@@ -42,4 +42,5 @@ RUN uv pip install --upgrade setuptools==69.5.1 setuptools_scm -i https://mirror
 # install data-juicer then
 COPY data-juicer /data-juicer
 RUN uv pip install -v -e .[all] -i https://mirrors.huaweicloud.com/repository/pypi/simple --system \
-    && python -c "import nltk; nltk.download('punkt_tab'); nltk.download('punkt'); nltk.download('averaged_perceptron_tagger');  nltk.download('averaged_perceptron_tagger_eng')"
+    && python -c "import nltk; nltk.download('punkt_tab'); nltk.download('punkt'); nltk.download('averaged_perceptron_tagger');  nltk.download('averaged_perceptron_tagger_eng')" \
+    && pip cache purge
