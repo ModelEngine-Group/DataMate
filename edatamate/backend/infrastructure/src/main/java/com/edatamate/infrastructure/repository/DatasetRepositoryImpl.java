@@ -1,10 +1,15 @@
 package com.edatamate.infrastructure.repository;
 
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.repository.CrudRepository;
 import com.edatamate.common.dataset.Dataset;
 import com.edatamate.domain.repository.DatasetRepository;
 import com.edatamate.infrastructure.mapper.DatasetMapper;
 import org.springframework.stereotype.Repository;
+import com.edatamate.common.dataset.dto.DatasetPageQueryDto;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import org.springframework.util.StringUtils;
 
 /**
  * 数据集repository实现
@@ -13,5 +18,24 @@ import org.springframework.stereotype.Repository;
  * @since: 2025-07-14
  */
 @Repository
-public class DatasetRepositoryImpl extends ServiceImpl<DatasetMapper, Dataset> implements DatasetRepository {
+public class DatasetRepositoryImpl extends CrudRepository<DatasetMapper, Dataset> implements DatasetRepository {
+    @Override
+    public IPage<Dataset> pageQuery(DatasetPageQueryDto dto) {
+        Page<Dataset> page = new Page<>(dto.pageNum(), dto.pageSize());
+        LambdaQueryWrapper<Dataset> wrapper = new LambdaQueryWrapper<>();
+        if (StringUtils.hasText(dto.name())) {
+            wrapper.like(Dataset::getName, dto.name());
+        }
+        if (dto.type() != null) {
+            wrapper.eq(Dataset::getType, dto.type());
+        }
+        if (dto.status() != null) {
+            wrapper.eq(Dataset::getStatus, dto.status());
+        }
+        if (StringUtils.hasText(dto.createdBy())) {
+            wrapper.eq(Dataset::getCreatedBy, dto.createdBy());
+        }
+        // 可补充其他条件
+        return baseMapper.selectPage(page, wrapper);
+    }
 }

@@ -37,12 +37,12 @@ public class Dataset {
     /**
      * 数据集类型
      */
-    private String type;
+    private DatasetType type;
 
     /**
      * 数据集状态
      */
-    private String status;
+    private DatasetStatus status;
 
     /**
      * 数据集所属父级ID

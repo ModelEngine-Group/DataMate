@@ -1,11 +1,11 @@
 package com.edatamate.application.dataset;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.edatamate.common.dataset.Dataset;
+import com.edatamate.common.dataset.dto.DatasetPageQueryDto;
 import com.edatamate.domain.repository.DatasetRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 /**
  * 数据集服务
@@ -19,11 +19,39 @@ public class DatasetService {
     private final DatasetRepository datasetRepository;
 
     /**
-     * 获取数据集列表
-     *
-     * @return 数据集列表
+     * 新增数据集
      */
-    public List<Dataset> getDatasets() {
-        return datasetRepository.list();
+    public Dataset createDataset(Dataset dataset) {
+        datasetRepository.save(dataset);
+        return dataset;
+    }
+
+    /**
+     * 根据ID查询数据集
+     */
+    public Dataset getDatasetById(Long id) {
+        return datasetRepository.getById(id);
+    }
+
+    /**
+     * 更新数据集
+     */
+    public Dataset updateDataset(Dataset dataset) {
+        datasetRepository.updateById(dataset);
+        return dataset;
+    }
+
+    /**
+     * 删除数据集
+     */
+    public void deleteDataset(Long id) {
+        datasetRepository.removeById(id);
+    }
+
+    /**
+     * 分页条件查询数据集
+     */
+    public IPage<Dataset> pageQuery(DatasetPageQueryDto queryDto) {
+        return datasetRepository.pageQuery(queryDto);
     }
 }

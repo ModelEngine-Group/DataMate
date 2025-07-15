@@ -25,11 +25,6 @@
             <artifactId>application</artifactId>
             <version>${app.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <version>${postgresql.version}</version>
-        </dependency>
     </dependencies>
 
     <build>

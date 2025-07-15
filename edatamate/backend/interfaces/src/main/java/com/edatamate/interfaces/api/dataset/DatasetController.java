@@ -1,13 +1,11 @@
 package com.edatamate.interfaces.api.dataset;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.edatamate.application.dataset.DatasetService;
 import com.edatamate.common.dataset.Dataset;
+import com.edatamate.common.dataset.dto.DatasetPageQueryDto;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * 数据集控制器
@@ -21,8 +19,28 @@ import java.util.List;
 public class DatasetController {
     private final DatasetService datasetService;
 
-    @GetMapping("/list")
-    public List<Dataset> getDatasets() {
-        return datasetService.getDatasets();
+    @PostMapping("/create")
+    public Dataset createDataset(@RequestBody Dataset dataset) {
+        return datasetService.createDataset(dataset);
+    }
+
+    @GetMapping("/{id}")
+    public Dataset getDatasetById(@PathVariable Long id) {
+        return datasetService.getDatasetById(id);
+    }
+
+    @PutMapping("/update")
+    public Dataset updateDataset(@RequestBody Dataset dataset) {
+        return datasetService.updateDataset(dataset);
+    }
+
+    @DeleteMapping("/{id}")
+    public void deleteDataset(@PathVariable Long id) {
+        datasetService.deleteDataset(id);
+    }
+
+    @PostMapping("/page")
+    public IPage<Dataset> pageQuery(@RequestBody DatasetPageQueryDto queryDto) {
+        return datasetService.pageQuery(queryDto);
     }
 }
