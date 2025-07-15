@@ -1,0 +1,27 @@
+# 编译输出目录
+**/target/
+**/bin/
+**/build/
+**/out/
+
+# 日志文件
+*.log
+logs/
+
+# IDE 相关文件
+.idea/
+*.iml
+*.ipr
+*.iws
+.classpath
+.project
+.settings/
+.vscode/
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 依赖管理
+**/maven-wrapper.jar
+!.mvn/wrapper/maven-wrapper.jar

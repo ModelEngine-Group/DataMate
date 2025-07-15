@@ -1,0 +1,39 @@
+-- 数据集表结构
+CREATE TABLE t_dataset
+(
+    id           BIGSERIAL PRIMARY KEY,
+    name         VARCHAR(255) NOT NULL,
+    description  TEXT,
+    type         VARCHAR(100),
+    status       VARCHAR(50),
+    parent_id    BIGINT,
+    created_time TIMESTAMP,
+    created_by   VARCHAR(255),
+    updated_time TIMESTAMP,
+    updated_by   VARCHAR(255)
+);
+
+CREATE INDEX idx_t_dataset_name ON t_dataset(name);
+CREATE INDEX idx_t_dataset_parent_id ON t_dataset(parent_id);
+CREATE INDEX idx_t_dataset_status ON t_dataset(status);
+
+
+-- 表注释
+COMMENT ON TABLE t_dataset IS '系统数据集主表';
+
+-- 列注释
+COMMENT ON COLUMN t_dataset.id IS '数据集唯一标识';
+COMMENT ON COLUMN t_dataset.name IS '数据集名称（唯一）';
+COMMENT ON COLUMN t_dataset.description IS '数据集详细描述';
+COMMENT ON COLUMN t_dataset.type IS '数据集分类类型';
+COMMENT ON COLUMN t_dataset.status IS '数据集状态：启用/禁用/归档';
+COMMENT ON COLUMN t_dataset.parent_id IS '父级数据集ID（用于构建层级关系）';
+COMMENT ON COLUMN t_dataset.created_time IS '数据集创建时间';
+COMMENT ON COLUMN t_dataset.created_by IS '数据集创建人';
+COMMENT ON COLUMN t_dataset.updated_time IS '数据集最后更新时间';
+COMMENT ON COLUMN t_dataset.updated_by IS '数据集最后更新人';
+
+-- 索引注释
+COMMENT ON INDEX idx_t_dataset_name IS '数据集名称索引';
+COMMENT ON INDEX idx_t_dataset_parent_id IS '父级数据集关联索引';
+COMMENT ON INDEX idx_t_dataset_status IS '数据集状态筛选索引';
