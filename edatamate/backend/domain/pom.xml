@@ -4,29 +4,26 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>edatamate-infrastructure</artifactId>
-    <version>${app.version}</version>
+    <artifactId>domain</artifactId>
+    <version>1.0.0</version>
 
     <properties>
-        <postgresql.version>42.7.2</postgresql.version>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
     <parent>
         <groupId>com.modelengine.edatamate</groupId>
-        <artifactId>edatamate-backend</artifactId>
+        <artifactId>backend</artifactId>
         <version>1.0.0</version>
     </parent>
 
     <dependencies>
         <dependency>
             <groupId>com.modelengine.edatamate</groupId>
-            <artifactId>edatamate-domain</artifactId>
+            <artifactId>common</artifactId>
             <version>${app.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <version>${postgresql.version}</version>
         </dependency>
     </dependencies>
 </project>

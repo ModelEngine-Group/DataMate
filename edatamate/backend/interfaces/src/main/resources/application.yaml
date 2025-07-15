@@ -1,6 +1,6 @@
 spring:
   application:
-    name: edatamate-interfaces
+    name: interfaces
   datasource:
     url: jdbc:postgresql://edatamate.dallas98.top/edatamate
     username: edatamate

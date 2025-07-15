@@ -5,17 +5,17 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.modelengine.edatamate</groupId>
-    <artifactId>edatamate-backend</artifactId>
+    <artifactId>backend</artifactId>
     <version>1.0.0</version>
     <packaging>pom</packaging>
     <name>edatamate for model-engine</name>
 
     <modules>
-        <module>edatamate-domain</module>
-        <module>edatamate-infrastructure</module>
-        <module>edatamate-application</module>
-        <module>edatamate-interfaces</module>
-        <module>edatamate-common</module>
+        <module>domain</module>
+        <module>infrastructure</module>
+        <module>application</module>
+        <module>interfaces</module>
+        <module>common</module>
     </modules>
 
     <properties>

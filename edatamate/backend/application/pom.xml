@@ -4,29 +4,31 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>edatamate-common</artifactId>
+    <artifactId>application</artifactId>
     <version>${app.version}</version>
 
     <properties>
-        <mybatis-plus.version>3.5.12</mybatis-plus.version>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
     <parent>
         <groupId>com.modelengine.edatamate</groupId>
-        <artifactId>edatamate-backend</artifactId>
+        <artifactId>backend</artifactId>
         <version>1.0.0</version>
     </parent>
 
     <dependencies>
         <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <scope>annotationProcessor</scope>
+            <groupId>com.modelengine.edatamate</groupId>
+            <artifactId>domain</artifactId>
+            <version>${app.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
-            <version>${mybatis-plus.version}</version>
+            <groupId>com.modelengine.edatamate</groupId>
+            <artifactId>infrastructure</artifactId>
+            <version>${app.version}</version>
         </dependency>
     </dependencies>
 </project>
