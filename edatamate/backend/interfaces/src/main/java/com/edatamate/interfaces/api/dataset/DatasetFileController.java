@@ -4,6 +4,9 @@ import com.edatamate.application.dataset.DatasetFileService;
 import com.edatamate.common.dataset.DatasetFile;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 /**
  * 文件管理控制器
@@ -59,5 +62,21 @@ public class DatasetFileController {
     public void deleteDatasetFile(@PathVariable Long id) {
         datasetFileService.deleteDatasetFile(id);
     }
-}
 
+    /**
+     * 上传多个数据集文件
+     *
+     * @param files 上传的文件列表
+     * @param datasetId 数据集ID
+     * @return 数据集文件列表
+     */
+    @PostMapping("/upload/{datasetId}")
+    public List<DatasetFile> uploadDatasetFiles(@RequestParam("files") List<MultipartFile> files,
+                                                @PathVariable("datasetId") Long datasetId) {
+        return datasetFileService.createDatasetFiles(files, datasetId);
+    }
+
+    /**
+     * 删除多个数据集文件
+     */
+}

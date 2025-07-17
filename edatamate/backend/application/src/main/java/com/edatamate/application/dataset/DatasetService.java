@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.edatamate.common.dataset.Dataset;
 import com.edatamate.common.dataset.dto.DatasetPageQueryDto;
 import com.edatamate.domain.repository.DatasetRepository;
+import com.edatamate.infrastructure.mapper.DatasetMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +18,8 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class DatasetService {
     private final DatasetRepository datasetRepository;
+
+    private final DatasetFileService datasetFileService;
 
     /**
      * 新增数据集
@@ -46,6 +49,7 @@ public class DatasetService {
      */
     public void deleteDataset(Long id) {
         datasetRepository.removeById(id);
+        datasetFileService.deleteDatasetFiles(id);
     }
 
     /**

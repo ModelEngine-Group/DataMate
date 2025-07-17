@@ -15,4 +15,10 @@ import org.springframework.stereotype.Repository;
 @Repository
 public class DatasetFileRepositoryImpl extends CrudRepository<DatasetFileMapper, DatasetFile> implements DatasetFileRepository {
 
+    @Override
+    public void removeByDatasetId(Long datasetId) {
+        lambdaUpdate()
+                .eq(DatasetFile::getDatasetId, datasetId)
+                .remove();
+    }
 }

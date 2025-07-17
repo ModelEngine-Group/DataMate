@@ -9,6 +9,7 @@
 
     <properties>
         <mybatis-plus.version>3.5.12</mybatis-plus.version>
+        <hutool.version>5.8.24</hutool.version>
     </properties>
 
     <parent>
@@ -27,6 +28,11 @@
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
             <version>${mybatis-plus.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>cn.hutool</groupId>
+            <artifactId>hutool-all</artifactId>
+            <version>${hutool.version}</version>
         </dependency>
     </dependencies>
 </project>
