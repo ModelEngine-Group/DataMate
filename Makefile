@@ -27,3 +27,6 @@ install-ray:
 
 install-unstructured:
 	kubectl apply -f install/kubernetes/unstructured/deploy.yaml
+
+install-mysql:
+	kubectl apply -f install/kubernetes/mysql/deploy.yaml
