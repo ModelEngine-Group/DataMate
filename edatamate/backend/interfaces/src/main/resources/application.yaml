@@ -6,3 +6,7 @@ spring:
     username: edatamate
     password: edatamate@123
     driver-class-name: org.postgresql.Driver
+
+dataset:
+  file:
+    base-dir: /dataset

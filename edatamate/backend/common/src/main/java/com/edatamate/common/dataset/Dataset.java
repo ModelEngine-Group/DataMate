@@ -6,7 +6,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
 /**
  * 数据集实体类
@@ -52,7 +52,7 @@ public class Dataset {
     /**
      * 数据集创建时间
      */
-    private Date createdTime;
+    private LocalDateTime createdTime;
 
     /**
      * 数据集创建人
@@ -62,7 +62,7 @@ public class Dataset {
     /**
      * 数据集更新时间
      */
-    private Date updatedTime;
+    private LocalDateTime updatedTime;
 
     /**
      * 数据集更新人
