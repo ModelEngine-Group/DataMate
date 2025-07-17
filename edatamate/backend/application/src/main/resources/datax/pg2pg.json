@@ -1,0 +1,60 @@
+{
+  "job": {
+    "setting": {
+      "speed": {
+        "channel": 5
+      },
+      "errorLimit": {
+        "record": 0,
+        "percentage": 0.02
+      }
+    },
+    "content": [
+      {
+        "reader": {
+          "name": "postgresqlreader",
+          "parameter": {
+            "username": "username",
+            "password": "password",
+            "column": [
+              "\"id\"",
+              "\"name\"",
+              "\"description\""
+            ],
+            "splitPk": "",
+            "connection": [
+              {
+                "table": [
+                  "public.from"
+                ],
+                "jdbcUrl": [
+                  "jdbc:postgresql://127.0.0.1/postgres"
+                ]
+              }
+            ]
+          }
+        },
+        "writer": {
+          "name": "postgresqlwriter",
+          "parameter": {
+            "username": "username",
+            "password": "password",
+            "column": [
+              "\"description\"",
+              "\"name\"",
+              "\"id\""
+            ],
+            "connection": [
+              {
+                "table": [
+                  "public.to"
+                ],
+                "jdbcUrl": "jdbc:postgresql://127.0.0.1/postgres"
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}
