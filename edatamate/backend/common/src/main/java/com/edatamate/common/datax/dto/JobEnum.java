@@ -5,7 +5,9 @@ import lombok.Getter;
 @Getter
 public enum JobEnum {
     NAS("nas", NasParameter.class),
-    OBS("obs", ObsParameter.class);
+    OBS("obs", ObsParameter.class),
+    MYSQL("mysql", MysqlParameter.class),
+    PGSQL("postgresql", PgsqlParameter.class);
 
     private final String type;
 

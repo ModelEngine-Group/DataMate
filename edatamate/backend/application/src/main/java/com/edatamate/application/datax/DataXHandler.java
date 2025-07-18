@@ -3,10 +3,10 @@ package com.edatamate.application.datax;
 
 import com.alibaba.fastjson2.JSON;
 import com.edatamate.common.datax.dto.JobEnum;
-import com.edatamate.common.datax.dto.Parameter;
 import com.edatamate.common.datax.dto.Reader;
 import com.edatamate.common.datax.dto.Writer;
-import com.edatamate.common.datax.utils.DataXUtil;
+import com.edatamate.infrastructure.utils.DataXUtil;
+import com.edatamate.infrastructure.feignclient.DataXClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -21,10 +21,8 @@ public class DataXHandler {
     public Map<String, Object> createJob(String srcConf, String destConf, String srcType, String destType) {
         JobEnum readerType = JobEnum.of(srcType);
         JobEnum writerType = JobEnum.of(destType);
-        Parameter srcParam = JSON.parseObject(srcConf, readerType.getParameter());
-        Reader reader = DataXUtil.generateReader(srcParam, readerType.getType());
-        Parameter destParam = JSON.parseObject(destConf, writerType.getParameter());
-        Writer writer = DataXUtil.generateWriter(destParam, writerType.getType());
+        Reader reader = DataXUtil.generateReader(srcConf, readerType);
+        Writer writer = DataXUtil.generateWriter(destConf, writerType);
         return invokeDataX(generateConfig(reader, writer));
     }
 
