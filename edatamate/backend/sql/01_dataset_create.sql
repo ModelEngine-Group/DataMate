@@ -7,11 +7,13 @@ CREATE TABLE IF NOT EXISTS t_dataset
     type         VARCHAR(100),
     status       VARCHAR(50),
     parent_id    BIGINT,
-    created_time TIMESTAMP,
+    created_time TIMESTAMP    NOT NULL DEFAULT NOW(),
     created_by   VARCHAR(255),
-    updated_time TIMESTAMP,
+    updated_time TIMESTAMP    NOT NULL DEFAULT NOW(),
     updated_by   VARCHAR(255)
 );
+
+CREATE OR REPLACE TRIGGER trg_dataset_updated_time BEFORE UPDATE ON t_dataset FOR EACH ROW EXECUTE FUNCTION update_time();
 
 CREATE INDEX idx_dataset_name ON t_dataset (name);
 CREATE INDEX idx_dataset_parent_id ON t_dataset (parent_id);
@@ -34,9 +36,9 @@ COMMENT ON COLUMN t_dataset.updated_time IS '数据集最后更新时间';
 COMMENT ON COLUMN t_dataset.updated_by IS '数据集最后更新人';
 
 -- 索引注释
-COMMENT ON INDEX idx_t_dataset_name IS '数据集名称索引';
-COMMENT ON INDEX idx_t_dataset_parent_id IS '父级数据集关联索引';
-COMMENT ON INDEX idx_t_dataset_status IS '数据集状态筛选索引';
+COMMENT ON INDEX idx_dataset_name IS '数据集名称索引';
+COMMENT ON INDEX idx_dataset_parent_id IS '父级数据集关联索引';
+COMMENT ON INDEX idx_dataset_status IS '数据集状态筛选索引';
 
 CREATE TABLE IF NOT EXISTS t_dataset_file
 (
@@ -53,5 +55,7 @@ CREATE TABLE IF NOT EXISTS t_dataset_file
     created_time TIMESTAMP    NOT NULL DEFAULT NOW(),
     updated_time TIMESTAMP    NOT NULL DEFAULT NOW()
 );
+
+CREATE OR REPLACE TRIGGER trg_dataset_file_updated_time BEFORE UPDATE ON t_dataset_file FOR EACH ROW EXECUTE FUNCTION update_time();
 
 CREATE INDEX idx_dataset_file_dataset_id ON t_dataset_file (dataset_id);
