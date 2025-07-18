@@ -2,10 +2,11 @@ package com.edatamate.application.datax;
 
 
 import com.alibaba.fastjson2.JSON;
-import com.edatamate.application.datax.dto.Reader;
-import com.edatamate.application.datax.dto.Writer;
-import com.edatamate.application.datax.utils.DataXReaderUtil;
-import com.edatamate.application.datax.utils.DataXWriterUtil;
+import com.edatamate.common.datax.dto.JobEnum;
+import com.edatamate.common.datax.dto.Parameter;
+import com.edatamate.common.datax.dto.Reader;
+import com.edatamate.common.datax.dto.Writer;
+import com.edatamate.common.datax.utils.DataXUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -17,9 +18,13 @@ import java.util.Map;
 public class DataXHandler {
     private final DataXClient dataXClient;
 
-    public Map<String, Object> createNasJob(String ip, String path, String prefix, String destPath) {
-        Reader reader = DataXReaderUtil.generateNasReader(ip, path, prefix);
-        Writer writer = DataXWriterUtil.generateNasWriter(ip, path, prefix, destPath);
+    public Map<String, Object> createJob(String srcConf, String destConf, String srcType, String destType) {
+        JobEnum readerType = JobEnum.of(srcType);
+        JobEnum writerType = JobEnum.of(destType);
+        Parameter srcParam = JSON.parseObject(srcConf, readerType.getParameter());
+        Reader reader = DataXUtil.generateReader(srcParam, readerType.getType());
+        Parameter destParam = JSON.parseObject(destConf, writerType.getParameter());
+        Writer writer = DataXUtil.generateWriter(destParam, writerType.getType());
         return invokeDataX(generateConfig(reader, writer));
     }
 
