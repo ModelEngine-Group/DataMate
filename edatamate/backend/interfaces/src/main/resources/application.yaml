@@ -6,6 +6,9 @@ spring:
     username: edatamate
     password: edatamate@123
     driver-class-name: org.postgresql.Driver
+  ai:
+    dashscope:
+      api-key: d3f8b7c0-1e2a-4b3c-9f4e-5a6b7c8d9e0f
 
 dataset:
   file:
