@@ -34,6 +34,8 @@ public class NasWriter extends Writer {
             new File(this.mountPoint).mkdirs();
             MountUtil.mount(this.jobConfig.getString("ip") + ":" + this.jobConfig.getString("path"),
                     mountPoint, "nfs", StringUtils.EMPTY);
+            String destPath = this.jobConfig.getString("destPath");
+            new File(destPath).mkdirs();
         }
 
         @Override
@@ -80,7 +82,7 @@ public class NasWriter extends Writer {
 
                     String filePath = this.mountPoint + "/" + fileName;
                     ShellUtil.runCommand("rsync", Arrays.asList("--no-links", "--chmod=750", "--", filePath,
-                            this.destPath));
+                            this.destPath + "/" + fileName));
                 }
             } catch (Exception e) {
                 throw DataXException.asDataXException(CommonErrorCode.RUNTIME_ERROR, e);

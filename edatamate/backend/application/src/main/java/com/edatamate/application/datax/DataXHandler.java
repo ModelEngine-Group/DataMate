@@ -15,7 +15,7 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 public class DataXHandler {
-    DataXClient dataXClient;
+    private final DataXClient dataXClient;
 
     public Map<String, Object> createNasJob(String ip, String path, String prefix, String destPath) {
         Reader reader = DataXReaderUtil.generateNasReader(ip, path, prefix);
