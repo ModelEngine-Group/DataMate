@@ -23,9 +23,9 @@
         <app.version>1.0.0</app.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
-        <spring-boot.version>3.2.12</spring-boot.version>
+        <spring-boot.version>3.5.3</spring-boot.version>
         <fastjson2.version>2.0.23</fastjson2.version>
-        <openfeign.version>4.1.0</openfeign.version>
+        <openfeign.version>4.3.0</openfeign.version>
         <junit5.version>5.13.3</junit5.version>
     </properties>
 
