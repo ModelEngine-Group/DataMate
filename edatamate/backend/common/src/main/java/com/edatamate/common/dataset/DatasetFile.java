@@ -1,9 +1,11 @@
 package com.edatamate.common.dataset;
 
+import cn.hutool.core.io.FileUtil;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -11,6 +13,7 @@ import java.time.LocalDateTime;
 
 @Getter
 @Setter
+@NoArgsConstructor
 @TableName("t_dataset_file")
 public class DatasetFile {
 
@@ -44,7 +47,7 @@ public class DatasetFile {
         this.name = file.getOriginalFilename();
         this.path = filePath;
         this.size = file.getSize();
-        this.type = file.getContentType();
+        this.type = FileUtil.getSuffix(file.getOriginalFilename());
         this.status = "active"; // 默认状态为 active
         this.parentId = 0L; // 默认父级ID为0
         this.sourceFile = file.getOriginalFilename();

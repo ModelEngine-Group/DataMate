@@ -60,8 +60,8 @@ public class DatasetFileController {
      * @return 数据集文件列表
      */
     @PostMapping("/upload/{datasetId}")
-    public List<DatasetFile> uploadDatasetFiles(@RequestParam("files") List<MultipartFile> files,
+    public List<DatasetFile> uploadDatasetFiles(@RequestParam("files") MultipartFile[] files,
                                                 @PathVariable("datasetId") Long datasetId) {
-        return datasetFileService.createDatasetFiles(files, datasetId);
+        return datasetFileService.createDatasetFiles(List.of(files), datasetId);
     }
 }

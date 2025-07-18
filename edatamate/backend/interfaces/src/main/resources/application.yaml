@@ -9,6 +9,10 @@ spring:
   ai:
     dashscope:
       api-key: d3f8b7c0-1e2a-4b3c-9f4e-5a6b7c8d9e0f
+  servlet:
+    multipart:
+      max-file-size: 1024MB
+      max-request-size: 1024MB
 
 dataset:
   file:
