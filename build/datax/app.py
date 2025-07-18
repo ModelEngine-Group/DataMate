@@ -11,7 +11,7 @@ class CreateJobParam(BaseModel):
     content: str
 
 
-@app.post("/process/", tags=["run datax.py"])
+@app.post("/process", tags=["run datax.py"])
 async def process(job: CreateJobParam):
     output = {
         "status": "failed",

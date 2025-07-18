@@ -6,18 +6,18 @@ import com.edatamate.application.datax.dto.Reader;
 import com.edatamate.application.datax.dto.Writer;
 import com.edatamate.application.datax.utils.DataXReaderUtil;
 import com.edatamate.application.datax.utils.DataXWriterUtil;
-import com.edatamate.application.utils.HttpClientUtil;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
-import java.io.IOException;
 
 import java.util.Map;
 
 
 @Service
+@RequiredArgsConstructor
 public class DataXHandler {
-    public String createNasJob(String ip, String path, String prefix, String destPath) throws IOException,
-            InterruptedException {
+    DataXClient dataXClient;
+
+    public Map<String, Object> createNasJob(String ip, String path, String prefix, String destPath) {
         Reader reader = DataXReaderUtil.generateNasReader(ip, path, prefix);
         Writer writer = DataXWriterUtil.generateNasWriter(ip, path, prefix, destPath);
         return invokeDataX(generateConfig(reader, writer));
@@ -34,7 +34,7 @@ public class DataXHandler {
         // 固定的settings部分
         Map<String, Object> settings = Map.of(
                 "speed", Map.of("channel", 3),
-                "errorLimit", Map.of("record", 0, "percentage", 0.02)
+                "errorLimit", Map.of("record", 0)
         );
 
         // 构建完整的JSON结构
@@ -59,10 +59,8 @@ public class DataXHandler {
      *
      * @param dataXConfig JSON配置字符串
      * @return 接口响应
-     * @throws IOException          如果请求失败
-     * @throws InterruptedException 如果请求中断
      */
-    public String invokeDataX(String dataXConfig) throws IOException, InterruptedException {
-        return HttpClientUtil.postJson(DataXConstant.URL, dataXConfig);
+    public Map<String, Object> invokeDataX(String dataXConfig) {
+        return dataXClient.process(Map.of("content", dataXConfig));
     }
 }

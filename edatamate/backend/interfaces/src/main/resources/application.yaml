@@ -10,3 +10,6 @@ spring:
 dataset:
   file:
     base-dir: /dataset
+
+datax:
+  url: http://datax:8000/process

@@ -22,7 +22,7 @@ RUN sed -i 's/deb.debian.org/mirrors.huaweicloud.com/g' /etc/apt/sources.list &&
 RUN pip config --user set global.index https://mirrors.huaweicloud.com/repository/pypi && \
     pip config --user set global.index-url https://mirrors.huaweicloud.com/repository/pypi/simple && \
     pip config --user set global.trusted-host mirrors.huaweicloud.com && \
-    pip install fastapi uvicorn && \
+    pip install fastapi uvicorn[standard] && \
     pip cache purge
 
 COPY --from=builder /DataX/target/datax/datax /opt/datax
