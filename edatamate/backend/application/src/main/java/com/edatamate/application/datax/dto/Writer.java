@@ -5,7 +5,7 @@ import lombok.Getter;
 
 @Builder
 @Getter
-public abstract class Writer extends Parameter {
+public class Writer {
     private String name;
 
     private Parameter parameter;

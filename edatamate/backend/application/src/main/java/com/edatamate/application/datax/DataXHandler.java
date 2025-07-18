@@ -7,16 +7,19 @@ import com.edatamate.application.datax.dto.Writer;
 import com.edatamate.application.datax.utils.DataXReaderUtil;
 import com.edatamate.application.datax.utils.DataXWriterUtil;
 import com.edatamate.application.utils.HttpClientUtil;
+import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 
 import java.util.Map;
 
 
+@Service
 public class DataXHandler {
-    public String createNasJob(String ip, String path, String prefix) throws IOException, InterruptedException {
+    public String createNasJob(String ip, String path, String prefix, String destPath) throws IOException,
+            InterruptedException {
         Reader reader = DataXReaderUtil.generateNasReader(ip, path, prefix);
-        Writer writer = DataXWriterUtil.generateNasWriter(ip, path, prefix);
+        Writer writer = DataXWriterUtil.generateNasWriter(ip, path, prefix, destPath);
         return invokeDataX(generateConfig(reader, writer));
     }
 
@@ -60,6 +63,6 @@ public class DataXHandler {
      * @throws InterruptedException 如果请求中断
      */
     public String invokeDataX(String dataXConfig) throws IOException, InterruptedException {
-        return HttpClientUtil.postJson(DataXConstant.HTTP_URL, dataXConfig);
+        return HttpClientUtil.postJson(DataXConstant.URL, dataXConfig);
     }
 }

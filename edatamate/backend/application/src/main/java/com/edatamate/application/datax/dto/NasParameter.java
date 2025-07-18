@@ -10,4 +10,6 @@ public class NasParameter extends Parameter {
     private String path;
 
     private String prefix;
+
+    private String destPath;
 }
