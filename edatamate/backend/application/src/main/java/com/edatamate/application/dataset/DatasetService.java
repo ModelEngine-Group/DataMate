@@ -2,6 +2,7 @@ package com.edatamate.application.dataset;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.edatamate.common.dataset.Dataset;
+import com.edatamate.common.dataset.DatasetStatus;
 import com.edatamate.common.dataset.dto.DatasetPageQueryDto;
 import com.edatamate.domain.repository.DatasetRepository;
 import com.edatamate.infrastructure.mapper.DatasetMapper;
@@ -25,6 +26,8 @@ public class DatasetService {
      * 新增数据集
      */
     public Dataset createDataset(Dataset dataset) {
+        dataset.setParentId(0L); // 默认父级ID为0
+        dataset.setStatus(DatasetStatus.DRAFT);
         datasetRepository.save(dataset);
         return dataset;
     }

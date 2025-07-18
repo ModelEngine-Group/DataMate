@@ -32,17 +32,6 @@ public class DatasetFileController {
     }
 
     /**
-     * 新增数据集文件
-     *
-     * @param datasetFile 数据集文件
-     * @return 数据集文件
-     */
-    @PostMapping
-    public DatasetFile createDatasetFile(@RequestBody DatasetFile datasetFile) {
-        return datasetFileService.createDatasetFile(datasetFile);
-    }
-
-    /**
      * 更新数据集文件
      *
      * @param datasetFile 数据集文件
@@ -64,7 +53,7 @@ public class DatasetFileController {
     }
 
     /**
-     * 上传多个数据集文件
+     * 批量上传数据集文件
      *
      * @param files 上传的文件列表
      * @param datasetId 数据集ID
@@ -75,8 +64,4 @@ public class DatasetFileController {
                                                 @PathVariable("datasetId") Long datasetId) {
         return datasetFileService.createDatasetFiles(files, datasetId);
     }
-
-    /**
-     * 删除多个数据集文件
-     */
 }

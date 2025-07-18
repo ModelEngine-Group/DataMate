@@ -66,26 +66,16 @@ public class DatasetFileService {
     /**
      * 新增多个数据集文件
      *
-     * @param files     上传的文件列表
+     * @param files 上传的文件列表
      * @param datasetId 数据集ID
      * @return 数据集文件列表
      */
     public List<DatasetFile> createDatasetFiles(List<MultipartFile> files, Long datasetId) {
         String baseDir = fileService.initDatasetDirectory(datasetId);
-
         List<DatasetFile> datasetFiles = files.stream().map(file -> {
             String filePath = fileService.uploadFileToDataset(file, baseDir);
-            DatasetFile datasetFile = new DatasetFile();
-            datasetFile.setDatasetId(datasetId);
-            datasetFile.setName(file.getOriginalFilename());
-            datasetFile.setPath(filePath);
-            datasetFile.setSize(file.getSize());
-            datasetFile.setType(file.getContentType());
-
-            datasetFile.setStatus("success");
-            datasetFile.setParentId(0L);
+            DatasetFile datasetFile = new DatasetFile(file, datasetId, filePath);
             datasetFile.setHash(fileService.calculateFileHash(file));
-            datasetFile.setSourceFile(file.getOriginalFilename());
             return datasetFile;
         }).collect(Collectors.toList());
         datasetFileRepository.saveBatch(datasetFiles, 1000);
