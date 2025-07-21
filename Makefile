@@ -16,6 +16,9 @@ build-unstructured:
 build-backend:
 	sh build/backend/build.sh
 
+build-frontend:
+	sh build/frontend/build.sh
+
 install-mineru:
 	kubectl apply -f install/kubernetes/mineru/deploy.yaml
 
@@ -36,3 +39,6 @@ install-mysql:
 
 install-backend:
 	kubectl apply -f install/kubernetes/backend/deploy.yaml
+
+install-frontend:
+	kubectl apply -f install/kubernetes/frontend/deploy.yaml

@@ -30,8 +30,6 @@ RUN wget https://aka.ms/download-jdk/microsoft-jdk-17.0.9-linux-x64.tar.gz -O jd
 # set the environment variable
 ENV JAVA_HOME=/opt/jdk
 
-WORKDIR /data-juicer
-
 # install uv
 RUN pip install uv -i https://mirrors.huaweicloud.com/repository/pypi/simple
 
@@ -40,7 +38,10 @@ RUN uv pip install --upgrade setuptools==69.5.1 setuptools_scm -i https://mirror
     && uv pip install http://dail-wlcb.oss-cn-wulanchabu.aliyuncs.com/data_juicer/recognize-anything-main.zip -i https://mirrors.huaweicloud.com/repository/pypi/simple --system
 
 # install data-juicer then
-COPY data-juicer /data-juicer
+RUN git clone https://github.com/modelscope/data-juicer.git
+
+WORKDIR /data-juicer
+
 RUN uv pip install -v -e .[all] -i https://mirrors.huaweicloud.com/repository/pypi/simple --system \
     && python -c "import nltk; nltk.download('punkt_tab'); nltk.download('punkt'); nltk.download('averaged_perceptron_tagger');  nltk.download('averaged_perceptron_tagger_eng')" \
     && pip cache purge

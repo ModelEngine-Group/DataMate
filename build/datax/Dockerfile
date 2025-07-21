@@ -5,7 +5,7 @@ RUN sed -i 's/deb.debian.org/mirrors.huaweicloud.com/g' /etc/apt/sources.list &&
     apt-get install -y git && \
     git clone https://github.com/alibaba/DataX.git
 
-COPY datax/ DataX/
+COPY extensions/datax/ DataX/
 
 RUN cd DataX && \
     sed -i "s/com.mysql.jdbc.Driver/com.mysql.cj.jdbc.Driver/g" \
@@ -29,4 +29,4 @@ RUN pip config --user set global.index https://mirrors.huaweicloud.com/repositor
 
 COPY --from=builder /DataX/target/datax/datax /opt/datax
 
-COPY app.py /opt/datax/bin/app.py
+COPY build/datax/app.py /opt/datax/bin/app.py
