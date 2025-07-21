@@ -13,6 +13,9 @@ build-data-juicer:
 build-unstructured:
 	sh build/unstructured/build.sh
 
+build-backend:
+	sh build/backend/build.sh
+
 install-mineru:
 	kubectl apply -f install/kubernetes/mineru/deploy.yaml
 
@@ -30,3 +33,6 @@ install-unstructured:
 
 install-mysql:
 	kubectl apply -f install/kubernetes/mysql/deploy.yaml
+
+install-backend:
+	kubectl apply -f install/kubernetes/backend/deploy.yaml
