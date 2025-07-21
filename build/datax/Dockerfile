@@ -8,6 +8,8 @@ RUN sed -i 's/deb.debian.org/mirrors.huaweicloud.com/g' /etc/apt/sources.list &&
 COPY datax/ DataX/
 
 RUN cd DataX && \
+    sed -i "s/com.mysql.jdbc.Driver/com.mysql.cj.jdbc.Driver/g" \
+    plugin-rdbms-util/src/main/java/com/alibaba/datax/plugin/rdbms/util/DataBaseType.java && \
     mvn -U clean package assembly:assembly -Dmaven.test.skip=true
 
 

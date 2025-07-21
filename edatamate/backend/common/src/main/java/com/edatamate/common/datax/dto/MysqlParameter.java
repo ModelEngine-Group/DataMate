@@ -23,5 +23,5 @@ public class MysqlParameter extends DBParameter {
 
     private String splitPk;
 
-    private int batchSize;
+    private Integer batchSize;
 }
