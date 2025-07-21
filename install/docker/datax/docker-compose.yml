@@ -1,0 +1,17 @@
+version: "3.8"
+
+services:
+  datax:
+    image: datax
+    container_name: datax
+    restart: always
+    command: >
+      bash -c "rpcbind && python3 /opt/datax/bin/app.py"
+    ports:
+      - "8000:8000"
+    volumes:
+      - type: bind
+        source: /tmp/data-platform
+        target: /tmp/data-platform
+    cap_add:
+      - SYS_ADMIN
