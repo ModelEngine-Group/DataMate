@@ -45,11 +45,11 @@ public class DatasetFileController {
     /**
      * 删除数据集文件
      *
-     * @param id 数据集文件ID
+     * @param fileIds 数据集文件ID列表
      */
-    @DeleteMapping("/{id}")
-    public void deleteDatasetFile(@PathVariable Long id) {
-        datasetFileService.deleteDatasetFile(id);
+    @DeleteMapping("/{dataset_id}/files")
+    public void deleteDatasetFile(@PathVariable("dataset_id") Long datasetId, @RequestParam("file_ids") List<Long> fileIds) {
+        datasetFileService.deleteDatasetFile(datasetId, fileIds);
     }
 
     /**
@@ -60,8 +60,7 @@ public class DatasetFileController {
      * @return 数据集文件列表
      */
     @PostMapping("/upload/{datasetId}")
-    public List<DatasetFile> uploadDatasetFiles(@RequestParam("files") MultipartFile[] files,
-                                                @PathVariable("datasetId") Long datasetId) {
+    public List<DatasetFile> uploadDatasetFiles(@RequestParam("files") MultipartFile[] files, @PathVariable("datasetId") Long datasetId) {
         return datasetFileService.createDatasetFiles(List.of(files), datasetId);
     }
 }

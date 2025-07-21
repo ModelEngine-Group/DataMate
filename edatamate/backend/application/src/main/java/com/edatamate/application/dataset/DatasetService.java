@@ -52,10 +52,10 @@ public class DatasetService {
     }
 
     /**
-     * 根据ID查询数据集
+     * 根据数据集id查询数据集
      */
-    public Dataset getDatasetById(Long id) {
-        return datasetRepository.getById(id);
+    public Dataset getDatasetById(Long datasetId) {
+        return datasetRepository.getById(datasetId);
     }
 
     /**
@@ -68,10 +68,11 @@ public class DatasetService {
 
     /**
      * 删除数据集
+     * @param datasetId 数据集ID
      */
-    public void deleteDataset(Long id) {
-        datasetRepository.removeById(id);
-        datasetFileService.deleteDatasetFiles(id);
+    public void deleteDataset(Long datasetId) {
+        datasetFileService.deleteDatasetFiles(datasetId);
+        datasetRepository.removeById(datasetId);
     }
 
     /**

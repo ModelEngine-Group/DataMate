@@ -1,5 +1,8 @@
 package com.edatamate.domain.service;
 
+import com.edatamate.domain.repository.DatasetFileRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -11,6 +14,8 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * 文件处理服务
@@ -20,6 +25,8 @@ import java.util.Comparator;
  */
 @Service
 public class FileService {
+    private static final Logger logger = LoggerFactory.getLogger(FileService.class);
+
     @Value("${dataset.file.base-dir:/dataset}")
     private String targetDirectory;
 
@@ -41,6 +48,13 @@ public class FileService {
         }
     }
 
+    /**
+     * 文件上传到指定目录
+     *
+     * @param file 上传的文件
+     * @param baseDir 基础目录
+     * @return 存放文件的最终目录
+     */
     public String uploadFileToDataset(MultipartFile file, String baseDir) {
         String fileName = file.getOriginalFilename();
         Path targetPath = Paths.get(baseDir, fileName);
@@ -81,18 +95,44 @@ public class FileService {
      */
     public void deleteFilesByDatasetId(Long datasetId) {
         Path datasetPath = Paths.get(targetDirectory, String.valueOf(datasetId));
-        try {
-            if (Files.exists(datasetPath)) {
-                Files.walk(datasetPath).sorted(Comparator.reverseOrder()).forEach(path -> {
-                    try {
-                        Files.delete(path);
-                    } catch (IOException e) {
-                        throw new RuntimeException("删除文件或目录失败: " + path, e);
-                    }
-                });
-            }
+        if (!Files.exists(datasetPath)) {
+            return; // 不存在直接返回
+        }
+        try (Stream<Path> walk = Files.walk(datasetPath)) {
+            walk.sorted(Comparator.reverseOrder()).forEach(path -> {
+                try {
+                    Files.delete(path);
+                } catch (IOException e) {
+                    logger.error("删除文件或目录失败, 路径: {}, 错误信息: {}", path, e.getMessage());
+                    throw new RuntimeException("删除文件或目录失败: " + path, e);
+                }
+            });
         } catch (IOException e) {
-            throw new RuntimeException("删除数据集目录及其内容失败", e);
+            throw new RuntimeException("删除数据集目录及其内容失败: " + datasetPath, e);
+        }
+    }
+
+    /**
+     * 删除数据集中文件
+     *
+     * @param paths 要删除的files的路径列表
+     */
+    public void batchDeleteFilesByIds(List<String> paths) {
+        if (paths == null || paths.isEmpty()) {
+            return; // 没有要删除的文件
+        }
+        for (String pathStr : paths) {
+            Path path = Paths.get(pathStr);
+            if (!Files.exists(path)) {
+                logger.warn("文件不存在, 跳过删除: {}", pathStr);
+                continue;
+            }
+            try {
+                Files.delete(path);
+            } catch (IOException e) {
+                logger.error("删除文件失败, 路径: {}, 错误信息: {}", pathStr, e.getMessage());
+                throw new RuntimeException("删除文件失败: " + pathStr, e);
+            }
         }
     }
 }

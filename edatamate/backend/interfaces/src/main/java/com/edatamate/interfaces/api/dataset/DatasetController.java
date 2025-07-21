@@ -24,9 +24,9 @@ public class DatasetController {
         return datasetService.createDataset(dataset);
     }
 
-    @GetMapping("/{id}")
-    public Dataset getDatasetById(@PathVariable Long id) {
-        return datasetService.getDatasetById(id);
+    @GetMapping("/{dataset_id}")
+    public Dataset getDatasetById(@PathVariable("dataset_id") Long datasetId) {
+        return datasetService.getDatasetById(datasetId);
     }
 
     @PutMapping("/update")
@@ -34,9 +34,14 @@ public class DatasetController {
         return datasetService.updateDataset(dataset);
     }
 
-    @DeleteMapping("/{id}")
-    public void deleteDataset(@PathVariable Long id) {
-        datasetService.deleteDataset(id);
+    /**
+     * 删除数据集
+     *
+     * @param datasetId 数据集ID
+     */
+    @DeleteMapping("/{dataset_id}")
+    public void deleteDataset(@PathVariable("dataset_id") Long datasetId) {
+        datasetService.deleteDataset(datasetId);
     }
 
     @PostMapping("/page")

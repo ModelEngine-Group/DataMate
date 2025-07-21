@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -55,12 +54,17 @@ public class DatasetFileService {
     }
 
     /**
-     * 删除数据集文件
+     * 数据集内根据fileIds删除数据集文件
      *
-     * @param id 数据集文件ID
+     * @param datasetId 数据集ID
+     * @param fileIds 数据集文件ID列表
      */
-    public void deleteDatasetFile(Long id) {
-        datasetFileRepository.removeById(id);
+    public void deleteDatasetFile(Long datasetId, List<Long> fileIds) {
+        // todo 删之前要根据数据集id查询数据集状态是否可以删除，能删除才执行删除操作，并改变数据集状态
+        // 要保证fileIds一定是同一个datasetId中的
+        List<String> filePaths = datasetFileRepository.getFilePathsByIds(fileIds);
+        fileService.batchDeleteFilesByIds(filePaths);
+        datasetFileRepository.removeByIds(fileIds);
     }
 
     /**
@@ -82,6 +86,11 @@ public class DatasetFileService {
         return datasetFiles;
     }
 
+    /**
+     * 删除某个数据集中所有文件
+     *
+     * @param datasetId 数据集文件ID
+     */
     public void deleteDatasetFiles(Long datasetId) {
         fileService.deleteFilesByDatasetId(datasetId);
         datasetFileRepository.removeByDatasetId(datasetId);
