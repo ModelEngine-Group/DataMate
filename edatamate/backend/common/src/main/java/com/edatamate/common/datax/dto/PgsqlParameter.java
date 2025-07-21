@@ -19,5 +19,5 @@ public class PgsqlParameter extends DBParameter {
 
     private String splitPk;
 
-    private int batchSize;
+    private Integer batchSize;
 }
