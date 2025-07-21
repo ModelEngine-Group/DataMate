@@ -9,6 +9,7 @@ import com.edatamate.common.dataset.SrcAndDesTypeEnum;
 import com.edatamate.common.dataset.dto.DatasetPageQueryDto;
 import com.edatamate.domain.repository.DatasetRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
@@ -28,7 +29,8 @@ public class DatasetService {
 
     private final DataXHandler dataXHandler;
 
-    private final String PATH_PREFIX = "/dataset";
+    @Value("${dataset.file.base-dir:/dataset}")
+    private String baseDatasetPath;
 
     /**
      * 创建数据集
@@ -39,8 +41,8 @@ public class DatasetService {
         String sourceType = dataset.getSrcType();
         String destinationType = dataset.getDesType();
         if ("local".equals(destinationType)) { // 如果目标类型是本地导入, 需要在后台生成一个路径存放数据集
-            String destPath = PATH_PREFIX + "/" + dataset.getName() + "/" + UUID.randomUUID();
-            dataset.setDesType(new JSONObject().fluentPut("dest_path", destPath).toString());
+            String destPath = baseDatasetPath + "/" + dataset.getName();
+            dataset.setDesConfig(new JSONObject().fluentPut("dest_path", destPath).toString());
         }
         if (SrcAndDesTypeEnum.getRemoteSource().contains(sourceType)) {
             dataXHandler.createJob(dataset.getSrcConfig(), dataset.getDesConfig(), sourceType, destinationType);
