@@ -1,13 +1,17 @@
 package com.edatamate.application.dataset;
 
+import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.edatamate.application.datax.DataXHandler;
 import com.edatamate.common.dataset.Dataset;
 import com.edatamate.common.dataset.DatasetStatus;
+import com.edatamate.common.dataset.SrcAndDesTypeEnum;
 import com.edatamate.common.dataset.dto.DatasetPageQueryDto;
 import com.edatamate.domain.repository.DatasetRepository;
-import com.edatamate.infrastructure.mapper.DatasetMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.UUID;
 
 /**
  * 数据集服务
@@ -22,12 +26,25 @@ public class DatasetService {
 
     private final DatasetFileService datasetFileService;
 
+    private final DataXHandler dataXHandler;
+
+    private final String PATH_PREFIX = "/dataset";
+
     /**
-     * 新增数据集
+     * 创建数据集
      */
     public Dataset createDataset(Dataset dataset) {
         dataset.setParentId(0L); // 默认父级ID为0
         dataset.setStatus(DatasetStatus.DRAFT);
+        String sourceType = dataset.getSrcType();
+        String destinationType = dataset.getDesType();
+        if ("local".equals(destinationType)) { // 如果目标类型是本地导入, 需要在后台生成一个路径存放数据集
+            String destPath = PATH_PREFIX + "/" + dataset.getName() + "/" + UUID.randomUUID();
+            dataset.setDesType(new JSONObject().fluentPut("dest_path", destPath).toString());
+        }
+        if (SrcAndDesTypeEnum.getRemoteSource().contains(sourceType)) {
+            dataXHandler.createJob(dataset.getSrcConfig(), dataset.getDesConfig(), sourceType, destinationType);
+        }
         datasetRepository.save(dataset);
         return dataset;
     }

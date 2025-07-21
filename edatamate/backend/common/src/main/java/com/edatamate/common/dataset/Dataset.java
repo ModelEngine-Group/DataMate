@@ -40,6 +40,26 @@ public class Dataset {
     private DatasetType type;
 
     /**
+     * 数据源配置
+     */
+    private String srcConfig;
+
+    /**
+     * 数据源类型
+     */
+    private String srcType;
+
+    /**
+     * 目地配置
+     */
+    private String desConfig;
+
+    /**
+     * 目的类型
+     */
+    private String desType;
+
+    /**
      * 数据集状态
      */
     private DatasetStatus status;
