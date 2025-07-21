@@ -21,4 +21,6 @@ public class DBParameter extends Parameter {
     private String username;
 
     private String password;
+
+    private String querySql;
 }

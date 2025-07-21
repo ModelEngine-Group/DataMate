@@ -21,8 +21,6 @@ public class MysqlParameter extends DBParameter {
 
     private String writeMode;
 
-    private String querySql;
-
     private String splitPk;
 
     private int batchSize;
