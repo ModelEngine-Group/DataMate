@@ -30,7 +30,11 @@ import {
   AlertTriangle,
   Clock,
   Target,
+  X,
+  Trash2,
 } from "lucide-react"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Label } from "@/components/ui/label"
 
 interface Dataset {
   id: number
@@ -201,6 +205,32 @@ export default function DatasetManagementPage() {
   const [filterType, setFilterType] = useState("all")
   const [filterStatus, setFilterStatus] = useState("all")
 
+  const [showCreateForm, setShowCreateForm] = useState(false)
+  const [showTaskPanel, setShowTaskPanel] = useState(false)
+  const [creationTasks, setCreationTasks] = useState<any[]>([])
+  const [createForm, setCreateForm] = useState({
+    name: "",
+    description: "",
+    source: "local-upload", // local-upload, database, nas, obs
+    target: "local-folder", // local-folder, database
+    sourceConfig: {},
+    targetConfig: {},
+    syncStrategy: "immediate", // immediate, scheduled
+    cronExpression: "",
+    uploadedFiles: [] as File[],
+    scheduleConfig: {
+      type: "cron", // cron, simple
+      frequency: "daily", // daily, weekly, monthly
+      time: "02:00",
+      dayOfWeek: "1", // 1-7 (Monday-Sunday)
+      dayOfMonth: "1", // 1-31
+      endDate: "", // 任务结束日期
+      maxExecutions: 0, // 最大执行次数，0表示无限制
+    },
+  })
+
+  const [showCronPanel, setShowCronPanel] = useState(false)
+
   const filteredDatasets = datasets.filter((dataset) => {
     const matchesSearch =
       dataset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -289,6 +319,282 @@ export default function DatasetManagementPage() {
     )
   }
 
+  const handleCreateDataset = async () => {
+    const newDataset: Dataset = {
+      id: Date.now(),
+      name: createForm.name,
+      description: createForm.description,
+      type: "image",
+      category: "自定义",
+      size: "0 MB",
+      itemCount: 0,
+      createdAt: new Date().toISOString().split("T")[0],
+      lastModified: new Date().toISOString().split("T")[0],
+      status: "processing",
+      tags: [],
+      quality: 0,
+    }
+
+    const newTask = {
+      id: Date.now(),
+      datasetId: newDataset.id,
+      name: `导入 ${createForm.name}`,
+      source: createForm.source,
+      target: createForm.target,
+      status: createForm.syncStrategy === "immediate" ? "importing" : "waiting",
+      progress: 0,
+      syncStrategy: createForm.syncStrategy,
+      cronExpression: createForm.cronExpression,
+      scheduleConfig: createForm.scheduleConfig,
+      createdAt: new Date().toISOString(),
+      nextExecutionTime: createForm.syncStrategy === "scheduled" ? getNextExecutionTime(createForm) : null,
+      executionCount: 0,
+      maxExecutions: createForm.scheduleConfig.maxExecutions,
+      endDate: createForm.scheduleConfig.endDate,
+    }
+
+    setDatasets([newDataset, ...datasets])
+    setCreationTasks([newTask, ...creationTasks])
+
+    // Reset form and close modal
+    setCreateForm({
+      name: "",
+      description: "",
+      source: "local-upload",
+      target: "local-folder",
+      sourceConfig: {},
+      targetConfig: {},
+      syncStrategy: "immediate",
+      cronExpression: "",
+      uploadedFiles: [],
+      scheduleConfig: {
+        type: "cron", // cron, simple
+        frequency: "daily", // daily, weekly, monthly
+        time: "02:00",
+        dayOfWeek: "1", // 1-7 (Monday-Sunday)
+        dayOfMonth: "1", // 1-31
+        endDate: "", // 任务结束日期
+        maxExecutions: 0, // 最大执行次数，0表示无限制
+      },
+    })
+    setShowCreateForm(false)
+
+    // Simulate async import process
+    setTimeout(() => {
+      const interval = setInterval(() => {
+        setCreationTasks((prev) =>
+          prev.map((task) => {
+            if (task.id === newTask.id) {
+              const newProgress = Math.min(task.progress + Math.random() * 15, 100)
+              if (newProgress >= 100) {
+                // 检查是否需要继续定时执行
+                const shouldComplete = checkTaskCompletion(task)
+                return {
+                  ...task,
+                  progress: 100,
+                  status: shouldComplete ? "completed" : "waiting",
+                  nextExecutionTime: shouldComplete ? null : getNextExecutionTime(createForm),
+                }
+              }
+              return {
+                ...task,
+                progress: newProgress,
+                status: newProgress >= 100 ? "completed" : "importing",
+              }
+            }
+            return task
+          }),
+        )
+
+        setDatasets((prev) =>
+          prev.map((ds) => {
+            if (ds.id === newDataset.id) {
+              const task = creationTasks.find((t) => t.datasetId === ds.id)
+              if (task?.status === "completed") {
+                return {
+                  ...ds,
+                  status: "active",
+                  itemCount: Math.floor(Math.random() * 1000 + 100),
+                  size: `${(Math.random() * 500 + 50).toFixed(0)}MB`,
+                  quality: Math.floor(Math.random() * 20 + 80),
+                }
+              }
+            }
+            return ds
+          }),
+        )
+      }, 500)
+
+      setTimeout(() => clearInterval(interval), 8000)
+    }, 1000)
+  }
+
+  const getSourceTargetOptions = () => {
+    const sourceOptions = [
+      { value: "local-upload", label: "本地上传" },
+      { value: "database", label: "数据库导入" },
+      { value: "nas", label: "NAS 导入" },
+      { value: "obs", label: "OBS 导入" },
+    ]
+
+    let targetOptions = []
+    if (["local-upload", "nas", "obs"].includes(createForm.source)) {
+      targetOptions = [{ value: "local-folder", label: "本地文件夹" }]
+    } else if (createForm.source === "database") {
+      targetOptions = [{ value: "database", label: "数据库" }]
+    }
+
+    return { sourceOptions, targetOptions }
+  }
+
+  const deleteTask = (taskId: number) => {
+    setCreationTasks((prev) => prev.filter((task) => task.id !== taskId))
+  }
+
+  const deleteDataset = (datasetId: number) => {
+    setDatasets((prev) => prev.filter((ds) => ds.id !== datasetId))
+    setCreationTasks((prev) => prev.filter((task) => task.datasetId !== datasetId))
+  }
+
+  const getNextExecutionTime = (form: any) => {
+    if (form.scheduleConfig.type === "cron") {
+      // 基于 cron 表达式计算下次执行时间
+      return calculateNextCronExecution(form.cronExpression)
+    } else {
+      // 基于简单配置计算下次执行时间
+      return calculateNextSimpleExecution(form.scheduleConfig)
+    }
+  }
+
+  const calculateNextCronExecution = (cronExpression: string) => {
+    // 简化的 cron 计算逻辑
+    const now = new Date()
+    const tomorrow = new Date(now)
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    tomorrow.setHours(2, 0, 0, 0) // 默认凌晨2点
+    return tomorrow.toISOString()
+  }
+
+  const calculateNextSimpleExecution = (config: any) => {
+    const now = new Date()
+    const next = new Date(now)
+
+    switch (config.frequency) {
+      case "daily":
+        next.setDate(next.getDate() + 1)
+        break
+      case "weekly":
+        next.setDate(next.getDate() + 7)
+        break
+      case "monthly":
+        next.setMonth(next.getMonth() + 1)
+        break
+    }
+
+    const [hours, minutes] = config.time.split(":")
+    next.setHours(Number.parseInt(hours), Number.parseInt(minutes), 0, 0)
+    return next.toISOString()
+  }
+
+  const generateCronFromSimpleConfig = (config: any) => {
+    const [hours, minutes] = config.time.split(":")
+
+    switch (config.frequency) {
+      case "daily":
+        return `0 ${minutes} ${hours} * * ?`
+      case "weekly":
+        return `0 ${minutes} ${hours} ? * ${config.dayOfWeek}`
+      case "monthly":
+        return `0 ${minutes} ${hours} ${config.dayOfMonth} * ?`
+      default:
+        return `0 ${minutes} ${hours} * * ?`
+    }
+  }
+
+  const executeTaskImmediately = (taskId: number) => {
+    setCreationTasks((prev) =>
+      prev.map((task) => {
+        if (task.id === taskId) {
+          return {
+            ...task,
+            status: "importing",
+            progress: 0,
+            executionCount: task.executionCount + 1,
+            lastExecutionTime: new Date().toISOString(),
+          }
+        }
+        return task
+      }),
+    )
+
+    // 模拟执行过程
+    setTimeout(() => {
+      const interval = setInterval(() => {
+        setCreationTasks((prev) =>
+          prev.map((task) => {
+            if (task.id === taskId && task.status === "importing") {
+              const newProgress = Math.min(task.progress + Math.random() * 15, 100)
+              if (newProgress >= 100) {
+                // 检查是否需要继续定时执行
+                const shouldComplete = checkTaskCompletion(task)
+                return {
+                  ...task,
+                  progress: 100,
+                  status: shouldComplete ? "completed" : "waiting",
+                  nextExecutionTime: shouldComplete ? null : getNextExecutionTime(createForm),
+                }
+              }
+              return { ...task, progress: newProgress }
+            }
+            return task
+          }),
+        )
+      }, 500)
+
+      setTimeout(() => clearInterval(interval), 8000)
+    }, 1000)
+  }
+
+  const checkTaskCompletion = (task: any) => {
+    // 检查是否达到最大执行次数
+    if (task.maxExecutions > 0 && task.executionCount >= task.maxExecutions) {
+      return true
+    }
+
+    // 检查是否超过结束日期
+    if (task.endDate && new Date() > new Date(task.endDate)) {
+      return true
+    }
+
+    return false
+  }
+
+  const getSourceLabel = (source: string) => {
+    switch (source) {
+      case "local-upload":
+        return "本地上传"
+      case "database":
+        return "数据库"
+      case "nas":
+        return "NAS"
+      case "obs":
+        return "OBS"
+      default:
+        return "未知"
+    }
+  }
+
+  const getTargetLabel = (target: string) => {
+    switch (target) {
+      case "local-folder":
+        return "本地文件夹"
+      case "database":
+        return "数据库"
+      default:
+        return "未知"
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -302,9 +608,17 @@ export default function DatasetManagementPage() {
             <Upload className="w-4 h-4 mr-2" />
             导入数据集
           </Button>
-          <Button>
+          <Button onClick={() => setShowCreateForm(true)}>
             <Plus className="w-4 h-4 mr-2" />
             创建数据集
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setShowTaskPanel(!showTaskPanel)}
+            className={showTaskPanel ? "bg-blue-50 border-blue-300" : ""}
+          >
+            <Activity className="w-4 h-4 mr-2" />
+            任务 {creationTasks.length > 0 && `(${creationTasks.length})`}
           </Button>
         </div>
       </div>
@@ -354,6 +668,254 @@ export default function DatasetManagementPage() {
         </CardContent>
       </Card>
 
+      {/* Creation Form - 移动到搜索框下方 */}
+      {showCreateForm && (
+        <Card className="border-2 border-blue-200">
+          <CardHeader>
+            <CardTitle>创建数据集</CardTitle>
+            <CardDescription>配置数据集基本信息和导入设置</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Basic Info */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>数据集名称</Label>
+                <Input
+                  value={createForm.name}
+                  onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
+                  placeholder="输入数据集名称"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>描述</Label>
+                <Input
+                  value={createForm.description}
+                  onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
+                  placeholder="输入数据集描述"
+                />
+              </div>
+            </div>
+
+            {/* Source → Target Pipeline */}
+            <div className="space-y-4 border-t pt-4">
+              <h4 className="font-medium text-gray-900">数据导入链路</h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>数据源</Label>
+                  <Select
+                    value={createForm.source}
+                    onValueChange={(value) => {
+                      const { targetOptions } = getSourceTargetOptions()
+                      const newTargetOptions =
+                        value === "database"
+                          ? [{ value: "database", label: "数据库" }]
+                          : [{ value: "local-folder", label: "本地文件夹" }]
+                      setCreateForm({
+                        ...createForm,
+                        source: value,
+                        target: newTargetOptions[0]?.value || "local-folder",
+                        sourceConfig: {},
+                        targetConfig: {},
+                      })
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {getSourceTargetOptions().sourceOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>数据目标</Label>
+                  <Select
+                    value={createForm.target}
+                    onValueChange={(value) => setCreateForm({ ...createForm, target: value, targetConfig: {} })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {getSourceTargetOptions().targetOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
+            {/* Source Configuration */}
+            {createForm.source !== "local-upload" && (
+              <div className="space-y-4 bg-gray-50 p-4 rounded-lg">
+                <h5 className="font-medium text-gray-900">数据源配置</h5>
+                {createForm.source === "database" && (
+                  <div className="space-y-4">
+                    <Input placeholder="JDBC URL (如: jdbc:mysql://localhost:3306/dbname)" />
+                    <div className="grid grid-cols-2 gap-4">
+                      <Input placeholder="用户名" />
+                      <Input type="password" placeholder="密码" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <Input placeholder="表名" />
+                      <Input placeholder="列名称列表 (逗号分隔)" />
+                    </div>
+                  </div>
+                )}
+                {createForm.source === "nas" && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <Input placeholder="NAS地址" />
+                    <Input placeholder="共享路径" />
+                  </div>
+                )}
+                {createForm.source === "obs" && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <Input placeholder="Endpoint" />
+                    <Input placeholder="Bucket名称" />
+                    <Input placeholder="Access Key (AK)" />
+                    <Input placeholder="Secret Key (SK)" />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* File Upload (only for local-upload source) */}
+            {createForm.source === "local-upload" && (
+              <div className="space-y-4">
+                <h5 className="font-medium text-gray-900">文件上传</h5>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors">
+                  <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                  <p className="text-gray-600 mb-2">拖拽文件到此处或点击上传</p>
+                  <p className="text-sm text-gray-500">支持 JPG, PNG, DICOM, CSV 等格式</p>
+                  <Input
+                    type="file"
+                    multiple
+                    className="hidden"
+                    id="file-upload"
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files || [])
+                      setCreateForm({ ...createForm, uploadedFiles: files })
+                    }}
+                  />
+                  <Button
+                    variant="outline"
+                    className="mt-4 bg-transparent"
+                    onClick={() => document.getElementById("file-upload")?.click()}
+                  >
+                    选择文件
+                  </Button>
+                </div>
+                {createForm.uploadedFiles.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium">已选择 {createForm.uploadedFiles.length} 个文件</p>
+                    <div className="max-h-32 overflow-y-auto space-y-1">
+                      {createForm.uploadedFiles.map((file, index) => (
+                        <div key={index} className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded">
+                          {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Target Configuration */}
+            {createForm.target === "local-folder" && (
+              <div className="space-y-4 bg-gray-50 p-4 rounded-lg">
+                <h5 className="font-medium text-gray-900">数据目标配置</h5>
+              </div>
+            )}
+
+            {createForm.target === "database" && (
+              <div className="space-y-4 bg-gray-50 p-4 rounded-lg">
+                <h5 className="font-medium text-gray-900">数据目标配置</h5>
+                <Input placeholder="JDBC URL (如: jdbc:mysql://localhost:3306/dbname)" />
+                <div className="grid grid-cols-2 gap-4">
+                  <Input placeholder="用户名" />
+                  <Input type="password" placeholder="密码" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <Input placeholder="表名" />
+                  <Input placeholder="列名称列表 (逗号分隔)" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Pre SQL (导入前执行)</Label>
+                  <Input placeholder="CREATE TABLE IF NOT EXISTS..." />
+                </div>
+                <div className="space-y-2">
+                  <Label>Post SQL (导入后执行)</Label>
+                  <Input placeholder="UPDATE table SET..." />
+                </div>
+              </div>
+            )}
+
+            {/* Sync Strategy */}
+            <div className="space-y-4 border-t pt-4">
+              <h4 className="font-medium text-gray-900">同步策略</h4>
+              <div className="space-y-4">
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="syncStrategy"
+                      value="immediate"
+                      checked={createForm.syncStrategy === "immediate"}
+                      onChange={(e) => setCreateForm({ ...createForm, syncStrategy: e.target.value })}
+                    />
+                    <span>立即同步</span>
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="syncStrategy"
+                      value="scheduled"
+                      checked={createForm.syncStrategy === "scheduled"}
+                      onChange={(e) => setCreateForm({ ...createForm, syncStrategy: e.target.value })}
+                    />
+                    <span>定时同步</span>
+                  </label>
+                </div>
+
+                {createForm.syncStrategy === "scheduled" && (
+                  <div className="space-y-2">
+                    <Label>Cron 表达式</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        value={createForm.cronExpression}
+                        onChange={(e) => setCreateForm({ ...createForm, cronExpression: e.target.value })}
+                        placeholder="0 0 2 * * ? (每天凌晨2点)"
+                      />
+                      <Button variant="outline" size="sm" onClick={() => setShowCronPanel(true)}>
+                        可视化配置
+                      </Button>
+                    </div>
+                    <p className="text-xs text-gray-500">示例: 0 0 2 * * ? (每天凌晨2点), 0 0 * * * ? (每小时)</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-2 pt-4 border-t">
+              <Button onClick={handleCreateDataset} disabled={!createForm.name || !createForm.description}>
+                创建数据集
+              </Button>
+              <Button variant="outline" onClick={() => setShowCreateForm(false)}>
+                取消
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Dataset Grid */}
       <div className="grid gap-6">
         {filteredDatasets.map((dataset) => (
@@ -394,6 +956,9 @@ export default function DatasetManagementPage() {
                     <Button variant="outline" size="sm">
                       <Download className="w-4 h-4 mr-1" />
                       下载
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => deleteDataset(dataset.id)}>
+                      <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
                 </div>
@@ -754,6 +1319,315 @@ export default function DatasetManagementPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Cron Configuration Panel */}
+      {showCronPanel && (
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-50" onClick={() => setShowCronPanel(false)}>
+          <div
+            className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg p-6 w-[500px] max-h-[80vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold">定时任务配置</h3>
+              <Button variant="ghost" size="sm" onClick={() => setShowCronPanel(false)}>
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+
+            <Tabs defaultValue="simple">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="simple">简单配置</TabsTrigger>
+                <TabsTrigger value="advanced">高级配置</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="simple" className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>执行频率</Label>
+                    <Select
+                      value={createForm.scheduleConfig.frequency}
+                      onValueChange={(value) =>
+                        setCreateForm({
+                          ...createForm,
+                          scheduleConfig: { ...createForm.scheduleConfig, frequency: value },
+                        })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="daily">每天</SelectItem>
+                        <SelectItem value="weekly">每周</SelectItem>
+                        <SelectItem value="monthly">每月</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>执行时间</Label>
+                    <Input
+                      type="time"
+                      value={createForm.scheduleConfig.time}
+                      onChange={(e) =>
+                        setCreateForm({
+                          ...createForm,
+                          scheduleConfig: { ...createForm.scheduleConfig, time: e.target.value },
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+
+                {createForm.scheduleConfig.frequency === "weekly" && (
+                  <div>
+                    <Label>星期几</Label>
+                    <Select
+                      value={createForm.scheduleConfig.dayOfWeek}
+                      onValueChange={(value) =>
+                        setCreateForm({
+                          ...createForm,
+                          scheduleConfig: { ...createForm.scheduleConfig, dayOfWeek: value },
+                        })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1">周一</SelectItem>
+                        <SelectItem value="2">周二</SelectItem>
+                        <SelectItem value="3">周三</SelectItem>
+                        <SelectItem value="4">周四</SelectItem>
+                        <SelectItem value="5">周五</SelectItem>
+                        <SelectItem value="6">周六</SelectItem>
+                        <SelectItem value="0">周日</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {createForm.scheduleConfig.frequency === "monthly" && (
+                  <div>
+                    <Label>每月第几天</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      max="31"
+                      value={createForm.scheduleConfig.dayOfMonth}
+                      onChange={(e) =>
+                        setCreateForm({
+                          ...createForm,
+                          scheduleConfig: { ...createForm.scheduleConfig, dayOfMonth: e.target.value },
+                        })
+                      }
+                    />
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>结束日期 (可选)</Label>
+                    <Input
+                      type="date"
+                      value={createForm.scheduleConfig.endDate}
+                      onChange={(e) =>
+                        setCreateForm({
+                          ...createForm,
+                          scheduleConfig: { ...createForm.scheduleConfig, endDate: e.target.value },
+                        })
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label>最大执行次数 (0=无限制)</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      value={createForm.scheduleConfig.maxExecutions}
+                      onChange={(e) =>
+                        setCreateForm({
+                          ...createForm,
+                          scheduleConfig: {
+                            ...createForm.scheduleConfig,
+                            maxExecutions: Number.parseInt(e.target.value),
+                          },
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="advanced" className="space-y-4">
+                <div>
+                  <Label>Cron 表达式</Label>
+                  <Input
+                    value={createForm.cronExpression}
+                    onChange={(e) => setCreateForm({ ...createForm, cronExpression: e.target.value })}
+                    placeholder="0 0 2 * * ? (每天凌晨2点)"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">格式: 秒 分 时 日 月 周 年(可选)</p>
+                </div>
+
+                <div className="bg-gray-50 p-3 rounded">
+                  <Label className="text-sm">常用表达式:</Label>
+                  <div className="mt-2 space-y-1 text-xs">
+                    <div className="flex justify-between">
+                      <span>每天凌晨2点:</span>
+                      <Button
+                        variant="link"
+                        size="sm"
+                        className="h-auto p-0 text-xs"
+                        onClick={() => setCreateForm({ ...createForm, cronExpression: "0 0 2 * * ?" })}
+                      >
+                        0 0 2 * * ?
+                      </Button>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>每小时:</span>
+                      <Button
+                        variant="link"
+                        size="sm"
+                        className="h-auto p-0 text-xs"
+                        onClick={() => setCreateForm({ ...createForm, cronExpression: "0 0 * * * ?" })}
+                      >
+                        0 0 * * * ?
+                      </Button>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>每周一上午9点:</span>
+                      <Button
+                        variant="link"
+                        size="sm"
+                        className="h-auto p-0 text-xs"
+                        onClick={() => setCreateForm({ ...createForm, cronExpression: "0 0 9 ? * MON" })}
+                      >
+                        0 0 9 ? * MON
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
+
+            <div className="flex gap-2 mt-6">
+              <Button
+                onClick={() => {
+                  // 根据简单配置生成 cron 表达式
+                  if (createForm.scheduleConfig.type === "simple") {
+                    const cronExpr = generateCronFromSimpleConfig(createForm.scheduleConfig)
+                    setCreateForm({ ...createForm, cronExpression: cronExpr })
+                  }
+                  setShowCronPanel(false)
+                }}
+              >
+                确认
+              </Button>
+              <Button variant="outline" onClick={() => setShowCronPanel(false)}>
+                取消
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Task Panel */}
+      {showTaskPanel && (
+        <div className="fixed inset-0 z-50" onClick={() => setShowTaskPanel(false)}>
+          <div
+            className="absolute right-0 top-0 h-full w-96 bg-white shadow-xl border-l"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-4 border-b">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">导入任务</h3>
+                <Button variant="ghost" size="sm" onClick={() => setShowTaskPanel(false)}>
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+            <ScrollArea className="h-full pb-16">
+              <div className="p-4 space-y-4">
+                {creationTasks.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <Activity className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                    <p>暂无导入任务</p>
+                  </div>
+                ) : (
+                  creationTasks.map((task) => (
+                    <Card key={task.id} className="border">
+                      <CardContent className="pt-4">
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-medium text-sm">{task.name}</h4>
+                            <div className="flex items-center gap-1">
+                              <Badge
+                                className={
+                                  task.status === "importing"
+                                    ? "bg-blue-100 text-blue-800"
+                                    : task.status === "completed"
+                                      ? "bg-green-100 text-green-800"
+                                      : task.status === "waiting"
+                                        ? "bg-yellow-100 text-yellow-800"
+                                        : "bg-gray-100 text-gray-800"
+                                }
+                              >
+                                {task.status === "importing"
+                                  ? "导入中"
+                                  : task.status === "completed"
+                                    ? "已完成"
+                                    : task.status === "waiting"
+                                      ? "等待中"
+                                      : "未知"}
+                              </Badge>
+                              <Button variant="ghost" size="sm" onClick={() => deleteTask(task.id)}>
+                                <Trash2 className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          </div>
+
+                          <div className="text-xs text-gray-500">
+                            <div>源: {getSourceLabel(task.source)}</div>
+                            <div>目标: {getTargetLabel(task.target)}</div>
+                            <div>策略: {task.syncStrategy === "immediate" ? "立即同步" : "定时同步"}</div>
+                            {task.cronExpression && <div>Cron: {task.cronExpression}</div>}
+                            {task.nextExecutionTime && (
+                              <div>下次执行: {new Date(task.nextExecutionTime).toLocaleString()}</div>
+                            )}
+                            {task.executionCount > 0 && <div>已执行: {task.executionCount} 次</div>}
+                            {task.maxExecutions > 0 && <div>最大执行: {task.maxExecutions} 次</div>}
+                          </div>
+
+                          {task.status === "importing" && (
+                            <div className="space-y-1">
+                              <div className="flex justify-between text-xs">
+                                <span>进度</span>
+                                <span>{Math.round(task.progress)}%</span>
+                              </div>
+                              <Progress value={task.progress} className="h-1" />
+                            </div>
+                          )}
+
+                          {task.syncStrategy === "scheduled" && task.status === "waiting" && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full bg-transparent"
+                              onClick={() => executeTaskImmediately(task.id)}
+                            >
+                              立即执行一次
+                            </Button>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
+              </div>
+            </ScrollArea>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
