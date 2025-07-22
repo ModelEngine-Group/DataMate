@@ -23,8 +23,8 @@ RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list && \
     apt-get clean && \
     rm -rf /var/lib/apy/lists/*
 
-RUN pip config --user set global.index-url https://mirrors.cloud.aliyuncs.com/pypi/simple && \
-    pip config --user set global.trusted-host mirrors.cloud.aliyuncs.com && \
+RUN pip config --user set global.index-url https://mirrors.aliyun.com/pypi/simple && \
+    pip config --user set global.trusted-host mirrors.aliyun.com && \
     pip install fastapi uvicorn[standard] && \
     pip cache purge
 
