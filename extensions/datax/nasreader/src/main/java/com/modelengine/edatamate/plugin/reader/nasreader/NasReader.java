@@ -6,7 +6,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -66,19 +68,22 @@ public class NasReader extends Reader {
 
         private Configuration jobConfig;
         private String mountPoint;
+        private Set<String> fileType;
 
         @Override
         public void init() {
             this.jobConfig = super.getPluginJobConf();
             this.mountPoint = this.jobConfig.getString("mountPoint");
+            this.fileType = new HashSet<>(this.jobConfig.getList("fileType", Collections.emptyList(), String.class));
         }
 
         @Override
         public void startRead(RecordSender recordSender) {
             try (Stream<Path> stream = Files.list(Paths.get(this.mountPoint))) {
-                List<String> files = stream.filter(Files::isRegularFile) // 只保留普通文件
-                        .map(Path::getFileName)    // 转成绝对路径
-                        .map(Path::toString).collect(Collectors.toList());
+                List<String> files = stream.filter(Files::isRegularFile)
+                        .filter(file -> fileType.isEmpty() || fileType.contains(getFileSuffix(file)))
+                        .map(path -> path.getFileName().toString())
+                        .collect(Collectors.toList());
                 files.forEach(filePath -> {
                     Record record = recordSender.createRecord();
                     record.addColumn(new StringColumn(filePath));
@@ -89,6 +94,15 @@ public class NasReader extends Reader {
                 LOG.error("Error reading files from mount point: {}", this.mountPoint, e);
                 throw new RuntimeException(e);
             }
+        }
+
+        private String getFileSuffix(Path path) {
+            String fileName = path.getFileName().toString();
+            int lastDotIndex = fileName.lastIndexOf('.');
+            if (lastDotIndex == -1 || lastDotIndex == fileName.length() - 1) {
+                return "";
+            }
+            return fileName.substring(lastDotIndex + 1);
         }
 
         @Override
