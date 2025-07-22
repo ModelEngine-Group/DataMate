@@ -11,6 +11,8 @@ import com.edatamate.domain.dataset.parser.datasetconfig.SyncConfig;
 import com.edatamate.domain.dataset.repository.DatasetRepository;
 import com.edatamate.domain.dataset.schedule.ScheduleSyncService;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.ConcurrentHashMap;
@@ -18,6 +20,8 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 @RequiredArgsConstructor
 public class DatasetDomainService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DatasetDomainService.class);
+
     private final DatasetRepository datasetRepository;
 
     private final ScheduleSyncService scheduleSyncService;
@@ -34,11 +38,17 @@ public class DatasetDomainService {
         if (SrcAndDesTypeEnum.getRemoteSource().contains(dataset.getSrcType())) {
             // todo 下发同步任务
             Runnable job = () -> {
-                // 这里可以添加具体的同步逻辑
-                System.out.println("Executing sync job for dataset: " + dataset.getId());
+                try {
+                    // 添加具体的同步逻辑
+                    // 1.下发任务到datax
+                    datasetRepository.submitSyncJob(dataset);
+                    // 2.执行扫盘逻辑
+                } catch (Exception e) {
+                    LOGGER.warn("Error executing sync job for dataset: {}", dataset.getId(), e);
+                }
             };
             SyncConfig syncConfig = JSONObject.parseObject(dataset.getScheduleConfig(), SyncConfig.class);
-            SimpleCronTask simpleCronTask = scheduleSyncService.addScheduleCornTask(job, syncConfig.getCron(), syncConfig.getMaxExecuteTimes());
+            SimpleCronTask simpleCronTask = scheduleSyncService.addScheduleCornTask(job, syncConfig);
             taskMap.put(dataset.getId(), simpleCronTask);
         }
         return dataset;
@@ -65,6 +75,7 @@ public class DatasetDomainService {
      */
     public void deleteDataset(Long datasetId) {
         datasetRepository.removeById(datasetId);
+        taskMap.remove(datasetId);
     }
 
     /**

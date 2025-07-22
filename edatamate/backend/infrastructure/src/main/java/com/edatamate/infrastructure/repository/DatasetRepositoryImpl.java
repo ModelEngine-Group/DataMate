@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.repository.CrudRepository;
 import com.edatamate.common.dataset.Dataset;
+import com.edatamate.common.dataset.SrcAndDesTypeEnum;
 import com.edatamate.domain.dataset.repository.DatasetRepository;
 import com.edatamate.infrastructure.datax.DataXHandler;
 import com.edatamate.infrastructure.mapper.DatasetMapper;
@@ -42,5 +43,13 @@ public class DatasetRepositoryImpl extends CrudRepository<DatasetMapper, Dataset
         }
         // 可补充其他条件
         return baseMapper.selectPage(page, wrapper);
+    }
+
+    @Override
+    public void submitSyncJob(Dataset dataset) {
+        String srcType = dataset.getSrcType();
+        if (SrcAndDesTypeEnum.getRemoteSource().contains(srcType)) {
+            dataXHandler.createJob(dataset.getSrcConfig(), dataset.getDesConfig(), srcType, dataset.getDesType());
+        }
     }
 }

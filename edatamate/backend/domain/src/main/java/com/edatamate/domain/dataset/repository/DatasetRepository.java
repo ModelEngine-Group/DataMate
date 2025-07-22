@@ -19,4 +19,11 @@ public interface DatasetRepository extends IRepository<Dataset> {
      * @return 分页结果，包含数据集列表和分页信息
      */
     IPage<Dataset> pageQuery(DatasetPageQueryDto dto);
+
+    /**
+     * 提交同步任务
+     *
+     * @param dataset 数据集对象
+     */
+    void submitSyncJob(Dataset dataset);
 }

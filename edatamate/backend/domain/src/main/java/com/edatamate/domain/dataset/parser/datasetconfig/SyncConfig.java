@@ -11,4 +11,6 @@ public class SyncConfig extends CommonConfig {
     private String cron;
 
     private int maxExecuteTimes;
+
+    private boolean executeCurrent;
 }
