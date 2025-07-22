@@ -21,10 +21,11 @@ spec:
         ports:
         - containerPort: 8080
         volumeMounts:
-        - name: tmp
-          mountPath: /tmp/data-platform
+        - name: dataset
+          mountPath: /dataset
+          subPath: dataset
       volumes:
-      - name: tmp
+      - name: dataset
         hostPath:
           path: /tmp/data-platform
 

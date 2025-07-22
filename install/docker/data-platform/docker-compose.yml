@@ -7,8 +7,8 @@ services:
       - "8080:8080"
     volumes:
       - type: bind
-        source: /tmp/data-platform
-        target: /tmp/data-platform
+        source: /tmp/data-platform/dataset
+        target: /dataset
     networks: [ edatamate ]
 
   # 2) datax
@@ -23,8 +23,8 @@ services:
       - "8000:8000"
     volumes:
       - type: bind
-        source: /tmp/data-platform
-        target: /tmp/data-platform
+        source: /tmp/data-platform/dataset
+        target: /dataset
     networks: [ edatamate ]
 
   # 3) frontend（NodePort 30000）
@@ -44,7 +44,7 @@ services:
       POSTGRES_USER: "postgres"
       POSTGRES_PASSWORD: "123456"
     ports:
-      - "3306:3306"
+      - "5432:5432"
     volumes:
       - type: bind
         source: /tmp/data-platform/postgresql-docker
