@@ -1,7 +1,6 @@
-package com.edatamate.infrastructure.utils;
+package com.edatamate.common.dataset.utils;
 
 import com.edatamate.common.dataset.DatasetFile;
-import com.edatamate.domain.dataset.service.FileService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,7 +33,7 @@ public class LocalScannerUtils {
                 file.setName(path.getFileName().toString());
                 file.setPath(path.toString());
                 file.setSize(path.toFile().length());
-                file.setType(getFileSuffix(path.getFileName().toString()));
+                file.setType(FileUtils.getFileSuffix(path.getFileName().toString()));
                 file.setStatus("active");
                 file.setParentId(0L);
                 file.setSourceFile(path.getFileName().toString());
@@ -45,17 +44,12 @@ public class LocalScannerUtils {
         }
         fileList.forEach(file -> {
             try (var inputStream = Files.newInputStream(Paths.get(file.getPath()))) {
-                file.setHash(FileService.calculateFileHash(inputStream));
+                file.setHash(FileUtils.calculateFileHash(inputStream));
             } catch (IOException e) {
                 logger.error("Failed to calculate sha256: {}", e.getMessage());
                 file.setHash(EMPTY_HASH);
             }
         });
         return fileList;
-    }
-
-    public static String getFileSuffix(String fileName) {
-        int idx = fileName.lastIndexOf('.');
-        return (idx > 0 && idx < fileName.length() - 1) ? fileName.substring(idx + 1) : "";
     }
 }

@@ -1,6 +1,7 @@
 package com.edatamate.application.dataset;
 
 import com.edatamate.common.dataset.DatasetFile;
+import com.edatamate.common.dataset.utils.FileUtils;
 import com.edatamate.domain.dataset.repository.DatasetFileRepository;
 import com.edatamate.domain.dataset.service.FileService;
 import lombok.RequiredArgsConstructor;
@@ -88,7 +89,7 @@ public class DatasetFileService {
             String filePath = fileService.uploadFileToDataset(file, baseDir);
             DatasetFile datasetFile = new DatasetFile(file, datasetId, filePath);
             try (var inputStream = file.getInputStream()) {
-                datasetFile.setHash(FileService.calculateFileHash(inputStream));
+                datasetFile.setHash(FileUtils.calculateFileHash(inputStream));
             } catch (IOException e) {
                 logger.error("Failed to calculate sha256: {}", e.getMessage());
                 datasetFile.setHash(EMPTY_HASH);

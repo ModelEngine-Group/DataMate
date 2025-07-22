@@ -33,8 +33,6 @@ public class FileService {
     @Value("${dataset.file.base-dir:/dataset}")
     private String targetDirectory;
 
-    private static final String EMPTY_HASH = "0";
-
     /**
      * 初始化数据集目录
      *
@@ -68,27 +66,6 @@ public class FileService {
             return targetPath.toString();
         } catch (IOException e) {
             throw new RuntimeException("文件上传失败", e);
-        }
-    }
-
-
-    public static String calculateFileHash(InputStream fis) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] buffer = new byte[8192];
-            int bytesRead;
-            while ((bytesRead = fis.read(buffer)) != -1) {
-                digest.update(buffer, 0, bytesRead);
-            }
-            byte[] hashBytes = digest.digest();
-            StringBuilder sb = new StringBuilder();
-            for (byte b : hashBytes) {
-                sb.append(String.format("%02x", b));
-            }
-            return sb.toString();
-        } catch (Exception e) {
-            logger.error("计算文件SHA-256哈希值失败:", e);
-            return EMPTY_HASH;
         }
     }
 

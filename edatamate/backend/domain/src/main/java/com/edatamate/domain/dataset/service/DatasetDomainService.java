@@ -3,18 +3,23 @@ package com.edatamate.domain.dataset.service;
 import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.edatamate.common.dataset.Dataset;
+import com.edatamate.common.dataset.DatasetFile;
 import com.edatamate.common.dataset.DatasetStatus;
 import com.edatamate.common.dataset.SrcAndDesTypeEnum;
 import com.edatamate.common.dataset.dto.DatasetPageQueryDto;
+import com.edatamate.common.dataset.utils.LocalScannerUtils;
 import com.edatamate.common.schedule.SimpleCronTask;
 import com.edatamate.domain.dataset.parser.datasetconfig.SyncConfig;
+import com.edatamate.domain.dataset.repository.DatasetFileRepository;
 import com.edatamate.domain.dataset.repository.DatasetRepository;
 import com.edatamate.domain.dataset.schedule.ScheduleSyncService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
@@ -24,9 +29,14 @@ public class DatasetDomainService {
 
     private final DatasetRepository datasetRepository;
 
+    private final DatasetFileRepository datasetFileRepository;
+
     private final ScheduleSyncService scheduleSyncService;
 
     private final ConcurrentHashMap<Long, SimpleCronTask> taskMap = new ConcurrentHashMap<>();
+
+    @Value("${dataset.file.base-dir:/dataset}")
+    private String baseDatasetPath;
 
     /**
      * 创建数据集
@@ -34,6 +44,10 @@ public class DatasetDomainService {
     public Dataset createDataset(Dataset dataset) {
         dataset.setParentId(0L); // 默认父级ID为0
         dataset.setStatus(DatasetStatus.DRAFT);
+        String destPath = baseDatasetPath + "/" + dataset.getName();
+        if (SrcAndDesTypeEnum.LOCAL.getType().equals(dataset.getDesType())) { // 如果目标类型是本地导入, 需要在后台生成一个路径存放数据集
+            dataset.setDesConfig(new JSONObject().fluentPut("dest_path", destPath).toString());
+        }
         datasetRepository.save(dataset);
         if (SrcAndDesTypeEnum.getRemoteSource().contains(dataset.getSrcType())) {
             // todo 下发同步任务
@@ -43,6 +57,9 @@ public class DatasetDomainService {
                     // 1.下发任务到datax
                     datasetRepository.submitSyncJob(dataset);
                     // 2.执行扫盘逻辑
+                    List<DatasetFile> datasetFiles = LocalScannerUtils.scanDatasetFiles(destPath, dataset.getId());
+                    // 3.保存文件元数据
+                    datasetFileRepository.saveBatch(datasetFiles, 1000);
                 } catch (Exception e) {
                     LOGGER.warn("Error executing sync job for dataset: {}", dataset.getId(), e);
                 }
