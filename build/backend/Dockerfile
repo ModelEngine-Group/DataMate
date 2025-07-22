@@ -9,7 +9,8 @@ RUN cd /opt/backend && \
 
 FROM openjdk:17-jdk-slim
 
-RUN sed -i 's/deb.debian.org/mirrors.huaweicloud.com/g' /etc/apt/sources.list && \
+RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list && \
+    sed -i 's/security.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list && \
     apt-get update && \
     apt-get install -y vim wget curl nfs-common rsync && \
     apt-get clean && \

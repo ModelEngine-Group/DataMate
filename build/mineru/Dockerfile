@@ -5,9 +5,8 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-RUN pip config --user set global.index https://mirrors.huaweicloud.com/repository/pypi && \
-    pip config --user set global.index-url https://mirrors.huaweicloud.com/repository/pypi/simple && \
-    pip config --user set global.trusted-host mirrors.huaweicloud.com && \
+RUN pip config --user set global.index-url https://mirrors.cloud.aliyuncs.com/pypi/simple && \
+    pip config --user set global.trusted-host mirrors.cloud.aliyuncs.com && \
     pip install --upgrade setuptools && \
     pip install -U 'mineru[core]==2.1.0' --break-system-packages && \
     pip install torch==2.7.1+cpu -f https://download.pytorch.org/whl/torch/ && \
