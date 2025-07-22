@@ -1,13 +1,14 @@
 package com.edatamate.domain.service;
 
-import com.edatamate.domain.repository.DatasetFileRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -16,6 +17,8 @@ import java.security.MessageDigest;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Stream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  * 文件处理服务
@@ -133,6 +136,31 @@ public class FileService {
                 logger.error("删除文件失败, 路径: {}, 错误信息: {}", pathStr, e.getMessage());
                 throw new RuntimeException("删除文件失败: " + pathStr, e);
             }
+        }
+    }
+
+    /**
+     * 压缩指定文件到Zip输出流中
+     *
+     * @param filePath 要压缩的文件路径
+     * @param zos Zip输出流
+     * @param fileName 压缩包中的文件名
+     */
+    public void zipFile(String filePath, ZipOutputStream zos, String fileName) throws IOException {
+        Path path = Paths.get(filePath);
+        if (!Files.exists(path)) {
+            logger.warn("文件不存在: {}", filePath);
+        }
+        try (InputStream fis = Files.newInputStream(path);
+             BufferedInputStream bis = new BufferedInputStream(fis)) {
+            ZipEntry zipEntry = new ZipEntry(fileName);
+            zos.putNextEntry(zipEntry);
+            byte[] buffer = new byte[8192];
+            int len;
+            while ((len = bis.read(buffer)) > 0) {
+                zos.write(buffer, 0, len);
+            }
+            zos.closeEntry();
         }
     }
 }

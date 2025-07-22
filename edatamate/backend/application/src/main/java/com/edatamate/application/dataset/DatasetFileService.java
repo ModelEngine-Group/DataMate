@@ -4,12 +4,16 @@ import com.edatamate.common.dataset.DatasetFile;
 import com.edatamate.domain.repository.DatasetFileRepository;
 import com.edatamate.domain.service.FileService;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.zip.ZipOutputStream;
 
 @Service
 @RequiredArgsConstructor
@@ -18,6 +22,8 @@ public class DatasetFileService {
     private String targetDirectory;
 
     private final DatasetFileRepository datasetFileRepository;
+
+    private static final Logger logger = LoggerFactory.getLogger(DatasetFileService.class);
 
     private final FileService fileService;
 
@@ -94,5 +100,37 @@ public class DatasetFileService {
     public void deleteDatasetFiles(Long datasetId) {
         fileService.deleteFilesByDatasetId(datasetId);
         datasetFileRepository.removeByDatasetId(datasetId);
+    }
+
+    /**
+     * 根据数据集ID获取其中所有文件ID
+     *
+     * @param datasetId 数据集文件ID
+     */
+    public List<Long> getFileIdsByDatasetId(Long datasetId) {
+        return datasetFileRepository.lambdaQuery().eq(DatasetFile::getDatasetId, datasetId)
+                .list().stream().map(DatasetFile::getId).toList();
+    }
+
+    /**
+     * 下载压缩包
+     *
+     * @param fileIds 待打包数据集文件ID
+     * @param zos Zip输出流
+     */
+    public void zipFiles(List<Long> fileIds, ZipOutputStream zos) {
+        List<DatasetFile> files = datasetFileRepository.listByIds(fileIds);
+        for (DatasetFile file : files) {
+            try {
+                if (file.getPath() == null) {
+                    logger.error("文件路径为空, 无法打包, 文件ID: {}", file.getId());
+                    throw new RuntimeException("文件路径为空: " + file.getId());
+                }
+                fileService.zipFile(file.getPath(), zos, file.getName());
+            } catch (IOException e) {
+                logger.error("打包文件失败, 文件路径: {}, 错误信息: {}", file.getPath(), e.getMessage());
+                throw new RuntimeException("打包文件失败: " + file.getPath(), e);
+            }
+        }
     }
 }
