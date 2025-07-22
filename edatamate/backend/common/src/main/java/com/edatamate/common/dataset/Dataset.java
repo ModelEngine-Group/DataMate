@@ -40,6 +40,11 @@ public class Dataset {
     private DatasetType type;
 
     /**
+     * 同步配置
+     */
+    private String scheduleConfig;
+
+    /**
      * 数据源配置
      */
     private String srcConfig;

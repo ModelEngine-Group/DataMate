@@ -1,4 +1,4 @@
-package com.edatamate.domain.parser.datasetconfig;
+package com.edatamate.domain.dataset.parser.datasetconfig;
 
 /**
  * S3配置类,用于存储S3相关的配置信息

@@ -1,4 +1,4 @@
-package com.edatamate.domain.service;
+package com.edatamate.domain.dataset.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

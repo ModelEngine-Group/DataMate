@@ -1,4 +1,4 @@
-package com.edatamate.infrastructure.feignclient;
+package com.edatamate.infrastructure.datax;
 
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.stereotype.Component;

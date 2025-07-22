@@ -2,7 +2,7 @@ package com.edatamate.infrastructure.repository;
 
 import com.baomidou.mybatisplus.extension.repository.CrudRepository;
 import com.edatamate.common.dataset.DatasetFile;
-import com.edatamate.domain.repository.DatasetFileRepository;
+import com.edatamate.domain.dataset.repository.DatasetFileRepository;
 import com.edatamate.infrastructure.mapper.DatasetFileMapper;
 import org.springframework.stereotype.Repository;
 

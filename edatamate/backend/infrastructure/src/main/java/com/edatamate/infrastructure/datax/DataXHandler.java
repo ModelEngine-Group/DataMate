@@ -1,4 +1,4 @@
-package com.edatamate.application.datax;
+package com.edatamate.infrastructure.datax;
 
 
 import com.alibaba.fastjson2.JSON;
@@ -6,7 +6,6 @@ import com.edatamate.common.datax.dto.JobEnum;
 import com.edatamate.common.datax.dto.Reader;
 import com.edatamate.common.datax.dto.Writer;
 import com.edatamate.infrastructure.utils.DataXUtil;
-import com.edatamate.infrastructure.feignclient.DataXClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

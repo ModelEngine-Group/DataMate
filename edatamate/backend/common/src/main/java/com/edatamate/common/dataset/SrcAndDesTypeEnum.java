@@ -26,7 +26,7 @@ public enum SrcAndDesTypeEnum {
      * 获取名称
      */
     public static List<String> getRemoteSource() {
-        return Arrays.asList(NFS.getName(), S3.getName(), DATABASE.getName(), LOCAL_COLLECTION.getName());
+        return Arrays.asList(NFS.getName(), S3.getName(), DATABASE.getName());
     }
 
     /**

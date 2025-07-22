@@ -1,4 +1,4 @@
-package com.edatamate.domain.parser.datasetconfig;
+package com.edatamate.domain.dataset.parser.datasetconfig;
 
 import com.edatamate.common.dataset.DataBaseType;
 

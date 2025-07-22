@@ -1,8 +1,8 @@
 package com.edatamate.application.dataset;
 
 import com.edatamate.common.dataset.DatasetFile;
-import com.edatamate.domain.repository.DatasetFileRepository;
-import com.edatamate.domain.service.FileService;
+import com.edatamate.domain.dataset.repository.DatasetFileRepository;
+import com.edatamate.domain.dataset.service.FileService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

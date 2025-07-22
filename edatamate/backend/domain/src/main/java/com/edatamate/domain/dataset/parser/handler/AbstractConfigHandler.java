@@ -1,6 +1,6 @@
-package com.edatamate.domain.parser.handler;
+package com.edatamate.domain.dataset.parser.handler;
 
-import com.edatamate.domain.parser.datasetconfig.CommonConfig;
+import com.edatamate.domain.dataset.parser.datasetconfig.CommonConfig;
 
 public abstract class AbstractConfigHandler implements ConfigHandler {
     @Override

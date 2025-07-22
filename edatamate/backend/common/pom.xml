@@ -10,6 +10,7 @@
     <properties>
         <mybatis-plus.version>3.5.12</mybatis-plus.version>
         <hutool.version>5.8.24</hutool.version>
+        <cronutils.version>9.2.0</cronutils.version>
     </properties>
 
     <parent>
@@ -42,6 +43,11 @@
             <groupId>com.alibaba.fastjson2</groupId>
             <artifactId>fastjson2</artifactId>
             <version>${fastjson2.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.cronutils</groupId>
+            <artifactId>cron-utils</artifactId>
+            <version>${cronutils.version}</version>
         </dependency>
     </dependencies>
 </project>

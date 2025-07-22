@@ -4,8 +4,10 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.repository.CrudRepository;
 import com.edatamate.common.dataset.Dataset;
-import com.edatamate.domain.repository.DatasetRepository;
+import com.edatamate.domain.dataset.repository.DatasetRepository;
+import com.edatamate.infrastructure.datax.DataXHandler;
 import com.edatamate.infrastructure.mapper.DatasetMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import com.edatamate.common.dataset.dto.DatasetPageQueryDto;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -19,6 +21,9 @@ import org.springframework.util.StringUtils;
  */
 @Repository
 public class DatasetRepositoryImpl extends CrudRepository<DatasetMapper, Dataset> implements DatasetRepository {
+    @Autowired
+    private DataXHandler dataXHandler;
+
     @Override
     public IPage<Dataset> pageQuery(DatasetPageQueryDto dto) {
         Page<Dataset> page = new Page<>(dto.pageNum(), dto.pageSize());
