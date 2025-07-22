@@ -25,6 +25,8 @@ public class DatasetFileService {
 
     private static final Logger logger = LoggerFactory.getLogger(DatasetFileService.class);
 
+    private static final String EMPTY_HASH = "0";
+
     private final FileService fileService;
 
     /**
@@ -85,7 +87,12 @@ public class DatasetFileService {
         List<DatasetFile> datasetFiles = files.stream().map(file -> {
             String filePath = fileService.uploadFileToDataset(file, baseDir);
             DatasetFile datasetFile = new DatasetFile(file, datasetId, filePath);
-            datasetFile.setHash(fileService.calculateFileHash(file));
+            try (var inputStream = file.getInputStream()) {
+                datasetFile.setHash(FileService.calculateFileHash(inputStream));
+            } catch (IOException e) {
+                logger.error("Failed to calculate sha256: {}", e.getMessage());
+                datasetFile.setHash(EMPTY_HASH);
+            }
             return datasetFile;
         }).collect(Collectors.toList());
         datasetFileRepository.saveBatch(datasetFiles, 1000);

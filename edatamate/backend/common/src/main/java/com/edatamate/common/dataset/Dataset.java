@@ -25,7 +25,7 @@ public class Dataset {
     private Long id;
 
     /**
-     * 数据集名称
+     * 数据集名称(todo 这里需要写一个自定义注解来验证名称的唯一性)
      */
     private String name;
 
