@@ -1,44 +1,93 @@
-.PHONY: build-mineru build-datax build-data-juicer build-unstructured install-datax install-ray install-unstructured \
-	install-data-juicer
+MAKEFLAGS += --no-print-directory
 
-build-mineru:
+INSTALLER ?= docker
+
+.PHONY: install-%
+install-%:
+ifeq ($(INSTALLER),docker)
+	@echo "Installing via Docker..."
+	$(MAKE) docker-$*
+else ifeq ($(INSTALLER),helm)
+	@echo "Installing via Helm..."
+	$(MAKE) helm-$*
+else ifeq ($(INSTALLER),k8s)
+	@echo "Installing via raw K8s manifests..."
+	$(MAKE) k8s-$*
+else
+	@echo "Unknown INSTALLER: $(INSTALLER)"
+endif
+
+.PHONY: build-%
+build-%:
+	$(MAKE) $*
+
+.PHONY: mineru
+mineru:
 	sh build/mineru/build.sh
 
-build-datax:
+.PHONY: datax
+datax:
 	sh build/datax/build.sh
 
-build-data-juicer:
+.PHONY: data-juicer
+data-juicer:
 	sh build/data-juicer/build.sh
 
-build-unstructured:
+.PHONY: unstructured
+unstructured:
 	sh build/unstructured/build.sh
 
-build-backend:
+.PHONY: backend
+backend:
 	sh build/backend/build.sh
 
-build-frontend:
+.PHONY: frontend
+frontend:
 	sh build/frontend/build.sh
 
-install-mineru:
+.PHONY: k8s-mineru
+k8s-mineru:
 	kubectl apply -f install/kubernetes/mineru/deploy.yaml
 
-install-datax:
+.PHONY: k8s-datax
+k8s-datax:
 	kubectl apply -f install/kubernetes/datax/deploy.yaml
 
-install-data-juicer:
+.PHONY: docker-datax
+docker-datax:
+	cd install/docker/data-platform && docker-compose up -d datax
+
+.PHONY: helm-data-juicer
+helm-data-juicer:
 	sh install/helm/data-juicer/install.sh
 
-install-ray:
+.PHONY: helm-ray
+helm-ray:
 	sh install/helm/ray/install.sh
 
-install-unstructured:
+.PHONY: k8s-unstructured
+k8s-unstructured:
 	kubectl apply -f install/kubernetes/unstructured/deploy.yaml
 
-install-mysql:
+.PHONY: k8s-mysql
+k8s-mysql:
 	kubectl apply -f install/kubernetes/mysql/deploy.yaml
 
-install-backend:
+.PHONY: k8s-backend
+k8s-backend:
 	kubectl apply -f install/kubernetes/backend/deploy.yaml
 
-install-frontend:
+.PHONY: k8s-frontend
+k8s-frontend:
 	kubectl apply -f install/kubernetes/frontend/deploy.yaml
+
+.PHONY: k8s-pgsql
+k8s-pgsql:
+	kubectl apply -f install/kubernetes/postgresql/deploy.yaml
+
+.PHONY: docker-edatamate
+docker-edatamate:
+	cd install/docker/data-platform && docker-compose up -d
+
+.PHONY: k8s-edatamate
+k8s-edatamate: k8s-pgsql k8s-backend k8s-frontend datax
