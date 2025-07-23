@@ -42,6 +42,7 @@ public class DatasetRepositoryImpl extends CrudRepository<DatasetMapper, Dataset
             wrapper.eq(Dataset::getCreatedBy, dto.createdBy());
         }
         // 可补充其他条件
+        page.setTotal(baseMapper.selectCount(wrapper));
         return baseMapper.selectPage(page, wrapper);
     }
 
