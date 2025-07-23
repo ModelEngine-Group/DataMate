@@ -88,6 +88,7 @@ public class DatasetDomainService {
                 // 1.下发任务到datax
                 datasetRepository.submitSyncJob(dataset);
                 // 2.执行扫盘逻辑
+                // todo 数据库同步不需要进行扫盘；扫盘后需要注意文件差异对比，如果差异对比由datax实现，那么需要删除数据库中当前数据集的文件元数据
                 String datasetPath = baseDatasetPath + "/" + dataset.getId();
                 List<DatasetFile> datasetFiles = LocalScannerUtils.scanDatasetFiles(datasetPath, dataset.getId());
                 // 3.保存文件元数据
