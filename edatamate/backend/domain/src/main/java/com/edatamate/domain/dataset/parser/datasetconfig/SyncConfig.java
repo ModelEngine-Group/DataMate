@@ -35,25 +35,24 @@ public class SyncConfig extends CommonConfig {
         }
         switch (fixedType) {
             case HOURLY:
-                // fixedTime: "mm"
-                cron = String.format("%s * * * *", fixedTime);
+                // fixedTime: "ss:mm"
+                String[] hourly = fixedTime.split(":");
+                if (hourly.length == 2) {
+                    cron = String.format("%s %s * * * *", hourly[0], hourly[1]);
+                }
                 break;
             case DAILY:
-                // fixedTime: "HH:mm"
+                // fixedTime: "ss:mm:HH"
                 String[] daily = fixedTime.split(":");
-                if (daily.length == 2) {
-                    cron = String.format("%s %s * * *", daily[1], daily[0]);
+                if (daily.length == 3) {
+                    cron = String.format("%s %s %s * * *", daily[0], daily[1], daily[2]);
                 }
                 break;
             case MONTHLY:
-                // fixedTime: "dd HH:mm"
-                String[] monthly = fixedTime.split(" ");
-                if (monthly.length != 2) {
-                    break;
-                }
-                String[] hm = monthly[1].split(":");
-                if (hm.length == 2) {
-                    cron = String.format("%s %s %s * *", hm[1], hm[0], monthly[0]);
+                // fixedTime: "ss:mm:HH:dd"
+                String[] monthly = fixedTime.split(":");
+                if (monthly.length == 4) {
+                    cron = String.format("%s %s %s %s * *", monthly[0], monthly[1], monthly[2], monthly[3]);
                 }
                 break;
             default:
