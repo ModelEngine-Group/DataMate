@@ -79,22 +79,4 @@ public class SimpleCronTask {
             scheduleNext();
         }, delayMillis, TimeUnit.MILLISECONDS);
     }
-
-    /* ------------------- 测试示例 ------------------- */
-    public static void main(String[] args) throws Exception {
-        ScheduledExecutorService pool = java.util.concurrent.Executors.newScheduledThreadPool(2);
-
-        // 任务逻辑：打印当前时间
-        Runnable job = () -> System.out.println("task executed at " + java.time.LocalTime.now());
-
-        // 每 10 秒执行一次，最多执行 5 次
-        SimpleCronTask task = new SimpleCronTask(job, "*/10 * * * * *", 5, pool);
-
-        task.start();        // 开始调度
-
-        // 主线程等待演示
-        Thread.sleep(30_000);
-        task.cancel();
-        pool.shutdown();
-    }
 }
