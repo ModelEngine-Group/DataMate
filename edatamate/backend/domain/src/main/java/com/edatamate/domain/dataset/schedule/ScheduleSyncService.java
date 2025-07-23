@@ -25,9 +25,6 @@ public class ScheduleSyncService {
      */
     public SimpleCronTask addScheduleCornTask(Runnable job, SyncConfig syncConfig) {
         SimpleCronTask task = new SimpleCronTask(job, syncConfig.getCron(), syncConfig.getMaxExecuteTimes(), pool);
-        if (syncConfig.isExecuteCurrent()) {
-            task.runOnceNow();
-        }
         task.start();
         return task;
     }

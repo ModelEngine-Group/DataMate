@@ -13,6 +13,8 @@ import com.edatamate.domain.dataset.parser.datasetconfig.SyncConfig;
 import com.edatamate.domain.dataset.repository.DatasetFileRepository;
 import com.edatamate.domain.dataset.repository.DatasetRepository;
 import com.edatamate.domain.dataset.schedule.ScheduleSyncService;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,37 +40,65 @@ public class DatasetDomainService {
     @Value("${dataset.file.base-dir:/dataset}")
     private String baseDatasetPath;
 
+    @PreDestroy
+    public void destroyTasks() {
+        for (SimpleCronTask task : taskMap.values()) {
+            task.cancel();
+        }
+        taskMap.clear();
+    }
+
+    @PostConstruct
+    public void initTasksFromDb() {
+        List<Dataset> datasets = datasetRepository.list();
+        for (Dataset dataset : datasets) {
+            if (SrcAndDesTypeEnum.getRemoteSource().contains(dataset.getSrcType())) {
+                SimpleCronTask simpleCronTask = createSyncTask(dataset);
+                taskMap.put(dataset.getId(), simpleCronTask);
+            }
+        }
+    }
+
     /**
      * 创建数据集
      */
     public Dataset createDataset(Dataset dataset) {
         dataset.setParentId(0L); // 默认父级ID为0
         dataset.setStatus(DatasetStatus.DRAFT);
-        String destPath = baseDatasetPath + "/" + dataset.getName();
-        if (SrcAndDesTypeEnum.LOCAL.getType().equals(dataset.getDesType())) { // 如果目标类型是本地导入, 需要在后台生成一个路径存放数据集
-            dataset.setDesConfig(new JSONObject().fluentPut("dest_path", destPath).toString());
-        }
         datasetRepository.save(dataset);
+        String datasetPath = baseDatasetPath + "/" + dataset.getId();
+        if (SrcAndDesTypeEnum.LOCAL.getType().equals(dataset.getDesType())) { // 如果目标类型是本地导入, 需要在后台生成一个路径存放数据集
+            dataset.setDesConfig(new JSONObject().fluentPut("dest_path", datasetPath).toString());
+        }
+        datasetRepository.updateById(dataset);
         if (SrcAndDesTypeEnum.getRemoteSource().contains(dataset.getSrcType())) {
-            // todo 下发同步任务
-            Runnable job = () -> {
-                try {
-                    // 1.下发任务到datax
-                    datasetRepository.submitSyncJob(dataset);
-                    // 2.执行扫盘逻辑
-                    List<DatasetFile> datasetFiles = LocalScannerUtils.scanDatasetFiles(destPath, dataset.getId());
-                    // 3.保存文件元数据
-                    datasetFileRepository.saveBatch(datasetFiles, 1000);
-                } catch (Exception e) {
-                    LOGGER.warn("Error executing sync job for dataset: {}", dataset.getId(), e);
-                }
-            };
+            SimpleCronTask simpleCronTask = createSyncTask(dataset);
             SyncConfig syncConfig = JSONObject.parseObject(dataset.getScheduleConfig(), SyncConfig.class);
-            syncConfig.toCronFromFixed();
-            SimpleCronTask simpleCronTask = scheduleSyncService.addScheduleCornTask(job, syncConfig);
+            if (syncConfig.isExecuteCurrent()) {
+                simpleCronTask.runOnceNow();
+            }
             taskMap.put(dataset.getId(), simpleCronTask);
         }
         return dataset;
+    }
+
+    private SimpleCronTask createSyncTask(Dataset dataset) {
+        Runnable job = () -> {
+            try {
+                // 1.下发任务到datax
+                datasetRepository.submitSyncJob(dataset);
+                // 2.执行扫盘逻辑
+                String datasetPath = baseDatasetPath + "/" + dataset.getId();
+                List<DatasetFile> datasetFiles = LocalScannerUtils.scanDatasetFiles(datasetPath, dataset.getId());
+                // 3.保存文件元数据
+                datasetFileRepository.saveBatch(datasetFiles, 1000);
+            } catch (Exception e) {
+                LOGGER.warn("Error executing sync job for dataset: {}", dataset.getId(), e);
+            }
+        };
+        SyncConfig syncConfig = JSONObject.parseObject(dataset.getScheduleConfig(), SyncConfig.class);
+        syncConfig.toCronFromFixed();
+        return scheduleSyncService.addScheduleCornTask(job, syncConfig);
     }
 
     /**
@@ -88,6 +118,7 @@ public class DatasetDomainService {
 
     /**
      * 删除数据集
+     *
      * @param datasetId 数据集ID
      */
     public void deleteDataset(Long datasetId) {
