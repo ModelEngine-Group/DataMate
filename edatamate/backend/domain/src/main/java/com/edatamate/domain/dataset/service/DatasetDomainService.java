@@ -53,7 +53,6 @@ public class DatasetDomainService {
             // todo 下发同步任务
             Runnable job = () -> {
                 try {
-                    // 添加具体的同步逻辑
                     // 1.下发任务到datax
                     datasetRepository.submitSyncJob(dataset);
                     // 2.执行扫盘逻辑
@@ -65,6 +64,7 @@ public class DatasetDomainService {
                 }
             };
             SyncConfig syncConfig = JSONObject.parseObject(dataset.getScheduleConfig(), SyncConfig.class);
+            syncConfig.toCronFromFixed();
             SimpleCronTask simpleCronTask = scheduleSyncService.addScheduleCornTask(job, syncConfig);
             taskMap.put(dataset.getId(), simpleCronTask);
         }
