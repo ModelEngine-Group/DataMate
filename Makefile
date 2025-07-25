@@ -91,6 +91,10 @@ data-juicer-helm-install:
 ray-helm-install:
 	sh install/helm/ray/install.sh
 
+.PHONY: es-helm-install
+es-helm-install:
+	sh install/helm/es/install.sh
+
 .PHONY: unstructured-k8s-install
 unstructured-k8s-install:
 	kubectl apply -f install/kubernetes/unstructured/deploy.yaml
