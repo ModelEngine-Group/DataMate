@@ -1,6 +1,0 @@
-{
-    "name": "naswriter",
-    "class": "com.modelengine.edatamate.plugin.writer.naswriter.NasWriter",
-    "description": "write to local",
-    "developer": "modelengine"
-}

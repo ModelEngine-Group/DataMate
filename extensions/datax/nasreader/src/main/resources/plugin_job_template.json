@@ -1,8 +1,0 @@
-{
-  "name": "nasreader",
-  "parameter": {
-    "ip": "127.0.0.1",
-    "path": "/test",
-    "prefix": ""
-  }
-}

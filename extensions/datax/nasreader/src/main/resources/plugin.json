@@ -1,6 +1,0 @@
-{
-  "name": "nasreader",
-  "class": "com.modelengine.edatamate.plugin.reader.nasreader.NasReader",
-  "description": "read from nas file system",
-  "developer": "modelengine"
-}
