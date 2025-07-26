@@ -1,7 +1,7 @@
 #!/bin/bash
 
 helm repo add elastic https://helm.elastic.co
-helm repo update
+helm repo update elastic
 
 helm install elastic-operator elastic/eck-operator -n elastic-system --create-namespace
 helm install es-kb elastic/eck-stack \

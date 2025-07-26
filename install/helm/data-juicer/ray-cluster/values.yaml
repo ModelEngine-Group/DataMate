@@ -6,8 +6,8 @@
 # in this Helm chart.
 
 image:
-  repository: docker.io/datajuicer/data-juicer
-  tag: v1.4.0
+  repository: data-juicer
+  tag: latest
   pullPolicy: IfNotPresent
 
 nameOverride: "kuberay"
@@ -57,7 +57,8 @@ head:
   # in the headGroupSpec. See https://github.com/ray-project/kuberay/pull/1128 for more details.
   serviceAccountName: ""
   restartPolicy: ""
-  rayStartParams: {}
+  rayStartParams:
+    object-store-memory: '78643200'
   # containerEnv specifies environment variables for the Ray container,
   # Follows standard K8s container env schema.
   containerEnv: []
@@ -79,9 +80,9 @@ head:
   # for further guidance.
   resources:
     limits:
-      cpu: "1"
+      cpu: "4"
       # To avoid out-of-memory issues, never allocate less than 2G memory for the Ray head.
-      memory: "2G"
+      memory: "8G"
     requests:
       cpu: "1"
       memory: "2G"
@@ -162,8 +163,8 @@ worker:
   # for further guidance.
   resources:
     limits:
-      cpu: "1"
-      memory: "1G"
+      cpu: "4"
+      memory: "8G"
     requests:
       cpu: "1"
       memory: "1G"
