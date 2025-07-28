@@ -61,9 +61,11 @@ head:
     object-store-memory: '78643200'
   # containerEnv specifies environment variables for the Ray container,
   # Follows standard K8s container env schema.
-  containerEnv: []
-  # - name: EXAMPLE_ENV
-  #   value: "1"
+  containerEnv:
+    - name: RAY_DEDUP_LOGS
+      value: "0"
+    - name: RAY_TQDM_PATCH_PRINT
+      value: "0"
   envFrom: []
     # - secretRef:
     #     name: my-env-secret
@@ -99,9 +101,15 @@ head:
   volumes:
     - name: log-volume
       emptyDir: {}
+    - name: dataset
+      hostPath:
+        path: /tmp/data-platform
   volumeMounts:
     - mountPath: /tmp/ray
       name: log-volume
+    - name: dataset
+      mountPath: /dataset
+      subPath: dataset
   # sidecarContainers specifies additional containers to attach to the Ray pod.
   # Follows standard K8s container spec.
   sidecarContainers: []
@@ -144,9 +152,11 @@ worker:
   rayStartParams: {}
   # containerEnv specifies environment variables for the Ray container,
   # Follows standard K8s container env schema.
-  containerEnv: []
-  # - name: EXAMPLE_ENV
-  #   value: "1"
+  containerEnv:
+    - name: RAY_DEDUP_LOGS
+      value: "0"
+    - name: RAY_TQDM_PATCH_PRINT
+      value: "0"
   envFrom: []
     # - secretRef:
     #     name: my-env-secret
@@ -181,9 +191,15 @@ worker:
   volumes:
     - name: log-volume
       emptyDir: {}
+    - name: dataset
+      hostPath:
+        path: /tmp/data-platform
   volumeMounts:
     - mountPath: /tmp/ray
       name: log-volume
+    - name: dataset
+      mountPath: /dataset
+      subPath: dataset
   # sidecarContainers specifies additional containers to attach to the Ray pod.
   # Follows standard K8s container spec.
   sidecarContainers: []
