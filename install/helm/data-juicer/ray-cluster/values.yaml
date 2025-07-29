@@ -104,6 +104,7 @@ head:
     - name: dataset
       hostPath:
         path: /tmp/data-platform
+        type: DirectoryOrCreate
   volumeMounts:
     - mountPath: /tmp/ray
       name: log-volume
@@ -112,7 +113,27 @@ head:
       subPath: dataset
   # sidecarContainers specifies additional containers to attach to the Ray pod.
   # Follows standard K8s container spec.
-  sidecarContainers: []
+  sidecarContainers:
+    - name: data-juicer
+      image: data-juicer
+      imagePullPolicy: IfNotPresent
+      command:
+        - tail
+        - -f
+        - /dev/null
+      env:
+        - name: RAY_DEDUP_LOGS
+          value: "0"
+        - name: RAY_TQDM_PATCH_PRINT
+          value: "0"
+      ports:
+        - containerPort: 8000
+      volumeMounts:
+        - mountPath: /tmp/ray
+          name: log-volume
+        - name: dataset
+          mountPath: /dataset
+          subPath: dataset
   # See docs/guidance/pod-command.md for more details about how to specify
   # container command for head Pod.
   command: []
@@ -194,6 +215,7 @@ worker:
     - name: dataset
       hostPath:
         path: /tmp/data-platform
+        type: DirectoryOrCreate
   volumeMounts:
     - mountPath: /tmp/ray
       name: log-volume
