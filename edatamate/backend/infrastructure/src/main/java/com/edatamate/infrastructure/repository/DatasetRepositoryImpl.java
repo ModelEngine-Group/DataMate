@@ -14,6 +14,11 @@ import com.edatamate.common.dataset.dto.DatasetPageQueryDto;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.springframework.util.StringUtils;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static com.edatamate.common.dataset.SrcAndDesTypeEnum.DATABASE;
+
 /**
  * 数据集repository实现
  *
@@ -50,7 +55,30 @@ public class DatasetRepositoryImpl extends CrudRepository<DatasetMapper, Dataset
     public void submitSyncJob(Dataset dataset) {
         String srcType = dataset.getSrcType();
         if (SrcAndDesTypeEnum.getRemoteSource().contains(srcType)) {
-            dataXHandler.createJob(dataset.getSrcConfig(), dataset.getDesConfig(), srcType, dataset.getDesType());
+            if (org.apache.commons.lang3.StringUtils.equals(srcType, DATABASE.getName())) {
+                srcType = extractDatabaseType(dataset.getSrcConfig());
+            }
+            String desType = dataset.getDesType();
+            if (org.apache.commons.lang3.StringUtils.equals(dataset.getDesType(), DATABASE.getName())) {
+                desType = extractDatabaseType(dataset.getDesConfig());
+            }
+            dataXHandler.createJob(dataset.getSrcConfig(), dataset.getDesConfig(), srcType, desType);
         }
+    }
+
+    private static String extractDatabaseType(String config) {
+        if (config == null || config.isEmpty()) {
+            return null;
+        }
+
+        // 正则表达式：匹配 jdbc:xxx:// 格式
+        Pattern pattern = Pattern.compile(".*jdbc:([^:]+):.*");
+        Matcher matcher = pattern.matcher(config);
+
+        if (matcher.matches()) {
+            return matcher.group(1);
+        }
+
+        return null;
     }
 }

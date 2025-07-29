@@ -49,5 +49,9 @@
             <artifactId>cron-utils</artifactId>
             <version>${cronutils.version}</version>
         </dependency>
+        <dependency>
+            <groupId>io.fabric8</groupId>
+            <artifactId>kubernetes-client</artifactId>
+        </dependency>
     </dependencies>
 </project>

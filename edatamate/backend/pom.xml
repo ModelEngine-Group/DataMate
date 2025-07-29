@@ -27,6 +27,7 @@
         <fastjson2.version>2.0.23</fastjson2.version>
         <openfeign.version>4.3.0</openfeign.version>
         <junit5.version>5.13.3</junit5.version>
+        <kubernetes.version>6.8.1</kubernetes.version>
     </properties>
 
     <parent>
@@ -53,6 +54,11 @@
                 <groupId>org.springframework.cloud</groupId>
                 <artifactId>spring-cloud-starter-loadbalancer</artifactId>
                 <version>${openfeign.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.fabric8</groupId>
+                <artifactId>kubernetes-client</artifactId>
+                <version>${kubernetes.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
