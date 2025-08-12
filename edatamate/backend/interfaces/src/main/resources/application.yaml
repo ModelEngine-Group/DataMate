@@ -2,9 +2,9 @@ spring:
   application:
     name: interfaces
   datasource:
-    url: jdbc:postgresql://edatamate.dallas98.top/edatamate
+    url: jdbc:postgresql://jasonwang.site:30003/edatamate
     username: edatamate
-    password: edatamate@123
+    password: 1234@iewauH
     driver-class-name: org.postgresql.Driver
   ai:
     dashscope:
