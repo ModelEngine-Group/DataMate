@@ -27,7 +27,7 @@ kubectl apply -f ../editions/enterprise/k8s/
 
 ## 📁 项目结构
 
-详见 [代码架构设计](docs/architecture/代码架构设计.md)
+详见 [代码架构设计](docs/Architecture-Design.md)
 
 ## 🤝 贡献指南
 
