@@ -362,7 +362,6 @@ API规范管理
 ### 代码生成流程
 位置：`scripts/build/generate-api.ps1`
 
-```
 API代码生成工作流
 1. 读取OpenAPI YAML规范文件
 2. 使用openapi-generator-maven-plugin生成:
