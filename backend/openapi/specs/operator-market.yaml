@@ -1,0 +1,296 @@
+openapi: 3.0.3
+info:
+  title: Operator Market Service API
+  description: |
+    算子市场服务API，提供算子的发布、管理和订阅功能。
+    
+    主要功能：
+    - 算子发布和管理
+    - 算子版本控制
+    - 算子评分和评论
+    - 算子分类和标签
+    - 算子下载和安装
+  version: 1.0.0
+  contact:
+    name: Data Engine Platform Team
+    email: dev@dataengine.com
+
+servers:
+  - url: http://localhost:8096/api/v1/operator-market
+    description: Development server
+
+tags:
+  - name: Operator
+    description: 算子管理
+  - name: Category
+    description: 算子分类管理
+  - name: Download
+    description: 算子下载管理
+
+paths:
+  /operators:
+    get:
+      tags: [Operator]
+      summary: 获取算子列表
+      description: 分页查询算子列表，支持按分类、标签等条件筛选
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+          description: 页码，从0开始
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+          description: 每页大小
+        - name: category
+          in: query
+          schema:
+            type: string
+          description: 按分类筛选
+        - name: keyword
+          in: query
+          schema:
+            type: string
+          description: 关键词搜索
+      responses:
+        '200':
+          description: 成功返回算子列表
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedOperatorResponse'
+        '400':
+          description: 请求参数错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      tags: [Operator]
+      summary: 发布新算子
+      description: 创建并发布一个新的算子
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOperatorRequest'
+      responses:
+        '201':
+          description: 算子创建成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperatorResponse'
+        '400':
+          description: 请求参数错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /operators/{id}:
+    get:
+      tags: [Operator]
+      summary: 获取算子详情
+      description: 根据ID获取算子的详细信息
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 算子ID
+      responses:
+        '200':
+          description: 成功返回算子详情
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperatorResponse'
+        '404':
+          description: 算子不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags: [Operator]
+      summary: 更新算子信息
+      description: 根据ID更新算子信息
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 算子ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateOperatorRequest'
+      responses:
+        '200':
+          description: 算子更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperatorResponse'
+        '404':
+          description: 算子不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /categories:
+    get:
+      tags: [Category]
+      summary: 获取算子分类列表
+      description: 获取所有可用的算子分类
+      responses:
+        '200':
+          description: 成功返回分类列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CategoryResponse'
+
+components:
+  schemas:
+    OperatorResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          description: 算子ID
+        name:
+          type: string
+          description: 算子名称
+        description:
+          type: string
+          description: 算子描述
+        version:
+          type: string
+          description: 算子版本
+        category:
+          type: string
+          description: 算子分类
+        author:
+          type: string
+          description: 作者
+        rating:
+          type: number
+          format: double
+          description: 评分
+        downloadCount:
+          type: integer
+          description: 下载次数
+        createdAt:
+          type: string
+          format: date-time
+          description: 创建时间
+        updatedAt:
+          type: string
+          format: date-time
+          description: 更新时间
+
+    CreateOperatorRequest:
+      type: object
+      required:
+        - name
+        - description
+        - version
+        - category
+      properties:
+        name:
+          type: string
+          description: 算子名称
+        description:
+          type: string
+          description: 算子描述
+        version:
+          type: string
+          description: 算子版本
+        category:
+          type: string
+          description: 算子分类
+        documentation:
+          type: string
+          description: 文档内容
+
+    UpdateOperatorRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: 算子名称
+        description:
+          type: string
+          description: 算子描述
+        version:
+          type: string
+          description: 算子版本
+        category:
+          type: string
+          description: 算子分类
+        documentation:
+          type: string
+          description: 文档内容
+
+    PagedOperatorResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/OperatorResponse'
+        totalElements:
+          type: integer
+          description: 总记录数
+        totalPages:
+          type: integer
+          description: 总页数
+        number:
+          type: integer
+          description: 当前页码
+        size:
+          type: integer
+          description: 每页大小
+
+    CategoryResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          description: 分类ID
+        name:
+          type: string
+          description: 分类名称
+        description:
+          type: string
+          description: 分类描述
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: 错误代码
+        message:
+          type: string
+          description: 错误信息
+        timestamp:
+          type: string
+          format: date-time
+          description: 错误时间

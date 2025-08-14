@@ -1,0 +1,708 @@
+openapi: 3.0.3
+info:
+  title: Data Management Service API
+  description: |
+    数据管理服务API，提供数据集的创建、管理和文件操作功能。
+    
+    主要功能：
+    - 数据集的创建和管理
+    - 多种数据集类型支持（图像、文本、音频、视频、多模态等）
+    - 数据集文件管理
+    - 数据集标签和元数据管理
+    - 数据集统计信息
+  version: 1.0.0
+  contact:
+    name: Data Engine Platform Team
+    email: dev@dataengine.com
+
+servers:
+  - url: http://localhost:8092/api/v1/data-management
+    description: Development server
+
+tags:
+  - name: Dataset
+    description: 数据集管理
+  - name: DatasetFile
+    description: 数据集文件管理
+  - name: DatasetType
+    description: 数据集类型管理
+  - name: Tag
+    description: 标签管理
+
+paths:
+  /datasets:
+    get:
+      tags: [Dataset]
+      summary: 获取数据集列表
+      description: 分页查询数据集列表，支持按类型、标签等条件筛选
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+          description: 页码，从0开始
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+          description: 每页大小
+        - name: type
+          in: query
+          schema:
+            type: string
+          description: 数据集类型过滤
+        - name: tags
+          in: query
+          schema:
+            type: string
+          description: 标签过滤，多个标签用逗号分隔
+        - name: keyword
+          in: query
+          schema:
+            type: string
+          description: 关键词搜索（名称、描述）
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [ACTIVE, INACTIVE, PROCESSING]
+          description: 数据集状态过滤
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedDatasetResponse'
+        '400':
+          description: 请求参数错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      tags: [Dataset]
+      summary: 创建数据集
+      description: 创建新的数据集
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDatasetRequest'
+      responses:
+        '201':
+          description: 创建成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatasetResponse'
+        '400':
+          description: 请求参数错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /datasets/{datasetId}:
+    get:
+      tags: [Dataset]
+      summary: 获取数据集详情
+      description: 根据ID获取数据集详细信息
+      parameters:
+        - name: datasetId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 数据集ID
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatasetResponse'
+        '404':
+          description: 数据集不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags: [Dataset]
+      summary: 更新数据集
+      description: 更新数据集信息
+      parameters:
+        - name: datasetId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 数据集ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDatasetRequest'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatasetResponse'
+        '404':
+          description: 数据集不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags: [Dataset]
+      summary: 删除数据集
+      description: 删除指定的数据集
+      parameters:
+        - name: datasetId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 数据集ID
+      responses:
+        '204':
+          description: 删除成功
+        '404':
+          description: 数据集不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /datasets/{datasetId}/files:
+    get:
+      tags: [DatasetFile]
+      summary: 获取数据集文件列表
+      description: 分页获取数据集中的文件列表
+      parameters:
+        - name: datasetId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 数据集ID
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+          description: 页码，从0开始
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+          description: 每页大小
+        - name: fileType
+          in: query
+          schema:
+            type: string
+          description: 文件类型过滤
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [UPLOADED, PROCESSING, COMPLETED, ERROR]
+          description: 文件状态过滤
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedDatasetFileResponse'
+
+    post:
+      tags: [DatasetFile]
+      summary: 上传文件到数据集
+      description: 向指定数据集上传文件
+      parameters:
+        - name: datasetId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 数据集ID
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: 要上传的文件
+                description:
+                  type: string
+                  description: 文件描述
+      responses:
+        '201':
+          description: 上传成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatasetFileResponse'
+
+  /datasets/{datasetId}/files/{fileId}:
+    get:
+      tags: [DatasetFile]
+      summary: 获取文件详情
+      description: 获取数据集中指定文件的详细信息
+      parameters:
+        - name: datasetId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 数据集ID
+        - name: fileId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 文件ID
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatasetFileResponse'
+
+    delete:
+      tags: [DatasetFile]
+      summary: 删除文件
+      description: 从数据集中删除指定文件
+      parameters:
+        - name: datasetId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 数据集ID
+        - name: fileId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 文件ID
+      responses:
+        '204':
+          description: 删除成功
+
+  /datasets/{datasetId}/files/{fileId}/download:
+    get:
+      tags: [DatasetFile]
+      summary: 下载文件
+      description: 下载数据集中的指定文件
+      parameters:
+        - name: datasetId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 数据集ID
+        - name: fileId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 文件ID
+      responses:
+        '200':
+          description: 文件内容
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+
+  /dataset-types:
+    get:
+      tags: [DatasetType]
+      summary: 获取数据集类型列表
+      description: 获取所有支持的数据集类型
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DatasetTypeResponse'
+
+  /tags:
+    get:
+      tags: [Tag]
+      summary: 获取标签列表
+      description: 获取所有可用的标签
+      parameters:
+        - name: keyword
+          in: query
+          schema:
+            type: string
+          description: 标签名称关键词搜索
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TagResponse'
+
+    post:
+      tags: [Tag]
+      summary: 创建标签
+      description: 创建新的标签
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTagRequest'
+      responses:
+        '201':
+          description: 创建成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TagResponse'
+
+  /datasets/{datasetId}/statistics:
+    get:
+      tags: [Dataset]
+      summary: 获取数据集统计信息
+      description: 获取数据集的统计信息（文件数量、大小、完成度等）
+      parameters:
+        - name: datasetId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 数据集ID
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatasetStatisticsResponse'
+
+components:
+  schemas:
+    PagedDatasetResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/DatasetResponse'
+        page:
+          type: integer
+          description: 当前页码
+        size:
+          type: integer
+          description: 每页大小
+        totalElements:
+          type: integer
+          description: 总元素数
+        totalPages:
+          type: integer
+          description: 总页数
+        first:
+          type: boolean
+          description: 是否为第一页
+        last:
+          type: boolean
+          description: 是否为最后一页
+
+    DatasetResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          description: 数据集ID
+        name:
+          type: string
+          description: 数据集名称
+        description:
+          type: string
+          description: 数据集描述
+        type:
+          $ref: '#/components/schemas/DatasetTypeResponse'
+        status:
+          type: string
+          enum: [ACTIVE, INACTIVE, PROCESSING]
+          description: 数据集状态
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/TagResponse'
+          description: 标签列表
+        dataSource:
+          type: string
+          description: 数据源
+        targetLocation:
+          type: string
+          description: 目标位置
+        fileCount:
+          type: integer
+          description: 文件数量
+        totalSize:
+          type: integer
+          format: int64
+          description: 总大小（字节）
+        completionRate:
+          type: number
+          format: float
+          description: 完成率（0-100）
+        createdAt:
+          type: string
+          format: date-time
+          description: 创建时间
+        updatedAt:
+          type: string
+          format: date-time
+          description: 更新时间
+        createdBy:
+          type: string
+          description: 创建者
+
+    CreateDatasetRequest:
+      type: object
+      required:
+        - name
+        - type
+      properties:
+        name:
+          type: string
+          description: 数据集名称
+          minLength: 1
+          maxLength: 100
+        description:
+          type: string
+          description: 数据集描述
+          maxLength: 500
+        type:
+          type: string
+          description: 数据集类型
+        tags:
+          type: array
+          items:
+            type: string
+          description: 标签列表
+        dataSource:
+          type: string
+          description: 数据源
+        targetLocation:
+          type: string
+          description: 目标位置
+
+    UpdateDatasetRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: 数据集名称
+          maxLength: 100
+        description:
+          type: string
+          description: 数据集描述
+          maxLength: 500
+        tags:
+          type: array
+          items:
+            type: string
+          description: 标签列表
+        status:
+          type: string
+          enum: [ACTIVE, INACTIVE]
+          description: 数据集状态
+
+    DatasetTypeResponse:
+      type: object
+      properties:
+        code:
+          type: string
+          description: 类型编码
+        name:
+          type: string
+          description: 类型名称
+        description:
+          type: string
+          description: 类型描述
+        supportedFormats:
+          type: array
+          items:
+            type: string
+          description: 支持的文件格式
+        icon:
+          type: string
+          description: 图标
+
+    PagedDatasetFileResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/DatasetFileResponse'
+        page:
+          type: integer
+          description: 当前页码
+        size:
+          type: integer
+          description: 每页大小
+        totalElements:
+          type: integer
+          description: 总元素数
+        totalPages:
+          type: integer
+          description: 总页数
+        first:
+          type: boolean
+          description: 是否为第一页
+        last:
+          type: boolean
+          description: 是否为最后一页
+
+    DatasetFileResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          description: 文件ID
+        fileName:
+          type: string
+          description: 文件名
+        originalName:
+          type: string
+          description: 原始文件名
+        fileType:
+          type: string
+          description: 文件类型
+        size:
+          type: integer
+          format: int64
+          description: 文件大小（字节）
+        status:
+          type: string
+          enum: [UPLOADED, PROCESSING, COMPLETED, ERROR]
+          description: 文件状态
+        description:
+          type: string
+          description: 文件描述
+        filePath:
+          type: string
+          description: 文件路径
+        uploadedAt:
+          type: string
+          format: date-time
+          description: 上传时间
+        uploadedBy:
+          type: string
+          description: 上传者
+
+    TagResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          description: 标签ID
+        name:
+          type: string
+          description: 标签名称
+        color:
+          type: string
+          description: 标签颜色
+        description:
+          type: string
+          description: 标签描述
+        usageCount:
+          type: integer
+          description: 使用次数
+
+    CreateTagRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: 标签名称
+          minLength: 1
+          maxLength: 50
+        color:
+          type: string
+          description: 标签颜色
+          pattern: '^#[0-9A-Fa-f]{6}$'
+        description:
+          type: string
+          description: 标签描述
+          maxLength: 200
+
+    DatasetStatisticsResponse:
+      type: object
+      properties:
+        totalFiles:
+          type: integer
+          description: 总文件数
+        completedFiles:
+          type: integer
+          description: 已完成文件数
+        totalSize:
+          type: integer
+          format: int64
+          description: 总大小（字节）
+        completionRate:
+          type: number
+          format: float
+          description: 完成率（0-100）
+        fileTypeDistribution:
+          type: object
+          additionalProperties:
+            type: integer
+          description: 文件类型分布
+        statusDistribution:
+          type: object
+          additionalProperties:
+            type: integer
+          description: 状态分布
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: 错误代码
+        message:
+          type: string
+          description: 错误消息
+        timestamp:
+          type: string
+          format: date-time
+          description: 错误时间
+        path:
+          type: string
+          description: 请求路径

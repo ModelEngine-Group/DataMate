@@ -1,0 +1,621 @@
+openapi: 3.0.3
+info:
+  title: Data Synthesis Service API
+  description: 数据合成服务API - 指令、COT蒸馏、多模态合成
+  version: 1.0.0
+  contact:
+    name: Data Engine Platform Team
+    email: dev@dataengine.com
+
+servers:
+  - url: http://localhost:8085
+    description: Development server
+
+tags:
+  - name: synthesis-templates
+    description: 合成模板管理
+  - name: synthesis-jobs
+    description: 合成任务管理
+  - name: instruction-tuning
+    description: 指令调优
+  - name: cot-distillation
+    description: COT蒸馏
+
+paths:
+  /api/v1/synthesis/templates:
+    get:
+      tags:
+        - synthesis-templates
+      summary: 获取合成模板列表
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: type
+          in: query
+          schema:
+            $ref: '#/components/schemas/SynthesisType'
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SynthesisTemplatePageResponse'
+
+    post:
+      tags:
+        - synthesis-templates
+      summary: 创建合成模板
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSynthesisTemplateRequest'
+      responses:
+        '201':
+          description: 创建成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SynthesisTemplateResponse'
+
+  /api/v1/synthesis/templates/{templateId}:
+    get:
+      tags:
+        - synthesis-templates
+      summary: 获取合成模板详情
+      parameters:
+        - name: templateId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SynthesisTemplateDetailResponse'
+
+    put:
+      tags:
+        - synthesis-templates
+      summary: 更新合成模板
+      parameters:
+        - name: templateId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSynthesisTemplateRequest'
+      responses:
+        '200':
+          description: 更新成功
+
+  /api/v1/synthesis/jobs:
+    get:
+      tags:
+        - synthesis-jobs
+      summary: 获取合成任务列表
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/JobStatus'
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SynthesisJobPageResponse'
+
+    post:
+      tags:
+        - synthesis-jobs
+      summary: 创建合成任务
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSynthesisJobRequest'
+      responses:
+        '201':
+          description: 任务创建成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SynthesisJobResponse'
+
+  /api/v1/synthesis/jobs/{jobId}:
+    get:
+      tags:
+        - synthesis-jobs
+      summary: 获取合成任务详情
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SynthesisJobDetailResponse'
+
+  /api/v1/synthesis/jobs/{jobId}/execute:
+    post:
+      tags:
+        - synthesis-jobs
+      summary: 执行合成任务
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 任务开始执行
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobExecutionResponse'
+
+  /api/v1/synthesis/instruction-tuning:
+    post:
+      tags:
+        - instruction-tuning
+      summary: 指令调优数据合成
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstructionTuningRequest'
+      responses:
+        '200':
+          description: 合成成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InstructionTuningResponse'
+
+  /api/v1/synthesis/cot-distillation:
+    post:
+      tags:
+        - cot-distillation
+      summary: COT蒸馏数据合成
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/COTDistillationRequest'
+      responses:
+        '200':
+          description: 蒸馏成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/COTDistillationResponse'
+
+components:
+  schemas:
+    SynthesisTemplateResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        type:
+          $ref: '#/components/schemas/SynthesisType'
+        category:
+          type: string
+        modelConfig:
+          $ref: '#/components/schemas/ModelConfig'
+        enabled:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    SynthesisTemplateDetailResponse:
+      allOf:
+        - $ref: '#/components/schemas/SynthesisTemplateResponse'
+        - type: object
+          properties:
+            promptTemplate:
+              type: string
+            parameters:
+              type: object
+            examples:
+              type: array
+              items:
+                $ref: '#/components/schemas/SynthesisExample'
+
+    SynthesisTemplatePageResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/SynthesisTemplateResponse'
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+        size:
+          type: integer
+        number:
+          type: integer
+
+    CreateSynthesisTemplateRequest:
+      type: object
+      required:
+        - name
+        - type
+        - promptTemplate
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        type:
+          $ref: '#/components/schemas/SynthesisType'
+        category:
+          type: string
+        promptTemplate:
+          type: string
+        modelConfig:
+          $ref: '#/components/schemas/ModelConfig'
+        parameters:
+          type: object
+
+    UpdateSynthesisTemplateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        promptTemplate:
+          type: string
+        enabled:
+          type: boolean
+        parameters:
+          type: object
+
+    SynthesisJobResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        templateId:
+          type: string
+        status:
+          $ref: '#/components/schemas/JobStatus'
+        progress:
+          type: number
+          format: double
+        targetCount:
+          type: integer
+        generatedCount:
+          type: integer
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    SynthesisJobDetailResponse:
+      allOf:
+        - $ref: '#/components/schemas/SynthesisJobResponse'
+        - type: object
+          properties:
+            template:
+              $ref: '#/components/schemas/SynthesisTemplateResponse'
+            statistics:
+              $ref: '#/components/schemas/SynthesisStatistics'
+            samples:
+              type: array
+              items:
+                $ref: '#/components/schemas/GeneratedSample'
+
+    SynthesisJobPageResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/SynthesisJobResponse'
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+        size:
+          type: integer
+        number:
+          type: integer
+
+    CreateSynthesisJobRequest:
+      type: object
+      required:
+        - name
+        - templateId
+        - targetCount
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        templateId:
+          type: string
+        targetCount:
+          type: integer
+        parameters:
+          type: object
+        seedData:
+          type: array
+          items:
+            type: object
+
+    JobExecutionResponse:
+      type: object
+      properties:
+        executionId:
+          type: string
+        status:
+          type: string
+        message:
+          type: string
+
+    InstructionTuningRequest:
+      type: object
+      required:
+        - baseInstructions
+        - targetDomain
+        - count
+      properties:
+        baseInstructions:
+          type: array
+          items:
+            type: string
+        targetDomain:
+          type: string
+        count:
+          type: integer
+        modelConfig:
+          $ref: '#/components/schemas/ModelConfig'
+        parameters:
+          type: object
+
+    InstructionTuningResponse:
+      type: object
+      properties:
+        jobId:
+          type: string
+        generatedInstructions:
+          type: array
+          items:
+            $ref: '#/components/schemas/GeneratedInstruction'
+        statistics:
+          $ref: '#/components/schemas/GenerationStatistics'
+
+    COTDistillationRequest:
+      type: object
+      required:
+        - sourceModel
+        - targetFormat
+        - examples
+      properties:
+        sourceModel:
+          type: string
+        targetFormat:
+          type: string
+          enum: [QA, INSTRUCTION, REASONING]
+        examples:
+          type: array
+          items:
+            $ref: '#/components/schemas/COTExample'
+        parameters:
+          type: object
+
+    COTDistillationResponse:
+      type: object
+      properties:
+        jobId:
+          type: string
+        distilledData:
+          type: array
+          items:
+            $ref: '#/components/schemas/DistilledCOTData'
+        statistics:
+          $ref: '#/components/schemas/DistillationStatistics'
+
+    SynthesisType:
+      type: string
+      enum:
+        - INSTRUCTION_TUNING
+        - COT_DISTILLATION
+        - DIALOGUE_GENERATION
+        - TEXT_AUGMENTATION
+        - MULTIMODAL_SYNTHESIS
+        - CUSTOM
+
+    JobStatus:
+      type: string
+      enum:
+        - PENDING
+        - RUNNING
+        - COMPLETED
+        - FAILED
+        - CANCELLED
+
+    ModelConfig:
+      type: object
+      properties:
+        modelName:
+          type: string
+        temperature:
+          type: number
+          format: double
+        maxTokens:
+          type: integer
+        topP:
+          type: number
+          format: double
+        frequencyPenalty:
+          type: number
+          format: double
+
+    SynthesisExample:
+      type: object
+      properties:
+        input:
+          type: string
+        output:
+          type: string
+        explanation:
+          type: string
+
+    SynthesisStatistics:
+      type: object
+      properties:
+        totalGenerated:
+          type: integer
+        successfulGenerated:
+          type: integer
+        failedGenerated:
+          type: integer
+        averageLength:
+          type: number
+          format: double
+        uniqueCount:
+          type: integer
+
+    GeneratedSample:
+      type: object
+      properties:
+        id:
+          type: string
+        content:
+          type: string
+        score:
+          type: number
+          format: double
+        metadata:
+          type: object
+        createdAt:
+          type: string
+          format: date-time
+
+    GeneratedInstruction:
+      type: object
+      properties:
+        instruction:
+          type: string
+        input:
+          type: string
+        output:
+          type: string
+        quality:
+          type: number
+          format: double
+
+    GenerationStatistics:
+      type: object
+      properties:
+        totalGenerated:
+          type: integer
+        averageQuality:
+          type: number
+          format: double
+        diversityScore:
+          type: number
+          format: double
+
+    COTExample:
+      type: object
+      properties:
+        question:
+          type: string
+        reasoning:
+          type: string
+        answer:
+          type: string
+
+    DistilledCOTData:
+      type: object
+      properties:
+        question:
+          type: string
+        reasoning:
+          type: string
+        answer:
+          type: string
+        confidence:
+          type: number
+          format: double
+
+    DistillationStatistics:
+      type: object
+      properties:
+        totalProcessed:
+          type: integer
+        successfulDistilled:
+          type: integer
+        averageConfidence:
+          type: number
+          format: double
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - BearerAuth: []

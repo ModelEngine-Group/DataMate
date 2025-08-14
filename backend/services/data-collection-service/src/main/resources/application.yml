@@ -1,0 +1,91 @@
+# 数据归集服务配置
+server:
+  port: 8085
+
+spring:
+  application:
+    name: data-collection-service
+  
+  # 数据库配置
+  datasource:
+    url: jdbc:mysql://localhost:3306/data_engine_platform?useUnicode=true&characterEncoding=utf-8&useSSL=false
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:password}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    
+  # JPA配置
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: true
+    
+  # 任务调度配置
+  task:
+    execution:
+      pool:
+        core-size: 10
+        max-size: 20
+        queue-capacity: 100
+        keep-alive: 60s
+    scheduling:
+      pool:
+        size: 5
+
+# 数据归集服务配置
+data-collection:
+  # DataX配置
+  datax:
+    home-path: ${DATAX_HOME:/opt/datax}
+    python-path: ${PYTHON_PATH:/usr/bin/python}
+    job-config-path: ${DATAX_JOB_PATH:/tmp/datax/jobs}
+    log-path: ${DATAX_LOG_PATH:/tmp/datax/logs}
+    max-memory: 2048
+    channel-count: 5
+    
+  # 执行配置
+  execution:
+    max-concurrent-tasks: 10
+    task-timeout-minutes: 120
+    retry-count: 3
+    retry-interval-seconds: 30
+    
+  # 监控配置
+  monitoring:
+    status-check-interval-seconds: 30
+    log-retention-days: 30
+    enable-metrics: true
+
+# 日志配置
+logging:
+  level:
+    com.dataengine.collection: DEBUG
+    org.springframework.data.jpa: DEBUG
+    org.hibernate.SQL: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/data-collection-service.log
+    max-size: 100MB
+    max-history: 30
+
+# 管理端点配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when_authorized
+
+# OpenAPI文档配置
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html

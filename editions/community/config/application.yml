@@ -1,0 +1,43 @@
+spring:
+  profiles:
+    active: community
+  
+  datasource:
+    url: jdbc:mysql://mysql:3306/dataengine?useSSL=false&serverTimezone=UTC
+    username: root
+    password: root123
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  
+  redis:
+    host: redis
+    port: 6379
+    password: ""
+    database: 0
+  
+  elasticsearch:
+    uris: http://elasticsearch:9200
+    username: ""
+    password: ""
+
+# 对象存储配置
+storage:
+  provider: minio
+  minio:
+    endpoint: http://minio:9000
+    access-key: admin
+    secret-key: admin123
+    bucket: dataengine
+
+# Ray配置
+ray:
+  head-service-host: ray-head
+  head-service-port: 10001
+  dashboard-host: ray-head
+  dashboard-port: 8265
+
+# 功能开关
+features:
+  enterprise-auth: false
+  advanced-monitoring: false
+  audit-logging: false
+  premium-operators: false

@@ -1,0 +1,535 @@
+openapi: 3.0.3
+info:
+  title: Data Cleaning Service API
+  description: 数据清洗服务API - 策略/规则、流程编排对接
+  version: 1.0.0
+  contact:
+    name: Data Engine Platform Team
+    email: dev@dataengine.com
+
+servers:
+  - url: http://localhost:8084
+    description: Development server
+
+tags:
+  - name: cleaning-rules
+    description: 清洗规则管理
+  - name: cleaning-jobs
+    description: 清洗任务管理
+  - name: cleaning-templates
+    description: 清洗模板
+  - name: quality-reports
+    description: 质量报告
+
+paths:
+  /api/v1/cleaning/rules:
+    get:
+      tags:
+        - cleaning-rules
+      summary: 获取清洗规则列表
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: category
+          in: query
+          schema:
+            $ref: '#/components/schemas/RuleCategory'
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleaningRulePageResponse'
+
+    post:
+      tags:
+        - cleaning-rules
+      summary: 创建清洗规则
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCleaningRuleRequest'
+      responses:
+        '201':
+          description: 创建成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleaningRuleResponse'
+
+  /api/v1/cleaning/rules/{ruleId}:
+    get:
+      tags:
+        - cleaning-rules
+      summary: 获取清洗规则详情
+      parameters:
+        - name: ruleId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleaningRuleDetailResponse'
+
+    put:
+      tags:
+        - cleaning-rules
+      summary: 更新清洗规则
+      parameters:
+        - name: ruleId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCleaningRuleRequest'
+      responses:
+        '200':
+          description: 更新成功
+
+  /api/v1/cleaning/jobs:
+    get:
+      tags:
+        - cleaning-jobs
+      summary: 获取清洗任务列表
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/JobStatus'
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleaningJobPageResponse'
+
+    post:
+      tags:
+        - cleaning-jobs
+      summary: 创建清洗任务
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCleaningJobRequest'
+      responses:
+        '201':
+          description: 任务创建成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleaningJobResponse'
+
+  /api/v1/cleaning/jobs/{jobId}:
+    get:
+      tags:
+        - cleaning-jobs
+      summary: 获取清洗任务详情
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleaningJobDetailResponse'
+
+  /api/v1/cleaning/jobs/{jobId}/execute:
+    post:
+      tags:
+        - cleaning-jobs
+      summary: 执行清洗任务
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 任务开始执行
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobExecutionResponse'
+
+  /api/v1/cleaning/templates:
+    get:
+      tags:
+        - cleaning-templates
+      summary: 获取清洗模板列表
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CleaningTemplateResponse'
+
+    post:
+      tags:
+        - cleaning-templates
+      summary: 创建清洗模板
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCleaningTemplateRequest'
+      responses:
+        '201':
+          description: 模板创建成功
+
+components:
+  schemas:
+    CleaningRuleResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          $ref: '#/components/schemas/RuleCategory'
+        ruleType:
+          $ref: '#/components/schemas/RuleType'
+        priority:
+          type: integer
+        enabled:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    CleaningRuleDetailResponse:
+      allOf:
+        - $ref: '#/components/schemas/CleaningRuleResponse'
+        - type: object
+          properties:
+            conditions:
+              type: array
+              items:
+                $ref: '#/components/schemas/RuleCondition'
+            actions:
+              type: array
+              items:
+                $ref: '#/components/schemas/RuleAction'
+            parameters:
+              type: object
+
+    CleaningRulePageResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/CleaningRuleResponse'
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+        size:
+          type: integer
+        number:
+          type: integer
+
+    CreateCleaningRuleRequest:
+      type: object
+      required:
+        - name
+        - category
+        - ruleType
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          $ref: '#/components/schemas/RuleCategory'
+        ruleType:
+          $ref: '#/components/schemas/RuleType'
+        priority:
+          type: integer
+        conditions:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleCondition'
+        actions:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleAction'
+
+    UpdateCleaningRuleRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        priority:
+          type: integer
+        enabled:
+          type: boolean
+        conditions:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleCondition'
+        actions:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleAction'
+
+    CleaningJobResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        status:
+          $ref: '#/components/schemas/JobStatus'
+        datasetId:
+          type: string
+        progress:
+          type: number
+          format: double
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    CleaningJobDetailResponse:
+      allOf:
+        - $ref: '#/components/schemas/CleaningJobResponse'
+        - type: object
+          properties:
+            rules:
+              type: array
+              items:
+                $ref: '#/components/schemas/CleaningRuleResponse'
+            statistics:
+              $ref: '#/components/schemas/CleaningStatistics'
+            logs:
+              type: array
+              items:
+                $ref: '#/components/schemas/JobLog'
+
+    CleaningJobPageResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/CleaningJobResponse'
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+        size:
+          type: integer
+        number:
+          type: integer
+
+    CreateCleaningJobRequest:
+      type: object
+      required:
+        - name
+        - datasetId
+        - ruleIds
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        datasetId:
+          type: string
+        ruleIds:
+          type: array
+          items:
+            type: string
+        parameters:
+          type: object
+
+    JobExecutionResponse:
+      type: object
+      properties:
+        executionId:
+          type: string
+        status:
+          type: string
+        message:
+          type: string
+
+    CleaningTemplateResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        rules:
+          type: array
+          items:
+            $ref: '#/components/schemas/CleaningRuleResponse'
+
+    CreateCleaningTemplateRequest:
+      type: object
+      required:
+        - name
+        - ruleIds
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        ruleIds:
+          type: array
+          items:
+            type: string
+
+    RuleCategory:
+      type: string
+      enum:
+        - DATA_VALIDATION
+        - MISSING_VALUE_HANDLING
+        - OUTLIER_DETECTION
+        - DEDUPLICATION
+        - FORMAT_STANDARDIZATION
+        - TEXT_CLEANING
+        - CUSTOM
+
+    RuleType:
+      type: string
+      enum:
+        - FILTER
+        - TRANSFORM
+        - VALIDATE
+        - ENRICH
+
+    JobStatus:
+      type: string
+      enum:
+        - PENDING
+        - RUNNING
+        - COMPLETED
+        - FAILED
+        - CANCELLED
+
+    RuleCondition:
+      type: object
+      properties:
+        field:
+          type: string
+        operator:
+          type: string
+        value:
+          type: string
+        logicOperator:
+          type: string
+          enum: [AND, OR]
+
+    RuleAction:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [DELETE, UPDATE, FLAG, IGNORE]
+        parameters:
+          type: object
+
+    CleaningStatistics:
+      type: object
+      properties:
+        totalRecords:
+          type: integer
+          format: int64
+        processedRecords:
+          type: integer
+          format: int64
+        validRecords:
+          type: integer
+          format: int64
+        invalidRecords:
+          type: integer
+          format: int64
+        modifiedRecords:
+          type: integer
+          format: int64
+
+    JobLog:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        level:
+          type: string
+          enum: [INFO, WARN, ERROR]
+        message:
+          type: string
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - BearerAuth: []

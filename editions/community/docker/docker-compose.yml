@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  # 数据库
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: dataengine
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  # 缓存
+  redis:
+    image: redis:7.0
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+
+  # 搜索引擎
+  elasticsearch:
+    image: elasticsearch:7.17.0
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+
+  # 对象存储
+  minio:
+    image: minio/minio:latest
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: admin123
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+
+  # Ray集群
+  ray-head:
+    image: rayproject/ray:2.7.0
+    ports:
+      - "8265:8265"
+      - "10001:10001"
+    command: ray start --head --dashboard-host=0.0.0.0 --dashboard-port=8265 --block
+
+volumes:
+  mysql_data:
+  redis_data:
+  es_data:
+  minio_data:

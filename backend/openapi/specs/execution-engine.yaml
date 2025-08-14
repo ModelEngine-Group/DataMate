@@ -1,0 +1,713 @@
+openapi: 3.0.3
+info:
+  title: Execution Engine Service API
+  description: 执行引擎服务API - 与Ray/DataX/Python执行器对接
+  version: 1.0.0
+  contact:
+    name: Data Engine Platform Team
+    email: dev@dataengine.com
+
+servers:
+  - url: http://localhost:8088
+    description: Development server
+
+tags:
+  - name: jobs
+    description: 作业管理
+  - name: executors
+    description: 执行器管理
+  - name: resources
+    description: 资源管理
+  - name: monitoring
+    description: 监控管理
+
+paths:
+  /api/v1/jobs:
+    get:
+      tags:
+        - jobs
+      summary: 获取作业列表
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/JobStatus'
+        - name: executor
+          in: query
+          schema:
+            $ref: '#/components/schemas/ExecutorType'
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobPageResponse'
+
+    post:
+      tags:
+        - jobs
+      summary: 提交作业
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitJobRequest'
+      responses:
+        '201':
+          description: 作业提交成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobResponse'
+
+  /api/v1/jobs/{jobId}:
+    get:
+      tags:
+        - jobs
+      summary: 获取作业详情
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobDetailResponse'
+
+    delete:
+      tags:
+        - jobs
+      summary: 取消作业
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 取消成功
+
+  /api/v1/jobs/{jobId}/logs:
+    get:
+      tags:
+        - jobs
+      summary: 获取作业日志
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: follow
+          in: query
+          description: 是否实时跟踪日志
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/JobLog'
+
+  /api/v1/jobs/{jobId}/retry:
+    post:
+      tags:
+        - jobs
+      summary: 重试作业
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 重试成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobResponse'
+
+  /api/v1/executors:
+    get:
+      tags:
+        - executors
+      summary: 获取执行器列表
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ExecutorResponse'
+
+    post:
+      tags:
+        - executors
+      summary: 注册执行器
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterExecutorRequest'
+      responses:
+        '201':
+          description: 注册成功
+
+  /api/v1/executors/{executorId}:
+    get:
+      tags:
+        - executors
+      summary: 获取执行器详情
+      parameters:
+        - name: executorId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecutorDetailResponse'
+
+    put:
+      tags:
+        - executors
+      summary: 更新执行器
+      parameters:
+        - name: executorId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateExecutorRequest'
+      responses:
+        '200':
+          description: 更新成功
+
+  /api/v1/resources/clusters:
+    get:
+      tags:
+        - resources
+      summary: 获取集群信息
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ClusterInfo'
+
+  /api/v1/resources/nodes:
+    get:
+      tags:
+        - resources
+      summary: 获取节点信息
+      parameters:
+        - name: clusterId
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/NodeInfo'
+
+  /api/v1/monitoring/metrics:
+    get:
+      tags:
+        - monitoring
+      summary: 获取监控指标
+      parameters:
+        - name: metric
+          in: query
+          schema:
+            type: string
+        - name: start
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: end
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetricsResponse'
+
+components:
+  schemas:
+    JobResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        status:
+          $ref: '#/components/schemas/JobStatus'
+        executorType:
+          $ref: '#/components/schemas/ExecutorType'
+        priority:
+          type: integer
+        progress:
+          type: number
+          format: double
+        submittedAt:
+          type: string
+          format: date-time
+        startedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+        submittedBy:
+          type: string
+
+    JobDetailResponse:
+      allOf:
+        - $ref: '#/components/schemas/JobResponse'
+        - type: object
+          properties:
+            configuration:
+              $ref: '#/components/schemas/JobConfiguration'
+            resources:
+              $ref: '#/components/schemas/ResourceRequirement'
+            metrics:
+              $ref: '#/components/schemas/JobMetrics'
+            artifacts:
+              type: array
+              items:
+                $ref: '#/components/schemas/JobArtifact'
+            dependencies:
+              type: array
+              items:
+                type: string
+
+    JobPageResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/JobResponse'
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+        size:
+          type: integer
+        number:
+          type: integer
+
+    SubmitJobRequest:
+      type: object
+      required:
+        - name
+        - executorType
+        - configuration
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        executorType:
+          $ref: '#/components/schemas/ExecutorType'
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 5
+        configuration:
+          $ref: '#/components/schemas/JobConfiguration'
+        resources:
+          $ref: '#/components/schemas/ResourceRequirement'
+        dependencies:
+          type: array
+          items:
+            type: string
+        timeoutSeconds:
+          type: integer
+
+    JobConfiguration:
+      type: object
+      properties:
+        script:
+          type: string
+          description: 执行脚本或代码
+        arguments:
+          type: array
+          items:
+            type: string
+          description: 执行参数
+        environment:
+          type: object
+          description: 环境变量
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/FileReference'
+        packages:
+          type: array
+          items:
+            type: string
+          description: 依赖包列表
+
+    ResourceRequirement:
+      type: object
+      properties:
+        cpuCores:
+          type: number
+          format: double
+        memoryGB:
+          type: number
+          format: double
+        gpuCount:
+          type: integer
+        diskGB:
+          type: number
+          format: double
+        nodeSelector:
+          type: object
+          description: 节点选择器
+
+    ExecutorResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          $ref: '#/components/schemas/ExecutorType'
+        status:
+          $ref: '#/components/schemas/ExecutorStatus'
+        version:
+          type: string
+        capabilities:
+          type: array
+          items:
+            type: string
+        registeredAt:
+          type: string
+          format: date-time
+        lastHeartbeat:
+          type: string
+          format: date-time
+
+    ExecutorDetailResponse:
+      allOf:
+        - $ref: '#/components/schemas/ExecutorResponse'
+        - type: object
+          properties:
+            configuration:
+              type: object
+            resources:
+              $ref: '#/components/schemas/ExecutorResources'
+            currentJobs:
+              type: array
+              items:
+                $ref: '#/components/schemas/JobResponse'
+            statistics:
+              $ref: '#/components/schemas/ExecutorStatistics'
+
+    RegisterExecutorRequest:
+      type: object
+      required:
+        - name
+        - type
+        - endpoint
+      properties:
+        name:
+          type: string
+        type:
+          $ref: '#/components/schemas/ExecutorType'
+        endpoint:
+          type: string
+        capabilities:
+          type: array
+          items:
+            type: string
+        configuration:
+          type: object
+
+    UpdateExecutorRequest:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/ExecutorStatus'
+        configuration:
+          type: object
+
+    ClusterInfo:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum: [RAY, KUBERNETES, YARN, STANDALONE]
+        status:
+          type: string
+          enum: [ACTIVE, INACTIVE, ERROR]
+        nodeCount:
+          type: integer
+        totalCpuCores:
+          type: integer
+        totalMemoryGB:
+          type: number
+          format: double
+        totalGpuCount:
+          type: integer
+        availableResources:
+          $ref: '#/components/schemas/ResourceInfo'
+
+    NodeInfo:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        clusterId:
+          type: string
+        status:
+          type: string
+          enum: [ACTIVE, INACTIVE, BUSY, ERROR]
+        resources:
+          $ref: '#/components/schemas/ResourceInfo'
+        usage:
+          $ref: '#/components/schemas/ResourceUsage'
+        lastUpdate:
+          type: string
+          format: date-time
+
+    MetricsResponse:
+      type: object
+      properties:
+        metric:
+          type: string
+        dataPoints:
+          type: array
+          items:
+            $ref: '#/components/schemas/MetricDataPoint'
+        aggregation:
+          type: object
+
+    JobLog:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        level:
+          type: string
+          enum: [DEBUG, INFO, WARN, ERROR]
+        source:
+          type: string
+        message:
+          type: string
+
+    JobMetrics:
+      type: object
+      properties:
+        cpuUsage:
+          type: number
+          format: double
+        memoryUsage:
+          type: number
+          format: double
+        diskUsage:
+          type: number
+          format: double
+        networkIO:
+          type: object
+        duration:
+          type: integer
+          format: int64
+
+    JobArtifact:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum: [LOG, OUTPUT, CHECKPOINT, MODEL]
+        size:
+          type: integer
+          format: int64
+        path:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    FileReference:
+      type: object
+      properties:
+        name:
+          type: string
+        path:
+          type: string
+        type:
+          type: string
+          enum: [LOCAL, HDFS, S3, HTTP]
+
+    ExecutorResources:
+      type: object
+      properties:
+        total:
+          $ref: '#/components/schemas/ResourceInfo'
+        available:
+          $ref: '#/components/schemas/ResourceInfo'
+        allocated:
+          $ref: '#/components/schemas/ResourceInfo'
+
+    ExecutorStatistics:
+      type: object
+      properties:
+        totalJobs:
+          type: integer
+        successfulJobs:
+          type: integer
+        failedJobs:
+          type: integer
+        averageExecutionTime:
+          type: number
+          format: double
+        uptime:
+          type: integer
+          format: int64
+
+    ResourceInfo:
+      type: object
+      properties:
+        cpuCores:
+          type: number
+          format: double
+        memoryGB:
+          type: number
+          format: double
+        gpuCount:
+          type: integer
+        diskGB:
+          type: number
+          format: double
+
+    ResourceUsage:
+      type: object
+      properties:
+        cpuUsagePercent:
+          type: number
+          format: double
+        memoryUsagePercent:
+          type: number
+          format: double
+        diskUsagePercent:
+          type: number
+          format: double
+
+    MetricDataPoint:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        value:
+          type: number
+          format: double
+        tags:
+          type: object
+
+    JobStatus:
+      type: string
+      enum:
+        - SUBMITTED
+        - PENDING
+        - RUNNING
+        - COMPLETED
+        - FAILED
+        - CANCELLED
+        - TIMEOUT
+
+    ExecutorType:
+      type: string
+      enum:
+        - RAY
+        - DATAX
+        - PYTHON
+        - SPARK
+        - FLINK
+        - CUSTOM
+
+    ExecutorStatus:
+      type: string
+      enum:
+        - ACTIVE
+        - INACTIVE
+        - BUSY
+        - ERROR
+        - MAINTENANCE
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - BearerAuth: []

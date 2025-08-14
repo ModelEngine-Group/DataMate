@@ -1,0 +1,640 @@
+openapi: 3.0.3
+info:
+  title: Pipeline Orchestration Service API
+  description: 流程编排服务API - 可视化、模板、执行计划
+  version: 1.0.0
+  contact:
+    name: Data Engine Platform Team
+    email: dev@dataengine.com
+
+servers:
+  - url: http://localhost:8087
+    description: Development server
+
+tags:
+  - name: pipelines
+    description: 流水线管理
+  - name: pipeline-templates
+    description: 流水线模板
+  - name: executions
+    description: 执行管理
+  - name: workflows
+    description: 工作流编排
+
+paths:
+  /api/v1/pipelines:
+    get:
+      tags:
+        - pipelines
+      summary: 获取流水线列表
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/PipelineStatus'
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PipelinePageResponse'
+
+    post:
+      tags:
+        - pipelines
+      summary: 创建流水线
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePipelineRequest'
+      responses:
+        '201':
+          description: 创建成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PipelineResponse'
+
+  /api/v1/pipelines/{pipelineId}:
+    get:
+      tags:
+        - pipelines
+      summary: 获取流水线详情
+      parameters:
+        - name: pipelineId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PipelineDetailResponse'
+
+    put:
+      tags:
+        - pipelines
+      summary: 更新流水线
+      parameters:
+        - name: pipelineId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePipelineRequest'
+      responses:
+        '200':
+          description: 更新成功
+
+  /api/v1/pipelines/{pipelineId}/execute:
+    post:
+      tags:
+        - executions
+      summary: 执行流水线
+      parameters:
+        - name: pipelineId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecutePipelineRequest'
+      responses:
+        '200':
+          description: 执行开始
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PipelineExecutionResponse'
+
+  /api/v1/executions:
+    get:
+      tags:
+        - executions
+      summary: 获取执行历史
+      parameters:
+        - name: pipelineId
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/ExecutionStatus'
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecutionPageResponse'
+
+  /api/v1/executions/{executionId}:
+    get:
+      tags:
+        - executions
+      summary: 获取执行详情
+      parameters:
+        - name: executionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecutionDetailResponse'
+
+  /api/v1/executions/{executionId}/stop:
+    post:
+      tags:
+        - executions
+      summary: 停止执行
+      parameters:
+        - name: executionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 停止成功
+
+  /api/v1/templates:
+    get:
+      tags:
+        - pipeline-templates
+      summary: 获取模板列表
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PipelineTemplateResponse'
+
+    post:
+      tags:
+        - pipeline-templates
+      summary: 创建模板
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePipelineTemplateRequest'
+      responses:
+        '201':
+          description: 创建成功
+
+components:
+  schemas:
+    PipelineResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        status:
+          $ref: '#/components/schemas/PipelineStatus'
+        version:
+          type: string
+        category:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        createdBy:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        lastModified:
+          type: string
+          format: date-time
+
+    PipelineDetailResponse:
+      allOf:
+        - $ref: '#/components/schemas/PipelineResponse'
+        - type: object
+          properties:
+            definition:
+              $ref: '#/components/schemas/PipelineDefinition'
+            parameters:
+              type: array
+              items:
+                $ref: '#/components/schemas/PipelineParameter'
+            dependencies:
+              type: array
+              items:
+                type: string
+            statistics:
+              $ref: '#/components/schemas/PipelineStatistics'
+
+    PipelinePageResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/PipelineResponse'
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+        size:
+          type: integer
+        number:
+          type: integer
+
+    CreatePipelineRequest:
+      type: object
+      required:
+        - name
+        - definition
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        definition:
+          $ref: '#/components/schemas/PipelineDefinition'
+        parameters:
+          type: array
+          items:
+            $ref: '#/components/schemas/PipelineParameter'
+        tags:
+          type: array
+          items:
+            type: string
+
+    UpdatePipelineRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        definition:
+          $ref: '#/components/schemas/PipelineDefinition'
+        status:
+          $ref: '#/components/schemas/PipelineStatus'
+
+    ExecutePipelineRequest:
+      type: object
+      properties:
+        parameters:
+          type: object
+          description: 执行参数
+        environment:
+          type: string
+          description: 执行环境
+        priority:
+          type: integer
+          description: 优先级
+
+    PipelineExecutionResponse:
+      type: object
+      properties:
+        executionId:
+          type: string
+        pipelineId:
+          type: string
+        status:
+          $ref: '#/components/schemas/ExecutionStatus'
+        startTime:
+          type: string
+          format: date-time
+        message:
+          type: string
+
+    ExecutionResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        pipelineId:
+          type: string
+        pipelineName:
+          type: string
+        status:
+          $ref: '#/components/schemas/ExecutionStatus'
+        progress:
+          type: number
+          format: double
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        duration:
+          type: integer
+          format: int64
+          description: 执行时长（毫秒）
+
+    ExecutionDetailResponse:
+      allOf:
+        - $ref: '#/components/schemas/ExecutionResponse'
+        - type: object
+          properties:
+            steps:
+              type: array
+              items:
+                $ref: '#/components/schemas/ExecutionStep'
+            logs:
+              type: array
+              items:
+                $ref: '#/components/schemas/ExecutionLog'
+            metrics:
+              $ref: '#/components/schemas/ExecutionMetrics'
+            artifacts:
+              type: array
+              items:
+                $ref: '#/components/schemas/ExecutionArtifact'
+
+    ExecutionPageResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExecutionResponse'
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+        size:
+          type: integer
+        number:
+          type: integer
+
+    PipelineTemplateResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        version:
+          type: string
+        definition:
+          $ref: '#/components/schemas/PipelineDefinition'
+        usageCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    CreatePipelineTemplateRequest:
+      type: object
+      required:
+        - name
+        - definition
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        definition:
+          $ref: '#/components/schemas/PipelineDefinition'
+
+    PipelineDefinition:
+      type: object
+      properties:
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/PipelineNode'
+        edges:
+          type: array
+          items:
+            $ref: '#/components/schemas/PipelineEdge'
+        settings:
+          type: object
+          description: 流水线设置
+
+    PipelineNode:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: [OPERATOR, CONDITION, LOOP, PARALLEL]
+        name:
+          type: string
+        operatorId:
+          type: string
+        configuration:
+          type: object
+        position:
+          $ref: '#/components/schemas/NodePosition'
+
+    PipelineEdge:
+      type: object
+      properties:
+        id:
+          type: string
+        source:
+          type: string
+        target:
+          type: string
+        condition:
+          type: string
+        type:
+          type: string
+          enum: [SUCCESS, FAILURE, ALWAYS]
+
+    NodePosition:
+      type: object
+      properties:
+        x:
+          type: number
+        y:
+          type: number
+
+    PipelineParameter:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+        required:
+          type: boolean
+        defaultValue:
+          type: string
+        description:
+          type: string
+
+    PipelineStatistics:
+      type: object
+      properties:
+        totalExecutions:
+          type: integer
+        successfulExecutions:
+          type: integer
+        failedExecutions:
+          type: integer
+        averageDuration:
+          type: number
+          format: double
+        lastExecutionTime:
+          type: string
+          format: date-time
+
+    ExecutionStep:
+      type: object
+      properties:
+        id:
+          type: string
+        nodeId:
+          type: string
+        name:
+          type: string
+        status:
+          $ref: '#/components/schemas/ExecutionStatus'
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        duration:
+          type: integer
+          format: int64
+        message:
+          type: string
+
+    ExecutionLog:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        level:
+          type: string
+          enum: [DEBUG, INFO, WARN, ERROR]
+        nodeId:
+          type: string
+        message:
+          type: string
+
+    ExecutionMetrics:
+      type: object
+      properties:
+        totalNodes:
+          type: integer
+        completedNodes:
+          type: integer
+        failedNodes:
+          type: integer
+        cpuUsage:
+          type: number
+          format: double
+        memoryUsage:
+          type: number
+          format: double
+        throughput:
+          type: number
+          format: double
+
+    ExecutionArtifact:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        size:
+          type: integer
+          format: int64
+        path:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    PipelineStatus:
+      type: string
+      enum:
+        - DRAFT
+        - ACTIVE
+        - INACTIVE
+        - DEPRECATED
+
+    ExecutionStatus:
+      type: string
+      enum:
+        - PENDING
+        - RUNNING
+        - SUCCESS
+        - FAILED
+        - CANCELLED
+        - SKIPPED
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - BearerAuth: []

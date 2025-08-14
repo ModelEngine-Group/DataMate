@@ -1,0 +1,631 @@
+openapi: 3.0.3
+info:
+  title: Data Evaluation Service API
+  description: 数据评估服务API - 质量、适配性、价值评估
+  version: 1.0.0
+  contact:
+    name: Data Engine Platform Team
+    email: dev@dataengine.com
+
+servers:
+  - url: http://localhost:8086
+    description: Development server
+
+tags:
+  - name: quality-evaluation
+    description: 数据质量评估
+  - name: compatibility-evaluation
+    description: 适配性评估
+  - name: value-evaluation
+    description: 价值评估
+  - name: evaluation-reports
+    description: 评估报告
+
+paths:
+  /api/v1/evaluation/quality:
+    post:
+      tags:
+        - quality-evaluation
+      summary: 数据质量评估
+      description: 对数据集进行质量评估，包括完整性、准确性、一致性等
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QualityEvaluationRequest'
+      responses:
+        '200':
+          description: 评估成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QualityEvaluationResponse'
+
+  /api/v1/evaluation/quality/{evaluationId}:
+    get:
+      tags:
+        - quality-evaluation
+      summary: 获取质量评估结果
+      parameters:
+        - name: evaluationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QualityEvaluationDetailResponse'
+
+  /api/v1/evaluation/compatibility:
+    post:
+      tags:
+        - compatibility-evaluation
+      summary: 适配性评估
+      description: 评估数据集与目标模型或任务的适配性
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompatibilityEvaluationRequest'
+      responses:
+        '200':
+          description: 评估成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompatibilityEvaluationResponse'
+
+  /api/v1/evaluation/value:
+    post:
+      tags:
+        - value-evaluation
+      summary: 价值评估
+      description: 评估数据集的商业价值和使用价值
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValueEvaluationRequest'
+      responses:
+        '200':
+          description: 评估成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValueEvaluationResponse'
+
+  /api/v1/evaluation/reports:
+    get:
+      tags:
+        - evaluation-reports
+      summary: 获取评估报告列表
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: type
+          in: query
+          schema:
+            $ref: '#/components/schemas/EvaluationType'
+        - name: datasetId
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvaluationReportPageResponse'
+
+  /api/v1/evaluation/reports/{reportId}:
+    get:
+      tags:
+        - evaluation-reports
+      summary: 获取评估报告详情
+      parameters:
+        - name: reportId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvaluationReportDetailResponse'
+
+  /api/v1/evaluation/reports/{reportId}/export:
+    get:
+      tags:
+        - evaluation-reports
+      summary: 导出评估报告
+      parameters:
+        - name: reportId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [PDF, EXCEL, JSON]
+            default: PDF
+      responses:
+        '200':
+          description: 导出成功
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+
+  /api/v1/evaluation/batch:
+    post:
+      tags:
+        - evaluation-reports
+      summary: 批量评估
+      description: 对多个数据集进行批量评估
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchEvaluationRequest'
+      responses:
+        '202':
+          description: 批量评估任务已提交
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchEvaluationResponse'
+
+components:
+  schemas:
+    QualityEvaluationRequest:
+      type: object
+      required:
+        - datasetId
+        - metrics
+      properties:
+        datasetId:
+          type: string
+          description: 数据集ID
+        metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/QualityMetric'
+          description: 评估指标
+        sampleSize:
+          type: integer
+          description: 采样大小
+        parameters:
+          type: object
+          description: 评估参数
+
+    QualityEvaluationResponse:
+      type: object
+      properties:
+        evaluationId:
+          type: string
+        status:
+          $ref: '#/components/schemas/EvaluationStatus'
+        overallScore:
+          type: number
+          format: double
+          description: 总体质量分数
+        metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/QualityMetricResult'
+        recommendations:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    QualityEvaluationDetailResponse:
+      allOf:
+        - $ref: '#/components/schemas/QualityEvaluationResponse'
+        - type: object
+          properties:
+            detailedResults:
+              $ref: '#/components/schemas/DetailedQualityResults'
+            visualizations:
+              type: array
+              items:
+                $ref: '#/components/schemas/VisualizationData'
+
+    CompatibilityEvaluationRequest:
+      type: object
+      required:
+        - datasetId
+        - targetType
+      properties:
+        datasetId:
+          type: string
+        targetType:
+          $ref: '#/components/schemas/TargetType'
+        targetConfig:
+          type: object
+          description: 目标配置（模型、任务等）
+        evaluationCriteria:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompatibilityCriterion'
+
+    CompatibilityEvaluationResponse:
+      type: object
+      properties:
+        evaluationId:
+          type: string
+        compatibilityScore:
+          type: number
+          format: double
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompatibilityResult'
+        suggestions:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    ValueEvaluationRequest:
+      type: object
+      required:
+        - datasetId
+        - valueCriteria
+      properties:
+        datasetId:
+          type: string
+        valueCriteria:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValueCriterion'
+        marketContext:
+          type: object
+          description: 市场环境信息
+        businessContext:
+          type: object
+          description: 业务环境信息
+
+    ValueEvaluationResponse:
+      type: object
+      properties:
+        evaluationId:
+          type: string
+        valueScore:
+          type: number
+          format: double
+        monetaryValue:
+          type: number
+          format: double
+          description: 货币价值估算
+        strategicValue:
+          type: number
+          format: double
+          description: 战略价值评分
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValueResult'
+        insights:
+          type: array
+          items:
+            type: string
+
+    EvaluationReportResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        datasetId:
+          type: string
+        type:
+          $ref: '#/components/schemas/EvaluationType'
+        status:
+          $ref: '#/components/schemas/EvaluationStatus'
+        overallScore:
+          type: number
+          format: double
+        summary:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+
+    EvaluationReportPageResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/EvaluationReportResponse'
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+        size:
+          type: integer
+        number:
+          type: integer
+
+    EvaluationReportDetailResponse:
+      allOf:
+        - $ref: '#/components/schemas/EvaluationReportResponse'
+        - type: object
+          properties:
+            qualityResults:
+              $ref: '#/components/schemas/QualityEvaluationResponse'
+            compatibilityResults:
+              $ref: '#/components/schemas/CompatibilityEvaluationResponse'
+            valueResults:
+              $ref: '#/components/schemas/ValueEvaluationResponse'
+            attachments:
+              type: array
+              items:
+                $ref: '#/components/schemas/ReportAttachment'
+
+    BatchEvaluationRequest:
+      type: object
+      required:
+        - datasetIds
+        - evaluationTypes
+      properties:
+        datasetIds:
+          type: array
+          items:
+            type: string
+        evaluationTypes:
+          type: array
+          items:
+            $ref: '#/components/schemas/EvaluationType'
+        parameters:
+          type: object
+
+    BatchEvaluationResponse:
+      type: object
+      properties:
+        batchId:
+          type: string
+        status:
+          type: string
+        totalTasks:
+          type: integer
+        submittedAt:
+          type: string
+          format: date-time
+
+    QualityMetric:
+      type: string
+      enum:
+        - COMPLETENESS
+        - ACCURACY
+        - CONSISTENCY
+        - VALIDITY
+        - UNIQUENESS
+        - TIMELINESS
+
+    QualityMetricResult:
+      type: object
+      properties:
+        metric:
+          $ref: '#/components/schemas/QualityMetric'
+        score:
+          type: number
+          format: double
+        details:
+          type: object
+        issues:
+          type: array
+          items:
+            $ref: '#/components/schemas/QualityIssue'
+
+    DetailedQualityResults:
+      type: object
+      properties:
+        fieldAnalysis:
+          type: array
+          items:
+            $ref: '#/components/schemas/FieldAnalysis'
+        distributionAnalysis:
+          $ref: '#/components/schemas/DistributionAnalysis'
+        correlationAnalysis:
+          $ref: '#/components/schemas/CorrelationAnalysis'
+
+    TargetType:
+      type: string
+      enum:
+        - LANGUAGE_MODEL
+        - CLASSIFICATION_MODEL
+        - RECOMMENDATION_SYSTEM
+        - CUSTOM_TASK
+
+    CompatibilityCriterion:
+      type: string
+      enum:
+        - FORMAT_COMPATIBILITY
+        - SCHEMA_COMPATIBILITY
+        - SIZE_ADEQUACY
+        - DISTRIBUTION_MATCH
+        - FEATURE_COVERAGE
+
+    CompatibilityResult:
+      type: object
+      properties:
+        criterion:
+          $ref: '#/components/schemas/CompatibilityCriterion'
+        score:
+          type: number
+          format: double
+        status:
+          type: string
+          enum: [PASS, WARN, FAIL]
+        details:
+          type: string
+
+    ValueCriterion:
+      type: string
+      enum:
+        - RARITY
+        - DEMAND
+        - QUALITY
+        - COMPLETENESS
+        - TIMELINESS
+        - STRATEGIC_IMPORTANCE
+
+    ValueResult:
+      type: object
+      properties:
+        criterion:
+          $ref: '#/components/schemas/ValueCriterion'
+        score:
+          type: number
+          format: double
+        impact:
+          type: string
+          enum: [LOW, MEDIUM, HIGH]
+        explanation:
+          type: string
+
+    EvaluationType:
+      type: string
+      enum:
+        - QUALITY
+        - COMPATIBILITY
+        - VALUE
+        - COMPREHENSIVE
+
+    EvaluationStatus:
+      type: string
+      enum:
+        - PENDING
+        - RUNNING
+        - COMPLETED
+        - FAILED
+
+    QualityIssue:
+      type: object
+      properties:
+        type:
+          type: string
+        severity:
+          type: string
+          enum: [LOW, MEDIUM, HIGH, CRITICAL]
+        description:
+          type: string
+        affectedRecords:
+          type: integer
+        suggestions:
+          type: array
+          items:
+            type: string
+
+    FieldAnalysis:
+      type: object
+      properties:
+        fieldName:
+          type: string
+        dataType:
+          type: string
+        nullCount:
+          type: integer
+        uniqueCount:
+          type: integer
+        statistics:
+          type: object
+
+    DistributionAnalysis:
+      type: object
+      properties:
+        distributions:
+          type: array
+          items:
+            type: object
+        outliers:
+          type: array
+          items:
+            type: object
+        patterns:
+          type: array
+          items:
+            type: string
+
+    CorrelationAnalysis:
+      type: object
+      properties:
+        correlationMatrix:
+          type: array
+          items:
+            type: array
+            items:
+              type: number
+        significantCorrelations:
+          type: array
+          items:
+            type: object
+
+    VisualizationData:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [CHART, GRAPH, HISTOGRAM, HEATMAP]
+        title:
+          type: string
+        data:
+          type: object
+        config:
+          type: object
+
+    ReportAttachment:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        size:
+          type: integer
+          format: int64
+        downloadUrl:
+          type: string
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - BearerAuth: []

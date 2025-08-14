@@ -1,0 +1,301 @@
+openapi: 3.0.3
+info:
+  title: Data Annotation Service API
+  description: 数据标注服务API - 智能预标注、人工平台、主动学习
+  version: 1.0.0
+  contact:
+    name: Data Engine Platform Team
+    email: dev@dataengine.com
+
+servers:
+  - url: http://localhost:8083
+    description: Development server
+  - url: https://api.dataengine.com/annotation
+    description: Production server
+
+tags:
+  - name: annotation-tasks
+    description: 标注任务管理
+  - name: annotation-data
+    description: 标注数据管理
+  - name: pre-annotation
+    description: 智能预标注
+  - name: active-learning
+    description: 主动学习
+
+paths:
+  /api/v1/annotation/tasks:
+    get:
+      tags:
+        - annotation-tasks
+      summary: 获取标注任务列表
+      description: 分页获取标注任务列表
+      parameters:
+        - name: page
+          in: query
+          description: 页码
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          description: 每页大小
+          schema:
+            type: integer
+            default: 20
+        - name: status
+          in: query
+          description: 任务状态
+          schema:
+            type: string
+            enum: [PENDING, IN_PROGRESS, COMPLETED, PAUSED]
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnnotationTaskPageResponse'
+        '400':
+          description: 请求参数错误
+        '500':
+          description: 服务器内部错误
+
+    post:
+      tags:
+        - annotation-tasks
+      summary: 创建标注任务
+      description: 创建新的标注任务
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAnnotationTaskRequest'
+      responses:
+        '201':
+          description: 创建成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnnotationTaskResponse'
+        '400':
+          description: 请求参数错误
+        '500':
+          description: 服务器内部错误
+
+  /api/v1/annotation/tasks/{taskId}:
+    get:
+      tags:
+        - annotation-tasks
+      summary: 获取标注任务详情
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnnotationTaskResponse'
+        '404':
+          description: 任务不存在
+
+    put:
+      tags:
+        - annotation-tasks
+      summary: 更新标注任务
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAnnotationTaskRequest'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnnotationTaskResponse'
+
+  /api/v1/annotation/pre-annotate:
+    post:
+      tags:
+        - pre-annotation
+      summary: 智能预标注
+      description: 使用AI模型进行智能预标注
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PreAnnotationRequest'
+      responses:
+        '200':
+          description: 预标注成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PreAnnotationResponse'
+
+components:
+  schemas:
+    AnnotationTaskResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          description: 任务ID
+        name:
+          type: string
+          description: 任务名称
+        description:
+          type: string
+          description: 任务描述
+        type:
+          type: string
+          enum: [TEXT_CLASSIFICATION, NAMED_ENTITY_RECOGNITION, OBJECT_DETECTION, SEMANTIC_SEGMENTATION]
+          description: 标注类型
+        status:
+          type: string
+          enum: [PENDING, IN_PROGRESS, COMPLETED, PAUSED]
+          description: 任务状态
+        datasetId:
+          type: string
+          description: 数据集ID
+        progress:
+          type: number
+          format: double
+          description: 进度百分比
+        createdAt:
+          type: string
+          format: date-time
+          description: 创建时间
+        updatedAt:
+          type: string
+          format: date-time
+          description: 更新时间
+
+    CreateAnnotationTaskRequest:
+      type: object
+      required:
+        - name
+        - type
+        - datasetId
+      properties:
+        name:
+          type: string
+          description: 任务名称
+        description:
+          type: string
+          description: 任务描述
+        type:
+          type: string
+          enum: [TEXT_CLASSIFICATION, NAMED_ENTITY_RECOGNITION, OBJECT_DETECTION, SEMANTIC_SEGMENTATION]
+          description: 标注类型
+        datasetId:
+          type: string
+          description: 数据集ID
+        configuration:
+          type: object
+          description: 标注配置
+
+    UpdateAnnotationTaskRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: 任务名称
+        description:
+          type: string
+          description: 任务描述
+        status:
+          type: string
+          enum: [PENDING, IN_PROGRESS, COMPLETED, PAUSED]
+          description: 任务状态
+
+    AnnotationTaskPageResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/AnnotationTaskResponse'
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+        size:
+          type: integer
+        number:
+          type: integer
+
+    PreAnnotationRequest:
+      type: object
+      required:
+        - taskId
+        - dataIds
+      properties:
+        taskId:
+          type: string
+          description: 标注任务ID
+        dataIds:
+          type: array
+          items:
+            type: string
+          description: 待预标注的数据ID列表
+        modelId:
+          type: string
+          description: 预标注模型ID
+        confidence:
+          type: number
+          format: double
+          description: 置信度阈值
+
+    PreAnnotationResponse:
+      type: object
+      properties:
+        taskId:
+          type: string
+          description: 任务ID
+        processedCount:
+          type: integer
+          description: 已处理数据数量
+        successCount:
+          type: integer
+          description: 成功预标注数量
+        results:
+          type: array
+          items:
+            type: object
+            properties:
+              dataId:
+                type: string
+              annotations:
+                type: array
+                items:
+                  type: object
+              confidence:
+                type: number
+                format: double
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - BearerAuth: []

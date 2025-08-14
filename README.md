@@ -1,80 +1,42 @@
-# 构建镜像
+# Data-Engine 一站式数据工作平台
 
-| 名称           | 命令                      |
-|--------------|-------------------------|
-| data-juicer  | make build-data-juicer  |
-| datax        | make build-datax        |
-| mineru       | make build-mineru       |
-| unstructured | make build-unstructrued |
+> 面向模型微调与RAG检索的企业级数据处理平台，支持数据管理、算子市场、数据清洗、数据合成、数据标注、数据评估等核心功能。
 
-# 部署服务
+## 🌟 核心特性
 
-| 名称           | 命令                        |
-|--------------|---------------------------|
-| data-juicer  | make install-data-juicer  |
-| datax        | make install-datax        |
-| mineru       | make install-mineru       |
-| ray          | make install-ray          |
-| unstructured | make install-unstructrued |
+- **六大核心模块**：数据管理、算子市场、数据清洗、数据合成、数据标注、数据评估
+- **双版本支持**：社区版(CE)和企业版(EE)
+- **DDD架构**：领域驱动设计，清晰的分层架构
+- **微服务架构**：Spring Boot + 容器化部署
+- **可视化编排**：拖拽式数据处理流程设计
+- **算子生态**：丰富的内置算子和自定义算子支持
 
-# api
+## 🚀 快速开始
 
-## datax
-request:
-```shell
-curl -X POST "http://localhost:8000/process/" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "content": "{\"job\":{\"setting\":{\"speed\":{\"channel\":1},\"errorLimit\":{\"record\":0,\"percentage\":0.02}},\"content\":[{\"reader\":{\"name\":\"streamreader\",\"parameter\":{\"column\":[{\"value\":\"DataX\",\"type\":\"string\"},{\"value\":19890604,\"type\":\"long\"},{\"value\":\"1989-06-04 00:00:00\",\"type\":\"date\"},{\"value\":true,\"type\":\"bool\"},{\"value\":\"test\",\"type\":\"bytes\"}],\"sliceRecordCount\":100000}},\"writer\":{\"name\":\"streamwriter\",\"parameter\":{\"print\":false,\"encoding\":\"UTF-8\"}}}]}}"
-  }'
+### 社区版部署
+```bash
+cd deployment/docker
+docker-compose -f docker-compose.ce.yml up -d
 ```
 
-## mineru
-request:
-```shell
-curl -X 'POST' \
-  'http://mineru:30000/file_parse' \
-  -H 'accept: application/json' \
-  -H 'Content-Type: multipart/form-data' \
-  -F 'return_middle_json=false' \
-  -F 'return_model_output=false' \
-  -F 'return_md=true' \
-  -F 'return_images=false' \
-  -F 'end_page_id=99999' \
-  -F 'parse_method=auto' \
-  -F 'start_page_id=0' \
-  -F 'lang_list=ch' \
-  -F 'output_dir=./output' \
-  -F 'server_url=string' \
-  -F 'return_content_list=false' \
-  -F 'backend=pipeline' \
-  -F 'table_enable=true' \
-  -F 'files=@test.pdf;type=application/pdf' \
-  -F 'formula_enable=true'
+### 企业版部署
+```bash
+cd deployment/kubernetes
+kubectl apply -f ../editions/enterprise/k8s/
 ```
 
-response:
-```shell
-{
-  "backend": "pipeline",
-  "version": "2.1.0",
-  "results": {
-    "test": {
-      "md_content": "md_content"
-    }
-  }
-}
-```
+## 📁 项目结构
 
-## unstructured
-request:
-```shell
-curl http://localhost:30181/process -X POST
-  -H "Content-Type: application/json"
-  -d '{"file_path": "/app/example-docs/pdf/DA-1p.pdf"}'
-```
+详见 [代码架构设计](docs/architecture/代码架构设计.md)
 
-response:
-```shell
-{"filePath":"/app/example-docs/pdf/DA-1p.pdf","text":"text","status":"success"}
-```
+## 🤝 贡献指南
+
+1. Fork 项目
+2. 创建特性分支
+3. 提交变更
+4. 推送到分支
+5. 创建 Pull Request
+
+## 📄 许可证
+
+[Apache License 2.0](LICENSE)

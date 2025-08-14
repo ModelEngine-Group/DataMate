@@ -1,0 +1,101 @@
+version: '3.8'
+
+services:
+  # PostgreSQL 主从集群
+  postgres-primary:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: dataengine
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+      POSTGRES_REPLICATION_USER: replicator
+      POSTGRES_REPLICATION_PASSWORD: replica123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_primary_data:/var/lib/postgresql/data
+      - ./config/postgresql.conf:/etc/postgresql/postgresql.conf
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
+
+  postgres-standby:
+    image: postgres:15
+    environment:
+      PGUSER: postgres
+      POSTGRES_PASSWORD: postgres123
+      POSTGRES_PRIMARY_USER: replicator
+      POSTGRES_PRIMARY_PASSWORD: replica123
+      POSTGRES_HOST_AUTH_METHOD: md5
+    volumes:
+      - postgres_standby_data:/var/lib/postgresql/data
+    depends_on:
+      - postgres-primary
+
+  # Redis Enterprise
+  redis-enterprise:
+    image: redislabs/redis:6.2.6-alpine
+    ports:
+      - "6379:6379"
+      - "8443:8443"
+    environment:
+      REDIS_PASSWORD: redis123
+    volumes:
+      - redis_enterprise_data:/data
+
+  # Elasticsearch 8.x 集群
+  elasticsearch-master:
+    image: elasticsearch:8.11.0
+    environment:
+      - cluster.name=dataengine-cluster
+      - node.name=es-master
+      - discovery.seed_hosts=elasticsearch-data
+      - cluster.initial_master_nodes=es-master
+      - xpack.security.enabled=true
+      - ELASTIC_PASSWORD=elastic123
+    ports:
+      - "9200:9200"
+    volumes:
+      - es_master_data:/usr/share/elasticsearch/data
+
+  elasticsearch-data:
+    image: elasticsearch:8.11.0
+    environment:
+      - cluster.name=dataengine-cluster
+      - node.name=es-data
+      - discovery.seed_hosts=elasticsearch-master
+      - cluster.initial_master_nodes=es-master
+      - xpack.security.enabled=true
+      - ELASTIC_PASSWORD=elastic123
+    volumes:
+      - es_data_data:/usr/share/elasticsearch/data
+
+  # HashiCorp Vault
+  vault:
+    image: vault:1.15.0
+    ports:
+      - "8200:8200"
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: vault-root-token
+      VAULT_DEV_LISTEN_ADDRESS: 0.0.0.0:8200
+    cap_add:
+      - IPC_LOCK
+    volumes:
+      - vault_data:/vault/data
+
+  # 企业计算引擎（模拟）
+  enterprise-compute:
+    image: rayproject/ray:2.8.0
+    ports:
+      - "8265:8265"
+      - "10001:10001"
+    environment:
+      RAY_ENABLE_AUTOSCALER: "true"
+      RAY_CLUSTER_SIZE: "3"
+    command: ray start --head --dashboard-host=0.0.0.0 --dashboard-port=8265 --block
+
+volumes:
+  postgres_primary_data:
+  postgres_standby_data:
+  redis_enterprise_data:
+  es_master_data:
+  es_data_data:
+  vault_data:
