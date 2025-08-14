@@ -295,53 +295,6 @@ Python执行器 (Ray Actor/Job)
 - **企业版**: 独立部署的DataX集群，通过API调用
 - **配置**: 通过`DATAX_HOME`环境变量指定安装目录
 
-## 前端架构设计
-
-### 多应用架构
-位置：`frontend/apps/`
-
-```
-前端架构
-├── console/                      # 数据工作台 (Next.js)
-│   ├── src/components/           # React组件
-│   │   ├── layout/              # 布局组件
-│   │   ├── data-management/     # 数据管理模块
-│   │   ├── operator-market/     # 算子市场模块
-│   │   ├── pipeline/            # 流程编排模块
-│   │   └── monitoring/          # 监控模块
-│   ├── pages/                   # 页面路由
-│   ├── styles/                  # 样式文件
-│   └── package.json
-│
-└── annotation-studio/           # 标注工作台 (可分离部署)
-    ├── src/components/          # 标注组件
-    │   ├── annotation/          # 标注界面
-    │   ├── quality-control/     # 质量控制
-    │   └── active-learning/     # 主动学习
-    └── package.json
-```
-
-### 共享组件库
-位置：`frontend/packages/`
-
-```
-共享组件库
-├── ui-components/               # 通用UI组件
-│   ├── data-grid/              # 数据表格
-│   ├── flow-editor/            # 流程编排画布
-│   ├── charts/                 # 图表组件
-│   └── forms/                  # 表单组件
-│
-├── api-sdk/                    # API SDK封装
-│   ├── data-management/        # 数据管理API
-│   ├── operator-market/        # 算子市场API
-│   └── pipeline/               # 流程编排API
-│
-└── utils/                      # 工具库
-    ├── date-helpers/           # 日期工具
-    ├── validation/             # 表单验证
-    └── constants/              # 常量定义
-```
 
 ## 部署架构设计
 
@@ -738,8 +691,8 @@ CI/CD流水线
 │   └── 消息队列接入            # Kafka/RabbitMQ消息
 │
 ├── 数据处理层
-│   ├── 流式处理引擎            # Ray/Spark Streaming
-│   ├── 批处理引擎              # DataX/Spark Batch
+│   ├── 流式处理引擎            # Ray
+│   ├── 批处理引擎              # DataX
 │   ├── 算子执行引擎            # Python Runtime
 │   └── 模型推理引擎            # TensorFlow/PyTorch
 │
