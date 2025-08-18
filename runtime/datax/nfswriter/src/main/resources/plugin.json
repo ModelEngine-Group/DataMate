@@ -1,0 +1,6 @@
+{
+    "name": "nfswriter",
+    "class": "com.modelengine.edatamate.plugin.writer.nfswriter.NfsWriter",
+    "description": "write to local",
+    "developer": "modelengine"
+}
