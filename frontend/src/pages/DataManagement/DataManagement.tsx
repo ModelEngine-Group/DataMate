@@ -1,0 +1,214 @@
+import { Card, Button, Statistic, Table, Tooltip } from "antd";
+import { Badge, Download, Edit, Plus, Trash2 } from "lucide-react";
+import {
+  getStatusBadge,
+  getTypeColor,
+  getTypeIcon,
+  statisticsData,
+} from "@/mock/dataset";
+import TagManager from "./components/TagManagement";
+import { Link, useNavigate } from "react-router";
+import { useState } from "react";
+import { useDatasets } from "./hooks/useDatasets";
+import { SearchControls } from "@/components/SearchControls";
+import CardView from "@/components/CardView";
+import type { Dataset } from "@/types/dataset";
+
+export default function DatasetManagementPage() {
+  const {
+    datasets,
+    favoriteDatasets,
+    contextHolder,
+    searchTerm,
+    filterOptions,
+    setSearchTerm,
+    handleFiltersChange,
+    handleToggleFavorite,
+    handleDownloadDataset,
+    handleDeleteDataset,
+  } = useDatasets();
+
+  const navigate = useNavigate();
+  const [viewMode, setViewMode] = useState<"card" | "list">("card");
+
+  const operations = [
+    {
+      key: "edit",
+      label: "编辑",
+      icon: <Edit className="w-4 h-4" />,
+      onClick: (item) => {
+        navigate(`/data/management/create`);
+      },
+    },
+    {
+      key: "download",
+      label: "下载",
+      icon: <Download className="w-4 h-4" />,
+      onClick: handleDownloadDataset,
+    },
+    {
+      key: "delete",
+      label: "删除",
+      icon: <Trash2 className="w-4 h-4" />,
+      onClick: (item) => handleDeleteDataset(item.id),
+    },
+  ];
+
+  const columns = [
+    {
+      title: "名称",
+      dataIndex: "name",
+      key: "name",
+      render: (text: string, record: Dataset) => (
+        <div className="flex items-center gap-3">
+          <div
+            className={`w-8 h-8 ${getTypeColor(
+              record.type
+            )} rounded flex items-center justify-center`}
+          >
+            {getTypeIcon(record.type)}
+          </div>
+          <div>
+            <div className="font-medium text-gray-900">{record.name}</div>
+            <div className="text-xs text-gray-500 truncate">
+              {record.description}
+            </div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: "类型",
+      dataIndex: "type",
+      key: "type",
+      render: (type: string) => <Badge>{type}</Badge>,
+      width: 100,
+    },
+    {
+      title: "大小",
+      dataIndex: "size",
+      key: "size",
+      width: 120,
+    },
+    {
+      title: "数据项",
+      dataIndex: "itemCount",
+      key: "itemCount",
+      render: (count: number) => <span>{count?.toLocaleString()}</span>,
+      width: 100,
+    },
+    {
+      title: "质量",
+      dataIndex: "quality",
+      key: "quality",
+      render: (quality: number) => (
+        <span className="font-medium">{quality}%</span>
+      ),
+      width: 100,
+    },
+    {
+      title: "状态",
+      dataIndex: "status",
+      key: "status",
+      render: (_: any, record: Dataset) => (
+        <Badge className={getStatusBadge(record.status)?.color}>
+          {getStatusBadge(record.status)?.label}
+        </Badge>
+      ),
+      width: 120,
+    },
+    {
+      title: "操作",
+      key: "actions",
+      width: 200,
+      render: (_: any, record: Dataset) => (
+        <div className="flex items-center gap-2">
+          {operations.map((op) => (
+            <Tooltip key={op.key} title={op.label}>
+              <Button
+                type="text"
+                icon={op.icon}
+                onClick={() => op.onClick(record)}
+              />
+            </Tooltip>
+          ))}
+        </div>
+      ),
+    },
+  ];
+
+  const renderCardView = () => (
+    <CardView
+      data={datasets}
+      pageSize={9}
+      operations={operations}
+      onView={(dataset) => {
+        navigate("/data/management/detail/" + dataset.id);
+      }}
+      onFavorite={(item) => handleToggleFavorite(item.id)}
+      isFavorite={(item) => favoriteDatasets.has(item.id)}
+    />
+  );
+
+  const renderListView = () => (
+    <Table columns={columns} dataSource={datasets} rowKey="id" />
+  );
+
+  return (
+    <div className="space-y-6">
+      {contextHolder}
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-bold">数据管理</h1>
+        </div>
+        <div className="flex gap-2">
+          {/* tasks */}
+          <TagManager />
+          <Link to="/data/management/create">
+            <Button type="primary" icon={<Plus className="w-4 h-4 mr-2" />}>
+              创建数据集
+            </Button>
+          </Link>
+        </div>
+      </div>
+
+      {/* Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card title="数据集统计">
+          <div className="grid grid-cols-4">
+            {statisticsData.map((item) => (
+              <Statistic
+                key={item.title}
+                title={item.title}
+                value={item.value}
+              />
+            ))}
+          </div>
+        </Card>
+        <Card title="大小统计">
+          <div className="grid grid-cols-4">
+            {statisticsData.map((item) => (
+              <Statistic
+                key={item.title}
+                title={item.title}
+                value={`${item.value} MB`}
+              />
+            ))}
+          </div>
+        </Card>
+      </div>
+      <SearchControls
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        searchPlaceholder="搜索数据集名称、描述或标签..."
+        filters={filterOptions}
+        onFiltersChange={handleFiltersChange}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        showViewToggle
+      />
+      {viewMode === "card" ? renderCardView() : renderListView()}
+    </div>
+  );
+}

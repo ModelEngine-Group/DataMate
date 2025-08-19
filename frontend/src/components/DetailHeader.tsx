@@ -1,0 +1,123 @@
+import React from "react";
+import { Database } from "lucide-react";
+import { Card, Dropdown, Button, Tag, Tooltip } from "antd";
+import type { ItemType } from "antd/es/menu/interface";
+
+interface StatisticItem {
+  icon: React.ReactNode;
+  label: string;
+  value: string | number;
+}
+
+interface OperationItem {
+  key: string;
+  label: string;
+  icon?: React.ReactNode;
+  isDropdown?: boolean;
+  items?: ItemType[];
+  onMenuClick?: (key: string) => void;
+  onClick?: () => void;
+  danger?: boolean;
+}
+
+interface BaseDataItem {
+  id: number;
+  icon?: React.ReactNode;
+  status?: {
+    label: string;
+    icon?: React.ReactNode;
+    color?: string;
+  };
+  name: string;
+  description: string;
+  createdAt: string;
+  lastUpdated: string;
+}
+
+interface DetailHeaderProps<T> {
+  data: T;
+  statistics: StatisticItem[];
+  operations: OperationItem[];
+}
+
+const DetailHeader: React.FC<DetailHeaderProps<any>> = <T,>({
+  data,
+  statistics,
+  operations,
+}: DetailHeaderProps<T>) => {
+  return (
+    <Card>
+      <div className="flex items-start justify-between">
+        <div className="flex items-start gap-4 flex-1">
+          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg">
+            {data?.icon || <Database className="w-8 h-8" />}
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-2">
+              <h1 className="text-2xl font-bold text-gray-900">{data.name}</h1>
+              {data.status && (
+                <Tag icon={data.status.icon} color={data.status.color}>
+                  {data.status.label}
+                </Tag>
+              )}
+            </div>
+            <p className="text-gray-700 mb-4">{data.description}</p>
+            <div className="flex items-center gap-6 text-sm">
+              {statistics.map((stat, idx) => (
+                <div key={idx} className="flex items-center gap-1">
+                  {stat.icon}
+                  <span>
+                    {stat.value} {stat.label}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {operations.map((op) => {
+            if (op.isDropdown) {
+              return (
+                <Dropdown
+                  key={op.key}
+                  menu={{
+                    items: op.items as ItemType[],
+                    onClick: op.onMenuClick,
+                  }}
+                >
+                  <Tooltip title={op.label}>
+                    <Button icon={op.icon} />
+                  </Tooltip>
+                </Dropdown>
+              );
+            }
+            return (
+              <Tooltip title={op.label}>
+                <Button
+                  key={op.key}
+                  onClick={op.onClick}
+                  className={
+                    op.danger
+                      ? "text-red-600 border-red-200 bg-transparent"
+                      : ""
+                  }
+                  icon={op.icon}
+                />
+              </Tooltip>
+            );
+          })}
+          {/* <Dropdown trigger={['click']} menu={{
+                        items: operations as ItemType[], onClick: ({ key }) => {
+                            const operation = operations.find(op => op.key === key);
+                            if (operation?.onClick) {
+                                operation.onClick(item);
+                            }
+                        }
+                    }}><div className="cursor-pointer"><Ellipsis /></div></Dropdown> */}
+        </div>
+      </div>
+    </Card>
+  );
+};
+
+export default DetailHeader;
