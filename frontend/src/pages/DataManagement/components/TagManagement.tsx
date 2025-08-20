@@ -1,4 +1,4 @@
-"use client";
+
 
 import React, { useState } from "react";
 import { Drawer, Input, Button } from "antd";
@@ -61,7 +61,7 @@ const TagManager: React.FC = () => {
         onClose={() => setShowTagManager(false)}
         title="标签管理"
       >
-        <div className="space-y-6 mt-6">
+        <div className=" mt-6">
           {/* Add New Tag */}
           <div className="space-y-2">
             <label>添加新标签</label>

@@ -1,8 +1,6 @@
-"use client";
-
 import type React from "react";
 import { useState, useRef, useEffect } from "react";
-import { Card, Button, Badge, Slider, message } from "antd";
+import { Button, Badge, Checkbox, message } from "antd";
 import {
   Square,
   Circle,
@@ -181,10 +179,7 @@ const medicalAnnotationOptions = [
 ];
 
 export default function ImageAnnotationWorkspace({
-  task,
   currentFileIndex,
-  onSaveAndNext,
-  onSkipAndNext,
 }: ImageAnnotationWorkspaceProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(
@@ -386,7 +381,7 @@ export default function ImageAnnotationWorkspace({
   };
 
   const handleUpdate = () => {
-    toast({
+    message({
       title: "标注已更新",
       description: "医学标注信息已保存",
     });
@@ -423,33 +418,31 @@ export default function ImageAnnotationWorkspace({
         </div>
 
         {/* Image List */}
-        <ScrollArea className="h-[calc(100vh-120px)]">
-          <div className="p-2">
-            {mockMedicalImages.map((image, index) => (
-              <div
-                key={image.id}
-                className={`flex items-center p-3 mb-2 rounded-lg cursor-pointer transition-colors ${
-                  selectedImageIndex === index
-                    ? "bg-blue-50 border border-blue-200"
-                    : "hover:bg-gray-50"
-                }`}
-                onClick={() => setSelectedImageIndex(index)}
-              >
-                <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center text-sm font-medium mr-3">
-                  {index + 1}
-                </div>
-                <img
-                  src={image.thumbnail || "/placeholder.svg"}
-                  alt={`Slide ${index + 1}`}
-                  className="w-12 h-12 rounded border mr-3"
-                />
-                <div className="flex-1">
-                  <div className="font-medium text-sm">{image.name}</div>
-                </div>
+        <div className="p-2">
+          {mockMedicalImages.map((image, index) => (
+            <div
+              key={image.id}
+              className={`flex items-center p-3 mb-2 rounded-lg cursor-pointer transition-colors ${
+                selectedImageIndex === index
+                  ? "bg-blue-50 border border-blue-200"
+                  : "hover:bg-gray-50"
+              }`}
+              onClick={() => setSelectedImageIndex(index)}
+            >
+              <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center text-sm font-medium mr-3">
+                {index + 1}
               </div>
-            ))}
-          </div>
-        </ScrollArea>
+              <img
+                src={image.thumbnail || "/placeholder.svg"}
+                alt={`Slide ${index + 1}`}
+                className="w-12 h-12 rounded border mr-3"
+              />
+              <div className="flex-1">
+                <div className="font-medium text-sm">{image.name}</div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Main Content Area */}
@@ -482,24 +475,14 @@ export default function ImageAnnotationWorkspace({
 
               {/* Zoom Controls */}
               <div className="absolute bottom-4 left-4 flex items-center space-x-2 bg-white rounded-lg shadow-lg p-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setZoom(Math.max(zoom / 1.2, 0.1))}
-                >
+                <Button onClick={() => setZoom(Math.max(zoom / 1.2, 0.1))}>
                   <ZoomOut className="w-4 h-4" />
                 </Button>
                 <span className="text-sm px-2">{Math.round(zoom * 100)}%</span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setZoom(Math.min(zoom * 1.2, 5))}
-                >
+                <Button onClick={() => setZoom(Math.min(zoom * 1.2, 5))}>
                   <ZoomIn className="w-4 h-4" />
                 </Button>
                 <Button
-                  variant="outline"
-                  size="sm"
                   onClick={() => {
                     setZoom(1);
                     setPan({ x: 0, y: 0 });
@@ -537,10 +520,10 @@ export default function ImageAnnotationWorkspace({
 
             {/* Navigation Controls */}
             <div className="flex items-center justify-center mt-4 space-x-2">
-              <Button variant="outline" size="sm">
+              <Button>
                 <ArrowLeft className="w-4 h-4" />
               </Button>
-              <Button variant="outline" size="sm">
+              <Button>
                 <ArrowRight className="w-4 h-4" />
               </Button>
               <span className="text-sm text-gray-600 mx-4">手</span>
@@ -555,78 +538,68 @@ export default function ImageAnnotationWorkspace({
           <div>
             <h3 className="font-semibold text-lg mb-4">标注</h3>
 
-            <ScrollArea className="h-[calc(100vh-200px)]">
-              <div className="space-y-4">
-                {medicalAnnotationOptions.map((option) => (
-                  <div key={option.id} className="space-y-2">
-                    <Label className="text-sm font-medium">
-                      {option.label}
-                    </Label>
+            <div className="space-y-4">
+              {medicalAnnotationOptions.map((option) => (
+                <div key={option.id} className="space-y-2">
+                  <span className="text-sm font-medium">{option.label}</span>
 
-                    {option.type === "radio" && (
-                      <div className="space-y-1">
-                        {option.options?.map((opt) => (
-                          <div
-                            key={opt}
-                            className="flex items-center space-x-2"
-                          >
-                            <input
-                              type="radio"
-                              name={option.id}
-                              value={opt}
-                              onChange={(e) =>
-                                handleAnnotationValueChange(
-                                  option.id,
-                                  e.target.value
-                                )
-                              }
-                              className="w-4 h-4"
-                            />
-                            <span className="text-sm">{opt}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                  {option.type === "radio" && (
+                    <div className="space-y-1">
+                      {option.options?.map((opt) => (
+                        <div key={opt} className="flex items-center space-x-2">
+                          <input
+                            type="radio"
+                            name={option.id}
+                            value={opt}
+                            onChange={(e) =>
+                              handleAnnotationValueChange(
+                                option.id,
+                                e.target.value
+                              )
+                            }
+                            className="w-4 h-4"
+                          />
+                          <span className="text-sm">{opt}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
-                    {option.type === "checkbox" && (
-                      <div className="space-y-1">
-                        {option.options?.map((opt) => (
-                          <div
-                            key={opt}
-                            className="flex items-center space-x-2"
-                          >
-                            <Checkbox
-                              checked={
-                                annotationValues[`${option.id}_${opt}`] || false
-                              }
-                              onCheckedChange={(checked) =>
-                                handleAnnotationValueChange(
-                                  `${option.id}_${opt}`,
-                                  checked
-                                )
-                              }
-                            />
-                            <span className="text-sm">{opt}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                  {option.type === "checkbox" && (
+                    <div className="space-y-1">
+                      {option.options?.map((opt) => (
+                        <div key={opt} className="flex items-center space-x-2">
+                          <Checkbox
+                            checked={
+                              annotationValues[`${option.id}_${opt}`] || false
+                            }
+                            onChange={(checked) =>
+                              handleAnnotationValueChange(
+                                `${option.id}_${opt}`,
+                                checked
+                              )
+                            }
+                          />
+                          <span className="text-sm">{opt}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
-                    {option.type === "textarea" && (
-                      <textarea
-                        className="w-full p-2 border rounded-md text-sm resize-none"
-                        rows={3}
-                        placeholder={`请输入${option.label}`}
-                        value={annotationValues[option.id] || ""}
-                        onChange={(e) =>
-                          handleAnnotationValueChange(option.id, e.target.value)
-                        }
-                      />
-                    )}
-                  </div>
-                ))}
-              </div>
-            </ScrollArea>
+                  {option.type === "textarea" && (
+                    <textarea
+                      className="w-full p-2 border rounded-md text-sm resize-none"
+                      rows={3}
+                      placeholder={`请输入${option.label}`}
+                      value={annotationValues[option.id] || ""}
+                      onChange={(e) =>
+                        handleAnnotationValueChange(option.id, e.target.value)
+                      }
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="pt-4 border-t">

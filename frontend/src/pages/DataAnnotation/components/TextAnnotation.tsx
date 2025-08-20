@@ -1,7 +1,5 @@
-"use client";
-
 import { useState } from "react";
-import { Card, Button, Badge, Slider, message } from "antd";
+import { Card, Button, Badge, Input, Checkbox } from "antd";
 
 import {
   File,
@@ -91,8 +89,6 @@ const mockFiles: FileData[] = [
 ];
 
 export default function TextAnnotationWorkspace({
-  task,
-  currentFileIndex,
   onSaveAndNext,
   onSkipAndNext,
 }: TextAnnotationWorkspaceProps) {
@@ -121,7 +117,7 @@ export default function TextAnnotationWorkspace({
       };
       setSelectedFile(updatedFile);
 
-      toast({
+      message({
         title: status === "approved" ? "已标记为留用" : "已标记为不留用",
         description: `QA对 "${qaId}" 状态已更新`,
       });
@@ -141,7 +137,7 @@ export default function TextAnnotationWorkspace({
       setSelectedFile(updatedFile);
       setSelectedQAs([]);
 
-      toast({
+      message({
         title: "批量操作完成",
         description: `已将 ${selectedQAs.length} 个QA对标记为留用`,
       });
@@ -161,7 +157,7 @@ export default function TextAnnotationWorkspace({
       setSelectedFile(updatedFile);
       setSelectedQAs([]);
 
-      toast({
+      message({
         title: "批量操作完成",
         description: `已将 ${selectedQAs.length} 个QA对标记为不留用`,
       });
@@ -191,7 +187,7 @@ export default function TextAnnotationWorkspace({
       case "rejected":
         return <Badge className="bg-red-100 text-red-800">不留用</Badge>;
       default:
-        return <Badge variant="outline">待标注</Badge>;
+        return <Badge>待标注</Badge>;
     }
   };
 
@@ -225,7 +221,7 @@ export default function TextAnnotationWorkspace({
             </div>
           </div>
 
-          <ScrollArea className="h-96">
+          <div className="h-96">
             <div className="space-y-2">
               {mockFiles.map((file) => (
                 <div
@@ -249,7 +245,7 @@ export default function TextAnnotationWorkspace({
                 </div>
               ))}
             </div>
-          </ScrollArea>
+          </div>
         </div>
       </div>
 
@@ -273,63 +269,59 @@ export default function TextAnnotationWorkspace({
                   <CheckCircle className="w-4 h-4 mr-2" />
                   保存并下一个
                 </Button>
-                <Button onClick={onSkipAndNext} variant="outline">
-                  跳过
-                </Button>
+                <Button onClick={onSkipAndNext}>跳过</Button>
               </div>
             </div>
 
             {/* Filters and Batch Actions */}
             <Card>
-              <CardContent className="pt-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                      <Input
-                        placeholder="搜索QA对..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-10 w-64"
-                      />
-                    </div>
-                    <select
-                      value={statusFilter}
-                      onChange={(e) => setStatusFilter(e.target.value)}
-                      className="px-3 py-2 border rounded-md text-sm"
-                    >
-                      <option value="all">全部状态</option>
-                      <option value="pending">待标注</option>
-                      <option value="approved">已留用</option>
-                      <option value="rejected">不留用</option>
-                    </select>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <Input
+                      placeholder="搜索QA对..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10 w-64"
+                    />
                   </div>
-
-                  {selectedQAs.length > 0 && (
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm text-gray-600">
-                        已选择 {selectedQAs.length} 个
-                      </span>
-                      <Button
-                        onClick={handleBatchApprove}
-                        size="sm"
-                        className="bg-green-600 hover:bg-green-700"
-                      >
-                        <ThumbsUp className="w-4 h-4 mr-1" />
-                        批量留用
-                      </Button>
-                      <Button
-                        onClick={handleBatchReject}
-                        size="sm"
-                        variant="destructive"
-                      >
-                        <ThumbsDown className="w-4 h-4 mr-1" />
-                        批量不留用
-                      </Button>
-                    </div>
-                  )}
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="px-3 py-2 border rounded-md text-sm"
+                  >
+                    <option value="all">全部状态</option>
+                    <option value="pending">待标注</option>
+                    <option value="approved">已留用</option>
+                    <option value="rejected">不留用</option>
+                  </select>
                 </div>
-              </CardContent>
+
+                {selectedQAs.length > 0 && (
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm text-gray-600">
+                      已选择 {selectedQAs.length} 个
+                    </span>
+                    <Button
+                      onClick={handleBatchApprove}
+                      size="sm"
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      <ThumbsUp className="w-4 h-4 mr-1" />
+                      批量留用
+                    </Button>
+                    <Button
+                      onClick={handleBatchReject}
+                      size="sm"
+                      variant="destructive"
+                    >
+                      <ThumbsDown className="w-4 h-4 mr-1" />
+                      批量不留用
+                    </Button>
+                  </div>
+                )}
+              </div>
             </Card>
 
             {/* QA List */}
@@ -340,112 +332,110 @@ export default function TextAnnotationWorkspace({
                     selectedQAs.length === filteredQAs.length &&
                     filteredQAs.length > 0
                   }
-                  onCheckedChange={handleSelectAll}
+                  onChange={handleSelectAll}
                 />
                 <span className="text-sm font-medium">全选</span>
               </div>
 
-              <ScrollArea className="h-500">
+              <div className="h-500">
                 <div className="space-y-4">
                   {filteredQAs.map((qa) => (
                     <Card
                       key={qa.id}
                       className="hover:shadow-md transition-shadow"
                     >
-                      <CardContent className="pt-4">
-                        <div className="space-y-3">
-                          <div className="flex items-start justify-between">
-                            <div className="flex items-center space-x-2">
-                              <Checkbox
-                                checked={selectedQAs.includes(qa.id)}
-                                onCheckedChange={(checked) =>
-                                  handleQASelect(qa.id, checked as boolean)
-                                }
-                              />
-                              <MessageSquare className="w-4 h-4 text-blue-500" />
-                              <span className="text-sm font-medium">
-                                QA-{qa.id}
+                      <div className="space-y-3">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              checked={selectedQAs.includes(qa.id)}
+                              onCheckedChange={(checked) =>
+                                handleQASelect(qa.id, checked as boolean)
+                              }
+                            />
+                            <MessageSquare className="w-4 h-4 text-blue-500" />
+                            <span className="text-sm font-medium">
+                              QA-{qa.id}
+                            </span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            {qa.confidence && (
+                              <span
+                                className={`text-xs ${getConfidenceColor(
+                                  qa.confidence
+                                )}`}
+                              >
+                                置信度: {(qa.confidence * 100).toFixed(1)}%
                               </span>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              {qa.confidence && (
-                                <span
-                                  className={`text-xs ${getConfidenceColor(
-                                    qa.confidence
-                                  )}`}
-                                >
-                                  置信度: {(qa.confidence * 100).toFixed(1)}%
-                                </span>
-                              )}
-                              {getStatusBadge(qa.status)}
-                            </div>
-                          </div>
-
-                          <div className="space-y-2">
-                            <div>
-                              <div className="flex items-center space-x-2 mb-1">
-                                <HelpCircle className="w-4 h-4 text-blue-500" />
-                                <span className="text-sm font-medium text-blue-700">
-                                  问题
-                                </span>
-                              </div>
-                              <p className="text-sm bg-blue-50 p-3 rounded">
-                                {qa.question}
-                              </p>
-                            </div>
-
-                            <div>
-                              <div className="flex items-center space-x-2 mb-1">
-                                <MessageSquare className="w-4 h-4 text-green-500" />
-                                <span className="text-sm font-medium text-green-700">
-                                  答案
-                                </span>
-                              </div>
-                              <p className="text-sm bg-green-50 p-3 rounded">
-                                {qa.answer}
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center justify-end space-x-2">
-                            <Button
-                              onClick={() =>
-                                handleQAStatusChange(qa.id, "approved")
-                              }
-                              size="sm"
-                              variant={
-                                qa.status === "approved" ? "default" : "outline"
-                              }
-                              className={
-                                qa.status === "approved"
-                                  ? "bg-green-600 hover:bg-green-700"
-                                  : ""
-                              }
-                            >
-                              <ThumbsUp className="w-4 h-4 mr-1" />
-                              留用
-                            </Button>
-                            <Button
-                              onClick={() =>
-                                handleQAStatusChange(qa.id, "rejected")
-                              }
-                              size="sm"
-                              variant={
-                                qa.status === "rejected"
-                                  ? "destructive"
-                                  : "outline"
-                              }
-                            >
-                              <ThumbsDown className="w-4 h-4 mr-1" />
-                              不留用
-                            </Button>
+                            )}
+                            {getStatusBadge(qa.status)}
                           </div>
                         </div>
-                      </CardContent>
+
+                        <div className="space-y-2">
+                          <div>
+                            <div className="flex items-center space-x-2 mb-1">
+                              <HelpCircle className="w-4 h-4 text-blue-500" />
+                              <span className="text-sm font-medium text-blue-700">
+                                问题
+                              </span>
+                            </div>
+                            <p className="text-sm bg-blue-50 p-3 rounded">
+                              {qa.question}
+                            </p>
+                          </div>
+
+                          <div>
+                            <div className="flex items-center space-x-2 mb-1">
+                              <MessageSquare className="w-4 h-4 text-green-500" />
+                              <span className="text-sm font-medium text-green-700">
+                                答案
+                              </span>
+                            </div>
+                            <p className="text-sm bg-green-50 p-3 rounded">
+                              {qa.answer}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-end space-x-2">
+                          <Button
+                            onClick={() =>
+                              handleQAStatusChange(qa.id, "approved")
+                            }
+                            size="sm"
+                            variant={
+                              qa.status === "approved" ? "default" : "outline"
+                            }
+                            className={
+                              qa.status === "approved"
+                                ? "bg-green-600 hover:bg-green-700"
+                                : ""
+                            }
+                          >
+                            <ThumbsUp className="w-4 h-4 mr-1" />
+                            留用
+                          </Button>
+                          <Button
+                            onClick={() =>
+                              handleQAStatusChange(qa.id, "rejected")
+                            }
+                            size="sm"
+                            variant={
+                              qa.status === "rejected"
+                                ? "destructive"
+                                : "outline"
+                            }
+                          >
+                            <ThumbsDown className="w-4 h-4 mr-1" />
+                            不留用
+                          </Button>
+                        </div>
+                      </div>
                     </Card>
                   ))}
                 </div>
-              </ScrollArea>
+              </div>
             </div>
           </div>
         ) : (

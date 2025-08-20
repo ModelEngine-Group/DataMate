@@ -1,4 +1,4 @@
-"use client"
+
 
 import { Button } from "antd";
 import OperatorUpload from "@/app/(layout)/operator-market/components/operator-upload";

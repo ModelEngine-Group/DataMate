@@ -1,11 +1,12 @@
 import React from "react";
 import { Card } from "antd";
+import { CheckCircleOutlined } from "@ant-design/icons";
 
 interface RadioCardOption {
   value: string;
   label: string;
   description?: string;
-  icon?: React.ElementType;
+  icon?: React.ReactNode;
   color?: string;
 }
 
@@ -24,49 +25,34 @@ const RadioCard: React.FC<RadioCardProps> = ({
 }) => {
   return (
     <div
-      className={`grid xs:grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 ${
-        className || ""
-      }`}
+      className={`grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 ${className || ""}`}
+      style={{ gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}
     >
       {options.map((option) => (
         <Card
           key={option.value}
+          hoverable
+          style={{
+            borderColor: value === option.value ? "#1677ff" : undefined,
+            background: value === option.value ? "#e6f7ff" : undefined,
+            cursor: "pointer",
+          }}
           onClick={() => onChange(option.value)}
-          className={`cursor-pointer transition-all ${
-            value === option.value ? "border border-blue-500 shadow" : ""
-          }`}
         >
-          <div className="text-center">
-            {option.icon && (
-              <option.icon
-                className={`w-8 h-8 mx-auto mb-2 ${
-                  value === option.value
-                    ? option.color?.split(" ")[2] || "text-blue-500"
-                    : "text-gray-400"
-                }`}
-              />
-            )}
-            <h3
-              className={`font-medium text-sm mb-1 ${
-                value === option.value
-                  ? option.color?.split(" ")[2] || "text-blue-500"
-                  : "text-gray-900"
-              }`}
-            >
-              {option.label}
-            </h3>
-            {option.description && (
-              <p
-                className={`text-xs ${
-                  value === option.value
-                    ? option.color?.split(" ")[2] || "text-blue-500"
-                    : "text-gray-500"
-                }`}
-              >
-                {option.description}
-              </p>
-            )}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              marginBottom: 8,
+            }}
+          >
+            {option.icon && <span style={{ fontSize: 24 }}>{option.icon}</span>}
+            <span style={{ fontWeight: 500 }}>{option.label}</span>
           </div>
+          {option.description && (
+            <div style={{ color: "#888", fontSize: 13 }}>{option.description}</div>
+          )}
         </Card>
       ))}
     </div>

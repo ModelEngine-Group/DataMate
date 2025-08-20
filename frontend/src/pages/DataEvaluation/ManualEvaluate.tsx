@@ -1,7 +1,5 @@
-"use client";
-
 import { useState, useEffect } from "react";
-import { Button, Card, Badge, Input, Typography } from "antd";
+import { Button, Card, Badge, Input, Typography, Breadcrumb } from "antd";
 import {
   LeftOutlined,
   RightOutlined,
@@ -15,6 +13,7 @@ import {
 } from "@ant-design/icons";
 import { mockTasks, presetEvaluationDimensions } from "@/mock/evaluation";
 import { useNavigate } from "react-router";
+import DetailHeader from "@/components/DetailHeader";
 
 const { TextArea } = Input;
 const { Title } = Typography;
@@ -49,8 +48,9 @@ const slices: EvaluationSlice[] = Array.from(
   })
 );
 
-const ManualEvaluatePage = ({ taskId }) => {
+const ManualEvaluatePage = () => {
   const navigate = useNavigate();
+  const taskId = mockTasks[0].id;
   // 人工评估状态
   const [currentEvaluationTask, setCurrentEvaluationTask] =
     useState<EvaluationTask | null>(mockTasks[0]);
@@ -123,11 +123,6 @@ const ManualEvaluatePage = ({ taskId }) => {
 
   // 完成评估
   const handleCompleteEvaluation = () => {
-    // 计算平均分
-    const allScores = Object.values(sliceScores).flatMap((scores) =>
-      Object.values(scores)
-    );
-    // const averageScore = allScores.length > 0 ? Math.round((allScores.reduce((a, b) => a + b, 0) / allScores.length) * 20) : 0
     navigate(`/data/evaluation/task-report/${mockTasks[0].id}`);
   };
 
@@ -179,356 +174,231 @@ const ManualEvaluatePage = ({ taskId }) => {
     );
   };
 
+  // 头部统计信息
+  const statistics = [
+    {
+      icon: <DatabaseOutlined className="text-gray-500" />,
+      label: "数据集",
+      value: currentEvaluationTask?.datasetName || "",
+    },
+    {
+      icon: <ScissorOutlined className="text-gray-500" />,
+      label: "切片方法",
+      value: currentEvaluationTask?.sliceConfig?.method || "",
+    },
+    {
+      icon: <AimOutlined className="text-gray-500" />,
+      label: "样本数量",
+      value: evaluationSlices.length,
+    },
+    {
+      icon: <CalendarOutlined className="text-gray-500" />,
+      label: "创建时间",
+      value: currentEvaluationTask?.createdAt || "",
+    },
+  ];
+
   return (
-    <div style={{ minHeight: "100vh", background: "#f5f6fa" }}>
-      <div style={{ maxWidth: 1200, margin: "0 auto", padding: 24 }}>
-        {/* 头部信息 */}
-        <Card style={{ marginBottom: 24 }}>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: 16,
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-              <Button
-                type="text"
-                size="small"
-                onClick={() => navigate("/data/evaluation")}
-                icon={<LeftOutlined />}
-              >
-                返回列表
-              </Button>
-              <div>
-                <Title level={4} style={{ margin: 0 }}>
-                  {currentEvaluationTask?.name}
-                </Title>
-                <div style={{ color: "#888" }}>人工评估任务</div>
-              </div>
-            </div>
-            <div style={{ textAlign: "right" }}>
-              <div style={{ fontSize: 13, color: "#888" }}>进度</div>
-              <div style={{ fontSize: 22, fontWeight: 700, color: "#1677ff" }}>
-                {Math.round(progress)}%
-              </div>
-            </div>
+    <div className="space-y-4">
+      <Breadcrumb
+        items={[
+          {
+            title: (
+              <span onClick={() => navigate("/data/evaluation")}>数据评估</span>
+            ),
+          },
+          { title: "人工评估", key: "manual-evaluate" },
+        ]}
+      />
+      {/* 头部信息 */}
+      <DetailHeader
+        data={{
+          name: currentEvaluationTask?.name || "",
+          description: "人工评估任务",
+          icon: <FileTextOutlined />,
+          createdAt: currentEvaluationTask?.createdAt,
+          lastUpdated: currentEvaluationTask?.createdAt,
+        }}
+        statistics={statistics}
+        operations={[]}
+      />
+      {/* 进度条 */}
+      <div className="flex justify-between items-center mt-4 mb-6">
+        <div className="text-xs text-gray-500">
+          当前进度: {currentSliceIndex + 1} / {evaluationSlices.length}
+        </div>
+        <div className="flex items-center gap-4">
+          <span className="text-xs text-gray-500">
+            {Math.round(progress)}% 完成
+          </span>
+          <div className="w-48 bg-gray-200 rounded h-2">
+            <div
+              className="bg-blue-600 h-2 rounded transition-all"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          <span className="text-2xl font-bold text-blue-600">
+            {Math.round(progress)}%
+          </span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
+        {/* 左侧：切片内容 */}
+        <Card>
+          <div className="border-b border-gray-100 pb-4 mb-4 flex justify-between items-center">
+            <span className="text-base font-semibold flex items-center gap-2">
+              <FileTextOutlined />
+              切片内容
+            </span>
+            <Badge
+              count={`切片 ${currentSliceIndex + 1}`}
+              style={{ background: "#fafafa", color: "#333" }}
+            />
           </div>
 
-          {/* 任务基本信息 */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(4, 1fr)",
-              gap: 16,
-              fontSize: 13,
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <DatabaseOutlined style={{ color: "#888" }} />
-              <span style={{ color: "#888" }}>数据集:</span>
-              <span style={{ fontWeight: 500 }}>
-                {currentEvaluationTask?.datasetName}
-              </span>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <ScissorOutlined style={{ color: "#888" }} />
-              <span style={{ color: "#888" }}>切片方法:</span>
-              <span style={{ fontWeight: 500 }}>
-                {currentEvaluationTask?.sliceConfig?.method}
-              </span>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <AimOutlined style={{ color: "#888" }} />
-              <span style={{ color: "#888" }}>样本数量:</span>
-              <span style={{ fontWeight: 500 }}>{evaluationSlices.length}</span>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <CalendarOutlined style={{ color: "#888" }} />
-              <span style={{ color: "#888" }}>创建时间:</span>
-              <span style={{ fontWeight: 500 }}>
-                {currentEvaluationTask?.createdAt}
-              </span>
-            </div>
-          </div>
+          <div className="flex flex-col gap-2">
+            {currentSlice && (
+              <>
+                {/* 切片元信息 */}
+                <div className="bg-gray-50 rounded p-4 text-sm">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <span className="text-gray-500">来源文件:</span>
+                      <span className="ml-2 font-medium">
+                        {currentSlice.sourceFile}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">处理方法:</span>
+                      <span className="ml-2 font-medium">
+                        {currentSlice.metadata.processingMethod}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">位置:</span>
+                      <span className="ml-2 font-medium">
+                        {currentSlice.metadata.startPosition}-
+                        {currentSlice.metadata.endPosition}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">章节:</span>
+                      <span className="ml-2 font-medium">
+                        {currentSlice.metadata.section}
+                      </span>
+                    </div>
+                  </div>
+                </div>
 
-          {/* 进度条 */}
-          <div style={{ marginTop: 24 }}>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                fontSize: 13,
-                color: "#888",
-                marginBottom: 6,
-              }}
-            >
-              <span>
-                当前进度: {currentSliceIndex + 1} / {evaluationSlices.length}
-              </span>
-              <span>{Math.round(progress)}% 完成</span>
-            </div>
-            <div
-              style={{
-                width: "100%",
-                background: "#e5e7eb",
-                borderRadius: 4,
-                height: 8,
-              }}
-            >
-              <div
-                style={{
-                  background: "#1677ff",
-                  height: 8,
-                  borderRadius: 4,
-                  width: `${progress}%`,
-                  transition: "width 0.3s",
-                }}
-              />
-            </div>
+                {/* 切片内容 */}
+                <div className="border border-gray-100 rounded p-4 min-h-[180px]">
+                  <div className="text-xs text-gray-500 mb-2">内容预览</div>
+                  <div className="text-gray-900 leading-relaxed">
+                    {currentSlice.content}
+                  </div>
+                </div>
+
+                {/* 导航按钮 */}
+                <div className="flex items-center justify-between border-t border-gray-100 pt-4 mt-2">
+                  <Button
+                    type="default"
+                    icon={<LeftOutlined />}
+                    onClick={() =>
+                      setCurrentSliceIndex(Math.max(0, currentSliceIndex - 1))
+                    }
+                    disabled={currentSliceIndex === 0}
+                  >
+                    上一个
+                  </Button>
+                  <span className="text-xs text-gray-500">
+                    {currentSliceIndex + 1} / {evaluationSlices.length}
+                  </span>
+                  <Button
+                    type="default"
+                    icon={<RightOutlined />}
+                    onClick={() =>
+                      setCurrentSliceIndex(
+                        Math.min(
+                          evaluationSlices.length - 1,
+                          currentSliceIndex + 1
+                        )
+                      )
+                    }
+                    disabled={currentSliceIndex === evaluationSlices.length - 1}
+                  >
+                    下一个
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
         </Card>
 
-        <div
-          style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}
-        >
-          {/* 左侧：切片内容 */}
-          <Card>
-            <div
-              style={{
-                borderBottom: "1px solid #f0f0f0",
-                paddingBottom: 16,
-                marginBottom: 16,
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <span
-                style={{
-                  fontSize: 16,
-                  fontWeight: 600,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                }}
+        {/* 右侧：评估维度 */}
+        <Card>
+          <div className="border-b border-gray-100 pb-4 mb-4">
+            <span className="text-base font-semibold flex items-center gap-2">
+              <StarFilled className="text-yellow-400" />
+              评估维度
+            </span>
+            <div className="text-xs text-gray-500 mt-1">
+              请为每个维度进行1-5星评分
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-4">
+            {allDimensions.map((dimension) => (
+              <div
+                key={dimension.id}
+                className="border border-gray-100 rounded p-4"
               >
-                <FileTextOutlined />
-                切片内容
-              </span>
-              <Badge
-                count={`切片 ${currentSliceIndex + 1}`}
-                style={{ background: "#fafafa", color: "#333" }}
+                <StarRating
+                  value={currentScores[dimension.id] || 0}
+                  onChange={(score) =>
+                    updateSliceScore(
+                      currentSlice?.id || "",
+                      dimension.id,
+                      score
+                    )
+                  }
+                  dimension={dimension}
+                />
+              </div>
+            ))}
+
+            {/* 评论区域 */}
+            <div className="border border-gray-100 rounded p-4">
+              <span className="font-medium mb-2 block">评估备注</span>
+              <TextArea
+                placeholder="请输入对该切片的评估备注和建议..."
+                value={sliceComments[currentSlice?.id || ""] || ""}
+                onChange={(e) =>
+                  setSliceComments((prev) => ({
+                    ...prev,
+                    [currentSlice?.id || ""]: e.target.value,
+                  }))
+                }
+                rows={3}
               />
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              {currentSlice && (
-                <>
-                  {/* 切片元信息 */}
-                  <div
-                    style={{
-                      background: "#fafafa",
-                      borderRadius: 8,
-                      padding: 16,
-                      fontSize: 13,
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns: "1fr 1fr",
-                        gap: 12,
-                      }}
-                    >
-                      <div>
-                        <span style={{ color: "#888" }}>来源文件:</span>
-                        <span style={{ marginLeft: 6, fontWeight: 500 }}>
-                          {currentSlice.sourceFile}
-                        </span>
-                      </div>
-                      <div>
-                        <span style={{ color: "#888" }}>处理方法:</span>
-                        <span style={{ marginLeft: 6, fontWeight: 500 }}>
-                          {currentSlice.metadata.processingMethod}
-                        </span>
-                      </div>
-                      <div>
-                        <span style={{ color: "#888" }}>位置:</span>
-                        <span style={{ marginLeft: 6, fontWeight: 500 }}>
-                          {currentSlice.metadata.startPosition}-
-                          {currentSlice.metadata.endPosition}
-                        </span>
-                      </div>
-                      <div>
-                        <span style={{ color: "#888" }}>章节:</span>
-                        <span style={{ marginLeft: 6, fontWeight: 500 }}>
-                          {currentSlice.metadata.section}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* 切片内容 */}
-                  <div
-                    style={{
-                      border: "1px solid #f0f0f0",
-                      borderRadius: 8,
-                      padding: 16,
-                      minHeight: 180,
-                    }}
-                  >
-                    <div
-                      style={{ fontSize: 13, color: "#888", marginBottom: 8 }}
-                    >
-                      内容预览
-                    </div>
-                    <div style={{ color: "#222", lineHeight: 1.7 }}>
-                      {currentSlice.content}
-                    </div>
-                  </div>
-
-                  {/* 导航按钮 */}
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      borderTop: "1px solid #f0f0f0",
-                      paddingTop: 16,
-                      marginTop: 8,
-                    }}
-                  >
-                    <Button
-                      type="default"
-                      icon={<LeftOutlined />}
-                      onClick={() =>
-                        setCurrentSliceIndex(Math.max(0, currentSliceIndex - 1))
-                      }
-                      disabled={currentSliceIndex === 0}
-                    >
-                      上一个
-                    </Button>
-                    <span style={{ fontSize: 13, color: "#888" }}>
-                      {currentSliceIndex + 1} / {evaluationSlices.length}
-                    </span>
-                    <Button
-                      type="default"
-                      icon={<RightOutlined />}
-                      onClick={() =>
-                        setCurrentSliceIndex(
-                          Math.min(
-                            evaluationSlices.length - 1,
-                            currentSliceIndex + 1
-                          )
-                        )
-                      }
-                      disabled={
-                        currentSliceIndex === evaluationSlices.length - 1
-                      }
-                    >
-                      下一个
-                    </Button>
-                  </div>
-                </>
-              )}
-            </div>
-          </Card>
-
-          {/* 右侧：评估维度 */}
-          <Card>
-            <div
-              style={{
-                borderBottom: "1px solid #f0f0f0",
-                paddingBottom: 16,
-                marginBottom: 16,
-              }}
-            >
-              <span
-                style={{
-                  fontSize: 16,
-                  fontWeight: 600,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                }}
+            {/* 保存按钮 */}
+            <div className="border-t border-gray-100 pt-4">
+              <Button
+                type="primary"
+                icon={<SaveOutlined />}
+                onClick={handleSaveAndNext}
+                block
+                size="large"
               >
-                <StarFilled style={{ color: "#fadb14" }} />
-                评估维度
-              </span>
-              <div style={{ fontSize: 13, color: "#888", marginTop: 4 }}>
-                请为每个维度进行1-5星评分
-              </div>
+                {currentSliceIndex === evaluationSlices.length - 1
+                  ? "完成评估"
+                  : "保存并下一个"}
+              </Button>
             </div>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              {allDimensions.map((dimension) => (
-                <div
-                  key={dimension.id}
-                  style={{
-                    border: "1px solid #f0f0f0",
-                    borderRadius: 8,
-                    padding: 16,
-                  }}
-                >
-                  <StarRating
-                    value={currentScores[dimension.id] || 0}
-                    onChange={(score) =>
-                      updateSliceScore(
-                        currentSlice?.id || "",
-                        dimension.id,
-                        score
-                      )
-                    }
-                    dimension={dimension}
-                  />
-                </div>
-              ))}
-
-              {/* 评论区域 */}
-              <div
-                style={{
-                  border: "1px solid #f0f0f0",
-                  borderRadius: 8,
-                  padding: 16,
-                }}
-              >
-                <span
-                  style={{ fontWeight: 500, marginBottom: 8, display: "block" }}
-                >
-                  评估备注
-                </span>
-                <TextArea
-                  placeholder="请输入对该切片的评估备注和建议..."
-                  value={sliceComments[currentSlice?.id || ""] || ""}
-                  onChange={(e) =>
-                    setSliceComments((prev) => ({
-                      ...prev,
-                      [currentSlice?.id || ""]: e.target.value,
-                    }))
-                  }
-                  rows={3}
-                />
-              </div>
-
-              {/* 保存按钮 */}
-              <div style={{ borderTop: "1px solid #f0f0f0", paddingTop: 16 }}>
-                <Button
-                  type="primary"
-                  icon={<SaveOutlined />}
-                  onClick={handleSaveAndNext}
-                  block
-                  size="large"
-                >
-                  {currentSliceIndex === evaluationSlices.length - 1
-                    ? "完成评估"
-                    : "保存并下一个"}
-                </Button>
-              </div>
-            </div>
-          </Card>
-        </div>
+          </div>
+        </Card>
       </div>
     </div>
   );

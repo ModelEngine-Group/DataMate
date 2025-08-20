@@ -1,4 +1,4 @@
-"use client"
+
 
 import { useState } from "react"
 import { Card, Button, Input, Badge, Table, Select, DatePicker } from "antd"
@@ -227,6 +227,7 @@ export default function ExecutionLog() {
                     rowKey="id"
                     pagination={false}
                     locale={{ emptyText: "暂无执行日志" }}
+                    scroll={{ x: "max-content" }}
                 />
             </Card>
         </div>

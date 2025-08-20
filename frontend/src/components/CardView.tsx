@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { Card, Tag, Pagination, Dropdown } from "antd";
-import { Star, Ellipsis } from "lucide-react";
+import { Card, Tag, Pagination, Dropdown, Tooltip } from "antd";
+import { Star, Ellipsis, Clock } from "lucide-react";
 import type { ItemType } from "antd/es/menu/interface";
 
 interface BaseCardDataType {
@@ -49,8 +49,8 @@ function CardView<T extends BaseCardDataType>(props: CardViewProps<T>) {
   const pagedData = data.slice((current - 1) * pageSize, current * pageSize);
 
   return (
-    <div>
-      <div className="grid md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6">
+    <div className="flex-1 overflow-auto">
+      <div className="grid md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-4">
         {pagedData.map((item) => (
           <Card key={item.id} className="hover:shadow-lg transition-shadow">
             <div className="space-y-4">
@@ -72,7 +72,11 @@ function CardView<T extends BaseCardDataType>(props: CardViewProps<T>) {
                         {item.name}
                       </h3>
                       {item.status && (
-                        <Tag color={item.status.color} icon={item.status.icon}>
+                        <Tag
+                          icon={item.status.icon}
+                          color={item.status.color}
+                          className="text-xs"
+                        >
                           {item.status.label}
                         </Tag>
                       )}
@@ -101,8 +105,8 @@ function CardView<T extends BaseCardDataType>(props: CardViewProps<T>) {
               </div>
 
               {/* Description */}
-              <p className="text-gray-600 text-sm line-clamp-2">
-                {item.description}
+              <p className="text-gray-600 text-ellipsis overflow-hidden whitespace-nowrap  text-sm line-clamp-2">
+                <Tooltip title={item.description}>{item.description}</Tooltip>
               </p>
 
               {/* Statistics */}
@@ -120,7 +124,9 @@ function CardView<T extends BaseCardDataType>(props: CardViewProps<T>) {
               {/* Actions */}
               <div className="flex items-center justify-between pt-3 border-t border-t-gray-200">
                 <div className=" text-gray-500 text-right">
-                  <div>更新: {item.lastModified}</div>
+                  <div className="flex items-center gap-1">
+                    <Clock className="w-4 h-4" /> {item.lastModified}
+                  </div>
                 </div>
                 <Dropdown
                   trigger={["click"]}

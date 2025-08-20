@@ -1,5 +1,5 @@
-import { Card, Button, Statistic, Table, Tooltip } from "antd";
-import { Badge, Download, Edit, Plus, Trash2 } from "lucide-react";
+import { Card, Button, Statistic, Table, Tooltip, Badge, Tag } from "antd";
+import { Download, Edit, Plus, Trash2 } from "lucide-react";
 import {
   getStatusBadge,
   getTypeColor,
@@ -13,6 +13,7 @@ import { useDatasets } from "./hooks/useDatasets";
 import { SearchControls } from "@/components/SearchControls";
 import CardView from "@/components/CardView";
 import type { Dataset } from "@/types/dataset";
+import { DatasetTypeMap } from "./model";
 
 export default function DatasetManagementPage() {
   const {
@@ -59,29 +60,12 @@ export default function DatasetManagementPage() {
       title: "名称",
       dataIndex: "name",
       key: "name",
-      render: (text: string, record: Dataset) => (
-        <div className="flex items-center gap-3">
-          <div
-            className={`w-8 h-8 ${getTypeColor(
-              record.type
-            )} rounded flex items-center justify-center`}
-          >
-            {getTypeIcon(record.type)}
-          </div>
-          <div>
-            <div className="font-medium text-gray-900">{record.name}</div>
-            <div className="text-xs text-gray-500 truncate">
-              {record.description}
-            </div>
-          </div>
-        </div>
-      ),
     },
     {
       title: "类型",
       dataIndex: "type",
       key: "type",
-      render: (type: string) => <Badge>{type}</Badge>,
+      render: (type: string) => DatasetTypeMap[type]?.label || type,
       width: 100,
     },
     {
@@ -110,11 +94,14 @@ export default function DatasetManagementPage() {
       title: "状态",
       dataIndex: "status",
       key: "status",
-      render: (_: any, record: Dataset) => (
-        <Badge className={getStatusBadge(record.status)?.color}>
-          {getStatusBadge(record.status)?.label}
-        </Badge>
-      ),
+      render: (_: any, record: Dataset) => {
+        const status = getStatusBadge(record.status);
+        return (
+          <Tag icon={status.icon} color={status.color}>
+            {status.label}
+          </Tag>
+        );
+      },
       width: 120,
     },
     {
@@ -151,11 +138,18 @@ export default function DatasetManagementPage() {
   );
 
   const renderListView = () => (
-    <Table columns={columns} dataSource={datasets} rowKey="id" />
+    <div className="flex-1 overflow-auto">
+      <Table
+        columns={columns}
+        dataSource={datasets}
+        rowKey="id"
+        scroll={{ x: "max-content" }}
+      />
+    </div>
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-2 h-full flex flex-col">
       {contextHolder}
       {/* Header */}
       <div className="flex items-center justify-between">

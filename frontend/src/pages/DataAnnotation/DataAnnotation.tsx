@@ -1,5 +1,3 @@
-"use client";
-
 import { useState } from "react";
 import {
   Card,
@@ -40,14 +38,9 @@ export default function DataAnnotation() {
   >("list");
   const [selectedTaskId, setSelectedTaskId] = useState<string>("");
 
-  const handleTaskNameClick = (task: AnnotationTask) => {
-    setSelectedTaskId(task.id);
-    navigate(`/data/annotation/detail/${task.id}`);
-  };
-
   const handleAnnotate = (task: AnnotationTask) => {
     setSelectedTaskId(task.id);
-    navigate(`/data-annotation/annotation/${task.id}`);
+    navigate(`/data/annotation/task-annotate/${task.datasetType}/${task.id}`);
   };
 
   const handleDelete = (task: AnnotationTask) => {
@@ -95,7 +88,7 @@ export default function DataAnnotation() {
 
   // 如果当前视图是创建任务
   if (currentView === "create") {
-    router.push("/data-annotation/create-task");
+    navigate("/data/annotation/create-task");
   }
 
   // 如果当前视图是任务详情
@@ -295,7 +288,7 @@ export default function DataAnnotation() {
     },
   ];
   return (
-    <div className="space-y-6">
+    <div className="">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
@@ -306,7 +299,7 @@ export default function DataAnnotation() {
         <Button
           type="primary"
           icon={<PlusOutlined />}
-          onClick={() => setCurrentView("create")}
+          onClick={() => navigate("/data/annotation/create-task")}
         >
           创建标注任务
         </Button>

@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useRef, useEffect } from "react";
 import { Card, Button, Badge, Slider, message } from "antd";
 import {

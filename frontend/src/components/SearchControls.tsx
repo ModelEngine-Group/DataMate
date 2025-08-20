@@ -1,4 +1,4 @@
-"use client";
+
 import { Input, Button, Select, Tag, Segmented } from "antd";
 import {
   BarsOutlined,

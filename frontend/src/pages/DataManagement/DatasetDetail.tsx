@@ -34,18 +34,16 @@ import {
   GitBranch,
   Target,
   Trash2,
-  Upload,
 } from "lucide-react";
 import DetailHeader from "@/components/DetailHeader";
 import { TypeMap } from "./model";
 import type { Dataset } from "@/types/dataset";
-import { useParams } from "react-router";
+import { Link, useParams } from "react-router";
 import { useImportFile } from "./hooks/useImportFile";
 
 const navigateItems = [
   {
-    title: "数据管理",
-    href: "/data/management",
+    title: <Link to="/data/management">数据管理</Link>,
   },
   {
     title: "数据集详情",
@@ -350,7 +348,7 @@ export default function DatasetDetail() {
   ];
 
   const renderOverviewTab = () => (
-    <div className="space-y-6 flex flex-col gap-4">
+    <div className=" flex flex-col gap-4">
       {/* 基本信息 */}
       <Card>
         <Descriptions title="基本信息" items={items} column={2} />
@@ -441,7 +439,7 @@ export default function DatasetDetail() {
     }
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-4">
         <div className="relative">
           {steps.map((step, index) => (
             <div key={index} className="flex items-start gap-4 pb-8 last:pb-0">
@@ -469,7 +467,7 @@ export default function DatasetDetail() {
   };
 
   const renderDataQualityTab = () => (
-    <div className="space-y-6 mt-0">
+    <div className=" mt-0">
       <div className="grid md:grid-cols-2 gap-6">
         <Card title="质量分布">
           {[
@@ -557,7 +555,7 @@ export default function DatasetDetail() {
         activeTabKey={activeTab}
         onTabChange={setActiveTab}
       >
-        <div className="space-y-6">
+        <div className="">
           {activeTab === "overview" && renderOverviewTab()}
           {activeTab === "lineage" && renderLineageFlow(dataset.lineage)}
           {activeTab === "quality" && renderDataQualityTab()}

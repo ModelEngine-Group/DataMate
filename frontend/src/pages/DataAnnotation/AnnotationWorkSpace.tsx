@@ -1,7 +1,7 @@
-"use client";
+
 
 import { useEffect, useState } from "react";
-import { Card } from "antd";
+import { Card, message } from "antd";
 import { Button, Badge, Progress, Checkbox } from "antd";
 import {
   ArrowLeft,
@@ -21,9 +21,7 @@ import { Outlet, useNavigate } from "react-router";
 export default function AnnotationWorkspace() {
   const navigate = useNavigate();
   const [task, setTask] = useState(mockTasks[0]);
-  useEffect(() => {
-    setTask(mockTasks.find((t) => t.id === (router.query.id as string)));
-  }, []);
+
   const [currentFileIndex, setCurrentFileIndex] = useState(0);
   const [annotationProgress, setAnnotationProgress] = useState({
     completed: task.completedCount,
@@ -41,7 +39,7 @@ export default function AnnotationWorkspace() {
       setCurrentFileIndex(currentFileIndex + 1);
     }
 
-    toast({
+    message({
       title: "标注已保存",
       description: "标注结果已保存，自动跳转到下一个",
     });
@@ -57,7 +55,7 @@ export default function AnnotationWorkspace() {
       setCurrentFileIndex(currentFileIndex + 1);
     }
 
-    toast({
+    message({
       title: "已跳过",
       description: "已跳过当前项目，自动跳转到下一个",
     });
