@@ -1,6 +1,5 @@
 import React from "react";
 import { Card } from "antd";
-import { CheckCircleOutlined } from "@ant-design/icons";
 
 interface RadioCardOption {
   value: string;
@@ -25,7 +24,9 @@ const RadioCard: React.FC<RadioCardProps> = ({
 }) => {
   return (
     <div
-      className={`grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 ${className || ""}`}
+      className={`grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 ${
+        className || ""
+      }`}
       style={{ gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}
     >
       {options.map((option) => (
@@ -39,19 +40,12 @@ const RadioCard: React.FC<RadioCardProps> = ({
           }}
           onClick={() => onChange(option.value)}
         >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-              marginBottom: 8,
-            }}
-          >
-            {option.icon && <span style={{ fontSize: 24 }}>{option.icon}</span>}
-            <span style={{ fontWeight: 500 }}>{option.label}</span>
+          <div className="flex items-center gap-2 mb-2">
+            {option.icon && <span className="text-xl">{option.icon}</span>}
+            <span className="font-bold">{option.label}</span>
           </div>
           {option.description && (
-            <div style={{ color: "#888", fontSize: 13 }}>{option.description}</div>
+            <div className="color-gray-500 text-sm">{option.description}</div>
           )}
         </Card>
       ))}

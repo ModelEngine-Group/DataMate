@@ -22,6 +22,8 @@ import {
 } from "@ant-design/icons";
 import {
   getStatusBadge,
+  getTypeColor,
+  getTypeIcon,
   mockDatasets,
   mockFiles,
   mockTags,
@@ -40,6 +42,7 @@ import { TypeMap } from "./model";
 import type { Dataset } from "@/types/dataset";
 import { Link, useParams } from "react-router";
 import { useImportFile } from "./hooks/useImportFile";
+import { useFilesOperation } from "./hooks/useFilesOperation";
 
 const navigateItems = [
   {
@@ -71,51 +74,37 @@ export default function DatasetDetail() {
   const [activeTab, setActiveTab] = useState("overview");
 
   const [dataset, setDataset] = useState<Dataset>(mockDatasets[0]);
-  const { importFileRender, handleUpload } = useImportFile(messageApi, dataset);
-
+  const { importFileRender, handleUpload } = useImportFile();
+  const {
+    fileList,
+    selectedFiles,
+    setSelectedFiles,
+    previewVisible,
+    previewFileName,
+    previewContent,
+    setPreviewVisible,
+    fetchFiles,
+    handleShowFile,
+    handleDeleteFile,
+    handleDownloadFile,
+    handleBatchDeleteFiles,
+    handleBatchExport,
+  } = useFilesOperation(messageApi, dataset);
   // 模拟数据集详情
 
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
 
-  // 文件相关状态
-  const [fileList, setFileList] = useState(mockFiles);
-  const [selectedFiles, setSelectedFiles] = useState<number[]>([]);
-
-  // 标签相关状态
-  const [newTag, setNewTag] = useState("");
-  const [editingTag, setEditingTag] = useState<string | null>(null);
-  const [editingTagValue, setEditingTagValue] = useState("");
-  const [showAddTagPopover, setShowAddTagPopover] = useState(false);
-  const [showDetailAddTagPopover, setShowDetailAddTagPopover] = useState(false);
-  const [detailNewTag, setDetailNewTag] = useState("");
-  const [availableTags, setAvailableTags] = useState<string[]>(mockTags);
-
-  // 文件预览相关状态
-  const [previewVisible, setPreviewVisible] = useState(false);
-  const [previewContent, setPreviewContent] = useState("");
-  const [previewFileName, setPreviewFileName] = useState("");
-
-  const getDatasetDetail = async () => {
-    const res = await fetch(`/api/dataset/v2/${id}`);
+  const fetchDataset = async () => {
+    const res = await fetch(`/api/datasets/${id}`);
     setDataset(await res.json());
   };
 
-  const getFiles = async () => {
-    const res = await fetch(`/api/dataset/v2/${id}/files`);
-    setFileList(await res.json());
-  };
-
   useEffect(() => {
-    // getDatasetDetail();
-    // getFiles();
+    fetchDataset();
   }, []);
 
   const handleRefresh = async () => {
-    setIsRefreshing(true);
-    // 模拟刷新
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    setIsRefreshing(false);
+    fetchDataset();
   };
 
   const handleExportFormat = ({ key }) => {
@@ -123,76 +112,9 @@ export default function DatasetDetail() {
     // 实际导出逻辑
   };
 
-  const handleCreateNewTag = () => {
-    if (newTag.trim() && !availableTags.includes(newTag.trim())) {
-      setAvailableTags([...availableTags, newTag.trim()]);
-      setNewTag("");
-      setShowAddTagPopover(false);
-    }
-  };
-
-  const handleEditTag = (oldTag: string, newTag: string) => {
-    if (newTag.trim() && newTag !== oldTag) {
-      // 更新可用标签列表
-      setAvailableTags(
-        availableTags.map((tag) => (tag === oldTag ? newTag.trim() : tag))
-      );
-      // 更新所有数据集中的标签
-    }
-    setEditingTag(null);
-    setEditingTagValue("");
-  };
-
-  const handleDeleteTag = (tagToDelete: string) => {
-    // 从可用标签中删除
-    setAvailableTags(availableTags.filter((tag) => tag !== tagToDelete));
-    // 从所有数据集中删除该标签
-  };
-
-  const handleAddTagToDataset = (datasetId: number, tag: string) => {
-    // Update selected dataset if it's currently selected
-  };
-
-  const handleCreateAndAddTag = (datasetId: number) => {
-    if (detailNewTag.trim() && !availableTags.includes(detailNewTag.trim())) {
-      setAvailableTags([...availableTags, detailNewTag.trim()]);
-    }
-    if (detailNewTag.trim()) {
-      handleAddTagToDataset(datasetId, detailNewTag.trim());
-      setDetailNewTag("");
-    }
-  };
-
-  const handleBatchDelete = () => {
-    if (selectedFiles.length === 0) {
-      messageApi.open({ type: "warning", content: "请先选择要删除的文件" });
-      return;
-    }
-    // 执行批量删除逻辑
-    setSelectedFiles([]);
-    messageApi.open({
-      type: "success",
-      content: `已删除 ${selectedFiles.length} 个文件`,
-    });
-  };
-
-  const handleBatchExport = () => {
-    console.log("批量导出文件:", selectedFiles);
-    // 实际导出逻辑
-  };
-
-  const handleShowFile = (file: any) => async () => {
-    // 请求文件内容并弹窗预览
-    try {
-      const res = await fetch(`/api/dataset/v2/file/${file.id}`);
-      const data = await res.text();
-      setPreviewFileName(file.name);
-      setPreviewContent(data);
-      setPreviewVisible(true);
-    } catch (err) {
-      messageApi.open({ type: "error", content: "文件预览失败" });
-    }
-  };
+  useEffect(() => {
+    fetchFiles();
+  }, [id]);
 
   // 文件列表多选配置
   const rowSelection = {
@@ -233,14 +155,8 @@ export default function DatasetDetail() {
     },
   ];
 
-  // 操作列表
+  // 数据集操作列表
   const operations = [
-    {
-      key: "star",
-      label: "收藏",
-      icon: <StarOutlined />,
-      onClick: () => {},
-    },
     {
       key: "refresh",
       label: "刷新",
@@ -327,19 +243,10 @@ export default function DatasetDetail() {
       key: "action",
       render: (_, record) => (
         <div>
-          <Button type="link">下载</Button>
-          <Button
-            type="link"
-            onClick={async () => {
-              await fetch(`/api/dataset/v2/file/${record.id}`, {
-                method: "DELETE",
-              });
-              messageApi.open({
-                type: "success",
-                content: `文件 ${record.name} 已删除`,
-              });
-            }}
-          >
+          <Button type="link" onClick={() => handleDownloadFile(record)}>
+            下载
+          </Button>
+          <Button type="link" onClick={() => handleDeleteFile(record)}>
             删除
           </Button>
         </div>
@@ -368,17 +275,6 @@ export default function DatasetDetail() {
         </div>
       </Card>
       <Card>
-        <div className="flex justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">文件列表</h3>
-          <Button
-            onClick={handleBatchDelete}
-            danger
-            disabled={!selectedFiles.length}
-          >
-            <Trash2 className="w-4 h-4 mr-2" />
-            批量删除
-          </Button>
-        </div>
         {selectedFiles.length > 0 && (
           <div className="flex items-center gap-2 mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
             <span className="text-sm text-blue-700 font-medium">
@@ -392,7 +288,7 @@ export default function DatasetDetail() {
               批量导出
             </Button>
             <Button
-              onClick={handleBatchDelete}
+              onClick={handleBatchDeleteFiles}
               className="text-red-600 hover:text-red-700 hover:bg-red-50 bg-transparent"
             >
               <Trash2 className="w-4 h-4 mr-2" />
@@ -545,6 +441,8 @@ export default function DatasetDetail() {
       <DetailHeader
         data={{
           ...dataset,
+          icon: getTypeIcon(dataset.type),
+          iconColor: getTypeColor(dataset.type),
           status: getStatusBadge(dataset.status),
         }}
         statistics={statistics}

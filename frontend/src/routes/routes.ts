@@ -96,7 +96,7 @@ const router = createBrowserRouter([
             Component: DatasetManagement,
           },
           {
-            path: "create",
+            path: "create/:id?",
             Component: DatasetCreate,
           },
           {

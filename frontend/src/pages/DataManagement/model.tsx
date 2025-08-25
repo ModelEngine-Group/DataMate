@@ -1,18 +1,4 @@
 import { DatasetStatus, DatasetType } from "@/types/dataset";
-import {
-  BarChart3,
-  MessageCircleQuestion,
-  FileImage,
-  FileText,
-  AudioLines,
-  Video,
-  AlarmCheck,
-  ChartArea,
-  CheckCircle,
-  FileArchive,
-  Telescope,
-  SofaIcon,
-} from "lucide-react";
 
 export const DatasetTypeMap: Record<
   string,
@@ -69,19 +55,35 @@ export const DatasetTypeMap: Record<
   },
 };
 
-export const TypeMap = {
+export const TypeMap: Record<
+  string,
+  {
+    value: DatasetType;
+    label: string;
+    order: number;
+    description: string;
+    icon?: React.JSX.Element;
+    iconColor?: string;
+    // 新增：子类型列表
+    // 用于预训练和微调类型的子类型
+    // 例如：预训练下的文本、图像等
+    // 用于微调下的Alpaca、ChatGLM等
+    children: DatasetType[];
+  }
+> = {
+  ...DatasetTypeMap,
   [DatasetType.PRETRAIN_TEXT]: {
     value: DatasetType.PRETRAIN_TEXT,
     label: "文本预训练",
     color: "blue",
-    icon: "\u{1F4D6}", // 📖
+    icon: "📄", // 📄
     description: "用于大规模文本预训练模型的数据集",
   },
   [DatasetType.PRETRAIN_IMAGE]: {
     value: DatasetType.PRETRAIN_IMAGE,
     label: "图像预训练",
     color: "green",
-    icon: "\u{1F5BC}", // 🖼️
+    icon: "🖼️", // 🖼️
     description: "用于大规模图像预训练模型的数据集",
   },
   [DatasetType.PRETRAIN_AUDIO]: {
@@ -95,7 +97,7 @@ export const TypeMap = {
     value: DatasetType.PRETRAIN_VIDEO,
     label: "视频预训练",
     color: "orange",
-    icon: "\u{1F4FA}", // 📺
+    icon: "🎥", // 🎥
     description: "用于大规模视频预训练模型的数据集",
   },
   [DatasetType.FINE_TUNE_ALPACA]: {
@@ -137,7 +139,7 @@ export const TypeMap = {
     value: DatasetType.EVAL_SQUAD,
     label: "SQuAD评测",
     color: "indigo",
-    icon: "\u{1F4D6}", // 📖
+    icon: "📝", // 📝
     description: "用于SQuAD问答评测的数据集",
   },
   [DatasetType.EVAL_MNLI]: {
@@ -158,7 +160,7 @@ export const TypeMap = {
     value: DatasetType.EVAL_SINGLE_CHOICE_QA,
     label: "单选题评测",
     color: "brown",
-    icon: "\u{1F4DD}", // 📝
+    icon: "📋", // 📋
     description: "用于单选题问答评测的数据集",
   },
 };

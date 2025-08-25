@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { Card, Tag, Pagination, Dropdown, Tooltip } from "antd";
 import { Star, Ellipsis, Clock } from "lucide-react";
 import type { ItemType } from "antd/es/menu/interface";
@@ -22,7 +22,11 @@ interface BaseCardDataType {
 
 interface CardViewProps<T> {
   data: T[];
-  pageSize?: number;
+  pagination: {
+    current: number;
+    pageSize: number;
+    total: number;
+  };
   operations: {
     key: string;
     label: string;
@@ -35,38 +39,27 @@ interface CardViewProps<T> {
 }
 
 function CardView<T extends BaseCardDataType>(props: CardViewProps<T>) {
-  const {
-    data,
-    pageSize = 8,
-    operations,
-    onView,
-    onFavorite,
-    isFavorite,
-  } = props;
-
-  const [current, setCurrent] = useState(1);
-
-  const pagedData = data.slice((current - 1) * pageSize, current * pageSize);
+  const { data, pagination, operations, onView, onFavorite, isFavorite } =
+    props;
 
   return (
     <div className="flex-1 overflow-auto">
       <div className="grid md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-4">
-        {pagedData.map((item) => (
+        {data.map((item) => (
           <Card key={item.id} className="hover:shadow-lg transition-shadow">
             <div className="space-y-4">
               {/* Header */}
               <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3 flex-1">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
                   <div
-                    className={`flex-shrink-0 w-12 h-12 ${item.iconColor} rounded flex items-center justify-center`}
+                    className={`flex-shrink-0 w-12 h-12 ${item.iconColor} rounded-lg flex items-center justify-center`}
                   >
                     {item.icon}
                   </div>
-
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <h3
-                        className="text-lg font-semibold text-gray-900 truncate cursor-pointer hover:text-blue-600"
+                        className="text-lg flex-1 text-ellipsis overflow-hidden whitespace-nowrap font-semibold text-gray-900 truncate cursor-pointer hover:text-blue-600"
                         onClick={() => onView?.(item)}
                       >
                         {item.name}
@@ -103,9 +96,8 @@ function CardView<T extends BaseCardDataType>(props: CardViewProps<T>) {
                   </Tag>
                 ))}
               </div>
-
               {/* Description */}
-              <p className="text-gray-600 text-ellipsis overflow-hidden whitespace-nowrap  text-sm line-clamp-2">
+              <p className="text-gray-600 text-ellipsis overflow-hidden whitespace-nowrap text-sm line-clamp-2">
                 <Tooltip title={item.description}>{item.description}</Tooltip>
               </p>
 
@@ -150,13 +142,7 @@ function CardView<T extends BaseCardDataType>(props: CardViewProps<T>) {
         ))}
       </div>
       <div className="flex justify-end mt-6">
-        <Pagination
-          current={current}
-          pageSize={pageSize}
-          total={data.length}
-          onChange={setCurrent}
-          showSizeChanger={false}
-        />
+        <Pagination {...pagination} showSizeChanger={false} />
       </div>
     </div>
   );

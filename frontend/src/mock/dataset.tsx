@@ -531,11 +531,10 @@ export const getTypeIcon = (type: string) => {
     audio: AudioLines,
     video: Video,
     multimodal: BarChart3,
-    [DatasetType.EVAL]: FileImage,
-    [DatasetType.PRETRAIN]: FileText,
-    [DatasetType.FINE_TUNE]: AudioLines,
-    [DatasetType.EVAL_GSM8K]: Video,
-    [DatasetType.EVAL_IMDB]: BarChart3,
+    ...Object.keys(TypeMap).reduce((acc, key) => {
+      acc[key] = TypeMap[key as keyof typeof TypeMap].icon;
+      return acc;
+    }, {}),
   };
   const IconComponent = iconMap[type as keyof typeof iconMap] || FileImage;
   return <IconComponent className="w-4 h-4" />;

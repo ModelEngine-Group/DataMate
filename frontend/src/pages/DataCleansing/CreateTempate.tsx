@@ -1,9 +1,18 @@
 import { useState } from "react";
-import { Card, Button, Input,  Steps, Form, Divider } from "antd";
-import OperatorOrchestrationPage from "./components/Orchestration";
+import { Card, Button, Input, Steps, Form, Divider } from "antd";
 import { Link, useNavigate } from "react-router";
 import RadioCard from "@/components/RadioCard";
+
 import { ArrowLeft } from "lucide-react";
+import type { OperatorI } from "@/types/cleansing";
+import OperatorLibrary from "./components/OperatorLibrary";
+import OperatorOrchestration from "./components/OperatorOrchestration";
+import OperatorConfig from "./components/OperatorConfig";
+import {
+  templateTypes,
+  OPERATOR_CATEGORIES,
+  operatorList,
+} from "@/mock/cleansing";
 
 const { TextArea } = Input;
 
@@ -11,67 +20,33 @@ export default function CleansingTemplateCreate() {
   const navigate = useNavigate();
   const [form] = Form.useForm();
   const [currentStep, setCurrentStep] = useState(0);
-  const [selectedOperators, setSelectedOperators] = useState<any[]>([]);
-
-  // 模板类型选项
-  const templateTypes = [
-    {
-      value: "text",
-      label: "文本",
-      icon: "📝",
-      description: "处理文本数据的清洗模板",
-    },
-    {
-      value: "image",
-      label: "图片",
-      icon: "🖼️",
-      description: "处理图像数据的清洗模板",
-    },
-    {
-      value: "video",
-      label: "视频",
-      icon: "🎥",
-      description: "处理视频数据的清洗模板",
-    },
-    {
-      value: "audio",
-      label: "音频",
-      icon: "🎵",
-      description: "处理音频数据的清洗模板",
-    },
-    {
-      value: "image-to-text",
-      label: "图片转文本",
-      icon: "🔄",
-      description: "图像识别转文本的处理模板",
-    },
-  ];
-
+  const [operators, setOperators] = useState<OperatorI[]>([]);
+  const [selectedOperator, setSelectedOperator] = useState<string | null>(null);
   const [templateConfig, setTemplateConfig] = useState({
     name: "",
     description: "",
     type: "",
-    category: "",
   });
 
-  const addOperator = (operator: any) => {
-    const newOperator = {
-      ...operator,
-      id: `${operator.id}_${Date.now()}`,
-      originalId: operator.id,
-      config: Object.keys(operator.params || {}).reduce(
-        (acc: any, param: any) => {
-          acc[param.name] = param.default;
-          return acc;
-        },
-        {}
-      ),
-    };
-    setSelectedOperators([...selectedOperators, newOperator]);
+  const toggleOperator = (template: OperatorI) => {
+    const exist = operators.find((op) => op.originalId === template.id);
+    if (exist) {
+      setOperators(operators.filter((op) => op.originalId !== template.id));
+    } else {
+      const newOperator: OperatorI = {
+        ...template,
+        id: `${template.id}_${Date.now()}`,
+        originalId: template.id,
+        params: JSON.parse(JSON.stringify(template.params)),
+      };
+      setOperators([...operators, newOperator]);
+    }
   };
 
+  // 删除算子
   const removeOperator = (id: string) => {
-    setSelectedOperators(selectedOperators.filter((item) => item.id !== id));
+    setOperators(operators.filter((op) => op.id !== id));
+    if (selectedOperator === id) setSelectedOperator(null);
   };
 
   const handleNext = () => {
@@ -90,19 +65,21 @@ export default function CleansingTemplateCreate() {
     const values = form.getFieldsValue();
     const template = {
       ...values,
-      operators: selectedOperators,
+      ...templateConfig,
+      operators,
       createdAt: new Date().toISOString(),
     };
-    // onSave(template); // 需要实现保存逻辑
+    console.log("保存模板数据:", template);
+    navigate("/data/cleansing");
   };
 
   const canProceed = () => {
     const values = form.getFieldsValue();
     switch (currentStep) {
       case 0:
-        return values.name && values.description && values.type;
+        return values.name && values.type;
       case 1:
-        return selectedOperators.length > 0;
+        return operators.length > 0;
       default:
         return false;
     }
@@ -149,10 +126,30 @@ export default function CleansingTemplateCreate() {
         );
       case 1:
         return (
-          <OperatorOrchestrationPage
-            handleAdd={addOperator}
-            handleRemove={removeOperator}
-          />
+          <div className="flex w-full h-full">
+            {/* 左侧算子库 */}
+            <OperatorLibrary
+              operators={operators}
+              operatorList={operatorList}
+              OPERATOR_CATEGORIES={OPERATOR_CATEGORIES}
+              toggleOperator={toggleOperator}
+            />
+
+            {/* 中间算子编排区域 */}
+            <OperatorOrchestration
+              operators={operators}
+              OPERATOR_CATEGORIES={OPERATOR_CATEGORIES}
+              selectedOperator={selectedOperator}
+              setSelectedOperator={setSelectedOperator}
+              setOperators={setOperators}
+              removeOperator={removeOperator}
+            />
+
+            {/* 右侧参数配置面板 */}
+            <OperatorConfig
+              selectedOp={operators.find((op) => op.id === selectedOperator)}
+            />
+          </div>
         );
       default:
         return null;
@@ -160,7 +157,7 @@ export default function CleansingTemplateCreate() {
   };
 
   return (
-    <div>
+    <div className="h-full flex flex-col flex-1">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center">
@@ -180,30 +177,31 @@ export default function CleansingTemplateCreate() {
         </div>
       </div>
 
-      {/* Progress Steps */}
-      <Card>
-        {renderStepContent()}
-        <Divider />
-        <div className="w-full mt-8 flex justify-end border-t pt-6 gap-4">
-          <Button onClick={() => navigate("/data/cleansing")}>取消</Button>
-          {currentStep > 0 && <Button onClick={handlePrev}>上一步</Button>}
-          {currentStep === 1 ? (
-            <Button
-              type="primary"
-              onClick={handleSave}
-              disabled={!canProceed()}
-            >
-              创建模板
-            </Button>
-          ) : (
-            <Button
-              type="primary"
-              onClick={handleNext}
-              disabled={!canProceed()}
-            >
-              下一步
-            </Button>
-          )}
+      <Card className="h-full flex flex-col justify-between flex-1 overflow-auto">
+        <div className="flex-1">{renderStepContent()}</div>
+        <div className="flex-end">
+          <Divider />
+          <div className="w-full mt-4 flex justify-end gap-4">
+            <Button onClick={() => navigate("/data/cleansing")}>取消</Button>
+            {currentStep > 0 && <Button onClick={handlePrev}>上一步</Button>}
+            {currentStep === 1 ? (
+              <Button
+                type="primary"
+                onClick={handleSave}
+                disabled={!canProceed()}
+              >
+                创建模板
+              </Button>
+            ) : (
+              <Button
+                type="primary"
+                onClick={handleNext}
+                disabled={!canProceed()}
+              >
+                下一步
+              </Button>
+            )}
+          </div>
         </div>
       </Card>
     </div>

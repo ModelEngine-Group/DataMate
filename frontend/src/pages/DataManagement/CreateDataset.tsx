@@ -1,7 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { ArrowLeft } from "lucide-react";
-import { InboxOutlined } from "@ant-design/icons";
 import {
   Select,
   Card,
@@ -11,15 +10,11 @@ import {
   Radio,
   Divider,
   message,
-  Upload,
-  type UploadProps,
 } from "antd";
-import { datasetTypes, mockTags } from "@/mock/dataset";
+import { datasetTypes, mockDatasets, mockTags } from "@/mock/dataset";
 import RadioCard from "@/components/RadioCard";
-import { Link, useNavigate } from "react-router";
-import type { Dataset } from "@/types/dataset";
-
-const { Dragger } = Upload;
+import { Link, useNavigate, useParams } from "react-router";
+import { useImportFile } from "./hooks/useImportFile";
 
 const dataSourceOptions = [
   { label: "本地上传", value: "local" },
@@ -28,11 +23,13 @@ const dataSourceOptions = [
   { label: "OBS导入", value: "obs" },
 ];
 
-type FileType = Parameters<GetProp<UploadProps, "beforeUpload">>[0];
-
 export default function DatasetCreate() {
   const navigate = useNavigate();
+  const { id } = useParams(); // 获取动态路由参数
+  const [messageApi] = message.useMessage();
   const [form] = Form.useForm();
+
+  const { importFileRender, fileList, handleUpload } = useImportFile();
   const [availableTags, setAvailableTags] = useState<string[]>(mockTags);
   const [newDataset, setNewDataset] = useState({
     name: "",
@@ -43,7 +40,37 @@ export default function DatasetCreate() {
     source: "local",
     target: "local",
   });
-  const [fileList, setFileList] = useState([]);
+
+  const fetchDataset = async () => {
+    // 如果有id，说明是编辑模式
+    if (id) {
+      setNewDataset({
+        name: mockDatasets[0].name,
+        description: mockDatasets[0].description,
+        datasetType: "PRETRAIN",
+        type: "PRETRAIN_IMAGE",
+        tags: mockDatasets[0].tags || [],
+        source: "local",
+        target: "local",
+      }); // 先设置一个默认值，防止form报错
+      fetch(`/api/dataset/${id}`)
+        .then((res) => res.json())
+        .then((data) => {
+          setNewDataset({
+            ...data,
+            tags: data.tags || [],
+            source: "local",
+            target: "local",
+          });
+          form.setFieldsValue(data);
+        });
+    }
+  };
+
+  useEffect(() => {
+    fetchDataset();
+  }, [id, form]);
+
   const [importConfig, setImportConfig] = useState({
     source: "local",
     target: "local",
@@ -68,52 +95,18 @@ export default function DatasetCreate() {
     },
   });
 
-  const handleUpload = (data: Dataset) => {
-    const formData = new FormData();
-    fileList.forEach((file) => {
-      formData.append("files[]", file);
-    });
-
-    console.log("Uploading files for dataset ID:", formData, data.id);
-    fetch(`/api/dataset/v2/file/upload/${data.id}`, {
-      method: "POST",
-      body: formData,
-    })
-      .then((res) => res.json())
-      .then(() => {
-        setFileList([]);
-        message.success("数据集创建成功");
-        navigate("/data/management/details/" + data.id);
-      })
-      .catch(() => {
-        message.error("上传失败.");
-      })
-      .finally(() => {});
-  };
-
-  const handleCreateDataset = async () => {
+  const handleSubmit = async () => {
+    const url = id ? `/api/datasets/${id}` : "/api/datasets";
+    const method = id ? "PUT" : "POST";
     const formValues = await form.validateFields();
-    const res = await fetch("/api/dataset/v2/create", {
-      method: "POST",
+    const res = await fetch(url, {
+      method,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ...formValues, files: undefined }),
     });
     if (!res.ok) throw new Error("Failed to fetch datasets");
     const data = await res.json();
-    handleUpload(data);
-  };
-
-  const options: SelectProps["options"] = [];
-
-  for (let i = 10; i < 36; i++) {
-    options.push({
-      value: i.toString(36) + i,
-      label: i.toString(36) + i,
-    });
-  }
-
-  const onFinishFailed = (errorInfo) => {
-    console.log("Failed:", errorInfo);
+    handleUpload(messageApi, data);
   };
 
   const handleDatasourceChange = (e: RadioChangeEvent) => {
@@ -146,7 +139,9 @@ export default function DatasetCreate() {
               <ArrowLeft className="w-4 h-4 mr-1" />
             </Button>
           </Link>
-          <h1 className="text-xl font-bold bg-clip-text">创建数据集</h1>
+          <h1 className="text-xl font-bold bg-clip-text">
+            {id ? "编辑" : "创建"}数据集
+          </h1>
         </div>
       </div>
 
@@ -155,11 +150,10 @@ export default function DatasetCreate() {
         <Form
           form={form}
           initialValues={newDataset}
-          onFinishFailed={onFinishFailed}
           onValuesChange={handleValuesChange}
           layout="vertical"
         >
-          <h2 className="font-medium text-gray-900 text-lg mb-2">基本信息</h2>
+          <h2 className="font-medium text-gray-900 text-base mb-2">基本信息</h2>
           <Form.Item
             label="数据集名称"
             name="name"
@@ -193,9 +187,9 @@ export default function DatasetCreate() {
                   (item) => item.value === newDataset.datasetType
                 )?.options ?? []
               }
-              value={newDataset.usageType}
-              onChange={(usageType) =>
-                setNewDataset({ ...newDataset, usageType })
+              value={newDataset.type}
+              onChange={(type) =>
+                setNewDataset({ ...newDataset, type })
               }
             />
           </Form.Item>
@@ -210,7 +204,7 @@ export default function DatasetCreate() {
 
           {/* Import Configuration */}
           <div className="space-y-4 pt-4">
-            <h2 className="font-medium text-gray-900 mt-4 text-lg">
+            <h2 className="font-medium text-gray-900 mt-4 text-base">
               数据导入配置
             </h2>
             <div className="grid grid-cols-2">
@@ -413,29 +407,7 @@ export default function DatasetCreate() {
                   }),
                 ]}
               >
-                <Dragger
-                  className="w-full"
-                  fileList={fileList}
-                  onRemove={(file) => {
-                    const index = fileList.indexOf(file);
-                    const newFileList = fileList.slice();
-                    newFileList.splice(index, 1);
-                    setFileList(newFileList);
-                  }}
-                  beforeUpload={(file) => {
-                    setFileList([...fileList, file]);
-
-                    return false;
-                  }}
-                >
-                  <p className="ant-upload-drag-icon">
-                    <InboxOutlined />
-                  </p>
-                  <p className="ant-upload-text">本地文件上传</p>
-                  <p className="ant-upload-hint">
-                    拖拽文件到此处或点击选择文件,支持 JPG, PNG, TXT, JSON 等格式
-                  </p>
-                </Dragger>
+                {importFileRender()}
               </Form.Item>
             )}
 
@@ -506,7 +478,7 @@ export default function DatasetCreate() {
             <Button onClick={() => navigate("/dataset-management")}>
               取消
             </Button>
-            <Button type="primary" onClick={handleCreateDataset}>
+            <Button type="primary" onClick={handleSubmit}>
               创建
             </Button>
           </div>

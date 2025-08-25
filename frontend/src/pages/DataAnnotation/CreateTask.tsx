@@ -1,11 +1,9 @@
 import type React from "react";
 import { useState } from "react";
-import { Card, Button, Input, Select, Badge, Divider, Form, message } from "antd";
+import { Card, Button, Input, Select, Divider, Form, message } from "antd";
 import TextArea from "antd/es/input/TextArea";
 import {
   DatabaseOutlined,
-  FileTextOutlined,
-  PictureOutlined,
   CheckOutlined,
   EyeOutlined,
   PlusOutlined,
@@ -15,8 +13,6 @@ import { mockTemplates } from "@/mock/annotation";
 import { CustomTemplateDialog } from "./components/AnnotationTemplate";
 import { Link, useNavigate } from "react-router";
 import { ArrowLeft } from "lucide-react";
-
-const { Option } = Select;
 
 interface Dataset {
   id: string;
@@ -44,11 +40,14 @@ const templateCategories = ["Computer Vision", "Natural Language Processing"];
 export default function AnnotationTaskCreate() {
   const navigate = useNavigate();
   const [form] = Form.useForm();
-  const [showCustomTemplateDialog, setShowCustomTemplateDialog] = useState(false);
+  const [showCustomTemplateDialog, setShowCustomTemplateDialog] =
+    useState(false);
   const [selectedCategory, setSelectedCategory] = useState("Computer Vision");
   const [searchQuery, setSearchQuery] = useState("");
   const [datasetFilter, setDatasetFilter] = useState("all");
-  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(
+    null
+  );
   const [selectedDataset, setSelectedDataset] = useState<Dataset | null>(null);
 
   // 用于Form的受控数据
@@ -98,7 +97,9 @@ export default function AnnotationTaskCreate() {
     try {
       const values = await form.validateFields();
       const dataset = mockDatasets.find((ds) => ds.id === values.datasetId);
-      const template = mockTemplates.find((tpl) => tpl.id === values.templateId);
+      const template = mockTemplates.find(
+        (tpl) => tpl.id === values.templateId
+      );
       if (!dataset) {
         message.error("请选择数据集");
         return;
@@ -168,27 +169,26 @@ export default function AnnotationTaskCreate() {
             rules={[{ required: true, message: "请选择数据集" }]}
           >
             <Select
-              placeholder="选择数据集"
-              showSearch
               optionFilterProp="children"
-              onChange={handleDatasetSelect}
               value={formValues.datasetId}
-              className="w-full"
-            >
-              {filteredDatasets.map((dataset) => (
-                <Option key={dataset.id} value={dataset.id}>
-                  <div className="flex items-center gap-2">
-                    <DatabaseOutlined />
-                    <div>
-                      <div className="font-medium">{dataset.name}</div>
-                      <div className="text-xs text-gray-500">
-                        {dataset.fileCount} 个文件 • {dataset.size}
-                      </div>
+              onChange={handleDatasetSelect}
+              placeholder="请选择数据集"
+              size="large"
+              options={filteredDatasets.map((dataset) => ({
+                label: (
+                  <div className="flex items-center justify-between gap-3 py-2">
+                    <div className="font-medium text-gray-900">
+                      {dataset?.icon || <DatabaseOutlined className="mr-2" />}
+                      {dataset.name}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {dataset?.fileCount} 文件 • {dataset.size}
                     </div>
                   </div>
-                </Option>
-              ))}
-            </Select>
+                ),
+                value: dataset.id,
+              }))}
+            />
           </Form.Item>
 
           {/* 模板选择 */}
@@ -196,13 +196,12 @@ export default function AnnotationTaskCreate() {
             模板选择
           </h2>
           <Form.Item
-            label=""
             name="templateId"
             rules={[{ required: true, message: "请选择标注模板" }]}
           >
             <div className="flex">
               {/* Category Sidebar */}
-              <div className="w-64 pr-6 border-r">
+              <div className="w-64 pr-6 border-r border-gray-200">
                 <div className="space-y-2">
                   {templateCategories.map((category) => {
                     const isAvailable =
@@ -240,7 +239,7 @@ export default function AnnotationTaskCreate() {
               </div>
               {/* Template Grid */}
               <div className="flex-1 pl-6">
-                <div style={{ maxHeight: 384, overflowY: "auto" }}>
+                <div className="max-h-96 overflow-auto">
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {filteredTemplates.map((template) => (
                       <div
@@ -269,9 +268,6 @@ export default function AnnotationTaskCreate() {
                                 {template.name}
                               </span>
                             </div>
-                            {formValues.templateId === template.id && (
-                              <CheckOutlined style={{ color: "#1677ff" }} />
-                            )}
                           </div>
                           <p className="text-xs text-gray-600">
                             {template.description}
@@ -315,7 +311,6 @@ export default function AnnotationTaskCreate() {
             {selectedTemplate && (
               <div className="mt-4 p-3 bg-blue-50 rounded-lg">
                 <div className="flex items-center space-x-2">
-                  <EyeOutlined style={{ color: "#1677ff" }} />
                   <span
                     className="text-sm font-medium"
                     style={{ color: "#1677ff" }}

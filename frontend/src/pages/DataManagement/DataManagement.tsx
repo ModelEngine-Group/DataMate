@@ -1,11 +1,6 @@
-import { Card, Button, Statistic, Table, Tooltip, Badge, Tag } from "antd";
+import { Card, Button, Statistic, Table, Tooltip, Tag } from "antd";
 import { Download, Edit, Plus, Trash2 } from "lucide-react";
-import {
-  getStatusBadge,
-  getTypeColor,
-  getTypeIcon,
-  statisticsData,
-} from "@/mock/dataset";
+import { getStatusBadge } from "@/mock/dataset";
 import TagManager from "./components/TagManagement";
 import { Link, useNavigate } from "react-router";
 import { useState } from "react";
@@ -18,13 +13,13 @@ import { DatasetTypeMap } from "./model";
 export default function DatasetManagementPage() {
   const {
     datasets,
-    favoriteDatasets,
+    pagination,
     contextHolder,
     searchTerm,
     filterOptions,
+    statisticsData,
     setSearchTerm,
     handleFiltersChange,
-    handleToggleFavorite,
     handleDownloadDataset,
     handleDeleteDataset,
   } = useDatasets();
@@ -38,7 +33,7 @@ export default function DatasetManagementPage() {
       label: "编辑",
       icon: <Edit className="w-4 h-4" />,
       onClick: (item) => {
-        navigate(`/data/management/create`);
+        navigate(`/data/management/create/${item.id}`);
       },
     },
     {
@@ -129,11 +124,11 @@ export default function DatasetManagementPage() {
       data={datasets}
       pageSize={9}
       operations={operations}
+      pagination={pagination}
       onView={(dataset) => {
         navigate("/data/management/detail/" + dataset.id);
       }}
-      onFavorite={(item) => handleToggleFavorite(item.id)}
-      isFavorite={(item) => favoriteDatasets.has(item.id)}
+      showFavorite={false}
     />
   );
 
@@ -142,6 +137,7 @@ export default function DatasetManagementPage() {
       <Table
         columns={columns}
         dataSource={datasets}
+        pagination={pagination}
         rowKey="id"
         scroll={{ x: "max-content" }}
       />

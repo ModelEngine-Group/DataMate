@@ -5,10 +5,14 @@ import type { Dataset } from "@/types/dataset";
 
 const { Dragger } = Upload;
 
-export const useImportFile = (message, dataset: Dataset) => {
+export const useImportFile = () => {
   const [fileList, setFileList] = useState<UploadFile[]>([]);
 
-  const handleUpload = () => {
+  const resetFiles = () => {
+    setFileList([]);
+  };
+
+  const handleUpload = (message: any, dataset: Dataset) => {
     const formData = new FormData();
     fileList.forEach((file) => {
       console.log(file);
@@ -16,13 +20,16 @@ export const useImportFile = (message, dataset: Dataset) => {
     });
 
     console.log("Uploading files for dataset ID:", formData, dataset.id);
-    fetch(`/api/dataset/v2/file/upload/${dataset.id}`, {
+    fetch(`/api/datasets/${dataset.id}/files`, {
       method: "POST",
+      headers: {
+        "Content-Type": "application/form-data", // This is not necessary for FormData, but can be included if needed
+      },
       body: formData,
     })
       .then((res) => res.json())
       .then(() => {
-        setFileList([]);
+        resetFiles();
         message.success("数据集创建成功");
       })
       .catch(() => {
@@ -57,5 +64,5 @@ export const useImportFile = (message, dataset: Dataset) => {
     </Dragger>
   );
 
-  return { fileList, handleUpload, importFileRender };
+  return { fileList, resetFiles, handleUpload, importFileRender };
 };

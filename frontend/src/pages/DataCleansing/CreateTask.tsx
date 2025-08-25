@@ -7,22 +7,23 @@ import {
   Button,
   Modal,
   Form,
-  Typography,
   Tag,
   message,
 } from "antd";
 import {
   SaveOutlined,
-  ArrowRightOutlined,
   DatabaseOutlined,
   PlusOutlined,
 } from "@ant-design/icons";
-import OperatorOrchestrationPage from "./components/Orchestration";
-import { Link, useNavigate } from "react-router";
+import { data, Link, useNavigate } from "react-router";
 import { ArrowLeft } from "lucide-react";
+import OperatorLibrary from "./components/OperatorLibrary";
+import OperatorOrchestration from "./components/OperatorOrchestration";
+import OperatorConfig from "./components/OperatorConfig";
+import type { OperatorI } from "@/types/cleansing";
+import { OPERATOR_CATEGORIES, operatorList } from "@/mock/cleansing";
 
 const { TextArea } = Input;
-const { Title, Paragraph } = Typography;
 
 export default function CleansingTaskCreate() {
   const navigate = useNavigate();
@@ -38,10 +39,11 @@ export default function CleansingTaskCreate() {
     generateReport: true,
     autoBackup: false,
   });
-  const [selectedOperators, setSelectedOperators] = useState<any[]>([]);
   const [showSaveTemplateDialog, setShowSaveTemplateDialog] = useState(false);
   const [templateName, setTemplateName] = useState("");
   const [templateDescription, setTemplateDescription] = useState("");
+  const [operators, setOperators] = useState<OperatorI[]>([]);
+  const [selectedOperator, setSelectedOperator] = useState<string | null>(null);
 
   // 数据集列表
   const datasets = [
@@ -75,24 +77,25 @@ export default function CleansingTaskCreate() {
     },
   ];
 
-  const addOperator = (operator: any) => {
-    const newOperator = {
-      ...operator,
-      id: `${operator.id}_${Date.now()}`,
-      originalId: operator.id,
-      config: Object.keys(operator.params || {}).reduce(
-        (acc: any, param: any) => {
-          acc[param.name] = param.default;
-          return acc;
-        },
-        {}
-      ),
-    };
-    setSelectedOperators([...selectedOperators, newOperator]);
+  const toggleOperator = (template: OperatorI) => {
+    const exist = operators.find((op) => op.originalId === template.id);
+    if (exist) {
+      setOperators(operators.filter((op) => op.originalId !== template.id));
+    } else {
+      const newOperator: OperatorI = {
+        ...template,
+        id: `${template.id}_${Date.now()}`,
+        originalId: template.id,
+        params: JSON.parse(JSON.stringify(template.params)),
+      };
+      setOperators([...operators, newOperator]);
+    }
   };
 
+  // 删除算子
   const removeOperator = (id: string) => {
-    setSelectedOperators(selectedOperators.filter((item) => item.id !== id));
+    setOperators(operators.filter((op) => op.id !== id));
+    if (selectedOperator === id) setSelectedOperator(null);
   };
 
   const handleNext = () => {
@@ -110,10 +113,11 @@ export default function CleansingTaskCreate() {
   const handleSave = () => {
     const task = {
       ...taskConfig,
-      operators: selectedOperators,
+      operators,
       createdAt: new Date().toISOString(),
     };
-    onSave(task);
+    console.log("创建任务:", task);
+    navigate("/data/cleansing");
     message.success("任务已创建");
   };
 
@@ -124,7 +128,7 @@ export default function CleansingTaskCreate() {
           taskConfig.name && taskConfig.datasetId && taskConfig.newDatasetName
         );
       case 2:
-        return selectedOperators.length > 0;
+        return operators.length > 0;
       default:
         return false;
     }
@@ -169,15 +173,13 @@ export default function CleansingTaskCreate() {
                 size="large"
                 options={datasets.map((dataset) => ({
                   label: (
-                    <div className="flex items-center gap-3 py-2">
-                      <DatabaseOutlined style={{ color: "#1677ff" }} />
-                      <div>
-                        <div className="font-medium text-gray-900">
-                          {dataset.name}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          {dataset.files} 文件 • {dataset.size}
-                        </div>
+                    <div className="flex items-center justify-between gap-3 py-2">
+                      <div className="font-medium text-gray-900">
+                        {dataset.icon || <DatabaseOutlined className="mr-2" />}
+                        {dataset.name}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {dataset.files} 文件 • {dataset.size}
                       </div>
                     </div>
                   ),
@@ -202,11 +204,28 @@ export default function CleansingTaskCreate() {
         );
       case 2:
         return (
-          <div>
-            <h2 className="font-medium text-gray-900 text-lg mb-2">算子编排</h2>
-            <OperatorOrchestrationPage
-              handleAdd={addOperator}
-              handleRemove={removeOperator}
+          <div className="flex w-full h-full">
+            {/* 左侧算子库 */}
+            <OperatorLibrary
+              operators={operators}
+              operatorList={operatorList}
+              OPERATOR_CATEGORIES={OPERATOR_CATEGORIES}
+              toggleOperator={toggleOperator}
+            />
+
+            {/* 中间算子编排区域 */}
+            <OperatorOrchestration
+              operators={operators}
+              OPERATOR_CATEGORIES={OPERATOR_CATEGORIES}
+              selectedOperator={selectedOperator}
+              setSelectedOperator={setSelectedOperator}
+              setOperators={setOperators}
+              removeOperator={removeOperator}
+            />
+
+            {/* 右侧参数配置面板 */}
+            <OperatorConfig
+              selectedOp={operators.find((op) => op.id === selectedOperator)}
             />
           </div>
         );
@@ -302,7 +321,7 @@ export default function CleansingTaskCreate() {
             </Form.Item>
             <Form.Item label="包含算子">
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                {selectedOperators.map((op, index) => (
+                {operatorList.map((op, index) => (
                   <Tag key={index}>{op.name}</Tag>
                 ))}
               </div>

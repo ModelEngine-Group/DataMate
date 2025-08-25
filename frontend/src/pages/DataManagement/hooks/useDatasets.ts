@@ -4,17 +4,24 @@ import {
   getTypeIcon,
   mockDatasets,
   mockTags,
+  statisticsData as statistics,
 } from "@/mock/dataset";
 import type { Dataset } from "@/types/dataset";
 import { message } from "antd";
 import { useEffect, useState } from "react";
 
 export function useDatasets() {
+  const [statisticsData, setStatisticsData] = useState<any>(statistics);
   const [datasets, setDatasets] = useState(mapDatasets(mockDatasets));
   const [searchTerm, setSearchTerm] = useState("");
   const [favoriteDatasets, setFavoriteDatasets] = useState<Set<number>>(
     new Set([1, 3])
   );
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 15,
+    total: 0,
+  });
   const filterOptions = [
     {
       key: "type",
@@ -39,18 +46,10 @@ export function useDatasets() {
       ],
     },
     {
-      key: "tag",
+      key: "tags",
       label: "标签",
       mode: "multiple",
       options: mockTags.map((tag) => ({ label: tag, value: tag })),
-    },
-    {
-      key: "isFavorite",
-      label: "收藏",
-      options: [
-        { label: "已收藏", value: "favorited" },
-        { label: "未收藏", value: "unfavorited" },
-      ],
     },
   ];
 
@@ -79,7 +78,10 @@ export function useDatasets() {
   const [messageApi, contextHolder] = message.useMessage();
 
   const handleDeleteDataset = async (id: number) => {
-    await fetch(`/api/dataset/v2/${id}`);
+    await fetch(`/api/datasets/${id}`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+    });
     messageApi.success("数据删除成功");
   };
 
@@ -115,10 +117,19 @@ export function useDatasets() {
   async function fetchDatasets(params?: any) {
     console.log("Fetching datasets from API...");
 
-    const res = await fetch("/api/dataset/v2/page", {
-      method: "POST",
+    const res = await fetch("/api/datasets", {
+      method: "GET",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...params, pageNum: 1, pageSize: 100 }),
+      body: JSON.stringify({
+        ...params,
+        keywords: searchTerm,
+        type: params?.type === "all" ? undefined : params?.type,
+        status: params?.status === "all" ? undefined : params?.status,
+        // Convert tags to a comma-separated string if provided
+        tags: params?.tags?.length ? params.tags.join(",") : undefined,
+        page: pagination.current - 1,
+        size: pagination.pageSize,
+      }),
     });
     if (!res.ok) throw new Error("Failed to fetch datasets");
     const data = await res.json();
@@ -126,8 +137,22 @@ export function useDatasets() {
     setDatasets(mapDatasets(result));
   }
 
+  async function fetchDatasetStatistics() {
+    const res = await fetch("/api/datasets/statistics", {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+    if (!res.ok) throw new Error("Failed to fetch dataset statistics");
+    const data = await res.json();
+    setStatisticsData(data);
+  }
+
   useEffect(() => {
     fetchDatasets();
+  }, [searchTerm, pagination.current, pagination.pageSize]);
+
+  useEffect(() => {
+    fetchDatasetStatistics();
   }, []);
 
   return {
@@ -136,10 +161,14 @@ export function useDatasets() {
     contextHolder,
     searchTerm,
     filterOptions,
+    pagination,
+    setPagination,
     setSearchTerm,
     handleToggleFavorite,
     handleDownloadDataset,
     handleDeleteDataset,
     handleFiltersChange,
+    fetchDatasets,
+    statisticsData,
   };
 }
