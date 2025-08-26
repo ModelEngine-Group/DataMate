@@ -1,4 +1,4 @@
-FROM maven:3-openjdk-17-slim AS builder
+FROM maven:3-openjdk-21-slim AS builder
 
 COPY backend/ /opt/backend
 COPY scripts/image/backend/settings.xml /opt/backend
@@ -7,7 +7,7 @@ RUN cd /opt/backend && \
     mvn -U clean package -s settings.xml
 
 
-FROM openjdk:17-jdk-slim
+FROM openjdk:21-jdk-slim
 
 RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list && \
     sed -i 's/security.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list && \
