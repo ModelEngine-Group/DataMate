@@ -1,0 +1,56 @@
+services:
+  # 1) backend
+  backend:
+    container_name: backend
+    image: backend         # 等价于 imagePullPolicy: IfNotPresent
+    ports:
+      - "8080:8080"
+    volumes:
+      - type: bind
+        source: /tmp/data-platform/dataset
+        target: /dataset
+    networks: [ edatamate ]
+
+  # 2) datax
+  datax:
+    container_name: datax
+    image: datax
+    command: >
+      bash -c "rpcbind && python3 /opt/datax/bin/app.py"
+    cap_add:
+      - SYS_ADMIN               # securityContext.capabilities.add
+    ports:
+      - "8000:8000"
+    volumes:
+      - type: bind
+        source: /tmp/data-platform/dataset
+        target: /dataset
+    networks: [ edatamate ]
+
+  # 3) frontend（NodePort 30000）
+  frontend:
+    container_name: frontend
+    image: frontend
+    ports:
+      - "3000:3000"            # nodePort → hostPort
+    networks: [ edatamate ]
+
+  # 4) mysql
+  postgres:
+    container_name: postgres
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: "edatamate"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "123456"
+    ports:
+      - "5432:5432"
+    volumes:
+      - type: bind
+        source: /tmp/data-platform/postgresql-docker
+        target: /var/lib/postgresql/data
+    networks: [ edatamate ]
+
+networks:
+  edatamate:
+    driver: bridge

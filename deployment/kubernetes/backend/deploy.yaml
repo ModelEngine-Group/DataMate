@@ -1,0 +1,106 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  labels:
+    app: backend
+  name: backend
+rules:
+  - verbs:
+      - create
+      - list
+      - get
+      - delete
+    apiGroups:
+      - batch
+    resources:
+      - jobs
+  - verbs:
+      - list
+    apiGroups:
+      - ""
+    resources:
+      - pods
+  - verbs:
+      - get
+      - list
+    apiGroups:
+      - ""
+    resources:
+      - pods/log
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app: backend
+  name: backend
+
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  labels:
+    app: backend
+  name: backend
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: backend
+subjects:
+  - kind: ServiceAccount
+    name: backend
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  labels:
+    app: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      serviceAccountName: backend
+      containers:
+      - name: backend
+        image: backend
+        imagePullPolicy: IfNotPresent
+        env:
+          - name: namespace
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+        ports:
+        - containerPort: 8080
+        volumeMounts:
+        - name: dataset
+          mountPath: /dataset
+          subPath: dataset
+      volumes:
+      - name: dataset
+        hostPath:
+          path: /tmp/data-platform
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  labels:
+    app: backend
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: 8080
+      protocol: TCP
+  selector:
+    app: backend
