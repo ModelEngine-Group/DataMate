@@ -38,6 +38,18 @@ data-engine-platform/
 │   │   │   └── config/                # 网关配置
 │   │   └── pom.xml
 │   │
+|   ├── openapi/                            # 📋 API规范定义
+|   │   ├── specs/                         # OpenAPI 3.0规范文件
+|   │   │   ├── data-management.yaml
+|   │   │   ├── data-collection.yaml
+|   │   │   ├── operator-market.yaml
+|   │   │   ├── data-cleaning.yaml
+|   │   │   ├── data-synthesis.yaml
+|   │   │   ├── data-annotation.yaml
+|   │   │   ├── data-evaluation.yaml
+|   │   │   ├── pipeline-orchestration.yaml
+|   │   │   ├── execution-engine.yaml
+|   │   │   └── rag-services.yaml
 │   ├── services/                      # 业务服务目录
 │   │   ├── main-application/          # 主应用微服务 (聚合器)
 │   │   │   ├── src/main/java/com/dataengine/
@@ -82,18 +94,6 @@ data-engine-platform/
 │               ├── metadata.json
 │               └── operator.py
 │
-├── openapi/                            # 📋 API规范定义
-│   ├── specs/                         # OpenAPI 3.0规范文件
-│   │   ├── data-management.yaml
-│   │   ├── data-collection.yaml
-│   │   ├── operator-market.yaml
-│   │   ├── data-cleaning.yaml
-│   │   ├── data-synthesis.yaml
-│   │   ├── data-annotation.yaml
-│   │   ├── data-evaluation.yaml
-│   │   ├── pipeline-orchestration.yaml
-│   │   ├── execution-engine.yaml
-│   │   └── rag-services.yaml
 │
 ├── deployment/                         # 🐳 部署与环境
 │   ├── docker/                        # 通用Dockerfile与Compose模版
