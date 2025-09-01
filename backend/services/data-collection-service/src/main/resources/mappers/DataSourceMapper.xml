@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dataengine.collection.infrastructure.persistence.mapper.DataSourceMapper">
+
+    <!-- Result Map -->
+    <resultMap id="DataSourceResultMap" type="com.dataengine.collection.domain.model.DataSource">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="type" column="type" typeHandler="org.apache.ibatis.type.EnumTypeHandler"/>
+        <result property="description" column="description"/>
+        <result property="config" column="config"/>
+        <result property="status" column="status" typeHandler="org.apache.ibatis.type.EnumTypeHandler"/>
+        <result property="lastTestAt" column="last_test_at"/>
+        <result property="lastTestResult" column="last_test_result"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+        <result property="createdBy" column="created_by"/>
+        <result property="updatedBy" column="updated_by"/>
+    </resultMap>
+
+    <!-- Base Column List -->
+    <sql id="Base_Column_List">
+        id, name, type, description, config, status, last_test_at, last_test_result,
+        created_at, updated_at, created_by, updated_by
+    </sql>
+
+    <!-- Insert -->
+    <insert id="insert" parameterType="com.dataengine.collection.domain.model.DataSource">
+        INSERT INTO t_dc_data_sources (
+            id, name, type, description, config, status, last_test_at, last_test_result,
+            created_at, updated_at, created_by, updated_by
+        ) VALUES (
+            #{id}, #{name}, #{type}, #{description}, #{config}, #{status}, #{lastTestAt}, #{lastTestResult},
+            #{createdAt}, #{updatedAt}, #{createdBy}, #{updatedBy}
+        )
+    </insert>
+
+    <!-- Update -->
+    <update id="update" parameterType="com.dataengine.collection.domain.model.DataSource">
+        UPDATE t_dc_data_sources 
+        SET name = #{name},
+            description = #{description},
+            config = #{config},
+            status = #{status},
+            last_test_at = #{lastTestAt},
+            last_test_result = #{lastTestResult},
+            updated_at = #{updatedAt},
+            updated_by = #{updatedBy}
+        WHERE id = #{id}
+    </update>
+
+    <!-- Delete by ID -->
+    <delete id="deleteById" parameterType="java.lang.String">
+        DELETE FROM t_dc_data_sources WHERE id = #{id}
+    </delete>
+
+    <!-- Select by ID -->
+    <select id="selectById" parameterType="java.lang.String" resultMap="DataSourceResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM t_dc_data_sources
+        WHERE id = #{id}
+    </select>
+
+    <!-- Select by Name -->
+    <select id="selectByName" parameterType="java.lang.String" resultMap="DataSourceResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM t_dc_data_sources
+        WHERE name = #{name}
+    </select>
+
+    <!-- Select by Type -->
+    <select id="selectByType" parameterType="java.lang.String" resultMap="DataSourceResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM t_dc_data_sources
+        WHERE type = #{type}
+        ORDER BY created_at DESC
+    </select>
+
+    <!-- Select by Status -->
+    <select id="selectByStatus" parameterType="java.lang.String" resultMap="DataSourceResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM t_dc_data_sources
+        WHERE status = #{status}
+        ORDER BY created_at DESC
+    </select>
+
+    <!-- Select All with Pagination -->
+    <select id="selectAll" resultMap="DataSourceResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM t_dc_data_sources
+        <where>
+            <if test="type != null and type != ''">
+                AND type = #{type}
+            </if>
+            <if test="status != null and status != ''">
+                AND status = #{status}
+            </if>
+            <if test="name != null and name != ''">
+                AND name LIKE CONCAT('%', #{name}, '%')
+            </if>
+        </where>
+        ORDER BY created_at DESC
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <!-- Count Total -->
+    <select id="count" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM t_dc_data_sources
+        <where>
+            <if test="type != null and type != ''">
+                AND type = #{type}
+            </if>
+            <if test="status != null and status != ''">
+                AND status = #{status}
+            </if>
+            <if test="name != null and name != ''">
+                AND name LIKE CONCAT('%', #{name}, '%')
+            </if>
+        </where>
+    </select>
+
+    <!-- Update Status -->
+    <update id="updateStatus">
+        UPDATE t_dc_data_sources 
+        SET status = #{status}, updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- Update Test Result -->
+    <update id="updateTestResult">
+        UPDATE t_dc_data_sources 
+        SET last_test_at = #{lastTestAt}, 
+            last_test_result = #{lastTestResult}, 
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+</mapper>

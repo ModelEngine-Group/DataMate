@@ -9,7 +9,7 @@ info:
     - DataX任务创建和管理
     - 数据同步任务执行
     - 任务监控和状态查询
-    - 数据血缘追踪
+    - 执行日志查看
   version: 1.0.0
   contact:
     name: Data Engine Platform Team
@@ -24,10 +24,10 @@ tags:
     description: 数据源管理
   - name: CollectionTask
     description: 数据归集任务
-  - name: DataXJob
-    description: DataX作业管理
+  - name: TaskExecution
+    description: 任务执行管理
   - name: Monitor
-    description: 监控和状态
+    description: 监控和日志
 
 paths:
   /datasources:
@@ -50,6 +50,11 @@ paths:
           in: query
           schema:
             $ref: '#/components/schemas/DataSourceType'
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [ACTIVE, INACTIVE]
       responses:
         '200':
           description: 数据源列表
@@ -93,6 +98,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DataSourceResponse'
+        '404':
+          description: 数据源不存在
 
     put:
       tags: [DataSource]
@@ -167,6 +174,11 @@ paths:
           in: query
           schema:
             $ref: '#/components/schemas/TaskStatus'
+        - name: name
+          in: query
+          description: 任务名称关键字搜索
+          schema:
+            type: string
       responses:
         '200':
           description: 归集任务列表
@@ -234,9 +246,22 @@ paths:
               schema:
                 $ref: '#/components/schemas/CollectionTaskResponse'
 
+    delete:
+      tags: [CollectionTask]
+      summary: 删除归集任务
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: 归集任务删除成功
+
   /tasks/{id}/execute:
     post:
-      tags: [CollectionTask]
+      tags: [TaskExecution]
       summary: 执行归集任务
       parameters:
         - name: id
@@ -254,7 +279,7 @@ paths:
 
   /tasks/{id}/stop:
     post:
-      tags: [CollectionTask]
+      tags: [TaskExecution]
       summary: 停止归集任务
       parameters:
         - name: id
@@ -266,10 +291,10 @@ paths:
         '200':
           description: 任务停止成功
 
-  /datax/jobs:
+  /executions:
     get:
-      tags: [DataXJob]
-      summary: 获取DataX作业列表
+      tags: [TaskExecution]
+      summary: 获取任务执行历史
       parameters:
         - name: page
           in: query
@@ -281,82 +306,77 @@ paths:
           schema:
             type: integer
             default: 20
+        - name: taskId
+          in: query
+          description: 按任务ID过滤
+          schema:
+            type: string
+        - name: status
+          in: query
+          description: 按执行状态过滤
+          schema:
+            type: string
+            enum: [RUNNING, SUCCESS, FAILED, STOPPED]
+        - name: startTime
+          in: query
+          description: 开始时间过滤(ISO-8601格式)
+          schema:
+            type: string
+            format: date-time
+        - name: endTime
+          in: query
+          description: 结束时间过滤(ISO-8601格式)
+          schema:
+            type: string
+            format: date-time
       responses:
         '200':
-          description: DataX作业列表
+          description: 任务执行历史列表
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PagedDataXJobs'
+                $ref: '#/components/schemas/PagedTaskExecutions'
 
-    post:
-      tags: [DataXJob]
-      summary: 创建DataX作业
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateDataXJobRequest'
-      responses:
-        '201':
-          description: DataX作业创建成功
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DataXJobResponse'
-
-  /datax/jobs/{id}/config:
+  /executions/{executionId}:
     get:
-      tags: [DataXJob]
-      summary: 获取DataX作业配置
+      tags: [TaskExecution]
+      summary: 获取任务执行详情
       parameters:
-        - name: id
+        - name: executionId
           in: path
           required: true
           schema:
             type: string
       responses:
         '200':
-          description: DataX作业配置
+          description: 任务执行详情
           content:
             application/json:
               schema:
-                type: object
+                $ref: '#/components/schemas/TaskExecutionDetail'
 
-  /monitor/tasks/{id}/status:
-    get:
-      tags: [Monitor]
-      summary: 获取任务执行状态
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: 任务执行状态
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TaskExecutionStatus'
-
-  /monitor/tasks/{id}/logs:
+  /executions/{executionId}/logs:
     get:
       tags: [Monitor]
       summary: 获取任务执行日志
       parameters:
-        - name: id
+        - name: executionId
           in: path
           required: true
           schema:
             type: string
         - name: lines
           in: query
+          description: 返回日志行数
           schema:
             type: integer
             default: 100
+        - name: level
+          in: query
+          description: 日志级别过滤
+          schema:
+            type: string
+            enum: [DEBUG, INFO, WARN, ERROR]
       responses:
         '200':
           description: 任务执行日志
@@ -369,6 +389,14 @@ paths:
     get:
       tags: [Monitor]
       summary: 获取归集统计信息
+      parameters:
+        - name: period
+          in: query
+          description: 统计周期
+          schema:
+            type: string
+            enum: [HOUR, DAY, WEEK, MONTH]
+            default: DAY
       responses:
         '200':
           description: 归集统计信息
@@ -418,8 +446,10 @@ components:
           type: string
         config:
           type: object
+          additionalProperties: true
         status:
           type: string
+          enum: [ACTIVE, INACTIVE]
         createdAt:
           type: string
           format: date-time
@@ -437,11 +467,14 @@ components:
         name:
           type: string
           description: 数据源名称
+          minLength: 1
+          maxLength: 100
         type:
           $ref: '#/components/schemas/DataSourceType'
         description:
           type: string
           description: 数据源描述
+          maxLength: 500
         config:
           type: object
           description: 数据源连接配置
@@ -452,8 +485,11 @@ components:
       properties:
         name:
           type: string
+          minLength: 1
+          maxLength: 100
         description:
           type: string
+          maxLength: 500
         config:
           type: object
           additionalProperties: true
@@ -483,15 +519,23 @@ components:
           type: string
         sourceDataSourceId:
           type: string
+        sourceDataSourceName:
+          type: string
         targetDataSourceId:
+          type: string
+        targetDataSourceName:
           type: string
         config:
           type: object
+          additionalProperties: true
         status:
           $ref: '#/components/schemas/TaskStatus'
-        schedule:
+        scheduleExpression:
           type: string
-          description: 调度表达式
+          description: Cron调度表达式
+        lastExecutionId:
+          type: string
+          description: 最后执行ID
         createdAt:
           type: string
           format: date-time
@@ -510,9 +554,12 @@ components:
         name:
           type: string
           description: 任务名称
+          minLength: 1
+          maxLength: 100
         description:
           type: string
           description: 任务描述
+          maxLength: 500
         sourceDataSourceId:
           type: string
           description: 源数据源ID
@@ -523,21 +570,24 @@ components:
           type: object
           description: 归集配置
           additionalProperties: true
-        schedule:
+        scheduleExpression:
           type: string
-          description: 调度表达式
+          description: Cron调度表达式
 
     UpdateCollectionTaskRequest:
       type: object
       properties:
         name:
           type: string
+          minLength: 1
+          maxLength: 100
         description:
           type: string
+          maxLength: 500
         config:
           type: object
           additionalProperties: true
-        schedule:
+        scheduleExpression:
           type: string
 
     TaskExecutionResponse:
@@ -549,36 +599,55 @@ components:
           type: string
         status:
           type: string
+          enum: [RUNNING, SUCCESS, FAILED, STOPPED]
         startedAt:
           type: string
           format: date-time
 
-    TaskExecutionStatus:
+    TaskExecutionDetail:
       type: object
       properties:
         executionId:
           type: string
         taskId:
           type: string
+        taskName:
+          type: string
         status:
           type: string
+          enum: [RUNNING, SUCCESS, FAILED, STOPPED]
         progress:
           type: number
           format: double
-        recordsProcessed:
-          type: integer
-          format: int64
+          minimum: 0
+          maximum: 100
         recordsTotal:
           type: integer
           format: int64
+        recordsProcessed:
+          type: integer
+          format: int64
+        recordsSuccess:
+          type: integer
+          format: int64
+        recordsFailed:
+          type: integer
+          format: int64
+        throughput:
+          type: number
+          format: double
+          description: 处理速度(记录/秒)
         startedAt:
           type: string
           format: date-time
-        finishedAt:
+        completedAt:
           type: string
           format: date-time
         errorMessage:
           type: string
+        config:
+          type: object
+          additionalProperties: true
 
     TaskExecutionLogs:
       type: object
@@ -588,45 +657,41 @@ components:
         logs:
           type: array
           items:
-            type: string
+            $ref: '#/components/schemas/LogEntry'
+        totalLines:
+          type: integer
 
-    DataXJobResponse:
+    LogEntry:
       type: object
       properties:
-        id:
-          type: string
-        name:
-          type: string
-        config:
-          type: object
-        status:
-          type: string
-        createdAt:
+        timestamp:
           type: string
           format: date-time
-
-    CreateDataXJobRequest:
-      type: object
-      required:
-        - name
-        - config
-      properties:
-        name:
+        level:
           type: string
-        config:
-          type: object
-          additionalProperties: true
+          enum: [DEBUG, INFO, WARN, ERROR]
+        message:
+          type: string
+        thread:
+          type: string
+        logger:
+          type: string
 
     CollectionStatistics:
       type: object
       properties:
+        period:
+          type: string
+          enum: [HOUR, DAY, WEEK, MONTH]
         totalTasks:
           type: integer
-        runningTasks:
+        activeTasks:
           type: integer
-        completedTasks:
+        totalExecutions:
           type: integer
-        failedTasks:
+        successfulExecutions:
+          type: integer
+        failedExecutions:
           type: integer
         totalRecordsProcessed:
           type: integer
@@ -634,6 +699,52 @@ components:
         avgExecutionTime:
           type: number
           format: double
+          description: 平均执行时间(秒)
+        avgThroughput:
+          type: number
+          format: double
+          description: 平均吞吐量(记录/秒)
+        topDataSources:
+          type: array
+          items:
+            $ref: '#/components/schemas/DataSourceUsage'
+        executionTrend:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExecutionTrendPoint'
+
+    DataSourceUsage:
+      type: object
+      properties:
+        dataSourceId:
+          type: string
+        dataSourceName:
+          type: string
+        type:
+          $ref: '#/components/schemas/DataSourceType'
+        taskCount:
+          type: integer
+        executionCount:
+          type: integer
+        recordsProcessed:
+          type: integer
+          format: int64
+
+    ExecutionTrendPoint:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        executionCount:
+          type: integer
+        successCount:
+          type: integer
+        failureCount:
+          type: integer
+        recordsProcessed:
+          type: integer
+          format: int64
 
     PagedDataSources:
       type: object
@@ -651,6 +762,10 @@ components:
           type: integer
         number:
           type: integer
+        first:
+          type: boolean
+        last:
+          type: boolean
 
     PagedCollectionTasks:
       type: object
@@ -668,14 +783,18 @@ components:
           type: integer
         number:
           type: integer
+        first:
+          type: boolean
+        last:
+          type: boolean
 
-    PagedDataXJobs:
+    PagedTaskExecutions:
       type: object
       properties:
         content:
           type: array
           items:
-            $ref: '#/components/schemas/DataXJobResponse'
+            $ref: '#/components/schemas/TaskExecutionDetail'
         totalElements:
           type: integer
           format: int64
@@ -685,3 +804,7 @@ components:
           type: integer
         number:
           type: integer
+        first:
+          type: boolean
+        last:
+          type: boolean

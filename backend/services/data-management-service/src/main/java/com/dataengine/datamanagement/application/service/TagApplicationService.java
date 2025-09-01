@@ -1,7 +1,7 @@
 package com.dataengine.datamanagement.application.service;
 
 import com.dataengine.datamanagement.domain.model.dataset.Tag;
-import com.dataengine.datamanagement.domain.repository.TagRepository;
+import com.dataengine.datamanagement.infrastructure.persistence.mapper.TagMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,17 +10,17 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * 标签应用服务
+ * 标签应用服务（UUID 主键）
  */
 @Service
 @Transactional
 public class TagApplicationService {
 
-    private final TagRepository tagRepository;
+    private final TagMapper tagMapper;
 
     @Autowired
-    public TagApplicationService(TagRepository tagRepository) {
-        this.tagRepository = tagRepository;
+    public TagApplicationService(TagMapper tagMapper) {
+        this.tagMapper = tagMapper;
     }
 
     /**
@@ -28,14 +28,15 @@ public class TagApplicationService {
      */
     public Tag createTag(String name, String color, String description) {
         // 检查名称是否已存在
-        if (tagRepository.findByName(name).isPresent()) {
+        if (tagMapper.findByName(name) != null) {
             throw new IllegalArgumentException("Tag with name '" + name + "' already exists");
         }
 
-        String tagId = UUID.randomUUID().toString();
-        Tag tag = new Tag(tagId, name, color, description);
-        
-        return tagRepository.save(tag);
+        Tag tag = new Tag(name, description, null, color);
+        tag.setUsageCount(0L);
+        tag.setId(UUID.randomUUID().toString());
+        tagMapper.insert(tag);
+        return tagMapper.findById(tag.getId());
     }
 
     /**
@@ -43,7 +44,7 @@ public class TagApplicationService {
      */
     @Transactional(readOnly = true)
     public List<Tag> getAllTags() {
-        return tagRepository.findAllByOrderByUsageCountDesc();
+        return tagMapper.findAllByOrderByUsageCountDesc();
     }
 
     /**
@@ -54,7 +55,7 @@ public class TagApplicationService {
         if (keyword == null || keyword.trim().isEmpty()) {
             return getAllTags();
         }
-        return tagRepository.findByKeyword(keyword.trim());
+        return tagMapper.findByKeyword(keyword.trim());
     }
 
     /**
@@ -62,8 +63,11 @@ public class TagApplicationService {
      */
     @Transactional(readOnly = true)
     public Tag getTag(String tagId) {
-        return tagRepository.findById(tagId)
-            .orElseThrow(() -> new IllegalArgumentException("Tag not found: " + tagId));
+        Tag tag = tagMapper.findById(tagId);
+        if (tag == null) {
+            throw new IllegalArgumentException("Tag not found: " + tagId);
+        }
+        return tag;
     }
 
     /**
@@ -71,7 +75,10 @@ public class TagApplicationService {
      */
     @Transactional(readOnly = true)
     public Tag getTagByName(String name) {
-        return tagRepository.findByName(name)
-            .orElseThrow(() -> new IllegalArgumentException("Tag not found: " + name));
+        Tag tag = tagMapper.findByName(name);
+        if (tag == null) {
+            throw new IllegalArgumentException("Tag not found: " + name);
+        }
+        return tag;
     }
 }

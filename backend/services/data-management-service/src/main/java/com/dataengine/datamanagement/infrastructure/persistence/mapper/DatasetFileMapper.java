@@ -1,0 +1,29 @@
+package com.dataengine.datamanagement.infrastructure.persistence.mapper;
+
+import com.dataengine.datamanagement.domain.model.dataset.DatasetFile;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.session.RowBounds;
+
+import java.util.List;
+
+@Mapper
+public interface DatasetFileMapper {
+    DatasetFile findById(@Param("id") String id);
+    List<DatasetFile> findByDatasetId(@Param("datasetId") String datasetId, RowBounds rowBounds);
+    List<DatasetFile> findByDatasetIdAndStatus(@Param("datasetId") String datasetId, @Param("status") String status, RowBounds rowBounds);
+    List<DatasetFile> findByDatasetIdAndFileType(@Param("datasetId") String datasetId, @Param("fileType") String fileType, RowBounds rowBounds);
+    Long countByDatasetId(@Param("datasetId") String datasetId);
+    Long countCompletedByDatasetId(@Param("datasetId") String datasetId);
+    Long sumSizeByDatasetId(@Param("datasetId") String datasetId);
+    DatasetFile findByDatasetIdAndFileName(@Param("datasetId") String datasetId, @Param("fileName") String fileName);
+    List<DatasetFile> findAllByDatasetId(@Param("datasetId") String datasetId);
+    List<DatasetFile> findByCriteria(@Param("datasetId") String datasetId,
+                                     @Param("fileType") String fileType,
+                                     @Param("status") String status,
+                                     RowBounds rowBounds);
+
+    int insert(DatasetFile file);
+    int update(DatasetFile file);
+    int deleteById(@Param("id") String id);
+}

@@ -1,105 +1,114 @@
 package com.dataengine.datamanagement.application.service;
 
-import com.dataengine.datamanagement.domain.model.dataset.*;
-import com.dataengine.datamanagement.domain.repository.DatasetRepository;
-import com.dataengine.datamanagement.domain.repository.TagRepository;
+import com.dataengine.datamanagement.domain.model.dataset.Dataset;
+import com.dataengine.datamanagement.domain.model.dataset.Tag;
+import com.dataengine.datamanagement.infrastructure.persistence.mapper.DatasetFileMapper;
+import com.dataengine.datamanagement.infrastructure.persistence.mapper.DatasetMapper;
+import com.dataengine.datamanagement.infrastructure.persistence.mapper.TagMapper;
+import org.apache.ibatis.session.RowBounds;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * 数据集应用服务
+ * 数据集应用服务（对齐 DB schema，使用 UUID 字符串主键）
  */
 @Service
 @Transactional
 public class DatasetApplicationService {
 
-    private final DatasetRepository datasetRepository;
-    private final TagRepository tagRepository;
+    private final DatasetMapper datasetMapper;
+    private final TagMapper tagMapper;
+    private final DatasetFileMapper datasetFileMapper;
 
     @Autowired
-    public DatasetApplicationService(DatasetRepository datasetRepository, TagRepository tagRepository) {
-        this.datasetRepository = datasetRepository;
-        this.tagRepository = tagRepository;
+    public DatasetApplicationService(DatasetMapper datasetMapper, TagMapper tagMapper, DatasetFileMapper datasetFileMapper) {
+        this.datasetMapper = datasetMapper;
+        this.tagMapper = tagMapper;
+        this.datasetFileMapper = datasetFileMapper;
     }
 
     /**
      * 创建数据集
      */
-    public Dataset createDataset(String name, String description, String typeCode, String typeName,
-                               String typeDescription, List<String> tagNames, String dataSource,
-                               String targetLocation, String createdBy) {
-        
-        // 检查名称是否已存在
-        if (datasetRepository.findByName(name).isPresent()) {
+    public Dataset createDataset(String name, String description, String datasetType,
+                                 List<String> tagNames, Long dataSourceId,
+                                 String path, String format, String createdBy) {
+        if (datasetMapper.findByName(name) != null) {
             throw new IllegalArgumentException("Dataset with name '" + name + "' already exists");
         }
 
-        // 创建数据集
-        DatasetType datasetType = new DatasetType(typeCode, typeName, typeDescription);
-        String datasetId = UUID.randomUUID().toString();
-        Dataset dataset = new Dataset(datasetId, name, description, datasetType, 
-                                    dataSource, targetLocation, createdBy);
+        Dataset dataset = new Dataset();
+        dataset.setId(UUID.randomUUID().toString());
+        dataset.setName(name);
+        dataset.setDescription(description);
+        dataset.setDatasetType(datasetType);
+        dataset.setDataSourceId(dataSourceId);
+        dataset.setPath(path);
+        dataset.setFormat(format);
+        dataset.setStatus("DRAFT");
+        dataset.setCreatedBy(createdBy);
+        dataset.setUpdatedBy(createdBy);
+        dataset.setCreatedAt(LocalDateTime.now());
+        dataset.setUpdatedAt(LocalDateTime.now());
+        datasetMapper.insert(dataset); // 手动设定 UUID 主键
 
         // 处理标签
         if (tagNames != null && !tagNames.isEmpty()) {
             Set<Tag> tags = processTagNames(tagNames);
-            tags.forEach(dataset::addTag);
+            for (Tag t : tags) {
+                tagMapper.insertDatasetTag(dataset.getId(), t.getId());
+            }
         }
-
-        return datasetRepository.save(dataset);
+        return datasetMapper.findById(dataset.getId());
     }
 
     /**
      * 更新数据集
      */
-    public Dataset updateDataset(String datasetId, String name, String description, 
-                               List<String> tagNames, DatasetStatus status) {
-        Dataset dataset = datasetRepository.findById(datasetId)
-            .orElseThrow(() -> new IllegalArgumentException("Dataset not found: " + datasetId));
-
-        // 更新基本信息
-        if (name != null || description != null) {
-            dataset.updateBasicInfo(name, description);
+    public Dataset updateDataset(String datasetId, String name, String description,
+                                 List<String> tagNames, String status) {
+        Dataset dataset = datasetMapper.findById(datasetId);
+        if (dataset == null) {
+            throw new IllegalArgumentException("Dataset not found: " + datasetId);
         }
 
-        // 更新状态
-        if (status != null) {
-            dataset.updateStatus(status);
-        }
+        if (name != null && !name.isEmpty()) dataset.setName(name);
+        if (description != null) dataset.setDescription(description);
+        if (status != null && !status.isEmpty()) dataset.setStatus(status);
+        dataset.setUpdatedAt(LocalDateTime.now());
 
-        // 更新标签
         if (tagNames != null) {
-            // 清除现有标签并减少使用计数
-            dataset.getTags().forEach(Tag::decrementUsage);
-            dataset.getTags().clear();
-            
-            // 添加新标签
+            tagMapper.deleteDatasetTagsByDatasetId(datasetId);
             if (!tagNames.isEmpty()) {
                 Set<Tag> newTags = processTagNames(tagNames);
-                newTags.forEach(dataset::addTag);
+                for (Tag t : newTags) {
+                    tagMapper.insertDatasetTag(datasetId, t.getId());
+                }
             }
         }
 
-        return datasetRepository.save(dataset);
+        datasetMapper.update(dataset);
+        return datasetMapper.findById(datasetId);
     }
 
     /**
      * 删除数据集
      */
     public void deleteDataset(String datasetId) {
-        Dataset dataset = datasetRepository.findById(datasetId)
-            .orElseThrow(() -> new IllegalArgumentException("Dataset not found: " + datasetId));
-
-        // 减少标签使用计数
-        dataset.getTags().forEach(Tag::decrementUsage);
-
-        datasetRepository.delete(dataset);
+        Dataset dataset = datasetMapper.findById(datasetId);
+        if (dataset == null) {
+            throw new IllegalArgumentException("Dataset not found: " + datasetId);
+        }
+        tagMapper.deleteDatasetTagsByDatasetId(datasetId);
+        datasetMapper.deleteById(datasetId);
     }
 
     /**
@@ -107,45 +116,28 @@ public class DatasetApplicationService {
      */
     @Transactional(readOnly = true)
     public Dataset getDataset(String datasetId) {
-        return datasetRepository.findById(datasetId)
-            .orElseThrow(() -> new IllegalArgumentException("Dataset not found: " + datasetId));
+        Dataset dataset = datasetMapper.findById(datasetId);
+        if (dataset == null) {
+            throw new IllegalArgumentException("Dataset not found: " + datasetId);
+        }
+        // 载入标签
+        List<Tag> tags = tagMapper.findByDatasetId(datasetId);
+        if (tags != null) {
+            dataset.getTags().addAll(tags);
+        }
+        return dataset;
     }
 
     /**
      * 分页查询数据集
      */
     @Transactional(readOnly = true)
-    public Page<Dataset> getDatasets(String typeCode, DatasetStatus status, String keyword,
+    public Page<Dataset> getDatasets(String typeCode, String status, String keyword,
                                    List<String> tagNames, Pageable pageable) {
-        return datasetRepository.findByCriteria(typeCode, status, keyword, tagNames, pageable);
-    }
-
-    /**
-     * 获取数据集统计信息
-     */
-    @Transactional(readOnly = true)
-    public DatasetStatistics getDatasetStatistics(String datasetId) {
-        Dataset dataset = getDataset(datasetId);
-        
-        Map<String, Integer> fileTypeDistribution = new HashMap<>();
-        Map<String, Integer> statusDistribution = new HashMap<>();
-        
-        for (DatasetFile file : dataset.getFiles()) {
-            // 文件类型分布
-            fileTypeDistribution.merge(file.getFileType(), 1, Integer::sum);
-            
-            // 状态分布
-            statusDistribution.merge(file.getStatus().name(), 1, Integer::sum);
-        }
-        
-        return new DatasetStatistics(
-            dataset.getFileCount(),
-            (int) dataset.getFiles().stream().filter(f -> f.getStatus() == DatasetFileStatus.COMPLETED).count(),
-            dataset.getTotalSize(),
-            dataset.getCompletionRate(),
-            fileTypeDistribution,
-            statusDistribution
-        );
+        RowBounds bounds = new RowBounds(pageable.getPageNumber() * pageable.getPageSize(), pageable.getPageSize());
+        List<Dataset> content = datasetMapper.findByCriteria(typeCode, status, keyword, tagNames, bounds);
+        long total = datasetMapper.countByCriteria(typeCode, status, keyword, tagNames);
+        return new PageImpl<>(content, pageable, total);
     }
 
     /**
@@ -153,50 +145,19 @@ public class DatasetApplicationService {
      */
     private Set<Tag> processTagNames(List<String> tagNames) {
         Set<Tag> tags = new HashSet<>();
-        
         for (String tagName : tagNames) {
-            Tag tag = tagRepository.findByName(tagName)
-                .orElseGet(() -> {
-                    String tagId = UUID.randomUUID().toString();
-                    Tag newTag = new Tag(tagId, tagName, "#007bff", null);
-                    return tagRepository.save(newTag);
-                });
-            
-            tag.incrementUsage();
+            Tag tag = tagMapper.findByName(tagName);
+            if (tag == null) {
+                Tag newTag = new Tag(tagName, null, null, "#007bff");
+                newTag.setUsageCount(0L);
+                newTag.setId(UUID.randomUUID().toString());
+                tagMapper.insert(newTag);
+                tag = newTag;
+            }
+            tag.setUsageCount(tag.getUsageCount() == null ? 1L : tag.getUsageCount() + 1);
+            tagMapper.updateUsageCount(tag.getId(), tag.getUsageCount());
             tags.add(tag);
         }
-        
         return tags;
-    }
-
-    /**
-     * 数据集统计信息
-     */
-    public static class DatasetStatistics {
-        private final Integer totalFiles;
-        private final Integer completedFiles;
-        private final Long totalSize;
-        private final Float completionRate;
-        private final Map<String, Integer> fileTypeDistribution;
-        private final Map<String, Integer> statusDistribution;
-
-        public DatasetStatistics(Integer totalFiles, Integer completedFiles, Long totalSize,
-                               Float completionRate, Map<String, Integer> fileTypeDistribution,
-                               Map<String, Integer> statusDistribution) {
-            this.totalFiles = totalFiles;
-            this.completedFiles = completedFiles;
-            this.totalSize = totalSize;
-            this.completionRate = completionRate;
-            this.fileTypeDistribution = fileTypeDistribution;
-            this.statusDistribution = statusDistribution;
-        }
-
-        // Getters
-        public Integer getTotalFiles() { return totalFiles; }
-        public Integer getCompletedFiles() { return completedFiles; }
-        public Long getTotalSize() { return totalSize; }
-        public Float getCompletionRate() { return completionRate; }
-        public Map<String, Integer> getFileTypeDistribution() { return fileTypeDistribution; }
-        public Map<String, Integer> getStatusDistribution() { return statusDistribution; }
     }
 }

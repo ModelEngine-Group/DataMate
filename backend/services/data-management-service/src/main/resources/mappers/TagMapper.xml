@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dataengine.datamanagement.infrastructure.persistence.mapper.TagMapper">
+
+    <resultMap id="TagResultMap" type="com.dataengine.datamanagement.domain.model.dataset.Tag">
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="description" property="description"/>
+        <result column="category" property="category"/>
+        <result column="color" property="color"/>
+        <result column="usage_count" property="usageCount"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, name, description, category, color, usage_count, created_at, updated_at
+    </sql>
+
+    <select id="findById" parameterType="string" resultMap="TagResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM t_dm_tags
+        WHERE id = #{id}
+    </select>
+
+    <select id="findByName" parameterType="string" resultMap="TagResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM t_dm_tags
+        WHERE name = #{name}
+        LIMIT 1
+    </select>
+
+    <select id="findByNameIn" parameterType="list" resultMap="TagResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM t_dm_tags
+        WHERE name IN
+        <foreach collection="list" item="n" open="(" separator="," close=")">
+            #{n}
+        </foreach>
+    </select>
+
+    <select id="findByKeyword" parameterType="string" resultMap="TagResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM t_dm_tags
+        WHERE name LIKE CONCAT('%', #{keyword}, '%')
+        ORDER BY usage_count DESC, name ASC
+    </select>
+
+    <select id="findAllByOrderByUsageCountDesc" resultMap="TagResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM t_dm_tags
+        ORDER BY usage_count DESC, name ASC
+    </select>
+
+    <insert id="insert" parameterType="com.dataengine.datamanagement.domain.model.dataset.Tag">
+        INSERT INTO t_dm_tags (id, name, description, category, color, usage_count)
+        VALUES (#{id}, #{name}, #{description}, #{category}, #{color}, #{usageCount})
+    </insert>
+
+    <update id="update" parameterType="com.dataengine.datamanagement.domain.model.dataset.Tag">
+        UPDATE t_dm_tags
+        SET name = #{name},
+            description = #{description},
+            category = #{category},
+            color = #{color},
+            usage_count = #{usageCount}
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateUsageCount">
+        UPDATE t_dm_tags
+        SET usage_count = #{usageCount}
+        WHERE id = #{id}
+    </update>
+
+    <!-- Dataset & Tag relations -->
+    <insert id="insertDatasetTag">
+        INSERT INTO t_dm_dataset_tags (dataset_id, tag_id)
+        VALUES (#{datasetId}, #{tagId})
+    </insert>
+
+    <delete id="deleteDatasetTagsByDatasetId">
+        DELETE FROM t_dm_dataset_tags WHERE dataset_id = #{datasetId}
+    </delete>
+
+    <select id="findByDatasetId" parameterType="string" resultMap="TagResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM t_dm_tags t
+        JOIN t_dm_dataset_tags dt ON dt.tag_id = t.id
+        WHERE dt.dataset_id = #{datasetId}
+        ORDER BY t.usage_count DESC, t.name ASC
+    </select>
+
+</mapper>

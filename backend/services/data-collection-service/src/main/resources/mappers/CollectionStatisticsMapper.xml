@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dataengine.collection.infrastructure.persistence.mapper.CollectionStatisticsMapper">
+
+    <!-- Result Map -->
+    <resultMap id="CollectionStatisticsResultMap" type="com.dataengine.collection.domain.model.CollectionStatistics">
+        <id property="id" column="id"/>
+        <result property="statDate" column="stat_date"/>
+        <result property="periodType" column="period_type"/>
+        <result property="totalTasks" column="total_tasks"/>
+        <result property="activeTasks" column="active_tasks"/>
+        <result property="totalExecutions" column="total_executions"/>
+        <result property="successfulExecutions" column="successful_executions"/>
+        <result property="failedExecutions" column="failed_executions"/>
+        <result property="totalRecordsProcessed" column="total_records_processed"/>
+        <result property="avgExecutionTime" column="avg_execution_time"/>
+        <result property="avgThroughput" column="avg_throughput"/>
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
+
+    <!-- Base Column List -->
+    <sql id="Base_Column_List">
+        id, stat_date, period_type, total_tasks, active_tasks, 
+        total_executions, successful_executions, failed_executions, 
+        total_records_processed, avg_execution_time, avg_throughput, created_at
+    </sql>
+
+    <!-- Insert -->
+    <insert id="insert" parameterType="com.dataengine.collection.domain.model.CollectionStatistics">
+        INSERT INTO t_dc_statistics (
+            id, stat_date, period_type, total_tasks, active_tasks,
+            total_executions, successful_executions, failed_executions,
+            total_records_processed, avg_execution_time, avg_throughput, created_at
+        ) VALUES (
+            #{id}, #{statDate}, #{periodType}, #{totalTasks}, #{activeTasks},
+            #{totalExecutions}, #{successfulExecutions}, #{failedExecutions},
+            #{totalRecordsProcessed}, #{avgExecutionTime}, #{avgThroughput}, #{createdAt}
+        )
+    </insert>
+
+    <!-- Update -->
+    <update id="update" parameterType="com.dataengine.collection.domain.model.CollectionStatistics">
+        UPDATE t_dc_statistics 
+        SET total_tasks = #{totalTasks},
+            active_tasks = #{activeTasks},
+            total_executions = #{totalExecutions},
+            successful_executions = #{successfulExecutions},
+            failed_executions = #{failedExecutions},
+            total_records_processed = #{totalRecordsProcessed},
+            avg_execution_time = #{avgExecutionTime},
+            avg_throughput = #{avgThroughput}
+        WHERE id = #{id}
+    </update>
+
+    <!-- Delete by ID -->
+    <delete id="deleteById" parameterType="java.lang.String">
+        DELETE FROM t_dc_statistics WHERE id = #{id}
+    </delete>
+
+    <!-- Select by ID -->
+    <select id="selectById" parameterType="java.lang.String" resultMap="CollectionStatisticsResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM t_dc_statistics
+        WHERE id = #{id}
+    </select>
+
+    <!-- Select by Date and Period -->
+    <select id="selectByDateAndPeriod" resultMap="CollectionStatisticsResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM t_dc_statistics
+        WHERE stat_date = #{statDate} AND period_type = #{periodType}
+    </select>
+
+    <!-- Select by Date Range -->
+    <select id="selectByDateRange" resultMap="CollectionStatisticsResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM t_dc_statistics
+        WHERE stat_date BETWEEN #{startDate} AND #{endDate}
+        <if test="periodType != null and periodType != ''">
+            AND period_type = #{periodType}
+        </if>
+        ORDER BY stat_date DESC, period_type
+    </select>
+
+    <!-- Select Recent Statistics -->
+    <select id="selectRecentStatistics" resultMap="CollectionStatisticsResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM t_dc_statistics
+        WHERE period_type = #{periodType}
+        ORDER BY stat_date DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- Select All with Pagination -->
+    <select id="selectAll" resultMap="CollectionStatisticsResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM t_dc_statistics
+        <where>
+            <if test="periodType != null and periodType != ''">
+                AND period_type = #{periodType}
+            </if>
+            <if test="startDate != null">
+                AND stat_date >= #{startDate}
+            </if>
+            <if test="endDate != null">
+                AND stat_date &lt;= #{endDate}
+            </if>
+        </where>
+        ORDER BY stat_date DESC, period_type
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <!-- Count Total -->
+    <select id="count" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM t_dc_statistics
+        <where>
+            <if test="periodType != null and periodType != ''">
+                AND period_type = #{periodType}
+            </if>
+            <if test="startDate != null">
+                AND stat_date >= #{startDate}
+            </if>
+            <if test="endDate != null">
+                AND stat_date &lt;= #{endDate}
+            </if>
+        </where>
+    </select>
+
+    <!-- Batch Insert -->
+    <insert id="batchInsert" parameterType="java.util.List">
+        INSERT INTO t_dc_statistics (
+            id, stat_date, period_type, total_tasks, active_tasks,
+            total_executions, successful_executions, failed_executions,
+            total_records_processed, avg_execution_time, avg_throughput, created_at
+        ) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.id}, #{item.statDate}, #{item.periodType}, #{item.totalTasks}, #{item.activeTasks},
+             #{item.totalExecutions}, #{item.successfulExecutions}, #{item.failedExecutions},
+             #{item.totalRecordsProcessed}, #{item.avgExecutionTime}, #{item.avgThroughput}, #{item.createdAt})
+        </foreach>
+    </insert>
+
+    <!-- Insert or Update on Duplicate Key -->
+    <insert id="insertOrUpdate" parameterType="com.dataengine.collection.domain.model.CollectionStatistics">
+        INSERT INTO t_dc_statistics (
+            id, stat_date, period_type, total_tasks, active_tasks,
+            total_executions, successful_executions, failed_executions,
+            total_records_processed, avg_execution_time, avg_throughput, created_at
+        ) VALUES (
+            #{id}, #{statDate}, #{periodType}, #{totalTasks}, #{activeTasks},
+            #{totalExecutions}, #{successfulExecutions}, #{failedExecutions},
+            #{totalRecordsProcessed}, #{avgExecutionTime}, #{avgThroughput}, #{createdAt}
+        ) ON DUPLICATE KEY UPDATE
+            total_tasks = VALUES(total_tasks),
+            active_tasks = VALUES(active_tasks),
+            total_executions = VALUES(total_executions),
+            successful_executions = VALUES(successful_executions),
+            failed_executions = VALUES(failed_executions),
+            total_records_processed = VALUES(total_records_processed),
+            avg_execution_time = VALUES(avg_execution_time),
+            avg_throughput = VALUES(avg_throughput)
+    </insert>
+
+</mapper>

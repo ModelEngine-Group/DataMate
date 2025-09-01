@@ -1,26 +1,15 @@
 package com.dataengine.datamanagement.domain.model.dataset;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Embeddable;
-
 /**
- * 数据集类型值对象
+ * 数据集类型值对象（简化，移除JPA注解）
  */
-@Embeddable
 public class DatasetType {
 
-    @Column(name = "type_code", nullable = false, length = 50)
     private String code;
-
-    @Column(name = "type_name", nullable = false, length = 100)
     private String name;
-
-    @Column(name = "type_description", length = 255)
     private String description;
 
-    protected DatasetType() {
-        // For JPA
-    }
+    public DatasetType() {}
 
     public DatasetType(String code, String name, String description) {
         this.code = code;
@@ -29,8 +18,13 @@ public class DatasetType {
     }
 
     public String getCode() { return code; }
+    public void setCode(String code) { this.code = code; }
+
     public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+
     public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
 
     @Override
     public boolean equals(Object o) {

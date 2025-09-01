@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dataengine.collection.infrastructure.persistence.mapper.TaskExecutionLogMapper">
+
+    <!-- Result Map -->
+    <resultMap id="TaskExecutionLogResultMap" type="com.dataengine.collection.domain.model.TaskExecutionLog">
+        <id property="id" column="id"/>
+        <result property="executionId" column="execution_id"/>
+        <result property="logLevel" column="log_level"/>
+        <result property="message" column="message"/>
+        <result property="thread" column="thread"/>
+        <result property="logger" column="logger"/>
+        <result property="exceptionStack" column="exception_stack"/>
+        <result property="timestamp" column="timestamp"/>
+    </resultMap>
+
+    <!-- Base Column List -->
+    <sql id="Base_Column_List">
+        id, execution_id, log_level, message, thread, logger, exception_stack, timestamp
+    </sql>
+
+    <!-- Insert -->
+    <insert id="insert" parameterType="com.dataengine.collection.domain.model.TaskExecutionLog">
+        INSERT INTO t_dc_execution_logs (
+            id, execution_id, log_level, message, thread, logger, exception_stack, timestamp
+        ) VALUES (
+            #{id}, #{executionId}, #{logLevel}, #{message}, #{thread}, #{logger}, #{exceptionStack}, #{timestamp}
+        )
+    </insert>
+
+    <!-- Batch Insert -->
+    <insert id="batchInsert" parameterType="java.util.List">
+        INSERT INTO t_dc_execution_logs (
+            id, execution_id, log_level, message, thread, logger, exception_stack, timestamp
+        ) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.id}, #{item.executionId}, #{item.logLevel}, #{item.message}, #{item.thread}, 
+             #{item.logger}, #{item.exceptionStack}, #{item.timestamp})
+        </foreach>
+    </insert>
+
+    <!-- Delete by ID -->
+    <delete id="deleteById" parameterType="java.lang.String">
+        DELETE FROM t_dc_execution_logs WHERE id = #{id}
+    </delete>
+
+    <!-- Delete by Execution ID -->
+    <delete id="deleteByExecutionId" parameterType="java.lang.String">
+        DELETE FROM t_dc_execution_logs WHERE execution_id = #{executionId}
+    </delete>
+
+    <!-- Select by ID -->
+    <select id="selectById" parameterType="java.lang.String" resultMap="TaskExecutionLogResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM t_dc_execution_logs
+        WHERE id = #{id}
+    </select>
+
+    <!-- Select by Execution ID -->
+    <select id="selectByExecutionId" resultMap="TaskExecutionLogResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM t_dc_execution_logs
+        WHERE execution_id = #{executionId}
+        ORDER BY timestamp ASC
+        <if test="limit != null">
+            LIMIT #{limit}
+        </if>
+    </select>
+
+    <!-- Select by Log Level -->
+    <select id="selectByLogLevel" resultMap="TaskExecutionLogResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM t_dc_execution_logs
+        WHERE log_level = #{logLevel}
+        ORDER BY timestamp DESC
+        <if test="limit != null">
+            LIMIT #{limit}
+        </if>
+    </select>
+
+    <!-- Select All with Pagination -->
+    <select id="selectAll" resultMap="TaskExecutionLogResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM t_dc_execution_logs
+        <where>
+            <if test="executionId != null and executionId != ''">
+                AND execution_id = #{executionId}
+            </if>
+            <if test="logLevel != null and logLevel != ''">
+                AND log_level = #{logLevel}
+            </if>
+            <if test="startTime != null">
+                AND timestamp >= #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND timestamp &lt;= #{endTime}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND message LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+        </where>
+        ORDER BY timestamp DESC
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <!-- Count Total -->
+    <select id="count" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM t_dc_execution_logs
+        <where>
+            <if test="executionId != null and executionId != ''">
+                AND execution_id = #{executionId}
+            </if>
+            <if test="logLevel != null and logLevel != ''">
+                AND log_level = #{logLevel}
+            </if>
+            <if test="startTime != null">
+                AND timestamp >= #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND timestamp &lt;= #{endTime}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND message LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+        </where>
+    </select>
+
+    <!-- Delete Old Logs -->
+    <delete id="deleteOldLogs">
+        DELETE FROM t_dc_execution_logs 
+        WHERE timestamp &lt; #{beforeTime}
+    </delete>
+
+    <!-- Select Error Logs -->
+    <select id="selectErrorLogs" resultMap="TaskExecutionLogResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM t_dc_execution_logs
+        WHERE log_level = 'ERROR'
+        <if test="executionId != null and executionId != ''">
+            AND execution_id = #{executionId}
+        </if>
+        ORDER BY timestamp DESC
+        <if test="limit != null">
+            LIMIT #{limit}
+        </if>
+    </select>
+
+</mapper>

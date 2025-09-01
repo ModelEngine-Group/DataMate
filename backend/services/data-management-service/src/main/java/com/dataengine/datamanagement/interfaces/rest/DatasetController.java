@@ -2,7 +2,6 @@ package com.dataengine.datamanagement.interfaces.rest;
 
 import com.dataengine.datamanagement.application.service.DatasetApplicationService;
 import com.dataengine.datamanagement.domain.model.dataset.Dataset;
-import com.dataengine.datamanagement.domain.model.dataset.DatasetStatus;
 import com.dataengine.datamanagement.interfaces.api.DatasetApi;
 import com.dataengine.datamanagement.interfaces.dto.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,14 +12,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * 数据集 REST 控制器
+ * 数据集 REST 控制器（UUID 模式）
  */
 @RestController
 public class DatasetController implements DatasetApi {
@@ -33,26 +31,17 @@ public class DatasetController implements DatasetApi {
     }
 
     @Override
-    public ResponseEntity<PagedDatasetResponse> datasetsGet(Integer page, Integer size, String type, 
+    public ResponseEntity<PagedDatasetResponse> datasetsGet(Integer page, Integer size, String type,
                                                           String tags, String keyword, String status) {
         Pageable pageable = PageRequest.of(page != null ? page : 0, size != null ? size : 20);
-        
+
         List<String> tagList = null;
         if (tags != null && !tags.trim().isEmpty()) {
             tagList = Arrays.asList(tags.split(","));
         }
-        
-        DatasetStatus datasetStatus = null;
-        if (status != null) {
-            try {
-                datasetStatus = DatasetStatus.valueOf(status);
-            } catch (IllegalArgumentException e) {
-                // 忽略无效状态
-            }
-        }
-        
-        Page<Dataset> datasetsPage = datasetApplicationService.getDatasets(type, datasetStatus, keyword, tagList, pageable);
-        
+
+        Page<Dataset> datasetsPage = datasetApplicationService.getDatasets(type, status, keyword, tagList, pageable);
+
         PagedDatasetResponse response = new PagedDatasetResponse();
         response.setContent(datasetsPage.getContent().stream()
             .map(this::convertToResponse)
@@ -63,25 +52,28 @@ public class DatasetController implements DatasetApi {
         response.setTotalPages(datasetsPage.getTotalPages());
         response.setFirst(datasetsPage.isFirst());
         response.setLast(datasetsPage.isLast());
-        
+
         return ResponseEntity.ok(response);
     }
 
     @Override
     public ResponseEntity<DatasetResponse> datasetsPost(CreateDatasetRequest createDatasetRequest) {
         try {
+            Long dataSourceId = null;
+            if (createDatasetRequest.getDataSource() != null) {
+                try { dataSourceId = Long.valueOf(createDatasetRequest.getDataSource()); } catch (NumberFormatException ignore) {}
+            }
             Dataset dataset = datasetApplicationService.createDataset(
                 createDatasetRequest.getName(),
                 createDatasetRequest.getDescription(),
                 createDatasetRequest.getType(),
-                getDatasetTypeName(createDatasetRequest.getType()),
-                getDatasetTypeDescription(createDatasetRequest.getType()),
                 createDatasetRequest.getTags(),
-                createDatasetRequest.getDataSource(),
+                dataSourceId,
                 createDatasetRequest.getTargetLocation(),
-                "system" // TODO: 从安全上下文获取当前用户
+                null,
+                "system" // TODO: 从安全上下文获取
             );
-            
+
             return ResponseEntity.status(HttpStatus.CREATED).body(convertToResponse(dataset));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
@@ -101,19 +93,14 @@ public class DatasetController implements DatasetApi {
     @Override
     public ResponseEntity<DatasetResponse> datasetsDatasetIdPut(String datasetId, UpdateDatasetRequest updateDatasetRequest) {
         try {
-            DatasetStatus status = null;
-            if (updateDatasetRequest.getStatus() != null) {
-                status = DatasetStatus.valueOf(updateDatasetRequest.getStatus().toString());
-            }
-            
             Dataset dataset = datasetApplicationService.updateDataset(
                 datasetId,
                 updateDatasetRequest.getName(),
                 updateDatasetRequest.getDescription(),
                 updateDatasetRequest.getTags(),
-                status
+                updateDatasetRequest.getStatus() != null ? updateDatasetRequest.getStatus().toString() : null
             );
-            
+
             return ResponseEntity.ok(convertToResponse(dataset));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.notFound().build();
@@ -132,22 +119,7 @@ public class DatasetController implements DatasetApi {
 
     @Override
     public ResponseEntity<DatasetStatisticsResponse> datasetsDatasetIdStatisticsGet(String datasetId) {
-        try {
-            DatasetApplicationService.DatasetStatistics statistics = 
-                datasetApplicationService.getDatasetStatistics(datasetId);
-            
-            DatasetStatisticsResponse response = new DatasetStatisticsResponse();
-            response.setTotalFiles(statistics.getTotalFiles());
-            response.setCompletedFiles(statistics.getCompletedFiles());
-            response.setTotalSize(statistics.getTotalSize());
-            response.setCompletionRate(statistics.getCompletionRate());
-            response.setFileTypeDistribution(statistics.getFileTypeDistribution());
-            response.setStatusDistribution(statistics.getStatusDistribution());
-            
-            return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
-        }
+        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
     }
 
     private DatasetResponse convertToResponse(Dataset dataset) {
@@ -155,61 +127,39 @@ public class DatasetController implements DatasetApi {
         response.setId(dataset.getId());
         response.setName(dataset.getName());
         response.setDescription(dataset.getDescription());
-        
-        // 转换数据集类型
+
         DatasetTypeResponse typeResponse = new DatasetTypeResponse();
-        typeResponse.setCode(dataset.getType().getCode());
-        typeResponse.setName(dataset.getType().getName());
-        typeResponse.setDescription(dataset.getType().getDescription());
+        typeResponse.setCode(dataset.getDatasetType());
         response.setType(typeResponse);
-        
-        response.setStatus(DatasetResponse.StatusEnum.fromValue(dataset.getStatus().name()));
-        response.setDataSource(dataset.getDataSource());
-        response.setTargetLocation(dataset.getTargetLocation());
-        response.setFileCount(dataset.getFileCount());
-        response.setTotalSize(dataset.getTotalSize());
-        response.setCompletionRate(dataset.getCompletionRate());
-        response.setCreatedAt(dataset.getCreatedAt().atOffset(ZoneOffset.UTC));
-        response.setUpdatedAt(dataset.getUpdatedAt().atOffset(ZoneOffset.UTC));
+
+        try {
+            response.setStatus(DatasetResponse.StatusEnum.fromValue(dataset.getStatus()));
+        } catch (Exception ignore) {
+        }
+
+        response.setDataSource(dataset.getDataSourceId() != null ? String.valueOf(dataset.getDataSourceId()) : null);
+        response.setTargetLocation(dataset.getPath());
+        response.setFileCount(dataset.getFileCount() != null ? dataset.getFileCount().intValue() : null);
+        response.setTotalSize(dataset.getSizeBytes());
+        response.setCompletionRate(dataset.getCompletionRate() != null ? dataset.getCompletionRate().floatValue() : null);
+
+        if (dataset.getCreatedAt() != null) response.setCreatedAt(dataset.getCreatedAt().atOffset(ZoneOffset.UTC));
+        if (dataset.getUpdatedAt() != null) response.setUpdatedAt(dataset.getUpdatedAt().atOffset(ZoneOffset.UTC));
         response.setCreatedBy(dataset.getCreatedBy());
-        
-        // 转换标签
+
         List<TagResponse> tagResponses = dataset.getTags().stream()
             .map(tag -> {
-                TagResponse tagResponse = new TagResponse();
-                tagResponse.setId(tag.getId());
-                tagResponse.setName(tag.getName());
-                tagResponse.setColor(tag.getColor());
-                tagResponse.setDescription(tag.getDescription());
-                tagResponse.setUsageCount(tag.getUsageCount());
-                return tagResponse;
+                TagResponse tr = new TagResponse();
+                tr.setId(tag.getId());
+                tr.setName(tag.getName());
+                tr.setColor(tag.getColor());
+                tr.setDescription(tag.getDescription());
+                tr.setUsageCount(tag.getUsageCount() != null ? tag.getUsageCount().intValue() : null);
+                return tr;
             })
             .collect(Collectors.toList());
         response.setTags(tagResponses);
-        
+
         return response;
-    }
-
-    private String getDatasetTypeName(String typeCode) {
-        // 简单的类型映射，实际应用中可以从配置或数据库获取
-        switch (typeCode) {
-            case "IMAGE": return "图像数据集";
-            case "TEXT": return "文本数据集";
-            case "AUDIO": return "音频数据集";
-            case "VIDEO": return "视频数据集";
-            case "MULTIMODAL": return "多模态数据集";
-            default: return typeCode;
-        }
-    }
-
-    private String getDatasetTypeDescription(String typeCode) {
-        switch (typeCode) {
-            case "IMAGE": return "用于机器学习的图像数据集";
-            case "TEXT": return "用于文本分析的文本数据集";
-            case "AUDIO": return "用于音频处理的音频数据集";
-            case "VIDEO": return "用于视频分析的视频数据集";
-            case "MULTIMODAL": return "包含多种数据类型的数据集";
-            default: return "数据集类型";
-        }
     }
 }
