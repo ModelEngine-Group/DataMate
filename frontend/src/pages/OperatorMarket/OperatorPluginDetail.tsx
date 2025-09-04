@@ -337,7 +337,7 @@ result = processor.process(image)`,
   ];
 
   const renderOverviewTab = () => (
-    <div className="">
+    <div className="flex flex-col gap-4">
       {/* 基本信息 */}
       <Card>
         <Descriptions column={2} title="基本信息" items={descriptionItems} />
@@ -425,7 +425,7 @@ result = processor.process(image)`,
   );
 
   const renderInstallTab = () => (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4">
       {/* 安装命令 */}
       <Card>
         <h3 className="text-lg font-semibold text-gray-900 mb-4">安装命令</h3>
@@ -522,7 +522,7 @@ result = processor.process(image)`}
   );
 
   const renderDocumentationTab = () => (
-    <div className="">
+    <div className="flex flex-col gap-4">
       <Card>
         <div className="prose max-w-none">
           <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
@@ -534,7 +534,7 @@ result = processor.process(image)`}
   );
 
   const renderExamplesTab = () => (
-    <div className="">
+    <div className="flex flex-col gap-4">
       {operator.examples.map((example, index) => (
         <Card key={index}>
           <div className="flex items-center justify-between mb-4">
@@ -557,7 +557,7 @@ result = processor.process(image)`}
   );
 
   const renderChangelogTab = () => (
-    <div className="">
+    <div className="flex flex-col gap-4">
       {operator.changelog.map((version, index) => (
         <Card key={index}>
           <div className="flex items-center justify-between mb-4">
@@ -587,7 +587,7 @@ result = processor.process(image)`}
   );
 
   const renderReviewsTab = () => (
-    <div className="">
+    <div className="flex flex-col gap-4">
       {/* 评分统计 */}
       <Card>
         <div className="flex items-center gap-6">

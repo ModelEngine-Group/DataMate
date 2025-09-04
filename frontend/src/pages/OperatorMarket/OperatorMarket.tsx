@@ -1,13 +1,11 @@
 import { useState } from "react";
-import { Button, Input, Badge, Drawer, List, Avatar, Tag } from "antd";
-import { FilterOutlined } from "@ant-design/icons";
+import { Button, Badge, List, Avatar, Tag } from "antd";
+import { FilterOutlined, StarFilled } from "@ant-design/icons";
 import {
   Plus,
   Eye,
   Edit,
   Star,
-  TagIcon,
-  Save,
   Trash2,
   X,
   Code,
@@ -28,6 +26,7 @@ import { mockOperators } from "@/mock/operator";
 import type { Operator } from "@/types/operator";
 import { mockTags } from "@/mock/dataset";
 import Filters from "./components/Filters";
+import TagManagement from "./components/TagManagement";
 
 export default function OperatorMarketPage() {
   const navigate = useNavigate();
@@ -325,7 +324,8 @@ export default function OperatorMarketPage() {
   };
 
   const renderCardView = (
-    <CardView className="mx-4"
+    <CardView
+      className="mx-4"
       data={filteredOperators.map((operator) => ({
         ...operator,
         icon: getTypeIcon(operator.type),
@@ -352,27 +352,17 @@ export default function OperatorMarketPage() {
 
   const renderListView = (
     <List
-      className="rounded-lg border border-gray-200 p-4 overflow-auto mx-4"
+      className="p-4 overflow-auto mx-4"
       dataSource={filteredOperators}
       pagination={{
         pageSize: 10,
         showSizeChanger: true,
         showQuickJumper: true,
-        showTotal: (total, range) =>
-          `${range[0]}-${range[1]} 共 ${total} 个算子`,
       }}
       renderItem={(operator) => (
         <List.Item
           className="hover:bg-gray-50 transition-colors px-6 py-4"
           actions={[
-            <Button
-              key="view"
-              type="text"
-              size="small"
-              onClick={() => handleViewOperator(operator)}
-              icon={<Eye className="w-4 h-4" />}
-              title="查看详情"
-            />,
             <Button
               key="edit"
               type="text"
@@ -392,10 +382,15 @@ export default function OperatorMarketPage() {
                   : "text-gray-400 hover:text-yellow-500"
               }
               icon={
-                <Star
-                  className={`w-4 h-4 ${
-                    favoriteOperators.has(operator.id) ? "fill-current" : ""
-                  }`}
+                <StarFilled
+                  style={{
+                    fontSize: "16px",
+                    color: favoriteOperators.has(operator.id)
+                      ? "#ffcc00ff"
+                      : "#d1d5db",
+                    cursor: "pointer",
+                  }}
+                  onClick={() => handleToggleFavorite(operator.id)}
                 />
               }
               title="收藏"
@@ -413,11 +408,11 @@ export default function OperatorMarketPage() {
           <List.Item.Meta
             avatar={
               <Avatar
-                className={`${getTypeColor(
-                  operator.type
-                )} flex items-center justify-center`}
                 icon={getTypeIcon(operator.type)}
                 size="large"
+                style={{
+                  backgroundColor: "oklch(0.932 0.032 255.585)",
+                }}
               />
             }
             title={
@@ -436,27 +431,12 @@ export default function OperatorMarketPage() {
             }
             description={
               <div className="space-y-2">
-                <div className="text-gray-600 ">
-                  {operator.description}
-                </div>
+                <div className="text-gray-600 ">{operator.description}</div>
                 <div className="flex items-center gap-4 text-xs text-gray-500">
                   <span>作者: {operator.author}</span>
                   <span>类型: {operator.type}</span>
                   <span>框架: {operator.framework}</span>
                   <span>使用次数: {operator.usage.toLocaleString()}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-500">模态:</span>
-                  {operator.modality.map((mod, index) => (
-                    <Tag
-                      key={index}
-                      size="small"
-                      icon={getModalityIcon(mod)}
-                      className="flex items-center gap-1"
-                    >
-                      {mod}
-                    </Tag>
-                  ))}
                 </div>
               </div>
             }
@@ -473,12 +453,7 @@ export default function OperatorMarketPage() {
         <h1 className="text-xl font-bold text-gray-900">算子市场</h1>
         <div className="flex items-center">
           <div className="flex gap-2">
-            <Button
-              onClick={() => setShowTagManager(true)}
-              icon={<TagIcon className="w-4 h-4 mr-2" />}
-            >
-              标签管理
-            </Button>
+            <TagManagement />
             <Button
               type="primary"
               onClick={handleUploadOperator}
@@ -493,7 +468,9 @@ export default function OperatorMarketPage() {
       <div className="flex h-full bg-white rounded-lg">
         <div
           className={`border-r border-gray-200 transition-all duration-300 ${
-            showFilters ? "translate-x-0 w-56" : "-translate-x-full w-0 opacity-0"
+            showFilters
+              ? "translate-x-0 w-56"
+              : "-translate-x-full w-0 opacity-0"
           }`}
         >
           <Filters />
@@ -540,93 +517,6 @@ export default function OperatorMarketPage() {
           )}
         </div>
       </div>
-
-      {/* Tag Manager */}
-      <Drawer
-        visible={showTagManager}
-        onClose={() => setShowTagManager(false)}
-        title="标签管理"
-      >
-        <div className=" mt-6">
-          {/* Add New Tag */}
-          <div className="space-y-2">
-            <label>添加新标签</label>
-            <div className="flex gap-2">
-              <Input
-                placeholder="输入标签名称..."
-                value={newTag}
-                onChange={(e) => setNewTag(e.target.value)}
-                onKeyPress={(e) => {
-                  if (e.key === "Enter") {
-                    handleCreateNewTag();
-                  }
-                }}
-              />
-              <Button onClick={handleCreateNewTag} disabled={!newTag.trim()}>
-                <Plus className="w-4 h-4 mr-2" />
-                添加
-              </Button>
-            </div>
-          </div>
-
-          {/* Existing Tags */}
-          <div className="grid grid-cols-2 gap-2">
-            {availableTags.map((tag) => (
-              <div
-                key={tag}
-                className="flex items-center justify-between p-2 border rounded-lg hover:bg-gray-50"
-              >
-                {editingTag === tag ? (
-                  <div className="flex gap-2 flex-1">
-                    <Input
-                      value={editingTagValue}
-                      onChange={(e) => setEditingTagValue(e.target.value)}
-                      onKeyPress={(e) => {
-                        if (e.key === "Enter") {
-                          handleEditTag(tag, editingTagValue);
-                        }
-                        if (e.key === "Escape") {
-                          setEditingTag(null);
-                          setEditingTagValue("");
-                        }
-                      }}
-                      className="h-6 "
-                      autoFocus
-                    />
-                    <Button
-                      onClick={() => handleEditTag(tag, editingTagValue)}
-                      className="h-6 w-6 p-0"
-                    >
-                      <Save className="w-3 h-3" />
-                    </Button>
-                  </div>
-                ) : (
-                  <>
-                    <span className="">{tag}</span>
-                    <div className="flex gap-1">
-                      <Button
-                        onClick={() => {
-                          setEditingTag(tag);
-                          setEditingTagValue(tag);
-                        }}
-                        className="h-6 w-6 p-0"
-                      >
-                        <Edit className="w-3 h-3" />
-                      </Button>
-                      <Button
-                        onClick={() => handleDeleteTag(tag)}
-                        className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  </>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </Drawer>
     </div>
   );
 }

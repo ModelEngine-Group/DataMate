@@ -195,22 +195,14 @@ export default function KnowledgeGenerationPage() {
       title: "知识库",
       dataIndex: "name",
       key: "name",
+      fixed: "left" as const,
+      width: 200,
       render: (_: any, kb: KnowledgeBase) => (
         <div
           className="flex items-center gap-3 cursor-pointer"
           onClick={() => navigate(`/data/knowledge-generation/detail/${kb.id}`)}
         >
-          <div className="p-2 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg text-white">
-            {kb.type === "structured" ? (
-              <Database className="w-4 h-4" />
-            ) : (
-              <BookOpen className="w-4 h-4" />
-            )}
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="font-medium text-gray-900 truncate">{kb.name}</p>
-            <p className="text-sm text-gray-500 truncate">{kb.description}</p>
-          </div>
+          {kb.name}
         </div>
       ),
     },
@@ -279,7 +271,7 @@ export default function KnowledgeGenerationPage() {
     {
       title: "操作",
       key: "actions",
-      align: "right" as const,
+      fixed: "right" as const,
       render: (_: any, kb: KnowledgeBase) => (
         <div className="flex items-center justify-end gap-2">
           <Dropdown
@@ -394,7 +386,6 @@ export default function KnowledgeGenerationPage() {
             columns={columns}
             dataSource={filteredData}
             rowKey="id"
-            pagination={false}
             locale={{
               emptyText: (
                 <div className="text-center py-16">

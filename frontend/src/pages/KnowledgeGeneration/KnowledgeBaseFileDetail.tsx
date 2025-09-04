@@ -3,19 +3,27 @@ import {
   Plus,
   Eye,
   Edit,
-  ChevronRight,
-  File,
   CheckCircle,
   Clock,
   AlertCircle,
   Trash2,
-  History,
   Scissors,
   VideoIcon as Vector,
   Server,
   FileText,
+  Download,
 } from "lucide-react";
-import { Card, Button, Badge, Progress, Input, Tabs, Modal } from "antd";
+import {
+  Card,
+  Button,
+  Badge,
+  Progress,
+  Input,
+  Tabs,
+  Modal,
+  Breadcrumb,
+  Tag,
+} from "antd";
 import {
   mockChunks,
   mockQAPairs,
@@ -23,7 +31,8 @@ import {
   vectorDatabases,
 } from "@/mock/knowledgeBase";
 import type { KnowledgeBase, KBFile } from "@/types/knowledge-base";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
+import DetailHeader from "@/components/DetailHeader";
 
 // 状态标签
 const getStatusLabel = (status: string) => {
@@ -37,6 +46,19 @@ const getStatusLabel = (status: string) => {
     completed: "已完成",
   };
   return labels[status] || status;
+};
+
+const getStatusColor = (status: string) => {
+  const colors: Record<string, string> = {
+    ready: "green",
+    processing: "blue",
+    vectorizing: "purple",
+    importing: "orange",
+    error: "blue",
+    disabled: "gray",
+    completed: "green",
+  };
+  return colors[status] || "default";
 };
 
 const KnowledgeBaseFileDetail: React.FC = () => {
@@ -159,17 +181,60 @@ const KnowledgeBaseFileDetail: React.FC = () => {
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
-                  <Badge>分块 {chunk.id}</Badge>
-                  <Badge className="text-xs">
-                    {sliceOperators.find((op) => op.id === chunk.sliceOperator)
-                      ?.name || chunk.sliceOperator}
-                  </Badge>
-                  {chunk.vectorId && (
-                    <Badge className="text-xs">
-                      <Vector className="w-3 h-3 mr-1" />
-                      已向量化
-                    </Badge>
-                  )}
+                  <div className="flex-1 flex items-center gap-2">
+                    <h4 className="text-sm font-semibold">分块 {chunk.id}</h4>
+                    <Tag className="text-xs">
+                      {sliceOperators.find(
+                        (op) => op.id === chunk.sliceOperator
+                      )?.name || chunk.sliceOperator}
+                    </Tag>
+                  </div>
+                  <div className="flex items-center gap-2 ml-4">
+                    {editingChunk === chunk.id ? (
+                      <>
+                        <Button
+                          type="primary"
+                          size="small"
+                          onClick={() => handleSaveChunk(chunk.id)}
+                        >
+                          保存
+                        </Button>
+                        <Button
+                          size="small"
+                          onClick={() => {
+                            setEditingChunk(null);
+                            setEditChunkContent("");
+                          }}
+                        >
+                          取消
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Button
+                          size="small"
+                          onClick={() => handleViewChunkDetail(chunk.id)}
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="small"
+                          onClick={() =>
+                            handleEditChunk(chunk.id, chunk.content)
+                          }
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="small"
+                          danger
+                          onClick={() => handleDeleteChunk(chunk.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </>
+                    )}
+                  </div>
                 </div>
                 <div className="text-sm leading-relaxed text-gray-700">
                   {editingChunk === chunk.id ? (
@@ -193,49 +258,6 @@ const KnowledgeBaseFileDetail: React.FC = () => {
                   )}
                 </div>
               </div>
-              <div className="flex items-center gap-2 ml-4">
-                {editingChunk === chunk.id ? (
-                  <>
-                    <Button
-                      size="small"
-                      onClick={() => handleSaveChunk(chunk.id)}
-                    >
-                      保存
-                    </Button>
-                    <Button
-                      size="small"
-                      onClick={() => {
-                        setEditingChunk(null);
-                        setEditChunkContent("");
-                      }}
-                    >
-                      取消
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <Button
-                      size="small"
-                      onClick={() => handleViewChunkDetail(chunk.id)}
-                    >
-                      <Eye className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      size="small"
-                      onClick={() => handleEditChunk(chunk.id, chunk.content)}
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      size="small"
-                      danger
-                      onClick={() => handleDeleteChunk(chunk.id)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </>
-                )}
-              </div>
             </div>
           </Card>
         ))}
@@ -243,220 +265,90 @@ const KnowledgeBaseFileDetail: React.FC = () => {
     </div>
   );
 
-  const renderVectors = () => (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
-        <Card className="p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Vector className="w-5 h-5 text-purple-600" />
-            <h4 className="font-medium">向量化状态</h4>
-          </div>
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <span className="text-sm text-gray-600">状态:</span>
-              <Badge>
-                {getStatusLabel(selectedFile.vectorizationStatus || "pending")}
-              </Badge>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-gray-600">向量维度:</span>
-              <span className="font-medium">
-                {selectedKB?.config.vectorDimension}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-gray-600">向量数量:</span>
-              <span className="font-medium">{selectedFile.chunkCount}</span>
-            </div>
-          </div>
-        </Card>
-        <Card className="p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Server className="w-5 h-5 text-blue-600" />
-            <h4 className="font-medium">存储信息</h4>
-          </div>
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <span className="text-sm text-gray-600">向量数据库:</span>
-              <span className="font-medium">
-                {
-                  vectorDatabases.find(
-                    (db) => db.id === selectedKB?.vectorDatabase
-                  )?.name
-                }
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-gray-600">嵌入模型:</span>
-              <span className="font-medium">
-                {selectedKB?.config.embeddingModel}
-              </span>
-            </div>
-          </div>
-        </Card>
-      </div>
-      {selectedFile.vectorizationStatus === "processing" && (
-        <div className="space-y-2">
-          <div className="flex justify-between text-sm">
-            <span>向量化进度</span>
-            <span>{selectedFile.progress}%</span>
-          </div>
-          <Progress percent={selectedFile.progress} showInfo={false} />
-        </div>
-      )}
-    </div>
-  );
-
-  const renderMetaData = () => (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <div className="font-medium mb-1">文件类型</div>
-          <Input value={selectedFile.type} readOnly />
-        </div>
-        <div>
-          <div className="font-medium mb-1">文件大小</div>
-          <Input value={selectedFile.size} readOnly />
-        </div>
-        <div>
-          <div className="font-medium mb-1">分块数量</div>
-          <Input value={selectedFile.chunkCount} readOnly />
-        </div>
-        <div>
-          <div className="font-medium mb-1">上传时间</div>
-          <Input value={selectedFile.uploadedAt} readOnly />
-        </div>
-        <div>
-          <div className="font-medium mb-1">数据源</div>
-          <Input
-            value={selectedFile.source === "upload" ? "上传文件" : "数据集文件"}
-            readOnly
-          />
-        </div>
-        {selectedFile.datasetId && (
-          <div>
-            <div className="font-medium mb-1">数据集ID</div>
-            <Input value={selectedFile.datasetId} readOnly />
-          </div>
-        )}
-      </div>
-    </div>
-  );
-
-  const renderProcessLogs = () => (
-    <div className="space-y-2">
-      <div className="flex items-center gap-2 text-sm">
-        <CheckCircle className="w-4 h-4 text-green-500" />
-        <span>文件上传完成</span>
-        <span className="text-gray-500 ml-auto">2024-01-22 10:30</span>
-      </div>
-      <div className="flex items-center gap-2 text-sm">
-        <CheckCircle className="w-4 h-4 text-green-500" />
-        <span>文本提取完成</span>
-        <span className="text-gray-500 ml-auto">2024-01-22 10:32</span>
-      </div>
-      <div className="flex items-center gap-2 text-sm">
-        <CheckCircle className="w-4 h-4 text-green-500" />
-        <span>切片算子处理完成</span>
-        <span className="text-gray-500 ml-auto">2024-01-22 10:35</span>
-      </div>
-      <div className="flex items-center gap-2 text-sm">
-        <CheckCircle className="w-4 h-4 text-green-500" />
-        <span>文档分块完成</span>
-        <span className="text-gray-500 ml-auto">2024-01-22 10:35</span>
-      </div>
-      <div className="flex items-center gap-2 text-sm">
-        {selectedFile.vectorizationStatus === "completed" ? (
-          <CheckCircle className="w-4 h-4 text-green-500" />
-        ) : selectedFile.vectorizationStatus === "processing" ? (
-          <Clock className="w-4 h-4 text-blue-500" />
-        ) : (
-          <AlertCircle className="w-4 h-4 text-gray-400" />
-        )}
-        <span>
-          向量化处理
-          {selectedFile.vectorizationStatus === "completed"
-            ? "完成"
-            : selectedFile.vectorizationStatus === "processing"
-            ? "中"
-            : "待开始"}
-        </span>
-        <span className="text-gray-500 ml-auto">
-          {selectedFile.vectorizationStatus === "completed"
-            ? "2024-01-22 10:38"
-            : "-"}
-        </span>
-      </div>
-    </div>
-  );
-
   return (
-    <div className="space-y-5">
-      <div className="flex items-center gap-2 text-sm text-gray-600">
-        <button
-          onClick={() => navigate("/data/knowledge-generation")}
-          className="hover:text-blue-600"
-        >
-          知识库
-        </button>
-        <ChevronRight className="w-4 h-4" />
-        <button
-          onClick={() => navigate("/data/knowledge-generation/detail/1")}
-          className="hover:text-blue-600"
-        >
-          {selectedKB?.name}
-        </button>
-        <ChevronRight className="w-4 h-4" />
-        <span>{selectedFile.name}</span>
-      </div>
-      <div className="flex items-center justify-between">
-        <div>
-          <File className="w-5 h-5" />
-          {selectedFile.name}
-          {selectedFile.size} • {selectedFile.chunkCount} 个分块 •{" "}
-          {getStatusLabel(selectedFile.status)}
-          {selectedFile.source === "dataset" && (
-            <Badge>数据集: {selectedFile.datasetId}</Badge>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          <Button onClick={() => setShowSliceTraceDialog(selectedFile.id)}>
-            <History className="w-4 h-4 mr-1" />
-            切片回溯
-          </Button>
-          {selectedFile.vectorizationStatus !== "completed" && (
-            <Button onClick={() => {}}>
-              <Vector className="w-4 h-4 mr-1" />
-              开始向量化
-            </Button>
-          )}
-        </div>
-      </div>
-      <Card
-        tabList={[
+    <div className="flex flex-col gap-4">
+      <Breadcrumb
+        items={[
           {
-            key: "chunks",
-            label: "分块内容",
-            children: renderChunks(),
+            title: <Link to="/data/knowledge-generation">知识库</Link>,
           },
           {
-            key: "vectors",
-            label: "向量信息",
-            children: renderVectors(),
+            title: (
+              <Link to="/data/knowledge-generation/detail/1">
+                {selectedKB?.name}
+              </Link>
+            ),
           },
           {
-            key: "metadata",
-            label: "元数据",
-            children: renderMetaData(),
-          },
-          {
-            key: "processing",
-            label: "处理日志",
-            children: renderProcessLogs(),
+            title: selectedFile.name,
           },
         ]}
-        defaultActiveTabKey="chunks"
-      ></Card>
+      />
+      <DetailHeader
+        data={{
+          id: selectedFile.id,
+          icon: <FileText className="w-8 h-8" />,
+          iconColor: "bg-blue-500 text-blue-600",
+          status: {
+            label: getStatusLabel(selectedFile.status),
+            color: getStatusColor(selectedFile.status),
+          },
+          name: selectedFile.name,
+          description: `${selectedFile.size} • ${
+            selectedFile.chunkCount
+          } 个分块${
+            selectedFile.source === "dataset"
+              ? ` • 数据集: ${selectedFile.datasetId}`
+              : ""
+          }`,
+          createdAt: selectedFile.uploadedAt,
+          lastUpdated: selectedFile.uploadedAt,
+        }}
+        statistics={[
+          {
+            icon: <Scissors className="w-4 h-4 text-blue-500" />,
+            label: "分块",
+            value: selectedFile.chunkCount,
+          },
+          {
+            icon: <Vector className="w-4 h-4 text-purple-500" />,
+            label: "向量化状态",
+            value: getStatusLabel(
+              selectedFile.vectorizationStatus || "pending"
+            ),
+          },
+          {
+            icon: <Server className="w-4 h-4 text-green-500" />,
+            label: "文件大小",
+            value: selectedFile.size,
+          },
+          {
+            icon: <Clock className="w-4 h-4 text-gray-500" />,
+            label: "上传时间",
+            value: selectedFile.uploadedAt,
+          },
+        ]}
+        operations={[
+          {
+            key: "download",
+            label: "下载",
+            icon: <Download className="w-4 h-4" />,
+            onClick: () => {
+              // 下载逻辑
+            },
+          },
+          {
+            key: "delete",
+            label: "删除",
+            icon: <Trash2 className="w-4 h-4" />,
+            danger: true,
+            onClick: () => {
+              // 删除逻辑
+            },
+          },
+        ]}
+      />
+      <Card>{renderChunks()}</Card>
 
       {/* Slice Trace Modal */}
       <Modal
