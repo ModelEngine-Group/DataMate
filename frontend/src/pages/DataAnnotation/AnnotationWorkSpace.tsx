@@ -1,5 +1,3 @@
-
-
 import { useEffect, useState } from "react";
 import { Card, message } from "antd";
 import { Button, Badge, Progress, Checkbox } from "antd";
@@ -86,32 +84,27 @@ export default function AnnotationWorkspace() {
     <div className="h-screen flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center">
           <Button
             type="text"
             onClick={() => navigate("/data/annotation")}
-            icon={<ArrowLeft className="w-4 h-4 mr-2" />}
-          >
-            返回
-          </Button>
+            icon={<ArrowLeft className="w-4 h-4" />}
+          ></Button>
           <div className="flex items-center space-x-2">
             {getDatasetTypeIcon(task.datasetType)}
             <span className="text-xl font-bold">{task.name}</span>
-            <Badge style={{ border: "1px solid #d9d9d9", background: "#fff" }}>
-              {task.type}
-            </Badge>
           </div>
         </div>
         <div className="flex items-center space-x-4">
           <div className="text-sm text-gray-600">
             {currentFileIndex + 1} / {task.totalCount}
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 min-w-56">
             <span className="text-sm text-gray-600">进度:</span>
             <Progress
               percent={currentProgress}
               showInfo={false}
-              style={{ width: 96, height: 8 }}
+              className="w-24 h-2"
             />
             <span className="text-sm font-medium">{currentProgress}%</span>
           </div>
@@ -119,7 +112,7 @@ export default function AnnotationWorkspace() {
       </div>
 
       {/* Main Content */}
-      <div className="bg-white border-b px-6 py-4 flex-1 flex">
+      <div className="bg-white border-b border-gray-200 px-6 py-4 flex-1 flex">
         {/* Annotation Area */}
         <div className="flex-1 flex flex-col">
           <Outlet />
@@ -127,19 +120,19 @@ export default function AnnotationWorkspace() {
 
         {/* Right Sidebar - Only show for text and image types */}
         {(task.datasetType === "text" || task.datasetType === "image") && (
-          <div className="w-80 border-l p-4 space-y-4">
+          <div className="w-80 border-l border-gray-200 p-4 space-y-4">
             {/* Progress Stats */}
             <Card>
               <div className="space-y-3 pt-4">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">已完成</span>
-                  <span className="font-medium" style={{ color: "#52c41a" }}>
+                  <span className="font-medium text-green-500">
                     {annotationProgress.completed}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">已跳过</span>
-                  <span className="font-medium" style={{ color: "#ff4d4f" }}>
+                  <span className="font-medium text-red-500">
                     {annotationProgress.skipped}
                   </span>
                 </div>
@@ -151,9 +144,7 @@ export default function AnnotationWorkspace() {
                       annotationProgress.skipped}
                   </span>
                 </div>
-                <div
-                  style={{ borderTop: "1px solid #eee", margin: "12px 0" }}
-                />
+                <div className="border-t border-gray-200 my-3" />
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">总进度</span>
                   <span className="font-medium">{currentProgress}%</span>
@@ -168,7 +159,7 @@ export default function AnnotationWorkspace() {
                   type="primary"
                   block
                   onClick={handleSaveAndNext}
-                  style={{ background: "#52c41a", borderColor: "#52c41a" }}
+                  className="bg-green-500 border-green-500 hover:bg-green-600 hover:border-green-600"
                   icon={<CheckCircle className="w-4 h-4 mr-2" />}
                 >
                   保存并下一个

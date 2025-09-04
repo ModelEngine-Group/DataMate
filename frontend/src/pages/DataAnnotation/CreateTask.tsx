@@ -5,12 +5,11 @@ import TextArea from "antd/es/input/TextArea";
 import {
   DatabaseOutlined,
   CheckOutlined,
-  EyeOutlined,
   PlusOutlined,
 } from "@ant-design/icons";
 import { mockDatasets } from "@/mock/dataset";
 import { mockTemplates } from "@/mock/annotation";
-import { CustomTemplateDialog } from "./components/AnnotationTemplate";
+import CustomTemplateDialog from "./components/CustomTemplateDialog";
 import { Link, useNavigate } from "react-router";
 import { ArrowLeft } from "lucide-react";
 

@@ -41,15 +41,15 @@ export default function WelcomePage() {
               开始使用
             </NavLink>
             <NavLink
-              to="/data-agent"
+              to="/agent"
               className="rounded px-4 py-2 inline-flex items-center bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg"
             >
               <MessageSquare className="mr-2 w-4 h-4" />
               对话助手
             </NavLink>
             <NavLink
-              to="/data-orchestration"
-              className="rounded px-4 py-2 inline-flex items-center bg-white/50"
+              to="/orchestration"
+              className="rounded px-4 py-2 inline-flex items-center bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white shadow-lg"
             >
               数据智能编排
               <ArrowRight className="ml-2 w-4 h-4" />
@@ -165,13 +165,13 @@ export default function WelcomePage() {
               </div>
 
               <div className="text-center">
-                <NavLink
-                  to="/data-orchestration"
-                  className="rounded px-4 py-2 inline-flex items-center bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white shadow-lg"
+                <span
+                  onClick={() => navigate("/orchestration")}
+                  className="cursor-pointer rounded px-4 py-2 inline-flex items-center bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white shadow-lg"
                 >
                   <GitBranch className="mr-2 w-4 h-4" />
                   开始编排
-                </NavLink>
+                </span>
               </div>
             </div>
           </Card>
@@ -232,13 +232,13 @@ export default function WelcomePage() {
               </div>
 
               <div className="text-center">
-                <NavLink
-                  to="/data-agent"
-                  className="rounded px-4 py-2 inline-flex items-center color-white bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg"
+                <span
+                  onClick={() => navigate("/agent")}
+                  className="cursor-pointer rounded px-4 py-2 inline-flex items-center bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg"
                 >
                   <MessageSquare className="mr-2 w-4 h-4" />
                   开始对话
-                </NavLink>
+                </span>
               </div>
             </div>
           </Card>
@@ -297,13 +297,13 @@ export default function WelcomePage() {
               </div>
 
               <div className="text-center">
-                <NavLink
-                  to="/dataset-management"
-                  className="rounded px-4 py-2 inline-flex items-center bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg"
+                <span
+                  onClick={() => navigate("/data/management")}
+                  className="cursor-pointer rounded px-4 py-2 inline-flex items-center bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg"
                 >
                   <Sparkles className="mr-2 w-4 h-4" />
                   开始构建数据集
-                </NavLink>
+                </span>
               </div>
             </div>
           </Card>

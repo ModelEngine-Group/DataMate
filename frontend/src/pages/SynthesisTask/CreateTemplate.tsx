@@ -230,8 +230,7 @@ export default function InstructionTemplateCreate() {
               </Button>
             </div>
           </div>
-          <Divider />
-          <h2 className="font-medium text-gray-900 text-lg mb-2">模板测试</h2>
+          <h2 className="font-medium text-gray-900 text-lg mb-2 pt-2">模板测试</h2>
           <div className="grid grid-cols-2 gap-4">
             <Form.Item label="测试输入" name="testInput">
               <TextArea
@@ -272,7 +271,7 @@ export default function InstructionTemplateCreate() {
             )}
           </Button>
           <Divider />
-          <div className="flex gap-2 pt-4 justify-end border-t mt-6">
+          <div className="flex gap-2 justify-end">
             <Button
               type="primary"
               onClick={handleSaveTemplate}

@@ -157,7 +157,6 @@ export default function DataAnnotation() {
       render: (progress: number) => (
         <div className="flex items-center space-x-2">
           <Progress percent={progress} size="small" style={{ width: 64 }} />
-          <span className="text-sm text-gray-600">{progress}%</span>
         </div>
       ),
     },
@@ -363,7 +362,6 @@ export default function DataAnnotation() {
           <Table
             columns={columns}
             dataSource={filteredAndSortedTasks}
-            pagination={false}
             scroll={{ x: "max-content" }}
           />
         </Card>
@@ -449,11 +447,6 @@ export default function DataAnnotation() {
           onView={(item) => handleAnnotate(tasks.find((t) => t.id === item.id))}
         />
       )}
-
-      {/* Footer Stats */}
-      <div className="text-sm text-gray-500 text-center">
-        显示 {filteredAndSortedTasks.length} 个任务
-      </div>
     </div>
   );
 }

@@ -1,7 +1,6 @@
-
-
 import { useState } from "react";
-import { Button, Input, Badge, Drawer, Checkbox } from "antd";
+import { Button, Input, Badge, Drawer, List, Avatar, Tag } from "antd";
+import { FilterOutlined } from "@ant-design/icons";
 import {
   Plus,
   Eye,
@@ -21,15 +20,14 @@ import {
   Zap,
   Settings,
   Package,
-  Filter,
 } from "lucide-react";
-import React from "react";
 import { SearchControls } from "@/components/SearchControls";
 import CardView from "@/components/CardView";
 import { useNavigate } from "react-router";
 import { mockOperators } from "@/mock/operator";
 import type { Operator } from "@/types/operator";
 import { mockTags } from "@/mock/dataset";
+import Filters from "./components/Filters";
 
 export default function OperatorMarketPage() {
   const navigate = useNavigate();
@@ -143,10 +141,6 @@ export default function OperatorMarketPage() {
   }
 
   // 视图状态管理
-  const [selectedOperator, setSelectedOperator] = useState<Operator | null>(
-    null
-  );
-
   const [availableTags, setAvailableTags] = useState<string[]>(mockTags);
   const [newTag, setNewTag] = useState("");
   const [editingTag, setEditingTag] = useState<string | null>(null);
@@ -154,13 +148,6 @@ export default function OperatorMarketPage() {
   const [favoriteOperators, setFavoriteOperators] = useState<Set<number>>(
     new Set([1, 3, 6])
   );
-
-  const categories = Array.from(new Set(operators.map((op) => op.category)));
-  const modalities = Array.from(
-    new Set(operators.flatMap((op) => op.modality))
-  );
-  const types = ["preprocessing", "training", "inference", "postprocessing"];
-  const statuses = ["active", "beta", "deprecated"];
 
   const filteredOperators = operators
     .filter((operator) => {
@@ -219,18 +206,18 @@ export default function OperatorMarketPage() {
     const statusConfig = {
       active: {
         label: "活跃",
-        color: "bg-green-100 text-green-800",
-        icon: Zap,
+        color: "green",
+        icon: <Zap className="w-3 h-3" />,
       },
       beta: {
         label: "测试版",
-        color: "bg-blue-100 text-blue-800",
-        icon: Settings,
+        color: "blue",
+        icon: <Settings className="w-3 h-3" />,
       },
       deprecated: {
         label: "已弃用",
-        color: "bg-gray-100 text-gray-600",
-        icon: X,
+        color: "gray",
+        icon: <X className="w-3 h-3" />,
       },
     };
     return (
@@ -337,301 +324,13 @@ export default function OperatorMarketPage() {
     );
   };
 
-  const clearAllFilters = () => {
-    setSearchTerm("");
-    setSelectedCategories([]);
-    setSelectedTypes([]);
-    setSelectedModalities([]);
-    setSelectedStatuses([]);
-    setSelectedTags([]);
-  };
-
-  const hasActiveFilters =
-    searchTerm ||
-    selectedCategories.length > 0 ||
-    selectedTypes.length > 0 ||
-    selectedModalities.length > 0 ||
-    selectedStatuses.length > 0 ||
-    selectedTags.length > 0;
-
-  const renderSidebar = () => (
-    <div
-      className={`w-72 bg-white border-r border-gray-200 transition-all duration-300 ${
-        showFilters ? "translate-x-0" : "-translate-x-full"
-      }`}
-    >
-      <div className="p-4 space-y-4 h-full overflow-y-auto">
-        {/* Filter Header */}
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-medium text-gray-900 flex items-center gap-2">
-            <Filter className="w-4 h-4" />
-            筛选器
-          </h3>
-          {hasActiveFilters && (
-            <Button
-              onClick={clearAllFilters}
-              className=" text-gray-500 hover:text-gray-700 h-6 px-2"
-            >
-              清除
-            </Button>
-          )}
-        </div>
-
-        {/* Categories */}
-        <div className="space-y-2">
-          <h4 className=" font-medium text-gray-900">分类</h4>
-          <div className="space-y-1">
-            {categories.map((category) => (
-              <label
-                key={category}
-                className="flex items-center space-x-2 cursor-pointer "
-              >
-                <Checkbox
-                  checked={selectedCategories.includes(category)}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      setSelectedCategories([...selectedCategories, category]);
-                    } else {
-                      setSelectedCategories(
-                        selectedCategories.filter((c) => c !== category)
-                      );
-                    }
-                  }}
-                />
-                <span className="text-gray-700 flex-1">{category}</span>
-                <span className="text-gray-400">
-                  ({operators.filter((op) => op.category === category).length})
-                </span>
-              </label>
-            ))}
-          </div>
-        </div>
-
-        {/* Types */}
-        <div className="space-y-2">
-          <h4 className=" font-medium text-gray-900">类型</h4>
-          <div className="space-y-1">
-            {types.map((type) => {
-              const typeLabels = {
-                preprocessing: "预处理",
-                training: "训练",
-                inference: "推理",
-                postprocessing: "后处理",
-              };
-              return (
-                <label
-                  key={type}
-                  className="flex items-center space-x-2 cursor-pointer "
-                >
-                  <Checkbox
-                    checked={selectedTypes.includes(type)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setSelectedTypes([...selectedTypes, type]);
-                      } else {
-                        setSelectedTypes(
-                          selectedTypes.filter((t) => t !== type)
-                        );
-                      }
-                    }}
-                  />
-                  <div className="flex items-center gap-1 flex-1">
-                    {getTypeIcon(type)}
-                    <span className="text-gray-700">
-                      {typeLabels[type as keyof typeof typeLabels]}
-                    </span>
-                  </div>
-                  <span className="text-gray-400">
-                    ({operators.filter((op) => op.type === type).length})
-                  </span>
-                </label>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Modalities */}
-        <div className="space-y-2">
-          <h4 className=" font-medium text-gray-900">模态</h4>
-          <div className="space-y-1">
-            {modalities.map((modality) => (
-              <label
-                key={modality}
-                className="flex items-center space-x-2 cursor-pointer "
-              >
-                <Checkbox
-                  checked={selectedModalities.includes(modality)}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      setSelectedModalities([...selectedModalities, modality]);
-                    } else {
-                      setSelectedModalities(
-                        selectedModalities.filter((m) => m !== modality)
-                      );
-                    }
-                  }}
-                />
-                <div className="flex items-center gap-1 flex-1">
-                  {getModalityIcon(modality)}
-                  <span className="text-gray-700">{modality}</span>
-                </div>
-                <span className="text-gray-400">
-                  (
-                  {
-                    operators.filter((op) => op.modality.includes(modality))
-                      .length
-                  }
-                  )
-                </span>
-              </label>
-            ))}
-          </div>
-        </div>
-
-        {/* Status */}
-        <div className="space-y-2">
-          <h4 className=" font-medium text-gray-900">状态</h4>
-          <div className="space-y-1">
-            {statuses.map((status) => {
-              const statusLabels = {
-                active: "活跃",
-                beta: "测试版",
-                deprecated: "已弃用",
-              };
-              return (
-                <label
-                  key={status}
-                  className="flex items-center space-x-2 cursor-pointer "
-                >
-                  <Checkbox
-                    checked={selectedStatuses.includes(status)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setSelectedStatuses([...selectedStatuses, status]);
-                      } else {
-                        setSelectedStatuses(
-                          selectedStatuses.filter((s) => s !== status)
-                        );
-                      }
-                    }}
-                  />
-                  <div className="flex-1">
-                    <div className={`${getStatusBadge(status).color}`}>
-                      <div className="flex items-center gap-1">
-                        {React.createElement(getStatusBadge(status).icon, {
-                          className: "w-3 h-3",
-                        })}
-                        <span>
-                          {statusLabels[status as keyof typeof statusLabels]}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <span className="text-gray-400">
-                    ({operators.filter((op) => op.status === status).length})
-                  </span>
-                </label>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Active Filters Summary */}
-        {hasActiveFilters && (
-          <div className="pt-3 border-t border-gray-200">
-            <h4 className=" font-medium text-gray-900 mb-2">已选筛选</h4>
-            <div className="space-y-1">
-              {selectedCategories.map((category) => (
-                <Badge
-                  key={category}
-                  className="bg-blue-100 text-blue-800  mr-1 mb-1"
-                >
-                  {category}
-                  <X
-                    className="w-3 h-3 ml-1 cursor-pointer"
-                    onClick={() =>
-                      setSelectedCategories(
-                        selectedCategories.filter((c) => c !== category)
-                      )
-                    }
-                  />
-                </Badge>
-              ))}
-              {selectedTypes.map((type) => (
-                <Badge
-                  key={type}
-                  className="bg-green-100 text-green-800  mr-1 mb-1"
-                >
-                  {type}
-                  <X
-                    className="w-3 h-3 ml-1 cursor-pointer"
-                    onClick={() =>
-                      setSelectedTypes(selectedTypes.filter((t) => t !== type))
-                    }
-                  />
-                </Badge>
-              ))}
-              {selectedModalities.map((modality) => (
-                <Badge
-                  key={modality}
-                  className="bg-purple-100 text-purple-800  mr-1 mb-1"
-                >
-                  {modality}
-                  <X
-                    className="w-3 h-3 ml-1 cursor-pointer"
-                    onClick={() =>
-                      setSelectedModalities(
-                        selectedModalities.filter((m) => m !== modality)
-                      )
-                    }
-                  />
-                </Badge>
-              ))}
-              {selectedStatuses.map((status) => (
-                <Badge
-                  key={status}
-                  className="bg-orange-100 text-orange-800  mr-1 mb-1"
-                >
-                  {status}
-                  <X
-                    className="w-3 h-3 ml-1 cursor-pointer"
-                    onClick={() =>
-                      setSelectedStatuses(
-                        selectedStatuses.filter((s) => s !== status)
-                      )
-                    }
-                  />
-                </Badge>
-              ))}
-              {selectedTags.map((tag) => (
-                <Badge
-                  key={tag}
-                  className="bg-pink-100 text-pink-800  mr-1 mb-1"
-                >
-                  {tag}
-                  <X
-                    className="w-3 h-3 ml-1 cursor-pointer"
-                    onClick={() =>
-                      setSelectedTags(selectedTags.filter((t) => t !== tag))
-                    }
-                  />
-                </Badge>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-
-  const renderCardView = () => (
-    <CardView
+  const renderCardView = (
+    <CardView className="mx-4"
       data={filteredOperators.map((operator) => ({
         ...operator,
         icon: getTypeIcon(operator.type),
         iconColor: getTypeColor(operator.type),
-        statusColor: getStatusBadge(operator.status).color,
-        statusLabel: getStatusBadge(operator.status).label,
+        status: getStatusBadge(operator.status),
         statistics: [
           { label: "使用次数", value: operator.usage.toLocaleString() },
           { label: "框架", value: operator.framework },
@@ -651,177 +350,183 @@ export default function OperatorMarketPage() {
     />
   );
 
-  const renderListView = () => (
-    <div className="bg-white rounded-lg border">
-      <div className="grid grid-cols-12 gap-4 p-4 border-b bg-gray-50 text-sm font-medium text-gray-700">
-        <div className="col-span-3">名称</div>
-        <div className="col-span-1">版本</div>
-        <div className="col-span-1">类型</div>
-        <div className="col-span-2">模态</div>
-        <div className="col-span-1">状态</div>
-        <div className="col-span-1">使用次数</div>
-        <div className="col-span-1">框架</div>
-        <div className="col-span-2">操作</div>
-      </div>
-      {filteredOperators.map((operator) => (
-        <div
-          key={operator.id}
-          className="grid grid-cols-12 gap-4 p-4 border-b hover:bg-gray-50 transition-colors"
-        >
-          <div className="col-span-3 flex items-center gap-3">
-            <div
-              className={`w-8 h-8 ${getTypeColor(
-                operator.type
-              )} rounded flex items-center justify-center`}
-            >
-              {getTypeIcon(operator.type)}
-            </div>
-            <div>
-              <h4
-                className="font-medium text-gray-900 cursor-pointer hover:text-blue-600"
-                onClick={() => handleViewOperator(operator)}
-              >
-                {operator.name}
-              </h4>
-              <p className=" text-gray-500">{operator.author}</p>
-            </div>
-          </div>
-          <div className="col-span-1 flex items-center">
-            <span className="text-sm">v{operator.version}</span>
-          </div>
-          <div className="col-span-1 flex items-center">
-            <Badge variant="outline" className="">
-              {operator.type}
-            </Badge>
-          </div>
-          <div className="col-span-2 flex items-center gap-1">
-            {operator.modality.map((mod, index) => (
-              <div
-                key={index}
-                className="flex items-center gap-1 px-2 py-1 bg-gray-100 rounded "
-              >
-                {getModalityIcon(mod)}
-                <span>{mod}</span>
-              </div>
-            ))}
-          </div>
-          <div className="col-span-1 flex items-center">
-            <div className={getStatusBadge(operator.status).color}>
-              <div className="flex items-center gap-1">
-                {React.createElement(getStatusBadge(operator.status).icon, {
-                  className: "w-3 h-3",
-                })}
-                <span>{getStatusBadge(operator.status).label}</span>
-              </div>
-            </div>
-          </div>
-          <div className="col-span-1 flex items-center">
-            <span className="text-sm">{operator.usage.toLocaleString()}</span>
-          </div>
-          <div className="col-span-1 flex items-center">
-            <span className="text-sm">{operator.framework}</span>
-          </div>
-          <div className="col-span-2 flex items-center gap-2">
+  const renderListView = (
+    <List
+      className="rounded-lg border border-gray-200 p-4 overflow-auto mx-4"
+      dataSource={filteredOperators}
+      pagination={{
+        pageSize: 10,
+        showSizeChanger: true,
+        showQuickJumper: true,
+        showTotal: (total, range) =>
+          `${range[0]}-${range[1]} 共 ${total} 个算子`,
+      }}
+      renderItem={(operator) => (
+        <List.Item
+          className="hover:bg-gray-50 transition-colors px-6 py-4"
+          actions={[
             <Button
+              key="view"
+              type="text"
+              size="small"
               onClick={() => handleViewOperator(operator)}
-              className="h-8 w-8 p-0"
+              icon={<Eye className="w-4 h-4" />}
               title="查看详情"
-            >
-              <Eye className="w-4 h-4" />
-            </Button>
+            />,
             <Button
+              key="edit"
+              type="text"
+              size="small"
               onClick={() => handleUpdateOperator(operator)}
-              className="h-8 w-8 p-0 bg-transparent"
+              icon={<Edit className="w-4 h-4" />}
               title="更新算子"
-            >
-              <Edit className="w-4 h-4" />
-            </Button>
+            />,
             <Button
+              key="favorite"
+              type="text"
+              size="small"
               onClick={() => handleToggleFavorite(operator.id)}
-              className={`h-8 w-8 p-0 border-none ${
+              className={
                 favoriteOperators.has(operator.id)
                   ? "text-yellow-500 hover:text-yellow-600"
                   : "text-gray-400 hover:text-yellow-500"
-              }`}
-            >
-              <Star
-                className={`w-4 h-4 ${
-                  favoriteOperators.has(operator.id) ? "fill-current" : ""
-                }`}
-              />
-            </Button>
+              }
+              icon={
+                <Star
+                  className={`w-4 h-4 ${
+                    favoriteOperators.has(operator.id) ? "fill-current" : ""
+                  }`}
+                />
+              }
+              title="收藏"
+            />,
             <Button
-              className="h-8 w-8 p-0 text-red-500 hover:text-red-700 bg-transparent"
+              key="delete"
+              type="text"
+              size="small"
+              danger
+              icon={<Trash2 className="w-4 h-4" />}
               title="删除算子"
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
-      ))}
-    </div>
+            />,
+          ]}
+        >
+          <List.Item.Meta
+            avatar={
+              <Avatar
+                className={`${getTypeColor(
+                  operator.type
+                )} flex items-center justify-center`}
+                icon={getTypeIcon(operator.type)}
+                size="large"
+              />
+            }
+            title={
+              <div className="flex items-center gap-3">
+                <span
+                  className="font-medium text-gray-900 cursor-pointer hover:text-blue-600"
+                  onClick={() => handleViewOperator(operator)}
+                >
+                  {operator.name}
+                </span>
+                <Tag color="default">v{operator.version}</Tag>
+                <Badge color={getStatusBadge(operator.status).color}>
+                  {getStatusBadge(operator.status).label}
+                </Badge>
+              </div>
+            }
+            description={
+              <div className="space-y-2">
+                <div className="text-gray-600 ">
+                  {operator.description}
+                </div>
+                <div className="flex items-center gap-4 text-xs text-gray-500">
+                  <span>作者: {operator.author}</span>
+                  <span>类型: {operator.type}</span>
+                  <span>框架: {operator.framework}</span>
+                  <span>使用次数: {operator.usage.toLocaleString()}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-500">模态:</span>
+                  {operator.modality.map((mod, index) => (
+                    <Tag
+                      key={index}
+                      size="small"
+                      icon={getModalityIcon(mod)}
+                      className="flex items-center gap-1"
+                    >
+                      {mod}
+                    </Tag>
+                  ))}
+                </div>
+              </div>
+            }
+          />
+        </List.Item>
+      )}
+    />
   );
 
-  const renderMarketView = () => (
-    <div className="flex h-screen bg-gray-50">
-      {/* Sidebar */}
-      {renderSidebar()}
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <div className="bg-white border-b border-gray-200 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button
-                onClick={() => setShowFilters(!showFilters)}
-                className="lg:hidden"
-                icon={<Filter className="w-4 h-4" />}
-              >
-                筛选
-              </Button>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">算子市场</h1>
-                <p className="text-gray-600 text-sm">发现和分享机器学习算子</p>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                onClick={() => setShowTagManager(true)}
-                icon={<TagIcon className="w-4 h-4 mr-2" />}
-              >
-                标签管理
-              </Button>
-              <Button
-                onClick={handleUploadOperator}
-                icon={<Plus className="w-4 h-4 mr-2" />}
-              >
-                上传算子
-              </Button>
-            </div>
+  return (
+    <div className="h-full">
+      {/* Header */}
+      <div className="flex justify-between mb-2">
+        <h1 className="text-xl font-bold text-gray-900">算子市场</h1>
+        <div className="flex items-center">
+          <div className="flex gap-2">
+            <Button
+              onClick={() => setShowTagManager(true)}
+              icon={<TagIcon className="w-4 h-4 mr-2" />}
+            >
+              标签管理
+            </Button>
+            <Button
+              type="primary"
+              onClick={handleUploadOperator}
+              icon={<Plus className="w-4 h-4 mr-2" />}
+            >
+              上传算子
+            </Button>
           </div>
         </div>
-        <SearchControls
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          searchPlaceholder="搜索算子..."
-          filters={filterOptions}
-          selectedFilters={selectedFilters}
-          onFiltersChange={setSelectedFilters}
-          sortBy={sortBy}
-          sortOrder={sortOrder}
-          onSortChange={(field, order) => {
-            setSortBy(field);
-            setSortOrder(order);
-          }}
-          sortOptions={sortOptions}
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
-          showViewToggle={true}
-        />
-
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+      </div>
+      {/* Main Content */}
+      <div className="flex h-full bg-white rounded-lg">
+        <div
+          className={`border-r border-gray-200 transition-all duration-300 ${
+            showFilters ? "translate-x-0 w-56" : "-translate-x-full w-0 opacity-0"
+          }`}
+        >
+          <Filters />
+        </div>
+        <div className="flex-1 bg-yellow flex flex-col px-4">
+          <div className="flex w-full items-center gap-4 border-b border-gray-200 mb-4">
+            <Button
+              type="text"
+              icon={<FilterOutlined />}
+              onClick={() => setShowFilters(!showFilters)}
+            />
+            <div className="flex-1">
+              <SearchControls
+                searchTerm={searchTerm}
+                onSearchChange={setSearchTerm}
+                searchPlaceholder="搜索算子..."
+                filters={filterOptions}
+                selectedFilters={selectedFilters}
+                onFiltersChange={setSelectedFilters}
+                sortBy={sortBy}
+                sortOrder={sortOrder}
+                onSortChange={(field, order) => {
+                  setSortBy(field);
+                  setSortOrder(order);
+                }}
+                sortOptions={sortOptions}
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
+                showViewToggle={true}
+              />
+            </div>
+          </div>
+          {/* Content */}
           {filteredOperators.length === 0 ? (
             <div className="text-center py-12">
               <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
@@ -831,7 +536,7 @@ export default function OperatorMarketPage() {
               <p className="text-gray-500">尝试调整筛选条件或搜索关键词</p>
             </div>
           ) : (
-            <>{viewMode === "card" ? renderCardView() : renderListView()}</>
+            <>{viewMode === "card" ? renderCardView : renderListView}</>
           )}
         </div>
       </div>
@@ -885,7 +590,7 @@ export default function OperatorMarketPage() {
                           setEditingTagValue("");
                         }
                       }}
-                      className="h-6 text-sm"
+                      className="h-6 "
                       autoFocus
                     />
                     <Button
@@ -897,7 +602,7 @@ export default function OperatorMarketPage() {
                   </div>
                 ) : (
                   <>
-                    <span className="text-sm">{tag}</span>
+                    <span className="">{tag}</span>
                     <div className="flex gap-1">
                       <Button
                         onClick={() => {
@@ -924,6 +629,4 @@ export default function OperatorMarketPage() {
       </Drawer>
     </div>
   );
-
-  return renderMarketView();
 }

@@ -1,6 +1,11 @@
 import React from "react";
 import { Card, Tag, Pagination, Dropdown, Tooltip } from "antd";
-import { Star, Ellipsis, Clock } from "lucide-react";
+import {
+  StarOutlined,
+  EllipsisOutlined,
+  ClockCircleOutlined,
+  StarFilled,
+} from "@ant-design/icons";
 import type { ItemType } from "antd/es/menu/interface";
 
 interface BaseCardDataType {
@@ -44,45 +49,44 @@ function CardView<T extends BaseCardDataType>(props: CardViewProps<T>) {
 
   return (
     <div className="flex-1 overflow-auto">
-      <div className="grid md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-4">
+      <div className="grid md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
         {data.map((item) => (
           <Card key={item.id} className="hover:shadow-lg transition-shadow">
             <div className="space-y-4">
               {/* Header */}
               <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3 flex-1 min-w-0">
+                <div className="flex items-center gap-3 min-w-0">
                   <div
-                    className={`flex-shrink-0 w-12 h-12 ${item.iconColor} rounded-lg flex items-center justify-center`}
+                    className={`flex-shrink-0 w-10 h-10 ${item.iconColor} rounded-lg flex items-center justify-center`}
                   >
                     {item.icon}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <h3
-                        className="text-lg flex-1 text-ellipsis overflow-hidden whitespace-nowrap font-semibold text-gray-900 truncate cursor-pointer hover:text-blue-600"
+                        className="text-base flex-1 text-ellipsis overflow-hidden whitespace-nowrap font-semibold text-gray-900 truncate cursor-pointer hover:text-blue-600"
                         onClick={() => onView?.(item)}
                       >
                         {item.name}
                       </h3>
                       {item.status && (
-                        <Tag
-                          icon={item.status.icon}
-                          color={item.status.color}
-                          className="text-xs"
-                        >
-                          {item.status.label}
+                        <Tag color={item.status.color}>
+                          <div className="flex items-center gap-2 text-xs py-0.5">
+                            <span>{item.status.icon}</span>
+                            <span>{item.status.label}</span>
+                          </div>
                         </Tag>
                       )}
                     </div>
                   </div>
                 </div>
                 {onFavorite && (
-                  <Star
-                    className={`w-4 h-4 p-0 border-none ${
-                      isFavorite?.(item)
-                        ? "fill-current text-yellow-500 hover:text-yellow-600"
-                        : "text-gray-400 hover:text-yellow-500"
-                    }`}
+                  <StarFilled
+                    style={{
+                      fontSize: "16px",
+                      color: isFavorite?.(item) ? "#ffcc00ff" : "#d1d5db",
+                      cursor: "pointer",
+                    }}
                     onClick={() => onFavorite?.(item)}
                   />
                 )}
@@ -91,22 +95,19 @@ function CardView<T extends BaseCardDataType>(props: CardViewProps<T>) {
               {/* Tags */}
               <div className="flex flex-wrap gap-1">
                 {item?.tags?.slice(0, 3)?.map((tag, index) => (
-                  <Tag key={index} className="">
-                    {tag}
-                  </Tag>
+                  <Tag key={index}>{tag}</Tag>
                 ))}
               </div>
               {/* Description */}
-              <p className="text-gray-600 text-ellipsis overflow-hidden whitespace-nowrap text-sm line-clamp-2">
+              <p className="text-gray-600 text-xs text-ellipsis overflow-hidden whitespace-nowrap text-xs line-clamp-2">
                 <Tooltip title={item.description}>{item.description}</Tooltip>
               </p>
-
               {/* Statistics */}
               <div className="grid grid-cols-2 gap-4 py-3">
                 {item.statistics?.map((stat, idx) => (
                   <div key={idx}>
                     <div className="text-sm text-gray-500">{stat.label}:</div>
-                    <div className="text-lg font-semibold text-gray-900">
+                    <div className="text-base font-semibold text-gray-900">
                       {stat.value}
                     </div>
                   </div>
@@ -117,7 +118,8 @@ function CardView<T extends BaseCardDataType>(props: CardViewProps<T>) {
               <div className="flex items-center justify-between pt-3 border-t border-t-gray-200">
                 <div className=" text-gray-500 text-right">
                   <div className="flex items-center gap-1">
-                    <Clock className="w-4 h-4" /> {item.lastModified}
+                    <ClockCircleOutlined className="w-4 h-4" />{" "}
+                    {item.lastModified}
                   </div>
                 </div>
                 <Dropdown
@@ -133,7 +135,7 @@ function CardView<T extends BaseCardDataType>(props: CardViewProps<T>) {
                   }}
                 >
                   <div className="cursor-pointer">
-                    <Ellipsis />
+                    <EllipsisOutlined />
                   </div>
                 </Dropdown>
               </div>

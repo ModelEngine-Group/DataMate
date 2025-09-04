@@ -173,7 +173,7 @@ export default function CreateRatioTask() {
       {/* Header */}
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center">
-          <Button type="text" onClick={() => navigate("/data/ratio-task")}>
+          <Button type="text" onClick={() => navigate("/data/synthesis/ratio-task")}>
             <ArrowLeft className="w-4 h-4 mr-1" />
           </Button>
           <h1 className="text-xl font-bold bg-clip-text">创建配比任务</h1>
@@ -530,7 +530,7 @@ export default function CreateRatioTask() {
                 </div>
                 <Divider />
                 <div className="flex justify-end gap-2">
-                  <Button onClick={() => navigate("/data/ratio-task")}>取消</Button>
+                  <Button onClick={() => navigate("/data/synthesis/ratio-task")}>取消</Button>
                   <Button
                     type="primary"
                     onClick={handleCreateRatioTask}

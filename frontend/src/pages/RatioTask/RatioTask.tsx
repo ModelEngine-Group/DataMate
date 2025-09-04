@@ -14,23 +14,17 @@ import {
   Eye,
   Clock,
   Play,
-  Search as SearchIcon,
   CheckCircle,
   AlertCircle,
   Pause,
   Download as DownloadIcon,
   BarChart3,
-  Grid3X3,
-  List,
-  ArrowUpDown,
 } from "lucide-react";
 import type { RatioTask } from "@/types/ratio";
 import { mockRatioTasks } from "@/mock/ratio";
 import { useNavigate } from "react-router";
 import CardView from "@/components/CardView";
 import { SearchControls } from "@/components/SearchControls";
-
-const { Option } = Select;
 
 export default function RatioTasksPage() {
   const navigate = useNavigate();
@@ -150,66 +144,36 @@ export default function RatioTasksPage() {
       title: "任务名称",
       dataIndex: "name",
       key: "name",
-      render: (text: string) => (
-        <span className="flex items-center gap-2">
-          <BarChart3 className="w-4 h-4 text-blue-500" />
-          {text}
-        </span>
-      ),
     },
     {
       title: "状态",
       dataIndex: "status",
       key: "status",
-      render: (status: string) => {
-        const statusConfig = getStatusBadge(status);
-        const StatusIcon = statusConfig.icon;
-        return (
-          <Badge
-            color={statusConfig.color.replace("bg-", "").replace("-100", "")}
-          >
-            <StatusIcon className="w-3 h-3" />
-            {statusConfig.label}
-          </Badge>
-        );
-      },
     },
     {
       title: "配比方式",
       dataIndex: "ratioType",
       key: "ratioType",
-      render: (type: string) => (
-        <Badge color="gray">{type === "dataset" ? "按数据集" : "按标签"}</Badge>
-      ),
     },
     {
       title: "进度",
       dataIndex: "progress",
       key: "progress",
-      render: (progress: number, record: RatioTask) => (
-        <div>
-          <Progress percent={Math.round(progress)} size="small" />
-          <div className="text-xs text-gray-500">{Math.round(progress)}%</div>
-        </div>
-      ),
     },
     {
       title: "目标数量",
       dataIndex: "targetCount",
       key: "targetCount",
-      render: (count: number) => count.toLocaleString(),
     },
     {
       title: "已生成",
       dataIndex: "generatedCount",
       key: "generatedCount",
-      render: (count: number) => count.toLocaleString(),
     },
     {
       title: "数据源",
       dataIndex: "sourceDatasets",
       key: "sourceDatasets",
-      render: (arr: string[]) => <span>{arr.length}个数据集</span>,
     },
     {
       title: "创建时间",
@@ -223,25 +187,24 @@ export default function RatioTasksPage() {
         <div className="flex items-center gap-1 justify-end">
           {task.status === "running" && (
             <Button
+              type="link"
               size="small"
               onClick={() => handleTaskAction(task.id, "pause")}
             >
-              <Pause className="w-4 h-4" />
+              停止
             </Button>
           )}
           {task.status === "paused" && (
             <Button
               size="small"
+              type="link"
               onClick={() => handleTaskAction(task.id, "resume")}
             >
-              <Play className="w-4 h-4" />
+              开始
             </Button>
           )}
-          <Button size="small">
-            <Eye className="w-4 h-4" />
-          </Button>
-          <Button size="small">
-            <DownloadIcon className="w-4 h-4" />
+          <Button type="link" size="small">
+            下载
           </Button>
         </div>
       ),
@@ -254,6 +217,7 @@ export default function RatioTasksPage() {
         columns={columns}
         dataSource={filteredAndSortedTasks}
         rowKey="id"
+        scroll={{ x: "max-content" }}
         locale={{
           emptyText: (
             <div className="text-center py-8">
@@ -270,7 +234,9 @@ export default function RatioTasksPage() {
                 filterStatus === "all" &&
                 filterType === "all" && (
                   <Button
-                    onClick={() => navigate("/data/synthesis/ratio-task/create")}
+                    onClick={() =>
+                      navigate("/data/synthesis/ratio-task/create")
+                    }
                     type="primary"
                   >
                     <Plus className="w-4 h-4 mr-2" />
@@ -312,18 +278,14 @@ export default function RatioTasksPage() {
         {
           key: "view",
           label: "查看",
-          icon: <Eye className="w-4 h-4" />,
           onClick: (item) => navigate(`/data/synthesis/ratio-task/${item.id}`),
         },
         {
           key: "download",
           label: "下载",
-          icon: <DownloadIcon className="w-4 h-4" />,
           onClick: (item) => console.log("下载", item.name),
         },
       ]}
-      onView={(item) => navigate(`/data/synthesis/ratio-task/${item.id}`)}
-      onFavorite={(item) => console.log("收藏", item.name)}
     />
   );
 

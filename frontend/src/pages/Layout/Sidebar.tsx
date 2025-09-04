@@ -1,5 +1,11 @@
 import React, { memo, useEffect, useState } from "react";
 import { Button, Menu } from "antd";
+import {
+  CloseOutlined,
+  MenuOutlined,
+  OrderedListOutlined,
+  SettingOutlined,
+} from "@ant-design/icons";
 import { Sparkles, X, Menu as MenuIcon } from "lucide-react";
 import { antMenuItems, antMenuItems as items } from "@/pages/Layout/menu";
 import TaskPopover from "../../components/TaskPopover";
@@ -49,17 +55,13 @@ const AsiderAndHeaderLayout = () => {
             <span className="text-lg font-bold text-gray-900">ModelEngine</span>
           </NavLink>
         )}
-        <Button
-          type="text"
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="p-2 hover:bg-gray-100"
-        >
+        <span className="cursor-pointer hover:text-blue-500" onClick={() => setSidebarOpen(!sidebarOpen)}>
           {sidebarOpen ? (
-            <X className="w-4 h-4" />
+            <CloseOutlined />
           ) : (
-            <MenuIcon className="w-4 h-4" />
+            <MenuOutlined className="ml-4" />
           )}
-        </Button>
+        </span>
       </div>
 
       {/* Navigation */}
@@ -83,16 +85,17 @@ const AsiderAndHeaderLayout = () => {
         {sidebarOpen ? (
           <div className="space-y-2">
             <TaskPopover />
-            <Button block onClick={() => navigate("/data/settings")}>设置</Button>
+            <Button block onClick={() => navigate("/data/settings")}>
+              设置
+            </Button>
           </div>
         ) : (
           <div className="space-y-2">
-            <Button className="w-full p-2">?</Button>
-            <Button
-              className="w-full p-2"
-              onClick={() => navigate("/data/settings")}
-            >
-              ⚙
+            <Button block>
+              <OrderedListOutlined />
+            </Button>
+            <Button block onClick={() => navigate("/data/settings")}>
+              <SettingOutlined />
             </Button>
           </div>
         )}

@@ -1,5 +1,5 @@
 import type React from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Plus,
   Settings,
@@ -18,6 +18,9 @@ import {
   Zap,
   StarOff,
   CheckCircle,
+  MoreVertical,
+  VectorSquare,
+  VectorSquareIcon,
 } from "lucide-react";
 import {
   Table,
@@ -30,6 +33,7 @@ import {
   Card,
   Breadcrumb,
   Checkbox,
+  Dropdown,
 } from "antd";
 import { mockKnowledgeBases } from "@/mock/knowledgeBase";
 import { useNavigate } from "react-router";
@@ -39,8 +43,8 @@ import { SearchControls } from "@/components/SearchControls";
 const KnowledgeBaseDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const knowledgeBase = mockKnowledgeBases[0];
-  const [knowledgeBases, setKnowledgeBases] =
-    useState<KnowledgeBase[]>(mockKnowledgeBases);
+
+  const [files, setFiles] = useState([]);
 
   // --- 新增的状态 ---
   const [fileSearchQuery, setFileSearchQuery] = useState("");
@@ -65,31 +69,9 @@ const KnowledgeBaseDetailPage: React.FC = () => {
     { label: "已禁用", value: "disabled" },
   ];
 
-  // --- 文件过滤和排序 ---
-  let filteredFiles = (knowledgeBase.files ?? []).filter((file: KBFile) => {
-    if (
-      fileSearchQuery &&
-      !file.name.toLowerCase().includes(fileSearchQuery.toLowerCase())
-    ) {
-      return false;
-    }
-    if (fileTypeFilter && file.type !== fileTypeFilter) {
-      return false;
-    }
-    if (fileStatusFilter && file.vectorizationStatus !== fileStatusFilter) {
-      return false;
-    }
-    return true;
-  });
-
-  if (fileSortOrder) {
-    filteredFiles = [...filteredFiles].sort((a, b) => {
-      const aSize = parseFloat(a.size);
-      const bSize = parseFloat(b.size);
-      if (fileSortOrder === "ascend") return aSize - bSize;
-      return bSize - aSize;
-    });
-  }
+  useEffect(() => {
+    setFiles(knowledgeBase.files);
+  }, [knowledgeBase]);
 
   const [showVectorizationDialog, setShowVectorizationDialog] = useState(false);
   const [showEditFileDialog, setShowEditFileDialog] = useState<KBFile | null>(
@@ -97,21 +79,7 @@ const KnowledgeBaseDetailPage: React.FC = () => {
   );
 
   // File table logic
-  const handleDeleteFile = (file: KBFile) => {
-    if (window.confirm(`确定要删除文件 "${file.name}" 吗？`)) {
-      setKnowledgeBases((prev) =>
-        prev.map((kb) =>
-          kb.id === knowledgeBase?.id
-            ? {
-                ...kb,
-                files: kb.files.filter((f) => f.id !== file.id),
-                fileCount: kb.fileCount - 1,
-              }
-            : kb
-        )
-      );
-    }
-  };
+  const handleDeleteFile = (file: KBFile) => {};
 
   const handleFileSelect = (file: KBFile) => {
     setShowEditFileDialog(file);
@@ -122,13 +90,7 @@ const KnowledgeBaseDetailPage: React.FC = () => {
     // 实际业务逻辑可在此实现
   };
 
-  const handleDeleteKB = (kb: KnowledgeBase) => {
-    if (window.confirm(`确定要删除知识库 "${kb.name}" 吗？`)) {
-      setKnowledgeBases((prev) => prev.filter((item) => item.id !== kb.id));
-      message.success("删除成功");
-      navigate("/data/knowledge-generation");
-    }
-  };
+  const handleDeleteKB = (kb: KnowledgeBase) => {};
 
   // 状态 Badge 映射
   function getStatusBadgeVariant(status: string) {
@@ -220,10 +182,14 @@ const KnowledgeBaseDetailPage: React.FC = () => {
       onFilter: (value: string, record: KBFile) =>
         record.name.toLowerCase().includes(value.toLowerCase()),
       render: (text: string, file: KBFile) => (
-        <div className="flex items-center gap-3">
-          <File className="w-4 h-4 text-gray-400" />
-          <span className="font-medium text-gray-900">{file.name}</span>
-        </div>
+        <Button
+          type="link"
+          onClick={() =>
+            navigate("/data/knowledge-generation/file-detail/" + file.id)
+          }
+        >
+          {file.name}
+        </Button>
       ),
     },
     {
@@ -231,13 +197,10 @@ const KnowledgeBaseDetailPage: React.FC = () => {
       dataIndex: "type",
       key: "type",
       filters: allFileTypes.map((type) => ({
-        text: type?.toUpperCase?.(),
+        text: type,
         value: type,
       })),
       onFilter: (value: string, record: KBFile) => record.type === value,
-      render: (type: string) => (
-        <Badge color="blue" text={type?.toUpperCase?.()} />
-      ),
     },
     {
       title: "大小",
@@ -245,7 +208,6 @@ const KnowledgeBaseDetailPage: React.FC = () => {
       key: "size",
       sorter: (a: KBFile, b: KBFile) => parseFloat(a.size) - parseFloat(b.size),
       sortOrder: fileSortOrder,
-      render: (size: string) => <span className="text-gray-700">{size}</span>,
     },
     {
       title: "向量化状态",
@@ -303,48 +265,30 @@ const KnowledgeBaseDetailPage: React.FC = () => {
       title: "上传时间",
       dataIndex: "uploadedAt",
       key: "uploadedAt",
-      render: (uploadedAt: string) => (
-        <span className="text-sm text-gray-600">{uploadedAt}</span>
-      ),
     },
     {
       title: "操作",
       key: "actions",
       align: "right" as const,
       render: (_: any, file: KBFile) => (
-        <div className="flex items-center justify-end gap-2">
-          <Button
-            type="text"
-            size="small"
-            onClick={() => handleFileSelect(file)}
-            className="text-blue-600"
-          >
-            <Eye className="w-4 h-4" />
-          </Button>
-          {file.source === "upload" && (
-            <Button type="text" size="small" className="text-green-600">
-              <RefreshCw className="w-4 h-4" />
-            </Button>
-          )}
-          {file.vectorizationStatus !== "completed" && (
-            <Button
-              type="text"
-              size="small"
-              onClick={() => handleStartVectorization(file.id)}
-              className="text-purple-600"
-            >
-              <StarOff className="w-4 h-4" />
-            </Button>
-          )}
-          <Button
-            type="text"
-            size="small"
-            onClick={() => handleDeleteFile(file)}
-            className="text-red-600"
-          >
-            <Trash2 className="w-4 h-4" />
-          </Button>
-        </div>
+        <Dropdown
+          menu={{
+            items: [
+              {
+                label: "重试",
+                key: "retry",
+                onClick: () => handleStartVectorization(file.id),
+              },
+              {
+                label: "删除",
+                key: "delete",
+                onClick: () => handleDeleteFile(file),
+              },
+            ],
+          }}
+        >
+          <MoreHorizontal />
+        </Dropdown>
       ),
     },
   ];
@@ -415,15 +359,14 @@ const KnowledgeBaseDetailPage: React.FC = () => {
             {
               key: "vector",
               label: "向量化管理",
-              icon: <StarOff className="w-4 h-4" />,
+              icon: <VectorSquareIcon className="w-4 h-4" />,
               onClick: () => setShowVectorizationDialog(true),
             },
             ...(knowledgeBase.status === "error"
               ? [
                   {
                     key: "retry",
-                    label: "重试处理",
-                    icon: <RefreshCw className="w-4 h-4" />,
+                    label: "重试",
                     onClick: () => {}, // 填写重试逻辑
                     danger: false,
                   },
@@ -437,39 +380,20 @@ const KnowledgeBaseDetailPage: React.FC = () => {
               items: [
                 {
                   key: "download",
-                  label: (
-                    <>
-                      <Download className="w-4 h-4 mr-2" />
-                      导出知识库
-                    </>
-                  ),
+                  label: "导出",
                 },
                 {
                   key: "settings",
-                  label: (
-                    <>
-                      <Settings className="w-4 h-4 mr-2" />
-                      配置设置
-                    </>
-                  ),
+                  label: "配置",
                 },
                 { type: "divider" },
                 {
                   key: "delete",
-                  label: (
-                    <>
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      删除知识库
-                    </>
-                  ),
+                  label: "删除",
                   danger: true,
                   onClick: () => handleDeleteKB(knowledgeBase),
                 },
               ],
-              onMenuClick: ({ key }: { key: string }) => {
-                if (key === "delete") handleDeleteKB(knowledgeBase);
-                // 其它下拉操作可在此扩展
-              },
             },
           ]}
         />
@@ -511,7 +435,7 @@ const KnowledgeBaseDetailPage: React.FC = () => {
           {/* Files Table */}
           <Table
             columns={fileColumns}
-            dataSource={filteredFiles}
+            dataSource={files}
             rowKey="id"
             pagination={false}
             locale={{

@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { Card, Button, Badge, Table, Dropdown, Menu } from "antd";
+import { Card, Button, Badge, Table, Dropdown } from "antd";
+import { PlusOutlined } from "@ant-design/icons";
 import { SearchControls } from "@/components/SearchControls";
 import {
   BookOpen,
   Plus,
-  Eye,
   Upload,
   Database,
   Edit,
@@ -25,6 +25,27 @@ export default function KnowledgeGenerationPage() {
   const navigate = useNavigate();
   const [knowledgeBases, setKnowledgeBases] =
     useState<KnowledgeBase[]>(mockKnowledgeBases);
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: mockKnowledgeBases.length,
+    showSizeChanger: true,
+    pageSizeOptions: ["10", "20", "50", "100"],
+    onChange: (page: number, pageSize?: number) => {
+      setPagination((prev) => ({
+        ...prev,
+        current: page,
+        pageSize: pageSize || prev.pageSize,
+      }));
+    },
+    onShowSizeChange: (current: number, size: number) => {
+      setPagination((prev) => ({
+        ...prev,
+        current: current,
+        pageSize: size,
+      }));
+    },
+  });
   const [typeFilter, setTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortBy, setSortBy] = useState<
@@ -116,19 +137,19 @@ export default function KnowledgeGenerationPage() {
     switch (status) {
       case "ready":
       case "completed":
-        return <CheckCircle className="w-4 h-4 text-green-500" />;
+        return <CheckCircle className="w-4 h-4" />;
       case "processing":
-        return <Clock className="w-4 h-4 text-blue-500" />;
+        return <Clock className="w-4 h-4" />;
       case "vectorizing":
-        return <Vector className="w-4 h-4 text-purple-500" />;
+        return <Vector className="w-4 h-4" />;
       case "importing":
-        return <Upload className="w-4 h-4 text-orange-500" />;
+        return <Upload className="w-4 h-4" />;
       case "error":
-        return <XCircle className="w-4 h-4 text-red-500" />;
+        return <XCircle className="w-4 h-4" />;
       case "disabled":
-        return <AlertCircle className="w-4 h-4 text-gray-500" />;
+        return <AlertCircle className="w-4 h-4" />;
       default:
-        return <AlertCircle className="w-4 h-4 text-gray-500" />;
+        return <AlertCircle className="w-4 h-4" />;
     }
   };
 
@@ -145,20 +166,21 @@ export default function KnowledgeGenerationPage() {
     return labels[status as keyof typeof labels] || status;
   };
 
-  const getStatusBadgeVariant = (status: string) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case "ready":
       case "completed":
-        return "default";
+        return "#389e0d"; // green-500
       case "processing":
       case "vectorizing":
-        return "secondary";
       case "importing":
-        return "outline";
+        return "#3b82f6"; // blue-600
       case "error":
-        return "destructive";
+        return "#ef4444"; // red-600
+      case "disabled":
+        return "#6b7280"; // gray-600
       default:
-        return "outline";
+        return "#6b7280"; // gray-600
     }
   };
 
@@ -197,9 +219,7 @@ export default function KnowledgeGenerationPage() {
       dataIndex: "type",
       key: "type",
       render: (type: string) => (
-        <Badge variant="outline">
-          {type === "structured" ? "结构化" : "非结构化"}
-        </Badge>
+        <Badge>{type === "structured" ? "结构化" : "非结构化"}</Badge>
       ),
     },
     {
@@ -207,10 +227,13 @@ export default function KnowledgeGenerationPage() {
       dataIndex: "status",
       key: "status",
       render: (status: string) => (
-        <Badge variant={getStatusBadgeVariant(status)}>
+        <div
+          className={`inline-flex items-center text-white px-2 py-1 rounded text-xs`}
+          style={{ backgroundColor: getStatusColor(status) }}
+        >
           {getStatusIcon(status)}
           <span className="ml-1">{getStatusLabel(status)}</span>
-        </Badge>
+        </div>
       ),
     },
     {
@@ -259,47 +282,27 @@ export default function KnowledgeGenerationPage() {
       align: "right" as const,
       render: (_: any, kb: KnowledgeBase) => (
         <div className="flex items-center justify-end gap-2">
-          <Button
-            type="text"
-            size="small"
-            onClick={() =>
-              navigate(`/data/knowledge-generation/detail/${kb.id}`)
-            }
-          >
-            <Eye className="w-4 h-4" />
-          </Button>
           <Dropdown
             trigger={["click"]}
-            overlay={
-              <Menu>
-                <Menu.Item
-                  key="view"
-                  onClick={() =>
-                    navigate(`/data/knowledge-generation/detail/${kb.id}`)
-                  }
-                >
-                  <Eye className="w-4 h-4 mr-2" />
-                  查看详情
-                </Menu.Item>
-                <Menu.Item key="vector">
-                  <Vector className="w-4 h-4 mr-2" />
-                  向量化管理
-                </Menu.Item>
-                <Menu.Item key="download">
-                  <Download className="w-4 h-4 mr-2" />
-                  导出数据
-                </Menu.Item>
-                <Menu.Divider />
-                <Menu.Item
-                  key="delete"
-                  onClick={() => handleDeleteKB(kb)}
-                  danger
-                >
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  删除知识库
-                </Menu.Item>
-              </Menu>
-            }
+            menu={{
+              items: [
+                {
+                  label: "编辑",
+                  key: "edit",
+                },
+                {
+                  label: "导出",
+                  key: "download",
+                },
+                { type: "divider" },
+                {
+                  label: "删除",
+                  key: "delete",
+                  danger: true,
+                  onClick: () => handleDeleteKB(kb),
+                },
+              ],
+            }}
           >
             <Button type="text" size="small" className="h-8 w-8 p-0">
               <MoreHorizontal className="h-4 w-4" />
@@ -318,8 +321,8 @@ export default function KnowledgeGenerationPage() {
         <Button
           type="primary"
           onClick={() => navigate("/data/knowledge-generation/create")}
+          icon={<PlusOutlined className="w-4 h-4" />}
         >
-          <Plus className="w-4 h-4 mr-2" />
           创建知识库
         </Button>
       </div>
@@ -342,24 +345,15 @@ export default function KnowledgeGenerationPage() {
             type: kb.type,
             icon:
               kb.type === "structured" ? (
-                <Database className="w-6 h-6 text-white-100" />
+                <Database className="w-5 h-5 text-white" />
               ) : (
-                <BookOpen className="w-6 h-6 text-white-100" />
+                <BookOpen className="w-5 h-5 text-white" />
               ),
-            iconColor: "",
+            iconColor: "bg-blue-500",
             status: {
               label: getStatusLabel(kb.status),
               icon: getStatusIcon(kb.status),
-              color:
-                kb.status === "ready" || kb.status === "completed"
-                  ? "green"
-                  : kb.status === "processing" || kb.status === "vectorizing"
-                  ? "blue"
-                  : kb.status === "importing"
-                  ? "orange"
-                  : kb.status === "error"
-                  ? "red"
-                  : "gray",
+              color: getStatusColor(kb.status),
             },
             description: kb.description,
             tags: [],
@@ -373,32 +367,17 @@ export default function KnowledgeGenerationPage() {
           }))}
           operations={[
             {
-              key: "view",
-              label: "查看详情",
-              icon: <Eye className="w-4 h-4 mr-2" />,
-              onClick: (kb) =>
-                navigate(`/data/knowledge-generation/detail/${kb.id}`),
-            },
-            {
               key: "edit",
-              label: "修改参数配置",
-              icon: <Edit className="w-4 h-4 mr-2" />,
+              label: "编辑",
               onClick: (item) => {},
             },
             {
-              key: "vector",
-              label: "向量化管理",
-              icon: <Vector className="w-4 h-4 mr-2" />,
-            },
-            {
               key: "download",
-              label: "导出数据",
-              icon: <Download className="w-4 h-4 mr-2" />,
+              label: "导出",
             },
             {
               key: "delete",
-              label: "删除知识库",
-              icon: <Trash2 className="w-4 h-4 mr-2" />,
+              label: "删除",
               onClick: (item) =>
                 handleDeleteKB(knowledgeBases.find((kb) => kb.id === item.id)!),
             },
@@ -406,6 +385,7 @@ export default function KnowledgeGenerationPage() {
           onView={(item) =>
             navigate(`/data/knowledge-generation/detail/${item.id}`)
           }
+          pagination={pagination}
         />
       ) : (
         <Card>

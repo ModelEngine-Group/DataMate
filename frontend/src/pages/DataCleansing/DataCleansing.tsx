@@ -338,22 +338,13 @@ export default function DataProcessingPage() {
               }))}
               operations={[
                 {
-                  key: "view",
-                  label: "查看",
-                  icon: <EyeOutlined />,
-                  onClick: (item) =>
-                    handleViewTask(cleaningTasks.find((t) => t.id === item.id)),
-                },
-                {
                   key: "download",
                   label: "下载",
-                  icon: <DownloadOutlined />,
                   onClick: (item) => {}, // implement download logic
                 },
                 {
                   key: "delete",
                   label: "删除",
-                  icon: <DeleteOutlined />,
                   onClick: (item) => {}, // implement delete logic
                 },
               ]}

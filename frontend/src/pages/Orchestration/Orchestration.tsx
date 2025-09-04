@@ -370,7 +370,7 @@ export default function OrchestrationPage() {
   };
 
   return (
-    <div className=" p-4">
+    <div className="space-y-4 p-4 bg-gray-50 min-h-screen">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
@@ -379,12 +379,9 @@ export default function OrchestrationPage() {
             size="small"
             onClick={() => navigate(-1)}
             icon={<ArrowLeft className="w-4 h-4 mr-2" />}
-          >
-            返回
-          </Button>
+          ></Button>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">数据智能编排</h1>
-            <p className="text-gray-600 mt-2">可视化设计和管理数据处理流程</p>
+            <h1 className="text-2xl font-bold text-gray-900">数据智能编排</h1>
           </div>
         </div>
         <div className="flex gap-2">
@@ -407,11 +404,7 @@ export default function OrchestrationPage() {
       {/* Main Content */}
       <Tabs defaultActiveKey="templates">
         <TabPane
-          tab={
-            <span>
-              <GitBranch className="w-4 h-4" /> 流程模板 ({templates.length})
-            </span>
-          }
+          tab={<span>流程模板 ({templates.length})</span>}
           key="templates"
         >
           <div className="grid gap-4">
@@ -504,11 +497,7 @@ export default function OrchestrationPage() {
           </div>
         </TabPane>
         <TabPane
-          tab={
-            <span>
-              <Play className="w-4 h-4" /> 执行历史 ({executions.length})
-            </span>
-          }
+          tab={<span>执行历史 ({executions.length})</span>}
           key="executions"
         >
           <div className="grid gap-4">
@@ -590,14 +579,7 @@ export default function OrchestrationPage() {
             ))}
           </div>
         </TabPane>
-        <TabPane
-          tab={
-            <span>
-              <Eye className="w-4 h-4" /> 实时监控
-            </span>
-          }
-          key="monitoring"
-        >
+        <TabPane tab={<span>实时监控</span>} key="monitoring">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card>
               <div className="pt-6 flex items-center gap-2">

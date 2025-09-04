@@ -104,7 +104,7 @@ const annotationTools = [
   { id: "textarea", label: "文本域", icon: <BarsOutlined />, type: "both" },
 ];
 
-export function CustomTemplateDialog({
+export default function CustomTemplateDialog({
   open,
   onOpenChange,
   onSaveTemplate,

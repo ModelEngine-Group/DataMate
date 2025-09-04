@@ -6,11 +6,11 @@ import {
   Button,
   Badge,
   Tag,
-  Tabs,
   Descriptions,
   type DescriptionsProps,
   Breadcrumb,
 } from "antd";
+import { FireOutlined, ShareAltOutlined, StarOutlined, VerticalAlignBottomOutlined } from "@ant-design/icons";
 import {
   Star,
   Download,
@@ -21,16 +21,13 @@ import {
   Package,
   Zap,
   Copy,
-  Share2,
-  Flag,
   ChevronRight,
   ImageIcon,
   Music,
   Video,
-  ArrowLeft,
 } from "lucide-react";
 import DetailHeader from "@/components/DetailHeader";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 
 export default function OperatorPluginDetail() {
   const navigate = useNavigate();
@@ -428,7 +425,7 @@ result = processor.process(image)`,
   );
 
   const renderInstallTab = () => (
-    <div className="flex flex-cols ">
+    <div className="flex flex-col gap-6">
       {/* 安装命令 */}
       <Card>
         <h3 className="text-lg font-semibold text-gray-900 mb-4">安装命令</h3>
@@ -651,7 +648,7 @@ result = processor.process(image)`}
                   <div className="flex items-center gap-2 mt-1">
                     <div className="flex items-center gap-1">
                       {[1, 2, 3, 4, 5].map((star) => (
-                        <Star
+                        <StarOutlined
                           key={star}
                           className={`w-4 h-4 ${
                             star <= review.rating
@@ -722,7 +719,7 @@ result = processor.process(image)`}
       key: "favorite",
       label: "收藏",
       icon: (
-        <Star
+        <StarOutlined
           className={`w-4 h-4 ${
             isFavorited ? "fill-yellow-400 text-yellow-400" : ""
           }`}
@@ -733,25 +730,17 @@ result = processor.process(image)`}
     {
       key: "share",
       label: "分享",
-      icon: <Share2 className="w-4 h-4" />,
+      icon: <ShareAltOutlined />,
       onClick: () => {
         /* 分享逻辑 */
       },
     },
     {
       key: "report",
-      label: "举报",
-      icon: <Flag className="w-4 h-4" />,
+      label: "发布",
+      icon: <FireOutlined />,
       onClick: () => {
-        /* 举报逻辑 */
-      },
-    },
-    {
-      key: "install",
-      label: "安装使用",
-      icon: <Download className="w-4 h-4 mr-2" />,
-      onClick: () => {
-        /* 安装逻辑 */
+        /* 发布逻辑 */
       },
     },
   ];
@@ -762,11 +751,11 @@ result = processor.process(image)`}
       <Breadcrumb
         items={[
           {
-            title: "算子市场",
+            title: <Link to="/data/operator-market">算子市场</Link>,
             href: "/data/operator-market",
           },
           {
-            title: "算子详情",
+            title: operator.name,
           },
         ]}
       />

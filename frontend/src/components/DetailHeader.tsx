@@ -50,7 +50,7 @@ const DetailHeader: React.FC<DetailHeaderProps<any>> = <T,>({
       <div className="flex items-start justify-between">
         <div className="flex items-start gap-4 flex-1">
           <div
-            className={`w-16 h-16 rounded-xl flex items-center justify-center shadow-lg ${
+            className={`w-16 h-16 text-white rounded-xl flex items-center justify-center shadow-lg ${
               data?.iconColor
                 ? data.iconColor
                 : "bg-gradient-to-br from-blue-500 to-blue-600"
@@ -62,8 +62,11 @@ const DetailHeader: React.FC<DetailHeaderProps<any>> = <T,>({
             <div className="flex items-center gap-3 mb-2">
               <h1 className="text-lg font-bold text-gray-900">{data.name}</h1>
               {data.status && (
-                <Tag icon={data.status.icon} color={data.status.color}>
-                  {data.status.label}
+                <Tag color={data.status.color}>
+                  <div className="flex items-center gap-2 text-xs">
+                    <span>{data.status.icon}</span>
+                    <span>{data.status.label}</span>
+                  </div>
                 </Tag>
               )}
             </div>
