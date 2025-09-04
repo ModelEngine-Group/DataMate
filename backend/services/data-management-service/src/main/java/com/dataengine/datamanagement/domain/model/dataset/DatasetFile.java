@@ -16,7 +16,7 @@ public class DatasetFile {
     private String fileFormat;
     private LocalDateTime uploadTime;
     private LocalDateTime lastAccessTime;
-    private String status; // ACTIVE, PROCESSING, DELETED
+    private String status; // UPLOADED, PROCESSING, COMPLETED, ERROR
 
     public DatasetFile() {}
 
@@ -27,7 +27,7 @@ public class DatasetFile {
         this.fileType = fileType;
         this.fileSize = fileSize;
         this.fileFormat = fileFormat;
-        this.status = "ACTIVE";
+        this.status = StatusConstants.DatasetFileStatuses.COMPLETED;
     }
 
     // Getters & Setters

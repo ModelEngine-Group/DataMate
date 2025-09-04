@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.dataengine.collection.infrastructure.persistence.mapper.DataSourceMapper">
@@ -8,10 +8,10 @@
     <resultMap id="DataSourceResultMap" type="com.dataengine.collection.domain.model.DataSource">
         <id property="id" column="id"/>
         <result property="name" column="name"/>
-        <result property="type" column="type" typeHandler="org.apache.ibatis.type.EnumTypeHandler"/>
+        <result property="type" column="type"/>
         <result property="description" column="description"/>
         <result property="config" column="config"/>
-        <result property="status" column="status" typeHandler="org.apache.ibatis.type.EnumTypeHandler"/>
+        <result property="status" column="status"/>
         <result property="lastTestAt" column="last_test_at"/>
         <result property="lastTestResult" column="last_test_result"/>
         <result property="createdAt" column="created_at"/>
@@ -39,7 +39,7 @@
 
     <!-- Update -->
     <update id="update" parameterType="com.dataengine.collection.domain.model.DataSource">
-        UPDATE t_dc_data_sources 
+        UPDATE t_dc_data_sources
         SET name = #{name},
             description = #{description},
             config = #{config},
@@ -126,16 +126,16 @@
 
     <!-- Update Status -->
     <update id="updateStatus">
-        UPDATE t_dc_data_sources 
+        UPDATE t_dc_data_sources
         SET status = #{status}, updated_at = NOW()
         WHERE id = #{id}
     </update>
 
     <!-- Update Test Result -->
     <update id="updateTestResult">
-        UPDATE t_dc_data_sources 
-        SET last_test_at = #{lastTestAt}, 
-            last_test_result = #{lastTestResult}, 
+        UPDATE t_dc_data_sources
+        SET last_test_at = #{lastTestAt},
+            last_test_result = #{lastTestResult},
             updated_at = NOW()
         WHERE id = #{id}
     </update>

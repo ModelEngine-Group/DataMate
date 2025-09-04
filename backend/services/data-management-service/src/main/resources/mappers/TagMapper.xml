@@ -85,7 +85,7 @@
     </delete>
 
     <select id="findByDatasetId" parameterType="string" resultMap="TagResultMap">
-        SELECT <include refid="Base_Column_List"/>
+        SELECT t.id, t.name, t.description, t.category, t.color, t.usage_count, t.created_at, t.updated_at
         FROM t_dm_tags t
         JOIN t_dm_dataset_tags dt ON dt.tag_id = t.id
         WHERE dt.dataset_id = #{datasetId}

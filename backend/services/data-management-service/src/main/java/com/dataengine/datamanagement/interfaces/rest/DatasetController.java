@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -119,7 +120,23 @@ public class DatasetController implements DatasetApi {
 
     @Override
     public ResponseEntity<DatasetStatisticsResponse> datasetsDatasetIdStatisticsGet(String datasetId) {
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+        try {
+            Map<String, Object> stats = datasetApplicationService.getDatasetStatistics(datasetId);
+
+            DatasetStatisticsResponse response = new DatasetStatisticsResponse();
+            response.setTotalFiles((Integer) stats.get("totalFiles"));
+            response.setCompletedFiles((Integer) stats.get("completedFiles"));
+            response.setTotalSize((Long) stats.get("totalSize"));
+            response.setCompletionRate((Float) stats.get("completionRate"));
+            response.setFileTypeDistribution((Map<String, Integer>) stats.get("fileTypeDistribution"));
+            response.setStatusDistribution((Map<String, Integer>) stats.get("statusDistribution"));
+
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     private DatasetResponse convertToResponse(Dataset dataset) {

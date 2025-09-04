@@ -32,7 +32,7 @@ public class Dataset {
     private Double completionRate = 0.0;
     private Double qualityScore = 0.0;
 
-    private String status; // DRAFT/ACTIVE/ARCHIVED
+    private String status; // DRAFT/ACTIVE/ARCHIVED/PROCESSING
     private Boolean isPublic = false;
     private Boolean isFeatured = false;
 
