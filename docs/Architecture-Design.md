@@ -77,7 +77,7 @@ data-engine-platform/
 │       ├── monitoring-common/         # 指标、日志、链路追踪
 │       └── storage-common/            # MinIO/S3/FS抽象
 │
-├── runtime/                            # 🚀 运行时与算子
+├── runtime/                            # 🚀 三方软件适配及扩展
 │   ├── python-executor/               # Python执行器 (Ray Actor/Job)
 │   │   ├── operator_runtime.py
 │   │   ├── wrappers/                  # 各类算子包装器
@@ -86,8 +86,10 @@ data-engine-platform/
 │   │   │   ├── unstructured_io_wrapper.py
 │   │   │   └── custom_operator_loader.py
 │   │   └── requirements.txt
-│   ├── datax/                         # DataX内置 (CE场景为Jar依赖)
-│   └── operators/                     # 自定义算子仓库 (规范、模板、示例)
+│   ├── datax/                         # datax扩展
+│   ├── labelstudio/                         # labelstudio扩展
+│   ├── datajuicer/                         # datajuicer扩展
+│   └── operators/                     # 算子仓库 (规范、模板、示例)
 │       ├── README.md
 │       └── examples/
 │           └── text_length_filter/
