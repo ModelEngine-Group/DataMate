@@ -1,4 +1,4 @@
-name: Backend Docker Image CI When PR
+name: Backend Docker Image CI
 
 on:
   push:
@@ -13,6 +13,7 @@ on:
       - 'backend/**'
       - 'build/backend/**'
       - '.github/workflows/**'
+  workflow_dispatch:
 
 jobs:
 
