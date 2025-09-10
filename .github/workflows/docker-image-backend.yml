@@ -2,13 +2,13 @@ name: Backend Docker Image CI
 
 on:
   push:
-    branches: [ "develop" ]
+    branches: [ "develop_930" ]
     paths:
       - 'backend/**'
       - 'build/backend/**'
       - '.github/workflows/**'
   pull_request:
-    branches: [ "develop" ]
+    branches: [ "develop_930" ]
     paths:
       - 'backend/**'
       - 'build/backend/**'
