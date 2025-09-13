@@ -1,6 +1,5 @@
 import { Card, Button, Statistic, Table, Tooltip, Tag } from "antd";
 import { Download, Edit, Plus, Trash2 } from "lucide-react";
-import { getStatusBadge } from "@/mock/dataset";
 import TagManager from "./components/TagManagement";
 import { Link, useNavigate } from "react-router";
 import { useState } from "react";
@@ -8,17 +7,17 @@ import { useDatasets } from "./hooks/useDatasets";
 import { SearchControls } from "@/components/SearchControls";
 import CardView from "@/components/CardView";
 import type { Dataset } from "@/types/dataset";
-import { DatasetTypeMap } from "./model";
+import { datasetStatusMap, datasetTypeMap } from "./model";
 
 export default function DatasetManagementPage() {
   const {
     datasets,
     pagination,
     contextHolder,
-    searchTerm,
+    searchParams,
     filterOptions,
     statisticsData,
-    setSearchTerm,
+    setSearchParams,
     handleFiltersChange,
     handleDownloadDataset,
     handleDeleteDataset,
@@ -55,12 +54,13 @@ export default function DatasetManagementPage() {
       title: "名称",
       dataIndex: "name",
       key: "name",
+      fixed: "left",
     },
     {
       title: "类型",
       dataIndex: "type",
       key: "type",
-      render: (type: string) => DatasetTypeMap[type]?.label || type,
+      render: (type: string) => datasetTypeMap[type]?.label || type,
       width: 100,
     },
     {
@@ -71,26 +71,24 @@ export default function DatasetManagementPage() {
     },
     {
       title: "数据项",
-      dataIndex: "itemCount",
-      key: "itemCount",
-      render: (count: number) => <span>{count?.toLocaleString()}</span>,
+      dataIndex: "fileCount",
+      key: "fileCount",
       width: 100,
     },
     {
-      title: "质量",
-      dataIndex: "quality",
-      key: "quality",
-      render: (quality: number) => (
-        <span className="font-medium">{quality}%</span>
-      ),
+      title: "完成率",
+      dataIndex: "completionRate",
+      key: "completionRate",
       width: 100,
     },
     {
       title: "状态",
       dataIndex: "status",
       key: "status",
-      render: (_: any, record: Dataset) => {
-        const status = getStatusBadge(record.status);
+      render: (value: string) => {
+        const status = datasetStatusMap[value];
+        console.log(status);
+
         return (
           <Tag icon={status.icon} color={status.color}>
             {status.label}
@@ -103,6 +101,7 @@ export default function DatasetManagementPage() {
       title: "操作",
       key: "actions",
       width: 200,
+      fixed: "right",
       render: (_: any, record: Dataset) => (
         <div className="flex items-center gap-2">
           {operations.map((op) => (
@@ -119,12 +118,18 @@ export default function DatasetManagementPage() {
     },
   ];
 
+  const pager = {
+    current: searchParams.current,
+    pageSize: searchParams.pageSize,
+    ...pagination,
+  };
+
   const renderCardView = () => (
     <CardView
       data={datasets}
       pageSize={9}
       operations={operations}
-      pagination={pagination}
+      pagination={pager}
       onView={(dataset) => {
         navigate("/data/management/detail/" + dataset.id);
       }}
@@ -137,9 +142,9 @@ export default function DatasetManagementPage() {
       <Table
         columns={columns}
         dataSource={datasets}
-        pagination={pagination}
+        pagination={pager}
         rowKey="id"
-        scroll={{ x: "max-content" }}
+        scroll={{ x: "max-content", y: "calc(100vh - 31rem)" }}
       />
     </div>
   );
@@ -167,7 +172,7 @@ export default function DatasetManagementPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card title="数据集统计">
           <div className="grid grid-cols-4">
-            {statisticsData.map((item) => (
+            {statisticsData.count.map((item) => (
               <Statistic
                 key={item.title}
                 title={item.title}
@@ -178,7 +183,7 @@ export default function DatasetManagementPage() {
         </Card>
         <Card title="大小统计">
           <div className="grid grid-cols-4">
-            {statisticsData.map((item) => (
+            {statisticsData.size.map((item) => (
               <Statistic
                 key={item.title}
                 title={item.title}
@@ -189,11 +194,14 @@ export default function DatasetManagementPage() {
         </Card>
       </div>
       <SearchControls
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
+        searchTerm={searchParams.keywords}
+        onSearchChange={(keywords) =>
+          setSearchParams({ ...searchParams, keywords })
+        }
         searchPlaceholder="搜索数据集名称、描述或标签..."
         filters={filterOptions}
         onFiltersChange={handleFiltersChange}
+        onClearFilters={() => setSearchParams({ ...searchParams, filter: {} })}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         showViewToggle

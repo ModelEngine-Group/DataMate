@@ -1,11 +1,9 @@
 import React, { useState } from "react";
 import { Drawer, Input, Button, message } from "antd";
 import { Plus, Edit, Save, Trash2, TagIcon, X } from "lucide-react";
-import { useDatasets } from "../hooks/useDatasets";
 import { useTagsOperation } from "../hooks/useTagsOperation";
 
 const TagManager: React.FC = () => {
-  const { fetchDatasets } = useDatasets();
   const [messageApi] = message.useMessage();
   const {
     tags,
@@ -121,7 +119,6 @@ const TagManager: React.FC = () => {
               </div>
             ))}
           </div>
-
         </div>
       </Drawer>
     </>

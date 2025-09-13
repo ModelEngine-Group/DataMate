@@ -1,7 +1,6 @@
 import React from "react";
-import { Card, Tag, Pagination, Dropdown, Tooltip } from "antd";
+import { Card, Tag, Pagination, Dropdown, Tooltip, Empty } from "antd";
 import {
-  StarOutlined,
   EllipsisOutlined,
   ClockCircleOutlined,
   StarFilled,
@@ -46,6 +45,14 @@ interface CardViewProps<T> {
 function CardView<T extends BaseCardDataType>(props: CardViewProps<T>) {
   const { data, pagination, operations, onView, onFavorite, isFavorite } =
     props;
+
+  if (data.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-gray-500">
+        <Empty />
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 overflow-auto">
@@ -135,7 +142,7 @@ function CardView<T extends BaseCardDataType>(props: CardViewProps<T>) {
                   }}
                 >
                   <div className="cursor-pointer">
-                    <EllipsisOutlined />
+                    <EllipsisOutlined style={{ fontSize: 24 }} />
                   </div>
                 </Dropdown>
               </div>
@@ -144,7 +151,7 @@ function CardView<T extends BaseCardDataType>(props: CardViewProps<T>) {
         ))}
       </div>
       <div className="flex justify-end mt-6">
-        <Pagination {...pagination} showSizeChanger={false} />
+        <Pagination {...pagination} />
       </div>
     </div>
   );

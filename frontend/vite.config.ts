@@ -12,8 +12,12 @@ export default defineConfig({
     },
   },
   server: {
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      'access-control-allow-headers': "Origin, X-Requested-With, Content-Type, Accept",
+    },
     proxy: {
-      "/api": 'http://jasonwang.site:30010'
+      "/api": 'http://localhost:8002'
     }
   }
 });

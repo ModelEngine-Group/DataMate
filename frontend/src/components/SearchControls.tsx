@@ -1,4 +1,3 @@
-
 import { Input, Button, Select, Tag, Segmented } from "antd";
 import {
   BarsOutlined,
@@ -23,6 +22,7 @@ interface SearchControlsProps {
   filters?: FilterOption[];
   selectedFilters?: Record<string, string[]>;
   onFiltersChange?: (filters: Record<string, string[]>) => void;
+  onClearFilters?: () => void;
 
   // View props
   viewMode?: "card" | "list";
@@ -47,6 +47,7 @@ export function SearchControls({
   onSearchChange,
   onFiltersChange,
   onViewModeChange,
+  onClearFilters,
 }: SearchControlsProps) {
   const [selectedFilters, setSelectedFilters] = useState<{
     [key: string]: string[];
@@ -86,6 +87,7 @@ export function SearchControls({
 
   const handleClearAllFilters = () => {
     setSelectedFilters({});
+    onClearFilters?.();
   };
 
   const hasActiveFilters = Object.values(selectedFilters).some(
@@ -93,6 +95,7 @@ export function SearchControls({
   );
 
   useEffect(() => {
+    if (Object.keys(selectedFilters).length === 0) return;
     onFiltersChange?.(selectedFilters);
   }, [selectedFilters]);
 
@@ -104,6 +107,7 @@ export function SearchControls({
           {/* Search */}
           <div className="relative flex-1">
             <Input
+              allowClear
               placeholder={searchPlaceholder}
               value={searchTerm}
               onChange={(e) => onSearchChange(e.target.value)}

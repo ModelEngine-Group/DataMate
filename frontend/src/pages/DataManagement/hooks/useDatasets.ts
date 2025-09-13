@@ -1,26 +1,52 @@
 import {
-  getStatusBadge,
   getTypeColor,
   getTypeIcon,
-  mockDatasets,
   mockTags,
   statisticsData as statistics,
 } from "@/mock/dataset";
 import type { Dataset } from "@/types/dataset";
 import { message } from "antd";
 import { useEffect, useState } from "react";
+import {
+  getDatasetStatisticsUsingGet,
+  queryDatasetsUsingGet,
+} from "../dataset-apis";
+import { datasetStatusMap, datasetTypeMap } from "../model";
+import { useDebouncedEffect } from "@/hooks/useDebouncedEffect";
+import { formatBytes } from "@/utils/unit";
 
 export function useDatasets() {
-  const [statisticsData, setStatisticsData] = useState<any>(statistics);
-  const [datasets, setDatasets] = useState(mapDatasets(mockDatasets));
-  const [searchTerm, setSearchTerm] = useState("");
+  const [statisticsData, setStatisticsData] = useState<any>({
+    count: statistics,
+    size: statistics,
+  });
+  const [datasets, setDatasets] = useState<Dataset[]>([]);
+
+  const [searchParams, setSearchParams] = useState({
+    keywords: "",
+    filter: {
+      type: [] as string[],
+      status: [] as string[],
+      tags: [] as string[],
+    },
+    current: 1,
+    pageSize: 15,
+  });
   const [favoriteDatasets, setFavoriteDatasets] = useState<Set<number>>(
     new Set([1, 3])
   );
   const [pagination, setPagination] = useState({
-    current: 1,
-    pageSize: 15,
     total: 0,
+    showSizeChanger: true,
+    pageSizeOptions: ["10", "15", "20", "50"],
+    showTotal: (total: number) => `共 ${total} 条`,
+    onChange: (current: number, pageSize?: number) => {
+      setSearchParams((prev) => ({
+        ...prev,
+        current,
+        pageSize: pageSize || prev.pageSize,
+      }));
+    },
   });
   const filterOptions = [
     {
@@ -28,11 +54,7 @@ export function useDatasets() {
       label: "类型",
       options: [
         { label: "所有类型", value: "all" },
-        { label: "图像", value: "image" },
-        { label: "文本", value: "text" },
-        { label: "音频", value: "audio" },
-        { label: "视频", value: "video" },
-        { label: "多模态", value: "multimodal" },
+        ...Object.values(datasetTypeMap),
       ],
     },
     {
@@ -40,9 +62,7 @@ export function useDatasets() {
       label: "状态",
       options: [
         { label: "所有状态", value: "all" },
-        { label: "活跃", value: "active" },
-        { label: "处理中", value: "processing" },
-        { label: "已归档", value: "archived" },
+        ...Object.values(datasetStatusMap),
       ],
     },
     {
@@ -54,11 +74,11 @@ export function useDatasets() {
   ];
 
   const handleFiltersChange = (searchFilters: { [key: string]: string[] }) => {
-    const params = Object.keys(searchFilters).reduce((prev, cur) => {
-      const filter = searchFilters[cur] || [];
-      return { ...prev, [cur]: filter[0] };
-    }, {});
-    fetchDatasets(params);
+    setSearchParams({
+      ...searchParams,
+      current: 1,
+      filter: { ...searchParams.filter, ...searchFilters },
+    });
   };
 
   const handleToggleFavorite = (datasetId: number) => {
@@ -86,84 +106,119 @@ export function useDatasets() {
   };
 
   function mapDatasets(result: Dataset[]) {
-    return result.map((dataset: Dataset) => ({
+    const res = result.map((dataset: Dataset) => ({
       ...dataset,
+      size: formatBytes(dataset.totalSize || 0),
       icon: getTypeIcon(dataset.type),
       iconColor: getTypeColor(dataset.type),
-      status: getStatusBadge(dataset.status),
-      description: dataset.description,
-      tags: dataset.tags,
+      status: datasetStatusMap[dataset.status],
+      tags: dataset.tags.map((tag) => tag.name),
       statistics: [
-        { label: "数据项", value: dataset.itemCount?.toLocaleString() || 0 },
+        { label: "数据项", value: dataset?.fileCount || 0 },
         {
           label: "已标注",
-          value: dataset.annotations?.completed?.toLocaleString() || 0,
+          value: dataset.annotations?.completed || 0,
         },
-        { label: "大小", value: dataset.size || "0 MB" },
+        { label: "大小", value: dataset.totalSize || "0 MB" },
         {
           label: "完成率",
-          value: dataset.annotations
-            ? `${Math.round(
-                (dataset.annotations?.completed / dataset.annotations?.total) *
-                  100
-              )}%`
-            : "0%",
+          value: dataset.completionRate ? `${dataset.completionRate}%` : "0%",
         },
       ],
-      lastModified: dataset.updatedTime,
+      lastModified: dataset.updatedAt,
     }));
+    return res;
   }
 
-  async function fetchDatasets(params?: any) {
-    console.log("Fetching datasets from API...");
+  function getFirstOfArray(arr: string[]) {
+    if(!arr || arr.length === 0 || !Array.isArray(arr)) return undefined;
+    if(arr[0] === "all") return undefined;
+    return arr[0];
+  }
 
-    const res = await fetch("/api/datasets", {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...params,
-        keywords: searchTerm,
-        type: params?.type === "all" ? undefined : params?.type,
-        status: params?.status === "all" ? undefined : params?.status,
-        // Convert tags to a comma-separated string if provided
-        tags: params?.tags?.length ? params.tags.join(",") : undefined,
-        page: pagination.current - 1,
-        size: pagination.pageSize,
-      }),
+  async function fetchDatasets() {
+    const { keywords, filter, current, pageSize } = searchParams;
+    const data = await queryDatasetsUsingGet({
+      ...filter,
+      keywords,
+      type: getFirstOfArray(filter?.type) || undefined,
+      status: getFirstOfArray(filter?.status) || undefined,
+      tags: filter?.tags?.length ? filter.tags.join(",") : undefined,
+      page: current,
+      size: pageSize,
     });
-    if (!res.ok) throw new Error("Failed to fetch datasets");
-    const data = await res.json();
-    const result = data?.records ?? mockDatasets;
+    setPagination((prev) => ({
+      ...prev,
+      total: data?.totalElements || 0,
+    }));
+    const result = data?.results ?? [];
     setDatasets(mapDatasets(result));
   }
 
-  async function fetchDatasetStatistics() {
-    const res = await fetch("/api/datasets/statistics", {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-    });
-    if (!res.ok) throw new Error("Failed to fetch dataset statistics");
-    const data = await res.json();
-    setStatisticsData(data);
+  async function getDatasetStatistics() {
+    const data = await getDatasetStatisticsUsingGet();
+    const statistics = {
+      size: [
+        {
+          title: "文本",
+          value: data.size.text || "0 MB",
+        },
+        {
+          title: "图像",
+          value: data.size.image || "0 MB",
+        },
+        {
+          title: "音频",
+          value: data.size.audio || "0 MB",
+        },
+        {
+          title: "视频",
+          value: data.size.video || "0 MB",
+        },
+      ],
+      count: [
+        {
+          title: "文本",
+          value: data.count.text || 0,
+        },
+        {
+          title: "图像",
+          value: data.count.image || 0,
+        },
+        {
+          title: "音频",
+          value: data.count.audio || 0,
+        },
+        {
+          title: "视频",
+          value: data.count.video || 0,
+        },
+      ],
+    };
+    setStatisticsData(statistics);
   }
 
-  useEffect(() => {
-    fetchDatasets();
-  }, [searchTerm, pagination.current, pagination.pageSize]);
+  useDebouncedEffect(
+    () => {
+      fetchDatasets();
+    },
+    [searchParams],
+    500
+  );
 
   useEffect(() => {
-    fetchDatasetStatistics();
+    getDatasetStatistics();
   }, []);
 
   return {
     datasets,
     favoriteDatasets,
     contextHolder,
-    searchTerm,
     filterOptions,
     pagination,
+    searchParams,
+    setSearchParams,
     setPagination,
-    setSearchTerm,
     handleToggleFavorite,
     handleDownloadDataset,
     handleDeleteDataset,

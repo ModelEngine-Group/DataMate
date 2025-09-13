@@ -1,22 +1,6 @@
 import { useState } from "react";
-import {
-  Card,
-  Button,
-  Input,
-  Badge,
-  Table,
-  Select,
-  Dropdown,
-  Menu,
-} from "antd";
-import {
-  SearchOutlined,
-  MoreOutlined,
-  PlayCircleOutlined,
-  StopOutlined,
-  EditOutlined,
-  DeleteOutlined,
-} from "@ant-design/icons";
+import { Card, Button, Badge, Table, Dropdown } from "antd";
+import { EllipsisOutlined } from "@ant-design/icons";
 import { SearchControls } from "@/components/SearchControls";
 
 interface Task {
@@ -119,6 +103,7 @@ export default function TaskManagement() {
       title: "任务名称",
       dataIndex: "name",
       key: "name",
+      fixed: "left",
       render: (text: string) => <span style={{ fontWeight: 500 }}>{text}</span>,
     },
     {
@@ -164,7 +149,7 @@ export default function TaskManagement() {
     {
       title: "操作",
       key: "action",
-      align: "right" as const,
+      fixed: "right" as const,
       render: (_: any, record: Task) => (
         <Dropdown
           menu={{
@@ -192,7 +177,10 @@ export default function TaskManagement() {
           }}
           trigger={["click"]}
         >
-          <Button type="text" icon={<MoreOutlined />} />
+          <Button
+            type="text"
+            icon={<EllipsisOutlined style={{ fontSize: 20 }} />}
+          />
         </Dropdown>
       ),
     },
@@ -213,7 +201,9 @@ export default function TaskManagement() {
   ];
 
   // 新增：SearchControls 筛选变化处理
-  const handleSearchControlsFiltersChange = (filters: Record<string, string[]>) => {
+  const handleSearchControlsFiltersChange = (
+    filters: Record<string, string[]>
+  ) => {
     setStatusFilter(filters.status?.[0] || "all");
   };
 

@@ -6,12 +6,11 @@ import {
   Video,
 } from "lucide-react";
 import {
-  CheckCircleOutlined,
-  ClockCircleOutlined,
-  DatabaseOutlined,
-} from "@ant-design/icons";
-import { DatasetTypeMap, TypeMap } from "@/pages/DataManagement/model";
-import { DatasetType, type Dataset } from "@/types/dataset";
+  datasetStatusMap,
+  datasetTypeMap,
+  TypeMap,
+} from "@/pages/DataManagement/model";
+import { DatasetStatus, DatasetType, type Dataset } from "@/types/dataset";
 
 export const mockDatasets: Dataset[] = [
   {
@@ -19,13 +18,13 @@ export const mockDatasets: Dataset[] = [
     name: "肺癌WSI病理图像数据集",
     description:
       "来自三甲医院的肺癌全切片病理图像，包含详细的病理标签和分级信息",
-    type: "image",
+    type: DatasetType.PRETRAIN_IMAGE,
     category: "医学影像",
     size: "1.2TB",
     itemCount: 1247,
     createdAt: "2024-01-15",
     lastModified: "2024-01-23",
-    status: "active",
+    status: DatasetStatus.ACTIVE,
     tags: ["WSI", "病理", "肺癌", "分类", "分级"],
     quality: 94.2,
     isFavorited: true,
@@ -455,7 +454,7 @@ export const mockTags = [
   "呼吸科",
 ];
 
-export const datasetTypes = Object.values(DatasetTypeMap).map((type) => ({
+export const datasetTypes = Object.values(datasetTypeMap).map((type) => ({
   ...type,
   options: type.children?.map(
     (subType) => TypeMap[subType as keyof typeof TypeMap]
@@ -506,22 +505,7 @@ export const mockFiles = [
 ];
 
 export const getStatusBadge = (status: string) => {
-  const statusConfig = {
-    active: {
-      label: "活跃",
-      color: "#409f17ff",
-      icon: <CheckCircleOutlined />,
-    },
-    processing: {
-      label: "处理中",
-      color: "#2673e5",
-      icon: <ClockCircleOutlined />,
-    },
-    archived: { label: "已归档", color: "#333333", icon: <DatabaseOutlined /> },
-  };
-  return (
-    statusConfig[status as keyof typeof statusConfig] || statusConfig.active
-  );
+  return datasetStatusMap[status] || datasetStatusMap[DatasetStatus.ACTIVE];
 };
 
 export const getTypeIcon = (type: string) => {

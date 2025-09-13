@@ -1,6 +1,8 @@
-import { DatasetStatus, DatasetType } from "@/types/dataset";
+import { DatasetType, DatasetStatus } from "@/types/dataset";
+import { CheckCircleOutlined, ClockCircleOutlined, CloseCircleOutlined } from "@ant-design/icons";
+import React from "react";
 
-export const DatasetTypeMap: Record<
+export const datasetTypeMap: Record<
   string,
   {
     value: DatasetType;
@@ -71,7 +73,7 @@ export const TypeMap: Record<
     children: DatasetType[];
   }
 > = {
-  ...DatasetTypeMap,
+  ...datasetTypeMap,
   [DatasetType.PRETRAIN_TEXT]: {
     value: DatasetType.PRETRAIN_TEXT,
     label: "文本预训练",
@@ -165,25 +167,23 @@ export const TypeMap: Record<
   },
 };
 
-export const DatasetStatusMap = {
-  [DatasetStatus.DRAFT]: {
-    value: DatasetStatus.DRAFT,
-    label: "草稿",
-    color: "gray",
-  },
-  [DatasetStatus.PROCESSING]: {
-    value: DatasetStatus.PROCESSING,
-    label: "处理中",
-    color: "blue",
-  },
-  [DatasetStatus.ARCHIVED]: {
-    value: DatasetStatus.ARCHIVED,
-    label: "已归档",
-    color: "orange",
-  },
-  [DatasetStatus.PUBLISHED]: {
-    value: DatasetStatus.PUBLISHED,
-    label: "已发布",
-    color: "green",
-  },
+export const datasetStatusMap = {
+  [DatasetStatus.ACTIVE]: {
+      label: "活跃",
+      value: DatasetStatus.ACTIVE,
+      color: "#409f17ff",
+      icon: <CheckCircleOutlined />,
+    },
+    [DatasetStatus.PROCESSING]: {
+      label: "处理中",
+      value: DatasetStatus.PROCESSING,
+      color: "#2673e5",
+      icon: <ClockCircleOutlined />,
+    },
+    [DatasetStatus.INACTIVE]: {
+      label: "未激活",
+      value: DatasetStatus.INACTIVE,
+      color: "#4f4444ff",
+      icon: <CloseCircleOutlined />,
+    },
 };
