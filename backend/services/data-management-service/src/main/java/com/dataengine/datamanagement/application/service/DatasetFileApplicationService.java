@@ -2,6 +2,7 @@ package com.dataengine.datamanagement.application.service;
 
 import com.dataengine.datamanagement.domain.model.dataset.Dataset;
 import com.dataengine.datamanagement.domain.model.dataset.DatasetFile;
+import com.dataengine.datamanagement.domain.model.dataset.StatusConstants;
 import com.dataengine.datamanagement.infrastructure.persistence.mapper.DatasetFileMapper;
 import com.dataengine.datamanagement.infrastructure.persistence.mapper.DatasetMapper;
 import org.apache.ibatis.session.RowBounds;
@@ -77,7 +78,7 @@ public class DatasetFileApplicationService {
             datasetFile.setFileFormat(getFileExtension(originalFilename));
             datasetFile.setFileSize(file.getSize());
             datasetFile.setUploadTime(LocalDateTime.now());
-            datasetFile.setStatus("ACTIVE");
+            datasetFile.setStatus(StatusConstants.DatasetFileStatuses.COMPLETED);
 
             // 保存到数据库
             datasetFileMapper.insert(datasetFile);

@@ -1,6 +1,7 @@
 package com.dataengine.datamanagement.application.service;
 
 import com.dataengine.datamanagement.domain.model.dataset.Dataset;
+import com.dataengine.datamanagement.domain.model.dataset.StatusConstants;
 import com.dataengine.datamanagement.domain.model.dataset.Tag;
 import com.dataengine.datamanagement.infrastructure.persistence.mapper.DatasetFileMapper;
 import com.dataengine.datamanagement.infrastructure.persistence.mapper.DatasetMapper;
@@ -53,7 +54,7 @@ public class DatasetApplicationService {
         dataset.setDataSourceId(dataSourceId);
         dataset.setPath(path);
         dataset.setFormat(format);
-        dataset.setStatus("DRAFT");
+        dataset.setStatus(StatusConstants.DatasetStatuses.ACTIVE);
         dataset.setCreatedBy(createdBy);
         dataset.setUpdatedBy(createdBy);
         dataset.setCreatedAt(LocalDateTime.now());
@@ -61,13 +62,18 @@ public class DatasetApplicationService {
         datasetMapper.insert(dataset); // 手动设定 UUID 主键
 
         // 处理标签
+        Set<Tag> processedTags = new HashSet<>();
         if (tagNames != null && !tagNames.isEmpty()) {
-            Set<Tag> tags = processTagNames(tagNames);
-            for (Tag t : tags) {
+            processedTags = processTagNames(tagNames);
+            for (Tag t : processedTags) {
                 tagMapper.insertDatasetTag(dataset.getId(), t.getId());
             }
         }
-        return datasetMapper.findById(dataset.getId());
+
+        // 返回创建的数据集，包含标签信息
+        Dataset createdDataset = datasetMapper.findById(dataset.getId());
+        createdDataset.getTags().addAll(processedTags);
+        return createdDataset;
     }
 
     /**
@@ -85,18 +91,29 @@ public class DatasetApplicationService {
         if (status != null && !status.isEmpty()) dataset.setStatus(status);
         dataset.setUpdatedAt(LocalDateTime.now());
 
+        Set<Tag> processedTags = new HashSet<>();
         if (tagNames != null) {
             tagMapper.deleteDatasetTagsByDatasetId(datasetId);
             if (!tagNames.isEmpty()) {
-                Set<Tag> newTags = processTagNames(tagNames);
-                for (Tag t : newTags) {
+                processedTags = processTagNames(tagNames);
+                for (Tag t : processedTags) {
                     tagMapper.insertDatasetTag(datasetId, t.getId());
                 }
+            }
+        } else {
+            // 如果没有传入标签参数，保持原有标签
+            List<Tag> existingTags = tagMapper.findByDatasetId(datasetId);
+            if (existingTags != null) {
+                processedTags.addAll(existingTags);
             }
         }
 
         datasetMapper.update(dataset);
-        return datasetMapper.findById(datasetId);
+
+        // 返回更新后的数据集，包含标签信息
+        Dataset updatedDataset = datasetMapper.findById(datasetId);
+        updatedDataset.getTags().addAll(processedTags);
+        return updatedDataset;
     }
 
     /**
@@ -136,6 +153,17 @@ public class DatasetApplicationService {
                                    List<String> tagNames, Pageable pageable) {
         RowBounds bounds = new RowBounds(pageable.getPageNumber() * pageable.getPageSize(), pageable.getPageSize());
         List<Dataset> content = datasetMapper.findByCriteria(typeCode, status, keyword, tagNames, bounds);
+
+        // 为每个数据集填充标签信息
+        if (content != null && !content.isEmpty()) {
+            for (Dataset dataset : content) {
+                List<Tag> tags = tagMapper.findByDatasetId(dataset.getId());
+                if (tags != null) {
+                    dataset.getTags().addAll(tags);
+                }
+            }
+        }
+
         long total = datasetMapper.countByCriteria(typeCode, status, keyword, tagNames);
         return new PageImpl<>(content, pageable, total);
     }
@@ -159,5 +187,57 @@ public class DatasetApplicationService {
             tags.add(tag);
         }
         return tags;
+    }
+
+    /**
+     * 获取数据集统计信息
+     */
+    @Transactional(readOnly = true)
+    public Map<String, Object> getDatasetStatistics(String datasetId) {
+        Dataset dataset = datasetMapper.findById(datasetId);
+        if (dataset == null) {
+            throw new IllegalArgumentException("Dataset not found: " + datasetId);
+        }
+
+        Map<String, Object> statistics = new HashMap<>();
+
+        // 基础统计
+        Long totalFiles = datasetFileMapper.countByDatasetId(datasetId);
+        Long completedFiles = datasetFileMapper.countCompletedByDatasetId(datasetId);
+        Long totalSize = datasetFileMapper.sumSizeByDatasetId(datasetId);
+
+        statistics.put("totalFiles", totalFiles != null ? totalFiles.intValue() : 0);
+        statistics.put("completedFiles", completedFiles != null ? completedFiles.intValue() : 0);
+        statistics.put("totalSize", totalSize != null ? totalSize : 0L);
+
+        // 完成率计算
+        float completionRate = 0.0f;
+        if (totalFiles != null && totalFiles > 0) {
+            completionRate = (completedFiles != null ? completedFiles.floatValue() : 0.0f) / totalFiles.floatValue() * 100.0f;
+        }
+        statistics.put("completionRate", completionRate);
+
+        // 文件类型分布统计
+        Map<String, Integer> fileTypeDistribution = new HashMap<>();
+        List<com.dataengine.datamanagement.domain.model.dataset.DatasetFile> allFiles = datasetFileMapper.findAllByDatasetId(datasetId);
+        if (allFiles != null) {
+            for (com.dataengine.datamanagement.domain.model.dataset.DatasetFile file : allFiles) {
+                String fileType = file.getFileType() != null ? file.getFileType() : "unknown";
+                fileTypeDistribution.put(fileType, fileTypeDistribution.getOrDefault(fileType, 0) + 1);
+            }
+        }
+        statistics.put("fileTypeDistribution", fileTypeDistribution);
+
+        // 状态分布统计
+        Map<String, Integer> statusDistribution = new HashMap<>();
+        if (allFiles != null) {
+            for (com.dataengine.datamanagement.domain.model.dataset.DatasetFile file : allFiles) {
+                String status = file.getStatus() != null ? file.getStatus() : "unknown";
+                statusDistribution.put(status, statusDistribution.getOrDefault(status, 0) + 1);
+            }
+        }
+        statistics.put("statusDistribution", statusDistribution);
+
+        return statistics;
     }
 }

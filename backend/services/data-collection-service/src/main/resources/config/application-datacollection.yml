@@ -2,7 +2,7 @@ dataengine:
   data-collection:
     # DataX配置
     datax:
-      home-path: ${DATAX_HOME:./runtime/datax}
+      home-path: ${DATAX_HOME:D:/datax}
       python-path: ${DATAX_PYTHON_PATH:python3}
       job-config-path: ${DATAX_JOB_PATH:./data/temp/datax/jobs}
       log-path: ${DATAX_LOG_PATH:./logs/datax}
