@@ -76,9 +76,9 @@ export default function DatasetManagementPage() {
       width: 100,
     },
     {
-      title: "完成率",
-      dataIndex: "completionRate",
-      key: "completionRate",
+      title: "存储路径",
+      dataIndex: "storagePath",
+      key: "storagePath",
       width: 100,
     },
     {

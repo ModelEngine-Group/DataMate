@@ -121,8 +121,8 @@ export function useDatasets() {
         },
         { label: "大小", value: dataset.totalSize || "0 MB" },
         {
-          label: "完成率",
-          value: dataset.completionRate ? `${dataset.completionRate}%` : "0%",
+          label: "存储路径",
+          value: dataset.storagePath || "未知",
         },
       ],
       lastModified: dataset.updatedAt,

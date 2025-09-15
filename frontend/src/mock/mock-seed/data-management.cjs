@@ -16,7 +16,7 @@ function datasetItem() {
   return {
     id: Mock.Random.guid().replace(/[^a-zA-Z0-9]/g, ""),
     name: Mock.Random.ctitle(5, 20),
-    type: Mock.Random.pick(["image", "text", "audio", "video"]),
+    type: Mock.Random.pick(["PRETRAIN", "FINE_TUNE", "EVAL"]),
     status: Mock.Random.pick(["ACTIVE", "INACTIVE", "PROCESSING"]),
     tags: Mock.Random.shuffle(tagList).slice(0, Mock.Random.integer(1, 3)),
     dataSource: "dataSource",
@@ -147,7 +147,7 @@ module.exports = function (router) {
 
       filteredDatasets = filteredDatasets.filter((dataset) =>
         dataset.name.includes(keywords) || dataset.description.includes(keywords
-      );
+      ));
     }
     if (type) {
       console.log("filter type:", type);
