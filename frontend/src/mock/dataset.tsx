@@ -9,7 +9,7 @@ import {
   datasetStatusMap,
   datasetTypeMap,
   TypeMap,
-} from "@/pages/DataManagement/model";
+} from "@/pages/DataManagement/dataset-model";
 import { DatasetStatus, DatasetType, type Dataset } from "@/types/dataset";
 
 export const mockDatasets: Dataset[] = [

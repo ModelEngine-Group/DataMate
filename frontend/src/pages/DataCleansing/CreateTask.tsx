@@ -15,7 +15,7 @@ import {
   DatabaseOutlined,
   PlusOutlined,
 } from "@ant-design/icons";
-import { data, Link, useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { ArrowLeft } from "lucide-react";
 import OperatorLibrary from "./components/OperatorLibrary";
 import OperatorOrchestration from "./components/OperatorOrchestration";

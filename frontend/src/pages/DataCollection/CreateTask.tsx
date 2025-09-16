@@ -1,19 +1,30 @@
 import { useState } from "react";
-import { Card, Input, Button, Select, Radio, Form, Divider } from "antd";
-import { SaveOutlined } from "@ant-design/icons";
+import {
+  Card,
+  Input,
+  Button,
+  Select,
+  Radio,
+  Form,
+  Divider,
+  InputNumber,
+  TimePicker,
+  App,
+} from "antd";
 import { Link, useNavigate } from "react-router";
 import { ArrowLeft } from "lucide-react";
+import { createTaskUsingPost } from "./data-collection-apis";
 
 const { TextArea } = Input;
 
 interface ScheduleConfig {
   type: "immediate" | "scheduled";
-  scheduleType?: "daily" | "weekly" | "monthly" | "custom";
+  scheduleType?: "day" | "week" | "month" | "custom";
   time?: string;
   dayOfWeek?: string;
   dayOfMonth?: string;
   cronExpression?: string;
-  maxExecutions?: number;
+  maxRetries?: number;
 }
 
 const defaultTemplates = [
@@ -49,6 +60,7 @@ const defaultTemplates = [
 export default function CollectionTaskCreate() {
   const navigate = useNavigate();
   const [form] = Form.useForm();
+  const { message } = App.useApp();
 
   const [templateType, setTemplateType] = useState<"default" | "custom">(
     "default"
@@ -58,6 +70,8 @@ export default function CollectionTaskCreate() {
 
   const [scheduleConfig, setScheduleConfig] = useState<ScheduleConfig>({
     type: "immediate",
+    maxRetries: 10,
+    scheduleType: "daily",
   });
 
   const [isCreateDataset, setIsCreateDataset] = useState(false);
@@ -73,14 +87,16 @@ export default function CollectionTaskCreate() {
       return;
     }
     // Create task logic here
-    console.log("Creating task:", {
+    const params = {
       ...formData,
       templateType,
       selectedTemplate: templateType === "default" ? selectedTemplate : null,
       customConfig: templateType === "custom" ? customConfig : null,
       scheduleConfig,
-    });
-    window.alert("任务创建成功！");
+    };
+    console.log("Creating task:", params);
+    await createTaskUsingPost(params);
+    message.success("任务创建成功");
     navigate("/data/collection");
   };
 
@@ -133,6 +149,117 @@ export default function CollectionTaskCreate() {
             <Input placeholder="请填写文件格式，使用正则表达式" />
           </Form.Item>
 
+          {/* 同步配置 */}
+          <h2 className="font-medium text-gray-900 my-4 text-lg">同步配置</h2>
+          <Form.Item label="同步方式">
+            <Radio.Group
+              value={scheduleConfig.type}
+              onChange={(e) =>
+                setScheduleConfig({
+                  type: e.target.value as ScheduleConfig["type"],
+                })
+              }
+            >
+              <Radio value="immediate">立即同步</Radio>
+              <Radio value="scheduled">定时同步</Radio>
+            </Radio.Group>
+          </Form.Item>
+          {scheduleConfig.type === "scheduled" && (
+            <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Form.Item label="调度类型">
+                <Select
+                  options={[
+                    { label: "每日", value: "day" },
+                    { label: "每周", value: "week" },
+                    { label: "每月", value: "month" },
+                    { label: "自定义Cron", value: "custom" },
+                  ]}
+                  value={scheduleConfig.scheduleType}
+                  onChange={(value) =>
+                    setScheduleConfig((prev) => ({
+                      ...prev,
+                      scheduleType: value as ScheduleConfig["scheduleType"],
+                    }))
+                  }
+                />
+              </Form.Item>
+              {scheduleConfig.scheduleType === "custom" ? (
+                <Form.Item
+                  label="Cron表达式"
+                  name="cronExpression"
+                  rules={[{ required: true, message: "请输入Cron表达式" }]}
+                >
+                  <Input
+                    placeholder="例如：0 0 * * * 表示每天午夜执行"
+                    value={scheduleConfig.cronExpression}
+                    onChange={(e) =>
+                      setScheduleConfig((prev) => ({
+                        ...prev,
+                        cronExpression: e.target.value,
+                      }))
+                    }
+                  />
+                </Form.Item>
+              ) : (
+                <Form.Item label="执行时间" className="w-full">
+                  {scheduleConfig.scheduleType === "day" ? (
+                    <TimePicker />
+                  ) : (
+                    <Select
+                      options={
+                        scheduleConfig.scheduleType === "week"
+                          ? [
+                              { label: "周一", value: "1" },
+                              { label: "周二", value: "2" },
+                              { label: "周三", value: "3" },
+                              { label: "周四", value: "4" },
+                              { label: "周五", value: "5" },
+                              { label: "周六", value: "6" },
+                              { label: "周日", value: "0" },
+                            ]
+                          : [
+                              { label: "每月1日", value: "1" },
+                              { label: "每月5日", value: "5" },
+                              { label: "每月10日", value: "10" },
+                              { label: "每月15日", value: "15" },
+                              { label: "每月20日", value: "20" },
+                              { label: "每月25日", value: "25" },
+                              { label: "每月30日", value: "30" },
+                            ]
+                      }
+                      placeholder={
+                        scheduleConfig.scheduleType === "week"
+                          ? "选择星期几"
+                          : "选择日期"
+                      }
+                      value={scheduleConfig.dayOfWeek}
+                      onChange={(value) =>
+                        setScheduleConfig((prev) => ({
+                          ...prev,
+                          dayOfWeek: value as string,
+                        }))
+                      }
+                    />
+                  )}
+                </Form.Item>
+              )}
+            </div>
+          )}
+          <Form.Item label="最大执行次数">
+            <InputNumber
+              min={1}
+              value={scheduleConfig.maxRetries}
+              onChange={(value) =>
+                setScheduleConfig((prev) => ({
+                  ...prev,
+                  maxRetries: value,
+                }))
+              }
+              className="w-full"
+              style={{ width: "100%" }}
+            />
+          </Form.Item>
+
           {/* 模板配置 */}
           <h2 className="font-medium text-gray-900 my-4 text-lg">模板配置</h2>
           <Form.Item label="模板类型">
@@ -167,6 +294,7 @@ export default function CollectionTaskCreate() {
               </div>
             </Form.Item>
           )}
+
           {templateType === "custom" && (
             <Form.Item label="DataX JSON配置">
               <TextArea

@@ -38,7 +38,7 @@ import {
   Trash2,
 } from "lucide-react";
 import DetailHeader from "@/components/DetailHeader";
-import { TypeMap } from "./model";
+import { TypeMap } from "./dataset-model";
 import type { Dataset } from "@/types/dataset";
 import { Link, useParams } from "react-router";
 import { useImportFile } from "./hooks/useImportFile";

@@ -35,13 +35,7 @@ export default function DataCollection() {
           setActiveTab(tab);
         }}
       />
-      <Card>
-        {activeTab === "task-management" ? (
-          <TaskManagement />
-        ) : (
-          <ExecutionLog />
-        )}
-      </Card>
+      {activeTab === "task-management" ? <TaskManagement /> : <ExecutionLog />}
     </div>
   );
 }

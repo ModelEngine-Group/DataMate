@@ -11,7 +11,7 @@ import {
   getDatasetStatisticsUsingGet,
   queryDatasetsUsingGet,
 } from "../dataset-apis";
-import { datasetStatusMap, datasetTypeMap } from "../model";
+import { datasetStatusMap, datasetTypeMap } from "../dataset-model";
 import { useDebouncedEffect } from "@/hooks/useDebouncedEffect";
 import { formatBytes } from "@/utils/unit";
 

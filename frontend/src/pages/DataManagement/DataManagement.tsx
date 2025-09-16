@@ -7,7 +7,7 @@ import { useDatasets } from "./hooks/useDatasets";
 import { SearchControls } from "@/components/SearchControls";
 import CardView from "@/components/CardView";
 import type { Dataset } from "@/types/dataset";
-import { datasetStatusMap, datasetTypeMap } from "./model";
+import { datasetStatusMap, datasetTypeMap } from "./dataset-model";
 
 export default function DatasetManagementPage() {
   const {

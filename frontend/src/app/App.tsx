@@ -1,12 +1,14 @@
-import { Outlet } from "react-router";
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import { RouterProvider } from "react-router";
+import router from "../routes/routes";
 
 function App() {
-
   return (
-    <div>
-      <Outlet />
-    </div>
+    <StrictMode>
+      <RouterProvider router={router} key="router" />
+    </StrictMode>
   );
 }
 
-export default App;
+createRoot(document.getElementById("root")!).render(<App />);

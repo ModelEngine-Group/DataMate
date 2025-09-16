@@ -406,7 +406,6 @@ export default function VideoAnnotationWorkspace({
       {/* Tools Panel */}
       <div className="w-64 border-r bg-gray-50 p-4 space-y-4">
         {/* Tool Selection */}
-        {contextHolder}
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-base">工具</CardTitle>

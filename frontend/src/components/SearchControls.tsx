@@ -1,8 +1,9 @@
-import { Input, Button, Select, Tag, Segmented } from "antd";
+import { Input, Button, Select, Tag, Segmented, DatePicker } from "antd";
 import {
   BarsOutlined,
   AppstoreOutlined,
   SearchOutlined,
+  ReloadOutlined,
 } from "@ant-design/icons";
 import { useEffect, useState } from "react";
 
@@ -24,6 +25,13 @@ interface SearchControlsProps {
   onFiltersChange?: (filters: Record<string, string[]>) => void;
   onClearFilters?: () => void;
 
+  // Date range props
+  dateRange?: [Date | null, Date | null] | null;
+  onDateChange?: (dates: [Date | null, Date | null] | null) => void;
+
+  // Reload props
+  handleReload?: () => void;
+
   // View props
   viewMode?: "card" | "list";
   onViewModeChange?: (mode: "card" | "list") => void;
@@ -32,6 +40,8 @@ interface SearchControlsProps {
   showFilters?: boolean;
   showSort?: boolean;
   showViewToggle?: boolean;
+  showReload?: boolean;
+  showDatePicker?: boolean;
 
   // Styling
   className?: string;
@@ -39,11 +49,17 @@ interface SearchControlsProps {
 
 export function SearchControls({
   viewMode,
+  className,
   searchTerm,
   showFilters = true,
   showViewToggle = true,
   searchPlaceholder = "搜索...",
   filters = [],
+  dateRange,
+  showDatePicker = false,
+  showReload = true,
+  handleReload,
+  onDateChange,
   onSearchChange,
   onFiltersChange,
   onViewModeChange,
@@ -100,7 +116,7 @@ export function SearchControls({
   }, [selectedFilters]);
 
   return (
-    <div className="mt-4 mb-4">
+    <div className={className}>
       <div className="flex items-center justify-between gap-4">
         {/* Left side - Search and Filters */}
         <div className="flex items-center gap-4 flex-1">
@@ -139,6 +155,19 @@ export function SearchControls({
             </div>
           )}
         </div>
+
+        {showDatePicker && (
+          <DatePicker.RangePicker
+            value={dateRange as any}
+            onChange={onDateChange}
+            style={{ width: 260 }}
+            allowClear
+            placeholder={["开始时间", "结束时间"]}
+          />
+        )}
+        {showReload && (
+          <Button icon={<ReloadOutlined />} onClick={handleReload}></Button>
+        )}
 
         {/* Right side - View Toggle */}
         {showViewToggle && onViewModeChange && (
