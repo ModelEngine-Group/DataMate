@@ -1,9 +1,8 @@
-import { mockTags } from "@/mock/dataset";
 import { useState } from "react";
 
 export function useTagsOperation(message) {
   // 标签相关状态
-  const [tags, setTags] = useState<string[]>(mockTags);
+  const [tags, setTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState("");
   const [editingTag, setEditingTag] = useState<string | null>(null);
   const [editingTagValue, setEditingTagValue] = useState("");

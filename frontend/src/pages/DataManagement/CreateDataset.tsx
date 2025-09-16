@@ -11,10 +11,11 @@ import {
   Divider,
   message,
 } from "antd";
-import { datasetTypes, mockDatasets, mockTags } from "@/mock/dataset";
 import RadioCard from "@/components/RadioCard";
 import { Link, useNavigate, useParams } from "react-router";
 import { useImportFile } from "./hooks/useImportFile";
+import { datasetTypes } from "./dataset-model";
+import { queryDatasetByIdUsingGet } from "./dataset-apis";
 
 const dataSourceOptions = [
   { label: "本地上传", value: "local" },
@@ -30,7 +31,7 @@ export default function DatasetCreate() {
   const [form] = Form.useForm();
 
   const { importFileRender, fileList, handleUpload } = useImportFile();
-  const [availableTags, setAvailableTags] = useState<string[]>(mockTags);
+  const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [newDataset, setNewDataset] = useState({
     name: "",
     description: "",
@@ -44,26 +45,16 @@ export default function DatasetCreate() {
   const fetchDataset = async () => {
     // 如果有id，说明是编辑模式
     if (id) {
+      const { data } = await queryDatasetByIdUsingGet(id);
       setNewDataset({
-        name: mockDatasets[0].name,
-        description: mockDatasets[0].description,
+        name: data.name,
+        description: data.description,
         datasetType: "PRETRAIN",
         type: "PRETRAIN_IMAGE",
-        tags: mockDatasets[0].tags || [],
+        tags: data.tags || [],
         source: "local",
         target: "local",
-      }); // 先设置一个默认值，防止form报错
-      fetch(`/api/dataset/${id}`)
-        .then((res) => res.json())
-        .then((data) => {
-          setNewDataset({
-            ...data,
-            tags: data.tags || [],
-            source: "local",
-            target: "local",
-          });
-          form.setFieldsValue(data);
-        });
+      });
     }
   };
 
@@ -188,9 +179,7 @@ export default function DatasetCreate() {
                 )?.options ?? []
               }
               value={newDataset.type}
-              onChange={(type) =>
-                setNewDataset({ ...newDataset, type })
-              }
+              onChange={(type) => setNewDataset({ ...newDataset, type })}
             />
           </Form.Item>
 

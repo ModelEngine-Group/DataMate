@@ -1,4 +1,3 @@
-import { mockDatasets } from "@/mock/dataset";
 import {
   mockKnowledgeBases,
   sliceOperators,
@@ -31,6 +30,7 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { useNavigate } from "react-router";
+import type { Dataset } from "@/types/dataset";
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -45,6 +45,7 @@ const KnowledgeBaseCreatePage: React.FC = () => {
     null
   );
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [selectedDatasetFiles, setSelectedDatasetFiles] = useState<
     {
       datasetId: string;
@@ -133,10 +134,6 @@ const KnowledgeBaseCreatePage: React.FC = () => {
     );
   };
 
-  const filteredDatasets = mockDatasets.filter((dataset) =>
-    dataset.name.toLowerCase().includes(datasetSearchQuery.toLowerCase())
-  );
-
   const handleSliceOperatorToggle = (operatorId: string) => {
     setSelectedSliceOperators((prev) =>
       prev.includes(operatorId)
@@ -224,7 +221,10 @@ const KnowledgeBaseCreatePage: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center">
-          <Button type="text" onClick={() => navigate("/data/knowledge-generation")}>
+          <Button
+            type="text"
+            onClick={() => navigate("/data/knowledge-generation")}
+          >
             <ArrowLeft className="w-4 h-4 mr-1" />
           </Button>
           <h1 className="text-xl font-bold bg-clip-text">创建知识库</h1>
@@ -375,9 +375,7 @@ const KnowledgeBaseCreatePage: React.FC = () => {
                           />
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
-                              <span className="text-lg">
-                                {operator.icon}
-                              </span>
+                              <span className="text-lg">{operator.icon}</span>
                               <span className="font-medium text-sm">
                                 {operator.name}
                               </span>
@@ -535,9 +533,7 @@ const KnowledgeBaseCreatePage: React.FC = () => {
                       <Input
                         placeholder="搜索数据集..."
                         value={datasetSearchQuery}
-                        onChange={(e) =>
-                          setDatasetSearchQuery(e.target.value)
-                        }
+                        onChange={(e) => setDatasetSearchQuery(e.target.value)}
                         className="flex-1"
                       />
                       <Button onClick={() => setSelectedDatasetId(null)}>
@@ -546,12 +542,12 @@ const KnowledgeBaseCreatePage: React.FC = () => {
                     </div>
                     <div className="grid grid-cols-3 gap-4 h-80">
                       <div className="col-span-1 border rounded-lg overflow-y-auto p-2 space-y-2">
-                        {filteredDatasets.length === 0 && (
+                        {datasets.length === 0 && (
                           <p className="text-center text-gray-500 py-4 text-sm">
                             无匹配数据集
                           </p>
                         )}
-                        {filteredDatasets.map((dataset) => (
+                        {datasets.map((dataset) => (
                           <div
                             key={dataset.id}
                             className={`flex items-center justify-between p-3 border rounded-lg cursor-pointer ${
@@ -564,9 +560,7 @@ const KnowledgeBaseCreatePage: React.FC = () => {
                             <div className="flex items-center gap-3">
                               <Folder className="w-5 h-5 text-blue-400" />
                               <div>
-                                <p className="font-medium">
-                                  {dataset.name}
-                                </p>
+                                <p className="font-medium">{dataset.name}</p>
                                 <p className="text-xs text-gray-500">
                                   {dataset.files.length} 个文件
                                 </p>
@@ -589,13 +583,13 @@ const KnowledgeBaseCreatePage: React.FC = () => {
                             <div className="flex items-center gap-2 p-2 border-b pb-2">
                               <Checkbox
                                 checked={isAllDatasetFilesSelected(
-                                  mockDatasets.find(
+                                  datasets.find(
                                     (d) => d.id === selectedDatasetId
                                   )!
                                 )}
                                 onChange={(e) =>
                                   handleSelectAllDatasetFiles(
-                                    mockDatasets.find(
+                                    datasets.find(
                                       (d) => d.id === selectedDatasetId
                                     )!,
                                     e.target.checked
@@ -605,14 +599,14 @@ const KnowledgeBaseCreatePage: React.FC = () => {
                               <span className="font-medium">
                                 全选 (
                                 {
-                                  mockDatasets.find(
+                                  datasets.find(
                                     (d) => d.id === selectedDatasetId
                                   )?.files.length
                                 }{" "}
                                 个文件)
                               </span>
                             </div>
-                            {mockDatasets
+                            {datasets
                               .find((d) => d.id === selectedDatasetId)
                               ?.files.map((file) => (
                                 <div
@@ -634,9 +628,7 @@ const KnowledgeBaseCreatePage: React.FC = () => {
                                     />
                                     <File className="w-5 h-5 text-gray-400" />
                                     <div>
-                                      <p className="font-medium">
-                                        {file.name}
-                                      </p>
+                                      <p className="font-medium">{file.name}</p>
                                       <p className="text-sm text-gray-500">
                                         {file.size} • {file.type}
                                       </p>

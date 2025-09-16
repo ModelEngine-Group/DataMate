@@ -24,7 +24,7 @@ export default function TaskManagement() {
       ],
     },
   ];
-
+  const [loadingData, setLoadingData] = useState(false);
   const [tasks, setTasks] = useState<CollectionTask[]>([]);
   const [searchParams, setSearchParams] = useState<{
     searchTerm: string;
@@ -52,9 +52,19 @@ export default function TaskManagement() {
   });
 
   const refreshTaskList = async () => {
-    const res = await queryTasksUsingPost(searchParams);
-    setTasks(res.data.results || []);
-    setPagination((prev) => ({ ...prev, total: res.data.totalElements || 0 }));
+    setLoadingData(true);
+    try {
+      const res = await queryTasksUsingPost(searchParams);
+      setTasks(res.data.results || []);
+      setPagination((prev) => ({
+        ...prev,
+        total: res.data.totalElements || 0,
+      }));
+    } catch (error) {
+      message.error("获取任务列表失败");
+    } finally {
+      setLoadingData(false);
+    }
   };
 
   const handleStartTask = async (taskId: string) => {
@@ -221,6 +231,7 @@ export default function TaskManagement() {
         <Table
           columns={columns}
           dataSource={tasks}
+          loading={loadingData}
           rowKey="id"
           pagination={{
             ...pagination,

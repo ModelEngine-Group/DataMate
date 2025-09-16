@@ -33,7 +33,7 @@ export enum DatasetStatus {
 
 export interface DatasetFile {
   id: number;
-  name: string;
+  fileName: string;
   size: string;
   uploadDate: string;
   path: string;

@@ -29,6 +29,18 @@ function datasetItem() {
     updatedAt: Mock.Random.datetime("yyyy-MM-dd HH:mm:ss"),
     createdBy: Mock.Random.cname(),
     updatedBy: Mock.Random.cname(),
+    lineage: {
+      source: Mock.Random.word(5, 15),
+      processing: new Array(Mock.Random.integer(1, 5))
+        .fill(null)
+        .map(() => Mock.Random.csentence(5, 20)),
+      training: {
+        model: Mock.Random.pick(["ResNet-50", "BERT", "GPT-3", "VGG16"]),
+        accuracy: parseFloat((Math.random() * 100).toFixed(2)),
+        f1Score: parseFloat((Math.random() * 100).toFixed(2)),
+      },
+      destination: Mock.Random.word(5, 15),
+    },
   };
 }
 
@@ -91,9 +103,33 @@ const datasetStatistics = {
         ), // percentage
 };
 
+const datasetTypes = [
+  {
+    code: "PRETRAIN",
+    name: "预训练数据集",
+    description: "用于模型预训练的大规模数据集",
+    supportedFormats: ["txt", "json", "csv", "parquet"],
+    icon: "brain",
+  },
+  {
+    code: "FINE_TUNE",
+    name: "微调数据集",
+    description: "用于模型微调的专业数据集",
+    supportedFormats: ["json", "csv", "xlsx"],
+    icon: "tune",
+  },
+  {
+    code: "EVAL",
+    name: "评估数据集",
+    description: "用于模型评估的标准数据集",
+    supportedFormats: ["json", "csv", "xml"],
+    icon: "assessment",
+  },
+];
+
 module.exports = function (router) {
   // 获取数据统计信息
-  router.get(API.getDatasetStatisticsUsingGet, (req, res) => {
+  router.get(API.queryDatasetStatisticsUsingGet, (req, res) => {
     res.send({
       code: "0",
       msg: "Success",
@@ -124,30 +160,19 @@ module.exports = function (router) {
     });
   });
 
-  router.get(API.queryDatasetsUsingGet, (req, res) => {
-    res.send({
-      code: "0",
-      msg: "Success",
-      data: {
-        totalElements: datasetList.length,
-        page: 1,
-        size: 10,
-        results: datasetList.slice(0, 10),
-      },
-    });
-  });
-
   // 获取数据集列表
-  router.post(API.queryDatasetsUsingGet, (req, res) => {
+  router.post(API.queryDatasetsUsingPost, (req, res) => {
     const { page = 1, size = 10, keywords, type, status, tags } = req.body;
 
     let filteredDatasets = datasetList;
     if (keywords) {
       console.log("filter keywords:", keywords);
 
-      filteredDatasets = filteredDatasets.filter((dataset) =>
-        dataset.name.includes(keywords) || dataset.description.includes(keywords
-      ));
+      filteredDatasets = filteredDatasets.filter(
+        (dataset) =>
+          dataset.name.includes(keywords) ||
+          dataset.description.includes(keywords)
+      );
     }
     if (type) {
       console.log("filter type:", type);
@@ -187,8 +212,10 @@ module.exports = function (router) {
     });
   });
 
-  router.get(API.getDatasetByIdUsingGet, (req, res) => {
-    const { id } = req.query;
+  // 根据ID获取数据集详情
+  router.get(API.queryDatasetByIdUsingGet, (req, res) => {
+    const { id } = req.params;
+
     const dataset = datasetList.find((d) => d.id === id);
     if (dataset) {
       res.send({
@@ -197,11 +224,259 @@ module.exports = function (router) {
         data: dataset,
       });
     } else {
-      res.send({
+      res.status(404).send({
         code: "1",
         msg: "Dataset not found",
         data: null,
       });
     }
   });
+
+  // 更新数据集
+  router.put(API.updateDatasetByIdUsingPut, (req, res) => {
+    const { datasetId } = req.params;
+    const index = datasetList.findIndex((d) => d.id === datasetId);
+
+    if (index !== -1) {
+      datasetList[index] = {
+        ...datasetList[index],
+        ...req.body,
+        updatedAt: new Date().toISOString(),
+        updatedBy: "Admin",
+      };
+      res.send({
+        code: "0",
+        msg: "Dataset updated successfully",
+        data: datasetList[index],
+      });
+    } else {
+      res.status(404).send({
+        code: "1",
+        msg: "Dataset not found",
+        data: null,
+      });
+    }
+  });
+
+  // 删除数据集
+  router.delete(API.deleteDatasetByIdUsingDelete, (req, res) => {
+    const { datasetId } = req.params;
+    const index = datasetList.findIndex((d) => d.id === datasetId);
+
+    if (index !== -1) {
+      datasetList.splice(index, 1);
+      res.status(204).send();
+    } else {
+      res.status(404).send({
+        code: "1",
+        msg: "Dataset not found",
+        data: null,
+      });
+    }
+  });
+
+  // 获取数据集文件列表
+  router.get(API.queryFilesUsingGet, (req, res) => {
+    const { datasetId } = req.params;
+    const { page = 0, size = 20, fileType, status } = req.query;
+
+    let filteredFiles = datasetFileList;
+
+    if (fileType) {
+      filteredFiles = filteredFiles.filter(
+        (file) => file.fileType === fileType
+      );
+    }
+
+    if (status) {
+      filteredFiles = filteredFiles.filter((file) => file.status === status);
+    }
+
+    const startIndex = page * size;
+    const endIndex = startIndex + parseInt(size);
+    const pageData = filteredFiles.slice(startIndex, endIndex);
+
+    res.send({
+      code: "0",
+      msg: "Success",
+      data: {
+        results: pageData,
+        page: parseInt(page),
+        size: parseInt(size),
+        totalElements: filteredFiles.length,
+      },
+    });
+  });
+
+  // 上传文件到数据集
+  router.post(API.uploadFileUsingPost, (req, res) => {
+    const { datasetId } = req.params;
+    const newFile = {
+      ...datasetFileItem(),
+      ...req.body,
+      id: Mock.Random.guid().replace(/[^a-zA-Z0-9]/g, ""),
+      uploadedAt: new Date().toISOString(),
+      uploadedBy: "Admin",
+    };
+
+    datasetFileList.push(newFile);
+
+    res.status(201).send({
+      code: "0",
+      msg: "File uploaded successfully",
+      data: newFile,
+    });
+  });
+
+  // 获取文件详情
+  router.get(API.queryFileByIdUsingGet, (req, res) => {
+    const { datasetId, fileId } = req.params;
+    const file = datasetFileList.find((f) => f.id === fileId);
+
+    if (file) {
+      res.send({
+        code: "0",
+        msg: "Success",
+        data: file,
+      });
+    } else {
+      res.status(404).send({
+        code: "1",
+        msg: "File not found",
+        data: null,
+      });
+    }
+  });
+
+  // 删除文件
+  router.delete(API.deleteFileByIdUsingDelete, (req, res) => {
+    const { datasetId, fileId } = req.params;
+    const index = datasetFileList.findIndex((f) => f.id === fileId);
+
+    if (index !== -1) {
+      datasetFileList.splice(index, 1);
+      res.status(204).send();
+    } else {
+      res.status(404).send({
+        code: "1",
+        msg: "File not found",
+        data: null,
+      });
+    }
+  });
+
+  // 下载文件
+  router.get(API.downloadFileByIdUsingGet, (req, res) => {
+    const { datasetId, fileId } = req.params;
+    const file = datasetFileList.find((f) => f.id === fileId);
+
+    if (file) {
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="${file.fileName}"`
+      );
+      res.setHeader("Content-Type", "application/octet-stream");
+      res.send(`Mock file content for ${file.fileName}`);
+    } else {
+      res.status(404).send({
+        code: "1",
+        msg: "File not found",
+        data: null,
+      });
+    }
+  });
+
+  // 获取数据集类型列表
+  router.get(API.queryDatasetTypesUsingGet, (req, res) => {
+    res.send({
+      code: "0",
+      msg: "Success",
+      data: datasetTypes,
+    });
+  });
+
+  // 获取标签列表
+  router.get(API.queryTagsUsingGet, (req, res) => {
+    const { keyword } = req.query;
+    let filteredTags = tagList;
+
+    if (keyword) {
+      filteredTags = tagList.filter((tag) =>
+        tag.name.toLowerCase().includes(keyword.toLowerCase())
+      );
+    }
+
+    res.send({
+      code: "0",
+      msg: "Success",
+      data: filteredTags,
+    });
+  });
+
+  // 创建标签
+  router.post(API.createTagUsingPost, (req, res) => {
+    const newTag = {
+      ...tagItem(),
+      ...req.body,
+      id: Mock.Random.guid().replace(/[^a-zA-Z0-9]/g, ""),
+      usageCount: 0,
+    };
+
+    tagList.push(newTag);
+
+    res.status(201).send({
+      code: "0",
+      msg: "Tag created successfully",
+      data: newTag,
+    });
+  });
+
+  // 获取数据集统计信息
+  // router.get(API.queryDatasetStatisticsUsingGet, (req, res) => {
+  //   const { datasetId } = req.params;
+  //   const dataset = datasetList.find((d) => d.id === datasetId);
+
+  //   if (dataset) {
+  //     const datasetFiles = datasetFileList.filter(
+  //       (f) => f.datasetId === datasetId
+  //     );
+  //     const completedFiles = datasetFiles.filter(
+  //       (f) => f.status === "COMPLETED"
+  //     );
+
+  //     const fileTypeDistribution = datasetFiles.reduce((acc, file) => {
+  //       acc[file.fileType] = (acc[file.fileType] || 0) + 1;
+  //       return acc;
+  //     }, {});
+
+  //     const statusDistribution = datasetFiles.reduce((acc, file) => {
+  //       acc[file.status] = (acc[file.status] || 0) + 1;
+  //       return acc;
+  //     }, {});
+
+  //     const statistics = {
+  //       totalFiles: datasetFiles.length,
+  //       completedFiles: completedFiles.length,
+  //       totalSize: datasetFiles.reduce((acc, file) => acc + file.size, 0),
+  //       completionRate:
+  //         datasetFiles.length > 0
+  //           ? Math.round((completedFiles.length / datasetFiles.length) * 100)
+  //           : 0,
+  //       fileTypeDistribution,
+  //       statusDistribution,
+  //     };
+
+  //     res.send({
+  //       code: "0",
+  //       msg: "Success",
+  //       data: statistics,
+  //     });
+  //   } else {
+  //     res.status(404).send({
+  //       code: "1",
+  //       msg: "Dataset not found",
+  //       data: null,
+  //     });
+  //   }
+  // });
 };

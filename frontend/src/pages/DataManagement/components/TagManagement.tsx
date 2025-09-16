@@ -1,25 +1,23 @@
 import React, { useState } from "react";
-import { Drawer, Input, Button, message } from "antd";
+import { Drawer, Input, Button } from "antd";
 import { Plus, Edit, Save, Trash2, TagIcon, X } from "lucide-react";
 import { useTagsOperation } from "../hooks/useTagsOperation";
 
 const TagManager: React.FC = () => {
-  const [messageApi] = message.useMessage();
   const {
     tags,
     newTag,
+    editingTag,
+    editingTagValue,
     setNewTag,
     handleEditTag,
-    handleDeleteTag,
     updateTag,
     addTag,
     deleteTag,
-    editingTag,
     setEditingTag,
-    editingTagValue,
     setEditingTagValue,
     handleCreateNewTag,
-  } = useTagsOperation(messageApi);
+  } = useTagsOperation();
   const [showTagManager, setShowTagManager] = useState(false);
   const [availableTags, setAvailableTags] = useState<string[]>([]);
 
@@ -65,10 +63,10 @@ const TagManager: React.FC = () => {
           <div className="grid grid-cols-2 gap-2 mt-4">
             {tags.map((tag) => (
               <div
-                key={tag}
+                key={tag.id}
                 className="flex items-center justify-between px-2 border border-gray-100 rounded hover:bg-blue-50"
               >
-                {editingTag === tag ? (
+                {editingTag === tag.id ? (
                   <div className="flex items-center gap-2 flex-1">
                     <Input
                       value={editingTagValue}
@@ -98,12 +96,12 @@ const TagManager: React.FC = () => {
                   </div>
                 ) : (
                   <>
-                    <span className="text-sm">{tag}</span>
+                    <span className="text-sm">{tag.name}</span>
                     <div className="flex gap-1">
                       <Button
                         onClick={() => {
-                          setEditingTag(tag);
-                          setEditingTagValue(tag);
+                          setEditingTag(tag.id);
+                          setEditingTagValue(tag.name);
                         }}
                         type="text"
                         icon={<Edit className="w-3 h-3" />}

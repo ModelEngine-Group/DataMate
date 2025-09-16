@@ -24,7 +24,6 @@ import {
 import type { RatioConfig, RatioTask } from "@/types/ratio";
 import { mockRatioTasks } from "@/mock/ratio";
 import type { Dataset } from "@/types/dataset";
-import { mockDatasets } from "@/mock/dataset";
 import { useNavigate } from "react-router";
 
 const { TextArea } = Input;
@@ -45,7 +44,7 @@ export default function CreateRatioTask() {
   });
 
   const [tasks, setTasks] = useState<RatioTask[]>(mockRatioTasks);
-  const [datasets] = useState<Dataset[]>(mockDatasets);
+  const [datasets] = useState<Dataset[]>([]);
 
   const handleCreateRatioTask = async () => {
     try {

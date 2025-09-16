@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
-import { Card, Button, Badge, Table, DatePicker } from "antd";
+import { Card, Button, Badge, Table, DatePicker, App } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import dayjs from "dayjs";
-import { ReloadOutlined } from "@ant-design/icons";
 import { SearchControls } from "@/components/SearchControls";
 import type { CollectionLog } from "@/types/collection";
 import { queryExecutionLogUsingPost } from "../data-collection-apis";
@@ -22,6 +21,8 @@ const filterOptions = [
 ];
 
 export default function ExecutionLog() {
+  const { message } = App.useApp();
+  const [loadingData, setLoadingData] = useState(false);
   const [logs, setLogs] = useState<CollectionLog[]>([]);
   const [pagination, setPagination] = useState({
     total: 0,
@@ -62,9 +63,19 @@ export default function ExecutionLog() {
   };
 
   const fetchLogs = async () => {
-    const res = await queryExecutionLogUsingPost(searchParams);
-    setLogs(res.data.results || []);
-    setPagination((prev) => ({ ...prev, total: res.data.totalElements || 0 }));
+    setLoadingData(true);
+    try {
+      const res = await queryExecutionLogUsingPost(searchParams);
+      setLogs(res.data.results || []);
+      setPagination((prev) => ({
+        ...prev,
+        total: res.data.totalElements || 0,
+      }));
+    } catch (error) {
+      message.error("获取执行日志失败");
+    } finally {
+      setLoadingData(false);
+    }
   };
 
   useEffect(() => {
@@ -177,6 +188,7 @@ export default function ExecutionLog() {
       </div>
       <Card>
         <Table
+          loading={loadingData}
           columns={columns}
           dataSource={logs}
           rowKey="id"

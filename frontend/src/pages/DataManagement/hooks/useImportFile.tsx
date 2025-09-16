@@ -2,6 +2,7 @@ import { Upload, type UploadFile } from "antd";
 import { InboxOutlined } from "@ant-design/icons";
 import { useState } from "react";
 import type { Dataset } from "@/types/dataset";
+import { uploadDatasetFileUsingPost } from "../dataset-apis";
 
 const { Dragger } = Upload;
 
@@ -12,30 +13,15 @@ export const useImportFile = () => {
     setFileList([]);
   };
 
-  const handleUpload = (message: any, dataset: Dataset) => {
+  const handleUpload = async (message: any, dataset: Dataset) => {
     const formData = new FormData();
     fileList.forEach((file) => {
       console.log(file);
       formData.append("files[]", file);
     });
-
-    console.log("Uploading files for dataset ID:", formData, dataset.id);
-    fetch(`/api/datasets/${dataset.id}/files`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/form-data", // This is not necessary for FormData, but can be included if needed
-      },
-      body: formData,
-    })
-      .then((res) => res.json())
-      .then(() => {
-        resetFiles();
-        message.success("数据集创建成功");
-      })
-      .catch(() => {
-        message.error("上传失败.");
-      })
-      .finally(() => {});
+    await uploadDatasetFileUsingPost(dataset?.id, formData);
+    resetFiles();
+    message.success("文件上传成功");
   };
 
   const importFileRender = () => (

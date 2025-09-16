@@ -9,7 +9,7 @@
     "*.spec.js"
   ],
   "verbose": true,
-  "watch": ["mock/**/*"],
+  "watch": ["*.cjs"],
   "exec": "node --inspect=0.0.0.0:9229 mock.cjs",
   "ext": "js,cjs,json",
   "execMap": {

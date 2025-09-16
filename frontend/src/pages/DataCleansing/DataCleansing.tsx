@@ -275,6 +275,7 @@ export default function DataProcessingPage() {
         <>
           {/* Search and Filters */}
           <SearchControls
+            className="mb-4"
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
             searchPlaceholder="搜索任务名称、描述"

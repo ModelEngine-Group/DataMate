@@ -1,9 +1,16 @@
-import { mockTags } from "@/mock/dataset";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import {
+  createDatasetTagUsingPost,
+  deleteDatasetTagByIdUsingDelete,
+  queryDatasetTagsUsingGet,
+  updateDatasetTagByIdUsingPut,
+} from "../dataset-apis";
+import { App } from "antd";
 
-export function useTagsOperation(message) {
+export function useTagsOperation() {
   // 标签相关状态
-  const [tags, setTags] = useState<string[]>(mockTags);
+  const { message } = App.useApp();
+  const [tags, setTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState("");
   const [editingTag, setEditingTag] = useState<string | null>(null);
   const [editingTagValue, setEditingTagValue] = useState("");
@@ -14,9 +21,8 @@ export function useTagsOperation(message) {
   // 获取标签列表
   const fetchTags = async () => {
     try {
-      const response = await fetch(`/api/tags`);
-      const data = await response.json();
-      setTags(data);
+      const { data } = await queryDatasetTagsUsingGet();
+      setTags(data || []);
     } catch (e) {
       message.error("获取标签失败");
     }
@@ -25,13 +31,7 @@ export function useTagsOperation(message) {
   // 添加标签
   const addTag = async (tag: string) => {
     try {
-      const response = await fetch(`/api/tags`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ tag }),
-      });
+      const response = await createDatasetTagUsingPost(tag);
       if (response.ok) {
         fetchTags();
         message.success("标签添加成功");
@@ -46,9 +46,7 @@ export function useTagsOperation(message) {
   // 删除标签
   const deleteTag = async (tag: string) => {
     try {
-      const response = await fetch(`/api/tags/${tag}`, {
-        method: "DELETE",
-      });
+      const response = await deleteDatasetTagByIdUsingDelete(tag.id);
       if (response.ok) {
         fetchTags();
         message.success("标签删除成功");
@@ -62,13 +60,7 @@ export function useTagsOperation(message) {
 
   const updateTag = async (oldTag: string, newTag: string) => {
     try {
-      const response = await fetch(`/api/tags/${oldTag}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ tag: newTag }),
-      });
+      const response = await updateDatasetTagByIdUsingPut(oldTag.id, newTag);
       if (response.ok) {
         fetchTags();
         message.success("标签更新成功");
@@ -89,17 +81,21 @@ export function useTagsOperation(message) {
 
   const handleEditTag = (tag: string, value: string) => {
     if (value.trim()) {
-      updateTag(tag, value.trim());
+      updateTag(tag.id, value.trim());
       setEditingTag(null);
       setEditingTagValue("");
     }
   };
 
   const handleDeleteTag = (tag: string) => {
-    deleteTag(tag);
+    deleteTag(tag.id);
     setEditingTag(null);
     setEditingTagValue("");
   };
+
+  useEffect(() => {
+    fetchTags();
+  }, []);
 
   return {
     tags,

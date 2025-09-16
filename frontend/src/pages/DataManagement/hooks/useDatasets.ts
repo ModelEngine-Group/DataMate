@@ -1,26 +1,21 @@
-import {
-  getTypeColor,
-  getTypeIcon,
-  mockTags,
-  statisticsData as statistics,
-} from "@/mock/dataset";
 import type { Dataset } from "@/types/dataset";
 import { message } from "antd";
 import { useEffect, useState } from "react";
 import {
+  downloadDatasetUsingGet,
   getDatasetStatisticsUsingGet,
   queryDatasetsUsingGet,
 } from "../dataset-apis";
-import { datasetStatusMap, datasetTypeMap } from "../dataset-model";
+import { datasetStatusMap, datasetTypeMap, mapDataset } from "../dataset-model";
 import { useDebouncedEffect } from "@/hooks/useDebouncedEffect";
-import { formatBytes } from "@/utils/unit";
 
 export function useDatasets() {
   const [statisticsData, setStatisticsData] = useState<any>({
-    count: statistics,
-    size: statistics,
+    count: {},
+    size: {},
   });
   const [datasets, setDatasets] = useState<Dataset[]>([]);
+  const [tags] = useState<string[]>(["标签1", "标签2", "标签3", "标签4"]);
 
   const [searchParams, setSearchParams] = useState({
     keywords: "",
@@ -69,7 +64,7 @@ export function useDatasets() {
       key: "tags",
       label: "标签",
       mode: "multiple",
-      options: mockTags.map((tag) => ({ label: tag, value: tag })),
+      options: tags.map((tag) => ({ label: tag, value: tag })),
     },
   ];
 
@@ -93,7 +88,10 @@ export function useDatasets() {
     });
   };
 
-  const handleDownloadDataset = (dataset: Dataset) => {};
+  const handleDownloadDataset = async (dataset: Dataset) => {
+    await downloadDatasetUsingGet(dataset.id, dataset.name);
+    message.success("数据集下载成功");
+  };
 
   const [messageApi, contextHolder] = message.useMessage();
 
@@ -105,40 +103,15 @@ export function useDatasets() {
     messageApi.success("数据删除成功");
   };
 
-  function mapDatasets(result: Dataset[]) {
-    const res = result.map((dataset: Dataset) => ({
-      ...dataset,
-      size: formatBytes(dataset.totalSize || 0),
-      icon: getTypeIcon(dataset.type),
-      iconColor: getTypeColor(dataset.type),
-      status: datasetStatusMap[dataset.status],
-      tags: dataset.tags.map((tag) => tag.name),
-      statistics: [
-        { label: "数据项", value: dataset?.fileCount || 0 },
-        {
-          label: "已标注",
-          value: dataset.annotations?.completed || 0,
-        },
-        { label: "大小", value: dataset.totalSize || "0 MB" },
-        {
-          label: "存储路径",
-          value: dataset.storagePath || "未知",
-        },
-      ],
-      lastModified: dataset.updatedAt,
-    }));
-    return res;
-  }
-
   function getFirstOfArray(arr: string[]) {
-    if(!arr || arr.length === 0 || !Array.isArray(arr)) return undefined;
-    if(arr[0] === "all") return undefined;
+    if (!arr || arr.length === 0 || !Array.isArray(arr)) return undefined;
+    if (arr[0] === "all") return undefined;
     return arr[0];
   }
 
   async function fetchDatasets() {
     const { keywords, filter, current, pageSize } = searchParams;
-    const data = await queryDatasetsUsingGet({
+    const { data } = await queryDatasetsUsingGet({
       ...filter,
       keywords,
       type: getFirstOfArray(filter?.type) || undefined,
@@ -152,11 +125,11 @@ export function useDatasets() {
       total: data?.totalElements || 0,
     }));
     const result = data?.results ?? [];
-    setDatasets(mapDatasets(result));
+    setDatasets(result.map(mapDataset));
   }
 
-  async function getDatasetStatistics() {
-    const data = await getDatasetStatisticsUsingGet();
+  async function fetchStatistics() {
+    const { data } = await getDatasetStatisticsUsingGet();
     const statistics = {
       size: [
         {
@@ -207,7 +180,7 @@ export function useDatasets() {
   );
 
   useEffect(() => {
-    getDatasetStatistics();
+    fetchStatistics();
   }, []);
 
   return {

@@ -1,5 +1,5 @@
 import type React from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, Button, Input, Select, Divider, Form, message } from "antd";
 import TextArea from "antd/es/input/TextArea";
 import {
@@ -7,21 +7,12 @@ import {
   CheckOutlined,
   PlusOutlined,
 } from "@ant-design/icons";
-import { mockDatasets } from "@/mock/dataset";
 import { mockTemplates } from "@/mock/annotation";
 import CustomTemplateDialog from "./components/CustomTemplateDialog";
 import { Link, useNavigate } from "react-router";
 import { ArrowLeft } from "lucide-react";
-
-interface Dataset {
-  id: string;
-  name: string;
-  type: "text" | "image";
-  description: string;
-  fileCount: number;
-  size: string;
-  createdAt: string;
-}
+import { queryDatasetsUsingGet } from "../DataManagement/dataset-apis";
+import { DatasetType, type Dataset } from "@/types/dataset";
 
 interface Template {
   id: string;
@@ -47,6 +38,7 @@ export default function AnnotationTaskCreate() {
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(
     null
   );
+  const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [selectedDataset, setSelectedDataset] = useState<Dataset | null>(null);
 
   // 用于Form的受控数据
@@ -57,26 +49,26 @@ export default function AnnotationTaskCreate() {
     templateId: "",
   });
 
-  const filteredDatasets = mockDatasets.filter((dataset) => {
-    const matchesSearch =
-      dataset.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      dataset.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesFilter =
-      datasetFilter === "all" || dataset.type === datasetFilter;
-    return matchesSearch && matchesFilter;
-  });
+  const fetchDatasets = async () => {
+    const { data } = await queryDatasetsUsingGet();
+    setDatasets(data.results || []);
+  };
+
+  useEffect(() => {
+    fetchDatasets();
+  }, []);
 
   const filteredTemplates = mockTemplates.filter(
     (template) => template.category === selectedCategory
   );
 
   const handleDatasetSelect = (datasetId: string) => {
-    const dataset = mockDatasets.find((ds) => ds.id === datasetId) || null;
+    const dataset = datasets.find((ds) => ds.id === datasetId) || null;
     setSelectedDataset(dataset);
     setFormValues((prev) => ({ ...prev, datasetId }));
-    if (dataset?.type === "image") {
+    if (dataset?.type === DatasetType.PRETRAIN_IMAGE) {
       setSelectedCategory("Computer Vision");
-    } else if (dataset?.type === "text") {
+    } else if (dataset?.type === DatasetType.PRETRAIN_TEXT) {
       setSelectedCategory("Natural Language Processing");
     }
     setSelectedTemplate(null);
@@ -95,7 +87,7 @@ export default function AnnotationTaskCreate() {
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
-      const dataset = mockDatasets.find((ds) => ds.id === values.datasetId);
+      const dataset = datasets.find((ds) => ds.id === values.datasetId);
       const template = mockTemplates.find(
         (tpl) => tpl.id === values.templateId
       );
@@ -173,7 +165,7 @@ export default function AnnotationTaskCreate() {
               onChange={handleDatasetSelect}
               placeholder="请选择数据集"
               size="large"
-              options={filteredDatasets.map((dataset) => ({
+              options={datasets.map((dataset) => ({
                 label: (
                   <div className="flex items-center justify-between gap-3 py-2">
                     <div className="font-medium text-gray-900">

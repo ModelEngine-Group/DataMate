@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { mockDatasets, mockFiles } from "@/mock/dataset";
 import type { Dataset } from "@/types/dataset";
 import {
   Steps,
@@ -46,7 +45,8 @@ export default function SynthesisTaskCreate() {
   const [searchQuery, setSearchQuery] = useState("");
   const [createStep, setCreateStep] = useState(1);
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
-  const [datasets] = useState<Dataset[]>(mockDatasets);
+  const [datasets] = useState<Dataset[]>([]);
+  const [files] = useState<File[]>([]);
   const [selectedSynthesisTypes, setSelectedSynthesisTypes] = useState<
     string[]
   >(["qa_judge"]);
@@ -170,7 +170,7 @@ export default function SynthesisTaskCreate() {
   };
 
   const handleSelectAllFiles = () => {
-    const filteredFiles = mockFiles.filter((file) =>
+    const filteredFiles = files.filter((file) =>
       file.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
     if (selectedFiles.length === filteredFiles.length) {
@@ -353,7 +353,7 @@ export default function SynthesisTaskCreate() {
                           type="default"
                         >
                           {selectedFiles.length ===
-                          mockFiles.filter((file) =>
+                          files.filter((file) =>
                             file.name
                               .toLowerCase()
                               .includes(searchQuery.toLowerCase())
@@ -363,7 +363,7 @@ export default function SynthesisTaskCreate() {
                         </Button>
                       </div>
                       <div className="space-y-1">
-                        {mockFiles
+                        {files
                           .filter((file) =>
                             file.name
                               .toLowerCase()
@@ -417,7 +417,7 @@ export default function SynthesisTaskCreate() {
                         </div>
                       ) : (
                         selectedFiles.map((fileId) => {
-                          const file = mockFiles.find((f) => f.id === fileId);
+                          const file = files.find((f) => f.id === fileId);
                           if (!file) return null;
                           return (
                             <div

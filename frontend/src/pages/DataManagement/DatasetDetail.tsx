@@ -6,11 +6,11 @@ import {
   Breadcrumb,
   Descriptions,
   Tag,
-  message,
   Modal,
+  type DescriptionsProps,
+  App,
 } from "antd";
 import {
-  StarOutlined,
   ReloadOutlined,
   FlagOutlined,
   DownloadOutlined,
@@ -21,14 +21,6 @@ import {
   ClockCircleOutlined,
 } from "@ant-design/icons";
 import {
-  getStatusBadge,
-  getTypeColor,
-  getTypeIcon,
-  mockDatasets,
-  mockFiles,
-  mockTags,
-} from "@/mock/dataset";
-import {
   AlertTriangle,
   Database,
   Download,
@@ -38,11 +30,12 @@ import {
   Trash2,
 } from "lucide-react";
 import DetailHeader from "@/components/DetailHeader";
-import { TypeMap } from "./dataset-model";
+import { mapDataset, TypeMap } from "./dataset-model";
 import type { Dataset } from "@/types/dataset";
 import { Link, useParams } from "react-router";
 import { useImportFile } from "./hooks/useImportFile";
 import { useFilesOperation } from "./hooks/useFilesOperation";
+import { downloadFile, queryDatasetByIdUsingGet } from "./dataset-apis";
 
 const navigateItems = [
   {
@@ -70,10 +63,10 @@ const tabList = [
 
 export default function DatasetDetail() {
   const { id } = useParams(); // 获取动态路由参数
-  const [messageApi, contextHolder] = message.useMessage();
   const [activeTab, setActiveTab] = useState("overview");
+  const { message } = App.useApp();
 
-  const [dataset, setDataset] = useState<Dataset>(mockDatasets[0]);
+  const [dataset, setDataset] = useState<Dataset>({} as Dataset);
   const { importFileRender, handleUpload } = useImportFile();
   const {
     fileList,
@@ -89,32 +82,31 @@ export default function DatasetDetail() {
     handleDownloadFile,
     handleBatchDeleteFiles,
     handleBatchExport,
-  } = useFilesOperation(messageApi, dataset);
+  } = useFilesOperation(dataset);
   // 模拟数据集详情
 
   const [showUploadDialog, setShowUploadDialog] = useState(false);
 
   const fetchDataset = async () => {
-    const res = await fetch(`/api/datasets/${id}`);
-    setDataset(await res.json());
+    const { data } = await queryDatasetByIdUsingGet(id as unknown as number);
+    setDataset(mapDataset(data));
   };
 
   useEffect(() => {
     fetchDataset();
+    fetchFiles();
   }, []);
 
   const handleRefresh = async () => {
     fetchDataset();
-  };
-
-  const handleExportFormat = ({ key }) => {
-    console.log(`导出为 ${key} 格式`);
-    // 实际导出逻辑
-  };
-
-  useEffect(() => {
     fetchFiles();
-  }, [id]);
+    message.success({ content: "数据刷新成功" });
+  };
+
+  const handleExportFormat = async ({ type }) => {
+    await downloadFile(dataset.id, type, `${dataset.name}-${type}.txt`);
+    message.success("文件下载成功");
+  };
 
   // 文件列表多选配置
   const rowSelection = {
@@ -133,24 +125,24 @@ export default function DatasetDetail() {
     {
       icon: <FileTextOutlined className="text-blue-500" />,
       label: "数据项",
-      value: dataset.itemCount || 0,
+      value: dataset?.itemCount || 0,
     },
     {
       icon: <DatabaseOutlined className="text-green-500" />,
       label: "大小",
-      value: dataset.size || "0 B",
+      value: dataset?.size || "0 B",
     },
     {
       icon: <FileImageOutlined className="text-purple-500" />,
       label: "类型",
       value:
-        TypeMap[dataset.type as keyof typeof TypeMap]?.label || dataset.type,
+        TypeMap[dataset?.type as keyof typeof TypeMap]?.label || dataset.type,
     },
     {
       icon: <ClockCircleOutlined className="text-grey-500" />,
       label: "",
-      value: dataset.lastModified
-        ? new Date(dataset.lastModified).toLocaleDateString()
+      value: dataset?.lastModified
+        ? new Date(dataset?.lastModified).toLocaleDateString()
         : "未知",
     },
   ];
@@ -162,12 +154,6 @@ export default function DatasetDetail() {
       label: "刷新",
       icon: <ReloadOutlined />,
       onClick: handleRefresh,
-    },
-    {
-      key: "publish",
-      label: "发布",
-      icon: <FlagOutlined />,
-      onClick: () => {},
     },
     {
       key: "upload",
@@ -213,13 +199,18 @@ export default function DatasetDetail() {
   const columns = [
     {
       title: "文件名",
-      dataIndex: "name",
-      key: "name",
+      dataIndex: "fileName",
+      key: "fileName",
       render: (text, file) => (
         <Button type="link" onClick={handleShowFile(file)}>
           {text}
         </Button>
       ),
+    },
+    {
+      title: "类型",
+      dataIndex: "type",
+      key: "type",
     },
     {
       title: "大小",
@@ -261,19 +252,21 @@ export default function DatasetDetail() {
         <Descriptions title="基本信息" items={items} column={2} />
       </Card>
       {/* 标签 */}
-      <Card>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">标签</h3>
-        <div className="flex flex-wrap gap-2">
-          {dataset.tags?.map((tag, index) => (
-            <Tag
-              key={index}
-              className="px-3 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded-full"
-            >
-              {tag}
-            </Tag>
-          ))}
-        </div>
-      </Card>
+      {dataset?.tags?.length > 0 && (
+        <Card>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">标签</h3>
+          <div className="flex flex-wrap gap-2">
+            {dataset.tags?.map((tag, index) => (
+              <Tag
+                key={index}
+                className="px-3 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded-full"
+              >
+                {tag}
+              </Tag>
+            ))}
+          </div>
+        </Card>
+      )}
       <Card>
         {selectedFiles.length > 0 && (
           <div className="flex items-center gap-2 mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
@@ -435,16 +428,10 @@ export default function DatasetDetail() {
 
   return (
     <div className="min-h-screen flex flex-col gap-4">
-      {contextHolder}
       <Breadcrumb items={navigateItems} />
       {/* Header */}
       <DetailHeader
-        data={{
-          ...dataset,
-          icon: getTypeIcon(dataset.type),
-          iconColor: getTypeColor(dataset.type),
-          status: getStatusBadge(dataset.status),
-        }}
+        data={dataset}
         statistics={statistics}
         operations={operations}
       />
@@ -485,7 +472,10 @@ export default function DatasetDetail() {
         title="上传文件"
         open={showUploadDialog}
         onCancel={() => setShowUploadDialog(false)}
-        onOk={handleUpload}
+        onOk={async () => {
+          await handleUpload(message, dataset.id);
+          setShowUploadDialog(false);
+        }}
       >
         {importFileRender()}
       </Modal>

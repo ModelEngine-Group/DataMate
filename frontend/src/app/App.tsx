@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import { RouterProvider } from "react-router";
 import router from "../routes/routes";
 
-function App() {
+export function App() {
   return (
     <StrictMode>
       <RouterProvider router={router} key="router" />

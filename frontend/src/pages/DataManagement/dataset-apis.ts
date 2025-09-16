@@ -31,7 +31,10 @@ export function deleteDatasetByIdUsingDelete(id: string | number) {
 }
 
 // 下载数据集
-export function downloadDatasetUsingGet(id: string | number, filename?: string) {
+export function downloadDatasetUsingGet(
+  id: string | number,
+  filename?: string
+) {
   return download(`/api/datasets/${id}/download`, null, filename);
 }
 
@@ -50,34 +53,49 @@ export function uploadDatasetFileUsingPost(id: string | number, data: any) {
   return post(`/api/datasets/${id}/files`, data);
 }
 
+export function downloadFile(
+  id: string | number,
+  fileId: string | number,
+  filename?: string
+) {
+  return download(
+    `/api/datasets/${id}/files/${fileId}/download`,
+    null,
+    filename
+  );
+}
+
 // 删除数据集文件
-export function deleteDatasetFileUsingDelete(datasetId: string | number, fileId: string | number) {
+export function deleteDatasetFileUsingDelete(
+  datasetId: string | number,
+  fileId: string | number
+) {
   return del(`/api/datasets/${datasetId}/files/${fileId}`);
 }
 
-// 获取数据集预览
+// 文件预览
 export function previewDatasetUsingGet(id: string | number, params?: any) {
   return get(`/api/datasets/${id}/preview`, params);
 }
 
 // 获取数据集标签
 export function queryDatasetTagsUsingGet(params?: any) {
-  return get("/api/datasets/tags", params);
+  return get("/api/dataset-tags", params);
 }
 
 // 创建数据集标签
 export function createDatasetTagUsingPost(data: any) {
-  return post("/api/datasets/tags", data);
+  return post("/api/dataset-tags", data);
 }
 
 // 更新数据集标签
 export function updateDatasetTagByIdUsingPut(id: string | number, data: any) {
-  return put(`/api/datasets/tags/${id}`, data);
+  return put(`/api/dataset-tags/${id}`, data);
 }
 
 // 删除数据集标签
 export function deleteDatasetTagByIdUsingDelete(id: string | number) {
-  return del(`/api/datasets/tags/${id}`);
+  return del(`/api/datasets-tags/${id}`);
 }
 
 // 数据集质量检查
@@ -111,7 +129,10 @@ export function copyDatasetUsingPost(id: string | number, data: any) {
 }
 
 // 获取数据集版本列表
-export function queryDatasetVersionsUsingGet(id: string | number, params?: any) {
+export function queryDatasetVersionsUsingGet(
+  id: string | number,
+  params?: any
+) {
   return get(`/api/datasets/${id}/versions`, params);
 }
 
@@ -121,11 +142,17 @@ export function createDatasetVersionUsingPost(id: string | number, data: any) {
 }
 
 // 切换数据集版本
-export function switchDatasetVersionUsingPut(id: string | number, versionId: string | number) {
+export function switchDatasetVersionUsingPut(
+  id: string | number,
+  versionId: string | number
+) {
   return put(`/api/datasets/${id}/versions/${versionId}/switch`);
 }
 
 // 删除数据集版本
-export function deleteDatasetVersionUsingDelete(id: string | number, versionId: string | number) {
+export function deleteDatasetVersionUsingDelete(
+  id: string | number,
+  versionId: string | number
+) {
   return del(`/api/datasets/${id}/versions/${versionId}`);
 }

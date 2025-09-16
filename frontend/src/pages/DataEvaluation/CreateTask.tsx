@@ -16,7 +16,6 @@ import {
   SaveOutlined,
   DeleteOutlined,
 } from "@ant-design/icons";
-import { mockDatasets } from "@/mock/dataset";
 import {
   evaluationTemplates,
   presetEvaluationDimensions,
@@ -27,10 +26,9 @@ import { useNavigate } from "react-router";
 const { Title, Paragraph } = Typography;
 const { Option } = Select;
 
-const datasets = mockDatasets;
-
 const EvaluationTaskCreate = () => {
   const navigate = useNavigate();
+  const [datasets, setDatasets] = useState([]);
   const [selectedTemplate, setSelectedTemplate] =
     useState<string>("dialogue_text");
   const [allDimensions, setAllDimensions] = useState<EvaluationDimension[]>([
@@ -207,7 +205,7 @@ const EvaluationTaskCreate = () => {
               }
               placeholder="选择要评估的数据集"
             >
-              {mockDatasets.map((dataset) => (
+              {datasets.map((dataset) => (
                 <Option key={dataset.id} value={dataset.id}>
                   {dataset.name}（{dataset.fileCount} 文件 • {dataset.size}）
                 </Option>

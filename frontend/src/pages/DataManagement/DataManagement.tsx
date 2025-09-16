@@ -55,6 +55,14 @@ export default function DatasetManagementPage() {
       dataIndex: "name",
       key: "name",
       fixed: "left",
+      render: (name, record) => (
+        <Button
+          type="link"
+          onClick={() => navigate(`/data/management/detail/${record.id}`)}
+        >
+          {name}
+        </Button>
+      ),
     },
     {
       title: "类型",
@@ -76,19 +84,10 @@ export default function DatasetManagementPage() {
       width: 100,
     },
     {
-      title: "存储路径",
-      dataIndex: "storagePath",
-      key: "storagePath",
-      width: 100,
-    },
-    {
       title: "状态",
       dataIndex: "status",
       key: "status",
-      render: (value: string) => {
-        const status = datasetStatusMap[value];
-        console.log(status);
-
+      render: (status: any) => {
         return (
           <Tag icon={status.icon} color={status.color}>
             {status.label}
@@ -172,7 +171,7 @@ export default function DatasetManagementPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card title="数据集统计">
           <div className="grid grid-cols-4">
-            {statisticsData.count.map((item) => (
+            {statisticsData.count?.map?.((item) => (
               <Statistic
                 key={item.title}
                 title={item.title}
@@ -183,7 +182,7 @@ export default function DatasetManagementPage() {
         </Card>
         <Card title="大小统计">
           <div className="grid grid-cols-4">
-            {statisticsData.size.map((item) => (
+            {statisticsData.size?.map?.((item) => (
               <Statistic
                 key={item.title}
                 title={item.title}
@@ -205,6 +204,7 @@ export default function DatasetManagementPage() {
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         showViewToggle
+        className="my-4"
       />
       {viewMode === "card" ? renderCardView() : renderListView()}
     </div>

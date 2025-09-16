@@ -24,7 +24,6 @@ import CardView from "@/components/CardView";
 import { useNavigate } from "react-router";
 import { mockOperators } from "@/mock/operator";
 import type { Operator } from "@/types/operator";
-import { mockTags } from "@/mock/dataset";
 import Filters from "./components/Filters";
 import TagManagement from "./components/TagManagement";
 
@@ -140,7 +139,7 @@ export default function OperatorMarketPage() {
   }
 
   // 视图状态管理
-  const [availableTags, setAvailableTags] = useState<string[]>(mockTags);
+  const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState("");
   const [editingTag, setEditingTag] = useState<string | null>(null);
   const [editingTagValue, setEditingTagValue] = useState("");

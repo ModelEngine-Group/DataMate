@@ -18,7 +18,6 @@ import {
 } from "@ant-design/icons";
 import { SearchControls } from "@/components/SearchControls";
 import { mockTasks } from "@/mock/evaluation";
-import { mockDatasets } from "@/mock/dataset";
 import CardView from "@/components/CardView";
 import { useNavigate } from "react-router";
 import type { Dataset } from "@/types/dataset";
@@ -26,7 +25,7 @@ import type { Dataset } from "@/types/dataset";
 export default function DataEvaluationPage() {
   const navigate = useNavigate();
   const [tasks, setTasks] = useState<EvaluationTask[]>(mockTasks);
-  const [datasets] = useState<Dataset[]>(mockDatasets);
+  const [datasets, setDatasets] = useState<Dataset[]>([]);
 
   // 搜索和过滤状态
   const [searchTerm, setSearchTerm] = useState("");

@@ -1,6 +1,18 @@
-import { DatasetType, DatasetStatus } from "@/types/dataset";
-import { CheckCircleOutlined, ClockCircleOutlined, CloseCircleOutlined } from "@ant-design/icons";
+import { DatasetType, DatasetStatus, type Dataset } from "@/types/dataset";
+import { formatBytes } from "@/utils/unit";
+import {
+  CheckCircleOutlined,
+  ClockCircleOutlined,
+  CloseCircleOutlined,
+} from "@ant-design/icons";
 import React from "react";
+import {
+  BarChart3,
+  FileImage,
+  FileText,
+  AudioLines,
+  Video,
+} from "lucide-react";
 
 export const datasetTypeMap: Record<
   string,
@@ -169,21 +181,88 @@ export const TypeMap: Record<
 
 export const datasetStatusMap = {
   [DatasetStatus.ACTIVE]: {
-      label: "活跃",
-      value: DatasetStatus.ACTIVE,
-      color: "#409f17ff",
-      icon: <CheckCircleOutlined />,
-    },
-    [DatasetStatus.PROCESSING]: {
-      label: "处理中",
-      value: DatasetStatus.PROCESSING,
-      color: "#2673e5",
-      icon: <ClockCircleOutlined />,
-    },
-    [DatasetStatus.INACTIVE]: {
-      label: "未激活",
-      value: DatasetStatus.INACTIVE,
-      color: "#4f4444ff",
-      icon: <CloseCircleOutlined />,
-    },
+    label: "活跃",
+    value: DatasetStatus.ACTIVE,
+    color: "#409f17ff",
+    icon: <CheckCircleOutlined />,
+  },
+  [DatasetStatus.PROCESSING]: {
+    label: "处理中",
+    value: DatasetStatus.PROCESSING,
+    color: "#2673e5",
+    icon: <ClockCircleOutlined />,
+  },
+  [DatasetStatus.INACTIVE]: {
+    label: "未激活",
+    value: DatasetStatus.INACTIVE,
+    color: "#4f4444ff",
+    icon: <CloseCircleOutlined />,
+  },
+};
+
+export function mapDataset(dataset: Dataset) {
+  return {
+    ...dataset,
+    size: formatBytes(dataset.totalSize || 0),
+    icon: getTypeIcon(dataset.type),
+    iconColor: getTypeColor(dataset.type),
+    status: datasetStatusMap[dataset.status],
+    tags: dataset.tags.map((tag) => tag.name),
+    statistics: [
+      { label: "数据项", value: dataset?.fileCount || 0 },
+      {
+        label: "已标注",
+        value: dataset.annotations?.completed || 0,
+      },
+      { label: "大小", value: dataset.totalSize || "0 MB" },
+      {
+        label: "存储路径",
+        value: dataset.storagePath || "未知",
+      },
+    ],
+    lastModified: dataset.updatedAt,
+  };
+}
+
+export const datasetTypes = Object.values(datasetTypeMap).map((type) => ({
+  ...type,
+  options: type.children?.map(
+    (subType) => TypeMap[subType as keyof typeof TypeMap]
+  ),
+}));
+
+export const getStatusBadge = (status: string) => {
+  return datasetStatusMap[status] || datasetStatusMap[DatasetStatus.ACTIVE];
+};
+
+export const getTypeIcon = (type: string) => {
+  const iconMap = {
+    image: FileImage,
+    text: FileText,
+    audio: AudioLines,
+    video: Video,
+    multimodal: BarChart3,
+    ...Object.keys(TypeMap).reduce((acc, key) => {
+      acc[key] = TypeMap[key as keyof typeof TypeMap].icon;
+      return acc;
+    }, {}),
+  };
+  const IconComponent = iconMap[type as keyof typeof iconMap] || FileImage;
+  return <IconComponent className="w-4 h-4" />;
+};
+
+export const getTypeColor = (type: string) => {
+  const colorMap = {
+    image: "bg-blue-100",
+    text: "bg-green-100",
+    audio: "bg-purple-100",
+    video: "bg-blue-100",
+    multimodal: "bg-orange-100",
+    [DatasetType.EVAL]: "bg-blue-100",
+    [DatasetType.PRETRAIN]: "bg-green-100",
+    [DatasetType.FINE_TUNE]: "bg-purple-100",
+    [DatasetType.EVAL_GSM8K]: "bg-orange-100",
+    [DatasetType.EVAL_IMDB]: "bg-pink-100",
+  };
+  return colorMap[type as keyof typeof colorMap] || "bg-blue-100";
 };

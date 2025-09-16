@@ -1,10 +1,15 @@
-import { mockFiles } from "@/mock/dataset";
-import type { DatasetFile } from "@/types/dataset";
+import type { Dataset, DatasetFile } from "@/types/dataset";
+import { App } from "antd";
 import { useState } from "react";
+import { downloadFile, queryDatasetFilesUsingGet } from "../dataset-apis";
+import { useParams } from "react-router";
 
-export function useFilesOperation(messageApi: any, dataset: Dataset) {
+export function useFilesOperation(dataset: Dataset) {
+  const { message } = App.useApp();
+  const { id } = useParams(); // 获取动态路由参数
+
   // 文件相关状态
-  const [fileList, setFileList] = useState(mockFiles);
+  const [fileList, setFileList] = useState<DatasetFile[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<number[]>([]);
 
   // 文件预览相关状态
@@ -13,25 +18,13 @@ export function useFilesOperation(messageApi: any, dataset: Dataset) {
   const [previewFileName, setPreviewFileName] = useState("");
 
   const fetchFiles = async () => {
-    const res = await fetch(`/api/datasets/${dataset.id}/files`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        datasetId: id,
-        page: 1,
-        size: 20,
-        fileType: "all",
-        status: "active",
-      }),
-    });
-    setFileList(await res.json());
+    const { data } = await queryDatasetFilesUsingGet(id!);
+    setFileList(data.results || []);
   };
 
   const handleBatchDeleteFiles = () => {
     if (selectedFiles.length === 0) {
-      messageApi.open({ type: "warning", content: "请先选择要删除的文件" });
+      message.warning({ content: "请先选择要删除的文件" });
       return;
     }
     // 执行批量删除逻辑
@@ -42,8 +35,7 @@ export function useFilesOperation(messageApi: any, dataset: Dataset) {
     });
     fetchFiles(); // 刷新文件列表
     setSelectedFiles([]); // 清空选中状态
-    messageApi.open({
-      type: "success",
+    message.success({
       content: `已删除 ${selectedFiles.length} 个文件`,
     });
   };
@@ -51,16 +43,9 @@ export function useFilesOperation(messageApi: any, dataset: Dataset) {
   const handleDownloadFile = async (file: DatasetFile) => {
     console.log("批量下载文件:", selectedFiles);
     // 实际导出逻辑
-    await fetch(`/api/datasets/${dataset.id}/files/${file.id}download`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ fileIds: selectedFiles }),
-    });
+    await downloadFile(dataset.id, file.id, file.fileName);
     // 假设导出成功
-    messageApi.open({
-      type: "success",
+    message.success({
       content: `已导出 ${selectedFiles.length} 个文件`,
     });
     setSelectedFiles([]); // 清空选中状态
@@ -71,11 +56,11 @@ export function useFilesOperation(messageApi: any, dataset: Dataset) {
     try {
       const res = await fetch(`/api/datasets/${dataset.id}/file/${file.id}`);
       const data = await res.text();
-      setPreviewFileName(file.name);
+      setPreviewFileName(file.fileName);
       setPreviewContent(data);
       setPreviewVisible(true);
     } catch (err) {
-      messageApi.open({ type: "error", content: "文件预览失败" });
+      message.error({ content: "文件预览失败" });
     }
   };
 
@@ -86,21 +71,15 @@ export function useFilesOperation(messageApi: any, dataset: Dataset) {
       });
       await res.json();
       fetchFiles(); // 刷新文件列表
-      messageApi.open({
-        type: "success",
-        content: `文件 ${file.name} 已删除`,
-      });
+      message.success({ content: `文件 ${file.fileName} 已删除` });
     } catch (error) {
-      messageApi.open({
-        type: "error",
-        content: `文件 ${file.name} 删除失败`,
-      });
+      message.error({ content: `文件 ${file.fileName} 删除失败` });
     }
   };
 
   const handleBatchExport = () => {
     if (selectedFiles.length === 0) {
-      messageApi.open({ type: "warning", content: "请先选择要导出的文件" });
+      message.warning({ content: "请先选择要导出的文件" });
       return;
     }
     // 执行批量导出逻辑
@@ -114,15 +93,13 @@ export function useFilesOperation(messageApi: any, dataset: Dataset) {
     })
       .then((res) => res.json())
       .then(() => {
-        messageApi.open({
-          type: "success",
+        message.success({
           content: `已导出 ${selectedFiles.length} 个文件`,
         });
         setSelectedFiles([]); // 清空选中状态
       })
       .catch(() => {
-        messageApi.open({
-          type: "error",
+        message.error({
           content: "导出失败，请稍后再试",
         });
       });
