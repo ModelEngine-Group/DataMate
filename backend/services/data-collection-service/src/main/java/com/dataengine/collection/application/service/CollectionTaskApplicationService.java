@@ -46,10 +46,10 @@ public class CollectionTaskApplicationService {
         // 验证数据源存在
         DataSourceId sourceId = DataSourceId.of(createDTO.getSourceDataSourceId());
         DataSourceId targetId = DataSourceId.of(createDTO.getTargetDataSourceId());
-        
+
         DataSource sourceDataSource = dataSourceRepository.findById(sourceId)
             .orElseThrow(() -> new IllegalArgumentException("Source data source not found: " + createDTO.getSourceDataSourceId()));
-        
+
         DataSource targetDataSource = dataSourceRepository.findById(targetId)
             .orElseThrow(() -> new IllegalArgumentException("Target data source not found: " + createDTO.getTargetDataSourceId()));
 
@@ -103,11 +103,11 @@ public class CollectionTaskApplicationService {
         }
 
         CollectionTask savedTask = taskRepository.save(task);
-        
+
         // 获取数据源信息
         DataSource sourceDataSource = dataSourceRepository.findById(task.getSourceDataSourceId()).orElse(null);
         DataSource targetDataSource = dataSourceRepository.findById(task.getTargetDataSourceId()).orElse(null);
-        
+
         return convertToDTO(savedTask, sourceDataSource, targetDataSource);
     }
 
@@ -130,10 +130,10 @@ public class CollectionTaskApplicationService {
      */
     @Transactional(readOnly = true)
     public Page<CollectionTaskDTO> getTasks(Pageable pageable, TaskStatus status) {
-        Page<CollectionTask> page = status != null 
+        Page<CollectionTask> page = status != null
             ? taskRepository.findByStatus(status, pageable)
             : taskRepository.findAll(pageable);
-        
+
         return page.map(task -> {
             DataSource sourceDataSource = dataSourceRepository.findById(task.getSourceDataSourceId()).orElse(null);
             DataSource targetDataSource = dataSourceRepository.findById(task.getTargetDataSourceId()).orElse(null);
@@ -156,7 +156,7 @@ public class CollectionTaskApplicationService {
         // 获取数据源
         DataSource sourceDataSource = dataSourceRepository.findById(task.getSourceDataSourceId())
             .orElseThrow(() -> new IllegalArgumentException("Source data source not found"));
-        
+
         DataSource targetDataSource = dataSourceRepository.findById(task.getTargetDataSourceId())
             .orElseThrow(() -> new IllegalArgumentException("Target data source not found"));
 
@@ -222,7 +222,7 @@ public class CollectionTaskApplicationService {
         }
 
         DataXJobStatus jobStatus = dataXDomainService.getJobStatus(task.getLastExecutionId());
-        
+
         return new TaskExecutionStatusDTO(
             task.getId().getValue(),
             jobStatus.getState().name(),
@@ -249,7 +249,7 @@ public class CollectionTaskApplicationService {
 
         String logs = dataXDomainService.getJobLogs(task.getLastExecutionId(), lines);
         String[] logLines = logs.split("\n");
-        
+
         List<TaskExecutionLogsDTO.LogEntry> logEntries = new ArrayList<>();
         for (String line : logLines) {
             logEntries.add(new TaskExecutionLogsDTO.LogEntry(
@@ -258,7 +258,7 @@ public class CollectionTaskApplicationService {
                 line
             ));
         }
-        
+
         return new TaskExecutionLogsDTO(task.getLastExecutionId(), logEntries, logLines.length, 1, lines);
     }
 
@@ -281,14 +281,15 @@ public class CollectionTaskApplicationService {
     /**
      * 定时检查任务执行状态
      */
-    @Scheduled(fixedDelay = 30000) // 每30秒检查一次
+//    jar包启动时报错 先注释掉
+//    @Scheduled(fixedDelay = 30000) // 每30秒检查一次
     public void checkRunningTasks() {
         var runningTasks = taskRepository.findRunningTasks();
-        
+
         for (CollectionTask task : runningTasks) {
             if (task.getLastExecutionId() != null) {
                 DataXJobStatus jobStatus = dataXDomainService.getJobStatus(task.getLastExecutionId());
-                
+
                 // 更新任务状态
                 if (jobStatus.isCompleted()) {
                     task.complete();
