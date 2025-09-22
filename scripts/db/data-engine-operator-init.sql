@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS t_operator
 
 CREATE TABLE IF NOT EXISTS t_operator_category
 (
-  id        int,
+  id        int primary key auto_increment,
   name      varchar(64),
   type      varchar(64),
   parent_id int

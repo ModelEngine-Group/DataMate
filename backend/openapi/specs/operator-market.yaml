@@ -245,14 +245,14 @@ paths:
                       type: integer
                     name:
                       type: string
-                    number:
+                    count:
                       type: integer
                     categories:
                       $ref: '#/components/schemas/CategoryResponse'
                   required:
                     - id
                     - name
-                    - number
+                    - count
                     - categories
           headers: {}
       security: []
@@ -415,7 +415,7 @@ components:
         name:
           type: string
           description: 分类名称
-        number:
+        count:
           type: integer
         type:
           type: string
@@ -428,7 +428,7 @@ components:
         - name
         - type
         - parentId
-        - number
+        - count
     CategoryResponse:
       type: array
       items:
