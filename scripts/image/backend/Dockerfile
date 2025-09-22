@@ -16,5 +16,6 @@ RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debia
     rm -rf /var/lib/apy/lists/*
 
 COPY --from=builder /opt/backend/services/main-application/target/data-engine.jar /opt/backend/data-engine.jar
+COPY editions/community/config/application.yml /opt/backend/application.yml
 
 CMD ["java", "-jar", "/opt/backend/data-engine.jar"]

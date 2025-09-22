@@ -7,7 +7,7 @@ import java.util.Map;
 
 /**
  * 数据归集任务聚合根
- * 
+ *
  * 定义数据从源数据源归集到目标数据源的任务配置
  */
 @Entity
@@ -15,7 +15,7 @@ import java.util.Map;
 public class CollectionTask extends AggregateRoot<CollectionTaskId> {
 
     @EmbeddedId
-    private CollectionTaskId id;
+    private CollectionTaskId collectionTaskId;
 
     @Column(nullable = false)
     private String name;
@@ -91,7 +91,7 @@ public class CollectionTask extends AggregateRoot<CollectionTaskId> {
     }
 
     public void start(String executionId) {
-        if (this.status != TaskStatus.READY && this.status != TaskStatus.COMPLETED 
+        if (this.status != TaskStatus.READY && this.status != TaskStatus.COMPLETED
             && this.status != TaskStatus.FAILED) {
             throw new IllegalStateException("Task cannot be started in current status: " + this.status);
         }
@@ -125,14 +125,14 @@ public class CollectionTask extends AggregateRoot<CollectionTaskId> {
     }
 
     public boolean canExecute() {
-        return this.status == TaskStatus.READY || this.status == TaskStatus.COMPLETED 
+        return this.status == TaskStatus.READY || this.status == TaskStatus.COMPLETED
                || this.status == TaskStatus.FAILED;
     }
 
     // Getters
     @Override
     public CollectionTaskId getId() {
-        return id;
+        return collectionTaskId;
     }
 
     public String getName() {

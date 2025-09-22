@@ -7,7 +7,7 @@ import java.util.Map;
 
 /**
  * 数据源聚合根
- * 
+ *
  * 管理各种类型的数据源连接配置信息
  */
 @Entity
@@ -15,7 +15,7 @@ import java.util.Map;
 public class DataSource extends AggregateRoot<DataSourceId> {
 
     @EmbeddedId
-    private DataSourceId id;
+    private DataSourceId dataSourceId;
 
     @Column(nullable = false)
     private String name;
@@ -46,10 +46,10 @@ public class DataSource extends AggregateRoot<DataSourceId> {
         // JPA constructor
     }
 
-    public DataSource(DataSourceId id, String name, DataSourceType type, 
+    public DataSource(DataSourceId id, String name, DataSourceType type,
                      String description, Map<String, String> config) {
         super(id);
-        this.id = id;
+        this.dataSourceId = id;
         this.name = name;
         this.type = type;
         this.description = description;
@@ -82,7 +82,7 @@ public class DataSource extends AggregateRoot<DataSourceId> {
     // Getters
     @Override
     public DataSourceId getId() {
-        return id;
+        return dataSourceId;
     }
 
     public String getName() {
