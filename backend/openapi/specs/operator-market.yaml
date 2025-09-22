@@ -239,7 +239,21 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/CategoryResponse'
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    name:
+                      type: string
+                    number:
+                      type: integer
+                    categories:
+                      $ref: '#/components/schemas/CategoryResponse'
+                  required:
+                    - id
+                    - name
+                    - number
+                    - categories
           headers: {}
       security: []
   /labels:
@@ -357,30 +371,6 @@ paths:
       security: []
 components:
   schemas:
-    Category:
-      type: object
-      properties:
-        id:
-          type: integer
-          description: 分类id
-        name:
-          type: string
-          description: 分类名称
-        number:
-          type: integer
-          description: 分类下算子数量
-        type:
-          type: string
-          description: 分类类型（0：预置，1：自定义）
-        parentId:
-          type: integer
-          description: 父分类id
-      required:
-        - id
-        - name
-        - type
-        - parentId
-        - number
     UpdateLabelRequest:
       type: object
       required:
@@ -416,20 +406,33 @@ components:
         name:
           type: string
           description: 标签名称
-    CategoryResponse:
+    SubCategory:
       type: object
       properties:
-        total:
+        id:
           type: integer
-          description: 分类数量
-        categories:
-          type: array
-          items:
-            $ref: '#/components/schemas/Category'
-          description: 分类列表
+          description: 分类id
+        name:
+          type: string
+          description: 分类名称
+        number:
+          type: integer
+        type:
+          type: string
+          description: 分类类型（0：预置，1：自定义）
+        parentId:
+          type: integer
+          description: 父分类id
       required:
-        - total
-        - categories
+        - id
+        - name
+        - type
+        - parentId
+        - number
+    CategoryResponse:
+      type: array
+      items:
+        $ref: '#/components/schemas/SubCategory'
     UpdateOperatorRequest:
       type: object
       properties:

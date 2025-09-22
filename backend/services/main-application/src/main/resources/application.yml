@@ -12,9 +12,9 @@ spring:
   # 数据源配置
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:32275/dataengine?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://101.201.105.190:9988/dataengine?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
     username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:123456}
+    password: ${DB_PASSWORD:Huawei@123}
     hikari:
       maximum-pool-size: 20
       minimum-idle: 5
@@ -61,7 +61,9 @@ spring:
       max-file-size: 100MB
       max-request-size: 100MB
 
-# 应用配置
+
+  main:
+    allow-bean-definition-overriding: true
 server:
   port: ${SERVER_PORT:8080}
   servlet:

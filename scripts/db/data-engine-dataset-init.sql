@@ -165,19 +165,19 @@ CREATE TABLE IF NOT EXISTS users (
 -- 插入初始数据
 
 -- 插入默认用户
-INSERT IGNORE INTO users (username, email, password_hash, full_name, role, organization) VALUES 
+INSERT IGNORE INTO users (username, email, password_hash, full_name, role, organization) VALUES
 ('admin', 'admin@dataengine.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7q7U3.XUO', '系统管理员', 'ADMIN', 'Data-Engine'),
 ('knowledge_user', 'knowledge@dataengine.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7q7U3.XUO', '知识库用户', 'USER', '三甲医院');
 
 -- 插入默认数据源
-INSERT IGNORE INTO data_sources (name, description, type, host, port, database_name, username, enabled) VALUES 
+INSERT IGNORE INTO data_sources (name, description, type, host, port, database_name, username, enabled) VALUES
 ('知识库MySQL', '知识库MySQL数据库连接', 'MYSQL', 'localhost', 3306, 'knowledge_base', 'knowledge_user', TRUE),
 ('本地文件系统', '本地文件系统数据源', 'FILE_SYSTEM', NULL, NULL, NULL, NULL, TRUE),
 ('MinIO存储', 'MinIO对象存储服务', 'MINIO', 'localhost', 9000, NULL, 'admin', TRUE),
 ('医学影像PACS', 'PACS医学影像存储系统', 'PACS', 'pacs.hospital.com', 104, NULL, 'pacs_user', TRUE);
 
 -- 插入默认标签
-INSERT IGNORE INTO tags (name, description, category, color) VALUES 
+INSERT IGNORE INTO tags (name, description, category, color) VALUES
 ('WSI', '全切片图像', '医学影像', '#FF6B6B'),
 ('病理', '病理学相关', '医学', '#4ECDC4'),
 ('肺癌', '肺癌相关数据', '疾病', '#45B7D1'),
@@ -190,7 +190,7 @@ INSERT IGNORE INTO tags (name, description, category, color) VALUES
 ('已验证', '已验证数据', '状态', '#85C1E9');
 
 -- 插入示例数据集
-INSERT IGNORE INTO datasets (name, description, dataset_type, category, data_source_id, format, file_count, record_count, completion_rate, quality_score, status, is_public, is_featured) VALUES 
+INSERT IGNORE INTO datasets (name, description, dataset_type, category, data_source_id, format, file_count, record_count, completion_rate, quality_score, status, is_public, is_featured) VALUES
 ('肺癌WSI病理图像数据集', '来自三甲医院的肺癌全切片病理图像，包含详细的病理标注信息', 'IMAGE', '医学影像', 1, 'WSI', 1247, 1205, 94.20, 96.80, 'ACTIVE', TRUE, TRUE),
 ('肺癌WSI诊断数据集A', '基于肺癌WSI数据集生成的诊断数据集', 'IMAGE', '医学影像', 1, 'WSI', 850, 0, 0.00, 0.00, 'DRAFT', FALSE, FALSE),
 ('肺癌WSI诊断数据集B', '基于肺癌WSI数据集生成的诊断数据集', 'IMAGE', '医学影像', 1, 'WSI', 650, 0, 0.00, 0.00, 'DRAFT', FALSE, FALSE),
@@ -199,7 +199,7 @@ INSERT IGNORE INTO datasets (name, description, dataset_type, category, data_sou
 ('GSM8K数学推理数据集', '包含小学数学应用题的推理数据集，并开展数学推理能力训练', 'TEXT', '数学', 1, 'JSON', 8500, 8500, 96.00, 96.00, 'ACTIVE', FALSE, FALSE);
 
 -- 插入数据集标签关联
-INSERT IGNORE INTO dataset_tags (dataset_id, tag_id) VALUES 
+INSERT IGNORE INTO dataset_tags (dataset_id, tag_id) VALUES
 (1, 1), (1, 2), (1, 3), (1, 5), (1, 9), (1, 10),  -- 肺癌WSI病理图像数据集
 (2, 1), (2, 2), (2, 3), (2, 5),  -- 肺癌WSI诊断数据集A
 (3, 1), (3, 2), (3, 3), (3, 5),  -- 肺癌WSI诊断数据集B
@@ -208,14 +208,14 @@ INSERT IGNORE INTO dataset_tags (dataset_id, tag_id) VALUES
 (6, 7), (6, 8), (6, 9);  -- GSM8K数学推理数据集
 
 -- 插入示例文件数据（肺癌WSI数据集）
-INSERT IGNORE INTO dataset_files (dataset_id, file_name, file_path, file_type, file_format, file_size, status) VALUES 
+INSERT IGNORE INTO dataset_files (dataset_id, file_name, file_path, file_type, file_format, file_size, status) VALUES
 (1, 'lung_cancer_001.jpg', '/datasets/wsi/lung_cancer_001.jpg', 'IMAGE', 'JPG', 2516582, 'ACTIVE'),
 (1, 'lung_cancer_002.jpg', '/datasets/wsi/lung_cancer_002.jpg', 'IMAGE', 'JPG', 1887437, 'ACTIVE'),
 (1, 'pathology_report_001.txt', '/datasets/wsi/pathology_report_001.txt', 'TEXT', 'TXT', 15360, 'ACTIVE'),
 (1, 'ct_scan_001.dcm', '/datasets/wsi/ct_scan_001.dcm', 'IMAGE', 'DCM', 47185920, 'ACTIVE');
 
 -- 插入统计数据
-INSERT IGNORE INTO dataset_statistics (dataset_id, stat_date, total_files, total_size, processed_files, error_files, download_count, view_count) VALUES 
+INSERT IGNORE INTO dataset_statistics (dataset_id, stat_date, total_files, total_size, processed_files, error_files, download_count, view_count) VALUES
 (1, CURDATE(), 1247, 1342177280, 1205, 15, 0, 0),  -- 1.2TB = 1342177280000 bytes, 约1.2TB/1000 ≈ 1.3GB用于示例
 (4, CURDATE(), 50000, 943718400, 50000, 0, 0, 0),  -- 约900MB
 (5, CURDATE(), 100000, 2516582400, 95000, 0, 0, 0),  -- 约2.3GB
@@ -225,7 +225,7 @@ COMMIT;
 
 -- 创建视图：数据集详情视图
 CREATE OR REPLACE VIEW dataset_details AS
-SELECT 
+SELECT
     d.id,
     d.name,
     d.description,
@@ -257,7 +257,7 @@ GROUP BY d.id, ds.name, ds.type, stats.total_size;
 
 -- 创建视图：数据集统计摘要
 CREATE OR REPLACE VIEW dataset_summary AS
-SELECT 
+SELECT
     COUNT(*) as total_datasets,
     SUM(CASE WHEN status = 'ACTIVE' THEN 1 ELSE 0 END) as active_datasets,
     SUM(CASE WHEN is_public = TRUE THEN 1 ELSE 0 END) as public_datasets,
@@ -268,4 +268,16 @@ SELECT
     COUNT(DISTINCT category) as categories
 FROM datasets;
 
-```
+CREATE TABLE collection_tasks (
+                                id VARCHAR(255) NOT NULL,
+                                name VARCHAR(255) NOT NULL,
+                                description VARCHAR(255),
+                                source_datasource_id VARCHAR(255),
+                                target_datasource_id VARCHAR(255),
+                                status VARCHAR(50),
+                                schedule_expression VARCHAR(255),
+                                last_execution_id VARCHAR(255),
+                                created_at DATETIME,
+                                updated_at DATETIME,
+                                PRIMARY KEY (id)
+);

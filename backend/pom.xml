@@ -28,6 +28,7 @@
         <springdoc.version>2.2.0</springdoc.version>
         <jackson-databind-nullable.version>0.2.6</jackson-databind-nullable.version>
         <jakarta-validation.version>3.0.2</jakarta-validation.version>
+        <maven-assembly-plugin.version>3.3.0</maven-assembly-plugin.version>
     </properties>
 
     <modules>

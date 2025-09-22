@@ -123,6 +123,32 @@
                     <mainClass>com.dataengine.main.DataEnginePlatformApplication</mainClass>
                 </configuration>
             </plugin>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-assembly-plugin</artifactId>
+              <version>${maven-assembly-plugin.version}</version>
+              <executions>
+                <execution>
+                  <id>make-assembly</id>
+                  <phase>package</phase>
+                  <goals>
+                    <goal>single</goal>
+                  </goals>
+                </execution>
+              </executions>
+              <configuration>
+                <finalName>data-engine</finalName>
+                <appendAssemblyId>false</appendAssemblyId>
+                <descriptorRefs>
+                    <descriptorRef>jar-with-dependencies</descriptorRef>
+                </descriptorRefs>
+                <archive>
+                  <manifest>
+                    <mainClass>com.dataengine.main.DataEnginePlatformApplication</mainClass>
+                  </manifest>
+                </archive>
+              </configuration>
+            </plugin>
         </plugins>
     </build>
 </project>

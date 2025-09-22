@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 @Entity
 @Getter
 @Setter
-@Table(name = "operator")
+@Table(name = "t_operator")
 public class OperatorEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
