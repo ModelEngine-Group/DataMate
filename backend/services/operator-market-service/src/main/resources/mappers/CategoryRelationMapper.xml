@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dataengine.operator.mapper.CategoryRelationMapper">
+
+  <select id="findAllRelationWithCategory" resultType="com.dataengine.operator.domain.modal.RelationCategoryDTO">
+    SELECT tc.id AS id, tcr.operator_id AS operatorId, tc.name AS name, tc.parent_id AS parentId
+    FROM t_operator_category_relation tcr
+           LEFT JOIN t_operator_category tc ON tcr.category_id = tc.id
+  </select>
+
+  <select id="findFullOuterJoinNative" resultType="com.dataengine.operator.domain.modal.RelationCategoryDTO">
+    SELECT toc.id, tocr.operator_id, toc.name, toc.parent_id FROM t_operator_category_relation tocr
+        LEFT JOIN t_operator_category toc ON tocr.category_id = toc.id
+    UNION
+    SELECT toc.id, tocr.operator_id, toc.name, toc.parent_id FROM t_operator_category_relation tocr
+        RIGHT JOIN t_operator_category toc ON tocr.category_id = toc.id
+  </select>
+
+</mapper>
