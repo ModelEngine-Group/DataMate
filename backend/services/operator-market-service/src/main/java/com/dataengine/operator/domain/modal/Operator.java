@@ -7,18 +7,28 @@ import java.time.LocalDateTime;
 
 @Getter
 @Setter
-public class OperatorEntity {
-    private Long id;
+public class Operator {
+    private String id;
 
     private String name;
 
     private String description;
 
-    private String category;
+    private String language;
 
     private String version;
 
-    private String author;
+    private String modal;
+
+    private String inputs;
+
+    private String outputs;
+
+    private String runtime;
+
+    private String settings;
+
+    private Boolean isStar;
 
     private LocalDateTime createdAt;
 

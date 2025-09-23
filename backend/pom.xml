@@ -18,7 +18,7 @@
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <spring-boot.version>3.2.0</spring-boot.version>
+        <spring-boot.version>3.2.2</spring-boot.version>
         <spring-cloud.version>2023.0.0</spring-cloud.version>
         <mysql.version>8.0.33</mysql.version>
         <postgresql.version>42.6.0</postgresql.version>
@@ -30,8 +30,9 @@
         <jakarta-validation.version>3.0.2</jakarta-validation.version>
         <jakarta.persistence.version>3.1.0</jakarta.persistence.version>
         <maven-assembly-plugin.version>3.3.0</maven-assembly-plugin.version>
-        <mybatis.spring.boot.version>3.0.4</mybatis.spring.boot.version>
-        <mybatis.spring.version>3.0.4</mybatis.spring.version>
+        <mybatis-plus.version>3.5.5</mybatis-plus.version>
+        <mapstruct.version>1.6.3</mapstruct.version>
+        <lombok.version>1.18.32</lombok.version>
     </properties>
 
     <modules>
@@ -108,17 +109,46 @@
             </dependency>
             <!-- MyBatis version alignment -->
             <dependency>
-                <groupId>org.mybatis.spring.boot</groupId>
-                <artifactId>mybatis-spring-boot-starter</artifactId>
-                <version>${mybatis.spring.boot.version}</version>
+              <groupId>com.baomidou</groupId>
+              <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
+              <version>${mybatis-plus.version}</version>
             </dependency>
+
             <dependency>
-                <groupId>org.mybatis</groupId>
-                <artifactId>mybatis-spring</artifactId>
-                <version>${mybatis.spring.version}</version>
+              <groupId>org.mapstruct</groupId>
+              <artifactId>mapstruct</artifactId>
+              <version>${mapstruct.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+          <groupId>org.springframework.boot</groupId>
+          <artifactId>spring-boot-dependencies</artifactId>
+          <version>${spring-boot.version}</version>
+          <type>pom</type>
+          <scope>import</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.springframework.boot</groupId>
+          <artifactId>spring-boot-starter-web</artifactId>
+          <version>${spring-boot.version}</version>
+        </dependency>
+        <dependency>
+          <groupId>org.springframework.cloud</groupId>
+          <artifactId>spring-cloud-dependencies</artifactId>
+          <version>${spring-cloud.version}</version>
+          <type>pom</type>
+          <scope>import</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>org.projectlombok</groupId>
+          <artifactId>lombok</artifactId>
+          <version>${lombok.version}</version>
+        </dependency>
+    </dependencies>
 
     <build>
         <plugins>

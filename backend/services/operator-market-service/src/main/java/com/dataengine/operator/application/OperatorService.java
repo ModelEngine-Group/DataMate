@@ -2,7 +2,7 @@ package com.dataengine.operator.application;
 
 import com.dataengine.operator.infrastructure.persistence.mapper.OperatorMapper;
 import com.dataengine.operator.interfaces.dto.*;
-import com.dataengine.operator.domain.modal.OperatorEntity;
+import com.dataengine.operator.domain.modal.Operator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -20,7 +20,7 @@ public class OperatorService {
         return new ArrayList<>();
     }
 
-    private OperatorResponse toDto(OperatorEntity entity) {
+    private OperatorResponse toDto(Operator entity) {
         OperatorResponse dto = new OperatorResponse();
         dto.setId(entity.getId());
         dto.setName(entity.getName());
