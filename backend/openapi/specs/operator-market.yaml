@@ -1,9 +1,9 @@
-openapi: 3.0.3
+openapi: 3.0.1
 info:
   title: Operator Market Service API
   description: |
     算子市场服务API，提供算子的发布、管理和订阅功能。
-    
+
     主要功能：
     - 算子发布和管理
     - 算子版本控制
@@ -11,151 +11,228 @@ info:
     - 算子分类和标签
     - 算子下载和安装
   version: 1.0.0
-  contact:
-    name: Data Engine Platform Team
-    email: dev@dataengine.com
-
-servers:
-  - url: http://localhost:8096/api/v1/operator-market
-    description: Development server
-
 tags:
   - name: Operator
-    description: 算子管理
   - name: Category
-    description: 算子分类管理
-  - name: Download
-    description: 算子下载管理
-
+  - name: Label
 paths:
-  /operators:
-    get:
-      tags: [Operator]
+  /operators/list:
+    post:
       summary: 获取算子列表
+      deprecated: false
       description: 分页查询算子列表，支持按分类、标签等条件筛选
-      parameters:
-        - name: page
-          in: query
-          schema:
-            type: integer
-            default: 0
-          description: 页码，从0开始
-        - name: size
-          in: query
-          schema:
-            type: integer
-            default: 20
-          description: 每页大小
-        - name: category
-          in: query
-          schema:
-            type: string
-          description: 按分类筛选
-        - name: keyword
-          in: query
-          schema:
-            type: string
-          description: 关键词搜索
+      tags:
+        - Operator
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                page:
+                  type: integer
+                  description: 页数
+                size:
+                  type: integer
+                  description: 单页数量
+                categories:
+                  type: array
+                  items:
+                    type: integer
+                  description: 分类id列表
+                operatorName:
+                  type: string
+                  description: 算子名称
+                labelName:
+                  type: string
+                  description: 标签名称
+              required:
+                - page
+                - size
+                - categories
+            examples: {}
       responses:
         '200':
           description: 成功返回算子列表
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PagedOperatorResponse'
-        '400':
-          description: 请求参数错误
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
+                type: array
+                items:
+                  $ref: '#/components/schemas/OperatorResponse'
+          headers: {}
+      security: []
+  /operators/create:
     post:
-      tags: [Operator]
-      summary: 发布新算子
+      summary: 创建新算子
+      deprecated: false
       description: 创建并发布一个新的算子
+      tags:
+        - Operator
+      parameters: []
       requestBody:
-        required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/CreateOperatorRequest'
+            example: null
       responses:
         '201':
           description: 算子创建成功
           content:
             application/json:
-              schema:
+              schema: &ref_0
                 $ref: '#/components/schemas/OperatorResponse'
-        '400':
-          description: 请求参数错误
+          headers: {}
+      security: []
+  /operators/upload:
+    post:
+      summary: 上传新算子
+      deprecated: false
+      description: 创建并发布一个新的算子
+      tags:
+        - Operator
+      parameters: []
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  example: ''
+                description:
+                  type: string
+                  example: ''
+            examples: {}
+      responses:
+        '201':
+          description: 算子创建成功
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
+              schema: *ref_0
+          headers: {}
+      security: []
   /operators/{id}:
     get:
-      tags: [Operator]
       summary: 获取算子详情
+      deprecated: false
       description: 根据ID获取算子的详细信息
+      tags:
+        - Operator
       parameters:
         - name: id
           in: path
+          description: 算子ID
           required: true
+          example: ''
           schema:
             type: string
-          description: 算子ID
       responses:
         '200':
           description: 成功返回算子详情
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/OperatorResponse'
+              schema: *ref_0
+          headers: {}
         '404':
           description: 算子不存在
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-
+          headers: {}
+      security: []
     put:
-      tags: [Operator]
       summary: 更新算子信息
+      deprecated: false
       description: 根据ID更新算子信息
+      tags:
+        - Operator
       parameters:
         - name: id
           in: path
+          description: 算子ID
           required: true
+          example: ''
           schema:
             type: string
-          description: 算子ID
       requestBody:
-        required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/UpdateOperatorRequest'
+            example: null
       responses:
         '200':
           description: 算子更新成功
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/OperatorResponse'
-        '404':
-          description: 算子不存在
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-  /categories:
+              schema: *ref_0
+          headers: {}
+      security: []
+  /category:
+    post:
+      summary: 创建算子分类
+      deprecated: false
+      description: ''
+      tags:
+        - Category
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: 名称
+                parentId:
+                  type: integer
+                  description: 父分类id
+              required:
+                - name
+                - parentId
+      responses:
+        '201':
+          description: ''
+          headers: {}
+      security: []
+    delete:
+      summary: 删除算子分类
+      deprecated: false
+      description: ''
+      tags:
+        - Category
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: integer
+                  description: ID 编号
+              required:
+                - id
+      responses:
+        '204':
+          description: ''
+          headers: {}
+      security: []
+  /category/tree:
     get:
-      tags: [Category]
       summary: 获取算子分类列表
+      deprecated: false
       description: 获取所有可用的算子分类
+      tags:
+        - Category
+      parameters: []
       responses:
         '200':
           description: 成功返回分类列表
@@ -164,16 +241,203 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/CategoryResponse'
-
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    name:
+                      type: string
+                    count:
+                      type: integer
+                    categories:
+                      $ref: '#/components/schemas/CategoryResponse'
+                  required:
+                    - id
+                    - name
+                    - count
+                    - categories
+          headers: {}
+      security: []
+  /labels:
+    get:
+      summary: 获取算子标签列表
+      deprecated: false
+      description: 获取所有算子的标签
+      tags:
+        - Label
+      parameters:
+        - name: page
+          in: query
+          description: 页码，从0开始
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          description: 每页大小
+          required: false
+          schema:
+            type: integer
+            default: 20
+        - name: keyword
+          in: query
+          description: 关键词搜索
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功返回标签列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LabelResponse'
+          headers: {}
+      security: []
+    post:
+      summary: 创建标签
+      deprecated: false
+      description: 批量创建标签
+      tags:
+        - Label
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: 名称
+              required:
+                - name
+            example: veniam
+      responses:
+        '201':
+          description: 创建成功
+          headers: {}
+      security: []
+    delete:
+      summary: 删除标签
+      deprecated: false
+      description: 批量删除标签
+      tags:
+        - Label
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: integer
+                format: int64
+              description: 标签id列表
+            example: null
+      responses:
+        '204':
+          description: 删除成功
+          headers: {}
+      security: []
+  /labels/{id}:
+    put:
+      summary: 更新标签
+      deprecated: false
+      description: 更新标签
+      tags:
+        - Label
+      parameters:
+        - name: id
+          in: path
+          description: 标签ID
+          required: true
+          example: ''
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/UpdateLabelRequest'
+            example: null
+      responses:
+        '200':
+          description: 更新成功
+          headers: {}
+      security: []
 components:
   schemas:
-    OperatorResponse:
+    UpdateLabelRequest:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+          description: 标签id
+        name:
+          type: string
+          description: 标签名称
+    Response:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          type: object
+          properties: {}
+      required:
+        - code
+        - message
+        - data
+    LabelResponse:
       type: object
       properties:
         id:
           type: string
-          description: 算子ID
+          description: 标签ID
+        name:
+          type: string
+          description: 标签名称
+    SubCategory:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: 分类id
+        name:
+          type: string
+          description: 分类名称
+        count:
+          type: integer
+        type:
+          type: string
+          description: 分类类型（0：预置，1：自定义）
+        parentId:
+          type: integer
+          description: 父分类id
+      required:
+        - id
+        - name
+        - type
+        - parentId
+        - count
+    CategoryResponse:
+      type: array
+      items:
+        $ref: '#/components/schemas/SubCategory'
+    UpdateOperatorRequest:
+      type: object
+      properties:
         name:
           type: string
           description: 算子名称
@@ -186,16 +450,58 @@ components:
         category:
           type: string
           description: 算子分类
-        author:
+        documentation:
           type: string
-          description: 作者
-        rating:
-          type: number
-          format: double
-          description: 评分
-        downloadCount:
-          type: integer
-          description: 下载次数
+          description: 文档内容
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: 错误代码
+        message:
+          type: string
+          description: 错误信息
+        timestamp:
+          type: string
+          format: date-time
+          description: 错误时间
+    OperatorResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          description: 算子ID
+        name:
+          type: string
+          description: 算子名称
+        description:
+          type: string
+          description: 算子描述
+        language:
+          type: string
+          description: 开发语言
+        version:
+          type: string
+          description: 算子版本
+        modal:
+          type: string
+          description: 模态
+        inputs:
+          type: string
+          description: 输入类型
+        outputs:
+          type: string
+          description: 输入类型
+        runtime:
+          type: string
+          description: 运行时设置
+        settings:
+          type: string
+          description: 算子参数
+        isStar:
+          type: boolean
+          description: 是否收藏
         createdAt:
           type: string
           format: date-time
@@ -204,7 +510,14 @@ components:
           type: string
           format: date-time
           description: 更新时间
-
+      required:
+        - language
+        - modal
+        - inputs
+        - outputs
+        - runtime
+        - settings
+        - isStar
     CreateOperatorRequest:
       type: object
       required:
@@ -228,69 +541,5 @@ components:
         documentation:
           type: string
           description: 文档内容
-
-    UpdateOperatorRequest:
-      type: object
-      properties:
-        name:
-          type: string
-          description: 算子名称
-        description:
-          type: string
-          description: 算子描述
-        version:
-          type: string
-          description: 算子版本
-        category:
-          type: string
-          description: 算子分类
-        documentation:
-          type: string
-          description: 文档内容
-
-    PagedOperatorResponse:
-      type: object
-      properties:
-        content:
-          type: array
-          items:
-            $ref: '#/components/schemas/OperatorResponse'
-        totalElements:
-          type: integer
-          description: 总记录数
-        totalPages:
-          type: integer
-          description: 总页数
-        number:
-          type: integer
-          description: 当前页码
-        size:
-          type: integer
-          description: 每页大小
-
-    CategoryResponse:
-      type: object
-      properties:
-        id:
-          type: string
-          description: 分类ID
-        name:
-          type: string
-          description: 分类名称
-        description:
-          type: string
-          description: 分类描述
-
-    ErrorResponse:
-      type: object
-      properties:
-        error:
-          type: string
-          description: 错误代码
-        message:
-          type: string
-          description: 错误信息
-        timestamp:
-          type: string
-          format: date-time
-          description: 错误时间
+  securitySchemes: {}
+servers: []

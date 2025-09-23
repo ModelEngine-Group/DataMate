@@ -60,6 +60,32 @@
             <groupId>jakarta.validation</groupId>
             <artifactId>jakarta.validation-api</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-compress</artifactId>
+            <version>1.26.1</version>
+        </dependency>
+
+        <dependency>
+          <groupId>org.mapstruct</groupId>
+          <artifactId>mapstruct</artifactId>
+        </dependency>
+
+        <dependency>
+          <groupId>org.mapstruct</groupId>
+          <artifactId>mapstruct-processor</artifactId>
+          <version>${mapstruct.version}</version>
+          <scope>provided</scope> <!-- 编译时需要，运行时不需要 -->
+        </dependency>
     </dependencies>
 
     <build>
@@ -89,6 +115,21 @@
                                 <useSpringBoot3>true</useSpringBoot3>
                                 <documentationProvider>springdoc</documentationProvider>
                             </configOptions>
+                            <typeMappings>
+                              <!-- 将 OpenAPI 的 date-time 类型映射为 Java 的 LocalDateTime -->
+                              <typeMapping>OffsetDateTime=LocalDateTime</typeMapping>
+                              <typeMapping>ZonedDateTime=LocalDateTime</typeMapping>
+                              <!-- 如果规范中也用了 Date 类型 -->
+                              <!-- <typeMapping>Date=LocalDate</typeMapping> -->
+                            </typeMappings>
+                            <!-- 关键配置：导入映射 -->
+                            <importMappings>
+                              <!-- 指定 LocalDateTime 的完整类名 -->
+                              <importMapping>java.time.OffsetDateTime=java.time.LocalDateTime</importMapping>
+                              <importMapping>java.time.ZonedDateTime=java.time.LocalDateTime</importMapping>
+                              <!-- 如果映射了 Date -->
+                              <!-- <importMapping>java.time.LocalDate=java.time.LocalDate</importMapping> -->
+                            </importMappings>
                         </configuration>
                     </execution>
                 </executions>
@@ -96,5 +137,3 @@
         </plugins>
     </build>
 </project>
-
-
