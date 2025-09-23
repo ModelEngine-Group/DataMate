@@ -22,21 +22,13 @@ spring:
       idle-timeout: 600000
       max-lifetime: 1800000
 
-  # JPA配置
-  jpa:
-    hibernate:
-      ddl-auto: none
-    show-sql: false
-    database-platform: org.hibernate.dialect.MySQL8Dialect
-    properties:
-      hibernate:
-        format_sql: true
-        use_sql_comments: false
-        hbm2ddl:
-          auto: none
-        jdbc:
-          lob:
-            non_contextual_creation: true
+  # Elasticsearch配置
+  elasticsearch:
+    uris: ${ES_URIS:http://localhost:9200}
+    username: ${ES_USERNAME:}
+    password: ${ES_PASSWORD:}
+    connection-timeout: 10s
+    socket-timeout: 30s
 
   # Jackson配置
   jackson:
@@ -53,9 +45,46 @@ spring:
       max-file-size: 100MB
       max-request-size: 100MB
 
+  # 任务调度配置
+  task:
+    execution:
+      pool:
+        core-size: ${TASK_EXECUTION_CORE_SIZE:10}
+        max-size: ${TASK_EXECUTION_MAX_SIZE:20}
+        queue-capacity: ${TASK_EXECUTION_QUEUE_CAPACITY:100}
+        keep-alive: ${TASK_EXECUTION_KEEP_ALIVE:60s}
+    scheduling:
+      pool:
+        size: ${TASK_SCHEDULING_POOL_SIZE:5}
+  config:
+    import:
+      - classpath:config/application-datacollection.yml
+      - classpath:config/application-datamanagement.yml
 
-  main:
-    allow-bean-definition-overriding: true
+# MyBatis配置（需在顶层，不在 spring 下）
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: true
+    default-fetch-size: 100
+    default-statement-timeout: 30
+    use-generated-keys: true
+    cache-enabled: true
+    lazy-loading-enabled: false
+    multiple-result-sets-enabled: true
+    use-column-label: true
+    auto-mapping-behavior: partial
+    auto-mapping-unknown-column-behavior: none
+    default-executor-type: simple
+    call-setters-on-nulls: false
+    return-instance-for-empty-row: false
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+  mapper-locations:
+    - classpath*:mappers/**/*.xml
+  type-aliases-package:
+    - com.dataengine.collection.domain.model
+    - com.dataengine.datamanagement.domain.model.dataset
+
+# 应用配置
 server:
   port: ${SERVER_PORT:8080}
   servlet:
@@ -88,10 +117,6 @@ management:
   health:
     elasticsearch:
       enabled: false  # 禁用Elasticsearch健康检查
-  metrics:
-    export:
-      prometheus:
-        enabled: true
 
 # 平台配置
 dataengine:
@@ -125,10 +150,8 @@ dataengine:
         - "numpy"
         - "data-juicer"
 
-  # DataX配置
-  datax:
-    home: ${DATAX_HOME:./runtime/datax}
-    python-path: ${DATAX_PYTHON_PATH:python3}
+  # 数据归集服务配置（可由模块导入叠加）
+  data-collection: {}
 
   # 算子市场配置
   operator-market:
