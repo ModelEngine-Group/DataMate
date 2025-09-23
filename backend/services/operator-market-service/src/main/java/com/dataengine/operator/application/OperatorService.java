@@ -3,26 +3,21 @@ package com.dataengine.operator.application;
 import com.dataengine.operator.interfaces.dto.*;
 import com.dataengine.operator.domain.modal.OperatorEntity;
 import com.dataengine.operator.domain.repository.OperatorRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Example;
-import org.springframework.data.domain.ExampleMatcher;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class OperatorService {
-    @Autowired
-    private OperatorRepository operatorRepository;
+    private final OperatorRepository operatorRepository;
 
-    public PagedOperatorResponse getOperators(Integer page, Integer size, List<Integer> categories,
+    public List<OperatorResponse> getOperators(Integer page, Integer size, List<Integer> categories,
                                               String operatorName, String labelName) {
-        return new PagedOperatorResponse();
+        return new ArrayList<>();
     }
 
     private OperatorResponse toDto(OperatorEntity entity) {
@@ -30,9 +25,7 @@ public class OperatorService {
         dto.setId(entity.getId());
         dto.setName(entity.getName());
         dto.setDescription(entity.getDescription());
-        dto.setCategory(entity.getCategory());
         dto.setVersion(entity.getVersion());
-        dto.setAuthor(entity.getAuthor());
         return dto;
     }
     public OperatorResponse getOperatorById(String id) {

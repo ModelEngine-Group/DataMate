@@ -7,13 +7,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 @RestController
 public class OperatorController implements OperatorApi {
     @Autowired
     private OperatorService operatorService;
 
     @Override
-    public ResponseEntity<PagedOperatorResponse> operatorsListPost(OperatorsListPostRequest request) {
+    public ResponseEntity<List<OperatorResponse>> operatorsListPost(OperatorsListPostRequest request) {
         return ResponseEntity.ok(operatorService.getOperators(request.getPage(), request.getSize(),
             request.getCategories(), request.getOperatorName(), request.getLabelName()));
     }

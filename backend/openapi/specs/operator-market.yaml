@@ -58,7 +58,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PagedOperatorResponse'
+                type: array
+                items:
+                  $ref: '#/components/schemas/OperatorResponse'
           headers: {}
       security: []
   /operators/create:
@@ -477,22 +479,30 @@ components:
         description:
           type: string
           description: 算子描述
+        language:
+          type: string
+          description: 开发语言
         version:
           type: string
           description: 算子版本
-        category:
+        modal:
           type: string
-          description: 算子分类
-        author:
+          description: 模态
+        inputs:
           type: string
-          description: 作者
-        rating:
-          type: number
-          format: double
-          description: 评分
-        downloadCount:
-          type: integer
-          description: 下载次数
+          description: 输入类型
+        outputs:
+          type: string
+          description: 输入类型
+        runtime:
+          type: string
+          description: 运行时设置
+        settings:
+          type: string
+          description: 算子参数
+        isStar:
+          type: boolean
+          description: 是否收藏
         createdAt:
           type: string
           format: date-time
@@ -501,6 +511,14 @@ components:
           type: string
           format: date-time
           description: 更新时间
+      required:
+        - language
+        - modal
+        - inputs
+        - outputs
+        - runtime
+        - settings
+        - isStar
     CreateOperatorRequest:
       type: object
       required:
@@ -524,23 +542,5 @@ components:
         documentation:
           type: string
           description: 文档内容
-    PagedOperatorResponse:
-      type: object
-      properties:
-        content:
-          type: array
-          items: *ref_0
-        totalElements:
-          type: integer
-          description: 总记录数
-        totalPages:
-          type: integer
-          description: 总页数
-        number:
-          type: integer
-          description: 当前页码
-        size:
-          type: integer
-          description: 每页大小
   securitySchemes: {}
 servers: []
