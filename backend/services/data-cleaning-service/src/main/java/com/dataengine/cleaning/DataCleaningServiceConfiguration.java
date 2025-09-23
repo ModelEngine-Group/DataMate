@@ -2,7 +2,6 @@ package com.dataengine.cleaning;
 
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
@@ -14,7 +13,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @SpringBootApplication
 @EnableAsync
 @EnableScheduling
-@EnableJpaRepositories(basePackages = "com.dataengine.cleaning.infrastructure.repository")
 @ComponentScan(basePackages = {
     "com.dataengine.cleaning",
     "com.dataengine.shared"

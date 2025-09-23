@@ -34,7 +34,8 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 })
 @MapperScan(basePackages = {
     "com.dataengine.collection.infrastructure.persistence.mapper",
-    "com.dataengine.datamanagement.infrastructure.persistence.mapper"
+    "com.dataengine.datamanagement.infrastructure.persistence.mapper",
+    "com.dataengine.operator.infrastructure.persistence.mapper"
 })
 @EnableTransactionManagement
 @EnableAsync

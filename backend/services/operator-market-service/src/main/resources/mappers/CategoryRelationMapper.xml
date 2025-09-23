@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.dataengine.operator.mapper.CategoryRelationMapper">
+<mapper namespace="com.dataengine.operator.infrastructure.persistence.mapper.CategoryRelationMapper">
 
   <select id="findAllRelationWithCategory" resultType="com.dataengine.operator.domain.modal.RelationCategoryDTO">
     SELECT tc.id AS id, tcr.operator_id AS operatorId, tc.name AS name, tc.parent_id AS parentId
