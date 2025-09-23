@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * 标签 REST 控制器
+ * 标签 REST 控制器（UUID 模式）
  */
 @RestController
 public class TagController implements TagApi {
@@ -29,11 +29,11 @@ public class TagController implements TagApi {
     @Override
     public ResponseEntity<List<TagResponse>> tagsGet(String keyword) {
         List<Tag> tags = tagApplicationService.searchTags(keyword);
-        
+
         List<TagResponse> response = tags.stream()
             .map(this::convertToResponse)
             .collect(Collectors.toList());
-        
+
         return ResponseEntity.ok(response);
     }
 
@@ -45,7 +45,7 @@ public class TagController implements TagApi {
                 createTagRequest.getColor(),
                 createTagRequest.getDescription()
             );
-            
+
             return ResponseEntity.status(HttpStatus.CREATED).body(convertToResponse(tag));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
@@ -58,8 +58,8 @@ public class TagController implements TagApi {
         response.setName(tag.getName());
         response.setColor(tag.getColor());
         response.setDescription(tag.getDescription());
-        response.setUsageCount(tag.getUsageCount());
-        
+        response.setUsageCount(tag.getUsageCount() != null ? tag.getUsageCount().intValue() : null);
+
         return response;
     }
 }

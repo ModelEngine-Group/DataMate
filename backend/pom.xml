@@ -29,6 +29,8 @@
         <jackson-databind-nullable.version>0.2.6</jackson-databind-nullable.version>
         <jakarta-validation.version>3.0.2</jakarta-validation.version>
         <maven-assembly-plugin.version>3.3.0</maven-assembly-plugin.version>
+        <mybatis.spring.boot.version>3.0.3</mybatis.spring.boot.version>
+        <mybatis.spring.version>3.0.3</mybatis.spring.version>
     </properties>
 
     <modules>
@@ -90,6 +92,17 @@
                 <groupId>jakarta.validation</groupId>
                 <artifactId>jakarta.validation-api</artifactId>
                 <version>${jakarta-validation.version}</version>
+            </dependency>
+            <!-- MyBatis version alignment -->
+            <dependency>
+                <groupId>org.mybatis.spring.boot</groupId>
+                <artifactId>mybatis-spring-boot-starter</artifactId>
+                <version>${mybatis.spring.boot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.mybatis</groupId>
+                <artifactId>mybatis-spring</artifactId>
+                <version>${mybatis.spring.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

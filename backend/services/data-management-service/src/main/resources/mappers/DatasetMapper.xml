@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dataengine.datamanagement.infrastructure.persistence.mapper.DatasetMapper">
+
+    <resultMap id="DatasetResultMap" type="com.dataengine.datamanagement.domain.model.dataset.Dataset">
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="description" property="description"/>
+        <result column="dataset_type" property="datasetType"/>
+        <result column="category" property="category"/>
+        <result column="data_source_id" property="dataSourceId"/>
+        <result column="path" property="path"/>
+        <result column="format" property="format"/>
+        <result column="size_bytes" property="sizeBytes"/>
+        <result column="file_count" property="fileCount"/>
+        <result column="record_count" property="recordCount"/>
+        <result column="completion_rate" property="completionRate"/>
+        <result column="quality_score" property="qualityScore"/>
+        <result column="status" property="status"/>
+        <result column="is_public" property="isPublic"/>
+        <result column="is_featured" property="isFeatured"/>
+        <result column="download_count" property="downloadCount"/>
+        <result column="view_count" property="viewCount"/>
+        <result column="version" property="version"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+        <result column="created_by" property="createdBy"/>
+        <result column="updated_by" property="updatedBy"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, name, description, dataset_type, category, data_source_id, path, format, size_bytes, file_count, record_count,
+        completion_rate, quality_score, status, is_public, is_featured, download_count, view_count, version,
+        created_at, updated_at, created_by, updated_by
+    </sql>
+
+    <sql id="Alias_D_Column_List">
+        d.id AS id,
+        d.name AS name,
+        d.description AS description,
+        d.dataset_type AS dataset_type,
+        d.category AS category,
+        d.data_source_id AS data_source_id,
+        d.path AS path,
+        d.format AS format,
+        d.size_bytes AS size_bytes,
+        d.file_count AS file_count,
+        d.record_count AS record_count,
+        d.completion_rate AS completion_rate,
+        d.quality_score AS quality_score,
+        d.status AS status,
+        d.is_public AS is_public,
+        d.is_featured AS is_featured,
+        d.download_count AS download_count,
+        d.view_count AS view_count,
+        d.version AS version,
+        d.created_at AS created_at,
+        d.updated_at AS updated_at,
+        d.created_by AS created_by,
+        d.updated_by AS updated_by
+    </sql>
+
+    <select id="findById" parameterType="string" resultMap="DatasetResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM t_dm_datasets
+        WHERE id = #{id}
+    </select>
+
+    <select id="findByName" parameterType="string" resultMap="DatasetResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM t_dm_datasets
+        WHERE name = #{name}
+        LIMIT 1
+    </select>
+
+    <select id="findByStatus" parameterType="string" resultMap="DatasetResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM t_dm_datasets
+        WHERE status = #{status}
+        ORDER BY updated_at DESC
+    </select>
+
+    <select id="findByCreatedBy" resultMap="DatasetResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM t_dm_datasets
+        WHERE created_by = #{createdBy}
+        ORDER BY created_at DESC
+    </select>
+
+    <select id="findByTypeCode" resultMap="DatasetResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM t_dm_datasets
+        WHERE dataset_type = #{typeCode}
+        ORDER BY created_at DESC
+    </select>
+
+    <select id="findByTagNames" resultMap="DatasetResultMap">
+        SELECT DISTINCT <include refid="Alias_D_Column_List"/>
+        FROM t_dm_datasets d
+        JOIN t_dm_dataset_tags dt ON d.id = dt.dataset_id
+        JOIN t_dm_tags t ON t.id = dt.tag_id
+        WHERE t.name IN
+        <foreach collection="tagNames" item="name" open="(" separator="," close=")">
+            #{name}
+        </foreach>
+        ORDER BY d.created_at DESC
+    </select>
+
+    <select id="findByKeyword" resultMap="DatasetResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM t_dm_datasets
+        WHERE name LIKE CONCAT('%', #{keyword}, '%')
+           OR description LIKE CONCAT('%', #{keyword}, '%')
+        ORDER BY created_at DESC
+    </select>
+
+    <select id="findByCriteria" resultMap="DatasetResultMap">
+        SELECT DISTINCT <include refid="Alias_D_Column_List"/>
+        FROM t_dm_datasets d
+        LEFT JOIN t_dm_dataset_tags dt ON d.id = dt.dataset_id
+        LEFT JOIN t_dm_tags t ON t.id = dt.tag_id
+        <where>
+            <if test="typeCode != null and typeCode != ''">
+                AND d.dataset_type = #{typeCode}
+            </if>
+            <if test="status != null and status != ''">
+                AND d.status = #{status}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND (d.name LIKE CONCAT('%', #{keyword}, '%') OR d.description LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+            <if test="tagNames != null and tagNames.size > 0">
+                AND t.name IN
+                <foreach collection="tagNames" item="n" open="(" separator="," close=")">
+                    #{n}
+                </foreach>
+            </if>
+        </where>
+        ORDER BY d.created_at DESC
+    </select>
+
+    <select id="countByCriteria" resultType="long">
+        SELECT COUNT(DISTINCT d.id)
+        FROM t_dm_datasets d
+        LEFT JOIN t_dm_dataset_tags dt ON d.id = dt.dataset_id
+        LEFT JOIN t_dm_tags t ON t.id = dt.tag_id
+        <where>
+            <if test="typeCode != null and typeCode != ''">
+                AND d.dataset_type = #{typeCode}
+            </if>
+            <if test="status != null and status != ''">
+                AND d.status = #{status}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND (d.name LIKE CONCAT('%', #{keyword}, '%') OR d.description LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+            <if test="tagNames != null and tagNames.size > 0">
+                AND t.name IN
+                <foreach collection="tagNames" item="n" open="(" separator="," close=")">
+                    #{n}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+    <insert id="insert" parameterType="com.dataengine.datamanagement.domain.model.dataset.Dataset">
+        INSERT INTO t_dm_datasets (
+            id, name, description, dataset_type, category, data_source_id, path, format, size_bytes, file_count, record_count,
+            completion_rate, quality_score, status, is_public, is_featured, download_count, view_count, version, created_at, updated_at, created_by, updated_by
+        ) VALUES (
+            #{id}, #{name}, #{description}, #{datasetType}, #{category}, #{dataSourceId}, #{path}, #{format}, #{sizeBytes}, #{fileCount}, #{recordCount},
+            #{completionRate}, #{qualityScore}, #{status}, #{isPublic}, #{isFeatured}, #{downloadCount}, #{viewCount}, #{version}, #{createdAt}, #{updatedAt}, #{createdBy}, #{updatedBy}
+        )
+    </insert>
+
+    <update id="update" parameterType="com.dataengine.datamanagement.domain.model.dataset.Dataset">
+        UPDATE t_dm_datasets
+        SET name = #{name},
+            description = #{description},
+            dataset_type = #{datasetType},
+            category = #{category},
+            data_source_id = #{dataSourceId},
+            path = #{path},
+            format = #{format},
+            size_bytes = #{sizeBytes},
+            file_count = #{fileCount},
+            record_count = #{recordCount},
+            completion_rate = #{completionRate},
+            quality_score = #{qualityScore},
+            status = #{status},
+            is_public = #{isPublic},
+            is_featured = #{isFeatured},
+            download_count = #{downloadCount},
+            view_count = #{viewCount},
+            version = #{version},
+            updated_at = #{updatedAt},
+            updated_by = #{updatedBy}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById" parameterType="string">
+        DELETE FROM t_dm_datasets WHERE id = #{id}
+    </delete>
+
+</mapper>

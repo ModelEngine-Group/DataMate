@@ -6,7 +6,6 @@ import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.web.multipart.support.StandardServletMultipartResolver;
 
@@ -14,7 +13,6 @@ import org.springframework.web.multipart.support.StandardServletMultipartResolve
  * 数据管理服务配置
  */
 @Configuration
-@EnableJpaRepositories(basePackages = "com.dataengine.datamanagement.domain.repository")
 @EnableTransactionManagement
 @EnableCaching
 @EnableConfigurationProperties(DataManagementProperties.class)

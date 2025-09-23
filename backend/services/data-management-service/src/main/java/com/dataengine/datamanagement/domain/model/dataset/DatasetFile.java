@@ -1,93 +1,63 @@
 package com.dataengine.datamanagement.domain.model.dataset;
 
-import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 /**
- * 数据集文件实体
+ * 数据集文件实体（与数据库表 t_dm_dataset_files 对齐）
  */
-@Entity
-@Table(name = "dataset_files")
-public class DatasetFile extends com.dataengine.shared.domain.Entity<String> {
+public class DatasetFile {
 
-    @Id
-    @Column(name = "id", length = 36)
-    private String id;
-
-    @Column(name = "file_name", nullable = false, length = 255)
+    private String id; // UUID
+    private String datasetId; // UUID
     private String fileName;
-
-    @Column(name = "original_name", nullable = false, length = 255)
-    private String originalName;
-
-    @Column(name = "file_type", nullable = false, length = 100)
-    private String fileType;
-
-    @Column(name = "size", nullable = false)
-    private Long size;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
-    private DatasetFileStatus status;
-
-    @Column(name = "description", length = 500)
-    private String description;
-
-    @Column(name = "file_path", nullable = false, length = 500)
     private String filePath;
+    private String fileType; // IMAGE/TEXT/VIDEO/AUDIO
+    private Long fileSize; // bytes
+    private String fileFormat;
+    private LocalDateTime uploadTime;
+    private LocalDateTime lastAccessTime;
+    private String status; // UPLOADED, PROCESSING, COMPLETED, ERROR
 
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
+    public DatasetFile() {}
 
-    @Column(name = "uploaded_by", nullable = false, length = 50)
-    private String uploadedBy;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "dataset_id", nullable = false)
-    private Dataset dataset;
-
-    protected DatasetFile() {
-        // For JPA
-    }
-
-    public DatasetFile(String id, String fileName, String originalName, String fileType,
-                      Long size, String description, String filePath, String uploadedBy,
-                      Dataset dataset) {
-        this.id = id;
+    public DatasetFile(String datasetId, String fileName, String filePath, String fileType, Long fileSize, String fileFormat) {
+        this.datasetId = datasetId;
         this.fileName = fileName;
-        this.originalName = originalName;
-        this.fileType = fileType;
-        this.size = size;
-        this.description = description;
         this.filePath = filePath;
-        this.uploadedBy = uploadedBy;
-        this.dataset = dataset;
-        this.status = DatasetFileStatus.UPLOADED;
-        this.updatedAt = LocalDateTime.now();
+        this.fileType = fileType;
+        this.fileSize = fileSize;
+        this.fileFormat = fileFormat;
+        this.status = StatusConstants.DatasetFileStatuses.COMPLETED;
     }
 
-    public void updateStatus(DatasetFileStatus status) {
-        this.status = status;
-    }
+    // Getters & Setters
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
 
-    public void updateDescription(String description) {
-        this.description = description;
-    }
+    public String getDatasetId() { return datasetId; }
+    public void setDatasetId(String datasetId) { this.datasetId = datasetId; }
 
-    @Override
-    public String getId() {
-        return id;
-    }
-
-    // Getters
     public String getFileName() { return fileName; }
-    public String getOriginalName() { return originalName; }
-    public String getFileType() { return fileType; }
-    public Long getSize() { return size; }
-    public DatasetFileStatus getStatus() { return status; }
-    public String getDescription() { return description; }
+    public void setFileName(String fileName) { this.fileName = fileName; }
+
     public String getFilePath() { return filePath; }
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public String getUploadedBy() { return uploadedBy; }
-    public Dataset getDataset() { return dataset; }
+    public void setFilePath(String filePath) { this.filePath = filePath; }
+
+    public String getFileType() { return fileType; }
+    public void setFileType(String fileType) { this.fileType = fileType; }
+
+    public Long getFileSize() { return fileSize; }
+    public void setFileSize(Long fileSize) { this.fileSize = fileSize; }
+
+    public String getFileFormat() { return fileFormat; }
+    public void setFileFormat(String fileFormat) { this.fileFormat = fileFormat; }
+
+    public LocalDateTime getUploadTime() { return uploadTime; }
+    public void setUploadTime(LocalDateTime uploadTime) { this.uploadTime = uploadTime; }
+
+    public LocalDateTime getLastAccessTime() { return lastAccessTime; }
+    public void setLastAccessTime(LocalDateTime lastAccessTime) { this.lastAccessTime = lastAccessTime; }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 }

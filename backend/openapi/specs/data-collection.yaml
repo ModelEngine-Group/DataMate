@@ -2,152 +2,27 @@ openapi: 3.0.3
 info:
   title: Data Collection Service API
   description: |
-    数据归集服务API，基于DataX实现多数据源的数据采集和归集功能。
-    
+    数据归集服务API，基于数据归集实现数据采集和归集功能。
+
     主要功能：
-    - 多种数据源连接配置
-    - DataX任务创建和管理
+    - 数据归集任务创建和管理
     - 数据同步任务执行
     - 任务监控和状态查询
-    - 数据血缘追踪
+    - 执行日志查看
+
   version: 1.0.0
-  contact:
-    name: Data Engine Platform Team
-    email: dev@dataengine.com
 
 servers:
   - url: http://localhost:8090/api/v1/collection
     description: Development server
 
 tags:
-  - name: DataSource
-    description: 数据源管理
   - name: CollectionTask
-    description: 数据归集任务
-  - name: DataXJob
-    description: DataX作业管理
-  - name: Monitor
-    description: 监控和状态
+    description: 数据归集任务管理（包括模板查询）
+  - name: TaskExecution
+    description: 任务执行管理
 
 paths:
-  /datasources:
-    get:
-      tags: [DataSource]
-      summary: 获取数据源列表
-      description: 分页查询已配置的数据源
-      parameters:
-        - name: page
-          in: query
-          schema:
-            type: integer
-            default: 0
-        - name: size
-          in: query
-          schema:
-            type: integer
-            default: 20
-        - name: type
-          in: query
-          schema:
-            $ref: '#/components/schemas/DataSourceType'
-      responses:
-        '200':
-          description: 数据源列表
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PagedDataSources'
-
-    post:
-      tags: [DataSource]
-      summary: 创建数据源
-      description: 配置新的数据源连接
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateDataSourceRequest'
-      responses:
-        '201':
-          description: 数据源创建成功
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DataSourceResponse'
-
-  /datasources/{id}:
-    get:
-      tags: [DataSource]
-      summary: 获取数据源详情
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: 数据源详情
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DataSourceResponse'
-
-    put:
-      tags: [DataSource]
-      summary: 更新数据源
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateDataSourceRequest'
-      responses:
-        '200':
-          description: 数据源更新成功
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DataSourceResponse'
-
-    delete:
-      tags: [DataSource]
-      summary: 删除数据源
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '204':
-          description: 数据源删除成功
-
-  /datasources/{id}/test:
-    post:
-      tags: [DataSource]
-      summary: 测试数据源连接
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: 连接测试结果
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ConnectionTestResult'
-
   /tasks:
     get:
       tags: [CollectionTask]
@@ -167,13 +42,18 @@ paths:
           in: query
           schema:
             $ref: '#/components/schemas/TaskStatus'
+        - name: name
+          in: query
+          description: 任务名称关键字搜索
+          schema:
+            type: string
       responses:
         '200':
           description: 归集任务列表
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PagedCollectionTasks'
+                $ref: '#/components/schemas/PagedCollectionTaskSummary'
 
     post:
       tags: [CollectionTask]
@@ -210,6 +90,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CollectionTaskResponse'
+        '404':
+          description: 归集任务不存在
 
     put:
       tags: [CollectionTask]
@@ -234,10 +116,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/CollectionTaskResponse'
 
-  /tasks/{id}/execute:
-    post:
+    delete:
       tags: [CollectionTask]
-      summary: 执行归集任务
+      summary: 删除归集任务
       parameters:
         - name: id
           in: path
@@ -245,32 +126,38 @@ paths:
           schema:
             type: string
       responses:
-        '202':
+        '204':
+          description: 归集任务删除成功
+
+  /tasks/{id}/execute:
+    post:
+      tags: [TaskExecution]
+      summary: 执行归集任务
+      description: 立即执行指定的归集任务
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '201':
           description: 任务执行已启动
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/TaskExecutionResponse'
 
-  /tasks/{id}/stop:
-    post:
-      tags: [CollectionTask]
-      summary: 停止归集任务
+  /tasks/{id}/executions:
+    get:
+      tags: [TaskExecution]
+      summary: 获取任务执行记录
       parameters:
         - name: id
           in: path
           required: true
           schema:
             type: string
-      responses:
-        '200':
-          description: 任务停止成功
-
-  /datax/jobs:
-    get:
-      tags: [DataXJob]
-      summary: 获取DataX作业列表
-      parameters:
         - name: page
           in: query
           schema:
@@ -283,33 +170,16 @@ paths:
             default: 20
       responses:
         '200':
-          description: DataX作业列表
+          description: 任务执行记录列表
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PagedDataXJobs'
+                $ref: '#/components/schemas/PagedTaskExecutions'
 
-    post:
-      tags: [DataXJob]
-      summary: 创建DataX作业
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateDataXJobRequest'
-      responses:
-        '201':
-          description: DataX作业创建成功
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DataXJobResponse'
-
-  /datax/jobs/{id}/config:
+  /executions/{id}:
     get:
-      tags: [DataXJob]
-      summary: 获取DataX作业配置
+      tags: [TaskExecution]
+      summary: 获取执行详情
       parameters:
         - name: id
           in: path
@@ -318,16 +188,15 @@ paths:
             type: string
       responses:
         '200':
-          description: DataX作业配置
+          description: 执行详情
           content:
             application/json:
               schema:
-                type: object
+                $ref: '#/components/schemas/TaskExecutionDetail'
 
-  /monitor/tasks/{id}/status:
-    get:
-      tags: [Monitor]
-      summary: 获取任务执行状态
+    delete:
+      tags: [TaskExecution]
+      summary: 停止任务执行
       parameters:
         - name: id
           in: path
@@ -335,142 +204,91 @@ paths:
           schema:
             type: string
       responses:
-        '200':
-          description: 任务执行状态
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TaskExecutionStatus'
+        '204':
+          description: 任务执行已停止
 
-  /monitor/tasks/{id}/logs:
+  /templates:
     get:
-      tags: [Monitor]
-      summary: 获取任务执行日志
+      tags: [CollectionTask]
+      summary: 获取DataX模板列表
+      description: 获取可用的DataX任务模板列表，用于创建任务时选择
       parameters:
-        - name: id
-          in: path
-          required: true
+        - name: sourceType
+          in: query
+          description: 源数据源类型过滤
           schema:
             type: string
-        - name: lines
+        - name: targetType
+          in: query
+          description: 目标数据源类型过滤
+          schema:
+            type: string
+        - name: page
           in: query
           schema:
             type: integer
-            default: 100
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
       responses:
         '200':
-          description: 任务执行日志
+          description: 归集模板列表
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TaskExecutionLogs'
-
-  /monitor/statistics:
-    get:
-      tags: [Monitor]
-      summary: 获取归集统计信息
-      responses:
-        '200':
-          description: 归集统计信息
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CollectionStatistics'
+                $ref: '#/components/schemas/PagedDataxTemplates'
 
 components:
   schemas:
-    DataSourceType:
-      type: string
-      enum:
-        - MYSQL
-        - POSTGRESQL
-        - ORACLE
-        - SQLSERVER
-        - MONGODB
-        - REDIS
-        - ELASTICSEARCH
-        - HIVE
-        - HDFS
-        - KAFKA
-        - HTTP
-        - FILE
-
     TaskStatus:
       type: string
       enum:
         - DRAFT
         - READY
         - RUNNING
-        - COMPLETED
+        - SUCCESS
         - FAILED
         - STOPPED
+      description: |
+        任务和执行状态枚举:
+        - DRAFT: 草稿状态
+        - READY: 就绪状态
+        - RUNNING: 运行中
+        - SUCCESS: 执行成功 (对应原来的COMPLETED/SUCCESS)
+        - FAILED: 执行失败
+        - STOPPED: 已停止
 
-    DataSourceResponse:
+    SyncMode:
+      type: string
+      enum: [ONCE, SCHEDULED]
+      description: 同步方式：一次性(ONCE) 或 定时(SCHEDULED)
+
+    CollectionTaskSummary:
       type: object
       properties:
         id:
           type: string
         name:
           type: string
-        type:
-          $ref: '#/components/schemas/DataSourceType'
         description:
           type: string
-        config:
-          type: object
         status:
+          $ref: '#/components/schemas/TaskStatus'
+        syncMode:
+          $ref: '#/components/schemas/SyncMode'
+        lastExecutionId:
           type: string
+          description: 最后执行ID
         createdAt:
           type: string
           format: date-time
         updatedAt:
           type: string
           format: date-time
-
-    CreateDataSourceRequest:
-      type: object
-      required:
-        - name
-        - type
-        - config
-      properties:
-        name:
-          type: string
-          description: 数据源名称
-        type:
-          $ref: '#/components/schemas/DataSourceType'
-        description:
-          type: string
-          description: 数据源描述
-        config:
-          type: object
-          description: 数据源连接配置
-          additionalProperties: true
-
-    UpdateDataSourceRequest:
-      type: object
-      properties:
-        name:
-          type: string
-        description:
-          type: string
-        config:
-          type: object
-          additionalProperties: true
-
-    ConnectionTestResult:
-      type: object
-      properties:
-        success:
-          type: boolean
-        message:
-          type: string
-        latency:
-          type: integer
-          description: 连接延迟(ms)
-        testedAt:
-          type: string
-          format: date-time
+      description: 任务列表摘要信息（不包含详细配置与调度表达式）
 
     CollectionTaskResponse:
       type: object
@@ -481,17 +299,20 @@ components:
           type: string
         description:
           type: string
-        sourceDataSourceId:
-          type: string
-        targetDataSourceId:
-          type: string
         config:
           type: object
+          additionalProperties: true
+          description: 归集配置，包含源端和目标端配置信息
         status:
           $ref: '#/components/schemas/TaskStatus'
-        schedule:
+        syncMode:
+          $ref: '#/components/schemas/SyncMode'
+        scheduleExpression:
           type: string
-          description: 调度表达式
+          description: Cron调度表达式 (仅当 syncMode = SCHEDULED 时有效)
+        lastExecutionId:
+          type: string
+          description: 最后执行ID
         createdAt:
           type: string
           format: date-time
@@ -503,153 +324,64 @@ components:
       type: object
       required:
         - name
-        - sourceDataSourceId
-        - targetDataSourceId
         - config
+        - syncMode
       properties:
         name:
           type: string
           description: 任务名称
+          minLength: 1
+          maxLength: 100
         description:
           type: string
           description: 任务描述
-        sourceDataSourceId:
-          type: string
-          description: 源数据源ID
-        targetDataSourceId:
-          type: string
-          description: 目标数据源ID
+          maxLength: 500
         config:
           type: object
-          description: 归集配置
+          description: 归集配置，包含源端和目标端配置信息
           additionalProperties: true
-        schedule:
+        syncMode:
+          $ref: '#/components/schemas/SyncMode'
+        scheduleExpression:
           type: string
-          description: 调度表达式
+          description: Cron调度表达式 (syncMode=SCHEDULED 时必填)
 
     UpdateCollectionTaskRequest:
       type: object
       properties:
         name:
           type: string
+          description: 任务名称
+          minLength: 1
+          maxLength: 100
         description:
           type: string
+          description: 任务描述
+          maxLength: 500
         config:
           type: object
+          description: 归集配置，包含源端和目标端配置信息
           additionalProperties: true
-        schedule:
+        syncMode:
+          $ref: '#/components/schemas/SyncMode'
+        scheduleExpression:
           type: string
+          description: Cron调度表达式 (syncMode=SCHEDULED 时必填)
 
-    TaskExecutionResponse:
-      type: object
-      properties:
-        executionId:
-          type: string
-        taskId:
-          type: string
-        status:
-          type: string
-        startedAt:
-          type: string
-          format: date-time
-
-    TaskExecutionStatus:
-      type: object
-      properties:
-        executionId:
-          type: string
-        taskId:
-          type: string
-        status:
-          type: string
-        progress:
-          type: number
-          format: double
-        recordsProcessed:
-          type: integer
-          format: int64
-        recordsTotal:
-          type: integer
-          format: int64
-        startedAt:
-          type: string
-          format: date-time
-        finishedAt:
-          type: string
-          format: date-time
-        errorMessage:
-          type: string
-
-    TaskExecutionLogs:
-      type: object
-      properties:
-        executionId:
-          type: string
-        logs:
-          type: array
-          items:
-            type: string
-
-    DataXJobResponse:
-      type: object
-      properties:
-        id:
-          type: string
-        name:
-          type: string
-        config:
-          type: object
-        status:
-          type: string
-        createdAt:
-          type: string
-          format: date-time
-
-    CreateDataXJobRequest:
-      type: object
-      required:
-        - name
-        - config
-      properties:
-        name:
-          type: string
-        config:
-          type: object
-          additionalProperties: true
-
-    CollectionStatistics:
-      type: object
-      properties:
-        totalTasks:
-          type: integer
-        runningTasks:
-          type: integer
-        completedTasks:
-          type: integer
-        failedTasks:
-          type: integer
-        totalRecordsProcessed:
-          type: integer
-          format: int64
-        avgExecutionTime:
-          type: number
-          format: double
-
-    PagedDataSources:
+    PagedCollectionTaskSummary:
       type: object
       properties:
         content:
           type: array
           items:
-            $ref: '#/components/schemas/DataSourceResponse'
+            $ref: '#/components/schemas/CollectionTaskSummary'
         totalElements:
           type: integer
-          format: int64
         totalPages:
           type: integer
-        size:
-          type: integer
         number:
+          type: integer
+        size:
           type: integer
 
     PagedCollectionTasks:
@@ -661,27 +393,120 @@ components:
             $ref: '#/components/schemas/CollectionTaskResponse'
         totalElements:
           type: integer
-          format: int64
         totalPages:
-          type: integer
-        size:
           type: integer
         number:
           type: integer
+        size:
+          type: integer
 
-    PagedDataXJobs:
+    TaskExecutionResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        taskId:
+          type: string
+        taskName:
+          type: string
+        status:
+          $ref: '#/components/schemas/TaskStatus'
+        startedAt:
+          type: string
+          format: date-time
+
+    TaskExecutionDetail:
+      type: object
+      properties:
+        id:
+          type: string
+        taskId:
+          type: string
+        taskName:
+          type: string
+        status:
+          $ref: '#/components/schemas/TaskStatus'
+        progress:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 100
+        recordsTotal:
+          type: integer
+        recordsProcessed:
+          type: integer
+        recordsSuccess:
+          type: integer
+        recordsFailed:
+          type: integer
+        throughput:
+          type: number
+          format: double
+        dataSizeBytes:
+          type: integer
+        startedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+        durationSeconds:
+          type: integer
+        errorMessage:
+          type: string
+
+    PagedTaskExecutions:
       type: object
       properties:
         content:
           type: array
           items:
-            $ref: '#/components/schemas/DataXJobResponse'
+            $ref: '#/components/schemas/TaskExecutionDetail'
         totalElements:
           type: integer
-          format: int64
         totalPages:
+          type: integer
+        number:
           type: integer
         size:
           type: integer
+
+    DataxTemplateSummary:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        sourceType:
+          type: string
+          description: 源数据源类型
+        targetType:
+          type: string
+          description: 目标数据源类型
+        description:
+          type: string
+        version:
+          type: string
+        isSystem:
+          type: boolean
+          description: 是否为系统模板
+        createdAt:
+          type: string
+          format: date-time
+
+    PagedDataxTemplates:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/DataxTemplateSummary'
+        totalElements:
+          type: integer
+        totalPages:
+          type: integer
         number:
+          type: integer
+        size:
           type: integer

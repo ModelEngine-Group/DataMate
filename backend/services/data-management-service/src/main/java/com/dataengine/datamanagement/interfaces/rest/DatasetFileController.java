@@ -2,7 +2,6 @@ package com.dataengine.datamanagement.interfaces.rest;
 
 import com.dataengine.datamanagement.application.service.DatasetFileApplicationService;
 import com.dataengine.datamanagement.domain.model.dataset.DatasetFile;
-import com.dataengine.datamanagement.domain.model.dataset.DatasetFileStatus;
 import com.dataengine.datamanagement.interfaces.api.DatasetFileApi;
 import com.dataengine.datamanagement.interfaces.dto.DatasetFileResponse;
 import com.dataengine.datamanagement.interfaces.dto.PagedDatasetFileResponse;
@@ -18,12 +17,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.stream.Collectors;
 
 /**
- * 数据集文件 REST 控制器
+ * 数据集文件 REST 控制器（UUID 模式）
  */
 @RestController
 public class DatasetFileController implements DatasetFileApi {
@@ -40,17 +38,8 @@ public class DatasetFileController implements DatasetFileApi {
                                                                   String fileType, String status) {
         Pageable pageable = PageRequest.of(page != null ? page : 0, size != null ? size : 20);
 
-        DatasetFileStatus fileStatus = null;
-        if (status != null) {
-            try {
-                fileStatus = DatasetFileStatus.valueOf(status);
-            } catch (IllegalArgumentException e) {
-                // 忽略无效状态
-            }
-        }
-
         Page<DatasetFile> filesPage = datasetFileApplicationService.getDatasetFiles(
-            datasetId, fileType, fileStatus, pageable);
+            datasetId, fileType, status, pageable);
 
         PagedDatasetFileResponse response = new PagedDatasetFileResponse();
         response.setContent(filesPage.getContent().stream()
@@ -70,7 +59,7 @@ public class DatasetFileController implements DatasetFileApi {
     public ResponseEntity<DatasetFileResponse> datasetsDatasetIdFilesPost(String datasetId, MultipartFile file, String description) {
         try {
             DatasetFile datasetFile = datasetFileApplicationService.uploadFile(
-                datasetId, file, description, "system"); // TODO: 从安全上下文获取当前用户
+                datasetId, file, description, "system");
 
             return ResponseEntity.status(HttpStatus.CREATED).body(convertToResponse(datasetFile));
         } catch (IllegalArgumentException e) {
@@ -109,7 +98,7 @@ public class DatasetFileController implements DatasetFileApi {
             return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .header(HttpHeaders.CONTENT_DISPOSITION,
-                    "attachment; filename=\"" + datasetFile.getOriginalName() + "\"")
+                    "attachment; filename=\"" + datasetFile.getFileName() + "\"")
                 .body(resource);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.notFound().build();
@@ -122,15 +111,14 @@ public class DatasetFileController implements DatasetFileApi {
         DatasetFileResponse response = new DatasetFileResponse();
         response.setId(datasetFile.getId());
         response.setFileName(datasetFile.getFileName());
-        response.setOriginalName(datasetFile.getOriginalName());
+        response.setOriginalName(null);
         response.setFileType(datasetFile.getFileType());
-        response.setSize(datasetFile.getSize());
-        response.setStatus(DatasetFileResponse.StatusEnum.fromValue(datasetFile.getStatus().name()));
-        response.setDescription(datasetFile.getDescription());
+        response.setSize(datasetFile.getFileSize());
+        try { response.setStatus(DatasetFileResponse.StatusEnum.fromValue(datasetFile.getStatus())); } catch (Exception ignore) {}
+        response.setDescription(null);
         response.setFilePath(datasetFile.getFilePath());
-        response.setUploadedAt(datasetFile.getUpdatedAt().atOffset(ZoneOffset.UTC));
-        response.setUploadedBy(datasetFile.getUploadedBy());
-
+        if (datasetFile.getUploadTime() != null) response.setUploadedAt(datasetFile.getUploadTime().atOffset(ZoneOffset.UTC));
+        response.setUploadedBy(null);
         return response;
     }
 }

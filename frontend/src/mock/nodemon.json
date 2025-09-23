@@ -1,0 +1,22 @@
+{
+  "restartable": "rs",
+  "ignore": [
+    ".git",
+    "node_modules/**/node_modules",
+    "dist",
+    "build",
+    "*.test.js",
+    "*.spec.js"
+  ],
+  "verbose": true,
+  "watch": ["*.cjs"],
+  "exec": "node --inspect=0.0.0.0:9229 mock.cjs",
+  "ext": "js,cjs,json",
+  "execMap": {
+    "js": "node --harmony"
+  },
+  "env": {
+    "NODE_ENV": "development"
+  },
+  "signal": "SIGTERM"
+}

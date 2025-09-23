@@ -1,11 +1,10 @@
 package com.dataengine.main;
 
+import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.elasticsearch.repository.config.EnableElasticsearchRepositories;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
@@ -33,29 +32,9 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
     "com.dataengine.shared",
     "com.dataengine.common"
 })
-@EntityScan(basePackages = {
-    "com.dataengine.datamanagement.domain.model",
-    "com.dataengine.collection.domain.model",
-    "com.dataengine.operator.domain.model",
-    "com.dataengine.cleaning.domain.model",
-    "com.dataengine.synthesis.domain.model",
-    "com.dataengine.annotation.domain.model",
-    "com.dataengine.evaluation.domain.model",
-    "com.dataengine.pipeline.domain.model",
-    "com.dataengine.execution.domain.model",
-    "com.dataengine.rag.domain.model",
-    "com.dataengine.shared.domain"
-})
-@EnableJpaRepositories(basePackages = {
-    "com.dataengine.collection.infrastructure.persistence",
-    "com.dataengine.operator.infrastructure.persistence",
-    "com.dataengine.cleaning.infrastructure.persistence",
-    "com.dataengine.synthesis.infrastructure.persistence",
-    "com.dataengine.annotation.infrastructure.persistence",
-    "com.dataengine.evaluation.infrastructure.persistence",
-    "com.dataengine.pipeline.infrastructure.persistence",
-    "com.dataengine.execution.infrastructure.persistence",
-    "com.dataengine.rag.infrastructure.persistence"
+@MapperScan(basePackages = {
+    "com.dataengine.collection.infrastructure.persistence.mapper",
+    "com.dataengine.datamanagement.infrastructure.persistence.mapper"
 })
 @EnableTransactionManagement
 @EnableAsync

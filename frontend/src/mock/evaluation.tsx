@@ -1,0 +1,290 @@
+// 预设评估维度配置
+export const presetEvaluationDimensions: EvaluationDimension[] = [
+    {
+        id: "answer_relevance",
+        name: "回答相关性",
+        description: "评估回答内容是否针对问题，是否切中要点",
+        category: "accuracy",
+        isEnabled: true,
+    },
+    {
+        id: "content_quality",
+        name: "内容质量",
+        description: "评估内容的准确性、完整性和可读性",
+        category: "quality",
+        isEnabled: true,
+    },
+    {
+        id: "information_completeness",
+        name: "信息完整性",
+        description: "评估信息是否完整，无缺失关键内容",
+        category: "completeness",
+        isEnabled: true,
+    },
+    {
+        id: "language_fluency",
+        name: "语言流畅性",
+        description: "评估语言表达是否流畅自然",
+        category: "quality",
+        isEnabled: true,
+    },
+    {
+        id: "factual_accuracy",
+        name: "事实准确性",
+        description: "评估内容中事实信息的准确性",
+        category: "accuracy",
+        isEnabled: true,
+    },
+]
+
+
+export const sliceOperators: SliceOperator[] = [
+    {
+        id: "paragraph-split",
+        name: "段落分割",
+        description: "按段落自然分割文档",
+        type: "text",
+        icon: "📄",
+        params: { minLength: 50, maxLength: 1000 },
+    },
+    {
+        id: "sentence-split",
+        name: "句子分割",
+        description: "按句子边界分割文档",
+        type: "text",
+        icon: "📝",
+        params: { maxSentences: 5, overlap: 1 },
+    },
+    {
+        id: "semantic-split",
+        name: "语义分割",
+        description: "基于语义相似度智能分割",
+        type: "semantic",
+        icon: "🧠",
+        params: { threshold: 0.7, windowSize: 3 },
+    },
+    {
+        id: "length-split",
+        name: "长度分割",
+        description: "按固定字符长度分割",
+        type: "text",
+        icon: "📏",
+        params: { chunkSize: 512, overlap: 50 },
+    },
+    {
+        id: "structure-split",
+        name: "结构化分割",
+        description: "按文档结构（标题、章节）分割",
+        type: "structure",
+        icon: "🏗️",
+        params: { preserveHeaders: true, minSectionLength: 100 },
+    },
+    {
+        id: "table-extract",
+        name: "表格提取",
+        description: "提取并单独处理表格内容",
+        type: "structure",
+        icon: "📊",
+        params: { includeHeaders: true, mergeRows: false },
+    },
+    {
+        id: "code-extract",
+        name: "代码提取",
+        description: "识别并提取代码块",
+        type: "custom",
+        icon: "💻",
+        params: { languages: ["python", "javascript", "sql"], preserveIndentation: true },
+    },
+    {
+        id: "qa-extract",
+        name: "问答提取",
+        description: "自动识别问答格式内容",
+        type: "semantic",
+        icon: "❓",
+        params: { confidenceThreshold: 0.8, generateAnswers: true },
+    },
+]
+
+
+export const mockTasks: EvaluationTask[] = [
+    {
+        id: "1",
+        name: "客服对话数据质量评估",
+        datasetId: "1",
+        datasetName: "客服对话数据集",
+        evaluationType: "model",
+        status: "completed",
+        score: 85,
+        progress: 100,
+        createdAt: "2024-01-15 14:30",
+        completedAt: "2024-01-15 14:45",
+        description: "评估客服对话数据的质量，包括对话完整性、回复准确性等维度",
+        dimensions: ["answer_relevance", "content_quality", "information_completeness"],
+        customDimensions: [],
+        sliceConfig: {
+            threshold: 0.8,
+            sampleCount: 100,
+            method: "语义分割",
+        },
+        modelConfig: {
+            url: "https://api.openai.com/v1/chat/completions",
+            apiKey: "sk-***",
+            prompt: "请从数据质量、标签准确性、标注一致性三个维度评估这个客服对话数据集...",
+            temperature: 0.3,
+            maxTokens: 2000,
+        },
+        metrics: {
+            accuracy: 88,
+            completeness: 92,
+            consistency: 78,
+            relevance: 85,
+        },
+        issues: [
+            { type: "重复数据", count: 23, severity: "medium" },
+            { type: "格式错误", count: 5, severity: "high" },
+            { type: "内容不完整", count: 12, severity: "low" },
+        ],
+    },
+    {
+        id: "2",
+        name: "产品评论人工评估",
+        datasetId: "2",
+        datasetName: "产品评论数据集",
+        evaluationType: "manual",
+        status: "pending",
+        progress: 0,
+        createdAt: "2024-01-15 15:20",
+        description: "人工评估产品评论数据的情感标注准确性",
+        dimensions: ["content_quality", "factual_accuracy"],
+        customDimensions: [
+            {
+                id: "custom_1",
+                name: "情感极性准确性",
+                description: "评估情感标注的极性（正面/负面/中性）准确性",
+                category: "custom",
+                isCustom: true,
+                isEnabled: true,
+            },
+        ],
+        sliceConfig: {
+            threshold: 0.7,
+            sampleCount: 50,
+            method: "段落分割",
+        },
+        metrics: {
+            accuracy: 0,
+            completeness: 0,
+            consistency: 0,
+            relevance: 0,
+        },
+        issues: [],
+    },
+    {
+        id: "3",
+        name: "新闻分类数据评估",
+        datasetId: "4",
+        datasetName: "新闻分类数据集",
+        evaluationType: "manual",
+        status: "running",
+        progress: 65,
+        createdAt: "2024-01-15 16:10",
+        description: "人工评估新闻分类数据集的标注质量",
+        dimensions: ["content_quality", "information_completeness", "factual_accuracy"],
+        customDimensions: [],
+        sliceConfig: {
+            threshold: 0.9,
+            sampleCount: 80,
+            method: "句子分割",
+        },
+        metrics: {
+            accuracy: 82,
+            completeness: 78,
+            consistency: 85,
+            relevance: 80,
+        },
+        issues: [{ type: "标注不一致", count: 15, severity: "medium" }],
+    },
+]
+
+// 模拟QA对数据
+export const mockQAPairs: QAPair[] = [
+    {
+        id: "qa_1",
+        question: "这个产品的退货政策是什么？",
+        answer: "我们提供7天无理由退货服务，商品需要保持原包装完整。",
+        sliceId: "slice_1",
+        score: 4.5,
+        feedback: "回答准确且完整",
+    },
+    {
+        id: "qa_2",
+        question: "如何联系客服？",
+        answer: "您可以通过在线客服、电话400-123-4567或邮箱service@company.com联系我们。",
+        sliceId: "slice_2",
+        score: 5.0,
+        feedback: "提供了多种联系方式，非常全面",
+    },
+    {
+        id: "qa_3",
+        question: "配送时间需要多久？",
+        answer: "一般情况下，我们会在1-3个工作日内发货，配送时间根据地区不同为2-7天。",
+        sliceId: "slice_3",
+        score: 4.0,
+        feedback: "时间范围说明清楚",
+    },
+]
+// 评估维度模板配置
+export const evaluationTemplates = {
+    dialogue_text: {
+        name: "对话文本评估",
+        dimensions: [
+            {
+                id: "answer_relevance",
+                name: "回答是否有针对性",
+                description: "评估回答内容是否针对问题，是否切中要点",
+                category: "accuracy" as const,
+                isEnabled: true,
+            },
+            {
+                id: "question_correctness",
+                name: "问题是否正确",
+                description: "评估问题表述是否清晰、准确、合理",
+                category: "quality" as const,
+                isEnabled: true,
+            },
+            {
+                id: "answer_independence",
+                name: "回答是否独立",
+                description: "评估回答是否独立完整，不依赖外部信息",
+                category: "completeness" as const,
+                isEnabled: true,
+            },
+        ],
+    },
+    data_quality: {
+        name: "数据质量评估",
+        dimensions: [
+            {
+                id: "data_quality",
+                name: "数据质量",
+                description: "评估数据的整体质量，包括格式规范性、完整性等",
+                category: "quality" as const,
+                isEnabled: true,
+            },
+            {
+                id: "label_accuracy",
+                name: "标签准确性",
+                description: "评估数据标签的准确性和一致性",
+                category: "accuracy" as const,
+                isEnabled: true,
+            },
+            {
+                id: "data_completeness",
+                name: "数据完整性",
+                description: "评估数据集的完整性，是否存在缺失数据",
+                category: "completeness" as const,
+                isEnabled: true,
+            },
+        ],
+    },
+}

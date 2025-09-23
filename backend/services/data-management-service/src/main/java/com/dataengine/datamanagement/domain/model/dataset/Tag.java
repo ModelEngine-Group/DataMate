@@ -1,65 +1,55 @@
 package com.dataengine.datamanagement.domain.model.dataset;
 
-import jakarta.persistence.*;
-import java.util.HashSet;
-import java.util.Set;
+import java.time.LocalDateTime;
 
 /**
- * 标签实体
+ * 标签实体（与数据库表 t_dm_tags 对齐）
  */
-@Entity
-@Table(name = "tags")
-public class Tag extends com.dataengine.shared.domain.Entity<String> {
+public class Tag {
 
-    @Id
-    @Column(name = "id", length = 36)
-    private String id;
-
-    @Column(name = "name", nullable = false, unique = true, length = 50)
+    private String id; // UUID
     private String name;
-
-    @Column(name = "color", length = 7)
-    private String color;
-
-    @Column(name = "description", length = 200)
     private String description;
+    private String category;
+    private String color;
+    private Long usageCount = 0L;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
-    @Column(name = "usage_count", nullable = false)
-    private Integer usageCount = 0;
+    public Tag() {}
 
-    @ManyToMany(mappedBy = "tags", fetch = FetchType.LAZY)
-    private Set<Dataset> datasets = new HashSet<>();
-
-    protected Tag() {
-        // For JPA
-    }
-
-    public Tag(String id, String name, String color, String description) {
-        this.id = id;
+    public Tag(String name, String description, String category, String color) {
         this.name = name;
-        this.color = color;
         this.description = description;
+        this.category = category;
+        this.color = color;
     }
 
-    public void incrementUsage() {
-        this.usageCount++;
-    }
+    public void incrementUsage() { this.usageCount = (this.usageCount == null ? 1 : this.usageCount + 1); }
+    public void decrementUsage() { if (this.usageCount != null && this.usageCount > 0) this.usageCount--; }
 
-    public void decrementUsage() {
-        if (this.usageCount > 0) {
-            this.usageCount--;
-        }
-    }
+    // Getters & Setters
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
 
-    @Override
-    public String getId() {
-        return id;
-    }
-
-    // Getters
     public String getName() { return name; }
-    public String getColor() { return color; }
+    public void setName(String name) { this.name = name; }
+
     public String getDescription() { return description; }
-    public Integer getUsageCount() { return usageCount; }
-    public Set<Dataset> getDatasets() { return datasets; }
+    public void setDescription(String description) { this.description = description; }
+
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
+
+    public String getColor() { return color; }
+    public void setColor(String color) { this.color = color; }
+
+    public Long getUsageCount() { return usageCount; }
+    public void setUsageCount(Long usageCount) { this.usageCount = usageCount; }
+
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 }
