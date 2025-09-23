@@ -3,9 +3,8 @@ package com.dataengine.collection.application.service;
 import com.dataengine.collection.domain.model.CollectionTask;
 import com.dataengine.collection.domain.model.TaskExecution;
 import com.dataengine.collection.domain.model.TaskStatus;
-import com.dataengine.collection.domain.model.ExecutionStatus;
+import com.dataengine.collection.domain.model.TaskStatus;
 import com.dataengine.collection.infrastructure.persistence.mapper.CollectionTaskMapper;
-import com.dataengine.collection.infrastructure.persistence.mapper.TaskExecutionLogMapper;
 import com.dataengine.collection.infrastructure.persistence.mapper.TaskExecutionMapper;
 import com.dataengine.collection.infrastructure.runtime.datax.DataxJobBuilder;
 import com.dataengine.collection.infrastructure.runtime.datax.DataxProcessRunner;
@@ -41,7 +40,7 @@ public class DataxExecutionService {
         exec.setId(UUID.randomUUID().toString());
         exec.setTaskId(task.getId());
         exec.setTaskName(task.getName());
-        exec.setStatus(ExecutionStatus.RUNNING);
+        exec.setStatus(TaskStatus.RUNNING);
         exec.setProgress(0.0);
         exec.setStartedAt(LocalDateTime.now());
         exec.setCreatedAt(LocalDateTime.now());
@@ -59,12 +58,12 @@ public class DataxExecutionService {
             int code = processRunner.runJob(job.toFile(), executionId, Duration.ofSeconds(timeoutSeconds));
             log.info("DataX finished with code {} for execution {}", code, executionId);
             // 简化：成功即完成
-            executionMapper.completeExecution(executionId, ExecutionStatus.SUCCESS.name(), LocalDateTime.now(),
+            executionMapper.completeExecution(executionId, TaskStatus.SUCCESS.name(), LocalDateTime.now(),
                     0, 0L, 0L, 0L, null, null);
-            taskMapper.updateStatus(task.getId(), TaskStatus.COMPLETED.name());
+            taskMapper.updateStatus(task.getId(), TaskStatus.SUCCESS.name());
         } catch (Exception e) {
             log.error("DataX execution failed", e);
-            executionMapper.completeExecution(executionId, ExecutionStatus.FAILED.name(), LocalDateTime.now(),
+            executionMapper.completeExecution(executionId, TaskStatus.FAILED.name(), LocalDateTime.now(),
                     0, 0L, 0L, 0L, e.getMessage(), null);
             taskMapper.updateStatus(task.getId(), TaskStatus.FAILED.name());
         }

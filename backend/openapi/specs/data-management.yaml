@@ -3,7 +3,7 @@ info:
   title: Data Management Service API
   description: |
     数据管理服务API，提供数据集的创建、管理和文件操作功能。
-    
+
     主要功能：
     - 数据集的创建和管理
     - 多种数据集类型支持（图像、文本、音频、视频、多模态等）
@@ -11,9 +11,6 @@ info:
     - 数据集标签和元数据管理
     - 数据集统计信息
   version: 1.0.0
-  contact:
-    name: Data Engine Platform Team
-    email: dev@dataengine.com
 
 servers:
   - url: http://localhost:8092/api/v1/data-management

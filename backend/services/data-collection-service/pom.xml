@@ -148,6 +148,8 @@
                                 <useTags>true</useTags>
                                 <useSpringBoot3>true</useSpringBoot3>
                                 <documentationProvider>springdoc</documentationProvider>
+                                <dateLibrary>java8-localdatetime</dateLibrary>
+                                <java8>true</java8>
                             </configOptions>
                         </configuration>
                     </execution>

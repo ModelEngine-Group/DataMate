@@ -9,7 +9,7 @@ public class TaskExecution {
     private String id;
     private String taskId;
     private String taskName;
-    private ExecutionStatus status;
+    private TaskStatus status;
     private Double progress;
     private Long recordsTotal;
     private Long recordsProcessed;

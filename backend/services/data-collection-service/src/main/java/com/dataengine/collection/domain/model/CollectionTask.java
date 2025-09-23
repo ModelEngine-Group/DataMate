@@ -9,10 +9,9 @@ public class CollectionTask {
     private String id;
     private String name;
     private String description;
-    private String sourceDataSourceId;
-    private String targetDataSourceId;
-    private String config; // DataX JSON 配置
+    private String config; // DataX JSON 配置，包含源端和目标端配置信息
     private TaskStatus status;
+    private String syncMode; // ONCE / SCHEDULED
     private String scheduleExpression;
     private Integer retryCount;
     private Integer timeoutSeconds;
