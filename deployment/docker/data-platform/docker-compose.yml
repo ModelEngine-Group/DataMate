@@ -32,23 +32,24 @@ services:
     container_name: frontend
     image: frontend
     ports:
-      - "3000:3000"            # nodePort → hostPort
+      - "3000:80"            # nodePort → hostPort
     networks: [ edatamate ]
 
   # 4) mysql
-  postgres:
-    container_name: postgres
-    image: postgres:15-alpine
+  mysql:
+    container_name: mysql
+    image: mysql:8.0
     environment:
-      POSTGRES_DB: "edatamate"
-      POSTGRES_USER: "postgres"
-      POSTGRES_PASSWORD: "123456"
+      MYSQL_ROOT_PASSWORD: Huawei@123
+      MYSQL_DATABASE: dataengine
+      MYSQL_USER: root
+      MYSQL_PASSWORD: Huawei@123
     ports:
-      - "5432:5432"
+      - "3306:3306"
     volumes:
       - type: bind
-        source: /tmp/data-platform/postgresql-docker
-        target: /var/lib/postgresql/data
+        source: /tmp/data-platform/mysql
+        target: /var/lib/mysql
     networks: [ edatamate ]
 
 networks:
