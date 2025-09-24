@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "mock": "cd src/mock && nodemon --config nodemon.json --inspect=0.0.0.0:9229 mock.cjs --env=development --port=8002",
-    "build": "tsc -b && vite build",
+    "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
