@@ -1,5 +1,3 @@
-# syntax=docker.io/docker/dockerfile:1
-
 FROM node:18-alpine AS builder
 
 WORKDIR /app
@@ -9,7 +7,6 @@ COPY frontend ./
 RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi && \
     npm run build
 
-# Production image, copy all the files and run next
 FROM node:18-alpine AS runner
 WORKDIR /app
 

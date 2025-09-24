@@ -41,6 +41,8 @@ uninstall-%:
 	esac; \
   $(MAKE) $*-$$INSTALLER-uninstall
 
+
+# build
 .PHONY: mineru-docker-build
 mineru-docker-build:
 	sh scripts/image/mineru/build.sh
@@ -84,6 +86,22 @@ datax-docker-install:
 .PHONY: datax-docker-uninstall
 datax-docker-uninstall:
 	cd deployment/docker/data-platform && docker-compose down datax
+
+.PHONY: backend-docker-install
+backend-docker-install:
+	cd deployment/docker/data-platform && docker-compose up -d backend
+
+.PHONY: backend-docker-uninstall
+backend-docker-uninstall:
+	cd deployment/docker/data-platform && docker-compose down backend
+
+.PHONY: frontend-docker-install
+frontend-docker-install:
+	cd deployment/docker/data-platform && docker-compose up -d frontend
+
+.PHONY: frontend-docker-uninstall
+frontend-docker-uninstall:
+	cd deployment/docker/data-platform && docker-compose down frontend
 
 .PHONY: data-juicer-helm-install
 data-juicer-helm-install:
