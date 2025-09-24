@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, Button, Input, Steps, Form, Divider } from "antd";
 import { Link, useNavigate } from "react-router";
 import RadioCard from "@/components/RadioCard";
@@ -8,11 +8,11 @@ import type { OperatorI } from "@/types/cleansing";
 import OperatorLibrary from "./components/OperatorLibrary";
 import OperatorOrchestration from "./components/OperatorOrchestration";
 import OperatorConfig from "./components/OperatorConfig";
+import { templateTypes, OPERATOR_CATEGORIES } from "@/mock/cleansing";
 import {
-  templateTypes,
-  OPERATOR_CATEGORIES,
-  operatorList,
-} from "@/mock/cleansing";
+  createCleaningTemplateUsingPost,
+  queryCleaningTemplatesUsingPost,
+} from "./cleansing-apis";
 
 const { TextArea } = Input;
 
@@ -20,6 +20,7 @@ export default function CleansingTemplateCreate() {
   const navigate = useNavigate();
   const [form] = Form.useForm();
   const [currentStep, setCurrentStep] = useState(0);
+  const [operatorList, setOperatorList] = useState<OperatorI[]>([]);
   const [operators, setOperators] = useState<OperatorI[]>([]);
   const [selectedOperator, setSelectedOperator] = useState<string | null>(null);
   const [templateConfig, setTemplateConfig] = useState({
@@ -27,6 +28,15 @@ export default function CleansingTemplateCreate() {
     description: "",
     type: "",
   });
+
+  const fetchTemplates = async () => {
+    const { data } = await queryCleaningTemplatesUsingPost();
+    setOperatorList(data);
+  };
+
+  useEffect(() => {
+    fetchTemplates();
+  }, []);
 
   const toggleOperator = (template: OperatorI) => {
     const exist = operators.find((op) => op.originalId === template.id);
@@ -61,7 +71,7 @@ export default function CleansingTemplateCreate() {
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const values = form.getFieldsValue();
     const template = {
       ...values,
@@ -70,6 +80,7 @@ export default function CleansingTemplateCreate() {
       createdAt: new Date().toISOString(),
     };
     console.log("保存模板数据:", template);
+    await createCleaningTemplateUsingPost(template);
     navigate("/data/cleansing");
   };
 

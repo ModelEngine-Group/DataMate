@@ -30,7 +30,7 @@ interface SearchControlsProps {
   onDateChange?: (dates: [Date | null, Date | null] | null) => void;
 
   // Reload props
-  handleReload?: () => void;
+  onReload?: () => void;
 
   // View props
   viewMode?: "card" | "list";
@@ -58,7 +58,7 @@ export function SearchControls({
   dateRange,
   showDatePicker = false,
   showReload = true,
-  handleReload,
+  onReload,
   onDateChange,
   onSearchChange,
   onFiltersChange,
@@ -119,9 +119,9 @@ export function SearchControls({
     <div className={className}>
       <div className="flex items-center justify-between gap-4">
         {/* Left side - Search and Filters */}
-        <div className="flex items-center gap-4 flex-1">
+        <div className="flex items-center gap-2 flex-1">
           {/* Search */}
-          <div className="relative flex-1">
+          <div className="relative flex-1 max-w-200">
             <Input
               allowClear
               placeholder={searchPlaceholder}
@@ -165,21 +165,24 @@ export function SearchControls({
             placeholder={["开始时间", "结束时间"]}
           />
         )}
-        {showReload && (
-          <Button icon={<ReloadOutlined />} onClick={handleReload}></Button>
-        )}
 
-        {/* Right side - View Toggle */}
-        {showViewToggle && onViewModeChange && (
-          <Segmented
-            options={[
-              { value: "list", icon: <BarsOutlined /> },
-              { value: "card", icon: <AppstoreOutlined /> },
-            ]}
-            value={viewMode}
-            onChange={(value) => onViewModeChange(value as "list" | "card")}
-          />
-        )}
+        {/* Right side */}
+        <div className="flex items-center gap-2">
+          {showViewToggle && onViewModeChange && (
+            <Segmented
+              options={[
+                { value: "list", icon: <BarsOutlined /> },
+                { value: "card", icon: <AppstoreOutlined /> },
+              ]}
+              value={viewMode}
+              onChange={(value) => onViewModeChange(value as "list" | "card")}
+            />
+          )}
+
+          {showReload && (
+            <Button icon={<ReloadOutlined />} onClick={onReload}></Button>
+          )}
+        </div>
       </div>
 
       {/* Active Filters Display */}

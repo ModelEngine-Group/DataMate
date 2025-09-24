@@ -27,6 +27,7 @@ interface BaseCardDataType {
 interface CardViewProps<T> {
   data: T[];
   pagination: {
+    [key: string]: any;
     current: number;
     pageSize: number;
     total: number;

@@ -153,9 +153,6 @@ class Request {
 
     const config = {
       method: "GET",
-      headers: {
-        ...options.headers,
-      },
       ...options,
     };
 

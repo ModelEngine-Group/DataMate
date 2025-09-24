@@ -33,27 +33,27 @@ export default function WelcomePage() {
             支持对话式操作、智能编排、数据合成、智能标注、全面评估和RAG知识库构建。
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <NavLink
-              to="/data/management"
-              className="rounded px-4 py-2 inline-flex items-center bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg"
+            <span
+              onClick={() => navigate("/data/management")}
+              className="cursor-pointer rounded px-4 py-2 inline-flex items-center bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg"
             >
               <Database className="mr-2 w-4 h-4" />
               开始使用
-            </NavLink>
-            <NavLink
-              to="/agent"
-              className="rounded px-4 py-2 inline-flex items-center bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg"
+            </span>
+            <span
+              onClick={() => navigate("/agent")}
+              className="cursor-pointer rounded px-4 py-2 inline-flex items-center bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg"
             >
               <MessageSquare className="mr-2 w-4 h-4" />
               对话助手
-            </NavLink>
-            <NavLink
-              to="/orchestration"
-              className="rounded px-4 py-2 inline-flex items-center bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white shadow-lg"
+            </span>
+            <span
+              onClick={() => navigate("/orchestration")}
+              className="cursor-pointer rounded px-4 py-2 inline-flex items-center bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white shadow-lg"
             >
               数据智能编排
               <ArrowRight className="ml-2 w-4 h-4" />
-            </NavLink>
+            </span>
           </div>
         </div>
 

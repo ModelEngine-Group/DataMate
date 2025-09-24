@@ -127,6 +127,7 @@ const datasetTypes = [
   },
 ];
 
+module.exports = { datasetList };
 module.exports = function (router) {
   // 获取数据统计信息
   router.get(API.queryDatasetStatisticsUsingGet, (req, res) => {

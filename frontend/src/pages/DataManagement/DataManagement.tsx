@@ -1,36 +1,134 @@
-import { Card, Button, Statistic, Table, Tooltip, Tag } from "antd";
-import { Download, Edit, Plus, Trash2 } from "lucide-react";
+import { Card, Button, Statistic, Table, Tooltip, Tag, App } from "antd";
+import {
+  DownloadOutlined,
+  EditOutlined,
+  PlusCircleOutlined,
+  DeleteOutlined,
+  PlusOutlined,
+} from "@ant-design/icons";
 import TagManager from "./components/TagManagement";
 import { Link, useNavigate } from "react-router";
-import { useState } from "react";
-import { useDatasets } from "./hooks/useDatasets";
+import { useEffect, useState } from "react";
 import { SearchControls } from "@/components/SearchControls";
 import CardView from "@/components/CardView";
 import type { Dataset } from "@/types/dataset";
-import { datasetStatusMap, datasetTypeMap } from "./dataset-model";
+import { datasetStatusMap, datasetTypeMap, mapDataset } from "./dataset-model";
+import useFetchData from "@/hooks/useFetchData";
+import {
+  downloadDatasetUsingGet,
+  getDatasetStatisticsUsingGet,
+  queryDatasetsUsingGet,
+} from "./dataset-apis";
 
 export default function DatasetManagementPage() {
+  const navigate = useNavigate();
+  const { message } = App.useApp();
+  const [viewMode, setViewMode] = useState<"card" | "list">("card");
+
+  const [statisticsData, setStatisticsData] = useState<any>({
+    count: {},
+    size: {},
+  });
+
+  async function fetchStatistics() {
+    const { data } = await getDatasetStatisticsUsingGet();
+    const statistics = {
+      size: [
+        {
+          title: "文本",
+          value: data.size.text || "0 MB",
+        },
+        {
+          title: "图像",
+          value: data.size.image || "0 MB",
+        },
+        {
+          title: "音频",
+          value: data.size.audio || "0 MB",
+        },
+        {
+          title: "视频",
+          value: data.size.video || "0 MB",
+        },
+      ],
+      count: [
+        {
+          title: "文本",
+          value: data.count.text || 0,
+        },
+        {
+          title: "图像",
+          value: data.count.image || 0,
+        },
+        {
+          title: "音频",
+          value: data.count.audio || 0,
+        },
+        {
+          title: "视频",
+          value: data.count.video || 0,
+        },
+      ],
+    };
+    setStatisticsData(statistics);
+  }
+
+  const [tags] = useState<string[]>(["标签1", "标签2", "标签3", "标签4"]);
+
+  const filterOptions = [
+    {
+      key: "type",
+      label: "类型",
+      options: [
+        { label: "所有类型", value: "all" },
+        ...Object.values(datasetTypeMap),
+      ],
+    },
+    {
+      key: "status",
+      label: "状态",
+      options: [
+        { label: "所有状态", value: "all" },
+        ...Object.values(datasetStatusMap),
+      ],
+    },
+    {
+      key: "tags",
+      label: "标签",
+      mode: "multiple",
+      options: tags.map((tag) => ({ label: tag, value: tag })),
+    },
+  ];
   const {
-    datasets,
-    pagination,
-    contextHolder,
+    tableData,
     searchParams,
-    filterOptions,
-    statisticsData,
+    pagination,
     setSearchParams,
     handleFiltersChange,
-    handleDownloadDataset,
-    handleDeleteDataset,
-  } = useDatasets();
+  } = useFetchData(queryDatasetsUsingGet, mapDataset);
 
-  const navigate = useNavigate();
-  const [viewMode, setViewMode] = useState<"card" | "list">("card");
+  const handleDownloadDataset = async (dataset: Dataset) => {
+    await downloadDatasetUsingGet(dataset.id, dataset.name);
+    message.success("数据集下载成功");
+  };
+
+  const handleDeleteDataset = async (id: number) => {
+    await fetch(`/api/datasets/${id}`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+    });
+    message.success("数据删除成功");
+  };
+
+  useEffect(() => {
+    fetchStatistics();
+  }, []);
 
   const operations = [
     {
       key: "edit",
       label: "编辑",
-      icon: <Edit className="w-4 h-4" />,
+      icon: <EditOutlined />,
       onClick: (item) => {
         navigate(`/data/management/create/${item.id}`);
       },
@@ -38,13 +136,13 @@ export default function DatasetManagementPage() {
     {
       key: "download",
       label: "下载",
-      icon: <Download className="w-4 h-4" />,
+      icon: <DownloadOutlined />,
       onClick: handleDownloadDataset,
     },
     {
       key: "delete",
       label: "删除",
-      icon: <Trash2 className="w-4 h-4" />,
+      icon: <DeleteOutlined />,
       onClick: (item) => handleDeleteDataset(item.id),
     },
   ];
@@ -117,40 +215,32 @@ export default function DatasetManagementPage() {
     },
   ];
 
-  const pager = {
-    current: searchParams.current,
-    pageSize: searchParams.pageSize,
-    ...pagination,
-  };
-
   const renderCardView = () => (
     <CardView
-      data={datasets}
+      data={tableData}
       pageSize={9}
       operations={operations}
-      pagination={pager}
+      pagination={pagination}
       onView={(dataset) => {
         navigate("/data/management/detail/" + dataset.id);
       }}
-      showFavorite={false}
     />
   );
 
   const renderListView = () => (
-    <div className="flex-1 overflow-auto">
+    <Card>
       <Table
         columns={columns}
-        dataSource={datasets}
-        pagination={pager}
+        dataSource={tableData}
+        pagination={pagination}
         rowKey="id"
-        scroll={{ x: "max-content", y: "calc(100vh - 31rem)" }}
+        scroll={{ x: "max-content", y: "calc(100vh - 34rem)" }}
       />
-    </div>
+    </Card>
   );
 
   return (
     <div className="space-y-2 h-full flex flex-col">
-      {contextHolder}
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -160,7 +250,7 @@ export default function DatasetManagementPage() {
           {/* tasks */}
           <TagManager />
           <Link to="/data/management/create">
-            <Button type="primary" icon={<Plus className="w-4 h-4 mr-2" />}>
+            <Button type="primary" icon={<PlusOutlined className="w-4 h-4 mr-2" />}>
               创建数据集
             </Button>
           </Link>

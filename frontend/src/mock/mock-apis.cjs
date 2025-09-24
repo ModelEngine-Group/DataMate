@@ -30,22 +30,22 @@ const MockAPI = {
   queryDatasetStatisticsUsingGet: "/datasets/statistics", // 获取数据集统计信息
 
   // 数据清洗接口
-  queryCleaningRulesUsingGet: "/api/v1/cleaning/rules", // 获取清洗规则列表
-  createCleaningRuleUsingPost: "/api/v1/cleaning/rules", //创建清洗规则
-  queryCleaningRuleByIdUsingGet: "/api/v1/cleaning/rules/{ruleId}", // 根据ID获取清洗规则详情
-  updateCleaningRuleByIdUsingPut: "/api/v1/cleaning/rules/{ruleId}", // 更新清洗规则
-  deleteCleaningRuleByIdUsingDelete: "/api/v1/cleaning/rules/{ruleId}", // 删除清洗规则
-  queryCleaningJobsUsingGet: "/api/v1/cleaning/jobs", // 获取清洗任务列表
-  createCleaningJobUsingPost: "/api/v1/cleaning/jobs", // 创建清洗任务
-  queryCleaningJobByIdUsingGet: "/api/v1/cleaning/jobs/{jobId}", // 根据ID获取清洗任务详情
-  deleteCleaningJobByIdUsingDelete: "/api/v1/cleaning/jobs/{jobId}", // 删除清洗任务
-  executeCleaningJobUsingPost: "/api/v1/cleaning/jobs/{jobId}/execute", // 执行清洗任务
-  stopCleaningJobUsingPost: "/api/v1/cleaning/jobs/{jobId}/stop", // 停止清洗任务
-  queryCleaningTemplatesUsingGet: "/api/v1/cleaning/templates", // 获取清洗模板列表
-  createCleaningTemplateUsingPost: "/api/v1/cleaning/templates", // 创建清洗模板
-  queryCleaningTemplateByIdUsingGet: "/api/v1/cleaning/templates/{templateId}", // 根据ID获取清洗模板详情
+  queryCleaningRulesUsingGet: "/v1/cleaning/rules", // 获取清洗规则列表
+  createCleaningRuleUsingPost: "/v1/cleaning/rules", //创建清洗规则
+  queryCleaningRuleByIdUsingGet: "/v1/cleaning/rules/{ruleId}", // 根据ID获取清洗规则详情
+  updateCleaningRuleByIdUsingPut: "/v1/cleaning/rules/{ruleId}", // 更新清洗规则
+  deleteCleaningRuleByIdUsingDelete: "/v1/cleaning/rules/{ruleId}", // 删除清洗规则
+  queryCleaningJobsUsingPost: "/v1/cleaning/jobs", // 获取清洗任务列表
+  createCleaningJobUsingPost: "/v1/cleaning/jobs/create", // 创建清洗任务
+  queryCleaningJobByIdUsingGet: "/v1/cleaning/jobs/{jobId}", // 根据ID获取清洗任务详情
+  deleteCleaningJobByIdUsingDelete: "/v1/cleaning/jobs/{jobId}", // 删除清洗任务
+  executeCleaningJobUsingPost: "/v1/cleaning/jobs/{jobId}/execute", // 执行清洗任务
+  stopCleaningJobUsingPost: "/v1/cleaning/jobs/{jobId}/stop", // 停止清洗任务
+  queryCleaningTemplatesUsingPost: "/v1/cleaning/templates", // 获取清洗模板列表
+  createCleaningTemplateUsingPost: "/v1/cleaning/templates/create", // 创建清洗模板
+  queryCleaningTemplateByIdUsingGet: "/v1/cleaning/templates/{templateId}", // 根据ID获取清洗模板详情
   deleteCleaningTemplateByIdUsingDelete:
-    "/api/v1/cleaning/templates/{templateId}", // 删除清洗模板
+    "/v1/cleaning/templates/{templateId}", // 删除清洗模板
 };
 
 module.exports = addMockPrefix("/api", MockAPI);

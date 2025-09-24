@@ -21,33 +21,6 @@ function cleaningRuleItem() {
     enabled: Mock.Random.boolean(),
     createdAt: Mock.Random.datetime("yyyy-MM-dd HH:mm:ss"),
     updatedAt: Mock.Random.datetime("yyyy-MM-dd HH:mm:ss"),
-    conditions: [
-      {
-        field: Mock.Random.word(5, 10),
-        operator: Mock.Random.pick([
-          "EQUALS",
-          "NOT_EQUALS",
-          "CONTAINS",
-          "GREATER_THAN",
-          "LESS_THAN",
-        ]),
-        value: Mock.Random.word(3, 10),
-        logicOperator: Mock.Random.pick(["AND", "OR"]),
-      },
-    ],
-    actions: [
-      {
-        type: Mock.Random.pick(["DELETE", "UPDATE", "FLAG", "IGNORE"]),
-        parameters: {
-          field: Mock.Random.word(5, 10),
-          value: Mock.Random.word(3, 10),
-        },
-      },
-    ],
-    parameters: {
-      threshold: Mock.Random.float(0, 1, 2, 2),
-      maxRetries: Mock.Random.integer(1, 5),
-    },
   };
 }
 
@@ -66,7 +39,10 @@ function cleaningJobItem() {
       "FAILED",
       "CANCELLED",
     ]),
-    datasetId: Mock.Random.guid().replace(/[^a-zA-Z0-9]/g, ""),
+    dataset: {
+      id: Mock.Random.guid().replace(/[^a-zA-Z0-9]/g, ""),
+      name: Mock.Random.ctitle(3, 8),
+    },
     progress: Mock.Random.float(0, 100, 2, 2),
     startTime: Mock.Random.datetime("yyyy-MM-dd HH:mm:ss"),
     endTime: Mock.Random.datetime("yyyy-MM-dd HH:mm:ss"),
@@ -99,6 +75,7 @@ function cleaningTemplateItem() {
     name: Mock.Random.ctitle(5, 15),
     description: Mock.Random.csentence(5, 25),
     category: Mock.Random.ctitle(3, 8),
+    usage: Mock.Random.integer(1, 100),
     rules: [cleaningRuleList[0], cleaningRuleList[1], cleaningRuleList[2]],
     createdAt: Mock.Random.datetime("yyyy-MM-dd HH:mm:ss"),
   };
@@ -108,7 +85,7 @@ const cleaningTemplateList = new Array(15).fill(null).map(cleaningTemplateItem);
 
 module.exports = function (router) {
   // 获取清洗规则列表
-  router.get("/api/v1/cleaning/rules", (req, res) => {
+  router.get(API.queryCleaningRulesUsingGet, (req, res) => {
     const { page = 0, size = 20, category } = req.query;
     let filteredRules = cleaningRuleList;
 
@@ -136,7 +113,7 @@ module.exports = function (router) {
   });
 
   // 创建清洗规则
-  router.post("/api/v1/cleaning/rules", (req, res) => {
+  router.post(API.createCleaningRuleUsingPost, (req, res) => {
     const newRule = {
       ...cleaningRuleItem(),
       ...req.body,
@@ -153,7 +130,7 @@ module.exports = function (router) {
   });
 
   // 获取清洗规则详情
-  router.get("/api/v1/cleaning/rules/:ruleId", (req, res) => {
+  router.get(API.queryCleaningRuleByIdUsingGet, (req, res) => {
     const { ruleId } = req.params;
     const rule = cleaningRuleList.find((r) => r.id === ruleId);
 
@@ -173,7 +150,7 @@ module.exports = function (router) {
   });
 
   // 更新清洗规则
-  router.put("/api/v1/cleaning/rules/:ruleId", (req, res) => {
+  router.put(API.updateCleaningRuleByIdUsingPut, (req, res) => {
     const { ruleId } = req.params;
     const index = cleaningRuleList.findIndex((r) => r.id === ruleId);
 
@@ -198,7 +175,7 @@ module.exports = function (router) {
   });
 
   // 删除清洗规则
-  router.delete("/api/v1/cleaning/rules/:ruleId", (req, res) => {
+  router.delete(API.deleteCleaningRuleByIdUsingDelete, (req, res) => {
     const { ruleId } = req.params;
     const index = cleaningRuleList.findIndex((r) => r.id === ruleId);
 
@@ -219,15 +196,15 @@ module.exports = function (router) {
   });
 
   // 获取清洗任务列表
-  router.get("/api/v1/cleaning/jobs", (req, res) => {
-    const { page = 0, size = 20, status } = req.query;
+  router.post(API.queryCleaningJobsUsingPost, (req, res) => {
+    const { page = 1, size = 10, status, type } = req.body;
     let filteredJobs = cleaningJobList;
 
     if (status) {
       filteredJobs = cleaningJobList.filter((job) => job.status === status);
     }
 
-    const startIndex = page * size;
+    const startIndex = (page - 1) * size;
     const endIndex = startIndex + parseInt(size);
     const pageData = filteredJobs.slice(startIndex, endIndex);
 
@@ -235,7 +212,7 @@ module.exports = function (router) {
       code: "0",
       msg: "Success",
       data: {
-        content: pageData,
+        results: pageData,
         totalElements: filteredJobs.length,
         totalPages: Math.ceil(filteredJobs.length / size),
         size: parseInt(size),
@@ -245,7 +222,7 @@ module.exports = function (router) {
   });
 
   // 创建清洗任务
-  router.post("/api/v1/cleaning/jobs", (req, res) => {
+  router.post(API.createCleaningJobUsingPost, (req, res) => {
     const newJob = {
       ...cleaningJobItem(),
       ...req.body,
@@ -263,7 +240,7 @@ module.exports = function (router) {
   });
 
   // 获取清洗任务详情
-  router.get("/api/v1/cleaning/jobs/:jobId", (req, res) => {
+  router.get(API.queryCleaningJobByIdUsingGet, (req, res) => {
     const { jobId } = req.params;
     const job = cleaningJobList.find((j) => j.id === jobId);
 
@@ -282,33 +259,8 @@ module.exports = function (router) {
     }
   });
 
-  // 更新清洗任务
-  router.put("/api/v1/cleaning/jobs/:jobId", (req, res) => {
-    const { jobId } = req.params;
-    const index = cleaningJobList.findIndex((j) => j.id === jobId);
-
-    if (index !== -1) {
-      cleaningJobList[index] = {
-        ...cleaningJobList[index],
-        ...req.body,
-        updatedAt: new Date().toISOString(),
-      };
-      res.send({
-        code: "0",
-        msg: "Cleaning job updated successfully",
-        data: cleaningJobList[index],
-      });
-    } else {
-      res.status(404).send({
-        code: "1",
-        msg: "Cleaning job not found",
-        data: null,
-      });
-    }
-  });
-
   // 删除清洗任务
-  router.delete("/api/v1/cleaning/jobs/:jobId", (req, res) => {
+  router.delete(API.deleteCleaningJobByIdUsingDelete, (req, res) => {
     const { jobId } = req.params;
     const index = cleaningJobList.findIndex((j) => j.id === jobId);
 
@@ -329,7 +281,7 @@ module.exports = function (router) {
   });
 
   // 执行清洗任务
-  router.post("/api/v1/cleaning/jobs/:jobId/execute", (req, res) => {
+  router.post(API.executeCleaningJobUsingPost, (req, res) => {
     const { jobId } = req.params;
     const job = cleaningJobList.find((j) => j.id === jobId);
 
@@ -356,7 +308,7 @@ module.exports = function (router) {
   });
 
   // 停止清洗任务
-  router.post("/api/v1/cleaning/jobs/:jobId/stop", (req, res) => {
+  router.post(API.stopCleaningJobUsingPost, (req, res) => {
     const { jobId } = req.params;
     const job = cleaningJobList.find((j) => j.id === jobId);
 
@@ -379,16 +331,20 @@ module.exports = function (router) {
   });
 
   // 获取清洗模板列表
-  router.get("/api/v1/cleaning/templates", (req, res) => {
+  router.post(API.queryCleaningTemplatesUsingPost, (req, res) => {
+    const { page = 0, size = 20 } = req.body;
+    const startIndex = page * size;
+    const endIndex = startIndex + parseInt(size);
+    const pageData = cleaningTemplateList.slice(startIndex, endIndex);
     res.send({
       code: "0",
       msg: "Success",
-      data: cleaningTemplateList,
+      data: { results: pageData, totalElements: cleaningTemplateList.length },
     });
   });
 
   // 创建清洗模板
-  router.post("/api/v1/cleaning/templates", (req, res) => {
+  router.post(API.createCleaningTemplateUsingPost, (req, res) => {
     const newTemplate = {
       ...cleaningTemplateItem(),
       ...req.body,
@@ -405,7 +361,7 @@ module.exports = function (router) {
   });
 
   // 获取清洗模板详情
-  router.get("/api/v1/cleaning/templates/:templateId", (req, res) => {
+  router.get(API.queryCleaningTemplateByIdUsingGet, (req, res) => {
     const { templateId } = req.params;
     const template = cleaningTemplateList.find((t) => t.id === templateId);
 
@@ -424,33 +380,8 @@ module.exports = function (router) {
     }
   });
 
-  // 更新清洗模板
-  router.put("/api/v1/cleaning/templates/:templateId", (req, res) => {
-    const { templateId } = req.params;
-    const index = cleaningTemplateList.findIndex((t) => t.id === templateId);
-
-    if (index !== -1) {
-      cleaningTemplateList[index] = {
-        ...cleaningTemplateList[index],
-        ...req.body,
-        updatedAt: new Date().toISOString(),
-      };
-      res.send({
-        code: "0",
-        msg: "Cleaning template updated successfully",
-        data: cleaningTemplateList[index],
-      });
-    } else {
-      res.status(404).send({
-        code: "1",
-        msg: "Cleaning template not found",
-        data: null,
-      });
-    }
-  });
-
   // 删除清洗模板
-  router.delete("/api/v1/cleaning/templates/:templateId", (req, res) => {
+  router.delete(API.deleteCleaningTemplateByIdUsingDelete, (req, res) => {
     const { templateId } = req.params;
     const index = cleaningTemplateList.findIndex((t) => t.id === templateId);
 

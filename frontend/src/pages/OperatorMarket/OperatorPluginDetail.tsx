@@ -10,7 +10,7 @@ import {
   type DescriptionsProps,
   Breadcrumb,
 } from "antd";
-import { FireOutlined, ShareAltOutlined, StarOutlined, VerticalAlignBottomOutlined } from "@ant-design/icons";
+import { FireOutlined, ShareAltOutlined, StarOutlined } from "@ant-design/icons";
 import {
   Star,
   Download,
