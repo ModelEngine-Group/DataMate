@@ -12,9 +12,9 @@ spring:
   # 数据源配置
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/knowledge_base?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
-    username: ${DB_USERNAME:knowledge_user}
-    password: ${DB_PASSWORD:knowledge_password}
+    url: jdbc:mysql://101.201.105.190:9988/dataengine?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:Huawei@123}
     hikari:
       maximum-pool-size: 20
       minimum-idle: 5
