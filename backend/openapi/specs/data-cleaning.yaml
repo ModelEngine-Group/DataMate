@@ -142,7 +142,6 @@ paths:
           example: ''
           schema:
             type: string
-            format: uuid
       responses:
         '200':
           description: 成功获取任务详情
@@ -183,7 +182,6 @@ paths:
           example: ''
           schema:
             type: string
-            format: uuid
       responses:
         '204':
           description: 任务删除成功
@@ -288,7 +286,6 @@ paths:
           example: ''
           schema:
             type: string
-            format: uuid
       responses:
         '200':
           description: 成功获取模板详情
@@ -329,7 +326,6 @@ paths:
           example: ''
           schema:
             type: string
-            format: uuid
       requestBody:
         content:
           application/json:
@@ -384,7 +380,6 @@ paths:
           example: ''
           schema:
             type: string
-            format: uuid
       responses:
         '204':
           description: 模板删除成功
@@ -513,7 +508,7 @@ components:
         instance:
           type: array
           items: &ref_3
-            $ref: '#/components/schemas/OperatorResponse'
+            $ref: '#/components/schemas/OperatorInstance'
           description: 模板定义的清洗规则和配置
     CreateCleaningTemplateRequest:
       type: object
@@ -527,8 +522,10 @@ components:
         description:
           type: string
           description: 模板描述
-        instance: &ref_4
-          $ref: '#/components/schemas/OperatorInstance'
+        instance:
+          type: array
+          items: *ref_3
+          description: 任务的具体配置（如果非模板创建，则直接定义）'
     CleaningTemplate:
       type: object
       required:
@@ -539,7 +536,6 @@ components:
       properties:
         id:
           type: string
-          format: uuid
           description: 模板唯一标识符
         name:
           type: string
@@ -549,7 +545,8 @@ components:
           description: 模板描述
         instance:
           type: array
-          items: *ref_3
+          items: &ref_4
+            $ref: '#/components/schemas/OperatorResponse'
           description: 模板定义的清洗规则和配置
         createdAt:
           type: string
@@ -574,7 +571,10 @@ components:
           description: 任务描述
         sourceType:
           type: string
-        instance: *ref_4
+        instance:
+          type: array
+          items: *ref_3
+          description: 任务的具体配置（如果非模板创建，则直接定义）
     ErrorResponse:
       type: object
       properties:
@@ -595,7 +595,6 @@ components:
       properties:
         id:
           type: string
-          format: uuid
           description: 任务唯一标识符
         name:
           type: string
@@ -613,11 +612,10 @@ components:
             - failed
         templateId:
           type: string
-          format: uuid
           description: 关联的模板ID（如果基于模板创建）
         instance:
           type: array
-          items: *ref_3
+          items: *ref_4
           description: 任务的具体配置（如果非模板创建，则直接定义）
         progress:
           $ref: '#/components/schemas/CleaningProcess'

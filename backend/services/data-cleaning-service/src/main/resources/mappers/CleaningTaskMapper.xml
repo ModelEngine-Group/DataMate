@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dataengine.cleaning.infrastructure.persistence.mapper.CleaningTaskMapper">
+
+    <select id="findTasksByStatus" resultType="com.dataengine.cleaning.interfaces.dto.CleaningTask">
+        SELECT * FROM t_clean_task WHERE status = #{status}
+    </select>
+
+    <select id="findTaskById" resultType="com.dataengine.cleaning.interfaces.dto.CleaningTask">
+        SELECT * FROM t_clean_task WHERE id = #{taskId}
+    </select>
+
+    <insert id="insertTask">
+        INSERT INTO t_clean_task (id, name, description, status, created_at)
+        VALUES (#{id}, #{name}, #{description}, #{status}, NOW())
+    </insert>
+
+    <update id="updateTaskStatus">
+        UPDATE t_clean_task SET status = #{status} WHERE id = #{id}
+    </update>
+
+    <delete id="deleteTask">
+        DELETE FROM t_clean_task WHERE id = #{taskId}
+    </delete>
+
+</mapper>
