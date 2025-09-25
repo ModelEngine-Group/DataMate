@@ -47,6 +47,9 @@ paths:
                 labelName:
                   type: string
                   description: 标签名称
+                isStar:
+                  type: boolean
+                  description: 是否收藏
               required:
                 - page
                 - size
@@ -478,15 +481,9 @@ components:
         description:
           type: string
           description: 算子描述
-        language:
-          type: string
-          description: 开发语言
         version:
           type: string
           description: 算子版本
-        modal:
-          type: string
-          description: 模态
         inputs:
           type: string
           description: 输入类型
