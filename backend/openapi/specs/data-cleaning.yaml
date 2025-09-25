@@ -18,22 +18,34 @@ tags:
     description: 数据清洗模板管理
 
 paths:
+  /ray/log:
+    get:
+      summary: 获取ray日志文件
+      deprecated: false
+      description: ''
+      tags: [ ]
+      parameters: [ ]
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: { }
+          headers: { }
+      security: [ ]
   /cleaning/tasks:
     get:
+      summary: 查询数据清洗任务列表
+      deprecated: false
+      description: 获取所有数据清洗任务或根据查询参数筛选任务。
       tags:
         - CleaningTask
-      summary: 查询数据清洗任务列表
-      description: 获取所有数据清洗任务或根据查询参数筛选任务。
       parameters:
         - name: status
           in: query
           description: 根据任务状态筛选 (e.g., pending, running, completed, failed)
-          required: false
-          schema:
-            type: string
-        - name: type
-          in: query
-          description: 根据使用的模板ID筛选任务
           required: false
           schema:
             type: string
@@ -44,55 +56,90 @@ paths:
             application/json:
               schema:
                 type: array
-                items:
+                items: &ref_1
                   $ref: '#/components/schemas/CleaningTask'
+          headers: { }
         '400':
-          $ref: '#/components/responses/BadRequest'
+          description: 请求参数无效或缺失
+          content:
+            application/json:
+              schema: &ref_0
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Bad Request
+                message: Invalid input data provided.
+          headers: { }
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          description: 服务器内部错误
+          content:
+            application/json:
+              schema: *ref_0
+              example:
+                error: Internal Server Error
+                message: An unexpected error occurred on the server.
+          headers: { }
+      security: [ ]
     post:
+      summary: 创建新的数据清洗任务
+      deprecated: false
+      description: 可以直接创建任务或基于现有模板创建任务。
       tags:
         - CleaningTask
-      summary: 创建新的数据清洗任务
-      description: 可以直接创建任务或基于现有模板创建任务。
+      parameters: [ ]
       requestBody:
-        required: true
         content:
           application/json:
             schema:
-              oneOf:
-                - $ref: '#/components/schemas/CreateCleaningTaskRequest'
-                - $ref: '#/components/schemas/CreateCleaningTaskFromTemplateRequest'
-              discriminator:
-                propertyName: sourceType
-                mapping:
-                  direct: '#/components/schemas/CreateCleaningTaskRequest'
-                  template: '#/components/schemas/CreateCleaningTaskFromTemplateRequest'
+              $ref: '#/components/schemas/CreateCleaningTaskRequest'
+            examples: { }
       responses:
         '201':
           description: 任务创建成功
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/CleaningTask'
+              schema: *ref_1
+          headers: { }
         '400':
-          $ref: '#/components/responses/BadRequest'
+          description: 请求参数无效或缺失
+          content:
+            application/json:
+              schema: *ref_0
+              example:
+                error: Bad Request
+                message: Invalid input data provided.
+          headers: { }
         '404':
-          $ref: '#/components/responses/NotFound'
+          description: 请求的资源未找到
+          content:
+            application/json:
+              schema: *ref_0
+              example:
+                error: Not Found
+                message: The requested resource was not found.
+          headers: { }
         '500':
-          $ref: '#/components/responses/InternalServerError'
-
+          description: 服务器内部错误
+          content:
+            application/json:
+              schema: *ref_0
+              example:
+                error: Internal Server Error
+                message: An unexpected error occurred on the server.
+          headers: { }
+      security: [ ]
   /cleaning/tasks/{taskId}:
     get:
+      summary: 获取单个数据清洗任务详情
+      deprecated: false
+      description: 根据任务ID获取任务的详细信息。
       tags:
         - CleaningTask
-      summary: 获取单个数据清洗任务详情
-      description: 根据任务ID获取任务的详细信息。
       parameters:
         - name: taskId
           in: path
-          required: true
           description: 任务的唯一标识符
+          required: true
+          example: ''
           schema:
             type: string
             format: uuid
@@ -101,39 +148,73 @@ paths:
           description: 成功获取任务详情
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/CleaningTask'
+              schema: *ref_1
+          headers: { }
         '404':
-          $ref: '#/components/responses/NotFound'
+          description: 请求的资源未找到
+          content:
+            application/json:
+              schema: *ref_0
+              example:
+                error: Not Found
+                message: The requested resource was not found.
+          headers: { }
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          description: 服务器内部错误
+          content:
+            application/json:
+              schema: *ref_0
+              example:
+                error: Internal Server Error
+                message: An unexpected error occurred on the server.
+          headers: { }
+      security: [ ]
     delete:
+      summary: 删除数据清洗任务
+      deprecated: false
+      description: 根据任务ID删除指定的任务。
       tags:
         - CleaningTask
-      summary: 删除数据清洗任务
-      description: 根据任务ID删除指定的任务。
       parameters:
         - name: taskId
           in: path
-          required: true
           description: 任务的唯一标识符
+          required: true
+          example: ''
           schema:
             type: string
             format: uuid
       responses:
         '204':
           description: 任务删除成功
+          headers: { }
         '404':
-          $ref: '#/components/responses/NotFound'
+          description: 请求的资源未找到
+          content:
+            application/json:
+              schema: *ref_0
+              example:
+                error: Not Found
+                message: The requested resource was not found.
+          headers: { }
         '500':
-          $ref: '#/components/responses/InternalServerError'
-
+          description: 服务器内部错误
+          content:
+            application/json:
+              schema: *ref_0
+              example:
+                error: Internal Server Error
+                message: An unexpected error occurred on the server.
+          headers: { }
+      security: [ ]
   /cleaning/templates:
     get:
+      summary: 查询数据清洗模板列表
+      deprecated: false
+      description: 获取所有可用的数据清洗模板。
       tags:
         - CleaningTemplate
-      summary: 查询数据清洗模板列表
-      description: 获取所有可用的数据清洗模板。
+      parameters: [ ]
       responses:
         '200':
           description: 成功获取模板列表
@@ -141,17 +222,27 @@ paths:
             application/json:
               schema:
                 type: array
-                items:
+                items: &ref_2
                   $ref: '#/components/schemas/CleaningTemplate'
+          headers: { }
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          description: 服务器内部错误
+          content:
+            application/json:
+              schema: *ref_0
+              example:
+                error: Internal Server Error
+                message: An unexpected error occurred on the server.
+          headers: { }
+      security: [ ]
     post:
+      summary: 创建新的数据清洗模板
+      deprecated: false
+      description: 定义一个新的数据清洗模板。
       tags:
         - CleaningTemplate
-      summary: 创建新的数据清洗模板
-      description: 定义一个新的数据清洗模板。
+      parameters: [ ]
       requestBody:
-        required: true
         content:
           application/json:
             schema:
@@ -161,24 +252,40 @@ paths:
           description: 模板创建成功
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/CleaningTemplate'
+              schema: *ref_2
+          headers: { }
         '400':
-          $ref: '#/components/responses/BadRequest'
+          description: 请求参数无效或缺失
+          content:
+            application/json:
+              schema: *ref_0
+              example:
+                error: Bad Request
+                message: Invalid input data provided.
+          headers: { }
         '500':
-          $ref: '#/components/responses/InternalServerError'
-
+          description: 服务器内部错误
+          content:
+            application/json:
+              schema: *ref_0
+              example:
+                error: Internal Server Error
+                message: An unexpected error occurred on the server.
+          headers: { }
+      security: [ ]
   /cleaning/templates/{templateId}:
     get:
+      summary: 获取单个数据清洗模板详情
+      deprecated: false
+      description: 根据模板ID获取模板的详细信息。
       tags:
         - CleaningTemplate
-      summary: 获取单个数据清洗模板详情
-      description: 根据模板ID获取模板的详细信息。
       parameters:
         - name: templateId
           in: path
-          required: true
           description: 模板的唯一标识符
+          required: true
+          example: ''
           schema:
             type: string
             format: uuid
@@ -187,27 +294,43 @@ paths:
           description: 成功获取模板详情
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/CleaningTemplate'
+              schema: *ref_2
+          headers: { }
         '404':
-          $ref: '#/components/responses/NotFound'
+          description: 请求的资源未找到
+          content:
+            application/json:
+              schema: *ref_0
+              example:
+                error: Not Found
+                message: The requested resource was not found.
+          headers: { }
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          description: 服务器内部错误
+          content:
+            application/json:
+              schema: *ref_0
+              example:
+                error: Internal Server Error
+                message: An unexpected error occurred on the server.
+          headers: { }
+      security: [ ]
     put:
+      summary: 更新数据清洗模板
+      deprecated: false
+      description: 根据模板ID更新模板的全部信息。
       tags:
         - CleaningTemplate
-      summary: 更新数据清洗模板
-      description: 根据模板ID更新模板的全部信息。
       parameters:
         - name: templateId
           in: path
-          required: true
           description: 模板的唯一标识符
+          required: true
+          example: ''
           schema:
             type: string
             format: uuid
       requestBody:
-        required: true
         content:
           application/json:
             schema:
@@ -217,191 +340,217 @@ paths:
           description: 模板更新成功
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/CleaningTemplate'
+              schema: *ref_2
+          headers: { }
         '400':
-          $ref: '#/components/responses/BadRequest'
+          description: 请求参数无效或缺失
+          content:
+            application/json:
+              schema: *ref_0
+              example:
+                error: Bad Request
+                message: Invalid input data provided.
+          headers: { }
         '404':
-          $ref: '#/components/responses/NotFound'
+          description: 请求的资源未找到
+          content:
+            application/json:
+              schema: *ref_0
+              example:
+                error: Not Found
+                message: The requested resource was not found.
+          headers: { }
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          description: 服务器内部错误
+          content:
+            application/json:
+              schema: *ref_0
+              example:
+                error: Internal Server Error
+                message: An unexpected error occurred on the server.
+          headers: { }
+      security: [ ]
     delete:
+      summary: 删除数据清洗模板
+      deprecated: false
+      description: 根据模板ID删除指定的模板。
       tags:
         - CleaningTemplate
-      summary: 删除数据清洗模板
-      description: 根据模板ID删除指定的模板。
       parameters:
         - name: templateId
           in: path
-          required: true
           description: 模板的唯一标识符
+          required: true
+          example: ''
           schema:
             type: string
             format: uuid
       responses:
         '204':
           description: 模板删除成功
+          headers: { }
         '404':
-          $ref: '#/components/responses/NotFound'
+          description: 请求的资源未找到
+          content:
+            application/json:
+              schema: *ref_0
+              example:
+                error: Not Found
+                message: The requested resource was not found.
+          headers: { }
         '409':
           description: 因为有任务正在使用该模板而无法删除
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+              schema: *ref_0
               example:
-                error: "Conflict"
-                message: "Template is in use by active tasks and cannot be deleted."
+                error: Conflict
+                message: Template is in use by active tasks and cannot be deleted.
+          headers: { }
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          description: 服务器内部错误
+          content:
+            application/json:
+              schema: *ref_0
+              example:
+                error: Internal Server Error
+                message: An unexpected error occurred on the server.
+          headers: { }
+      security: [ ]
 
 components:
   schemas:
-    # --- 任务相关 ---
-    CleaningTask:
+    OperatorInstance:
       type: object
-      required:
-        - id
-        - name
-        - status
-        - createdAt
       properties:
         id:
           type: string
-          format: uuid
-          description: 任务唯一标识符
-          example: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+        overrides:
+          type: array
+          items:
+            type: object
+            properties: { }
+      required:
+        - id
+        - overrides
+    CleaningProcess:
+      type: object
+      properties:
+        process:
+          type: number
+          format: float
+          description: 进度百分比
+        totalFileNum:
+          type: integer
+          description: 总文件数量
+        finishedFileNum:
+          type: integer
+          description: 已完成文件数量
+      required:
+        - process
+        - totalFileNum
+        - finishedFileNum
+    OperatorResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: 算子ID
         name:
           type: string
-          description: 任务名称
-          example: "清洗销售数据2023"
+          description: 算子名称
         description:
           type: string
-          description: 任务描述
-          example: "清洗2023年度的销售原始数据"
-        status:
+          description: 算子描述
+        version:
           type: string
-          description: 任务当前状态
-          enum: [pending, running, completed, failed]
-          example: "pending"
-        templateId:
+          description: 算子版本
+        inputs:
           type: string
-          format: uuid
-          description: 关联的模板ID（如果基于模板创建）
-          example: "f0e9d8c7-b6a5-4321-fedc-ba9876543210"
-        configuration:
-          type: object
-          description: 任务的具体配置（如果非模板创建，则直接定义）
-          # 这里可以定义更具体的配置结构，或保持为通用对象
-          example:
-            sourcePath: "/data/raw_sales_2023.csv"
-            outputPath: "/data/cleaned_sales_2023.csv"
-            rules:
-              - type: "remove_duplicates"
-              - type: "fill_missing"
-                column: "price"
-                strategy: "mean"
-        progress:
-          type: integer
-          description: 任务进度百分比 (0-100)
-          example: 50
-        result:
-          type: object
-          description: 任务执行结果摘要
-          example:
-            rowsProcessed: 10000
-            rowsCleaned: 9800
-            errorCount: 5
+          description: 输入类型
+        outputs:
+          type: string
+          description: 输入类型
+        runtime:
+          type: string
+          description: 运行时设置
+        settings:
+          type: string
+          description: 算子参数
+        isStar:
+          type: boolean
+          description: 是否收藏
         createdAt:
           type: string
           format: date-time
-          description: 任务创建时间
+          description: 创建时间
         updatedAt:
           type: string
           format: date-time
-          description: 任务最后更新时间
-
-    CreateCleaningTaskRequest:
+          description: 更新时间
+      required:
+        - inputs
+        - outputs
+        - runtime
+        - settings
+        - isStar
+    UpdateCleaningTemplateRequest:
       type: object
       required:
-        - sourceType
         - name
-        - configuration
+        - instance
+        - id
       properties:
-        sourceType:
+        id:
           type: string
-          enum: [direct]
-          description: 指定创建方式为直接定义
         name:
           type: string
-          description: 任务名称
+          description: 模板名称
         description:
           type: string
-          description: 任务描述
-        configuration:
-          type: object
-          description: 任务的具体配置
-
-    CreateCleaningTaskFromTemplateRequest:
+          description: 模板描述
+        instance:
+          type: array
+          items: &ref_3
+            $ref: '#/components/schemas/OperatorResponse'
+          description: 模板定义的清洗规则和配置
+    CreateCleaningTemplateRequest:
       type: object
       required:
-        - sourceType
         - name
-        - templateId
+        - instance
       properties:
-        sourceType:
-          type: string
-          enum: [template]
-          description: 指定创建方式为基于模板
         name:
           type: string
-          description: 任务名称
+          description: 模板名称
         description:
           type: string
-          description: 任务描述
-        templateId:
-          type: string
-          format: uuid
-          description: 要使用的模板ID
-        # 可选：允许覆盖模板的部分配置
-        overrides:
-          type: object
-          description: 对模板配置的覆盖项
-
-    # --- 模板相关 ---
+          description: 模板描述
+        instance: &ref_4
+          $ref: '#/components/schemas/OperatorInstance'
     CleaningTemplate:
       type: object
       required:
         - id
         - name
-        - configuration
+        - instance
         - createdAt
       properties:
         id:
           type: string
           format: uuid
           description: 模板唯一标识符
-          example: "f0e9d8c7-b6a5-4321-fedc-ba9876543210"
         name:
           type: string
           description: 模板名称
-          example: "标准销售数据清洗模板"
         description:
           type: string
           description: 模板描述
-          example: "用于清洗标准格式的销售数据"
-        configuration:
-          type: object
+        instance:
+          type: array
+          items: *ref_3
           description: 模板定义的清洗规则和配置
-          example:
-            rules:
-              - type: "remove_duplicates"
-              - type: "validate_format"
-                column: "date"
-                format: "YYYY-MM-DD"
-              - type: "fill_missing"
-                column: "quantity"
-                strategy: "zero"
         createdAt:
           type: string
           format: date-time
@@ -410,40 +559,22 @@ components:
           type: string
           format: date-time
           description: 模板最后更新时间
-
-    CreateCleaningTemplateRequest:
+    CreateCleaningTaskRequest:
       type: object
       required:
         - name
-        - configuration
+        - instance
+        - sourceType
       properties:
         name:
           type: string
-          description: 模板名称
+          description: 任务名称
         description:
           type: string
-          description: 模板描述
-        configuration:
-          type: object
-          description: 模板定义的清洗规则和配置
-
-    UpdateCleaningTemplateRequest:
-      type: object
-      required:
-        - name
-        - configuration
-      properties:
-        name:
+          description: 任务描述
+        sourceType:
           type: string
-          description: 模板名称
-        description:
-          type: string
-          description: 模板描述
-        configuration:
-          type: object
-          description: 模板定义的清洗规则和配置
-
-    # --- 通用响应 ---
+        instance: *ref_4
     ErrorResponse:
       type: object
       properties:
@@ -453,34 +584,53 @@ components:
         message:
           type: string
           description: 错误详细信息
-
-  responses:
-    BadRequest:
-      description: 请求参数无效或缺失
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          example:
-            error: "Bad Request"
-            message: "Invalid input data provided."
-
-    NotFound:
-      description: 请求的资源未找到
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          example:
-            error: "Not Found"
-            message: "The requested resource was not found."
-
-    InternalServerError:
-      description: 服务器内部错误
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          example:
-            error: "Internal Server Error"
-            message: "An unexpected error occurred on the server."
+    CleaningTask:
+      type: object
+      required:
+        - id
+        - name
+        - status
+        - createdAt
+        - startedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: 任务唯一标识符
+        name:
+          type: string
+          description: 任务名称
+        description:
+          type: string
+          description: 任务描述
+        status:
+          type: string
+          description: 任务当前状态
+          enum:
+            - pending
+            - running
+            - completed
+            - failed
+        templateId:
+          type: string
+          format: uuid
+          description: 关联的模板ID（如果基于模板创建）
+        instance:
+          type: array
+          items: *ref_3
+          description: 任务的具体配置（如果非模板创建，则直接定义）
+        progress:
+          $ref: '#/components/schemas/CleaningProcess'
+        createdAt:
+          type: string
+          description: 任务创建时间
+          format: date-time
+        startedAt:
+          type: string
+          format: date-time
+          description: 任务开始时间
+        updatedAt:
+          type: string
+          format: date-time
+          description: 任务最后更新时间
+    securitySchemes: { }

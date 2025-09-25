@@ -1,15 +1,17 @@
 USE dataengine;
 
-CREATE TABLE IF NOT EXISTS t_clean_template (
+CREATE TABLE IF NOT EXISTS t_clean_template
+(
   id          varchar(64) primary key not null unique,
   name        varchar(64),
   description varchar(256),
-  create_at   timestamp,
-  update_at   timestamp,
-  create_by   varchar(256)
+  created_at  timestamp,
+  updated_at  timestamp,
+  created_by  varchar(256)
 );
 
-CREATE TABLE IF NOT EXISTS t_clean_task (
+CREATE TABLE IF NOT EXISTS t_clean_task
+(
   id             varchar(64) primary key,
   name           varchar(64),
   description    varchar(256),
@@ -21,20 +23,23 @@ CREATE TABLE IF NOT EXISTS t_clean_task (
   config_path    varchar(256),
   restart_times  int,
   submit_id      varchar(256),
-  create_at      timestamp,
-  finish_at      timestamp,
-  create_by      varchar(256)
+  created_at     timestamp,
+  started_at     timestamp,
+  finished_at    timestamp,
+  created_by     varchar(256)
 );
 
-CREATE TABLE IF NOT EXISTS t_operator_instance (
+CREATE TABLE IF NOT EXISTS t_operator_instance
+(
   id                int primary key auto_increment,
   instance_id       varchar(256),
   operator_id       varchar(256),
-  op_index             int,
+  op_index          int,
   settings_override text
 );
 
-CREATE TABLE IF NOT EXISTS t_clean_result (
+CREATE TABLE IF NOT EXISTS t_clean_result
+(
   id          int primary key auto_increment,
   instance_id varchar(64),
   src_file_id varchar(64),
