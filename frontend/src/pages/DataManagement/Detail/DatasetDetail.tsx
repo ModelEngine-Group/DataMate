@@ -12,7 +12,6 @@ import {
 } from "antd";
 import {
   ReloadOutlined,
-  FlagOutlined,
   DownloadOutlined,
   UploadOutlined,
   FileTextOutlined,
@@ -30,12 +29,11 @@ import {
   Trash2,
 } from "lucide-react";
 import DetailHeader from "@/components/DetailHeader";
-import { mapDataset, TypeMap } from "./dataset-model";
+import { mapDataset, TypeMap } from "../dataset-model";
 import type { Dataset } from "@/types/dataset";
 import { Link, useParams } from "react-router";
-import { useImportFile } from "./hooks/useImportFile";
-import { useFilesOperation } from "./hooks/useFilesOperation";
-import { downloadFile, queryDatasetByIdUsingGet } from "./dataset-apis";
+import { useImportFile, useFilesOperation } from "../hooks";
+import { downloadFile, queryDatasetByIdUsingGet } from "../dataset-apis";
 
 const navigateItems = [
   {
@@ -179,19 +177,14 @@ export default function DatasetDetail() {
   // 基本信息
   const items: DescriptionsProps["items"] = [
     {
-      key: "importMethod",
-      label: "导入方式",
-      children: "本地上传",
-    },
-    {
       key: "createdBy",
       label: "创建者",
-      children: "admin",
+      children: dataset.createdBy || "未知",
     },
     {
       key: "createdTime",
       label: "创建时间",
-      children: "2025-01-15 10:30:00",
+      children: dataset.createdAt,
     },
   ];
 

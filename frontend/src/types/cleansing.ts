@@ -20,6 +20,26 @@ export interface OperatorI {
   };
 }
 
+export interface CleansingTask {
+  id: string;
+  name: string;
+  dataset: {
+    id: string;
+    name: string;
+  };
+  status: {
+    label: string;
+    color: string;
+  };
+  startTime: string;
+  progress: number;
+  operators: OperatorI[];
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  description?: string;
+}
+
 export enum RuleCategory {
   DATA_VALIDATION = "DATA_VALIDATION",
   MISSING_VALUE_HANDLING = "MISSING_VALUE_HANDLING",

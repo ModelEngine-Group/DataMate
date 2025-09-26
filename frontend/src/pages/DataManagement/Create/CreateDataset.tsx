@@ -13,9 +13,9 @@ import {
 } from "antd";
 import RadioCard from "@/components/RadioCard";
 import { Link, useNavigate, useParams } from "react-router";
-import { useImportFile } from "./hooks/useImportFile";
-import { datasetTypes } from "./dataset-model";
-import { queryDatasetByIdUsingGet } from "./dataset-apis";
+import { useImportFile } from "../hooks/useImportFile";
+import { datasetTypes } from "../dataset-model";
+import { queryDatasetByIdUsingGet } from "../dataset-apis";
 
 const dataSourceOptions = [
   { label: "本地上传", value: "local" },

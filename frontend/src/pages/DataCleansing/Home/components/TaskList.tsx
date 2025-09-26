@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Table, Progress, Badge, Button, Tooltip, Card } from "antd";
+import { Table, Progress, Badge, Button, Tooltip, Card, App } from "antd";
 import {
   PlayCircleOutlined,
   PauseCircleOutlined,
@@ -9,14 +9,20 @@ import {
 import { SearchControls } from "@/components/SearchControls";
 import CardView from "@/components/CardView";
 import { useNavigate } from "react-router";
-import { queryCleaningJobsUsingGet } from "../cleansing-apis";
-import { TaskStatusMap, templateTypesMap } from "../cleansing-model";
+import {
+  deleteCleaningJobByIdUsingDelete,
+  executeCleaningJobUsingPost,
+  queryCleaningJobsUsingGet,
+  stopCleaningJobUsingPost,
+} from "../../cleansing-apis";
+import { TaskStatusMap, templateTypesMap } from "../../cleansing-model";
 import type { Dataset } from "@/types/dataset";
-import { JobStatus } from "@/types/cleansing";
+import { JobStatus, type CleansingTask } from "@/types/cleansing";
 import useFetchData from "@/hooks/useFetchData";
 
 export default function TaskList() {
   const navigate = useNavigate();
+  const { message } = App.useApp();
   const [viewMode, setViewMode] = useState<"card" | "list">("list");
   const filterOptions = [
     {
@@ -64,11 +70,23 @@ export default function TaskList() {
     navigate("/data/cleansing/task-detail/" + task.id);
   };
 
-  const pauseTask = () => {};
+  const pauseTask = async (item: CleansingTask) => {
+    await stopCleaningJobUsingPost(item.id);
+    message.success("任务已暂停");
+    fetchData();
+  };
 
-  const startTask = () => {};
+  const startTask = async (item: CleansingTask) => {
+    await executeCleaningJobUsingPost(item.id);
+    message.success("任务已启动");
+    fetchData();
+  };
 
-  const deleteTask = () => {};
+  const deleteTask = async (item: CleansingTask) => {
+    await deleteCleaningJobByIdUsingDelete(item.id);
+    message.success("任务已删除");
+    fetchData();
+  };
 
   const taskOperations = (record) => {
     const isRunning = record.status.value === JobStatus.RUNNING;

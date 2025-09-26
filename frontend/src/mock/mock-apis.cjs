@@ -32,20 +32,20 @@ const MockAPI = {
   // 数据清洗接口
   queryCleaningRulesUsingGet: "/v1/cleaning/rules", // 获取清洗规则列表
   createCleaningRuleUsingPost: "/v1/cleaning/rules", //创建清洗规则
-  queryCleaningRuleByIdUsingGet: "/v1/cleaning/rules/{ruleId}", // 根据ID获取清洗规则详情
-  updateCleaningRuleByIdUsingPut: "/v1/cleaning/rules/{ruleId}", // 更新清洗规则
-  deleteCleaningRuleByIdUsingDelete: "/v1/cleaning/rules/{ruleId}", // 删除清洗规则
+  queryCleaningRuleByIdUsingGet: "/v1/cleaning/rules/:ruleId", // 根据ID获取清洗规则详情
+  updateCleaningRuleByIdUsingPut: "/v1/cleaning/rules/:ruleId", // 更新清洗规则
+  deleteCleaningRuleByIdUsingDelete: "/v1/cleaning/rules/:ruleId", // 删除清洗规则
   queryCleaningJobsUsingPost: "/v1/cleaning/jobs", // 获取清洗任务列表
   createCleaningJobUsingPost: "/v1/cleaning/jobs/create", // 创建清洗任务
-  queryCleaningJobByIdUsingGet: "/v1/cleaning/jobs/{jobId}", // 根据ID获取清洗任务详情
-  deleteCleaningJobByIdUsingDelete: "/v1/cleaning/jobs/{jobId}", // 删除清洗任务
-  executeCleaningJobUsingPost: "/v1/cleaning/jobs/{jobId}/execute", // 执行清洗任务
-  stopCleaningJobUsingPost: "/v1/cleaning/jobs/{jobId}/stop", // 停止清洗任务
+  queryCleaningJobByIdUsingGet: "/v1/cleaning/jobs/:jobId", // 根据ID获取清洗任务详情
+  deleteCleaningJobByIdUsingDelete: "/v1/cleaning/jobs/:jobId", // 删除清洗任务
+  executeCleaningJobUsingPost: "/v1/cleaning/jobs/:jobId/execute", // 执行清洗任务
+  stopCleaningJobUsingPost: "/v1/cleaning/jobs/:jobId/stop", // 停止清洗任务
   queryCleaningTemplatesUsingPost: "/v1/cleaning/templates", // 获取清洗模板列表
   createCleaningTemplateUsingPost: "/v1/cleaning/templates/create", // 创建清洗模板
-  queryCleaningTemplateByIdUsingGet: "/v1/cleaning/templates/{templateId}", // 根据ID获取清洗模板详情
+  queryCleaningTemplateByIdUsingGet: "/v1/cleaning/templates/:templateId", // 根据ID获取清洗模板详情
   deleteCleaningTemplateByIdUsingDelete:
-    "/v1/cleaning/templates/{templateId}", // 删除清洗模板
+    "/v1/cleaning/templates/:templateId", // 删除清洗模板
 };
 
 module.exports = addMockPrefix("/api", MockAPI);

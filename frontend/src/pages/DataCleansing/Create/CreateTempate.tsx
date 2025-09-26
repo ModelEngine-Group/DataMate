@@ -12,7 +12,7 @@ import { templateTypes, OPERATOR_CATEGORIES } from "@/mock/cleansing";
 import {
   createCleaningTemplateUsingPost,
   queryCleaningTemplatesUsingPost,
-} from "./cleansing-apis";
+} from "../cleansing-apis";
 
 const { TextArea } = Input;
 

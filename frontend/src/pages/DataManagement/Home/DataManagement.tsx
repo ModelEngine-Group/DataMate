@@ -2,7 +2,6 @@ import { Card, Button, Statistic, Table, Tooltip, Tag, App } from "antd";
 import {
   DownloadOutlined,
   EditOutlined,
-  PlusCircleOutlined,
   DeleteOutlined,
   PlusOutlined,
 } from "@ant-design/icons";
@@ -12,13 +11,13 @@ import { useEffect, useState } from "react";
 import { SearchControls } from "@/components/SearchControls";
 import CardView from "@/components/CardView";
 import type { Dataset } from "@/types/dataset";
-import { datasetStatusMap, datasetTypeMap, mapDataset } from "./dataset-model";
+import { datasetStatusMap, datasetTypeMap, mapDataset } from "../dataset-model";
 import useFetchData from "@/hooks/useFetchData";
 import {
   downloadDatasetUsingGet,
   getDatasetStatisticsUsingGet,
   queryDatasetsUsingGet,
-} from "./dataset-apis";
+} from "../dataset-apis";
 
 export default function DatasetManagementPage() {
   const navigate = useNavigate();

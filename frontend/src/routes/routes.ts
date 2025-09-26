@@ -2,17 +2,17 @@ import { createBrowserRouter } from "react-router";
 import Home from "../pages/Home/Home";
 import MainLayout from "../pages/Layout/MainLayout";
 
-import DataCollection from "@/pages/DataCollection/DataCollection";
-import CollectionTaskCreate from "@/pages/DataCollection/CreateTask";
+import DataCollection from "@/pages/DataCollection/Home/DataCollection";
+import CollectionTaskCreate from "@/pages/DataCollection/Create/CreateTask";
 
-import DatasetManagement from "@/pages/DataManagement/DataManagement";
-import DatasetCreate from "@/pages/DataManagement/CreateDataset";
-import DatasetDetail from "@/pages/DataManagement/DatasetDetail";
+import DatasetManagement from "@/pages/DataManagement/Home/DataManagement";
+import DatasetCreate from "@/pages/DataManagement/Create/CreateDataset";
+import DatasetDetail from "@/pages/DataManagement/Detail/DatasetDetail";
 
-import DataCleansing from "@/pages/DataCleansing/DataCleansing";
-import CleansingTaskCreate from "@/pages/DataCleansing/CreateTask";
-import CleansingTaskDetail from "@/pages/DataCleansing/TaskDetail";
-import CleansingTemplateCreate from "@/pages/DataCleansing/CreateTempate";
+import DataCleansing from "@/pages/DataCleansing/Home/DataCleansing";
+import CleansingTaskCreate from "@/pages/DataCleansing/Create/CreateTask";
+import CleansingTaskDetail from "@/pages/DataCleansing/Detail/TaskDetail";
+import CleansingTemplateCreate from "@/pages/DataCleansing/Create/CreateTempate";
 
 import DataAnnotation from "@/pages/DataAnnotation/DataAnnotation";
 import AnnotationTaskCreate from "@/pages/DataAnnotation/CreateTask";

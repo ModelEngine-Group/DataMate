@@ -4,8 +4,8 @@ import type { ColumnsType } from "antd/es/table";
 import dayjs from "dayjs";
 import { SearchControls } from "@/components/SearchControls";
 import type { CollectionLog } from "@/types/collection";
-import { queryExecutionLogUsingPost } from "../data-collection-apis";
-import { LogStatusMap, LogTriggerTypeMap } from "../collection-model";
+import { queryExecutionLogUsingPost } from "../../data-collection-apis";
+import { LogStatusMap, LogTriggerTypeMap } from "../../collection-model";
 
 const filterOptions = [
   {

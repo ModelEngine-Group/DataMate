@@ -7,9 +7,9 @@ import {
   executeTaskByIdUsingPost,
   queryTasksUsingPost,
   stopTaskByIdUsingPost,
-} from "../data-collection-apis";
+} from "../../data-collection-apis";
 import { TaskStatus, type CollectionTask } from "@/types/collection";
-import { StatusMap, SyncModeMap } from "../collection-model";
+import { StatusMap, SyncModeMap } from "../../collection-model";
 import { useDebouncedEffect } from "@/hooks/useDebouncedEffect";
 
 export default function TaskManagement() {

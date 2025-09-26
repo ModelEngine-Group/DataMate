@@ -4,7 +4,7 @@ import {
   AppstoreOutlined,
 } from "@ant-design/icons";
 import CardView from "@/components/CardView";
-import { queryCleaningTemplatesUsingPost } from "../cleansing-apis";
+import { queryCleaningTemplatesUsingPost } from "../../cleansing-apis";
 import { useNavigate } from "react-router";
 import useFetchData from "@/hooks/useFetchData";
 
