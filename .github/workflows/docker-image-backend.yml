@@ -5,14 +5,14 @@ on:
     branches: [ "develop_930" ]
     paths:
       - 'backend/**'
-      - 'build/backend/**'
-      - '.github/workflows/**'
+      - 'scripts/images/backend/**'
+      - '.github/workflows/docker-image-backend.yml'
   pull_request:
     branches: [ "develop_930" ]
     paths:
       - 'backend/**'
-      - 'build/backend/**'
-      - '.github/workflows/**'
+      - 'scripts/images/backend/**'
+      - '.github/workflows/docker-image-backend.yml'
   workflow_dispatch:
 
 jobs:
@@ -23,5 +23,5 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: Build the Docker image
+    - name: Build the Backend Docker image
       run: make build-backend

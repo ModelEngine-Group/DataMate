@@ -10,6 +10,6 @@ RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi && \
 FROM nginx:1.29 AS runner
 
 COPY --from=builder /app/dist /opt/frontend
-COPY scripts/image/frontend/edm.conf /etc/nginx/conf.d/default.conf
+COPY scripts/images/frontend/edm.conf /etc/nginx/conf.d/default.conf
 
 CMD ["nginx", "-g", "daemon off;"]

@@ -30,4 +30,4 @@ RUN pip config --user set global.index-url https://mirrors.aliyun.com/pypi/simpl
 
 COPY --from=builder /DataX/target/datax/datax /opt/datax
 
-COPY scripts/image/datax/app.py /opt/datax/bin/app.py
+COPY scripts/images/datax/app.py /opt/datax/bin/app.py

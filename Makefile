@@ -45,27 +45,27 @@ uninstall-%:
 # build
 .PHONY: mineru-docker-build
 mineru-docker-build:
-	sh scripts/image/mineru/build.sh
+	sh scripts/images/mineru/build.sh
 
 .PHONY: datax-docker-build
 datax-docker-build:
-	sh scripts/image/datax/build.sh
+	sh scripts/images/datax/build.sh
 
 .PHONY: data-juicer-docker-build
 data-juicer-docker-build:
-	sh scripts/image/data-juicer/build.sh
+	sh scripts/images/data-juicer/build.sh
 
 .PHONY: unstructured-docker-build
 unstructured-docker-build:
-	sh scripts/image/unstructured/build.sh
+	sh scripts/images/unstructured/build.sh
 
 .PHONY: backend-docker-build
 backend-docker-build:
-	sh scripts/image/backend/build.sh
+	sh scripts/images/backend/build.sh
 
 .PHONY: frontend-docker-build
 frontend-docker-build:
-	sh scripts/image/frontend/build.sh
+	sh scripts/images/frontend/build.sh
 
 .PHONY: mineru-k8s-install
 mineru-k8s-install:

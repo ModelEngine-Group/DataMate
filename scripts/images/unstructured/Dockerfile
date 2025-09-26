@@ -6,4 +6,4 @@ RUN pip config --user set global.index https://mirrors.huaweicloud.com/repositor
     pip install fastapi uvicorn && \
     pip cache purge
 
-COPY scripts/image/unstructured/app.py /app/app.py
+COPY scripts/images/unstructured/app.py /app/app.py
