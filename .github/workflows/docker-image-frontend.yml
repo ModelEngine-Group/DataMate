@@ -1,0 +1,27 @@
+name: Frontend Docker Image CI
+
+on:
+  push:
+    branches: [ "develop_930" ]
+    paths:
+      - 'frontend/**'
+      - 'scripts/images/frontend/**'
+      - '.github/workflows/docker-image-frontend.yml'
+  pull_request:
+    branches: [ "develop_930" ]
+    paths:
+      - 'frontend/**'
+      - 'scripts/images/frontend/**'
+      - '.github/workflows/docker-image-frontend.yml'
+  workflow_dispatch:
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the Frontend Docker image
+        run: make build-frontend

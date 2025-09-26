@@ -1,7 +1,7 @@
 FROM maven:3-amazoncorretto-21-debian AS builder
 
 COPY backend/ /opt/backend
-COPY scripts/image/backend/settings.xml /opt/backend
+COPY scripts/images/backend/settings.xml /opt/backend
 
 RUN cd /opt/backend && \
     mvn -U clean package -s settings.xml -Dmaven.test.skip=true
