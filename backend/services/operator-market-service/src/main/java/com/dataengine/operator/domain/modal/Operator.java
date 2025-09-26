@@ -14,11 +14,7 @@ public class Operator {
 
     private String description;
 
-    private String language;
-
     private String version;
-
-    private String modal;
 
     private String inputs;
 

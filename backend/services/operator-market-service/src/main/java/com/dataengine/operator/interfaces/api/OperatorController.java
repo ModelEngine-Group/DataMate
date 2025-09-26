@@ -6,7 +6,6 @@ import com.dataengine.operator.infrastructure.persistence.mapper.OperatorMapper;
 import com.dataengine.operator.interfaces.dto.*;
 import com.dataengine.operator.application.OperatorService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -22,8 +21,10 @@ public class OperatorController implements OperatorApi {
 
     @Override
     public ResponseEntity<List<OperatorResponse>> operatorsListPost(OperatorsListPostRequest request) {
-        List<Operator> allOperators = operatorMapper.findAllOperators();
-        List<OperatorResponse> responses = allOperators.stream()
+        Integer offset = (request.getPage() - 1) * request.getSize();
+        List<Operator> filteredOperators = operatorMapper.findOperatorsByCriteria(request.getSize(), offset,
+            request.getOperatorName(), request.getCategories(), request.getIsStar());
+        List<OperatorResponse> responses = filteredOperators.stream()
             .map(OperatorConverter.INSTANCE::operatorToResponse).toList();
         return ResponseEntity.ok(responses);
     }
@@ -48,4 +49,3 @@ public class OperatorController implements OperatorApi {
         return ResponseEntity.ok(operatorService.uploadOperator(file, description));
     }
 }
-
