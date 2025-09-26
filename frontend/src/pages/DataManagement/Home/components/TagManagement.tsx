@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Drawer, Input, Button } from "antd";
 import { Plus, Edit, Save, Trash2, TagIcon, X } from "lucide-react";
-import { useTagsOperation } from "../hooks/useTagsOperation";
+import { useTagsOperation } from "../../hooks/useTagsOperation";
 
 const TagManager: React.FC = () => {
   const {

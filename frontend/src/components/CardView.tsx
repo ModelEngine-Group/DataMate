@@ -32,12 +32,14 @@ interface CardViewProps<T> {
     pageSize: number;
     total: number;
   };
-  operations: {
-    key: string;
-    label: string;
-    icon?: React.JSX.Element;
-    onClick?: (item: T) => void;
-  }[];
+  operations:
+    | {
+        key: string;
+        label: string;
+        icon?: React.JSX.Element;
+        onClick?: (item: T) => void;
+      }[]
+    | ((item: T) => ItemType[]);
   onView: (item: T) => void;
   onFavorite?: (item: T) => void;
   isFavorite?: (item: T) => boolean;
@@ -54,6 +56,9 @@ function CardView<T extends BaseCardDataType>(props: CardViewProps<T>) {
       </div>
     );
   }
+
+  const ops = (item) =>
+    typeof operations === "function" ? operations(item) : operations;
 
   return (
     <div className="flex-1 overflow-auto">
@@ -133,9 +138,9 @@ function CardView<T extends BaseCardDataType>(props: CardViewProps<T>) {
                 <Dropdown
                   trigger={["click"]}
                   menu={{
-                    items: operations as ItemType[],
+                    items: ops(item),
                     onClick: ({ key }) => {
-                      const operation = operations.find((op) => op.key === key);
+                      const operation = ops(item).find((op) => op.key === key);
                       if (operation?.onClick) {
                         operation.onClick(item);
                       }
