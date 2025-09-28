@@ -1,6 +1,7 @@
 // 首页数据获取
 import { useState } from "react";
 import { useDebouncedEffect } from "./useDebouncedEffect";
+import Loading from "@/utils/loading";
 
 export default function useFetchData<T>(
   fetchFunc: (params?: any) => Promise<any>,
@@ -52,6 +53,7 @@ export default function useFetchData<T>(
 
   async function fetchData() {
     const { keywords, filter, current, pageSize } = searchParams;
+    Loading.show();
     const { data } = await fetchFunc({
       ...filter,
       keywords,
@@ -67,6 +69,7 @@ export default function useFetchData<T>(
     }));
     const result = data?.results ?? [];
     setTableData(result.map(mapDataFunc));
+    Loading.hide();
 
     console.log(data, result.map(mapDataFunc));
   }
