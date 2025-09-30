@@ -27,7 +27,7 @@ public class TagController implements TagApi {
     }
 
     @Override
-    public ResponseEntity<List<TagResponse>> tagsGet(String keyword) {
+    public ResponseEntity<List<TagResponse>> getTags(String keyword) {
         List<Tag> tags = tagApplicationService.searchTags(keyword);
 
         List<TagResponse> response = tags.stream()
@@ -38,7 +38,7 @@ public class TagController implements TagApi {
     }
 
     @Override
-    public ResponseEntity<TagResponse> tagsPost(CreateTagRequest createTagRequest) {
+    public ResponseEntity<TagResponse> createTag(CreateTagRequest createTagRequest) {
         try {
             Tag tag = tagApplicationService.createTag(
                 createTagRequest.getName(),

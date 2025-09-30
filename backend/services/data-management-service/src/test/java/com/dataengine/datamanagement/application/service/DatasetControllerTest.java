@@ -1,6 +1,5 @@
 package com.dataengine.datamanagement.application.service;
 
-import com.dataengine.datamanagement.application.service.DatasetApplicationService;
 import com.dataengine.datamanagement.domain.model.dataset.Dataset;
 import com.dataengine.datamanagement.domain.model.dataset.StatusConstants;
 import com.dataengine.datamanagement.domain.model.dataset.Tag;
@@ -70,7 +69,7 @@ class DatasetControllerTest {
 
     @Test
     @DisplayName("datasetsGet: 正常分页查询数据集")
-    void datasetsGet_success() {
+    void getDatasets_success() {
         // Given
         List<Dataset> datasets = Arrays.asList(sampleDataset);
         Page<Dataset> page = new PageImpl<>(datasets, PageRequest.of(0, 20), 1);
@@ -78,7 +77,7 @@ class DatasetControllerTest {
                 eq(Arrays.asList("tag1", "tag2")), any())).thenReturn(page);
 
         // When
-        ResponseEntity<PagedDatasetResponse> response = controller.datasetsGet(0, 20, "CSV",
+        ResponseEntity<PagedDatasetResponse> response = controller.getDatasets(0, 20, "CSV",
                 "tag1,tag2", "test", "ACTIVE");
 
         // Then
@@ -105,12 +104,12 @@ class DatasetControllerTest {
 
     @Test
     @DisplayName("datasetsGet: 默认分页参数")
-    void datasetsGet_defaultPaging() {
+    void getDatasets_defaultPaging() {
         Page<Dataset> emptyPage = new PageImpl<>(Collections.emptyList(), PageRequest.of(0, 20), 0);
         when(datasetApplicationService.getDatasets(isNull(), isNull(), isNull(), isNull(), any()))
                 .thenReturn(emptyPage);
 
-        ResponseEntity<PagedDatasetResponse> response = controller.datasetsGet(null, null, null,
+        ResponseEntity<PagedDatasetResponse> response = controller.getDatasets(null, null, null,
                 null, null, null);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -121,23 +120,23 @@ class DatasetControllerTest {
 
     @Test
     @DisplayName("datasetsGet: 标签参数解析")
-    void datasetsGet_tagsProcessing() {
+    void getDatasets_tagsProcessing() {
         Page<Dataset> page = new PageImpl<>(Collections.emptyList(), PageRequest.of(0, 20), 0);
         when(datasetApplicationService.getDatasets(isNull(), isNull(), isNull(), any(), any()))
                 .thenReturn(page);
 
         // 测试空标签
-        controller.datasetsGet(null, null, null, "", null, null);
+        controller.getDatasets(null, null, null, "", null, null);
         verify(datasetApplicationService).getDatasets(isNull(), isNull(), isNull(), isNull(), any());
 
         // 测试空白标签
-        controller.datasetsGet(null, null, null, "   ", null, null);
+        controller.getDatasets(null, null, null, "   ", null, null);
         verify(datasetApplicationService, times(2)).getDatasets(isNull(), isNull(), isNull(), isNull(), any());
     }
 
     @Test
     @DisplayName("datasetsPost: 正常创建数据集")
-    void datasetsPost_success() {
+    void createDataset_success() {
         CreateDatasetRequest request = new CreateDatasetRequest();
         request.setName("New Dataset");
         request.setDescription("New description");
@@ -150,7 +149,7 @@ class DatasetControllerTest {
                 eq("JSON"), eq(Arrays.asList("tag1", "tag2")), eq(123L), eq("/new/path"),
                 isNull(), eq("system"))).thenReturn(sampleDataset);
 
-        ResponseEntity<DatasetResponse> response = controller.datasetsPost(request);
+        ResponseEntity<DatasetResponse> response = controller.createDataset(request);
 
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertNotNull(response.getBody());
@@ -162,7 +161,7 @@ class DatasetControllerTest {
 
     @Test
     @DisplayName("datasetsPost: 数据源ID转换异常时传入null")
-    void datasetsPost_invalidDataSourceId() {
+    void createDataset_invalidDataSourceId() {
         CreateDatasetRequest request = new CreateDatasetRequest();
         request.setName("New Dataset");
         request.setDataSource("invalid-id");
@@ -171,7 +170,7 @@ class DatasetControllerTest {
                 isNull(), isNull(), isNull(), isNull(), isNull(), eq("system")))
                 .thenReturn(sampleDataset);
 
-        ResponseEntity<DatasetResponse> response = controller.datasetsPost(request);
+        ResponseEntity<DatasetResponse> response = controller.createDataset(request);
 
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         verify(datasetApplicationService).createDataset(eq("New Dataset"), isNull(),
@@ -180,14 +179,14 @@ class DatasetControllerTest {
 
     @Test
     @DisplayName("datasetsPost: 服务抛异常时返回400")
-    void datasetsPost_serviceException() {
+    void createDataset_serviceException() {
         CreateDatasetRequest request = new CreateDatasetRequest();
         request.setName("Duplicate Dataset");
 
         when(datasetApplicationService.createDataset(anyString(), any(), any(), any(),
                 any(), any(), any(), anyString())).thenThrow(new IllegalArgumentException("Already exists"));
 
-        ResponseEntity<DatasetResponse> response = controller.datasetsPost(request);
+        ResponseEntity<DatasetResponse> response = controller.createDataset(request);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         assertNull(response.getBody());
@@ -195,10 +194,10 @@ class DatasetControllerTest {
 
     @Test
     @DisplayName("datasetsDatasetIdGet: 正常获取数据集详情")
-    void datasetsDatasetIdGet_success() {
+    void getDatasetById_success() {
         when(datasetApplicationService.getDataset("dataset-id-1")).thenReturn(sampleDataset);
 
-        ResponseEntity<DatasetResponse> response = controller.datasetsDatasetIdGet("dataset-id-1");
+        ResponseEntity<DatasetResponse> response = controller.getDatasetById("dataset-id-1");
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
@@ -216,11 +215,11 @@ class DatasetControllerTest {
 
     @Test
     @DisplayName("datasetsDatasetIdGet: 数据集不存在时返回404")
-    void datasetsDatasetIdGet_notFound() {
+    void getDatasetById_notFound() {
         when(datasetApplicationService.getDataset("not-exist"))
                 .thenThrow(new IllegalArgumentException("Dataset not found"));
 
-        ResponseEntity<DatasetResponse> response = controller.datasetsDatasetIdGet("not-exist");
+        ResponseEntity<DatasetResponse> response = controller.getDatasetById("not-exist");
 
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
         assertNull(response.getBody());
@@ -229,7 +228,7 @@ class DatasetControllerTest {
 
     @Test
     @DisplayName("datasetsDatasetIdPut: 状态为null时传入null")
-    void datasetsDatasetIdPut_nullStatus() {
+    void updateDataset_nullStatus() {
         UpdateDatasetRequest request = new UpdateDatasetRequest();
         request.setName("Updated Name");
         request.setStatus(null);
@@ -237,7 +236,7 @@ class DatasetControllerTest {
         when(datasetApplicationService.updateDataset(eq("dataset-id-1"), eq("Updated Name"),
                 isNull(), isNull(), isNull())).thenReturn(sampleDataset);
 
-        ResponseEntity<DatasetResponse> response = controller.datasetsDatasetIdPut("dataset-id-1", request);
+        ResponseEntity<DatasetResponse> response = controller.updateDataset("dataset-id-1", request);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         verify(datasetApplicationService).updateDataset(eq("dataset-id-1"), eq("Updated Name"),
@@ -246,14 +245,14 @@ class DatasetControllerTest {
 
     @Test
     @DisplayName("datasetsDatasetIdPut: 数据集不存在时返回404")
-    void datasetsDatasetIdPut_notFound() {
+    void updateDataset_notFound() {
         UpdateDatasetRequest request = new UpdateDatasetRequest();
         request.setName("Updated Name");
 
         when(datasetApplicationService.updateDataset(anyString(), anyString(), any(), any(), any()))
                 .thenThrow(new IllegalArgumentException("Dataset not found"));
 
-        ResponseEntity<DatasetResponse> response = controller.datasetsDatasetIdPut("not-exist", request);
+        ResponseEntity<DatasetResponse> response = controller.updateDataset("not-exist", request);
 
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
         assertNull(response.getBody());
@@ -261,10 +260,10 @@ class DatasetControllerTest {
 
     @Test
     @DisplayName("datasetsDatasetIdDelete: 正常删除数据集")
-    void datasetsDatasetIdDelete_success() {
+    void deleteDataset_success() {
         doNothing().when(datasetApplicationService).deleteDataset("dataset-id-1");
 
-        ResponseEntity<Void> response = controller.datasetsDatasetIdDelete("dataset-id-1");
+        ResponseEntity<Void> response = controller.deleteDataset("dataset-id-1");
 
         assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
         verify(datasetApplicationService).deleteDataset("dataset-id-1");
@@ -272,18 +271,18 @@ class DatasetControllerTest {
 
     @Test
     @DisplayName("datasetsDatasetIdDelete: 数据集不存在时返回404")
-    void datasetsDatasetIdDelete_notFound() {
+    void deleteDataset_notFound() {
         doThrow(new IllegalArgumentException("Dataset not found"))
                 .when(datasetApplicationService).deleteDataset("not-exist");
 
-        ResponseEntity<Void> response = controller.datasetsDatasetIdDelete("not-exist");
+        ResponseEntity<Void> response = controller.deleteDataset("not-exist");
 
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
     }
 
     @Test
     @DisplayName("datasetsDatasetIdStatisticsGet: 正常获取统计信息")
-    void datasetsDatasetIdStatisticsGet_success() {
+    void getDatasetStatistics_success() {
         Map<String, Object> stats = new HashMap<>();
         stats.put("totalFiles", 100);
         stats.put("completedFiles", 80);
@@ -294,7 +293,7 @@ class DatasetControllerTest {
 
         when(datasetApplicationService.getDatasetStatistics("dataset-id-1")).thenReturn(stats);
 
-        ResponseEntity<DatasetStatisticsResponse> response = controller.datasetsDatasetIdStatisticsGet("dataset-id-1");
+        ResponseEntity<DatasetStatisticsResponse> response = controller.getDatasetStatistics("dataset-id-1");
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
@@ -310,11 +309,11 @@ class DatasetControllerTest {
 
     @Test
     @DisplayName("datasetsDatasetIdStatisticsGet: 数据集不存在时返回404")
-    void datasetsDatasetIdStatisticsGet_notFound() {
+    void getDatasetStatistics_notFound() {
         when(datasetApplicationService.getDatasetStatistics("not-exist"))
                 .thenThrow(new IllegalArgumentException("Dataset not found"));
 
-        ResponseEntity<DatasetStatisticsResponse> response = controller.datasetsDatasetIdStatisticsGet("not-exist");
+        ResponseEntity<DatasetStatisticsResponse> response = controller.getDatasetStatistics("not-exist");
 
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
         assertNull(response.getBody());
@@ -322,11 +321,11 @@ class DatasetControllerTest {
 
     @Test
     @DisplayName("datasetsDatasetIdStatisticsGet: 其他异常时返回500")
-    void datasetsDatasetIdStatisticsGet_internalError() {
+    void getDatasetStatistics_internalError() {
         when(datasetApplicationService.getDatasetStatistics("dataset-id-1"))
                 .thenThrow(new RuntimeException("Internal error"));
 
-        ResponseEntity<DatasetStatisticsResponse> response = controller.datasetsDatasetIdStatisticsGet("dataset-id-1");
+        ResponseEntity<DatasetStatisticsResponse> response = controller.getDatasetStatistics("dataset-id-1");
 
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
         assertNull(response.getBody());
