@@ -20,7 +20,7 @@ import { SearchControls } from "@/components/SearchControls";
 import { mockTasks } from "@/mock/evaluation";
 import CardView from "@/components/CardView";
 import { useNavigate } from "react-router";
-import type { Dataset } from "@/types/dataset";
+import type { Dataset } from "@/pages/DataManagement/dataset.model";
 
 export default function DataEvaluationPage() {
   const navigate = useNavigate();

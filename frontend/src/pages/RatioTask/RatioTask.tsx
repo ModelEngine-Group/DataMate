@@ -20,7 +20,7 @@ import {
   Download as DownloadIcon,
   BarChart3,
 } from "lucide-react";
-import type { RatioTask } from "@/types/ratio";
+import type { RatioTask } from "@/pages/RatioTask/ratio";
 import { mockRatioTasks } from "@/mock/ratio";
 import { useNavigate } from "react-router";
 import CardView from "@/components/CardView";

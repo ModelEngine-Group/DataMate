@@ -1,74 +1,52 @@
-import {
-  LogStatus,
-  SyncMode,
-  TaskStatus,
-  TriggerType,
-} from "@/types/collection";
+export enum TaskStatus {
+  DRAFT = "DRAFT",
+  READY = "READY",
+  RUNNING = "RUNNING",
+  SUCCESS = "SUCCESS",
+  FAILED = "FAILED",
+  STOPPED = "STOPPED",
+}
 
-export const StatusMap: Record<
-  TaskStatus,
-  { label: string; color: string; value: TaskStatus }
-> = {
-  [TaskStatus.RUNNING]: {
-    label: "运行",
-    color: "blue",
-    value: TaskStatus.RUNNING,
-  },
-  [TaskStatus.STOPPED]: {
-    label: "停止",
-    color: "gray",
-    value: TaskStatus.STOPPED,
-  },
-  [TaskStatus.FAILED]: {
-    label: "错误",
-    color: "red",
-    value: TaskStatus.FAILED,
-  },
-  [TaskStatus.SUCCESS]: {
-    label: "成功",
-    color: "green",
-    value: TaskStatus.SUCCESS,
-  },
-  [TaskStatus.DRAFT]: {
-    label: "草稿",
-    color: "orange",
-    value: TaskStatus.DRAFT,
-  },
-  [TaskStatus.READY]: { label: "就绪", color: "cyan", value: TaskStatus.READY },
-};
+export enum SyncMode {
+  ONCE = "ONCE",
+  SCHEDULED = "SCHEDULED",
+}
 
-export const SyncModeMap: Record<SyncMode, { label: string; value: SyncMode }> =
-  {
-    [SyncMode.ONCE]: { label: "立即同步", value: SyncMode.ONCE },
-    [SyncMode.SCHEDULED]: { label: "定时同步", value: SyncMode.SCHEDULED },
-  };
+export interface CollectionTask {
+  id: string;
+  name: string;
+  description: string;
+  config: object; // 具体配置结构根据实际需求定义
+  status: TaskStatus;
+  syncMode: SyncMode;
+  scheduleExpression?: string; // 仅当 syncMode 为 SCHEDULED 时存在
+  lastExecutionId: string;
+  createdAt: string; // ISO date string
+  updatedAt: string; // ISO date string
+}
 
-export const LogStatusMap: Record<
-  LogStatus,
-  { label: string; color: string; value: LogStatus }
-> = {
-  [LogStatus.SUCCESS]: {
-    label: "成功",
-    color: "green",
-    value: LogStatus.SUCCESS,
-  },
-  [LogStatus.FAILED]: {
-    label: "失败",
-    color: "red",
-    value: LogStatus.FAILED,
-  },
-  [LogStatus.RUNNING]: {
-    label: "运行中",
-    color: "blue",
-    value: LogStatus.RUNNING,
-  },
-};
+export enum LogStatus {
+  RUNNING = "RUNNING",
+  SUCCESS = "SUCCESS",
+  FAILED = "FAILED",
+}
 
-export const LogTriggerTypeMap: Record<
-  TriggerType,
-  { label: string; value: TriggerType }
-> = {
-  [TriggerType.MANUAL]: { label: "手动", value: TriggerType.MANUAL },
-  [TriggerType.SCHEDULED]: { label: "定时", value: TriggerType.SCHEDULED },
-  [TriggerType.API]: { label: "API", value: TriggerType.API },
-};
+export enum TriggerType {
+  MANUAL = "MANUAL",
+  SCHEDULED = "SCHEDULED",
+  API = "API",
+}
+
+export interface CollectionLog {
+  id: string;
+  taskId: string;
+  taskName: string;
+  status: TaskStatus; // 任务执行状态
+  triggerType: TriggerType; // 触发类型，如手动触发、定时触发等
+  startTime: string; // ISO date string
+  endTime: string; // ISO date string
+  duration: string; // 格式化的持续时间字符串
+  retryCount: number;
+  processId: string;
+  errorMessage?: string; // 可选，错误信息
+}

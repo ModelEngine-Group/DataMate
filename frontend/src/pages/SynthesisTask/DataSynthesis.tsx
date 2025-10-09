@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Tabs, Button, Card } from "antd";
 import { Plus, ArrowRight } from "lucide-react";
-import DataAnnotation from "../DataAnnotation/components/TextAnnotation";
+import DataAnnotation from "../DataAnnotation/Annotate/components/TextAnnotation";
 import { useNavigate } from "react-router";
 import InstructionTemplateTab from "./components/InstructionTemplateTab";
 import SynthesisTaskTab from "./components/SynthesisTaskTab";

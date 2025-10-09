@@ -54,10 +54,6 @@ const TopLoadingBar = () => {
     };
   }, []);
 
-  useEffect(() => {
-    console.log(progress);
-  }, [progress]);
-
   if (!isVisible) return null;
 
   return (

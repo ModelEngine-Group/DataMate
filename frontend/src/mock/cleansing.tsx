@@ -1,4 +1,4 @@
-import type { OperatorI } from "@/types/cleansing";
+import type { OperatorI } from "@/pages/DataCleansing/cleansing.interface";
 import {
   DatabaseOutlined,
   FilterOutlined,

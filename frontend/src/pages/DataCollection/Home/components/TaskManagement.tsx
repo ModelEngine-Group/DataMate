@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { Card, Button, Badge, Table, Dropdown, App } from "antd";
 import { EllipsisOutlined } from "@ant-design/icons";
 import { SearchControls } from "@/components/SearchControls";
@@ -7,10 +6,10 @@ import {
   executeTaskByIdUsingPost,
   queryTasksUsingPost,
   stopTaskByIdUsingPost,
-} from "../../data-collection-apis";
-import { TaskStatus, type CollectionTask } from "@/types/collection";
-import { StatusMap, SyncModeMap } from "../../collection-model";
-import { useDebouncedEffect } from "@/hooks/useDebouncedEffect";
+} from "../../collection-apis";
+import { TaskStatus, type CollectionTask } from "../../collection-model";
+import { StatusMap, SyncModeMap } from "../../collection-const";
+import useFetchData from "@/hooks/useFetchData";
 
 export default function TaskManagement() {
   const { message } = App.useApp();
@@ -24,85 +23,39 @@ export default function TaskManagement() {
       ],
     },
   ];
-  const [loadingData, setLoadingData] = useState(false);
-  const [tasks, setTasks] = useState<CollectionTask[]>([]);
-  const [searchParams, setSearchParams] = useState<{
-    searchTerm: string;
-    current: number;
-    pageSize: number;
-    filters: Record<string, string[]>;
-  }>({
-    searchTerm: "",
-    current: 1,
-    pageSize: 10,
-    filters: {},
-  });
-  const [pagination, setPagination] = useState({
-    total: 0,
-    showSizeChanger: true,
-    pageSizeOptions: ["10", "15", "20", "50"],
-    showTotal: (total: number) => `共 ${total} 条`,
-    onChange: (current: number, pageSize?: number) => {
-      setSearchParams((prev) => ({
-        ...prev,
-        current,
-        pageSize: pageSize || prev.pageSize,
-      }));
-    },
-  });
 
-  const refreshTaskList = async () => {
-    setLoadingData(true);
-    try {
-      const res = await queryTasksUsingPost(searchParams);
-      setTasks(res.data.results || []);
-      setPagination((prev) => ({
-        ...prev,
-        total: res.data.totalElements || 0,
-      }));
-    } catch (error) {
-      message.error("获取任务列表失败");
-    } finally {
-      setLoadingData(false);
-    }
-  };
+  const {
+    loading,
+    tableData,
+    pagination,
+    searchParams,
+    setSearchParams,
+    fetchData,
+    handleFiltersChange,
+  } = useFetchData(queryTasksUsingPost);
 
   const handleStartTask = async (taskId: string) => {
     await executeTaskByIdUsingPost(taskId);
     message.success("任务启动请求已发送");
-    refreshTaskList();
+    fetchData();
   };
 
   const handleStopTask = async (taskId: string) => {
     await stopTaskByIdUsingPost(taskId);
     message.success("任务停止请求已发送");
-    refreshTaskList();
+    fetchData();
   };
 
   const handleDeleteTask = async (taskId: string) => {
     await deleteTaskByIdUsingDelete(taskId);
     message.success("任务已删除");
-    refreshTaskList();
+    fetchData();
   };
 
   const handleViewDetail = (record: CollectionTask) => {
     // Implement your view detail logic here
     console.log("Viewing details for task:", record);
   };
-
-  // 新增：SearchControls 筛选变化处理
-  const handleFiltersChange = (filters: Record<string, string[]>) => {
-    console.log(filters);
-
-    setSearchParams((prev) => ({
-      ...prev,
-      filters,
-    }));
-  };
-
-  useDebouncedEffect(() => {
-    refreshTaskList();
-  }, [searchParams]);
 
   const columns = [
     {
@@ -205,11 +158,11 @@ export default function TaskManagement() {
     <div>
       {/* Header Actions */}
       <SearchControls
-        searchTerm={searchParams.searchTerm}
+        searchTerm={searchParams.keywords}
         onSearchChange={(newSearchTerm) =>
           setSearchParams((prev) => ({
             ...prev,
-            searchTerm: newSearchTerm,
+            keywords: newSearchTerm,
             current: 1,
           }))
         }
@@ -230,8 +183,8 @@ export default function TaskManagement() {
       <Card>
         <Table
           columns={columns}
-          dataSource={tasks}
-          loading={loadingData}
+          dataSource={tableData}
+          loading={loading}
           rowKey="id"
           pagination={{
             ...pagination,

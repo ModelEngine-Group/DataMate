@@ -1,8 +1,8 @@
 import { Upload, type UploadFile } from "antd";
 import { InboxOutlined } from "@ant-design/icons";
 import { useState } from "react";
-import type { Dataset } from "@/types/dataset";
-import { uploadDatasetFileUsingPost } from "../dataset-apis";
+import type { Dataset } from "@/pages/DataManagement/dataset.model";
+import { uploadDatasetFileUsingPost } from "../dataset.api";
 
 const { Dragger } = Upload;
 

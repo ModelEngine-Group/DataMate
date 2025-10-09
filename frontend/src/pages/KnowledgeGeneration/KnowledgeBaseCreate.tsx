@@ -30,7 +30,7 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { useNavigate } from "react-router";
-import type { Dataset } from "@/types/dataset";
+import type { Dataset } from "@/pages/DataManagement/dataset.model";
 
 const { TextArea } = Input;
 const { Option } = Select;

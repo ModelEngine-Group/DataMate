@@ -20,7 +20,7 @@ import { ArrowLeft } from "lucide-react";
 import OperatorLibrary from "./components/OperatorLibrary";
 import OperatorOrchestration from "./components/OperatorOrchestration";
 import OperatorConfig from "./components/OperatorConfig";
-import type { OperatorI } from "@/types/cleansing";
+import type { OperatorI } from "@/pages/DataCleansing/cleansing.interface";
 import { OPERATOR_CATEGORIES, operatorList } from "@/mock/cleansing";
 
 const { TextArea } = Input;

@@ -10,14 +10,14 @@ import { Link, useNavigate } from "react-router";
 import { useEffect, useState } from "react";
 import { SearchControls } from "@/components/SearchControls";
 import CardView from "@/components/CardView";
-import type { Dataset } from "@/types/dataset";
-import { datasetStatusMap, datasetTypeMap, mapDataset } from "../dataset-model";
+import type { Dataset } from "@/pages/DataManagement/dataset.model";
+import { datasetStatusMap, datasetTypeMap, mapDataset } from "../dataset.const";
 import useFetchData from "@/hooks/useFetchData";
 import {
   downloadDatasetUsingGet,
   getDatasetStatisticsUsingGet,
   queryDatasetsUsingGet,
-} from "../dataset-apis";
+} from "../dataset.api";
 
 export default function DatasetManagementPage() {
   const navigate = useNavigate();

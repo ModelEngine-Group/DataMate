@@ -14,10 +14,10 @@ import {
   executeCleaningJobUsingPost,
   queryCleaningJobsUsingGet,
   stopCleaningJobUsingPost,
-} from "../../cleansing-apis";
-import { TaskStatusMap, templateTypesMap } from "../../cleansing-model";
-import type { Dataset } from "@/types/dataset";
-import { JobStatus, type CleansingTask } from "@/types/cleansing";
+} from "../../cleansing.api";
+import { TaskStatusMap, templateTypesMap } from "../../cleansing.const";
+import type { Dataset } from "@/pages/DataManagement/dataset.model";
+import { JobStatus, type CleansingTask } from "@/pages/DataCleansing/cleansing.interface";
 import useFetchData from "@/hooks/useFetchData";
 
 export default function TaskList() {
@@ -184,6 +184,7 @@ export default function TaskList() {
       ),
     },
   ];
+
   return (
     <>
       {/* Search and Filters */}

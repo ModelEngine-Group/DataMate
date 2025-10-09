@@ -10,7 +10,7 @@ import {
   DownloadIcon,
   CheckCircle,
 } from "lucide-react";
-import type { SynthesisTask } from "@/types/synthesis";
+import type { SynthesisTask } from "@/pages/SynthesisTask/synthesis";
 import { mockSynthesisTasks } from "@/mock/synthesis";
 import { useNavigate } from "react-router";
 import { SearchControls } from "@/components/SearchControls";

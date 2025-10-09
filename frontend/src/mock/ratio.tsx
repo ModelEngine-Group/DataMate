@@ -1,4 +1,4 @@
-import type { RatioTask } from "@/types/ratio";
+import type { RatioTask } from "@/pages/RatioTask/ratio";
 
 export const mockRatioTasks: RatioTask[] = [
   {

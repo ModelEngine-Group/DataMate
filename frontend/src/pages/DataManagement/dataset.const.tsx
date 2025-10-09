@@ -1,4 +1,4 @@
-import { DatasetType, DatasetStatus, type Dataset } from "@/types/dataset";
+import { DatasetType, DatasetStatus, type Dataset } from "@/pages/DataManagement/dataset.model";
 import { formatBytes } from "@/utils/unit";
 import {
   CheckCircleOutlined,

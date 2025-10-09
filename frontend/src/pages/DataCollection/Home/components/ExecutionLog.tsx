@@ -1,11 +1,10 @@
-import { useEffect, useState } from "react";
-import { Card, Button, Badge, Table, DatePicker, App } from "antd";
+import { Card, Badge, Table } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import dayjs from "dayjs";
 import { SearchControls } from "@/components/SearchControls";
-import type { CollectionLog } from "@/types/collection";
-import { queryExecutionLogUsingPost } from "../../data-collection-apis";
-import { LogStatusMap, LogTriggerTypeMap } from "../../collection-model";
+import type { CollectionLog } from "@/pages/DataCollection/collection-model";
+import { queryExecutionLogUsingPost } from "../../collection-apis";
+import { LogStatusMap, LogTriggerTypeMap } from "../../collection-const";
+import useFetchData from "@/hooks/useFetchData";
 
 const filterOptions = [
   {
@@ -21,37 +20,6 @@ const filterOptions = [
 ];
 
 export default function ExecutionLog() {
-  const { message } = App.useApp();
-  const [loadingData, setLoadingData] = useState(false);
-  const [logs, setLogs] = useState<CollectionLog[]>([]);
-  const [pagination, setPagination] = useState({
-    total: 0,
-    showSizeChanger: true,
-    pageSizeOptions: ["10", "15", "20", "50"],
-    showTotal: (total: number) => `共 ${total} 条`,
-    onChange: (current: number, pageSize?: number) => {
-      setSearchParams((prev) => ({
-        ...prev,
-        current,
-        pageSize: pageSize || prev.pageSize,
-      }));
-    },
-  });
-
-  const [searchParams, setSearchParams] = useState<{
-    keyword: string;
-    current: number;
-    pageSize: number;
-    dateRange: [dayjs.Dayjs | null, dayjs.Dayjs | null] | null;
-    filters: Record<string, string[]>;
-  }>({
-    keyword: "",
-    filters: {},
-    current: 1,
-    pageSize: 10,
-    dateRange: null,
-  });
-
   const handleReset = () => {
     setSearchParams({
       keyword: "",
@@ -62,25 +30,14 @@ export default function ExecutionLog() {
     });
   };
 
-  const fetchLogs = async () => {
-    setLoadingData(true);
-    try {
-      const res = await queryExecutionLogUsingPost(searchParams);
-      setLogs(res.data.results || []);
-      setPagination((prev) => ({
-        ...prev,
-        total: res.data.totalElements || 0,
-      }));
-    } catch (error) {
-      message.error("获取执行日志失败");
-    } finally {
-      setLoadingData(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchLogs();
-  }, [searchParams]);
+  const {
+    loading,
+    tableData,
+    pagination,
+    searchParams,
+    setSearchParams,
+    handleFiltersChange,
+  } = useFetchData(queryExecutionLogUsingPost);
 
   const columns: ColumnsType<CollectionLog> = [
     {
@@ -163,12 +120,7 @@ export default function ExecutionLog() {
             })
           }
           filters={filterOptions}
-          onFiltersChange={(filters) =>
-            setSearchParams({
-              ...searchParams,
-              filters,
-            })
-          }
+          onFiltersChange={handleFiltersChange}
           showViewToggle={false}
           onClearFilters={() =>
             setSearchParams((prev) => ({
@@ -177,7 +129,7 @@ export default function ExecutionLog() {
             }))
           }
           showDatePicker
-          dateRange={searchParams.dateRange}
+          dateRange={searchParams.dateRange || [null, null]}
           onDateChange={(date) =>
             setSearchParams((prev) => ({ ...prev, dateRange: date }))
           }
@@ -188,9 +140,9 @@ export default function ExecutionLog() {
       </div>
       <Card>
         <Table
-          loading={loadingData}
+          loading={loading}
           columns={columns}
-          dataSource={logs}
+          dataSource={tableData}
           rowKey="id"
           pagination={pagination}
           scroll={{ x: "max-content" }}

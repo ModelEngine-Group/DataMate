@@ -1,7 +1,7 @@
-import type { Dataset, DatasetFile } from "@/types/dataset";
+import type { Dataset, DatasetFile } from "@/pages/DataManagement/dataset.model";
 import { App } from "antd";
 import { useState } from "react";
-import { downloadFile, queryDatasetFilesUsingGet } from "../dataset-apis";
+import { downloadFile, queryDatasetFilesUsingGet } from "../dataset.api";
 import { useParams } from "react-router";
 
 export function useFilesOperation(dataset: Dataset) {

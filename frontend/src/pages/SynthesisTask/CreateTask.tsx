@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Dataset } from "@/types/dataset";
+import type { Dataset } from "@/pages/DataManagement/dataset.model";
 import {
   Steps,
   Card,

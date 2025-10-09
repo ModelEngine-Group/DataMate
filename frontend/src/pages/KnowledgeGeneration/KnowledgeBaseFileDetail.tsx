@@ -3,9 +3,7 @@ import {
   Plus,
   Eye,
   Edit,
-  CheckCircle,
   Clock,
-  AlertCircle,
   Trash2,
   Scissors,
   VideoIcon as Vector,
@@ -17,7 +15,6 @@ import {
   Card,
   Button,
   Badge,
-  Progress,
   Input,
   Tabs,
   Modal,
@@ -28,9 +25,8 @@ import {
   mockChunks,
   mockQAPairs,
   sliceOperators,
-  vectorDatabases,
 } from "@/mock/knowledgeBase";
-import type { KnowledgeBase, KBFile } from "@/types/knowledge-base";
+import type { KnowledgeBase, KBFile } from "@/pages/KnowledgeGeneration/knowledge-base.interface";
 import { Link, useNavigate } from "react-router";
 import DetailHeader from "@/components/DetailHeader";
 

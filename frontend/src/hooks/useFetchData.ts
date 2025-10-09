@@ -9,6 +9,8 @@ export default function useFetchData<T>(
 ) {
   // 表格数据
   const [tableData, setTableData] = useState<T[]>([]);
+  // 设置加载状态
+  const [loading, setLoading] = useState(false);
 
   // 搜索参数
   const [searchParams, setSearchParams] = useState({
@@ -54,6 +56,7 @@ export default function useFetchData<T>(
   async function fetchData() {
     const { keywords, filter, current, pageSize } = searchParams;
     Loading.show();
+    setLoading(true);
     const { data } = await fetchFunc({
       ...filter,
       keywords,
@@ -67,10 +70,13 @@ export default function useFetchData<T>(
       ...prev,
       total: data?.totalElements || 0,
     }));
-    const result = data?.results ?? [];
-    setTableData(result.map(mapDataFunc));
+    let result = [];
+    if (mapDataFunc) {
+      result = data?.results.map(mapDataFunc) ?? [];
+    }
+    setTableData(result);
     Loading.hide();
-
+    setLoading(false);
     console.log(data, result.map(mapDataFunc));
   }
 
@@ -83,6 +89,7 @@ export default function useFetchData<T>(
   );
 
   return {
+    loading,
     tableData,
     pagination,
     searchParams,

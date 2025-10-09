@@ -10,7 +10,7 @@ import {
   Checkbox,
 } from "antd";
 import { StarFilled, StarOutlined, SearchOutlined } from "@ant-design/icons";
-import type { OperatorI } from "@/types/cleansing";
+import type { OperatorI } from "@/pages/DataCleansing/cleansing.interface";
 
 interface OperatorListProps {
   operators: OperatorI[];

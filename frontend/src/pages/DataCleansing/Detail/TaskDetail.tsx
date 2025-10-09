@@ -13,9 +13,9 @@ import {
 } from "lucide-react";
 import DetailHeader from "@/components/DetailHeader";
 import { Link, useNavigate, useParams } from "react-router";
-import { deleteCleaningJobByIdUsingDelete, executeCleaningJobUsingPost, queryCleaningJobByIdUsingGet, stopCleaningJobUsingPost } from "../cleansing-apis";
-import { TaskStatusMap } from "../cleansing-model";
-import { JobStatus } from "@/types/cleansing";
+import { deleteCleaningJobByIdUsingDelete, executeCleaningJobUsingPost, queryCleaningJobByIdUsingGet, stopCleaningJobUsingPost } from "../cleansing.api";
+import { TaskStatusMap } from "../cleansing.const";
+import { JobStatus } from "@/pages/DataCleansing/cleansing.interface";
 import BasicInfo from "./components/BasicInfo";
 import OperatorTable from "./components/OperatorTable";
 import FileTable from "./components/FileTable";

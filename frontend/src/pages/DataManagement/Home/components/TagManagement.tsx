@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Drawer, Input, Button } from "antd";
+import { Drawer, Input, Button, Tag } from "antd";
 import { Plus, Edit, Save, Trash2, TagIcon, X } from "lucide-react";
 import { useTagsOperation } from "../../hooks/useTagsOperation";
 
@@ -21,6 +21,17 @@ const TagManager: React.FC = () => {
   const [showTagManager, setShowTagManager] = useState(false);
   const [availableTags, setAvailableTags] = useState<string[]>([]);
 
+  const preparedTags = [
+    { id: "1", name: "重要" },
+    { id: "2", name: "待处理" },
+    { id: "3", name: "已完成" },
+    { id: "4", name: "审核中" },
+    { id: "5", name: "高优先级" },
+    { id: "6", name: "低优先级" },
+    { id: "7", name: "客户A" },
+    { id: "8", name: "客户B" },
+  ];
+
   return (
     <>
       <Button
@@ -37,7 +48,6 @@ const TagManager: React.FC = () => {
         <div className="space-y-4">
           {/* Add New Tag */}
           <div className="space-y-2">
-            <label>添加新标签</label>
             <div className="flex gap-2">
               <Input
                 placeholder="输入标签名称..."
@@ -58,6 +68,16 @@ const TagManager: React.FC = () => {
                 添加
               </Button>
             </div>
+          </div>
+
+          <div className="grid grid-cols-2">
+            <h3 className="font-medium">预置标签</h3>
+            {preparedTags.length > 0 &&
+              preparedTags.map((tag) => (
+                <Tag key={tag.id} color="blue" className="m-1 cursor-pointer">
+                  {tag.name}
+                </Tag>
+              ))}
           </div>
 
           <div className="grid grid-cols-2 gap-2 mt-4">

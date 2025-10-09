@@ -4,7 +4,7 @@ import {
   deleteDatasetTagByIdUsingDelete,
   queryDatasetTagsUsingGet,
   updateDatasetTagByIdUsingPut,
-} from "../dataset-apis";
+} from "../dataset.api";
 import { App } from "antd";
 
 export function useTagsOperation() {

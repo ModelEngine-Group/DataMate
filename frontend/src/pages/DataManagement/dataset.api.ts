@@ -7,7 +7,7 @@ export function getDatasetStatisticsUsingGet() {
 
 // 查询数据集列表
 export function queryDatasetsUsingGet(params?: any) {
-  return post("/api/datasets", params);
+  return get("/api/datasets", params);
 }
 
 // 创建数据集

@@ -23,7 +23,7 @@ import { SearchControls } from "@/components/SearchControls";
 import CardView from "@/components/CardView";
 import { useNavigate } from "react-router";
 import { mockOperators } from "@/mock/operator";
-import type { Operator } from "@/types/operator";
+import type { Operator } from "@/pages/OperatorMarket/operator.interface";
 import Filters from "./components/Filters";
 import TagManagement from "./components/TagManagement";
 

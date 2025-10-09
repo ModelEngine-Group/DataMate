@@ -14,22 +14,22 @@ import CleansingTaskCreate from "@/pages/DataCleansing/Create/CreateTask";
 import CleansingTaskDetail from "@/pages/DataCleansing/Detail/TaskDetail";
 import CleansingTemplateCreate from "@/pages/DataCleansing/Create/CreateTempate";
 
-import DataAnnotation from "@/pages/DataAnnotation/DataAnnotation";
-import AnnotationTaskCreate from "@/pages/DataAnnotation/CreateTask";
-import AnnotationWorkspace from "@/pages/DataAnnotation/AnnotationWorkSpace";
-import TextAnnotationWorkspace from "@/pages/DataAnnotation/components/TextAnnotation";
-import ImageAnnotationWorkspace from "@/pages/DataAnnotation/components/ImageAnnotation";
-import AudioAnnotationWorkspace from "@/pages/DataAnnotation/components/AudioAnnotation";
-import VideoAnnotationWorkspace from "@/pages/DataAnnotation/components/VideoAnnotation";
+import DataAnnotation from "@/pages/DataAnnotation/Home/DataAnnotation";
+import AnnotationTaskCreate from "@/pages/DataAnnotation/Create/CreateTask";
+import AnnotationWorkspace from "@/pages/DataAnnotation/Annotate/AnnotationWorkSpace";
+import TextAnnotationWorkspace from "@/pages/DataAnnotation/Annotate/components/TextAnnotation";
+import ImageAnnotationWorkspace from "@/pages/DataAnnotation/Annotate/components/ImageAnnotation";
+import AudioAnnotationWorkspace from "@/pages/DataAnnotation/Annotate/components/AudioAnnotation";
+import VideoAnnotationWorkspace from "@/pages/DataAnnotation/Annotate/components/VideoAnnotation";
 
 import DataSynthesisPage from "@/pages/SynthesisTask/DataSynthesis";
 import InstructionTemplateCreate from "@/pages/SynthesisTask/CreateTemplate";
 import SynthesisTaskCreate from "@/pages/SynthesisTask/CreateTask";
 
-import DataEvaluationPage from "@/pages/DataEvaluation/DataEvaluation";
-import EvaluationTaskCreate from "@/pages/DataEvaluation/CreateTask";
-import EvaluationTaskReport from "@/pages/DataEvaluation/EvaluationReport";
-import ManualEvaluatePage from "@/pages/DataEvaluation/ManualEvaluate";
+import DataEvaluationPage from "@/pages/DataEvaluation/Home/DataEvaluation";
+import EvaluationTaskCreate from "@/pages/DataEvaluation/Create/CreateTask";
+import EvaluationTaskReport from "@/pages/DataEvaluation/Report/EvaluationReport";
+import ManualEvaluatePage from "@/pages/DataEvaluation/Evaluate/ManualEvaluate";
 
 import KnowledgeGenerationPage from "@/pages/KnowledgeGeneration/KnowledgeGeneration";
 import KnowledgeBaseCreatePage from "@/pages/KnowledgeGeneration/KnowledgeBaseCreate";

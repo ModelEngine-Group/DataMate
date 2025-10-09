@@ -11,8 +11,8 @@ import { mockTemplates } from "@/mock/annotation";
 import CustomTemplateDialog from "./components/CustomTemplateDialog";
 import { Link, useNavigate } from "react-router";
 import { ArrowLeft } from "lucide-react";
-import { queryDatasetsUsingGet } from "../DataManagement/dataset-apis";
-import { DatasetType, type Dataset } from "@/types/dataset";
+import { queryDatasetsUsingGet } from "../../DataManagement/dataset.api";
+import { DatasetType, type Dataset } from "@/pages/DataManagement/dataset.model";
 
 interface Template {
   id: string;

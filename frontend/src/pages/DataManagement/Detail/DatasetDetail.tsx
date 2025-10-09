@@ -29,11 +29,11 @@ import {
   Trash2,
 } from "lucide-react";
 import DetailHeader from "@/components/DetailHeader";
-import { mapDataset, TypeMap } from "../dataset-model";
-import type { Dataset } from "@/types/dataset";
+import { mapDataset, TypeMap } from "../dataset.const";
+import type { Dataset } from "@/pages/DataManagement/dataset.model";
 import { Link, useParams } from "react-router";
 import { useImportFile, useFilesOperation } from "../hooks";
-import { downloadFile, queryDatasetByIdUsingGet } from "../dataset-apis";
+import { downloadFile, queryDatasetByIdUsingGet } from "../dataset.api";
 
 const navigateItems = [
   {

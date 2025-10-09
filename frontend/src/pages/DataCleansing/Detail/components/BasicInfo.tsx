@@ -1,4 +1,4 @@
-import type { CleansingTask, OperatorI } from "@/types/cleansing";
+import type { CleansingTask, OperatorI } from "@/pages/DataCleansing/cleansing.interface";
 import { Button, Card, Descriptions, Progress, Badge } from "antd";
 import { Activity, AlertCircle, CheckCircle, Clock } from "lucide-react";
 import { useNavigate } from "react-router";

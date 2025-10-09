@@ -14,8 +14,8 @@ import {
 import RadioCard from "@/components/RadioCard";
 import { Link, useNavigate, useParams } from "react-router";
 import { useImportFile } from "../hooks/useImportFile";
-import { datasetTypes } from "../dataset-model";
-import { queryDatasetByIdUsingGet } from "../dataset-apis";
+import { datasetTypes } from "../dataset.const";
+import { queryDatasetByIdUsingGet } from "../dataset.api";
 
 const dataSourceOptions = [
   { label: "本地上传", value: "local" },

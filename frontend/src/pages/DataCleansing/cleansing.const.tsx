@@ -1,4 +1,4 @@
-import { JobStatus, TemplateType } from "@/types/cleansing";
+import { JobStatus, TemplateType } from "@/pages/DataCleansing/cleansing.interface";
 import {
   ClockCircleOutlined,
   PlayCircleOutlined,

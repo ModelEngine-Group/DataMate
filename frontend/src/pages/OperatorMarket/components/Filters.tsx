@@ -14,7 +14,7 @@ import {
   X,
   Zap,
 } from "lucide-react";
-import type { Operator } from "@/types/operator";
+import type { Operator } from "@/pages/OperatorMarket/operator.interface";
 import { mockOperators } from "@/mock/operator";
 import React from "react";
 

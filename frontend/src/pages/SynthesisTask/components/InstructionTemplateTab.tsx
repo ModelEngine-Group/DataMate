@@ -9,7 +9,7 @@ import {
   Trash2,
   MoreHorizontal,
 } from "lucide-react";
-import type { Template } from "@/types/synthesis";
+import type { Template } from "@/pages/SynthesisTask/synthesis";
 import { useNavigate } from "react-router";
 import { mockTemplates } from "@/mock/synthesis";
 import { SearchControls } from "@/components/SearchControls";

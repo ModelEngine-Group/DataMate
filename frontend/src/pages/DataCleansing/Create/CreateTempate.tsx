@@ -4,7 +4,7 @@ import { Link, useNavigate } from "react-router";
 import RadioCard from "@/components/RadioCard";
 
 import { ArrowLeft } from "lucide-react";
-import type { OperatorI } from "@/types/cleansing";
+import type { OperatorI } from "@/pages/DataCleansing/cleansing.interface";
 import OperatorLibrary from "./components/OperatorLibrary";
 import OperatorOrchestration from "./components/OperatorOrchestration";
 import OperatorConfig from "./components/OperatorConfig";
@@ -12,7 +12,7 @@ import { templateTypes, OPERATOR_CATEGORIES } from "@/mock/cleansing";
 import {
   createCleaningTemplateUsingPost,
   queryCleaningTemplatesUsingPost,
-} from "../cleansing-apis";
+} from "../cleansing.api";
 
 const { TextArea } = Input;
 

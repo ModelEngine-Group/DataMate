@@ -21,9 +21,9 @@ import {
   Shuffle,
   PieChart,
 } from "lucide-react";
-import type { RatioConfig, RatioTask } from "@/types/ratio";
+import type { RatioConfig, RatioTask } from "@/pages/RatioTask/ratio";
 import { mockRatioTasks } from "@/mock/ratio";
-import type { Dataset } from "@/types/dataset";
+import type { Dataset } from "@/pages/DataManagement/dataset.model";
 import { useNavigate } from "react-router";
 
 const { TextArea } = Input;
