@@ -1,0 +1,31 @@
+# The data-juicer image includes all open-source contents of data-juicer,
+# and it will be installed in editable mode.
+
+FROM python:3.12
+
+# change to aliyun source
+RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources
+
+# install 3rd-party system dependencies
+RUN DEBIAN_FRONTEND=noninteractive apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y git curl vim wget libglx-mesa0 libglib2.0-0 ffmpeg libsm6 \
+    libxext6 build-essential cmake gfortran libopenblas-dev liblapack-dev postgresql libpq-dev \
+    && apt-get autoclean && rm -rf /var/lib/apt/lists/*
+
+# install uv
+RUN pip install uv -i https://mirrors.aliyun.com/pypi/simple
+
+# install requirements which need to be installed from source
+RUN uv pip install --upgrade setuptools==69.5.1 setuptools_scm -i https://mirrors.aliyun.com/pypi/simple --system \
+    && uv pip install http://dail-wlcb.oss-cn-wulanchabu.aliyuncs.com/data_juicer/recognize-anything-main.zip -i https://mirrors.aliyun.com/pypi/simple --system
+
+WORKDIR /opt
+
+# install data-juicer then
+RUN git config --global http.sslVerify false && git clone https://github.com/modelscope/data-juicer.git
+
+WORKDIR /opt/data-juicer
+
+RUN uv pip install -v -e .[generic,nlp,vision,distributed] -i https://mirrors.aliyun.com/pypi/simple --system \
+    && python -c "import nltk; nltk.download('punkt_tab'); nltk.download('punkt'); nltk.download('averaged_perceptron_tagger');  nltk.download('averaged_perceptron_tagger_eng')" \
+    && pip cache purge

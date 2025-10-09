@@ -1,0 +1,76 @@
+[project]
+name = "data_platform"
+dynamic = ["version"]
+description = "Data Processing for and with Foundation Models."
+authors = [
+    { name = "Huawei data pltform team" }
+]
+readme = "README.md"
+license = { text = "Apache-2.0" }
+requires-python = ">=3.10"
+urls = { repository = "https://github.com/ModelEngine-Group/data-platform" }
+classifiers = [
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent"
+]
+
+# Core dependencies
+dependencies = [
+    "uvicorn",
+    "fastapi",
+    "loguru",
+    "jsonargparse",
+    "ray[default, data]==2.46.0",
+    "opencv-python"
+]
+
+[project.optional-dependencies]
+dj = [
+    "py-data-juicer~=1.4.0"
+]
+
+op = [
+    "python-docx==1.1.0"
+]
+
+# All dependencies
+all = [
+    "data_platform[dj]",
+    "data_platform[op]"
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "data_platform/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["data_platform"]
+include = ["pyproject.toml"]
+
+[tool.hatch.build]
+include = ["pyproject.toml"]
+
+[tool.hatch.build.targets.wheel.shared-data]
+"pyproject.toml" = "pyproject.toml"
+
+[tool.flake8]
+per-file-ignores = [
+    "*/__init__.py: F401"
+]
+max-line-length = 120
+extend-ignore = [
+    "E203", # whitespace before ':' (black handles this)
+    "E501", # line too long (black handles this)
+    "BLK100", # black would make changes (black handles this)
+]
+
+[tool.black]
+line-length = 120
+target-version = ['py310']
+
+[tool.isort]
+profile = "black"

@@ -1,0 +1,16 @@
+name: '图注表注去除'
+name_en: 'Figure and Table Description Removal'
+description: '去除文档中的图注、表注等内容。'
+description_en: 'Removes figure and table description from documents.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'LegendCleaner'
+version: '1.0.0'
+types:
+  - 'cleanse'
+modal: 'text'
+effect:
+  before: '图1.1.1 图注名称'
+  after: ''
+inputs: 'text'
+outputs: 'text'

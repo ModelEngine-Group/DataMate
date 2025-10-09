@@ -1,0 +1,27 @@
+name: '模糊图片过滤'
+name_en: 'Fuzzy Image Filter'
+description: '去除模糊的图片。'
+description_en: 'Filters out fuzzy images.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'ImgBlurredImagesCleaner'
+version: '1.0.0'
+types:
+  - 'cleanse'
+modal: 'image'
+effect:
+  before: ''
+  after: ''
+inputs: 'image'
+outputs: 'image'
+settings:
+  blurredThreshold:
+    name: 梯度函数值
+    name_en: Gradient Value
+    description: 梯度函数值取值越小，图片模糊度越高。
+    description_en: A smaller gradient value indicates a higher image blur.
+    type: slider
+    defaultVal: 1000
+    min: 1
+    max: 10000
+    step: 1

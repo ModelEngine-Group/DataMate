@@ -1,0 +1,36 @@
+name: '文档字数检查'
+name_en: 'Word Count Check'
+description: '字数不在指定范围会被过滤掉。'
+description_en: 'Filters out documents whose word count is not in the specified range.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'FileWithShortOrLongLengthFilter'
+version: '1.0.0'
+types:
+  - 'cleanse'
+modal: 'text'
+effect:
+  before: '过短文本'
+  after: ''
+inputs: 'text'
+outputs: 'text'
+settings:
+  fileLength:
+    name: 文档字数
+    name_en: Words
+    description: '过滤字数不在指定范围内的文档，如[10,10000000]。若输入为空，则不对字数上/下限做限制。'
+    description_en: Filters out files whose number of words is not within the range you set, for example, [10,10000000]. If left blank, the minimum and maximum number of words have no limit.
+    type: range
+    properties:
+      - name: fileMinimumLength
+        type: inputNumber
+        defaultVal: 10
+        min: 0
+        max: 10000000000000000
+        step: 1
+      - name: fileMaximumLength
+        type: inputNumber
+        defaultVal: 10000000
+        min: 0
+        max: 10000000000000000
+        step: 1

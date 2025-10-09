@@ -1,0 +1,16 @@
+name: '病理图片内容抽取'
+name_en: 'Pathology Image Content Extraction'
+description: '解析病理图片。'
+description_en: 'Analyze pathological images.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'SlideFormatter'
+version: '1.0.0'
+types:
+  - 'collect'
+modal: 'image'
+effect:
+  before: ''
+  after: ''
+inputs: 'image'
+outputs: 'image'

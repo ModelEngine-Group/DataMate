@@ -1,0 +1,16 @@
+name: '落盘算子'
+name_en: 'save file operator'
+description: '将文件内容保存为文件。'
+description_en: 'Save the file data as a file.'
+language: 'Python'
+vendor: 'Huawei'
+raw_id: 'FileExporter'
+version: '1.0.0'
+types:
+  - 'collect'
+modal: 'others'
+effect:
+  before: ''
+  after: ''
+inputs: 'all'
+outputs: 'all'

@@ -1,0 +1,16 @@
+name: '文本切分'
+name_en: 'Text Segmentation'
+description: '将文本切分成多个切片。'
+description_en: 'Text Segmentation.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'Segmentation'
+version: '1.0.0'
+types:
+  - 'consolidate'
+modal: 'text'
+effect:
+  before: ''
+  after: ''
+inputs: 'text'
+outputs: 'text'

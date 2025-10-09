@@ -1,0 +1,17 @@
+name: '图片阴影去除'
+name_en: 'Image Shadow Removal'
+description: '去除图片中的阴影，主要适用于文档场景。'
+description_en: 'Removes shadows from images, which is mainly applicable to document
+  scenarios.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'ImgShadowRemove'
+version: '1.0.0'
+types:
+  - 'cleanse'
+modal: 'image'
+effect:
+  before: ''
+  after: ''
+inputs: 'image'
+outputs: 'image'

@@ -1,0 +1,16 @@
+name: '转换为Word'
+name_en: 'Convert-to-Word'
+description: '将抽取结果转换为docx的word文件。'
+description_en: 'Converts extraction results to Word files in DOCX format.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'TextToWord'
+version: '1.0.0'
+types:
+  - 'cleanse'
+modal: 'text'
+effect:
+  before: ''
+  after: ''
+inputs: 'text'
+outputs: 'text'

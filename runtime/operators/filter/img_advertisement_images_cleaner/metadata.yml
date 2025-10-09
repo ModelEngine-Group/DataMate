@@ -1,0 +1,16 @@
+name: '广告图片过滤'
+name_en: 'Ad Image Filter'
+description: '去除包含二维码的图片。'
+description_en: 'Removes images containing QR codes.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'ImgAdvertisementImagesCleaner'
+version: '1.0.0'
+types:
+  - 'cleanse'
+modal: 'image'
+effect:
+  before: ''
+  after: ''
+inputs: 'image'
+outputs: 'image'

@@ -1,0 +1,6 @@
+{
+  "query_sql": "SELECT * FROM operator_duplicate_img_features WHERE task_uuid = ? AND file_feature = ?",
+  "db_path": "/flow/sqlite.db",
+  "insert_sql": "INSERT INTO operator_duplicate_img_features (task_uuid, file_feature,file_name,timestamp) VALUES (?,?,?,?)",
+  "create_tables_sql": "CREATE TABLE IF NOT EXISTS operator_duplicate_img_features (id INTEGER PRIMARY KEY AUTOINCREMENT,task_uuid TEXT,file_feature TEXT,file_name TEXT,timestamp DATETIME);"
+}

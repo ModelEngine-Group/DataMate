@@ -1,0 +1,16 @@
+name: '重复图片去除'
+name_en: 'Duplicate Image Removal'
+description: '去除重复的图片。'
+description_en: 'Removes duplicate images.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'ImgDuplicatedImagesCleaner'
+version: '1.0.0'
+types:
+  - 'cleanse'
+modal: 'image'
+effect:
+  before: ''
+  after: ''
+inputs: 'image'
+outputs: 'image'

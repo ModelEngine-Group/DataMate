@@ -1,0 +1,16 @@
+name: '文本质量评估'
+name_en: 'Text Quality Evaluation'
+description: '通过用户维度和相应描述进行文本评估。'
+description_en: 'Text evaluation is performed based on user dimensions and corresponding descriptions.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'TextQualityEvaluation'
+version: '1.0.0'
+types:
+  - 'consolidate'
+modal: 'text'
+effect:
+  before: ''
+  after: ''
+inputs: 'text'
+outputs: 'text'

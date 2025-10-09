@@ -1,0 +1,16 @@
+name: '文档局部内容去重'
+name_en: 'Partial Content Deduplication'
+description: '文档局部内容去重。'
+description_en: 'Deduplicates partial file content.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'DuplicateSentencesFilter'
+version: '1.0.0'
+types:
+  - 'cleanse'
+modal: 'text'
+effect:
+  before: '这是一个重复的句子。 这是一个重复的句子。 这是一个重复的句子。 这是一个重复的句子。 这是一个重复的句子。'
+  after: '这是一个重复的句子。'
+inputs: 'text'
+outputs: 'text'

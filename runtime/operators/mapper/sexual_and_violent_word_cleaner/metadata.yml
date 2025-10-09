@@ -1,0 +1,16 @@
+name: '暴力色情文本匿名化'
+name_en: 'Violent and Pornographic Text Anonymization'
+description: '将暴力、色情文本进行匿名化。'
+description_en: 'Anonymizes violent and pornographic texts.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'SexualAndViolentWordCleaner'
+version: '1.0.0'
+types:
+  - 'cleanse'
+modal: 'text'
+effect:
+  before: '特别字符：炸药'
+  after: '特别字符：***'
+inputs: 'text'
+outputs: 'text'

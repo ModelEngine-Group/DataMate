@@ -1,0 +1,16 @@
+name: '知识库关系切片'
+name_en: 'Knowledge base relationship slicing'
+description: '知识库关系切片'
+description_en: 'Knowledge base relationship slicing.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'KnowledgeRelationSlice'
+version: '1.0.0'
+types:
+  - 'cleanse'
+modal: 'text'
+effect:
+  before: ''
+  after: ''
+inputs: 'text'
+outputs: 'text'

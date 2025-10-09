@@ -67,6 +67,10 @@ backend-docker-build:
 frontend-docker-build:
 	sh scripts/images/frontend/build.sh
 
+.PHONY: runtime-docker-build
+runtime-docker-build:
+	sh scripts/images/runtime/build.sh
+
 .PHONY: mineru-k8s-install
 mineru-k8s-install:
 	kubectl apply -f deployment/kubernetes/mineru/deploy.yaml

@@ -1,0 +1,17 @@
+name: '图片锐度增强'
+name_en: 'Image Sharpness Enhancement'
+description: '自适应调节图片的锐度，主要适用于自然场景图片。'
+description_en: 'Adapts and adjusts the image sharpness, which is mainly applicable
+  to natural scenery image scenarios.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'ImgSharpness'
+version: '1.0.0'
+types:
+  - 'cleanse'
+modal: 'image'
+effect:
+  before: ''
+  after: ''
+inputs: 'image'
+outputs: 'image'

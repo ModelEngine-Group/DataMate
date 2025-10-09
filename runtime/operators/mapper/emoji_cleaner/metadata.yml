@@ -1,0 +1,16 @@
+name: '文档表情去除'
+name_en: 'Emoticon Removal'
+description: '去除文档中表情字符或者emoji符号。'
+description_en: 'Removes emoticons or emojis from documents.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'EmojiCleaner'
+version: '1.0.0'
+types:
+  - 'cleanse'
+modal: 'text'
+effect:
+  before: '使用方式很简单，只需要将代码放入Markdown文本中即可，富文本格式可直接复制表情😀使用。'
+  after: '使用方式很简单，只需要将代码放入Markdown文本中即可，富文本格式可直接复制表情使用。'
+inputs: 'text'
+outputs: 'text'
