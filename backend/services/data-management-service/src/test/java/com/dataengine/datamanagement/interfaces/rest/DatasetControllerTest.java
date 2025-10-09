@@ -1,11 +1,11 @@
-package com.dataengine.datamanagement.application.service;
+package com.dataengine.datamanagement.interfaces.rest;
 
+import com.dataengine.common.interfaces.Response;
+import com.dataengine.datamanagement.application.service.DatasetApplicationService;
 import com.dataengine.datamanagement.domain.model.dataset.Dataset;
 import com.dataengine.datamanagement.domain.model.dataset.StatusConstants;
 import com.dataengine.datamanagement.domain.model.dataset.Tag;
 import com.dataengine.datamanagement.interfaces.dto.*;
-import com.dataengine.datamanagement.interfaces.rest.DatasetController;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -36,14 +36,10 @@ class DatasetControllerTest {
     private DatasetController controller;
 
     private Dataset sampleDataset;
-    private Tag sampleTag;
-    private ObjectMapper objectMapper;
 
     @BeforeEach
     void setUp() {
-        objectMapper = new ObjectMapper();
-
-        sampleTag = new Tag();
+        Tag sampleTag = new Tag();
         sampleTag.setId("tag-id-1");
         sampleTag.setName("test-tag");
         sampleTag.setColor("#ff0000");
@@ -71,32 +67,32 @@ class DatasetControllerTest {
     @DisplayName("datasetsGet: 正常分页查询数据集")
     void getDatasets_success() {
         // Given
-        List<Dataset> datasets = Arrays.asList(sampleDataset);
+        List<Dataset> datasets = Collections.singletonList(sampleDataset);
         Page<Dataset> page = new PageImpl<>(datasets, PageRequest.of(0, 20), 1);
         when(datasetApplicationService.getDatasets(eq("CSV"), eq("ACTIVE"), eq("test"),
                 eq(Arrays.asList("tag1", "tag2")), any())).thenReturn(page);
 
         // When
-        ResponseEntity<PagedDatasetResponse> response = controller.getDatasets(0, 20, "CSV",
+        ResponseEntity<Response<PagedDatasetResponse>> response = controller.getDatasets(0, 20, "CSV",
                 "tag1,tag2", "test", "ACTIVE");
 
         // Then
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertEquals(1, response.getBody().getContent().size());
-        assertEquals(0, response.getBody().getPage());
-        assertEquals(20, response.getBody().getSize());
-        assertEquals(1, response.getBody().getTotalElements());
-        assertEquals(1, response.getBody().getTotalPages());
-        assertTrue(response.getBody().getFirst());
-        assertTrue(response.getBody().getLast());
+        assertEquals(1, response.getBody().getData().getContent().size());
+        assertEquals(0, response.getBody().getData().getPage());
+        assertEquals(20, response.getBody().getData().getSize());
+        assertEquals(1, response.getBody().getData().getTotalElements());
+        assertEquals(1, response.getBody().getData().getTotalPages());
+        assertTrue(response.getBody().getData().getFirst());
+        assertTrue(response.getBody().getData().getLast());
 
-        DatasetResponse datasetResponse = response.getBody().getContent().get(0);
+        DatasetResponse datasetResponse = response.getBody().getData().getContent().getFirst();
         assertEquals("dataset-id-1", datasetResponse.getId());
         assertEquals("Test Dataset", datasetResponse.getName());
         assertEquals("CSV", datasetResponse.getType().getCode());
         assertEquals(1, datasetResponse.getTags().size());
-        assertEquals("test-tag", datasetResponse.getTags().get(0).getName());
+        assertEquals("test-tag", datasetResponse.getTags().getFirst().getName());
 
         verify(datasetApplicationService).getDatasets(eq("CSV"), eq("ACTIVE"), eq("test"),
                 eq(Arrays.asList("tag1", "tag2")), any());
@@ -109,11 +105,12 @@ class DatasetControllerTest {
         when(datasetApplicationService.getDatasets(isNull(), isNull(), isNull(), isNull(), any()))
                 .thenReturn(emptyPage);
 
-        ResponseEntity<PagedDatasetResponse> response = controller.getDatasets(null, null, null,
+        ResponseEntity<Response<PagedDatasetResponse>> response = controller.getDatasets(null, null, null,
                 null, null, null);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertTrue(response.getBody().getContent().isEmpty());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody().getData().getContent().isEmpty());
         verify(datasetApplicationService).getDatasets(isNull(), isNull(), isNull(), isNull(),
                 argThat(pageable -> pageable.getPageNumber() == 0 && pageable.getPageSize() == 20));
     }
@@ -149,11 +146,11 @@ class DatasetControllerTest {
                 eq("JSON"), eq(Arrays.asList("tag1", "tag2")), eq(123L), eq("/new/path"),
                 isNull(), eq("system"))).thenReturn(sampleDataset);
 
-        ResponseEntity<DatasetResponse> response = controller.createDataset(request);
+        ResponseEntity<Response<DatasetResponse>> response = controller.createDataset(request);
 
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertEquals("dataset-id-1", response.getBody().getId());
+        assertEquals("dataset-id-1", response.getBody().getData().getId());
         verify(datasetApplicationService).createDataset(eq("New Dataset"), eq("New description"),
                 eq("JSON"), eq(Arrays.asList("tag1", "tag2")), eq(123L), eq("/new/path"),
                 isNull(), eq("system"));
@@ -170,7 +167,7 @@ class DatasetControllerTest {
                 isNull(), isNull(), isNull(), isNull(), isNull(), eq("system")))
                 .thenReturn(sampleDataset);
 
-        ResponseEntity<DatasetResponse> response = controller.createDataset(request);
+        ResponseEntity<Response<DatasetResponse>> response = controller.createDataset(request);
 
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         verify(datasetApplicationService).createDataset(eq("New Dataset"), isNull(),
@@ -186,7 +183,7 @@ class DatasetControllerTest {
         when(datasetApplicationService.createDataset(anyString(), any(), any(), any(),
                 any(), any(), any(), anyString())).thenThrow(new IllegalArgumentException("Already exists"));
 
-        ResponseEntity<DatasetResponse> response = controller.createDataset(request);
+        ResponseEntity<Response<DatasetResponse>> response = controller.createDataset(request);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         assertNull(response.getBody());
@@ -197,18 +194,18 @@ class DatasetControllerTest {
     void getDatasetById_success() {
         when(datasetApplicationService.getDataset("dataset-id-1")).thenReturn(sampleDataset);
 
-        ResponseEntity<DatasetResponse> response = controller.getDatasetById("dataset-id-1");
+        ResponseEntity<Response<DatasetResponse>> response = controller.getDatasetById("dataset-id-1");
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertEquals("dataset-id-1", response.getBody().getId());
-        assertEquals("Test Dataset", response.getBody().getName());
-        assertEquals("1", response.getBody().getDataSource());
-        assertEquals("/test/path", response.getBody().getTargetLocation());
-        assertEquals(10, response.getBody().getFileCount());
-        assertEquals(1024L, response.getBody().getTotalSize());
-        assertEquals(80.0f, response.getBody().getCompletionRate());
-        assertEquals("testuser", response.getBody().getCreatedBy());
+        assertEquals("dataset-id-1", response.getBody().getData().getId());
+        assertEquals("Test Dataset", response.getBody().getData().getName());
+        assertEquals("1", response.getBody().getData().getDataSource());
+        assertEquals("/test/path", response.getBody().getData().getTargetLocation());
+        assertEquals(10, response.getBody().getData().getFileCount());
+        assertEquals(1024L, response.getBody().getData().getTotalSize());
+        assertEquals(80.0f, response.getBody().getData().getCompletionRate());
+        assertEquals("testuser", response.getBody().getData().getCreatedBy());
 
         verify(datasetApplicationService).getDataset("dataset-id-1");
     }
@@ -219,7 +216,7 @@ class DatasetControllerTest {
         when(datasetApplicationService.getDataset("not-exist"))
                 .thenThrow(new IllegalArgumentException("Dataset not found"));
 
-        ResponseEntity<DatasetResponse> response = controller.getDatasetById("not-exist");
+        ResponseEntity<Response<DatasetResponse>> response = controller.getDatasetById("not-exist");
 
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
         assertNull(response.getBody());
@@ -236,7 +233,7 @@ class DatasetControllerTest {
         when(datasetApplicationService.updateDataset(eq("dataset-id-1"), eq("Updated Name"),
                 isNull(), isNull(), isNull())).thenReturn(sampleDataset);
 
-        ResponseEntity<DatasetResponse> response = controller.updateDataset("dataset-id-1", request);
+        ResponseEntity<Response<DatasetResponse>> response = controller.updateDataset("dataset-id-1", request);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         verify(datasetApplicationService).updateDataset(eq("dataset-id-1"), eq("Updated Name"),
@@ -252,7 +249,7 @@ class DatasetControllerTest {
         when(datasetApplicationService.updateDataset(anyString(), anyString(), any(), any(), any()))
                 .thenThrow(new IllegalArgumentException("Dataset not found"));
 
-        ResponseEntity<DatasetResponse> response = controller.updateDataset("not-exist", request);
+        ResponseEntity<Response<DatasetResponse>> response = controller.updateDataset("not-exist", request);
 
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
         assertNull(response.getBody());
@@ -263,7 +260,7 @@ class DatasetControllerTest {
     void deleteDataset_success() {
         doNothing().when(datasetApplicationService).deleteDataset("dataset-id-1");
 
-        ResponseEntity<Void> response = controller.deleteDataset("dataset-id-1");
+        ResponseEntity<Response<Void>> response = controller.deleteDataset("dataset-id-1");
 
         assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
         verify(datasetApplicationService).deleteDataset("dataset-id-1");
@@ -275,7 +272,7 @@ class DatasetControllerTest {
         doThrow(new IllegalArgumentException("Dataset not found"))
                 .when(datasetApplicationService).deleteDataset("not-exist");
 
-        ResponseEntity<Void> response = controller.deleteDataset("not-exist");
+        ResponseEntity<Response<Void>> response = controller.deleteDataset("not-exist");
 
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
     }
@@ -293,16 +290,16 @@ class DatasetControllerTest {
 
         when(datasetApplicationService.getDatasetStatistics("dataset-id-1")).thenReturn(stats);
 
-        ResponseEntity<DatasetStatisticsResponse> response = controller.getDatasetStatistics("dataset-id-1");
+        ResponseEntity<Response<DatasetStatisticsResponse>> response = controller.getDatasetStatistics("dataset-id-1");
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertEquals(100, response.getBody().getTotalFiles());
-        assertEquals(80, response.getBody().getCompletedFiles());
-        assertEquals(2048L, response.getBody().getTotalSize());
-        assertEquals(80.0f, response.getBody().getCompletionRate());
-        assertNotNull(response.getBody().getFileTypeDistribution());
-        assertNotNull(response.getBody().getStatusDistribution());
+        assertEquals(100, response.getBody().getData().getTotalFiles());
+        assertEquals(80, response.getBody().getData().getCompletedFiles());
+        assertEquals(2048L, response.getBody().getData().getTotalSize());
+        assertEquals(80.0f, response.getBody().getData().getCompletionRate());
+        assertNotNull(response.getBody().getData().getFileTypeDistribution());
+        assertNotNull(response.getBody().getData().getStatusDistribution());
 
         verify(datasetApplicationService).getDatasetStatistics("dataset-id-1");
     }
@@ -313,7 +310,7 @@ class DatasetControllerTest {
         when(datasetApplicationService.getDatasetStatistics("not-exist"))
                 .thenThrow(new IllegalArgumentException("Dataset not found"));
 
-        ResponseEntity<DatasetStatisticsResponse> response = controller.getDatasetStatistics("not-exist");
+        ResponseEntity<Response<DatasetStatisticsResponse>> response = controller.getDatasetStatistics("not-exist");
 
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
         assertNull(response.getBody());
@@ -325,7 +322,7 @@ class DatasetControllerTest {
         when(datasetApplicationService.getDatasetStatistics("dataset-id-1"))
                 .thenThrow(new RuntimeException("Internal error"));
 
-        ResponseEntity<DatasetStatisticsResponse> response = controller.getDatasetStatistics("dataset-id-1");
+        ResponseEntity<Response<DatasetStatisticsResponse>> response = controller.getDatasetStatistics("dataset-id-1");
 
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
         assertNull(response.getBody());
