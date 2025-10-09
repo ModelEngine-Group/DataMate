@@ -34,8 +34,8 @@ public class DatasetFileController implements DatasetFileApi {
     }
 
     @Override
-    public ResponseEntity<PagedDatasetFileResponse> datasetsDatasetIdFilesGet(String datasetId, Integer page, Integer size,
-                                                                  String fileType, String status) {
+    public ResponseEntity<PagedDatasetFileResponse> getDatasetFiles(String datasetId, Integer page, Integer size,
+                                                                    String fileType, String status) {
         Pageable pageable = PageRequest.of(page != null ? page : 0, size != null ? size : 20);
 
         Page<DatasetFile> filesPage = datasetFileApplicationService.getDatasetFiles(
@@ -56,7 +56,7 @@ public class DatasetFileController implements DatasetFileApi {
     }
 
     @Override
-    public ResponseEntity<DatasetFileResponse> datasetsDatasetIdFilesPost(String datasetId, MultipartFile file, String description) {
+    public ResponseEntity<DatasetFileResponse> uploadDatasetFile(String datasetId, MultipartFile file, String description) {
         try {
             DatasetFile datasetFile = datasetFileApplicationService.uploadFile(
                 datasetId, file, description, "system");
@@ -70,7 +70,7 @@ public class DatasetFileController implements DatasetFileApi {
     }
 
     @Override
-    public ResponseEntity<DatasetFileResponse> datasetsDatasetIdFilesFileIdGet(String datasetId, String fileId) {
+    public ResponseEntity<DatasetFileResponse> getDatasetFileById(String datasetId, String fileId) {
         try {
             DatasetFile datasetFile = datasetFileApplicationService.getDatasetFile(datasetId, fileId);
             return ResponseEntity.ok(convertToResponse(datasetFile));
@@ -80,7 +80,7 @@ public class DatasetFileController implements DatasetFileApi {
     }
 
     @Override
-    public ResponseEntity<Void> datasetsDatasetIdFilesFileIdDelete(String datasetId, String fileId) {
+    public ResponseEntity<Void> deleteDatasetFile(String datasetId, String fileId) {
         try {
             datasetFileApplicationService.deleteDatasetFile(datasetId, fileId);
             return ResponseEntity.noContent().build();
@@ -90,7 +90,7 @@ public class DatasetFileController implements DatasetFileApi {
     }
 
     @Override
-    public ResponseEntity<Resource> datasetsDatasetIdFilesFileIdDownloadGet(String datasetId, String fileId) {
+    public ResponseEntity<Resource> downloadDatasetFile(String datasetId, String fileId) {
         try {
             DatasetFile datasetFile = datasetFileApplicationService.getDatasetFile(datasetId, fileId);
             Resource resource = datasetFileApplicationService.downloadFile(datasetId, fileId);

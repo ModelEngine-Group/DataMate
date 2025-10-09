@@ -32,8 +32,8 @@ public class DatasetController implements DatasetApi {
     }
 
     @Override
-    public ResponseEntity<PagedDatasetResponse> datasetsGet(Integer page, Integer size, String type,
-                                                          String tags, String keyword, String status) {
+    public ResponseEntity<PagedDatasetResponse> getDatasets(Integer page, Integer size, String type,
+                                                            String tags, String keyword, String status) {
         Pageable pageable = PageRequest.of(page != null ? page : 0, size != null ? size : 20);
 
         List<String> tagList = null;
@@ -58,7 +58,7 @@ public class DatasetController implements DatasetApi {
     }
 
     @Override
-    public ResponseEntity<DatasetResponse> datasetsPost(CreateDatasetRequest createDatasetRequest) {
+    public ResponseEntity<DatasetResponse> createDataset(CreateDatasetRequest createDatasetRequest) {
         try {
             Long dataSourceId = null;
             if (createDatasetRequest.getDataSource() != null) {
@@ -82,7 +82,7 @@ public class DatasetController implements DatasetApi {
     }
 
     @Override
-    public ResponseEntity<DatasetResponse> datasetsDatasetIdGet(String datasetId) {
+    public ResponseEntity<DatasetResponse> getDatasetById(String datasetId) {
         try {
             Dataset dataset = datasetApplicationService.getDataset(datasetId);
             return ResponseEntity.ok(convertToResponse(dataset));
@@ -92,7 +92,7 @@ public class DatasetController implements DatasetApi {
     }
 
     @Override
-    public ResponseEntity<DatasetResponse> datasetsDatasetIdPut(String datasetId, UpdateDatasetRequest updateDatasetRequest) {
+    public ResponseEntity<DatasetResponse> updateDataset(String datasetId, UpdateDatasetRequest updateDatasetRequest) {
         try {
             Dataset dataset = datasetApplicationService.updateDataset(
                 datasetId,
@@ -109,7 +109,7 @@ public class DatasetController implements DatasetApi {
     }
 
     @Override
-    public ResponseEntity<Void> datasetsDatasetIdDelete(String datasetId) {
+    public ResponseEntity<Void> deleteDataset(String datasetId) {
         try {
             datasetApplicationService.deleteDataset(datasetId);
             return ResponseEntity.noContent().build();
@@ -119,7 +119,7 @@ public class DatasetController implements DatasetApi {
     }
 
     @Override
-    public ResponseEntity<DatasetStatisticsResponse> datasetsDatasetIdStatisticsGet(String datasetId) {
+    public ResponseEntity<DatasetStatisticsResponse> getDatasetStatistics(String datasetId) {
         try {
             Map<String, Object> stats = datasetApplicationService.getDatasetStatistics(datasetId);
 

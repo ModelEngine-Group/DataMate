@@ -27,8 +27,8 @@ class DatasetTypeControllerTest {
 
     @Test
     @DisplayName("datasetTypesGet: 返回所有数据集类型")
-    void datasetTypesGet_success() {
-        ResponseEntity<List<DatasetTypeResponse>> response = controller.datasetTypesGet();
+    void getDatasetTypes_success() {
+        ResponseEntity<List<DatasetTypeResponse>> response = controller.getDatasetTypes();
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
@@ -104,8 +104,8 @@ class DatasetTypeControllerTest {
 
     @Test
     @DisplayName("datasetTypesGet: 验证返回的数据集类型顺序")
-    void datasetTypesGet_orderVerification() {
-        ResponseEntity<List<DatasetTypeResponse>> response = controller.datasetTypesGet();
+    void getDatasetTypes_orderVerification() {
+        ResponseEntity<List<DatasetTypeResponse>> response = controller.getDatasetTypes();
 
         List<DatasetTypeResponse> types = response.getBody();
         assertNotNull(types);
@@ -120,8 +120,8 @@ class DatasetTypeControllerTest {
 
     @Test
     @DisplayName("datasetTypesGet: 验证每个类型都有必要属性")
-    void datasetTypesGet_requiredProperties() {
-        ResponseEntity<List<DatasetTypeResponse>> response = controller.datasetTypesGet();
+    void getDatasetTypes_requiredProperties() {
+        ResponseEntity<List<DatasetTypeResponse>> response = controller.getDatasetTypes();
 
         List<DatasetTypeResponse> types = response.getBody();
         assertNotNull(types);
@@ -141,8 +141,8 @@ class DatasetTypeControllerTest {
 
     @Test
     @DisplayName("datasetTypesGet: 验证支持的格式不为空")
-    void datasetTypesGet_supportedFormatsNotEmpty() {
-        ResponseEntity<List<DatasetTypeResponse>> response = controller.datasetTypesGet();
+    void getDatasetTypes_supportedFormatsNotEmpty() {
+        ResponseEntity<List<DatasetTypeResponse>> response = controller.getDatasetTypes();
 
         List<DatasetTypeResponse> types = response.getBody();
         assertNotNull(types);
@@ -150,7 +150,7 @@ class DatasetTypeControllerTest {
         for (DatasetTypeResponse type : types) {
             assertNotNull(type.getSupportedFormats());
             assertFalse(type.getSupportedFormats().isEmpty());
-            
+
             // 确保每个支持的格式都不为空字符串
             for (String format : type.getSupportedFormats()) {
                 assertNotNull(format);
@@ -161,8 +161,8 @@ class DatasetTypeControllerTest {
 
     @Test
     @DisplayName("datasetTypesGet: 验证图标映射")
-    void datasetTypesGet_iconMapping() {
-        ResponseEntity<List<DatasetTypeResponse>> response = controller.datasetTypesGet();
+    void getDatasetTypes_iconMapping() {
+        ResponseEntity<List<DatasetTypeResponse>> response = controller.getDatasetTypes();
 
         List<DatasetTypeResponse> types = response.getBody();
         assertNotNull(types);
@@ -196,8 +196,8 @@ class DatasetTypeControllerTest {
 
     @Test
     @DisplayName("datasetTypesGet: 验证特定格式包含")
-    void datasetTypesGet_specificFormatInclusion() {
-        ResponseEntity<List<DatasetTypeResponse>> response = controller.datasetTypesGet();
+    void getDatasetTypes_specificFormatInclusion() {
+        ResponseEntity<List<DatasetTypeResponse>> response = controller.getDatasetTypes();
 
         List<DatasetTypeResponse> types = response.getBody();
         assertNotNull(types);
@@ -242,8 +242,8 @@ class DatasetTypeControllerTest {
 
     @Test
     @DisplayName("datasetTypesGet: 返回响应状态正确")
-    void datasetTypesGet_responseStatus() {
-        ResponseEntity<List<DatasetTypeResponse>> response = controller.datasetTypesGet();
+    void getDatasetTypes_responseStatus() {
+        ResponseEntity<List<DatasetTypeResponse>> response = controller.getDatasetTypes();
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
@@ -251,9 +251,9 @@ class DatasetTypeControllerTest {
 
     @Test
     @DisplayName("datasetTypesGet: 多次调用返回一致结果")
-    void datasetTypesGet_consistentResults() {
-        ResponseEntity<List<DatasetTypeResponse>> response1 = controller.datasetTypesGet();
-        ResponseEntity<List<DatasetTypeResponse>> response2 = controller.datasetTypesGet();
+    void getDatasetTypes_consistentResults() {
+        ResponseEntity<List<DatasetTypeResponse>> response1 = controller.getDatasetTypes();
+        ResponseEntity<List<DatasetTypeResponse>> response2 = controller.getDatasetTypes();
 
         assertEquals(response1.getStatusCode(), response2.getStatusCode());
         assertEquals(response1.getBody().size(), response2.getBody().size());
@@ -264,7 +264,7 @@ class DatasetTypeControllerTest {
         for (int i = 0; i < types1.size(); i++) {
             DatasetTypeResponse type1 = types1.get(i);
             DatasetTypeResponse type2 = types2.get(i);
-            
+
             assertEquals(type1.getCode(), type2.getCode());
             assertEquals(type1.getName(), type2.getName());
             assertEquals(type1.getDescription(), type2.getDescription());

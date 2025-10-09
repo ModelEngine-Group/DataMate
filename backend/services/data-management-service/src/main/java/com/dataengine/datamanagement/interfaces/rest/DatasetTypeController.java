@@ -15,7 +15,7 @@ import java.util.List;
 public class DatasetTypeController implements DatasetTypeApi {
 
     @Override
-    public ResponseEntity<List<DatasetTypeResponse>> datasetTypesGet() {
+    public ResponseEntity<List<DatasetTypeResponse>> getDatasetTypes() {
         // 硬编码的数据集类型，实际应用中可以从数据库获取
         List<DatasetTypeResponse> types = Arrays.asList(
             createDatasetType("IMAGE", "图像数据集", "用于机器学习的图像数据集", Arrays.asList("jpg", "jpeg", "png", "bmp", "gif")),
@@ -24,7 +24,7 @@ public class DatasetTypeController implements DatasetTypeApi {
             createDatasetType("VIDEO", "视频数据集", "用于视频分析的视频数据集", Arrays.asList("mp4", "avi", "mov", "mkv")),
             createDatasetType("MULTIMODAL", "多模态数据集", "包含多种数据类型的数据集", Arrays.asList("*"))
         );
-        
+
         return ResponseEntity.ok(types);
     }
 
@@ -35,7 +35,7 @@ public class DatasetTypeController implements DatasetTypeApi {
         response.setDescription(description);
         response.setSupportedFormats(supportedFormats);
         response.setIcon(getIconForType(code));
-        
+
         return response;
     }
 
