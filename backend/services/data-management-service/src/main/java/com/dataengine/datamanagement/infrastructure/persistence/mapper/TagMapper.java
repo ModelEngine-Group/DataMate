@@ -11,6 +11,7 @@ public interface TagMapper {
     Tag findById(@Param("id") String id);
     Tag findByName(@Param("name") String name);
     List<Tag> findByNameIn(@Param("list") List<String> names);
+    List<Tag> findByIdIn(@Param("ids") List<String> ids);
     List<Tag> findByKeyword(@Param("keyword") String keyword);
     List<Tag> findAllByOrderByUsageCountDesc();
 
@@ -22,4 +23,5 @@ public interface TagMapper {
     int insertDatasetTag(@Param("datasetId") String datasetId, @Param("tagId") String tagId);
     int deleteDatasetTagsByDatasetId(@Param("datasetId") String datasetId);
     List<Tag> findByDatasetId(@Param("datasetId") String datasetId);
+    void deleteTagsById(@Param("ids") List<String> ids);
 }
