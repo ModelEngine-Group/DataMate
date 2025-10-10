@@ -68,6 +68,10 @@
         <version>${mapstruct.version}</version>
         <scope>provided</scope> <!-- 编译时需要，运行时不需要 -->
       </dependency>
+        <dependency>
+            <groupId>org.springframework.data</groupId>
+            <artifactId>spring-data-commons</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
