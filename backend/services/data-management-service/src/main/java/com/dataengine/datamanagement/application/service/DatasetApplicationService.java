@@ -6,6 +6,7 @@ import com.dataengine.datamanagement.domain.model.dataset.Tag;
 import com.dataengine.datamanagement.infrastructure.persistence.mapper.DatasetFileMapper;
 import com.dataengine.datamanagement.infrastructure.persistence.mapper.DatasetMapper;
 import com.dataengine.datamanagement.infrastructure.persistence.mapper.TagMapper;
+import com.dataengine.datamanagement.interfaces.dto.AllDatasetStatisticsResponse;
 import org.apache.ibatis.session.RowBounds;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -239,5 +240,12 @@ public class DatasetApplicationService {
         statistics.put("statusDistribution", statusDistribution);
 
         return statistics;
+    }
+
+    /**
+     * 获取所有数据集的汇总统计信息
+     */
+    public AllDatasetStatisticsResponse getAllDatasetStatistics() {
+        return datasetMapper.getAllDatasetStatistics();
     }
 }
