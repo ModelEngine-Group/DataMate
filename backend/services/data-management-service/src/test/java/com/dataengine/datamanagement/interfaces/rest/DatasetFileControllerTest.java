@@ -1,5 +1,6 @@
 package com.dataengine.datamanagement.interfaces.rest;
 
+import com.dataengine.common.interfaces.Response;
 import com.dataengine.datamanagement.application.service.DatasetFileApplicationService;
 import com.dataengine.datamanagement.domain.model.dataset.DatasetFile;
 import com.dataengine.datamanagement.domain.model.dataset.StatusConstants;
@@ -69,21 +70,21 @@ class DatasetFileControllerTest {
                 eq(StatusConstants.DatasetFileStatuses.COMPLETED), any())).thenReturn(page);
 
         // When
-        ResponseEntity<PagedDatasetFileResponse> response = controller.getDatasetFiles(
+        ResponseEntity<Response<PagedDatasetFileResponse>> response = controller.getDatasetFiles(
                 "dataset-id-1", 0, 20, "text/csv", StatusConstants.DatasetFileStatuses.COMPLETED);
 
         // Then
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertEquals(1, response.getBody().getContent().size());
-        assertEquals(0, response.getBody().getPage());
-        assertEquals(20, response.getBody().getSize());
-        assertEquals(1, response.getBody().getTotalElements());
-        assertEquals(1, response.getBody().getTotalPages());
-        assertTrue(response.getBody().getFirst());
-        assertTrue(response.getBody().getLast());
+        assertEquals(1, response.getBody().getData().getContent().size());
+        assertEquals(0, response.getBody().getData().getPage());
+        assertEquals(20, response.getBody().getData().getSize());
+        assertEquals(1, response.getBody().getData().getTotalElements());
+        assertEquals(1, response.getBody().getData().getTotalPages());
+        assertTrue(response.getBody().getData().getFirst());
+        assertTrue(response.getBody().getData().getLast());
 
-        DatasetFileResponse fileResponse = response.getBody().getContent().get(0);
+        DatasetFileResponse fileResponse = response.getBody().getData().getContent().get(0);
         assertEquals("file-id-1", fileResponse.getId());
         assertEquals("test-file.csv", fileResponse.getFileName());
         assertEquals("text/csv", fileResponse.getFileType());
@@ -101,11 +102,11 @@ class DatasetFileControllerTest {
         when(datasetFileApplicationService.getDatasetFiles(eq("dataset-id-1"), isNull(), isNull(), any()))
                 .thenReturn(emptyPage);
 
-        ResponseEntity<PagedDatasetFileResponse> response = controller.getDatasetFiles(
+        ResponseEntity<Response<PagedDatasetFileResponse>> response = controller.getDatasetFiles(
                 "dataset-id-1", null, null, null, null);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertTrue(response.getBody().getContent().isEmpty());
+        assertTrue(response.getBody().getData().getContent().isEmpty());
         verify(datasetFileApplicationService).getDatasetFiles(eq("dataset-id-1"), isNull(), isNull(),
                 argThat(pageable -> pageable.getPageNumber() == 0 && pageable.getPageSize() == 20));
     }
@@ -117,12 +118,12 @@ class DatasetFileControllerTest {
         when(datasetFileApplicationService.getDatasetFiles(eq("dataset-id-1"), isNull(), isNull(), any()))
                 .thenReturn(emptyPage);
 
-        ResponseEntity<PagedDatasetFileResponse> response = controller.getDatasetFiles(
+        ResponseEntity<Response<PagedDatasetFileResponse>> response = controller.getDatasetFiles(
                 "dataset-id-1", 0, 10, null, null);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertTrue(response.getBody().getContent().isEmpty());
-        assertEquals(0, response.getBody().getTotalElements());
+        assertTrue(response.getBody().getData().getContent().isEmpty());
+        assertEquals(0, response.getBody().getData().getTotalElements());
     }
 
     @Test
@@ -131,15 +132,15 @@ class DatasetFileControllerTest {
         when(datasetFileApplicationService.uploadFile(eq("dataset-id-1"), eq(multipartFile),
                 eq("Test description"), eq("system"))).thenReturn(sampleFile);
 
-        ResponseEntity<DatasetFileResponse> response = controller.uploadDatasetFile(
+        ResponseEntity<Response<DatasetFileResponse>> response = controller.uploadDatasetFile(
                 "dataset-id-1", multipartFile, "Test description");
 
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertEquals("file-id-1", response.getBody().getId());
-        assertEquals("test-file.csv", response.getBody().getFileName());
-        assertEquals("text/csv", response.getBody().getFileType());
-        assertEquals(1024L, response.getBody().getSize());
+        assertEquals("file-id-1", response.getBody().getData().getId());
+        assertEquals("test-file.csv", response.getBody().getData().getFileName());
+        assertEquals("text/csv", response.getBody().getData().getFileType());
+        assertEquals(1024L, response.getBody().getData().getSize());
 
         verify(datasetFileApplicationService).uploadFile(eq("dataset-id-1"), eq(multipartFile),
                 eq("Test description"), eq("system"));
@@ -151,7 +152,7 @@ class DatasetFileControllerTest {
         when(datasetFileApplicationService.uploadFile(eq("dataset-id-1"), eq(multipartFile),
                 any(), eq("system"))).thenThrow(new IllegalArgumentException("Dataset not found"));
 
-        ResponseEntity<DatasetFileResponse> response = controller.uploadDatasetFile(
+        ResponseEntity<Response<DatasetFileResponse>> response = controller.uploadDatasetFile(
                 "dataset-id-1", multipartFile, "desc");
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
@@ -164,7 +165,7 @@ class DatasetFileControllerTest {
         when(datasetFileApplicationService.uploadFile(eq("dataset-id-1"), eq(multipartFile),
                 any(), eq("system"))).thenThrow(new RuntimeException("IO error"));
 
-        ResponseEntity<DatasetFileResponse> response = controller.uploadDatasetFile(
+        ResponseEntity<Response<DatasetFileResponse>> response = controller.uploadDatasetFile(
                 "dataset-id-1", multipartFile, "desc");
 
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
@@ -177,14 +178,14 @@ class DatasetFileControllerTest {
         when(datasetFileApplicationService.getDatasetFile("dataset-id-1", "file-id-1"))
                 .thenReturn(sampleFile);
 
-        ResponseEntity<DatasetFileResponse> response = controller.getDatasetFileById(
+        ResponseEntity<Response<DatasetFileResponse>> response = controller.getDatasetFileById(
                 "dataset-id-1", "file-id-1");
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertEquals("file-id-1", response.getBody().getId());
-        assertEquals("test-file.csv", response.getBody().getFileName());
-        assertEquals("text/csv", response.getBody().getFileType());
+        assertEquals("file-id-1", response.getBody().getData().getId());
+        assertEquals("test-file.csv", response.getBody().getData().getFileName());
+        assertEquals("text/csv", response.getBody().getData().getFileType());
 
         verify(datasetFileApplicationService).getDatasetFile("dataset-id-1", "file-id-1");
     }
@@ -195,7 +196,7 @@ class DatasetFileControllerTest {
         when(datasetFileApplicationService.getDatasetFile("dataset-id-1", "not-exist"))
                 .thenThrow(new IllegalArgumentException("File not found"));
 
-        ResponseEntity<DatasetFileResponse> response = controller.getDatasetFileById(
+        ResponseEntity<Response<DatasetFileResponse>> response = controller.getDatasetFileById(
                 "dataset-id-1", "not-exist");
 
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
@@ -207,7 +208,7 @@ class DatasetFileControllerTest {
     void deleteDatasetFile_success() {
         doNothing().when(datasetFileApplicationService).deleteDatasetFile("dataset-id-1", "file-id-1");
 
-        ResponseEntity<Void> response = controller.deleteDatasetFile(
+        ResponseEntity<Response<Void>> response = controller.deleteDatasetFile(
                 "dataset-id-1", "file-id-1");
 
         assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
@@ -220,7 +221,7 @@ class DatasetFileControllerTest {
         doThrow(new IllegalArgumentException("File not found"))
                 .when(datasetFileApplicationService).deleteDatasetFile("dataset-id-1", "not-exist");
 
-        ResponseEntity<Void> response = controller.deleteDatasetFile(
+        ResponseEntity<Response<Void>> response = controller.deleteDatasetFile(
                 "dataset-id-1", "not-exist");
 
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
@@ -283,10 +284,10 @@ class DatasetFileControllerTest {
         when(datasetFileApplicationService.getDatasetFile("dataset-id-1", "file-id-1"))
                 .thenReturn(sampleFile);
 
-        ResponseEntity<DatasetFileResponse> response = controller.getDatasetFileById(
+        ResponseEntity<Response<DatasetFileResponse>> response = controller.getDatasetFileById(
                 "dataset-id-1", "file-id-1");
 
-        DatasetFileResponse fileResponse = response.getBody();
+        DatasetFileResponse fileResponse = response.getBody().getData();
         assertNotNull(fileResponse);
         assertEquals("file-id-1", fileResponse.getId());
         assertEquals("test-file.csv", fileResponse.getFileName());
@@ -310,10 +311,10 @@ class DatasetFileControllerTest {
         when(datasetFileApplicationService.getDatasetFile("dataset-id-1", "minimal-file"))
                 .thenReturn(minimalFile);
 
-        ResponseEntity<DatasetFileResponse> response = controller.getDatasetFileById(
+        ResponseEntity<Response<DatasetFileResponse>> response = controller.getDatasetFileById(
                 "dataset-id-1", "minimal-file");
 
-        DatasetFileResponse fileResponse = response.getBody();
+        DatasetFileResponse fileResponse = response.getBody().getData();
         assertNotNull(fileResponse);
         assertEquals("minimal-file", fileResponse.getId());
         assertEquals("minimal.txt", fileResponse.getFileName());
@@ -334,10 +335,10 @@ class DatasetFileControllerTest {
         when(datasetFileApplicationService.getDatasetFile("dataset-id-1", "invalid-status-file"))
                 .thenReturn(fileWithInvalidStatus);
 
-        ResponseEntity<DatasetFileResponse> response = controller.getDatasetFileById(
+        ResponseEntity<Response<DatasetFileResponse>> response = controller.getDatasetFileById(
                 "dataset-id-1", "invalid-status-file");
 
-        DatasetFileResponse fileResponse = response.getBody();
+        DatasetFileResponse fileResponse = response.getBody().getData();
         assertNotNull(fileResponse);
         assertEquals("invalid-status-file", fileResponse.getId());
         // 状态转换失败时应该不设置或设置为null

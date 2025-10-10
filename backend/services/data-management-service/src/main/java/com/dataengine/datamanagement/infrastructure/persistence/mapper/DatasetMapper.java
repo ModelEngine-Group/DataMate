@@ -1,6 +1,7 @@
 package com.dataengine.datamanagement.infrastructure.persistence.mapper;
 
 import com.dataengine.datamanagement.domain.model.dataset.Dataset;
+import com.dataengine.datamanagement.interfaces.dto.AllDatasetStatisticsResponse;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.session.RowBounds;
@@ -29,4 +30,5 @@ public interface DatasetMapper {
     int insert(Dataset dataset);
     int update(Dataset dataset);
     int deleteById(@Param("id") String id);
+    AllDatasetStatisticsResponse getAllDatasetStatistics();
 }
