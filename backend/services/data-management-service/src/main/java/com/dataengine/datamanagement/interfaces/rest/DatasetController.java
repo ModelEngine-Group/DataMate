@@ -146,6 +146,11 @@ public class DatasetController {
         }
     }
 
+    @GetMapping("/statistics")
+    public ResponseEntity<Response<AllDatasetStatisticsResponse>> getAllStatistics() {
+        return ResponseEntity.ok(Response.ok(datasetApplicationService.getAllDatasetStatistics()));
+    }
+
     private DatasetResponse convertToResponse(Dataset dataset) {
         DatasetResponse response = new DatasetResponse();
         response.setId(dataset.getId());
