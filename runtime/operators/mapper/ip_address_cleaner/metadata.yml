@@ -1,0 +1,16 @@
+name: 'IP地址匿名化'
+name_en: 'IP Address Anonymization'
+description: 'IP地址匿名化'
+description_en: 'Anonymizes IP addresses.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'AnonymizedIpAddress'
+version: '1.0.0'
+types:
+  - 'cleanse'
+modal: 'text'
+effect:
+  before: '这个是IP地址：10.x.x.10'
+  after: '这个是IP地址：<ip>'
+inputs: 'text'
+outputs: 'text'

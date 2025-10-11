@@ -1,0 +1,16 @@
+name: 'HTML标签去除'
+name_en: 'HTML Tag Removal'
+description: '移除文档中HTML标签，如 <html>、<dev>、<p> 等。'
+description_en: 'Removes HTML tags from documents, such as <html>, <dev>, and <p>.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'HtmlTagCleaner'
+version: '1.0.0'
+types:
+  - 'cleanse'
+modal: 'text'
+effect:
+  before: '<p><b>机器学习</b>是<a href="/wiki/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD" title="人工智能">人工智能</a>的一个分支。</p>'
+  after: '机器学习是人工智能的一个分支。'
+inputs: 'text'
+outputs: 'text'

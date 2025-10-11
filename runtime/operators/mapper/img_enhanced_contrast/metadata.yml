@@ -1,0 +1,16 @@
+name: '图片对比度增强'
+name_en: 'Image Contrast Enhancement'
+description: '自适应调节图片的对比度。'
+description_en: 'Adapts and adjusts the image contrast.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'ImgContrast'
+version: '1.0.0'
+types:
+  - 'cleanse'
+modal: 'image'
+effect:
+  before: ''
+  after: ''
+inputs: 'image'
+outputs: 'image'

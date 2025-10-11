@@ -1,0 +1,16 @@
+name: 'XML标签去除'
+name_en: 'XML Tag Removal'
+description: '去除XML中的标签。'
+description_en: 'Removes tags from XML files.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'XMLTagCleaner'
+version: '1.0.0'
+types:
+  - 'cleanse'
+modal: 'text'
+effect:
+  before: '   <性别>男</性别>'
+  after: '性别: 男'
+inputs: 'text'
+outputs: 'text'

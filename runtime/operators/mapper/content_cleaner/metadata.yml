@@ -1,0 +1,16 @@
+name: '文档目录去除'
+name_en: 'Document Contents Removal'
+description: '去除文档中的目录。'
+description_en: 'Removes tables of contents from documents.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'ContentCleaner'
+version: '1.0.0'
+types:
+  - 'cleanse'
+modal: 'text'
+effect:
+  before: ''
+  after: ''
+inputs: 'text'
+outputs: 'text'

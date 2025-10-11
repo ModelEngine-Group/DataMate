@@ -1,0 +1,17 @@
+name: '图片方向校正'
+name_en: 'Image Orientation Correction'
+description: '将含有文字的图片校正到文字水平方向，主要适用于文档场景。'
+description_en: 'Corrects images to ensure text is presented horizontally, which is
+  mainly applicable to document scenarios.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'ImgDirectionCorrect'
+version: '1.0.0'
+types:
+  - 'cleanse'
+modal: 'image'
+effect:
+  before: ''
+  after: ''
+inputs: 'image'
+outputs: 'image'

@@ -27,9 +27,10 @@ tags:
     description: 标签管理
 
 paths:
-  /datasets:
+  /data-management/datasets:
     get:
       tags: [Dataset]
+      operationId: getDatasets
       summary: 获取数据集列表
       description: 分页查询数据集列表，支持按类型、标签等条件筛选
       parameters:
@@ -82,6 +83,7 @@ paths:
 
     post:
       tags: [Dataset]
+      operationId: createDataset
       summary: 创建数据集
       description: 创建新的数据集
       requestBody:
@@ -104,9 +106,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /datasets/{datasetId}:
+  /data-management/datasets/{datasetId}:
     get:
       tags: [Dataset]
+      operationId: getDatasetById
       summary: 获取数据集详情
       description: 根据ID获取数据集详细信息
       parameters:
@@ -133,6 +136,7 @@ paths:
     put:
       tags: [Dataset]
       summary: 更新数据集
+      operationId: updateDataset
       description: 更新数据集信息
       parameters:
         - name: datasetId
@@ -163,6 +167,7 @@ paths:
 
     delete:
       tags: [Dataset]
+      operationId: deleteDataset
       summary: 删除数据集
       description: 删除指定的数据集
       parameters:
@@ -182,10 +187,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /datasets/{datasetId}/files:
+  /data-management/datasets/{datasetId}/files:
     get:
       tags: [DatasetFile]
       summary: 获取数据集文件列表
+      operationId: getDatasetFiles
       description: 分页获取数据集中的文件列表
       parameters:
         - name: datasetId
@@ -228,6 +234,7 @@ paths:
     post:
       tags: [DatasetFile]
       summary: 上传文件到数据集
+      operationId: uploadDatasetFile
       description: 向指定数据集上传文件
       parameters:
         - name: datasetId
@@ -258,11 +265,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/DatasetFileResponse'
 
-  /datasets/{datasetId}/files/{fileId}:
+  /data-management/datasets/{datasetId}/files/{fileId}:
     get:
       tags: [DatasetFile]
       summary: 获取文件详情
       description: 获取数据集中指定文件的详细信息
+      operationId: getDatasetFileById
       parameters:
         - name: datasetId
           in: path
@@ -287,6 +295,7 @@ paths:
     delete:
       tags: [DatasetFile]
       summary: 删除文件
+      operationId: deleteDatasetFile
       description: 从数据集中删除指定文件
       parameters:
         - name: datasetId
@@ -305,9 +314,10 @@ paths:
         '204':
           description: 删除成功
 
-  /datasets/{datasetId}/files/{fileId}/download:
+  /data-management/datasets/{datasetId}/files/{fileId}/download:
     get:
       tags: [DatasetFile]
+      operationId: downloadDatasetFile
       summary: 下载文件
       description: 下载数据集中的指定文件
       parameters:
@@ -332,8 +342,9 @@ paths:
                 type: string
                 format: binary
 
-  /dataset-types:
+  /data-management/dataset-types:
     get:
+      operationId: getDatasetTypes
       tags: [DatasetType]
       summary: 获取数据集类型列表
       description: 获取所有支持的数据集类型
@@ -347,9 +358,10 @@ paths:
                 items:
                   $ref: '#/components/schemas/DatasetTypeResponse'
 
-  /tags:
+  /data-management/tags:
     get:
       tags: [Tag]
+      operationId: getTags
       summary: 获取标签列表
       description: 获取所有可用的标签
       parameters:
@@ -370,6 +382,7 @@ paths:
 
     post:
       tags: [Tag]
+      operationId: createTag
       summary: 创建标签
       description: 创建新的标签
       requestBody:
@@ -386,9 +399,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/TagResponse'
 
-  /datasets/{datasetId}/statistics:
+  /data-management/datasets/{datasetId}/statistics:
     get:
       tags: [Dataset]
+      operationId: getDatasetStatistics
       summary: 获取数据集统计信息
       description: 获取数据集的统计信息（文件数量、大小、完成度等）
       parameters:

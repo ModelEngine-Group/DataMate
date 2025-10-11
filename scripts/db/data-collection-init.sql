@@ -1,7 +1,7 @@
 -- 数据归集服务数据库初始化脚本
--- 适用于knowledge_base数据库
+-- 适用于dataengine数据库
 
-USE knowledge_base;
+USE dataengine;
 
 -- =====================================
 -- DDL语句 - 数据库表结构定义
@@ -11,6 +11,31 @@ USE knowledge_base;
 DROP TABLE IF EXISTS t_dc_task_executions;
 DROP TABLE IF EXISTS t_dc_collection_tasks;
 DROP TABLE IF EXISTS t_dc_datax_templates;
+
+CREATE TABLE t_dc_task_executions (
+                                    id VARCHAR(36) PRIMARY KEY COMMENT '执行记录ID（UUID）',
+                                    task_id VARCHAR(36) NOT NULL COMMENT '任务ID',
+                                    task_name VARCHAR(255) NOT NULL COMMENT '任务名称',
+                                    status VARCHAR(20) DEFAULT 'RUNNING' COMMENT '执行状态：RUNNING/SUCCESS/FAILED/STOPPED',
+                                    progress DECIMAL(5,2) DEFAULT 0.00 COMMENT '进度百分比',
+                                    records_total BIGINT DEFAULT 0 COMMENT '总记录数',
+                                    records_processed BIGINT DEFAULT 0 COMMENT '已处理记录数',
+                                    records_success BIGINT DEFAULT 0 COMMENT '成功记录数',
+                                    records_failed BIGINT DEFAULT 0 COMMENT '失败记录数',
+                                    throughput DECIMAL(10,2) DEFAULT 0.00 COMMENT '吞吐量（条/秒）',
+                                    data_size_bytes BIGINT DEFAULT 0 COMMENT '数据量（字节）',
+                                    started_at TIMESTAMP NULL COMMENT '开始时间',
+                                    completed_at TIMESTAMP NULL COMMENT '完成时间',
+                                    duration_seconds INT DEFAULT 0 COMMENT '执行时长（秒）',
+                                    config JSON COMMENT '执行配置',
+                                    error_message TEXT COMMENT '错误信息',
+                                    datax_job_id TEXT COMMENT 'datax任务ID',
+                                    result TEXT COMMENT '执行结果',
+                                    created_at TIMESTAMP NULL COMMENT '创建时间',
+                                    INDEX idx_task_id (task_id),
+                                    INDEX idx_status (status),
+                                    INDEX idx_started_at (started_at)
+) COMMENT='任务执行明细表';
 
 -- 数据归集任务表
 CREATE TABLE t_dc_collection_tasks (

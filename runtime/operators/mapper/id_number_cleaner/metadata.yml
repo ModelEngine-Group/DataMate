@@ -1,0 +1,16 @@
+name: '身份证号匿名化'
+name_en: 'ID Card Number Anonymization'
+description: '身份证号匿名化。'
+description_en: 'Anonymizes ID card numbers.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'AnonymizedIdNumber'
+version: '1.0.0'
+types:
+  - 'cleanse'
+modal: 'text'
+effect:
+  before: '这个是身份证号110101190001011009'
+  after: '这个是身份证号<id>'
+inputs: 'text'
+outputs: 'text'

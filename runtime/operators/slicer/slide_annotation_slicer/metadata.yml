@@ -1,0 +1,16 @@
+name: '病理图片标注切片'
+name_en: 'Pathological Image Annotation Slicing'
+description: '根据标注文件对病理图片进行切片。'
+description_en: 'Slicing pathology image based on annotation file..'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'AnnotationSlicer'
+version: '1.0.0'
+types:
+  - 'consolidate'
+modal: 'image'
+effect:
+  before: ''
+  after: ''
+inputs: 'image'
+outputs: 'image'

@@ -1,0 +1,27 @@
+name: '相似图片去除'
+name_en: 'Similar Image Removal'
+description: '去除相似的图片。'
+description_en: 'Removes similar images.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'ImgSimilarImagesCleaner'
+version: '1.0.0'
+types:
+  - 'cleanse'
+modal: 'image'
+effect:
+  before: ''
+  after: ''
+inputs: 'image'
+outputs: 'image'
+settings:
+  similarThreshold:
+    name: 相似度
+    name_en: Similarity
+    description: 相似度取值越大，图片相似度越高。
+    description_en: A larger similarity value indicates a higher image similarity.
+    type: slider
+    defaultVal: 0.8
+    min: 0
+    max: 1
+    step: 0.01

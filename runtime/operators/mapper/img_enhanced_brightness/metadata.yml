@@ -1,0 +1,16 @@
+name: '图片亮度增强'
+name_en: 'Image Brightness Enhancement'
+description: '自适应调节图片的亮度。'
+description_en: 'Adapts and adjusts image brightness.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'ImgBrightness'
+version: '1.0.0'
+types:
+  - 'cleanse'
+modal: 'image'
+effect:
+  before: ''
+  after: ''
+inputs: 'image'
+outputs: 'image'

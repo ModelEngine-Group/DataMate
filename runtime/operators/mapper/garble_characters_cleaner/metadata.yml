@@ -1,0 +1,17 @@
+name: '文档乱码去除'
+name_en: 'Garbled Character Removal'
+description: '去除文档中的乱码和无意义的unicode。'
+description_en: 'Removes garbled characters and meaningless Unicode characters from
+  documents.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'GrableCharactersCleaner'
+version: '1.0.0'
+types:
+  - 'cleanse'
+modal: 'text'
+effect:
+  before: '文档乱码����'
+  after: '文档乱码'
+inputs: 'text'
+outputs: 'text'

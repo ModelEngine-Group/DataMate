@@ -1,0 +1,35 @@
+name: '图片格式转换'
+name_en: 'Image Format Conversion'
+description: '将图片编码格式统一为jpg、jpeg、png、bmp格式'
+description_en: 'Converts image formats to JPG, JPEG, PNG, or BMP.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'ImgTypeUnify'
+version: '1.0.0'
+types:
+  - 'cleanse'
+modal: 'image'
+effect:
+  before: ''
+  after: ''
+inputs: 'image'
+outputs: 'image'
+settings:
+  imgType:
+    name: 图片编码格式
+    name_en: Image Encoding Format
+    type: select
+    defaultVal: jpg
+    options:
+      - label: jpg
+        label_en: jpg
+        value: jpg
+      - label: png
+        label_en: png
+        value: png
+      - label: jpeg
+        label_en: jpeg
+        value: jpeg
+      - label: bmp
+        label_en: bmp
+        value: bmp

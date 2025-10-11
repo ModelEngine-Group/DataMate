@@ -2,9 +2,9 @@ package com.dataengine.datamanagement.interfaces.rest;
 
 import com.dataengine.datamanagement.application.service.DatasetFileApplicationService;
 import com.dataengine.datamanagement.domain.model.dataset.DatasetFile;
-import com.dataengine.datamanagement.interfaces.api.DatasetFileApi;
 import com.dataengine.datamanagement.interfaces.dto.DatasetFileResponse;
 import com.dataengine.datamanagement.interfaces.dto.PagedDatasetFileResponse;
+import com.dataengine.common.interfaces.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
@@ -14,7 +14,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.ZoneOffset;
@@ -24,7 +24,8 @@ import java.util.stream.Collectors;
  * 数据集文件 REST 控制器（UUID 模式）
  */
 @RestController
-public class DatasetFileController implements DatasetFileApi {
+@RequestMapping("/data-management/datasets/{datasetId}/files")
+public class DatasetFileController {
 
     private final DatasetFileApplicationService datasetFileApplicationService;
 
@@ -33,9 +34,13 @@ public class DatasetFileController implements DatasetFileApi {
         this.datasetFileApplicationService = datasetFileApplicationService;
     }
 
-    @Override
-    public ResponseEntity<PagedDatasetFileResponse> datasetsDatasetIdFilesGet(String datasetId, Integer page, Integer size,
-                                                                  String fileType, String status) {
+    @GetMapping
+    public ResponseEntity<Response<PagedDatasetFileResponse>> getDatasetFiles(
+        @PathVariable("datasetId") String datasetId,
+        @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
+        @RequestParam(value = "size", required = false, defaultValue = "20") Integer size,
+        @RequestParam(value = "fileType", required = false) String fileType,
+        @RequestParam(value = "status", required = false) String status) {
         Pageable pageable = PageRequest.of(page != null ? page : 0, size != null ? size : 20);
 
         Page<DatasetFile> filesPage = datasetFileApplicationService.getDatasetFiles(
@@ -52,45 +57,54 @@ public class DatasetFileController implements DatasetFileApi {
         response.setFirst(filesPage.isFirst());
         response.setLast(filesPage.isLast());
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(Response.ok(response));
     }
 
-    @Override
-    public ResponseEntity<DatasetFileResponse> datasetsDatasetIdFilesPost(String datasetId, MultipartFile file, String description) {
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Response<DatasetFileResponse>> uploadDatasetFile(
+        @PathVariable("datasetId") String datasetId,
+        @RequestPart(value = "file", required = false) MultipartFile file,
+        @RequestParam(value = "description", required = false) String description) {
         try {
             DatasetFile datasetFile = datasetFileApplicationService.uploadFile(
                 datasetId, file, description, "system");
 
-            return ResponseEntity.status(HttpStatus.CREATED).body(convertToResponse(datasetFile));
+            return ResponseEntity.status(HttpStatus.CREATED).body(Response.ok(convertToResponse(datasetFile)));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(Response.error("参数错误", null));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Response.error("服务器错误", null));
         }
     }
 
-    @Override
-    public ResponseEntity<DatasetFileResponse> datasetsDatasetIdFilesFileIdGet(String datasetId, String fileId) {
+    @GetMapping("/{fileId}")
+    public ResponseEntity<Response<DatasetFileResponse>> getDatasetFileById(
+        @PathVariable("datasetId") String datasetId,
+        @PathVariable("fileId") String fileId) {
         try {
             DatasetFile datasetFile = datasetFileApplicationService.getDatasetFile(datasetId, fileId);
-            return ResponseEntity.ok(convertToResponse(datasetFile));
+            return ResponseEntity.ok(Response.ok(convertToResponse(datasetFile)));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Response.error("未找到文件", null));
         }
     }
 
-    @Override
-    public ResponseEntity<Void> datasetsDatasetIdFilesFileIdDelete(String datasetId, String fileId) {
+    @DeleteMapping("/{fileId}")
+    public ResponseEntity<Response<Void>> deleteDatasetFile(
+        @PathVariable("datasetId") String datasetId,
+        @PathVariable("fileId") String fileId) {
         try {
             datasetFileApplicationService.deleteDatasetFile(datasetId, fileId);
             return ResponseEntity.noContent().build();
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Response.error("未找到文件", null));
         }
     }
 
-    @Override
-    public ResponseEntity<Resource> datasetsDatasetIdFilesFileIdDownloadGet(String datasetId, String fileId) {
+    @GetMapping(value = "/{fileId}/download", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    public ResponseEntity<Resource> downloadDatasetFile(
+        @PathVariable("datasetId") String datasetId,
+        @PathVariable("fileId") String fileId) {
         try {
             DatasetFile datasetFile = datasetFileApplicationService.getDatasetFile(datasetId, fileId);
             Resource resource = datasetFileApplicationService.downloadFile(datasetId, fileId);
@@ -101,7 +115,7 @@ public class DatasetFileController implements DatasetFileApi {
                     "attachment; filename=\"" + datasetFile.getFileName() + "\"")
                 .body(resource);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
@@ -114,10 +128,12 @@ public class DatasetFileController implements DatasetFileApi {
         response.setOriginalName(null);
         response.setFileType(datasetFile.getFileType());
         response.setSize(datasetFile.getFileSize());
-        try { response.setStatus(DatasetFileResponse.StatusEnum.fromValue(datasetFile.getStatus())); } catch (Exception ignore) {}
+        response.setStatus(datasetFile.getStatus());
         response.setDescription(null);
         response.setFilePath(datasetFile.getFilePath());
-        if (datasetFile.getUploadTime() != null) response.setUploadedAt(datasetFile.getUploadTime().atOffset(ZoneOffset.UTC));
+        if (datasetFile.getUploadTime() != null) {
+            response.setUploadedAt(datasetFile.getUploadTime().atOffset(ZoneOffset.UTC).toLocalDateTime());
+        }
         response.setUploadedBy(null);
         return response;
     }

@@ -1,0 +1,16 @@
+name: '政治文本匿名化'
+name_en: 'Political Text Anonymization'
+description: '将政治文本进行匿名化。'
+description_en: 'Anonymizes political texts.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'PoliticalWordCleaner'
+version: '1.0.0'
+types:
+  - 'cleanse'
+modal: 'text'
+effect:
+  before: '特别字符：改革历程'
+  after: '特别字符：***'
+inputs: 'text'
+outputs: 'text'

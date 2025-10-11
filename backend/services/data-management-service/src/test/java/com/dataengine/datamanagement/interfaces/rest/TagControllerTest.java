@@ -1,5 +1,6 @@
 package com.dataengine.datamanagement.interfaces.rest;
 
+import com.dataengine.common.interfaces.Response;
 import com.dataengine.datamanagement.application.service.TagApplicationService;
 import com.dataengine.datamanagement.domain.model.dataset.Tag;
 import com.dataengine.datamanagement.interfaces.dto.CreateTagRequest;
@@ -19,7 +20,6 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -45,20 +45,20 @@ class TagControllerTest {
 
     @Test
     @DisplayName("tagsGet: 正常搜索标签")
-    void tagsGet_success() {
+    void getTags_success() {
         // Given
         List<Tag> tags = Arrays.asList(sampleTag);
         when(tagApplicationService.searchTags("sample")).thenReturn(tags);
 
         // When
-        ResponseEntity<List<TagResponse>> response = controller.tagsGet("sample");
+        ResponseEntity<Response<List<TagResponse>>> response = controller.getTags("sample");
 
         // Then
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertEquals(1, response.getBody().size());
+        assertEquals(1, response.getBody().getData().size());
 
-        TagResponse tagResponse = response.getBody().get(0);
+        TagResponse tagResponse = response.getBody().getData().get(0);
         assertEquals("tag-id-1", tagResponse.getId());
         assertEquals("sample-tag", tagResponse.getName());
         assertEquals("#ff0000", tagResponse.getColor());
@@ -74,30 +74,30 @@ class TagControllerTest {
         List<Tag> allTags = Arrays.asList(sampleTag);
         when(tagApplicationService.searchTags(null)).thenReturn(allTags);
 
-        ResponseEntity<List<TagResponse>> response = controller.tagsGet(null);
+        ResponseEntity<Response<List<TagResponse>>> response = controller.getTags(null);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertEquals(1, response.getBody().size());
+        assertEquals(1, response.getBody().getData().size());
         verify(tagApplicationService).searchTags(null);
     }
 
     @Test
     @DisplayName("tagsGet: 空结果集")
-    void tagsGet_emptyResult() {
+    void getTags_emptyResult() {
         when(tagApplicationService.searchTags("nonexistent")).thenReturn(Collections.emptyList());
 
-        ResponseEntity<List<TagResponse>> response = controller.tagsGet("nonexistent");
+        ResponseEntity<Response<List<TagResponse>>> response = controller.getTags("nonexistent");
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertTrue(response.getBody().isEmpty());
+        assertTrue(response.getBody().getData().isEmpty());
         verify(tagApplicationService).searchTags("nonexistent");
     }
 
     @Test
     @DisplayName("tagsPost: 正常创建标签")
-    void tagsPost_success() {
+    void createTag_success() {
         // Given
         CreateTagRequest request = new CreateTagRequest();
         request.setName("new-tag");
@@ -108,23 +108,23 @@ class TagControllerTest {
                 .thenReturn(sampleTag);
 
         // When
-        ResponseEntity<TagResponse> response = controller.tagsPost(request);
+        ResponseEntity<Response<TagResponse>> response = controller.createTag(request);
 
         // Then
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertEquals("tag-id-1", response.getBody().getId());
-        assertEquals("sample-tag", response.getBody().getName());
-        assertEquals("#ff0000", response.getBody().getColor());
-        assertEquals("Sample tag description", response.getBody().getDescription());
-        assertEquals(10, response.getBody().getUsageCount());
+        assertEquals("tag-id-1", response.getBody().getData().getId());
+        assertEquals("sample-tag", response.getBody().getData().getName());
+        assertEquals("#ff0000", response.getBody().getData().getColor());
+        assertEquals("Sample tag description", response.getBody().getData().getDescription());
+        assertEquals(10, response.getBody().getData().getUsageCount());
 
         verify(tagApplicationService).createTag("new-tag", "#00ff00", "New tag description");
     }
 
     @Test
     @DisplayName("tagsPost: 标签名重复时返回400")
-    void tagsPost_duplicateName() {
+    void createTag_duplicateName() {
         CreateTagRequest request = new CreateTagRequest();
         request.setName("duplicate-tag");
         request.setColor("#0000ff");
@@ -133,7 +133,7 @@ class TagControllerTest {
         when(tagApplicationService.createTag("duplicate-tag", "#0000ff", "Duplicate tag"))
                 .thenThrow(new IllegalArgumentException("Tag already exists"));
 
-        ResponseEntity<TagResponse> response = controller.tagsPost(request);
+        ResponseEntity<Response<TagResponse>> response = controller.createTag(request);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         assertNull(response.getBody());
@@ -142,7 +142,7 @@ class TagControllerTest {
 
     @Test
     @DisplayName("tagsPost: 创建标签时处理null值")
-    void tagsPost_nullValues() {
+    void createTag_nullValues() {
         CreateTagRequest request = new CreateTagRequest();
         request.setName("minimal-tag");
         // color和description为null
@@ -150,7 +150,7 @@ class TagControllerTest {
         when(tagApplicationService.createTag("minimal-tag", null, null))
                 .thenReturn(sampleTag);
 
-        ResponseEntity<TagResponse> response = controller.tagsPost(request);
+        ResponseEntity<Response<TagResponse>> response = controller.createTag(request);
 
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertNotNull(response.getBody());
@@ -163,9 +163,9 @@ class TagControllerTest {
         // 通过public API间接测试convertToResponse方法
         when(tagApplicationService.searchTags(null)).thenReturn(Arrays.asList(sampleTag));
 
-        ResponseEntity<List<TagResponse>> response = controller.tagsGet(null);
+        ResponseEntity<Response<List<TagResponse>>> response = controller.getTags(null);
 
-        TagResponse tagResponse = response.getBody().get(0);
+        TagResponse tagResponse = response.getBody().getData().get(0);
         assertEquals("tag-id-1", tagResponse.getId());
         assertEquals("sample-tag", tagResponse.getName());
         assertEquals("#ff0000", tagResponse.getColor());
@@ -183,9 +183,9 @@ class TagControllerTest {
 
         when(tagApplicationService.searchTags(null)).thenReturn(Arrays.asList(tagWithNullUsage));
 
-        ResponseEntity<List<TagResponse>> response = controller.tagsGet(null);
+        ResponseEntity<Response<List<TagResponse>>> response = controller.getTags(null);
 
-        TagResponse tagResponse = response.getBody().get(0);
+        TagResponse tagResponse = response.getBody().getData().get(0);
         assertEquals("tag-id-2", tagResponse.getId());
         assertEquals("null-usage-tag", tagResponse.getName());
         assertNull(tagResponse.getUsageCount());
@@ -206,13 +206,13 @@ class TagControllerTest {
 
         when(tagApplicationService.searchTags("multi")).thenReturn(Arrays.asList(tag1, tag2));
 
-        ResponseEntity<List<TagResponse>> response = controller.tagsGet("multi");
+        ResponseEntity<Response<List<TagResponse>>> response = controller.getTags("multi");
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(2, response.getBody().size());
+        assertEquals(2, response.getBody().getData().size());
 
-        TagResponse first = response.getBody().get(0);
-        TagResponse second = response.getBody().get(1);
+        TagResponse first = response.getBody().getData().get(0);
+        TagResponse second = response.getBody().getData().get(1);
 
         assertEquals("tag-1", first.getId());
         assertEquals("first-tag", first.getName());
@@ -227,25 +227,25 @@ class TagControllerTest {
 
     @Test
     @DisplayName("tagsGet: 搜索关键词为空字符串")
-    void tagsGet_emptyKeyword() {
+    void getTags_emptyKeyword() {
         when(tagApplicationService.searchTags("")).thenReturn(Arrays.asList(sampleTag));
 
-        ResponseEntity<List<TagResponse>> response = controller.tagsGet("");
+        ResponseEntity<Response<List<TagResponse>>> response = controller.getTags("");
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(1, response.getBody().size());
+        assertEquals(1, response.getBody().getData().size());
         verify(tagApplicationService).searchTags("");
     }
 
     @Test
     @DisplayName("tagsGet: 搜索关键词为空白字符")
-    void tagsGet_blankKeyword() {
+    void getTags_blankKeyword() {
         when(tagApplicationService.searchTags("   ")).thenReturn(Arrays.asList(sampleTag));
 
-        ResponseEntity<List<TagResponse>> response = controller.tagsGet("   ");
+        ResponseEntity<Response<List<TagResponse>>> response = controller.getTags("   ");
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(1, response.getBody().size());
+        assertEquals(1, response.getBody().getData().size());
         verify(tagApplicationService).searchTags("   ");
     }
 }

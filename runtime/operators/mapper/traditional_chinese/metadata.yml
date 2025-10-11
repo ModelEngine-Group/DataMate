@@ -1,0 +1,16 @@
+name: '繁体转简体'
+name_en: 'Traditional-Simplified Chinese Conversion'
+description: '将繁体转换为简体。'
+description_en: 'Converts traditional Chinese characters to simplified Chinese characters.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'TraditionalChineseCleaner'
+version: '1.0.0'
+types:
+  - 'cleanse'
+modal: 'text'
+effect:
+  before: '華為的業務涵蓋了從通信設備到智能手機、企業網絡解決方案以及雲計算等多個領域。'
+  after: '华为的业务涵盖了从通信设备到智能手机、企业网络解决方案以及云计算等多个领域。'
+inputs: 'text'
+outputs: 'text'

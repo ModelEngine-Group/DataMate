@@ -1,0 +1,27 @@
+name: '文档字重复率检查'
+name_en: 'Word Repetition Rate Check'
+description: '去除重复字过多的文档。'
+description_en: 'Filters out files that contain excessive repeated words.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'FileWithHighRepeatWordRateFilter'
+version: '1.0.0'
+types:
+  - 'cleanse'
+modal: 'text'
+effect:
+  before: '机器学学学学学学学学学学学学学学学学学学学学学学学学学学学学学学习'
+  after: ''
+inputs: 'text'
+outputs: 'text'
+settings:
+  repeatWordRatio:
+    name: 文档字重复率
+    name_en: Word Repetition Rate
+    description: 某个字的统计数/文档总字数 > 设定值，该文档被去除。
+    description_en: 'Filters out files that meet the formula: Number of times a word occurs/Totalnumber of words > Value you set.'
+    type: slider
+    defaultVal: 0.5
+    min: 0
+    max: 1
+    step: 0.1

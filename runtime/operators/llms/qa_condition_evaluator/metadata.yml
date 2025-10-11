@@ -1,0 +1,16 @@
+name: 'QA评估'
+name_en: 'QA Assessment'
+description: '通过用户维度和相应描述进行QA对评估。'
+description_en: 'Perform QA assessment based on the user dimension and corresponding description.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'QAConditionEvaluator'
+version: '1.0.0'
+types:
+  - 'consolidate'
+modal: 'text'
+effect:
+  before: ''
+  after: ''
+inputs: 'text'
+outputs: 'text'

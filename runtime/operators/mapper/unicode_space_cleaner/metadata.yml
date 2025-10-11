@@ -1,0 +1,16 @@
+name: '空格标准化'
+name_en: 'Space Standardization'
+description: '将文档中不同的 unicode 空格，如 u2008，转换为正常空格\u0020。'
+description_en: 'Converts different Unicode spaces, such as u2008, in the document to normal spaces \u0020.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'UnicodeSpaceCleaner'
+version: '1.0.0'
+types:
+  - 'cleanse'
+modal: 'text'
+effect:
+  before: 'A computer program is said to learn from experience E with respect to some class of tasks T and performance measure P, if its　performance at tasks in T, as　measured by P, improves with experience E.'
+  after: 'A computer program is said to learn from experience E with respect to some class of tasks T and performance measure P, if its performance at tasks in T, as measured by P, improves with experience E.'
+inputs: 'text'
+outputs: 'text'

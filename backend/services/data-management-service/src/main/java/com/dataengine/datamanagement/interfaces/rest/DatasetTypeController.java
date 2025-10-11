@@ -1,8 +1,10 @@
 package com.dataengine.datamanagement.interfaces.rest;
 
-import com.dataengine.datamanagement.interfaces.api.DatasetTypeApi;
+import com.dataengine.common.interfaces.Response;
 import com.dataengine.datamanagement.interfaces.dto.DatasetTypeResponse;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Arrays;
@@ -12,11 +14,15 @@ import java.util.List;
  * 数据集类型 REST 控制器
  */
 @RestController
-public class DatasetTypeController implements DatasetTypeApi {
+@RequestMapping("/data-management/dataset-types")
+public class DatasetTypeController {
 
-    @Override
-    public ResponseEntity<List<DatasetTypeResponse>> datasetTypesGet() {
-        // 硬编码的数据集类型，实际应用中可以从数据库获取
+    /**
+     * 获取所有支持的数据集类型
+     * @return 数据集类型列表
+     */
+    @GetMapping
+    public ResponseEntity<Response<List<DatasetTypeResponse>>> getDatasetTypes() {
         List<DatasetTypeResponse> types = Arrays.asList(
             createDatasetType("IMAGE", "图像数据集", "用于机器学习的图像数据集", Arrays.asList("jpg", "jpeg", "png", "bmp", "gif")),
             createDatasetType("TEXT", "文本数据集", "用于文本分析的文本数据集", Arrays.asList("txt", "csv", "json", "xml")),
@@ -24,8 +30,7 @@ public class DatasetTypeController implements DatasetTypeApi {
             createDatasetType("VIDEO", "视频数据集", "用于视频分析的视频数据集", Arrays.asList("mp4", "avi", "mov", "mkv")),
             createDatasetType("MULTIMODAL", "多模态数据集", "包含多种数据类型的数据集", Arrays.asList("*"))
         );
-        
-        return ResponseEntity.ok(types);
+        return ResponseEntity.ok(Response.ok(types));
     }
 
     private DatasetTypeResponse createDatasetType(String code, String name, String description, List<String> supportedFormats) {
@@ -35,7 +40,6 @@ public class DatasetTypeController implements DatasetTypeApi {
         response.setDescription(description);
         response.setSupportedFormats(supportedFormats);
         response.setIcon(getIconForType(code));
-        
         return response;
     }
 

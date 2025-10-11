@@ -1,0 +1,16 @@
+name: '邮件地址匿名化'
+name_en: 'Email Address Anonymization'
+description: '邮件地址匿名化'
+description_en: 'Anonymizes email addresses.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'EmailNumberCleaner'
+version: '1.0.0'
+types:
+  - 'cleanse'
+modal: 'text'
+effect:
+  before: '这个是邮箱号：test_email@gmail.com'
+  after: '这个是邮箱号：<email>'
+inputs: 'text'
+outputs: 'text'

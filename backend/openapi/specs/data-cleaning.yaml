@@ -59,25 +59,6 @@ paths:
                 items: &ref_1
                   $ref: '#/components/schemas/CleaningTask'
           headers: { }
-        '400':
-          description: 请求参数无效或缺失
-          content:
-            application/json:
-              schema: &ref_0
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                error: Bad Request
-                message: Invalid input data provided.
-          headers: { }
-        '500':
-          description: 服务器内部错误
-          content:
-            application/json:
-              schema: *ref_0
-              example:
-                error: Internal Server Error
-                message: An unexpected error occurred on the server.
-          headers: { }
       security: [ ]
     post:
       summary: 创建新的数据清洗任务
@@ -98,33 +79,6 @@ paths:
           content:
             application/json:
               schema: *ref_1
-          headers: { }
-        '400':
-          description: 请求参数无效或缺失
-          content:
-            application/json:
-              schema: *ref_0
-              example:
-                error: Bad Request
-                message: Invalid input data provided.
-          headers: { }
-        '404':
-          description: 请求的资源未找到
-          content:
-            application/json:
-              schema: *ref_0
-              example:
-                error: Not Found
-                message: The requested resource was not found.
-          headers: { }
-        '500':
-          description: 服务器内部错误
-          content:
-            application/json:
-              schema: *ref_0
-              example:
-                error: Internal Server Error
-                message: An unexpected error occurred on the server.
           headers: { }
       security: [ ]
   /cleaning/tasks/{taskId}:
@@ -149,24 +103,6 @@ paths:
             application/json:
               schema: *ref_1
           headers: { }
-        '404':
-          description: 请求的资源未找到
-          content:
-            application/json:
-              schema: *ref_0
-              example:
-                error: Not Found
-                message: The requested resource was not found.
-          headers: { }
-        '500':
-          description: 服务器内部错误
-          content:
-            application/json:
-              schema: *ref_0
-              example:
-                error: Internal Server Error
-                message: An unexpected error occurred on the server.
-          headers: { }
       security: [ ]
     delete:
       summary: 删除数据清洗任务
@@ -185,24 +121,6 @@ paths:
       responses:
         '204':
           description: 任务删除成功
-          headers: { }
-        '404':
-          description: 请求的资源未找到
-          content:
-            application/json:
-              schema: *ref_0
-              example:
-                error: Not Found
-                message: The requested resource was not found.
-          headers: { }
-        '500':
-          description: 服务器内部错误
-          content:
-            application/json:
-              schema: *ref_0
-              example:
-                error: Internal Server Error
-                message: An unexpected error occurred on the server.
           headers: { }
       security: [ ]
   /cleaning/templates:
@@ -223,15 +141,6 @@ paths:
                 items: &ref_2
                   $ref: '#/components/schemas/CleaningTemplate'
           headers: { }
-        '500':
-          description: 服务器内部错误
-          content:
-            application/json:
-              schema: *ref_0
-              example:
-                error: Internal Server Error
-                message: An unexpected error occurred on the server.
-          headers: { }
       security: [ ]
     post:
       summary: 创建新的数据清洗模板
@@ -251,24 +160,6 @@ paths:
           content:
             application/json:
               schema: *ref_2
-          headers: { }
-        '400':
-          description: 请求参数无效或缺失
-          content:
-            application/json:
-              schema: *ref_0
-              example:
-                error: Bad Request
-                message: Invalid input data provided.
-          headers: { }
-        '500':
-          description: 服务器内部错误
-          content:
-            application/json:
-              schema: *ref_0
-              example:
-                error: Internal Server Error
-                message: An unexpected error occurred on the server.
           headers: { }
       security: [ ]
   /cleaning/templates/{templateId}:
@@ -292,24 +183,6 @@ paths:
           content:
             application/json:
               schema: *ref_2
-          headers: { }
-        '404':
-          description: 请求的资源未找到
-          content:
-            application/json:
-              schema: *ref_0
-              example:
-                error: Not Found
-                message: The requested resource was not found.
-          headers: { }
-        '500':
-          description: 服务器内部错误
-          content:
-            application/json:
-              schema: *ref_0
-              example:
-                error: Internal Server Error
-                message: An unexpected error occurred on the server.
           headers: { }
       security: [ ]
     put:
@@ -338,33 +211,6 @@ paths:
             application/json:
               schema: *ref_2
           headers: { }
-        '400':
-          description: 请求参数无效或缺失
-          content:
-            application/json:
-              schema: *ref_0
-              example:
-                error: Bad Request
-                message: Invalid input data provided.
-          headers: { }
-        '404':
-          description: 请求的资源未找到
-          content:
-            application/json:
-              schema: *ref_0
-              example:
-                error: Not Found
-                message: The requested resource was not found.
-          headers: { }
-        '500':
-          description: 服务器内部错误
-          content:
-            application/json:
-              schema: *ref_0
-              example:
-                error: Internal Server Error
-                message: An unexpected error occurred on the server.
-          headers: { }
       security: [ ]
     delete:
       summary: 删除数据清洗模板
@@ -384,33 +230,6 @@ paths:
         '204':
           description: 模板删除成功
           headers: { }
-        '404':
-          description: 请求的资源未找到
-          content:
-            application/json:
-              schema: *ref_0
-              example:
-                error: Not Found
-                message: The requested resource was not found.
-          headers: { }
-        '409':
-          description: 因为有任务正在使用该模板而无法删除
-          content:
-            application/json:
-              schema: *ref_0
-              example:
-                error: Conflict
-                message: Template is in use by active tasks and cannot be deleted.
-          headers: { }
-        '500':
-          description: 服务器内部错误
-          content:
-            application/json:
-              schema: *ref_0
-              example:
-                error: Internal Server Error
-                message: An unexpected error occurred on the server.
-          headers: { }
       security: [ ]
 
 components:
@@ -421,8 +240,9 @@ components:
         id:
           type: string
         overrides:
-          type: array
-          items:
+          type: object
+          properties: { }
+          additionalProperties:
             type: object
             properties: { }
       required:
@@ -449,8 +269,7 @@ components:
       type: object
       properties:
         id:
-          type: integer
-          format: int64
+          type: string
           description: 算子ID
         name:
           type: string
@@ -561,7 +380,9 @@ components:
       required:
         - name
         - instance
-        - sourceType
+        - srcDatasetId
+        - destDatasetName
+        - destDatasetType
       properties:
         name:
           type: string
@@ -569,7 +390,11 @@ components:
         description:
           type: string
           description: 任务描述
-        sourceType:
+        srcDatasetId:
+          type: string
+        destDatasetName:
+          type: string
+        destDatasetType:
           type: string
         instance:
           type: array
@@ -602,6 +427,18 @@ components:
         description:
           type: string
           description: 任务描述
+        srcDatasetId:
+          type: string
+          description: 源数据集id
+        srcDatasetName:
+          type: string
+          description: 源数据集名称
+        destDatasetId:
+          type: string
+          description: 目标数据集id
+        destDatasetName:
+          type: string
+          description: 目标数据集名称
         status:
           type: string
           description: 任务当前状态

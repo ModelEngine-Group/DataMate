@@ -90,6 +90,7 @@ spec:
       - name: dataset
         hostPath:
           path: /tmp/data-platform
+          type: DirectoryOrCreate
 
 ---
 apiVersion: v1

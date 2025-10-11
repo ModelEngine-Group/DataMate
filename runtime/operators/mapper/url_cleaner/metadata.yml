@@ -1,0 +1,16 @@
+name: 'URL网址匿名化'
+name_en: 'URL Anonymization'
+description: '将文档中的url网址匿名化。'
+description_en: 'Anonymizes URLs in documents.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'AnonymizedUrlCleaner'
+version: '1.0.0'
+types:
+  - 'cleanse'
+modal: 'text'
+effect:
+  before: '需要被屏蔽的url：https://www.huawei.com'
+  after: '需要被屏蔽的url：<url>'
+inputs: 'text'
+outputs: 'text'

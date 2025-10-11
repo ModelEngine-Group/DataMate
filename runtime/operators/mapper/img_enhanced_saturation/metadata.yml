@@ -1,0 +1,17 @@
+name: '图片饱和度增强'
+name_en: 'Image Saturation Enhancement'
+description: '自适应调节图片的饱和度，主要适用于自然场景图片。'
+description_en: 'Adapts and adjusts the saturation of images, which is mainly applicable
+  to natural scenery image scenarios.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'ImgSaturation'
+version: '1.0.0'
+types:
+  - 'cleanse'
+modal: 'image'
+effect:
+  before: ''
+  after: ''
+inputs: 'image'
+outputs: 'image'

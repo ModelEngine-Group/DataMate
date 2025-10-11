@@ -1,0 +1,17 @@
+name: '多余空格去除'
+name_en: 'Redundant Space Removal'
+description: '移除文档首尾、句中或标点符号附近多余空格和 tab 等。'
+description_en: 'Removes redundant spaces and tabs at the beginning and end of documents,
+  in sentences, or near punctuations.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'ExtraSpaceCleaner'
+version: '1.0.0'
+types:
+  - 'cleanse'
+modal: 'text'
+effect:
+  before: '  人工智能的研究历史有着一条从以“推理”为重  点，到以“知识”为重点，再到以“学习”为重点的自然、清晰的脉络。  '
+  after: '人工智能的研究历史有着一条从以“推理”为重点，到以“知识”为重点，再到以“学习”为重点的自然、清晰的脉络。'
+inputs: 'text'
+outputs: 'text'

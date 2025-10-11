@@ -1,0 +1,17 @@
+name: '图片噪点去除'
+name_en: 'Image Noise Removal'
+description: '去除图片中的噪点，主要适用于自然场景。'
+description_en: 'Removes noises from images, which is mainly applicable to natural
+  scenery image scenarios.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'ImgDenoise'
+version: '1.0.0'
+types:
+  - 'cleanse'
+modal: 'image'
+effect:
+  before: ''
+  after: ''
+inputs: 'image'
+outputs: 'image'
