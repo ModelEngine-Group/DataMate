@@ -6,6 +6,7 @@ class Request {
     this.baseURL = baseURL;
     this.defaultHeaders = {
       "Content-Type": "application/json",
+      Accept: "*/*",
     };
   }
 
@@ -83,8 +84,8 @@ class Request {
    * @param {object} data - 请求体数据
    * @param {object} options - 额外的fetch选项
    */
-  async post(url, data = null, options = {}) {
-    const config = {
+  async post(url, data = {}, options = {}) {
+    let config = {
       method: "POST",
       headers: {
         ...this.defaultHeaders,
@@ -93,6 +94,18 @@ class Request {
       body: data ? JSON.stringify(data) : undefined,
       ...options,
     };
+
+    const isFormData = data instanceof FormData;
+    if (isFormData) {
+      config = {
+        method: "POST",
+        headers: {
+          ...options.headers,
+        },
+        body: data,
+        ...options,
+      };
+    }
 
     const response = await fetch(this.baseURL + url, config);
     return this.handleResponse(response);
@@ -130,12 +143,17 @@ class Request {
 
     const config = {
       method: "DELETE",
+      redirect: "follow",
       headers: {
         ...this.defaultHeaders,
         ...options.headers,
+        "X-Requested-With": "XMLHttpRequest", // 添加此行以确保某些服务器接受请求
       },
       ...options,
+      credentials: "include",
+      mode: "cors", // 确保 CORS 模式
     };
+    console.log(config);
 
     const response = await fetch(fullURL, config);
     return this.handleResponse(response);

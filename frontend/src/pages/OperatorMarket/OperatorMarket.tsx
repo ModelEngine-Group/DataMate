@@ -3,9 +3,7 @@ import { Button, Badge, List, Avatar, Tag } from "antd";
 import { FilterOutlined, StarFilled } from "@ant-design/icons";
 import {
   Plus,
-  Eye,
   Edit,
-  Star,
   Trash2,
   X,
   Code,
@@ -25,7 +23,7 @@ import { useNavigate } from "react-router";
 import { mockOperators } from "@/mock/operator";
 import type { Operator } from "@/pages/OperatorMarket/operator.interface";
 import Filters from "./components/Filters";
-import TagManagement from "./components/TagManagement";
+import TagManagement from "@/components/TagManagement";
 
 export default function OperatorMarketPage() {
   const navigate = useNavigate();

@@ -1,5 +1,11 @@
-import { DatasetType, DatasetStatus, type Dataset } from "@/pages/DataManagement/dataset.model";
-import { formatBytes } from "@/utils/unit";
+import {
+  DatasetType,
+  DatasetStatus,
+  type Dataset,
+  DatasetSubType,
+  DataSource,
+} from "@/pages/DataManagement/dataset.model";
+import { formatBytes, formatDateTime } from "@/utils/unit";
 import {
   CheckCircleOutlined,
   ClockCircleOutlined,
@@ -12,6 +18,12 @@ import {
   FileText,
   AudioLines,
   Video,
+  FileCode,
+  MessageCircleMore,
+  ImagePlus,
+  FileMusic,
+  Music,
+  Videotape,
 } from "lucide-react";
 
 export const datasetTypeMap: Record<
@@ -23,159 +35,125 @@ export const datasetTypeMap: Record<
     description: string;
     icon?: React.JSX.Element;
     iconColor?: string;
-    // 新增：子类型列表
-    // 用于预训练和微调类型的子类型
-    // 例如：预训练下的文本、图像等
-    // 用于微调下的Alpaca、ChatGLM等
-    children: DatasetType[];
+    children: DatasetSubType[];
   }
 > = {
-  [DatasetType.PRETRAIN]: {
-    value: DatasetType.PRETRAIN,
-    label: "预训练",
+  [DatasetType.TEXT]: {
+    value: DatasetType.TEXT,
+    label: "文本",
     order: 1,
     children: [
-      DatasetType.PRETRAIN_TEXT,
-      DatasetType.PRETRAIN_IMAGE,
-      DatasetType.PRETRAIN_AUDIO,
-      DatasetType.PRETRAIN_VIDEO,
+      DatasetSubType.TEXT_DOCUMENT,
+      DatasetSubType.TEXT_WEB,
+      DatasetSubType.TEXT_DIALOG,
     ],
-    description: "用于大规模预训练模型的数据集",
+    description: "用于处理和分析文本数据的数据集",
   },
-  [DatasetType.FINE_TUNE]: {
-    value: DatasetType.FINE_TUNE,
-    label: "微调",
+  [DatasetType.IMAGE]: {
+    value: DatasetType.IMAGE,
+    label: "图像",
     order: 2,
-    children: [
-      DatasetType.FINE_TUNE_ALPACA,
-      DatasetType.FINE_TUNE_CHATGLM,
-      DatasetType.FINE_TUNE_BLOOMZ,
-      DatasetType.FINE_TUNE_LLAMA,
-    ],
-    description: "用于微调特定任务或领域模型的数据集",
+    children: [DatasetSubType.IMAGE_IMAGE, DatasetSubType.IMAGE_CAPTION],
+    description: "用于处理和分析图像数据的数据集",
   },
-  [DatasetType.EVAL]: {
-    value: DatasetType.EVAL,
-    label: "评测",
+  [DatasetType.AUDIO]: {
+    value: DatasetType.AUDIO,
+    label: "音频",
     order: 3,
-    children: [
-      DatasetType.EVAL_GSM8K,
-      DatasetType.EVAL_SQUAD,
-      DatasetType.EVAL_MNLI,
-      DatasetType.EVAL_IMDB,
-      DatasetType.EVAL_SINGLE_CHOICE_QA,
-    ],
-    description: "用于评测模型性能和效果的数据集",
+    children: [DatasetSubType.AUDIO_AUDIO, DatasetSubType.AUDIO_JSONL],
+    description: "用于处理和分析音频数据的数据集",
+  },
+  [DatasetType.VIDEO]: {
+    value: DatasetType.VIDEO,
+    label: "视频",
+    order: 3,
+    children: [DatasetSubType.VIDEO_VIDEO, DatasetSubType.VIDEO_JSONL],
+    description: "用于处理和分析视频数据的数据集",
   },
 };
 
-export const TypeMap: Record<
+export const datasetSubTypeMap: Record<
   string,
   {
-    value: DatasetType;
+    value: DatasetSubType;
     label: string;
-    order: number;
-    description: string;
-    icon?: React.JSX.Element;
-    iconColor?: string;
-    // 新增：子类型列表
-    // 用于预训练和微调类型的子类型
-    // 例如：预训练下的文本、图像等
-    // 用于微调下的Alpaca、ChatGLM等
-    children: DatasetType[];
+    order?: number;
+    description?: string;
+    icon?: React.JSX.Element | string;
+    color?: string;
   }
 > = {
-  ...datasetTypeMap,
-  [DatasetType.PRETRAIN_TEXT]: {
-    value: DatasetType.PRETRAIN_TEXT,
-    label: "文本预训练",
+  [DatasetSubType.TEXT_DOCUMENT]: {
+    value: DatasetSubType.TEXT_DOCUMENT,
+    label: "文档",
     color: "blue",
     icon: "📄", // 📄
-    description: "用于大规模文本预训练模型的数据集",
+    icon: <FileText className="w-4 h-4" />,
+    description: "用于存储和处理各种文档格式的文本数据集",
   },
-  [DatasetType.PRETRAIN_IMAGE]: {
-    value: DatasetType.PRETRAIN_IMAGE,
-    label: "图像预训练",
+  [DatasetSubType.TEXT_WEB]: {
+    value: DatasetSubType.TEXT_WEB,
+    label: "网页",
+    color: "cyan",
+    icon: "🌐", // 🌐
+    icon: <FileCode className="w-4 h-4" />,
+    description: "用于存储和处理网页数据集",
+  },
+  [DatasetSubType.TEXT_DIALOG]: {
+    value: DatasetSubType.TEXT_DIALOG,
+    label: "对话",
+    color: "teal",
+    icon: "💬", // 💬
+    icon: <MessageCircleMore className="w-4 h-4" />,
+    description: "用于存储和处理对话数据的数据集",
+  },
+  [DatasetSubType.IMAGE_IMAGE]: {
+    value: DatasetSubType.IMAGE_IMAGE,
+    label: "图像",
     color: "green",
     icon: "🖼️", // 🖼️
+    icon: <FileImage className="w-4 h-4" />,
     description: "用于大规模图像预训练模型的数据集",
   },
-  [DatasetType.PRETRAIN_AUDIO]: {
-    value: DatasetType.PRETRAIN_AUDIO,
-    label: "音频预训练",
+  [DatasetSubType.IMAGE_CAPTION]: {
+    value: DatasetSubType.IMAGE_CAPTION,
+    label: "图像+caption",
+    color: "lightgreen",
+    icon: "📝", // 📝
+    icon: <ImagePlus className="w-4 h-4" />,
+    description: "用于图像标题生成的数据集",
+  },
+  [DatasetSubType.AUDIO_AUDIO]: {
+    value: DatasetSubType.AUDIO_AUDIO,
+    label: "音频",
     color: "purple",
     icon: "\u{1F50A}", // 🔊
+    icon: <Music className="w-4 h-4" />,
     description: "用于大规模音频预训练模型的数据集",
   },
-  [DatasetType.PRETRAIN_VIDEO]: {
-    value: DatasetType.PRETRAIN_VIDEO,
-    label: "视频预训练",
+  [DatasetSubType.AUDIO_JSONL]: {
+    value: DatasetSubType.AUDIO_JSONL,
+    label: "音频+JSONL",
+    color: "purple",
+    icon: "\u{1F50A}", // 🔊
+    icon: <FileMusic className="w-4 h-4" />,
+    description: "用于大规模音频预训练模型的数据集",
+  },
+  [DatasetSubType.VIDEO_VIDEO]: {
+    value: DatasetSubType.VIDEO_VIDEO,
+    label: "视频",
     color: "orange",
-    icon: "🎥", // 🎥
+    icon: "🎥",
+    icon: <Video className="w-4 h-4" />,
     description: "用于大规模视频预训练模型的数据集",
   },
-  [DatasetType.FINE_TUNE_ALPACA]: {
-    value: DatasetType.FINE_TUNE_ALPACA,
-    label: "Alpaca微调",
-    color: "cyan",
-    icon: "\u{1F9D8}", // 🦙
-    description: "用于Alpaca模型微调的数据集",
-  },
-  [DatasetType.FINE_TUNE_CHATGLM]: {
-    value: DatasetType.FINE_TUNE_CHATGLM,
-    label: "ChatGLM微调",
-    color: "teal ",
-    icon: "\u{1F4AC}", // 💬
-    description: "用于ChatGLM模型微调的数据集",
-  },
-  [DatasetType.FINE_TUNE_BLOOMZ]: {
-    value: DatasetType.FINE_TUNE_BLOOMZ,
-    label: "BLOOMZ微调",
-    color: "pink",
-    icon: "\u{1F33A}", // 🌼
-    description: "用于BLOOMZ模型微调的数据集",
-  },
-  [DatasetType.FINE_TUNE_LLAMA]: {
-    value: DatasetType.FINE_TUNE_LLAMA,
-    label: "LLAMA微调",
-    color: "red",
-    icon: "\u{1F999}", // 🦙
-    description: "用于LLAMA模型微调的数据集",
-  },
-  [DatasetType.EVAL_GSM8K]: {
-    value: DatasetType.EVAL_GSM8K,
-    label: "GSM8K评测",
-    color: "gray",
-    icon: "\u{1F4D3}", // 📓
-    description: "用于GSM8K数学题评测的数据集",
-  },
-  [DatasetType.EVAL_SQUAD]: {
-    value: DatasetType.EVAL_SQUAD,
-    label: "SQuAD评测",
-    color: "indigo",
-    icon: "📝", // 📝
-    description: "用于SQuAD问答评测的数据集",
-  },
-  [DatasetType.EVAL_MNLI]: {
-    value: DatasetType.EVAL_MNLI,
-    label: "MNLI评测",
-    color: "lime",
-    icon: "\u{1F4D6}", // 📖
-    description: "用于MNLI自然语言推断评测的数据集",
-  },
-  [DatasetType.EVAL_IMDB]: {
-    value: DatasetType.EVAL_IMDB,
-    label: "IMDB评测",
-    color: "yellow",
-    icon: "\u{1F4C3}", // 📃
-    description: "用于IMDB情感分析评测的数据集",
-  },
-  [DatasetType.EVAL_SINGLE_CHOICE_QA]: {
-    value: DatasetType.EVAL_SINGLE_CHOICE_QA,
-    label: "单选题评测",
-    color: "brown",
-    icon: "📋", // 📋
-    description: "用于单选题问答评测的数据集",
+  [DatasetSubType.VIDEO_JSONL]: {
+    value: DatasetSubType.VIDEO_JSONL,
+    label: "视频+JSONL",
+    color: "orange",
+    icon: "🎥", // 🎥
+    icon: <Videotape className="w-4 h-4" />,
+    description: "用于大规模视频预训练模型的数据集",
   },
 };
 
@@ -200,14 +178,26 @@ export const datasetStatusMap = {
   },
 };
 
+export const dataSourceMap: Record<string, { label: string; value: string }> = {
+  [DataSource.UPLOAD]: { label: "本地上传", value: DataSource.UPLOAD },
+  [DataSource.COLLECTION]: { label: "本地归集 ", value: DataSource.COLLECTION },
+  [DataSource.DATABASE]: { label: "数据库导入", value: DataSource.DATABASE },
+  [DataSource.NAS]: { label: "NAS导入", value: DataSource.NAS },
+  [DataSource.OBS]: { label: "OBS导入", value: DataSource.OBS },
+};
+
+export const dataSourceOptions = Object.values(dataSourceMap);
+
 export function mapDataset(dataset: Dataset) {
   return {
     ...dataset,
     size: formatBytes(dataset.totalSize || 0),
-    icon: getTypeIcon(dataset.type),
-    iconColor: getTypeColor(dataset.type),
+    createdAt: formatDateTime(dataset.createdAt) || "--",
+    updatedAt: formatDateTime(dataset?.updatedAt) || "--",
+    icon: datasetSubTypeMap[dataset?.type?.code]?.icon || (
+      <BarChart3 className="w-4 h-4" />
+    ),
     status: datasetStatusMap[dataset.status],
-    tags: dataset.tags.map((tag) => tag.name),
     statistics: [
       { label: "数据项", value: dataset?.fileCount || 0 },
       {
@@ -227,42 +217,7 @@ export function mapDataset(dataset: Dataset) {
 export const datasetTypes = Object.values(datasetTypeMap).map((type) => ({
   ...type,
   options: type.children?.map(
-    (subType) => TypeMap[subType as keyof typeof TypeMap]
+    (subType) => datasetSubTypeMap[subType as keyof typeof datasetSubTypeMap]
   ),
 }));
 
-export const getStatusBadge = (status: string) => {
-  return datasetStatusMap[status] || datasetStatusMap[DatasetStatus.ACTIVE];
-};
-
-export const getTypeIcon = (type: string) => {
-  const iconMap = {
-    image: FileImage,
-    text: FileText,
-    audio: AudioLines,
-    video: Video,
-    multimodal: BarChart3,
-    ...Object.keys(TypeMap).reduce((acc, key) => {
-      acc[key] = TypeMap[key as keyof typeof TypeMap].icon;
-      return acc;
-    }, {}),
-  };
-  const IconComponent = iconMap[type as keyof typeof iconMap] || FileImage;
-  return <IconComponent className="w-4 h-4" />;
-};
-
-export const getTypeColor = (type: string) => {
-  const colorMap = {
-    image: "bg-blue-100",
-    text: "bg-green-100",
-    audio: "bg-purple-100",
-    video: "bg-blue-100",
-    multimodal: "bg-orange-100",
-    [DatasetType.EVAL]: "bg-blue-100",
-    [DatasetType.PRETRAIN]: "bg-green-100",
-    [DatasetType.FINE_TUNE]: "bg-purple-100",
-    [DatasetType.EVAL_GSM8K]: "bg-orange-100",
-    [DatasetType.EVAL_IMDB]: "bg-pink-100",
-  };
-  return colorMap[type as keyof typeof colorMap] || "bg-blue-100";
-};

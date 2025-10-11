@@ -12,12 +12,30 @@ export default defineConfig({
     },
   },
   server: {
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-      'access-control-allow-headers': "Origin, X-Requested-With, Content-Type, Accept",
-    },
+    // headers: {
+    //   "Access-Control-Allow-Origin": "*",
+    //   "access-control-allow-headers":
+    //     "Origin, X-Requested-With, Content-Type, Accept",
+    // },
     proxy: {
-      "/api": 'http://localhost:8002'
-    }
-  }
+      "^/api": {
+        target: "http://127.0.0.1:8080",
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/api/, "/api"),
+        configure: (proxy, options) => {
+          // proxy 是 'http-proxy' 的实例
+          proxy.on("proxyReq", (proxyReq, req, res) => {
+            // 可以在这里修改请求头
+            proxyReq.removeHeader("referer");
+            proxyReq.removeHeader("origin");
+          });
+          proxy.on("proxyRes", (proxyRes, req, res) => {
+            delete proxyRes.headers["set-cookie"];
+            proxyRes.headers["cookies"] = ""; // 清除 cookies 头
+          });
+        },
+      },
+    },
+  },
 });

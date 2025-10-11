@@ -17,7 +17,7 @@ export const useImportFile = () => {
     const formData = new FormData();
     fileList.forEach((file) => {
       console.log(file);
-      formData.append("files[]", file);
+      formData.append("file", file);
     });
     await uploadDatasetFileUsingPost(dataset?.id, formData);
     resetFiles();

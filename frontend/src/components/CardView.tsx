@@ -1,11 +1,12 @@
-import React from "react";
-import { Card, Tag, Pagination, Dropdown, Tooltip, Empty } from "antd";
+import React, { useState, useEffect, useRef } from "react";
+import { Card, Tag, Pagination, Dropdown, Tooltip, Empty, Popover } from "antd";
 import {
   EllipsisOutlined,
   ClockCircleOutlined,
   StarFilled,
 } from "@ant-design/icons";
 import type { ItemType } from "antd/es/menu/interface";
+import { formatDateTime } from "@/utils/unit";
 
 interface BaseCardDataType {
   id: string | number;
@@ -45,6 +46,113 @@ interface CardViewProps<T> {
   isFavorite?: (item: T) => boolean;
 }
 
+// 标签渲染组件
+const TagsRenderer = ({ tags }: { tags?: any[] }) => {
+  const [visibleTags, setVisibleTags] = useState<any[]>([]);
+  const [hiddenTags, setHiddenTags] = useState<any[]>([]);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!tags || tags.length === 0) return;
+
+    const calculateVisibleTags = () => {
+      if (!containerRef.current) return;
+
+      const containerWidth = containerRef.current.offsetWidth;
+      const tempDiv = document.createElement("div");
+      tempDiv.style.visibility = "hidden";
+      tempDiv.style.position = "absolute";
+      tempDiv.style.top = "-9999px";
+      tempDiv.className = "flex flex-wrap gap-1";
+      document.body.appendChild(tempDiv);
+
+      let totalWidth = 0;
+      let visibleCount = 0;
+      const tagElements: HTMLElement[] = [];
+
+      // 为每个tag创建临时元素来测量宽度
+      tags.forEach((tag, index) => {
+        const tagElement = document.createElement("span");
+        tagElement.className = "ant-tag ant-tag-default";
+        tagElement.style.margin = "2px";
+        tagElement.textContent = typeof tag === "string" ? tag : tag.name;
+        tempDiv.appendChild(tagElement);
+        tagElements.push(tagElement);
+
+        const tagWidth = tagElement.offsetWidth + 4; // 加上gap的宽度
+
+        // 如果不是最后一个标签，需要预留+n标签的空间
+        const plusTagWidth = index < tags.length - 1 ? 35 : 0; // +n标签大约35px宽度
+
+        if (totalWidth + tagWidth + plusTagWidth <= containerWidth) {
+          totalWidth += tagWidth;
+          visibleCount++;
+        } else {
+          // 如果当前标签放不下，且已经有可见标签，则停止
+          if (visibleCount > 0) return;
+          // 如果是第一个标签就放不下，至少显示一个
+          if (index === 0) {
+            totalWidth += tagWidth;
+            visibleCount = 1;
+          }
+        }
+      });
+
+      document.body.removeChild(tempDiv);
+
+      setVisibleTags(tags.slice(0, visibleCount));
+      setHiddenTags(tags.slice(visibleCount));
+    };
+
+    // 延迟执行以确保DOM已渲染
+    const timer = setTimeout(calculateVisibleTags, 0);
+
+    // 监听窗口大小变化
+    const handleResize = () => {
+      calculateVisibleTags();
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [tags]);
+
+  if (!tags || tags.length === 0) return null;
+
+  const popoverContent = (
+    <div className="max-w-xs">
+      <div className="flex flex-wrap gap-1">
+        {hiddenTags.map((tag, index) => (
+          <Tag key={index}>{typeof tag === "string" ? tag : tag.name}</Tag>
+        ))}
+      </div>
+    </div>
+  );
+
+  return (
+    <div ref={containerRef} className="flex flex-wrap gap-1 w-full">
+      {visibleTags.map((tag, index) => (
+        <Tag key={index}>{typeof tag === "string" ? tag : tag.name}</Tag>
+      ))}
+      {hiddenTags.length > 0 && (
+        <Popover
+          content={popoverContent}
+          title="更多标签"
+          trigger="hover"
+          placement="topLeft"
+        >
+          <Tag className="cursor-pointer bg-gray-100 border-gray-300 text-gray-600 hover:bg-gray-200">
+            +{hiddenTags.length}
+          </Tag>
+        </Popover>
+      )}
+    </div>
+  );
+};
+
 function CardView<T extends BaseCardDataType>(props: CardViewProps<T>) {
   const { data, pagination, operations, onView, onFavorite, isFavorite } =
     props;
@@ -64,13 +172,19 @@ function CardView<T extends BaseCardDataType>(props: CardViewProps<T>) {
     <div className="flex-1 overflow-auto">
       <div className="grid md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
         {data.map((item) => (
-          <Card key={item.id} className="hover:shadow-lg transition-shadow">
-            <div className="space-y-4">
+          <div
+            key={item.id}
+            className="border border-gray-100 rounded-lg p-4 bg-white hover:shadow-lg transition-shadow duration-200"
+          >
+            <div className="flex flex-col space-y-4 h-full">
               {/* Header */}
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3 min-w-0">
                   <div
-                    className={`flex-shrink-0 w-10 h-10 ${item.iconColor} rounded-lg flex items-center justify-center`}
+                    className={`flex-shrink-0 w-10 h-10 ${
+                      item.iconColor ||
+                      "bg-gradient-to-br from-blue-100 to-blue-200"
+                    } rounded-lg flex items-center justify-center`}
                   >
                     {item.icon}
                   </div>
@@ -105,26 +219,26 @@ function CardView<T extends BaseCardDataType>(props: CardViewProps<T>) {
                 )}
               </div>
 
-              {/* Tags */}
-              <div className="flex flex-wrap gap-1">
-                {item?.tags?.slice(0, 3)?.map((tag, index) => (
-                  <Tag key={index}>{tag}</Tag>
-                ))}
-              </div>
-              {/* Description */}
-              <p className="text-gray-600 text-xs text-ellipsis overflow-hidden whitespace-nowrap text-xs line-clamp-2">
-                <Tooltip title={item.description}>{item.description}</Tooltip>
-              </p>
-              {/* Statistics */}
-              <div className="grid grid-cols-2 gap-4 py-3">
-                {item.statistics?.map((stat, idx) => (
-                  <div key={idx}>
-                    <div className="text-sm text-gray-500">{stat.label}:</div>
-                    <div className="text-base font-semibold text-gray-900">
-                      {stat.value}
+              <div className="flex-1 flex flex-col justify-end">
+                {/* Tags */}
+                <TagsRenderer tags={item?.tags} />
+
+                {/* Description */}
+                <p className="text-gray-600 text-xs text-ellipsis overflow-hidden whitespace-nowrap text-xs line-clamp-2 mt-2">
+                  <Tooltip title={item.description}>{item.description}</Tooltip>
+                </p>
+
+                {/* Statistics */}
+                <div className="grid grid-cols-2 gap-4 py-3">
+                  {item.statistics?.map((stat, idx) => (
+                    <div key={idx}>
+                      <div className="text-sm text-gray-500">{stat.label}:</div>
+                      <div className="text-base font-semibold text-gray-900">
+                        {stat.value}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
 
               {/* Actions */}
@@ -132,7 +246,7 @@ function CardView<T extends BaseCardDataType>(props: CardViewProps<T>) {
                 <div className=" text-gray-500 text-right">
                   <div className="flex items-center gap-1">
                     <ClockCircleOutlined className="w-4 h-4" />{" "}
-                    {item.lastModified}
+                    {formatDateTime(item.updatedAt)}
                   </div>
                 </div>
                 <Dropdown
@@ -153,7 +267,7 @@ function CardView<T extends BaseCardDataType>(props: CardViewProps<T>) {
                 </Dropdown>
               </div>
             </div>
-          </Card>
+          </div>
         ))}
       </div>
       <div className="flex justify-end mt-6">

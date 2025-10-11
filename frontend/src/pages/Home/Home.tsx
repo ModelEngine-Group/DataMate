@@ -10,7 +10,7 @@ import {
   GitBranch,
 } from "lucide-react";
 import { features, menuItems } from "../Layout/menu";
-import { NavLink, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 import { Card } from "antd";
 
 export default function WelcomePage() {

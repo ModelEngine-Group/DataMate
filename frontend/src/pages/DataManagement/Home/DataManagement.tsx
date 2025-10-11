@@ -5,7 +5,7 @@ import {
   DeleteOutlined,
   PlusOutlined,
 } from "@ant-design/icons";
-import TagManager from "./components/TagManagement";
+import TagManager from "@/components/TagManagement";
 import { Link, useNavigate } from "react-router";
 import { useEffect, useState } from "react";
 import { SearchControls } from "@/components/SearchControls";
@@ -17,6 +17,11 @@ import {
   downloadDatasetUsingGet,
   getDatasetStatisticsUsingGet,
   queryDatasetsUsingGet,
+  deleteDatasetByIdUsingDelete,
+  createDatasetTagUsingPost,
+  queryDatasetTagsUsingGet,
+  updateDatasetTagByIdUsingPut,
+  deleteDatasetTagByIdUsingDelete,
 } from "../dataset.api";
 
 export default function DatasetManagementPage() {
@@ -30,7 +35,7 @@ export default function DatasetManagementPage() {
   });
 
   async function fetchStatistics() {
-    const { data } = await getDatasetStatisticsUsingGet();
+    const data = await getDatasetStatisticsUsingGet();
     const statistics = {
       size: [
         {
@@ -102,6 +107,7 @@ export default function DatasetManagementPage() {
     tableData,
     searchParams,
     pagination,
+    fetchData,
     setSearchParams,
     handleFiltersChange,
   } = useFetchData(queryDatasetsUsingGet, mapDataset);
@@ -112,10 +118,9 @@ export default function DatasetManagementPage() {
   };
 
   const handleDeleteDataset = async (id: number) => {
-    await fetch(`/api/datasets/${id}`, {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-    });
+    if (!id) return;
+    await deleteDatasetByIdUsingDelete(id);
+
     message.success("数据删除成功");
   };
 
@@ -247,9 +252,17 @@ export default function DatasetManagementPage() {
         </div>
         <div className="flex gap-2">
           {/* tasks */}
-          <TagManager />
+          <TagManager
+            onCreate={createDatasetTagUsingPost}
+            onDelete={deleteDatasetTagByIdUsingDelete}
+            onUpdate={updateDatasetTagByIdUsingPut}
+            onFetch={queryDatasetTagsUsingGet}
+          />
           <Link to="/data/management/create">
-            <Button type="primary" icon={<PlusOutlined className="w-4 h-4 mr-2" />}>
+            <Button
+              type="primary"
+              icon={<PlusOutlined className="w-4 h-4 mr-2" />}
+            >
               创建数据集
             </Button>
           </Link>
@@ -257,7 +270,7 @@ export default function DatasetManagementPage() {
       </div>
 
       {/* Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
         <Card title="数据集统计">
           <div className="grid grid-cols-4">
             {statisticsData.count?.map?.((item) => (
@@ -294,6 +307,7 @@ export default function DatasetManagementPage() {
         onViewModeChange={setViewMode}
         showViewToggle
         className="my-4"
+        onReload={fetchData}
       />
       {viewMode === "card" ? renderCardView() : renderListView()}
     </div>

@@ -1,34 +1,34 @@
 export enum DatasetType {
-  CSV = "CSV",
-  JSON = "JSON",
-  XML = "XML",
-  PARQUET = "Parquet",
-  AVRO = "Avro",
-  PRETRAIN = "PRETRAIN",
-  FINE_TUNE = "FINE_TUNE",
-  EVAL = "EVAL",
+  TEXT = "TEXT",
+  IMAGE = "IMAGE",
+  AUDIO = "AUDIO",
+  VIDEO = "VIDEO",
+}
 
-  PRETRAIN_TEXT = "PRETRAIN_TEXT",
-  PRETRAIN_IMAGE = "PRETRAIN_IMAGE",
-  PRETRAIN_AUDIO = "PRETRAIN_AUDIO",
-  PRETRAIN_VIDEO = "PRETRAIN_VIDEO",
-
-  FINE_TUNE_ALPACA = "FINE_TUNE_ALPACA",
-  FINE_TUNE_CHATGLM = "FINE_TUNE_CHATGLM",
-  FINE_TUNE_BLOOMZ = "FINE_TUNE_BLOOMZ",
-  FINE_TUNE_LLAMA = "FINE_TUNE_LLAMA",
-
-  EVAL_GSM8K = "EVAL_GSM8K",
-  EVAL_SQUAD = "EVAL_SQUAD",
-  EVAL_MNLI = "EVAL_MNLI",
-  EVAL_IMDB = "EVAL_IMDB",
-  EVAL_SINGLE_CHOICE_QA = "EVAL_SINGLE_CHOICE_QA",
+export enum DatasetSubType {
+  TEXT_DOCUMENT = "TEXT_DOCUMENT",
+  TEXT_WEB = "TEXT_WEB",
+  TEXT_DIALOG = "TEXT_DIALOG",
+  IMAGE_IMAGE = "IMAGE_IMAGE",
+  IMAGE_CAPTION = "IMAGE_CAPTION",
+  AUDIO_AUDIO = "AUDIO_AUDIO",
+  AUDIO_JSONL = "AUDIO_JSONL",
+  VIDEO_VIDEO = "VIDEO_VIDEO",
+  VIDEO_JSONL = "VIDEO_JSONL",
 }
 
 export enum DatasetStatus {
   ACTIVE = "ACTIVE",
   INACTIVE = "INACTIVE",
   PROCESSING = "PROCESSING",
+}
+
+export enum DataSource {
+  UPLOAD = "UPLOAD",
+  COLLECTION = "COLLECTION",
+  DATABASE = "DATABASE",
+  NAS = "NAS",
+  OBS = "OBS",
 }
 
 export interface DatasetFile {
@@ -49,9 +49,9 @@ export interface Dataset {
   size?: string;
   itemCount?: number;
   createdBy: string;
-  createdTime: string;
+  createdAt: string;
   updatedBy: string;
-  updatedTime: string;
+  updatedAt: string;
   lastModified: string;
   tags: string[];
   quality: number;
@@ -71,6 +71,13 @@ export interface Dataset {
       f1Score: number;
     };
   };
+}
+
+export interface TagItem {
+  id: string;
+  name: string;
+  color: string;
+  description: string;
 }
 
 export interface ScheduleConfig {

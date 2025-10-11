@@ -1,7 +1,7 @@
 import type { Dataset, DatasetFile } from "@/pages/DataManagement/dataset.model";
 import { App } from "antd";
 import { useState } from "react";
-import { downloadFile, queryDatasetFilesUsingGet } from "../dataset.api";
+import { deleteDatasetFileUsingDelete, downloadFile, queryDatasetFilesUsingGet } from "../dataset.api";
 import { useParams } from "react-router";
 
 export function useFilesOperation(dataset: Dataset) {
@@ -18,8 +18,8 @@ export function useFilesOperation(dataset: Dataset) {
   const [previewFileName, setPreviewFileName] = useState("");
 
   const fetchFiles = async () => {
-    const { data } = await queryDatasetFilesUsingGet(id!);
-    setFileList(data.results || []);
+    const data = await queryDatasetFilesUsingGet(id!);
+    setFileList(data.content || []);
   };
 
   const handleBatchDeleteFiles = () => {
@@ -66,9 +66,7 @@ export function useFilesOperation(dataset: Dataset) {
 
   const handleDeleteFile = async (file) => {
     try {
-      const res = await fetch(`/api/datasets/${dataset.id}/files/${file.id}`, {
-        method: "DELETE",
-      });
+      const res = await deleteDatasetFileUsingDelete(dataset.id, file.id);
       await res.json();
       fetchFiles(); // 刷新文件列表
       message.success({ content: `文件 ${file.fileName} 已删除` });

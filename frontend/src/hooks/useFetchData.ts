@@ -57,13 +57,13 @@ export default function useFetchData<T>(
     const { keywords, filter, current, pageSize } = searchParams;
     Loading.show();
     setLoading(true);
-    const { data } = await fetchFunc({
+    const data = await fetchFunc({
       ...filter,
       keywords,
       type: getFirstOfArray(filter?.type) || undefined,
       status: getFirstOfArray(filter?.status) || undefined,
       tags: filter?.tags?.length ? filter.tags.join(",") : undefined,
-      page: current,
+      page: current - 1,
       size: pageSize,
     });
     setPagination((prev) => ({
@@ -72,7 +72,7 @@ export default function useFetchData<T>(
     }));
     let result = [];
     if (mapDataFunc) {
-      result = data?.results.map(mapDataFunc) ?? [];
+      result = data?.content.map(mapDataFunc) ?? [];
     }
     setTableData(result);
     Loading.hide();
