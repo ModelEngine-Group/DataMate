@@ -93,8 +93,9 @@ frontend-docker-uninstall:
 runtime-helm-install:
 	helm repo add kuberay https://ray-project.github.io/kuberay-helm/
 	helm repo update
-	helm install kuberay-operator kuberay/kuberay-operator --version 1.4.0
-	helm install raycluster deployment/helm/ray/ray-cluster/
+	helm upgrade kuberay-operator kuberay/kuberay-operator --version 1.4.0 --install
+	helm upgrade raycluster deployment/helm/ray/ray-cluster/ --install
+	kubectl apply -f deployment/helm/ray/service.yaml
 
 .PHONY: unstructured-k8s-install
 unstructured-k8s-install:

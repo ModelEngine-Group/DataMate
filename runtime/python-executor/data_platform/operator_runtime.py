@@ -71,7 +71,7 @@ async def query_task_info(request: QueryTaskRequest):
 
 @app.post("/api/task/{task_id}/submit")
 async def submit_task(task_id):
-    config_path = f"/opt/runtime/flow/{task_id}/process.yaml"
+    config_path = f"/flow/{task_id}/process.yaml"
     logger.info("Start submitting job...")
 
     dataset_path = get_from_cfg(task_id, "dataset_path")
@@ -122,7 +122,7 @@ def check_valid_path(file_path):
 
 
 def get_from_cfg(task_id, key):
-    config_path = f"/opt/runtime/flow/{task_id}/process.yaml"
+    config_path = f"/flow/{task_id}/process.yaml"
     if not check_valid_path(config_path):
         logger.error(f"config_path is not existed! please check this path.")
         raise APIException(ErrorCode.FILE_NOT_FOUND_ERROR)
