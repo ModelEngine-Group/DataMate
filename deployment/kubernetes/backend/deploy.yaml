@@ -89,7 +89,7 @@ spec:
       volumes:
       - name: dataset
         hostPath:
-          path: /tmp/data-platform
+          path: /tmp/data-platform/dataset
           type: DirectoryOrCreate
 
 ---

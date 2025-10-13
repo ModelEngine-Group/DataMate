@@ -39,7 +39,7 @@ uninstall-%:
 		3) INSTALLER=helm ;; \
 		*) echo "Invalid choice" && exit 1 ;; \
 	esac; \
-  $(MAKE) $*-$$INSTALLER-uninstall
+    $(MAKE) $*-$$INSTALLER-uninstall
 
 
 # build
@@ -125,6 +125,7 @@ unstructured-k8s-install:
 
 .PHONY: mysql-k8s-install
 mysql-k8s-install:
+	kubectl create configmap init-sql --from-file=scripts/db/
 	kubectl apply -f deployment/kubernetes/mysql/deploy.yaml
 
 .PHONY: backend-k8s-install
