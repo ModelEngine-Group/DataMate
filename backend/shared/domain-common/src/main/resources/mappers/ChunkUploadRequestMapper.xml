@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dataengine.common.infrastructure.mapper.ChunkUploadRequestMapper">
+
+    <resultMap id="ChunkUploadRequestResultMap" type="com.dataengine.common.domain.model.ChunkUploadPreRequest">
+        <id column="id" property="id"/>
+        <result column="total_file_num" property="totalFileNum"/>
+        <result column="uploaded_file_num" property="uploadedFileNum"/>
+        <result column="upload_path" property="uploadPath"/>
+        <result column="timeout" property="timeout"/>
+        <result column="service_id" property="serviceId"/>
+        <result column="check_info" property="checkInfo"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, total_file_num, uploaded_file_num, upload_path, timeout, service_id, check_info
+    </sql>
+
+    <select id="findById" parameterType="string" resultMap="ChunkUploadRequestResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM t_chunk_upload_request
+        WHERE id = #{id}
+    </select>
+
+    <select id="findByServiceId" parameterType="string" resultMap="ChunkUploadRequestResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM t_chunk_upload_request
+        WHERE service_id = #{serviceId}
+        ORDER BY timeout DESC
+    </select>
+
+    <select id="findAll" resultMap="ChunkUploadRequestResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM t_chunk_upload_request
+        ORDER BY timeout DESC
+    </select>
+
+    <insert id="insert" parameterType="com.dataengine.common.domain.model.ChunkUploadPreRequest">
+        INSERT INTO t_chunk_upload_request (
+            id, total_file_num, uploaded_file_num, upload_path, timeout, service_id, check_info
+        ) VALUES (
+            #{id}, #{totalFileNum}, #{uploadedFileNum}, #{uploadPath}, #{timeout}, #{serviceId}, #{checkInfo}
+        )
+    </insert>
+
+    <update id="update" parameterType="com.dataengine.common.domain.model.ChunkUploadPreRequest">
+        UPDATE t_chunk_upload_request
+        SET total_file_num = #{totalFileNum},
+            uploaded_file_num = #{uploadedFileNum},
+            upload_path = #{uploadPath},
+            timeout = #{timeout},
+            service_id = #{serviceId},
+            check_info = #{checkInfo}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById" parameterType="string">
+        DELETE FROM t_chunk_upload_request WHERE id = #{id}
+    </delete>
+
+    <delete id="deleteByServiceId" parameterType="string">
+        DELETE FROM t_chunk_upload_request WHERE service_id = #{serviceId}
+    </delete>
+</mapper>

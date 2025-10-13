@@ -8,6 +8,8 @@ import com.dataengine.datamanagement.domain.model.dataset.Tag;
 import com.dataengine.datamanagement.infrastructure.persistence.mapper.DatasetFileMapper;
 import com.dataengine.datamanagement.infrastructure.persistence.mapper.DatasetMapper;
 import com.dataengine.datamanagement.infrastructure.persistence.mapper.TagMapper;
+import com.dataengine.datamanagement.interfaces.dto.CreateDatasetRequest;
+import com.dataengine.datamanagement.interfaces.dto.DatasetPagingQuery;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,8 +17,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -96,9 +96,8 @@ class DataManagementIntegrationTest {
         when(tagMapper.updateUsageCount(eq(createdTag.getId()), eq(1L))).thenReturn(1);
         when(tagMapper.insertDatasetTag(anyString(), eq(createdTag.getId()))).thenReturn(1);
 
-        Dataset dataset = datasetService.createDataset(
-            datasetName, datasetDesc, datasetType,
-            tagNames, 1L, "/data/mnist", "csv", "user1"
+        Dataset dataset = datasetService.createDataset(new CreateDatasetRequest(
+            datasetName, datasetDesc, datasetType,tagNames, "1L", "/data/mnist")
         );
 
         assertNotNull(dataset);
@@ -122,7 +121,6 @@ class DataManagementIntegrationTest {
 
         // === 阶段4: 搜索数据集 ===
         List<Dataset> searchResult = Arrays.asList(createdDataset);
-        Page<Dataset> searchPage = new PageImpl<>(searchResult, PageRequest.of(0, 10), 1);
         List<Tag> datasetTags = Arrays.asList(createdTag);
 
         when(datasetMapper.findByCriteria(eq("IMAGE"), isNull(), eq("MNIST"),
@@ -131,9 +129,7 @@ class DataManagementIntegrationTest {
                 eq(Arrays.asList(tagName)))).thenReturn(1L);
         when(tagMapper.findByDatasetId(anyString())).thenReturn(datasetTags);
 
-        Page<Dataset> searchResults = datasetService.getDatasets(
-            "IMAGE", null, "MNIST", Arrays.asList(tagName), PageRequest.of(0, 10)
-        );
+        Page<Dataset> searchResults = datasetService.getDatasets(new DatasetPagingQuery("IMAGE", null, "MNIST", tagName));
 
         assertEquals(1, searchResults.getContent().size());
         assertEquals(1L, searchResults.getTotalElements());
@@ -168,9 +164,9 @@ class DataManagementIntegrationTest {
         when(tagMapper.updateUsageCount(eq(nlpTag.getId()), eq(1L))).thenReturn(1);
         when(tagMapper.insertDatasetTag(anyString(), eq(nlpTag.getId()))).thenReturn(1);
 
-        datasetService.createDataset(
-            "文本分类数据集", "情感分析数据", "TEXT", 
-            Arrays.asList("nlp"), 2L, "/data/text", "json", "user2"
+        datasetService.createDataset(new CreateDatasetRequest(
+            "文本分类数据集", "情感分析数据", "TEXT",
+            Arrays.asList("nlp"), "2L", "/data/text")
         );
 
         // 第二个数据集使用该标签
@@ -182,10 +178,11 @@ class DataManagementIntegrationTest {
         when(datasetMapper.findByName("问答数据集")).thenReturn(null);
         when(datasetMapper.findById(anyString())).thenReturn(dataset2);
         when(tagMapper.updateUsageCount(eq(nlpTag.getId()), eq(2L))).thenReturn(1);
-        when(tagMapper.insertDatasetTag(anyString(), eq(nlpTag.getId()))).thenReturn(1);        datasetService.createDataset(
+        when(tagMapper.insertDatasetTag(anyString(), eq(nlpTag.getId()))).thenReturn(1);
+        datasetService.createDataset(new CreateDatasetRequest(
             "问答数据集", "机器阅读理解", "TEXT",
-            Arrays.asList("nlp"), 3L, "/data/qa", "json", "user3"
-        );
+            Arrays.asList("nlp"), "3L", "/data/qa"
+        ));
 
         // 验证标签使用次数更新
         verify(tagMapper).updateUsageCount(eq(nlpTag.getId()), eq(1L));
@@ -224,18 +221,13 @@ class DataManagementIntegrationTest {
         when(tagMapper.updateUsageCount(eq(oldTag.getId()), eq(6L))).thenReturn(1);
         when(tagMapper.insertDatasetTag(anyString(), eq(oldTag.getId()))).thenReturn(1);
 
-        Dataset created = datasetService.createDataset(
-            "初始数据集", "初始描述", "TEXT",
-            Arrays.asList("old-tag"), 1L, "/path", "csv", "user1"
-        );
-
         // 重置部分mock以准备更新操作
         reset(tagMapper);
         when(tagMapper.deleteDatasetTagsByDatasetId("dataset-update-001")).thenReturn(1);
         when(tagMapper.findByName("new-tag")).thenReturn(newTag);
         when(tagMapper.updateUsageCount(eq(newTag.getId()), eq(1L))).thenReturn(1);
         when(tagMapper.insertDatasetTag(eq("dataset-update-001"), eq(newTag.getId()))).thenReturn(1);
-        
+
         // 更新数据集 - 更改标签和状态
         Dataset updatedDataset = new Dataset();
         updatedDataset.setId("dataset-update-001");
@@ -327,8 +319,8 @@ class DataManagementIntegrationTest {
         when(datasetMapper.findByName("existing-dataset")).thenReturn(existingDataset);
 
         IllegalArgumentException datasetException = assertThrows(IllegalArgumentException.class,
-            () -> datasetService.createDataset("existing-dataset", "desc", "TEXT",
-                null, 1L, "/path", "csv", "user"));
+            () -> datasetService.createDataset(new CreateDatasetRequest("existing-dataset", "desc", "TEXT",
+                null, "1L", "/path")));
         assertTrue(datasetException.getMessage().contains("already exists"));
 
         // 获取不存在的资源

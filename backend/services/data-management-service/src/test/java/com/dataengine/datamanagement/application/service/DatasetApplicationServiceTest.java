@@ -6,6 +6,8 @@ import com.dataengine.datamanagement.domain.model.dataset.Tag;
 import com.dataengine.datamanagement.infrastructure.persistence.mapper.DatasetFileMapper;
 import com.dataengine.datamanagement.infrastructure.persistence.mapper.DatasetMapper;
 import com.dataengine.datamanagement.infrastructure.persistence.mapper.TagMapper;
+import com.dataengine.datamanagement.interfaces.dto.CreateDatasetRequest;
+import com.dataengine.datamanagement.interfaces.dto.DatasetPagingQuery;
 import org.apache.ibatis.session.RowBounds;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -16,8 +18,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -77,8 +77,8 @@ class DatasetApplicationServiceTest {
         when(tagMapper.insert(any(Tag.class))).thenReturn(1);
 
         // When
-        Dataset result = service.createDataset("New Dataset", "Description", "CSV",
-                tagNames, 1L, "/path", "csv", "user1");
+        Dataset result = service.createDataset(new CreateDatasetRequest("New Dataset", "Description", "CSV",
+                tagNames, "1", "/path"));
 
         // Then
         assertNotNull(result);
@@ -103,7 +103,7 @@ class DatasetApplicationServiceTest {
         when(datasetMapper.findByName("Duplicate")).thenReturn(sampleDataset);
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> service.createDataset("Duplicate", "desc", "CSV", null, 1L, "/path", "csv", "user1"));
+                () -> service.createDataset(new CreateDatasetRequest("Duplicate", "desc", "CSV", null, "1L", "/path")));
 
         assertTrue(ex.getMessage().contains("already exists"));
         verify(datasetMapper).findByName("Duplicate");
@@ -117,8 +117,8 @@ class DatasetApplicationServiceTest {
         when(datasetMapper.insert(any(Dataset.class))).thenReturn(1);
         when(datasetMapper.findById(anyString())).thenReturn(sampleDataset);
 
-        Dataset result = service.createDataset("No Tags Dataset", "desc", "CSV",
-                null, 1L, "/path", "csv", "user1");
+        Dataset result = service.createDataset(new CreateDatasetRequest("No Tags Dataset", "desc", "CSV",
+                null, "1L", "/path"));
 
         assertNotNull(result);
         verify(tagMapper, never()).insertDatasetTag(anyString(), anyString());
@@ -214,15 +214,13 @@ class DatasetApplicationServiceTest {
     void getDatasets_pagination() {
         List<Dataset> datasets = Arrays.asList(sampleDataset);
         List<Tag> tags = Arrays.asList(sampleTag);
-        Pageable pageable = PageRequest.of(0, 10);
 
         when(datasetMapper.findByCriteria(eq("CSV"), eq("ACTIVE"), eq("test"),
                 eq(Arrays.asList("tag1")), any(RowBounds.class))).thenReturn(datasets);
         when(datasetMapper.countByCriteria("CSV", "ACTIVE", "test", Arrays.asList("tag1"))).thenReturn(1L);
         when(tagMapper.findByDatasetId("dataset-id-1")).thenReturn(tags);
 
-        Page<Dataset> result = service.getDatasets("CSV", "ACTIVE", "test",
-                Arrays.asList("tag1"), pageable);
+        Page<Dataset> result = service.getDatasets(new DatasetPagingQuery("CSV", "ACTIVE", "test", "tag1"));
 
         assertNotNull(result);
         assertEquals(1, result.getContent().size());
@@ -236,12 +234,11 @@ class DatasetApplicationServiceTest {
     @Test
     @DisplayName("getDatasets: 空结果集")
     void getDatasets_emptyResult() {
-        Pageable pageable = PageRequest.of(0, 10);
         when(datasetMapper.findByCriteria(isNull(), isNull(), isNull(),
                 isNull(), any(RowBounds.class))).thenReturn(Collections.emptyList());
         when(datasetMapper.countByCriteria(null, null, null, null)).thenReturn(0L);
 
-        Page<Dataset> result = service.getDatasets(null, null, null, null, pageable);
+        Page<Dataset> result = service.getDatasets(new DatasetPagingQuery());
 
         assertNotNull(result);
         assertTrue(result.getContent().isEmpty());
@@ -316,7 +313,7 @@ class DatasetApplicationServiceTest {
         when(tagMapper.insert(any(Tag.class))).thenReturn(1);
 
         List<String> tagNames = Arrays.asList("existing", "new");
-        service.createDataset("Test Dataset", "desc", "CSV", tagNames, 1L, "/path", "csv", "user1");
+        service.createDataset(new CreateDatasetRequest("Test Dataset", "desc", "CSV", tagNames, "1L", "/path"));
 
         verify(tagMapper).findByName("existing");
         verify(tagMapper).findByName("new");

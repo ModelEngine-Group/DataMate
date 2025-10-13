@@ -1,23 +1,26 @@
 package com.dataengine.datamanagement.application.service;
 
 import com.dataengine.datamanagement.domain.model.dataset.Dataset;
-import com.dataengine.datamanagement.domain.model.dataset.StatusConstants;
 import com.dataengine.datamanagement.domain.model.dataset.Tag;
 import com.dataengine.datamanagement.infrastructure.persistence.mapper.DatasetFileMapper;
 import com.dataengine.datamanagement.infrastructure.persistence.mapper.DatasetMapper;
 import com.dataengine.datamanagement.infrastructure.persistence.mapper.TagMapper;
+import com.dataengine.datamanagement.interfaces.converter.DatasetConverter;
 import com.dataengine.datamanagement.interfaces.dto.AllDatasetStatisticsResponse;
+import com.dataengine.datamanagement.interfaces.dto.CreateDatasetRequest;
+import com.dataengine.datamanagement.interfaces.dto.DatasetPagingQuery;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.ibatis.session.RowBounds;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * 数据集应用服务（对齐 DB schema，使用 UUID 字符串主键）
@@ -30,6 +33,9 @@ public class DatasetApplicationService {
     private final TagMapper tagMapper;
     private final DatasetFileMapper datasetFileMapper;
 
+    @Value("${dataset.base.path:/dataset}")
+    private String datasetBasePath;
+
     @Autowired
     public DatasetApplicationService(DatasetMapper datasetMapper, TagMapper tagMapper, DatasetFileMapper datasetFileMapper) {
         this.datasetMapper = datasetMapper;
@@ -40,32 +46,21 @@ public class DatasetApplicationService {
     /**
      * 创建数据集
      */
-    public Dataset createDataset(String name, String description, String datasetType,
-                                 List<String> tagNames, Long dataSourceId,
-                                 String path, String format, String createdBy) {
-        if (datasetMapper.findByName(name) != null) {
-            throw new IllegalArgumentException("Dataset with name '" + name + "' already exists");
+    @Transactional
+    public Dataset createDataset(CreateDatasetRequest createDatasetRequest) {
+        if (datasetMapper.findByName(createDatasetRequest.getName()) != null) {
+            throw new IllegalArgumentException("Dataset with name '" + createDatasetRequest.getName() + "' already exists");
         }
 
-        Dataset dataset = new Dataset();
-        dataset.setId(UUID.randomUUID().toString());
-        dataset.setName(name);
-        dataset.setDescription(description);
-        dataset.setDatasetType(datasetType);
-        dataset.setDataSourceId(dataSourceId);
-        dataset.setPath(path);
-        dataset.setFormat(format);
-        dataset.setStatus(StatusConstants.DatasetStatuses.ACTIVE);
-        dataset.setCreatedBy(createdBy);
-        dataset.setUpdatedBy(createdBy);
-        dataset.setCreatedAt(LocalDateTime.now());
-        dataset.setUpdatedAt(LocalDateTime.now());
-        datasetMapper.insert(dataset); // 手动设定 UUID 主键
+        // 创建数据集对象
+        Dataset dataset = DatasetConverter.INSTANCE.convertToDataset(createDatasetRequest);
+        dataset.initCreateParam(datasetBasePath);
+        datasetMapper.insert(dataset);
 
         // 处理标签
         Set<Tag> processedTags = new HashSet<>();
-        if (tagNames != null && !tagNames.isEmpty()) {
-            processedTags = processTagNames(tagNames);
+        if (CollectionUtils.isNotEmpty(createDatasetRequest.getTags())) {
+            processedTags = processTagNames(createDatasetRequest.getTags());
             for (Tag t : processedTags) {
                 tagMapper.insertDatasetTag(dataset.getId(), t.getId());
             }
@@ -150,13 +145,13 @@ public class DatasetApplicationService {
      * 分页查询数据集
      */
     @Transactional(readOnly = true)
-    public Page<Dataset> getDatasets(String typeCode, String status, String keyword,
-                                   List<String> tagNames, Pageable pageable) {
-        RowBounds bounds = new RowBounds(pageable.getPageNumber() * pageable.getPageSize(), pageable.getPageSize());
-        List<Dataset> content = datasetMapper.findByCriteria(typeCode, status, keyword, tagNames, bounds);
+    public Page<Dataset> getDatasets(DatasetPagingQuery query) {
+        RowBounds bounds = new RowBounds(query.getPage() * query.getSize(), query.getSize());
+        List<Dataset> content = datasetMapper.findByCriteria(query.getType(), query.getStatus(), query.getKeyword(), query.getTagList(), bounds);
+        long total = datasetMapper.countByCriteria(query.getType(), query.getStatus(), query.getKeyword(), query.getTagList());
 
         // 为每个数据集填充标签信息
-        if (content != null && !content.isEmpty()) {
+        if (CollectionUtils.isNotEmpty(content)) {
             for (Dataset dataset : content) {
                 List<Tag> tags = tagMapper.findByDatasetId(dataset.getId());
                 if (tags != null) {
@@ -164,9 +159,7 @@ public class DatasetApplicationService {
                 }
             }
         }
-
-        long total = datasetMapper.countByCriteria(typeCode, status, keyword, tagNames);
-        return new PageImpl<>(content, pageable, total);
+        return new PageImpl<>(content, PageRequest.of(query.getPage(), query.getSize()), total);
     }
 
     /**

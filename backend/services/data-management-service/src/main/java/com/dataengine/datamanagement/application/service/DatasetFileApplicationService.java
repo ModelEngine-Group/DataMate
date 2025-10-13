@@ -1,10 +1,21 @@
 package com.dataengine.datamanagement.application.service;
 
+import com.dataengine.common.domain.model.ChunkUploadPreRequest;
+import com.dataengine.common.domain.model.FileUploadResult;
+import com.dataengine.common.domain.service.FileService;
+import com.dataengine.common.domain.utils.AnalyzerUtils;
+import com.dataengine.datamanagement.domain.contants.DatasetConstant;
 import com.dataengine.datamanagement.domain.model.dataset.Dataset;
 import com.dataengine.datamanagement.domain.model.dataset.DatasetFile;
+import com.dataengine.datamanagement.domain.model.dataset.DatasetFileUploadCheckInfo;
 import com.dataengine.datamanagement.domain.model.dataset.StatusConstants;
 import com.dataengine.datamanagement.infrastructure.persistence.mapper.DatasetFileMapper;
 import com.dataengine.datamanagement.infrastructure.persistence.mapper.DatasetMapper;
+import com.dataengine.datamanagement.interfaces.converter.DatasetConverter;
+import com.dataengine.datamanagement.interfaces.dto.UploadFileRequest;
+import com.dataengine.datamanagement.interfaces.dto.UploadFilesPreRequest;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.ibatis.session.RowBounds;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
@@ -25,6 +37,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -37,14 +50,19 @@ public class DatasetFileApplicationService {
     private final DatasetFileMapper datasetFileMapper;
     private final DatasetMapper datasetMapper;
     private final Path fileStorageLocation;
+    private final FileService fileService;
+
+    @Value("${dataset.base.path:/dataset}")
+    private String datasetBasePath;
 
     @Autowired
     public DatasetFileApplicationService(DatasetFileMapper datasetFileMapper,
-                                       DatasetMapper datasetMapper,
+                                       DatasetMapper datasetMapper, FileService fileService,
                                        @Value("${app.file.upload-dir:./uploads}") String uploadDir) {
         this.datasetFileMapper = datasetFileMapper;
         this.datasetMapper = datasetMapper;
         this.fileStorageLocation = Paths.get(uploadDir).toAbsolutePath().normalize();
+        this.fileService = fileService;
         try {
             Files.createDirectories(this.fileStorageLocation);
         } catch (Exception ex) {
@@ -169,5 +187,66 @@ public class DatasetFileApplicationService {
             return null;
         }
         return fileName.substring(lastDotIndex + 1);
+    }
+
+    /**
+     * 预上传
+     *
+     * @param chunkUploadRequest 上传请求
+     * @param datasetId 数据集id
+     * @return 请求id
+     */
+    @Transactional
+    public String preUpload(UploadFilesPreRequest chunkUploadRequest, String datasetId) {
+        ChunkUploadPreRequest request = ChunkUploadPreRequest.builder().build();
+        request.setUploadPath(datasetBasePath + File.separator + datasetId);
+        request.setTotalFileNum(chunkUploadRequest.getTotalFileNum());
+        request.setServiceId(DatasetConstant.SERVICE_ID);
+        DatasetFileUploadCheckInfo checkInfo = new DatasetFileUploadCheckInfo();
+        checkInfo.setDatasetId(datasetId);
+        checkInfo.setHasArchive(chunkUploadRequest.isHasArchive());
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            String checkInfoJson = objectMapper.writeValueAsString(checkInfo);
+            request.setCheckInfo(checkInfoJson);
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException("Failed to serialize checkInfo to JSON", e);
+        }
+        return fileService.preUpload(request);
+    }
+
+    /**
+     * 切片上传
+     *
+     * @param uploadFileRequest 上传请求
+     */
+    public void chunkUpload(String datasetId, UploadFileRequest uploadFileRequest) {
+        FileUploadResult uploadResult = fileService.chunkUpload(DatasetConverter.INSTANCE.toChunkUploadRequest(uploadFileRequest));
+        saveFileInfoToDb(uploadResult, uploadFileRequest, datasetId);
+        if (uploadResult.isAllFilesUploaded()) {
+            // 解析文件，后续依据需求看是否添加校验文件元数据和解析半结构化文件的逻辑，
+        }
+    }
+
+    private void saveFileInfoToDb(FileUploadResult fileUploadResult, UploadFileRequest uploadFile, String datasetId) {
+        if (Objects.isNull(fileUploadResult.getSavedFile())) {
+            // 文件切片上传没有完成
+            return;
+        }
+        File savedFile = fileUploadResult.getSavedFile();
+        LocalDateTime currentTime = LocalDateTime.now();
+        DatasetFile datasetFile = DatasetFile.builder()
+            .id(UUID.randomUUID().toString())
+            .datasetId(datasetId)
+            .fileSize(savedFile.length())
+            .uploadTime(currentTime)
+            .lastAccessTime(currentTime)
+            .lastAccessTime(currentTime)
+            .fileName(uploadFile.getFileName())
+            .filePath(savedFile.getPath())
+            .fileType(AnalyzerUtils.getExtension(uploadFile.getFileName()))
+            .build();
+
+        datasetFileMapper.insert(datasetFile);
     }
 }
