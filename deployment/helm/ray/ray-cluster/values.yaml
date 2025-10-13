@@ -106,10 +106,22 @@ head:
       hostPath:
         path: /opt/data-platform/data/log
         type: DirectoryOrCreate
+    - name: dataset-volume
+      hostPath:
+        path: /opt/data-platform/data/dataset
+        type: DirectoryOrCreate
+    - name: flow-volume
+      hostPath:
+        path: /opt/data-platform/data/flow
+        type: DirectoryOrCreate
   volumeMounts:
     - mountPath: /tmp/ray
       name: log-volume
       subPath: ray
+    - mountPath: /dataset
+      name: dataset-volume
+    - mountPath: /flow
+      name: flow-volume
   # sidecarContainers specifies additional containers to attach to the Ray pod.
   # Follows standard K8s container spec.
   sidecarContainers:
@@ -127,6 +139,10 @@ head:
       volumeMounts:
         - mountPath: /var/log/data-platform
           name: log-volume
+        - mountPath: /dataset
+          name: dataset-volume
+        - mountPath: /flow
+          name: flow-volume
   # See docs/guidance/pod-command.md for more details about how to specify
   # container command for head Pod.
   command: []
@@ -210,10 +226,22 @@ worker:
       hostPath:
         path: /opt/data-platform/data/log
         type: DirectoryOrCreate
+    - name: dataset-volume
+      hostPath:
+        path: /opt/data-platform/data/dataset
+        type: DirectoryOrCreate
+    - name: flow-volume
+      hostPath:
+        path: /opt/data-platform/data/flow
+        type: DirectoryOrCreate
   volumeMounts:
     - mountPath: /tmp/ray
       name: log-volume
       subPath: ray
+    - mountPath: /dataset
+      name: dataset-volume
+    - mountPath: /flow
+      name: flow-volume
   # sidecarContainers specifies additional containers to attach to the Ray pod.
   # Follows standard K8s container spec.
   sidecarContainers: []
@@ -291,10 +319,22 @@ additionalWorkerGroups:
         hostPath:
           path: /opt/data-platform/data/log
           type: DirectoryOrCreate
+      - name: dataset-volume
+        hostPath:
+          path: /opt/data-platform/data/dataset
+          type: DirectoryOrCreate
+      - name: flow-volume
+        hostPath:
+          path: /opt/data-platform/data/flow
+          type: DirectoryOrCreate
     volumeMounts:
       - mountPath: /tmp/ray
         name: log-volume
         subPath: ray
+      - mountPath: /dataset
+        name: dataset-volume
+      - mountPath: /flow
+        name: flow-volume
     sidecarContainers: []
     # See docs/guidance/pod-command.md for more details about how to specify
     # container command for worker Pod.
