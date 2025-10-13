@@ -5,7 +5,7 @@ interface RadioCardOption {
   value: string;
   label: string;
   description?: string;
-  icon?: React.ReactNode;
+  icon?: SVGAElement | React.FC<React.SVGProps<SVGElement>>;
   color?: string;
 }
 
@@ -30,9 +30,9 @@ const RadioCard: React.FC<RadioCardProps> = ({
       style={{ gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}
     >
       {options.map((option) => (
-        <Card
+        <div
           key={option.value}
-          hoverable
+          className="border border-gray-200 rounded-lg hover:shadow-lg p-4 text-center"
           style={{
             borderColor: value === option.value ? "#1677ff" : undefined,
             background: value === option.value ? "#e6f7ff" : undefined,
@@ -40,14 +40,28 @@ const RadioCard: React.FC<RadioCardProps> = ({
           }}
           onClick={() => onChange(option.value)}
         >
-          <div className="flex items-center gap-2 mb-2">
-            {option.icon && <span className="text-xl">{option.icon}</span>}
-            <span className="font-bold">{option.label}</span>
-          </div>
+          <option.icon
+            className={`w-8 h-8 mx-auto mb-2 ${
+              value === option.value ? "text-blue-500" : "text-gray-400"
+            }`}
+          />
+          <h3
+            className={`font-medium text-sm mb-1 ${
+              value === option.value ? "text-blue-500" : "text-gray-900"
+            }`}
+          >
+            {option.label}
+          </h3>
           {option.description && (
-            <div className="color-gray-500 text-sm">{option.description}</div>
+            <div
+              className={`text-xs ${
+                value === option.value ? "text-blue-500" : "text-gray-500"
+              }`}
+            >
+              {option.description}
+            </div>
           )}
-        </Card>
+        </div>
       ))}
     </div>
   );

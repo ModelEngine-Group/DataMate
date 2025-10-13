@@ -115,7 +115,7 @@ const TagManager: React.FC = ({
   // 获取标签列表
   const fetchTags = async () => {
     try {
-      const data = await onFetch?.();
+      const { data } = await onFetch?.();
       setTags(data || []);
     } catch (e) {
       message.error("获取标签失败");

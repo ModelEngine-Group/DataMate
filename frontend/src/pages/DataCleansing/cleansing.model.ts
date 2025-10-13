@@ -6,8 +6,9 @@ export interface OperatorI {
   icon: React.ReactNode;
   description: string;
   tags: string[];
-  isPopular?: boolean;
-  params: {
+  isStar?: boolean;
+  originalId?: string; // 用于标识原始算子ID，便于去重
+  settings: {
     [key: string]: {
       type: "input" | "select" | "radio" | "checkbox" | "range";
       label: string;
@@ -23,21 +24,32 @@ export interface OperatorI {
 export interface CleansingTask {
   id: string;
   name: string;
-  dataset: {
-    id: string;
-    name: string;
-  };
+  description?: string;
+  srcDatasetId: string;
+  srcDatasetName: string;
+  destDatasetId: string;
+  destDatasetName: string;
+  templateId: string;
+  templateName: string;
   status: {
     label: string;
+    value: TaskStatus;
     color: string;
   };
-  startTime: string;
+  startedAt: string;
   progress: number;
   operators: OperatorI[];
-  createdBy: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface CleansingTemplate {
+  id: string;
+  name: string;
   description?: string;
+  instance: OperatorI[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 export enum RuleCategory {
@@ -50,12 +62,11 @@ export enum RuleCategory {
   CUSTOM = "CUSTOM",
 }
 
-export enum JobStatus {
-  PENDING = "PENDING",
-  RUNNING = "RUNNING",
-  COMPLETED = "COMPLETED",
-  FAILED = "FAILED",
-  CANCELLED = "CANCELLED",
+export enum TaskStatus {
+  PENDING = "pending",
+  RUNNING = "running",
+  COMPLETED = "completed",
+  FAILED = "failed",
 }
 
 export interface RuleCondition {

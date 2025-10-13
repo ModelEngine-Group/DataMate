@@ -1,75 +1,27 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Card, Button, Input, Steps, Form, Divider } from "antd";
 import { Link, useNavigate } from "react-router";
 import RadioCard from "@/components/RadioCard";
 
 import { ArrowLeft } from "lucide-react";
-import type { OperatorI } from "@/pages/DataCleansing/cleansing.interface";
 import OperatorLibrary from "./components/OperatorLibrary";
 import OperatorOrchestration from "./components/OperatorOrchestration";
 import OperatorConfig from "./components/OperatorConfig";
 import { templateTypes, OPERATOR_CATEGORIES } from "@/mock/cleansing";
-import {
-  createCleaningTemplateUsingPost,
-  queryCleaningTemplatesUsingPost,
-} from "../cleansing.api";
+import { createCleaningTemplateUsingPost } from "../cleansing.api";
+import { useDragOperators } from "./hooks/useDragOperators";
+import { useOperatorOperations } from "./hooks/useOperatorOperations";
 
 const { TextArea } = Input;
 
 export default function CleansingTemplateCreate() {
   const navigate = useNavigate();
   const [form] = Form.useForm();
-  const [currentStep, setCurrentStep] = useState(0);
-  const [operatorList, setOperatorList] = useState<OperatorI[]>([]);
-  const [operators, setOperators] = useState<OperatorI[]>([]);
-  const [selectedOperator, setSelectedOperator] = useState<string | null>(null);
   const [templateConfig, setTemplateConfig] = useState({
     name: "",
     description: "",
     type: "",
   });
-
-  const fetchTemplates = async () => {
-    const { data } = await queryCleaningTemplatesUsingPost();
-    setOperatorList(data);
-  };
-
-  useEffect(() => {
-    fetchTemplates();
-  }, []);
-
-  const toggleOperator = (template: OperatorI) => {
-    const exist = operators.find((op) => op.originalId === template.id);
-    if (exist) {
-      setOperators(operators.filter((op) => op.originalId !== template.id));
-    } else {
-      const newOperator: OperatorI = {
-        ...template,
-        id: `${template.id}_${Date.now()}`,
-        originalId: template.id,
-        params: JSON.parse(JSON.stringify(template.params)),
-      };
-      setOperators([...operators, newOperator]);
-    }
-  };
-
-  // 删除算子
-  const removeOperator = (id: string) => {
-    setOperators(operators.filter((op) => op.id !== id));
-    if (selectedOperator === id) setSelectedOperator(null);
-  };
-
-  const handleNext = () => {
-    if (currentStep < 1) {
-      setCurrentStep(currentStep + 1);
-    }
-  };
-
-  const handlePrev = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
-    }
-  };
 
   const handleSave = async () => {
     const values = form.getFieldsValue();
@@ -84,6 +36,25 @@ export default function CleansingTemplateCreate() {
     navigate("/data/cleansing");
   };
 
+  const handleValuesChange = (_, allValues) => {
+    setTemplateConfig({ ...templateConfig, ...allValues });
+  };
+
+  const {
+    templates,
+    operators,
+    currentTemplate,
+    currentStep,
+    setCurrentTemplate,
+    setOperators,
+    selectedOperator,
+    setSelectedOperator,
+    toggleOperator,
+    removeOperator,
+    handleNext,
+    handlePrev,
+  } = useOperatorOperations();
+
   const canProceed = () => {
     const values = form.getFieldsValue();
     switch (currentStep) {
@@ -96,9 +67,16 @@ export default function CleansingTemplateCreate() {
     }
   };
 
-  const handleValuesChange = (_, allValues) => {
-    setTemplateConfig({ ...templateConfig, ...allValues });
-  };
+  const {
+    handleDragStart,
+    handleDragEnd,
+    handleContainerDragOver,
+    handleContainerDragLeave,
+    handleItemDragOver,
+    handleItemDragLeave,
+    handleItemDrop,
+    handleDropToContainer,
+  } = useDragOperators({ operators, setOperators });
 
   const renderStepContent = () => {
     switch (currentStep) {
@@ -115,7 +93,7 @@ export default function CleansingTemplateCreate() {
               name="name"
               rules={[{ required: true, message: "请输入模板名称" }]}
             >
-              <Input placeholder="输入模板名称" size="large" />
+              <Input placeholder="输入模板名称" />
             </Form.Item>
             <Form.Item label="模板描述" name="description">
               <TextArea placeholder="描述模板的用途和特点" rows={4} />
@@ -141,19 +119,31 @@ export default function CleansingTemplateCreate() {
             {/* 左侧算子库 */}
             <OperatorLibrary
               operators={operators}
-              operatorList={operatorList}
+              operatorList={currentTemplate?.instance || []}
               OPERATOR_CATEGORIES={OPERATOR_CATEGORIES}
               toggleOperator={toggleOperator}
+              handleDragStart={handleDragStart}
             />
 
             {/* 中间算子编排区域 */}
             <OperatorOrchestration
+              templates={templates}
+              currentTemplate={currentTemplate}
+              setCurrentTemplate={setCurrentTemplate}
               operators={operators}
+              setOperators={setOperators}
               OPERATOR_CATEGORIES={OPERATOR_CATEGORIES}
               selectedOperator={selectedOperator}
               setSelectedOperator={setSelectedOperator}
-              setOperators={setOperators}
               removeOperator={removeOperator}
+              handleDragStart={handleDragStart}
+              handleContainerDragLeave={handleContainerDragLeave}
+              handleContainerDragOver={handleContainerDragOver}
+              handleItemDragOver={handleItemDragOver}
+              handleItemDragLeave={handleItemDragLeave}
+              handleItemDrop={handleItemDrop}
+              handleDropToContainer={handleDropToContainer}
+              handleDragEnd={handleDragEnd}
             />
 
             {/* 右侧参数配置面板 */}

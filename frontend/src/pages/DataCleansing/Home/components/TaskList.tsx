@@ -3,22 +3,27 @@ import { Table, Progress, Badge, Button, Tooltip, Card, App } from "antd";
 import {
   PlayCircleOutlined,
   PauseCircleOutlined,
-  DatabaseOutlined,
   DeleteOutlined,
 } from "@ant-design/icons";
 import { SearchControls } from "@/components/SearchControls";
 import CardView from "@/components/CardView";
 import { useNavigate } from "react-router";
 import {
-  deleteCleaningJobByIdUsingDelete,
-  executeCleaningJobUsingPost,
-  queryCleaningJobsUsingGet,
-  stopCleaningJobUsingPost,
-} from "../../cleansing.api";
-import { TaskStatusMap, templateTypesMap } from "../../cleansing.const";
-import type { Dataset } from "@/pages/DataManagement/dataset.model";
-import { JobStatus, type CleansingTask } from "@/pages/DataCleansing/cleansing.interface";
+  mapTask,
+  TaskStatusMap,
+  templateTypesMap,
+} from "../../cleansing.const";
+import {
+  TaskStatus,
+  type CleansingTask,
+} from "@/pages/DataCleansing/cleansing.model";
 import useFetchData from "@/hooks/useFetchData";
+import {
+  deleteCleaningTaskByIdUsingDelete,
+  executeCleaningTaskUsingPost,
+  queryCleaningTasksUsingGet,
+  stopCleaningTaskUsingPost,
+} from "../../cleansing.api";
 
 export default function TaskList() {
   const navigate = useNavigate();
@@ -43,20 +48,6 @@ export default function TaskList() {
     },
   ];
 
-  const mapTask = (task) => ({
-    ...task,
-    icon: <DatabaseOutlined style={{ color: "#1677ff" }} />,
-    iconColor: "bg-blue-100",
-    status: TaskStatusMap[task.status],
-    tags: task.rules.map((item) => item.name),
-    statistics: [
-      { label: "进度", value: `${task.progress}%` },
-      { label: "已处理", value: task.statistics.processedRecords },
-      { label: "总数", value: task.statistics.totalRecords },
-    ],
-    lastModified: task.startTime,
-  });
-
   const {
     tableData,
     pagination,
@@ -64,33 +55,34 @@ export default function TaskList() {
     setSearchParams,
     fetchData,
     handleFiltersChange,
-  } = useFetchData(queryCleaningJobsUsingGet, mapTask);
+  } = useFetchData(queryCleaningTasksUsingGet, mapTask);
 
   const handleViewTask = (task: any) => {
     navigate("/data/cleansing/task-detail/" + task.id);
   };
 
   const pauseTask = async (item: CleansingTask) => {
-    await stopCleaningJobUsingPost(item.id);
+    await stopCleaningTaskUsingPost(item.id);
     message.success("任务已暂停");
     fetchData();
   };
 
   const startTask = async (item: CleansingTask) => {
-    await executeCleaningJobUsingPost(item.id);
+    await executeCleaningTaskUsingPost(item.id);
     message.success("任务已启动");
     fetchData();
   };
 
   const deleteTask = async (item: CleansingTask) => {
-    await deleteCleaningJobByIdUsingDelete(item.id);
+    await deleteCleaningTaskByIdUsingDelete(item.id);
     message.success("任务已删除");
     fetchData();
   };
 
   const taskOperations = (record) => {
-    const isRunning = record.status.value === JobStatus.RUNNING;
-    const isPending = record.status.value === JobStatus.PENDING;
+    const isRunning = record.status?.value === TaskStatus.RUNNING;
+    const isPending = record.status?.value === TaskStatus.PENDING;
+    
     const pauseBtn = {
       key: "pause",
       label: "暂停",
@@ -127,16 +119,35 @@ export default function TaskList() {
       ),
     },
     {
-      title: "数据集",
-      dataIndex: "dataset",
-      key: "dataset",
-      render: (dataset: Dataset) => {
+      title: "源数据集",
+      dataIndex: "srcDatasetId",
+      key: "srcDatasetId",
+      render: (_, record: CleansingTask) => {
         return (
           <Button
             type="link"
-            onClick={() => navigate("/data/management/detail/" + dataset.id)}
+            onClick={() =>
+              navigate("/data/management/detail/" + record.srcDatasetId)
+            }
           >
-            {dataset.name}
+            {record.srcDatasetName}
+          </Button>
+        );
+      },
+    },
+    {
+      title: "目标数据集",
+      dataIndex: "destDatasetId",
+      key: "destDatasetId",
+      render: (_, record: CleansingTask) => {
+        return (
+          <Button
+            type="link"
+            onClick={() =>
+              navigate("/data/management/detail/" + record.destDatasetId)
+            }
+          >
+            {record.destDatasetName}
           </Button>
         );
       },
@@ -151,8 +162,16 @@ export default function TaskList() {
     },
     {
       title: "开始时间",
-      dataIndex: "startTime",
-      key: "startTime",
+      dataIndex: "startedAt",
+      key: "startedAt",
+      width: 180,
+    },
+    {
+      title: "结束时间",
+      dataIndex: "endedAt",
+      key: "endedAt",
+      width: 180,
+      sorter: true,
     },
     {
       title: "进度",

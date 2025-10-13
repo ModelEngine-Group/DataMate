@@ -4,30 +4,16 @@ import {
   AppstoreOutlined,
 } from "@ant-design/icons";
 import CardView from "@/components/CardView";
-import { queryCleaningTemplatesUsingPost } from "../../cleansing.api";
+import { queryCleaningTemplatesUsingGet } from "../../cleansing.api";
 import { useNavigate } from "react-router";
 import useFetchData from "@/hooks/useFetchData";
+import { mapTemplate } from "../../cleansing.const";
 
 export default function TemplateList() {
   const navigate = useNavigate();
-  const mapTemplate = (template) => ({
-    id: template.id,
-    name: template.name,
-    type: template.category,
-    icon: <AppstoreOutlined style={{ color: "#1677ff" }} />,
-    iconColor: "bg-blue-100",
-    status: {
-      label: template.category,
-      color: template.color,
-    },
-    description: template.description,
-    tags: template.rules.map((item) => item.name),
-    statistics: [{ label: "使用次数", value: template.usage }],
-    lastModified: template.updatedAt || "",
-  });
 
   const { tableData, pagination } = useFetchData(
-    queryCleaningTemplatesUsingPost,
+    queryCleaningTemplatesUsingGet,
     mapTemplate
   );
 
@@ -64,8 +50,6 @@ export default function TemplateList() {
       onClick: DeleteTemplate, // 可实现删除逻辑
     },
   ];
-
-  console.log(tableData);
 
   return (
     <CardView

@@ -79,7 +79,7 @@ export const datasetSubTypeMap: Record<
     label: string;
     order?: number;
     description?: string;
-    icon?: React.JSX.Element | string;
+    icon?: any;
     color?: string;
   }
 > = {
@@ -87,72 +87,63 @@ export const datasetSubTypeMap: Record<
     value: DatasetSubType.TEXT_DOCUMENT,
     label: "文档",
     color: "blue",
-    icon: "📄", // 📄
-    icon: <FileText className="w-4 h-4" />,
+    icon: FileText,
     description: "用于存储和处理各种文档格式的文本数据集",
   },
   [DatasetSubType.TEXT_WEB]: {
     value: DatasetSubType.TEXT_WEB,
     label: "网页",
     color: "cyan",
-    icon: "🌐", // 🌐
-    icon: <FileCode className="w-4 h-4" />,
+    icon: FileCode,
     description: "用于存储和处理网页数据集",
   },
   [DatasetSubType.TEXT_DIALOG]: {
     value: DatasetSubType.TEXT_DIALOG,
     label: "对话",
     color: "teal",
-    icon: "💬", // 💬
-    icon: <MessageCircleMore className="w-4 h-4" />,
+    icon: MessageCircleMore,
     description: "用于存储和处理对话数据的数据集",
   },
   [DatasetSubType.IMAGE_IMAGE]: {
     value: DatasetSubType.IMAGE_IMAGE,
     label: "图像",
     color: "green",
-    icon: "🖼️", // 🖼️
-    icon: <FileImage className="w-4 h-4" />,
+    icon: FileImage,
     description: "用于大规模图像预训练模型的数据集",
   },
   [DatasetSubType.IMAGE_CAPTION]: {
     value: DatasetSubType.IMAGE_CAPTION,
     label: "图像+caption",
     color: "lightgreen",
-    icon: "📝", // 📝
-    icon: <ImagePlus className="w-4 h-4" />,
+    icon: ImagePlus,
     description: "用于图像标题生成的数据集",
   },
   [DatasetSubType.AUDIO_AUDIO]: {
     value: DatasetSubType.AUDIO_AUDIO,
     label: "音频",
     color: "purple",
-    icon: "\u{1F50A}", // 🔊
-    icon: <Music className="w-4 h-4" />,
+    icon: Music,
     description: "用于大规模音频预训练模型的数据集",
   },
   [DatasetSubType.AUDIO_JSONL]: {
     value: DatasetSubType.AUDIO_JSONL,
     label: "音频+JSONL",
     color: "purple",
-    icon: "\u{1F50A}", // 🔊
-    icon: <FileMusic className="w-4 h-4" />,
+    icon: FileMusic,
     description: "用于大规模音频预训练模型的数据集",
   },
   [DatasetSubType.VIDEO_VIDEO]: {
     value: DatasetSubType.VIDEO_VIDEO,
     label: "视频",
     color: "orange",
-    icon: "🎥",
-    icon: <Video className="w-4 h-4" />,
+    icon: Video,
     description: "用于大规模视频预训练模型的数据集",
   },
   [DatasetSubType.VIDEO_JSONL]: {
     value: DatasetSubType.VIDEO_JSONL,
     label: "视频+JSONL",
     color: "orange",
-    icon: "🎥", // 🎥
-    icon: <Videotape className="w-4 h-4" />,
+    icon: Videotape,
     description: "用于大规模视频预训练模型的数据集",
   },
 };
@@ -220,4 +211,3 @@ export const datasetTypes = Object.values(datasetTypeMap).map((type) => ({
     (subType) => datasetSubTypeMap[subType as keyof typeof datasetSubTypeMap]
   ),
 }));
-

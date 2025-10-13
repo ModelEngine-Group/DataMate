@@ -41,16 +41,11 @@ const operators = [
 export default function OperatorTable({ task }: { task: any }) {
   const operatorColumns = [
     {
-      title: "序号",
-      dataIndex: "index",
-      key: "index",
-      width: 80,
-      render: (text: any, record: any, index: number) => index + 1,
-    },
-    {
       title: "算子名称",
       dataIndex: "name",
       key: "name",
+      fixed: "left",
+      width: 200,
       filterDropdown: ({
         setSelectedKeys,
         selectedKeys,
@@ -81,68 +76,26 @@ export default function OperatorTable({ task }: { task: any }) {
         record.name.toLowerCase().includes(value.toLowerCase()),
     },
     {
-      title: "开始时间",
-      dataIndex: "startTime",
-      key: "startTime",
-      sorter: (a: any, b: any) =>
-        new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
+      title: "版本",
+      dataIndex: "version",
+      key: "version",
     },
     {
-      title: "结束时间",
-      dataIndex: "endTime",
-      key: "endTime",
-      sorter: (a: any, b: any) =>
-        new Date(a.endTime).getTime() - new Date(b.endTime).getTime(),
+      title: "创建时间",
+      dataIndex: "createdAt",
+      key: "createdAt",
     },
     {
-      title: "执行时长",
-      dataIndex: "duration",
-      key: "duration",
-    },
-    {
-      title: "处理文件数",
-      dataIndex: "processedFiles",
-      key: "processedFiles",
-      sorter: (a: any, b: any) => a.processedFiles - b.processedFiles,
-    },
-    {
-      title: "成功率",
-      dataIndex: "successRate",
-      key: "successRate",
-      sorter: (a: any, b: any) => a.successRate - b.successRate,
-      render: (rate: number) => `${rate}%`,
-    },
-    {
-      title: "状态",
-      dataIndex: "status",
-      key: "status",
-      filters: [
-        { text: "成功", value: "成功" },
-        { text: "失败", value: "失败" },
-        { text: "运行中", value: "运行中" },
-      ],
-      onFilter: (value: string, record: any) => record.status === value,
-      render: (status: string) => (
-        <Badge
-          status={
-            status === "成功"
-              ? "success"
-              : status === "失败"
-              ? "error"
-              : "processing"
-          }
-          text={status}
-        />
-      ),
+      title: "更新时间",
+      dataIndex: "updatedAt",
+      key: "updatedAt",
     },
   ];
-
-  console.log("task?.rules");
 
   return (
     <Table
       columns={operatorColumns}
-      dataSource={task?.rules || operators}
+      dataSource={task?.instance || operators}
       pagination={false}
       size="middle"
     />

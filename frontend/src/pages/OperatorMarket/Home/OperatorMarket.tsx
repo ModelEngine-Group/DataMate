@@ -21,9 +21,10 @@ import { SearchControls } from "@/components/SearchControls";
 import CardView from "@/components/CardView";
 import { useNavigate } from "react-router";
 import { mockOperators } from "@/mock/operator";
-import type { Operator } from "@/pages/OperatorMarket/operator.interface";
+import type { Operator } from "@/pages/OperatorMarket/operator.model";
 import Filters from "./components/Filters";
 import TagManagement from "@/components/TagManagement";
+import { ListView } from "./components/List";
 
 export default function OperatorMarketPage() {
   const navigate = useNavigate();
@@ -242,27 +243,16 @@ export default function OperatorMarketPage() {
     return colorMap[type as keyof typeof colorMap] || "bg-blue-100";
   };
 
-  const getModalityIcon = (modality: string) => {
-    const iconMap = {
-      text: FileText,
-      image: ImageIcon,
-      audio: Music,
-      video: Video,
-    };
-    const IconComponent = iconMap[modality as keyof typeof iconMap] || FileText;
-    return <IconComponent className="w-3 h-3" />;
-  };
-
   const handleViewOperator = (operator: Operator) => {
     navigate(`/data/operator-market/plugin-detail/${operator.id}`);
   };
 
   const handleUploadOperator = () => {
-    navigate(`/data/operator-market/upload-operator`);
+    navigate(`/data/operator-market/create`);
   };
 
   const handleUpdateOperator = (operator: Operator) => {
-    navigate(`/data/operator-market/${operator.id}/edit`);
+    navigate(`/data/operator-market/create/${operator.id}`);
   };
 
   const handleToggleFavorite = (operatorId: number) => {
@@ -320,129 +310,6 @@ export default function OperatorMarketPage() {
     );
   };
 
-  const renderCardView = (
-    <CardView
-      className="mx-4"
-      data={filteredOperators.map((operator) => ({
-        ...operator,
-        icon: getTypeIcon(operator.type),
-        iconColor: getTypeColor(operator.type),
-        status: getStatusBadge(operator.status),
-        statistics: [
-          { label: "使用次数", value: operator.usage.toLocaleString() },
-          { label: "框架", value: operator.framework },
-          { label: "大小", value: operator.size },
-          { label: "语言", value: operator.language },
-        ],
-      }))}
-      pageSize={8}
-      operations={[
-        { key: "view", label: "查看详情", onClick: handleViewOperator },
-        { key: "edit", label: "更新算子", onClick: handleUpdateOperator },
-        { key: "delete", label: "删除算子", onClick: handleDeleteTag },
-      ]}
-      onView={handleViewOperator}
-      onFavorite={(item) => handleToggleFavorite(item.id)}
-      isFavorite={(item) => favoriteOperators.has(item.id)}
-    />
-  );
-
-  const renderListView = (
-    <List
-      className="p-4 overflow-auto mx-4"
-      dataSource={filteredOperators}
-      pagination={{
-        pageSize: 10,
-        showSizeChanger: true,
-        showQuickJumper: true,
-      }}
-      renderItem={(operator) => (
-        <List.Item
-          className="hover:bg-gray-50 transition-colors px-6 py-4"
-          actions={[
-            <Button
-              key="edit"
-              type="text"
-              size="small"
-              onClick={() => handleUpdateOperator(operator)}
-              icon={<Edit className="w-4 h-4" />}
-              title="更新算子"
-            />,
-            <Button
-              key="favorite"
-              type="text"
-              size="small"
-              onClick={() => handleToggleFavorite(operator.id)}
-              className={
-                favoriteOperators.has(operator.id)
-                  ? "text-yellow-500 hover:text-yellow-600"
-                  : "text-gray-400 hover:text-yellow-500"
-              }
-              icon={
-                <StarFilled
-                  style={{
-                    fontSize: "16px",
-                    color: favoriteOperators.has(operator.id)
-                      ? "#ffcc00ff"
-                      : "#d1d5db",
-                    cursor: "pointer",
-                  }}
-                  onClick={() => handleToggleFavorite(operator.id)}
-                />
-              }
-              title="收藏"
-            />,
-            <Button
-              key="delete"
-              type="text"
-              size="small"
-              danger
-              icon={<Trash2 className="w-4 h-4" />}
-              title="删除算子"
-            />,
-          ]}
-        >
-          <List.Item.Meta
-            avatar={
-              <Avatar
-                icon={getTypeIcon(operator.type)}
-                size="large"
-                style={{
-                  backgroundColor: "oklch(0.932 0.032 255.585)",
-                }}
-              />
-            }
-            title={
-              <div className="flex items-center gap-3">
-                <span
-                  className="font-medium text-gray-900 cursor-pointer hover:text-blue-600"
-                  onClick={() => handleViewOperator(operator)}
-                >
-                  {operator.name}
-                </span>
-                <Tag color="default">v{operator.version}</Tag>
-                <Badge color={getStatusBadge(operator.status).color}>
-                  {getStatusBadge(operator.status).label}
-                </Badge>
-              </div>
-            }
-            description={
-              <div className="space-y-2">
-                <div className="text-gray-600 ">{operator.description}</div>
-                <div className="flex items-center gap-4 text-xs text-gray-500">
-                  <span>作者: {operator.author}</span>
-                  <span>类型: {operator.type}</span>
-                  <span>框架: {operator.framework}</span>
-                  <span>使用次数: {operator.usage.toLocaleString()}</span>
-                </div>
-              </div>
-            }
-          />
-        </List.Item>
-      )}
-    />
-  );
-
   return (
     <div className="h-full">
       {/* Header */}
@@ -479,7 +346,7 @@ export default function OperatorMarketPage() {
               icon={<FilterOutlined />}
               onClick={() => setShowFilters(!showFilters)}
             />
-            <div className="flex-1">
+            <div className="flex-1 my-4">
               <SearchControls
                 searchTerm={searchTerm}
                 onSearchChange={setSearchTerm}
@@ -510,7 +377,51 @@ export default function OperatorMarketPage() {
               <p className="text-gray-500">尝试调整筛选条件或搜索关键词</p>
             </div>
           ) : (
-            <>{viewMode === "card" ? renderCardView : renderListView}</>
+            <>
+              {viewMode === "card" ? (
+                <CardView
+                  className="mx-4"
+                  data={filteredOperators.map((operator) => ({
+                    ...operator,
+                    icon: getTypeIcon(operator.type),
+                    iconColor: getTypeColor(operator.type),
+                    status: getStatusBadge(operator.status),
+                    statistics: [
+                      {
+                        label: "使用次数",
+                        value: operator.usage.toLocaleString(),
+                      },
+                      { label: "框架", value: operator.framework },
+                      { label: "大小", value: operator.size },
+                      { label: "语言", value: operator.language },
+                    ],
+                  }))}
+                  pageSize={8}
+                  operations={[
+                    {
+                      key: "view",
+                      label: "查看详情",
+                      onClick: handleViewOperator,
+                    },
+                    {
+                      key: "edit",
+                      label: "更新算子",
+                      onClick: handleUpdateOperator,
+                    },
+                    {
+                      key: "delete",
+                      label: "删除算子",
+                      onClick: handleDeleteTag,
+                    },
+                  ]}
+                  onView={handleViewOperator}
+                  onFavorite={(item) => handleToggleFavorite(item.id)}
+                  isFavorite={(item) => favoriteOperators.has(item.id)}
+                />
+              ) : (
+                <ListView operators={filteredOperators} />
+              )}
+            </>
           )}
         </div>
       </div>

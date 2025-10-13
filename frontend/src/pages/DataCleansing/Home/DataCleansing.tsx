@@ -4,6 +4,7 @@ import { PlusOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router";
 import TaskList from "./components/TaskList";
 import TemplateList from "./components/TemplateList";
+import ProcessFlowDiagram from "./components/ProcessFlowDiagram";
 
 export default function DataProcessingPage() {
   const navigate = useNavigate();
@@ -34,7 +35,7 @@ export default function DataProcessingPage() {
           </div>
         </div>
       </div>
-
+      <ProcessFlowDiagram />
       <Tabs
         activeKey={currentView}
         onChange={(key) => setCurrentView(key as any)}

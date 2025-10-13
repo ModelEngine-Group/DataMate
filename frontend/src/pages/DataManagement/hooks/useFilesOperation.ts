@@ -1,7 +1,15 @@
-import type { Dataset, DatasetFile } from "@/pages/DataManagement/dataset.model";
+import type {
+  Dataset,
+  DatasetFile,
+} from "@/pages/DataManagement/dataset.model";
 import { App } from "antd";
 import { useState } from "react";
-import { deleteDatasetFileUsingDelete, downloadFile, queryDatasetFilesUsingGet } from "../dataset.api";
+import {
+  deleteDatasetFileUsingDelete,
+  downloadFile,
+  exportDatasetUsingPost,
+  queryDatasetFilesUsingGet,
+} from "../dataset.api";
 import { useParams } from "react-router";
 
 export function useFilesOperation(dataset: Dataset) {
@@ -18,7 +26,7 @@ export function useFilesOperation(dataset: Dataset) {
   const [previewFileName, setPreviewFileName] = useState("");
 
   const fetchFiles = async () => {
-    const data = await queryDatasetFilesUsingGet(id!);
+    const { data } = await queryDatasetFilesUsingGet(id!);
     setFileList(data.content || []);
   };
 
@@ -66,8 +74,7 @@ export function useFilesOperation(dataset: Dataset) {
 
   const handleDeleteFile = async (file) => {
     try {
-      const res = await deleteDatasetFileUsingDelete(dataset.id, file.id);
-      await res.json();
+      await deleteDatasetFileUsingDelete(dataset.id, file.id);
       fetchFiles(); // 刷新文件列表
       message.success({ content: `文件 ${file.fileName} 已删除` });
     } catch (error) {
@@ -82,14 +89,7 @@ export function useFilesOperation(dataset: Dataset) {
     }
     // 执行批量导出逻辑
     console.log("批量导出文件:", selectedFiles);
-    fetch(`/api/datasets/${dataset.id}/files/export`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ fileIds: selectedFiles }),
-    })
-      .then((res) => res.json())
+    exportDatasetUsingPost(dataset.id, { fileIds: selectedFiles })
       .then(() => {
         message.success({
           content: `已导出 ${selectedFiles.length} 个文件`,

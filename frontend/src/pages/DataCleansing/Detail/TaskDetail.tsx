@@ -13,9 +13,14 @@ import {
 } from "lucide-react";
 import DetailHeader from "@/components/DetailHeader";
 import { Link, useNavigate, useParams } from "react-router";
-import { deleteCleaningJobByIdUsingDelete, executeCleaningJobUsingPost, queryCleaningJobByIdUsingGet, stopCleaningJobUsingPost } from "../cleansing.api";
+import {
+  deleteCleaningTaskByIdUsingDelete,
+  executeCleaningTaskUsingPost,
+  queryCleaningTaskByIdUsingGet,
+  stopCleaningTaskUsingPost,
+} from "../cleansing.api";
 import { TaskStatusMap } from "../cleansing.const";
-import { JobStatus } from "@/pages/DataCleansing/cleansing.interface";
+import { TaskStatus } from "@/pages/DataCleansing/cleansing.model";
 import BasicInfo from "./components/BasicInfo";
 import OperatorTable from "./components/OperatorTable";
 import FileTable from "./components/FileTable";
@@ -23,14 +28,14 @@ import LogsTable from "./components/LogsTable";
 
 // 任务详情页面组件
 export default function CleansingTaskDetail() {
-  const { id } = useParams(); // 获取动态路由参数
+  const { id = "" } = useParams(); // 获取动态路由参数
   const { message } = App.useApp();
   const navigate = useNavigate();
 
   const fetchTaskDetail = async () => {
     if (!id) return;
     try {
-      const { data } = await queryCleaningJobByIdUsingGet(id);
+      const { data } = await queryCleaningTaskByIdUsingGet(id);
       setTask(data);
     } catch (error) {
       message.error("获取任务详情失败");
@@ -39,19 +44,19 @@ export default function CleansingTaskDetail() {
   };
 
   const pauseTask = async () => {
-    await stopCleaningJobUsingPost(id);
+    await stopCleaningTaskUsingPost(id);
     message.success("任务已暂停");
     fetchTaskDetail();
   };
 
   const startTask = async () => {
-    await executeCleaningJobUsingPost(id);
+    await executeCleaningTaskUsingPost(id);
     message.success("任务已启动");
     fetchTaskDetail();
   };
 
   const deleteTask = async () => {
-    await deleteCleaningJobByIdUsingDelete(id);
+    await deleteCleaningTaskByIdUsingDelete(id);
     message.success("任务已删除");
     navigate("/data/cleansing");
   };
@@ -95,7 +100,7 @@ export default function CleansingTaskDetail() {
   ];
 
   const operations = [
-    ...(task?.status === JobStatus.RUNNING
+    ...(task?.status === TaskStatus.RUNNING
       ? [
           {
             key: "pause",
@@ -105,7 +110,7 @@ export default function CleansingTaskDetail() {
           },
         ]
       : []),
-    ...(task?.status === JobStatus.PENDING
+    ...(task?.status === TaskStatus.PENDING
       ? [
           {
             key: "start",

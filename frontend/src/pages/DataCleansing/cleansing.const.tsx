@@ -1,10 +1,17 @@
-import { JobStatus, TemplateType } from "@/pages/DataCleansing/cleansing.interface";
+import {
+  CleansingTask,
+  CleansingTemplate,
+  TaskStatus,
+  TemplateType,
+} from "@/pages/DataCleansing/cleansing.model";
+import { formatDateTime } from "@/utils/unit";
 import {
   ClockCircleOutlined,
   PlayCircleOutlined,
   CheckCircleOutlined,
   AlertOutlined,
-  StopOutlined,
+  DatabaseOutlined,
+  AppstoreOutlined,
 } from "@ant-design/icons";
 
 export const templateTypesMap = {
@@ -41,34 +48,52 @@ export const templateTypesMap = {
 };
 
 export const TaskStatusMap = {
-  [JobStatus.PENDING]: {
+  [TaskStatus.PENDING]: {
     label: "待处理",
-    value: JobStatus.PENDING,
+    value: TaskStatus.PENDING,
     color: "gray",
     icon: <ClockCircleOutlined />,
   },
-  [JobStatus.RUNNING]: {
+  [TaskStatus.RUNNING]: {
     label: "进行中",
-    value: JobStatus.RUNNING,
+    value: TaskStatus.RUNNING,
     color: "blue",
     icon: <PlayCircleOutlined />,
   },
-  [JobStatus.COMPLETED]: {
+  [TaskStatus.COMPLETED]: {
     label: "已完成",
-    value: JobStatus.COMPLETED,
+    value: TaskStatus.COMPLETED,
     color: "green",
     icon: <CheckCircleOutlined />,
   },
-  [JobStatus.FAILED]: {
+  [TaskStatus.FAILED]: {
     label: "失败",
-    value: JobStatus.FAILED,
+    value: TaskStatus.FAILED,
     color: "red",
     icon: <AlertOutlined />,
   },
-  [JobStatus.CANCELLED]: {
-    label: "已取消",
-    value: JobStatus.CANCELLED,
-    color: "orange",
-    icon: <StopOutlined />,
-  },
 };
+
+export const mapTask = (task: CleansingTask) => {
+  return {
+    ...task,
+    createdAt: formatDateTime(task.createdAt),
+    startedAt: formatDateTime(task.startedAt),
+    endedAt: formatDateTime(task.endedAt),
+    icon: <DatabaseOutlined style={{ color: "#1677ff" }} />,
+    iconColor: "bg-blue-100",
+    status: TaskStatusMap[task.status],
+    statistics: [{ label: "进度", value: `${task.progress}%` }],
+    lastModified: formatDateTime(task.createdAt),
+  };
+};
+
+export const mapTemplate = (template: CleansingTemplate) => ({
+  ...template,
+  createdAt: formatDateTime(template.createdAt),
+  updatedAt: formatDateTime(template.updatedAt),
+  icon: <AppstoreOutlined style={{ color: "#1677ff" }} />,
+  iconColor: "bg-blue-100",
+  statistics: [{ label: "算子数量", value: template.instance?.length ?? 0 }],
+  lastModified: formatDateTime(template.updatedAt),
+});

@@ -16,31 +16,25 @@ function datasetItem() {
   return {
     id: Mock.Random.guid().replace(/[^a-zA-Z0-9]/g, ""),
     name: Mock.Random.ctitle(5, 20),
-    type: Mock.Random.pick(["PRETRAIN", "FINE_TUNE", "EVAL"]),
+    type: Mock.Random.pick([
+      "TEXT_DOCUMENT",
+      "TEXT_WEB",
+      "TEXT_DIALOG",
+      "IMAGE_IMAGE",
+      "IMAGE_CAPTION",
+      "AUDIO_AUDIO",
+      "AUDIO_JSONL",
+      "VIDEO_VIDEO",
+      "VIDEO_JSONL",
+    ]),
     status: Mock.Random.pick(["ACTIVE", "INACTIVE", "PROCESSING"]),
     tags: Mock.Random.shuffle(tagList).slice(0, Mock.Random.integer(1, 3)),
-    dataSource: "dataSource",
-    targetLocation: "targetLocation",
-    fileCount: Mock.Random.integer(1, 100),
     totalSize: Mock.Random.integer(1024, 1024 * 1024 * 1024), // in bytes
-    completionRate: Mock.Random.integer(0, 100), // percentage
     description: Mock.Random.cparagraph(1, 3),
     createdAt: Mock.Random.datetime("yyyy-MM-dd HH:mm:ss"),
     updatedAt: Mock.Random.datetime("yyyy-MM-dd HH:mm:ss"),
     createdBy: Mock.Random.cname(),
     updatedBy: Mock.Random.cname(),
-    lineage: {
-      source: Mock.Random.word(5, 15),
-      processing: new Array(Mock.Random.integer(1, 5))
-        .fill(null)
-        .map(() => Mock.Random.csentence(5, 20)),
-      training: {
-        model: Mock.Random.pick(["ResNet-50", "BERT", "GPT-3", "VGG16"]),
-        accuracy: parseFloat((Math.random() * 100).toFixed(2)),
-        f1Score: parseFloat((Math.random() * 100).toFixed(2)),
-      },
-      destination: Mock.Random.word(5, 15),
-    },
   };
 }
 
@@ -162,8 +156,9 @@ module.exports = function (router) {
   });
 
   // 获取数据集列表
-  router.post(API.queryDatasetsUsingPost, (req, res) => {
-    const { page = 1, size = 10, keywords, type, status, tags } = req.body;
+  router.get(API.queryDatasetsUsingGet, (req, res) => {
+    const { page = 0, size = 10, keywords, type, status, tags } = req.query;
+    console.log("Received query params:", req.query);
 
     let filteredDatasets = datasetList;
     if (keywords) {
@@ -197,8 +192,8 @@ module.exports = function (router) {
 
     const totalElements = filteredDatasets.length;
     const paginatedDatasets = filteredDatasets.slice(
-      (page - 1) * size,
-      page * size
+      page * size,
+      (page + 1) * size
     );
 
     res.send({
@@ -208,7 +203,7 @@ module.exports = function (router) {
         totalElements,
         page,
         size,
-        results: paginatedDatasets,
+        content: paginatedDatasets,
       },
     });
   });
@@ -301,7 +296,7 @@ module.exports = function (router) {
       code: "0",
       msg: "Success",
       data: {
-        results: pageData,
+        content: pageData,
         page: parseInt(page),
         size: parseInt(size),
         totalElements: filteredFiles.length,
@@ -431,5 +426,4 @@ module.exports = function (router) {
       data: newTag,
     });
   });
-
 };

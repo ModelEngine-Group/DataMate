@@ -261,6 +261,12 @@ export const flattenArray = <T>(array: T[][]): T[] => {
   return array.reduce((acc, val) => acc.concat(val), []);
 };
 
+export const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    // 这里可以添加提示消息
+  };
+
+
 // 示例用法
 // console.log(formatBytes(1024)); // "1 KB"
 // console.log(formatDateTime("2023-10-01T12:34:56Z")); // "2023-10-01 12:34:56"

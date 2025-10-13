@@ -10,7 +10,11 @@ import {
   ClockCircleOutlined,
 } from "@ant-design/icons";
 import DetailHeader from "@/components/DetailHeader";
-import { mapDataset, datasetStatusMap, datasetSubTypeMap } from "../dataset.const";
+import {
+  mapDataset,
+  datasetStatusMap,
+  datasetSubTypeMap,
+} from "../dataset.const";
 import type { Dataset } from "@/pages/DataManagement/dataset.model";
 import { Link, useParams } from "react-router";
 import { useFilesOperation, useImportFile } from "../hooks";
@@ -56,7 +60,7 @@ export default function DatasetDetail() {
   const [showUploadDialog, setShowUploadDialog] = useState(false);
 
   const fetchDataset = async () => {
-    const data = await queryDatasetByIdUsingGet(id as unknown as number);
+    const { data } = await queryDatasetByIdUsingGet(id as unknown as number);
     setDataset(mapDataset(data));
   };
 

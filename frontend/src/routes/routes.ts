@@ -36,9 +36,9 @@ import KnowledgeBaseCreatePage from "@/pages/KnowledgeGeneration/KnowledgeBaseCr
 import KnowledgeBaseDetailPage from "@/pages/KnowledgeGeneration/KnowledgeBaseDetail";
 import KnowledgeBaseFileDetailPage from "@/pages/KnowledgeGeneration/KnowledgeBaseFileDetail";
 
-import OperatorMarketPage from "@/pages/OperatorMarket/OperatorMarket";
-import OperatorPluginCreate from "@/pages/OperatorMarket/UploadOperator";
-import OperatorPluginDetail from "@/pages/OperatorMarket/OperatorPluginDetail";
+import OperatorMarketPage from "@/pages/OperatorMarket/Home/OperatorMarket";
+import OperatorPluginCreate from "@/pages/OperatorMarket/Create/OperatorPluginCreate";
+import OperatorPluginDetail from "@/pages/OperatorMarket/Detail/OperatorPluginDetail";
 import RatioTasksPage from "@/pages/RatioTask/RatioTask";
 import CreateRatioTask from "@/pages/RatioTask/CreateRatioTask";
 import OrchestrationPage from "@/pages/Orchestration/Orchestration";
@@ -247,7 +247,7 @@ const router = createBrowserRouter([
             Component: OperatorMarketPage,
           },
           {
-            path: "upload-operator",
+            path: "create",
             Component: OperatorPluginCreate,
           },
           {

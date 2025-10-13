@@ -57,7 +57,7 @@ export default function useFetchData<T>(
     const { keywords, filter, current, pageSize } = searchParams;
     Loading.show();
     setLoading(true);
-    const data = await fetchFunc({
+    const { data } = await fetchFunc({
       ...filter,
       keywords,
       type: getFirstOfArray(filter?.type) || undefined,
@@ -77,6 +77,8 @@ export default function useFetchData<T>(
     setTableData(result);
     Loading.hide();
     setLoading(false);
+    console.log(data);
+    
     console.log(data, result.map(mapDataFunc));
   }
 

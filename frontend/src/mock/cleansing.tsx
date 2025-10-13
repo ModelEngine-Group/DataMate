@@ -1,4 +1,4 @@
-import type { OperatorI } from "@/pages/DataCleansing/cleansing.interface";
+import type { OperatorI } from "@/pages/DataCleansing/cleansing.model";
 import {
   DatabaseOutlined,
   FilterOutlined,
@@ -11,6 +11,7 @@ import {
   AimOutlined,
   SwapOutlined,
 } from "@ant-design/icons";
+import { FileImage, FileText, Music, Repeat, Video } from "lucide-react";
 
 export const MOCK_TASKS = [
   {
@@ -131,31 +132,31 @@ export const templateTypes = [
   {
     value: "text",
     label: "文本",
-    icon: "📝",
+    icon: FileText,
     description: "处理文本数据的清洗模板",
   },
   {
     value: "image",
     label: "图片",
-    icon: "🖼️",
+    icon: FileImage,
     description: "处理图像数据的清洗模板",
   },
   {
     value: "video",
     label: "视频",
-    icon: "🎥",
+    icon: Video,
     description: "处理视频数据的清洗模板",
   },
   {
     value: "audio",
     label: "音频",
-    icon: "🎵",
+    icon: Music,
     description: "处理音频数据的清洗模板",
   },
   {
     value: "image-to-text",
     label: "图片转文本",
-    icon: "🔄",
+    icon: Repeat,
     description: "图像识别转文本的处理模板",
   },
 ];
@@ -183,8 +184,8 @@ const generateOperatorTemplates = (): OperatorI[] => {
       icon: <DatabaseOutlined />,
       description: "从MySQL数据库读取数据",
       tags: ["数据库", "读取", "MySQL"],
-      isPopular: true,
-      params: {
+      isStar: true,
+      settings: {
         host: { type: "input", label: "主机地址", value: "localhost" },
         port: { type: "input", label: "端口", value: "3306" },
         database: { type: "input", label: "数据库名", value: "" },
@@ -207,8 +208,8 @@ const generateOperatorTemplates = (): OperatorI[] => {
       icon: <FileTextOutlined />,
       description: "读取CSV文件数据",
       tags: ["文件", "读取", "CSV"],
-      isPopular: true,
-      params: {
+      isStar: true,
+      settings: {
         filepath: { type: "input", label: "文件路径", value: "" },
         encoding: {
           type: "select",
@@ -227,7 +228,7 @@ const generateOperatorTemplates = (): OperatorI[] => {
       icon: <FilterOutlined />,
       description: "根据条件过滤数据行",
       tags: ["过滤", "条件", "筛选"],
-      isPopular: true,
+      isStar: true,
       params: {
         column: { type: "input", label: "过滤字段", value: "" },
         operator: {
@@ -253,8 +254,8 @@ const generateOperatorTemplates = (): OperatorI[] => {
       icon: <ThunderboltOutlined />,
       description: "训练线性回归模型",
       tags: ["回归", "监督学习", "预测"],
-      isPopular: true,
-      params: {
+      isStar: true,
+      settings: {
         features: {
           type: "checkbox",
           label: "特征列",
@@ -280,7 +281,7 @@ const generateOperatorTemplates = (): OperatorI[] => {
       icon: <ClusterOutlined />,
       description: "训练随机森林模型",
       tags: ["分类", "回归", "集成学习"],
-      params: {
+      settings: {
         n_estimators: {
           type: "range",
           label: "树的数量",

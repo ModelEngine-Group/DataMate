@@ -20,7 +20,7 @@ const OperatorConfig: React.FC<OperatorConfigProps> = ({
   onParamChange,
 }) => {
   return (
-    <div className="w-1/4 flex flex-col ">
+    <div className="w-1/4 flex flex-col h-screen">
       <div className="px-4 pb-4 border-b border-gray-200">
         <span className="font-semibold text-base flex items-center gap-2">
           <SettingOutlined />
@@ -38,7 +38,7 @@ const OperatorConfig: React.FC<OperatorConfigProps> = ({
                 {selectedOp.description}
               </div>
               <div className="flex flex-wrap gap-1 mt-2">
-                {selectedOp.tags.map((tag: string) => (
+                {selectedOp?.tags?.map((tag: string) => (
                   <Tag key={tag} color="default">
                     {tag}
                   </Tag>
@@ -47,7 +47,7 @@ const OperatorConfig: React.FC<OperatorConfigProps> = ({
             </div>
             <Divider />
             <Form layout="vertical">
-              {Object.entries(selectedOp.params).map(([key, param]) =>
+              {Object.entries(selectedOp.settings).map(([key, param]) =>
                 renderParamConfig ? (
                   renderParamConfig(selectedOp, key, param)
                 ) : (

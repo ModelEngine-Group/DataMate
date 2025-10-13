@@ -1,9 +1,12 @@
-import type { CleansingTask, OperatorI } from "@/pages/DataCleansing/cleansing.interface";
-import { Button, Card, Descriptions, Progress, Badge } from "antd";
+import type {
+  CleansingTask,
+  OperatorI,
+} from "@/pages/DataCleansing/cleansing.model";
+import { Button, Card, Descriptions, Progress, Badge, Tag } from "antd";
 import { Activity, AlertCircle, CheckCircle, Clock } from "lucide-react";
 import { useNavigate } from "react-router";
 
-export default function BasicInfo({ task }: {task: CleansingTask}) {
+export default function BasicInfo({ task }: { task: CleansingTask }) {
   const navigate = useNavigate();
 
   const descriptionItems = [
@@ -15,15 +18,36 @@ export default function BasicInfo({ task }: {task: CleansingTask}) {
     { key: "name", label: "任务名称", children: task?.name },
     {
       key: "dataset",
-      label: "数据集",
+      label: "源数据集",
       children: (
-        <Button type="link" size="small" onClick={() => navigate}>
-          {task?.dataset.name}
+        <Button
+          type="link"
+          size="small"
+          onClick={() =>
+            navigate("/data/management/detail/" + task?.srcDatasetId)
+          }
+        >
+          {task?.srcDatasetName}
+        </Button>
+      ),
+    },
+    {
+      key: "targetDataset",
+      label: "目标数据集",
+      children: (
+        <Button
+          type="link"
+          size="small"
+          onClick={() =>
+            navigate("/data/management/detail/" + task?.destDatasetId)
+          }
+        >
+          {task?.destDatasetName}
         </Button>
       ),
     },
     { key: "template", label: "使用模板", children: task?.template },
-    { key: "startTime", label: "开始时间", children: task?.startTime },
+    { key: "startTime", label: "开始时间", children: task?.startedAt },
     { key: "estimatedTime", label: "预计用时", children: task?.estimatedTime },
     {
       key: "description",
@@ -38,13 +62,8 @@ export default function BasicInfo({ task }: {task: CleansingTask}) {
       label: "处理算子",
       children: (
         <div className="flex flex-wrap gap-1">
-          {task?.rules?.map?.((op: OperatorI) => (
-            <Badge
-              key={op.id}
-              className="bg-gray-50 border border-gray-200 mr-1"
-            >
-              {op.name}
-            </Badge>
+          {task?.instance?.map?.((op: OperatorI) => (
+            <Tag key={op.id}>{op.name}</Tag>
           ))}
         </div>
       ),

@@ -10,53 +10,54 @@ import {
   Checkbox,
 } from "antd";
 import { StarFilled, StarOutlined, SearchOutlined } from "@ant-design/icons";
-import type { OperatorI } from "@/pages/DataCleansing/cleansing.interface";
+import type { OperatorI } from "@/pages/DataCleansing/cleansing.model";
 
 interface OperatorListProps {
   operators: OperatorI[];
   favorites: Set<string>;
   showPoppular?: boolean;
   toggleFavorite: (id: string) => void;
-  handleTemplateDragStart: (
-    e: React.DragEvent,
-    template: OperatorI
-  ) => void;
-  toggleOperator: (template: OperatorI) => void;
+  toggleOperator: (operator: OperatorI) => void;
   selectedOperators: OperatorI[];
+  onDragOperator: (
+    e: React.DragEvent,
+    item: OperatorI,
+    source: "library"
+  ) => void;
 }
 
 const OperatorList: React.FC<OperatorListProps> = ({
   operators,
   favorites,
   toggleFavorite,
-  handleTemplateDragStart,
   toggleOperator,
   showPoppular,
   selectedOperators,
+  onDragOperator,
 }) => (
   <div className="grid grid-cols-1 gap-2">
-    {operators.map((template) => {
+    {operators.map((operator) => {
       // 判断是否已选
       const isSelected = selectedOperators.some(
-        (op) => op.originalId === template.id
+        (op) => op.originalId === operator.id
       );
       return (
         <Card
           size="small"
-          key={template.id}
+          key={operator.id}
           draggable
           hoverable
-          onDragStart={(e) => handleTemplateDragStart(e, template)}
-          onClick={() => toggleOperator(template)}
+          onDragStart={(e) => onDragOperator(e, operator, "library")}
+          onClick={() => toggleOperator(operator)}
         >
           <div className="flex items-center justify-between">
             <div className="flex flex-1 min-w-0 items-center gap-2">
               <Checkbox checked={isSelected} />
               <span className="flex-1 min-w-0 font-medium text-sm overflow-hidden text-ellipsis whitespace-nowrap">
-                {template.name}
+                {operator.name}
               </span>
             </div>
-            {showPoppular && template.isPopular && (
+            {showPoppular && operator.isStar && (
               <Tag color="gold" className="text-xs">
                 热门
               </Tag>
@@ -65,10 +66,10 @@ const OperatorList: React.FC<OperatorListProps> = ({
               className="cursor-pointer"
               onClick={(e) => {
                 e.stopPropagation();
-                toggleFavorite(template.id);
+                toggleFavorite(operator.id);
               }}
             >
-              {favorites.has(template.id) ? (
+              {favorites.has(operator.id) ? (
                 <StarFilled style={{ color: "#FFD700" }} />
               ) : (
                 <StarOutlined />
@@ -86,6 +87,11 @@ interface OperatorLibraryProps {
   operatorList: OperatorI[];
   OPERATOR_CATEGORIES: any;
   toggleOperator: (template: OperatorI) => void;
+  handleDragStart: (
+    e: React.DragEvent,
+    item: OperatorI,
+    source: "library"
+  ) => void;
 }
 
 const OperatorLibrary: React.FC<OperatorLibraryProps> = ({
@@ -93,6 +99,7 @@ const OperatorLibrary: React.FC<OperatorLibraryProps> = ({
   operatorList,
   OPERATOR_CATEGORIES,
   toggleOperator,
+  handleDragStart,
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showFavorites, setShowFavorites] = useState(false);
@@ -126,13 +133,7 @@ const OperatorLibrary: React.FC<OperatorLibraryProps> = ({
       filtered = filtered.filter((template) => favorites.has(template.id));
     }
     return filtered;
-  }, [
-    operatorList,
-    searchTerm,
-    selectedCategory,
-    showFavorites,
-    favorites,
-  ]);
+  }, [operatorList, searchTerm, selectedCategory, showFavorites, favorites]);
 
   // 按分类分组
   const groupedTemplates = useMemo(() => {
@@ -155,15 +156,6 @@ const OperatorLibrary: React.FC<OperatorLibraryProps> = ({
       newFavorites.add(templateId);
     }
     setFavorites(newFavorites);
-  };
-
-  // 从算子库拖拽到编排区
-  const handleTemplateDragStart = (
-    e: React.DragEvent,
-    template: OperatorTemplate
-  ) => {
-    e.dataTransfer.setData("application/json", JSON.stringify(template));
-    e.dataTransfer.effectAllowed = "copy";
   };
 
   return (
@@ -217,11 +209,9 @@ const OperatorLibrary: React.FC<OperatorLibraryProps> = ({
             <div className="pr-4">
               <div className="font-medium mb-2">热门算子</div>
               <OperatorList
-                operators={operatorList
-                  .filter((t) => t.isPopular)
-                  .slice(0, 4)}
+                operators={operatorList.filter((t) => t.isStar).slice(0, 4)}
                 favorites={favorites}
-                handleTemplateDragStart={handleTemplateDragStart}
+                onDragOperator={handleDragStart}
                 toggleOperator={toggleOperator}
                 selectedOperators={operators}
                 toggleFavorite={toggleFavorite}
@@ -261,7 +251,7 @@ const OperatorLibrary: React.FC<OperatorLibraryProps> = ({
                   operators={templates}
                   favorites={favorites}
                   toggleOperator={toggleOperator}
-                  handleTemplateDragStart={handleTemplateDragStart}
+                  onDragOperator={handleDragStart}
                   toggleFavorite={toggleFavorite}
                 />
               </Collapse.Panel>
