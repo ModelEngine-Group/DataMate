@@ -16,7 +16,7 @@ import { ArrowLeft, Database } from "lucide-react";
 import OperatorLibrary from "./components/OperatorLibrary";
 import OperatorOrchestration from "./components/OperatorOrchestration";
 import OperatorConfig from "./components/OperatorConfig";
-import { OPERATOR_CATEGORIES, operatorList } from "@/mock/cleansing";
+import { OPERATOR_CATEGORIES } from "@/mock/cleansing";
 import { datasetSubTypeMap } from "@/pages/DataManagement/dataset.const";
 import { queryDatasetsUsingGet } from "@/pages/DataManagement/dataset.api";
 import { useDragOperators } from "./hooks/useDragOperators";
@@ -176,7 +176,7 @@ export default function CleansingTaskCreate() {
             {/* 左侧算子库 */}
             <OperatorLibrary
               operators={operators}
-              operatorList={operatorList}
+              operatorList={currentTemplate?.instance || []}
               OPERATOR_CATEGORIES={OPERATOR_CATEGORIES}
               toggleOperator={toggleOperator}
               handleDragStart={handleDragStart}
@@ -293,7 +293,7 @@ export default function CleansingTaskCreate() {
           </Form.Item>
           <Form.Item label="包含算子">
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-              {operatorList.map((op, index) => (
+              {operators.map((op, index) => (
                 <Tag key={index}>{op.name}</Tag>
               ))}
             </div>

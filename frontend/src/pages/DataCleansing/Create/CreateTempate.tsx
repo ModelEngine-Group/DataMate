@@ -58,9 +58,9 @@ export default function CleansingTemplateCreate() {
   const canProceed = () => {
     const values = form.getFieldsValue();
     switch (currentStep) {
-      case 0:
-        return values.name && values.type;
       case 1:
+        return values.name && values.type;
+      case 2:
         return operators.length > 0;
       default:
         return false;
@@ -80,7 +80,7 @@ export default function CleansingTemplateCreate() {
 
   const renderStepContent = () => {
     switch (currentStep) {
-      case 0:
+      case 1:
         return (
           <Form
             form={form}
@@ -113,7 +113,7 @@ export default function CleansingTemplateCreate() {
             </Form.Item>
           </Form>
         );
-      case 1:
+      case 2:
         return (
           <div className="flex w-full h-full">
             {/* 左侧算子库 */}
@@ -184,8 +184,8 @@ export default function CleansingTemplateCreate() {
           <Divider />
           <div className="w-full mt-4 flex justify-end gap-4">
             <Button onClick={() => navigate("/data/cleansing")}>取消</Button>
-            {currentStep > 0 && <Button onClick={handlePrev}>上一步</Button>}
-            {currentStep === 1 ? (
+            {currentStep > 1 && <Button onClick={handlePrev}>上一步</Button>}
+            {currentStep === 2 ? (
               <Button
                 type="primary"
                 onClick={handleSave}

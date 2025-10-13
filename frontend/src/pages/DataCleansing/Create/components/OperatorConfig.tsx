@@ -52,6 +52,7 @@ const OperatorConfig: React.FC<OperatorConfigProps> = ({
                   renderParamConfig(selectedOp, key, param)
                 ) : (
                   <ParamConfig
+                    key={key}
                     operator={selectedOp}
                     paramKey={key}
                     param={param}
