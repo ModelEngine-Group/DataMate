@@ -3,13 +3,19 @@ package com.dataengine.datamanagement.interfaces.rest;
 import com.dataengine.common.interfaces.Response;
 import com.dataengine.datamanagement.application.service.TagApplicationService;
 import com.dataengine.datamanagement.domain.model.dataset.Tag;
+import com.dataengine.datamanagement.interfaces.converter.TagConverter;
 import com.dataengine.datamanagement.interfaces.dto.CreateTagRequest;
 import com.dataengine.datamanagement.interfaces.dto.TagResponse;
+import com.dataengine.datamanagement.interfaces.dto.UpdateTagRequest;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Size;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -30,10 +36,10 @@ public class TagController {
      * 查询标签列表
      */
     @GetMapping
-    public ResponseEntity<Response<List<TagResponse>>> getTags(@RequestParam(required = false) String keyword) {
+    public ResponseEntity<Response<List<TagResponse>>> getTags(@RequestParam(name = "keyword", required = false) String keyword) {
         List<Tag> tags = tagApplicationService.searchTags(keyword);
         List<TagResponse> response = tags.stream()
-            .map(this::convertToResponse)
+            .map(TagConverter.INSTANCE::convertToResponse)
             .collect(Collectors.toList());
         return ResponseEntity.ok(Response.ok(response));
     }
@@ -49,19 +55,31 @@ public class TagController {
                 createTagRequest.getColor(),
                 createTagRequest.getDescription()
             );
-            return ResponseEntity.status(201).body(Response.ok(convertToResponse(tag)));
+            return ResponseEntity.ok(Response.ok(TagConverter.INSTANCE.convertToResponse(tag)));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Response.error(e.getMessage(), null));
         }
     }
 
-    private TagResponse convertToResponse(Tag tag) {
-        TagResponse response = new TagResponse();
-        response.setId(tag.getId());
-        response.setName(tag.getName());
-        response.setColor(tag.getColor());
-        response.setDescription(tag.getDescription());
-        response.setUsageCount(tag.getUsageCount() != null ? tag.getUsageCount().intValue() : null);
-        return response;
+    /**
+     * 更新标签
+     *
+     * @param updateTagRequest 更新参数
+     * @return 更新结果
+     */
+    @PutMapping
+    public ResponseEntity<Response<TagResponse>> updateTag(@RequestBody @Valid UpdateTagRequest updateTagRequest) {
+        Tag tag = tagApplicationService.updateTag(TagConverter.INSTANCE.updateRequestToTag(updateTagRequest));
+        return ResponseEntity.ok(Response.ok(TagConverter.INSTANCE.convertToResponse(tag)));
+    }
+
+    @DeleteMapping
+    public ResponseEntity<Response<Valid>> deleteTag(@RequestParam(value = "ids") @Valid @Size(max = 10) List<String> ids) {
+        try {
+            tagApplicationService.deleteTag(ids.stream().filter(StringUtils::isNoneBlank).distinct().toList());
+            return ResponseEntity.ok(Response.ok(null));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Response.error(e.getMessage(), null));
+        }
     }
 }

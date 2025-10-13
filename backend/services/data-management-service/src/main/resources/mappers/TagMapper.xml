@@ -92,4 +92,20 @@
         ORDER BY t.usage_count DESC, t.name ASC
     </select>
 
+    <delete id="deleteTagsById">
+        DELETE FROM t_dm_tags WHERE
+        id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+          #{id}
+        </foreach>
+    </delete>
+
+    <select id="findByIdIn" resultMap="TagResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM t_dm_tags
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+          #{id}
+        </foreach>
+    </select>
 </mapper>
