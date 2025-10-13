@@ -2,54 +2,37 @@ services:
   # 1) backend
   backend:
     container_name: backend
-    image: backend         # 等价于 imagePullPolicy: IfNotPresent
+    image: backend
     ports:
       - "8080:8080"
     volumes:
-      - type: bind
-        source: /tmp/data-platform/dataset
-        target: /dataset
+      - ${DATASET_VOLUME}:/dataset
+      - ${FLOW_VOLUME}:/flow
+      - ${LOG_VOLUME}:/var/log/data-platform
     networks: [ edatamate ]
 
-  # 2) datax
-  datax:
-    container_name: datax
-    image: datax
-    command: >
-      bash -c "rpcbind && python3 /opt/datax/bin/app.py"
-    cap_add:
-      - SYS_ADMIN               # securityContext.capabilities.add
-    ports:
-      - "8000:8000"
-    volumes:
-      - type: bind
-        source: /tmp/data-platform/dataset
-        target: /dataset
-    networks: [ edatamate ]
-
-  # 3) frontend（NodePort 30000）
+  # 2) frontend（NodePort 30000）
   frontend:
     container_name: frontend
     image: frontend
     ports:
-      - "3000:80"            # nodePort → hostPort
+      - "30000:80"            # nodePort → hostPort
+    volumes:
+      - ${LOG_VOLUME}:/var/log/data-platform
     networks: [ edatamate ]
 
-  # 4) mysql
+  # 3) mysql
   mysql:
     container_name: mysql
-    image: mysql:8.0
+    image: mysql:8
     environment:
       MYSQL_ROOT_PASSWORD: Huawei@123
-      MYSQL_DATABASE: dataengine
-      MYSQL_USER: root
-      MYSQL_PASSWORD: Huawei@123
     ports:
       - "3306:3306"
     volumes:
-      - type: bind
-        source: /tmp/data-platform/mysql
-        target: /var/lib/mysql
+      - ${MYSQL_VOLUME}:/var/lib/mysql
+      - ../../../scripts/db:/docker-entrypoint-initdb.d
+      - ${LOG_VOLUME}:/var/log/data-platform
     networks: [ edatamate ]
 
 networks:

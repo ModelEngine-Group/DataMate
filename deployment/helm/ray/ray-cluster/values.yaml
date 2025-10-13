@@ -103,10 +103,13 @@ head:
   # Ray writes logs to /tmp/ray/session_latests/logs instead of stdout/stderr.
   volumes:
     - name: log-volume
-      emptyDir: {}
+      hostPath:
+        path: /opt/data-platform/data/log
+        type: DirectoryOrCreate
   volumeMounts:
     - mountPath: /tmp/ray
       name: log-volume
+      subPath: ray
   # sidecarContainers specifies additional containers to attach to the Ray pod.
   # Follows standard K8s container spec.
   sidecarContainers:
@@ -114,14 +117,15 @@ head:
       image: runtime
       imagePullPolicy: IfNotPresent
       command:
-        - tail
-        - -f
-        - /dev/null
+        - python
+        - /opt/runtime/data_platform/operator_runtime.py
+        - --port
+        - "8081"
       env: []
       ports:
         - containerPort: 8080
       volumeMounts:
-        - mountPath: /tmp/ray
+        - mountPath: /var/log/data-platform
           name: log-volume
   # See docs/guidance/pod-command.md for more details about how to specify
   # container command for head Pod.
@@ -203,10 +207,13 @@ worker:
   # Ray writes logs to /tmp/ray/session_latests/logs instead of stdout/stderr.
   volumes:
     - name: log-volume
-      emptyDir: {}
+      hostPath:
+        path: /opt/data-platform/data/log
+        type: DirectoryOrCreate
   volumeMounts:
     - mountPath: /tmp/ray
       name: log-volume
+      subPath: ray
   # sidecarContainers specifies additional containers to attach to the Ray pod.
   # Follows standard K8s container spec.
   sidecarContainers: []
@@ -281,10 +288,13 @@ additionalWorkerGroups:
     # Ray writes logs to /tmp/ray/session_latests/logs instead of stdout/stderr.
     volumes:
       - name: log-volume
-        emptyDir: {}
+        hostPath:
+          path: /opt/data-platform/data/log
+          type: DirectoryOrCreate
     volumeMounts:
       - mountPath: /tmp/ray
         name: log-volume
+        subPath: ray
     sidecarContainers: []
     # See docs/guidance/pod-command.md for more details about how to specify
     # container command for worker Pod.
