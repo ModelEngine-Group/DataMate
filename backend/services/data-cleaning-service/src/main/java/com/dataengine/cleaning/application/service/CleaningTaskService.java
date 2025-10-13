@@ -96,7 +96,7 @@ public class CleaningTaskService {
     private void prepareTask(CleaningTask task, List<OperatorInstance> instances) {
         TaskProcess process = new TaskProcess();
         process.setInstanceId(task.getId());
-        process.setDatasetPath(DATASET_PATH + "/" + task.getSrcDatasetId());
+        process.setDatasetPath(FLOW_PATH + "/" + task.getId() + "/dataset.jsonl");
         process.setExportPath(DATASET_PATH + "/" + task.getDestDatasetId());
         process.setExecutorType(ExecutorType.DATA_PLATFORM.getValue());
         process.setProcess(instances.stream()
