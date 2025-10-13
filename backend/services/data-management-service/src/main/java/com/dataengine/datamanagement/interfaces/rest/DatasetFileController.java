@@ -134,6 +134,7 @@ public class DatasetFileController {
         if (datasetFile.getUploadTime() != null) {
             response.setUploadedAt(datasetFile.getUploadTime().atOffset(ZoneOffset.UTC).toLocalDateTime());
         }
+        response.setLastAccessTime(datasetFile.getLastAccessTime());
         response.setUploadedBy(null);
         return response;
     }

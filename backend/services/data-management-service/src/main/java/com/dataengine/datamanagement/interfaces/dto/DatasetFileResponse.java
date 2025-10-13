@@ -28,6 +28,8 @@ public class DatasetFileResponse {
     private String filePath;
     /** 上传时间 */
     private LocalDateTime uploadedAt;
+    /** 最后更新时间 */
+    private LocalDateTime lastAccessTime;
     /** 上传者 */
     private String uploadedBy;
 }
