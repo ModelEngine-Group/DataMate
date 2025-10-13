@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Table, Progress, Badge, Button, Tooltip, Card, App } from "antd";
+import { Table, Progress, Badge, Button, Tooltip, Card, App, Spin } from "antd";
 import {
   PlayCircleOutlined,
   PauseCircleOutlined,
   DeleteOutlined,
+  LoadingOutlined,
 } from "@ant-design/icons";
 import { SearchControls } from "@/components/SearchControls";
 import CardView from "@/components/CardView";
@@ -49,6 +50,7 @@ export default function TaskList() {
   ];
 
   const {
+    loading,
     tableData,
     pagination,
     searchParams,
@@ -82,7 +84,7 @@ export default function TaskList() {
   const taskOperations = (record) => {
     const isRunning = record.status?.value === TaskStatus.RUNNING;
     const isPending = record.status?.value === TaskStatus.PENDING;
-    
+
     const pauseBtn = {
       key: "pause",
       label: "暂停",
@@ -222,26 +224,29 @@ export default function TaskList() {
         onReload={fetchData}
       />
       {/* Task List */}
-      {viewMode === "card" ? (
-        <CardView
-          data={tableData}
-          operations={taskOperations}
-          onView={(item) =>
-            handleViewTask(tableData.find((t) => t.id === item.id))
-          }
-          pagination={pagination}
-        />
-      ) : (
-        <Card>
-          <Table
-            columns={taskColumns}
-            dataSource={tableData}
-            rowKey="id"
-            scroll={{ x: "max-content", y: "calc(100vh - 20rem)" }}
+      <Spin indicator={<LoadingOutlined spin />} spinning={loading}>
+        {viewMode === "card" ? (
+          <CardView
+            data={tableData}
+            operations={taskOperations}
+            onView={(item) =>
+              handleViewTask(tableData.find((t) => t.id === item.id))
+            }
             pagination={pagination}
           />
-        </Card>
-      )}
+        ) : (
+          <Card>
+            <Table
+              columns={taskColumns}
+              dataSource={tableData}
+              rowKey="id"
+              loading={loading}
+              scroll={{ x: "max-content", y: "calc(100vh - 20rem)" }}
+              pagination={pagination}
+            />
+          </Card>
+        )}
+      </Spin>
     </>
   );
 }
