@@ -1,11 +1,12 @@
 package com.dataengine.cleaning.application.httpclient;
 
 import com.dataengine.cleaning.domain.model.CreateDatasetRequest;
-import com.dataengine.cleaning.domain.model.Dataset;
-import com.dataengine.cleaning.domain.model.PagedDatasetFile;
+import com.dataengine.cleaning.domain.model.DatasetResponse;
+import com.dataengine.cleaning.domain.model.PagedDatasetFileResponse;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.AbstractPageRequest;
 import org.springframework.data.domain.Pageable;
 
 
@@ -19,7 +20,7 @@ import java.time.Duration;
 
 @Slf4j
 public class DatasetClient {
-    private static final String BASE_URL = "http://backend:8080/api";
+    private static final String BASE_URL = "http://localhost:8080/api";
 
     private static final String CREATE_DATASET_URL = BASE_URL + "/data-management/datasets";
 
@@ -29,7 +30,11 @@ public class DatasetClient {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
-    public static Dataset createDataset(String name, String type) {
+    static {
+        OBJECT_MAPPER.registerModule(new JavaTimeModule());
+    }
+
+    public static DatasetResponse createDataset(String name, String type) {
         CreateDatasetRequest createDatasetRequest = new CreateDatasetRequest();
         createDatasetRequest.setName(name);
         createDatasetRequest.setType(type);
@@ -58,14 +63,15 @@ public class DatasetClient {
                 log.error("Request failed with status code: {}", statusCode);
                 throw new RuntimeException();
             }
-            return OBJECT_MAPPER.readValue(responseBody, Dataset.class);
+            JsonNode jsonNode = OBJECT_MAPPER.readTree(responseBody);
+            return OBJECT_MAPPER.treeToValue(jsonNode.get("data"), DatasetResponse.class);
         } catch (IOException | InterruptedException e) {
             log.error("Error occurred while making the request: {}", e.getMessage());
             throw new RuntimeException();
         }
     }
 
-    public static PagedDatasetFile getDatasetFile(String datasetId, Pageable page) {
+    public static PagedDatasetFileResponse getDatasetFile(String datasetId, Pageable page) {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(MessageFormat.format(GET_DATASET_FILE_URL, datasetId)))
                 .timeout(Duration.ofSeconds(30))
@@ -82,7 +88,8 @@ public class DatasetClient {
                 log.error("Request failed with status code: {}", statusCode);
                 throw new RuntimeException();
             }
-            return OBJECT_MAPPER.readValue(responseBody, PagedDatasetFile.class);
+            JsonNode jsonNode = OBJECT_MAPPER.readTree(responseBody);
+            return OBJECT_MAPPER.treeToValue(jsonNode.get("data"), PagedDatasetFileResponse.class);
         } catch (IOException | InterruptedException e) {
             log.error("Error occurred while making the request: {}", e.getMessage());
             throw new RuntimeException();

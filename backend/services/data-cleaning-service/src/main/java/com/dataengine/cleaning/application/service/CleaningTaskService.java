@@ -4,10 +4,10 @@ package com.dataengine.cleaning.application.service;
 import com.dataengine.cleaning.application.httpclient.DatasetClient;
 import com.dataengine.cleaning.application.httpclient.RuntimeClient;
 import com.dataengine.cleaning.domain.converter.OperatorInstanceConverter;
-import com.dataengine.cleaning.domain.model.Dataset;
+import com.dataengine.cleaning.domain.model.DatasetResponse;
 import com.dataengine.cleaning.domain.model.ExecutorType;
 import com.dataengine.cleaning.domain.model.OperatorInstancePo;
-import com.dataengine.cleaning.domain.model.PagedDatasetFile;
+import com.dataengine.cleaning.domain.model.PagedDatasetFileResponse;
 import com.dataengine.cleaning.domain.model.TaskProcess;
 import com.dataengine.cleaning.infrastructure.persistence.mapper.CleaningTaskMapper;
 import com.dataengine.cleaning.infrastructure.persistence.mapper.OperatorInstanceMapper;
@@ -29,6 +29,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -44,13 +45,17 @@ public class CleaningTaskService {
 
     private final ExecutorService taskExecutor = Executors.newFixedThreadPool(5);
 
+    private final String DATASET_PATH = "/dataset";
+
+    private final String FLOW_PATH = "/flow";
+
     public List<CleaningTask> getTasks(String status) {
         return cleaningTaskMapper.findTasksByStatus(status);
     }
 
     @Transactional
     public CleaningTask createTask(CreateCleaningTaskRequest request) {
-        Dataset dataset = DatasetClient.createDataset(request.getDestDatasetName(), request.getDestDatasetType());
+        DatasetResponse datasetResponse = DatasetClient.createDataset(request.getDestDatasetName(), request.getDestDatasetType());
 
         CleaningTask task = new CleaningTask();
         task.setName(request.getName());
@@ -59,15 +64,15 @@ public class CleaningTaskService {
         String taskId = UUID.randomUUID().toString();
         task.setId(taskId);
         task.setSrcDatasetId(request.getSrcDatasetId());
-        task.setDestDatasetId(dataset.getId());
-        task.setDestDatasetName(dataset.getName());
+        task.setDestDatasetId(datasetResponse.getId());
+        task.setDestDatasetName(datasetResponse.getName());
         cleaningTaskMapper.insertTask(task);
 
         List<OperatorInstancePo> instancePos = request.getInstance().stream()
                 .map(OperatorInstanceConverter.INSTANCE::operatorToDo).toList();
         operatorInstanceMapper.insertInstance(taskId, instancePos);
 
-        taskExecutor.submit(() -> executeTask(task, request, dataset.getId()));
+        taskExecutor.submit(() -> executeTask(task, request, datasetResponse.getId()));
         return task;
     }
 
@@ -91,8 +96,8 @@ public class CleaningTaskService {
     private void prepareTask(CleaningTask task, List<OperatorInstance> instances) {
         TaskProcess process = new TaskProcess();
         process.setInstanceId(task.getId());
-        process.setDatasetPath("/opt/runtime/" + task.getSrcDatasetId() + "/");
-        process.setExportPath("/opt/runtime/" + task.getDestDatasetId() + "/");
+        process.setDatasetPath(DATASET_PATH + "/" + task.getSrcDatasetId());
+        process.setExportPath(DATASET_PATH + "/" + task.getDestDatasetId());
         process.setExecutorType(ExecutorType.DATA_PLATFORM.getValue());
         process.setProcess(instances.stream()
                 .map(instance -> Map.of(instance.getId(), instance.getOverrides()))
@@ -107,11 +112,11 @@ public class CleaningTaskService {
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         Yaml yaml = new Yaml(options);
 
-        File file = new File("/opt/runtime/flow/" + process.getInstanceId() + "/process.yaml");
+        File file = new File(FLOW_PATH + "/" + process.getInstanceId() + "/process.yaml");
         file.getParentFile().mkdirs();
 
         try (FileWriter writer = new FileWriter(file)) {
-            yaml.dump(jsonNode, writer);
+            yaml.dump(jsonMapper.treeToValue(jsonNode, Map.class), writer);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -121,14 +126,22 @@ public class CleaningTaskService {
         int pageNumber = 0;
         int pageSize = 500;
         PageRequest pageRequest = PageRequest.of(pageNumber, pageSize);
-        PagedDatasetFile datasetFile;
+        PagedDatasetFileResponse datasetFile;
         do {
             datasetFile = DatasetClient.getDatasetFile(srcDatasetId, pageRequest);
+            if (datasetFile.getContent() != null && datasetFile.getContent().isEmpty()) {
+                break;
+            }
             List<Map<String, Object>> files = datasetFile.getContent().stream()
-                    .map(content -> Map.of("file_name", (Object) content.getFileName(),
-                            "file_size", content.getFileSize()))
+                    .map(content -> Map.of("fileName", (Object) content.getFileName(),
+                            "fileSize", content.getSize() + "B",
+                            "filePath", content.getFilePath(),
+                            "fileType", content.getFileType(),
+                            "fileId", content.getId(),
+                            "sourceFileModifyTime",
+                            content.getLastAccessTime().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()))
                     .toList();
-            writeListMapToJsonlFile(files, "/opt/runtime/flow/" + taskId + "/dataset.jsonl");
+            writeListMapToJsonlFile(files, FLOW_PATH + "/" + taskId + "/dataset.jsonl");
             pageNumber += 1;
         } while (pageNumber < datasetFile.getTotalPages());
     }
@@ -141,13 +154,18 @@ public class CleaningTaskService {
         ObjectMapper objectMapper = new ObjectMapper();
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName))) {
-            for (Map<String, Object> map : mapList) {
-                    String jsonString = objectMapper.writeValueAsString(map);
-                    writer.write(jsonString);
+            if (!mapList.isEmpty()) { // 检查列表是否为空，避免异常
+                String jsonString = objectMapper.writeValueAsString(mapList.get(0));
+                writer.write(jsonString);
+
+                for (int i = 1; i < mapList.size(); i++) {
                     writer.newLine();
+                    jsonString = objectMapper.writeValueAsString(mapList.get(i));
+                    writer.write(jsonString);
+                }
             }
         } catch (IOException e) {
-            System.err.println("Error serializing map to JSON: " + e.getMessage());
+            throw new RuntimeException("Error serializing map to JSON: " + e.getMessage());
         }
     }
 }
