@@ -70,7 +70,7 @@ def preprocess_dataset(dataset: rd.Dataset, cfg) -> rd.Dataset:
 
     def process_batch_arrow(table: pa.Table, names_list=None) -> pa.Table:
         name2value_table = {
-            Fields.flow_id: cfg.flow_id,
+            Fields.instance_id: cfg.instance_id,
             Fields.export_path: cfg.export_path
         }
 

@@ -2,7 +2,7 @@
 
 class Fields(object):
     result = 'execute_result'
-    flow_id = 'flow_id'
+    instance_id = 'instance_id'
     export_path = 'export_path'
 
 
