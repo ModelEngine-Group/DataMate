@@ -82,7 +82,7 @@ public class CollectionTaskController implements CollectionTaskApi {
     }
 
     @Override
-    public ResponseEntity<CollectionTaskResponse> tasksPost(CreateCollectionTaskRequest body) {
+    public ResponseEntity<CollectionTaskResponse> createTask(CreateCollectionTaskRequest body) {
         CollectionTask t = new CollectionTask();
         t.setName(body.getName());
         t.setDescription(body.getDescription());
@@ -94,7 +94,7 @@ public class CollectionTaskController implements CollectionTaskApi {
     }
 
     @Override
-    public ResponseEntity<CollectionTaskResponse> tasksIdPut(String id, UpdateCollectionTaskRequest body) {
+    public ResponseEntity<CollectionTaskResponse> updateTask(String id, UpdateCollectionTaskRequest body) {
         CollectionTask t = taskService.get(id);
         if (t == null) {
             return ResponseEntity.notFound().build();
@@ -110,19 +110,19 @@ public class CollectionTaskController implements CollectionTaskApi {
     }
 
     @Override
-    public ResponseEntity<Void> tasksIdDelete(String id) {
+    public ResponseEntity<Void> deleteTask(String id) {
         taskService.delete(id);
         return ResponseEntity.noContent().build();
     }
 
     @Override
-    public ResponseEntity<CollectionTaskResponse> tasksIdGet(String id) {
+    public ResponseEntity<CollectionTaskResponse> getTaskDetail(String id) {
         CollectionTask t = taskService.get(id);
         return t == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(toResponse(t));
     }
 
     @Override
-    public ResponseEntity<PagedCollectionTaskSummary> tasksGet(Integer page, Integer size, TaskStatus status, String name) {
+    public ResponseEntity<PagedCollectionTaskSummary> getTasks(Integer page, Integer size, TaskStatus status, String name) {
         var list = taskService.list(page, size, status == null ? null : status.getValue(), name);
         PagedCollectionTaskSummary p = new PagedCollectionTaskSummary();
         p.setContent(list.stream().map(this::toSummary).collect(Collectors.toList()));
