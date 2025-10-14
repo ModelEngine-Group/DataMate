@@ -19,7 +19,7 @@ public class DatasetResponse {
     /** 数据集描述 */
     private String description;
     /** 数据集类型 */
-    private DatasetTypeResponse type;
+    private String datasetType;
     /** 数据集状态 */
     private String status;
     /** 标签列表 */

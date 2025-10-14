@@ -5,6 +5,10 @@ import com.dataengine.datamanagement.domain.model.dataset.DatasetFile;
 import com.dataengine.datamanagement.interfaces.dto.DatasetFileResponse;
 import com.dataengine.datamanagement.interfaces.dto.PagedDatasetFileResponse;
 import com.dataengine.common.interfaces.Response;
+import com.dataengine.datamanagement.interfaces.dto.UploadFileRequest;
+import com.dataengine.datamanagement.interfaces.dto.UploadFilesPreRequest;
+import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
@@ -23,6 +27,7 @@ import java.util.stream.Collectors;
 /**
  * 数据集文件 REST 控制器（UUID 模式）
  */
+@Slf4j
 @RestController
 @RequestMapping("/data-management/datasets/{datasetId}/files")
 public class DatasetFileController {
@@ -121,7 +126,7 @@ public class DatasetFileController {
         }
     }
 
-    private DatasetFileResponse convertToResponse(DatasetFile datasetFile) {
+        private DatasetFileResponse convertToResponse(DatasetFile datasetFile) {
         DatasetFileResponse response = new DatasetFileResponse();
         response.setId(datasetFile.getId());
         response.setFileName(datasetFile.getFileName());
@@ -137,5 +142,30 @@ public class DatasetFileController {
         response.setLastAccessTime(datasetFile.getLastAccessTime());
         response.setUploadedBy(null);
         return response;
+    }
+
+    /**
+     * 文件上传请求
+     *
+     * @param request 批量文件上传请求
+     * @return 批量上传请求id
+     */
+    @PostMapping("/upload/pre-upload")
+    public ResponseEntity<Response<String>> preUpload(@PathVariable("datasetId") String datasetId, @RequestBody @Valid UploadFilesPreRequest request) {
+        return ResponseEntity.ok(Response.ok(datasetFileApplicationService.preUpload(request, datasetId)));
+    }
+
+    /**
+     * 分块上传
+     *
+     * @param uploadFileRequest 上传文件请求
+     */
+    @PostMapping("/upload/chunk")
+    public ResponseEntity<Void> chunkUpload(@PathVariable("datasetId") String datasetId, UploadFileRequest uploadFileRequest) {
+        log.info("file upload reqId:{}, fileNo:{}, total chunk num:{}, current chunkNo:{}",
+            uploadFileRequest.getReqId(), uploadFileRequest.getFileNo(), uploadFileRequest.getTotalChunkNum(),
+            uploadFileRequest.getChunkNo());
+        datasetFileApplicationService.chunkUpload(datasetId, uploadFileRequest);
+        return ResponseEntity.ok().build();
     }
 }

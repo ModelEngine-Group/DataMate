@@ -1,5 +1,6 @@
 package com.dataengine.datamanagement.application.service;
 
+import com.dataengine.common.domain.service.FileService;
 import com.dataengine.datamanagement.domain.model.dataset.Dataset;
 import com.dataengine.datamanagement.domain.model.dataset.DatasetFile;
 import com.dataengine.datamanagement.domain.model.dataset.StatusConstants;
@@ -11,7 +12,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.io.Resource;
@@ -24,7 +24,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
@@ -46,6 +45,9 @@ class DatasetFileApplicationServiceTest {
     @Mock
     private MultipartFile multipartFile;
 
+    @Mock
+    private FileService fileService;
+
     private DatasetFileApplicationService service;
     private Dataset sampleDataset;
     private DatasetFile sampleFile;
@@ -54,8 +56,8 @@ class DatasetFileApplicationServiceTest {
     void setUp() {
         // 使用临时目录进行测试
         String tempDir = System.getProperty("java.io.tmpdir") + "/test-uploads";
-        service = new DatasetFileApplicationService(datasetFileMapper, datasetMapper, tempDir);
-        
+        service = new DatasetFileApplicationService(datasetFileMapper, datasetMapper, fileService, tempDir);
+
         sampleDataset = new Dataset();
         sampleDataset.setId("dataset-id-1");
         sampleDataset.setName("Test Dataset");
@@ -92,7 +94,7 @@ class DatasetFileApplicationServiceTest {
         // Then
         assertNotNull(result);
         verify(datasetMapper).findById("dataset-id-1");
-        
+
         ArgumentCaptor<DatasetFile> fileCaptor = ArgumentCaptor.forClass(DatasetFile.class);
         verify(datasetFileMapper).insert(fileCaptor.capture());
         DatasetFile insertedFile = fileCaptor.getValue();
@@ -115,7 +117,7 @@ class DatasetFileApplicationServiceTest {
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> service.uploadFile("not-exist", multipartFile, "desc", "user1"));
-        
+
         assertTrue(ex.getMessage().contains("Dataset not found"));
         verify(datasetMapper).findById("not-exist");
         verify(datasetFileMapper, never()).insert(any());
@@ -151,7 +153,7 @@ class DatasetFileApplicationServiceTest {
 
         RuntimeException ex = assertThrows(RuntimeException.class,
                 () -> service.uploadFile("dataset-id-1", multipartFile, "desc", "user1"));
-        
+
         assertTrue(ex.getMessage().contains("Could not store file"));
         verify(datasetFileMapper, never()).insert(any());
     }
@@ -161,16 +163,16 @@ class DatasetFileApplicationServiceTest {
     void getDatasetFiles_pagination() {
         List<DatasetFile> files = Arrays.asList(sampleFile);
         Pageable pageable = PageRequest.of(0, 10);
-        
-        when(datasetFileMapper.findByCriteria(eq("dataset-id-1"), eq("text/csv"), 
+
+        when(datasetFileMapper.findByCriteria(eq("dataset-id-1"), eq("text/csv"),
                 eq(StatusConstants.DatasetFileStatuses.COMPLETED), any(RowBounds.class))).thenReturn(files);
 
-        Page<DatasetFile> result = service.getDatasetFiles("dataset-id-1", "text/csv", 
+        Page<DatasetFile> result = service.getDatasetFiles("dataset-id-1", "text/csv",
                 StatusConstants.DatasetFileStatuses.COMPLETED, pageable);
 
         assertNotNull(result);
         assertEquals(1, result.getContent().size());
-        verify(datasetFileMapper).findByCriteria(eq("dataset-id-1"), eq("text/csv"), 
+        verify(datasetFileMapper).findByCriteria(eq("dataset-id-1"), eq("text/csv"),
                 eq(StatusConstants.DatasetFileStatuses.COMPLETED), any(RowBounds.class));
     }
 
@@ -178,7 +180,7 @@ class DatasetFileApplicationServiceTest {
     @DisplayName("getDatasetFiles: 空结果集")
     void getDatasetFiles_emptyResult() {
         Pageable pageable = PageRequest.of(0, 10);
-        when(datasetFileMapper.findByCriteria(eq("dataset-id-1"), isNull(), 
+        when(datasetFileMapper.findByCriteria(eq("dataset-id-1"), isNull(),
                 isNull(), any(RowBounds.class))).thenReturn(Collections.emptyList());
 
         Page<DatasetFile> result = service.getDatasetFiles("dataset-id-1", null, null, pageable);
@@ -206,7 +208,7 @@ class DatasetFileApplicationServiceTest {
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> service.getDatasetFile("dataset-id-1", "not-exist"));
-        
+
         assertTrue(ex.getMessage().contains("File not found"));
         verify(datasetFileMapper).findById("not-exist");
     }
@@ -220,7 +222,7 @@ class DatasetFileApplicationServiceTest {
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> service.getDatasetFile("dataset-id-1", "file-id-1"));
-        
+
         assertTrue(ex.getMessage().contains("does not belong to the specified dataset"));
         verify(datasetFileMapper).findById("file-id-1");
     }
@@ -238,7 +240,7 @@ class DatasetFileApplicationServiceTest {
         verify(datasetFileMapper).findById("file-id-1");
         verify(datasetFileMapper).deleteById("file-id-1");
         verify(datasetMapper).findById("dataset-id-1");
-        
+
         ArgumentCaptor<Dataset> captor = ArgumentCaptor.forClass(Dataset.class);
         verify(datasetMapper).update(captor.capture());
         Dataset updated = captor.getValue();
@@ -253,7 +255,7 @@ class DatasetFileApplicationServiceTest {
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> service.deleteDatasetFile("dataset-id-1", "not-exist"));
-        
+
         assertTrue(ex.getMessage().contains("File not found"));
         verify(datasetFileMapper).findById("not-exist");
         verify(datasetFileMapper, never()).deleteById(anyString());
@@ -265,7 +267,7 @@ class DatasetFileApplicationServiceTest {
         Dataset smallDataset = new Dataset();
         smallDataset.setFileCount(0L);
         smallDataset.setSizeBytes(0L);
-        
+
         when(datasetFileMapper.findById("file-id-1")).thenReturn(sampleFile);
         when(datasetFileMapper.deleteById("file-id-1")).thenReturn(1);
         when(datasetMapper.findById("dataset-id-1")).thenReturn(smallDataset);
@@ -286,7 +288,7 @@ class DatasetFileApplicationServiceTest {
         // 创建临时文件用于测试
         Path tempFile = Files.createTempFile("test", ".csv");
         Files.write(tempFile, "test content".getBytes());
-        
+
         sampleFile.setFilePath(tempFile.toString());
         when(datasetFileMapper.findById("file-id-1")).thenReturn(sampleFile);
 
@@ -295,7 +297,7 @@ class DatasetFileApplicationServiceTest {
         assertNotNull(result);
         assertTrue(result.exists());
         verify(datasetFileMapper).findById("file-id-1");
-        
+
         // 清理临时文件
         Files.deleteIfExists(tempFile);
     }
@@ -308,7 +310,7 @@ class DatasetFileApplicationServiceTest {
 
         RuntimeException ex = assertThrows(RuntimeException.class,
                 () -> service.downloadFile("dataset-id-1", "file-id-1"));
-        
+
         assertTrue(ex.getMessage().contains("File not found"));
         verify(datasetFileMapper).findById("file-id-1");
     }
@@ -320,7 +322,7 @@ class DatasetFileApplicationServiceTest {
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> service.downloadFile("dataset-id-1", "not-exist"));
-        
+
         assertTrue(ex.getMessage().contains("File not found"));
         verify(datasetFileMapper).findById("not-exist");
     }

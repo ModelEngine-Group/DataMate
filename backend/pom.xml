@@ -34,6 +34,7 @@
         <mapstruct.version>1.6.3</mapstruct.version>
         <lombok.version>1.18.32</lombok.version>
         <lombok-mapstruct-binding.version>0.2.0</lombok-mapstruct-binding.version>
+        <poi.version>5.4.0</poi.version>
     </properties>
 
     <modules>
@@ -132,6 +133,12 @@
               <artifactId>mysql-connector-java</artifactId>
               <version>${mysql.version}</version>
             </dependency>
+
+            <dependency>
+              <groupId>org.apache.poi</groupId>
+              <artifactId>poi</artifactId>
+              <version>${poi.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -164,6 +171,12 @@
           <groupId>org.mapstruct</groupId>
           <artifactId>mapstruct</artifactId>
           <version>${mapstruct.version}</version>
+        </dependency>
+
+        <dependency>
+          <groupId>org.apache.poi</groupId>
+          <artifactId>poi</artifactId>
+          <version>${poi.version}</version>
         </dependency>
     </dependencies>
 

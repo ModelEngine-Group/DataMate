@@ -1,12 +1,19 @@
 package com.dataengine.datamanagement.domain.model.dataset;
 
+import lombok.Getter;
+import lombok.Setter;
+
+import java.io.File;
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 /**
  * 数据集实体（与数据库表 t_dm_datasets 对齐）
  */
+@Getter
+@Setter
 public class Dataset {
 
     private String id; // UUID
@@ -18,7 +25,7 @@ public class Dataset {
 
     private String category;
     // DB: data_source_id
-    private Long dataSourceId;
+    private String dataSourceId;
     // DB: path
     private String path;
     // DB: format
@@ -47,13 +54,13 @@ public class Dataset {
     private String updatedBy;
 
     // 聚合内的便捷集合（非持久化关联，由应用服务填充）
-    private Set<Tag> tags = new HashSet<>();
-    private Set<DatasetFile> files = new HashSet<>();
+    private List<Tag> tags = new ArrayList<>();
+    private List<DatasetFile> files = new ArrayList<>();
 
     public Dataset() {}
 
     public Dataset(String name, String description, String datasetType, String category,
-                   Long dataSourceId, String path, String format, String status, String createdBy) {
+                   String dataSourceId, String path, String format, String status, String createdBy) {
         this.name = name;
         this.description = description;
         this.datasetType = datasetType;
@@ -63,6 +70,16 @@ public class Dataset {
         this.format = format;
         this.status = status;
         this.createdBy = createdBy;
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void initCreateParam(String datasetBasePath) {
+        this.id = UUID.randomUUID().toString();
+        this.path = datasetBasePath + File.separator + this.id;
+        this.status = StatusConstants.DatasetStatuses.ACTIVE;
+        this.createdBy = "system";
+        this.updatedBy = "system";
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }
@@ -94,80 +111,4 @@ public class Dataset {
             this.updatedAt = LocalDateTime.now();
         }
     }
-
-    // Getters & Setters
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
-
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
-
-    public String getDatasetType() { return datasetType; }
-    public void setDatasetType(String datasetType) { this.datasetType = datasetType; }
-
-    public String getCategory() { return category; }
-    public void setCategory(String category) { this.category = category; }
-
-    public Long getDataSourceId() { return dataSourceId; }
-    public void setDataSourceId(Long dataSourceId) { this.dataSourceId = dataSourceId; }
-
-    public String getPath() { return path; }
-    public void setPath(String path) { this.path = path; }
-
-    public String getFormat() { return format; }
-    public void setFormat(String format) { this.format = format; }
-
-    public Long getSizeBytes() { return sizeBytes; }
-    public void setSizeBytes(Long sizeBytes) { this.sizeBytes = sizeBytes; }
-
-    public Long getFileCount() { return fileCount; }
-    public void setFileCount(Long fileCount) { this.fileCount = fileCount; }
-
-    public Long getRecordCount() { return recordCount; }
-    public void setRecordCount(Long recordCount) { this.recordCount = recordCount; }
-
-    public Double getCompletionRate() { return completionRate; }
-    public void setCompletionRate(Double completionRate) { this.completionRate = completionRate; }
-
-    public Double getQualityScore() { return qualityScore; }
-    public void setQualityScore(Double qualityScore) { this.qualityScore = qualityScore; }
-
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
-
-    public Boolean getPublic() { return isPublic; }
-    public void setPublic(Boolean aPublic) { isPublic = aPublic; }
-
-    public Boolean getFeatured() { return isFeatured; }
-    public void setFeatured(Boolean featured) { isFeatured = featured; }
-
-    public Long getDownloadCount() { return downloadCount; }
-    public void setDownloadCount(Long downloadCount) { this.downloadCount = downloadCount; }
-
-    public Long getViewCount() { return viewCount; }
-    public void setViewCount(Long viewCount) { this.viewCount = viewCount; }
-
-    public Long getVersion() { return version; }
-    public void setVersion(Long version) { this.version = version; }
-
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
-
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
-
-    public String getCreatedBy() { return createdBy; }
-    public void setCreatedBy(String createdBy) { this.createdBy = createdBy; }
-
-    public String getUpdatedBy() { return updatedBy; }
-    public void setUpdatedBy(String updatedBy) { this.updatedBy = updatedBy; }
-
-    public Set<Tag> getTags() { return tags; }
-    public void setTags(Set<Tag> tags) { this.tags = tags; }
-
-    public Set<DatasetFile> getFiles() { return files; }
-    public void setFiles(Set<DatasetFile> files) { this.files = files; }
 }

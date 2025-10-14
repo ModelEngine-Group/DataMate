@@ -36,7 +36,8 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
     "com.dataengine.collection.infrastructure.persistence.mapper",
     "com.dataengine.datamanagement.infrastructure.persistence.mapper",
     "com.dataengine.operator.infrastructure.persistence.mapper",
-    "com.dataengine.cleaning.infrastructure.persistence.mapper"
+    "com.dataengine.cleaning.infrastructure.persistence.mapper",
+    "com.dataengine.common.infrastructure.mapper"
 })
 @EnableTransactionManagement
 @EnableAsync
