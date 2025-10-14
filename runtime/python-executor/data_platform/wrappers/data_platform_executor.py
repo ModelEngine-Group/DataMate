@@ -55,8 +55,6 @@ class RayExecutor:
             meta["extraFilePath"] = None
         if not meta.get("extraFileType"):
             meta["extraFileType"] = None
-        if not meta.get("sourceFileModifyTime"):
-            meta["sourceFileModifyTime"] = None
         return meta
 
     def run(self):

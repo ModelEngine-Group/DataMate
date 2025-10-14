@@ -117,7 +117,7 @@ head:
   volumeMounts:
     - mountPath: /tmp/ray
       name: log-volume
-      subPath: ray
+      subPath: ray/head
     - mountPath: /dataset
       name: dataset-volume
     - mountPath: /flow
@@ -137,6 +137,9 @@ head:
       ports:
         - containerPort: 8080
       volumeMounts:
+        - mountPath: /tmp/ray
+          name: log-volume
+          subPath: ray/head
         - mountPath: /var/log/data-platform
           name: log-volume
         - mountPath: /dataset
@@ -237,7 +240,7 @@ worker:
   volumeMounts:
     - mountPath: /tmp/ray
       name: log-volume
-      subPath: ray
+      subPath: ray/worker
     - mountPath: /dataset
       name: dataset-volume
     - mountPath: /flow

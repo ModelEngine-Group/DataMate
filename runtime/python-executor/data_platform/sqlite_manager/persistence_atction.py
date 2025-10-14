@@ -41,7 +41,6 @@ class TaskInfoPersistence:
         file_type = str(sample.get("fileType"))
         file_name = str(sample.get("fileName"))
         file_path = str(sample.get("filePath"))
-        source_file_modify_time = int(sample.get("sourceFileModifyTime") if sample.get("sourceFileModifyTime") else "0")
         status = int(sample.get("execute_status"))
         failed_reason = sample.get("failed_reason")
         operator_id = str(failed_reason.get("op_name")) if failed_reason else ""
@@ -50,8 +49,8 @@ class TaskInfoPersistence:
         child_id = sample.get("childId")
         slice_num = sample.get('slice_num', 0)
         insert_data = [instance_id, meta_file_name, meta_file_type, meta_file_id, meta_file_size, file_id, file_size,
-                       file_type, file_name, file_path, source_file_modify_time, status, operator_id, error_code,
-                       incremental, child_id, slice_num]
+                       file_type, file_name, file_path, status, operator_id, error_code, incremental, child_id,
+                       slice_num]
         self.insert_clean_result(insert_data, instance_id)
 
     def insert_clean_result(self, insert_data, instance_id):

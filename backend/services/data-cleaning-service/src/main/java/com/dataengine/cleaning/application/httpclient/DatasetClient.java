@@ -37,7 +37,7 @@ public class DatasetClient {
     public static DatasetResponse createDataset(String name, String type) {
         CreateDatasetRequest createDatasetRequest = new CreateDatasetRequest();
         createDatasetRequest.setName(name);
-        createDatasetRequest.setType(type);
+        createDatasetRequest.setDatasetType(type);
 
 
         String jsonPayload;

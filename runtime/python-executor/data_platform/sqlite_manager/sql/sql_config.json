@@ -1,7 +1,7 @@
 {
   "query_sql": "SELECT * FROM task_instance_info WHERE instance_id = ?",
   "db_path": "/flow/sqlite.db",
-  "insert_sql": "INSERT INTO task_instance_info (instance_id, meta_file_name, meta_file_type, meta_file_id, meta_file_size, file_id, file_size, file_type, file_name, file_path, source_file_modify_time, status, operator_id, error_code, incremental, childId, slice_num) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-  "create_tables_sql": "CREATE TABLE IF NOT EXISTS task_instance_info (instance_id TEXT, meta_file_name TEXT, meta_file_type TEXT, meta_file_id TEXT, meta_file_size TEXT, file_id TEXT, file_size TEXT, file_type TEXT, file_name TEXT, file_path TEXT, source_file_modify_time INTEGER, status INTEGER, operator_id TEXT, error_code TEXT, incremental TEXT, childId INTEGER, slice_num INTEGER DEFAULT 0)",
+  "insert_sql": "INSERT INTO task_instance_info (instance_id, meta_file_name, meta_file_type, meta_file_id, meta_file_size, file_id, file_size, file_type, file_name, file_path, status, operator_id, error_code, incremental, childId, slice_num) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+  "create_tables_sql": "CREATE TABLE IF NOT EXISTS task_instance_info (instance_id TEXT, meta_file_name TEXT, meta_file_type TEXT, meta_file_id TEXT, meta_file_size TEXT, file_id TEXT, file_size TEXT, file_type TEXT, file_name TEXT, file_path TEXT, status INTEGER, operator_id TEXT, error_code TEXT, incremental TEXT, childId INTEGER, slice_num INTEGER DEFAULT 0)",
   "delete_task_instance_sql": "DELETE FROM task_instance_info WHERE instance_id = ?"
 }
