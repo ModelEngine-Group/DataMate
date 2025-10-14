@@ -17,7 +17,7 @@ public class OperatorService {
 
     public List<OperatorResponse> getOperators(Integer page, Integer size, List<Integer> categories,
                                                String operatorName, Boolean isStar) {
-        Integer offset = (page - 1) * size;
+        Integer offset = page * size;
         List<Operator> filteredOperators = operatorMapper.findOperatorsByCriteria(size, offset, operatorName,
                 categories, isStar);
         return filteredOperators.stream()
