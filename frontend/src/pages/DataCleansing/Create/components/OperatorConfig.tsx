@@ -11,13 +11,17 @@ interface OperatorConfigProps {
     paramKey: string,
     param: any
   ) => React.ReactNode;
-  onParamChange?: (operatorId: string, paramKey: string, value: any) => void;
+  handleConfigChange?: (
+    operatorId: string,
+    paramKey: string,
+    value: any
+  ) => void;
 }
 
 const OperatorConfig: React.FC<OperatorConfigProps> = ({
   selectedOp,
   renderParamConfig,
-  onParamChange,
+  handleConfigChange,
 }) => {
   return (
     <div className="w-1/4 flex flex-col h-screen">
@@ -47,7 +51,7 @@ const OperatorConfig: React.FC<OperatorConfigProps> = ({
             </div>
             <Divider />
             <Form layout="vertical">
-              {Object.entries(selectedOp.settings).map(([key, param]) =>
+              {Object.entries(selectedOp.configs).map(([key, param]) =>
                 renderParamConfig ? (
                   renderParamConfig(selectedOp, key, param)
                 ) : (
@@ -56,7 +60,7 @@ const OperatorConfig: React.FC<OperatorConfigProps> = ({
                     operator={selectedOp}
                     paramKey={key}
                     param={param}
-                    onParamChange={onParamChange}
+                    onParamChange={handleConfigChange}
                   />
                 )
               )}

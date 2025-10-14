@@ -9,8 +9,7 @@ function operatorItem() {
     version: "1.0.0",
     inputs: Mock.Random.integer(1, 5),
     outputs: Mock.Random.integer(1, 5),
-    runtime: Mock.Random.pick(["Python", "Java", "Scala"]),
-    settings: {
+    settings: JSON.stringify({
       host: { type: "input", label: "主机地址", value: "localhost" },
       port: { type: "input", label: "端口", value: "3306" },
       database: { type: "input", label: "数据库名", value: "" },
@@ -36,14 +35,15 @@ function operatorItem() {
         value: [],
         options: ["feature1", "feature2", "feature3"],
       },
-    },
+    }),
+    categories: [Mock.Random.pick([3, 4, 5, 6, 7, 8, 9])],
     isStar: Mock.Random.boolean(),
     createdAt: Mock.Random.datetime("yyyy-MM-dd HH:mm:ss"),
     updatedAt: Mock.Random.datetime("yyyy-MM-dd HH:mm:ss"),
   };
 }
 
-const operatorList = new Array(10).fill(null).map(operatorItem);
+const operatorList = new Array(50).fill(null).map(operatorItem);
 
 // 清洗任务数据
 function cleaningTaskItem() {
@@ -73,7 +73,10 @@ function cleaningTemplateItem() {
     id: Mock.Random.guid().replace(/[^a-zA-Z0-9]/g, ""),
     name: Mock.Random.ctitle(5, 15),
     description: Mock.Random.csentence(5, 25),
-    instance: operatorList,
+    instance: operatorList.slice(
+      Mock.Random.integer(0, 5),
+      Mock.Random.integer(6, 50)
+    ),
     category: Mock.Random.ctitle(3, 8),
     createdAt: Mock.Random.datetime("yyyy-MM-dd HH:mm:ss"),
     updatedAt: Mock.Random.datetime("yyyy-MM-dd HH:mm:ss"),
@@ -82,12 +85,41 @@ function cleaningTemplateItem() {
 
 const cleaningTemplateList = new Array(15).fill(null).map(cleaningTemplateItem);
 
+const categoryTree = [
+  {
+    id: 1,
+    name: "modal",
+    count: 7,
+    categories: [
+      { id: 3, name: "text", count: 3, type: null, parentId: null },
+      { id: 4, name: "image", count: 0, type: null, parentId: null },
+      { id: 5, name: "audio", count: 0, type: null, parentId: null },
+      { id: 6, name: "video", count: 0, type: null, parentId: null },
+      {
+        id: 7,
+        name: "multimodal",
+        count: 0,
+        type: null,
+        parentId: null,
+      },
+    ],
+  },
+  {
+    id: 2,
+    name: "language",
+    count: 3,
+    categories: [
+      { id: 8, name: "python", count: 2, type: null, parentId: null },
+      { id: 9, name: "java", count: 1, type: null, parentId: null },
+    ],
+  },
+];
+
 module.exports = function (router) {
   // 获取清洗任务列表
   router.get(API.queryCleaningTasksUsingGet, (req, res) => {
     const { page = 0, size = 10, status } = req.query;
     let filteredTasks = cleaningTaskList;
-    console.log(req.query);
 
     if (status) {
       filteredTasks = cleaningTaskList.filter((task) => task.status === status);
@@ -288,5 +320,182 @@ module.exports = function (router) {
         data: null,
       });
     }
+  });
+
+  // 获取算子列表
+  router.post(API.queryOperatorsUsingPost, (req, res) => {
+    const {
+      page = 0,
+      size = 20,
+      categories = [],
+      operatorName = "",
+      labelName = "",
+      isStar,
+    } = req.body;
+
+    let filteredOperators = operatorList;
+
+    // 按分类筛选
+    if (categories && categories.length > 0) {
+      filteredOperators = filteredOperators.filter((op) =>
+        categories.includes(op.category.id)
+      );
+    }
+
+    // 按名称搜索
+    if (operatorName) {
+      filteredOperators = filteredOperators.filter((op) =>
+        op.name.toLowerCase().includes(operatorName.toLowerCase())
+      );
+    }
+
+    // 按标签筛选
+    if (labelName) {
+      filteredOperators = filteredOperators.filter((op) =>
+        op.labels.some((label) => label.name.includes(labelName))
+      );
+    }
+
+    // 按收藏状态筛选
+    if (typeof isStar === "boolean") {
+      filteredOperators = filteredOperators.filter(
+        (op) => op.isStar === isStar
+      );
+    }
+
+    const startIndex = page * size;
+    const endIndex = startIndex + parseInt(size);
+    const pageData = filteredOperators.slice(startIndex, endIndex);
+
+    res.send({
+      code: "0",
+      msg: "Success",
+      data: {
+        content: pageData,
+        totalElements: filteredOperators.length,
+        totalPages: Math.ceil(filteredOperators.length / size),
+        size: parseInt(size),
+        number: parseInt(page),
+        first: page === 0,
+        last: page >= Math.ceil(filteredOperators.length / size) - 1,
+      },
+    });
+  });
+
+  // 获取算子详情
+  router.get(API.queryOperatorByIdUsingGet, (req, res) => {
+    const { id } = req.params;
+    const operator = operatorList.find((op) => op.id === id);
+
+    if (operator) {
+      // 增加浏览次数模拟
+      operator.viewCount = (operator.viewCount || 0) + 1;
+
+      res.send({
+        code: "0",
+        msg: "Success",
+        data: operator,
+      });
+    } else {
+      res.status(404).send({
+        error: "OPERATOR_NOT_FOUND",
+        message: "算子不存在",
+        timestamp: new Date().toISOString(),
+      });
+    }
+  });
+
+  // 更新算子信息
+  router.put(API.updateOperatorByIdUsingPut, (req, res) => {
+    const { id } = req.params;
+    const index = operatorList.findIndex((op) => op.id === id);
+
+    if (index !== -1) {
+      operatorList[index] = {
+        ...operatorList[index],
+        ...req.body,
+        updatedAt: new Date().toISOString(),
+      };
+
+      res.send({
+        code: "0",
+        msg: "Operator updated successfully",
+        data: operatorList[index],
+      });
+    } else {
+      res.status(404).send({
+        error: "OPERATOR_NOT_FOUND",
+        message: "算子不存在",
+        timestamp: new Date().toISOString(),
+      });
+    }
+  });
+
+  // 创建算子
+  router.post(API.createOperatorUsingPost, (req, res) => {
+    const { name, description, version, category, documentation } = req.body;
+
+    const newOperator = {
+      ...operatorItem(),
+      ...req.body,
+      id: Mock.Random.guid().replace(/[^a-zA-Z0-9]/g, ""),
+      name,
+      description,
+      version,
+      category:
+        typeof category === "string"
+          ? { id: category, name: category }
+          : category,
+      documentation,
+      status: "REVIEWING",
+      downloadCount: 0,
+      rating: 0,
+      ratingCount: 0,
+      isStar: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    operatorList.push(newOperator);
+
+    res.status(201).send({
+      code: "0",
+      msg: "Operator created successfully",
+      data: newOperator,
+    });
+  });
+
+  // 上传算子
+  router.post(API.uploadOperatorUsingPost, (req, res) => {
+    const { description } = req.body;
+
+    const newOperator = {
+      ...operatorItem(),
+      description: description || "通过文件上传创建的算子",
+      status: "REVIEWING",
+      downloadCount: 0,
+      rating: 0,
+      ratingCount: 0,
+      isStar: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    operatorList.push(newOperator);
+
+    res.status(201).send({
+      code: "0",
+      msg: "Operator uploaded successfully",
+      data: newOperator,
+    });
+  });
+
+  // 获取算子分类树
+  router.get(API.queryCategoryTreeUsingGet, (req, res) => {
+    res.send({
+      code: "0",
+      msg: "Success",
+      data: categoryTree,
+    });
   });
 };
