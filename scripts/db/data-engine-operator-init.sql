@@ -63,14 +63,11 @@ INSERT IGNORE INTO t_operator_category(id, name, type, parent_id) VALUES
 
 INSERT IGNORE INTO t_operator
   (id, name, description, version, inputs, outputs, runtime, settings, file_name, is_star) VALUES
-('TestOp1', 'TestOp1', '', '1.0.0', 'text', 'text', '', '', '', false),
-('TestOp2', 'TestOp2', '', '1.0.0', 'text', 'text', '', '', '', false),
-('TestOp3', 'TestOp3', '', '1.0.0', 'text', 'text', '', '', '', false);
+('TextFormatter', '文本抽取算子', '', '1.0.0', 'text', 'text', '', '', '', false),
+('FileExporter', '文本落盘算子', '', '1.0.0', 'text', 'text', '', '', '', false);
 
 INSERT IGNORE INTO t_operator_category_relation(category_id, operator_id) VALUES
-(3, 'TestOp1'),
-(3, 'TestOp2'),
-(3, 'TestOp3'),
-(8, 'TestOp1'),
-(8, 'TestOp2'),
-(9, 'TestOp3');
+(3, 'TextFormatter'),
+(7, 'FileExporter'),
+(8, 'TextFormatter'),
+(8, 'FileExporter');

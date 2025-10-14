@@ -58,6 +58,7 @@ public class CategoryService {
                     category.setCount((int) value.stream()
                         .filter(dto -> StringUtils.isNotEmpty(dto.getOperatorId()))
                         .count());
+                    category.setParentId(parentId);
                     return category;
                 }).collect(Collectors.toList()));
                 return response;

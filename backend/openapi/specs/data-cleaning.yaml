@@ -49,6 +49,24 @@ paths:
           required: false
           schema:
             type: string
+        - name: keywords
+          in: query
+          description: 关键字
+          required: false
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: 分页数
+          required: true
+          schema:
+            type: integer
+        - name: size
+          in: query
+          description: 分页单页数
+          required: true
+          schema:
+            type: integer
       responses:
         '200':
           description: 成功获取任务列表
@@ -381,6 +399,7 @@ components:
         - name
         - instance
         - srcDatasetId
+        - srcDatasetName
         - destDatasetName
         - destDatasetType
       properties:
@@ -391,6 +410,8 @@ components:
           type: string
           description: 任务描述
         srcDatasetId:
+          type: string
+        srcDatasetName:
           type: string
         destDatasetName:
           type: string
@@ -464,7 +485,7 @@ components:
           type: string
           format: date-time
           description: 任务开始时间
-        updatedAt:
+        finishedAt:
           type: string
           format: date-time
           description: 任务最后更新时间

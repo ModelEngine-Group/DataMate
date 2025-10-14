@@ -17,8 +17,9 @@ public class CleaningTaskController implements CleaningTaskApi {
     private CleaningTaskService cleaningTaskService;
 
     @Override
-    public ResponseEntity<List<CleaningTask>> cleaningTasksGet(String status) {
-        return ResponseEntity.ok(cleaningTaskService.getTasks(status));
+    public ResponseEntity<List<CleaningTask>> cleaningTasksGet(Integer page, Integer size, String status,
+                                                               String keywords) {
+        return ResponseEntity.ok(cleaningTaskService.getTasks(status, keywords, page, size));
     }
 
     @Override

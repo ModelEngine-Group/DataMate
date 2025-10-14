@@ -1,8 +1,5 @@
 package com.dataengine.operator.interfaces.api;
 
-import com.dataengine.operator.domain.converter.OperatorConverter;
-import com.dataengine.operator.domain.modal.Operator;
-import com.dataengine.operator.infrastructure.persistence.mapper.OperatorMapper;
 import com.dataengine.operator.interfaces.dto.*;
 import com.dataengine.operator.application.OperatorService;
 import lombok.RequiredArgsConstructor;
@@ -17,15 +14,10 @@ import java.util.List;
 public class OperatorController implements OperatorApi {
     private final OperatorService operatorService;
 
-    private final OperatorMapper operatorMapper;
-
     @Override
     public ResponseEntity<List<OperatorResponse>> operatorsListPost(OperatorsListPostRequest request) {
-        Integer offset = (request.getPage() - 1) * request.getSize();
-        List<Operator> filteredOperators = operatorMapper.findOperatorsByCriteria(request.getSize(), offset,
-            request.getOperatorName(), request.getCategories(), request.getIsStar());
-        List<OperatorResponse> responses = filteredOperators.stream()
-            .map(OperatorConverter.INSTANCE::operatorToResponse).toList();
+        List<OperatorResponse> responses = operatorService.getOperators(request.getPage(), request.getSize(),
+                request.getCategories(), request.getOperatorName(), request.getIsStar());
         return ResponseEntity.ok(responses);
     }
 

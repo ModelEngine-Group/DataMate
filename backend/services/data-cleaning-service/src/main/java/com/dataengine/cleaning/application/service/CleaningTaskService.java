@@ -49,8 +49,9 @@ public class CleaningTaskService {
 
     private final String FLOW_PATH = "/flow";
 
-    public List<CleaningTask> getTasks(String status) {
-        return cleaningTaskMapper.findTasksByStatus(status);
+    public List<CleaningTask> getTasks(String status, String keywords, Integer page, Integer size) {
+        Integer offset = (page - 1) * size;
+        return cleaningTaskMapper.findTasksByStatus(status, keywords, size, offset);
     }
 
     @Transactional
@@ -64,6 +65,7 @@ public class CleaningTaskService {
         String taskId = UUID.randomUUID().toString();
         task.setId(taskId);
         task.setSrcDatasetId(request.getSrcDatasetId());
+        task.setSrcDatasetName(request.getSrcDatasetName());
         task.setDestDatasetId(datasetResponse.getId());
         task.setDestDatasetName(datasetResponse.getName());
         cleaningTaskMapper.insertTask(task);
