@@ -1,18 +1,11 @@
 import { useState } from "react";
-import { Card, Button, Input, Steps, Form, Divider } from "antd";
+import { Card, Button, Steps, Form, Divider } from "antd";
 import { Link, useNavigate } from "react-router";
-import RadioCard from "@/components/RadioCard";
 
 import { ArrowLeft } from "lucide-react";
-import OperatorLibrary from "./components/OperatorLibrary";
-import OperatorOrchestration from "./components/OperatorOrchestration";
-import OperatorConfig from "./components/OperatorConfig";
-import { templateTypes, OPERATOR_CATEGORIES } from "@/mock/cleansing";
 import { createCleaningTemplateUsingPost } from "../cleansing.api";
-import { useDragOperators } from "./hooks/useDragOperators";
-import { useOperatorOperations } from "./hooks/useOperatorOperations";
-
-const { TextArea } = Input;
+import CleansingTemplateStepOne from "./components/CreateTemplateStepOne";
+import { useCreateStepTwo } from "./hooks/useCreateStepTwo";
 
 export default function CleansingTemplateCreate() {
   const navigate = useNavigate();
@@ -28,7 +21,7 @@ export default function CleansingTemplateCreate() {
     const template = {
       ...values,
       ...templateConfig,
-      operators,
+      operators: selectedOperators,
       createdAt: new Date().toISOString(),
     };
     console.log("保存模板数据:", template);
@@ -41,19 +34,12 @@ export default function CleansingTemplateCreate() {
   };
 
   const {
-    templates,
-    operators,
-    currentTemplate,
+    renderStepTwo,
+    selectedOperators,
     currentStep,
-    setCurrentTemplate,
-    setOperators,
-    selectedOperator,
-    setSelectedOperator,
-    toggleOperator,
-    removeOperator,
-    handleNext,
     handlePrev,
-  } = useOperatorOperations();
+    handleNext,
+  } = useCreateStepTwo();
 
   const canProceed = () => {
     const values = form.getFieldsValue();
@@ -61,97 +47,25 @@ export default function CleansingTemplateCreate() {
       case 1:
         return values.name && values.type;
       case 2:
-        return operators.length > 0;
+        return selectedOperators.length > 0;
       default:
         return false;
     }
   };
 
-  const {
-    handleDragStart,
-    handleDragEnd,
-    handleContainerDragOver,
-    handleContainerDragLeave,
-    handleItemDragOver,
-    handleItemDragLeave,
-    handleItemDrop,
-    handleDropToContainer,
-  } = useDragOperators({ operators, setOperators });
-
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
         return (
-          <Form
+          <CleansingTemplateStepOne
             form={form}
-            layout="vertical"
-            initialValues={templateConfig}
-            onValuesChange={handleValuesChange}
-          >
-            <Form.Item
-              label="模板名称"
-              name="name"
-              rules={[{ required: true, message: "请输入模板名称" }]}
-            >
-              <Input placeholder="输入模板名称" />
-            </Form.Item>
-            <Form.Item label="模板描述" name="description">
-              <TextArea placeholder="描述模板的用途和特点" rows={4} />
-            </Form.Item>
-            <Form.Item
-              label="模板类型"
-              name="type"
-              rules={[{ required: true, message: "请选择模板类型" }]}
-            >
-              <RadioCard
-                options={templateTypes}
-                value={templateConfig.type}
-                onChange={(type) =>
-                  setTemplateConfig({ ...templateConfig, type })
-                }
-              />
-            </Form.Item>
-          </Form>
+            handleValuesChange={handleValuesChange}
+            templateConfig={templateConfig}
+            setTemplateConfig={setTemplateConfig}
+          />
         );
       case 2:
-        return (
-          <div className="flex w-full h-full">
-            {/* 左侧算子库 */}
-            <OperatorLibrary
-              operators={operators}
-              operatorList={currentTemplate?.instance || []}
-              OPERATOR_CATEGORIES={OPERATOR_CATEGORIES}
-              toggleOperator={toggleOperator}
-              handleDragStart={handleDragStart}
-            />
-
-            {/* 中间算子编排区域 */}
-            <OperatorOrchestration
-              templates={templates}
-              currentTemplate={currentTemplate}
-              setCurrentTemplate={setCurrentTemplate}
-              operators={operators}
-              setOperators={setOperators}
-              OPERATOR_CATEGORIES={OPERATOR_CATEGORIES}
-              selectedOperator={selectedOperator}
-              setSelectedOperator={setSelectedOperator}
-              removeOperator={removeOperator}
-              handleDragStart={handleDragStart}
-              handleContainerDragLeave={handleContainerDragLeave}
-              handleContainerDragOver={handleContainerDragOver}
-              handleItemDragOver={handleItemDragOver}
-              handleItemDragLeave={handleItemDragLeave}
-              handleItemDrop={handleItemDrop}
-              handleDropToContainer={handleDropToContainer}
-              handleDragEnd={handleDragEnd}
-            />
-
-            {/* 右侧参数配置面板 */}
-            <OperatorConfig
-              selectedOp={operators.find((op) => op.id === selectedOperator)}
-            />
-          </div>
-        );
+        return renderStepTwo;
       default:
         return null;
     }

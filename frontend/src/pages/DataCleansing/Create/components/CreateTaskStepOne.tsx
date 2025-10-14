@@ -5,7 +5,7 @@ import TextArea from "antd/es/input/TextArea";
 import { Database } from "lucide-react";
 import { useEffect, useState } from "react";
 
-export default function CleansingTaskStepOne({ taskConfig, setTaskConfig }) {
+export default function CreateTaskStepOne({ taskConfig, setTaskConfig }) {
   const [datasets, setDatasets] = useState<any[]>([]);
   const fetchDatasets = async () => {
     const { data } = await queryDatasetsUsingGet({ page: 0, size: 1000 });

@@ -3,13 +3,9 @@ import { Card, Steps, Button, message } from "antd";
 import { SaveOutlined } from "@ant-design/icons";
 import { Link, useNavigate } from "react-router";
 import { ArrowLeft } from "lucide-react";
-import OperatorLibrary from "./components/OperatorLibrary";
-import OperatorOrchestration from "./components/OperatorOrchestration";
-import OperatorConfig from "./components/OperatorConfig";
-import { useDragOperators } from "./hooks/useDragOperators";
-import { useOperatorOperations } from "./hooks/useOperatorOperations";
 import { createCleaningTaskUsingPost } from "../cleansing.api";
-import CleansingTaskStepOne from "./components/StepOne";
+import CleansingTaskStepOne from "./components/CreateTaskStepOne";
+import { useCreateStepTwo } from "./hooks/useCreateStepTwo";
 
 export default function CleansingTaskCreate() {
   const navigate = useNavigate();
@@ -26,35 +22,12 @@ export default function CleansingTaskCreate() {
   });
 
   const {
-    operators,
+    renderStepTwo,
     selectedOperators,
     currentStep,
-    templates,
-    currentTemplate,
-    configOperator,
-    setCurrentTemplate,
-    setConfigOperator,
-    setSelectedOperators,
-    handleConfigChange,
-    toggleOperator,
-    removeOperator,
-    handleNext,
     handlePrev,
-  } = useOperatorOperations();
-
-  const {
-    handleDragStart,
-    handleDragEnd,
-    handleContainerDragOver,
-    handleContainerDragLeave,
-    handleItemDragOver,
-    handleItemDragLeave,
-    handleItemDrop,
-    handleDropToContainer,
-  } = useDragOperators({
-    operators: selectedOperators,
-    setOperators: setSelectedOperators,
-  });
+    handleNext,
+  } = useCreateStepTwo();
 
   const handleSave = async () => {
     const task = {
@@ -75,7 +48,7 @@ export default function CleansingTaskCreate() {
           taskConfig.name && taskConfig.datasetId && taskConfig.newDatasetName
         );
       case 2:
-        return operators.length > 0;
+        return selectedOperators.length > 0;
       default:
         return false;
     }
@@ -91,43 +64,7 @@ export default function CleansingTaskCreate() {
           />
         );
       case 2:
-        return (
-          <div className="flex w-full h-full">
-            {/* 左侧算子库 */}
-            <OperatorLibrary
-              selectedOperators={selectedOperators}
-              operatorList={operators}
-              toggleOperator={toggleOperator}
-              handleDragStart={handleDragStart}
-            />
-
-            {/* 中间算子编排区域 */}
-            <OperatorOrchestration
-              selectedOperators={selectedOperators}
-              configOperator={configOperator}
-              templates={templates}
-              currentTemplate={currentTemplate}
-              setSelectedOperators={setSelectedOperators}
-              setConfigOperator={setConfigOperator}
-              setCurrentTemplate={setCurrentTemplate}
-              removeOperator={removeOperator}
-              handleDragStart={handleDragStart}
-              handleContainerDragLeave={handleContainerDragLeave}
-              handleContainerDragOver={handleContainerDragOver}
-              handleItemDragOver={handleItemDragOver}
-              handleItemDragLeave={handleItemDragLeave}
-              handleItemDrop={handleItemDrop}
-              handleDropToContainer={handleDropToContainer}
-              handleDragEnd={handleDragEnd}
-            />
-
-            {/* 右侧参数配置面板 */}
-            <OperatorConfig
-              selectedOp={configOperator}
-              handleConfigChange={handleConfigChange}
-            />
-          </div>
-        );
+        return renderStepTwo;
       default:
         return null;
     }

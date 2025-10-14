@@ -2,12 +2,13 @@ import React from "react";
 import { Tag, Divider, Form } from "antd";
 import { SettingOutlined } from "@ant-design/icons";
 import ParamConfig from "./ParamConfig";
+import { OperatorI } from "../../cleansing.model";
 
 // OperatorConfig/OperatorTemplate 类型需根据主文件实际导入
 interface OperatorConfigProps {
-  selectedOp: any; // OperatorConfig
+  selectedOp: OperatorI;
   renderParamConfig?: (
-    operator: any,
+    operator: OperatorI,
     paramKey: string,
     param: any
   ) => React.ReactNode;
