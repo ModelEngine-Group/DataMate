@@ -1,7 +1,11 @@
 package com.dataengine.datamanagement.application.service;
 
 import com.dataengine.datamanagement.domain.model.dataset.Dataset;
+import com.dataengine.datamanagement.domain.model.dataset.DatasetFile;
 import com.dataengine.datamanagement.domain.model.dataset.Tag;
+import com.dataengine.datamanagement.infrastructure.client.CollectionTaskClient;
+import com.dataengine.datamanagement.infrastructure.client.dto.CollectionTaskDetailResponse;
+import com.dataengine.datamanagement.infrastructure.client.dto.LocalCollectionConfig;
 import com.dataengine.datamanagement.infrastructure.persistence.mapper.DatasetFileMapper;
 import com.dataengine.datamanagement.infrastructure.persistence.mapper.DatasetMapper;
 import com.dataengine.datamanagement.infrastructure.persistence.mapper.TagMapper;
@@ -9,13 +13,17 @@ import com.dataengine.datamanagement.interfaces.converter.DatasetConverter;
 import com.dataengine.datamanagement.interfaces.dto.AllDatasetStatisticsResponse;
 import com.dataengine.datamanagement.interfaces.dto.CreateDatasetRequest;
 import com.dataengine.datamanagement.interfaces.dto.DatasetPagingQuery;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.session.RowBounds;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +33,7 @@ import java.util.*;
 /**
  * 数据集应用服务（对齐 DB schema，使用 UUID 字符串主键）
  */
+@Slf4j
 @Service
 @Transactional
 public class DatasetApplicationService {
@@ -32,15 +41,26 @@ public class DatasetApplicationService {
     private final DatasetMapper datasetMapper;
     private final TagMapper tagMapper;
     private final DatasetFileMapper datasetFileMapper;
+    private final CollectionTaskClient collectionTaskClient;
+    private final FileMetadataService fileMetadataService;
+    private final ObjectMapper objectMapper;
 
     @Value("${dataset.base.path:/dataset}")
     private String datasetBasePath;
 
     @Autowired
-    public DatasetApplicationService(DatasetMapper datasetMapper, TagMapper tagMapper, DatasetFileMapper datasetFileMapper) {
+    public DatasetApplicationService(DatasetMapper datasetMapper,
+                                     TagMapper tagMapper,
+                                     DatasetFileMapper datasetFileMapper,
+                                     CollectionTaskClient collectionTaskClient,
+                                     FileMetadataService fileMetadataService,
+                                     ObjectMapper objectMapper) {
         this.datasetMapper = datasetMapper;
         this.tagMapper = tagMapper;
         this.datasetFileMapper = datasetFileMapper;
+        this.collectionTaskClient = collectionTaskClient;
+        this.fileMetadataService = fileMetadataService;
+        this.objectMapper = objectMapper;
     }
 
     /**
@@ -64,6 +84,11 @@ public class DatasetApplicationService {
             for (Tag t : processedTags) {
                 tagMapper.insertDatasetTag(dataset.getId(), t.getId());
             }
+        }
+
+        if (StringUtils.isNotBlank(createDatasetRequest.getDataSource())) {
+            // 数据源id不为空，使用异步线程进行文件扫盘落库
+            processDataSourceAsync(dataset.getId(), createDatasetRequest.getDataSource());
         }
 
         // 返回创建的数据集，包含标签信息
@@ -240,5 +265,79 @@ public class DatasetApplicationService {
      */
     public AllDatasetStatisticsResponse getAllDatasetStatistics() {
         return datasetMapper.getAllDatasetStatistics();
+    }
+
+    /**
+     * 异步处理数据源文件扫描
+     * @param datasetId 数据集ID
+     * @param dataSourceId 数据源ID（归集任务ID）
+     */
+    @Async
+    public void processDataSourceAsync(String datasetId, String dataSourceId) {
+        try {
+            log.info("开始处理数据源文件扫描，数据集ID: {}, 数据源ID: {}", datasetId, dataSourceId);
+
+            // 1. 调用数据归集服务获取任务详情
+            CollectionTaskDetailResponse taskDetail = collectionTaskClient.getTaskDetail(dataSourceId);
+            if (taskDetail == null) {
+                log.error("获取归集任务详情失败，任务ID: {}", dataSourceId);
+                return;
+            }
+
+            log.info("获取到归集任务详情: {}", taskDetail.getName());
+
+            // 2. 解析任务配置
+            LocalCollectionConfig config = parseTaskConfig(taskDetail.getConfig());
+            if (config == null) {
+                log.error("解析任务配置失败，任务ID: {}", dataSourceId);
+                return;
+            }
+
+            // 3. 检查任务类型是否为 LOCAL_COLLECTION
+            if (!"LOCAL_COLLECTION".equalsIgnoreCase(config.getType())) {
+                log.info("任务类型不是 LOCAL_COLLECTION，跳过文件扫描。任务类型: {}", config.getType());
+                return;
+            }
+
+            // 4. 获取文件路径列表
+            List<String> filePaths = config.getFilePaths();
+            if (CollectionUtils.isEmpty(filePaths)) {
+                log.warn("文件路径列表为空，任务ID: {}", dataSourceId);
+                return;
+            }
+
+            log.info("开始扫描文件，共 {} 个文件路径", filePaths.size());
+
+            // 5. 扫描文件元数据
+            List<DatasetFile> datasetFiles = fileMetadataService.scanFiles(filePaths, datasetId);
+
+            // 6. 批量插入数据集文件表
+            if (CollectionUtils.isNotEmpty(datasetFiles)) {
+                for (DatasetFile datasetFile : datasetFiles) {
+                    datasetFileMapper.insert(datasetFile);
+                }
+                log.info("文件元数据写入完成，共写入 {} 条记录", datasetFiles.size());
+            } else {
+                log.warn("未扫描到有效文件");
+            }
+
+        } catch (Exception e) {
+            log.error("处理数据源文件扫描失败，数据集ID: {}, 数据源ID: {}", datasetId, dataSourceId, e);
+        }
+    }
+
+    /**
+     * 解析任务配置
+     */
+    private LocalCollectionConfig parseTaskConfig(Map<String, Object> configMap) {
+        try {
+            if (configMap == null || configMap.isEmpty()) {
+                return null;
+            }
+            return objectMapper.convertValue(configMap, LocalCollectionConfig.class);
+        } catch (Exception e) {
+            log.error("解析任务配置失败", e);
+            return null;
+        }
     }
 }

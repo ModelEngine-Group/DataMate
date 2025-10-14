@@ -23,8 +23,9 @@ tags:
     description: 任务执行管理
 
 paths:
-  /tasks:
+  /data-collection/tasks:
     get:
+      operationId: getTasks
       tags: [CollectionTask]
       summary: 获取归集任务列表
       parameters:
@@ -56,6 +57,7 @@ paths:
                 $ref: '#/components/schemas/PagedCollectionTaskSummary'
 
     post:
+      operationId: createTask
       tags: [CollectionTask]
       summary: 创建归集任务
       description: 创建新的数据归集任务
@@ -73,8 +75,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/CollectionTaskResponse'
 
-  /tasks/{id}:
+  /data-collection/tasks/{id}:
     get:
+      operationId: getTaskDetail
       tags: [CollectionTask]
       summary: 获取归集任务详情
       parameters:
@@ -94,6 +97,7 @@ paths:
           description: 归集任务不存在
 
     put:
+      operationId: updateTask
       tags: [CollectionTask]
       summary: 更新归集任务
       parameters:
@@ -117,6 +121,7 @@ paths:
                 $ref: '#/components/schemas/CollectionTaskResponse'
 
     delete:
+      operationId: deleteTask
       tags: [CollectionTask]
       summary: 删除归集任务
       parameters:

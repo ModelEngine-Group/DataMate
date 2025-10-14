@@ -92,8 +92,8 @@ public class DatasetFileApplicationService {
             datasetFile.setDatasetId(datasetId);
             datasetFile.setFileName(fileName);
             datasetFile.setFilePath(targetLocation.toString());
-            datasetFile.setFileType(file.getContentType());
-            datasetFile.setFileFormat(getFileExtension(originalFilename));
+            datasetFile.setFileType(getFileExtension(originalFilename));
+            datasetFile.setFileFormat(file.getContentType());
             datasetFile.setFileSize(file.getSize());
             datasetFile.setUploadTime(LocalDateTime.now());
             datasetFile.setStatus(StatusConstants.DatasetFileStatuses.COMPLETED);
@@ -240,7 +240,6 @@ public class DatasetFileApplicationService {
             .datasetId(datasetId)
             .fileSize(savedFile.length())
             .uploadTime(currentTime)
-            .lastAccessTime(currentTime)
             .lastAccessTime(currentTime)
             .fileName(uploadFile.getFileName())
             .filePath(savedFile.getPath())
