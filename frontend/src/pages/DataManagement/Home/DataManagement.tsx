@@ -35,42 +35,42 @@ export default function DatasetManagementPage() {
   });
 
   async function fetchStatistics() {
-    const data = await getDatasetStatisticsUsingGet();
+    const { data } = await getDatasetStatisticsUsingGet();
     const statistics = {
       size: [
         {
           title: "文本",
-          value: data.size.text || "0 MB",
+          value: data?.size?.text || "0 MB",
         },
         {
           title: "图像",
-          value: data.size.image || "0 MB",
+          value: data?.size?.image || "0 MB",
         },
         {
           title: "音频",
-          value: data.size.audio || "0 MB",
+          value: data?.size?.audio || "0 MB",
         },
         {
           title: "视频",
-          value: data.size.video || "0 MB",
+          value: data?.size?.video || "0 MB",
         },
       ],
       count: [
         {
           title: "文本",
-          value: data.count.text || 0,
+          value: data?.count?.text || 0,
         },
         {
           title: "图像",
-          value: data.count.image || 0,
+          value: data?.count?.image || 0,
         },
         {
           title: "音频",
-          value: data.count.audio || 0,
+          value: data?.count.audio || 0,
         },
         {
           title: "视频",
-          value: data.count.video || 0,
+          value: data?.count?.video || 0,
         },
       ],
     };
