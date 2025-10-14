@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Card, Tag, Pagination, Dropdown, Tooltip, Empty, Popover } from "antd";
+import { Tag, Pagination, Dropdown, Tooltip, Empty, Popover } from "antd";
 import {
   EllipsisOutlined,
   ClockCircleOutlined,
@@ -22,7 +22,7 @@ interface BaseCardDataType {
   description: string;
   tags?: string[];
   statistics?: { label: string; value: string | number }[];
-  lastModified: string;
+  updatedAt?: string;
 }
 
 interface CardViewProps<T> {
@@ -180,27 +180,29 @@ function CardView<T extends BaseCardDataType>(props: CardViewProps<T>) {
               {/* Header */}
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div
-                    className={`flex-shrink-0 w-10 h-10 ${
-                      item.iconColor ||
-                      "bg-gradient-to-br from-blue-100 to-blue-200"
-                    } rounded-lg flex items-center justify-center`}
-                  >
-                    {item.icon}
-                  </div>
+                  {item?.icon && (
+                    <div
+                      className={`flex-shrink-0 w-12 h-12 ${
+                        item?.iconColor ||
+                        "bg-gradient-to-br from-blue-100 to-blue-200"
+                      } rounded-lg flex items-center justify-center`}
+                    >
+                      {item?.icon}
+                    </div>
+                  )}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <h3
                         className="text-base flex-1 text-ellipsis overflow-hidden whitespace-nowrap font-semibold text-gray-900 truncate cursor-pointer hover:text-blue-600"
                         onClick={() => onView?.(item)}
                       >
-                        {item.name}
+                        {item?.name}
                       </h3>
-                      {item.status && (
-                        <Tag color={item.status.color}>
+                      {item?.status && (
+                        <Tag color={item?.status?.color}>
                           <div className="flex items-center gap-2 text-xs py-0.5">
-                            <span>{item.status.icon}</span>
-                            <span>{item.status.label}</span>
+                            <span>{item?.status?.icon}</span>
+                            <span>{item?.status?.label}</span>
                           </div>
                         </Tag>
                       )}
@@ -221,20 +223,24 @@ function CardView<T extends BaseCardDataType>(props: CardViewProps<T>) {
 
               <div className="flex-1 flex flex-col justify-end">
                 {/* Tags */}
-                <TagsRenderer tags={item?.tags} />
+                <TagsRenderer tags={item?.tags || []} />
 
                 {/* Description */}
                 <p className="text-gray-600 text-xs text-ellipsis overflow-hidden whitespace-nowrap text-xs line-clamp-2 mt-2">
-                  <Tooltip title={item.description}>{item.description}</Tooltip>
+                  <Tooltip title={item?.description}>
+                    {item?.description}
+                  </Tooltip>
                 </p>
 
                 {/* Statistics */}
                 <div className="grid grid-cols-2 gap-4 py-3">
-                  {item.statistics?.map((stat, idx) => (
+                  {item?.statistics?.map((stat, idx) => (
                     <div key={idx}>
-                      <div className="text-sm text-gray-500">{stat.label}:</div>
+                      <div className="text-sm text-gray-500">
+                        {stat?.label}:
+                      </div>
                       <div className="text-base font-semibold text-gray-900">
-                        {stat.value}
+                        {stat?.value}
                       </div>
                     </div>
                   ))}
@@ -246,7 +252,7 @@ function CardView<T extends BaseCardDataType>(props: CardViewProps<T>) {
                 <div className=" text-gray-500 text-right">
                   <div className="flex items-center gap-1">
                     <ClockCircleOutlined className="w-4 h-4" />{" "}
-                    {formatDateTime(item.updatedAt)}
+                    {formatDateTime(item?.updatedAt)}
                   </div>
                 </div>
                 <Dropdown

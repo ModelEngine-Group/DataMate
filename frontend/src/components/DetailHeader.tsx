@@ -20,20 +20,6 @@ interface OperationItem {
   danger?: boolean;
 }
 
-interface BaseDataItem {
-  id: number;
-  icon?: React.ReactNode;
-  status?: {
-    label: string;
-    icon?: React.ReactNode;
-    color?: string;
-  };
-  name: string;
-  description: string;
-  createdAt: string;
-  lastUpdated: string;
-}
-
 interface DetailHeaderProps<T> {
   data: T;
   statistics: StatisticItem[];
@@ -71,6 +57,15 @@ const DetailHeader: React.FC<DetailHeaderProps<any>> = <T,>({
               )}
             </div>
             <p className="text-gray-700 mb-4">{data.description}</p>
+            {data?.tags?.map((tag) => (
+              <Tag
+                key={tag.id}
+                className="mr-1"
+                style={{ background: tag.color }}
+              >
+                {tag.name}
+              </Tag>
+            ))}
             <div className="flex items-center gap-6 text-sm">
               {statistics.map((stat, idx) => (
                 <div key={idx} className="flex items-center gap-1">

@@ -1,4 +1,4 @@
-import { LogStatus, SyncMode, TaskStatus, TriggerType } from "./collection-model";
+import { LogStatus, SyncMode, TaskStatus, TriggerType } from "./collection.model";
 
 export const StatusMap: Record<
   TaskStatus,

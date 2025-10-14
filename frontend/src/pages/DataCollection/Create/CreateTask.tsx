@@ -13,7 +13,7 @@ import {
 } from "antd";
 import { Link, useNavigate } from "react-router";
 import { ArrowLeft } from "lucide-react";
-import { createTaskUsingPost } from "../collection-apis";
+import { createTaskUsingPost } from "../collection.apis";
 
 const { TextArea } = Input;
 

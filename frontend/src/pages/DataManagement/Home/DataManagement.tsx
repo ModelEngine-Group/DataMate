@@ -23,6 +23,7 @@ import {
   updateDatasetTagByIdUsingPut,
   deleteDatasetTagByIdUsingDelete,
 } from "../dataset.api";
+import { formatBytes } from "@/utils/unit";
 
 export default function DatasetManagementPage() {
   const navigate = useNavigate();
@@ -36,19 +37,20 @@ export default function DatasetManagementPage() {
 
   async function fetchStatistics() {
     const { data } = await getDatasetStatisticsUsingGet();
+
     const statistics = {
       size: [
         {
-          title: "文本",
-          value: data?.size?.text || "0 MB",
+          title: "总计",
+          value: data?.totalDatasets,
         },
         {
-          title: "图像",
-          value: data?.size?.image || "0 MB",
+          title: "文件数",
+          value: data?.totalFiles,
         },
         {
-          title: "音频",
-          value: data?.size?.audio || "0 MB",
+          title: "大小",
+          value: formatBytes(data?.totalSize),
         },
         {
           title: "视频",
@@ -66,7 +68,7 @@ export default function DatasetManagementPage() {
         },
         {
           title: "音频",
-          value: data?.count.audio || 0,
+          value: data?.count?.audio || 0,
         },
         {
           title: "视频",
@@ -270,8 +272,8 @@ export default function DatasetManagementPage() {
       </div>
 
       {/* Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-        <Card title="数据集统计">
+      <div className="grid grid-cols-1 mt-4">
+        {/* <Card title="数据集统计">
           <div className="grid grid-cols-4">
             {statisticsData.count?.map?.((item) => (
               <Statistic
@@ -281,14 +283,14 @@ export default function DatasetManagementPage() {
               />
             ))}
           </div>
-        </Card>
-        <Card title="大小统计">
+        </Card> */}
+        <Card>
           <div className="grid grid-cols-4">
             {statisticsData.size?.map?.((item) => (
               <Statistic
                 key={item.title}
                 title={item.title}
-                value={`${item.value} MB`}
+                value={`${item.value}`}
               />
             ))}
           </div>

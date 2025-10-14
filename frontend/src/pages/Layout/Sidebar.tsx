@@ -84,7 +84,7 @@ const AsiderAndHeaderLayout = () => {
       <div className="p-4 border-t border-gray-200">
         {sidebarOpen ? (
           <div className="space-y-2">
-            <TaskPopover />
+            {/* <TaskPopover /> */}
             <Button block onClick={() => navigate("/data/settings")}>
               设置
             </Button>

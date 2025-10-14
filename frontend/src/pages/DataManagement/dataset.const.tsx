@@ -13,10 +13,8 @@ import {
 } from "@ant-design/icons";
 import React from "react";
 import {
-  BarChart3,
   FileImage,
   FileText,
-  AudioLines,
   Video,
   FileCode,
   MessageCircleMore,
@@ -24,6 +22,7 @@ import {
   FileMusic,
   Music,
   Videotape,
+  Database,
 } from "lucide-react";
 
 export const datasetTypeMap: Record<
@@ -180,14 +179,13 @@ export const dataSourceMap: Record<string, { label: string; value: string }> = {
 export const dataSourceOptions = Object.values(dataSourceMap);
 
 export function mapDataset(dataset: Dataset) {
+  const IconComponent = datasetSubTypeMap[dataset?.type?.code]?.icon;
   return {
     ...dataset,
     size: formatBytes(dataset.totalSize || 0),
     createdAt: formatDateTime(dataset.createdAt) || "--",
     updatedAt: formatDateTime(dataset?.updatedAt) || "--",
-    icon: datasetSubTypeMap[dataset?.type?.code]?.icon || (
-      <BarChart3 className="w-4 h-4" />
-    ),
+    icon: <IconComponent /> || <Database />,
     status: datasetStatusMap[dataset.status],
     statistics: [
       { label: "数据项", value: dataset?.fileCount || 0 },

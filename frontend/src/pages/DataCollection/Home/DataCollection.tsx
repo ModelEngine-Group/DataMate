@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button, Card, Tabs } from "antd";
+import { Button, Tabs } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import TaskManagement from "./components/TaskManagement";
 import ExecutionLog from "./components/ExecutionLog";

@@ -13,7 +13,7 @@ import {
   updateDatasetByIdUsingPut,
 } from "../dataset.api";
 import { DatasetSubType, DatasetType, DataSource } from "../dataset.model";
-import { queryTasksUsingPost } from "@/pages/DataCollection/collection-apis";
+import { queryTasksUsingPost } from "@/pages/DataCollection/collection.apis";
 import { mockPreparedTags } from "@/components/TagManagement";
 
 export default function DatasetCreate() {
@@ -44,12 +44,12 @@ export default function DatasetCreate() {
   // 获取标签
   const fetchTags = async () => {
     try {
-      const res = await queryDatasetTagsUsingGet();
+      const { data } = await queryDatasetTagsUsingGet();
       const preparedTags = mockPreparedTags.map((tag) => ({
         label: tag.name,
         value: tag.name,
       }));
-      const customTags = res.map((tag) => ({
+      const customTags = data.map((tag) => ({
         label: tag.name,
         value: tag.name,
       }));
@@ -77,8 +77,8 @@ export default function DatasetCreate() {
   // 获取归集任务列表
   const fetchCollectionTasks = async () => {
     try {
-      const res = await queryTasksUsingPost({ pageNum: 1, pageSize: 100 });
-      const options = res.map((task: any) => ({
+      const { data } = await queryTasksUsingPost({ pageNum: 1, pageSize: 100 });
+      const options = data.map((task: any) => ({
         label: task.name,
         value: task.id,
       }));
@@ -137,7 +137,7 @@ export default function DatasetCreate() {
 
   const handleSubmit = async () => {
     const formValues = await form.validateFields();
-    
+
     const params = {
       ...formValues,
       files: undefined,
@@ -147,7 +147,7 @@ export default function DatasetCreate() {
       const callFn = id
         ? () => updateDatasetByIdUsingPut(id, params)
         : () => createDatasetUsingPost(params);
-      const data = await callFn();
+      const { data } = await callFn();
       dataset = data;
       message.success(`数据集${id ? "更新" : "创建"}成功`);
 

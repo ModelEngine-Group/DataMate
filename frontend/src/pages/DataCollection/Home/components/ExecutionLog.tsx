@@ -1,9 +1,9 @@
 import { Card, Badge, Table } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { SearchControls } from "@/components/SearchControls";
-import type { CollectionLog } from "@/pages/DataCollection/collection-model";
-import { queryExecutionLogUsingPost } from "../../collection-apis";
-import { LogStatusMap, LogTriggerTypeMap } from "../../collection-const";
+import type { CollectionLog } from "@/pages/DataCollection/collection.model";
+import { queryExecutionLogUsingPost } from "../../collection.apis";
+import { LogStatusMap, LogTriggerTypeMap } from "../../collection.const";
 import useFetchData from "@/hooks/useFetchData";
 
 const filterOptions = [

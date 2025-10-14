@@ -6,9 +6,9 @@ import {
   executeTaskByIdUsingPost,
   queryTasksUsingPost,
   stopTaskByIdUsingPost,
-} from "../../collection-apis";
-import { TaskStatus, type CollectionTask } from "../../collection-model";
-import { StatusMap, SyncModeMap } from "../../collection-const";
+} from "../../collection.apis";
+import { TaskStatus, type CollectionTask } from "../../collection.model";
+import { StatusMap, SyncModeMap } from "../../collection.const";
 import useFetchData from "@/hooks/useFetchData";
 
 export default function TaskManagement() {
