@@ -67,6 +67,16 @@ head:
       value: "0"
     - name: RAY_TQDM_PATCH_PRINT
       value: "0"
+    - name: MYSQL_HOST
+      value: "mysql"
+    - name: MYSQL_PORT
+      value: "3306"
+    - name: MYSQL_USER
+      value: "root"
+    - name: MYSQL_PASSWORD
+      value: "Huawei@123"
+    - name: MYSQL_DATABASE
+      value: "dataengine"
   # - name: EXAMPLE_ENV
   #   value: "1"
   envFrom: []
@@ -191,6 +201,16 @@ worker:
       value: "0"
     - name: RAY_TQDM_PATCH_PRINT
       value: "0"
+    - name: MYSQL_HOST
+      value: "mysql"
+    - name: MYSQL_PORT
+      value: "3306"
+    - name: MYSQL_USER
+      value: "root"
+    - name: MYSQL_PASSWORD
+      value: "Huawei@123"
+    - name: MYSQL_DATABASE
+      value: "dataengine"
   # - name: EXAMPLE_ENV
   #   value: "1"
   envFrom: []
