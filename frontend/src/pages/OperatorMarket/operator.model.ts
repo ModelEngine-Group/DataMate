@@ -1,28 +1,32 @@
-export interface Operator {
-  id: number;
+export interface OperatorI {
+  id: string;
   name: string;
-  version: string;
+  type: string;
+  icon: React.ReactNode;
   description: string;
-  author: string;
-  category: string;
-  modality: string[];
-  type: "preprocessing" | "training" | "inference" | "postprocessing";
   tags: string[];
-  createdAt: string;
-  lastModified: string;
-  status: "active" | "deprecated" | "beta";
-  isFavorited?: boolean;
-  downloads: number;
-  usage: number;
-  framework: string;
-  language: string;
-  size: string;
-  dependencies: string[];
-  inputFormat: string[];
-  outputFormat: string[];
-  performance: {
-    accuracy?: number;
-    speed: string;
-    memory: string;
+  isStar?: boolean;
+  originalId?: string; // 用于标识原始算子ID，便于去重
+  categories: number[]; // 分类列表
+  settings: string;
+  params?: { [key: string]: any }; // 用户配置的参数
+  defaultParams?: { [key: string]: any }; // 默认参数
+  configs: {
+    [key: string]: {
+      type: "input" | "select" | "radio" | "checkbox" | "range";
+      label: string;
+      value: any;
+      options?: string[] | { label: string; value: any }[];
+      min?: number;
+      max?: number;
+      step?: number;
+    };
   };
+}
+
+export interface CategoryI {
+  id: string;
+  name: string;
+  icon: React.ReactNode;
+  operators: OperatorI[];
 }

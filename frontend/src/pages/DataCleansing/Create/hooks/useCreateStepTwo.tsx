@@ -12,6 +12,7 @@ export function useCreateStepTwo() {
     currentTemplate,
     configOperator,
     currentStep,
+    categoryOptions,
     handlePrev,
     handleNext,
     setCurrentTemplate,
@@ -40,6 +41,7 @@ export function useCreateStepTwo() {
     <div className="flex w-full h-full">
       {/* 左侧算子库 */}
       <OperatorLibrary
+        categoryOptions={categoryOptions}
         selectedOperators={selectedOperators}
         operatorList={operators}
         toggleOperator={toggleOperator}

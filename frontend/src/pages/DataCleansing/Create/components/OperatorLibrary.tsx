@@ -1,11 +1,8 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Card, Input, Select, Tooltip, Collapse, Tag, Checkbox } from "antd";
 import { StarFilled, StarOutlined, SearchOutlined } from "@ant-design/icons";
 import type { OperatorI } from "@/pages/DataCleansing/cleansing.model";
-import {
-  queryCategoryTreeUsingGet,
-  queryOperatorsUsingPost,
-} from "@/pages/OperatorMarket/operator.api";
+import { CategoryI } from "@/pages/OperatorMarket/operator.model";
 
 interface OperatorListProps {
   operators: OperatorI[];
@@ -78,6 +75,7 @@ const OperatorList: React.FC<OperatorListProps> = ({
 interface OperatorLibraryProps {
   selectedOperators: OperatorI[];
   operatorList: OperatorI[];
+  categoryOptions: CategoryI[];
   toggleOperator: (template: OperatorI) => void;
   handleDragStart: (
     e: React.DragEvent,
@@ -89,6 +87,7 @@ interface OperatorLibraryProps {
 const OperatorLibrary: React.FC<OperatorLibraryProps> = ({
   selectedOperators,
   operatorList,
+  categoryOptions,
   toggleOperator,
   handleDragStart,
 }) => {
@@ -99,34 +98,6 @@ const OperatorLibrary: React.FC<OperatorLibraryProps> = ({
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
     new Set([])
   );
-  const [categoryOptions, setCategoryOptions] = useState([]);
-
-  const initData = async () => {
-    const [categoryRes, operatorRes] = await Promise.all([
-      queryCategoryTreeUsingGet(),
-      queryOperatorsUsingPost({ page: 0, size: 1000 }),
-    ]);
-    const options = categoryRes.data.reduce((acc: any[], item: any) => {
-      const cats = item.categories.map((cat) => ({
-        ...cat,
-        type: item.name,
-        label: cat.name,
-        value: cat.id,
-        icon: cat.icon,
-        operators: operatorRes.data.content.filter(
-          (op) => op[item.name] === cat.name
-        ),
-      }));
-      acc.push(...cats);
-      return acc;
-    }, [] as { id: string; name: string; icon: React.ReactNode }[]);
-
-    setCategoryOptions(options);
-  };
-
-  useEffect(() => {
-    initData();
-  }, []);
 
   // 按分类分组
   const groupedOperators = useMemo(() => {

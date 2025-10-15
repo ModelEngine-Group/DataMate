@@ -495,7 +495,13 @@ module.exports = function (router) {
     res.send({
       code: "0",
       msg: "Success",
-      data: categoryTree,
+      data: {
+        page: 0,
+        size: categoryTree.length,
+        totalElements: categoryTree.length,
+        totalPages: 1,
+        content: categoryTree,
+      },
     });
   });
 };

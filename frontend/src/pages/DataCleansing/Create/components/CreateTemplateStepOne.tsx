@@ -8,8 +8,16 @@ export default function CreateTemplateStepOne({
   form,
   templateConfig,
   setTemplateConfig,
-  handleValuesChange,
+}: {
+  form: any;
+  templateConfig: { name: string; description: string; type: string };
+  setTemplateConfig: React.Dispatch<
+    React.SetStateAction<{ name: string; description: string; type: string }>
+  >;
 }) {
+  const handleValuesChange = (_, allValues) => {
+    setTemplateConfig({ ...templateConfig, ...allValues });
+  };
   return (
     <Form
       form={form}
@@ -35,7 +43,9 @@ export default function CreateTemplateStepOne({
         <RadioCard
           options={templateTypes}
           value={templateConfig.type}
-          onChange={(type) => setTemplateConfig({ ...templateConfig, type })}
+          onChange={(type) => {
+            setTemplateConfig({ ...templateConfig, type });
+          }}
         />
       </Form.Item>
     </Form>

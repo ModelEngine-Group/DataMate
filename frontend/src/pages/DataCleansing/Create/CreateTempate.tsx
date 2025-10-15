@@ -8,7 +8,7 @@ import CleansingTemplateStepOne from "./components/CreateTemplateStepOne";
 import { useCreateStepTwo } from "./hooks/useCreateStepTwo";
 
 export default function CleansingTemplateCreate() {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   const [form] = Form.useForm();
   const [templateConfig, setTemplateConfig] = useState({
     name: "",
@@ -20,17 +20,12 @@ export default function CleansingTemplateCreate() {
     const values = form.getFieldsValue();
     const template = {
       ...values,
-      ...templateConfig,
       operators: selectedOperators,
-      createdAt: new Date().toISOString(),
     };
-    console.log("保存模板数据:", template);
+    console.log("创建模板:", template);
+
     await createCleaningTemplateUsingPost(template);
     navigate("/data/cleansing");
-  };
-
-  const handleValuesChange = (_, allValues) => {
-    setTemplateConfig({ ...templateConfig, ...allValues });
   };
 
   const {
@@ -43,6 +38,8 @@ export default function CleansingTemplateCreate() {
 
   const canProceed = () => {
     const values = form.getFieldsValue();
+    console.log(values);
+
     switch (currentStep) {
       case 1:
         return values.name && values.type;
@@ -59,7 +56,6 @@ export default function CleansingTemplateCreate() {
         return (
           <CleansingTemplateStepOne
             form={form}
-            handleValuesChange={handleValuesChange}
             templateConfig={templateConfig}
             setTemplateConfig={setTemplateConfig}
           />
