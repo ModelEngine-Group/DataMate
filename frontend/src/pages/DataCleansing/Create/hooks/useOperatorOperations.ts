@@ -85,12 +85,11 @@ export function useOperatorOperations() {
   const toggleOperator = (operator: OperatorI) => {
     const exist = selectedOperators.find((op) => op.id === operator.id);
     if (exist) {
-      setSelectedOperators(operators.filter((op) => op.id !== operator.id));
+      setSelectedOperators(
+        selectedOperators.filter((op) => op.id !== operator.id)
+      );
     } else {
-      const newOperator: OperatorI = {
-        ...operator,
-      };
-      setSelectedOperators([...selectedOperators, newOperator]);
+      setSelectedOperators([...selectedOperators, { ...operator }]);
     }
   };
 
