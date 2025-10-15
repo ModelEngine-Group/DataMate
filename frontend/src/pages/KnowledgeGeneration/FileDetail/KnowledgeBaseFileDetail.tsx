@@ -26,7 +26,7 @@ import {
   mockQAPairs,
   sliceOperators,
 } from "@/mock/knowledgeBase";
-import type { KnowledgeBase, KBFile } from "@/pages/KnowledgeGeneration/knowledge-base.interface";
+import type { KnowledgeBase, KBFile } from "@/pages/KnowledgeGeneration/knowledge-base.model";
 import { Link, useNavigate } from "react-router";
 import DetailHeader from "@/components/DetailHeader";
 

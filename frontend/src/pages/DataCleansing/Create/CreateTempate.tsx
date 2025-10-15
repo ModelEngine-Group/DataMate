@@ -8,7 +8,7 @@ import CleansingTemplateStepOne from "./components/CreateTemplateStepOne";
 import { useCreateStepTwo } from "./hooks/useCreateStepTwo";
 
 export default function CleansingTemplateCreate() {
-  const navigate = useNavigate();
+  const navigate = useNavigate()
   const [form] = Form.useForm();
   const [templateConfig, setTemplateConfig] = useState({
     name: "",
