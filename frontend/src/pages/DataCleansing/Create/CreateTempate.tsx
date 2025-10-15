@@ -13,13 +13,11 @@ export default function CleansingTemplateCreate() {
   const [templateConfig, setTemplateConfig] = useState({
     name: "",
     description: "",
-    type: "",
   });
 
   const handleSave = async () => {
-    const values = form.getFieldsValue();
     const template = {
-      ...values,
+      ...templateConfig,
       operators: selectedOperators,
     };
     console.log("创建模板:", template);
@@ -38,11 +36,10 @@ export default function CleansingTemplateCreate() {
 
   const canProceed = () => {
     const values = form.getFieldsValue();
-    console.log(values);
 
     switch (currentStep) {
       case 1:
-        return values.name && values.type;
+        return values.name;
       case 2:
         return selectedOperators.length > 0;
       default:

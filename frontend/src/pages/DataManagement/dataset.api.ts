@@ -39,7 +39,11 @@ export function downloadDatasetUsingGet(
   id: string | number,
   filename?: string
 ) {
-  return download(`/api/data-management/datasets/${id}/download`, null, filename);
+  return download(
+    `/api/data-management/datasets/${id}/download`,
+    null,
+    filename
+  );
 }
 
 // 验证数据集
@@ -98,8 +102,10 @@ export function updateDatasetTagByIdUsingPut(id: string | number, data: any) {
 }
 
 // 删除数据集标签
-export function deleteDatasetTagByIdUsingDelete(id: string | number) {
-  return del(`/api/data-management/tags/${id}`);
+export function deleteDatasetTagByIdUsingDelete(tag) {
+  console.log(tag);
+  
+  return del(`/api/data-management/tags/${tag.id}`);
 }
 
 // 数据集质量检查
@@ -150,7 +156,9 @@ export function switchDatasetVersionUsingPut(
   id: string | number,
   versionId: string | number
 ) {
-  return put(`/api/data-management/datasets/${id}/versions/${versionId}/switch`);
+  return put(
+    `/api/data-management/datasets/${id}/versions/${versionId}/switch`
+  );
 }
 
 // 删除数据集版本

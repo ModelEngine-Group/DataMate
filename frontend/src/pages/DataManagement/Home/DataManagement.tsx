@@ -122,7 +122,7 @@ export default function DatasetManagementPage() {
   const handleDeleteDataset = async (id: number) => {
     if (!id) return;
     await deleteDatasetByIdUsingDelete(id);
-
+    fetchData();
     message.success("数据删除成功");
   };
 
@@ -273,17 +273,6 @@ export default function DatasetManagementPage() {
 
       {/* Statistics */}
       <div className="grid grid-cols-1 mt-4">
-        {/* <Card title="数据集统计">
-          <div className="grid grid-cols-4">
-            {statisticsData.count?.map?.((item) => (
-              <Statistic
-                key={item.title}
-                title={item.title}
-                value={item.value}
-              />
-            ))}
-          </div>
-        </Card> */}
         <Card>
           <div className="grid grid-cols-4">
             {statisticsData.size?.map?.((item) => (
