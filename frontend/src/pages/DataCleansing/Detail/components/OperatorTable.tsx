@@ -1,4 +1,4 @@
-import { Button, Input, Table, Badge } from "antd";
+import { Button, Input, Table } from "antd";
 
 const operators = [
   {

@@ -31,10 +31,10 @@ import EvaluationTaskCreate from "@/pages/DataEvaluation/Create/CreateTask";
 import EvaluationTaskReport from "@/pages/DataEvaluation/Report/EvaluationReport";
 import ManualEvaluatePage from "@/pages/DataEvaluation/Evaluate/ManualEvaluate";
 
-import KnowledgeGenerationPage from "@/pages/KnowledgeGeneration/KnowledgeGeneration";
-import KnowledgeBaseCreatePage from "@/pages/KnowledgeGeneration/KnowledgeBaseCreate";
-import KnowledgeBaseDetailPage from "@/pages/KnowledgeGeneration/KnowledgeBaseDetail";
-import KnowledgeBaseFileDetailPage from "@/pages/KnowledgeGeneration/KnowledgeBaseFileDetail";
+import KnowledgeGenerationPage from "@/pages/KnowledgeGeneration/Home/KnowledgeGeneration";
+import KnowledgeBaseCreatePage from "@/pages/KnowledgeGeneration/Create/KnowledgeBaseCreate";
+import KnowledgeBaseDetailPage from "@/pages/KnowledgeGeneration/Detail/KnowledgeBaseDetail";
+import KnowledgeBaseFileDetailPage from "@/pages/KnowledgeGeneration/FileDetail/KnowledgeBaseFileDetail";
 
 import OperatorMarketPage from "@/pages/OperatorMarket/Home/OperatorMarket";
 import OperatorPluginCreate from "@/pages/OperatorMarket/Create/OperatorPluginCreate";
@@ -45,15 +45,16 @@ import OrchestrationPage from "@/pages/Orchestration/Orchestration";
 import WorkflowEditor from "@/pages/Orchestration/WorkflowEditor";
 import AgentPage from "@/pages/Agent/Agent";
 import SettingsPage from "@/pages/SettingsPage/Settings";
+import { withErrorBoundary } from "@/components/ErrorBoundary";
 
 const router = createBrowserRouter([
   {
     path: "/",
-    Component: Home,
+    Component: withErrorBoundary(Home),
   },
   {
     path: "/agent",
-    Component: AgentPage,
+    Component: withErrorBoundary(AgentPage),
   },
   {
     path: "/orchestration",
@@ -61,17 +62,17 @@ const router = createBrowserRouter([
       {
         path: "",
         index: true,
-        Component: OrchestrationPage,
+        Component: withErrorBoundary(OrchestrationPage),
       },
       {
         path: "create-workflow",
-        Component: WorkflowEditor,
+        Component: withErrorBoundary(WorkflowEditor),
       },
     ],
   },
   {
     path: "/data",
-    Component: MainLayout,
+    Component: withErrorBoundary(MainLayout),
     children: [
       {
         path: "collection",

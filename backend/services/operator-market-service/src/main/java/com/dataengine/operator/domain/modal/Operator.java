@@ -20,6 +20,8 @@ public class Operator {
 
     private String outputs;
 
+    private String categories;
+
     private String runtime;
 
     private String settings;

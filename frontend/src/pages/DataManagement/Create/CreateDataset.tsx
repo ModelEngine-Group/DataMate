@@ -202,7 +202,14 @@ export default function DatasetCreate() {
     });
   };
 
-  const handleValuesChange = (_, allValues: any) => {
+  const handleValuesChange = (currentValue, allValues) => {
+    if (Object.keys(currentValue).includes("datasetType")) {
+      // 重置type
+      allValues.type =
+        datasetTypes.find((item) => item.value === currentValue.datasetType)
+          ?.options?.[0]?.value || "";
+      form.setFieldValue("type", allValues.type);
+    }
     setNewDataset({ ...newDataset, ...allValues });
   };
 
@@ -268,7 +275,6 @@ export default function DatasetCreate() {
               onChange={(type) => setNewDataset({ ...newDataset, type })}
             />
           </Form.Item>
-
           <Form.Item name="tags" label="标签">
             <Select className="w-full" mode="tags" options={tagOptions} />
           </Form.Item>

@@ -179,16 +179,16 @@ export const dataSourceMap: Record<string, { label: string; value: string }> = {
 export const dataSourceOptions = Object.values(dataSourceMap);
 
 export function mapDataset(dataset: Dataset) {
-  const IconComponent = datasetSubTypeMap[dataset?.type?.code]?.icon;
+  const IconComponent = datasetSubTypeMap[dataset?.type?.code]?.icon || null;
   return {
     ...dataset,
     size: formatBytes(dataset.totalSize || 0),
     createdAt: formatDateTime(dataset.createdAt) || "--",
     updatedAt: formatDateTime(dataset?.updatedAt) || "--",
-    icon: <IconComponent /> || <Database />,
+    icon: IconComponent ? <IconComponent /> : <Database />,
     status: datasetStatusMap[dataset.status],
     statistics: [
-      { label: "数据项", value: dataset?.fileCount || 0 },
+      { label: "数据项", value: dataset.fileCount || 0 },
       {
         label: "已标注",
         value: dataset.annotations?.completed || 0,

@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 数据集实体（与数据库表 t_dm_datasets 对齐）
@@ -22,7 +23,7 @@ public class DatasetResponse {
     /** 数据集描述 */
     private String description;
     /** 数据集类型 */
-    private DatasetTypeResponse type;
+    private String datasetType;
     /** 数据集状态 */
     private String status;
     /** 数据源 */

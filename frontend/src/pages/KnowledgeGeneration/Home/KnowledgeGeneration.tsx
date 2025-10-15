@@ -7,14 +7,11 @@ import {
   Plus,
   Upload,
   Database,
-  Edit,
   CheckCircle,
   XCircle,
   Clock,
   AlertCircle,
   MoreHorizontal,
-  Trash2,
-  Download,
   VideoIcon as Vector,
 } from "lucide-react";
 import { mockKnowledgeBases, vectorDatabases } from "@/mock/knowledgeBase";
@@ -137,19 +134,19 @@ export default function KnowledgeGenerationPage() {
     switch (status) {
       case "ready":
       case "completed":
-        return <CheckCircle className="w-4 h-4" />;
+        return <CheckCircle />;
       case "processing":
-        return <Clock className="w-4 h-4" />;
+        return <Clock />;
       case "vectorizing":
-        return <Vector className="w-4 h-4" />;
+        return <Vector />;
       case "importing":
-        return <Upload className="w-4 h-4" />;
+        return <Upload />;
       case "error":
-        return <XCircle className="w-4 h-4" />;
+        return <XCircle />;
       case "disabled":
-        return <AlertCircle className="w-4 h-4" />;
+        return <AlertCircle />;
       default:
-        return <AlertCircle className="w-4 h-4" />;
+        return <AlertCircle />;
     }
   };
 
@@ -307,7 +304,7 @@ export default function KnowledgeGenerationPage() {
 
   // Main list view
   return (
-    <div className="">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold">知识库管理</h1>
         <Button
@@ -335,13 +332,8 @@ export default function KnowledgeGenerationPage() {
             id: kb.id,
             name: kb.name,
             type: kb.type,
-            icon:
-              kb.type === "structured" ? (
-                <Database className="w-5 h-5 text-white" />
-              ) : (
-                <BookOpen className="w-5 h-5 text-white" />
-              ),
-            iconColor: "bg-blue-500",
+            icon: kb.type === "structured" ? <Database /> : <BookOpen />,
+            iconColor: "bg-blue-200",
             status: {
               label: getStatusLabel(kb.status),
               icon: getStatusIcon(kb.status),

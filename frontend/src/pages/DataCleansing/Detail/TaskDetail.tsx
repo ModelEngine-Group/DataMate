@@ -8,7 +8,6 @@ import {
   AlertCircle,
   Database,
   Trash2,
-  Download,
   Activity,
 } from "lucide-react";
 import DetailHeader from "@/components/DetailHeader";

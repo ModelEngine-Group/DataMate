@@ -2,15 +2,12 @@ import type React from "react";
 import { useEffect, useState } from "react";
 import {
   Plus,
-  Settings,
   Edit,
   File,
   Trash2,
   Save,
   Layers,
-  Eye,
   RefreshCw,
-  Download,
   BookOpen,
   Database,
   MoreHorizontal,
@@ -18,8 +15,6 @@ import {
   Zap,
   StarOff,
   CheckCircle,
-  MoreVertical,
-  VectorSquare,
   VectorSquareIcon,
 } from "lucide-react";
 import {

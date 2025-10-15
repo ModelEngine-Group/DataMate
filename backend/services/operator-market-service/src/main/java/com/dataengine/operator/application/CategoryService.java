@@ -5,7 +5,7 @@ import com.dataengine.operator.domain.modal.Category;
 import com.dataengine.operator.domain.modal.RelationCategoryDTO;
 import com.dataengine.operator.infrastructure.persistence.mapper.CategoryMapper;
 import com.dataengine.operator.infrastructure.persistence.mapper.CategoryRelationMapper;
-import com.dataengine.operator.interfaces.dto.CategoryTreeGet200ResponseInner;
+import com.dataengine.operator.interfaces.dto.CategoryTreeResponse;
 import com.dataengine.operator.interfaces.dto.SubCategory;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -22,7 +22,7 @@ public class CategoryService {
 
     private final CategoryRelationMapper categoryRelationMapper;
 
-    public List<CategoryTreeGet200ResponseInner> getAllCategories() {
+    public List<CategoryTreeResponse> getAllCategories() {
         List<Category> allCategories = categoryMapper.findAllCategories();
         Map<Integer, Category> categories = allCategories.stream().collect(Collectors.toMap(
             Category::getId,
@@ -32,8 +32,8 @@ public class CategoryService {
         return groupByParentIdSorted(allRelations, categories);
     }
 
-    private List<CategoryTreeGet200ResponseInner> groupByParentIdSorted(List<RelationCategoryDTO> relations,
-                                                                        Map<Integer, Category> categories) {
+    private List<CategoryTreeResponse> groupByParentIdSorted(List<RelationCategoryDTO> relations,
+                                                             Map<Integer, Category> categories) {
         Map<Integer, List<RelationCategoryDTO>> groupedByParentId = relations.stream()
             .filter(relation -> relation.getParentId() > 0)
             .collect(Collectors.groupingBy(RelationCategoryDTO::getParentId));
@@ -46,7 +46,7 @@ public class CategoryService {
                 Map<Integer, List<RelationCategoryDTO>> collect = group.stream().collect(
                     Collectors.groupingBy(RelationCategoryDTO::getCategoryId));
 
-                CategoryTreeGet200ResponseInner response = new CategoryTreeGet200ResponseInner();
+                CategoryTreeResponse response = new CategoryTreeResponse();
                 response.setId(parentId);
                 response.setCount(group.size());
                 response.setName(categories.get(parentId).getName());

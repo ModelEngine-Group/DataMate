@@ -490,6 +490,11 @@ components:
         outputs:
           type: string
           description: 输入类型
+        categories:
+          type: array
+          description: 算子分类列表
+          items:
+            type: integer
         runtime:
           type: string
           description: 运行时设置

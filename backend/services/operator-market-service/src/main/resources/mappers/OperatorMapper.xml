@@ -9,14 +9,7 @@
 
     <select id="findOperatorsByCriteria" parameterType="map" resultType="com.dataengine.operator.domain.modal.Operator">
         SELECT operator_id as id, operator_name as name, description, version, inputs, outputs, runtime, settings,
-            is_star, created_at, updated_at
-        FROM
-        (
-            SELECT operator_id, operator_name, description, version, inputs, outputs, runtime, settings, is_star,
-                created_at, updated_at, ROW_NUMBER() OVER (
-            PARTITION BY operator_id -- 按 id 分组
-            ORDER BY created_at DESC -- 按创建时间降序排列 (最新时间在前)
-        ) AS rn -- 为每组内的行分配序号
+            is_star, created_at, updated_at, GROUP_CONCAT(category_id ORDER BY created_at DESC SEPARATOR ',') AS categories
         FROM v_operator
         <where>
             <if test="operatorName != null and operatorName != ''">
@@ -32,8 +25,7 @@
                 AND is_star = #{isStar}
             </if>
         </where>
-        ) ranked_data
-        WHERE rn = 1
+        GROUP BY operator_id
         LIMIT ${size} OFFSET ${offset};
     </select>
 </mapper>
