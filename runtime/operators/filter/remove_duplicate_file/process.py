@@ -17,8 +17,9 @@ from typing import List, Dict, Any
 
 import numpy as np
 from datasketch import MinHash
+from sqlalchemy import text
 
-from data_platform.sqlite_manager.sqlite_manager import SQLiteManager
+from data_platform.sql_manager.sql_manager import SQLManager
 from data_platform.common.utils import get_now_time
 from data_platform.core.base_op import Filter
 
@@ -91,33 +92,42 @@ class DuplicateFilesFilter(Filter):
         minhash_values = text_minhash.hashvalues
         # 将 NumPy 数组转换为字符串
         minhash_values_string = np.array2string(minhash_values)
-
-        query_sql = self.sql_dict.get("query_sql")
         query_task_uuid_sql = self.sql_dict.get("query_task_uuid_sql")
         insert_sql = self.sql_dict.get("insert_sql")
-        db_path = self.sql_dict.get("db_path")
         create_tables_sql = self.sql_dict.get("create_tables_sql")
-        db_manager = SQLiteManager()
+        db_manager = SQLManager()
         try:
-            self.conn = db_manager.create_connect(db_path)
+            self.conn = db_manager.create_connect()
         except Exception as e:
             logger.error("fileName: %s, database connection failed: %s", file_name, str(e))
             raise RuntimeError(82000, str(e)) from None
         with self.conn as connection:
-            connection.execute(create_tables_sql)
-            result = connection.execute(query_task_uuid_sql, [self.task_uuid]).fetchall()
+            connection.execute(text(create_tables_sql))
+            result = connection.execute(query_task_uuid_sql, {"task_uuid": self.task_uuid}).fetchall()
             total_count = len(result)
-            for i in range(0, total_count, self.page_size):
-                rows = connection.execute(query_sql, [self.task_uuid, self.page_size, i]).fetchall()
-                # 对应任务uuid，最后一页没有数据，跳出循环
-                if not rows:
-                    break
-                # 对两个文本进行相似度比较
-                if self.determine_similar_text(rows, text_minhash, file_name):
-                    return ""
-            connection.execute(insert_sql, [self.task_uuid, minhash_values_string, file_name.encode("utf-8").hex(),
-                                            timestamp])
+            if self.has_similar_text(connection, file_name, text_minhash, total_count):
+                return ""
+            insert_data = {
+                "task_uuid": self.task_uuid,
+               "file_feature": minhash_values_string,
+               "file_name": file_name.encode("utf-8").hex(),
+               "timestamp": timestamp
+            }
+            connection.execute(text(insert_sql), insert_data)
         return input_text
+
+    def has_similar_text(self, connection, file_name, text_minhash, total_count) -> bool:
+        query_sql = self.sql_dict.get("query_sql")
+        for i in range(0, total_count, self.page_size):
+            rows = connection.execute(
+                text(query_sql), {"task_uuid": self.task_uuid, "ge": self.page_size, "le": i}).fetchall()
+            # 对应任务uuid，最后一页没有数据，跳出循环
+            if not rows:
+                break
+            # 对两个文本进行相似度比较
+            if self.determine_similar_text(rows, text_minhash, file_name):
+                return True
+        return False
 
     def determine_similar_text(self, file_features: List, text_minhash: MinHash, file_name: str) -> bool:
         for signature in file_features:

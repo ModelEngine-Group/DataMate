@@ -17,8 +17,9 @@ from typing import Dict, Any
 
 import cv2
 from Crypto.Hash import MD5
+from sqlalchemy import text
 
-from data_platform.sqlite_manager.sqlite_manager import SQLiteManager
+from data_platform.sql_manager.sql_manager import SQLManager
 from data_platform.common.utils import get_now_time
 from data_platform.common.utils import bytes_to_numpy, numpy_to_bytes
 from data_platform.core.base_op import Filter
@@ -77,24 +78,24 @@ class ImgDuplicatedImagesCleaner(Filter):
         query_sql = str(self.sql_dict.get("query_sql"))
         insert_sql = str(self.sql_dict.get("insert_sql"))
         create_tables_sql = str(self.sql_dict.get("create_tables_sql"))
-        db_path = str(self.sql_dict.get("db_path"))
-        query_sql_params = [self.task_uuid, md5]
-        insert_sql_params = [self.task_uuid, md5, file_name.encode("utf-8"), timestamp]
+        query_sql_params = {"task_uuid": self.task_uuid, "file_feature": md5}
+        insert_sql_params = {"task_uuid": self.task_uuid, "file_feature": md5, "file_name": file_name.encode("utf-8"),
+                             "timestamp": timestamp}
 
-        db_manager = SQLiteManager()
+        db_manager = SQLManager()
         try:
-            self.conn = db_manager.create_connect(db_path)
+            self.conn = db_manager.create_connect()
         except Exception as e:
             logger.error("fileName: %s, database connection failed: %s", file_name, str(e))
             raise RuntimeError(82000, str(e)) from None
 
         with self.conn as connection:
-            connection.execute(create_tables_sql)
+            connection.execute(text(create_tables_sql))
             # 判断是否有重复文件
-            result = connection.execute(query_sql, query_sql_params).fetchall()
+            result = connection.execute(text(query_sql, query_sql_params)).fetchall()
             # 查询记录为空，无重复图片, 插入新文件特征
             if not result:
-                connection.execute(insert_sql, insert_sql_params)
+                connection.execute(text(insert_sql, insert_sql_params))
                 return img_bytes
             logger.info("fileName: %s, method: Duplicate ImagesCleaner. The image is duplicated and filtered ",
                         file_name)

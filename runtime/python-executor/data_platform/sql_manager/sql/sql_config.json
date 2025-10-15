@@ -1,0 +1,12 @@
+{
+  "query_sql": "SELECT * FROM t_task_instance_info WHERE instance_id IN (:instance_id)",
+  "insert_sql": "INSERT INTO t_task_instance_info (instance_id, meta_file_name, meta_file_type, meta_file_id, meta_file_size, file_id, file_size, file_type, file_name, file_path, status, operator_id, error_code, incremental, child_id, slice_num) VALUES (:instance_id, :meta_file_name, :meta_file_type, :meta_file_id, :meta_file_size, :file_id, :file_size, :file_type, :file_name, :file_path, :status, :operator_id, :error_code, :incremental, :child_id, :slice_num)",
+  "create_tables_sql": "CREATE TABLE IF NOT EXISTS t_task_instance_info (instance_id VARCHAR(255), meta_file_name TEXT, meta_file_type VARCHAR(100), meta_file_id BIGINT, meta_file_size VARCHAR(100), file_id BIGINT, file_size VARCHAR(100), file_type VARCHAR(100), file_name TEXT, file_path TEXT, status INT, operator_id VARCHAR(255), error_code VARCHAR(100), incremental VARCHAR(50), child_id BIGINT, slice_num INT DEFAULT 0);",
+  "delete_task_instance_sql": "DELETE FROM t_task_instance_info WHERE instance_id = :instance_id",
+  "create_duplicate_img_tables_sql": "CREATE TABLE IF NOT EXISTS operator_duplicate_img_features (id INT AUTO_INCREMENT PRIMARY KEY,task_uuid VARCHAR(255),file_feature TEXT,file_name TEXT,timestamp DATETIME);",
+  "delete_duplicate_img_tables_sql": "DELETE FROM operator_duplicate_img_features WHERE flow_id = :flow_id",
+  "create_similar_img_tables_sql": "CREATE TABLE IF NOT EXISTS operator_similar_img_features (id INT AUTO_INCREMENT PRIMARY KEY,task_uuid VARCHAR(255),p_hash TEXT,des_matrix BLOB,matrix_shape TEXT,file_name TEXT,timestamp DATETIME);",
+  "delete_similar_img_tables_sql": "DELETE FROM operator_similar_img_features WHERE flow_id = :flow_id",
+  "create_similar_text_tables_sql": "CREATE TABLE IF NOT EXISTS operators_similar_text_features (id INT AUTO_INCREMENT PRIMARY KEY, task_uuid VARCHAR(255),file_feature TEXT,file_name TEXT,timestamp DATETIME);",
+  "delete_similar_text_tables_sql": "DELETE FROM operators_similar_text_features WHERE flow_id = :flow_id"
+}

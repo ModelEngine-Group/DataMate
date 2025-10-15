@@ -12,7 +12,7 @@ from data_platform.common.utils.llm_request import LlmReq
 from data_platform.common.utils.registry import Registry
 from data_platform.common.utils import check_valid_path
 from data_platform.core.constant import Fields
-from data_platform.sqlite_manager.persistence_atction import TaskInfoPersistence
+from data_platform.sql_manager.persistence_atction import TaskInfoPersistence
 
 OPERATORS = Registry('Operators')
 
