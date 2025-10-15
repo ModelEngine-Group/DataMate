@@ -42,6 +42,8 @@ public class CleaningTask {
 
         COMPLETED("completed"),
 
+        STOPPED("stopped"),
+
         FAILED("failed");
 
         private final String value;

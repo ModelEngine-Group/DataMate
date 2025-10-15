@@ -39,8 +39,7 @@ CREATE TABLE IF NOT EXISTS t_operator_instance
 
 CREATE TABLE IF NOT EXISTS t_clean_result
 (
-    id          int primary key auto_increment,
-    instance_id varchar(64),
+    instance_id varchar(64) primary key,
     src_file_id varchar(64),
     dst_file_id varchar(64),
     src_name    varchar(256),
@@ -56,4 +55,4 @@ VALUES ('ac2f2582-a990-11f0-9768-00155d09c825', '空模板', '空模板'),
 
 INSERT IGNORE INTO t_operator_instance(instance_id, operator_id, op_index, settings_override)
 VALUES ('fb6d0d76-a990-11f0-92db-00155d09c825', 'TextFormatter', 1, '{}'),
-       ('fb6d0d76-a990-11f0-92db-00155d09c825', 'FileExporter', 1, '{}');
+       ('fb6d0d76-a990-11f0-92db-00155d09c825', 'FileExporter', 2, '{}');

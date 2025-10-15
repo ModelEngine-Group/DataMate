@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -38,6 +39,7 @@ public class CleaningTemplateService {
             template.setName(value.get(0).getName());
             template.setDescription(value.get(0).getDescription());
             template.setInstance(value.stream().filter(v -> StringUtils.isNotBlank(v.getOperatorId()))
+                    .sorted(Comparator.comparingInt(TemplateWithInstance::getOpIndex))
                     .map(v -> {
                         OperatorResponse operator = operatorsMap.get(v.getOperatorId());
                         if (StringUtils.isNotBlank(v.getSettingsOverride())) {

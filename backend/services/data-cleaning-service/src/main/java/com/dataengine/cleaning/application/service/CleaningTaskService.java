@@ -172,5 +172,9 @@ public class CleaningTaskService {
 
     public void stopTask(String taskId) {
         RuntimeClient.stopTask(taskId);
+        CleaningTask task = new CleaningTask();
+        task.setId(taskId);
+        task.setStatus(CleaningTask.StatusEnum.STOPPED);
+        cleaningTaskMapper.updateTaskStatus(task);
     }
 }
