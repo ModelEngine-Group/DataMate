@@ -228,7 +228,7 @@ paths:
           description: ''
           headers: {}
       security: []
-  /category/tree:
+  /categories/tree:
     get:
       summary: 获取算子分类列表
       deprecated: false

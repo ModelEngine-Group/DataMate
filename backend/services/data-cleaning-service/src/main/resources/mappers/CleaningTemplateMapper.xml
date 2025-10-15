@@ -2,8 +2,14 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.dataengine.cleaning.infrastructure.persistence.mapper.CleaningTemplateMapper">
 
-    <select id="findAllTemplates" resultType="com.dataengine.cleaning.interfaces.dto.CleaningTemplate">
-        SELECT * FROM t_clean_template
+    <select id="findAllTemplates" resultType="com.dataengine.cleaning.domain.model.TemplateWithInstance">
+        SELECT t.id AS id, name, description, created_at, updated_at, created_by, operator_id, op_index, settings_override
+        FROM t_clean_template t LEFT JOIN t_operator_instance o ON t.id = o.instance_id;
+    </select>
+
+    <select id="findAllOperators" resultType="com.dataengine.cleaning.interfaces.dto.OperatorResponse">
+        SELECT id, name, description, version, inputs, outputs, runtime, settings, is_star, created_at, updated_at
+        FROM t_operator
     </select>
 
     <select id="findTemplateById" resultType="com.dataengine.cleaning.interfaces.dto.CleaningTemplate">

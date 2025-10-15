@@ -74,7 +74,10 @@ public class CleaningTaskService {
                 .map(OperatorInstanceConverter.INSTANCE::operatorToDo).toList();
         operatorInstanceMapper.insertInstance(taskId, instancePos);
 
-        taskExecutor.submit(() -> executeTask(task, request));
+        prepareTask(task, request.getInstance());
+        scanDataset(task.getId(), request.getSrcDatasetId());
+
+        taskExecutor.submit(() -> executeTask(task));
         return task;
     }
 
@@ -87,12 +90,10 @@ public class CleaningTaskService {
         cleaningTaskMapper.deleteTask(taskId);
     }
 
-    private void executeTask(CleaningTask task, CreateCleaningTaskRequest request) {
+    public void executeTask(CleaningTask task) {
         task.setStatus(CleaningTask.StatusEnum.RUNNING);
         cleaningTaskMapper.updateTaskStatus(task);
-        prepareTask(task, request.getInstance());
-        scanDataset(task.getId(), request.getSrcDatasetId());
-        submitTask(task);
+        submitTask(task.getId());
     }
 
     private void prepareTask(CleaningTask task, List<OperatorInstance> instances) {
@@ -146,8 +147,8 @@ public class CleaningTaskService {
         } while (pageNumber < datasetFile.getTotalPages());
     }
 
-    private void submitTask(CleaningTask task) {
-        RuntimeClient.submitTask(task.getId());
+    private void submitTask(String taskId) {
+        RuntimeClient.submitTask(taskId);
     }
 
     private void writeListMapToJsonlFile(List<Map<String, Object>> mapList, String fileName) {
@@ -167,5 +168,13 @@ public class CleaningTaskService {
         } catch (IOException e) {
             throw new RuntimeException("Error serializing map to JSON: " + e.getMessage());
         }
+    }
+
+    public void stopTask(String taskId) {
+        RuntimeClient.stopTask(taskId);
+        CleaningTask task = new CleaningTask();
+        task.setId(taskId);
+        task.setStatus(CleaningTask.StatusEnum.STOPPED);
+        cleaningTaskMapper.updateTaskStatus(task);
     }
 }

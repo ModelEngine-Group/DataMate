@@ -8,7 +8,15 @@ import com.dataengine.common.interfaces.PagedResponse;
 import com.dataengine.common.interfaces.Response;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 
 @RestController
 @RequestMapping("/cleaning/tasks")
@@ -28,6 +36,20 @@ public class CleaningTaskController {
     @PostMapping
     public ResponseEntity<Response<CleaningTask>> cleaningTasksPost(@RequestBody CreateCleaningTaskRequest request) {
         return ResponseEntity.ok(Response.ok(cleaningTaskService.createTask(request)));
+    }
+
+    @PostMapping("/{taskId}/stop")
+    public ResponseEntity<Response<Object>> cleaningTasksStop(@PathVariable("taskId") String taskId) {
+        cleaningTaskService.stopTask(taskId);
+        return ResponseEntity.ok(Response.ok(null));
+    }
+
+    @PostMapping("/{taskId}/start")
+    public ResponseEntity<Response<Object>> cleaningTasksStart(@PathVariable("taskId") String taskId) {
+        CleaningTask task = new CleaningTask();
+        task.setId(taskId);
+        cleaningTaskService.executeTask(task);
+        return ResponseEntity.ok(Response.ok(null));
     }
 
     @GetMapping("/{taskId}")
