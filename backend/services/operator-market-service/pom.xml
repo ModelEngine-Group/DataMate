@@ -89,46 +89,6 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
-            <plugin>
-                <groupId>org.openapitools</groupId>
-                <artifactId>openapi-generator-maven-plugin</artifactId>
-                <version>6.6.0</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>generate</goal>
-                        </goals>
-                        <configuration>
-                            <inputSpec>${project.basedir}/../../openapi/specs/operator-market.yaml</inputSpec>
-                            <generatorName>spring</generatorName>
-                            <output>${project.build.directory}/generated-sources/openapi</output>
-                            <apiPackage>com.dataengine.operator.interfaces.api</apiPackage>
-                            <modelPackage>com.dataengine.operator.interfaces.dto</modelPackage>
-                            <configOptions>
-                                <interfaceOnly>true</interfaceOnly>
-                                <useTags>true</useTags>
-                                <useSpringBoot3>true</useSpringBoot3>
-                                <documentationProvider>springdoc</documentationProvider>
-                            </configOptions>
-                            <typeMappings>
-                              <!-- 将 OpenAPI 的 date-time 类型映射为 Java 的 LocalDateTime -->
-                              <typeMapping>OffsetDateTime=LocalDateTime</typeMapping>
-                              <typeMapping>ZonedDateTime=LocalDateTime</typeMapping>
-                              <!-- 如果规范中也用了 Date 类型 -->
-                              <!-- <typeMapping>Date=LocalDate</typeMapping> -->
-                            </typeMappings>
-                            <!-- 关键配置：导入映射 -->
-                            <importMappings>
-                              <!-- 指定 LocalDateTime 的完整类名 -->
-                              <importMapping>java.time.OffsetDateTime=java.time.LocalDateTime</importMapping>
-                              <importMapping>java.time.ZonedDateTime=java.time.LocalDateTime</importMapping>
-                              <!-- 如果映射了 Date -->
-                              <!-- <importMapping>java.time.LocalDate=java.time.LocalDate</importMapping> -->
-                            </importMappings>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
         </plugins>
     </build>
 </project>

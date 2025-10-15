@@ -6,6 +6,9 @@ override INSTALLER = docker
 build-%:
 	$(MAKE) $*-docker-build
 
+.PHONY: build
+build: backend-docker-build frontend-docker-build runtime-docker-build
+
 .PHONY: install-%
 install-%:
 	@echo "Choose a deployment method:"

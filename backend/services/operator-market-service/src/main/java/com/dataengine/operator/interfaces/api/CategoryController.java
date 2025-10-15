@@ -1,20 +1,28 @@
 package com.dataengine.operator.interfaces.api;
 
-import com.dataengine.operator.interfaces.dto.*;
+import com.dataengine.common.interfaces.PagedResponse;
+
+import com.dataengine.common.interfaces.Response;
 import com.dataengine.operator.application.CategoryService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.dataengine.operator.interfaces.dto.CategoryTreeResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
 import java.util.List;
 
+
 @RestController
-public class CategoryController implements CategoryApi {
-    @Autowired
-    private CategoryService categoryService;
+@RequestMapping("/category")
+@RequiredArgsConstructor
+public class CategoryController {
+    private final CategoryService categoryService;
 
-
-    @Override
-    public ResponseEntity<List<CategoryTreeGet200ResponseInner>> categoryTreeGet() {
-        return ResponseEntity.ok(categoryService.getAllCategories());
+    @GetMapping("/tree")
+    public ResponseEntity<Response<PagedResponse<CategoryTreeResponse>>> categoryTreeGet() {
+        List<CategoryTreeResponse> allCategories = categoryService.getAllCategories();
+        return ResponseEntity.ok(Response.ok(PagedResponse.of(allCategories)));
     }
 }

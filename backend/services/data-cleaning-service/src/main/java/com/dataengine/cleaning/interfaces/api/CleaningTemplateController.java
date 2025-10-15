@@ -5,41 +5,52 @@ import com.dataengine.cleaning.application.service.CleaningTemplateService;
 import com.dataengine.cleaning.interfaces.dto.CleaningTemplate;
 import com.dataengine.cleaning.interfaces.dto.CreateCleaningTemplateRequest;
 import com.dataengine.cleaning.interfaces.dto.UpdateCleaningTemplateRequest;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.dataengine.common.interfaces.PagedResponse;
+import com.dataengine.common.interfaces.Response;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
 
 @RestController
-public class CleaningTemplateController implements CleaningTemplateApi {
+@RequestMapping("/cleaning/templates")
+@RequiredArgsConstructor
+public class CleaningTemplateController {
+    private final CleaningTemplateService cleaningTemplateService;
 
-    @Autowired
-    private CleaningTemplateService cleaningTemplateService;
-
-    @Override
-    public ResponseEntity<List<CleaningTemplate>> cleaningTemplatesGet() {
-        return ResponseEntity.ok(cleaningTemplateService.getTemplates());
+    @GetMapping
+    public ResponseEntity<Response<PagedResponse<CleaningTemplate>>> cleaningTemplatesGet() {
+        return ResponseEntity.ok(Response.ok(PagedResponse.of(cleaningTemplateService.getTemplates())));
     }
 
-    @Override
-    public ResponseEntity<CleaningTemplate> cleaningTemplatesPost(CreateCleaningTemplateRequest request) {
-        return ResponseEntity.ok(cleaningTemplateService.createTemplate(request));
+    @PostMapping
+    public ResponseEntity<Response<CleaningTemplate>> cleaningTemplatesPost(
+            @RequestBody CreateCleaningTemplateRequest request) {
+        return ResponseEntity.ok(Response.ok(cleaningTemplateService.createTemplate(request)));
     }
 
-    @Override
-    public ResponseEntity<CleaningTemplate> cleaningTemplatesTemplateIdGet(String templateId) {
-        return ResponseEntity.ok(cleaningTemplateService.getTemplate(templateId));
+    @GetMapping("/{templateId}")
+    public ResponseEntity<Response<CleaningTemplate>> cleaningTemplatesTemplateIdGet(
+            @PathVariable("templateId") String templateId) {
+        return ResponseEntity.ok(Response.ok(cleaningTemplateService.getTemplate(templateId)));
     }
 
-    @Override
-    public ResponseEntity<CleaningTemplate> cleaningTemplatesTemplateIdPut(String templateId,
-                                                                           UpdateCleaningTemplateRequest request) {
-        return ResponseEntity.ok(cleaningTemplateService.updateTemplate(templateId, request));
+    @PutMapping("/{templateId}")
+    public ResponseEntity<Response<CleaningTemplate>> cleaningTemplatesTemplateIdPut(
+            @PathVariable("templateId") String templateId, @RequestBody UpdateCleaningTemplateRequest request) {
+        return ResponseEntity.ok(Response.ok(cleaningTemplateService.updateTemplate(templateId, request)));
     }
 
-    @Override
-    public ResponseEntity<Void> cleaningTemplatesTemplateIdDelete(String templateId) {
+    @DeleteMapping("/{templateId}")
+    public ResponseEntity<Response<Object>> cleaningTemplatesTemplateIdDelete(
+            @PathVariable("templateId") String templateId) {
         cleaningTemplateService.deleteTemplate(templateId);
         return ResponseEntity.noContent().build();
     }
