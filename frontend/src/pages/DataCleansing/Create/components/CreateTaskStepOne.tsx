@@ -24,9 +24,9 @@ export default function CreateTaskStepOne({
     name: string;
     description: string;
     datasetId: string;
-    targetDatasetName: string;
+    destDatasetName: string;
     type: DatasetType;
-    targetDatasetType: DatasetSubType;
+    destDatasetType: DatasetSubType;
   };
   setTaskConfig: (config: any) => void;
 }) {
@@ -41,7 +41,7 @@ export default function CreateTaskStepOne({
     fetchDatasets();
   }, []);
 
-  const targetDatasetTypeOptions = useMemo(() => {
+  const destDatasetTypeOptions = useMemo(() => {
     const options =
       datasetTypes.find((item) => item.value === taskConfig?.type)?.options ??
       [];
@@ -89,7 +89,7 @@ export default function CreateTaskStepOne({
           }))}
         />
       </Form.Item>
-      <Form.Item label="目标数据集名称" name="targetDatasetName" required>
+      <Form.Item label="目标数据集名称" name="destDatasetName" required>
         <Input placeholder="输入目标数据集名称" />
       </Form.Item>
       <Form.Item
@@ -104,17 +104,17 @@ export default function CreateTaskStepOne({
         />
       </Form.Item>
       <Form.Item
-        name="targetDatasetType"
+        name="destDatasetType"
         rules={[{ required: true, message: "请选择目标数据类型" }]}
       >
         <RadioCard
-          options={targetDatasetTypeOptions}
-          value={taskConfig.targetDatasetType}
+          options={destDatasetTypeOptions}
+          value={taskConfig.destDatasetType}
           onChange={(type) => {
-            form.setFieldValue("targetDatasetType", type);
+            form.setFieldValue("destDatasetType", type);
             setTaskConfig({
               ...taskConfig,
-              targetDatasetType: type as DatasetSubType,
+              destDatasetType: type as DatasetSubType,
             });
           }}
         />

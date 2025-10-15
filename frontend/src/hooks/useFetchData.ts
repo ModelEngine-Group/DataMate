@@ -2,11 +2,13 @@
 import { useState } from "react";
 import { useDebouncedEffect } from "./useDebouncedEffect";
 import Loading from "@/utils/loading";
+import { App } from "antd";
 
 export default function useFetchData<T>(
   fetchFunc: (params?: any) => Promise<any>,
   mapDataFunc: (data: any) => T = (data) => data as T
 ) {
+  const { message } = App.useApp();
   // 表格数据
   const [tableData, setTableData] = useState<T[]>([]);
   // 设置加载状态
@@ -57,29 +59,32 @@ export default function useFetchData<T>(
     const { keywords, filter, current, pageSize } = searchParams;
     Loading.show();
     setLoading(true);
-    const { data } = await fetchFunc({
-      ...filter,
-      keywords,
-      type: getFirstOfArray(filter?.type) || undefined,
-      status: getFirstOfArray(filter?.status) || undefined,
-      tags: filter?.tags?.length ? filter.tags.join(",") : undefined,
-      page: current - 1,
-      size: pageSize,
-    });
-    setPagination((prev) => ({
-      ...prev,
-      total: data?.totalElements || 0,
-    }));
-    let result = [];
-    if (mapDataFunc) {
-      result = data?.content.map(mapDataFunc) ?? [];
+    try {
+      const { data } = await fetchFunc({
+        ...filter,
+        keywords,
+        type: getFirstOfArray(filter?.type) || undefined,
+        status: getFirstOfArray(filter?.status) || undefined,
+        tags: filter?.tags?.length ? filter.tags.join(",") : undefined,
+        page: current - 1,
+        size: pageSize,
+      });
+      setPagination((prev) => ({
+        ...prev,
+        total: data?.totalElements || 0,
+      }));
+      let result = [];
+      if (mapDataFunc) {
+        result = data?.content.map(mapDataFunc) ?? [];
+      }
+      setTableData(result);
+      console.log(data, result.map(mapDataFunc));
+    } catch (error) {
+      message.error("数据获取失败，请稍后重试");
+    } finally {
+      Loading.hide();
+      setLoading(false);
     }
-    setTableData(result);
-    Loading.hide();
-    setLoading(false);
-    console.log(data);
-    
-    console.log(data, result.map(mapDataFunc));
   }
 
   useDebouncedEffect(
@@ -87,7 +92,7 @@ export default function useFetchData<T>(
       fetchData();
     },
     [searchParams],
-    500
+    searchParams?.keywords ? 500 : 0
   );
 
   return {

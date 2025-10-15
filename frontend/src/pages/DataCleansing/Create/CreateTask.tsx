@@ -18,8 +18,8 @@ export default function CleansingTaskCreate() {
     name: "",
     description: "",
     srcDatasetId: "",
-    targetDatasetName: "",
-    targetDatasetType: DatasetSubType.TEXT_DOCUMENT,
+    destDatasetName: "",
+    destDatasetType: DatasetSubType.TEXT_DOCUMENT,
     type: DatasetType.TEXT,
   });
 
@@ -46,13 +46,11 @@ export default function CleansingTaskCreate() {
     switch (currentStep) {
       case 1: {
         const values = form.getFieldsValue();
-        console.log(values);
-
         return (
           values.name &&
           values.srcDatasetId &&
-          values.targetDatasetName &&
-          values.targetDatasetType
+          values.destDatasetName &&
+          values.destDatasetType
         );
       }
       case 2:
