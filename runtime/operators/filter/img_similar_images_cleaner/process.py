@@ -20,8 +20,9 @@ from typing import List, Dict, Any
 
 import cv2
 import numpy as np
+from sqlalchemy import text
 
-from data_platform.sqlite_manager.sqlite_manager import SQLiteManager
+from data_platform.sql_manager.sql_manager import SQLManager
 from data_platform.common.utils import get_now_time
 from data_platform.common.utils import bytes_to_numpy
 from data_platform.core.base_op import Filter
@@ -149,35 +150,47 @@ class ImgSimilarImagesCleaner(Filter):
         des_matrix_binary = zlib.compress(des_matrix.tobytes())  # 使用 zlib 进行压缩数组
         timestamp = get_now_time('Asia/Shanghai', '%Y-%m-%d %H:%M:%S', file_name,
                                  "ImgSimilarCleaner")
-        query_sql = str(self.sql_dict.get("query_sql"))
         query_task_uuid_sql = str(self.sql_dict.get("query_task_uuid_sql"))
         insert_sql = str(self.sql_dict.get("insert_sql"))
         create_tables_sql = str(self.sql_dict.get("create_tables_sql"))
-        db_path = str(self.sql_dict.get("db_path"))
 
-        db_manager = SQLiteManager()
+        db_manager = SQLManager()
         try:
-            self.conn = db_manager.create_connect(db_path)
+            self.conn = db_manager.create_connect()
         except Exception as e:
             logger.error("fileName: %s, database connection failed: %s", file_name, str(e))
             raise RuntimeError(82000, str(e)) from None
 
         with self.conn as connection:
             """从数据库中获取文件特征、比较相似度，插入新的文件特征"""
-            connection.execute(create_tables_sql)
-            result = connection.execute(query_task_uuid_sql, [self.task_uuid]).fetchall()
+            with self.conn as connection:
+                connection.execute(text(create_tables_sql))
+            result = connection.execute(query_task_uuid_sql, {"task_uuid": self.task_uuid}).fetchall()
             total_count = len(result)
-            for i in range(0, total_count, self.page_size):
-                rows = connection.execute(query_sql, [self.task_uuid, self.page_size, i]).fetchall()
-                # 对应任务uuid，最后一页没有数据，跳出循环
-                if not rows:
-                    break
-                # 对两张图片进行相似度比较
-                if self.determine_similar_images(rows, p_hash, des_matrix, file_name):
+            if self.has_similar_images(connection, des_matrix, file_name, p_hash, total_count):
                     return np.array([])
-            connection.execute(insert_sql, [self.task_uuid, p_hash, des_matrix_binary, str(des_matrix.shape),
-                                            file_name.encode("utf-8").hex(), timestamp])
+
+            insert_data = {
+                "task_uuid": self.task_uuid,
+                "p_hash": p_hash,
+                "des_matrix": des_matrix_binary,
+                "matrix_shape": str(des_matrix.shape),
+                "file_name": file_name.encode("utf-8").hex(),
+                "timestamp": timestamp
+            }
+            connection.execute(text(insert_sql),insert_data)
         return img
+
+    def has_similar_images(self, connection, des_matrix, file_name, p_hash, total_count):
+        for i in range(0, total_count, self.page_size):
+            query_sql = self.sql_dict.get("query_sql")
+            rows = connection.execute(text(query_sql), {"task_uuid": self.task_uuid, "ge": self.page_size, "le": i}).fetchall()
+            # 对应任务uuid，最后一页没有数据，跳出循环
+            if not rows:
+                break            # 对两张图片进行相似度比较
+            if self.determine_similar_images(rows, p_hash, des_matrix, file_name):
+                return True
+        return False
 
     def determine_similar_images(self, file_features: List, p_hash: str, des_matrix: np.ndarray,
                                  file_name: str) -> bool:
