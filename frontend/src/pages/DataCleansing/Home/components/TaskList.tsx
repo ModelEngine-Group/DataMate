@@ -32,14 +32,6 @@ export default function TaskList() {
   const [viewMode, setViewMode] = useState<"card" | "list">("list");
   const filterOptions = [
     {
-      key: "type",
-      label: "类型",
-      options: [
-        { label: "所有类型", value: "all" },
-        ...Object.values(templateTypesMap),
-      ],
-    },
-    {
       key: "status",
       label: "状态",
       options: [

@@ -49,14 +49,27 @@ export default function CreateTaskStepOne({
     return options;
   }, [taskConfig?.type]);
 
+  const handleValuesChange = (currentValue, allValues) => {
+    const [key, value] = Object.entries(currentValue)[0];
+    let dataset = null;
+    if (key === "srcDatasetId") {
+      dataset = datasets.find((d) => d.id === value);
+      setTaskConfig({
+        ...taskConfig,
+        ...allValues,
+        srcDatasetName: dataset?.name || "",
+      });
+    } else {
+      setTaskConfig({ ...taskConfig, ...allValues });
+    }
+  };
+
   return (
     <Form
       layout="vertical"
       form={form}
       initialValues={taskConfig}
-      onValuesChange={(_, values) =>
-        setTaskConfig({ ...taskConfig, ...values })
-      }
+      onValuesChange={handleValuesChange}
     >
       <h2 className="font-medium text-gray-900 text-lg mb-2">任务信息</h2>
       <Form.Item label="任务名称" name="name" required>

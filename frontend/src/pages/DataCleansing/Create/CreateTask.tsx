@@ -18,6 +18,7 @@ export default function CleansingTaskCreate() {
     name: "",
     description: "",
     srcDatasetId: "",
+    srcDatasetName: "",
     destDatasetName: "",
     destDatasetType: DatasetSubType.TEXT_DOCUMENT,
     type: DatasetType.TEXT,
@@ -34,7 +35,7 @@ export default function CleansingTaskCreate() {
   const handleSave = async () => {
     const task = {
       ...taskConfig,
-      operators: selectedOperators,
+      instance: selectedOperators,
     };
     console.log("创建任务:", task);
     navigate("/data/cleansing");

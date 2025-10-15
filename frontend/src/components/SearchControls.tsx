@@ -117,11 +117,11 @@ export function SearchControls({
 
   return (
     <div className={className}>
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex items-center justify-between gap-8">
         {/* Left side - Search and Filters */}
         <div className="flex items-center gap-2 flex-1">
           {/* Search */}
-          <div className="relative flex-1 max-w-200">
+          <div className="relative flex-1">
             <Input
               allowClear
               placeholder={searchPlaceholder}

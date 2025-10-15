@@ -1,11 +1,8 @@
 import React, { useState } from "react";
 import { Card, Input, Tag, Select, Button } from "antd";
-import {
-  SettingOutlined,
-  DeleteOutlined,
-  ShareAltOutlined,
-} from "@ant-design/icons";
+import { DeleteOutlined } from "@ant-design/icons";
 import { CleansingTemplate, OperatorI } from "../../cleansing.model";
+import { Workflow } from "lucide-react";
 
 interface OperatorFlowProps {
   selectedOperators: OperatorI[];
@@ -78,7 +75,7 @@ const OperatorFlow: React.FC<OperatorFlowProps> = ({
       <div className="px-4 pb-2 border-b border-gray-200">
         <div className="flex justify-between items-start">
           <span className="font-semibold text-base flex items-center gap-2">
-            <SettingOutlined />
+            <Workflow className="w-5 h-5" />
             算子编排({selectedOperators.length}){" "}
             <Button
               type="link"
@@ -114,7 +111,7 @@ const OperatorFlow: React.FC<OperatorFlowProps> = ({
       >
         {selectedOperators.length === 0 && (
           <div className="text-center py-16 text-gray-400 border-2 border-dashed border-gray-100 rounded-lg">
-            <ShareAltOutlined className="text-5xl mb-4 opacity-50" />
+            <Workflow className="text-5xl mb-4 opacity-50" />
             <div className="text-lg font-medium mb-2">开始构建您的算子流程</div>
             <div className="text-sm">
               从左侧算子库拖拽算子到此处，或点击算子添加

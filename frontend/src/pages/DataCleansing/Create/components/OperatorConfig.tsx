@@ -1,8 +1,8 @@
 import React from "react";
 import { Tag, Divider, Form } from "antd";
-import { SettingOutlined } from "@ant-design/icons";
 import ParamConfig from "./ParamConfig";
 import { OperatorI } from "../../cleansing.model";
+import { Settings } from "lucide-react";
 
 // OperatorConfig/OperatorTemplate 类型需根据主文件实际导入
 interface OperatorConfigProps {
@@ -28,7 +28,7 @@ const OperatorConfig: React.FC<OperatorConfigProps> = ({
     <div className="w-1/4 flex flex-col h-screen">
       <div className="px-4 pb-4 border-b border-gray-200">
         <span className="font-semibold text-base flex items-center gap-2">
-          <SettingOutlined />
+          <Settings />
           参数配置
         </span>
       </div>
@@ -69,7 +69,7 @@ const OperatorConfig: React.FC<OperatorConfigProps> = ({
           </div>
         ) : (
           <div className="text-center py-12 text-gray-400">
-            <SettingOutlined className="text-5xl mb-4 opacity-50" />
+            <Settings className="text-5xl mb-4 opacity-50" />
             <div>请选择一个算子进行参数配置</div>
           </div>
         )}
