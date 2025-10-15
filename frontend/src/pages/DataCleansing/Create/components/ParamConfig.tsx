@@ -1,8 +1,9 @@
 import React from "react";
 import { Input, Select, Radio, Checkbox, Form, InputNumber, Slider } from "antd";
+import { OperatorI } from "../../cleansing.model";
 
 interface ParamConfigProps {
-  operator: any;
+  operator: OperatorI;
   paramKey: string;
   param: any;
   onParamChange?: (operatorId: string, paramKey: string, value: any) => void;

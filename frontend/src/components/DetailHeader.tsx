@@ -26,11 +26,11 @@ interface DetailHeaderProps<T> {
   operations: OperationItem[];
 }
 
-const DetailHeader: React.FC<DetailHeaderProps<any>> = <T,>({
+function DetailHeader<T>({
   data,
   statistics,
   operations,
-}: DetailHeaderProps<T>) => {
+}: DetailHeaderProps<T>): React.ReactNode {
   return (
     <Card>
       <div className="flex items-start justify-between">
@@ -56,16 +56,20 @@ const DetailHeader: React.FC<DetailHeaderProps<any>> = <T,>({
                 </Tag>
               )}
             </div>
-            <p className="text-gray-700 mb-4">{data.description}</p>
-            {data?.tags?.map((tag) => (
-              <Tag
-                key={tag.id}
-                className="mr-1"
-                style={{ background: tag.color }}
-              >
-                {tag.name}
-              </Tag>
-            ))}
+            <p className="text-gray-700 mb-2">{data.description}</p>
+            {data?.tags && (
+              <div className="flex flex-wrap mb-2">
+                {data?.tags?.map((tag) => (
+                  <Tag
+                    key={tag.id}
+                    className="mr-1"
+                    style={{ background: tag.color }}
+                  >
+                    {tag.name}
+                  </Tag>
+                ))}
+              </div>
+            )}
             <div className="flex items-center gap-6 text-sm">
               {statistics.map((stat, idx) => (
                 <div key={idx} className="flex items-center gap-1">
@@ -122,6 +126,6 @@ const DetailHeader: React.FC<DetailHeaderProps<any>> = <T,>({
       </div>
     </Card>
   );
-};
+}
 
 export default DetailHeader;

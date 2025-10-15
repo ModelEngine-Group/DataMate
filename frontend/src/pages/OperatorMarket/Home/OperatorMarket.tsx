@@ -1,17 +1,11 @@
 import { useState } from "react";
-import { Button, Badge, List, Avatar, Tag } from "antd";
-import { FilterOutlined, StarFilled } from "@ant-design/icons";
+import { Button } from "antd";
+import { FilterOutlined } from "@ant-design/icons";
 import {
   Plus,
-  Edit,
-  Trash2,
   X,
   Code,
   Cpu,
-  ImageIcon,
-  FileText,
-  Music,
-  Video,
   Brain,
   Zap,
   Settings,

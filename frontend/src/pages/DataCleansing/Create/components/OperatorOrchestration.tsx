@@ -8,17 +8,14 @@ import {
 import { CleansingTemplate, OperatorI } from "../../cleansing.model";
 
 interface OperatorFlowProps {
-  operators: OperatorI[];
-  OPERATOR_CATEGORIES: {
-    [key: string]: { name: string; icon: React.ReactNode };
-  };
+  selectedOperators: OperatorI[];
+  configOperator: OperatorI | null;
   templates: CleansingTemplate[];
   currentTemplate: CleansingTemplate | null;
   setCurrentTemplate: (template: CleansingTemplate | null) => void;
-  selectedOperator: string | null;
-  setSelectedOperator: (id: string | null) => void;
   removeOperator: (id: string) => void;
-  setOperators: (operators: OperatorI[]) => void;
+  setSelectedOperators: (operators: OperatorI[]) => void;
+  setConfigOperator: (operator: OperatorI | null) => void;
   handleDragStart: (
     e: React.DragEvent,
     operator: OperatorI,
@@ -34,13 +31,12 @@ interface OperatorFlowProps {
 }
 
 const OperatorFlow: React.FC<OperatorFlowProps> = ({
-  OPERATOR_CATEGORIES,
-  operators,
+  selectedOperators,
+  configOperator,
   templates,
   currentTemplate,
-  selectedOperator,
-  setOperators,
-  setSelectedOperator,
+  setSelectedOperators,
+  setConfigOperator,
   removeOperator,
   setCurrentTemplate,
   handleDragStart,
@@ -56,21 +52,23 @@ const OperatorFlow: React.FC<OperatorFlowProps> = ({
   // 添加编号修改处理函数
   const handleIndexChange = (operatorId: string, newIndex: string) => {
     const index = Number.parseInt(newIndex);
-    if (isNaN(index) || index < 1 || index > operators.length) {
+    if (isNaN(index) || index < 1 || index > selectedOperators.length) {
       return; // 无效输入，不处理
     }
 
-    const currentIndex = operators.findIndex((op) => op.id === operatorId);
+    const currentIndex = selectedOperators.findIndex(
+      (op) => op.id === operatorId
+    );
     if (currentIndex === -1) return;
 
     const targetIndex = index - 1; // 转换为0基索引
     if (currentIndex === targetIndex) return; // 位置没有变化
 
-    const newOperators = [...operators];
+    const newOperators = [...selectedOperators];
     const [movedOperator] = newOperators.splice(currentIndex, 1);
     newOperators.splice(targetIndex, 0, movedOperator);
 
-    setOperators(newOperators);
+    setSelectedOperators(newOperators);
     setEditingIndex(null);
   };
 
@@ -81,14 +79,15 @@ const OperatorFlow: React.FC<OperatorFlowProps> = ({
         <div className="flex justify-between items-start">
           <span className="font-semibold text-base flex items-center gap-2">
             <SettingOutlined />
-            算子编排({operators.length}){" "}
+            算子编排({selectedOperators.length}){" "}
             <Button
               type="link"
               size="small"
               onClick={() => {
-                setOperators([]);
-                setSelectedOperator(null);
+                setConfigOperator(null);
+                setSelectedOperators([]);
               }}
+              disabled={selectedOperators.length === 0}
             >
               清空
             </Button>
@@ -113,7 +112,7 @@ const OperatorFlow: React.FC<OperatorFlowProps> = ({
         onDragLeave={handleContainerDragLeave}
         onDrop={handleDropToContainer}
       >
-        {operators.length === 0 && (
+        {selectedOperators.length === 0 && (
           <div className="text-center py-16 text-gray-400 border-2 border-dashed border-gray-100 rounded-lg">
             <ShareAltOutlined className="text-5xl mb-4 opacity-50" />
             <div className="text-lg font-medium mb-2">开始构建您的算子流程</div>
@@ -122,12 +121,14 @@ const OperatorFlow: React.FC<OperatorFlowProps> = ({
             </div>
           </div>
         )}
-        {operators.map((operator, index) => (
+        {selectedOperators.map((operator, index) => (
           <Card
             size="small"
             key={operator.id}
             style={
-              selectedOperator === operator.id ? { borderColor: "#1677ff" } : {}
+              configOperator?.id === operator.id
+                ? { borderColor: "#1677ff" }
+                : {}
             }
             hoverable
             draggable
@@ -136,7 +137,7 @@ const OperatorFlow: React.FC<OperatorFlowProps> = ({
             onDragOver={(e) => handleItemDragOver(e, operator.id)}
             onDragLeave={handleItemDragLeave}
             onDrop={(e) => handleItemDrop(e, index)}
-            onClick={() => setSelectedOperator(operator.id)}
+            onClick={() => setConfigOperator(operator)}
           >
             <div className="flex items-center gap-1">
               {/* 可编辑编号 */}
@@ -145,7 +146,7 @@ const OperatorFlow: React.FC<OperatorFlowProps> = ({
                 <Input
                   type="number"
                   min={1}
-                  max={operators.length}
+                  max={selectedOperators.length}
                   defaultValue={index + 1}
                   className="w-10 h-6 text-xs text-center"
                   autoFocus
@@ -178,11 +179,9 @@ const OperatorFlow: React.FC<OperatorFlowProps> = ({
                 </span>
               </div>
               {/* 分类标签 */}
-              <Tag color="default">
-                {OPERATOR_CATEGORIES[operator.category]?.name}
-              </Tag>
+              <Tag color="default">分类</Tag>
               {/* 参数状态指示 */}
-              {Object.values(operator.settings).some(
+              {Object.values(operator.configs).some(
                 (param: any) =>
                   (param.type === "input" && !param.value) ||
                   (param.type === "checkbox" &&

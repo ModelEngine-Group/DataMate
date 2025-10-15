@@ -128,24 +128,19 @@ const MockAPI = {
   queryKnowledgeStatisticsUsingGet: "/knowledge/statistics", // 获取知识生成
 
   // 算子市场
-  createOperatorUsingPost: "/operators", // 创建算子
-  uploadOperatorUsingPost: "/operators/upload", // 上传算子
-  deleteCategoryUsingDelete: "/operators/categories/:categoryId", // 删除算子分类
-  createCategoryUsingPost: "/operators/categories", // 创建算子分类
-  queryCategoryTreeUsingGet: "/operators/categories/tree", // 获取算子分类树
-  createLabelUsingPost: "/operators/labels", // 创建算子标签
-  queryLabelsUsingGet: "/operators/labels", // 获取算子标签列表
-  deleteLabelsUsingDelete: "/operators/labels", // 删除算子标签
-  updateLabelByIdUsingPut: "/operators/labels/:labelId", // 更新算子标签
-  queryOperatorsUsingGet: "/operators", // 获取算子列表
+  queryOperatorsUsingPost: "/operators/list", // 获取算子列表
+  queryCategoryTreeUsingGet: "/categories/tree", // 获取算子分类树
   queryOperatorByIdUsingGet: "/operators/:operatorId", // 根据ID获取算子详情
+  createOperatorUsingPost: "/operators/create", // 创建算子
   updateOperatorByIdUsingPut: "/operators/:operatorId", // 更新算子
+  uploadOperatorUsingPost: "/operators/upload", // 上传算子
+  createLabelUsingPost: "/operators/labels", // 创建算子标签
+  queryLabelsUsingGet: "/labels", // 获取算子标签列表
+  deleteLabelsUsingDelete: "/labels", // 删除算子标签
+  updateLabelByIdUsingPut: "/labels/:labelId", // 更新算子标签
   deleteOperatorByIdUsingDelete: "/operators/:operatorId", // 删除算子
   publishOperatorUsingPost: "/operators/:operatorId/publish", // 发布算子
   unpublishOperatorUsingPost: "/operators/:operatorId/unpublish", // 下架算子
-  rateOperatorUsingPost: "/operators/:operatorId/rate", // 评分算子
-  queryOperatorRatingsUsingGet: "/operators/:operatorId/ratings", // 获取算子评分列表
-  queryOperatorStatisticsUsingGet: "/operators/statistics", // 获取算子统计信息
 };
 
 module.exports = addMockPrefix("/api", MockAPI);
