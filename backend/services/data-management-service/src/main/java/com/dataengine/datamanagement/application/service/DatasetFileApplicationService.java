@@ -16,6 +16,7 @@ import com.dataengine.datamanagement.interfaces.dto.UploadFileRequest;
 import com.dataengine.datamanagement.interfaces.dto.UploadFilesPreRequest;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.session.RowBounds;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -43,6 +44,7 @@ import java.util.UUID;
 /**
  * 数据集文件应用服务（UUID 模式）
  */
+@Slf4j
 @Service
 @Transactional
 public class DatasetFileApplicationService {
@@ -58,7 +60,7 @@ public class DatasetFileApplicationService {
     @Autowired
     public DatasetFileApplicationService(DatasetFileMapper datasetFileMapper,
                                        DatasetMapper datasetMapper, FileService fileService,
-                                       @Value("${app.file.upload-dir:./uploads}") String uploadDir) {
+                                       @Value("${app.file.upload-dir:./dataset}") String uploadDir) {
         this.datasetFileMapper = datasetFileMapper;
         this.datasetMapper = datasetMapper;
         this.fileStorageLocation = Paths.get(uploadDir).toAbsolutePath().normalize();
@@ -80,10 +82,12 @@ public class DatasetFileApplicationService {
         }
 
         String originalFilename = file.getOriginalFilename();
-        String fileName = System.currentTimeMillis() + "_" + (originalFilename != null ? originalFilename : "file");
+        String fileName = originalFilename != null ? originalFilename : "file";
         try {
             // 保存文件到磁盘
-            Path targetLocation = this.fileStorageLocation.resolve(fileName);
+            Path targetLocation = this.fileStorageLocation.resolve(datasetId + File.separator + fileName);
+            // 确保目标目录存在
+            Files.createDirectories(targetLocation);
             Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
 
             // 创建文件实体（UUID 主键）
@@ -108,6 +112,7 @@ public class DatasetFileApplicationService {
             return datasetFileMapper.findByDatasetIdAndFileName(datasetId, fileName);
 
         } catch (IOException ex) {
+            log.error("Could not store file {}", fileName, ex);
             throw new RuntimeException("Could not store file " + fileName, ex);
         }
     }

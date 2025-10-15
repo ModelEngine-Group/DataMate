@@ -206,7 +206,7 @@
     <select id="getAllDatasetStatistics" resultType="com.dataengine.datamanagement.interfaces.dto.AllDatasetStatisticsResponse">
       SELECT
         COUNT(*) AS total_datasets,
-        SUM(size_bytes) AS total_size_bytes,
+        SUM(size_bytes) AS total_size,
         SUM(file_count) AS total_files
       FROM t_dm_datasets;
     </select>

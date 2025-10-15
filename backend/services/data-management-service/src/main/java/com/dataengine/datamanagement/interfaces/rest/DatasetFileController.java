@@ -78,6 +78,7 @@ public class DatasetFileController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Response.error("参数错误", null));
         } catch (Exception e) {
+            log.error("upload fail", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Response.error("服务器错误", null));
         }
     }

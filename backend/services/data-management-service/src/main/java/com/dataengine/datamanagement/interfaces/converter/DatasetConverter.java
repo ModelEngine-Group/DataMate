@@ -24,6 +24,8 @@ public interface DatasetConverter {
     /**
      * 将数据集转换为响应
      */
+    @Mapping(source = "sizeBytes", target = "totalSize")
+    @Mapping(source = "path", target = "targetLocation")
     DatasetResponse convertToResponse(Dataset dataset);
 
     /**
