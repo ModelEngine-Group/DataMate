@@ -96,14 +96,7 @@ server:
 
 # 日志配置
 logging:
-  level:
-    com.dataengine: ${LOG_LEVEL:DEBUG}
-    org.springframework.security: ${LOG_LEVEL:DEBUG}
-    org.hibernate.SQL: ${SQL_LOG_LEVEL:WARN}
-    org.hibernate.type.descriptor.sql.BasicBinder: ${SQL_LOG_LEVEL:WARN}
-  pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{50} - %msg%n"
-    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{50} - %msg%n"
+  config: file:/opt/backend/log4j2.xml
 
 # Actuator配置
 management:
