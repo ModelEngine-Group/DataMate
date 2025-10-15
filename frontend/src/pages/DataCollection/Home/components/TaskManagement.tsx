@@ -4,7 +4,7 @@ import { SearchControls } from "@/components/SearchControls";
 import {
   deleteTaskByIdUsingDelete,
   executeTaskByIdUsingPost,
-  queryTasksUsingPost,
+  queryTasksUsingGet,
   stopTaskByIdUsingPost,
 } from "../../collection.apis";
 import { TaskStatus, type CollectionTask } from "../../collection.model";
@@ -32,7 +32,7 @@ export default function TaskManagement() {
     setSearchParams,
     fetchData,
     handleFiltersChange,
-  } = useFetchData(queryTasksUsingPost);
+  } = useFetchData(queryTasksUsingGet);
 
   const handleStartTask = async (taskId: string) => {
     await executeTaskByIdUsingPost(taskId);

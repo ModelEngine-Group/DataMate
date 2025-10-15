@@ -13,7 +13,7 @@ import {
   updateDatasetByIdUsingPut,
 } from "../dataset.api";
 import { DatasetSubType, DatasetType, DataSource } from "../dataset.model";
-import { queryTasksUsingPost } from "@/pages/DataCollection/collection.apis";
+import { queryTasksUsingGet } from "@/pages/DataCollection/collection.apis";
 import { mockPreparedTags } from "@/components/TagManagement";
 
 export default function DatasetCreate() {
@@ -77,7 +77,7 @@ export default function DatasetCreate() {
   // 获取归集任务列表
   const fetchCollectionTasks = async () => {
     try {
-      const { data } = await queryTasksUsingPost({ pageNum: 1, pageSize: 100 });
+      const { data } = await queryTasksUsingGet({ pageNum: 1, pageSize: 100 });
       const options = data.map((task: any) => ({
         label: task.name,
         value: task.id,

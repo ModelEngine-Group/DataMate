@@ -1,12 +1,12 @@
 import { get, post, put, del } from "@/utils/request";
 
 // 数据源任务相关接口
-export function queryTasksUsingPost(params?: any) {
-  return post("/api/data-collection/tasks", params);
+export function queryTasksUsingGet(params?: any) {
+  return get("/api/data-collection/tasks", params);
 }
 
 export function createTaskUsingPost(data: any) {
-  return post("/api/data-collection/tasks/create", data);
+  return post("/api/data-collection/tasks", data);
 }
 
 export function queryTaskByIdUsingGet(id: string | number) {
