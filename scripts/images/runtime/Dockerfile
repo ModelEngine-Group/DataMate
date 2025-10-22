@@ -17,8 +17,6 @@ ENV HF_HUB_DISABLE_XET=1
 
 RUN pip install -e . -i https://mirrors.huaweicloud.com/repository/pypi/simple \
     && pip install -r /opt/runtime/datamate/ops/requirements.txt -i https://mirrors.huaweicloud.com/repository/pypi/simple \
-    && pip cache purge \
-    && python -c "from unstructured.nlp.tokenize import download_nltk_packages; download_nltk_packages()" \
-    && python -c "from unstructured_inference.models.base import get_model; get_model()"
+    && pip cache purge
 
 RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime

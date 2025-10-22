@@ -1,21 +1,39 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: mysql
+  name: datamate-database
   labels:
-    app: mysql
+    app: datamate
+    tier: database
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: mysql
+      app: datamate
+      tier: database
   strategy:
     type: Recreate
   template:
     metadata:
       labels:
-        app: mysql
+        app: datamate
+        tier: database
     spec:
+      initContainers:
+        - name: init-log
+          image: mysql:8
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+          args:
+            - |
+              chown mysql:mysql /var/log/datamate/database
+              chmod 755 /var/log/datamate/database
+          volumeMounts:
+            - name: log-volume
+              mountPath: /var/log/datamate/database
+              subPath: database
       containers:
         - name: mysql
           image: mysql:8
@@ -28,6 +46,9 @@ spec:
           volumeMounts:
             - name: data-volume
               mountPath: /var/lib/mysql
+            - name: log-volume
+              mountPath: /var/log/datamate/database
+              subPath: database
             - name: init-sql
               mountPath: /docker-entrypoint-initdb.d
             - name: mysql-utf8-config
@@ -35,22 +56,27 @@ spec:
       volumes:
         - name: data-volume
           hostPath:
-            path: /opt/data-mate/data/mysql
+            path: /opt/datamate/data/mysql
+            type: DirectoryOrCreate
+        - name: log-volume
+          hostPath:
+            path: /opt/datamate/data/log
             type: DirectoryOrCreate
         - name: init-sql
           configMap:
-            name: init-sql
+            name: datamate-init-sql
         - name: mysql-utf8-config
           configMap:
-            name: mysql-utf8-config
+            name: datamate-mysql-utf8-config
 
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: mysql
+  name: datamate-database
   labels:
-    app: mysql
+    app: datamate
+    tier: database
 spec:
   type: ClusterIP
   ports:
@@ -58,4 +84,5 @@ spec:
       targetPort: 3306
       protocol: TCP
   selector:
-    app: mysql
+    app: datamate
+    tier: database

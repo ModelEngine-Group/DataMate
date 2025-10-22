@@ -4,7 +4,7 @@ import lombok.Getter;
 
 @Getter
 public enum ExecutorType {
-    DATA_PLATFORM("data_platform"),
+    DATAMATE("datamate"),
     DATA_JUICER_RAY("ray"),
     DATA_JUICER_DEFAULT("default");
 

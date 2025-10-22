@@ -15,7 +15,7 @@ from datamate.scheduler import func_scheduler
 from datamate.wrappers import WRAPPERS
 
 # 日志配置
-LOG_DIR = "/var/log/data-mate/runtime"
+LOG_DIR = "/var/log/datamate/runtime"
 os.makedirs(LOG_DIR, exist_ok=True)
 logger.add(
     f"{LOG_DIR}/runtime.log",

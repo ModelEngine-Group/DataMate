@@ -3,7 +3,7 @@
 <mapper namespace="com.datamate.cleaning.infrastructure.persistence.mapper.CleaningTaskMapper">
     <sql id="Base_Column_List">
         id, name, description, src_dataset_id, src_dataset_name, dest_dataset_id, dest_dataset_name, before_size,
-        after_size, status, created_at, started_at, finished_at
+        after_size, file_count, status, created_at, started_at, finished_at
     </sql>
 
     <select id="findTasks" resultType="com.datamate.cleaning.interfaces.dto.CleaningTask">
@@ -28,9 +28,9 @@
 
     <insert id="insertTask">
         INSERT INTO t_clean_task (id, name, description, status, src_dataset_id, src_dataset_name, dest_dataset_id,
-                                  dest_dataset_name, before_size, after_size, created_at)
+                                  dest_dataset_name, before_size, after_size, file_count, created_at)
         VALUES (#{id}, #{name}, #{description}, #{status}, #{srcDatasetId}, #{srcDatasetName}, #{destDatasetId},
-                #{destDatasetName}, ${beforeSize}, ${afterSize}, NOW())
+                #{destDatasetName}, #{beforeSize}, #{afterSize}, #{fileCount}, NOW())
     </insert>
 
     <update id="updateTask">

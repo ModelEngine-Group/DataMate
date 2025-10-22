@@ -5,6 +5,7 @@ character-set-server = utf8mb4
 collation-server = utf8mb4_unicode_ci
 # 或者使用 utf8_general_ci (性能稍好，但排序规则稍宽松)
 default-time-zone = 'Asia/Shanghai'
+log_error=/var/log/datamate/database/error.log
 
 [client]
 # 设置客户端连接默认字符集

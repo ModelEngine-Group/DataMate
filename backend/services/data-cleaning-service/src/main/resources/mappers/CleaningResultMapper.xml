@@ -5,4 +5,8 @@
         DELETE FROM t_clean_result WHERE instance_id = #{instanceId}
     </delete>
 
+    <select id="countByInstanceId" resultType="java.lang.Integer">
+        SELECT COUNT(1) FROM t_clean_result WHERE instance_id = #{instanceId}
+    </select>
+
 </mapper>

@@ -1,32 +1,45 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: frontend
+  name: datamate-frontend
   labels:
-    app: frontend
+    app: datamate
+    tier: frontend
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: frontend
+      app: datamate
+      tier: frontend
   template:
     metadata:
       labels:
-        app: frontend
+        app: datamate
+        tier: frontend
     spec:
       containers:
-      - name: frontend
-        image: frontend
-        imagePullPolicy: IfNotPresent
-        ports:
-        - containerPort: 80
+        - name: frontend
+          image: datamate-frontend
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: log-volume
+              mountPath: /var/log/datamate/frontend
+              subPath: frontend
+      volumes:
+        - name: log-volume
+          hostPath:
+            path: /opt/datamate/data/log
+            type: DirectoryOrCreate
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: frontend
+  name: datamate-frontend
   labels:
-    app: frontend
+    app: datamate
+    tier: frontend
 spec:
   type: NodePort
   ports:
@@ -35,4 +48,5 @@ spec:
       nodePort: 30000
       protocol: TCP
   selector:
-    app: frontend
+    app: datamate
+    tier: frontend
