@@ -20,6 +20,7 @@ def _import_operators():
     from . import img_formatter
     from . import file_exporter
     from . import slide_formatter
+    from . import unstructured_formatter
 
 
 _import_operators()
