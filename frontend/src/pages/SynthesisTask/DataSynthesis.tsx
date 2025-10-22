@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Tabs, Button, Card } from "antd";
+import { Tabs, Button } from "antd";
 import { Plus, ArrowRight } from "lucide-react";
 import DataAnnotation from "../DataAnnotation/Annotate/components/TextAnnotation";
 import { useNavigate } from "react-router";
@@ -8,7 +8,7 @@ import SynthesisTaskTab from "./components/SynthesisTaskTab";
 import DevelopmentInProgress from "@/components/DevelopmentInProgress";
 
 export default function DataSynthesisPage() {
-  return <DevelopmentInProgress />;
+  return <DevelopmentInProgress showTime="2025.11.30" />;
   const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState("tasks");

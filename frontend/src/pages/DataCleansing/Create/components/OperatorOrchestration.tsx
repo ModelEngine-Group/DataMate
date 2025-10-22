@@ -105,7 +105,7 @@ const OperatorFlow: React.FC<OperatorFlowProps> = ({
       </div>
       {/* 编排区域 */}
       <div
-        className="flex-1 overflow-auto p-4 flex flex-col gap-2"
+        className="flex-overflow-auto p-4 gap-2"
         onDragOver={(e) => e.preventDefault()}
         onDragLeave={handleContainerDragLeave}
         onDrop={handleDropToContainer}

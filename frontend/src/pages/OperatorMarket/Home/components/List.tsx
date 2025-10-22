@@ -1,6 +1,6 @@
-import { Button, Avatar, List, Tag, Badge } from "antd";
+import { Button, List, Tag, Badge } from "antd";
 import { DeleteOutlined, EditOutlined, StarFilled } from "@ant-design/icons";
-import { Brain, Code, Cpu, Package, Zap, Settings, X } from "lucide-react";
+import { Zap, Settings, X } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { Operator } from "../../operator.model";
@@ -49,20 +49,10 @@ export function ListView({ operators, pagination }) {
       statusConfig[status as keyof typeof statusConfig] || statusConfig.active
     );
   };
-  const getTypeIcon = (type: string) => {
-    const iconMap = {
-      preprocessing: Code,
-      training: Brain,
-      inference: Cpu,
-      postprocessing: Package,
-    };
-    const IconComponent = iconMap[type as keyof typeof iconMap] || Code;
-    return <IconComponent className="w-4 h-4" />;
-  };
 
   return (
     <List
-      className="p-4 overflow-auto mx-4"
+      className="p-4 flex-1 overflow-auto mx-4"
       dataSource={operators}
       pagination={pagination}
       renderItem={(operator) => (

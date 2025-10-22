@@ -123,7 +123,7 @@ export default function AnnotationTaskCreate() {
   };
 
   return (
-    <div className="h-full flex flex-col overflow-auto">
+    <div className="flex-overflow-auto">
       {/* Header */}
       <div className="flex items-center mb-2">
         <Link to="/data/annotation">
@@ -134,7 +134,7 @@ export default function AnnotationTaskCreate() {
         <h1 className="text-xl font-bold bg-clip-text">创建标注任务</h1>
       </div>
 
-      <div className="h-full flex-1 overflow-y-auto flex flex-col bg-white rounded-lg shadow-sm">
+      <div className="flex-overflow-auto bg-white rounded-lg shadow-sm">
         <div className="flex-1 overflow-y-auto p-6">
           <Form
             form={form}

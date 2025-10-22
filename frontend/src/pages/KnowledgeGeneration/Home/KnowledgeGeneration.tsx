@@ -20,7 +20,7 @@ import CardView from "@/components/CardView";
 import DevelopmentInProgress from "@/components/DevelopmentInProgress";
 
 export default function KnowledgeGenerationPage() {
-  return <DevelopmentInProgress />;
+  return <DevelopmentInProgress showTime="2025.10.30" />;
   const navigate = useNavigate();
   const [knowledgeBases, setKnowledgeBases] =
     useState<KnowledgeBase[]>(mockKnowledgeBases);

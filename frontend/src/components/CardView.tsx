@@ -168,12 +168,12 @@ function CardView<T extends BaseCardDataType>(props: CardViewProps<T>) {
   const ops = (item) =>
     typeof operations === "function" ? operations(item) : operations;
   return (
-    <div className="flex-1 flex flex-col overflow-auto">
-      <div className="overflow-auto grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+    <div className="flex-overflow-hidden">
+      <div className="flex-overflow-auto grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
         {data.map((item) => (
           <div
             key={item.id}
-            className="border border-gray-100 rounded-lg p-4 bg-white hover:shadow-lg transition-shadow duration-200"
+            className="border-card p-4 bg-white hover:shadow-lg transition-shadow duration-200"
           >
             <div className="flex flex-col space-y-4 h-full">
               {/* Header */}

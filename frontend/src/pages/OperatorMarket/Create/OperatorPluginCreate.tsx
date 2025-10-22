@@ -123,7 +123,7 @@ export default function OperatorPluginCreate() {
   };
 
   return (
-    <div className="h-full flex flex-col overflow-auto bg-gray-50">
+    <div className="flex-overflow-auto bg-gray-50">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-4">
@@ -167,8 +167,8 @@ export default function OperatorPluginCreate() {
       </div>
 
       {/* Content */}
-      <div className="h-full flex flex-col flex-1 overflow-y-auto p-6 mt-4 bg-white rounded-md shadow">
-        <div className="h-full w-full flex flex-col flex-1 overflow-y-auto">
+      <div className="flex-overflow-auto p-6 mt-4 bg-white border-card">
+        <div className="flex-overflow-auto">
           {uploadStep === "upload" && (
             <UploadStep onUpload={handleFileUpload} isUploading={isUploading} />
           )}

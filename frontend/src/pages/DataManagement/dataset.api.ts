@@ -97,13 +97,13 @@ export function createDatasetTagUsingPost(data: any) {
 }
 
 // 更新数据集标签
-export function updateDatasetTagByIdUsingPut(id: string | number, data: any) {
-  return put(`/api/data-management/tags/${id}`, data);
+export function updateDatasetTagUsingPut(data: any) {
+  return put(`/api/data-management/tags`, data);
 }
 
 // 删除数据集标签
-export function deleteDatasetTagByIdUsingDelete(id: string | number) {
-  return del(`/api/data-management/tags/${id}`);
+export function deleteDatasetTagUsingDelete(data: any) {
+  return del(`/api/data-management/tags`, data);
 }
 
 // 数据集质量检查

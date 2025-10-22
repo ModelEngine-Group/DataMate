@@ -1,15 +1,15 @@
 import { useState, useRef } from "react";
-import { Card, Select, Input, Button, Badge, Divider, Form, message } from "antd";
 import {
-  Plus,
-  ArrowLeft,
-  Play,
-  Save,
-  RefreshCw,
-  FileText,
-  Code,
-  X,
-} from "lucide-react";
+  Card,
+  Select,
+  Input,
+  Button,
+  Badge,
+  Divider,
+  Form,
+  message,
+} from "antd";
+import { Plus, ArrowLeft, Play, Save, RefreshCw, Code, X } from "lucide-react";
 import { useNavigate } from "react-router";
 import { mockTemplates } from "@/mock/annotation";
 import DevelopmentInProgress from "@/components/DevelopmentInProgress";
@@ -17,9 +17,11 @@ import DevelopmentInProgress from "@/components/DevelopmentInProgress";
 const { TextArea } = Input;
 
 export default function InstructionTemplateCreate() {
-  return <DevelopmentInProgress />;
+  return <DevelopmentInProgress showTime="2025.11.30" />;
   const navigate = useNavigate();
-  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(
+    null
+  );
   const [isTestingTemplate, setIsTestingTemplate] = useState(false);
   const [templates, setTemplates] = useState<Template[]>(mockTemplates);
   const [variables, setVariables] = useState<string[]>([]);
@@ -131,10 +133,7 @@ export default function InstructionTemplateCreate() {
       {/* Header */}
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center">
-          <Button
-            onClick={() => navigate("/data/synthesis/task")}
-            type="text"
-          >
+          <Button onClick={() => navigate("/data/synthesis/task")} type="text">
             <ArrowLeft className="w-4 h-4 mr-2" />
           </Button>
           <h1 className="text-xl font-bold bg-clip-text">
@@ -177,7 +176,9 @@ export default function InstructionTemplateCreate() {
           <Form.Item label="模板描述" name="description">
             <Input placeholder="简要描述模板的用途和特点" />
           </Form.Item>
-          <h2 className="font-medium text-gray-900 text-lg mt-6 mb-2">Prompt内容</h2>
+          <h2 className="font-medium text-gray-900 text-lg mt-6 mb-2">
+            Prompt内容
+          </h2>
           <Form.Item
             label="Prompt内容"
             name="prompt"
@@ -194,7 +195,9 @@ export default function InstructionTemplateCreate() {
             提示：使用 {"{变量名}"} 格式定义变量，例如 {"{text}"} 或 {"{input}"}
           </p>
           <div className="mb-4">
-            <span className="text-sm font-semibold text-gray-700">变量管理</span>
+            <span className="text-sm font-semibold text-gray-700">
+              变量管理
+            </span>
             <div className="flex flex-wrap gap-2 min-h-[50px] p-3 border rounded-xl bg-gray-50 mt-2">
               {variables.map((variable, index) => (
                 <Badge
@@ -226,13 +229,19 @@ export default function InstructionTemplateCreate() {
                 className="h-8 text-sm"
                 onPressEnter={handleAddVariable}
               />
-              <Button onClick={handleAddVariable} type="default" className="px-4 text-sm">
+              <Button
+                onClick={handleAddVariable}
+                type="default"
+                className="px-4 text-sm"
+              >
                 <Plus className="w-3 h-3 mr-1" />
                 添加
               </Button>
             </div>
           </div>
-          <h2 className="font-medium text-gray-900 text-lg mb-2 pt-2">模板测试</h2>
+          <h2 className="font-medium text-gray-900 text-lg mb-2 pt-2">
+            模板测试
+          </h2>
           <div className="grid grid-cols-2 gap-4">
             <Form.Item label="测试输入" name="testInput">
               <TextArea

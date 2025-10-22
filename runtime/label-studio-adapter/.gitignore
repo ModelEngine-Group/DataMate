@@ -1,0 +1,6 @@
+# Local Development Environment Files
+.env
+.dev.env
+
+# logs
+logs/

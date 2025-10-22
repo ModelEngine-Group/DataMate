@@ -2,8 +2,9 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   labels:
-    app: backend
-  name: backend
+    app: datamate
+    tier: backend
+  name: datamate-backend
 rules:
   - verbs:
       - create
@@ -33,83 +34,89 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   labels:
-    app: backend
-  name: backend
+    app: datamate
+    tier: backend
+  name: datamate-backend
 
 ---
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   labels:
-    app: backend
-  name: backend
+    app: datamate
+    tier: backend
+  name: datamate-backend
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: backend
+  name: datamate-backend
 subjects:
   - kind: ServiceAccount
-    name: backend
+    name: datamate-backend
 
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: backend
+  name: datamate-backend
   labels:
-    app: backend
+    app: datamate
+    tier: backend
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: backend
+      app: datamate
+      tier: backend
   template:
     metadata:
       labels:
-        app: backend
+        app: datamate
+        tier: backend
     spec:
-      serviceAccountName: backend
+      serviceAccountName: datamate-backend
       containers:
-      - name: backend
-        image: backend
-        imagePullPolicy: IfNotPresent
-        env:
-          - name: namespace
-            valueFrom:
-              fieldRef:
-                fieldPath: metadata.namespace
-          - name: SPRING_CONFIG_LOCATION
-            value: file:/opt/backend/application.yml
-        ports:
-        - containerPort: 8080
-        volumeMounts:
-        - name: dataset-volume
-          mountPath: /dataset
-        - name: flow-volume
-          mountPath: /flow
-        - name: log-volume
-          mountPath: /var/log/data-mate
+        - name: backend
+          image: datamate-backend
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: namespace
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: SPRING_CONFIG_LOCATION
+              value: file:/opt/backend/application.yml
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: dataset-volume
+              mountPath: /dataset
+            - name: flow-volume
+              mountPath: /flow
+            - name: log-volume
+              mountPath: /var/log/datamate
       volumes:
-      - name: dataset-volume
-        hostPath:
-          path: /opt/data-mate/data/dataset
-          type: DirectoryOrCreate
-      - name: flow-volume
-        hostPath:
-          path: /opt/data-mate/data/flow
-          type: DirectoryOrCreate
-      - name: log-volume
-        hostPath:
-          path: /opt/data-mate/data/log
-          type: DirectoryOrCreate
+        - name: dataset-volume
+          hostPath:
+            path: /opt/datamate/data/dataset
+            type: DirectoryOrCreate
+        - name: flow-volume
+          hostPath:
+            path: /opt/datamate/data/flow
+            type: DirectoryOrCreate
+        - name: log-volume
+          hostPath:
+            path: /opt/datamate/data/log
+            type: DirectoryOrCreate
 
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: backend
+  name: datamate-backend
   labels:
-    app: backend
+    app: datamate
+    tier: backend
 spec:
   type: ClusterIP
   ports:
@@ -117,4 +124,5 @@ spec:
       targetPort: 8080
       protocol: TCP
   selector:
-    app: backend
+    app: datamate
+    tier: backend

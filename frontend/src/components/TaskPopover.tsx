@@ -89,7 +89,7 @@ export default function TaskPopover() {
                 {tasks.map((task) => (
                   <div
                     key={task.id}
-                    className="p-3 border border-gray-100 rounded-lg hover:bg-gray-50"
+                    className="p-3 border-card hover:bg-gray-50"
                   >
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">

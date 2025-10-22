@@ -28,7 +28,7 @@ import { SearchControls } from "@/components/SearchControls";
 import DevelopmentInProgress from "@/components/DevelopmentInProgress";
 
 export default function RatioTasksPage() {
-  return <DevelopmentInProgress />;
+  return <DevelopmentInProgress showTime="2025.11.30" />;
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");

@@ -11,22 +11,12 @@ import {
   FileText,
   Download,
 } from "lucide-react";
-import {
-  Card,
-  Button,
-  Badge,
-  Input,
-  Tabs,
-  Modal,
-  Breadcrumb,
-  Tag,
-} from "antd";
-import {
-  mockChunks,
-  mockQAPairs,
-  sliceOperators,
-} from "@/mock/knowledgeBase";
-import type { KnowledgeBase, KBFile } from "@/pages/KnowledgeGeneration/knowledge-base.model";
+import { Card, Button, Badge, Input, Tabs, Modal, Breadcrumb, Tag } from "antd";
+import { mockChunks, mockQAPairs, sliceOperators } from "@/mock/knowledgeBase";
+import type {
+  KnowledgeBase,
+  KBFile,
+} from "@/pages/KnowledgeGeneration/knowledge-base.model";
 import { Link, useNavigate } from "react-router";
 import DetailHeader from "@/components/DetailHeader";
 import DevelopmentInProgress from "@/components/DevelopmentInProgress";
@@ -59,7 +49,7 @@ const getStatusColor = (status: string) => {
 };
 
 const KnowledgeBaseFileDetail: React.FC = () => {
-  return <DevelopmentInProgress />;
+  return <DevelopmentInProgress showTime="2025.10.30" />;
   const navigate = useNavigate();
   // 假设通过 props 或路由参数获取 selectedFile/selectedKB
   const [selectedFile] = useState<KBFile>(

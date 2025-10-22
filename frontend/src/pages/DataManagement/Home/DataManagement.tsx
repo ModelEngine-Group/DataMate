@@ -20,8 +20,8 @@ import {
   deleteDatasetByIdUsingDelete,
   createDatasetTagUsingPost,
   queryDatasetTagsUsingGet,
-  updateDatasetTagByIdUsingPut,
-  deleteDatasetTagByIdUsingDelete,
+  deleteDatasetTagUsingDelete,
+  updateDatasetTagUsingPut,
 } from "../dataset.api";
 import { formatBytes } from "@/utils/unit";
 import EditDataset from "../Create/EditDataset";
@@ -295,8 +295,8 @@ export default function DatasetManagementPage() {
           {/* tasks */}
           <TagManager
             onCreate={createDatasetTagUsingPost}
-            onDelete={deleteDatasetTagByIdUsingDelete}
-            onUpdate={updateDatasetTagByIdUsingPut}
+            onDelete={(ids: string) => deleteDatasetTagUsingDelete({ ids })}
+            onUpdate={updateDatasetTagUsingPut}
             onFetch={queryDatasetTagsUsingGet}
           />
           <Link to="/data/management/create">

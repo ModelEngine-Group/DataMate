@@ -129,7 +129,7 @@ const Filters: React.FC<FiltersProps> = ({
   );
 
   return (
-    <div className="p-4 space-y-4 h-full overflow-y-auto">
+    <div className="p-6 space-y-4 h-full overflow-y-auto">
       {/* Filter Header */}
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium text-gray-900 flex items-center gap-2">
@@ -142,7 +142,7 @@ const Filters: React.FC<FiltersProps> = ({
               className="cursor-pointer hover:text-blue-500"
             ></Button>
           </Tooltip>
-          筛选器
+          <h4>筛选器</h4>
         </h3>
         {hasActiveFilters && (
           <span

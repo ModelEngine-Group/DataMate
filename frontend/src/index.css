@@ -43,3 +43,27 @@
   visibility: visible;
   transform: translateX(0);
 }
+
+@layer components {
+  .flex-center {
+    @apply flex items-center justify-center;
+  }
+  .flex-overflow-auto {
+    @apply flex-1 flex flex-col overflow-auto h-full;
+  }
+  .flex-overflow-hidden {
+    @apply flex flex-col h-full overflow-hidden;
+  }
+  .border-card {
+    @apply border border-[#f0f0f0] rounded-lg bg-white;
+  }
+  .border {
+    @apply border border-gray-100;
+  }
+  .border-bottom {
+    @apply border-b border-gray-100;
+  }
+  .border-top {
+    @apply border-t border-gray-100;
+  }
+}

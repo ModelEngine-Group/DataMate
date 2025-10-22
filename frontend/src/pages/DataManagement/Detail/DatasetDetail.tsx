@@ -121,7 +121,7 @@ export default function DatasetDetail() {
     {
       icon: <Clock className="text-blue-400 w-4 h-4" />,
       key: "time",
-      value: dataset?.createdAt,
+      value: dataset?.updatedAt,
     },
   ];
 
@@ -200,7 +200,7 @@ export default function DatasetDetail() {
           },
         }}
       />
-      <div className="h-full flex flex-col flex-1 overflow-auto p-6 pt-2 bg-white rounded-md shadow">
+      <div className="flex-overflow-auto p-6 pt-2 bg-white rounded-md shadow">
         <Tabs activeKey={activeTab} items={tabList} onChange={setActiveTab} />
         <div className="h-full overflow-auto">
           {activeTab === "overview" && (

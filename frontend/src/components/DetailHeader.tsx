@@ -48,7 +48,7 @@ function DetailHeader<T>({
       <div className="flex items-start justify-between">
         <div className="flex items-start gap-4 flex-1">
           <div
-            className={`w-16 h-16 text-white rounded-xl flex items-center justify-center shadow-lg ${
+            className={`w-16 h-16 text-white rounded-lg flex-center shadow-lg ${
               data?.iconColor
                 ? data.iconColor
                 : "bg-gradient-to-br from-blue-100 to-blue-200"

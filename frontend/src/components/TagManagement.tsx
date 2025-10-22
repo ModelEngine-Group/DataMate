@@ -30,7 +30,7 @@ function CustomTag({
   return (
     <div
       key={tag.id}
-      className="flex items-center justify-between px-4 py-2 border border-gray-100 rounded-md hover:bg-gray-50"
+      className="flex items-center justify-between px-4 py-2 border-card hover:bg-gray-50"
     >
       {editingTag?.id === tag.id ? (
         <div className="flex gap-2 flex-1">
@@ -92,17 +92,6 @@ function CustomTag({
   );
 }
 
-export const mockPreparedTags = [
-  { id: "1", name: "重要" },
-  { id: "2", name: "待处理" },
-  { id: "3", name: "已完成" },
-  { id: "4", name: "审核中" },
-  { id: "5", name: "高优先级" },
-  { id: "6", name: "低优先级" },
-  { id: "7", name: "客户A" },
-  { id: "8", name: "客户B" },
-];
-
 const TagManager: React.FC = ({
   onFetch,
   onCreate,
@@ -112,7 +101,7 @@ const TagManager: React.FC = ({
   onFetch: () => Promise<any>;
   onCreate: (tag: Pick<TagItem, "name">) => Promise<{ ok: boolean }>;
   onDelete: (tagId: number) => Promise<{ ok: boolean }>;
-  onUpdate: (oldTagId: number, newTag: string) => Promise<{ ok: boolean }>;
+  onUpdate: (tag: TagItem) => Promise<{ ok: boolean }>;
 }) => {
   const [showTagManager, setShowTagManager] = useState(false);
   const { message } = App.useApp();
@@ -120,9 +109,6 @@ const TagManager: React.FC = ({
   const [newTag, setNewTag] = useState("");
   const [editingTag, setEditingTag] = useState<string | null>(null);
   const [editingTagValue, setEditingTagValue] = useState("");
-
-  // 预置标签
-  const [preparedTags, setPreparedTags] = useState(mockPreparedTags);
 
   // 获取标签列表
   const fetchTags = async () => {
@@ -161,7 +147,7 @@ const TagManager: React.FC = ({
 
   const updateTag = async (oldTag: TagItem, newTag: string) => {
     try {
-      await onUpdate?.(oldTag.id, { ...oldTag, name: newTag });
+      await onUpdate?.({ ...oldTag, name: newTag });
       fetchTags();
       message.success("标签更新成功");
     } catch (error) {
@@ -213,54 +199,47 @@ const TagManager: React.FC = ({
         title="标签管理"
         width={500}
       >
-        <div className="space-y-4">
+        <div className="space-y-4 flex-overflow">
           {/* Add New Tag */}
-          <div className="space-y-2">
-            <div className="flex gap-2">
-              <Input
-                placeholder="输入标签名称..."
-                value={newTag}
-                allowClear
-                onChange={(e) => setNewTag(e.target.value)}
-                onKeyPress={(e) => {
-                  if (e.key === "Enter") {
-                    addTag(e.target.value);
-                  }
-                }}
-              />
-              <Button
-                type="primary"
-                onClick={handleCreateNewTag}
-                disabled={!newTag.trim()}
-                icon={<PlusOutlined />}
-              >
-                添加
-              </Button>
+          <div className="flex gap-2">
+            <Input
+              placeholder="输入标签名称..."
+              value={newTag}
+              allowClear
+              onChange={(e) => setNewTag(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === "Enter") {
+                  addTag(e.target.value);
+                }
+              }}
+            />
+            <Button
+              type="primary"
+              onClick={handleCreateNewTag}
+              disabled={!newTag.trim()}
+              icon={<PlusOutlined />}
+            >
+              添加
+            </Button>
+          </div>
+
+          <div className="flex-overflow">
+            <div className="overflow-auto grid grid-cols-2 gap-2">
+              {tags.map((tag) => (
+                <CustomTag
+                  isEditable
+                  key={tag.id}
+                  tag={tag}
+                  editingTag={editingTag}
+                  editingTagValue={editingTagValue}
+                  setEditingTag={setEditingTag}
+                  setEditingTagValue={setEditingTagValue}
+                  handleEditTag={handleEditTag}
+                  handleCancelEdit={handleCancelEdit}
+                  handleDeleteTag={handleDeleteTag}
+                />
+              ))}
             </div>
-          </div>
-
-          <h2 className="font-large font-bold w-full">预置标签</h2>
-          <div className="grid grid-cols-2 gap-2">
-            {preparedTags.length > 0 &&
-              preparedTags.map((tag) => <CustomTag key={tag.id} tag={tag} />)}
-          </div>
-
-          <h2 className="font-large font-bold w-full">自定义标签</h2>
-          <div className="grid grid-cols-2 gap-2 mt-4">
-            {tags.map((tag) => (
-              <CustomTag
-                isEditable
-                key={tag.id}
-                tag={tag}
-                editingTag={editingTag}
-                editingTagValue={editingTagValue}
-                setEditingTag={setEditingTag}
-                setEditingTagValue={setEditingTagValue}
-                handleEditTag={handleEditTag}
-                handleCancelEdit={handleCancelEdit}
-                handleDeleteTag={handleDeleteTag}
-              />
-            ))}
           </div>
         </div>
       </Drawer>

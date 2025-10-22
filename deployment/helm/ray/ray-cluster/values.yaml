@@ -6,12 +6,12 @@
 # in this Helm chart.
 
 image:
-  repository: runtime
+  repository: datamate-runtime
   tag: latest
   pullPolicy: IfNotPresent
 
 nameOverride: "kuberay"
-fullnameOverride: ""
+fullnameOverride: "datamate-raycluster"
 
 imagePullSecrets: []
 # - name: an-existing-secret
@@ -68,7 +68,7 @@ head:
     - name: RAY_TQDM_PATCH_PRINT
       value: "0"
     - name: MYSQL_HOST
-      value: "mysql"
+      value: "datamate-database"
     - name: MYSQL_PORT
       value: "3306"
     - name: MYSQL_USER
@@ -114,15 +114,15 @@ head:
   volumes:
     - name: log-volume
       hostPath:
-        path: /opt/data-mate/data/log
+        path: /opt/datamate/data/log
         type: DirectoryOrCreate
     - name: dataset-volume
       hostPath:
-        path: /opt/data-mate/data/dataset
+        path: /opt/datamate/data/dataset
         type: DirectoryOrCreate
     - name: flow-volume
       hostPath:
-        path: /opt/data-mate/data/flow
+        path: /opt/datamate/data/flow
         type: DirectoryOrCreate
   volumeMounts:
     - mountPath: /tmp/ray
@@ -136,7 +136,7 @@ head:
   # Follows standard K8s container spec.
   sidecarContainers:
     - name: runtime
-      image: runtime
+      image: datamate-runtime
       imagePullPolicy: IfNotPresent
       command:
         - python
@@ -145,7 +145,7 @@ head:
         - "8081"
       env:
         - name: MYSQL_HOST
-          value: "mysql"
+          value: "datamate-database"
         - name: MYSQL_PORT
           value: "3306"
         - name: MYSQL_USER
@@ -160,7 +160,7 @@ head:
         - mountPath: /tmp/ray
           name: log-volume
           subPath: ray/head
-        - mountPath: /var/log/data-mate
+        - mountPath: /var/log/datamate
           name: log-volume
         - mountPath: /dataset
           name: dataset-volume
@@ -212,7 +212,7 @@ worker:
     - name: RAY_TQDM_PATCH_PRINT
       value: "0"
     - name: MYSQL_HOST
-      value: "mysql"
+      value: "datamate-database"
     - name: MYSQL_PORT
       value: "3306"
     - name: MYSQL_USER
@@ -257,15 +257,15 @@ worker:
   volumes:
     - name: log-volume
       hostPath:
-        path: /opt/data-mate/data/log
+        path: /opt/datamate/data/log
         type: DirectoryOrCreate
     - name: dataset-volume
       hostPath:
-        path: /opt/data-mate/data/dataset
+        path: /opt/datamate/data/dataset
         type: DirectoryOrCreate
     - name: flow-volume
       hostPath:
-        path: /opt/data-mate/data/flow
+        path: /opt/datamate/data/flow
         type: DirectoryOrCreate
   volumeMounts:
     - mountPath: /tmp/ray
@@ -350,15 +350,15 @@ additionalWorkerGroups:
     volumes:
       - name: log-volume
         hostPath:
-          path: /opt/data-mate/data/log
+          path: /opt/datamate/data/log
           type: DirectoryOrCreate
       - name: dataset-volume
         hostPath:
-          path: /opt/data-mate/data/dataset
+          path: /opt/datamate/data/dataset
           type: DirectoryOrCreate
       - name: flow-volume
         hostPath:
-          path: /opt/data-mate/data/flow
+          path: /opt/datamate/data/flow
           type: DirectoryOrCreate
     volumeMounts:
       - mountPath: /tmp/ray

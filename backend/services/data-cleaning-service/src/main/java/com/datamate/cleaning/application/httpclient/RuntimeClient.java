@@ -14,7 +14,7 @@ import java.time.Duration;
 
 @Slf4j
 public class RuntimeClient {
-    private static final String BASE_URL = "http://runtime:8081/api";
+    private static final String BASE_URL = "http://datamate-runtime:8081/api";
 
     private static final String CREATE_TASK_URL = BASE_URL + "/task/{0}/submit";
 

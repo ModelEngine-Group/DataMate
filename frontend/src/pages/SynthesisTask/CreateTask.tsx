@@ -41,7 +41,7 @@ import DevelopmentInProgress from "@/components/DevelopmentInProgress";
 const { TextArea } = Input;
 
 export default function SynthesisTaskCreate() {
-  return <DevelopmentInProgress />;
+  return <DevelopmentInProgress showTime="2025.11.30" />;
   const navigate = useNavigate();
   const [form] = Form.useForm();
   const [searchQuery, setSearchQuery] = useState("");

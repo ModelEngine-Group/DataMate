@@ -2,7 +2,6 @@ import RadioCard from "@/components/RadioCard";
 import { Input, Select, Form } from "antd";
 import { datasetTypes } from "../../dataset.const";
 import { useEffect, useState } from "react";
-import { mockPreparedTags } from "@/components/TagManagement";
 import { queryDatasetTagsUsingGet } from "../../dataset.api";
 
 export default function BasicInformation({
@@ -26,26 +25,11 @@ export default function BasicInformation({
   const fetchTags = async () => {
     try {
       const { data } = await queryDatasetTagsUsingGet();
-      const preparedTags = mockPreparedTags.map((tag) => ({
-        label: tag.name,
-        value: tag.name,
-      }));
       const customTags = data.map((tag) => ({
         label: tag.name,
         value: tag.name,
       }));
-      setTagOptions([
-        {
-          label: <span>预置标签</span>,
-          title: "prepared",
-          options: preparedTags,
-        },
-        {
-          label: <span>自定义标签</span>,
-          title: "custom",
-          options: customTags,
-        },
-      ]);
+      setTagOptions(customTags);
     } catch (error) {
       console.error("Error fetching tags: ", error);
     }

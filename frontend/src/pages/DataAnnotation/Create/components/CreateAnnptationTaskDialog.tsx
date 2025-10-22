@@ -1,5 +1,8 @@
 import { queryDatasetsUsingGet } from "@/pages/DataManagement/dataset.api";
-import { datasetTypeMap } from "@/pages/DataManagement/dataset.const";
+import {
+  datasetTypeMap,
+  mapDataset,
+} from "@/pages/DataManagement/dataset.const";
 import { Button, Form, Input, Modal, Select } from "antd";
 import TextArea from "antd/es/input/TextArea";
 import { Database } from "lucide-react";
@@ -26,7 +29,7 @@ export default function CreateAnnotationTask({
         page: 0,
         size: 1000,
       });
-      setDatasets(data.content || []);
+      setDatasets(data.content.map(mapDataset) || []);
     };
     fetchDatasets();
   }, [open]);
@@ -74,22 +77,20 @@ export default function CreateAnnotationTask({
         >
           <Select
             placeholder="请选择数据集"
-            options={datasets.map((dataset) => ({
-              label: (
-                <div className="flex items-center justify-between gap-3 py-2">
-                  <div className="flex items-center font-sm text-gray-900">
-                    <span>
-                      {dataset.icon || <Database className="w-4 h-4 mr-2" />}
-                    </span>
-                    <span>{dataset.name}</span>
+            options={datasets.map((dataset) => {
+              return {
+                label: (
+                  <div className="flex items-center justify-between gap-3 py-2">
+                    <div className="flex items-center font-sm text-gray-900">
+                      <span className="mr-2">{dataset.icon}</span>
+                      <span>{dataset.name}</span>
+                    </div>
+                    <div className="text-xs text-gray-500">{dataset.size}</div>
                   </div>
-                  <div className="text-xs text-gray-500">
-                    {datasetTypeMap[dataset?.datasetType]?.label}
-                  </div>
-                </div>
-              ),
-              value: dataset.id,
-            }))}
+                ),
+                value: dataset.id,
+              };
+            })}
           />
         </Form.Item>
       </Form>

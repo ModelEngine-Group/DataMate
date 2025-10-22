@@ -56,7 +56,7 @@ export default function ProcessFlowDiagram() {
   ];
 
   return (
-    <div className="rounded-xl border border-gray-200 p-6 bg-white">
+    <div className="border-card p-6">
       <div className="w-full flex items-center justify-center">
         <div className="w-full flex items-center space-x-12">
           {flowSteps.map((step, index) => {

@@ -56,7 +56,7 @@ export default function DatasetCreate() {
       </div>
 
       {/* form */}
-      <div className="h-full flex flex-col flex-1 overflow-auto bg-white border-gray-200 rounded shadow-sm">
+      <div className="flex-overflow-auto border-card">
         <div className="flex-1 p-6 overflow-auto">
           <Form
             form={form}
@@ -67,7 +67,7 @@ export default function DatasetCreate() {
             <BasicInformation data={newDataset} setData={setNewDataset} />
           </Form>
         </div>
-        <div className="flex gap-2 justify-end p-6 border-t border-gray-200">
+        <div className="flex gap-2 justify-end p-6 border-top">
           <Button onClick={() => navigate("/data/management")}>取消</Button>
           <Button type="primary" onClick={handleSubmit}>
             确定

@@ -23,6 +23,8 @@ import {
   Music,
   Videotape,
   Database,
+  Image,
+  ScanText,
 } from "lucide-react";
 
 export const datasetTypeMap: Record<
@@ -41,8 +43,8 @@ export const datasetTypeMap: Record<
     value: DatasetType.TEXT,
     label: "文本",
     order: 1,
-    icon: FileText,
-    iconColor: "#3b82f6",
+    icon: ScanText,
+    iconColor: "blue",
     children: [
       DatasetSubType.TEXT_DOCUMENT,
       DatasetSubType.TEXT_WEB,
@@ -54,8 +56,8 @@ export const datasetTypeMap: Record<
     value: DatasetType.IMAGE,
     label: "图像",
     order: 2,
-    icon: FileImage,
-    iconColor: "#3b82f6",
+    icon: Image,
+    iconColor: "green",
     children: [DatasetSubType.IMAGE_IMAGE, DatasetSubType.IMAGE_CAPTION],
     description: "用于处理和分析图像数据的数据集",
   },
@@ -64,7 +66,7 @@ export const datasetTypeMap: Record<
     label: "音频",
     order: 3,
     icon: Music,
-    iconColor: "#3b82f6",
+    iconColor: "orange",
     children: [DatasetSubType.AUDIO_AUDIO, DatasetSubType.AUDIO_JSONL],
     description: "用于处理和分析音频数据的数据集",
   },
@@ -73,7 +75,7 @@ export const datasetTypeMap: Record<
     label: "视频",
     order: 3,
     icon: Video,
-    iconColor: "#3b82f6",
+    iconColor: "purple",
     children: [DatasetSubType.VIDEO_VIDEO, DatasetSubType.VIDEO_JSONL],
     description: "用于处理和分析视频数据的数据集",
   },
@@ -193,14 +195,22 @@ export const dataSourceMap: Record<string, { label: string; value: string }> = {
 export const dataSourceOptions = Object.values(dataSourceMap);
 
 export function mapDataset(dataset: Dataset) {
-  const IconComponent = datasetTypeMap[dataset?.datasetType]?.icon || null;
+  const { icon: IconComponent, iconColor } =
+    datasetTypeMap[dataset?.datasetType] || {};
   return {
     ...dataset,
     type: datasetTypeMap[dataset.datasetType]?.label || "未知",
     size: formatBytes(dataset.totalSize || 0),
     createdAt: formatDateTime(dataset.createdAt) || "--",
     updatedAt: formatDateTime(dataset?.updatedAt) || "--",
-    icon: IconComponent ? <IconComponent className="w-4 h-4" /> : <Database />,
+    icon: IconComponent ? (
+      <IconComponent
+        className="w-5 h-5 text-gray-500"
+        // style={{ color: iconColor }}
+      />
+    ) : (
+      <Database />
+    ),
     status: datasetStatusMap[dataset.status],
     statistics: [
       { label: "文件数", value: dataset.fileCount || 0 },

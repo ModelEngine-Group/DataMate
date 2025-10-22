@@ -2,7 +2,7 @@ import { get, post, put, del, download } from "@/utils/request";
 
 // 标注任务管理相关接口
 export function queryAnnotationTasksUsingGet(params?: any) {
-  return get("/api/project/mappings/list", params);
+  return get("/project/mappings/list", params);
 }
 
 export function createAnnotationTaskUsingPost(data: any) {

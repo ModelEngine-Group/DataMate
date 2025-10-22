@@ -429,7 +429,7 @@ export default function ImageAnnotationWorkspace({
               }`}
               onClick={() => setSelectedImageIndex(index)}
             >
-              <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center text-sm font-medium mr-3">
+              <div className="w-8 h-8 bg-gray-200 rounded flex-center text-sm font-medium mr-3">
                 {index + 1}
               </div>
               <img
@@ -462,7 +462,7 @@ export default function ImageAnnotationWorkspace({
               </div>
             </div>
 
-            <div className="flex-1 border rounded-lg overflow-hidden bg-gray-100 relative">
+            <div className="flex-1 border-card overflow-hidden bg-gray-100 relative">
               <canvas
                 ref={canvasRef}
                 width={800}

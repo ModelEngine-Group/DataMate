@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import { Button, Menu, Popover } from "antd";
 import {
   CloseOutlined,
@@ -105,7 +105,6 @@ const AsiderAndHeaderLayout = () => {
           defaultOpenKeys={["synthesis"]}
           onClick={({ key }) => {
             setActiveItem(key);
-            console.log(`/data/${key}`);
             navigate(`/data/${key}`);
           }}
         />
@@ -169,10 +168,7 @@ const AsiderAndHeaderLayout = () => {
         <div
           className="fixed inset-0 z-40"
           onClick={() => {
-            console.log("clicked outside");
-
             setTaskCenterVisible(false);
-            toggleShowTaskPopover(false);
           }}
         />
       )}

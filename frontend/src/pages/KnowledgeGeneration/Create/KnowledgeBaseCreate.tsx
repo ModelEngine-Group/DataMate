@@ -37,7 +37,7 @@ const { TextArea } = Input;
 const { Option } = Select;
 
 const KnowledgeBaseCreatePage: React.FC = () => {
-  return <DevelopmentInProgress />;
+  return <DevelopmentInProgress showTime="2025.10.30" />;
   const navigate = useNavigate();
   const [form] = Form.useForm();
   const [knowledgeBases, setKnowledgeBases] =

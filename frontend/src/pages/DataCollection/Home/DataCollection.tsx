@@ -10,7 +10,7 @@ export default function DataCollection() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("task-management");
 
-  return <DevelopmentInProgress />;
+  return <DevelopmentInProgress showTime="2025.10.30" />;
 
   return (
     <div>

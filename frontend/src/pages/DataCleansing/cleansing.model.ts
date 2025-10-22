@@ -16,7 +16,11 @@ export interface CleansingTask {
     color: string;
   };
   startedAt: string;
-  progress: number;
+  progress: {
+    finishedFileNum: number;
+    process: 100,
+    totalFileNum: number;
+  };
   operators: OperatorI[];
   createdAt: string;
   updatedAt: string;

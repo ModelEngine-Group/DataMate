@@ -31,8 +31,8 @@ const { TextArea } = Input;
 const { Option } = Select;
 
 export default function CreateRatioTask() {
-  return <DevelopmentInProgress />;
-  
+  return <DevelopmentInProgress showTime="2025.11.30" />;
+
   const navigate = useNavigate();
   const [form] = Form.useForm();
   // 配比任务相关状态

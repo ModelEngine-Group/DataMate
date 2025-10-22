@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS t_clean_task
     dest_dataset_name varchar(64),
     before_size       bigint,
     after_size        bigint,
+    file_count        int,
     created_at        timestamp default current_timestamp,
     started_at        timestamp,
     finished_at       timestamp,

@@ -115,9 +115,9 @@ export default function OperatorMarketPage() {
         </div> */}
       </div>
       {/* Main Content */}
-      <div className="flex flex-1 overflow-auto h-full bg-white rounded-lg">
+      <div className="flex-overflow-auto flex-row border-card">
         <div
-          className={`border-r border-gray-200 transition-all duration-300 ${
+          className={`border-r border-gray-100 transition-all duration-300 ${
             showFilters
               ? "translate-x-0 w-56"
               : "-translate-x-full w-0 opacity-0"
@@ -130,7 +130,7 @@ export default function OperatorMarketPage() {
             setSelectedFilters={setSelectedFilters}
           />
         </div>
-        <div className="flex-1 bg-yellow flex flex-col px-4 my-4">
+        <div className="flex-overflow-auto p-6 ">
           <div className="flex w-full items-top gap-4 border-b border-gray-200 mb-4">
             {!showFilters && (
               <Button
@@ -139,9 +139,8 @@ export default function OperatorMarketPage() {
                 onClick={() => setShowFilters(true)}
               />
             )}
-            <div className="flex-1">
+            <div className="flex-1 mb-4">
               <SearchControls
-                className="mb-4"
                 searchTerm={searchParams.keyword}
                 onSearchChange={(keyword) =>
                   setSearchParams({ ...searchParams, keyword })

@@ -32,7 +32,7 @@ const RadioCard: React.FC<RadioCardProps> = ({
       {options.map((option) => (
         <div
           key={option.value}
-          className="border border-gray-200 rounded-lg hover:shadow-lg p-4 text-center"
+          className="border-card hover:shadow-lg p-4 text-center"
           style={{
             borderColor: value === option.value ? "#1677ff" : undefined,
             background: value === option.value ? "#e6f7ff" : undefined,

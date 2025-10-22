@@ -59,7 +59,7 @@ const defaultTemplates = [
 ];
 
 export default function CollectionTaskCreate() {
-  return <DevelopmentInProgress />;
+  return <DevelopmentInProgress showTime="2025.10.30" />;
 
   const navigate = useNavigate();
   const [form] = Form.useForm();

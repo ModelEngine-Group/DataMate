@@ -3,6 +3,7 @@ import { queryDatasetsUsingGet } from "@/pages/DataManagement/dataset.api";
 import {
   datasetTypeMap,
   datasetTypes,
+  mapDataset,
 } from "@/pages/DataManagement/dataset.const";
 import {
   Dataset,
@@ -34,7 +35,7 @@ export default function CreateTaskStepOne({
 
   const fetchDatasets = async () => {
     const { data } = await queryDatasetsUsingGet({ page: 0, size: 1000 });
-    setDatasets(data.content || []);
+    setDatasets(data.content.map(mapDataset) || []);
   };
 
   useEffect(() => {
@@ -76,22 +77,20 @@ export default function CreateTaskStepOne({
       <Form.Item label="源数据集" name="srcDatasetId" required>
         <Select
           placeholder="请选择源数据集"
-          options={datasets.map((dataset) => ({
-            label: (
-              <div className="flex items-center justify-between gap-3 py-2">
-                <div className="flex items-center font-sm text-gray-900">
-                  <span>
-                    {dataset.icon || <Database className="w-4 h-4 mr-2" />}
-                  </span>
-                  <span>{dataset.name}</span>
+          options={datasets.map((dataset) => {
+            return {
+              label: (
+                <div className="flex items-center justify-between gap-3 py-2">
+                  <div className="flex items-center font-sm text-gray-900">
+                    <span className="mr-2">{dataset.icon}</span>
+                    <span>{dataset.name}</span>
+                  </div>
+                  <div className="text-xs text-gray-500">{dataset.size}</div>
                 </div>
-                <div className="text-xs text-gray-500">
-                  {datasetTypeMap[dataset?.datasetType]?.label}
-                </div>
-              </div>
-            ),
-            value: dataset.id,
-          }))}
+              ),
+              value: dataset.id,
+            };
+          })}
         />
       </Form.Item>
       <Form.Item label="目标数据集名称" name="destDatasetName" required>

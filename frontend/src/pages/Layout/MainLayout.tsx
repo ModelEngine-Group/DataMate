@@ -9,9 +9,9 @@ const MainLayout = () => {
         {/* Sidebar */}
         <Sidebar />
         {/* Main Content */}
-        <div className="flex-1 flex flex-col overflow-auto p-6">
+        <div className="flex-overflow-auto p-6">
           {/* Content Area */}
-          <div className="flex-1 flex flex-col overflow-auto">
+          <div className="flex-overflow-auto">
             <Outlet />
           </div>
         </div>
