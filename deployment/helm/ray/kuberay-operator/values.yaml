@@ -3,13 +3,13 @@
 # Declare variables to be passed into your templates.
 
 # -- String to partially override release name.
-nameOverride: kuberay-operator
+nameOverride: datamate-kuberay-operator
 
 # -- String to fully override release name.
-fullnameOverride: kuberay-operator
+fullnameOverride: datamate-kuberay-operator
 
 # -- String to override component name.
-componentOverride: kuberay-operator
+componentOverride: datamate-kuberay-operator
 
 image:
   # -- Image repository.
@@ -32,7 +32,7 @@ serviceAccount:
   create: true
   # -- The name of the service account to use.
   # If not set and create is true, a name is generated using the fullname template.
-  name: kuberay-operator
+  name: datamate-kuberay-operator
 
 logging:
   # -- Log encoder to use for stdout (one of `json` or `console`).
@@ -88,7 +88,7 @@ featureGates:
 # Configurations for KubeRay operator metrics.
 metrics:
   # -- Whether KubeRay operator should emit control plane metrics.
-  enabled: true
+  enabled: false
   serviceMonitor:
     # -- Enable a prometheus ServiceMonitor
     enabled: false

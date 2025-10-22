@@ -6,12 +6,12 @@
 # in this Helm chart.
 
 image:
-  repository: runtime
+  repository: datamate-runtime
   tag: latest
   pullPolicy: IfNotPresent
 
 nameOverride: "kuberay"
-fullnameOverride: ""
+fullnameOverride: "datamate-raycluster"
 
 imagePullSecrets: []
 # - name: an-existing-secret
@@ -68,7 +68,7 @@ head:
     - name: RAY_TQDM_PATCH_PRINT
       value: "0"
     - name: MYSQL_HOST
-      value: "mysql"
+      value: "datamate-database"
     - name: MYSQL_PORT
       value: "3306"
     - name: MYSQL_USER
@@ -136,7 +136,7 @@ head:
   # Follows standard K8s container spec.
   sidecarContainers:
     - name: runtime
-      image: runtime
+      image: datamate-runtime
       imagePullPolicy: IfNotPresent
       command:
         - python
@@ -145,7 +145,7 @@ head:
         - "8081"
       env:
         - name: MYSQL_HOST
-          value: "mysql"
+          value: "datamate-database"
         - name: MYSQL_PORT
           value: "3306"
         - name: MYSQL_USER
@@ -212,7 +212,7 @@ worker:
     - name: RAY_TQDM_PATCH_PRINT
       value: "0"
     - name: MYSQL_HOST
-      value: "mysql"
+      value: "datamate-database"
     - name: MYSQL_PORT
       value: "3306"
     - name: MYSQL_USER
