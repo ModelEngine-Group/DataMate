@@ -1,4 +1,4 @@
-name: Backend Docker Image CI
+name: Runtime Docker Image CI
 
 on:
   push:
