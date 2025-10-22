@@ -39,8 +39,8 @@ jobs:
       - name: Set image tags
         id: set-tags
         run: |
-          # 镜像基础路径（适配你的仓库：ghcr.io/ModelEngine-Group/DataMate/backend）
-          BASE_IMAGE=ghcr.io/${{ github.repository }}/backend
+          LOWERCASE_REPO=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          BASE_IMAGE=ghcr.io/$LOWERCASE_REPO/backend
 
           # 根据触发事件设置标签
           if [[ $GITHUB_REF == refs/tags/v* ]]; then
