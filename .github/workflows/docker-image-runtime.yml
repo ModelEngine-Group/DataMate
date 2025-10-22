@@ -17,7 +17,7 @@ on:
 
 jobs:
   call-docker-build:
-    uses: .github/workflows/docker-images-reusable.yml
+    uses: ./.github/workflows/docker-images-reusable.yml
     with:
       service_name: runtime
       build_dir: .
