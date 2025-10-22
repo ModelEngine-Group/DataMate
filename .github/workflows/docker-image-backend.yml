@@ -40,7 +40,7 @@ jobs:
         id: set-tags
         run: |
           LOWERCASE_REPO=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-          BASE_IMAGE=ghcr.io/$LOWERCASE_REPO/backend
+          BASE_IMAGE=ghcr.io/$LOWERCASE_REPO/datamate-backend
 
           # 根据触发事件设置标签
           if [[ $GITHUB_REF == refs/tags/v* ]]; then
@@ -63,11 +63,22 @@ jobs:
         run: |
           # 从标签中提取版本号（main 分支默认为 latest）
           VERSION=$(echo ${{ steps.set-tags.outputs.TAGS }} | awk -F: '{print $2}')
+          echo "VERSION=$VERSION"
           make build-backend VERSION=$VERSION
+
+      - name: Tag image for GHCR
+        run: |
+          # 本地构建的镜像标签（datamate-backend:版本）
+          LOCAL_TAG="datamate-backend:$(echo ${{ steps.set-tags.outputs.TAGS }} | awk -F: '{print $2}')"
+          # 需要推送的完整标签（如 ghcr.io/modelengine-group/datamate/backend:test）
+          REMOTE_TAG="${{ steps.set-tags.outputs.TAGS }}"
+          # 给本地镜像添加远程标签
+          docker tag $LOCAL_TAG $REMOTE_TAG
 
       # 推送镜像到 GHCR（仅在 push 或手动触发时执行）
       - name: Push Backend Docker image
         if: github.event_name != 'pull_request'
         run: |
           # 推送之前构建的镜像（使用生成的标签）
+          echo "Pushing image: ${{ steps.set-tags.outputs.TAGS }}"
           docker push ${{ steps.set-tags.outputs.TAGS }}
