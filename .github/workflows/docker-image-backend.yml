@@ -2,13 +2,13 @@ name: Backend Docker Image CI
 
 on:
   push:
-    branches: [ "develop_930" ]
+    branches: [ "main", "main-test" ]
     paths:
       - 'backend/**'
       - 'scripts/images/backend/**'
       - '.github/workflows/docker-image-backend.yml'
   pull_request:
-    branches: [ "develop_930" ]
+    branches: [ "main" ]
     paths:
       - 'backend/**'
       - 'scripts/images/backend/**'
@@ -16,12 +16,58 @@ on:
   workflow_dispatch:
 
 jobs:
-
-  build:
-
+  build-and-push:
     runs-on: ubuntu-latest
+    # 仅在 push 或手动触发时推送镜像，PR 时只构建不推送
+    permissions:
+      contents: read
+      packages: write  # 授予推送镜像权限
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Build the Backend Docker image
-      run: make build-backend
+      - uses: actions/checkout@v4
+
+      # 登录到 GitHub 容器仓库（GHCR）
+      - name: Login to GHCR
+        if: github.event_name != 'pull_request'  # PR 时不登录
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # 生成镜像标签（适配 main 分支和 v* 标签）
+      - name: Set image tags
+        id: set-tags
+        run: |
+          # 镜像基础路径（适配你的仓库：ghcr.io/ModelEngine-Group/DataMate/backend）
+          BASE_IMAGE=ghcr.io/${{ github.repository }}/backend
+
+          # 根据触发事件设置标签
+          if [[ $GITHUB_REF == refs/tags/v* ]]; then
+            # 标签触发：使用标签名（如 v1.0.0 → 1.0.0）
+            TAG=${GITHUB_REF#refs/tags/v}
+            echo "TAGS=$BASE_IMAGE:$TAG" >> $GITHUB_OUTPUT
+          elif [[ $GITHUB_REF == refs/heads/main ]]; then
+            # main 分支触发：推送 latest 标签
+            echo "TAGS=$BASE_IMAGE:latest" >> $GITHUB_OUTPUT
+          # main-test分支：推送 test 标签（用于验证）
+          elif [[ $GITHUB_REF == refs/heads/main-test ]]; then
+            echo "TAGS=$BASE_IMAGE:test" >> $GITHUB_OUTPUT
+          else
+            # 其他情况（如 PR）：仅本地标签，不推送
+            echo "TAGS=$BASE_IMAGE:temp" >> $GITHUB_OUTPUT
+          fi
+
+      # 构建 Docker 镜像（使用 make 命令，动态传入版本）
+      - name: Build Backend Docker image
+        run: |
+          # 从标签中提取版本号（main 分支默认为 latest）
+          VERSION=$(echo ${{ steps.set-tags.outputs.TAGS }} | awk -F: '{print $2}')
+          make build-backend VERSION=$VERSION
+
+      # 推送镜像到 GHCR（仅在 push 或手动触发时执行）
+      - name: Push Backend Docker image
+        if: github.event_name != 'pull_request'
+        run: |
+          # 推送之前构建的镜像（使用生成的标签）
+          docker push ${{ steps.set-tags.outputs.TAGS }}
