@@ -18,7 +18,7 @@ on:
 jobs:
   call-docker-build:
     name: Build and Push Runtime Docker Image
-    uses: .github/workflows/docker-images-reusable.yml
+    uses: ./.github/workflows/docker-images-reusable.yml
     permissions:
       contents: read
       packages: write
