@@ -19,4 +19,3 @@ xmltodict==1.0.2
 zhconv==1.4.3
 sqlalchemy==2.0.40
 pymysql==1.1.1
-unstructured[pdf,docx]==0.18.15

@@ -10,8 +10,8 @@ services:
     volumes:
       - dataset_volume:/dataset
       - flow_volume:/flow
-      - log_volume:/var/log/data-mate
-    networks: [ edatamate ]
+      - log_volume:/var/log/datamate
+    networks: [ datamate ]
     depends_on:
       - mysql
 
@@ -23,8 +23,8 @@ services:
     ports:
       - "30000:80"            # nodePort → hostPort
     volumes:
-      - log_volume:/var/log/data-mate
-    networks: [ edatamate ]
+      - log_volume:/var/log/datamate
+    networks: [ datamate ]
     depends_on:
       - backend
 
@@ -41,8 +41,8 @@ services:
       - mysql_volume:/var/lib/mysql
       - ../../../scripts/db:/docker-entrypoint-initdb.d
       - ./utf8.cnf:/etc/mysql/conf.d/utf8.cnf
-      - log_volume:/var/log/data-mate
-    networks: [ edatamate ]
+      - log_volume:/var/log/datamate
+    networks: [ datamate ]
 
   runtime:
     container_name: runtime
@@ -65,22 +65,22 @@ services:
       - "8081"
     volumes:
       - ray_log_volume:/tmp/ray
-      - log_volume:/var/log/data-mate
+      - log_volume:/var/log/datamate
       - dataset_volume:/dataset
       - flow_volume:/flow
 
 volumes:
   dataset_volume:
-    name: data-mate-dataset-volume
+    name: datamate-dataset-volume
   flow_volume:
-    name: data-mate-flow-volume
+    name: datamate-flow-volume
   log_volume:
-    name: data-mate-log-volume
+    name: datamate-log-volume
   mysql_volume:
-    name: data-mate-mysql-volume
+    name: datamate-mysql-volume
   ray_log_volume:
-    name: data-mate-ray-log-volume
+    name: datamate-ray-log-volume
 
 networks:
-  edatamate:
+  datamate:
     driver: bridge

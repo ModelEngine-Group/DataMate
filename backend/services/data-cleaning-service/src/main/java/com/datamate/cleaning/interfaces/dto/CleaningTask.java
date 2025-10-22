@@ -36,6 +36,8 @@ public class CleaningTask {
 
     private long afterSize;
 
+    private int fileCount;
+
     /**
      * 任务当前状态
      */

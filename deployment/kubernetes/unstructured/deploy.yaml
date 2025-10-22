@@ -24,13 +24,6 @@ spec:
           - app.py
         ports:
         - containerPort: 8000
-        volumeMounts:
-        - name: tmp
-          mountPath: /tmp/data-mate
-      volumes:
-      - name: tmp
-        hostPath:
-          path: /tmp/data-mate
 
 ---
 apiVersion: v1

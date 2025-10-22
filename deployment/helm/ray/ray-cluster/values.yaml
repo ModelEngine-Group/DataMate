@@ -114,15 +114,15 @@ head:
   volumes:
     - name: log-volume
       hostPath:
-        path: /opt/data-mate/data/log
+        path: /opt/datamate/data/log
         type: DirectoryOrCreate
     - name: dataset-volume
       hostPath:
-        path: /opt/data-mate/data/dataset
+        path: /opt/datamate/data/dataset
         type: DirectoryOrCreate
     - name: flow-volume
       hostPath:
-        path: /opt/data-mate/data/flow
+        path: /opt/datamate/data/flow
         type: DirectoryOrCreate
   volumeMounts:
     - mountPath: /tmp/ray
@@ -160,7 +160,7 @@ head:
         - mountPath: /tmp/ray
           name: log-volume
           subPath: ray/head
-        - mountPath: /var/log/data-mate
+        - mountPath: /var/log/datamate
           name: log-volume
         - mountPath: /dataset
           name: dataset-volume
@@ -257,15 +257,15 @@ worker:
   volumes:
     - name: log-volume
       hostPath:
-        path: /opt/data-mate/data/log
+        path: /opt/datamate/data/log
         type: DirectoryOrCreate
     - name: dataset-volume
       hostPath:
-        path: /opt/data-mate/data/dataset
+        path: /opt/datamate/data/dataset
         type: DirectoryOrCreate
     - name: flow-volume
       hostPath:
-        path: /opt/data-mate/data/flow
+        path: /opt/datamate/data/flow
         type: DirectoryOrCreate
   volumeMounts:
     - mountPath: /tmp/ray
@@ -350,15 +350,15 @@ additionalWorkerGroups:
     volumes:
       - name: log-volume
         hostPath:
-          path: /opt/data-mate/data/log
+          path: /opt/datamate/data/log
           type: DirectoryOrCreate
       - name: dataset-volume
         hostPath:
-          path: /opt/data-mate/data/dataset
+          path: /opt/datamate/data/dataset
           type: DirectoryOrCreate
       - name: flow-volume
         hostPath:
-          path: /opt/data-mate/data/flow
+          path: /opt/datamate/data/flow
           type: DirectoryOrCreate
     volumeMounts:
       - mountPath: /tmp/ray

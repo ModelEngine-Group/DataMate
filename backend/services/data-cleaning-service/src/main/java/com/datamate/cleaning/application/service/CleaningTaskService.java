@@ -12,6 +12,7 @@ import com.datamate.cleaning.domain.model.TaskProcess;
 import com.datamate.cleaning.infrastructure.persistence.mapper.CleaningResultMapper;
 import com.datamate.cleaning.infrastructure.persistence.mapper.CleaningTaskMapper;
 import com.datamate.cleaning.infrastructure.persistence.mapper.OperatorInstanceMapper;
+import com.datamate.cleaning.interfaces.dto.CleaningProcess;
 import com.datamate.cleaning.interfaces.dto.CleaningTask;
 import com.datamate.cleaning.interfaces.dto.CreateCleaningTaskRequest;
 import com.datamate.cleaning.interfaces.dto.OperatorInstance;
@@ -55,7 +56,14 @@ public class CleaningTaskService {
 
     public List<CleaningTask> getTasks(String status, String keywords, Integer page, Integer size) {
         Integer offset = page * size;
-        return cleaningTaskMapper.findTasks(status, keywords, size, offset);
+        List<CleaningTask> tasks = cleaningTaskMapper.findTasks(status, keywords, size, offset);
+        tasks.forEach(this::setProcess);
+        return tasks;
+    }
+
+    private void setProcess(CleaningTask task) {
+        int count = cleaningResultMapper.countByInstanceId(task.getId());
+        task.setProgress(CleaningProcess.of(task.getFileCount(), count));
     }
 
     public int countTasks(String status, String keywords) {
@@ -80,6 +88,7 @@ public class CleaningTaskService {
         task.setDestDatasetId(destDataset.getId());
         task.setDestDatasetName(destDataset.getName());
         task.setBeforeSize(srcDataset.getTotalSize());
+        task.setFileCount(srcDataset.getFileCount());
         cleaningTaskMapper.insertTask(task);
 
         List<OperatorInstancePo> instancePos = request.getInstance().stream()
@@ -93,7 +102,9 @@ public class CleaningTaskService {
     }
 
     public CleaningTask getTask(String taskId) {
-        return cleaningTaskMapper.findTaskById(taskId);
+        CleaningTask task = cleaningTaskMapper.findTaskById(taskId);
+        setProcess(task);
+        return task;
     }
 
     @Transactional
@@ -113,7 +124,7 @@ public class CleaningTaskService {
         process.setDatasetId(task.getDestDatasetId());
         process.setDatasetPath(FLOW_PATH + "/" + task.getId() + "/dataset.jsonl");
         process.setExportPath(DATASET_PATH + "/" + task.getDestDatasetId());
-        process.setExecutorType(ExecutorType.DATA_PLATFORM.getValue());
+        process.setExecutorType(ExecutorType.DATAMATE.getValue());
         process.setProcess(instances.stream()
                 .map(instance -> Map.of(instance.getId(), instance.getOverrides()))
                 .toList());

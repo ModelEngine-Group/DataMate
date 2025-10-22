@@ -35,7 +35,7 @@ spec:
       volumes:
         - name: data-volume
           hostPath:
-            path: /opt/data-mate/data/mysql
+            path: /opt/datamate/data/mysql
             type: DirectoryOrCreate
         - name: init-sql
           configMap:
