@@ -4,20 +4,20 @@ on:
   push:
     branches: [ "main" ]
     paths:
-      - 'backend/**'
-      - 'scripts/images/backend/**'
-      - '.github/workflows/docker-image-backend.yml'
+      - 'runtime/**'
+      - 'scripts/images/runtime/**'
+      - '.github/workflows/docker-image-runtime.yml'
   pull_request:
     branches: [ "main" ]
     paths:
-      - 'backend/**'
-      - 'scripts/images/backend/**'
-      - '.github/workflows/docker-image-backend.yml'
+      - 'runtime/**'
+      - 'scripts/images/runtime/**'
+      - '.github/workflows/docker-image-runtime.yml'
   workflow_dispatch:
 
 jobs:
   call-docker-build:
     uses: .github/workflows/docker-images-reusable.yml
     with:
-      service_name: backend
+      service_name: runtime
       build_dir: .
