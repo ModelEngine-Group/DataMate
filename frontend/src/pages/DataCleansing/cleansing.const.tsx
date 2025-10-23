@@ -95,6 +95,7 @@ export const mapTask = (task: CleansingTask) => {
   const createdAt = formatDateTime(task.createdAt);
   return {
     ...task,
+    ...task.progress,
     createdAt,
     startedAt,
     finishedAt,
@@ -105,18 +106,18 @@ export const mapTask = (task: CleansingTask) => {
     before,
     after,
     statistics: [
-      { label: "进度", value: `${task.progress || 0}%` },
+      { label: "进度", value: `${task?.progress?.process || 0}%` },
       {
         label: "执行耗时",
         value: duration,
       },
       {
-        label: "处理前数据大小",
-        value: task.beforeSize ? formatBytes(task.beforeSize) : "--",
+        label: "已处理文件数",
+        value: task?.progress?.finishedFileNum || 0,
       },
       {
-        label: "处理后数据大小",
-        value: task.afterSize ? formatBytes(task.afterSize) : "--",
+        label: "总文件数",
+        value: task?.progress?.totalFileNum || 0,
       },
     ],
     lastModified: formatDateTime(task.createdAt),

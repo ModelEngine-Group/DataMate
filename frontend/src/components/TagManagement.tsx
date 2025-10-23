@@ -128,6 +128,7 @@ const TagManager: React.FC = ({
         name: tag,
       });
       fetchTags();
+      setNewTag("");
       message.success("标签添加成功");
     } catch (error) {
       message.error("添加标签失败");

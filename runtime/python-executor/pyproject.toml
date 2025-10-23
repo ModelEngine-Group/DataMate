@@ -17,7 +17,7 @@ classifiers = [
 
 # Core dependencies
 dependencies = [
-    "uvicorn",
+    "uvicorn[standard]",
     "fastapi",
     "loguru",
     "jsonargparse",

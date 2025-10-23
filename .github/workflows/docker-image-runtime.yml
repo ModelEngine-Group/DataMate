@@ -1,0 +1,27 @@
+name: Runtime Docker Image CI
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'runtime/**'
+      - 'scripts/images/runtime/**'
+      - '.github/workflows/docker-image-runtime.yml'
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'runtime/**'
+      - 'scripts/images/runtime/**'
+      - '.github/workflows/docker-image-runtime.yml'
+  workflow_dispatch:
+
+jobs:
+  call-docker-build:
+    name: Build and Push Runtime Docker Image
+    uses: ./.github/workflows/docker-images-reusable.yml
+    permissions:
+      contents: read
+      packages: write
+    with:
+      service_name: runtime
+      build_dir: .

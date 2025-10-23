@@ -93,9 +93,13 @@ function cleaningTaskItem() {
     srcDatasetName: Mock.Random.ctitle(5, 15),
     destDatasetId: Mock.Random.guid().replace(/[^a-zA-Z0-9]/g, ""),
     destDatasetName: Mock.Random.ctitle(5, 15),
-    progress: Mock.Random.float(0, 100, 2, 2),
+    progress: {
+      finishedFileNum: Mock.Random.integer(0, 100),
+      process: Mock.Random.integer(0, 100),
+      totalFileNum: 100,
+    },
     startedAt: Mock.Random.datetime("yyyy-MM-dd HH:mm:ss"),
-    endedAt: Mock.Random.datetime("yyyy-MM-dd HH:mm:ss"),
+    finishedAt: Mock.Random.datetime("yyyy-MM-dd HH:mm:ss"),
     createdAt: Mock.Random.datetime("yyyy-MM-dd HH:mm:ss"),
     updatedAt: Mock.Random.datetime("yyyy-MM-dd HH:mm:ss"),
     instance: operatorList,
@@ -244,7 +248,7 @@ module.exports = function (router) {
     const task = cleaningTaskList.find((j) => j.id === taskId);
 
     if (task) {
-      task.status = "running";
+      task.status = "RUNNING";
       task.startTime = new Date().toISOString();
 
       res.send({
@@ -252,7 +256,7 @@ module.exports = function (router) {
         msg: "Cleaning task execution started",
         data: {
           executionId: Mock.Random.guid().replace(/[^a-zA-Z0-9]/g, ""),
-          status: "running",
+          status: "RUNNING",
           message: "Task execution started successfully",
         },
       });
@@ -271,7 +275,7 @@ module.exports = function (router) {
     const task = cleaningTaskList.find((j) => j.id === taskId);
 
     if (task) {
-      task.status = "pending";
+      task.status = "PENDING";
       task.endTime = new Date().toISOString();
 
       res.send({

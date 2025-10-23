@@ -2,13 +2,13 @@ name: Frontend Docker Image CI
 
 on:
   push:
-    branches: [ "develop_930" ]
+    branches: [ "main" ]
     paths:
       - 'frontend/**'
       - 'scripts/images/frontend/**'
       - '.github/workflows/docker-image-frontend.yml'
   pull_request:
-    branches: [ "develop_930" ]
+    branches: [ "main" ]
     paths:
       - 'frontend/**'
       - 'scripts/images/frontend/**'
@@ -16,12 +16,12 @@ on:
   workflow_dispatch:
 
 jobs:
-
-  build:
-
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-      - name: Build the Frontend Docker image
-        run: make build-frontend
+  call-docker-build:
+    name: Build and Push Frontend Docker Image
+    uses: ./.github/workflows/docker-images-reusable.yml
+    permissions:
+      contents: read
+      packages: write
+    with:
+      service_name: frontend
+      build_dir: .

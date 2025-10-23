@@ -5,7 +5,7 @@ import {
 } from "../dataset.api";
 import { useEffect, useState } from "react";
 import { Dataset, DatasetType } from "../dataset.model";
-import { App, Button, Drawer, Form, Modal } from "antd";
+import { App, Button, Form, Modal } from "antd";
 
 export default function EditDataset({
   open,
@@ -16,7 +16,7 @@ export default function EditDataset({
   open: boolean;
   data: Dataset | null;
   onClose: () => void;
-  onRefresh?: () => void;
+  onRefresh?: (showMessage?: boolean) => void;
 }) {
   const [form] = Form.useForm();
   const { message } = App.useApp();
@@ -60,7 +60,7 @@ export default function EditDataset({
       await updateDatasetByIdUsingPut(data?.id, params);
       onClose();
       message.success("数据集更新成功");
-      onRefresh?.();
+      onRefresh?.(false);
     } catch (error) {
       console.error(error);
       message.error("数据集更新失败，请重试");

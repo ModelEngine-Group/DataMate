@@ -2,13 +2,13 @@ name: Backend Docker Image CI
 
 on:
   push:
-    branches: [ "develop_930" ]
+    branches: [ "main" ]
     paths:
       - 'backend/**'
       - 'scripts/images/backend/**'
       - '.github/workflows/docker-image-backend.yml'
   pull_request:
-    branches: [ "develop_930" ]
+    branches: [ "main" ]
     paths:
       - 'backend/**'
       - 'scripts/images/backend/**'
@@ -16,12 +16,12 @@ on:
   workflow_dispatch:
 
 jobs:
-
-  build:
-
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v4
-    - name: Build the Backend Docker image
-      run: make build-backend
+  call-docker-build:
+    name: Build and Push Backend Docker Image
+    uses: ./.github/workflows/docker-images-reusable.yml
+    permissions:
+      contents: read
+      packages: write
+    with:
+      service_name: backend
+      build_dir: .

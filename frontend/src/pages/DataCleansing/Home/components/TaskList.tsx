@@ -65,7 +65,7 @@ export default function TaskList() {
     fetchData();
   };
 
-  const taskOperations = (record) => {
+  const taskOperations = (record: CleansingTask) => {
     const isRunning = record.status?.value === TaskStatus.RUNNING;
     const showStart = [
       TaskStatus.PENDING,
@@ -91,7 +91,8 @@ export default function TaskList() {
       {
         key: "delete",
         label: "删除",
-        icon: <DeleteOutlined style={{ color: "#f5222d" }} />,
+        danger: true,
+        icon: <DeleteOutlined />,
         onClick: deleteTask, // implement delete logic
       },
     ];
@@ -104,12 +105,21 @@ export default function TaskList() {
       key: "name",
       fixed: "left",
       width: 150,
+      ellipsis: true,
+    },
+    {
+      title: "任务ID",
+      dataIndex: "id",
+      key: "id",
+      width: 150,
+      ellipsis: true,
     },
     {
       title: "源数据集",
       dataIndex: "srcDatasetId",
       key: "srcDatasetId",
       width: 150,
+      ellipsis: true,
       render: (_, record: CleansingTask) => {
         return (
           <Button
@@ -128,6 +138,7 @@ export default function TaskList() {
       dataIndex: "destDatasetId",
       key: "destDatasetId",
       width: 150,
+      ellipsis: true,
       render: (_, record: CleansingTask) => {
         return (
           <Button
@@ -147,47 +158,68 @@ export default function TaskList() {
       key: "status",
       width: 100,
       render: (status: any) => {
-        return <Badge color={status.color} text={status.label} />;
+        return <Badge color={status?.color} text={status?.label} />;
       },
     },
     {
-      title: "开始时间",
-      dataIndex: "startedAt",
-      key: "startedAt",
-      width: 180,
-    },
-    {
-      title: "结束时间",
-      dataIndex: "finishedAt",
-      key: "finishedAt",
-      width: 180,
-    },
-    {
       title: "进度",
-      dataIndex: "progress",
-      key: "progress",
+      dataIndex: "process",
+      key: "process",
       width: 200,
       render: (progress: number) => (
         <Progress percent={progress} size="small" />
       ),
     },
     {
-      title: "创建时间",
-      dataIndex: "createdAt",
-      key: "createdAt",
-      width: 180,
+      title: "已处理文件数",
+      dataIndex: "finishedFileNum",
+      key: "finishedFileNum",
+      width: 150,
+      align: "right",
+      ellipsis: true,
+    },
+    {
+      title: "总文件数",
+      dataIndex: "totalFileNum",
+      key: "totalFileNum",
+      width: 150,
+      align: "right",
+      ellipsis: true,
     },
     {
       title: "执行耗时",
       dataIndex: "duration",
       key: "duration",
       width: 180,
+      ellipsis: true,
+    },
+    {
+      title: "开始时间",
+      dataIndex: "startedAt",
+      key: "startedAt",
+      width: 180,
+      ellipsis: true,
+    },
+    {
+      title: "结束时间",
+      dataIndex: "finishedAt",
+      key: "finishedAt",
+      width: 180,
+      ellipsis: true,
+    },
+    {
+      title: "创建时间",
+      dataIndex: "createdAt",
+      key: "createdAt",
+      width: 180,
+      ellipsis: true,
     },
     {
       title: "数据量变化",
       dataIndex: "dataSizeChange",
       key: "dataSizeChange",
       width: 180,
+      ellipsis: true,
       render: (_: any, record: CleansingTask) => {
         if (record.before !== undefined && record.after !== undefined) {
           return `${record.before} → ${record.after}`;
@@ -207,6 +239,7 @@ export default function TaskList() {
                 <Button
                   type="text"
                   icon={op.icon}
+                  danger={op?.danger}
                   onClick={() => op.onClick(record)}
                 />
               </Tooltip>
@@ -232,6 +265,7 @@ export default function TaskList() {
         onViewModeChange={setViewMode}
         showViewToggle={true}
         onReload={fetchData}
+        onClearFilters={() => setSearchParams({ ...searchParams, filter: {} })}
       />
       {/* Task List */}
       {viewMode === "card" ? (

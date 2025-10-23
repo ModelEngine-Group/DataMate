@@ -41,6 +41,7 @@ If you like this project, please give it a Star⭐️!
 
 ```bash
 git clone git@github.com:ModelEngine-Group/DataMate.git
+cd DataMate
 ```
 
 ### Build Images

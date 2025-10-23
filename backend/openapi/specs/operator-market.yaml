@@ -1,547 +1,812 @@
-openapi: 3.0.1
+openapi: "3.0.1"
 info:
-  title: Operator Market Service API
-  description: |
-    算子市场服务API，提供算子的发布、管理和订阅功能。
-
-    主要功能：
-    - 算子发布和管理
-    - 算子版本控制
-    - 算子评分和评论
-    - 算子分类和标签
-    - 算子下载和安装
-  version: 1.0.0
-tags:
-  - name: Operator
-  - name: Category
-  - name: Label
+  title: "API Documentation"
+  version: "1.0"
 paths:
   /operators/list:
     post:
-      summary: 获取算子列表
-      deprecated: false
-      description: 分页查询算子列表，支持按分类、标签等条件筛选
-      tags:
-        - Operator
-      parameters: []
+      summary: "operatorsListPost"
+      description: "operatorsListPost"
       requestBody:
         content:
           application/json:
             schema:
-              type: object
+              type: "object"
               properties:
                 page:
-                  type: integer
-                  description: 页数
+                  type: "integer"
+                  description: ""
                 size:
-                  type: integer
-                  description: 单页数量
+                  type: "integer"
+                  description: ""
                 categories:
-                  type: array
+                  type: "array"
+                  description: ""
                   items:
-                    type: integer
-                  description: 分类id列表
+                    type: "integer"
+                  default: "new ArrayList<>()"
                 operatorName:
-                  type: string
-                  description: 算子名称
+                  type: "string"
+                  description: ""
                 labelName:
-                  type: string
-                  description: 标签名称
+                  type: "string"
+                  description: ""
                 isStar:
-                  type: boolean
-                  description: 是否收藏
-              required:
-                - page
-                - size
-                - categories
-            examples: {}
+                  type: "boolean"
+                  description: ""
+              description: ""
       responses:
-        '200':
-          description: 成功返回算子列表
+        "200":
+          description: ""
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/OperatorResponse'
-          headers: {}
-      security: []
-  /operators/create:
-    post:
-      summary: 创建新算子
-      deprecated: false
-      description: 创建并发布一个新的算子
-      tags:
-        - Operator
-      parameters: []
+                type: "object"
+                properties:
+                  code:
+                    type: "string"
+                    description: "状态码"
+                  message:
+                    type: "string"
+                    description: "消息"
+                  data:
+                    type: "object"
+                    properties:
+                      page:
+                        type: "integer"
+                        description: ""
+                        format: "int64"
+                      size:
+                        type: "integer"
+                        description: ""
+                        format: "int64"
+                      totalElements:
+                        type: "integer"
+                        description: ""
+                        format: "int64"
+                      totalPages:
+                        type: "integer"
+                        description: ""
+                        format: "int64"
+                      content:
+                        type: "array"
+                        description: ""
+                        items:
+                          type: "object"
+                          properties:
+                            id:
+                              type: "string"
+                              description: ""
+                            name:
+                              type: "string"
+                              description: ""
+                            description:
+                              type: "string"
+                              description: ""
+                            version:
+                              type: "string"
+                              description: ""
+                            inputs:
+                              type: "string"
+                              description: ""
+                            outputs:
+                              type: "string"
+                              description: ""
+                            categories:
+                              type: "array"
+                              description: ""
+                              items:
+                                type: "integer"
+                            runtime:
+                              type: "string"
+                              description: ""
+                            settings:
+                              type: "string"
+                              description: ""
+                            isStar:
+                              type: "boolean"
+                              description: ""
+                            createdAt:
+                              type: "string"
+                              description: ""
+                            updatedAt:
+                              type: "string"
+                              description: ""
+                          description: "OperatorResponse"
+                    description: "数据"
+  /operators/{id}:
+    get:
+      summary: "operatorsIdGet"
+      description: "operatorsIdGet"
+      parameters:
+        - name: "id"
+          in: "path"
+          description: ""
+          required: true
+          schema:
+            type: "string"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  code:
+                    type: "string"
+                    description: "状态码"
+                  message:
+                    type: "string"
+                    description: "消息"
+                  data:
+                    type: "object"
+                    properties:
+                      id:
+                        type: "string"
+                        description: ""
+                      name:
+                        type: "string"
+                        description: ""
+                      description:
+                        type: "string"
+                        description: ""
+                      version:
+                        type: "string"
+                        description: ""
+                      inputs:
+                        type: "string"
+                        description: ""
+                      outputs:
+                        type: "string"
+                        description: ""
+                      categories:
+                        type: "array"
+                        description: ""
+                        items:
+                          type: "integer"
+                      runtime:
+                        type: "string"
+                        description: ""
+                      settings:
+                        type: "string"
+                        description: ""
+                      isStar:
+                        type: "boolean"
+                        description: ""
+                      createdAt:
+                        type: "string"
+                        description: ""
+                      updatedAt:
+                        type: "string"
+                        description: ""
+                    description: "数据"
+    put:
+      summary: "operatorsIdPut"
+      description: "operatorsIdPut"
+      parameters:
+        - name: "id"
+          in: "path"
+          description: ""
+          required: true
+          schema:
+            type: "string"
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateOperatorRequest'
-            example: null
+              type: "object"
+              properties:
+                name:
+                  type: "string"
+                  description: ""
+                description:
+                  type: "string"
+                  description: ""
+                version:
+                  type: "string"
+                  description: ""
+                inputs:
+                  type: "string"
+                  description: ""
+                outputs:
+                  type: "string"
+                  description: ""
+                categories:
+                  type: "array"
+                  description: ""
+                  items:
+                    type: "integer"
+                runtime:
+                  type: "string"
+                  description: ""
+                settings:
+                  type: "string"
+                  description: ""
+              description: ""
       responses:
-        '201':
-          description: 算子创建成功
+        "200":
+          description: ""
           content:
             application/json:
-              schema: &ref_0
-                $ref: '#/components/schemas/OperatorResponse'
-          headers: {}
-      security: []
+              schema:
+                type: "object"
+                properties:
+                  code:
+                    type: "string"
+                    description: "状态码"
+                  message:
+                    type: "string"
+                    description: "消息"
+                  data:
+                    type: "object"
+                    properties:
+                      id:
+                        type: "string"
+                        description: ""
+                      name:
+                        type: "string"
+                        description: ""
+                      description:
+                        type: "string"
+                        description: ""
+                      version:
+                        type: "string"
+                        description: ""
+                      inputs:
+                        type: "string"
+                        description: ""
+                      outputs:
+                        type: "string"
+                        description: ""
+                      categories:
+                        type: "array"
+                        description: ""
+                        items:
+                          type: "integer"
+                      runtime:
+                        type: "string"
+                        description: ""
+                      settings:
+                        type: "string"
+                        description: ""
+                      isStar:
+                        type: "boolean"
+                        description: ""
+                      createdAt:
+                        type: "string"
+                        description: ""
+                      updatedAt:
+                        type: "string"
+                        description: ""
+                    description: "数据"
+  /operators/create:
+    post:
+      summary: "operatorsCreatePost"
+      description: "operatorsCreatePost"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: "object"
+              properties:
+                id:
+                  type: "string"
+                  description: ""
+                name:
+                  type: "string"
+                  description: ""
+                description:
+                  type: "string"
+                  description: ""
+                version:
+                  type: "string"
+                  description: ""
+                inputs:
+                  type: "string"
+                  description: ""
+                outputs:
+                  type: "string"
+                  description: ""
+                categories:
+                  type: "array"
+                  description: ""
+                  items:
+                    type: "integer"
+                runtime:
+                  type: "string"
+                  description: ""
+                settings:
+                  type: "string"
+                  description: ""
+                fileName:
+                  type: "string"
+                  description: ""
+              description: ""
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  code:
+                    type: "string"
+                    description: "状态码"
+                  message:
+                    type: "string"
+                    description: "消息"
+                  data:
+                    type: "object"
+                    properties:
+                      id:
+                        type: "string"
+                        description: ""
+                      name:
+                        type: "string"
+                        description: ""
+                      description:
+                        type: "string"
+                        description: ""
+                      version:
+                        type: "string"
+                        description: ""
+                      inputs:
+                        type: "string"
+                        description: ""
+                      outputs:
+                        type: "string"
+                        description: ""
+                      categories:
+                        type: "array"
+                        description: ""
+                        items:
+                          type: "integer"
+                      runtime:
+                        type: "string"
+                        description: ""
+                      settings:
+                        type: "string"
+                        description: ""
+                      isStar:
+                        type: "boolean"
+                        description: ""
+                      createdAt:
+                        type: "string"
+                        description: ""
+                      updatedAt:
+                        type: "string"
+                        description: ""
+                    description: "数据"
   /operators/upload:
     post:
-      summary: 上传新算子
-      deprecated: false
-      description: 创建并发布一个新的算子
-      tags:
-        - Operator
-      parameters: []
+      summary: "operatorsUploadPost"
+      description: "operatorsUploadPost"
+      parameters:
+        - name: "description"
+          in: "query"
+          description: ""
+          required: true
+          schema:
+            type: "string"
+            nullable: false
       requestBody:
         content:
           multipart/form-data:
             schema:
-              type: object
+              required:
+                - "file"
+              type: "object"
               properties:
                 file:
-                  type: string
-                  format: binary
-                  example: ''
-                description:
-                  type: string
-                  example: ''
-            examples: {}
+                  type: "string"
+                  description: ""
+                  format: "binary"
+        required: true
       responses:
-        '201':
-          description: 算子创建成功
-          content:
-            application/json:
-              schema: *ref_0
-          headers: {}
-      security: []
-  /operators/{id}:
-    get:
-      summary: 获取算子详情
-      deprecated: false
-      description: 根据ID获取算子的详细信息
-      tags:
-        - Operator
-      parameters:
-        - name: id
-          in: path
-          description: 算子ID
-          required: true
-          example: ''
-          schema:
-            type: string
-      responses:
-        '200':
-          description: 成功返回算子详情
-          content:
-            application/json:
-              schema: *ref_0
-          headers: {}
-        '404':
-          description: 算子不存在
+        "200":
+          description: ""
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          headers: {}
-      security: []
-    put:
-      summary: 更新算子信息
-      deprecated: false
-      description: 根据ID更新算子信息
-      tags:
-        - Operator
-      parameters:
-        - name: id
-          in: path
-          description: 算子ID
-          required: true
-          example: ''
-          schema:
-            type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateOperatorRequest'
-            example: null
-      responses:
-        '200':
-          description: 算子更新成功
-          content:
-            application/json:
-              schema: *ref_0
-          headers: {}
-      security: []
-  /category:
-    post:
-      summary: 创建算子分类
-      deprecated: false
-      description: ''
-      tags:
-        - Category
-      parameters: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                  description: 名称
-                parentId:
-                  type: integer
-                  description: 父分类id
-              required:
-                - name
-                - parentId
-      responses:
-        '201':
-          description: ''
-          headers: {}
-      security: []
-    delete:
-      summary: 删除算子分类
-      deprecated: false
-      description: ''
-      tags:
-        - Category
-      parameters: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                id:
-                  type: integer
-                  description: ID 编号
-              required:
-                - id
-      responses:
-        '204':
-          description: ''
-          headers: {}
-      security: []
-  /categories/tree:
-    get:
-      summary: 获取算子分类列表
-      deprecated: false
-      description: 获取所有可用的算子分类
-      tags:
-        - Category
-      parameters: []
-      responses:
-        '200':
-          description: 成功返回分类列表
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    id:
-                      type: integer
-                    name:
-                      type: string
-                    count:
-                      type: integer
-                    categories:
-                      $ref: '#/components/schemas/CategoryResponse'
-                  required:
-                    - id
-                    - name
-                    - count
-                    - categories
-          headers: {}
-      security: []
+                type: "object"
+                properties:
+                  code:
+                    type: "string"
+                    description: "状态码"
+                  message:
+                    type: "string"
+                    description: "消息"
+                  data:
+                    type: "object"
+                    properties:
+                      id:
+                        type: "string"
+                        description: ""
+                      name:
+                        type: "string"
+                        description: ""
+                      description:
+                        type: "string"
+                        description: ""
+                      version:
+                        type: "string"
+                        description: ""
+                      inputs:
+                        type: "string"
+                        description: ""
+                      outputs:
+                        type: "string"
+                        description: ""
+                      categories:
+                        type: "array"
+                        description: ""
+                        items:
+                          type: "integer"
+                      runtime:
+                        type: "string"
+                        description: ""
+                      settings:
+                        type: "string"
+                        description: ""
+                      isStar:
+                        type: "boolean"
+                        description: ""
+                      createdAt:
+                        type: "string"
+                        description: ""
+                      updatedAt:
+                        type: "string"
+                        description: ""
+                    description: "数据"
   /labels:
     get:
-      summary: 获取算子标签列表
-      deprecated: false
-      description: 获取所有算子的标签
-      tags:
-        - Label
+      summary: "labelsGet"
+      description: "labelsGet"
       parameters:
-        - name: page
-          in: query
-          description: 页码，从0开始
-          required: false
+        - name: "page"
+          in: "query"
+          description: ""
+          required: true
           schema:
-            type: integer
-            default: 0
-        - name: size
-          in: query
-          description: 每页大小
-          required: false
+            type: "integer"
+            nullable: false
+        - name: "size"
+          in: "query"
+          description: ""
+          required: true
           schema:
-            type: integer
-            default: 20
-        - name: keyword
-          in: query
-          description: 关键词搜索
-          required: false
+            type: "integer"
+            nullable: false
+        - name: "keyword"
+          in: "query"
+          description: ""
+          required: true
           schema:
-            type: string
+            type: "string"
+            nullable: false
       responses:
-        '200':
-          description: 成功返回标签列表
+        "200":
+          description: ""
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/LabelResponse'
-          headers: {}
-      security: []
+                type: "object"
+                properties:
+                  code:
+                    type: "string"
+                    description: "状态码"
+                  message:
+                    type: "string"
+                    description: "消息"
+                  data:
+                    type: "object"
+                    properties:
+                      page:
+                        type: "integer"
+                        description: ""
+                        format: "int64"
+                      size:
+                        type: "integer"
+                        description: ""
+                        format: "int64"
+                      totalElements:
+                        type: "integer"
+                        description: ""
+                        format: "int64"
+                      totalPages:
+                        type: "integer"
+                        description: ""
+                        format: "int64"
+                      content:
+                        type: "array"
+                        description: ""
+                        items:
+                          type: "object"
+                          properties:
+                            id:
+                              type: "string"
+                              description: ""
+                            name:
+                              type: "string"
+                              description: ""
+                          description: "com.datamate.operator.interfaces.dto.Label"
+                    description: "数据"
     post:
-      summary: 创建标签
-      deprecated: false
-      description: 批量创建标签
-      tags:
-        - Label
-      parameters: []
+      summary: "labelsPost"
+      description: "labelsPost"
       requestBody:
         content:
           application/json:
             schema:
-              type: object
+              type: "object"
               properties:
+                id:
+                  type: "string"
+                  description: ""
                 name:
-                  type: string
-                  description: 名称
-              required:
-                - name
-            example: veniam
+                  type: "string"
+                  description: ""
+              description: ""
       responses:
-        '201':
-          description: 创建成功
-          headers: {}
-      security: []
-    delete:
-      summary: 删除标签
-      deprecated: false
-      description: 批量删除标签
-      tags:
-        - Label
-      parameters: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                type: integer
-                format: int64
-              description: 标签id列表
-            example: null
-      responses:
-        '204':
-          description: 删除成功
-          headers: {}
-      security: []
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  code:
+                    type: "string"
+                    description: "状态码"
+                  message:
+                    type: "string"
+                    description: "消息"
+                  data:
+                    type: "object"
+                    properties: {}
+                    description: "数据"
   /labels/{id}:
     put:
-      summary: 更新标签
-      deprecated: false
-      description: 更新标签
-      tags:
-        - Label
+      summary: "labelsIdPut"
+      description: "labelsIdPut"
       parameters:
-        - name: id
-          in: path
-          description: 标签ID
+        - name: "id"
+          in: "path"
+          description: ""
           required: true
-          example: ''
           schema:
-            type: string
+            type: "string"
       requestBody:
         content:
           application/json:
             schema:
-              type: array
+              type: "array"
+              description: ""
               items:
-                $ref: '#/components/schemas/UpdateLabelRequest'
-            example: null
+                type: "object"
+                properties:
+                  id:
+                    type: "string"
+                    description: ""
+                  name:
+                    type: "string"
+                    description: ""
       responses:
-        '200':
-          description: 更新成功
-          headers: {}
-      security: []
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  code:
+                    type: "string"
+                    description: "状态码"
+                  message:
+                    type: "string"
+                    description: "消息"
+                  data:
+                    type: "object"
+                    properties: {}
+                    description: "数据"
+  /categories/tree:
+    get:
+      summary: "categoryTreeGet"
+      description: "categoryTreeGet"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  code:
+                    type: "string"
+                    description: "状态码"
+                  message:
+                    type: "string"
+                    description: "消息"
+                  data:
+                    type: "object"
+                    properties:
+                      page:
+                        type: "integer"
+                        description: ""
+                        format: "int64"
+                      size:
+                        type: "integer"
+                        description: ""
+                        format: "int64"
+                      totalElements:
+                        type: "integer"
+                        description: ""
+                        format: "int64"
+                      totalPages:
+                        type: "integer"
+                        description: ""
+                        format: "int64"
+                      content:
+                        type: "array"
+                        description: ""
+                        items:
+                          type: "object"
+                          properties:
+                            id:
+                              type: "integer"
+                              description: ""
+                            name:
+                              type: "string"
+                              description: ""
+                            count:
+                              type: "integer"
+                              description: ""
+                            categories:
+                              type: "array"
+                              description: ""
+                              items:
+                                type: "object"
+                                properties:
+                                  id:
+                                    type: "integer"
+                                    description: ""
+                                    format: "int64"
+                                  name:
+                                    type: "string"
+                                    description: ""
+                                  count:
+                                    type: "integer"
+                                    description: ""
+                                    format: "int64"
+                                  type:
+                                    type: "string"
+                                    description: ""
+                                  parentId:
+                                    type: "integer"
+                                    description: ""
+                                    format: "int64"
+                                description: "com.datamate.operator.interfaces.dto.SubCategory"
+                              default: "new ArrayList<>()"
+                          description: "com.datamate.operator.interfaces.dto.CategoryTreeResponse"
+                    description: "数据"
 components:
   schemas:
-    UpdateLabelRequest:
-      type: object
-      required:
-        - id
-        - name
-      properties:
-        id:
-          type: integer
-          description: 标签id
-        name:
-          type: string
-          description: 标签名称
-    Response:
-      type: object
-      properties:
-        code:
-          type: string
-        message:
-          type: string
-        data:
-          type: object
-          properties: {}
-      required:
-        - code
-        - message
-        - data
-    LabelResponse:
-      type: object
-      properties:
-        id:
-          type: string
-          description: 标签ID
-        name:
-          type: string
-          description: 标签名称
-    SubCategory:
-      type: object
-      properties:
-        id:
-          type: integer
-          description: 分类id
-        name:
-          type: string
-          description: 分类名称
-        count:
-          type: integer
-        type:
-          type: string
-          description: 分类类型（0：预置，1：自定义）
-        parentId:
-          type: integer
-          description: 父分类id
-      required:
-        - id
-        - name
-        - type
-        - parentId
-        - count
-    CategoryResponse:
-      type: array
-      items:
-        $ref: '#/components/schemas/SubCategory'
-    UpdateOperatorRequest:
-      type: object
-      properties:
-        name:
-          type: string
-          description: 算子名称
-        description:
-          type: string
-          description: 算子描述
-        version:
-          type: string
-          description: 算子版本
-        category:
-          type: string
-          description: 算子分类
-        documentation:
-          type: string
-          description: 文档内容
-    ErrorResponse:
-      type: object
-      properties:
-        error:
-          type: string
-          description: 错误代码
-        message:
-          type: string
-          description: 错误信息
-        timestamp:
-          type: string
-          format: date-time
-          description: 错误时间
     OperatorResponse:
-      type: object
+      type: "object"
       properties:
         id:
-          type: string
-          description: 算子ID
+          type: "string"
+          description: ""
         name:
-          type: string
-          description: 算子名称
+          type: "string"
+          description: ""
         description:
-          type: string
-          description: 算子描述
+          type: "string"
+          description: ""
         version:
-          type: string
-          description: 算子版本
+          type: "string"
+          description: ""
         inputs:
-          type: string
-          description: 输入类型
+          type: "string"
+          description: ""
         outputs:
-          type: string
-          description: 输入类型
+          type: "string"
+          description: ""
         categories:
-          type: array
-          description: 算子分类列表
+          type: "array"
+          description: ""
           items:
-            type: integer
+            type: "integer"
         runtime:
-          type: string
-          description: 运行时设置
+          type: "string"
+          description: ""
         settings:
-          type: string
-          description: 算子参数
+          type: "string"
+          description: ""
         isStar:
-          type: boolean
-          description: 是否收藏
+          type: "boolean"
+          description: ""
         createdAt:
-          type: string
-          format: date-time
-          description: 创建时间
+          type: "string"
+          description: ""
         updatedAt:
-          type: string
-          format: date-time
-          description: 更新时间
-      required:
-        - language
-        - modal
-        - inputs
-        - outputs
-        - runtime
-        - settings
-        - isStar
-    CreateOperatorRequest:
-      type: object
-      required:
-        - name
-        - description
-        - version
-        - category
+          type: "string"
+          description: ""
+      description: "数据"
+    com.datamate.operator.interfaces.dto.Label:
+      type: "object"
       properties:
+        id:
+          type: "string"
+          description: ""
         name:
-          type: string
-          description: 算子名称
-        description:
-          type: string
-          description: 算子描述
-        version:
-          type: string
-          description: 算子版本
-        category:
-          type: string
-          description: 算子分类
-        documentation:
-          type: string
-          description: 文档内容
-  securitySchemes: {}
-servers: []
+          type: "string"
+          description: ""
+      description: "com.datamate.operator.interfaces.dto.Label"
+    java.lang.Object:
+      type: "object"
+      properties: {}
+      description: "数据"
+    com.datamate.operator.interfaces.dto.SubCategory:
+      type: "object"
+      properties:
+        id:
+          type: "integer"
+          description: ""
+          format: "int64"
+        name:
+          type: "string"
+          description: ""
+        count:
+          type: "integer"
+          description: ""
+          format: "int64"
+        type:
+          type: "string"
+          description: ""
+        parentId:
+          type: "integer"
+          description: ""
+          format: "int64"
+      description: "com.datamate.operator.interfaces.dto.SubCategory"
+    com.datamate.operator.interfaces.dto.CategoryTreeResponse:
+      type: "object"
+      properties:
+        id:
+          type: "integer"
+          description: ""
+        name:
+          type: "string"
+          description: ""
+        count:
+          type: "integer"
+          description: ""
+        categories:
+          type: "array"
+          description: ""
+          items:
+            type: "object"
+            properties:
+              id:
+                type: "integer"
+                description: ""
+                format: "int64"
+              name:
+                type: "string"
+                description: ""
+              count:
+                type: "integer"
+                description: ""
+                format: "int64"
+              type:
+                type: "string"
+                description: ""
+              parentId:
+                type: "integer"
+                description: ""
+                format: "int64"
+            description: "com.datamate.operator.interfaces.dto.SubCategory"
+          default: "new ArrayList<>()"
+      description: "com.datamate.operator.interfaces.dto.CategoryTreeResponse"

@@ -64,6 +64,7 @@ export function formatExecutionDuration(
 }
 
 export const formatDuration = (seconds: number): string => {
+  if (seconds < 0) return "--";
   if (seconds < 60) {
     return `${seconds} 秒`;
   } else if (seconds < 3600) {

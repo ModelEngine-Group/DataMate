@@ -1,10 +1,21 @@
-import { Select, Input, Form, Radio, Modal, Button } from "antd";
+import {
+  Select,
+  Input,
+  Form,
+  Radio,
+  Modal,
+  Button,
+  App,
+  UploadFile,
+} from "antd";
+import { InboxOutlined } from "@ant-design/icons";
 import { dataSourceOptions } from "../../dataset.const";
 import { Dataset, DataSource } from "../../dataset.model";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { queryTasksUsingGet } from "@/pages/DataCollection/collection.apis";
-import { useImportFile } from "../../hooks";
 import { updateDatasetByIdUsingPut } from "../../dataset.api";
+import { sliceFile } from "@/utils/file.util";
+import Dragger from "antd/es/upload/Dragger";
 
 export default function ImportConfiguration({
   data,
@@ -15,16 +26,52 @@ export default function ImportConfiguration({
   data?: Dataset;
   open: boolean;
   onClose: () => void;
-  onRefresh?: () => void;
+  onRefresh?: (showMessage?: boolean) => void;
 }) {
+  const { message } = App.useApp();
   const [form] = Form.useForm();
   const [collectionOptions, setCollectionOptions] = useState([]);
   const [importConfig, setImportConfig] = useState<any>({
     source: DataSource.UPLOAD,
   });
-  const { importFileRender, handleUpload } = useImportFile();
 
-  // 获取归集任务列表
+  const [fileList, setFileList] = useState<UploadFile[]>([]);
+  const fileSliceList = useMemo(() => {
+    const sliceList = fileList.map((file) => {
+      const slices = sliceFile(file);
+      return { originFile: file, slices, name: file.name, size: file.size };
+    });
+    return sliceList;
+  }, [fileList]);
+
+  // 本地上传文件相关逻辑
+
+  const resetFiles = () => {
+    setFileList([]);
+  };
+
+  const handleUpload = async (dataset: Dataset) => {
+    const formData = new FormData();
+    fileList.forEach((file) => {
+      formData.append("file", file);
+    });
+    window.dispatchEvent(
+      new CustomEvent("upload:dataset", {
+        detail: { dataset, files: fileSliceList },
+      })
+    );
+    resetFiles();
+  };
+
+  const handleBeforeUpload = (_, files: UploadFile[]) => {
+    setFileList([...fileList, ...files]);
+    return false;
+  };
+
+  const handleRemoveFile = (file: UploadFile) => {
+    setFileList((prev) => prev.filter((f) => f.uid !== file.uid));
+  };
+
   const fetchCollectionTasks = async () => {
     try {
       const res = await queryTasksUsingGet({ page: 0, size: 100 });
@@ -40,6 +87,8 @@ export default function ImportConfiguration({
 
   const resetState = () => {
     form.resetFields();
+    setFileList([]);
+    form.setFieldsValue({ files: null });
     setImportConfig({ source: DataSource.UPLOAD });
   };
 
@@ -51,13 +100,16 @@ export default function ImportConfiguration({
         ...importConfig,
       });
     }
-    resetState();
-    onRefresh?.();
+    message.success("数据已更新");
+    onRefresh?.(false);
     onClose();
   };
 
   useEffect(() => {
-    if (open) fetchCollectionTasks();
+    if (open) {
+      resetState();
+      fetchCollectionTasks();
+    }
   }, [open]);
 
   return (
@@ -65,12 +117,19 @@ export default function ImportConfiguration({
       title="导入数据"
       open={open}
       width={600}
-      onCancel={onClose}
+      onCancel={() => {
+        onClose();
+        resetState();
+      }}
       maskClosable={false}
       footer={
         <>
           <Button onClick={onClose}>取消</Button>
-          <Button type="primary" onClick={handleImportData}>
+          <Button
+            type="primary"
+            disabled={!fileList?.length && !importConfig.dataSource}
+            onClick={handleImportData}
+          >
             确定
           </Button>
         </>
@@ -132,6 +191,7 @@ export default function ImportConfiguration({
             </Form.Item>
           </div>
         )}
+
         {/* obs import */}
         {importConfig?.source === DataSource.OBS && (
           <div className="grid grid-cols-2 gap-3 p-4 bg-blue-50 rounded-lg">
@@ -185,7 +245,18 @@ export default function ImportConfiguration({
               },
             ]}
           >
-            {importFileRender()}
+            <Dragger
+              className="w-full"
+              onRemove={handleRemoveFile}
+              beforeUpload={handleBeforeUpload}
+              multiple
+            >
+              <p className="ant-upload-drag-icon">
+                <InboxOutlined />
+              </p>
+              <p className="ant-upload-text">本地文件上传</p>
+              <p className="ant-upload-hint">拖拽文件到此处或点击选择文件</p>
+            </Dragger>
           </Form.Item>
         )}
 

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="WARN" monitorInterval="30">
     <Properties>
-        <Property name="LOG_PATH">/var/log/data-mate/backend</Property>
+        <Property name="LOG_PATH">/var/log/datamate/backend</Property>
         <Property name="LOG_PATTERN">%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{50} - %msg%n</Property>
         <Property name="MAX_FILE_SIZE">100MB</Property>
         <Property name="MAX_HISTORY">30</Property>

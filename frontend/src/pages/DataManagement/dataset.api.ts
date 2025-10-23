@@ -1,4 +1,4 @@
-import { get, post, put, del, download, upload } from "@/utils/request";
+import { get, post, put, del, download } from "@/utils/request";
 
 // 数据集统计接口
 export function getDatasetStatisticsUsingGet() {
@@ -35,15 +35,8 @@ export function deleteDatasetByIdUsingDelete(id: string | number) {
 }
 
 // 下载数据集
-export function downloadDatasetUsingGet(
-  id: string | number,
-  filename?: string
-) {
-  return download(
-    `/api/data-management/datasets/${id}/download`,
-    null,
-    filename
-  );
+export function downloadDatasetUsingGet(id: string | number) {
+  return download(`/api/data-management/datasets/${id}/files/download`);
 }
 
 // 验证数据集
@@ -61,15 +54,15 @@ export function uploadDatasetFileUsingPost(id: string | number, data: any) {
   return post(`/api/data-management/datasets/${id}/files`, data);
 }
 
-export function downloadFile(
+export function downloadFileByIdUsingGet(
   id: string | number,
   fileId: string | number,
-  filename?: string
+  fileName: string
 ) {
   return download(
-    `/api/data-management/datasets/${id}/files/download`,
+    `/api/data-management/datasets/${id}/files/${fileId}/download`,
     null,
-    filename
+    fileName
   );
 }
 

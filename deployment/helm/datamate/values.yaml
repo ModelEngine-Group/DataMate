@@ -1,0 +1,83 @@
+# Default values for datamate.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+global:
+  image:
+    repository: ""
+    pullPolicy: "IfNotPresent"
+    backend:
+      name: "datamate-backend"
+      tag: "latest"
+    frontend:
+      name: "datamate-frontend"
+      tag: "latest"
+    database:
+      name: "mysql"
+      tag: "8"
+
+datasetVolume: &datasetVolume
+  name: dataset-volume
+  hostPath:
+    path: /opt/datamate/data/dataset
+    type: DirectoryOrCreate
+
+flowVolume: &flowVolume
+  name: flow-volume
+  hostPath:
+    path: /opt/datamate/data/flow
+    type: DirectoryOrCreate
+
+logVolume: &logVolume
+  name: log-volume
+  hostPath:
+    path: /opt/datamate/data/log
+    type: DirectoryOrCreate
+
+dataVolume: &dataVolume
+  name: data-volume
+  hostPath:
+    path: /opt/datamate/data/mysql
+    type: DirectoryOrCreate
+
+backend:
+  volumes:
+    - *datasetVolume
+    - *flowVolume
+    - *logVolume
+  volumeMounts:
+    - name: dataset-volume
+      mountPath: /dataset
+    - name: flow-volume
+      mountPath: /flow
+    - name: log-volume
+      mountPath: /var/log/datamate
+
+frontend:
+  volumes:
+    - *logVolume
+  volumeMounts:
+    - name: log-volume
+      mountPath: /var/log/datamate/frontend
+      subPath: frontend
+
+database:
+  volumes:
+    - *dataVolume
+    - *logVolume
+    - name: init-sql
+      configMap:
+        name: datamate-init-sql
+    - name: mysql-utf8-config
+      configMap:
+        name: datamate-mysql-utf8-config
+  volumeMounts:
+    - name: data-volume
+      mountPath: /var/lib/mysql
+    - name: log-volume
+      mountPath: /var/log/datamate/database
+      subPath: database
+    - name: init-sql
+      mountPath: /docker-entrypoint-initdb.d
+    - name: mysql-utf8-config
+      mountPath: /etc/mysql/conf.d

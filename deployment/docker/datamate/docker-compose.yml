@@ -1,63 +1,70 @@
 services:
   # 1) backend
-  backend:
-    container_name: backend
-    image: backend
+  datamate-backend:
+    container_name: datamate-backend
+    image: datamate-backend
     restart: on-failure
     privileged: true
     ports:
-      - "8080:8080"
+      - "8080"
     volumes:
       - dataset_volume:/dataset
       - flow_volume:/flow
-      - log_volume:/var/log/data-mate
-    networks: [ edatamate ]
+      - log_volume:/var/log/datamate
+    networks: [ datamate ]
     depends_on:
-      - mysql
+      - datamate-database
 
   # 2) frontend（NodePort 30000）
-  frontend:
-    container_name: frontend
-    image: frontend
+  datamate-frontend:
+    container_name: datamate-frontend
+    image: datamate-frontend
     restart: on-failure
     ports:
       - "30000:80"            # nodePort → hostPort
     volumes:
-      - log_volume:/var/log/data-mate
-    networks: [ edatamate ]
+      - frontend_log_volume:/var/log/datamate/frontend
+    networks: [ datamate ]
     depends_on:
-      - backend
+      - datamate-backend
 
-  # 3) mysql
-  mysql:
-    container_name: mysql
+  # 3) database
+  datamate-database:
+    container_name: datamate-database
     image: mysql:8
     restart: on-failure
     environment:
       MYSQL_ROOT_PASSWORD: Huawei@123
     ports:
-      - "3306:3306"
+      - "3306"
+    command: |
+      sh -c "
+        chown mysql:mysql /var/log/datamate/database &&
+        chmod 755 /var/log/datamate/database &&
+        exec docker-entrypoint.sh mysqld
+      "
     volumes:
       - mysql_volume:/var/lib/mysql
       - ../../../scripts/db:/docker-entrypoint-initdb.d
-      - ./utf8.cnf:/etc/mysql/conf.d/utf8.cnf
-      - log_volume:/var/log/data-mate
-    networks: [ edatamate ]
+      - ./utf8.cnf:/etc/mysql/conf.d/utf8.cnf:ro
+      - database_log_volume:/var/log/datamate/database
+    networks: [ datamate ]
 
-  runtime:
-    container_name: runtime
-    image: runtime
+  # 3) runtime
+  datamate-runtime:
+    container_name: datamate-runtime
+    image: datamate-runtime
     restart: on-failure
     environment:
       RAY_DEDUP_LOGS: "0"
       RAY_TQDM_PATCH_PRINT: "0"
-      MYSQL_HOST: "mysql"
+      MYSQL_HOST: "datamate-database"
       MYSQL_PORT: "3306"
       MYSQL_USER: "root"
       MYSQL_PASSWORD: "Huawei@123"
       MYSQL_DATABASE: "datamate"
     ports:
-      - "8081:8081"
+      - "8081"
     command:
       - python
       - /opt/runtime/datamate/operator_runtime.py
@@ -65,22 +72,27 @@ services:
       - "8081"
     volumes:
       - ray_log_volume:/tmp/ray
-      - log_volume:/var/log/data-mate
+      - log_volume:/var/log/datamate
       - dataset_volume:/dataset
       - flow_volume:/flow
+    networks: [ datamate ]
 
 volumes:
   dataset_volume:
-    name: data-mate-dataset-volume
+    name: datamate-dataset-volume
   flow_volume:
-    name: data-mate-flow-volume
+    name: datamate-flow-volume
   log_volume:
-    name: data-mate-log-volume
+    name: datamate-log-volume
   mysql_volume:
-    name: data-mate-mysql-volume
+    name: datamate-mysql-volume
   ray_log_volume:
-    name: data-mate-ray-log-volume
+    name: datamate-ray-log-volume
+  frontend_log_volume:
+    name: datamate-frontend-log-volume
+  database_log_volume:
+    name: datamate-database-log-volume
 
 networks:
-  edatamate:
+  datamate:
     driver: bridge
