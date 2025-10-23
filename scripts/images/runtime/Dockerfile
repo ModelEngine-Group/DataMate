@@ -7,7 +7,7 @@ ENV PYTHONPATH=/opt/runtime/datamate/
 
 RUN sed -i 's/deb.debian.org/mirrors.huaweicloud.com/g' /etc/apt/sources.list.d/debian.sources \
     && apt update \
-    && apt install -y libgl1 libglib2.0-0 vim poppler-utils tesseract-ocr tesseract-ocr-chi-sim libmagic1t64 \
+    && apt install -y libgl1 libglib2.0-0 vim poppler-utils tesseract-ocr tesseract-ocr-chi-sim libmagic1t64  libreoffice\
     && apt clean \
     && rm -rf /var/lib/apt/lists/*
 
