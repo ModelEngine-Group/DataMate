@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-
 <mapper namespace="com.datamate.collection.infrastructure.persistence.mapper.CollectionTaskMapper">
 
   <!-- Result Map -->
-  <resultMap id="CollectionTaskResultMap" type="com.datamate.collection.domain.model.CollectionTask">
+  <resultMap id="CollectionTaskResultMap" type="com.datamate.collection.domain.model.entity.CollectionTask">
     <id property="id" column="id"/>
     <result property="name" column="name"/>
     <result property="description" column="description"/>
@@ -24,21 +23,6 @@
     <result property="updatedBy" column="updated_by"/>
   </resultMap>
 
-  <!-- 结果映射 (模板) -->
-  <resultMap id="DataxTemplateResultMap" type="com.datamate.collection.domain.model.DataxTemplate">
-    <id column="id" property="id" jdbcType="VARCHAR"/>
-    <result column="name" property="name" jdbcType="VARCHAR"/>
-    <result column="source_type" property="sourceType" jdbcType="VARCHAR"/>
-    <result column="target_type" property="targetType" jdbcType="VARCHAR"/>
-    <result column="template_content" property="templateContent" jdbcType="VARCHAR"/>
-    <result column="description" property="description" jdbcType="VARCHAR"/>
-    <result column="version" property="version" jdbcType="VARCHAR"/>
-    <result column="is_system" property="isSystem" jdbcType="BOOLEAN"/>
-    <result column="created_at" property="createdAt" jdbcType="TIMESTAMP"/>
-    <result column="updated_at" property="updatedAt" jdbcType="TIMESTAMP"/>
-    <result column="created_by" property="createdBy" jdbcType="VARCHAR"/>
-  </resultMap>
-
   <!-- Base Column List (tasks) -->
   <sql id="Base_Column_List">
     id,
@@ -46,96 +30,6 @@
     schedule_expression, retry_count, timeout_seconds, max_records, sort_field,
     last_execution_id, created_at, updated_at, created_by, updated_by
   </sql>
-
-  <!-- Template Column List -->
-  <sql id="Template_Column_List">
-    id, name, source_type, target_type, template_content, description, version, is_system, created_at, updated_at, created_by
-  </sql>
-
-  <!-- Insert -->
-  <insert id="insert" parameterType="com.datamate.collection.domain.model.CollectionTask">
-    INSERT INTO t_dc_collection_tasks (id, name, description, config, status, sync_mode,
-                                       schedule_expression, retry_count, timeout_seconds, max_records, sort_field,
-                                       last_execution_id, created_at, updated_at, created_by, updated_by)
-    VALUES (#{id}, #{name}, #{description}, #{config}, #{status}, #{syncMode},
-            #{scheduleExpression}, #{retryCount}, #{timeoutSeconds}, #{maxRecords}, #{sortField},
-            #{lastExecutionId}, #{createdAt}, #{updatedAt}, #{createdBy}, #{updatedBy})
-  </insert>
-
-  <!-- Update -->
-  <update id="update" parameterType="com.datamate.collection.domain.model.CollectionTask">
-    UPDATE t_dc_collection_tasks
-    SET name                = #{name},
-        description         = #{description},
-        config              = #{config},
-        status              = #{status},
-        sync_mode           = #{syncMode},
-        schedule_expression = #{scheduleExpression},
-        retry_count         = #{retryCount},
-        timeout_seconds     = #{timeoutSeconds},
-        max_records         = #{maxRecords},
-        sort_field          = #{sortField},
-        last_execution_id   = #{lastExecutionId},
-        updated_at          = #{updatedAt},
-        updated_by          = #{updatedBy}
-    WHERE id = #{id}
-  </update>
-
-  <!-- Delete by ID -->
-  <delete id="deleteById" parameterType="java.lang.String">
-    DELETE FROM t_dc_collection_tasks WHERE id = #{id}
-  </delete>
-
-  <!-- Select by ID -->
-  <select id="selectById" parameterType="java.lang.String" resultMap="CollectionTaskResultMap">
-    SELECT <include refid="Base_Column_List"/> FROM t_dc_collection_tasks WHERE id = #{id}
-  </select>
-
-  <!-- Select by Name -->
-  <select id="selectByName" parameterType="java.lang.String" resultMap="CollectionTaskResultMap">
-    SELECT <include refid="Base_Column_List"/> FROM t_dc_collection_tasks WHERE name = #{name}
-  </select>
-
-  <!-- Select by Status -->
-  <select id="selectByStatus" parameterType="java.lang.String" resultMap="CollectionTaskResultMap">
-    SELECT <include refid="Base_Column_List"/> FROM t_dc_collection_tasks WHERE status = #{status} ORDER BY created_at DESC
-  </select>
-
-  <!-- Select All with Pagination -->
-  <select id="selectAll" resultMap="CollectionTaskResultMap">
-    SELECT <include refid="Base_Column_List"/> FROM t_dc_collection_tasks
-    <where>
-      <if test="status != null and status != ''">
-        AND status = #{status}
-      </if>
-      <if test="name != null and name != ''">
-        AND name LIKE CONCAT('%', #{name}, '%')
-      </if>
-    </where>
-    ORDER BY created_at DESC
-    <if test="offset != null and limit != null">
-      LIMIT #{offset}, #{limit}
-    </if>
-  </select>
-
-  <!-- Count Total -->
-  <select id="count" resultType="java.lang.Long">
-    SELECT COUNT(*) FROM t_dc_collection_tasks
-    <where>
-      <if test="status != null and status != ''">
-        AND status = #{status}
-      </if>
-      <if test="name != null and name != ''">
-        AND name LIKE CONCAT('%', #{name}, '%')
-      </if>
-      <if test="sourceDataSourceId != null and sourceDataSourceId != ''">
-        AND source_datasource_id = #{sourceDataSourceId}
-      </if>
-      <if test="targetDataSourceId != null and targetDataSourceId != ''">
-        AND target_datasource_id = #{targetDataSourceId}
-      </if>
-    </where>
-  </select>
 
   <!-- Update Status -->
   <update id="updateStatus">
@@ -154,35 +48,4 @@
       AND schedule_expression IS NOT NULL
     ORDER BY created_at DESC
   </select>
-
-  <!-- 查询模板列表 -->
-  <select id="selectList" resultMap="DataxTemplateResultMap">
-    SELECT <include refid="Template_Column_List"/> FROM t_dc_datax_templates
-    <where>
-      <if test="sourceType != null and sourceType != ''">
-        AND source_type = #{sourceType}
-      </if>
-      <if test="targetType != null and targetType != ''">
-        AND target_type = #{targetType}
-      </if>
-    </where>
-    ORDER BY is_system DESC, created_at DESC
-    <if test="limit > 0">
-      LIMIT #{offset}, #{limit}
-    </if>
-  </select>
-
-  <!-- 统计模板数量 -->
-  <select id="countTemplates" resultType="java.lang.Integer">
-    SELECT COUNT(1) FROM t_dc_datax_templates
-    <where>
-      <if test="sourceType != null and sourceType != ''">
-        AND source_type = #{sourceType}
-      </if>
-      <if test="targetType != null and targetType != ''">
-        AND target_type = #{targetType}
-      </if>
-    </where>
-  </select>
-
 </mapper>

@@ -1,4 +1,4 @@
-package com.datamate.collection.domain.model;
+package com.datamate.collection.domain.model.entity;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;

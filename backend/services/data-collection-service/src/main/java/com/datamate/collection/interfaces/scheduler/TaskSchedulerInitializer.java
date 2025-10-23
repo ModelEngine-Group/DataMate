@@ -1,11 +1,10 @@
-package com.datamate.collection.application.scheduler;
+package com.datamate.collection.interfaces.scheduler;
 
-import com.datamate.collection.application.service.DataxExecutionService;
-import com.datamate.collection.domain.model.CollectionTask;
-import com.datamate.collection.domain.model.TaskStatus;
-import com.datamate.collection.domain.model.TaskExecution;
-import com.datamate.collection.infrastructure.persistence.mapper.CollectionTaskMapper;
-import com.datamate.collection.infrastructure.persistence.mapper.TaskExecutionMapper;
+import com.datamate.collection.application.CollectionTaskService;
+import com.datamate.collection.application.TaskExecutionService;
+import com.datamate.collection.common.enums.TaskStatus;
+import com.datamate.collection.domain.model.entity.CollectionTask;
+import com.datamate.collection.domain.model.entity.TaskExecution;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -21,14 +20,13 @@ import java.util.List;
 @RequiredArgsConstructor
 public class TaskSchedulerInitializer {
 
-    private final CollectionTaskMapper taskMapper;
-    private final TaskExecutionMapper executionMapper;
-    private final DataxExecutionService dataxExecutionService;
+    private final CollectionTaskService collectionTaskService;
+    private final TaskExecutionService taskExecutionService;
 
     // 定期扫描激活的采集任务，根据 Cron 判断是否到期执行
     @Scheduled(fixedDelayString = "${datamate.data-collection.scheduler.scan-interval-ms:10000}")
     public void scanAndTrigger() {
-        List<CollectionTask> tasks = taskMapper.selectActiveTasks();
+        List<CollectionTask> tasks = collectionTaskService.selectActiveTasks();
         if (tasks == null || tasks.isEmpty()) {
             return;
         }
@@ -40,7 +38,7 @@ public class TaskSchedulerInitializer {
             }
             try {
                 // 如果最近一次执行仍在运行，则跳过
-                TaskExecution latest = executionMapper.selectLatestByTaskId(task.getId());
+                TaskExecution latest = taskExecutionService.selectLatestByTaskId(task.getId());
                 if (latest != null && latest.getStatus() == TaskStatus.RUNNING) {
                     continue;
                 }
@@ -53,9 +51,9 @@ public class TaskSchedulerInitializer {
 
                 if (nextTime != null && !nextTime.isAfter(now)) {
                     // 到期，触发一次执行
-                    TaskExecution exec = dataxExecutionService.createExecution(task);
+                    TaskExecution exec = taskExecutionService.createExecution(task);
                     int timeout = task.getTimeoutSeconds() == null ? 3600 : task.getTimeoutSeconds();
-                    dataxExecutionService.runAsync(task, exec.getId(), timeout);
+                    taskExecutionService.runAsync(task, exec.getId(), timeout);
                     log.info("Triggered DataX execution for task {} at {}, execId={}", task.getId(), now, exec.getId());
                 }
             } catch (Exception ex) {

@@ -2,6 +2,7 @@ package com.datamate.datamanagement.application;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.datamate.common.domain.utils.ChunksSaver;
 import com.datamate.datamanagement.interfaces.dto.*;
 import com.datamate.common.infrastructure.exception.BusinessAssert;
 import com.datamate.common.interfaces.PagedResponse;
@@ -100,8 +101,13 @@ public class DatasetApplicationService {
     /**
      * 删除数据集
      */
+    @Transactional
     public void deleteDataset(String datasetId) {
+        Dataset dataset = datasetRepository.getById(datasetId);
         datasetRepository.removeById(datasetId);
+        if (dataset != null) {
+            ChunksSaver.deleteFolder(dataset.getPath());
+        }
     }
 
     /**

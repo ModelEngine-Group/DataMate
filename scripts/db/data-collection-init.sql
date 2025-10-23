@@ -31,7 +31,10 @@ CREATE TABLE t_dc_task_executions (
                                     error_message TEXT COMMENT '错误信息',
                                     datax_job_id TEXT COMMENT 'datax任务ID',
                                     result TEXT COMMENT '执行结果',
-                                    created_at TIMESTAMP NULL COMMENT '创建时间',
+                                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+                                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+                                    created_by VARCHAR(255) COMMENT '创建者',
+                                    updated_by VARCHAR(255) COMMENT '更新者',
                                     INDEX idx_task_id (task_id),
                                     INDEX idx_status (status),
                                     INDEX idx_started_at (started_at)

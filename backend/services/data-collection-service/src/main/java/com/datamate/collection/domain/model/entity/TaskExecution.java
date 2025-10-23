@@ -1,13 +1,19 @@
-package com.datamate.collection.domain.model;
+package com.datamate.collection.domain.model.entity;
 
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.datamate.collection.common.enums.TaskStatus;
+import com.datamate.common.domain.model.base.BaseEntity;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Data
-public class TaskExecution {
-    private String id;
+@Getter
+@Setter
+@TableName(value = "t_dc_task_executions", autoResultMap = true)
+public class TaskExecution extends BaseEntity<String> {
     private String taskId;
     private String taskName;
     private TaskStatus status;
@@ -25,7 +31,6 @@ public class TaskExecution {
     private String dataxJobId;
     private String config;
     private String result;
-    private LocalDateTime createdAt;
 
     public static TaskExecution initTaskExecution() {
         TaskExecution exec = new TaskExecution();

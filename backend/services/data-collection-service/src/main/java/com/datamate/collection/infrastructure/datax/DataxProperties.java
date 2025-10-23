@@ -1,4 +1,4 @@
-package com.datamate.collection.infrastructure.runtime.datax;
+package com.datamate.collection.infrastructure.datax;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
