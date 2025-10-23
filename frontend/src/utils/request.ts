@@ -202,7 +202,7 @@ class Request {
       try {
         const errorData = await processedResponse.json();
         error.data = errorData;
-        message.error(`请求失败，错误信息: ${processedResponse.statusText}`);
+        // message.error(`请求失败，错误信息: ${processedResponse.statusText}`);
       } catch {
         // 忽略JSON解析错误
       }
@@ -326,7 +326,6 @@ class Request {
         ...options,
       };
     }
-    console.log("post", url, config);
     return this.request(this.baseURL + url, config);
   }
 
@@ -403,7 +402,7 @@ class Request {
    * @param {string} filename - 下载文件名
    * @param {object} options - 额外的fetch选项，包括showLoading, onDownloadProgress
    */
-  async download(url, params = null, filename = "download", options = {}) {
+  async download(url, params = null, filename = "", options = {}) {
     const fullURL = this.buildURL(url, params);
 
     const config = {
@@ -416,6 +415,7 @@ class Request {
     const processedConfig = await this.executeRequestInterceptors(config);
 
     let blob;
+    let name = filename;
 
     // 如果需要下载进度监听，使用XMLHttpRequest
     if (config.onDownloadProgress) {
@@ -431,6 +431,10 @@ class Request {
       }
 
       blob = xhrResponse.xhr.response;
+      name =
+        name ||
+        xhrResponse.headers.get("Content-Disposition")?.split("filename=")[1] ||
+        "download";
     } else {
       // 使用fetch
       const response = await fetch(fullURL, processedConfig);
@@ -446,13 +450,17 @@ class Request {
       }
 
       blob = await processedResponse.blob();
+      name =
+        name ||
+        response.headers.get("Content-Disposition")?.split("filename=")[1] ||
+        `download_${Date.now()}`;
     }
 
     // 创建下载链接
     const downloadUrl = window.URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = downloadUrl;
-    link.download = filename;
+    link.download = filename ?? name;
 
     // 添加到DOM并触发下载
     document.body.appendChild(link);

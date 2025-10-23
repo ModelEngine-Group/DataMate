@@ -83,11 +83,6 @@ export default function Overview({ dataset, filesOperation }) {
       children: dataset.updatedAt,
     },
     {
-      key: "dataSource",
-      label: "数据源",
-      children: dataset.dataSource || "未知",
-    },
-    {
       key: "description",
       label: "描述",
       children: dataset.description || "无",

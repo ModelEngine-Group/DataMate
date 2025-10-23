@@ -4,6 +4,7 @@ import {
   EditOutlined,
   DeleteOutlined,
   PlusOutlined,
+  UploadOutlined,
 } from "@ant-design/icons";
 import TagManager from "@/components/TagManagement";
 import { Link, useNavigate } from "react-router";
@@ -25,6 +26,7 @@ import {
 } from "../dataset.api";
 import { formatBytes } from "@/utils/unit";
 import EditDataset from "../Create/EditDataset";
+import ImportConfiguration from "../Detail/components/ImportConfiguration";
 
 export default function DatasetManagementPage() {
   const navigate = useNavigate();
@@ -32,7 +34,7 @@ export default function DatasetManagementPage() {
   const [viewMode, setViewMode] = useState<"card" | "list">("card");
   const [editDatasetOpen, setEditDatasetOpen] = useState(false);
   const [currentDataset, setCurrentDataset] = useState<Dataset | null>(null);
-
+  const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [statisticsData, setStatisticsData] = useState<any>({
     count: {},
     size: {},
@@ -117,7 +119,13 @@ export default function DatasetManagementPage() {
     fetchData,
     setSearchParams,
     handleFiltersChange,
-  } = useFetchData(queryDatasetsUsingGet, mapDataset);
+  } = useFetchData<Dataset>(
+    queryDatasetsUsingGet,
+    mapDataset,
+    30000, // 30秒轮询间隔
+    true, // 自动刷新
+    [fetchStatistics] // 额外的轮询函数
+  );
 
   const handleDownloadDataset = async (dataset: Dataset) => {
     await downloadDatasetUsingGet(dataset.id, dataset.name);
@@ -131,9 +139,17 @@ export default function DatasetManagementPage() {
     message.success("数据删除成功");
   };
 
-  useEffect(() => {
-    fetchStatistics();
-  }, []);
+  const handleImportData = (dataset: Dataset) => {
+    setCurrentDataset(dataset);
+    setShowUploadDialog(true);
+  };
+
+  const handleRefresh = async (showMessage = true) => {
+    await fetchData();
+    if (showMessage) {
+      message.success("数据已刷新");
+    }
+  };
 
   const operations = [
     {
@@ -141,9 +157,16 @@ export default function DatasetManagementPage() {
       label: "编辑",
       icon: <EditOutlined />,
       onClick: (item: Dataset) => {
-        console.log(item);
         setCurrentDataset(item);
         setEditDatasetOpen(true);
+      },
+    },
+    {
+      key: "import",
+      label: "导入",
+      icon: <UploadOutlined />,
+      onClick: (item: Dataset) => {
+        handleImportData(item);
       },
     },
     {
@@ -158,6 +181,14 @@ export default function DatasetManagementPage() {
     {
       key: "delete",
       label: "删除",
+      danger: true,
+      confirm: {
+        title: "确认删除该数据集？",
+        description: "删除后该数据集将无法恢复，请谨慎操作。",
+        okText: "删除",
+        cancelText: "取消",
+        okType: "danger",
+      },
       icon: <DeleteOutlined />,
       onClick: (item: Dataset) => handleDeleteDataset(item.id),
     },
@@ -291,7 +322,7 @@ export default function DatasetManagementPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold">数据管理</h1>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
           {/* tasks */}
           <TagManager
             onCreate={createDatasetTagUsingPost}
@@ -336,14 +367,26 @@ export default function DatasetManagementPage() {
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         showViewToggle
-        onReload={fetchData}
+        onReload={handleRefresh}
       />
       {viewMode === "card" ? renderCardView() : renderListView()}
       <EditDataset
         open={editDatasetOpen}
         data={currentDataset}
-        onClose={() => setEditDatasetOpen(false)}
-        onRefresh={fetchData}
+        onClose={() => {
+          setCurrentDataset(null);
+          setEditDatasetOpen(false);
+        }}
+        onRefresh={handleRefresh}
+      />
+      <ImportConfiguration
+        data={currentDataset}
+        open={showUploadDialog}
+        onClose={() => {
+          setCurrentDataset(null);
+          setShowUploadDialog(false);
+        }}
+        onRefresh={handleRefresh}
       />
     </div>
   );

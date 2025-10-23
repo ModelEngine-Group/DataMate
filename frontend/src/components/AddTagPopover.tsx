@@ -1,4 +1,4 @@
-import { Button, Input, Popover, theme, Tag } from "antd";
+import { Button, Input, Popover, theme, Tag, Empty } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import { useEffect, useMemo, useState } from "react";
 
@@ -64,30 +64,35 @@ export default function AddTagPopover({
         open={showPopover}
         trigger="click"
         placement="bottom"
+        onOpenChange={setShowPopover}
         content={
           <div className="space-y-4 w-[300px]">
             <h4 className="font-medium border-b pb-2 border-gray-100">
               添加标签
             </h4>
             {/* Available Tags */}
-            <div className="space-y-2">
-              <h5 className="text-sm">选择现有标签</h5>
-              <div className="max-h-32 overflow-y-auto space-y-1">
-                {availableTags.map((tag) => (
-                  <span
-                    key={tag.id}
-                    className="h-7 w-full justify-start text-xs cursor-pointer flex items-center px-2 rounded hover:bg-gray-100"
-                    onClick={() => {
-                      onAddTag?.(tag.name);
-                      setShowPopover(false);
-                    }}
-                  >
-                    <PlusOutlined className="w-3 h-3 mr-1" />
-                    {tag.name}
-                  </span>
-                ))}
+            {availableTags?.length ? (
+              <div className="space-y-2">
+                <h5 className="text-sm">选择现有标签</h5>
+                <div className="max-h-32 overflow-y-auto space-y-1">
+                  {availableTags.map((tag) => (
+                    <span
+                      key={tag.id}
+                      className="h-7 w-full justify-start text-xs cursor-pointer flex items-center px-2 rounded hover:bg-gray-100"
+                      onClick={() => {
+                        onAddTag?.(tag.name);
+                        setShowPopover(false);
+                      }}
+                    >
+                      <PlusOutlined className="w-3 h-3 mr-1" />
+                      {tag.name}
+                    </span>
+                  ))}
+                </div>
               </div>
-            </div>
+            ) : (
+              <Empty description="没有可用标签，请先创建标签。" />
+            )}
 
             {/* Create New Tag */}
             <div className="space-y-2 border-t border-gray-100 pt-3">

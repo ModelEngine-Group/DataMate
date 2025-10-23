@@ -6,7 +6,7 @@ import { App } from "antd";
 import { useState } from "react";
 import {
   deleteDatasetFileUsingDelete,
-  downloadFile,
+  downloadFileByIdUsingGet,
   exportDatasetUsingPost,
   queryDatasetFilesUsingGet,
 } from "../dataset.api";
@@ -51,7 +51,7 @@ export function useFilesOperation(dataset: Dataset) {
   const handleDownloadFile = async (file: DatasetFile) => {
     console.log("批量下载文件:", selectedFiles);
     // 实际导出逻辑
-    await downloadFile(dataset.id, file.id, file.fileName);
+    await downloadFileByIdUsingGet(dataset.id, file.id, file.fileName);
     // 假设导出成功
     message.success({
       content: `已导出 1 个文件`,

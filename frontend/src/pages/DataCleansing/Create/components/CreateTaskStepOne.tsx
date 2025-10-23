@@ -1,10 +1,6 @@
 import RadioCard from "@/components/RadioCard";
 import { queryDatasetsUsingGet } from "@/pages/DataManagement/dataset.api";
-import {
-  datasetTypeMap,
-  datasetTypes,
-  mapDataset,
-} from "@/pages/DataManagement/dataset.const";
+import { datasetTypes, mapDataset } from "@/pages/DataManagement/dataset.const";
 import {
   Dataset,
   DatasetSubType,
@@ -12,8 +8,7 @@ import {
 } from "@/pages/DataManagement/dataset.model";
 import { Input, Select, Form } from "antd";
 import TextArea from "antd/es/input/TextArea";
-import { Database } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function CreateTaskStepOne({
   form,

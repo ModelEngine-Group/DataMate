@@ -5,15 +5,17 @@ import {
   DownloadOutlined,
   UploadOutlined,
   EditOutlined,
+  DeleteOutlined,
 } from "@ant-design/icons";
 import DetailHeader from "@/components/DetailHeader";
 import { mapDataset, datasetTypeMap } from "../dataset.const";
 import type { Dataset } from "@/pages/DataManagement/dataset.model";
-import { Link, useParams } from "react-router";
-import { useFilesOperation } from "../hooks";
+import { Link, useNavigate, useParams } from "react-router";
+import { useFilesOperation } from "./useFilesOperation";
 import {
   createDatasetTagUsingPost,
-  downloadFile,
+  deleteDatasetByIdUsingDelete,
+  downloadDatasetUsingGet,
   queryDatasetByIdUsingGet,
   queryDatasetTagsUsingGet,
   updateDatasetByIdUsingPut,
@@ -42,6 +44,7 @@ const tabList = [
 
 export default function DatasetDetail() {
   const { id } = useParams(); // 获取动态路由参数
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
   const { message } = App.useApp();
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -77,9 +80,15 @@ export default function DatasetDetail() {
     if (showMessage) message.success({ content: "数据刷新成功" });
   };
 
-  const handleExportFormat = async ({ type }) => {
-    await downloadFile(dataset.id, type, `${dataset.name}-${type}.zip`);
+  const handleDownload = async () => {
+    await downloadDatasetUsingGet(dataset.id);
     message.success("文件下载成功");
+  };
+
+  const handleDeleteDataset = async () => {
+    await deleteDatasetByIdUsingDelete(dataset.id);
+    navigate("/data/management");
+    message.success("数据集删除成功");
   };
 
   useEffect(() => {
@@ -153,13 +162,27 @@ export default function DatasetDetail() {
       //   { key: "csv", label: "CSV 格式", icon: <FileTextOutlined /> },
       //   { key: "coco", label: "COCO 格式", icon: <FileImageOutlined /> },
       // ],
-      onMenuClick: handleExportFormat,
+      onClick: () => handleDownload(),
     },
     {
       key: "refresh",
       label: "刷新",
       icon: <ReloadOutlined />,
       onClick: handleRefresh,
+    },
+    {
+      key: "delete",
+      label: "删除",
+      danger: true,
+      confirm: {
+        title: "确认删除该数据集？",
+        description: "删除后该数据集将无法恢复，请谨慎操作。",
+        okText: "删除",
+        cancelText: "取消",
+        okType: "danger",
+      },
+      icon: <DeleteOutlined />,
+      onClick: handleDeleteDataset,
     },
   ];
 

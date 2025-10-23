@@ -31,7 +31,8 @@ export default function TemplateList() {
     {
       key: "delete",
       label: "删除模板",
-      icon: <DeleteOutlined style={{ color: "#f5222d" }} />,
+      danger: true,
+      icon: <DeleteOutlined />,
       onClick: (template: CleansingTemplate) => deleteTemplate(template), // 可实现删除逻辑
     },
   ];

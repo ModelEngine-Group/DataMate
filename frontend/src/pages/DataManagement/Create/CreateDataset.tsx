@@ -4,7 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { Button, Form, App } from "antd";
 import { Link, useNavigate } from "react-router";
 import { createDatasetUsingPost } from "../dataset.api";
-import { DatasetType, DataSource } from "../dataset.model";
+import { DatasetType } from "../dataset.model";
 import BasicInformation from "./components/BasicInformation";
 
 export default function DatasetCreate() {
@@ -27,9 +27,9 @@ export default function DatasetCreate() {
       files: undefined,
     };
     try {
-      await createDatasetUsingPost(params);
+      const { data } = await createDatasetUsingPost(params);
       message.success(`数据集创建成功`);
-      navigate("/data/management");
+      navigate("/data/management/detail/" + data.id);
     } catch (error) {
       console.error(error);
       message.error("数据集创建失败，请重试");
@@ -69,7 +69,11 @@ export default function DatasetCreate() {
         </div>
         <div className="flex gap-2 justify-end p-6 border-top">
           <Button onClick={() => navigate("/data/management")}>取消</Button>
-          <Button type="primary" onClick={handleSubmit}>
+          <Button
+            type="primary"
+            disabled={!newDataset.name || !newDataset.datasetType}
+            onClick={handleSubmit}
+          >
             确定
           </Button>
         </div>

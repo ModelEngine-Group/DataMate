@@ -1,12 +1,17 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Tag, Pagination, Dropdown, Tooltip, Empty, Popover } from "antd";
 import {
-  EllipsisOutlined,
-  ClockCircleOutlined,
-  StarFilled,
-} from "@ant-design/icons";
+  Tag,
+  Pagination,
+  Tooltip,
+  Empty,
+  Popover,
+  Menu,
+  Popconfirm,
+} from "antd";
+import { ClockCircleOutlined, StarFilled } from "@ant-design/icons";
 import type { ItemType } from "antd/es/menu/interface";
 import { formatDateTime } from "@/utils/unit";
+import ActionDropdown from "./ActionDropdown";
 
 interface BaseCardDataType {
   id: string | number;
@@ -37,6 +42,7 @@ interface CardViewProps<T> {
     | {
         key: string;
         label: string;
+        danger?: boolean;
         icon?: React.JSX.Element;
         onClick?: (item: T) => void;
       }[]
@@ -167,84 +173,129 @@ function CardView<T extends BaseCardDataType>(props: CardViewProps<T>) {
 
   const ops = (item) =>
     typeof operations === "function" ? operations(item) : operations;
+
+  const menu = (item) => {
+    const ops =
+      typeof operations === "function" ? operations(item) : operations;
+    <Menu>
+      {ops.map((op) => {
+        if (op?.danger) {
+          return (
+            <Menu.Item key={op?.key} disabled icon={op?.icon}>
+              <Popconfirm
+                title="确定删除吗？"
+                description="此操作不可撤销"
+                onConfirm={op.onClick ? () => op.onClick(item) : undefined}
+                okText="确定"
+                cancelText="取消"
+                // 阻止事件冒泡，避免 Dropdown 关闭
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div
+                  style={{
+                    display: "block",
+                    width: "100%",
+                    color: "inherit",
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {op.icon}
+                  {op.label}
+                </div>
+              </Popconfirm>
+            </Menu.Item>
+          );
+        } else {
+          return (
+            <Menu.Item key={op?.key} onClick={op?.onClick} icon={op?.icon}>
+              {op?.label}
+            </Menu.Item>
+          );
+        }
+      })}
+    </Menu>;
+  };
   return (
     <div className="flex-overflow-hidden">
-      <div className="flex-overflow-auto grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+      <div className="overflow-auto grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
         {data.map((item) => (
           <div
             key={item.id}
             className="border-card p-4 bg-white hover:shadow-lg transition-shadow duration-200"
           >
             <div className="flex flex-col space-y-4 h-full">
-              {/* Header */}
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3 min-w-0">
-                  {item?.icon && (
-                    <div
-                      className={`flex-shrink-0 w-12 h-12 ${
-                        item?.iconColor ||
-                        "bg-gradient-to-br from-blue-100 to-blue-200"
-                      } rounded-lg flex items-center justify-center`}
-                    >
-                      {item?.icon}
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3
-                        className={`text-base flex-1 text-ellipsis overflow-hidden whitespace-nowrap font-semibold text-gray-900 truncate ${
-                          onView ? "cursor-pointer hover:text-blue-600" : ""
-                        }`}
-                        onClick={() => onView?.(item)}
+              <div
+                className="flex flex-col space-y-4 h-full"
+                onClick={() => onView?.(item)}
+                style={{ cursor: onView ? "pointer" : "default" }}
+              >
+                {/* Header */}
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3 min-w-0">
+                    {item?.icon && (
+                      <div
+                        className={`flex-shrink-0 w-12 h-12 ${
+                          item?.iconColor ||
+                          "bg-gradient-to-br from-blue-100 to-blue-200"
+                        } rounded-lg flex items-center justify-center`}
                       >
-                        {item?.name}
-                      </h3>
-                      {item?.status && (
-                        <Tag color={item?.status?.color}>
-                          <div className="flex items-center gap-2 text-xs py-0.5">
-                            <span>{item?.status?.icon}</span>
-                            <span>{item?.status?.label}</span>
-                          </div>
-                        </Tag>
-                      )}
+                        {item?.icon}
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3
+                          className={`text-base flex-1 text-ellipsis overflow-hidden whitespace-nowrap font-semibold text-gray-900 truncate`}
+                        >
+                          {item?.name}
+                        </h3>
+                        {item?.status && (
+                          <Tag color={item?.status?.color}>
+                            <div className="flex items-center gap-2 text-xs py-0.5">
+                              <span>{item?.status?.icon}</span>
+                              <span>{item?.status?.label}</span>
+                            </div>
+                          </Tag>
+                        )}
+                      </div>
                     </div>
                   </div>
+                  {onFavorite && (
+                    <StarFilled
+                      style={{
+                        fontSize: "16px",
+                        color: isFavorite?.(item) ? "#ffcc00ff" : "#d1d5db",
+                        cursor: "pointer",
+                      }}
+                      onClick={() => onFavorite?.(item)}
+                    />
+                  )}
                 </div>
-                {onFavorite && (
-                  <StarFilled
-                    style={{
-                      fontSize: "16px",
-                      color: isFavorite?.(item) ? "#ffcc00ff" : "#d1d5db",
-                      cursor: "pointer",
-                    }}
-                    onClick={() => onFavorite?.(item)}
-                  />
-                )}
-              </div>
 
-              <div className="flex-1 flex flex-col justify-end">
-                {/* Tags */}
-                <TagsRenderer tags={item?.tags || []} />
+                <div className="flex-1 flex flex-col justify-end">
+                  {/* Tags */}
+                  <TagsRenderer tags={item?.tags || []} />
 
-                {/* Description */}
-                <p className="text-gray-600 text-xs text-ellipsis overflow-hidden whitespace-nowrap text-xs line-clamp-2 mt-2">
-                  <Tooltip title={item?.description}>
-                    {item?.description}
-                  </Tooltip>
-                </p>
+                  {/* Description */}
+                  <p className="text-gray-600 text-xs text-ellipsis overflow-hidden whitespace-nowrap text-xs line-clamp-2 mt-2">
+                    <Tooltip title={item?.description}>
+                      {item?.description}
+                    </Tooltip>
+                  </p>
 
-                {/* Statistics */}
-                <div className="grid grid-cols-2 gap-4 py-3">
-                  {item?.statistics?.map((stat, idx) => (
-                    <div key={idx}>
-                      <div className="text-sm text-gray-500">
-                        {stat?.label}:
+                  {/* Statistics */}
+                  <div className="grid grid-cols-2 gap-4 py-3">
+                    {item?.statistics?.map((stat, idx) => (
+                      <div key={idx}>
+                        <div className="text-sm text-gray-500">
+                          {stat?.label}:
+                        </div>
+                        <div className="text-base font-semibold text-gray-900">
+                          {stat?.value}
+                        </div>
                       </div>
-                      <div className="text-base font-semibold text-gray-900">
-                        {stat?.value}
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               </div>
 
@@ -257,24 +308,15 @@ function CardView<T extends BaseCardDataType>(props: CardViewProps<T>) {
                   </div>
                 </div>
                 {operations && (
-                  <Dropdown
-                    trigger={["click"]}
-                    menu={{
-                      items: ops(item),
-                      onClick: ({ key }) => {
-                        const operation = ops(item).find(
-                          (op) => op.key === key
-                        );
-                        if (operation?.onClick) {
-                          operation.onClick(item);
-                        }
-                      },
+                  <ActionDropdown
+                    actions={ops(item)}
+                    onAction={(key) => {
+                      const operation = ops(item).find((op) => op.key === key);
+                      if (operation?.onClick) {
+                        operation.onClick(item);
+                      }
                     }}
-                  >
-                    <div className="cursor-pointer">
-                      <EllipsisOutlined style={{ fontSize: 24 }} />
-                    </div>
-                  </Dropdown>
+                  />
                 )}
               </div>
             </div>
