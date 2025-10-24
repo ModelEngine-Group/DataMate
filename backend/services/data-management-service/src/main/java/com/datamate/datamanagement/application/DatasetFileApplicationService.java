@@ -155,20 +155,21 @@ public class DatasetFileApplicationService {
     /**
      * 删除文件
      */
+    @Transactional
     public void deleteDatasetFile(String datasetId, String fileId) {
         DatasetFile file = getDatasetFile(datasetId, fileId);
-        try {
-            Path filePath = Paths.get(file.getFilePath());
-            Files.deleteIfExists(filePath);
-        } catch (IOException ex) {
-            // ignore
+        Dataset dataset = datasetRepository.getById(datasetId);
+        // 删除文件时，上传到数据集中的文件会同时删除数据库中的记录和文件系统中的文件，归集过来的文件仅删除数据库中的记录
+        if (file.getFilePath().startsWith(dataset.getPath())) {
+            try {
+                Path filePath = Paths.get(file.getFilePath());
+                Files.deleteIfExists(filePath);
+            } catch (IOException ex) {
+                throw BusinessException.of(SystemErrorCode.FILE_SYSTEM_ERROR);
+            }
         }
         datasetFileRepository.removeById(fileId);
-
-        Dataset dataset = datasetRepository.getById(datasetId);
-        // 简单刷新统计（精确处理可从DB统计）
-        dataset.setFileCount(Math.max(0, dataset.getFileCount() - 1));
-        dataset.setSizeBytes(Math.max(0, dataset.getSizeBytes() - (file.getFileSize() != null ? file.getFileSize() : 0)));
+        dataset.removeFile(file);
         datasetRepository.updateById(dataset);
     }
 
