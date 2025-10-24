@@ -29,8 +29,7 @@ export default function WelcomePage() {
             <span className="text-blue-600"> AI数据集</span>
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
-            从数据管理到知识生成，一站式解决机器学习数据准备的所有需求。
-            支持对话式操作、智能编排、数据合成、智能标注、全面评估和RAG知识库构建。
+            从数据管理到知识生成，一站式解决企业AI数据处理的场景问题。
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <span

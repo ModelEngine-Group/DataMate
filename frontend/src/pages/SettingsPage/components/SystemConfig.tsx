@@ -5,7 +5,7 @@ export default function SystemConfig() {
   const { message } = App.useApp();
   // System Settings State
   const [systemConfig, setSystemConfig] = useState({
-    siteName: "ML Dataset Tool",
+    siteName: "DataMate",
     maxFileSize: "100",
     autoBackup: true,
     logLevel: "info",
