@@ -5,8 +5,6 @@ import {
   Tooltip,
   Empty,
   Popover,
-  Menu,
-  Popconfirm,
 } from "antd";
 import { ClockCircleOutlined, StarFilled } from "@ant-design/icons";
 import type { ItemType } from "antd/es/menu/interface";
@@ -47,6 +45,7 @@ interface CardViewProps<T> {
         onClick?: (item: T) => void;
       }[]
     | ((item: T) => ItemType[]);
+  loading?: boolean;
   onView?: (item: T) => void;
   onFavorite?: (item: T) => void;
   isFavorite?: (item: T) => boolean;
@@ -160,8 +159,15 @@ const TagsRenderer = ({ tags }: { tags?: any[] }) => {
 };
 
 function CardView<T extends BaseCardDataType>(props: CardViewProps<T>) {
-  const { data, pagination, operations, onView, onFavorite, isFavorite } =
-    props;
+  const {
+    data,
+    pagination,
+    operations,
+    loading,
+    onView,
+    onFavorite,
+    isFavorite,
+  } = props;
 
   if (data.length === 0) {
     return (
@@ -174,47 +180,6 @@ function CardView<T extends BaseCardDataType>(props: CardViewProps<T>) {
   const ops = (item) =>
     typeof operations === "function" ? operations(item) : operations;
 
-  const menu = (item) => {
-    const ops =
-      typeof operations === "function" ? operations(item) : operations;
-    <Menu>
-      {ops.map((op) => {
-        if (op?.danger) {
-          return (
-            <Menu.Item key={op?.key} disabled icon={op?.icon}>
-              <Popconfirm
-                title="确定删除吗？"
-                description="此操作不可撤销"
-                onConfirm={op.onClick ? () => op.onClick(item) : undefined}
-                okText="确定"
-                cancelText="取消"
-                // 阻止事件冒泡，避免 Dropdown 关闭
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div
-                  style={{
-                    display: "block",
-                    width: "100%",
-                    color: "inherit",
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {op.icon}
-                  {op.label}
-                </div>
-              </Popconfirm>
-            </Menu.Item>
-          );
-        } else {
-          return (
-            <Menu.Item key={op?.key} onClick={op?.onClick} icon={op?.icon}>
-              {op?.label}
-            </Menu.Item>
-          );
-        }
-      })}
-    </Menu>;
-  };
   return (
     <div className="flex-overflow-hidden">
       <div className="overflow-auto grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">

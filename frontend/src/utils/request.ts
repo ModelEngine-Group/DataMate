@@ -91,7 +91,6 @@ class Request {
 
       const xhr = new XMLHttpRequest();
 
-      console.log("upload xhr", url, config);
       // 监听上传进度
       xhr.upload.addEventListener("progress", function (event) {
         if (event.lengthComputable) {

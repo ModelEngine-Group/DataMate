@@ -60,7 +60,7 @@ public class FileService {
         boolean isFinish = Objects.equals(preRequest.getUploadedFileNum(), preRequest.getTotalFileNum());
         if (isFinish) {
             // 删除存分片的临时路径
-            ChunksSaver.deleteFiles(new File(preRequest.getUploadPath(),
+            ChunksSaver.deleteFolder(new File(preRequest.getUploadPath(),
                 String.format(ChunksSaver.TEMP_DIR_NAME_FORMAT, preRequest.getId())).getPath());
             chunkUploadRequestMapper.deleteById(preRequest.getId());
         }

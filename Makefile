@@ -18,7 +18,7 @@ create-namespace:
 install-%:
 ifeq ($(origin INSTALLER), undefined)
 	@echo "Choose a deployment method:"
-	@echo "1. Docker"
+	@echo "1. Docker/Docker-Compose"
 	@echo "2. Kubernetes/Helm"
 	@echo -n "Enter choice: "
 	@read choice; \
@@ -39,7 +39,7 @@ install: install-datamate
 uninstall-%:
 ifeq ($(origin INSTALLER), undefined)
 	@echo "Choose a deployment method:"
-	@echo "1. Docker"
+	@echo "1. Docker/Docker-Compose"
 	@echo "2. Kubernetes/Helm"
 	@echo -n "Enter choice: "
 	@read choice; \
@@ -97,52 +97,6 @@ runtime-docker-install:
 runtime-docker-uninstall:
 	cd deployment/docker/datamate && docker-compose down runtime
 
-.PHONY: runtime-k8s-install
-runtime-k8s-install: create-namespace
-	helm upgrade datamate-kuberay-operator deployment/helm/ray/kuberay-operator --install -n $(NAMESPACE)
-	helm upgrade datamate-raycluster deployment/helm/ray/ray-cluster/ --install -n $(NAMESPACE)
-	kubectl apply -f deployment/helm/ray/service.yaml -n $(NAMESPACE)
-
-.PHONY: runtime-k8s-uninstall
-runtime-k8s-uninstall:
-	helm uninstall datamate-raycluster -n $(NAMESPACE)
-	helm uninstall datamate-kuberay-operator -n $(NAMESPACE)
-	kubectl delete -f deployment/helm/ray/service.yaml -n $(NAMESPACE)
-
-.PHONY: mysql-k8s-install
-mysql-k8s-install: create-namespace
-	kubectl create configmap datamate-init-sql --from-file=scripts/db/ --dry-run=client -o yaml | kubectl apply -f - -n $(NAMESPACE)
-	kubectl apply -f deployment/kubernetes/mysql/configmap.yaml -n $(NAMESPACE)
-	kubectl apply -f deployment/kubernetes/mysql/deploy.yaml -n $(NAMESPACE)
-
-.PHONY: mysql-k8s-uninstall
-mysql-k8s-uninstall:
-	kubectl delete configmap datamate-init-sql -n $(NAMESPACE) --ignore-not-found
-	kubectl delete -f deployment/kubernetes/mysql/configmap.yaml -n $(NAMESPACE) --ignore-not-found
-	kubectl delete -f deployment/kubernetes/mysql/deploy.yaml -n $(NAMESPACE) --ignore-not-found
-
-.PHONY: database-k8s-install
-database-k8s-install: mysql-k8s-install
-
-.PHONY: database-k8s-uninstall
-database-k8s-uninstall: mysql-k8s-uninstall
-
-.PHONY: backend-k8s-install
-backend-k8s-install: create-namespace
-	kubectl apply -f deployment/kubernetes/backend/deploy.yaml -n $(NAMESPACE)
-
-.PHONY: backend-k8s-uninstall
-backend-k8s-uninstall:
-	kubectl delete -f deployment/kubernetes/backend/deploy.yaml -n $(NAMESPACE) --ignore-not-found
-
-.PHONY: frontend-k8s-install
-frontend-k8s-install: create-namespace
-	kubectl apply -f deployment/kubernetes/frontend/deploy.yaml -n $(NAMESPACE)
-
-.PHONY: frontend-k8s-uninstall
-frontend-k8s-uninstall:
-	kubectl delete -f deployment/kubernetes/frontend/deploy.yaml -n $(NAMESPACE) --ignore-not-found
-
 .PHONY: datamate-docker-install
 datamate-docker-install:
 	cd deployment/docker/datamate && docker-compose up -d
@@ -152,7 +106,11 @@ datamate-docker-uninstall:
 	cd deployment/docker/datamate && docker-compose down
 
 .PHONY: datamate-k8s-install
-datamate-k8s-install: create-namespace database-k8s-install backend-k8s-install frontend-k8s-install runtime-k8s-install
+datamate-k8s-install: create-namespace
+	kubectl create configmap datamate-init-sql --from-file=scripts/db/ --dry-run=client -o yaml | kubectl apply -f - -n $(NAMESPACE)
+	helm install datamate deployment/helm/datamate/ -n $(NAMESPACE)
 
 .PHONY: datamate-k8s-uninstall
-datamate-k8s-uninstall: database-k8s-uninstall backend-k8s-uninstall frontend-k8s-uninstall runtime-k8s-uninstall
+datamate-k8s-uninstall:
+	helm uninstall datamate -n $(NAMESPACE) --ignore-not-found
+	kubectl delete configmap datamate-init-sql -n $(NAMESPACE) --ignore-not-found

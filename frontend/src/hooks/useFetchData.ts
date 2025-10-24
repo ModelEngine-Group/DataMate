@@ -23,7 +23,8 @@ export default function useFetchData<T>(
   mapDataFunc: (data: AnyObject) => T = (data) => data as T,
   pollingInterval: number = 30000, // 默认30秒轮询一次
   autoRefresh: boolean = true,
-  additionalPollingFuncs: (() => Promise<any>)[] = [] // 额外的轮询函数
+  additionalPollingFuncs: (() => Promise<any>)[] = [], // 额外的轮询函数
+  pageOffset: number = 1
 ) {
   const { message } = App.useApp();
 
@@ -88,7 +89,6 @@ export default function useFetchData<T>(
   const fetchData = useCallback(
     async (extraParams = {}, skipPollingRestart = false) => {
       const { keyword, filter, current, pageSize } = searchParams;
-
       if (!skipPollingRestart) {
         Loading.show();
         setLoading(true);
@@ -110,7 +110,7 @@ export default function useFetchData<T>(
             type: getFirstOfArray(filter?.type) || undefined,
             status: getFirstOfArray(filter?.status) || undefined,
             tags: filter?.tags?.length ? filter.tags.join(",") : undefined,
-            page: current - 1,
+            page: current - pageOffset,
             size: pageSize,
           }),
           ...additionalPollingFuncs.map((func) => func()),

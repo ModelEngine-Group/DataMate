@@ -51,7 +51,7 @@ export default function DatasetManagementPage() {
         },
         {
           title: "文件总数",
-          value: data?.totalFiles?.image || "0 MB",
+          value: data?.totalFiles || "0 MB",
         },
         {
           title: "总大小",
@@ -113,6 +113,7 @@ export default function DatasetManagementPage() {
   );
 
   const {
+    loading,
     tableData,
     searchParams,
     pagination,
@@ -124,7 +125,8 @@ export default function DatasetManagementPage() {
     mapDataset,
     30000, // 30秒轮询间隔
     true, // 自动刷新
-    [fetchStatistics] // 额外的轮询函数
+    [fetchStatistics], // 额外的轮询函数
+    0
   );
 
   const handleDownloadDataset = async (dataset: Dataset) => {
@@ -135,7 +137,7 @@ export default function DatasetManagementPage() {
   const handleDeleteDataset = async (id: number) => {
     if (!id) return;
     await deleteDatasetByIdUsingDelete(id);
-    fetchData();
+    fetchData({ pageOffset: 0 });
     message.success("数据删除成功");
   };
 
@@ -145,7 +147,7 @@ export default function DatasetManagementPage() {
   };
 
   const handleRefresh = async (showMessage = true) => {
-    await fetchData();
+    await fetchData({ pageOffset: 0 });
     if (showMessage) {
       message.success("数据已刷新");
     }
@@ -295,6 +297,7 @@ export default function DatasetManagementPage() {
 
   const renderCardView = () => (
     <CardView
+      loading={loading}
       data={tableData}
       pageSize={9}
       operations={operations}
@@ -316,6 +319,16 @@ export default function DatasetManagementPage() {
       />
     </Card>
   );
+
+  useEffect(() => {
+    const refresh = () => {
+      handleRefresh(true);
+    };
+    window.addEventListener("update:datasets", refresh);
+    return () => {
+      window.removeEventListener("update:datasets", refresh);
+    };
+  }, []);
 
   return (
     <div className="gap-4 h-full flex flex-col">
@@ -386,7 +399,7 @@ export default function DatasetManagementPage() {
           setCurrentDataset(null);
           setShowUploadDialog(false);
         }}
-        onRefresh={handleRefresh}
+        updateEvent="update:datasets"
       />
     </div>
   );

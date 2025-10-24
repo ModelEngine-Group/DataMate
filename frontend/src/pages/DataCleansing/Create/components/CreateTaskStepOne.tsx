@@ -29,7 +29,7 @@ export default function CreateTaskStepOne({
   const [datasets, setDatasets] = useState<Dataset[]>([]);
 
   const fetchDatasets = async () => {
-    const { data } = await queryDatasetsUsingGet({ page: 0, size: 1000 });
+    const { data } = await queryDatasetsUsingGet({ page: 1, size: 1000 });
     setDatasets(data.content.map(mapDataset) || []);
   };
 

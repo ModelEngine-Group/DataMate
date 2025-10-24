@@ -1,191 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-
 <mapper namespace="com.datamate.collection.infrastructure.persistence.mapper.TaskExecutionMapper">
 
-    <!-- Result Map -->
-    <resultMap id="TaskExecutionResultMap" type="com.datamate.collection.domain.model.TaskExecution">
-        <id property="id" column="id"/>
-        <result property="taskId" column="task_id"/>
-        <result property="taskName" column="task_name"/>
-        <result property="status" column="status" typeHandler="org.apache.ibatis.type.EnumTypeHandler"/>
-        <result property="progress" column="progress"/>
-        <result property="recordsTotal" column="records_total"/>
-        <result property="recordsProcessed" column="records_processed"/>
-        <result property="recordsSuccess" column="records_success"/>
-        <result property="recordsFailed" column="records_failed"/>
-        <result property="throughput" column="throughput"/>
-        <result property="dataSizeBytes" column="data_size_bytes"/>
-        <result property="startedAt" column="started_at"/>
-        <result property="completedAt" column="completed_at"/>
-        <result property="durationSeconds" column="duration_seconds"/>
-        <result property="errorMessage" column="error_message"/>
-        <result property="dataxJobId" column="datax_job_id"/>
-        <result property="config" column="config"/>
-        <result property="result" column="result"/>
-        <result property="createdAt" column="created_at"/>
-    </resultMap>
-
-    <!-- Base Column List -->
-    <sql id="Base_Column_List">
-        id, task_id, task_name, status, progress, records_total, records_processed,
-        records_success, records_failed, throughput, data_size_bytes, started_at,
-        completed_at, duration_seconds, error_message, datax_job_id, config, result, created_at
-    </sql>
-
-    <!-- Insert -->
-    <insert id="insert" parameterType="com.datamate.collection.domain.model.TaskExecution">
-        INSERT INTO t_dc_task_executions (
-            id, task_id, task_name, status, progress, records_total, records_processed,
-            records_success, records_failed, throughput, data_size_bytes, started_at,
-            completed_at, duration_seconds, error_message, datax_job_id, config, result, created_at
-        ) VALUES (
-            #{id}, #{taskId}, #{taskName}, #{status}, #{progress}, #{recordsTotal}, #{recordsProcessed},
-            #{recordsSuccess}, #{recordsFailed}, #{throughput}, #{dataSizeBytes}, #{startedAt},
-            #{completedAt}, #{durationSeconds}, #{errorMessage}, #{dataxJobId}, #{config}, #{result}, #{createdAt}
-        )
-    </insert>
-
-    <!-- Update -->
-    <update id="update" parameterType="com.datamate.collection.domain.model.TaskExecution">
-        UPDATE t_dc_task_executions
-        SET status = #{status},
-            progress = #{progress},
-            records_total = #{recordsTotal},
-            records_processed = #{recordsProcessed},
-            records_success = #{recordsSuccess},
-            records_failed = #{recordsFailed},
-            throughput = #{throughput},
-            data_size_bytes = #{dataSizeBytes},
-            completed_at = #{completedAt},
-            duration_seconds = #{durationSeconds},
-            error_message = #{errorMessage},
-            result = #{result}
-        WHERE id = #{id}
-    </update>
-
-    <!-- Delete by ID -->
-    <delete id="deleteById" parameterType="java.lang.String">
-        DELETE FROM t_dc_task_executions WHERE id = #{id}
-    </delete>
-
-    <!-- Select by ID -->
-    <select id="selectById" parameterType="java.lang.String" resultMap="TaskExecutionResultMap">
-        SELECT <include refid="Base_Column_List"/>
-        FROM t_dc_task_executions
-        WHERE id = #{id}
-    </select>
-
-    <!-- Select by Task ID -->
-    <select id="selectByTaskId" resultMap="TaskExecutionResultMap">
-        SELECT <include refid="Base_Column_List"/>
-        FROM t_dc_task_executions
-        WHERE task_id = #{taskId}
-        ORDER BY started_at DESC
-        <if test="limit != null">
-            LIMIT #{limit}
-        </if>
-    </select>
-
-    <!-- Select by Status -->
-    <select id="selectByStatus" parameterType="java.lang.String" resultMap="TaskExecutionResultMap">
-        SELECT <include refid="Base_Column_List"/>
-        FROM t_dc_task_executions
-        WHERE status = #{status}
-        ORDER BY started_at DESC
-    </select>
-
-    <!-- Select All with Pagination -->
-    <select id="selectAll" resultMap="TaskExecutionResultMap">
-        SELECT <include refid="Base_Column_List"/>
-        FROM t_dc_task_executions
-        <where>
-            <if test="taskId != null and taskId != ''">
-                AND task_id = #{taskId}
-            </if>
-            <if test="status != null and status != ''">
-                AND status = #{status}
-            </if>
-            <if test="startDate != null">
-                AND started_at >= #{startDate}
-            </if>
-            <if test="endDate != null">
-                AND started_at &lt;= #{endDate}
-            </if>
-        </where>
-        ORDER BY started_at DESC
-        <if test="offset != null and limit != null">
-            LIMIT #{offset}, #{limit}
-        </if>
-    </select>
-
-    <!-- Count Total -->
-    <select id="count" resultType="java.lang.Long">
-        SELECT COUNT(*)
-        FROM t_dc_task_executions
-        <where>
-            <if test="taskId != null and taskId != ''">
-                AND task_id = #{taskId}
-            </if>
-            <if test="status != null and status != ''">
-                AND status = #{status}
-            </if>
-            <if test="startDate != null">
-                AND started_at >= #{startDate}
-            </if>
-            <if test="endDate != null">
-                AND started_at &lt;= #{endDate}
-            </if>
-        </where>
-    </select>
-
-    <!-- Update Status and Progress -->
-    <update id="updateProgress">
-        UPDATE t_dc_task_executions
-        SET status = #{status},
-            progress = #{progress},
-            records_processed = #{recordsProcessed},
-            throughput = #{throughput}
-        WHERE id = #{id}
-    </update>
-
-    <!-- Complete Execution -->
-    <update id="completeExecution">
-        UPDATE t_dc_task_executions
-        SET status = #{status},
-            progress = 100.00,
-            completed_at = #{completedAt},
-            duration_seconds = #{durationSeconds},
-            records_success = #{recordsSuccess},
-            records_failed = #{recordsFailed},
-            data_size_bytes = #{dataSizeBytes},
-            error_message = #{errorMessage},
-            result = #{result}
-        WHERE id = #{id}
-    </update>
-
-    <!-- Select Running Executions -->
-    <select id="selectRunningExecutions" resultMap="TaskExecutionResultMap">
-        SELECT <include refid="Base_Column_List"/>
-        FROM t_dc_task_executions
-        WHERE status = 'RUNNING'
-        ORDER BY started_at ASC
-    </select>
-
     <!-- Select Latest Execution by Task -->
-    <select id="selectLatestByTaskId" parameterType="java.lang.String" resultMap="TaskExecutionResultMap">
-        SELECT <include refid="Base_Column_List"/>
-        FROM t_dc_task_executions
+    <select id="selectLatestByTaskId" resultType="com.datamate.collection.domain.model.entity.TaskExecution">
+        SELECT * FROM t_dc_task_executions
         WHERE task_id = #{taskId}
         ORDER BY started_at DESC
         LIMIT 1
     </select>
 
-    <!-- Delete Old Executions -->
-    <delete id="deleteOldExecutions">
-        DELETE FROM t_dc_task_executions
-        WHERE started_at &lt; #{beforeDate}
-    </delete>
+    <!-- Complete Execution -->
+    <update id="completeExecution">
+        UPDATE t_dc_task_executions
+        SET status = #{status},
+            completed_at = #{completedAt},
+            records_processed = #{recordsProcessed},
+            records_total = #{recordsTotal},
+            records_success = #{recordsSuccess},
+            records_failed = #{recordsFailed},
+            error_message = #{errorMessage},
+            updated_at = NOW()
+        WHERE id = #{executionId}
+    </update>
 
 </mapper>

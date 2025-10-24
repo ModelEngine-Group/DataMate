@@ -1,33 +1,4 @@
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  labels:
-    app: datamate
-    tier: backend
-  name: datamate-backend
-rules:
-  - verbs:
-      - create
-      - list
-      - get
-      - delete
-    apiGroups:
-      - batch
-    resources:
-      - jobs
-  - verbs:
-      - list
-    apiGroups:
-      - ""
-    resources:
-      - pods
-  - verbs:
-      - get
-      - list
-    apiGroups:
-      - ""
-    resources:
-      - pods/log
+
 
 ---
 apiVersion: v1
@@ -39,20 +10,7 @@ metadata:
   name: datamate-backend
 
 ---
-kind: RoleBinding
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  labels:
-    app: datamate
-    tier: backend
-  name: datamate-backend
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: datamate-backend
-subjects:
-  - kind: ServiceAccount
-    name: datamate-backend
+
 
 ---
 apiVersion: apps/v1

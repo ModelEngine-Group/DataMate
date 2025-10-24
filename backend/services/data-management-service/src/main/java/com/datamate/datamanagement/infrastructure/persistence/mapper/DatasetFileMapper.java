@@ -24,7 +24,6 @@ public interface DatasetFileMapper extends BaseMapper<DatasetFile> {
                                      @Param("status") String status,
                                      RowBounds rowBounds);
 
-    int insert(DatasetFile file);
     int update(DatasetFile file);
     int deleteById(@Param("id") String id);
 }

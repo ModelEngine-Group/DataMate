@@ -2,6 +2,8 @@ package com.datamate.common.domain.utils;
 
 import com.datamate.common.domain.model.ChunkUploadPreRequest;
 import com.datamate.common.domain.model.ChunkUploadRequest;
+import com.datamate.common.infrastructure.exception.BusinessException;
+import com.datamate.common.infrastructure.exception.SystemErrorCode;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -106,29 +108,17 @@ public class ChunksSaver {
      *
      * @param uploadPath 文件路径
      */
-    public static void deleteFiles(String uploadPath) {
-        File dic = new File(uploadPath);
-        if (!dic.exists()) {
-            return;
-        }
-        File[] files = dic.listFiles();
-        if (files == null || files.length == 0) {
-            dic.delete();
+    public static void deleteFolder(String uploadPath) {
+        File folder = new File(uploadPath);
+
+        if (!folder.exists()) {
+            log.info("folder {} does not exist", uploadPath);
             return;
         }
         try {
-            for (File file : files) {
-                if (file.isDirectory()) {
-                    deleteFiles(file.getPath());
-                } else {
-                    file.delete();
-                }
-            }
-            if (dic.exists()) {
-                dic.delete();
-            }
-        } catch (SecurityException e) {
-            log.warn("Fail to delete file", e);
+            FileUtils.deleteDirectory(folder);
+        } catch (IOException e) {
+            throw BusinessException.of(SystemErrorCode.FILE_SYSTEM_ERROR);
         }
     }
 }

@@ -1,491 +1,1286 @@
-openapi: 3.0.3
+openapi: "3.0.1"
 info:
-  title: Data Cleaning Service API
-  description: 数据清洗服务API - 策略/规则、流程编排对接
-  version: 1.0.0
-  contact:
-    name: Data Mate Platform Team
-
-servers:
-  - url: http://localhost:8084
-    description: Development server
-
-tags:
-  - name: CleaningTask
-    description: 数据清洗任务管理
-  - name: CleaningTemplate
-    description: 数据清洗模板管理
-
+  title: "API Documentation"
+  version: "1.0"
 paths:
-  /ray/log:
-    get:
-      summary: 获取ray日志文件
-      deprecated: false
-      description: ''
-      tags: [ ]
-      parameters: [ ]
-      responses:
-        '200':
-          description: ''
-          content:
-            application/json:
-              schema:
-                type: object
-                properties: { }
-          headers: { }
-      security: [ ]
-  /cleaning/tasks:
-    get:
-      summary: 查询数据清洗任务列表
-      deprecated: false
-      description: 获取所有数据清洗任务或根据查询参数筛选任务。
-      tags:
-        - CleaningTask
-      parameters:
-        - name: status
-          in: query
-          description: 根据任务状态筛选 (e.g., pending, running, completed, failed)
-          required: false
-          schema:
-            type: string
-        - name: keywords
-          in: query
-          description: 关键字
-          required: false
-          schema:
-            type: string
-        - name: page
-          in: query
-          description: 分页数
-          required: true
-          schema:
-            type: integer
-        - name: size
-          in: query
-          description: 分页单页数
-          required: true
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: 成功获取任务列表
-          content:
-            application/json:
-              schema:
-                type: array
-                items: &ref_1
-                  $ref: '#/components/schemas/CleaningTask'
-          headers: { }
-      security: [ ]
-    post:
-      summary: 创建新的数据清洗任务
-      deprecated: false
-      description: 可以直接创建任务或基于现有模板创建任务。
-      tags:
-        - CleaningTask
-      parameters: [ ]
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateCleaningTaskRequest'
-            examples: { }
-      responses:
-        '201':
-          description: 任务创建成功
-          content:
-            application/json:
-              schema: *ref_1
-          headers: { }
-      security: [ ]
-  /cleaning/tasks/{taskId}:
-    get:
-      summary: 获取单个数据清洗任务详情
-      deprecated: false
-      description: 根据任务ID获取任务的详细信息。
-      tags:
-        - CleaningTask
-      parameters:
-        - name: taskId
-          in: path
-          description: 任务的唯一标识符
-          required: true
-          example: ''
-          schema:
-            type: string
-      responses:
-        '200':
-          description: 成功获取任务详情
-          content:
-            application/json:
-              schema: *ref_1
-          headers: { }
-      security: [ ]
-    delete:
-      summary: 删除数据清洗任务
-      deprecated: false
-      description: 根据任务ID删除指定的任务。
-      tags:
-        - CleaningTask
-      parameters:
-        - name: taskId
-          in: path
-          description: 任务的唯一标识符
-          required: true
-          example: ''
-          schema:
-            type: string
-      responses:
-        '204':
-          description: 任务删除成功
-          headers: { }
-      security: [ ]
   /cleaning/templates:
     get:
-      summary: 查询数据清洗模板列表
-      deprecated: false
-      description: 获取所有可用的数据清洗模板。
-      tags:
-        - CleaningTemplate
-      parameters: [ ]
+      summary: "cleaningTemplatesGet"
+      description: "cleaningTemplatesGet"
+      parameters:
+      - name: "page"
+        in: "query"
+        description: ""
+        required: false
+        schema:
+          type: "integer"
+          nullable: false
+      - name: "size"
+        in: "query"
+        description: ""
+        required: false
+        schema:
+          type: "integer"
+          nullable: false
+      - name: "keywords"
+        in: "query"
+        description: ""
+        required: false
+        schema:
+          type: "string"
+          nullable: false
       responses:
-        '200':
-          description: 成功获取模板列表
+        "200":
+          description: ""
           content:
             application/json:
               schema:
-                type: array
-                items: &ref_2
-                  $ref: '#/components/schemas/CleaningTemplate'
-          headers: { }
-      security: [ ]
+                type: "object"
+                properties:
+                  code:
+                    type: "string"
+                    description: "状态码"
+                  message:
+                    type: "string"
+                    description: "消息"
+                  data:
+                    type: "object"
+                    properties:
+                      page:
+                        type: "integer"
+                        description: ""
+                        format: "int64"
+                      size:
+                        type: "integer"
+                        description: ""
+                        format: "int64"
+                      totalElements:
+                        type: "integer"
+                        description: ""
+                        format: "int64"
+                      totalPages:
+                        type: "integer"
+                        description: ""
+                        format: "int64"
+                      content:
+                        type: "array"
+                        description: ""
+                        items:
+                          type: "object"
+                          properties:
+                            id:
+                              type: "string"
+                              description: ""
+                            name:
+                              type: "string"
+                              description: ""
+                            description:
+                              type: "string"
+                              description: ""
+                            instance:
+                              type: "array"
+                              description: ""
+                              items:
+                                type: "object"
+                                properties:
+                                  id:
+                                    type: "string"
+                                    description: ""
+                                  name:
+                                    type: "string"
+                                    description: ""
+                                  description:
+                                    type: "string"
+                                    description: ""
+                                  version:
+                                    type: "string"
+                                    description: ""
+                                  inputs:
+                                    type: "string"
+                                    description: ""
+                                  outputs:
+                                    type: "string"
+                                    description: ""
+                                  runtime:
+                                    type: "string"
+                                    description: ""
+                                  settings:
+                                    type: "string"
+                                    description: ""
+                                  isStar:
+                                    type: "boolean"
+                                    description: ""
+                                  createdAt:
+                                    type: "string"
+                                    description: ""
+                                  updatedAt:
+                                    type: "string"
+                                    description: ""
+                                description: "OperatorResponse"
+                              default: "new ArrayList<>()"
+                            createdAt:
+                              type: "string"
+                              description: ""
+                            updatedAt:
+                              type: "string"
+                              description: ""
+                          description: "CleaningTemplate"
+                    description: "数据"
     post:
-      summary: 创建新的数据清洗模板
-      deprecated: false
-      description: 定义一个新的数据清洗模板。
-      tags:
-        - CleaningTemplate
-      parameters: [ ]
+      summary: "cleaningTemplatesPost"
+      description: "cleaningTemplatesPost"
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateCleaningTemplateRequest'
+              type: "object"
+              properties:
+                name:
+                  type: "string"
+                  description: ""
+                description:
+                  type: "string"
+                  description: ""
+                instance:
+                  type: "array"
+                  description: ""
+                  items:
+                    type: "object"
+                    properties:
+                      id:
+                        type: "string"
+                        description: ""
+                      overrides:
+                        type: "object"
+                        properties:
+                          key:
+                            type: "object"
+                            properties: {}
+                        description: ""
+                        default: "new HashMap<>()"
+                    description: "OperatorInstance"
+                  default: "new ArrayList<>()"
+              description: ""
       responses:
-        '201':
-          description: 模板创建成功
+        "200":
+          description: ""
           content:
             application/json:
-              schema: *ref_2
-          headers: { }
-      security: [ ]
+              schema:
+                type: "object"
+                properties:
+                  code:
+                    type: "string"
+                    description: "状态码"
+                  message:
+                    type: "string"
+                    description: "消息"
+                  data:
+                    type: "object"
+                    properties:
+                      id:
+                        type: "string"
+                        description: ""
+                      name:
+                        type: "string"
+                        description: ""
+                      description:
+                        type: "string"
+                        description: ""
+                      instance:
+                        type: "array"
+                        description: ""
+                        items:
+                          type: "object"
+                          properties:
+                            id:
+                              type: "string"
+                              description: ""
+                            name:
+                              type: "string"
+                              description: ""
+                            description:
+                              type: "string"
+                              description: ""
+                            version:
+                              type: "string"
+                              description: ""
+                            inputs:
+                              type: "string"
+                              description: ""
+                            outputs:
+                              type: "string"
+                              description: ""
+                            runtime:
+                              type: "string"
+                              description: ""
+                            settings:
+                              type: "string"
+                              description: ""
+                            isStar:
+                              type: "boolean"
+                              description: ""
+                            createdAt:
+                              type: "string"
+                              description: ""
+                            updatedAt:
+                              type: "string"
+                              description: ""
+                          description: "OperatorResponse"
+                        default: "new ArrayList<>()"
+                      createdAt:
+                        type: "string"
+                        description: ""
+                      updatedAt:
+                        type: "string"
+                        description: ""
+                    description: "数据"
   /cleaning/templates/{templateId}:
     get:
-      summary: 获取单个数据清洗模板详情
-      deprecated: false
-      description: 根据模板ID获取模板的详细信息。
-      tags:
-        - CleaningTemplate
+      summary: "cleaningTemplatesTemplateIdGet"
+      description: "cleaningTemplatesTemplateIdGet"
       parameters:
-        - name: templateId
-          in: path
-          description: 模板的唯一标识符
-          required: true
-          example: ''
-          schema:
-            type: string
+      - name: "templateId"
+        in: "path"
+        description: ""
+        required: true
+        schema:
+          type: "string"
       responses:
-        '200':
-          description: 成功获取模板详情
+        "200":
+          description: ""
           content:
             application/json:
-              schema: *ref_2
-          headers: { }
-      security: [ ]
+              schema:
+                type: "object"
+                properties:
+                  code:
+                    type: "string"
+                    description: "状态码"
+                  message:
+                    type: "string"
+                    description: "消息"
+                  data:
+                    type: "object"
+                    properties:
+                      id:
+                        type: "string"
+                        description: ""
+                      name:
+                        type: "string"
+                        description: ""
+                      description:
+                        type: "string"
+                        description: ""
+                      instance:
+                        type: "array"
+                        description: ""
+                        items:
+                          type: "object"
+                          properties:
+                            id:
+                              type: "string"
+                              description: ""
+                            name:
+                              type: "string"
+                              description: ""
+                            description:
+                              type: "string"
+                              description: ""
+                            version:
+                              type: "string"
+                              description: ""
+                            inputs:
+                              type: "string"
+                              description: ""
+                            outputs:
+                              type: "string"
+                              description: ""
+                            runtime:
+                              type: "string"
+                              description: ""
+                            settings:
+                              type: "string"
+                              description: ""
+                            isStar:
+                              type: "boolean"
+                              description: ""
+                            createdAt:
+                              type: "string"
+                              description: ""
+                            updatedAt:
+                              type: "string"
+                              description: ""
+                          description: "OperatorResponse"
+                        default: "new ArrayList<>()"
+                      createdAt:
+                        type: "string"
+                        description: ""
+                      updatedAt:
+                        type: "string"
+                        description: ""
+                    description: "数据"
     put:
-      summary: 更新数据清洗模板
-      deprecated: false
-      description: 根据模板ID更新模板的全部信息。
-      tags:
-        - CleaningTemplate
+      summary: "cleaningTemplatesTemplateIdPut"
+      description: "cleaningTemplatesTemplateIdPut"
       parameters:
-        - name: templateId
-          in: path
-          description: 模板的唯一标识符
-          required: true
-          example: ''
-          schema:
-            type: string
+      - name: "templateId"
+        in: "path"
+        description: ""
+        required: true
+        schema:
+          type: "string"
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateCleaningTemplateRequest'
+              type: "object"
+              properties:
+                id:
+                  type: "string"
+                  description: ""
+                name:
+                  type: "string"
+                  description: ""
+                description:
+                  type: "string"
+                  description: ""
+                instance:
+                  type: "array"
+                  description: ""
+                  items:
+                    type: "object"
+                    properties:
+                      id:
+                        type: "string"
+                        description: ""
+                      overrides:
+                        type: "object"
+                        properties:
+                          key:
+                            type: "object"
+                            properties: {}
+                        description: ""
+                        default: "new HashMap<>()"
+                    description: "OperatorInstance"
+                  default: "new ArrayList<>()"
+              description: ""
       responses:
-        '200':
-          description: 模板更新成功
+        "200":
+          description: ""
           content:
             application/json:
-              schema: *ref_2
-          headers: { }
-      security: [ ]
+              schema:
+                type: "object"
+                properties:
+                  code:
+                    type: "string"
+                    description: "状态码"
+                  message:
+                    type: "string"
+                    description: "消息"
+                  data:
+                    type: "object"
+                    properties:
+                      id:
+                        type: "string"
+                        description: ""
+                      name:
+                        type: "string"
+                        description: ""
+                      description:
+                        type: "string"
+                        description: ""
+                      instance:
+                        type: "array"
+                        description: ""
+                        items:
+                          type: "object"
+                          properties:
+                            id:
+                              type: "string"
+                              description: ""
+                            name:
+                              type: "string"
+                              description: ""
+                            description:
+                              type: "string"
+                              description: ""
+                            version:
+                              type: "string"
+                              description: ""
+                            inputs:
+                              type: "string"
+                              description: ""
+                            outputs:
+                              type: "string"
+                              description: ""
+                            runtime:
+                              type: "string"
+                              description: ""
+                            settings:
+                              type: "string"
+                              description: ""
+                            isStar:
+                              type: "boolean"
+                              description: ""
+                            createdAt:
+                              type: "string"
+                              description: ""
+                            updatedAt:
+                              type: "string"
+                              description: ""
+                          description: "OperatorResponse"
+                        default: "new ArrayList<>()"
+                      createdAt:
+                        type: "string"
+                        description: ""
+                      updatedAt:
+                        type: "string"
+                        description: ""
+                    description: "数据"
     delete:
-      summary: 删除数据清洗模板
-      deprecated: false
-      description: 根据模板ID删除指定的模板。
-      tags:
-        - CleaningTemplate
+      summary: "cleaningTemplatesTemplateIdDelete"
+      description: "cleaningTemplatesTemplateIdDelete"
       parameters:
-        - name: templateId
-          in: path
-          description: 模板的唯一标识符
-          required: true
-          example: ''
-          schema:
-            type: string
+      - name: "templateId"
+        in: "path"
+        description: ""
+        required: true
+        schema:
+          type: "string"
       responses:
-        '204':
-          description: 模板删除成功
-          headers: { }
-      security: [ ]
-
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  code:
+                    type: "string"
+                    description: "状态码"
+                  message:
+                    type: "string"
+                    description: "消息"
+                  data:
+                    type: "object"
+                    properties: {}
+                    description: "数据"
+  /cleaning/tasks:
+    get:
+      summary: "cleaningTasksGet"
+      description: "cleaningTasksGet"
+      parameters:
+      - name: "page"
+        in: "query"
+        description: ""
+        required: true
+        schema:
+          type: "integer"
+          nullable: false
+      - name: "size"
+        in: "query"
+        description: ""
+        required: true
+        schema:
+          type: "integer"
+          nullable: false
+      - name: "status"
+        in: "query"
+        description: ""
+        required: false
+        schema:
+          type: "string"
+          nullable: false
+      - name: "keywords"
+        in: "query"
+        description: ""
+        required: false
+        schema:
+          type: "string"
+          nullable: false
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  code:
+                    type: "string"
+                    description: "状态码"
+                  message:
+                    type: "string"
+                    description: "消息"
+                  data:
+                    type: "object"
+                    properties:
+                      page:
+                        type: "integer"
+                        description: ""
+                        format: "int64"
+                      size:
+                        type: "integer"
+                        description: ""
+                        format: "int64"
+                      totalElements:
+                        type: "integer"
+                        description: ""
+                        format: "int64"
+                      totalPages:
+                        type: "integer"
+                        description: ""
+                        format: "int64"
+                      content:
+                        type: "array"
+                        description: ""
+                        items:
+                          type: "object"
+                          properties:
+                            id:
+                              type: "string"
+                              description: ""
+                            name:
+                              type: "string"
+                              description: ""
+                            description:
+                              type: "string"
+                              description: ""
+                            srcDatasetId:
+                              type: "string"
+                              description: ""
+                            srcDatasetName:
+                              type: "string"
+                              description: ""
+                            destDatasetId:
+                              type: "string"
+                              description: ""
+                            destDatasetName:
+                              type: "string"
+                              description: ""
+                            beforeSize:
+                              type: "integer"
+                              description: ""
+                              format: "int64"
+                            afterSize:
+                              type: "integer"
+                              description: ""
+                              format: "int64"
+                            fileCount:
+                              type: "integer"
+                              description: ""
+                            status:
+                              type: "string"
+                              description: "{PENDING=PENDING, RUNNING=RUNNING, COMPLETED=COMPLETED,\
+                                \ STOPPED=STOPPED, FAILED=FAILED}"
+                              enum:
+                              - "PENDING"
+                              - "RUNNING"
+                              - "COMPLETED"
+                              - "STOPPED"
+                              - "FAILED"
+                            templateId:
+                              type: "string"
+                              description: ""
+                            instance:
+                              type: "array"
+                              description: ""
+                              items:
+                                type: "object"
+                                properties:
+                                  id:
+                                    type: "string"
+                                    description: ""
+                                  name:
+                                    type: "string"
+                                    description: ""
+                                  description:
+                                    type: "string"
+                                    description: ""
+                                  version:
+                                    type: "string"
+                                    description: ""
+                                  inputs:
+                                    type: "string"
+                                    description: ""
+                                  outputs:
+                                    type: "string"
+                                    description: ""
+                                  runtime:
+                                    type: "string"
+                                    description: ""
+                                  settings:
+                                    type: "string"
+                                    description: ""
+                                  isStar:
+                                    type: "boolean"
+                                    description: ""
+                                  createdAt:
+                                    type: "string"
+                                    description: ""
+                                  updatedAt:
+                                    type: "string"
+                                    description: ""
+                                description: "OperatorResponse"
+                            progress:
+                              type: "object"
+                              properties:
+                                process:
+                                  type: "number"
+                                  description: ""
+                                totalFileNum:
+                                  type: "integer"
+                                  description: ""
+                                finishedFileNum:
+                                  type: "integer"
+                                  description: ""
+                              description: ""
+                            createdAt:
+                              type: "string"
+                              description: ""
+                            startedAt:
+                              type: "string"
+                              description: ""
+                            finishedAt:
+                              type: "string"
+                              description: ""
+                          description: "CleaningTask"
+                    description: "数据"
+    post:
+      summary: "cleaningTasksPost"
+      description: "cleaningTasksPost"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: "object"
+              properties:
+                name:
+                  type: "string"
+                  description: ""
+                description:
+                  type: "string"
+                  description: ""
+                srcDatasetId:
+                  type: "string"
+                  description: ""
+                srcDatasetName:
+                  type: "string"
+                  description: ""
+                destDatasetName:
+                  type: "string"
+                  description: ""
+                destDatasetType:
+                  type: "string"
+                  description: ""
+                instance:
+                  type: "array"
+                  description: ""
+                  items:
+                    type: "object"
+                    properties:
+                      id:
+                        type: "string"
+                        description: ""
+                      overrides:
+                        type: "object"
+                        properties:
+                          key:
+                            type: "object"
+                            properties: {}
+                        description: ""
+                        default: "new HashMap<>()"
+                    description: "OperatorInstance"
+                  default: "new ArrayList<>()"
+              description: ""
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  code:
+                    type: "string"
+                    description: "状态码"
+                  message:
+                    type: "string"
+                    description: "消息"
+                  data:
+                    type: "object"
+                    properties:
+                      id:
+                        type: "string"
+                        description: ""
+                      name:
+                        type: "string"
+                        description: ""
+                      description:
+                        type: "string"
+                        description: ""
+                      srcDatasetId:
+                        type: "string"
+                        description: ""
+                      srcDatasetName:
+                        type: "string"
+                        description: ""
+                      destDatasetId:
+                        type: "string"
+                        description: ""
+                      destDatasetName:
+                        type: "string"
+                        description: ""
+                      beforeSize:
+                        type: "integer"
+                        description: ""
+                        format: "int64"
+                      afterSize:
+                        type: "integer"
+                        description: ""
+                        format: "int64"
+                      fileCount:
+                        type: "integer"
+                        description: ""
+                      status:
+                        type: "string"
+                        description: "{PENDING=PENDING, RUNNING=RUNNING, COMPLETED=COMPLETED,\
+                          \ STOPPED=STOPPED, FAILED=FAILED}"
+                        enum:
+                        - "PENDING"
+                        - "RUNNING"
+                        - "COMPLETED"
+                        - "STOPPED"
+                        - "FAILED"
+                      templateId:
+                        type: "string"
+                        description: ""
+                      instance:
+                        type: "array"
+                        description: ""
+                        items:
+                          type: "object"
+                          properties:
+                            id:
+                              type: "string"
+                              description: ""
+                            name:
+                              type: "string"
+                              description: ""
+                            description:
+                              type: "string"
+                              description: ""
+                            version:
+                              type: "string"
+                              description: ""
+                            inputs:
+                              type: "string"
+                              description: ""
+                            outputs:
+                              type: "string"
+                              description: ""
+                            runtime:
+                              type: "string"
+                              description: ""
+                            settings:
+                              type: "string"
+                              description: ""
+                            isStar:
+                              type: "boolean"
+                              description: ""
+                            createdAt:
+                              type: "string"
+                              description: ""
+                            updatedAt:
+                              type: "string"
+                              description: ""
+                          description: "OperatorResponse"
+                      progress:
+                        type: "object"
+                        properties:
+                          process:
+                            type: "number"
+                            description: ""
+                          totalFileNum:
+                            type: "integer"
+                            description: ""
+                          finishedFileNum:
+                            type: "integer"
+                            description: ""
+                        description: ""
+                      createdAt:
+                        type: "string"
+                        description: ""
+                      startedAt:
+                        type: "string"
+                        description: ""
+                      finishedAt:
+                        type: "string"
+                        description: ""
+                    description: "数据"
+  /cleaning/tasks/{taskId}/stop:
+    post:
+      summary: "cleaningTasksStop"
+      description: "cleaningTasksStop"
+      parameters:
+      - name: "taskId"
+        in: "path"
+        description: ""
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  code:
+                    type: "string"
+                    description: "状态码"
+                  message:
+                    type: "string"
+                    description: "消息"
+                  data:
+                    type: "object"
+                    properties: {}
+                    description: "数据"
+  /cleaning/tasks/{taskId}/execute:
+    post:
+      summary: "cleaningTasksStart"
+      description: "cleaningTasksStart"
+      parameters:
+      - name: "taskId"
+        in: "path"
+        description: ""
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  code:
+                    type: "string"
+                    description: "状态码"
+                  message:
+                    type: "string"
+                    description: "消息"
+                  data:
+                    type: "object"
+                    properties: {}
+                    description: "数据"
+  /cleaning/tasks/{taskId}:
+    get:
+      summary: "cleaningTasksTaskIdGet"
+      description: "cleaningTasksTaskIdGet"
+      parameters:
+      - name: "taskId"
+        in: "path"
+        description: ""
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  code:
+                    type: "string"
+                    description: "状态码"
+                  message:
+                    type: "string"
+                    description: "消息"
+                  data:
+                    type: "object"
+                    properties:
+                      id:
+                        type: "string"
+                        description: ""
+                      name:
+                        type: "string"
+                        description: ""
+                      description:
+                        type: "string"
+                        description: ""
+                      srcDatasetId:
+                        type: "string"
+                        description: ""
+                      srcDatasetName:
+                        type: "string"
+                        description: ""
+                      destDatasetId:
+                        type: "string"
+                        description: ""
+                      destDatasetName:
+                        type: "string"
+                        description: ""
+                      beforeSize:
+                        type: "integer"
+                        description: ""
+                        format: "int64"
+                      afterSize:
+                        type: "integer"
+                        description: ""
+                        format: "int64"
+                      fileCount:
+                        type: "integer"
+                        description: ""
+                      status:
+                        type: "string"
+                        description: "{PENDING=PENDING, RUNNING=RUNNING, COMPLETED=COMPLETED,\
+                          \ STOPPED=STOPPED, FAILED=FAILED}"
+                        enum:
+                        - "PENDING"
+                        - "RUNNING"
+                        - "COMPLETED"
+                        - "STOPPED"
+                        - "FAILED"
+                      templateId:
+                        type: "string"
+                        description: ""
+                      instance:
+                        type: "array"
+                        description: ""
+                        items:
+                          type: "object"
+                          properties:
+                            id:
+                              type: "string"
+                              description: ""
+                            name:
+                              type: "string"
+                              description: ""
+                            description:
+                              type: "string"
+                              description: ""
+                            version:
+                              type: "string"
+                              description: ""
+                            inputs:
+                              type: "string"
+                              description: ""
+                            outputs:
+                              type: "string"
+                              description: ""
+                            runtime:
+                              type: "string"
+                              description: ""
+                            settings:
+                              type: "string"
+                              description: ""
+                            isStar:
+                              type: "boolean"
+                              description: ""
+                            createdAt:
+                              type: "string"
+                              description: ""
+                            updatedAt:
+                              type: "string"
+                              description: ""
+                          description: "OperatorResponse"
+                      progress:
+                        type: "object"
+                        properties:
+                          process:
+                            type: "number"
+                            description: ""
+                          totalFileNum:
+                            type: "integer"
+                            description: ""
+                          finishedFileNum:
+                            type: "integer"
+                            description: ""
+                        description: ""
+                      createdAt:
+                        type: "string"
+                        description: ""
+                      startedAt:
+                        type: "string"
+                        description: ""
+                      finishedAt:
+                        type: "string"
+                        description: ""
+                    description: "数据"
+    delete:
+      summary: "cleaningTasksTaskIdDelete"
+      description: "cleaningTasksTaskIdDelete"
+      parameters:
+      - name: "taskId"
+        in: "path"
+        description: ""
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  code:
+                    type: "string"
+                    description: "状态码"
+                  message:
+                    type: "string"
+                    description: "消息"
+                  data:
+                    type: "object"
+                    properties: {}
+                    description: "数据"
 components:
   schemas:
-    OperatorInstance:
-      type: object
+    OperatorResponse:
+      type: "object"
       properties:
         id:
-          type: string
+          type: "string"
+          description: ""
+        name:
+          type: "string"
+          description: ""
+        description:
+          type: "string"
+          description: ""
+        version:
+          type: "string"
+          description: ""
+        inputs:
+          type: "string"
+          description: ""
+        outputs:
+          type: "string"
+          description: ""
+        runtime:
+          type: "string"
+          description: ""
+        settings:
+          type: "string"
+          description: ""
+        isStar:
+          type: "boolean"
+          description: ""
+        createdAt:
+          type: "string"
+          description: ""
+        updatedAt:
+          type: "string"
+          description: ""
+      description: "OperatorResponse"
+    CleaningTemplate:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          description: ""
+        name:
+          type: "string"
+          description: ""
+        description:
+          type: "string"
+          description: ""
+        instance:
+          type: "array"
+          description: ""
+          items:
+            type: "object"
+            properties:
+              id:
+                type: "string"
+                description: ""
+              name:
+                type: "string"
+                description: ""
+              description:
+                type: "string"
+                description: ""
+              version:
+                type: "string"
+                description: ""
+              inputs:
+                type: "string"
+                description: ""
+              outputs:
+                type: "string"
+                description: ""
+              runtime:
+                type: "string"
+                description: ""
+              settings:
+                type: "string"
+                description: ""
+              isStar:
+                type: "boolean"
+                description: ""
+              createdAt:
+                type: "string"
+                description: ""
+              updatedAt:
+                type: "string"
+                description: ""
+            description: "OperatorResponse"
+          default: "new ArrayList<>()"
+        createdAt:
+          type: "string"
+          description: ""
+        updatedAt:
+          type: "string"
+          description: ""
+      description: "数据"
+    OperatorInstance:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          description: ""
         overrides:
-          type: object
-          properties: { }
-          additionalProperties:
-            type: object
-            properties: { }
-      required:
-        - id
-        - overrides
+          type: "object"
+          properties:
+            key:
+              type: "object"
+              properties: {}
+          description: ""
+          default: "new HashMap<>()"
+      description: "OperatorInstance"
+    java.lang.Object:
+      type: "object"
+      properties: {}
+      description: "数据"
     CleaningProcess:
-      type: object
+      type: "object"
       properties:
         process:
-          type: number
-          format: float
-          description: 进度百分比
+          type: "number"
+          description: ""
         totalFileNum:
-          type: integer
-          description: 总文件数量
+          type: "integer"
+          description: ""
         finishedFileNum:
-          type: integer
-          description: 已完成文件数量
-      required:
-        - process
-        - totalFileNum
-        - finishedFileNum
-    OperatorResponse:
-      type: object
-      properties:
-        id:
-          type: string
-          description: 算子ID
-        name:
-          type: string
-          description: 算子名称
-        description:
-          type: string
-          description: 算子描述
-        version:
-          type: string
-          description: 算子版本
-        inputs:
-          type: string
-          description: 输入类型
-        outputs:
-          type: string
-          description: 输入类型
-        runtime:
-          type: string
-          description: 运行时设置
-        settings:
-          type: string
-          description: 算子参数
-        isStar:
-          type: boolean
-          description: 是否收藏
-        createdAt:
-          type: string
-          format: date-time
-          description: 创建时间
-        updatedAt:
-          type: string
-          format: date-time
-          description: 更新时间
-      required:
-        - inputs
-        - outputs
-        - runtime
-        - settings
-        - isStar
-    UpdateCleaningTemplateRequest:
-      type: object
-      required:
-        - name
-        - instance
-        - id
-      properties:
-        id:
-          type: string
-        name:
-          type: string
-          description: 模板名称
-        description:
-          type: string
-          description: 模板描述
-        instance:
-          type: array
-          items: &ref_3
-            $ref: '#/components/schemas/OperatorInstance'
-          description: 模板定义的清洗规则和配置
-    CreateCleaningTemplateRequest:
-      type: object
-      required:
-        - name
-        - instance
-      properties:
-        name:
-          type: string
-          description: 模板名称
-        description:
-          type: string
-          description: 模板描述
-        instance:
-          type: array
-          items: *ref_3
-          description: 任务的具体配置（如果非模板创建，则直接定义）'
-    CleaningTemplate:
-      type: object
-      required:
-        - id
-        - name
-        - instance
-        - createdAt
-      properties:
-        id:
-          type: string
-          description: 模板唯一标识符
-        name:
-          type: string
-          description: 模板名称
-        description:
-          type: string
-          description: 模板描述
-        instance:
-          type: array
-          items: &ref_4
-            $ref: '#/components/schemas/OperatorResponse'
-          description: 模板定义的清洗规则和配置
-        createdAt:
-          type: string
-          format: date-time
-          description: 模板创建时间
-        updatedAt:
-          type: string
-          format: date-time
-          description: 模板最后更新时间
-    CreateCleaningTaskRequest:
-      type: object
-      required:
-        - name
-        - instance
-        - srcDatasetId
-        - srcDatasetName
-        - destDatasetName
-        - destDatasetType
-      properties:
-        name:
-          type: string
-          description: 任务名称
-        description:
-          type: string
-          description: 任务描述
-        srcDatasetId:
-          type: string
-        srcDatasetName:
-          type: string
-        destDatasetName:
-          type: string
-        destDatasetType:
-          type: string
-        instance:
-          type: array
-          items: *ref_3
-          description: 任务的具体配置（如果非模板创建，则直接定义）
-    ErrorResponse:
-      type: object
-      properties:
-        error:
-          type: string
-          description: 错误类型
-        message:
-          type: string
-          description: 错误详细信息
+          type: "integer"
+          description: ""
+      description: ""
     CleaningTask:
-      type: object
-      required:
-        - id
-        - name
-        - status
-        - createdAt
-        - startedAt
+      type: "object"
       properties:
         id:
-          type: string
-          description: 任务唯一标识符
+          type: "string"
+          description: ""
         name:
-          type: string
-          description: 任务名称
+          type: "string"
+          description: ""
         description:
-          type: string
-          description: 任务描述
+          type: "string"
+          description: ""
         srcDatasetId:
-          type: string
-          description: 源数据集id
+          type: "string"
+          description: ""
         srcDatasetName:
-          type: string
-          description: 源数据集名称
+          type: "string"
+          description: ""
         destDatasetId:
-          type: string
-          description: 目标数据集id
+          type: "string"
+          description: ""
         destDatasetName:
-          type: string
-          description: 目标数据集名称
+          type: "string"
+          description: ""
+        beforeSize:
+          type: "integer"
+          description: ""
+          format: "int64"
+        afterSize:
+          type: "integer"
+          description: ""
+          format: "int64"
+        fileCount:
+          type: "integer"
+          description: ""
         status:
-          type: string
-          description: 任务当前状态
+          type: "string"
+          description: "{PENDING=PENDING, RUNNING=RUNNING, COMPLETED=COMPLETED, STOPPED=STOPPED,\
+            \ FAILED=FAILED}"
           enum:
-            - pending
-            - running
-            - completed
-            - failed
+          - "PENDING"
+          - "RUNNING"
+          - "COMPLETED"
+          - "STOPPED"
+          - "FAILED"
         templateId:
-          type: string
-          description: 关联的模板ID（如果基于模板创建）
+          type: "string"
+          description: ""
         instance:
-          type: array
-          items: *ref_4
-          description: 任务的具体配置（如果非模板创建，则直接定义）
+          type: "array"
+          description: ""
+          items:
+            type: "object"
+            properties:
+              id:
+                type: "string"
+                description: ""
+              name:
+                type: "string"
+                description: ""
+              description:
+                type: "string"
+                description: ""
+              version:
+                type: "string"
+                description: ""
+              inputs:
+                type: "string"
+                description: ""
+              outputs:
+                type: "string"
+                description: ""
+              runtime:
+                type: "string"
+                description: ""
+              settings:
+                type: "string"
+                description: ""
+              isStar:
+                type: "boolean"
+                description: ""
+              createdAt:
+                type: "string"
+                description: ""
+              updatedAt:
+                type: "string"
+                description: ""
+            description: "OperatorResponse"
         progress:
-          $ref: '#/components/schemas/CleaningProcess'
+          type: "object"
+          properties:
+            process:
+              type: "number"
+              description: ""
+            totalFileNum:
+              type: "integer"
+              description: ""
+            finishedFileNum:
+              type: "integer"
+              description: ""
+          description: ""
         createdAt:
-          type: string
-          description: 任务创建时间
-          format: date-time
+          type: "string"
+          description: ""
         startedAt:
-          type: string
-          format: date-time
-          description: 任务开始时间
+          type: "string"
+          description: ""
         finishedAt:
-          type: string
-          format: date-time
-          description: 任务最后更新时间
-    securitySchemes: { }
+          type: "string"
+          description: ""
+      description: "数据"

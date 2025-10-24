@@ -179,6 +179,7 @@ export default function Overview({ dataset, filesOperation }) {
             dataSource={fileList}
             // rowSelection={rowSelection}
             scroll={{ x: "max-content", y: 600 }}
+            pagination={{ showTotal: (total) => `共 ${total} 条` }}
           />
         </div>
       </div>

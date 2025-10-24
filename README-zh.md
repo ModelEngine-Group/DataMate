@@ -38,6 +38,7 @@
 
 ```bash
 git clone git@github.com:ModelEngine-Group/DataMate.git
+cd DataMate
 ```
 
 ### 镜像构建

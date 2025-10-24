@@ -127,35 +127,6 @@
 
     <build>
         <plugins>
-            <!-- OpenAPI Generator Plugin -->
-            <plugin>
-                <groupId>org.openapitools</groupId>
-                <artifactId>openapi-generator-maven-plugin</artifactId>
-                <version>6.6.0</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>generate</goal>
-                        </goals>
-                        <configuration>
-                            <inputSpec>${project.basedir}/../../openapi/specs/data-collection.yaml</inputSpec>
-                            <generatorName>spring</generatorName>
-                            <output>${project.build.directory}/generated-sources/openapi</output>
-                            <apiPackage>com.datamate.collection.interfaces.api</apiPackage>
-                            <modelPackage>com.datamate.collection.interfaces.dto</modelPackage>
-                            <configOptions>
-                                <interfaceOnly>true</interfaceOnly>
-                                <useTags>true</useTags>
-                                <useSpringBoot3>true</useSpringBoot3>
-                                <documentationProvider>springdoc</documentationProvider>
-                                <dateLibrary>java8-localdatetime</dateLibrary>
-                                <java8>true</java8>
-                            </configOptions>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
