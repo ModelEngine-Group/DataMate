@@ -24,6 +24,7 @@ export default function TaskUpload() {
       percent: 0,
       reqId: -1,
       controller,
+      updateEvent: detail.updateEvent || "update:dataset",
     };
     taskListRef.current = [task, ...taskListRef.current];
 
@@ -47,7 +48,7 @@ export default function TaskUpload() {
     if (task.isCancel && task.cancelFn) {
       task.cancelFn();
     }
-    window.dispatchEvent(new Event("update:dataset"));
+    window.dispatchEvent(new Event(task.updateEvent || "update:dataset"));
     window.dispatchEvent(
       new CustomEvent("show:task-popover", { detail: { show: false } })
     );
@@ -111,7 +112,7 @@ export default function TaskUpload() {
       cancelFn: () => {
         task.controller.abort();
         cancelUploadUsingPut(reqId);
-        window.dispatchEvent(new Event("update:dataset"));
+        window.dispatchEvent(new Event(task.updateEvent || "update:dataset"));
       },
     };
     updateTaskList(newTask);

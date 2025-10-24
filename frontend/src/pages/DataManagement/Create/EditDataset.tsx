@@ -28,6 +28,7 @@ export default function EditDataset({
     tags: [],
   });
   const fetchDataset = async () => {
+    if (!open) return;
     // 如果有id，说明是编辑模式
     if (data && data.id) {
       const { data: newData } = await queryDatasetByIdUsingGet(data.id);

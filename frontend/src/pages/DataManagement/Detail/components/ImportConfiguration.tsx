@@ -1,13 +1,4 @@
-import {
-  Select,
-  Input,
-  Form,
-  Radio,
-  Modal,
-  Button,
-  App,
-  UploadFile,
-} from "antd";
+import { Select, Input, Form, Radio, Modal, Button, UploadFile } from "antd";
 import { InboxOutlined } from "@ant-design/icons";
 import { dataSourceOptions } from "../../dataset.const";
 import { Dataset, DataSource } from "../../dataset.model";
@@ -21,14 +12,13 @@ export default function ImportConfiguration({
   data,
   open,
   onClose,
-  onRefresh,
+  updateEvent = "update:dataset",
 }: {
-  data?: Dataset;
+  data: Dataset | null;
   open: boolean;
   onClose: () => void;
-  onRefresh?: (showMessage?: boolean) => void;
+  updateEvent?: string;
 }) {
-  const { message } = App.useApp();
   const [form] = Form.useForm();
   const [collectionOptions, setCollectionOptions] = useState([]);
   const [importConfig, setImportConfig] = useState<any>({
@@ -57,7 +47,11 @@ export default function ImportConfiguration({
     });
     window.dispatchEvent(
       new CustomEvent("upload:dataset", {
-        detail: { dataset, files: fileSliceList },
+        detail: {
+          dataset,
+          files: fileSliceList,
+          updateEvent,
+        },
       })
     );
     resetFiles();
@@ -73,6 +67,7 @@ export default function ImportConfiguration({
   };
 
   const fetchCollectionTasks = async () => {
+    if (importConfig.source !== DataSource.COLLECTION) return;
     try {
       const res = await queryTasksUsingGet({ page: 0, size: 100 });
       const options = res.data.content.map((task: any) => ({
@@ -93,15 +88,14 @@ export default function ImportConfiguration({
   };
 
   const handleImportData = async () => {
+    if (!data) return;
     if (importConfig.source === DataSource.UPLOAD) {
       await handleUpload(data);
     } else if (importConfig.source === DataSource.COLLECTION) {
-      await updateDatasetByIdUsingPut(data?.id!, {
+      await updateDatasetByIdUsingPut(data.id, {
         ...importConfig,
       });
     }
-    message.success("数据已更新");
-    onRefresh?.(false);
     onClose();
   };
 
@@ -110,7 +104,7 @@ export default function ImportConfiguration({
       resetState();
       fetchCollectionTasks();
     }
-  }, [open]);
+  }, [open, importConfig.source]);
 
   return (
     <Modal

@@ -97,4 +97,5 @@ export interface TaskItem {
   isCancel?: boolean;
   controller: AbortController;
   cancelFn?: () => void;
+  updateEvent?: string;
 }

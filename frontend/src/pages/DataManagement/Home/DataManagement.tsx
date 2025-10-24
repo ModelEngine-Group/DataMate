@@ -320,6 +320,16 @@ export default function DatasetManagementPage() {
     </Card>
   );
 
+  useEffect(() => {
+    const refresh = () => {
+      handleRefresh(true);
+    };
+    window.addEventListener("update:datasets", refresh);
+    return () => {
+      window.removeEventListener("update:datasets", refresh);
+    };
+  }, []);
+
   return (
     <div className="gap-4 h-full flex flex-col">
       {/* Header */}
@@ -389,7 +399,7 @@ export default function DatasetManagementPage() {
           setCurrentDataset(null);
           setShowUploadDialog(false);
         }}
-        onRefresh={handleRefresh}
+        updateEvent="update:datasets"
       />
     </div>
   );
