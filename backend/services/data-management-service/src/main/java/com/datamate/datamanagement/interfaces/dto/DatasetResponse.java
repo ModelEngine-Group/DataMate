@@ -24,6 +24,8 @@ public class DatasetResponse {
     private String status;
     /** 标签列表 */
     private List<TagResponse> tags;
+    /** 数据集保留天数 */
+    private Integer retentionDays;
     /** 数据源 */
     private String dataSource;
     /** 目标位置 */
