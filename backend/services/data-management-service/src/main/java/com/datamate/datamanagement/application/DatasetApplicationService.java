@@ -220,30 +220,10 @@ public class DatasetApplicationService {
     public void processDataSourceAsync(String datasetId, String dataSourceId) {
         try {
             log.info("开始处理数据源文件扫描，数据集ID: {}, 数据源ID: {}", datasetId, dataSourceId);
-
-            // 1. 调用数据归集服务获取任务详情
-            CollectionTaskDetailResponse taskDetail = collectionTaskClient.getTaskDetail(dataSourceId).getData();
-            if (taskDetail == null) {
-                log.error("获取归集任务详情失败，任务ID: {}", dataSourceId);
-                return;
-            }
-
-            log.info("获取到归集任务详情: {}", taskDetail);
-
-            // 2. 解析任务配置
-            LocalCollectionConfig config = parseTaskConfig(taskDetail.getConfig());
-            if (config == null) {
-                log.error("解析任务配置失败，任务ID: {}", dataSourceId);
-                return;
-            }
-
-            // 4. 获取文件路径列表
-            List<String> filePaths = config.getFilePaths();
+            List<String> filePaths = getFilePaths(dataSourceId);
             if (CollectionUtils.isEmpty(filePaths)) {
-                log.warn("文件路径列表为空，任务ID: {}", dataSourceId);
                 return;
             }
-
             log.info("开始扫描文件，共 {} 个文件路径", filePaths.size());
 
             // 5. 扫描文件元数据
@@ -261,9 +241,11 @@ public class DatasetApplicationService {
                         dataset.removeFile(existDatasetFile);
                         existDatasetFile.setFileSize(datasetFile.getFileSize());
                         dataset.addFile(existDatasetFile);
+                        dataset.active();
                         datasetFileRepository.updateById(existDatasetFile);
                     } else {
                         dataset.addFile(datasetFile);
+                        dataset.active();
                         datasetFileRepository.save(datasetFile);
                     }
                 }
@@ -275,6 +257,24 @@ public class DatasetApplicationService {
         } catch (Exception e) {
             log.error("处理数据源文件扫描失败，数据集ID: {}, 数据源ID: {}", datasetId, dataSourceId, e);
         }
+    }
+
+    private List<String> getFilePaths(String dataSourceId) {
+        // 1. 调用数据归集服务获取任务详情
+        CollectionTaskDetailResponse taskDetail = collectionTaskClient.getTaskDetail(dataSourceId).getData();
+        if (taskDetail == null) {
+            log.warn("获取归集任务详情失败，任务ID: {}", dataSourceId);
+            return Collections.emptyList();
+        }
+        log.info("获取到归集任务详情: {}", taskDetail);
+        // 2. 解析任务配置
+        LocalCollectionConfig config = parseTaskConfig(taskDetail.getConfig());
+        if (config == null) {
+            log.warn("解析任务配置失败，任务ID: {}", dataSourceId);
+            return Collections.emptyList();
+        }
+        // 4. 获取文件路径列表
+        return config.getFilePaths();
     }
 
     /**

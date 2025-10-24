@@ -233,6 +233,7 @@ public class DatasetFileApplicationService {
 
         datasetFileRepository.save(datasetFile);
         dataset.addFile(datasetFile);
+        dataset.active();
         datasetRepository.updateById(dataset);
     }
 }
