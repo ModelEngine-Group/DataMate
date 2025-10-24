@@ -7,12 +7,10 @@ import com.datamate.collection.domain.model.entity.CollectionTask;
 import com.datamate.collection.domain.model.entity.TaskExecution;
 import com.datamate.collection.common.enums.TaskStatus;
 import com.datamate.collection.domain.repository.CollectionTaskRepository;
-import com.datamate.collection.interfaces.dto.CollectionTaskPagingQuery;
 import com.datamate.collection.common.enums.SyncMode;
 import com.datamate.common.domain.utils.ChunksSaver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -66,11 +64,8 @@ public class CollectionTaskService {
         return collectionTaskRepository.getById(id);
     }
 
-    public IPage<CollectionTask> getTasks(CollectionTaskPagingQuery query) {
-        LambdaQueryWrapper<CollectionTask> wrapper = new LambdaQueryWrapper<CollectionTask>()
-            .eq(query.getStatus() != null, CollectionTask::getStatus, query.getStatus())
-            .like(StringUtils.isNotBlank(query.getName()), CollectionTask::getName, query.getName());
-        return collectionTaskRepository.page(new Page<>(query.getPage(), query.getSize()), wrapper);
+    public IPage<CollectionTask> getTasks(Page<CollectionTask> page, LambdaQueryWrapper<CollectionTask> wrapper) {
+        return collectionTaskRepository.page(page, wrapper);
     }
 
     public List<CollectionTask> selectActiveTasks() {

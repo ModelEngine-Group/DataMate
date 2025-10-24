@@ -1,5 +1,7 @@
 package com.datamate.collection.interfaces.rest;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.datamate.collection.application.CollectionTaskService;
 import com.datamate.collection.domain.model.entity.CollectionTask;
 import com.datamate.collection.interfaces.converter.CollectionTaskConverter;
@@ -8,6 +10,7 @@ import com.datamate.common.interfaces.PagedResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -53,6 +56,10 @@ public class CollectionTaskController{
 
     @GetMapping
     public ResponseEntity<PagedResponse<CollectionTaskResponse>> getTasks(@Valid CollectionTaskPagingQuery query) {
-        return ResponseEntity.ok(CollectionTaskConverter.INSTANCE.toResponse(taskService.getTasks(query)));
+        Page<CollectionTask> page = new Page<>(query.getPage(), query.getSize());
+        LambdaQueryWrapper<CollectionTask> wrapper = new LambdaQueryWrapper<CollectionTask>()
+            .eq(query.getStatus() != null, CollectionTask::getStatus, query.getStatus())
+            .like(StringUtils.isNotBlank(query.getName()), CollectionTask::getName, query.getName());
+        return ResponseEntity.ok(CollectionTaskConverter.INSTANCE.toResponse(taskService.getTasks(page, wrapper)));
     }
 }
