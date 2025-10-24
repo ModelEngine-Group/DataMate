@@ -252,11 +252,11 @@ const router = createBrowserRouter([
           },
         ],
       },
-      {
-        path: "settings",
-        Component: SettingsPage,
-      },
     ],
+  },
+  {
+    path: "settings",
+    Component: SettingsPage,
   },
 ]);
 

@@ -137,11 +137,8 @@ const AsiderAndHeaderLayout = () => {
             </Popover>
             <Button
               block
-              color={pathname === "/data/settings" ? "primary" : "default"}
-              variant={pathname === "/data/settings" ? "filled" : "outlined"}
               onClick={() => {
-                setActiveItem("");
-                navigate("/data/settings");
+                navigate("/settings");
               }}
             >
               设置
@@ -167,11 +164,8 @@ const AsiderAndHeaderLayout = () => {
             </div>
             <Button
               block
-              color={pathname === "/data/settings" ? "primary" : "default"}
-              variant={pathname === "/data/settings" ? "filled" : "outlined"}
               onClick={() => {
-                setActiveItem("");
-                navigate("/data/settings");
+                navigate("/settings");
               }}
             >
               <SettingOutlined />
