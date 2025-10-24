@@ -237,7 +237,7 @@ export default function DatasetDetail() {
         data={dataset}
         open={showUploadDialog}
         onClose={() => setShowUploadDialog(false)}
-        onRefresh={handleRefresh}
+        updateEvent="update:dataset"
       />
       <EditDataset
         data={dataset}
