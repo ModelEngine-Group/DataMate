@@ -26,7 +26,7 @@ FROM openjdk:21-jdk-slim
 
 RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources && \
     apt-get update && \
-    apt-get install -y vim wget curl nfs-common rsync python3 python3-pip python-is-python3 && \
+    apt-get install -y vim wget curl nfs-common rsync python3 python3-pip python-is-python3 dos2unix && \
     apt-get clean && \
     rm -rf /var/lib/apy/lists/*
 
@@ -37,7 +37,8 @@ COPY editions/community/config/application.yml /opt/backend/application.yml
 COPY editions/community/config/log4j2.xml /opt/backend/log4j2.xml
 COPY scripts/images/backend/start.sh /opt/backend/start.sh
 
-RUN chmod +x /opt/backend/start.sh \
+RUN dos2unix /opt/backend/start.sh \
+    && chmod +x /opt/backend/start.sh \
     && ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 
 ENTRYPOINT ["/opt/backend/start.sh"]

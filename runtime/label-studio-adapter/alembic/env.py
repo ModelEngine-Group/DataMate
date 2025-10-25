@@ -27,15 +27,15 @@ def ensure_database_and_user():
     # 只在 MySQL 配置时执行
     if not settings.mysql_host:
         return
-    
-    mysql_root_password = os.getenv('MYSQL_ROOT_PASSWORD', 'Huawei@123')
-    
+
+    mysql_root_password = os.getenv('MYSQL_ROOT_PASSWORD', 'password')
+
     # URL 编码密码以处理特殊字符
     encoded_password = quote_plus(mysql_root_password)
-    
+
     # 使用 root 用户连接（不指定数据库）
     root_url = f"mysql+pymysql://root:{encoded_password}@{settings.mysql_host}:{settings.mysql_port}/"
-    
+
     try:
         root_engine = create_engine(root_url, poolclass=pool.NullPool)
         with root_engine.connect() as conn:
@@ -45,24 +45,24 @@ def ensure_database_and_user():
                 f"CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
             ))
             conn.commit()
-            
+
             # 创建用户（如果不存在）- 使用 MySQL 8 默认的 caching_sha2_password
             conn.execute(text(
                 f"CREATE USER IF NOT EXISTS '{settings.mysql_user}'@'%' "
                 f"IDENTIFIED BY '{settings.mysql_password}'"
             ))
             conn.commit()
-            
+
             # 授予权限
             conn.execute(text(
                 f"GRANT ALL PRIVILEGES ON `{settings.mysql_database}`.* TO '{settings.mysql_user}'@'%'"
             ))
             conn.commit()
-            
+
             # 刷新权限
             conn.execute(text("FLUSH PRIVILEGES"))
             conn.commit()
-            
+
         root_engine.dispose()
         print(f"✓ Database '{settings.mysql_database}' and user '{settings.mysql_user}' are ready")
     except Exception as e:
@@ -123,7 +123,7 @@ def run_migrations_online() -> None:
     """
     # 先确保数据库和用户存在
     ensure_database_and_user()
-    
+
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
