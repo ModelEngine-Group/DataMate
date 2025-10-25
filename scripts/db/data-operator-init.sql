@@ -3,7 +3,7 @@ USE datamate;
 CREATE TABLE IF NOT EXISTS t_operator
 (
     id          varchar(64) primary key,
-    name        varchar(64),
+    name        varchar(64) unique,
     description varchar(256),
     version     varchar(256),
     inputs      varchar(256),
@@ -19,7 +19,8 @@ CREATE TABLE IF NOT EXISTS t_operator
 CREATE TABLE IF NOT EXISTS t_operator_category
 (
     id        int primary key auto_increment,
-    name      varchar(64),
+    name      varchar(64) unique ,
+    value     varchar(64) unique ,
     type      varchar(64),
     parent_id int
 );
@@ -49,21 +50,21 @@ FROM t_operator_category_relation tocr
          LEFT JOIN t_operator o ON tocr.operator_id = o.id
          LEFT JOIN t_operator_category toc ON tocr.category_id = toc.id;
 
-INSERT IGNORE INTO t_operator_category(id, name, type, parent_id)
-VALUES (1, '模态', 'predefined', 0),
-       (2, '语言', 'predefined', 0),
-       (3, '文本', 'predefined', 1),
-       (4, '图片', 'predefined', 1),
-       (5, '音频', 'predefined', 1),
-       (6, '视频', 'predefined', 1),
-       (7, '多模态', 'predefined', 1),
-       (8, 'Python', 'predefined', 2),
-       (9, 'Java', 'predefined', 2),
-       (10, '来源', 'predefined', 0),
-       (11, '系统预置', 'predefined', 10),
-       (12, '用户上传', 'predefined', 10),
-       (13, '收藏状态', 'predefined', 0),
-       (14, '已收藏', 'predefined', 13);
+INSERT IGNORE INTO t_operator_category(id, name, value, type, parent_id)
+VALUES (1, '模态', 'model',  'predefined', 0),
+       (2, '语言', 'language', 'predefined', 0),
+       (3, '文本', 'text', 'predefined', 1),
+       (4, '图片', 'image', 'predefined', 1),
+       (5, '音频', 'audio', 'predefined', 1),
+       (6, '视频', 'video', 'predefined', 1),
+       (7, '多模态', 'multimodal', 'predefined', 1),
+       (8, 'Python', 'python', 'predefined', 2),
+       (9, 'Java', 'java', 'predefined', 2),
+       (10, '来源', 'origin', 'predefined', 0),
+       (11, '系统预置', 'predefined', 'predefined', 10),
+       (12, '用户上传', 'customized', 'predefined', 10),
+       (13, '收藏状态', 'starStatus', 'predefined', 0),
+       (14, '已收藏', 'isStar', 'predefined', 13);
 
 INSERT IGNORE INTO t_operator
 (id, name, description, version, inputs, outputs, runtime, settings, file_name, is_star)

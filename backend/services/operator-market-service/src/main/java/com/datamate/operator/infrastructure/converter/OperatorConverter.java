@@ -1,8 +1,10 @@
 package com.datamate.operator.infrastructure.converter;
 
+import com.datamate.common.domain.model.ChunkUploadRequest;
 import com.datamate.operator.domain.model.Operator;
 import com.datamate.operator.domain.model.OperatorView;
 import com.datamate.operator.interfaces.dto.OperatorDto;
+import com.datamate.operator.interfaces.dto.UploadOperatorRequest;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
@@ -19,6 +21,8 @@ public interface OperatorConverter {
     @Mapping(target = "categories", source = "categories", qualifiedByName = "stringToList")
     OperatorDto fromEntityToDto(OperatorView operator);
 
+    List<OperatorDto> fromEntityToDto(List<Operator> operator);
+
     @Named("stringToList")
     static List<Integer> stringToList(String input) {
         if (input == null || input.isEmpty()) {
@@ -28,4 +32,6 @@ public interface OperatorConverter {
     }
 
     Operator fromDtoToEntity(OperatorDto operator);
+
+    ChunkUploadRequest toChunkRequest(UploadOperatorRequest request);
 }
