@@ -55,8 +55,7 @@ CREATE TABLE IF NOT EXISTS t_clean_result
 );
 
 INSERT IGNORE INTO t_clean_template(id, name, description)
-VALUES ('ac2f2582-a990-11f0-9768-00155d09c825', '空模板', '空模板'),
-       ('26ae585c-8310-4679-adc0-e53215e6e69b', 'text文本清洗模板', 'text文本清洗模板'),
+VALUES ('26ae585c-8310-4679-adc0-e53215e6e69b', '文本清洗模板', '文本清洗模板'),
        ('4421504e-c6c9-4760-b55a-509d17429597', '图片清洗模板', '图片清洗模板');
 
 INSERT IGNORE INTO t_operator_instance(instance_id, operator_id, op_index, settings_override)

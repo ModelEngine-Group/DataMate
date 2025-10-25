@@ -32,6 +32,28 @@ spec:
       securityContext:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      initContainers:
+        {{- range .Values.initContainers }}
+        - name: {{ .name }}
+          {{- if .image }}
+          image: {{ .image }}
+          {{- else }}
+          image: {{ include "database.image" $ }}
+          {{- end }}
+          {{- if .imagePullPolicy }}
+          imagePullPolicy: {{ .imagePullPolicy }}
+          {{- else }}
+          imagePullPolicy: {{ default $.Values.global.image.pullPolicy $.Values.image.pullPolicy }}
+          {{- end }}
+          command:
+            {{- toYaml .command | nindent 12 }}
+          args:
+            {{- toYaml .args | nindent 12 }}
+          {{- with .volumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+        {{- end }}
       containers:
         - name: {{ .Chart.Name }}
           {{- with .Values.securityContext }}

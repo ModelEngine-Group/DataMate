@@ -21,6 +21,6 @@ public class UpdateCleaningTemplateRequest {
 
     private String description;
 
-    private List<OperatorInstance> instance = new ArrayList<>();
+    private List<OperatorInstanceDto> instance = new ArrayList<>();
 }
 
