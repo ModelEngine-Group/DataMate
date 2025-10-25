@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @EnableTransactionManagement
 @ComponentScan(basePackages = {
         "com.datamate.collection",
+        "com.datamate.datamanagement",
         "com.datamate.shared"
 })
 public class DataCollectionServiceConfiguration {

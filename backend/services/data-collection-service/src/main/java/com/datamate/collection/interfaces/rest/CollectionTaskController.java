@@ -7,11 +7,15 @@ import com.datamate.collection.domain.model.entity.CollectionTask;
 import com.datamate.collection.interfaces.converter.CollectionTaskConverter;
 import com.datamate.collection.interfaces.dto.*;
 import com.datamate.common.interfaces.PagedResponse;
+import com.datamate.datamanagement.application.DatasetApplicationService;
+import com.datamate.datamanagement.domain.model.dataset.Dataset;
+import com.datamate.datamanagement.interfaces.converter.DatasetConverter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
@@ -24,12 +28,19 @@ public class CollectionTaskController{
 
     private final CollectionTaskService taskService;
 
+    private final DatasetApplicationService datasetService;
+
     @PostMapping
+    @Transactional
     public ResponseEntity<CollectionTaskResponse> createTask(@Valid @RequestBody CreateCollectionTaskRequest request) {
         CollectionTask task = CollectionTaskConverter.INSTANCE.toCollectionTask(request);
-        task.setId(UUID.randomUUID().toString());
-        task.addPath();
-        return ResponseEntity.ok().body(CollectionTaskConverter.INSTANCE.toResponse(taskService.create(task)));
+        String datasetId = null;
+        if (Objects.nonNull(request.getDataset())) {
+            datasetId = datasetService.createDataset(request.getDataset()).getId();
+        }
+        CollectionTaskResponse response = CollectionTaskConverter.INSTANCE.toResponse(taskService.create(task, datasetId));
+        response.setDataset(DatasetConverter.INSTANCE.convertToResponse(datasetService.getDataset(datasetId)));
+        return ResponseEntity.ok().body(response);
     }
 
     @PutMapping("/{id}")
@@ -39,7 +50,7 @@ public class CollectionTaskController{
         }
         CollectionTask task = CollectionTaskConverter.INSTANCE.toCollectionTask(request);
         task.setId(id);
-        return ResponseEntity.ok(CollectionTaskConverter.INSTANCE.toResponse(taskService.update(task)));
+        return ResponseEntity.ok(CollectionTaskConverter.INSTANCE.toResponse(taskService.update(task, request.getDatasetId())));
     }
 
     @DeleteMapping("/{id}")

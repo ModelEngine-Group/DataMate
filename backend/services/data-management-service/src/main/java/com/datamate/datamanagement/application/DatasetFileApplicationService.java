@@ -41,9 +41,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -143,6 +141,7 @@ public class DatasetFileApplicationService {
     @Transactional(readOnly = true)
     public void downloadDatasetFileAsZip(String datasetId, HttpServletResponse response) {
         List<DatasetFile> allByDatasetId = datasetFileRepository.findAllByDatasetId(datasetId);
+        fileRename(allByDatasetId);
         response.setContentType("application/zip");
         String zipName = String.format("dataset_%s.zip",
             LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
@@ -155,6 +154,27 @@ public class DatasetFileApplicationService {
             log.error("Failed to download files in batches.", e);
             throw BusinessException.of(SystemErrorCode.FILE_SYSTEM_ERROR);
         }
+    }
+
+    private void fileRename(List<DatasetFile> files) {
+        Set<String> uniqueFilenames = new HashSet<>();
+        for (DatasetFile file : files) {
+            String originalFilename = file.getFileName();
+            if (!uniqueFilenames.add(originalFilename)) {
+                String newFilename;
+                int counter = 1;
+                do {
+                    newFilename = generateNewFilename(originalFilename, counter);
+                    counter++;
+                } while (!uniqueFilenames.add(newFilename));
+                file.setFileName(newFilename);
+            }
+        }
+    }
+
+    private String generateNewFilename(String oldFilename, int counter) {
+        int dotIndex = oldFilename.lastIndexOf(".");
+        return oldFilename.substring(0, dotIndex) + "-(" + counter + ")" + oldFilename.substring(dotIndex);
     }
 
     private void addToZipFile(DatasetFile file, ZipOutputStream zos) throws IOException {

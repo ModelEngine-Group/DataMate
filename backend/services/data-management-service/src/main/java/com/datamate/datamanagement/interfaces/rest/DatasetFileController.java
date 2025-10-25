@@ -93,7 +93,7 @@ public class DatasetFileController {
     }
 
     @IgnoreResponseWrap
-    @GetMapping(value = "/{fileId}/download", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @GetMapping(value = "/{fileId}/download", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE + ";charset=UTF-8")
     public ResponseEntity<Resource> downloadDatasetFileById(@PathVariable("datasetId") String datasetId,
                                                             @PathVariable("fileId") String fileId) {
         try {
