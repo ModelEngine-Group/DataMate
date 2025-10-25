@@ -39,6 +39,7 @@ public class TaskExecutionService {
     }
 
     @Async
+    @Transactional
     public void runAsync(CollectionTask task, String executionId, int timeoutSeconds) {
         try {
             int code = processRunner.runJob(task, executionId, timeoutSeconds);

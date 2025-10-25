@@ -48,6 +48,7 @@ public class CollectionTaskService {
     public CollectionTask update(CollectionTask task) {
         task.setUpdatedAt(LocalDateTime.now());
         collectionTaskRepository.updateById(task);
+        executeTaskNow(task);
         return task;
     }
 
