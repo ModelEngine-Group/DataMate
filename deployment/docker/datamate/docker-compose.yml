@@ -34,7 +34,7 @@ services:
     image: mysql:8
     restart: on-failure
     environment:
-      MYSQL_ROOT_PASSWORD: Huawei@123
+      MYSQL_ROOT_PASSWORD: password
     ports:
       - "3306"
     command: |
@@ -61,7 +61,7 @@ services:
       MYSQL_HOST: "datamate-database"
       MYSQL_PORT: "3306"
       MYSQL_USER: "root"
-      MYSQL_PASSWORD: "Huawei@123"
+      MYSQL_PASSWORD: "password"
       MYSQL_DATABASE: "datamate"
     ports:
       - "8081"

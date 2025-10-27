@@ -1,8 +1,9 @@
 package com.datamate.cleaning.application.scheduler;
 
-import com.datamate.cleaning.application.httpclient.RuntimeClient;
-import com.datamate.cleaning.infrastructure.persistence.mapper.CleaningTaskMapper;
-import com.datamate.cleaning.interfaces.dto.CleaningTask;
+import com.datamate.cleaning.infrastructure.httpclient.RuntimeClient;
+import com.datamate.cleaning.common.enums.CleaningTaskStatusEnum;
+import com.datamate.cleaning.domain.repository.CleaningTaskRepository;
+import com.datamate.cleaning.interfaces.dto.CleaningTaskDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -13,7 +14,7 @@ import java.util.concurrent.Executors;
 @Service
 @RequiredArgsConstructor
 public class CleaningTaskScheduler {
-    private final CleaningTaskMapper cleaningTaskMapper;
+    private final CleaningTaskRepository cleaningTaskRepo;
 
     private final ExecutorService taskExecutor = Executors.newFixedThreadPool(5);
 
@@ -22,19 +23,19 @@ public class CleaningTaskScheduler {
     }
 
     private void submitTask(String taskId) {
-        CleaningTask task = new CleaningTask();
+        CleaningTaskDto task = new CleaningTaskDto();
         task.setId(taskId);
-        task.setStatus(CleaningTask.StatusEnum.RUNNING);
+        task.setStatus(CleaningTaskStatusEnum.RUNNING);
         task.setStartedAt(LocalDateTime.now());
-        cleaningTaskMapper.updateTask(task);
+        cleaningTaskRepo.updateTask(task);
         RuntimeClient.submitTask(taskId);
     }
 
     public void stopTask(String taskId) {
         RuntimeClient.stopTask(taskId);
-        CleaningTask task = new CleaningTask();
+        CleaningTaskDto task = new CleaningTaskDto();
         task.setId(taskId);
-        task.setStatus(CleaningTask.StatusEnum.STOPPED);
-        cleaningTaskMapper.updateTask(task);
+        task.setStatus(CleaningTaskStatusEnum.STOPPED);
+        cleaningTaskRepo.updateTask(task);
     }
 }

@@ -10,8 +10,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * 数据采集任务实体（与数据库表 t_dc_collection_tasks 对齐）
@@ -45,5 +47,13 @@ public class CollectionTask extends BaseEntity<String> {
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public void initCreateParam() {
+        this.id = UUID.randomUUID().toString();
+        this.addPath();
+        this.status = TaskStatus.READY;
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
     }
 }

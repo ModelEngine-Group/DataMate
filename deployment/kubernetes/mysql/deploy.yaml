@@ -40,7 +40,7 @@ spec:
           imagePullPolicy: IfNotPresent
           env:
             - name: MYSQL_ROOT_PASSWORD
-              value: "Huawei@123"
+              value: "password"
           ports:
             - containerPort: 3306
           volumeMounts:

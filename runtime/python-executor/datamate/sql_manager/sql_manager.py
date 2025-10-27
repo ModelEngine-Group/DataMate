@@ -22,7 +22,7 @@ class SQLManager:
         connection_url = URL.create(
             drivername="mysql+pymysql",
             username=os.getenv("MYSQL_USER", "root"),
-            password=os.getenv("MYSQL_PASSWORD", "Huawei@123"),
+            password=os.getenv("MYSQL_PASSWORD", "password"),
             host=os.getenv("MYSQL_HOST", "mysql"),
             port=os.getenv("MYSQL_PORT", 3306),
             database=os.getenv("MYSQL_DATABASE", "datamate"),

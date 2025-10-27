@@ -7,7 +7,6 @@ import com.datamate.datamanagement.interfaces.dto.UploadFileRequest;
 import com.datamate.common.domain.model.ChunkUploadRequest;
 import com.datamate.datamanagement.domain.model.dataset.Dataset;
 import com.datamate.datamanagement.domain.model.dataset.DatasetFile;
-import com.datamate.datamanagement.interfaces.dto.*;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
