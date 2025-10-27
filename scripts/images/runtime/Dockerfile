@@ -19,4 +19,6 @@ RUN pip install -e . -i https://mirrors.huaweicloud.com/repository/pypi/simple \
     && pip install -r /opt/runtime/datamate/ops/requirements.txt -i https://mirrors.huaweicloud.com/repository/pypi/simple \
     && pip cache purge
 
+RUN /bin/bash -c "mineru-models-download -s modelscope -m pipeline"
+
 RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
