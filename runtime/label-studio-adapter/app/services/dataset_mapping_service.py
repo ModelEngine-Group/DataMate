@@ -5,7 +5,7 @@ from typing import Optional, List, Tuple
 from datetime import datetime
 import uuid
 
-from app.models.dataset_mapping import DatasetMapping
+from app.models.dm.labeling_project import LabelingProject
 from app.schemas.dataset_mapping import (
     DatasetMappingCreateRequest, 
     DatasetMappingUpdateRequest, 
@@ -28,11 +28,11 @@ class DatasetMappingService:
         labelling_project_name: str
     ) -> DatasetMappingResponse:
         """创建数据集映射"""
-        logger.info(f"Create dataset mapping: {mapping_data.source_dataset_id} -> {labelling_project_id}")
+        logger.info(f"Create dataset mapping: {mapping_data.dataset_id} -> {labelling_project_id}")
         
-        db_mapping = DatasetMapping(
+        db_mapping = LabelingProject(
             mapping_id=str(uuid.uuid4()),
-            source_dataset_id=mapping_data.source_dataset_id,
+            dataset_id=mapping_data.dataset_id,
             labelling_project_id=labelling_project_id,
             labelling_project_name=labelling_project_name
         )
@@ -41,48 +41,48 @@ class DatasetMappingService:
         await self.db.commit()
         await self.db.refresh(db_mapping)
         
-        logger.info(f"Mapping created: {db_mapping.mapping_id}")
+        logger.info(f"Mapping created: {db_mapping.id}")
         return DatasetMappingResponse.model_validate(db_mapping)
     
     async def get_mapping_by_source_uuid(
         self, 
-        source_dataset_id: str
+        dataset_id: str
     ) -> Optional[DatasetMappingResponse]:
         """根据源数据集ID获取映射（返回第一个未删除的）"""
-        logger.debug(f"Get mapping by source dataset id: {source_dataset_id}")
+        logger.debug(f"Get mapping by source dataset id: {dataset_id}")
         
         result = await self.db.execute(
-            select(DatasetMapping).where(
-                DatasetMapping.source_dataset_id == source_dataset_id,
-                DatasetMapping.deleted_at.is_(None)
+            select(LabelingProject).where(
+                LabelingProject.dataset_id == dataset_id,
+                LabelingProject.deleted_at.is_(None)
             )
         )
         mapping = result.scalar_one_or_none()
         
         if mapping:
-            logger.debug(f"Found mapping: {mapping.mapping_id}")
+            logger.debug(f"Found mapping: {mapping.id}")
             return DatasetMappingResponse.model_validate(mapping)
         
-        logger.debug(f"No mapping found for source dataset id: {source_dataset_id}")
+        logger.debug(f"No mapping found for source dataset id: {dataset_id}")
         return None
     
-    async def get_mappings_by_source_dataset_id(
+    async def get_mappings_by_dataset_id(
         self, 
-        source_dataset_id: str,
+        dataset_id: str,
         include_deleted: bool = False
     ) -> List[DatasetMappingResponse]:
         """根据源数据集ID获取所有映射关系"""
-        logger.debug(f"Get all mappings by source dataset id: {source_dataset_id}")
+        logger.debug(f"Get all mappings by source dataset id: {dataset_id}")
         
-        query = select(DatasetMapping).where(
-            DatasetMapping.source_dataset_id == source_dataset_id
+        query = select(LabelingProject).where(
+            LabelingProject.dataset_id == dataset_id
         )
         
         if not include_deleted:
-            query = query.where(DatasetMapping.deleted_at.is_(None))
+            query = query.where(LabelingProject.deleted_at.is_(None))
         
         result = await self.db.execute(
-            query.order_by(DatasetMapping.created_at.desc())
+            query.order_by(LabelingProject.created_at.desc())
         )
         mappings = result.scalars().all()
         
@@ -97,9 +97,9 @@ class DatasetMappingService:
         logger.debug(f"Get mapping by Label Studio project id: {labelling_project_id}")
         
         result = await self.db.execute(
-            select(DatasetMapping).where(
-                DatasetMapping.labelling_project_id == labelling_project_id,
-                DatasetMapping.deleted_at.is_(None)
+            select(LabelingProject).where(
+                LabelingProject.labeling_project_id == labelling_project_id,
+                LabelingProject.deleted_at.is_(None)
             )
         )
         mapping = result.scalar_one_or_none()
@@ -116,15 +116,15 @@ class DatasetMappingService:
         logger.debug(f"Get mapping: {mapping_id}")
         
         result = await self.db.execute(
-            select(DatasetMapping).where(
-                DatasetMapping.mapping_id == mapping_id,
-                DatasetMapping.deleted_at.is_(None)
+            select(LabelingProject).where(
+                LabelingProject.id == mapping_id,
+                LabelingProject.deleted_at.is_(None)
             )
         )
         mapping = result.scalar_one_or_none()
         
         if mapping:
-            logger.debug(f"Found mapping: {mapping.mapping_id}")
+            logger.debug(f"Found mapping: {mapping.id}")
             return DatasetMappingResponse.model_validate(mapping)
         
         logger.debug(f"Mapping not found: {mapping_id}")
@@ -143,11 +143,11 @@ class DatasetMappingService:
             return None
         
         update_values = update_data.model_dump(exclude_unset=True)
-        update_values["last_updated_at"] = datetime.utcnow()
+        update_values["last_updated_at"] = datetime.now()
         
         result = await self.db.execute(
-            update(DatasetMapping)
-            .where(DatasetMapping.mapping_id == mapping_id)
+            update(LabelingProject)
+            .where(LabelingProject.id == mapping_id)
             .values(**update_values)
         )
         await self.db.commit()
@@ -161,10 +161,10 @@ class DatasetMappingService:
         logger.debug(f"Update mapping last updated at: {mapping_id}")
         
         result = await self.db.execute(
-            update(DatasetMapping)
+            update(LabelingProject)
             .where(
-                DatasetMapping.mapping_id == mapping_id,
-                DatasetMapping.deleted_at.is_(None)
+                LabelingProject.id == mapping_id,
+                LabelingProject.deleted_at.is_(None)
             )
             .values(last_updated_at=datetime.utcnow())
         )
@@ -176,12 +176,12 @@ class DatasetMappingService:
         logger.info(f"Soft delete mapping: {mapping_id}")
         
         result = await self.db.execute(
-            update(DatasetMapping)
+            update(LabelingProject)
             .where(
-                DatasetMapping.mapping_id == mapping_id,
-                DatasetMapping.deleted_at.is_(None)
+                LabelingProject.id == mapping_id,
+                LabelingProject.deleted_at.is_(None)
             )
-            .values(deleted_at=datetime.utcnow())
+            .values(deleted_at=datetime.now())
         )
         await self.db.commit()
         
@@ -202,11 +202,11 @@ class DatasetMappingService:
         logger.debug(f"List all mappings, skip: {skip}, limit: {limit}")
         
         result = await self.db.execute(
-            select(DatasetMapping)
-            .where(DatasetMapping.deleted_at.is_(None))
+            select(LabelingProject)
+            .where(LabelingProject.deleted_at.is_(None))
             .offset(skip)
             .limit(limit)
-            .order_by(DatasetMapping.created_at.desc())
+            .order_by(LabelingProject.created_at.desc())
         )
         mappings = result.scalars().all()
         
@@ -215,10 +215,10 @@ class DatasetMappingService:
     
     async def count_mappings(self, include_deleted: bool = False) -> int:
         """统计映射总数"""
-        query = select(func.count()).select_from(DatasetMapping)
+        query = select(func.count()).select_from(LabelingProject)
         
         if not include_deleted:
-            query = query.where(DatasetMapping.deleted_at.is_(None))
+            query = query.where(LabelingProject.deleted_at.is_(None))
         
         result = await self.db.execute(query)
         return result.scalar_one()
@@ -233,14 +233,14 @@ class DatasetMappingService:
         logger.debug(f"List all mappings with count, skip: {skip}, limit: {limit}")
         
         # 构建查询
-        query = select(DatasetMapping)
+        query = select(LabelingProject)
         if not include_deleted:
-            query = query.where(DatasetMapping.deleted_at.is_(None))
+            query = query.where(LabelingProject.deleted_at.is_(None))
         
         # 获取总数
-        count_query = select(func.count()).select_from(DatasetMapping)
+        count_query = select(func.count()).select_from(LabelingProject)
         if not include_deleted:
-            count_query = count_query.where(DatasetMapping.deleted_at.is_(None))
+            count_query = count_query.where(LabelingProject.deleted_at.is_(None))
         
         count_result = await self.db.execute(count_query)
         total = count_result.scalar_one()
@@ -250,7 +250,7 @@ class DatasetMappingService:
             query
             .offset(skip)
             .limit(limit)
-            .order_by(DatasetMapping.created_at.desc())
+            .order_by(LabelingProject.created_at.desc())
         )
         mappings = result.scalars().all()
         
@@ -259,28 +259,28 @@ class DatasetMappingService:
     
     async def get_mappings_by_source_with_count(
         self,
-        source_dataset_id: str,
+        dataset_id: str,
         skip: int = 0,
         limit: int = 100,
         include_deleted: bool = False
     ) -> Tuple[List[DatasetMappingResponse], int]:
         """根据源数据集ID获取映射关系及总数（用于分页）"""
-        logger.debug(f"Get mappings by source dataset id with count: {source_dataset_id}")
+        logger.debug(f"Get mappings by source dataset id with count: {dataset_id}")
         
         # 构建查询
-        query = select(DatasetMapping).where(
-            DatasetMapping.source_dataset_id == source_dataset_id
+        query = select(LabelingProject).where(
+            LabelingProject.dataset_id == dataset_id
         )
         
         if not include_deleted:
-            query = query.where(DatasetMapping.deleted_at.is_(None))
+            query = query.where(LabelingProject.deleted_at.is_(None))
         
         # 获取总数
-        count_query = select(func.count()).select_from(DatasetMapping).where(
-            DatasetMapping.source_dataset_id == source_dataset_id
+        count_query = select(func.count()).select_from(LabelingProject).where(
+            LabelingProject.dataset_id == dataset_id
         )
         if not include_deleted:
-            count_query = count_query.where(DatasetMapping.deleted_at.is_(None))
+            count_query = count_query.where(LabelingProject.deleted_at.is_(None))
         
         count_result = await self.db.execute(count_query)
         total = count_result.scalar_one()
@@ -290,7 +290,7 @@ class DatasetMappingService:
             query
             .offset(skip)
             .limit(limit)
-            .order_by(DatasetMapping.created_at.desc())
+            .order_by(LabelingProject.created_at.desc())
         )
         mappings = result.scalars().all()
         

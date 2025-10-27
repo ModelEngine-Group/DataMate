@@ -73,7 +73,6 @@ class Settings(BaseSettings):
     # =========================
     # Data Management 服务配置
     # =========================
-    dm_service_base_url: str = "http://data-engine"
     dm_file_path_prefix: str = "/"  # DM存储文件夹前缀
     
 

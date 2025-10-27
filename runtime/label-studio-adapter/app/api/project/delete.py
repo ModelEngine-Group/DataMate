@@ -1,13 +1,15 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
 
 from app.db.database import get_db
 from app.services.dataset_mapping_service import DatasetMappingService
-from app.clients import get_clients
+from app.infrastructure import DatamateClient, LabelStudioClient
 from app.schemas.dataset_mapping import DeleteDatasetResponse
 from app.schemas import StandardResponse
 from app.core.logging import get_logger
+from app.core.config import settings
+
 from . import project_router
 
 logger = get_logger(__name__)
@@ -37,39 +39,39 @@ async def delete_mapping(
                 status_code=400,
                 detail="Either 'm' (mapping UUID) or 'proj' (project ID) must be provided"
             )
-        
-        # 获取全局客户端实例
-        dm_client_instance, ls_client_instance = get_clients()
+
+        ls_client = LabelStudioClient(base_url=settings.label_studio_base_url,
+                                      token=settings.label_studio_user_token)
         service = DatasetMappingService(db)
-        
-        mapping = None
         
         # 优先使用 mapping_id 查询
         if m:
-            logger.info(f"Deleting by mapping UUID: {m}")
+            logger.debug(f"Deleting by mapping UUID: {m}")
             mapping = await service.get_mapping_by_uuid(m)
         # 如果没有提供 m，使用 proj 查询
         elif proj:
-            logger.info(f"Deleting by project ID: {proj}")
+            logger.debug(f"Deleting by project ID: {proj}")
             mapping = await service.get_mapping_by_labelling_project_id(proj)
+        else:
+            mapping = None
         
         if not mapping:
             raise HTTPException(
                 status_code=404,
-                detail=f"Mapping not found"
+                detail=f"Mapping either not found or not specified."
             )
         
         mapping_id = mapping.mapping_id
         labelling_project_id = mapping.labelling_project_id
         labelling_project_name = mapping.labelling_project_name
         
-        logger.info(f"Found mapping: {mapping_id}, Label Studio project ID: {labelling_project_id}")
+        logger.debug(f"Found mapping: {mapping_id}, Label Studio project ID: {labelling_project_id}")
         
         # 1. 删除 Label Studio 项目
         try:
-            delete_success = await ls_client_instance.delete_project(int(labelling_project_id))
+            delete_success = await ls_client.delete_project(int(labelling_project_id))
             if delete_success:
-                logger.info(f"Successfully deleted Label Studio project: {labelling_project_id}")
+                logger.debug(f"Successfully deleted Label Studio project: {labelling_project_id}")
             else:
                 logger.warning(f"Failed to delete Label Studio project or project not found: {labelling_project_id}")
         except Exception as e:
@@ -84,19 +86,17 @@ async def delete_mapping(
                 status_code=500,
                 detail="Failed to delete mapping record"
             )
-        
-        logger.info(f"Successfully deleted mapping: {mapping_id}")
-        
-        response_data = DeleteDatasetResponse(
-            mapping_id=mapping_id,
-            status="success",
-            message=f"Successfully deleted mapping and Label Studio project '{labelling_project_name}'"
-        )
-        
+
+        logger.info(f"Successfully deleted mapping: {mapping_id}, Label Studio project: {labelling_project_id}")
+
         return StandardResponse(
             code=200,
             message="success",
-            data=response_data
+            data=DeleteDatasetResponse(
+                mapping_id=mapping_id,
+                status="success",
+                message=f"Successfully deleted mapping and Label Studio project '{labelling_project_name}'"
+            )
         )
         
     except HTTPException:

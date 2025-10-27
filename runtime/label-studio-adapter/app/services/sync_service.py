@@ -1,6 +1,5 @@
 from typing import Optional, List, Dict, Any, Tuple
-from app.clients.dm_client import DMServiceClient
-from app.clients.label_studio_client import LabelStudioClient
+from app.infrastructure import LabelStudioClient, DatamateClient
 from app.services.dataset_mapping_service import DatasetMappingService
 from app.schemas.dataset_mapping import SyncDatasetResponse
 from app.core.logging import get_logger
@@ -14,7 +13,7 @@ class SyncService:
     
     def __init__(
         self, 
-        dm_client: DMServiceClient, 
+        dm_client: DatamateClient, 
         ls_client: LabelStudioClient,
         mapping_service: DatasetMappingService
     ):
@@ -107,9 +106,9 @@ class SyncService:
         
         try:
             # 获取数据集信息
-            dataset_info = await self.dm_client.get_dataset(mapping.source_dataset_id)
+            dataset_info = await self.dm_client.get_dataset(mapping.dataset_id)
             if not dataset_info:
-                raise NoDatasetInfoFoundError(mapping.source_dataset_id)
+                raise NoDatasetInfoFoundError(mapping.dataset_id)
             
             synced_files = 0
             deleted_tasks = 0
@@ -129,7 +128,7 @@ class SyncService:
             # 分页获取并同步文件
             while True:
                 files_response = await self.dm_client.get_dataset_files(
-                    mapping.source_dataset_id, 
+                    mapping.dataset_id, 
                     page=page, 
                     size=batch_size,
                     status="COMPLETED"  # 只同步已完成的文件
@@ -173,7 +172,7 @@ class SyncService:
                         "meta": {
                             "file_size": file_info.size,
                             "file_type": file_info.fileType,
-                            "dm_dataset_id": mapping.source_dataset_id,
+                            "dm_dataset_id": mapping.dataset_id,
                             "dm_file_id": file_info.id,
                             "original_name": file_info.originalName,
                         }
@@ -249,22 +248,22 @@ class SyncService:
     
     async def get_sync_status(
         self, 
-        source_dataset_id: str
+        dataset_id: str
     ) -> Optional[Dict[str, Any]]:
         """获取同步状态"""
-        mapping = await self.mapping_service.get_mapping_by_source_uuid(source_dataset_id)
+        mapping = await self.mapping_service.get_mapping_by_source_uuid(dataset_id)
         if not mapping:
             return None
         
         # 获取DM数据集信息
-        dataset_info = await self.dm_client.get_dataset(source_dataset_id)
+        dataset_info = await self.dm_client.get_dataset(dataset_id)
         
         # 获取Label Studio项目任务数量
         tasks_info = await self.ls_client.get_project_tasks(mapping.labelling_project_id)
         
         return {
             "mapping_id": mapping.mapping_id,
-            "source_dataset_id": source_dataset_id,
+            "dataset_id": dataset_id,
             "labelling_project_id": mapping.labelling_project_id,
             "last_updated_at": mapping.last_updated_at,
             "dm_total_files": dataset_info.fileCount if dataset_info else 0,

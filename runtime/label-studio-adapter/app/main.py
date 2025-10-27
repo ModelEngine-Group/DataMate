@@ -8,7 +8,7 @@ from typing import Dict, Any
 
 from .core.config import settings
 from .core.logging import setup_logging, get_logger
-from .clients import DMServiceClient, LabelStudioClient, set_clients
+from .infrastructure import LabelStudioClient
 from .api import api_router
 from .schemas import StandardResponse
 
@@ -23,22 +23,11 @@ async def lifespan(app: FastAPI):
     # 启动时初始化
     logger.info("Starting Label Studio Adapter...")
     
-    # 初始化客户端
-    dm_client = DMServiceClient()
-    
     # 初始化 Label Studio 客户端，使用 HTTP REST API + Token 认证
     ls_client = LabelStudioClient(
         base_url=settings.label_studio_base_url,
         token=settings.label_studio_user_token
     )
-    
-    # 设置全局客户端
-    set_clients(dm_client, ls_client)
-    
-    # 数据库初始化由 Alembic 管理
-    # 在 Docker 环境中，entrypoint.sh 会在启动前运行: alembic upgrade head
-    # 在开发环境中，手动运行: alembic upgrade head
-    logger.info("Database schema managed by Alembic")
     
     logger.info("Label Studio Adapter started")
     
@@ -155,7 +144,6 @@ async def root():
             "message": f"{settings.app_name} is running",
             "version": settings.app_version,
             "docs_url": "/docs",
-            "dm_service_url": settings.dm_service_base_url,
             "label_studio_url": settings.label_studio_base_url
         }
     )

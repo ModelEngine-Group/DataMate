@@ -5,7 +5,7 @@ from typing import List, Optional
 from app.db.database import get_db
 from app.services.dataset_mapping_service import DatasetMappingService
 from app.services.sync_service import SyncService
-from app.clients import get_clients
+from app.infrastructure import DatamateClient, LabelStudioClient
 from app.exceptions import NoDatasetInfoFoundError, DatasetMappingNotFoundError
 from app.schemas.dataset_mapping import (
     DatasetMappingResponse,
@@ -14,6 +14,7 @@ from app.schemas.dataset_mapping import (
 )
 from app.schemas import StandardResponse
 from app.core.logging import get_logger
+from app.core.config import settings
 from . import project_router
 
 logger = get_logger(__name__)
@@ -30,10 +31,12 @@ async def sync_dataset_content(
     在数据库中记录更新时间，返回更新状态
     """
     try:
-        dm_client_instance, ls_client_instance = get_clients()
+        ls_client = LabelStudioClient(base_url=settings.label_studio_base_url,
+                                      token=settings.label_studio_user_token)
+        dm_client = DatamateClient(db)
         mapping_service = DatasetMappingService(db)
-        sync_service = SyncService(dm_client_instance, ls_client_instance, mapping_service)
-        
+        sync_service = SyncService(dm_client, ls_client, mapping_service)
+
         logger.info(f"Sync dataset content request: mapping_id={request.mapping_id}")
         
         # 根据 mapping_id 获取映射关系

@@ -12,7 +12,7 @@ from app.schemas.label_studio import (
 
 logger = get_logger(__name__)
 
-class LabelStudioClient:
+class Client:
     """Label Studio服务客户端
     
     使用 HTTP REST API 直接与 Label Studio 交互

@@ -27,7 +27,6 @@ async def get_config():
         data={
             "app_name": settings.app_name,
             "version": settings.app_version,
-            "dm_service_url": settings.dm_service_base_url,
             "label_studio_url": settings.label_studio_base_url,
             "debug": settings.debug
         }

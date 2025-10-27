@@ -98,9 +98,9 @@ async def get_mapping(
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@project_router.get("/mappings/by-source/{source_dataset_id}", response_model=StandardResponse[PaginatedData[DatasetMappingResponse]])
+@project_router.get("/mappings/by-source/{dataset_id}", response_model=StandardResponse[PaginatedData[DatasetMappingResponse]])
 async def get_mappings_by_source(
-    source_dataset_id: str,
+    dataset_id: str,
     page: int = Query(1, ge=1, description="页码（从1开始）"),
     page_size: int = Query(20, ge=1, le=100, description="每页记录数"),
     db: AsyncSession = Depends(get_db)
@@ -116,11 +116,11 @@ async def get_mappings_by_source(
         # 计算 skip
         skip = (page - 1) * page_size
         
-        logger.info(f"Get mappings by source dataset id: {source_dataset_id}, page={page}, page_size={page_size}")
+        logger.info(f"Get mappings by source dataset id: {dataset_id}, page={page}, page_size={page_size}")
         
         # 获取数据和总数
         mappings, total = await service.get_mappings_by_source_with_count(
-            source_dataset_id=source_dataset_id,
+            dataset_id=dataset_id,
             skip=skip,
             limit=page_size
         )

@@ -6,7 +6,7 @@ from .common import BaseResponseModel
 
 class DatasetMappingBase(BaseResponseModel):
     """数据集映射 基础模型"""
-    source_dataset_id: str = Field(..., description="源数据集ID")
+    dataset_id: str = Field(..., description="源数据集ID")
 
 class DatasetMappingCreateRequest(DatasetMappingBase):
     """数据集映射 创建 请求模型"""
@@ -21,7 +21,7 @@ class DatasetMappingCreateResponse(BaseResponseModel):
 
 class DatasetMappingUpdateRequest(BaseResponseModel):
     """数据集映射 更新 请求模型"""
-    source_dataset_id: Optional[str] = Field(None, description="源数据集ID")
+    dataset_id: Optional[str] = Field(None, description="源数据集ID")
 
 class DatasetMappingResponse(DatasetMappingBase):
     """数据集映射 查询 响应模型"""

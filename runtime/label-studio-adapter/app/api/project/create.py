@@ -4,7 +4,7 @@ from typing import Optional
 
 from app.db.database import get_db
 from app.services.dataset_mapping_service import DatasetMappingService
-from app.clients import get_clients
+from app.infrastructure import DatamateClient, LabelStudioClient
 from app.schemas.dataset_mapping import (
     DatasetMappingCreateRequest,
     DatasetMappingCreateResponse,
@@ -30,18 +30,19 @@ async def create_dataset_mapping(
     注意：一个数据集可以创建多个标注项目
     """
     try:
-        # 获取全局客户端实例
-        dm_client_instance, ls_client_instance = get_clients()
+        dm_client = DatamateClient(db)
+        ls_client = LabelStudioClient(base_url=settings.label_studio_base_url,
+                                      token=settings.label_studio_user_token)
         service = DatasetMappingService(db)
         
-        logger.info(f"Create dataset mapping request: {request.source_dataset_id}")
+        logger.info(f"Create dataset mapping request: {request.dataset_id}")
         
         # 从DM服务获取数据集信息
-        dataset_info = await dm_client_instance.get_dataset(request.source_dataset_id)
+        dataset_info = await dm_client.get_dataset(request.dataset_id)
         if not dataset_info:
             raise HTTPException(
                 status_code=404,
-                detail=f"Dataset not found in DM service: {request.source_dataset_id}"
+                detail=f"Dataset not found in DM service: {request.dataset_id}"
             )
         
         # 确定数据类型（基于数据集类型）
@@ -55,11 +56,10 @@ async def create_dataset_mapping(
             elif "text" in type_code:
                 data_type = "text"
         
-        # 生成项目名称
         project_name = f"{dataset_info.name}"
         
         # 在Label Studio中创建项目
-        project_data = await ls_client_instance.create_project(
+        project_data = await ls_client.create_project(
             title=project_name,
             description=dataset_info.description or f"Imported from DM dataset {dataset_info.id}",
             data_type=data_type
@@ -74,8 +74,8 @@ async def create_dataset_mapping(
         project_id = project_data["id"]
         
         # 配置本地存储：dataset/<id>
-        local_storage_path = f"{settings.label_studio_local_storage_dataset_base_path}/{request.source_dataset_id}"
-        storage_result = await ls_client_instance.create_local_storage(
+        local_storage_path = f"{settings.label_studio_local_storage_dataset_base_path}/{request.dataset_id}"
+        storage_result = await ls_client.create_local_storage(
             project_id=project_id,
             path=local_storage_path,
             title="Dataset_BLOB",
@@ -85,7 +85,7 @@ async def create_dataset_mapping(
 
         # 配置本地存储：upload
         local_storage_path = f"{settings.label_studio_local_storage_upload_base_path}"
-        storage_result = await ls_client_instance.create_local_storage(
+        storage_result = await ls_client.create_local_storage(
             project_id=project_id,
             path=local_storage_path,
             title="Upload_BLOB",
@@ -107,7 +107,7 @@ async def create_dataset_mapping(
         )
         
         logger.debug(
-            f"Dataset mapping created: {mapping.mapping_id} -> S {mapping.source_dataset_id} <> L {mapping.labelling_project_id}"
+            f"Dataset mapping created: {mapping.mapping_id} -> S {mapping.dataset_id} <> L {mapping.labelling_project_id}"
         )
         
         response_data = DatasetMappingCreateResponse(
