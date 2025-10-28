@@ -1,20 +1,9 @@
 import { useState } from "react";
-import {
-  Card,
-  Input,
-  Button,
-  Select,
-  Radio,
-  Form,
-  Divider,
-  InputNumber,
-  TimePicker,
-  App,
-} from "antd";
+import { Input, Button, Radio, Form, InputNumber, App, Select } from "antd";
 import { Link, useNavigate } from "react-router";
 import { ArrowLeft } from "lucide-react";
 import { createTaskUsingPost } from "../collection.apis";
-import DevelopmentInProgress from "@/components/DevelopmentInProgress";
+import SimpleCronScheduler from "@/pages/DataCollection/Create/SimpleCronScheduler";
 
 const { TextArea } = Input;
 
@@ -30,16 +19,16 @@ interface ScheduleConfig {
 
 const defaultTemplates = [
   {
-    id: "nas-to-local",
+    id: "nas",
     name: "NAS到本地",
     description: "从NAS文件系统导入数据到本地文件系统",
     config: {
-      reader: "nasreader",
+      reader: "nfsreader",
       writer: "localwriter",
     },
   },
   {
-    id: "obs-to-local",
+    id: "obs",
     name: "OBS到本地",
     description: "从OBS文件系统导入数据到本地文件系统",
     config: {
@@ -48,7 +37,7 @@ const defaultTemplates = [
     },
   },
   {
-    id: "web-tolocal",
+    id: "web",
     name: "Web到本地",
     description: "从Web URL导入数据到本地文件系统",
     config: {
@@ -58,9 +47,13 @@ const defaultTemplates = [
   },
 ];
 
-export default function CollectionTaskCreate() {
-  return <DevelopmentInProgress showTime="2025.10.30" />;
+enum TemplateType {
+  NAS = "nas",
+  OBS = "obs",
+  WEB = "web",
+}
 
+export default function CollectionTaskCreate() {
   const navigate = useNavigate();
   const [form] = Form.useForm();
   const { message } = App.useApp();
@@ -68,7 +61,7 @@ export default function CollectionTaskCreate() {
   const [templateType, setTemplateType] = useState<"default" | "custom">(
     "default"
   );
-  const [selectedTemplate, setSelectedTemplate] = useState("");
+  const [selectedTemplate, setSelectedTemplate] = useState("nas");
   const [customConfig, setCustomConfig] = useState("");
 
   const [scheduleConfig, setScheduleConfig] = useState<ScheduleConfig>({
@@ -104,7 +97,7 @@ export default function CollectionTaskCreate() {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="h-full flex flex-col">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center">
           <Link to="/data/collection">
@@ -116,244 +109,234 @@ export default function CollectionTaskCreate() {
         </div>
       </div>
 
-      <Card>
-        <Form
-          form={form}
-          layout="vertical"
-          initialValues={{
-            name: "",
-            datasetName: "",
-            fileFormat: "",
-            description: "",
-            cronExpression: "",
-            retryCount: 3,
-            timeout: 3600,
-            incrementalField: "",
-          }}
-          onValuesChange={(_, allValues) => {
-            // 文件格式变化时重置模板选择
-            if (_.fileFormat !== undefined) setSelectedTemplate("");
-          }}
-        >
-          {/* 基本信息 */}
-          <h2 className="font-medium text-gray-900 text-lg mb-4">基本信息</h2>
-
-          <Form.Item
-            label="任务名称"
-            name="name"
-            rules={[{ required: true, message: "请输入任务名称" }]}
+      <div className="flex-overflow-auto border-card">
+        <div className="flex-1 overflow-auto p-6">
+          <Form
+            form={form}
+            layout="vertical"
+            initialValues={scheduleConfig}
+            onValuesChange={(_, allValues) => {
+              // 文件格式变化时重置模板选择
+              if (_.fileFormat !== undefined) setSelectedTemplate("");
+            }}
           >
-            <Input placeholder="请输入任务名称" />
-          </Form.Item>
-          <Form.Item label="描述" name="description">
-            <TextArea placeholder="请输入任务描述" rows={3} />
-          </Form.Item>
-          <Form.Item label="文件格式" name="fileFormat">
-            <Input placeholder="请填写文件格式，使用正则表达式" />
-          </Form.Item>
+            {/* 基本信息 */}
+            <h2 className="font-medium text-gray-900 text-lg mb-2">基本信息</h2>
 
-          {/* 同步配置 */}
-          <h2 className="font-medium text-gray-900 my-4 text-lg">同步配置</h2>
-          <Form.Item label="同步方式">
-            <Radio.Group
-              value={scheduleConfig.type}
-              onChange={(e) =>
-                setScheduleConfig({
-                  type: e.target.value as ScheduleConfig["type"],
-                })
-              }
+            <Form.Item
+              label="任务名称"
+              name="name"
+              rules={[{ required: true, message: "请输入任务名称" }]}
             >
-              <Radio value="immediate">立即同步</Radio>
-              <Radio value="scheduled">定时同步</Radio>
-            </Radio.Group>
-          </Form.Item>
-          {scheduleConfig.type === "scheduled" && (
-            <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Form.Item label="调度类型">
-                <Select
-                  options={[
-                    { label: "每日", value: "day" },
-                    { label: "每周", value: "week" },
-                    { label: "每月", value: "month" },
-                    { label: "自定义Cron", value: "custom" },
-                  ]}
-                  value={scheduleConfig.scheduleType}
+              <Input placeholder="请输入任务名称" />
+            </Form.Item>
+            <Form.Item label="描述" name="description">
+              <TextArea placeholder="请输入任务描述" rows={3} />
+            </Form.Item>
+
+            {/* 同步配置 */}
+            <h2 className="font-medium text-gray-900 pt-6 mb-2 text-lg">
+              同步配置
+            </h2>
+            <Form.Item label="同步方式">
+              <Radio.Group
+                value={scheduleConfig.type}
+                onChange={(e) =>
+                  setScheduleConfig({
+                    type: e.target.value as ScheduleConfig["type"],
+                  })
+                }
+              >
+                <Radio value="immediate">立即同步</Radio>
+                <Radio value="scheduled">定时同步</Radio>
+              </Radio.Group>
+            </Form.Item>
+            {scheduleConfig.type === "scheduled" && (
+              <Form.Item
+                label=""
+                name="cronExpression"
+                rules={[{ required: true, message: "请输入Cron表达式" }]}
+              >
+                <SimpleCronScheduler
+                  className="px-2 rounded"
+                  value={scheduleConfig.cronExpression || "* * * * *"}
+                  showYear
                   onChange={(value) =>
-                    setScheduleConfig((prev) => ({
-                      ...prev,
-                      scheduleType: value as ScheduleConfig["scheduleType"],
-                    }))
+                    setScheduleConfig({ ...scheduleConfig, cron: value })
                   }
                 />
               </Form.Item>
-              {scheduleConfig.scheduleType === "custom" ? (
-                <Form.Item
-                  label="Cron表达式"
-                  name="cronExpression"
-                  rules={[{ required: true, message: "请输入Cron表达式" }]}
-                >
-                  <Input
-                    placeholder="例如：0 0 * * * 表示每天午夜执行"
-                    value={scheduleConfig.cronExpression}
-                    onChange={(e) =>
-                      setScheduleConfig((prev) => ({
-                        ...prev,
-                        cronExpression: e.target.value,
-                      }))
-                    }
-                  />
-                </Form.Item>
-              ) : (
-                <Form.Item label="执行时间" className="w-full">
-                  {scheduleConfig.scheduleType === "day" ? (
-                    <TimePicker />
-                  ) : (
-                    <Select
-                      options={
-                        scheduleConfig.scheduleType === "week"
-                          ? [
-                              { label: "周一", value: "1" },
-                              { label: "周二", value: "2" },
-                              { label: "周三", value: "3" },
-                              { label: "周四", value: "4" },
-                              { label: "周五", value: "5" },
-                              { label: "周六", value: "6" },
-                              { label: "周日", value: "0" },
-                            ]
-                          : [
-                              { label: "每月1日", value: "1" },
-                              { label: "每月5日", value: "5" },
-                              { label: "每月10日", value: "10" },
-                              { label: "每月15日", value: "15" },
-                              { label: "每月20日", value: "20" },
-                              { label: "每月25日", value: "25" },
-                              { label: "每月30日", value: "30" },
-                            ]
-                      }
-                      placeholder={
-                        scheduleConfig.scheduleType === "week"
-                          ? "选择星期几"
-                          : "选择日期"
-                      }
-                      value={scheduleConfig.dayOfWeek}
-                      onChange={(value) =>
-                        setScheduleConfig((prev) => ({
-                          ...prev,
-                          dayOfWeek: value as string,
-                        }))
-                      }
-                    />
-                  )}
-                </Form.Item>
-              )}
-            </div>
-          )}
-          <Form.Item label="最大执行次数">
-            <InputNumber
-              min={1}
-              value={scheduleConfig.maxRetries}
-              onChange={(value) =>
-                setScheduleConfig((prev) => ({
-                  ...prev,
-                  maxRetries: value,
-                }))
-              }
-              className="w-full"
-              style={{ width: "100%" }}
-            />
-          </Form.Item>
-
-          {/* 模板配置 */}
-          <h2 className="font-medium text-gray-900 my-4 text-lg">模板配置</h2>
-          <Form.Item label="模板类型">
-            <Radio.Group
-              value={templateType}
-              onChange={(e) => setTemplateType(e.target.value)}
-            >
-              <Radio value="default">使用默认模板</Radio>
-              <Radio value="custom">自定义DataX JSON配置</Radio>
-            </Radio.Group>
-          </Form.Item>
-          {templateType === "default" && (
-            <Form.Item label="选择模板">
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                {defaultTemplates.map((template) => (
-                  <div
-                    key={template.id}
-                    className={`border p-4 rounded-md hover:shadow-lg transition-shadow ${
-                      selectedTemplate === template.id
-                        ? "border-blue-500"
-                        : "border-gray-300"
-                    }`}
-                    onClick={() => setSelectedTemplate(template.id)}
-                  >
-                    <div className="font-medium">{template.name}</div>
-                    <div className="text-gray-500">{template.description}</div>
-                    <div className="text-gray-400">
-                      {template.config.reader} → {template.config.writer}
-                    </div>
-                  </div>
-                ))}
-              </div>
+            )}
+            <Form.Item name="maxRetries" label="最大执行次数">
+              <InputNumber min={1} style={{ width: "100%" }} />
             </Form.Item>
-          )}
 
-          {templateType === "custom" && (
-            <Form.Item label="DataX JSON配置">
-              <TextArea
-                placeholder="请输入DataX JSON配置..."
-                value={customConfig}
-                onChange={(e) => setCustomConfig(e.target.value)}
-                rows={12}
-                className="w-full"
-              />
-            </Form.Item>
-          )}
-
-          {/* 数据集配置 */}
-          {templateType === "default" && (
-            <>
-              <h2 className="font-medium text-gray-900 my-4 text-lg">
-                数据集配置
-              </h2>
-              <Form.Item
-                label="是否创建数据集"
-                name="createDataset"
-                required
-                rules={[{ required: true, message: "请选择是否创建数据集" }]}
+            {/* 模板配置 */}
+            <h2 className="font-medium text-gray-900 pt-6 mb-2 text-lg">
+              模板配置
+            </h2>
+            {/* <Form.Item label="模板类型">
+              <Radio.Group
+                value={templateType}
+                onChange={(e) => setTemplateType(e.target.value)}
               >
-                <Radio.Group
-                  value={isCreateDataset}
-                  onChange={(e) => setIsCreateDataset(e.target.value)}
-                >
-                  <Radio value={true}>是</Radio>
-                  <Radio value={false}>否</Radio>
-                </Radio.Group>
-              </Form.Item>
-              {isCreateDataset && (
-                <>
-                  <Form.Item
-                    label="数据集名称"
-                    name="datasetName"
-                    rules={[{ required: true, message: "请输入数据集名称" }]}
-                  >
-                    <Input placeholder="请输入数据集名称" />
-                  </Form.Item>
-                </>
-              )}
-            </>
-          )}
+                <Radio value="default">使用默认模板</Radio>
+                <Radio value="custom">自定义DataX JSON配置</Radio>
+              </Radio.Group>
+            </Form.Item> */}
+            {templateType === "default" && (
+              <>
+                {/* <Form.Item label="选择模板">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    {defaultTemplates.map((template) => (
+                      <div
+                        key={template.id}
+                        className={`border p-4 rounded-md hover:shadow-lg transition-shadow ${
+                          selectedTemplate === template.id
+                            ? "border-blue-500"
+                            : "border-gray-300"
+                        }`}
+                        onClick={() => setSelectedTemplate(template.id)}
+                      >
+                        <div className="font-medium">{template.name}</div>
+                        <div className="text-gray-500">
+                          {template.description}
+                        </div>
+                        <div className="text-gray-400">
+                          {template.config.reader} → {template.config.writer}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </Form.Item> */}
+                {/* nas import */}
+                {selectedTemplate === TemplateType.NAS && (
+                  <div className="grid grid-cols-2 gap-3 px-2 rounded">
+                    <Form.Item
+                      name="nasPath"
+                      rules={[{ required: true, message: "请输入NAS地址" }]}
+                      label="NAS地址"
+                    >
+                      <Input placeholder="192.168.1.100" />
+                    </Form.Item>
+                    <Form.Item
+                      name="sharePath"
+                      rules={[{ required: true, message: "请输入共享路径" }]}
+                      label="共享路径"
+                    >
+                      <Input placeholder="/share/importConfig" />
+                    </Form.Item>
+                    <Form.Item
+                      name="fileList"
+                      label="文件列表"
+                      className="col-span-2"
+                    >
+                      <Select
+                        placeholder="请选择文件列表"
+                        mode="tags"
+                        multiple
+                      />
+                    </Form.Item>
+                  </div>
+                )}
 
-          {/* 提交按钮 */}
-          <Divider />
-          <div className="flex gap-2 justify-end">
-            <Button onClick={() => navigate("/data/collection")}>取消</Button>
-            <Button type="primary" onClick={handleSubmit}>
-              创建任务
-            </Button>
-          </div>
-        </Form>
-      </Card>
+                {/* obs import */}
+                {selectedTemplate === TemplateType.OBS && (
+                  <div className="grid grid-cols-2 gap-3 p-4 bg-blue-50 rounded-lg">
+                    <Form.Item
+                      name="endpoint"
+                      rules={[{ required: true }]}
+                      label="Endpoint"
+                    >
+                      <Input
+                        className="h-8 text-xs"
+                        placeholder="obs.cn-north-4.myhuaweicloud.com"
+                      />
+                    </Form.Item>
+                    <Form.Item
+                      name="bucket"
+                      rules={[{ required: true }]}
+                      label="Bucket"
+                    >
+                      <Input className="h-8 text-xs" placeholder="my-bucket" />
+                    </Form.Item>
+                    <Form.Item
+                      name="accessKey"
+                      rules={[{ required: true }]}
+                      label="Access Key"
+                    >
+                      <Input className="h-8 text-xs" placeholder="Access Key" />
+                    </Form.Item>
+                    <Form.Item
+                      name="secretKey"
+                      rules={[{ required: true }]}
+                      label="Secret Key"
+                    >
+                      <Input
+                        type="password"
+                        className="h-8 text-xs"
+                        placeholder="Secret Key"
+                      />
+                    </Form.Item>
+                  </div>
+                )}
+              </>
+            )}
+
+            {templateType === "custom" && (
+              <Form.Item label="DataX JSON配置">
+                <TextArea
+                  placeholder="请输入DataX JSON配置..."
+                  value={customConfig}
+                  onChange={(e) => setCustomConfig(e.target.value)}
+                  rows={12}
+                  className="w-full"
+                />
+              </Form.Item>
+            )}
+
+            {/* 数据集配置 */}
+            {templateType === "default" && (
+              <>
+                <h2 className="font-medium text-gray-900 my-4 text-lg">
+                  数据集配置
+                </h2>
+                <Form.Item
+                  label="是否创建数据集"
+                  name="createDataset"
+                  required
+                  rules={[{ required: true, message: "请选择是否创建数据集" }]}
+                >
+                  <Radio.Group
+                    value={isCreateDataset}
+                    onChange={(e) => setIsCreateDataset(e.target.value)}
+                  >
+                    <Radio value={true}>是</Radio>
+                    <Radio value={false}>否</Radio>
+                  </Radio.Group>
+                </Form.Item>
+                {isCreateDataset && (
+                  <>
+                    <Form.Item
+                      label="数据集名称"
+                      name="datasetName"
+                      rules={[{ required: true, message: "请输入数据集名称" }]}
+                    >
+                      <Input placeholder="请输入数据集名称" />
+                    </Form.Item>
+                  </>
+                )}
+              </>
+            )}
+          </Form>
+        </div>
+        <div className="flex gap-2 justify-end border-top p-6">
+          <Button onClick={() => navigate("/data/collection")}>取消</Button>
+          <Button type="primary" onClick={handleSubmit}>
+            创建任务
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

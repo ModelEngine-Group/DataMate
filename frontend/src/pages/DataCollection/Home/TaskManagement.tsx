@@ -1,16 +1,34 @@
-import { Card, Button, Badge, Table, Dropdown, App } from "antd";
-import { EllipsisOutlined } from "@ant-design/icons";
+import {
+  Card,
+  Button,
+  Badge,
+  Table,
+  Dropdown,
+  App,
+  Tooltip,
+  Popconfirm,
+} from "antd";
+import {
+  DeleteOutlined,
+  EditOutlined,
+  EllipsisOutlined,
+  PauseCircleOutlined,
+  PauseOutlined,
+  PlayCircleOutlined,
+  StopOutlined,
+} from "@ant-design/icons";
 import { SearchControls } from "@/components/SearchControls";
 import {
   deleteTaskByIdUsingDelete,
   executeTaskByIdUsingPost,
   queryTasksUsingGet,
   stopTaskByIdUsingPost,
-} from "../../collection.apis";
-import { TaskStatus, type CollectionTask } from "../../collection.model";
-import { StatusMap, SyncModeMap } from "../../collection.const";
+} from "../collection.apis";
+import { TaskStatus, type CollectionTask } from "../collection.model";
+import { StatusMap, SyncModeMap } from "../collection.const";
 import useFetchData from "@/hooks/useFetchData";
 import { useNavigate } from "react-router";
+import { mapCollectionTask } from "../collection.const";
 
 export default function TaskManagement() {
   const { message } = App.useApp();
@@ -34,7 +52,7 @@ export default function TaskManagement() {
     setSearchParams,
     fetchData,
     handleFiltersChange,
-  } = useFetchData(queryTasksUsingGet);
+  } = useFetchData(queryTasksUsingGet, mapCollectionTask);
 
   const handleStartTask = async (taskId: string) => {
     await executeTaskByIdUsingPost(taskId);
@@ -54,35 +72,61 @@ export default function TaskManagement() {
     fetchData();
   };
 
+  const taskOperations = (record: CollectionTask) => {
+    const isStopped = record.status === TaskStatus.STOPPED;
+    const startButton = {
+      key: "start",
+      label: "启动",
+      icon: <PlayCircleOutlined />,
+      onClick: () => handleStartTask(record.id),
+    };
+    const stopButton = {
+      key: "stop",
+      label: "停止",
+      icon: <PauseCircleOutlined />,
+      onClick: () => handleStopTask(record.id),
+    };
+    const items = [
+      isStopped ? startButton : stopButton,
+      {
+        key: "edit",
+        label: "编辑",
+        icon: <EditOutlined />,
+        onClick: () => {
+          showEditTaskModal(record);
+        },
+      },
+      {
+        key: "delete",
+        label: "删除",
+        danger: true,
+        icon: <DeleteOutlined />,
+        confirm: {
+          title: "确定要删除该任务吗？此操作不可撤销。",
+          okText: "删除",
+          cancelText: "取消",
+          okType: "danger",
+        },
+        onClick: () => handleDeleteTask(record.id),
+      },
+    ];
+    return items;
+  };
+
   const columns = [
     {
       title: "任务名称",
       dataIndex: "name",
       key: "name",
       fixed: "left",
-      render: (text: string, record: CollectionTask) => (
-        <Button
-          type="link"
-          onClick={() => navigate("`/data-collection/tasks/${record.id}`)}>")}
-        >
-          {text}
-        </Button>
-      ),
     },
-
     {
       title: "状态",
       dataIndex: "status",
       key: "status",
-      render: (status: string) =>
-        StatusMap[status] ? (
-          <Badge
-            color={StatusMap[status].color}
-            text={StatusMap[status].label}
-          />
-        ) : (
-          <Badge text={status} />
-        ),
+      render: (status: string) => (
+        <Badge text={status.label} color={status.color} />
+      ),
     },
     {
       title: "同步方式",
@@ -115,47 +159,42 @@ export default function TaskManagement() {
       title: "操作",
       key: "action",
       fixed: "right" as const,
-      render: (_: any, record: Task) => (
-        <Dropdown
-          menu={{
-            items: [
-              record.status === TaskStatus.STOPPED
-                ? {
-                    key: "start",
-                    label: "启动",
-                    onClick: () => handleStartTask(record.id),
-                  }
-                : {
-                    key: "stop",
-                    label: "停止",
-                    onClick: () => handleStopTask(record.id),
-                  },
-              {
-                key: "edit",
-                label: "编辑",
-                onClick: () => handleViewDetail(record),
-              },
-              {
-                key: "delete",
-                label: "删除",
-                danger: true,
-                onClick: () => handleDeleteTask(record.id),
-              },
-            ],
-          }}
-          trigger={["click"]}
-        >
-          <Button
-            type="text"
-            icon={<EllipsisOutlined style={{ fontSize: 20 }} />}
-          />
-        </Dropdown>
-      ),
+      render: (_: any, record: CollectionTask) => {
+        return taskOperations(record).map((op) => {
+          const button = (
+            <Tooltip key={op.key} title={op.label}>
+              <Button
+                type="text"
+                icon={op.icon}
+                danger={op?.danger}
+                onClick={() => op.onClick(record)}
+              />
+            </Tooltip>
+          );
+          if (op.confirm) {
+            return (
+              <Popconfirm
+                key={op.key}
+                title={op.confirm.title}
+                okText={op.confirm.okText}
+                cancelText={op.confirm.cancelText}
+                okType={op.danger ? "danger" : "primary"}
+                onConfirm={() => op.onClick(record)}
+              >
+                <Tooltip key={op.key} title={op.label}>
+                  <Button type="text" icon={op.icon} danger={op?.danger} />
+                </Tooltip>
+              </Popconfirm>
+            );
+          }
+          return button;
+        });
+      },
     },
   ];
 
   return (
-    <div>
+    <div className="space-y-4">
       {/* Header Actions */}
       <SearchControls
         searchTerm={searchParams.keyword}
@@ -176,7 +215,6 @@ export default function TaskManagement() {
             filters: {},
           }))
         }
-        className="mb-4"
       />
 
       {/* Tasks Table */}
@@ -192,7 +230,7 @@ export default function TaskManagement() {
             pageSize: searchParams.pageSize,
             total: pagination.total,
           }}
-          scroll={{ x: "max-content" }}
+          scroll={{ x: "max-content", y: "calc(100vh - 25rem)" }}
         />
       </Card>
     </div>
