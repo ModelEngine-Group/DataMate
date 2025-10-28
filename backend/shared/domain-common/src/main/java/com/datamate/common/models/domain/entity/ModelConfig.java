@@ -5,6 +5,7 @@ import com.datamate.common.domain.model.base.BaseEntity;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 /**
  * 模型配置实体类
@@ -16,6 +17,7 @@ import lombok.Setter;
 @Setter
 @TableName("t_model_config")
 @Builder
+@ToString
 public class ModelConfig extends BaseEntity<String> {
     /**
      * 模型名称（如 qwen2）

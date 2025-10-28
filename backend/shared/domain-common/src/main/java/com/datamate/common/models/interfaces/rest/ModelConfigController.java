@@ -19,7 +19,7 @@ import java.util.List;
  * @since 2025-10-27
  */
 @RestController
-@RequestMapping("/api/models")
+@RequestMapping("/models")
 @RequiredArgsConstructor
 public class ModelConfigController {
     private final ModelConfigApplicationService modelConfigApplicationService;
@@ -40,7 +40,7 @@ public class ModelConfigController {
      * @return 模型列表
      */
     @GetMapping("/list")
-    public PagedResponse<ModelConfig> getModels(@RequestParam QueryModelRequest queryModelRequest) {
+    public PagedResponse<ModelConfig> getModels(QueryModelRequest queryModelRequest) {
         return modelConfigApplicationService.getModels(queryModelRequest);
     }
 
@@ -51,7 +51,7 @@ public class ModelConfigController {
      * @return 模型详情
      */
     @GetMapping("/{modelId}")
-    public ModelConfig getModelDetail(@PathVariable String modelId) {
+    public ModelConfig getModelDetail(@PathVariable("modelId") String modelId) {
         return modelConfigApplicationService.getModelDetail(modelId);
     }
 
