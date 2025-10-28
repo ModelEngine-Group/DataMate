@@ -40,7 +40,7 @@ export default function WelcomePage() {
               开始使用
             </span>
             <span
-              onClick={() => navigate("/agent")}
+              onClick={() => navigate("/chat")}
               className="cursor-pointer rounded px-4 py-2 inline-flex items-center bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg"
             >
               <MessageSquare className="mr-2 w-4 h-4" />
@@ -232,7 +232,7 @@ export default function WelcomePage() {
 
               <div className="text-center">
                 <span
-                  onClick={() => navigate("/agent")}
+                  onClick={() => navigate("/chat")}
                   className="cursor-pointer rounded px-4 py-2 inline-flex items-center bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg"
                 >
                   <MessageSquare className="mr-2 w-4 h-4" />

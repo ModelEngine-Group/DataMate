@@ -53,7 +53,7 @@ const router = createBrowserRouter([
     Component: withErrorBoundary(Home),
   },
   {
-    path: "/agent",
+    path: "/chat",
     Component: withErrorBoundary(AgentPage),
   },
   {

@@ -10,8 +10,10 @@ RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi && \
 FROM nginx:1.29 AS runner
 
 COPY --from=builder /app/dist /opt/frontend
-COPY scripts/images/frontend/backend.conf /etc/nginx/conf.d/default.conf
 
-RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
+    && rm -f /etc/nginx/conf.d/default.conf
+
+EXPOSE 80
 
 CMD ["nginx", "-g", "daemon off;"]
