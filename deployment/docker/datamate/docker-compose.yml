@@ -5,8 +5,6 @@ services:
     image: datamate-backend
     restart: on-failure
     privileged: true
-    ports:
-      - "8080"
     volumes:
       - dataset_volume:/dataset
       - flow_volume:/flow
@@ -24,6 +22,7 @@ services:
       - "30000:80"            # nodePort → hostPort
     volumes:
       - frontend_log_volume:/var/log/datamate/frontend
+      - $NGINX_CONF:/etc/nginx/conf.d/backend.conf
     networks: [ datamate ]
     depends_on:
       - datamate-backend
@@ -35,8 +34,6 @@ services:
     restart: on-failure
     environment:
       MYSQL_ROOT_PASSWORD: password
-    ports:
-      - "3306"
     command: |
       sh -c "
         chown mysql:mysql /var/log/datamate/database &&
@@ -63,8 +60,6 @@ services:
       MYSQL_USER: "root"
       MYSQL_PASSWORD: "password"
       MYSQL_DATABASE: "datamate"
-    ports:
-      - "8081"
     command:
       - python
       - /opt/runtime/datamate/operator_runtime.py
