@@ -2,10 +2,11 @@ const { addMockPrefix } = require("./mock-core/util.cjs");
 
 const MockAPI = {
   // 数据归集接口
-  queryTasksUsingPost: "/data-collection/tasks", // 获取数据源任务列表
+  queryTasksUsingGet: "/data-collection/tasks", // 获取数据源任务列表
   createTaskUsingPost: "/data-collection/tasks/create", // 创建数据源任务
   queryTaskByIdUsingGet: "/data-collection/tasks/:id", // 根据ID获取数据源任务详情
   updateTaskByIdUsingPut: "/data-collection/tasks/:id", // 更新数据源任务
+  queryDataXTemplatesUsingGet: "/data-collection/templates", // 获取DataX数据源模板列表
   deleteTaskByIdUsingDelete: "/data-collection/tasks/:id", // 删除数据源任务
   executeTaskByIdUsingPost: "/data-collection/tasks/:id/execute", // 执行数据源任务
   stopTaskByIdUsingPost: "/data-collection/tasks/:id/stop", // 停止数据源任务
@@ -91,7 +92,6 @@ const MockAPI = {
   deleteInstructionTemplateByIdUsingDelete: "/synthesis/templates/:templateId", // 删除指令模板
   instructionTuningUsingPost: "/synthesis/instruction-tuning", // 指令微调
   cotDistillationUsingPost: "/synthesis/cot-distillation", // Cot蒸馏
-  queryOperatorsUsingPost: "/synthesis/operators", // 获取操作列表
 
   // 数据评测接口
   queryEvaluationTasksUsingPost: "/evaluation/tasks", // 获取评测任务列表
@@ -144,6 +144,14 @@ const MockAPI = {
   deleteOperatorByIdUsingDelete: "/operators/:operatorId", // 删除算子
   publishOperatorUsingPost: "/operators/:operatorId/publish", // 发布算子
   unpublishOperatorUsingPost: "/operators/:operatorId/unpublish", // 下架算子
+
+  // 设置接口
+  queryModelsUsingGet: "/models/list", // 获取模型列表
+  queryProvidersUsingGet: "/models/providers", // 获取模型提供商列表
+  createModelUsingPost: "/models/create", // 创建模型
+  updateModelUsingPut: "/models/:id", // 更新模型
+  deleteModelUsingDelete: "/models/:id", // 删除模型
+  
 };
 
 module.exports = addMockPrefix("/api", MockAPI);

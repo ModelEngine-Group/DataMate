@@ -2,7 +2,7 @@ import { createBrowserRouter } from "react-router";
 import Home from "../pages/Home/Home";
 import MainLayout from "../pages/Layout/MainLayout";
 
-import DataCollection from "@/pages/DataCollection/Home/DataCollection";
+import DataCollection from "@/pages/DataCollection/Home/DataCollectionPage";
 import CollectionTaskCreate from "@/pages/DataCollection/Create/CreateTask";
 
 import DatasetManagement from "@/pages/DataManagement/Home/DataManagement";
@@ -44,7 +44,7 @@ import CreateRatioTask from "@/pages/RatioTask/CreateRatioTask";
 import OrchestrationPage from "@/pages/Orchestration/Orchestration";
 import WorkflowEditor from "@/pages/Orchestration/WorkflowEditor";
 import AgentPage from "@/pages/Agent/Agent";
-import SettingsPage from "@/pages/SettingsPage/Settings";
+import SettingsPage from "@/pages/SettingsPage/SettingsPage";
 import { withErrorBoundary } from "@/components/ErrorBoundary";
 
 const router = createBrowserRouter([
