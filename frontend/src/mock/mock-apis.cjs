@@ -3,7 +3,7 @@ const { addMockPrefix } = require("./mock-core/util.cjs");
 const MockAPI = {
   // 数据归集接口
   queryTasksUsingGet: "/data-collection/tasks", // 获取数据源任务列表
-  createTaskUsingPost: "/data-collection/tasks/create", // 创建数据源任务
+  createTaskUsingPost: "/data-collection/tasks", // 创建数据源任务
   queryTaskByIdUsingGet: "/data-collection/tasks/:id", // 根据ID获取数据源任务详情
   updateTaskByIdUsingPut: "/data-collection/tasks/:id", // 更新数据源任务
   queryDataXTemplatesUsingGet: "/data-collection/templates", // 获取DataX数据源模板列表

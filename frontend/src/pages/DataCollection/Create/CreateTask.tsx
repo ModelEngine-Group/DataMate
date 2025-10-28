@@ -4,18 +4,13 @@ import { Link, useNavigate } from "react-router";
 import { ArrowLeft } from "lucide-react";
 import { createTaskUsingPost } from "../collection.apis";
 import SimpleCronScheduler from "@/pages/DataCollection/Create/SimpleCronScheduler";
+import RadioCard from "@/components/RadioCard";
+import { datasetTypes } from "@/pages/DataManagement/dataset.const";
+import { SyncModeMap } from "../collection.const";
+import { SyncMode } from "../collection.model";
+import { DatasetSubType } from "@/pages/DataManagement/dataset.model";
 
 const { TextArea } = Input;
-
-interface ScheduleConfig {
-  type: "immediate" | "scheduled";
-  scheduleType?: "day" | "week" | "month" | "custom";
-  time?: string;
-  dayOfWeek?: string;
-  dayOfMonth?: string;
-  cronExpression?: string;
-  maxRetries?: number;
-}
 
 const defaultTemplates = [
   {
@@ -47,6 +42,8 @@ const defaultTemplates = [
   },
 ];
 
+const syncModeOptions = Object.values(SyncModeMap);
+
 enum TemplateType {
   NAS = "nas",
   OBS = "obs",
@@ -64,36 +61,40 @@ export default function CollectionTaskCreate() {
   const [selectedTemplate, setSelectedTemplate] = useState("nas");
   const [customConfig, setCustomConfig] = useState("");
 
-  const [scheduleConfig, setScheduleConfig] = useState<ScheduleConfig>({
-    type: "immediate",
+  const [newTask, setNewTask] = useState({
+    name: "",
+    description: "",
+    syncMode: SyncMode.ONCE,
+    cronExpression: "",
     maxRetries: 10,
-    scheduleType: "daily",
+    dataset: {},
+  });
+  const [scheduleExpression, setScheduleExpression] = useState({
+    type: SyncMode.SCHEDULED,
+    time: "00:00",
+    cronExpression: "0 0 0 * * ?",
   });
 
   const [isCreateDataset, setIsCreateDataset] = useState(false);
 
   const handleSubmit = async () => {
-    const formData = await form.validateFields();
-    if (templateType === "default" && !selectedTemplate) {
-      window.alert("请选择默认模板");
-      return;
+    try {
+      const formData = await form.validateFields();
+      if (templateType === "default" && !selectedTemplate) {
+        window.alert("请选择默认模板");
+        return;
+      }
+      if (templateType === "custom" && !customConfig.trim()) {
+        window.alert("请填写自定义配置");
+        return;
+      }
+      // Create task logic here
+      await createTaskUsingPost(newTask);
+      message.success("任务创建成功");
+      navigate("/data/collection");
+    } catch (error) {
+      message.error(`${error?.data?.message}：${error?.data?.data}`);
     }
-    if (templateType === "custom" && !customConfig.trim()) {
-      window.alert("请填写自定义配置");
-      return;
-    }
-    // Create task logic here
-    const params = {
-      ...formData,
-      templateType,
-      selectedTemplate: templateType === "default" ? selectedTemplate : null,
-      customConfig: templateType === "custom" ? customConfig : null,
-      scheduleConfig,
-    };
-    console.log("Creating task:", params);
-    await createTaskUsingPost(params);
-    message.success("任务创建成功");
-    navigate("/data/collection");
   };
 
   return (
@@ -114,17 +115,16 @@ export default function CollectionTaskCreate() {
           <Form
             form={form}
             layout="vertical"
-            initialValues={scheduleConfig}
+            initialValues={newTask}
             onValuesChange={(_, allValues) => {
-              // 文件格式变化时重置模板选择
-              if (_.fileFormat !== undefined) setSelectedTemplate("");
+              setNewTask({ ...newTask, ...allValues });
             }}
           >
             {/* 基本信息 */}
             <h2 className="font-medium text-gray-900 text-lg mb-2">基本信息</h2>
 
             <Form.Item
-              label="任务名称"
+              label="名称"
               name="name"
               rules={[{ required: true, message: "请输入任务名称" }]}
             >
@@ -138,32 +138,37 @@ export default function CollectionTaskCreate() {
             <h2 className="font-medium text-gray-900 pt-6 mb-2 text-lg">
               同步配置
             </h2>
-            <Form.Item label="同步方式">
+            <Form.Item name="syncMode" label="同步方式">
               <Radio.Group
-                value={scheduleConfig.type}
-                onChange={(e) =>
-                  setScheduleConfig({
-                    type: e.target.value as ScheduleConfig["type"],
-                  })
-                }
-              >
-                <Radio value="immediate">立即同步</Radio>
-                <Radio value="scheduled">定时同步</Radio>
-              </Radio.Group>
+                value={newTask.syncMode}
+                options={syncModeOptions}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setNewTask({
+                    ...newTask,
+                    scheduleExpression:
+                      value === SyncMode.SCHEDULED
+                        ? scheduleExpression.cronExpression
+                        : "",
+                  });
+                }}
+              ></Radio.Group>
             </Form.Item>
-            {scheduleConfig.type === "scheduled" && (
+            {newTask.syncMode === SyncMode.SCHEDULED && (
               <Form.Item
                 label=""
-                name="cronExpression"
                 rules={[{ required: true, message: "请输入Cron表达式" }]}
               >
                 <SimpleCronScheduler
                   className="px-2 rounded"
-                  value={scheduleConfig.cronExpression || "* * * * *"}
-                  showYear
-                  onChange={(value) =>
-                    setScheduleConfig({ ...scheduleConfig, cron: value })
-                  }
+                  value={scheduleExpression}
+                  onChange={(value) => {
+                    setScheduleExpression(value);
+                    setNewTask({
+                      ...newTask,
+                      scheduleExpression: value.cronExpression,
+                    });
+                  }}
                 />
               </Form.Item>
             )}
@@ -213,29 +218,25 @@ export default function CollectionTaskCreate() {
                 {selectedTemplate === TemplateType.NAS && (
                   <div className="grid grid-cols-2 gap-3 px-2 rounded">
                     <Form.Item
-                      name="nasPath"
+                      name={["config", "ip"]}
                       rules={[{ required: true, message: "请输入NAS地址" }]}
                       label="NAS地址"
                     >
                       <Input placeholder="192.168.1.100" />
                     </Form.Item>
                     <Form.Item
-                      name="sharePath"
+                      name={["config", "path"]}
                       rules={[{ required: true, message: "请输入共享路径" }]}
                       label="共享路径"
                     >
                       <Input placeholder="/share/importConfig" />
                     </Form.Item>
                     <Form.Item
-                      name="fileList"
+                      name={["config", "files"]}
                       label="文件列表"
                       className="col-span-2"
                     >
-                      <Select
-                        placeholder="请选择文件列表"
-                        mode="tags"
-                        multiple
-                      />
+                      <Select placeholder="请选择文件列表" mode="tags" />
                     </Form.Item>
                   </div>
                 )}
@@ -309,7 +310,19 @@ export default function CollectionTaskCreate() {
                 >
                   <Radio.Group
                     value={isCreateDataset}
-                    onChange={(e) => setIsCreateDataset(e.target.value)}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === false) {
+                        form.setFieldsValue({
+                          dataset: {},
+                        });
+                        setNewTask({
+                          ...newTask,
+                          dataset: {},
+                        });
+                      }
+                      setIsCreateDataset(e.target.value);
+                    }}
                   >
                     <Radio value={true}>是</Radio>
                     <Radio value={false}>否</Radio>
@@ -319,10 +332,40 @@ export default function CollectionTaskCreate() {
                   <>
                     <Form.Item
                       label="数据集名称"
-                      name="datasetName"
-                      rules={[{ required: true, message: "请输入数据集名称" }]}
+                      name={["dataset", "name"]}
+                      required
                     >
-                      <Input placeholder="请输入数据集名称" />
+                      <Input
+                        placeholder="输入数据集名称"
+                        onChange={(e) => {
+                          setNewTask({
+                            ...newTask,
+                            dataset: {
+                              ...newTask.dataset,
+                              name: e.target.value,
+                            },
+                          });
+                        }}
+                      />
+                    </Form.Item>
+                    <Form.Item
+                      label="数据集类型"
+                      name={["dataset", "datasetType"]}
+                      rules={[{ required: true, message: "请选择数据集类型" }]}
+                    >
+                      <RadioCard
+                        options={datasetTypes}
+                        value={newTask.dataset.datasetType}
+                        onChange={(type) => {
+                          form.setFieldValue(["dataset", "datasetType"], type);
+                          setNewTask({
+                            ...newTask,
+                            dataset: {
+                              datasetType: type as DatasetSubType,
+                            },
+                          });
+                        }}
+                      />
                     </Form.Item>
                   </>
                 )}
