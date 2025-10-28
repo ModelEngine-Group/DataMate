@@ -30,4 +30,9 @@ public class OperatorRepositoryImpl extends CrudRepository<OperatorMapper, Opera
     public void insertOperator(OperatorDto operator) {
         mapper.insert(OperatorConverter.INSTANCE.fromDtoToEntity(operator));
     }
+
+    @Override
+    public void deleteOperator(String id) {
+        mapper.deleteById(id);
+    }
 }

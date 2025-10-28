@@ -12,4 +12,6 @@ public interface OperatorRepository extends IRepository<Operator> {
     void updateOperator(OperatorDto operator);
 
     void insertOperator(OperatorDto operator);
+
+    void deleteOperator(String id);
 }

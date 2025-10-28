@@ -7,12 +7,12 @@ import com.datamate.collection.domain.model.entity.CollectionTask;
 import com.datamate.collection.domain.model.entity.TaskExecution;
 import com.datamate.collection.common.enums.TaskStatus;
 import com.datamate.collection.domain.repository.CollectionTaskRepository;
-import com.datamate.collection.interfaces.dto.CollectionTaskPagingQuery;
 import com.datamate.collection.common.enums.SyncMode;
 import com.datamate.common.domain.utils.ChunksSaver;
+import com.datamate.datamanagement.application.DatasetApplicationService;
+import com.datamate.datamanagement.domain.model.dataset.Dataset;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,31 +25,32 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class CollectionTaskService {
     private final TaskExecutionService taskExecutionService;
+    private final DatasetApplicationService datasetApplicationService;
     private final CollectionTaskRepository collectionTaskRepository;
 
     @Transactional
-    public CollectionTask create(CollectionTask task) {
-        task.setStatus(TaskStatus.READY);
-        task.setCreatedAt(LocalDateTime.now());
-        task.setUpdatedAt(LocalDateTime.now());
+    public CollectionTask create(CollectionTask task, String datasetId) {
+        task.initCreateParam();
         collectionTaskRepository.save(task);
-        executeTaskNow(task);
+        executeTaskNow(task, datasetId);
         return task;
     }
 
-    private void executeTaskNow(CollectionTask task) {
+    private void executeTaskNow(CollectionTask task, String datasetId) {
         if (Objects.equals(task.getSyncMode(), SyncMode.ONCE)) {
             TaskExecution exec = taskExecutionService.createExecution(task);
             int timeout = task.getTimeoutSeconds() == null ? 3600 : task.getTimeoutSeconds();
-            taskExecutionService.runAsync(task, exec.getId(), timeout);
+            taskExecutionService.runAsync(task, exec.getId(), timeout, datasetId);
             log.info("Triggered DataX execution for task {} at {}, execId={}", task.getId(), LocalDateTime.now(), exec.getId());
         }
     }
 
     @Transactional
-    public CollectionTask update(CollectionTask task) {
+    public CollectionTask update(CollectionTask task, String datasetId) {
         task.setUpdatedAt(LocalDateTime.now());
+        task.addPath();
         collectionTaskRepository.updateById(task);
+        executeTaskNow(task, datasetId);
         return task;
     }
 
@@ -66,11 +67,8 @@ public class CollectionTaskService {
         return collectionTaskRepository.getById(id);
     }
 
-    public IPage<CollectionTask> getTasks(CollectionTaskPagingQuery query) {
-        LambdaQueryWrapper<CollectionTask> wrapper = new LambdaQueryWrapper<CollectionTask>()
-            .eq(query.getStatus() != null, CollectionTask::getStatus, query.getStatus())
-            .like(StringUtils.isNotBlank(query.getName()), CollectionTask::getName, query.getName());
-        return collectionTaskRepository.page(new Page<>(query.getPage(), query.getSize()), wrapper);
+    public IPage<CollectionTask> getTasks(Page<CollectionTask> page, LambdaQueryWrapper<CollectionTask> wrapper) {
+        return collectionTaskRepository.page(page, wrapper);
     }
 
     public List<CollectionTask> selectActiveTasks() {

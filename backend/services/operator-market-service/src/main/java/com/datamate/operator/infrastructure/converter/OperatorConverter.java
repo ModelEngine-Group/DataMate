@@ -24,11 +24,11 @@ public interface OperatorConverter {
     List<OperatorDto> fromEntityToDto(List<Operator> operator);
 
     @Named("stringToList")
-    static List<Integer> stringToList(String input) {
+    static List<String> stringToList(String input) {
         if (input == null || input.isEmpty()) {
             return Collections.emptyList();
         }
-        return Arrays.stream(input.split(",")).map(Integer::valueOf).toList();
+        return Arrays.stream(input.split(",")).map(String::valueOf).toList();
     }
 
     Operator fromDtoToEntity(OperatorDto operator);

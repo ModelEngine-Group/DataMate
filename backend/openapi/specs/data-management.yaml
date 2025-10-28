@@ -39,7 +39,7 @@ paths:
           schema:
             type: integer
             default: 0
-          description: 页码，从0开始
+          description: 页码，从1开始
         - name: size
           in: query
           schema:
@@ -65,7 +65,7 @@ paths:
           in: query
           schema:
             type: string
-            enum: [ACTIVE, INACTIVE, PROCESSING]
+            enum: [DRAFT, ACTIVE, PROCESSING, ARCHIVED, PUBLISHED, DEPRECATED]
           description: 数据集状态过滤
       responses:
         '200':
@@ -231,40 +231,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/PagedDatasetFileResponse'
 
-    post:
-      tags: [DatasetFile]
-      summary: 上传文件到数据集
-      operationId: uploadDatasetFile
-      description: 向指定数据集上传文件
-      parameters:
-        - name: datasetId
-          in: path
-          required: true
-          schema:
-            type: string
-          description: 数据集ID
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              properties:
-                file:
-                  type: string
-                  format: binary
-                  description: 要上传的文件
-                description:
-                  type: string
-                  description: 文件描述
-      responses:
-        '201':
-          description: 上传成功
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DatasetFileResponse'
-
   /data-management/datasets/{datasetId}/files/{fileId}:
     get:
       tags: [DatasetFile]
@@ -341,6 +307,78 @@ paths:
               schema:
                 type: string
                 format: binary
+
+  /data-management/datasets/{datasetId}/files/download:
+    get:
+      tags: [ DatasetFile ]
+      operationId: downloadDatasetFileAsZip
+      summary: 下载文件
+      description: 下载数据集中全部文件
+      parameters:
+        - name: datasetId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 数据集ID
+      responses:
+        '200':
+          description: 文件内容
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+
+  /data-management/datasets/{datasetId}/files/upload/pre-upload:
+    post:
+      tags: [ DatasetFile ]
+      operationId: preUpload
+      summary: 切片上传预上传
+      description: 预上传接口，返回后续分片上传所需的请求ID
+      parameters:
+        - name: datasetId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 数据集ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UploadFilesPreRequest'
+      responses:
+        '200':
+          description: 预上传成功，返回请求ID
+          content:
+            application/json:
+              schema:
+                type: string
+
+  /data-management/datasets/{datasetId}/files/upload/chunk:
+    post:
+      tags: [ DatasetFile ]
+      operationId: chunkUpload
+      summary: 切片上传
+      description: 使用预上传返回的请求ID进行分片上传
+      parameters:
+        - name: datasetId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 数据集ID
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UploadFileRequest'
+      responses:
+        '200':
+          description: 上传成功
 
   /data-management/dataset-types:
     get:
@@ -548,8 +586,58 @@ components:
           description: 标签列表
         status:
           type: string
-          enum: [ACTIVE, INACTIVE]
+          enum: [DRAFT, ACTIVE, PROCESSING, ARCHIVED, PUBLISHED, DEPRECATED]
           description: 数据集状态
+
+    UploadFilesPreRequest:
+      type: object
+      description: 切片上传预上传请求
+      properties:
+        hasArchive:
+          type: boolean
+          description: 是否为压缩包上传
+          default: false
+        totalFileNum:
+          type: integer
+          format: int32
+          minimum: 1
+          description: 总文件数量
+        totalSize:
+          type: integer
+          format: int64
+          description: 总文件大小（字节）
+      required: [ totalFileNum ]
+
+    UploadFileRequest:
+      type: object
+      description: 分片上传请求
+      properties:
+        reqId:
+          type: string
+          description: 预上传返回的请求ID
+        fileNo:
+          type: integer
+          format: int32
+          description: 文件编号（批量中的第几个）
+        fileName:
+          type: string
+          description: 文件名称
+        totalChunkNum:
+          type: integer
+          format: int32
+          description: 文件总分片数量
+        chunkNo:
+          type: integer
+          format: int32
+          description: 当前分片编号（从1开始）
+        file:
+          type: string
+          format: binary
+          description: 分片二进制内容
+        checkSumHex:
+          type: string
+          description: 分片校验和（十六进制）
+      required: [ reqId, fileNo, fileName, totalChunkNum, chunkNo, file ]
 
     DatasetTypeResponse:
       type: object

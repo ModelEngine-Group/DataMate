@@ -27,8 +27,6 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
         "com.datamate.evaluation",
         "com.datamate.pipeline",
         "com.datamate.execution",
-        "com.datamate.rag",
-        "com.datamate.shared",
         "com.datamate.common"
 })
 @MapperScan(basePackages = {
@@ -36,7 +34,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
         "com.datamate.datamanagement.infrastructure.persistence.mapper",
         "com.datamate.operator.infrastructure.persistence.mapper",
         "com.datamate.cleaning.infrastructure.persistence.mapper",
-        "com.datamate.common.infrastructure.mapper"
+        "com.datamate.**.mapper"
 })
 @EnableTransactionManagement
 @EnableAsync

@@ -1,16 +1,13 @@
 package com.datamate.operator.interfaces.rest;
 
-import com.datamate.common.infrastructure.common.Response;
 import com.datamate.common.interfaces.PagedResponse;
 import com.datamate.operator.application.OperatorService;
 import com.datamate.operator.interfaces.dto.OperatorDto;
 import com.datamate.operator.interfaces.dto.OperatorsListPostRequest;
 import com.datamate.operator.interfaces.dto.UploadOperatorRequest;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -47,17 +44,22 @@ public class OperatorController {
     }
 
     @PostMapping("/upload")
-    public OperatorDto operatorsUploadPost(@RequestPart(value = "file") MultipartFile file) {
-        return operatorService.uploadOperator(file);
+    public OperatorDto operatorsUploadPost(@RequestBody UploadOperatorRequest request) {
+        return operatorService.uploadOperator(request.getFileName());
     }
 
-    @PostMapping("/upload/pre-upload")
+    @PostMapping(value = "/upload/pre-upload", produces = MediaType.APPLICATION_JSON_VALUE)
     public String preUpload() {
         return operatorService.preUpload();
     }
 
     @PostMapping("/upload/chunk")
-    public void chunkUpload(@RequestBody UploadOperatorRequest request) {
+    public void chunkUpload(@ModelAttribute UploadOperatorRequest request) {
         operatorService.chunkUpload(request);
+    }
+
+    @DeleteMapping("/{id}")
+    public void operatorDelete(@PathVariable("id") String id) {
+        operatorService.deleteOperator(id);
     }
 }

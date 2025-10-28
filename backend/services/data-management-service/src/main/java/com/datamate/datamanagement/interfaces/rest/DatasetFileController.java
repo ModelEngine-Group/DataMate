@@ -68,22 +68,6 @@ public class DatasetFileController {
         return ResponseEntity.ok(Response.ok(response));
     }
 
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<Response<DatasetFileResponse>> uploadDatasetFile(
-        @PathVariable("datasetId") String datasetId,
-        @RequestPart(value = "file", required = false) MultipartFile file) {
-        try {
-            DatasetFile datasetFile = datasetFileApplicationService.uploadFile(datasetId, file);
-
-            return ResponseEntity.status(HttpStatus.CREATED).body(Response.ok(DatasetConverter.INSTANCE.convertToResponse(datasetFile)));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Response.error(SystemErrorCode.UNKNOWN_ERROR, null));
-        } catch (Exception e) {
-            log.error("upload fail", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Response.error(SystemErrorCode.UNKNOWN_ERROR, null));
-        }
-    }
-
     @GetMapping("/{fileId}")
     public ResponseEntity<Response<DatasetFileResponse>> getDatasetFileById(
         @PathVariable("datasetId") String datasetId,
@@ -109,10 +93,9 @@ public class DatasetFileController {
     }
 
     @IgnoreResponseWrap
-    @GetMapping(value = "/{fileId}/download", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    public ResponseEntity<Resource> downloadDatasetFileById(
-        @PathVariable("datasetId") String datasetId,
-        @PathVariable("fileId") String fileId) {
+    @GetMapping(value = "/{fileId}/download", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE + ";charset=UTF-8")
+    public ResponseEntity<Resource> downloadDatasetFileById(@PathVariable("datasetId") String datasetId,
+                                                            @PathVariable("fileId") String fileId) {
         try {
             DatasetFile datasetFile = datasetFileApplicationService.getDatasetFile(datasetId, fileId);
             Resource resource = datasetFileApplicationService.downloadFile(datasetId, fileId);
@@ -142,8 +125,8 @@ public class DatasetFileController {
      * @return 批量上传请求id
      */
     @PostMapping("/upload/pre-upload")
-    public ResponseEntity<Response<String>> preUpload(@PathVariable("datasetId") String datasetId, @RequestBody @Valid UploadFilesPreRequest request) {
-
+    public ResponseEntity<Response<String>> preUpload(@PathVariable("datasetId") String datasetId,
+                                                      @RequestBody @Valid UploadFilesPreRequest request) {
         return ResponseEntity.ok(Response.ok(datasetFileApplicationService.preUpload(request, datasetId)));
     }
 
@@ -153,7 +136,7 @@ public class DatasetFileController {
      * @param uploadFileRequest 上传文件请求
      */
     @PostMapping("/upload/chunk")
-    public ResponseEntity<Void> chunkUpload(@PathVariable("datasetId") String datasetId, UploadFileRequest uploadFileRequest) {
+    public ResponseEntity<Void> chunkUpload(@PathVariable("datasetId") String datasetId, @Valid UploadFileRequest uploadFileRequest) {
         log.info("file upload reqId:{}, fileNo:{}, total chunk num:{}, current chunkNo:{}",
             uploadFileRequest.getReqId(), uploadFileRequest.getFileNo(), uploadFileRequest.getTotalChunkNum(),
             uploadFileRequest.getChunkNo());

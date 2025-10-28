@@ -14,32 +14,32 @@ import java.util.List;
 @Getter
 @Setter
 public class OperatorDto {
-  private String id;
+    private String id;
 
-  private String name;
+    private String name;
 
-  private String description;
+    private String description;
 
-  private String version;
+    private String version;
 
-  private String inputs;
+    private String inputs;
 
-  private String outputs;
+    private String outputs;
 
-  private List<Integer> categories;
+    private List<String> categories;
 
-  private String runtime;
+    private String runtime;
 
-  private String settings;
+    private String settings;
 
-  private String fileName;
+    private String fileName;
 
-  private Boolean isStar;
+    private Boolean isStar;
 
-  @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-  private LocalDateTime createdAt;
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+    private LocalDateTime createdAt;
 
-  @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-  private LocalDateTime updatedAt;
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+    private LocalDateTime updatedAt;
 }
 

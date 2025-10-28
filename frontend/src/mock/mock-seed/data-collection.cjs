@@ -3,37 +3,24 @@ const API = require("../mock-apis.cjs");
 const { Random } = Mock;
 
 // 生成模拟数据归集统计信息
-const collectionStatistics = {
-  period: Random.pick(["HOUR", "DAY", "WEEK", "MONTH"]),
-  totalTasks: Random.integer(50, 200),
-  activeTasks: Random.integer(10, 50),
-  successfulExecutions: Random.integer(30, 150),
-  failedExecutions: Random.integer(0, 50),
-  totalExecutions: Random.integer(20, 100),
-  avgExecutionTime: Random.integer(1000, 10000), // in milliseconds
-  avgThroughput: Random.integer(100, 1000), // records per second
-  topDataSources: new Array(5).fill(null).map(() => ({
-    dataSourceId: Mock.Random.guid().replace(/[^a-zA-Z0-9]/g, ""),
-    dataSourceName: Mock.Random.word(5, 15),
-    type: Mock.Random.pick([
-      "MySQL",
-      "PostgreSQL",
-      "ORACLE",
-      "SQLSERVER",
-      "MONGODB",
-      "REDIS",
-      "ELASTICSEARCH",
-      "HIVE",
-      "HDFS",
-      "KAFKA",
-      "HTTP",
-      "FILE",
-    ]),
-    taskCount: Mock.Random.integer(1, 20),
-    executionCount: Mock.Random.integer(1, 50),
-    recordsProcessed: Mock.Random.integer(70, 100), // percentage
-  })),
-};
+function dataXTemplate() {
+  return {
+    id: Mock.Random.guid().replace(/[^a-zA-Z0-9]/g, ""),
+    name: Mock.Random.ctitle(5, 15),
+    sourceType: Mock.Random.csentence(3, 10),
+    targetType: Mock.Random.csentence(3, 10),
+    description: Mock.Random.csentence(5, 20),
+    version: `v${Mock.Random.integer(1, 5)}.${Mock.Random.integer(
+      0,
+      9
+    )}.${Mock.Random.integer(0, 9)}`,
+    isSystem: Mock.Random.boolean(),
+    createdAt: Mock.Random.datetime("yyyy-MM-dd HH:mm:ss"),
+    updatedAt: Mock.Random.datetime("yyyy-MM-dd HH:mm:ss"),
+  };
+}
+
+const templateList = new Array(20).fill(null).map(dataXTemplate);
 
 // 生成模拟任务数据
 function taskItem() {
@@ -89,30 +76,21 @@ function executionLogItem() {
 const executionLogList = new Array(100).fill(null).map(executionLogItem);
 
 module.exports = function (router) {
-  // 获取数据统计信息
-  router.get(API.queryCollectionStatisticsUsingGet, (req, res) => {
-    res.send({
-      code: "0",
-      msg: "Success",
-      data: collectionStatistics,
-    });
-  });
-
   // 获取任务列表
-  router.post(API.queryTasksUsingPost, (req, res) => {
-    const { searchTerm, filters, page = 1, size = 10 } = req.body;
+  router.get(API.queryTasksUsingGet, (req, res) => {
+    const { keyword, status, page = 0, size = 10 } = req.query;
     let filteredTasks = taskList;
-    if (searchTerm) {
+    if (keyword) {
       filteredTasks = filteredTasks.filter((task) =>
-        task.name.includes(searchTerm)
+        task.name.includes(keyword)
       );
     }
-    if (filters && filters.status && filters.status.length > 0) {
+    if (status && status.length > 0) {
       filteredTasks = filteredTasks.filter((task) =>
-        filters.status.includes(task.status)
+        status.includes(task.status)
       );
     }
-    const startIndex = (page - 1) * size;
+    const startIndex = page * size;
     const endIndex = startIndex + size;
     const paginatedTasks = filteredTasks.slice(startIndex, endIndex);
 
@@ -123,7 +101,30 @@ module.exports = function (router) {
         totalElements: filteredTasks.length,
         page,
         size,
-        results: paginatedTasks,
+        content: paginatedTasks,
+      },
+    });
+  });
+
+  router.get(API.queryDataXTemplatesUsingGet, (req, res) => {
+    const { keyword, page = 0, size = 10 } = req.query;
+    let filteredTemplates = templateList;
+    if (keyword) {
+      filteredTemplates = filteredTemplates.filter((template) =>
+        template.name.includes(keyword)
+      );
+    }
+    const startIndex = page * size;
+    const endIndex = startIndex + size;
+    const paginatedTemplates = filteredTemplates.slice(startIndex, endIndex);
+    res.send({
+      code: "0",
+      msg: "Success",
+      data: {
+        content: paginatedTemplates,
+        totalElements: filteredTemplates.length,
+        page,
+        size,
       },
     });
   });

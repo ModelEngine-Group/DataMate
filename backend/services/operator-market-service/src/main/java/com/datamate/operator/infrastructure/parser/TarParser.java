@@ -3,6 +3,7 @@ package com.datamate.operator.infrastructure.parser;
 import com.datamate.common.infrastructure.exception.BusinessException;
 import com.datamate.common.infrastructure.exception.SystemErrorCode;
 import com.datamate.operator.infrastructure.exception.OperatorErrorCode;
+import com.datamate.operator.interfaces.dto.OperatorDto;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 
@@ -18,7 +19,7 @@ import java.util.Objects;
 public class TarParser extends AbstractParser {
 
     @Override
-    public <T> T parseYamlFromArchive(File archive, String entryPath, Class<T> clazz) {
+    public OperatorDto parseYamlFromArchive(File archive, String entryPath) {
         // 允许带或不带前导 "./"
         String normalized = entryPath.startsWith("./") ? entryPath.substring(2) : entryPath;
         try (InputStream fis = Files.newInputStream(archive.toPath());
@@ -28,7 +29,7 @@ public class TarParser extends AbstractParser {
                 String name = entry.getName();
                 if (Objects.equals(name, entryPath) || Objects.equals(name, normalized)) {
                     // 使用 SnakeYAML 解析当前 entry 的内容到目标类型
-                    return yaml.loadAs(tis, clazz);
+                    return parseYaml(tis);
                 }
             }
         } catch (IOException e) {
@@ -51,7 +52,7 @@ public class TarParser extends AbstractParser {
                     entryName = entryName.substring(2);
                 }
 
-                Path resolved = targetPath.resolve(entryName).normalize();
+                Path resolved = targetPath.resolve(entryName).toAbsolutePath().normalize();
                 if (!resolved.startsWith(targetPath.toAbsolutePath().normalize())) {
                     throw BusinessException.of(SystemErrorCode.FILE_SYSTEM_ERROR, "Bad tar entry: " + entryName);
                 }

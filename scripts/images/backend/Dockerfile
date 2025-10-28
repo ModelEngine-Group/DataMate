@@ -1,8 +1,6 @@
 FROM maven:3-openjdk-8-slim AS datax-builder
 
-RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list && \
-    sed -i 's/security.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list && \
-    apt-get update && \
+RUN apt-get update && \
     apt-get install -y git && \
     git clone https://github.com/alibaba/DataX.git
 
@@ -16,19 +14,17 @@ RUN cd DataX && \
 FROM maven:3-amazoncorretto-21-debian AS builder
 
 COPY backend/ /opt/backend
-COPY scripts/images/backend/settings.xml /opt/backend
 
 RUN cd /opt/backend && \
-    mvn -U clean package -s settings.xml -Dmaven.test.skip=true
+    mvn -U clean package -Dmaven.test.skip=true
 
 
 FROM openjdk:21-jdk-slim
 
-RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources && \
-    apt-get update && \
+RUN apt-get update && \
     apt-get install -y vim wget curl nfs-common rsync python3 python3-pip python-is-python3 dos2unix && \
     apt-get clean && \
-    rm -rf /var/lib/apy/lists/*
+    rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /opt/backend/services/main-application/target/data-mate.jar /opt/backend/data-mate.jar
 COPY --from=datax-builder /DataX/target/datax/datax /opt/datax
@@ -40,6 +36,8 @@ COPY scripts/images/backend/start.sh /opt/backend/start.sh
 RUN dos2unix /opt/backend/start.sh \
     && chmod +x /opt/backend/start.sh \
     && ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+
+EXPOSE 8080
 
 ENTRYPOINT ["/opt/backend/start.sh"]
 

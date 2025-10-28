@@ -1,7 +1,7 @@
 # 数据引擎平台 - 主应用配置
 spring:
   application:
-    name: data-mate-platform
+    name: datamate
 
   # 暂时排除Spring Security自动配置（开发阶段使用）
   autoconfigure:

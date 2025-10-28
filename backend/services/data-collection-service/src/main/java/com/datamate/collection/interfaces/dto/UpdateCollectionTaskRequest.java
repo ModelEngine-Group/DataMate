@@ -46,5 +46,8 @@ public class UpdateCollectionTaskRequest {
     @Schema(name = "scheduleExpression", description = "Cron调度表达式 (syncMode=SCHEDULED 时必填)", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     @JsonProperty("scheduleExpression")
     private String scheduleExpression;
+
+    /** 数据集id */
+    private String datasetId;
 }
 

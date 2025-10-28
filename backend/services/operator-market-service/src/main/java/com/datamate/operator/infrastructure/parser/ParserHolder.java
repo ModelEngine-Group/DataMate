@@ -3,6 +3,7 @@ package com.datamate.operator.infrastructure.parser;
 import com.datamate.common.infrastructure.exception.BusinessException;
 import com.datamate.common.infrastructure.exception.SystemErrorCode;
 import com.datamate.operator.infrastructure.exception.OperatorErrorCode;
+import com.datamate.operator.interfaces.dto.OperatorDto;
 import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Component;
 
@@ -29,13 +30,13 @@ public class ParserHolder {
     }
 
     // 便捷代理：从指定类型的压缩包中读取 entry 并解析为 clazz
-    public <T> T parseYamlFromArchive(String type, File archive, String entryPath, Class<T> clazz) {
+    public OperatorDto parseYamlFromArchive(String type, File archive, String entryPath) {
         AbstractParser parser = getParser(type);
         if (parser == null) {
             throw BusinessException.of(OperatorErrorCode.UNSUPPORTED_FILE_TYPE,
                 "No parser registered for type: " + type);
         }
-        return parser.parseYamlFromArchive(archive, entryPath, clazz);
+        return parser.parseYamlFromArchive(archive, entryPath);
     }
 
     // 便捷代理：将指定类型的压缩包解压到目标目录
