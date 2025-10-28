@@ -74,7 +74,7 @@ head:
     - name: MYSQL_USER
       value: "root"
     - name: MYSQL_PASSWORD
-      value: "Huawei@123"
+      value: "password"
     - name: MYSQL_DATABASE
       value: "datamate"
   # - name: EXAMPLE_ENV
@@ -151,7 +151,7 @@ head:
         - name: MYSQL_USER
           value: "root"
         - name: MYSQL_PASSWORD
-          value: "Huawei@123"
+          value: "password"
         - name: MYSQL_DATABASE
           value: "datamate"
       ports:
@@ -218,7 +218,7 @@ worker:
     - name: MYSQL_USER
       value: "root"
     - name: MYSQL_PASSWORD
-      value: "Huawei@123"
+      value: "password"
     - name: MYSQL_DATABASE
       value: "datamate"
   # - name: EXAMPLE_ENV

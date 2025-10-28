@@ -28,6 +28,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -220,61 +222,73 @@ public class DatasetApplicationService {
     public void processDataSourceAsync(String datasetId, String dataSourceId) {
         try {
             log.info("开始处理数据源文件扫描，数据集ID: {}, 数据源ID: {}", datasetId, dataSourceId);
-
-            // 1. 调用数据归集服务获取任务详情
-            CollectionTaskDetailResponse taskDetail = collectionTaskClient.getTaskDetail(dataSourceId).getData();
-            if (taskDetail == null) {
-                log.error("获取归集任务详情失败，任务ID: {}", dataSourceId);
-                return;
-            }
-
-            log.info("获取到归集任务详情: {}", taskDetail);
-
-            // 2. 解析任务配置
-            LocalCollectionConfig config = parseTaskConfig(taskDetail.getConfig());
-            if (config == null) {
-                log.error("解析任务配置失败，任务ID: {}", dataSourceId);
-                return;
-            }
-
-            // 4. 获取文件路径列表
-            List<String> filePaths = config.getFilePaths();
+            List<String> filePaths = getFilePaths(dataSourceId);
             if (CollectionUtils.isEmpty(filePaths)) {
-                log.warn("文件路径列表为空，任务ID: {}", dataSourceId);
                 return;
             }
-
             log.info("开始扫描文件，共 {} 个文件路径", filePaths.size());
 
-            // 5. 扫描文件元数据
             List<DatasetFile> datasetFiles = fileMetadataService.scanFiles(filePaths, datasetId);
             // 查询数据集中已存在的文件
             List<DatasetFile> existDatasetFileList = datasetFileRepository.findAllByDatasetId(datasetId);
             Map<String, DatasetFile> existDatasetFilePathMap = existDatasetFileList.stream().collect(Collectors.toMap(DatasetFile::getFilePath, Function.identity()));
             Dataset dataset = datasetRepository.getById(datasetId);
+            dataset.setFiles(existDatasetFileList);
 
-            // 6. 批量插入数据集文件表
-            if (CollectionUtils.isNotEmpty(datasetFiles)) {
-                for (DatasetFile datasetFile : datasetFiles) {
-                    if (existDatasetFilePathMap.containsKey(datasetFile.getFilePath())) {
-                        DatasetFile existDatasetFile = existDatasetFilePathMap.get(datasetFile.getFilePath());
-                        dataset.removeFile(existDatasetFile);
-                        existDatasetFile.setFileSize(datasetFile.getFileSize());
-                        dataset.addFile(existDatasetFile);
-                        datasetFileRepository.updateById(existDatasetFile);
-                    } else {
-                        dataset.addFile(datasetFile);
-                        datasetFileRepository.save(datasetFile);
-                    }
-                }
-                log.info("文件元数据写入完成，共写入 {} 条记录", datasetFiles.size());
-            } else {
-                log.warn("未扫描到有效文件");
-            }
+            // 批量同步数据集文件表
+            asyncDatasetFile(datasetFiles, existDatasetFilePathMap, dataset, existDatasetFileList, filePaths);
             datasetRepository.updateById(dataset);
         } catch (Exception e) {
             log.error("处理数据源文件扫描失败，数据集ID: {}, 数据源ID: {}", datasetId, dataSourceId, e);
         }
+    }
+
+    private void asyncDatasetFile(List<DatasetFile> datasetFiles, Map<String, DatasetFile> existDatasetFilePathMap, Dataset dataset, List<DatasetFile> existDatasetFileList, List<String> filePaths) {
+        if (CollectionUtils.isNotEmpty(datasetFiles)) {
+            for (DatasetFile datasetFile : datasetFiles) {
+                if (existDatasetFilePathMap.containsKey(datasetFile.getFilePath())) {
+                    DatasetFile existDatasetFile = existDatasetFilePathMap.get(datasetFile.getFilePath());
+                    dataset.removeFile(existDatasetFile);
+                    existDatasetFile.setFileSize(datasetFile.getFileSize());
+                    dataset.addFile(existDatasetFile);
+                    dataset.active();
+                    datasetFileRepository.updateById(existDatasetFile);
+                } else {
+                    dataset.addFile(datasetFile);
+                    dataset.active();
+                    datasetFileRepository.save(datasetFile);
+                }
+            }
+            log.info("文件元数据写入完成，共写入 {} 条记录", datasetFiles.size());
+        } else {
+            log.warn("未扫描到有效文件");
+        }
+        for (DatasetFile datasetFile : existDatasetFileList) {
+            String existFilePath = datasetFile.getFilePath();
+            for (String filePath : filePaths) {
+                if (existFilePath.equals(filePath) || existFilePath.startsWith(filePath)) {
+                    if (Files.notExists(Paths.get(existFilePath))) {
+                        dataset.removeFile(datasetFile);
+                        datasetFileRepository.removeById(datasetFile.getId());
+                    }
+                }
+            }
+        }
+    }
+
+    private List<String> getFilePaths(String dataSourceId) {
+        CollectionTaskDetailResponse taskDetail = collectionTaskClient.getTaskDetail(dataSourceId).getData();
+        if (taskDetail == null) {
+            log.warn("获取归集任务详情失败，任务ID: {}", dataSourceId);
+            return Collections.emptyList();
+        }
+        log.info("获取到归集任务详情: {}", taskDetail);
+        LocalCollectionConfig config = parseTaskConfig(taskDetail.getConfig());
+        if (config == null) {
+            log.warn("解析任务配置失败，任务ID: {}", dataSourceId);
+            return Collections.emptyList();
+        }
+        return config.getFilePaths();
     }
 
     /**

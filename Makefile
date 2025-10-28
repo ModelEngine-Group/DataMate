@@ -108,7 +108,7 @@ datamate-docker-uninstall:
 .PHONY: datamate-k8s-install
 datamate-k8s-install: create-namespace
 	kubectl create configmap datamate-init-sql --from-file=scripts/db/ --dry-run=client -o yaml | kubectl apply -f - -n $(NAMESPACE)
-	helm install datamate deployment/helm/datamate/ -n $(NAMESPACE)
+	helm upgrade datamate deployment/helm/datamate/ -n $(NAMESPACE) --install
 
 .PHONY: datamate-k8s-uninstall
 datamate-k8s-uninstall:

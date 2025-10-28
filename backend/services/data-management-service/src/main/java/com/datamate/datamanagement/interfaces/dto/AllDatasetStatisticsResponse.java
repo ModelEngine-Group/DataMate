@@ -10,11 +10,11 @@ import lombok.Setter;
 @Setter
 public class AllDatasetStatisticsResponse {
     /** 总数据集数 */
-    private Integer totalDatasets;
+    private Integer totalDatasets = 0;
 
     /** 总文件数 */
-    private Long totalSize;
+    private Long totalSize = 0L;
 
     /** 总大小（字节） */
-    private Long totalFiles;
+    private Long totalFiles = 0L;
 }

@@ -143,4 +143,10 @@ public class Dataset extends BaseEntity<String> {
             this.updatedAt = LocalDateTime.now();
         }
     }
+
+    public void active() {
+        if (this.status == DatasetStatusType.DRAFT) {
+            this.status = DatasetStatusType.ACTIVE;
+        }
+    }
 }

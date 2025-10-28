@@ -1,6 +1,7 @@
 package com.datamate.collection.interfaces.dto;
 
 import com.datamate.collection.common.enums.SyncMode;
+import com.datamate.datamanagement.interfaces.dto.CreateDatasetRequest;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.HashMap;
@@ -49,5 +50,9 @@ public class CreateCollectionTaskRequest {
     @Schema(name = "scheduleExpression", description = "Cron调度表达式 (syncMode=SCHEDULED 时必填)", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     @JsonProperty("scheduleExpression")
     private String scheduleExpression;
+
+    /** 创建数据集参数 */
+    @Valid
+    private CreateDatasetRequest dataset;
 }
 

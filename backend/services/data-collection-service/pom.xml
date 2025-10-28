@@ -6,7 +6,7 @@
 
     <parent>
         <groupId>com.datamate</groupId>
-        <artifactId>data-mate-platform</artifactId>
+        <artifactId>datamate</artifactId>
         <version>1.0.0-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
@@ -87,7 +87,12 @@
         <dependency>
             <groupId>com.datamate</groupId>
             <artifactId>domain-common</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.datamate</groupId>
+            <artifactId>data-management-service</artifactId>
+            <version>${project.version}</version>
         </dependency>
 
         <!-- OpenAPI Dependencies -->

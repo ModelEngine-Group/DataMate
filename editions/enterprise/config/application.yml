@@ -1,7 +1,7 @@
 # 数据引擎平台 - 主应用配置
 spring:
   application:
-    name: data-mate-platform
+    name: datamate
 
   # 暂时排除Spring Security自动配置（开发阶段使用）
   autoconfigure:
@@ -14,7 +14,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://mysql:3306/datamate?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
     username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:Huawei@123}
+    password: ${DB_PASSWORD:password}
     hikari:
       maximum-pool-size: 20
       minimum-idle: 5

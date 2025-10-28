@@ -13,10 +13,9 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @Configuration
 @EnableAsync
 @EnableScheduling
-@EntityScan(basePackages = "com.datamate.operator.domain.modal")
+@EntityScan(basePackages = "com.datamate.operator.domain.model")
 @ComponentScan(basePackages = {
-        "com.datamate.operator",
-        "com.datamate.shared"
+        "com.datamate.operator"
 })
 public class OperatorMarketServiceConfiguration {
     // Service configuration class for JAR packaging

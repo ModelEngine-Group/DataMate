@@ -1,18 +1,9 @@
 package com.datamate.operator.infrastructure.persistence.mapper;
 
-import com.datamate.operator.domain.modal.CategoryRelation;
-import com.datamate.operator.domain.modal.RelationCategoryDTO;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.datamate.operator.domain.model.CategoryRelation;
 import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
-
-import java.util.List;
 
 @Mapper
-public interface CategoryRelationMapper {
-
-    List<RelationCategoryDTO> findAllRelationWithCategory();
-
-    List<CategoryRelation> findAllRelation();
-
-    void batchInsert(@Param("operatorId") String operatorId, @Param("categories") List<Integer> categories);
+public interface CategoryRelationMapper extends BaseMapper<CategoryRelation> {
 }

@@ -1,11 +1,9 @@
 package com.datamate.cleaning.infrastructure.persistence.mapper;
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.datamate.cleaning.domain.model.entity.CleaningResult;
 import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
 
 @Mapper
-public interface CleaningResultMapper {
-    void deleteByInstanceId(@Param("instanceId") String instanceId);
-
-    int countByInstanceId(@Param("instanceId") String instanceId);
+public interface CleaningResultMapper extends BaseMapper<CleaningResult> {
 }

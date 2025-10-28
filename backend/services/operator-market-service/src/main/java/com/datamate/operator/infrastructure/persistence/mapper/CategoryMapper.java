@@ -1,12 +1,9 @@
 package com.datamate.operator.infrastructure.persistence.mapper;
 
-import com.datamate.operator.domain.modal.Category;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.datamate.operator.domain.model.Category;
 import org.apache.ibatis.annotations.Mapper;
 
-import java.util.List;
-
 @Mapper
-public interface CategoryMapper {
-
-    List<Category> findAllCategories();
+public interface CategoryMapper extends BaseMapper<Category> {
 }

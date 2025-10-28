@@ -6,6 +6,7 @@ import java.util.Map;
 
 import com.datamate.collection.common.enums.TaskStatus;
 import com.datamate.collection.common.enums.SyncMode;
+import com.datamate.datamanagement.interfaces.dto.DatasetResponse;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -44,5 +45,7 @@ public class CollectionTaskResponse {
 
   @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
   private LocalDateTime updatedAt;
+
+  private DatasetResponse dataset;
 }
 
