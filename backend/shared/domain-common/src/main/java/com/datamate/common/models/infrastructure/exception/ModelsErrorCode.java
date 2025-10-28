@@ -20,7 +20,12 @@ public enum ModelsErrorCode implements ErrorCode {
     /**
      * 模型配置已存在
      */
-    MODEL_CONFIG_ALREADY_EXISTS("model.0002", "模型配置已存在");
+    MODEL_CONFIG_ALREADY_EXISTS("model.0002", "模型配置已存在"),
+
+    /**
+     * 模型健康检查失败
+     */
+    MODEL_HEALTH_CHECK_FAILED("model.0003", "模型健康检查失败");
 
     private final String code;
     private final String message;

@@ -1,6 +1,8 @@
+USE datamate;
+
 CREATE TABLE t_model_config
 (
-    id         VARCHAR(36) AUTO_INCREMENT PRIMARY KEY COMMENT '主键ID',
+    id         VARCHAR(36)  PRIMARY KEY COMMENT '主键ID',
     model_name VARCHAR(100) NOT NULL COMMENT '模型名称（如 qwen2）',
     provider   VARCHAR(50)  NOT NULL COMMENT '模型提供商（如 Ollama、OpenAI、DeepSeek）',
     base_url   VARCHAR(255) NOT NULL COMMENT 'API 基础地址',
