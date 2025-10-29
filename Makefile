@@ -1,5 +1,6 @@
 MAKEFLAGS += --no-print-directory
 
+WITH_MINERU ?= false  # 默认不构建mineru
 VERSION ?= latest
 NAMESPACE ?= datamate
 
@@ -8,7 +9,7 @@ build-%:
 	$(MAKE) $*-docker-build
 
 .PHONY: build
-build: backend-docker-build frontend-docker-build runtime-docker-build
+build: backend-docker-build frontend-docker-build runtime-docker-build $(if $(WITH_MINERU),mineru-docker-build)
 
 .PHONY: create-namespace
 create-namespace:
@@ -73,6 +74,10 @@ runtime-docker-build:
 label-studio-adapter-docker-build:
 	docker build -t label-studio-adapter:$(VERSION) . -f scripts/images/label-studio-adapter/Dockerfile
 
+.PHONY: mineru-docker-build
+mineru-docker-build:
+	docker build -t datamate-mineru:$(VERSION) . -f scripts/images/mineru/Dockerfile
+
 .PHONY: backend-docker-install
 backend-docker-install:
 	cd deployment/docker/datamate && docker-compose up -d backend
@@ -96,6 +101,22 @@ runtime-docker-install:
 .PHONY: runtime-docker-uninstall
 runtime-docker-uninstall:
 	cd deployment/docker/datamate && docker-compose down runtime
+
+.PHONY: mineru-docker-install
+mineru-docker-install:
+	cd deployment/docker/datamate && docker-compose up -d mineru
+
+.PHONY: mineru-docker-uninstall
+mineru-docker-uninstall:
+	cd deployment/docker/datamate && docker-compose down mineru
+
+.PHONY: mineru-k8s-install
+mineru-k8s-install: create-namespace
+	kubectl apply -f deployment/kubernetes/mineru/deploy.yaml -n $(NAMESPACE)
+
+.PHONY: mineru-k8s-uninstall
+mineru-k8s-uninstall:
+	kubectl delete -f deployment/kubernetes/mineru/deploy.yaml -n $(NAMESPACE)
 
 .PHONY: datamate-docker-install
 datamate-docker-install:

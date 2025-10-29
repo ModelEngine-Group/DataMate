@@ -20,4 +20,3 @@ zhconv==1.4.3
 sqlalchemy==2.0.40
 pymysql==1.1.1
 unstructured[docx]==0.18.15
-mineru[pipeline]==2.1.0
