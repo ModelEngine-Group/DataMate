@@ -102,6 +102,10 @@ public class DatasetFileApplicationService {
     public void deleteDatasetFile(String datasetId, String fileId) {
         DatasetFile file = getDatasetFile(datasetId, fileId);
         Dataset dataset = datasetRepository.getById(datasetId);
+        dataset.setFiles(new ArrayList<>(Collections.singleton(file)));
+        datasetFileRepository.removeById(fileId);
+        dataset.removeFile(file);
+        datasetRepository.updateById(dataset);
         // 删除文件时，上传到数据集中的文件会同时删除数据库中的记录和文件系统中的文件，归集过来的文件仅删除数据库中的记录
         if (file.getFilePath().startsWith(dataset.getPath())) {
             try {
@@ -111,9 +115,6 @@ public class DatasetFileApplicationService {
                 throw BusinessException.of(SystemErrorCode.FILE_SYSTEM_ERROR);
             }
         }
-        datasetFileRepository.removeById(fileId);
-        dataset.removeFile(file);
-        datasetRepository.updateById(dataset);
     }
 
     /**
