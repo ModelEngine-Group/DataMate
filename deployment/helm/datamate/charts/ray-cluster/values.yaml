@@ -77,6 +77,8 @@ head:
       value: "password"
     - name: MYSQL_DATABASE
       value: "datamate"
+    - name: PDF_FORMATTER_BASE_URL
+      value: "http://datamate-mineru:9001"
   # - name: EXAMPLE_ENV
   #   value: "1"
   envFrom: []
@@ -154,6 +156,8 @@ head:
           value: "password"
         - name: MYSQL_DATABASE
           value: "datamate"
+        - name: PDF_FORMATTER_BASE_URL
+          value: "http://datamate-mineru:9001"
       ports:
         - containerPort: 8081
       volumeMounts:
@@ -221,6 +225,8 @@ worker:
       value: "password"
     - name: MYSQL_DATABASE
       value: "datamate"
+    - name: PDF_FORMATTER_BASE_URL
+      value: "http://datamate-mineru:9001"
   # - name: EXAMPLE_ENV
   #   value: "1"
   envFrom: []
