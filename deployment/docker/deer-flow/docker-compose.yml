@@ -1,0 +1,28 @@
+services:
+  deer-flow-backend:
+    image: deer-flow-backend
+    container_name: deer-flow-backend
+    env_file:
+      - .env
+    volumes:
+      - ./conf.yaml:/app/conf.yaml:ro
+    restart: unless-stopped
+    networks:
+      - datamate
+
+  deer-flow-frontend:
+    image: deer-flow-frontend
+    container_name: deer-flow-frontend
+    env_file:
+      - .env
+    depends_on:
+      - deer-flow-backend
+    restart: unless-stopped
+    networks:
+      - datamate
+
+networks:
+  datamate:
+    driver: bridge
+    name: datamate_datamate
+    external: true

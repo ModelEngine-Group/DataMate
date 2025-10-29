@@ -16,8 +16,8 @@ function datasetItem() {
   return {
     id: Mock.Random.guid().replace(/[^a-zA-Z0-9]/g, ""),
     name: Mock.Random.ctitle(5, 20),
-    type: Mock.Random.pick(["TEXT", "IMAGE", "AUDIO", "VIDEO"]),
-    status: Mock.Random.pick(["ACTIVE", "INACTIVE", "PROCESSING"]),
+    datasetType: Mock.Random.pick(["TEXT", "IMAGE", "AUDIO", "VIDEO"]),
+    status: Mock.Random.pick(["DRAFT","ACTIVE", "INACTIVE", "PROCESSING"]),
     tags: Mock.Random.shuffle(tagList).slice(0, Mock.Random.integer(1, 3)),
     totalSize: Mock.Random.integer(1024, 1024 * 1024 * 1024), // in bytes
     description: Mock.Random.cparagraph(1, 3),
@@ -164,7 +164,7 @@ module.exports = function (router) {
       console.log("filter type:", type);
 
       filteredDatasets = filteredDatasets.filter(
-        (dataset) => dataset.type === type
+        (dataset) => dataset.datasetType === type
       );
     }
     if (status) {
