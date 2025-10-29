@@ -5,6 +5,7 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 数据集响应DTO
@@ -42,8 +43,8 @@ public class DatasetResponse {
     private LocalDateTime updatedAt;
     /** 创建者 */
     private String createdBy;
-    /**
-     * 更新者
-     */
+    /** 更新者 */
     private String updatedBy;
+    /** 分布 */
+    private Map<String, Long> distribution ;
 }
