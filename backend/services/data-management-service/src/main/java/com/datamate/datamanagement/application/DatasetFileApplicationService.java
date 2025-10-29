@@ -10,7 +10,6 @@ import com.datamate.datamanagement.domain.contants.DatasetConstant;
 import com.datamate.datamanagement.domain.model.dataset.Dataset;
 import com.datamate.datamanagement.domain.model.dataset.DatasetFile;
 import com.datamate.datamanagement.domain.model.dataset.DatasetFileUploadCheckInfo;
-import com.datamate.datamanagement.domain.model.dataset.StatusConstants;
 import com.datamate.datamanagement.infrastructure.persistence.repository.DatasetFileRepository;
 import com.datamate.datamanagement.infrastructure.persistence.repository.DatasetRepository;
 import com.datamate.datamanagement.interfaces.converter.DatasetConverter;
@@ -31,7 +30,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -41,12 +39,9 @@ import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -60,7 +55,6 @@ public class DatasetFileApplicationService {
 
     private final DatasetFileRepository datasetFileRepository;
     private final DatasetRepository datasetRepository;
-    private final Path fileStorageLocation;
     private final FileService fileService;
 
     @Value("${dataset.base.path:/dataset}")
@@ -68,61 +62,10 @@ public class DatasetFileApplicationService {
 
     @Autowired
     public DatasetFileApplicationService(DatasetFileRepository datasetFileRepository,
-                                         DatasetRepository datasetRepository, FileService fileService,
-                                       @Value("${app.file.upload-dir:./dataset}") String uploadDir) {
+                                         DatasetRepository datasetRepository, FileService fileService) {
         this.datasetFileRepository = datasetFileRepository;
         this.datasetRepository = datasetRepository;
-        this.fileStorageLocation = Paths.get(uploadDir).toAbsolutePath().normalize();
         this.fileService = fileService;
-        try {
-            Files.createDirectories(this.fileStorageLocation);
-        } catch (Exception ex) {
-            throw new RuntimeException("Could not create the directory where the uploaded files will be stored.", ex);
-        }
-    }
-
-    /**
-     * 上传文件到数据集
-     */
-    public DatasetFile uploadFile(String datasetId, MultipartFile file) {
-        Dataset dataset = datasetRepository.getById(datasetId);
-        if (dataset == null) {
-            throw new IllegalArgumentException("Dataset not found: " + datasetId);
-        }
-
-        String originalFilename = file.getOriginalFilename();
-        String fileName = originalFilename != null ? originalFilename : "file";
-        try {
-            // 保存文件到磁盘
-            Path targetLocation = this.fileStorageLocation.resolve(datasetId + File.separator + fileName);
-            // 确保目标目录存在
-            Files.createDirectories(targetLocation);
-            Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
-
-            // 创建文件实体（UUID 主键）
-            DatasetFile datasetFile = new DatasetFile();
-            datasetFile.setId(UUID.randomUUID().toString());
-            datasetFile.setDatasetId(datasetId);
-            datasetFile.setFileName(fileName);
-            datasetFile.setFilePath(targetLocation.toString());
-            datasetFile.setFileType(getFileExtension(originalFilename));
-            datasetFile.setFileSize(file.getSize());
-            datasetFile.setUploadTime(LocalDateTime.now());
-            datasetFile.setStatus(StatusConstants.DatasetFileStatuses.COMPLETED);
-
-            // 保存到数据库
-            datasetFileRepository.save(datasetFile);
-
-            // 更新数据集统计
-            dataset.addFile(datasetFile);
-            datasetRepository.updateById(dataset);
-
-            return datasetFileRepository.findByDatasetIdAndFileName(datasetId, fileName);
-
-        } catch (IOException ex) {
-            log.error("Could not store file {}", fileName, ex);
-            throw new RuntimeException("Could not store file " + fileName, ex);
-        }
     }
 
     /**
@@ -155,20 +98,21 @@ public class DatasetFileApplicationService {
     /**
      * 删除文件
      */
+    @Transactional
     public void deleteDatasetFile(String datasetId, String fileId) {
         DatasetFile file = getDatasetFile(datasetId, fileId);
-        try {
-            Path filePath = Paths.get(file.getFilePath());
-            Files.deleteIfExists(filePath);
-        } catch (IOException ex) {
-            // ignore
+        Dataset dataset = datasetRepository.getById(datasetId);
+        // 删除文件时，上传到数据集中的文件会同时删除数据库中的记录和文件系统中的文件，归集过来的文件仅删除数据库中的记录
+        if (file.getFilePath().startsWith(dataset.getPath())) {
+            try {
+                Path filePath = Paths.get(file.getFilePath());
+                Files.deleteIfExists(filePath);
+            } catch (IOException ex) {
+                throw BusinessException.of(SystemErrorCode.FILE_SYSTEM_ERROR);
+            }
         }
         datasetFileRepository.removeById(fileId);
-
-        Dataset dataset = datasetRepository.getById(datasetId);
-        // 简单刷新统计（精确处理可从DB统计）
-        dataset.setFileCount(Math.max(0, dataset.getFileCount() - 1));
-        dataset.setSizeBytes(Math.max(0, dataset.getSizeBytes() - (file.getFileSize() != null ? file.getFileSize() : 0)));
+        dataset.removeFile(file);
         datasetRepository.updateById(dataset);
     }
 
@@ -197,6 +141,7 @@ public class DatasetFileApplicationService {
     @Transactional(readOnly = true)
     public void downloadDatasetFileAsZip(String datasetId, HttpServletResponse response) {
         List<DatasetFile> allByDatasetId = datasetFileRepository.findAllByDatasetId(datasetId);
+        fileRename(allByDatasetId);
         response.setContentType("application/zip");
         String zipName = String.format("dataset_%s.zip",
             LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
@@ -209,6 +154,27 @@ public class DatasetFileApplicationService {
             log.error("Failed to download files in batches.", e);
             throw BusinessException.of(SystemErrorCode.FILE_SYSTEM_ERROR);
         }
+    }
+
+    private void fileRename(List<DatasetFile> files) {
+        Set<String> uniqueFilenames = new HashSet<>();
+        for (DatasetFile file : files) {
+            String originalFilename = file.getFileName();
+            if (!uniqueFilenames.add(originalFilename)) {
+                String newFilename;
+                int counter = 1;
+                do {
+                    newFilename = generateNewFilename(originalFilename, counter);
+                    counter++;
+                } while (!uniqueFilenames.add(newFilename));
+                file.setFileName(newFilename);
+            }
+        }
+    }
+
+    private String generateNewFilename(String oldFilename, int counter) {
+        int dotIndex = oldFilename.lastIndexOf(".");
+        return oldFilename.substring(0, dotIndex) + "-(" + counter + ")" + oldFilename.substring(dotIndex);
     }
 
     private void addToZipFile(DatasetFile file, ZipOutputStream zos) throws IOException {
@@ -227,17 +193,6 @@ public class DatasetFileApplicationService {
             }
             zos.closeEntry();
         }
-    }
-
-    private String getFileExtension(String fileName) {
-        if (fileName == null || fileName.isEmpty()) {
-            return null;
-        }
-        int lastDotIndex = fileName.lastIndexOf(".");
-        if (lastDotIndex == -1) {
-            return null;
-        }
-        return fileName.substring(lastDotIndex + 1);
     }
 
     /**
@@ -275,9 +230,6 @@ public class DatasetFileApplicationService {
     public void chunkUpload(String datasetId, UploadFileRequest uploadFileRequest) {
         FileUploadResult uploadResult = fileService.chunkUpload(DatasetConverter.INSTANCE.toChunkUploadRequest(uploadFileRequest));
         saveFileInfoToDb(uploadResult, uploadFileRequest, datasetId);
-        if (uploadResult.isAllFilesUploaded()) {
-            // 解析文件，后续依据需求看是否添加校验文件元数据和解析半结构化文件的逻辑，
-        }
     }
 
     private void saveFileInfoToDb(FileUploadResult fileUploadResult, UploadFileRequest uploadFile, String datasetId) {
@@ -301,6 +253,7 @@ public class DatasetFileApplicationService {
 
         datasetFileRepository.save(datasetFile);
         dataset.addFile(datasetFile);
+        dataset.active();
         datasetRepository.updateById(dataset);
     }
 }

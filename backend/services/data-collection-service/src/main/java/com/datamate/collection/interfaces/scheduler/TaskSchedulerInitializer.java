@@ -53,7 +53,7 @@ public class TaskSchedulerInitializer {
                     // 到期，触发一次执行
                     TaskExecution exec = taskExecutionService.createExecution(task);
                     int timeout = task.getTimeoutSeconds() == null ? 3600 : task.getTimeoutSeconds();
-                    taskExecutionService.runAsync(task, exec.getId(), timeout);
+                    taskExecutionService.runAsync(task, exec.getId(), timeout, null);
                     log.info("Triggered DataX execution for task {} at {}, execId={}", task.getId(), now, exec.getId());
                 }
             } catch (Exception ex) {

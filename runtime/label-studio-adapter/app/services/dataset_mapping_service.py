@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import update
-from typing import Optional, List
+from sqlalchemy import update, func
+from typing import Optional, List, Tuple
 from datetime import datetime
 import uuid
 
@@ -213,11 +213,86 @@ class DatasetMappingService:
         logger.debug(f"Found {len(mappings)} mappings")
         return [DatasetMappingResponse.model_validate(mapping) for mapping in mappings]
     
-    async def count_mappings(self) -> int:
+    async def count_mappings(self, include_deleted: bool = False) -> int:
         """统计映射总数"""
+        query = select(func.count()).select_from(DatasetMapping)
+        
+        if not include_deleted:
+            query = query.where(DatasetMapping.deleted_at.is_(None))
+        
+        result = await self.db.execute(query)
+        return result.scalar_one()
+    
+    async def get_all_mappings_with_count(
+        self, 
+        skip: int = 0, 
+        limit: int = 100,
+        include_deleted: bool = False
+    ) -> Tuple[List[DatasetMappingResponse], int]:
+        """获取所有映射及总数（用于分页）"""
+        logger.debug(f"List all mappings with count, skip: {skip}, limit: {limit}")
+        
+        # 构建查询
+        query = select(DatasetMapping)
+        if not include_deleted:
+            query = query.where(DatasetMapping.deleted_at.is_(None))
+        
+        # 获取总数
+        count_query = select(func.count()).select_from(DatasetMapping)
+        if not include_deleted:
+            count_query = count_query.where(DatasetMapping.deleted_at.is_(None))
+        
+        count_result = await self.db.execute(count_query)
+        total = count_result.scalar_one()
+        
+        # 获取数据
         result = await self.db.execute(
-            select(DatasetMapping)
-            .where(DatasetMapping.deleted_at.is_(None))
+            query
+            .offset(skip)
+            .limit(limit)
+            .order_by(DatasetMapping.created_at.desc())
         )
         mappings = result.scalars().all()
-        return len(mappings)
+        
+        logger.debug(f"Found {len(mappings)} mappings, total: {total}")
+        return [DatasetMappingResponse.model_validate(mapping) for mapping in mappings], total
+    
+    async def get_mappings_by_source_with_count(
+        self,
+        source_dataset_id: str,
+        skip: int = 0,
+        limit: int = 100,
+        include_deleted: bool = False
+    ) -> Tuple[List[DatasetMappingResponse], int]:
+        """根据源数据集ID获取映射关系及总数（用于分页）"""
+        logger.debug(f"Get mappings by source dataset id with count: {source_dataset_id}")
+        
+        # 构建查询
+        query = select(DatasetMapping).where(
+            DatasetMapping.source_dataset_id == source_dataset_id
+        )
+        
+        if not include_deleted:
+            query = query.where(DatasetMapping.deleted_at.is_(None))
+        
+        # 获取总数
+        count_query = select(func.count()).select_from(DatasetMapping).where(
+            DatasetMapping.source_dataset_id == source_dataset_id
+        )
+        if not include_deleted:
+            count_query = count_query.where(DatasetMapping.deleted_at.is_(None))
+        
+        count_result = await self.db.execute(count_query)
+        total = count_result.scalar_one()
+        
+        # 获取数据
+        result = await self.db.execute(
+            query
+            .offset(skip)
+            .limit(limit)
+            .order_by(DatasetMapping.created_at.desc())
+        )
+        mappings = result.scalars().all()
+        
+        logger.debug(f"Found {len(mappings)} mappings, total: {total}")
+        return [DatasetMappingResponse.model_validate(mapping) for mapping in mappings], total

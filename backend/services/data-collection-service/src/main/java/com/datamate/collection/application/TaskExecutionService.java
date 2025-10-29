@@ -6,6 +6,7 @@ import com.datamate.collection.common.enums.TaskStatus;
 import com.datamate.collection.domain.process.ProcessRunner;
 import com.datamate.collection.domain.repository.CollectionTaskRepository;
 import com.datamate.collection.domain.repository.TaskExecutionRepository;
+import com.datamate.datamanagement.application.DatasetApplicationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -21,6 +22,7 @@ public class TaskExecutionService {
     private final ProcessRunner processRunner;
     private final TaskExecutionRepository executionRepository;
     private final CollectionTaskRepository collectionTaskRepository;
+    private final DatasetApplicationService datasetApplicationService;
 
 
     @Transactional
@@ -39,7 +41,8 @@ public class TaskExecutionService {
     }
 
     @Async
-    public void runAsync(CollectionTask task, String executionId, int timeoutSeconds) {
+    @Transactional
+    public void runAsync(CollectionTask task, String executionId, int timeoutSeconds, String datasetId) {
         try {
             int code = processRunner.runJob(task, executionId, timeoutSeconds);
             log.info("DataX finished with code {} for execution {}", code, executionId);
@@ -47,6 +50,7 @@ public class TaskExecutionService {
             executionRepository.completeExecution(executionId, TaskStatus.SUCCESS.name(), LocalDateTime.now(),
                 0, 0L, 0L, 0L, null);
             collectionTaskRepository.updateStatus(task.getId(), TaskStatus.SUCCESS.name());
+            datasetApplicationService.processDataSourceAsync(datasetId, task.getId());
         } catch (Exception e) {
             log.error("DataX execution failed", e);
             executionRepository.completeExecution(executionId, TaskStatus.FAILED.name(), LocalDateTime.now(),
