@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings
-from typing import Optional
+from typing import Optional, List
 import os
 from pathlib import Path
 
@@ -24,9 +24,9 @@ class Settings(BaseSettings):
     port: int = 8000
 
     # CORS配置
-    allowed_origins: list = ["*"]
-    allowed_methods: list = ["*"]
-    allowed_headers: list = ["*"]
+    allowed_origins: List[str] = ["*"]
+    allowed_methods: List[str] = ["*"]
+    allowed_headers: List[str] = ["*"]
 
     # MySQL数据库配置 (优先级1)
     mysql_host: Optional[str] = None
@@ -49,11 +49,7 @@ class Settings(BaseSettings):
     database_url: Optional[str] = None
 
     # 日志配置
-    log_level: str = "INFO"
-
-    # 安全配置
-    secret_key: str = "your-secret-key-change-this-in-production"
-    access_token_expire_minutes: int = 30
+    log_level: str = "DEBUG"
 
     # =========================
     # Label Studio 服务配置
@@ -63,8 +59,7 @@ class Settings(BaseSettings):
     label_studio_password: Optional[str] = None  # Label Studio 密码（用于登录）
     label_studio_user_token: Optional[str] = None  # Legacy Token
 
-    label_studio_local_storage_dataset_base_path: str = "/label-studio/local_files/dataset"  # Label Studio容器中的本地存储基础路径
-    label_studio_local_storage_upload_base_path: str = "/label-studio/local_files/upload"  # Label Studio容器中的本地存储基础路径
+    label_studio_local_storage_dataset_base_path: str = "/label-studio/local_files"  # Label Studio容器中的本地存储基础路径
     label_studio_file_path_prefix: str = "/data/local-files/?d="  # Label Studio本地文件服务路径前缀
 
     ls_task_page_size: int = 1000
@@ -73,7 +68,7 @@ class Settings(BaseSettings):
     # =========================
     # Data Management 服务配置
     # =========================
-    dm_file_path_prefix: str = "/"  # DM存储文件夹前缀
+    dm_file_path_prefix: str = "/dataset"  # DM存储文件夹前缀
 
 
     @property

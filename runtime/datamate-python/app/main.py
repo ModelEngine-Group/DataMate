@@ -1,16 +1,23 @@
 from fastapi import FastAPI, Request, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
+
 from contextlib import asynccontextmanager
 from typing import Dict, Any
+from sqlalchemy import text
 
 from .core.config import settings
 from .core.logging import setup_logging, get_logger
-from .infrastructure import LabelStudioClient
-from .api import api_router
-from .schemas import StandardResponse
+from .db.session import engine, AsyncSessionLocal
+from .module.shared.schema import StandardResponse
+from .module import router
+from .exception import (
+    starlette_http_exception_handler,
+    fastapi_http_exception_handler,
+    validation_exception_handler,
+    general_exception_handler
+)
 
 # 设置日志
 setup_logging()
@@ -21,23 +28,21 @@ async def lifespan(app: FastAPI):
     """应用程序生命周期管理"""
     
     # 启动时初始化
-    logger.info("Starting Label Studio Adapter...")
-    
-    # 初始化 Label Studio 客户端，使用 HTTP REST API + Token 认证
-    ls_client = LabelStudioClient(
-        base_url=settings.label_studio_base_url,
-        token=settings.label_studio_user_token
-    )
-    
-    logger.info("Label Studio Adapter started")
-    
+    logger.info("DataMate Python Backend starting...")
+    # 数据库连接验证
+    try:
+        async with AsyncSessionLocal() as session:
+            await session.execute(text("SELECT 1"))
+        logger.info("Database connection validated successfully.")
+    except Exception as e:
+        logger.error(f"Database connection validation failed: {e}")
+        logger.debug(f"Connection details: {settings.computed_database_url}")
+        raise
+
     yield
     
     # 关闭时清理
-    logger.info("Shutting down Label Studio Adapter...")
-    
-    # 客户端清理会在客户端管理器中处理
-    logger.info("Label Studio Adapter stopped")
+    logger.info("DataMate Python Backend shutting down ...")
 
 # 创建FastAPI应用
 app = FastAPI(
@@ -57,70 +62,16 @@ app.add_middleware(
     allow_headers=settings.allowed_headers,
 )
 
-# 自定义异常处理器：StarletteHTTPException (包括404等)
-@app.exception_handler(StarletteHTTPException)
-async def starlette_http_exception_handler(request: Request, exc: StarletteHTTPException):
-    """将Starlette的HTTPException转换为标准响应格式"""
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={
-            "code": exc.status_code,
-            "message": "error",
-            "data": {
-                "detail": exc.detail
-            }
-        }
-    )
-
-# 自定义异常处理器：FastAPI HTTPException
-@app.exception_handler(HTTPException)
-async def fastapi_http_exception_handler(request: Request, exc: HTTPException):
-    """将FastAPI的HTTPException转换为标准响应格式"""
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={
-            "code": exc.status_code,
-            "message": "error",
-            "data": {
-                "detail": exc.detail
-            }
-        }
-    )
-
-# 自定义异常处理器：RequestValidationError
-@app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    """将请求验证错误转换为标准响应格式"""
-    return JSONResponse(
-        status_code=422,
-        content={
-            "code": 422,
-            "message": "error",
-            "data": {
-                "detail": "Validation error",
-                "errors": exc.errors()
-            }
-        }
-    )
-
-# 自定义异常处理器：未捕获的异常
-@app.exception_handler(Exception)
-async def general_exception_handler(request: Request, exc: Exception):
-    """将未捕获的异常转换为标准响应格式"""
-    logger.error(f"Unhandled exception: {exc}", exc_info=True)
-    return JSONResponse(
-        status_code=500,
-        content={
-            "code": 500,
-            "message": "error",
-            "data": {
-                "detail": "Internal server error"
-            }
-        }
-    )
-
 # 注册路由
-app.include_router(api_router, prefix="/api")
+app.include_router(router)
+
+logger.debug("Registered routes: %s", [getattr(r, "path", None) for r in app.routes])
+
+# 注册全局异常处理器
+app.add_exception_handler(StarletteHTTPException, starlette_http_exception_handler) # type: ignore
+app.add_exception_handler(HTTPException, fastapi_http_exception_handler) # type: ignore
+app.add_exception_handler(RequestValidationError, validation_exception_handler) # type: ignore
+app.add_exception_handler(Exception, general_exception_handler)
 
 # 测试端点：验证异常处理
 @app.get("/test-404", include_in_schema=False)
