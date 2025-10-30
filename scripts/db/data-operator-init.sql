@@ -69,6 +69,7 @@ INSERT IGNORE INTO t_operator
 (id, name, description, version, inputs, outputs, runtime, settings, file_name, is_star)
 VALUES ('TextFormatter', 'TXT文本抽取', '抽取TXT中的文本。', '1.0.0', 'text', 'text', null, null, '', false),
        ('UnstructuredFormatter', '非结构化文本抽取', '抽取非结构化文件的文本，目前支持word文档。', '1.0.0', 'text', 'text', null, null, '', false),
+       ('ExternalPDFFormatter', '外部PDF文本抽取', '基于外部API，抽取PDF中的文本。', '1.0.0', 'text', 'text', null, null, '', false),
        ('FileExporter', '落盘算子', '将文件保存到本地目录。', '1.0.0', 'all', 'all', null, null, '', false),
        ('FileWithHighRepeatPhraseRateFilter', '文档词重复率检查', '去除重复词过多的文档。', '1.0.0', 'text', 'text', null, '{"repeatPhraseRatio": {"name": "文档词重复率", "description": "某个词的统计数/文档总词数 > 设定值，该文档被去除。", "type": "slider", "defaultVal": 0.5, "min": 0, "max": 1, "step": 0.1}, "hitStopwords": {"name": "去除停用词", "description": "统计重复词时，选择是否要去除停用词。", "type": "switch", "defaultVal": false, "required": true, "checkedLabel": "去除", "unCheckedLabel": "不去除"}}', '', 'false'),
        ('FileWithHighRepeatWordRateFilter', '文档字重复率检查', '去除重复字过多的文档。', '1.0.0', 'text', 'text', null, '{"repeatWordRatio": {"name": "文档字重复率", "description": "某个字的统计数/文档总字数 > 设定值，该文档被去除。", "type": "slider", "defaultVal": 0.5, "min": 0, "max": 1, "step": 0.1}}', '', 'false'),
@@ -122,7 +123,7 @@ AND o.id IN ('TextFormatter', 'FileWithShortOrLongLengthFilter', 'FileWithHighRe
             'AnonymizedIpAddress', 'AnonymizedPhoneNumber', 'AnonymizedUrlCleaner', 'HtmlTagCleaner', 'XMLTagCleaner',
             'ContentCleaner', 'EmailNumberCleaner', 'EmojiCleaner', 'ExtraSpaceCleaner', 'FullWidthCharacterCleaner',
             'GrableCharactersCleaner', 'InvisibleCharactersCleaner', 'LegendCleaner', 'PoliticalWordCleaner',
-            'SexualAndViolentWordCleaner', 'TraditionalChineseCleaner', 'UnicodeSpaceCleaner', 'UnstructuredFormatter');
+            'SexualAndViolentWordCleaner', 'TraditionalChineseCleaner', 'UnicodeSpaceCleaner');
 
 INSERT IGNORE INTO t_operator_category_relation(category_id, operator_id)
 SELECT c.id, o.id
@@ -138,4 +139,4 @@ SELECT c.id, o.id
 FROM t_operator_category c
        CROSS JOIN t_operator o
 WHERE c.id IN (7, 8, 11)
-  AND o.id IN ('FileExporter', 'UnstructuredFormatter');
+  AND o.id IN ('FileExporter', 'UnstructuredFormatter', 'ExternalPDFFormatter');

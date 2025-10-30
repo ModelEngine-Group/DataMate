@@ -11,7 +11,7 @@ def setup_logging():
     log_dir.mkdir(exist_ok=True)
     
     # 配置日志格式
-    log_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    log_format = "%(asctime)s - %(name)s - [%(levelname)s] - %(message)s"
     date_format = "%Y-%m-%d %H:%M:%S"
     
     # 创建处理器
@@ -44,9 +44,10 @@ def setup_logging():
     root_logger.addHandler(error_handler)
     
     # 配置第三方库日志级别（减少详细日志）
-    logging.getLogger("uvicorn").setLevel(logging.WARNING)
+    logging.getLogger("uvicorn").setLevel(logging.ERROR)
     logging.getLogger("sqlalchemy.engine").setLevel(logging.ERROR)  # 隐藏SQL查询日志
-    logging.getLogger("httpx").setLevel(logging.WARNING)
+    logging.getLogger("httpx").setLevel(logging.ERROR)
+    logging.getLogger("httpcore").setLevel(logging.ERROR)
 
 def get_logger(name: str) -> logging.Logger:
     """获取指定名称的日志器"""

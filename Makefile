@@ -1,5 +1,6 @@
 MAKEFLAGS += --no-print-directory
 
+WITH_MINERU ?= false  # 默认不构建mineru
 VERSION ?= latest
 NAMESPACE ?= datamate
 
@@ -8,7 +9,7 @@ build-%:
 	$(MAKE) $*-docker-build
 
 .PHONY: build
-build: backend-docker-build frontend-docker-build runtime-docker-build
+build: backend-docker-build frontend-docker-build runtime-docker-build $(if $(WITH_MINERU),mineru-docker-build)
 
 .PHONY: create-namespace
 create-namespace:
@@ -85,6 +86,9 @@ deer-flow-docker-build:
 	cp deployment/docker/deer-flow/conf.yaml.example ../deer-flow/conf.yaml
 	cd ../deer-flow && docker compose build
 
+.PHONY: mineru-docker-build
+mineru-docker-build:
+	docker build -t datamate-mineru:$(VERSION) . -f scripts/images/mineru/Dockerfile
 .PHONY: backend-docker-install
 backend-docker-install:
 	cd deployment/docker/datamate && docker compose up -d backend
@@ -108,6 +112,22 @@ runtime-docker-install:
 .PHONY: runtime-docker-uninstall
 runtime-docker-uninstall:
 	cd deployment/docker/datamate && docker compose down runtime
+
+.PHONY: mineru-docker-install
+mineru-docker-install:
+	cd deployment/docker/datamate && cp .env.example .env && docker compose up -d datamate-mineru
+
+.PHONY: mineru-docker-uninstall
+mineru-docker-uninstall:
+	cd deployment/docker/datamate && docker compose down datamate-mineru
+
+.PHONY: mineru-k8s-install
+mineru-k8s-install: create-namespace
+	kubectl apply -f deployment/kubernetes/mineru/deploy.yaml -n $(NAMESPACE)
+
+.PHONY: mineru-k8s-uninstall
+mineru-k8s-uninstall:
+	kubectl delete -f deployment/kubernetes/mineru/deploy.yaml -n $(NAMESPACE)
 
 .PHONY: datamate-docker-install
 datamate-docker-install:

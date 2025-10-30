@@ -60,6 +60,7 @@ services:
       MYSQL_USER: "root"
       MYSQL_PASSWORD: "password"
       MYSQL_DATABASE: "datamate"
+      PDF_FORMATTER_BASE_URL: "http://datamate-mineru:9001"
     command:
       - python
       - /opt/runtime/datamate/operator_runtime.py
@@ -71,6 +72,27 @@ services:
       - dataset_volume:/dataset
       - flow_volume:/flow
     networks: [ datamate ]
+
+  # 4) mineru
+  datamate-mineru:
+    container_name: datamate-mineru
+    image: datamate-mineru
+    restart: on-failure
+    environment:
+      MINERU_MODEL_SOURCE: local
+      MINERU_DEVICE_MODE: cpu  # cpu|cuda|npu|mps
+      MINERU_BACKEND_MODE: pipeline
+    privileged: true
+    command:
+      - python
+      - /opt/runtime/datamate/mineru/mineru_api.py
+      - --port
+      - "9001"
+    volumes:
+      - dataset_volume:/dataset
+      - mineru_log_volume:/var/log/datamate/mineru
+    networks: [ datamate ]
+    profiles: [ mineru ]
 
 volumes:
   dataset_volume:
