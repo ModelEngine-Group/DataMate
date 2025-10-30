@@ -13,7 +13,7 @@ import { KnowledgeBaseItem } from "../knowledge-base.model";
 import CreateKnowledgeBase from "../components/CreateKnowledgeBase";
 import { mapKnowledgeBase } from "../knowledge-base.const";
 
-export default function KnowledgeGenerationPage() {
+export default function KnowledgeBasePage() {
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<"card" | "list">("card");
   const [isEdit, setIsEdit] = useState(false);
@@ -75,14 +75,14 @@ export default function KnowledgeGenerationPage() {
       fixed: "left" as const,
       width: 200,
       ellipsis: true,
-      // render: (_: any, kb: KnowledgeBaseItem) => (
-      //   <Button
-      //     type="link"
-      //     onClick={() => navigate(`/data/knowledge-base/detail/${kb.id}`)}
-      //   >
-      //     {kb.name}
-      //   </Button>
-      // ),
+      render: (_: any, kb: KnowledgeBaseItem) => (
+        <Button
+          type="link"
+          onClick={() => navigate(`/data/knowledge-base/detail/${kb.id}`)}
+        >
+          {kb.name}
+        </Button>
+      ),
     },
     {
       title: "向量数据库",
@@ -148,7 +148,13 @@ export default function KnowledgeGenerationPage() {
         <CreateKnowledgeBase
           isEdit={isEdit}
           data={currentKB}
-          onUpdate={fetchData}
+          onUpdate={() => {
+            fetchData();
+          }}
+          onClose={() => {
+            setIsEdit(false);
+            setCurrentKB(null);
+          }}
         />
       </div>
 
@@ -170,7 +176,7 @@ export default function KnowledgeGenerationPage() {
         <CardView
           data={tableData}
           operations={operations}
-          // onView={(item) => navigate(`/data/knowledge-base/detail/${item.id}`)}
+          onView={(item) => navigate(`/data/knowledge-base/detail/${item.id}`)}
           pagination={pagination}
         />
       ) : (

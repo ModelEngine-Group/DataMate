@@ -1,10 +1,9 @@
 import { get, post, put, del } from "@/utils/request";
 
-
 // 获取知识库列表
 export function queryKnowledgeBasesUsingPost(params: any) {
-  console.log('get tk', params);
-  
+  console.log("get tk", params);
+
   return post("/api/knowledge-base/list", params);
 }
 
@@ -28,22 +27,28 @@ export function deleteKnowledgeBaseByIdUsingDelete(baseId: string) {
   return del(`/api/knowledge-base/${baseId}`);
 }
 
-// 获取知识生成任务列表
-export function queryKnowledgeGenerationTasksUsingPost(params: any) {
-  return post("/api/knowledge-base/tasks", params);
+// 获取知识生成文件列表
+export function queryKnowledgeBaseFilesUsingGet(baseId: string, data) {
+  return get(`/api/knowledge-base/${baseId}/files`, data);
 }
 
 // 添加文件到知识库
-export function addKnowledgeGenerationFilesUsingPost(baseId: string, data: any) {
+export function addKnowledgeBaseFilesUsingPost(baseId: string, data: any) {
   return post(`/api/knowledge-base/${baseId}/files`, data);
 }
 
 // 获取知识生成文件详情
-export function queryKnowledgeGenerationFilesByIdUsingGet(baseId: string, fileId: string) {
+export function queryKnowledgeBaseFilesByIdUsingGet(
+  baseId: string,
+  fileId: string
+) {
   return get(`/api/knowledge-base/${baseId}/files/${fileId}`);
 }
 
 // 删除知识生成文件
-export function deleteKnowledgeGenerationTaskByIdUsingDelete(baseId: string) {
-  return del(`/api/knowledge-base/${baseId}/files`);
+export function deleteKnowledgeBaseFileByIdUsingDelete(
+  baseId: string,
+  fileId: string
+) {
+  return del(`/api/knowledge-base/${baseId}/files/${fileId}`);
 }
