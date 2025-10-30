@@ -4,10 +4,8 @@ import com.datamate.cleaning.application.CleaningTemplateService;
 import com.datamate.cleaning.interfaces.dto.CleaningTemplateDto;
 import com.datamate.cleaning.interfaces.dto.CreateCleaningTemplateRequest;
 import com.datamate.cleaning.interfaces.dto.UpdateCleaningTemplateRequest;
-import com.datamate.common.infrastructure.common.Response;
 import com.datamate.common.interfaces.PagedResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,14 +27,14 @@ public class CleaningTemplateController {
     private final CleaningTemplateService cleaningTemplateService;
 
     @GetMapping
-    public ResponseEntity<Response<PagedResponse<CleaningTemplateDto>>> cleaningTemplatesGet(
+    public PagedResponse<CleaningTemplateDto> cleaningTemplatesGet(
             @RequestParam(value = "page", required = false) Integer page,
             @RequestParam(value = "size", required = false) Integer size,
             @RequestParam(value = "keywords", required = false) String keyword) {
         List<CleaningTemplateDto> templates = cleaningTemplateService.getTemplates(keyword);
         if (page == null || size == null) {
-            return ResponseEntity.ok(Response.ok(PagedResponse.of(templates.stream()
-                    .sorted(Comparator.comparing(CleaningTemplateDto::getCreatedAt).reversed()).toList())));
+            return PagedResponse.of(templates.stream()
+                    .sorted(Comparator.comparing(CleaningTemplateDto::getCreatedAt).reversed()).toList());
         }
         int count = templates.size();
         int totalPages = (count + size + 1) / size;
@@ -44,31 +42,31 @@ public class CleaningTemplateController {
                 .sorted(Comparator.comparing(CleaningTemplateDto::getCreatedAt).reversed())
                 .skip((long) page * size)
                 .limit(size).toList();
-        return ResponseEntity.ok(Response.ok(PagedResponse.of(limitTemplates, page, count, totalPages)));
+        return PagedResponse.of(limitTemplates, page, count, totalPages);
     }
 
     @PostMapping
-    public ResponseEntity<Response<CleaningTemplateDto>> cleaningTemplatesPost(
+    public CleaningTemplateDto cleaningTemplatesPost(
             @RequestBody CreateCleaningTemplateRequest request) {
-        return ResponseEntity.ok(Response.ok(cleaningTemplateService.createTemplate(request)));
+        return cleaningTemplateService.createTemplate(request);
     }
 
     @GetMapping("/{templateId}")
-    public ResponseEntity<Response<CleaningTemplateDto>> cleaningTemplatesTemplateIdGet(
+    public CleaningTemplateDto cleaningTemplatesTemplateIdGet(
             @PathVariable("templateId") String templateId) {
-        return ResponseEntity.ok(Response.ok(cleaningTemplateService.getTemplate(templateId)));
+        return cleaningTemplateService.getTemplate(templateId);
     }
 
     @PutMapping("/{templateId}")
-    public ResponseEntity<Response<CleaningTemplateDto>> cleaningTemplatesTemplateIdPut(
+    public CleaningTemplateDto cleaningTemplatesTemplateIdPut(
             @PathVariable("templateId") String templateId, @RequestBody UpdateCleaningTemplateRequest request) {
-        return ResponseEntity.ok(Response.ok(cleaningTemplateService.updateTemplate(templateId, request)));
+        return cleaningTemplateService.updateTemplate(templateId, request);
     }
 
     @DeleteMapping("/{templateId}")
-    public ResponseEntity<Response<Object>> cleaningTemplatesTemplateIdDelete(
+    public String cleaningTemplatesTemplateIdDelete(
             @PathVariable("templateId") String templateId) {
         cleaningTemplateService.deleteTemplate(templateId);
-        return ResponseEntity.noContent().build();
+        return templateId;
     }
 }

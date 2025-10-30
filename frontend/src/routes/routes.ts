@@ -42,9 +42,9 @@ import RatioTasksPage from "@/pages/RatioTask/RatioTask";
 import CreateRatioTask from "@/pages/RatioTask/CreateRatioTask";
 import OrchestrationPage from "@/pages/Orchestration/Orchestration";
 import WorkflowEditor from "@/pages/Orchestration/WorkflowEditor";
-import AgentPage from "@/pages/Agent/Agent";
 import SettingsPage from "@/pages/SettingsPage/SettingsPage";
 import { withErrorBoundary } from "@/components/ErrorBoundary";
+import AgentPage from "@/pages/Agent/Agent.tsx";
 
 const router = createBrowserRouter([
   {
