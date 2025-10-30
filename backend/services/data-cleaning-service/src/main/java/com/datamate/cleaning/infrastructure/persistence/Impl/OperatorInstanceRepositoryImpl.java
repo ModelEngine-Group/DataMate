@@ -3,7 +3,6 @@ package com.datamate.cleaning.infrastructure.persistence.Impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.repository.CrudRepository;
 import com.datamate.cleaning.infrastructure.converter.OperatorInstanceConverter;
-import com.datamate.cleaning.interfaces.dto.OperatorDto;
 import com.datamate.cleaning.interfaces.dto.OperatorInstanceDto;
 import com.datamate.cleaning.domain.model.entity.OperatorInstance;
 import com.datamate.cleaning.domain.repository.OperatorInstanceRepository;
@@ -19,11 +18,6 @@ import java.util.List;
 public class OperatorInstanceRepositoryImpl extends CrudRepository<OperatorInstanceMapper, OperatorInstance>
     implements OperatorInstanceRepository {
     private final OperatorInstanceMapper mapper;
-
-    @Override
-    public List<OperatorDto> findAllOperators() {
-        return OperatorInstanceConverter.INSTANCE.fromEntityToDto(mapper.findAllOperators());
-    }
 
     @Override
     public void insertInstance(String instanceId, List<OperatorInstanceDto> instances) {

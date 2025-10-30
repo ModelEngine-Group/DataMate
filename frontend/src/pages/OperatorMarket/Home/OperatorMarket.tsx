@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
-import { Button } from "antd";
-import { FilterOutlined, PlusOutlined } from "@ant-design/icons";
-import { Boxes } from "lucide-react";
+import { Button, message } from "antd";
+import {
+  DeleteOutlined,
+  EditOutlined,
+  FilterOutlined,
+  PlusOutlined,
+} from "@ant-design/icons";
+import { Boxes, Edit } from "lucide-react";
 import { SearchControls } from "@/components/SearchControls";
 import CardView from "@/components/CardView";
 import { useNavigate } from "react-router";
@@ -14,6 +19,7 @@ import TagManagement from "@/components/TagManagement";
 import { ListView } from "./components/List";
 import useFetchData from "@/hooks/useFetchData";
 import {
+  deleteOperatorByIdUsingDelete,
   queryCategoryTreeUsingGet,
   queryOperatorsUsingPost,
 } from "../operator.api";
@@ -22,8 +28,6 @@ import { mapOperator } from "../operator.const";
 export default function OperatorMarketPage() {
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<"card" | "list">("card");
-
-  const filterOptions = [];
 
   const [selectedFilters, setSelectedFilters] = useState<
     Record<string, string[]>
@@ -50,33 +54,44 @@ export default function OperatorMarketPage() {
     handleFiltersChange,
   } = useFetchData(queryOperatorsUsingPost, mapOperator);
 
-  const handleViewOperator = (operator: OperatorI) => {
-    navigate(`/data/operator-market/plugin-detail/${operator.id}`);
-  };
-
   const handleUploadOperator = () => {
     navigate(`/data/operator-market/create`);
   };
 
   const handleUpdateOperator = (operator: OperatorI) => {
-    navigate(`/data/operator-market/edit/${operator.id}`);
+    navigate(`/data/operator-market/create/${operator.id}`);
   };
 
-  const handleDeleteTag = (operator: OperatorI) => {
-    // 删除算子逻辑
-    console.log("删除算子", operator);
+  const handleDeleteOperator = async (operator: OperatorI) => {
+    try {
+      await deleteOperatorByIdUsingDelete(operator.id);
+      message.success("算子删除成功");
+      fetchData();
+    } catch (error) {
+      message.error("算子删除失败");
+    }
   };
 
   const operations = [
     {
       key: "edit",
-      label: "更新算子",
+      label: "更新",
+      icon: <EditOutlined />,
       onClick: handleUpdateOperator,
     },
     {
       key: "delete",
-      label: "删除算子",
-      onClick: handleDeleteTag,
+      label: "删除",
+      danger: true,
+      icon: <DeleteOutlined />,
+      confirm: {
+        title: "确认删除",
+        description: "此操作不可撤销，是否继续？",
+        okText: "删除",
+        okType: "danger",
+        cancelText: "取消",
+      },
+      onClick: handleDeleteOperator,
     },
   ];
 
@@ -87,14 +102,14 @@ export default function OperatorMarketPage() {
     const filteredIds = Object.values(selectedFilters).reduce(
       (acc, filter: string[]) => {
         if (filter.length) {
-          acc.push(...filter.map(Number));
+          acc.push(...filter);
         }
 
         return acc;
       },
       []
     );
-
+    
     fetchData({ categories: filteredIds?.length ? filteredIds : undefined });
   }, [selectedFilters]);
 
@@ -103,7 +118,7 @@ export default function OperatorMarketPage() {
       {/* Header */}
       <div className="flex justify-between">
         <h1 className="text-xl font-bold text-gray-900">算子市场</h1>
-        {/* <div className="flex gap-2">
+        <div className="flex gap-2">
           <TagManagement />
           <Button
             type="primary"
@@ -112,7 +127,7 @@ export default function OperatorMarketPage() {
           >
             上传算子
           </Button>
-        </div> */}
+        </div>
       </div>
       {/* Main Content */}
       <div className="flex-overflow-auto flex-row border-card">
@@ -146,7 +161,7 @@ export default function OperatorMarketPage() {
                   setSearchParams({ ...searchParams, keyword })
                 }
                 searchPlaceholder="搜索算子名称、描述..."
-                filters={filterOptions}
+                filters={[]}
                 onFiltersChange={handleFiltersChange}
                 viewMode={viewMode}
                 onViewModeChange={setViewMode}
@@ -167,9 +182,17 @@ export default function OperatorMarketPage() {
           ) : (
             <>
               {viewMode === "card" ? (
-                <CardView data={tableData} pagination={pagination} />
+                <CardView
+                  data={tableData}
+                  pagination={pagination}
+                  operations={operations}
+                />
               ) : (
-                <ListView operators={tableData} pagination={pagination} />
+                <ListView
+                  operators={tableData}
+                  operations={operations}
+                  pagination={pagination}
+                />
               )}
             </>
           )}
