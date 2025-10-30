@@ -87,15 +87,15 @@ export default function TaskManagement() {
       onClick: () => handleStopTask(record.id),
     };
     const items = [
-      isStopped ? startButton : stopButton,
-      {
-        key: "edit",
-        label: "编辑",
-        icon: <EditOutlined />,
-        onClick: () => {
-          showEditTaskModal(record);
-        },
-      },
+      // isStopped ? startButton : stopButton,
+      // {
+      //   key: "edit",
+      //   label: "编辑",
+      //   icon: <EditOutlined />,
+      //   onClick: () => {
+      //     showEditTaskModal(record);
+      //   },
+      // },
       {
         key: "delete",
         label: "删除",
@@ -119,11 +119,15 @@ export default function TaskManagement() {
       dataIndex: "name",
       key: "name",
       fixed: "left",
+      width: 150,
+      ellipsis: true,
     },
     {
       title: "状态",
       dataIndex: "status",
       key: "status",
+      width: 150,
+      ellipsis: true,
       render: (status: string) => (
         <Badge text={status.label} color={status.color} />
       ),
@@ -132,28 +136,37 @@ export default function TaskManagement() {
       title: "同步方式",
       dataIndex: "syncMode",
       key: "syncMode",
+      width: 150,
+      ellipsis: true,
       render: (text: string) => <span>{SyncModeMap[text]?.label}</span>,
     },
     {
       title: "创建时间",
       dataIndex: "createdAt",
       key: "createdAt",
+      width: 150,
+      ellipsis: true,
     },
     {
       title: "更新时间",
       dataIndex: "updatedAt",
       key: "updatedAt",
+      width: 150,
+      ellipsis: true,
     },
     {
       title: "最近执行ID",
       dataIndex: "lastExecutionId",
       key: "lastExecutionId",
+      width: 150,
+      ellipsis: true,
     },
     {
       title: "描述",
       dataIndex: "description",
       key: "description",
       ellipsis: true,
+      width: 200,
     },
     {
       title: "操作",
@@ -215,6 +228,7 @@ export default function TaskManagement() {
             filters: {},
           }))
         }
+        onReload={fetchData}
       />
 
       {/* Tasks Table */}
