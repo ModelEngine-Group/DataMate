@@ -3,12 +3,13 @@ from typing import Optional
 from datetime import datetime
 
 from app.module.shared.schema import BaseResponseModel
+from app.module.shared.schema import StandardResponse
 
-class DatasetMappingBase(BaseResponseModel):
+class _DatasetMappingBase(BaseResponseModel):
     """数据集映射 基础模型"""
     dataset_id: str = Field(..., description="源数据集ID")
 
-class DatasetMappingCreateRequest(DatasetMappingBase):
+class DatasetMappingCreateRequest(_DatasetMappingBase):
     """数据集映射 创建 请求模型"""
     pass
 
@@ -17,13 +18,12 @@ class DatasetMappingCreateResponse(BaseResponseModel):
     id: str = Field(..., description="映射UUID")
     labeling_project_id: str = Field(..., description="Label Studio项目ID")
     labeling_project_name: str = Field(..., description="Label Studio项目名称")
-    message: str = Field(..., description="响应消息")
 
 class DatasetMappingUpdateRequest(BaseResponseModel):
     """数据集映射 更新 请求模型"""
     dataset_id: Optional[str] = Field(None, description="源数据集ID")
 
-class DatasetMappingResponse(DatasetMappingBase):
+class DatasetMappingResponse(_DatasetMappingBase):
     """数据集映射 查询 响应模型"""
     id: str = Field(..., description="映射UUID")
     labeling_project_id: str = Field(..., description="标注项目ID")
@@ -39,4 +39,3 @@ class DeleteDatasetResponse(BaseResponseModel):
     """删除数据集响应模型"""
     id: str = Field(..., description="映射UUID")
     status: str = Field(..., description="删除状态")
-    message: str = Field(..., description="响应消息")
