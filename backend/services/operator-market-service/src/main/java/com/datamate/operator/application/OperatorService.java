@@ -35,14 +35,14 @@ public class OperatorService {
     @Value("${operator.base.path:/operator}")
     private String operatorBasePath;
 
-    public List<OperatorDto> getOperators(Integer page, Integer size, List<Integer> categories,
+    public List<OperatorDto> getOperators(Integer page, Integer size, List<String> categories,
                                           String operatorName, Boolean isStar) {
         List<OperatorView> filteredOperators = operatorViewRepo.findOperatorsByCriteria(page, size, operatorName,
                 categories, isStar);
         return filteredOperators.stream().map(OperatorConverter.INSTANCE::fromEntityToDto).toList();
     }
 
-    public int getOperatorsCount(List<Integer> categories, String operatorName, Boolean isStar) {
+    public int getOperatorsCount(List<String> categories, String operatorName, Boolean isStar) {
         return operatorViewRepo.countOperatorsByCriteria(operatorName, categories, isStar);
     }
 

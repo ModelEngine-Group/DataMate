@@ -43,7 +43,7 @@ dataVolume: &dataVolume
 operatorVolume: &operatorVolume
   name: operator-volume
   hostPath:
-    path: /opt/datamate/data/
+    path: /opt/datamate/data/operator
 
 backend:
   volumes:
@@ -73,6 +73,7 @@ frontend:
       subPath: frontend
     - mountPath: /etc/nginx/conf.d/backend.conf
       name: datamate-nginx-conf
+      subPath: backend.conf
 
 database:
   volumes:
@@ -112,11 +113,12 @@ ray-cluster:
         name: flow-volume
       - mountPath: /opt/runtime/datamate/ops/user
         name: operator-volume
+        subPath: extract
     sidecarContainers:
       - name: runtime
         image: datamate-runtime
         imagePullPolicy: IfNotPresent
-        command:
+        args:
           - python
           - /opt/runtime/datamate/operator_runtime.py
           - --port
@@ -146,6 +148,7 @@ ray-cluster:
             name: flow-volume
           - mountPath: /opt/runtime/datamate/ops/user
             name: operator-volume
+            subPath: extract
   worker:
     volumes:
       - *datasetVolume
@@ -162,3 +165,4 @@ ray-cluster:
         name: flow-volume
       - mountPath: /opt/runtime/datamate/ops/user
         name: operator-volume
+        subPath: extract
