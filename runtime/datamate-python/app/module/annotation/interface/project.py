@@ -108,8 +108,7 @@ async def create_mapping(
         response_data = DatasetMappingCreateResponse(
             id=mapping.id,
             labeling_project_id=str(mapping.labeling_project_id),
-            labeling_project_name=mapping.name or project_name,
-            message="Dataset mapping created successfully"
+            labeling_project_name=mapping.name or project_name
         )
         
         return StandardResponse(
@@ -341,8 +340,7 @@ async def delete_mapping(
             message="success",
             data=DeleteDatasetResponse(
                 id=id,
-                status="success",
-                message=f"Successfully deleted mapping and Label Studio project '{labeling_project_name}'"
+                status="success"
             )
         )
         

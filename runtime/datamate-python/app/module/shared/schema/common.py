@@ -1,7 +1,7 @@
 """
 通用响应模型
 """
-from typing import Generic, TypeVar, Optional, List
+from typing import Generic, TypeVar, Optional, List, Type
 from pydantic import BaseModel, Field
 
 # 定义泛型类型变量
@@ -29,18 +29,11 @@ class StandardResponse(BaseResponseModel, Generic[T]):
     """
     code: int = Field(..., description="HTTP状态码")
     message: str = Field(..., description="响应消息")
-    data: Optional[T] = Field(None, description="响应数据")
-    
+    data: T = Field(..., description="响应数据")
+
     class Config:
         populate_by_name = True
         alias_generator = to_camel
-        json_schema_extra = {
-            "example": {
-                "code": 200,
-                "message": "success",
-                "data": {}
-            }
-        }
 
 class PaginatedData(BaseResponseModel, Generic[T]):
     """分页数据容器"""
@@ -49,14 +42,22 @@ class PaginatedData(BaseResponseModel, Generic[T]):
     total_elements: int = Field(..., description="总条数")
     total_pages: int = Field(..., description="总页数")
     content: List[T] = Field(..., description="当前页数据")
+
+T_Data = TypeVar("T_Data")
+def get_standard_response_model(data_type: Type[T_Data]) -> Type[StandardResponse[T_Data]]:
+    """
+    根据给定的数据类型，动态创建并返回一个继承自 StandardResponse[data_type] 的新类。
     
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "page": 1,
-                "size": 20,
-                "totalElements": 100,
-                "totalPages": 5,
-                "content": []
-            }
-        }
+    FastAPI/Pydantic 需要一个具体的、非泛型的类作为 response_model。
+    """
+    # 动态创建类名，确保每个组合都有唯一的名称，防止命名冲突
+    response_model_name = f"StandardResponse_{data_type.__name__}"
+    
+    # 动态创建一个继承 StandardResponse[data_type] 的新类
+    NewStandardResponse = type(
+        response_model_name, 
+        (StandardResponse[data_type],), 
+        {"__doc__": f"Standard Response wrapper for {data_type.__name__}"}
+    )
+    
+    return NewStandardResponse
