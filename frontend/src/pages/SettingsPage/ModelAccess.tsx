@@ -79,14 +79,18 @@ export default function EnvironmentAccess() {
   } = useFetchData(queryModelListUsingGet);
 
   const handleAddModel = async () => {
-    const formValues = await form.validateFields();
-    const fn = isEditMode
-      ? () => updateModelByIdUsingPut(newModel.id, formValues)
-      : () => createModelUsingPost(formValues);
-    await fn();
-    setShowModelDialog(false);
-    fetchData();
-    message.success("模型添加成功");
+    try {
+      const formValues = await form.validateFields();
+      const fn = isEditMode
+        ? () => updateModelByIdUsingPut(newModel.id, formValues)
+        : () => createModelUsingPost(formValues);
+      await fn();
+      setShowModelDialog(false);
+      fetchData();
+      message.success("模型添加成功");
+    } catch (error) {
+      message.error(`${error?.data?.message}：${error?.data?.data}`);
+    }
   };
   const [providerOptions, setProviderOptions] = useState<ProviderI[]>([]);
 
@@ -304,14 +308,6 @@ export default function EnvironmentAccess() {
           layout="vertical"
         >
           <Form.Item
-            name="modelName"
-            label="模型名称"
-            required
-            rules={[{ required: true, message: "请输入模型名称" }]}
-          >
-            <Input placeholder="输入模型名称" />
-          </Form.Item>
-          <Form.Item
             name="provider"
             label="服务提供商"
             required
@@ -341,6 +337,15 @@ export default function EnvironmentAccess() {
             ]}
           >
             <Input placeholder="输入接口地址，如：https://api.openai.com" />
+          </Form.Item>
+          <Form.Item
+            name="modelName"
+            label="模型名称"
+            required
+            tooltip="请输入模型名称"
+            rules={[{ required: true, message: "请输入模型名称" }]}
+          >
+            <Input placeholder="输入模型名称" />
           </Form.Item>
           <Form.Item
             name="apiKey"

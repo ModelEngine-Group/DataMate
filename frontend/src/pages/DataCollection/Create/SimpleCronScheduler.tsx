@@ -130,14 +130,42 @@ const SimpleCronScheduler: React.FC<SimpleCronSchedulerProps> = ({
   return (
     <Space direction="vertical" className={`w-full ${className || ""}`}>
       {/* 执行周期选择 */}
-      <Form.Item label="执行周期" required>
-        <Select value={config.type} onChange={handleTypeChange}>
-          <Select.Option value="once">仅执行一次</Select.Option>
-          <Select.Option value="daily">每天执行</Select.Option>
-          <Select.Option value="weekly">每周执行</Select.Option>
-          <Select.Option value="monthly">每月执行</Select.Option>
-        </Select>
-      </Form.Item>
+      <div className="grid grid-cols-2 gap-4">
+        <Form.Item label="执行周期" required>
+          <Select value={config.type} onChange={handleTypeChange}>
+            <Select.Option value="once">仅执行一次</Select.Option>
+            <Select.Option value="daily">每天执行</Select.Option>
+            <Select.Option value="weekly">每周执行</Select.Option>
+            <Select.Option value="monthly">每月执行</Select.Option>
+          </Select>
+        </Form.Item>
+
+        {/* 周几选择 */}
+        {config.type === "weekly" && (
+          <Form.Item label="执行日期" required>
+            <Select
+              className="w-32"
+              value={config.weekDay}
+              onChange={(weekDay) => updateConfig({ weekDay })}
+              placeholder="选择周几"
+              options={weekDayOptions}
+            ></Select>
+          </Form.Item>
+        )}
+
+        {/* 月份日期选择 */}
+        {config.type === "monthly" && (
+          <Form.Item label="执行日期" required>
+            <Select
+              className="w-32"
+              value={config.monthDay}
+              onChange={(monthDay) => updateConfig({ monthDay })}
+              placeholder="选择日期"
+              options={monthDayOptions}
+            ></Select>
+          </Form.Item>
+        )}
+      </div>
 
       {/* 时间选择 */}
       <Form.Item label="执行时间" required>
@@ -164,32 +192,6 @@ const SimpleCronScheduler: React.FC<SimpleCronSchedulerProps> = ({
           </Space>
         </Space>
       </Form.Item>
-
-      {/* 周几选择 */}
-      {config.type === "weekly" && (
-        <Form.Item label="执行日期" required>
-          <Select
-            className="w-32"
-            value={config.weekDay}
-            onChange={(weekDay) => updateConfig({ weekDay })}
-            placeholder="选择周几"
-            options={weekDayOptions}
-          ></Select>
-        </Form.Item>
-      )}
-
-      {/* 月份日期选择 */}
-      {config.type === "monthly" && (
-        <Form.Item label="执行日期" required>
-          <Select
-            className="w-32"
-            value={config.monthDay}
-            onChange={(monthDay) => updateConfig({ monthDay })}
-            placeholder="选择日期"
-            options={monthDayOptions}
-          ></Select>
-        </Form.Item>
-      )}
 
       {/* Cron 表达式预览 */}
       {/* <div className="mt-4 pt-4 border-t border-gray-200">

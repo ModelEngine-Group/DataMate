@@ -6,7 +6,7 @@ CREATE TABLE t_model_config
     model_name VARCHAR(100) NOT NULL COMMENT '模型名称（如 qwen2）',
     provider   VARCHAR(50)  NOT NULL COMMENT '模型提供商（如 Ollama、OpenAI、DeepSeek）',
     base_url   VARCHAR(255) NOT NULL COMMENT 'API 基础地址',
-    api_key    VARCHAR(255) DEFAULT '' COMMENT 'API 密钥（无密钥则为空）',
+    api_key    VARCHAR(512) DEFAULT '' COMMENT 'API 密钥（无密钥则为空）',
     type       VARCHAR(50)  NOT NULL COMMENT '模型类型（如 chat、embedding）',
     is_enabled TINYINT      DEFAULT 1 COMMENT '是否启用：1-启用，0-禁用',
     created_at TIMESTAMP    DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',

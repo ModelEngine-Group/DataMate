@@ -1,7 +1,9 @@
 import { Button } from "antd";
-import { CheckCircle, Plus, Eye } from "lucide-react";
+import { CheckCircle, Plus } from "lucide-react";
+import { useNavigate } from "react-router";
 
 export default function PreviewStep({ setUploadStep }) {
+  const navigate = useNavigate();
   return (
     <div className="text-center py-2">
       <div className="w-24 h-24 mx-auto mb-6 bg-green-50 rounded-full flex items-center justify-center">
@@ -15,9 +17,8 @@ export default function PreviewStep({ setUploadStep }) {
           <Plus className="w-4 h-4 mr-2" />
           继续上传
         </Button>
-        <Button type="primary">
-          <Eye className="w-4 h-4 mr-2" />
-          查看算子
+        <Button type="primary" onClick={() => navigate("/data/operator-market")}>
+          返回主页
         </Button>
       </div>
     </div>

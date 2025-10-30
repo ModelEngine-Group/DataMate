@@ -13,7 +13,7 @@ import TaskUpload from "./TaskUpload";
 const AsiderAndHeaderLayout = () => {
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const [activeItem, setActiveItem] = useState<string>("management");
+  const [activeItem, setActiveItem] = useState<string>("");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [taskCenterVisible, setTaskCenterVisible] = useState(false);
 
@@ -33,6 +33,7 @@ const AsiderAndHeaderLayout = () => {
         return;
       }
     }
+    console.log(pathname);
   };
 
   useEffect(() => {
@@ -134,7 +135,15 @@ const AsiderAndHeaderLayout = () => {
                 任务中心
               </Button>
             </Popover>
-            <Button block onClick={() => navigate("/data/settings")}>
+            <Button
+              block
+              color={pathname === "/data/settings" ? "primary" : "default"}
+              variant={pathname === "/data/settings" ? "filled" : "outlined"}
+              onClick={() => {
+                setActiveItem("");
+                navigate("/data/settings");
+              }}
+            >
               设置
             </Button>
           </div>
@@ -156,7 +165,15 @@ const AsiderAndHeaderLayout = () => {
                 ></Button>
               </Popover>
             </div>
-            <Button block onClick={() => navigate("/data/settings")}>
+            <Button
+              block
+              color={pathname === "/data/settings" ? "primary" : "default"}
+              variant={pathname === "/data/settings" ? "filled" : "outlined"}
+              onClick={() => {
+                setActiveItem("");
+                navigate("/data/settings");
+              }}
+            >
               <SettingOutlined />
             </Button>
           </div>
