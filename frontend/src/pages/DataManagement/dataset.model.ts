@@ -98,4 +98,5 @@ export interface TaskItem {
   controller: AbortController;
   cancelFn?: () => void;
   updateEvent?: string;
+  size?: number;
 }

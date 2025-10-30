@@ -7,9 +7,11 @@ import com.datamate.operator.interfaces.dto.OperatorDto;
 import java.util.List;
 
 public interface OperatorRepository extends IRepository<Operator> {
-    List<Operator> findAllOperators();
+    List<OperatorDto> findAllOperators();
 
     void updateOperator(OperatorDto operator);
 
     void insertOperator(OperatorDto operator);
+
+    void deleteOperator(String id);
 }

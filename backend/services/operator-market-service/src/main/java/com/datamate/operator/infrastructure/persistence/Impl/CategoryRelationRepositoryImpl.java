@@ -1,5 +1,6 @@
 package com.datamate.operator.infrastructure.persistence.Impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.repository.CrudRepository;
 import com.datamate.operator.domain.model.CategoryRelation;
 import com.datamate.operator.domain.repository.CategoryRelationRepository;
@@ -23,10 +24,17 @@ public class CategoryRelationRepositoryImpl extends CrudRepository<CategoryRelat
     }
 
     @Override
-    public void batchInsert(String operatorId, List<Integer> categories) {
+    public void batchInsert(String operatorId, List<String> categories) {
         List<CategoryRelation> categoryRelations = categories.stream()
             .map(category -> new CategoryRelation(category, operatorId))
             .toList();
         mapper.insert(categoryRelations);
+    }
+
+    @Override
+    public void deleteByOperatorId(String operatorId) {
+        LambdaQueryWrapper<CategoryRelation> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(CategoryRelation::getOperatorId, operatorId);
+        mapper.delete(queryWrapper);
     }
 }

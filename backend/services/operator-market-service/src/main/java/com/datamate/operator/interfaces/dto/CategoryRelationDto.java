@@ -6,7 +6,7 @@ import lombok.Setter;
 @Setter
 @Getter
 public class CategoryRelationDto {
-    private Integer categoryId;
+    private String categoryId;
 
     private String operatorId;
 }

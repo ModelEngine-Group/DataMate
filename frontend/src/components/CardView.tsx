@@ -246,10 +246,10 @@ function CardView<T extends BaseCardDataType>(props: CardViewProps<T>) {
                   <div className="grid grid-cols-2 gap-4 py-3">
                     {item?.statistics?.map((stat, idx) => (
                       <div key={idx}>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-gray-500 overflow-hidden whitespace-nowrap text-ellipsis w-full">
                           {stat?.label}:
                         </div>
-                        <div className="text-base font-semibold text-gray-900">
+                        <div className="text-base font-semibold text-gray-900 overflow-hidden whitespace-nowrap text-ellipsis w-full">
                           {stat?.value}
                         </div>
                       </div>

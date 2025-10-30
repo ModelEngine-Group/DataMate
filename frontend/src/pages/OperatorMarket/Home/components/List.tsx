@@ -1,11 +1,11 @@
 import { Button, List, Tag, Badge } from "antd";
-import { DeleteOutlined, EditOutlined, StarFilled } from "@ant-design/icons";
+import { StarFilled } from "@ant-design/icons";
 import { Zap, Settings, X } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { Operator } from "../../operator.model";
 
-export function ListView({ operators, pagination }) {
+export function ListView({ operators = [], pagination, operations }) {
   const navigate = useNavigate();
   const [favoriteOperators, setFavoriteOperators] = useState<Set<number>>(
     new Set([1, 3, 6])
@@ -59,46 +59,39 @@ export function ListView({ operators, pagination }) {
         <List.Item
           className="hover:bg-gray-50 transition-colors px-6 py-4"
           actions={[
-            <Button
-              key="edit"
-              type="text"
-              size="small"
-              onClick={() => handleUpdateOperator(operator)}
-              icon={<EditOutlined className="w-4 h-4" />}
-              title="更新算子"
-            />,
-            <Button
-              key="favorite"
-              type="text"
-              size="small"
-              onClick={() => handleToggleFavorite(operator.id)}
-              className={
-                favoriteOperators.has(operator.id)
-                  ? "text-yellow-500 hover:text-yellow-600"
-                  : "text-gray-400 hover:text-yellow-500"
-              }
-              icon={
-                <StarFilled
-                  style={{
-                    fontSize: "16px",
-                    color: favoriteOperators.has(operator.id)
-                      ? "#ffcc00ff"
-                      : "#d1d5db",
-                    cursor: "pointer",
-                  }}
-                  onClick={() => handleToggleFavorite(operator.id)}
-                />
-              }
-              title="收藏"
-            />,
-            <Button
-              key="delete"
-              type="text"
-              size="small"
-              danger
-              icon={<DeleteOutlined className="w-4 h-4" />}
-              title="删除算子"
-            />,
+            // <Button
+            //   key="favorite"
+            //   type="text"
+            //   size="small"
+            //   onClick={() => handleToggleFavorite(operator.id)}
+            //   className={
+            //     favoriteOperators.has(operator.id)
+            //       ? "text-yellow-500 hover:text-yellow-600"
+            //       : "text-gray-400 hover:text-yellow-500"
+            //   }
+            //   icon={
+            //     <StarFilled
+            //       style={{
+            //         fontSize: "16px",
+            //         color: favoriteOperators.has(operator.id)
+            //           ? "#ffcc00ff"
+            //           : "#d1d5db",
+            //         cursor: "pointer",
+            //       }}
+            //       onClick={() => handleToggleFavorite(operator.id)}
+            //     />
+            //   }
+            //   title="收藏"
+            // />,
+            ...operations.map((operation) => (
+              <Button
+                type="text"
+                size="small"
+                title={operation.label}
+                icon={operation.icon}
+                onClick={() => operation.onClick(operator)}
+              />
+            )),
           ]}
         >
           <List.Item.Meta
@@ -124,12 +117,12 @@ export function ListView({ operators, pagination }) {
             description={
               <div className="space-y-2">
                 <div className="text-gray-600 ">{operator.description}</div>
-                {/* <div className="flex items-center gap-4 text-xs text-gray-500">
+                <div className="flex items-center gap-4 text-xs text-gray-500">
                   <span>作者: {operator.author}</span>
                   <span>类型: {operator.type}</span>
                   <span>框架: {operator.framework}</span>
                   <span>使用次数: {operator?.usage?.toLocaleString()}</span>
-                </div> */}
+                </div>
               </div>
             }
           />

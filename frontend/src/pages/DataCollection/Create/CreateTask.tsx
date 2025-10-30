@@ -146,6 +146,7 @@ export default function CollectionTaskCreate() {
                   const value = e.target.value;
                   setNewTask({
                     ...newTask,
+                    syncMode: value,
                     scheduleExpression:
                       value === SyncMode.SCHEDULED
                         ? scheduleExpression.cronExpression

@@ -19,7 +19,7 @@ public class OperatorsListPostRequest {
 
   private Integer size;
 
-  private List<Integer> categories = new ArrayList<>();
+  private List<String> categories = new ArrayList<>();
 
   private String operatorName;
 
