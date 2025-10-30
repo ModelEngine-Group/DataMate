@@ -1,33 +1,29 @@
-interface KnowledgeBase {
+export enum KBStatus {
+  READY = "ready",
+  PROCESSING = "processing",
+  VECTORIZING = "vectorizing",
+  IMPORTING = "importing",
+  ERROR = "error",
+  DISABLED = "disabled",
+}
+
+export enum KBType {
+  UNSTRUCTURED = "unstructured",
+  STRUCTURED = "structured",
+}
+
+export interface KnowledgeBaseItem {
   id: number;
   name: string;
   description: string;
-  type: "unstructured" | "structured";
-  status: "processing" | "ready" | "error" | "importing" | "vectorizing";
-  fileCount: number;
-  chunkCount: number;
-  vectorCount: number;
-  size: string;
-  progress: number;
+  type: KBType;
   createdAt: string;
-  lastUpdated: string;
-  vectorDatabase: string;
-  config: {
-    embeddingModel: string;
-    llmModel?: string;
-    chunkSize: number;
-    overlap: number;
-    sliceMethod: "paragraph" | "length" | "delimiter" | "semantic";
-    delimiter?: string;
-    enableQA: boolean;
-    vectorDimension: number;
-    sliceOperators: string[];
-  };
-  files: KBFile[];
-  vectorizationHistory: VectorizationRecord[];
+  updatedAt: string;
+  embeddingModel: string;
+  chatModel: string;
 }
 
-interface KBFile {
+export interface KBFile {
   id: number;
   name: string;
   type: string;

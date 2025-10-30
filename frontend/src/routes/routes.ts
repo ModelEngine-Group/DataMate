@@ -31,10 +31,9 @@ import EvaluationTaskCreate from "@/pages/DataEvaluation/Create/CreateTask";
 import EvaluationTaskReport from "@/pages/DataEvaluation/Report/EvaluationReport";
 import ManualEvaluatePage from "@/pages/DataEvaluation/Evaluate/ManualEvaluate";
 
-import KnowledgeGenerationPage from "@/pages/KnowledgeGeneration/Home/KnowledgeGeneration";
-import KnowledgeBaseCreatePage from "@/pages/KnowledgeGeneration/Create/KnowledgeBaseCreate";
-import KnowledgeBaseDetailPage from "@/pages/KnowledgeGeneration/Detail/KnowledgeBaseDetail";
-import KnowledgeBaseFileDetailPage from "@/pages/KnowledgeGeneration/FileDetail/KnowledgeBaseFileDetail";
+import KnowledgeGenerationPage from "@/pages/KnowledgeBase/Home/KnowledgeGeneration";
+import KnowledgeBaseDetailPage from "@/pages/KnowledgeBase/Detail/KnowledgeBaseDetail";
+import KnowledgeBaseFileDetailPage from "@/pages/KnowledgeBase/FileDetail/KnowledgeBaseFileDetail";
 
 import OperatorMarketPage from "@/pages/OperatorMarket/Home/OperatorMarket";
 import OperatorPluginCreate from "@/pages/OperatorMarket/Create/OperatorPluginCreate";
@@ -218,16 +217,12 @@ const router = createBrowserRouter([
         ],
       },
       {
-        path: "knowledge-generation",
+        path: "knowledge-base",
         children: [
           {
             path: "",
             index: true,
             Component: KnowledgeGenerationPage,
-          },
-          {
-            path: "create/:id?",
-            Component: KnowledgeBaseCreatePage,
           },
           {
             path: "detail/:id",
@@ -248,7 +243,7 @@ const router = createBrowserRouter([
             Component: OperatorMarketPage,
           },
           {
-            path: "create",
+            path: "create/:id?",
             Component: OperatorPluginCreate,
           },
           {
