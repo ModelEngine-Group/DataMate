@@ -110,7 +110,7 @@ public class FileMetadataService {
                 .fileType(fileType)
                 .uploadTime(LocalDateTime.now())
                 .lastAccessTime(LocalDateTime.now())
-                .status("UPLOADED")
+                .status("ACTIVE")
                 .build();
     }
 
