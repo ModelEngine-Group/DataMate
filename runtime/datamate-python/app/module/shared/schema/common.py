@@ -42,22 +42,3 @@ class PaginatedData(BaseResponseModel, Generic[T]):
     total_elements: int = Field(..., description="总条数")
     total_pages: int = Field(..., description="总页数")
     content: List[T] = Field(..., description="当前页数据")
-
-T_Data = TypeVar("T_Data")
-def get_standard_response_model(data_type: Type[T_Data]) -> Type[StandardResponse[T_Data]]:
-    """
-    根据给定的数据类型，动态创建并返回一个继承自 StandardResponse[data_type] 的新类。
-    
-    FastAPI/Pydantic 需要一个具体的、非泛型的类作为 response_model。
-    """
-    # 动态创建类名，确保每个组合都有唯一的名称，防止命名冲突
-    response_model_name = f"StandardResponse_{data_type.__name__}"
-    
-    # 动态创建一个继承 StandardResponse[data_type] 的新类
-    NewStandardResponse = type(
-        response_model_name, 
-        (StandardResponse[data_type],), 
-        {"__doc__": f"Standard Response wrapper for {data_type.__name__}"}
-    )
-    
-    return NewStandardResponse
