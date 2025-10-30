@@ -3,9 +3,11 @@ package com.datamate.datamanagement.domain.model.dataset;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.*;
+import org.apache.commons.lang3.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -40,6 +42,6 @@ public class DatasetFile {
      * @return 标签列表
      */
     public List<String> analyzeTag() {
-        return Arrays.asList(tags.split(","));
+        return StringUtils.isNoneBlank(tags) ? Arrays.asList(tags.split(",")) : Collections.emptyList();
     }
 }
