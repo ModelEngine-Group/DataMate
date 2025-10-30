@@ -91,3 +91,4 @@ volumes:
 networks:
   datamate:
     driver: bridge
+    name: datamate-network
