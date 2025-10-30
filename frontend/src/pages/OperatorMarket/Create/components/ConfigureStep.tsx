@@ -13,11 +13,6 @@ export default function ConfigureStep({
     form.setFieldsValue(parsedInfo);
   }, [parsedInfo]);
 
-export default function ConfigureStep({
-  parsedInfo,
-  parseError,
-  setParsedInfo,
-}) {
   return (
     <>
       {/* 解析结果 */}
