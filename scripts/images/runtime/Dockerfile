@@ -8,7 +8,7 @@ COPY scripts/images/runtime/start.sh /opt/runtime/start.sh
 ENV PYTHONPATH=/opt/runtime/datamate/
 
 RUN apt update \
-    && apt install -y libgl1 libglib2.0-0 vim poppler-utils tesseract-ocr tesseract-ocr-chi-sim libmagic1t64  libreoffice\
+    && apt install -y libgl1 libglib2.0-0 vim libmagic1t64  libreoffice\
     && apt clean \
     && rm -rf /var/lib/apt/lists/*
 
