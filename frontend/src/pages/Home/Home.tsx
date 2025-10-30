@@ -10,11 +10,60 @@ import {
   GitBranch,
 } from "lucide-react";
 import { features, menuItems } from "../Layout/menu";
+import { useState } from 'react';
 import { useNavigate } from "react-router";
 import { Card } from "antd";
 
 export default function WelcomePage() {
   const navigate = useNavigate();
+  const [isChecking, setIsChecking] = useState(false);
+
+  // 检查接口连通性的函数
+  const checkDeerFlowDeploy = async (): Promise<boolean> => {
+    try {
+      const response = await fetch('/deer-flow-backend/config', { // 替换为你的实际接口地址
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        timeout: 5000, // 5秒超时
+      });
+
+      // 检查 HTTP 状态码在 200-299 范围内
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes('application/json')) {
+        return true;
+      }
+    } catch (error) {
+      console.error('接口检查失败:', error);
+    }
+    return false;
+  };
+
+  const handleChatClick = async () => {
+    if (isChecking) return; // 防止重复点击
+
+    setIsChecking(true);
+
+    try {
+      const isDeerFlowDeploy = await checkDeerFlowDeploy();
+
+      if (isDeerFlowDeploy) {
+        // 接口正常，执行原有逻辑
+        window.location.href = "/chat";
+      } else {
+        // 接口异常，使用 navigate 跳转
+        navigate("/chat");
+      }
+    } catch (error) {
+      // 发生错误时也使用 navigate 跳转
+      console.error('检查过程中发生错误:', error);
+      navigate("/chat");
+    } finally {
+      setIsChecking(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="max-w-7xl mx-auto px-4 py-12">
@@ -40,11 +89,11 @@ export default function WelcomePage() {
               开始使用
             </span>
             <span
-              onClick={() => navigate("/chat")}
-              className="cursor-pointer rounded px-4 py-2 inline-flex items-center bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg"
+              onClick={handleChatClick}
+              className="cursor-pointer rounded px-4 py-2 inline-flex items-center bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <MessageSquare className="mr-2 w-4 h-4" />
-              对话助手
+                      {isChecking ? '检查中...' : '对话助手'}
             </span>
             <span
               onClick={() => navigate("/orchestration")}

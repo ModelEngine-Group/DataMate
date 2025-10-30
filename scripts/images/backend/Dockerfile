@@ -14,10 +14,9 @@ RUN cd DataX && \
 FROM maven:3-amazoncorretto-21-debian AS builder
 
 COPY backend/ /opt/backend
-COPY scripts/images/backend/settings.xml /opt/backend
 
 RUN cd /opt/backend && \
-    mvn -U clean package -s settings.xml -Dmaven.test.skip=true
+    mvn -U clean package -Dmaven.test.skip=true
 
 
 FROM openjdk:21-jdk-slim
@@ -25,7 +24,7 @@ FROM openjdk:21-jdk-slim
 RUN apt-get update && \
     apt-get install -y vim wget curl nfs-common rsync python3 python3-pip python-is-python3 dos2unix && \
     apt-get clean && \
-    rm -rf /var/lib/apy/lists/*
+    rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /opt/backend/services/main-application/target/data-mate.jar /opt/backend/data-mate.jar
 COPY --from=datax-builder /DataX/target/datax/datax /opt/datax

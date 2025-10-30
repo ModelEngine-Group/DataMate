@@ -12,7 +12,9 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PagedResponse <T> {
+    // 当前页码（从 0 开始）
     private long page;
+    // 每页数量
     private long size;
     private long totalElements;
     private long totalPages;
