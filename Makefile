@@ -115,11 +115,11 @@ runtime-docker-uninstall:
 
 .PHONY: mineru-docker-install
 mineru-docker-install:
-	cd deployment/docker/datamate && docker compose up -d mineru
+	cd deployment/docker/datamate && cp .env.example .env && docker compose up -d datamate-mineru
 
 .PHONY: mineru-docker-uninstall
 mineru-docker-uninstall:
-	cd deployment/docker/datamate && docker compose down mineru
+	cd deployment/docker/datamate && docker compose down datamate-mineru
 
 .PHONY: mineru-k8s-install
 mineru-k8s-install: create-namespace
