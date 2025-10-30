@@ -3,14 +3,22 @@ package com.datamate.operator.interfaces.dto;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
+
 @Setter
 @Getter
 public class CategoryDto {
-    private Integer id;
+    private String id;
 
     private String name;
 
+    private String value;
+
+    private long count;
+
     private String type;
 
-    private Integer parentId;
+    private String parentId;
+
+    private LocalDateTime createdAt;
 }

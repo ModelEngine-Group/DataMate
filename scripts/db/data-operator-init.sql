@@ -3,7 +3,7 @@ USE datamate;
 CREATE TABLE IF NOT EXISTS t_operator
 (
     id          varchar(64) primary key,
-    name        varchar(64),
+    name        varchar(64) unique,
     description varchar(256),
     version     varchar(256),
     inputs      varchar(256),
@@ -18,15 +18,17 @@ CREATE TABLE IF NOT EXISTS t_operator
 
 CREATE TABLE IF NOT EXISTS t_operator_category
 (
-    id        int primary key auto_increment,
-    name      varchar(64),
+    id        varchar(64) primary key,
+    name      varchar(64) unique ,
+    value     varchar(64) unique ,
     type      varchar(64),
-    parent_id int
+    parent_id varchar(64),
+    created_at timestamp default current_timestamp
 );
 
 CREATE TABLE IF NOT EXISTS t_operator_category_relation
 (
-    category_id int,
+    category_id varchar(64),
     operator_id varchar(64),
     primary key (category_id, operator_id)
 );
@@ -41,7 +43,7 @@ SELECT o.id     AS operator_id,
        runtime,
        settings,
        is_star,
-       created_at,
+       o.created_at AS created_at,
        updated_at,
        toc.id   AS category_id,
        toc.name AS category_name
@@ -49,21 +51,21 @@ FROM t_operator_category_relation tocr
          LEFT JOIN t_operator o ON tocr.operator_id = o.id
          LEFT JOIN t_operator_category toc ON tocr.category_id = toc.id;
 
-INSERT IGNORE INTO t_operator_category(id, name, type, parent_id)
-VALUES (1, '模态', 'predefined', 0),
-       (2, '语言', 'predefined', 0),
-       (3, '文本', 'predefined', 1),
-       (4, '图片', 'predefined', 1),
-       (5, '音频', 'predefined', 1),
-       (6, '视频', 'predefined', 1),
-       (7, '多模态', 'predefined', 1),
-       (8, 'Python', 'predefined', 2),
-       (9, 'Java', 'predefined', 2),
-       (10, '来源', 'predefined', 0),
-       (11, '系统预置', 'predefined', 10),
-       (12, '用户上传', 'predefined', 10),
-       (13, '收藏状态', 'predefined', 0),
-       (14, '已收藏', 'predefined', 13);
+INSERT IGNORE INTO t_operator_category(id, name, value, type, parent_id)
+VALUES ('64465bec-b46b-11f0-8291-00155d0e4808', '模态', 'modal',  'predefined', '0'),
+       ('873000a2-65b3-474b-8ccc-4813c08c76fb', '语言', 'language', 'predefined', '0'),
+       ('d8a5df7a-52a9-42c2-83c4-01062e60f597', '文本', 'text', 'predefined', '64465bec-b46b-11f0-8291-00155d0e4808'),
+       ('de36b61c-9e8a-4422-8c31-d30585c7100f', '图片', 'image', 'predefined', '64465bec-b46b-11f0-8291-00155d0e4808'),
+       ('42dd9392-73e4-458c-81ff-41751ada47b5', '音频', 'audio', 'predefined', '64465bec-b46b-11f0-8291-00155d0e4808'),
+       ('a233d584-73c8-4188-ad5d-8f7c8dda9c27', '视频', 'video', 'predefined', '64465bec-b46b-11f0-8291-00155d0e4808'),
+       ('4d7dbd77-0a92-44f3-9056-2cd62d4a71e4', '多模态', 'multimodal', 'predefined', '64465bec-b46b-11f0-8291-00155d0e4808'),
+       ('9eda9d5d-072b-499b-916c-797a0a8750e1', 'Python', 'python', 'predefined', '873000a2-65b3-474b-8ccc-4813c08c76fb'),
+       ('b5bfc548-8ef6-417c-b8a6-a4197c078249', 'Java', 'java', 'predefined', '873000a2-65b3-474b-8ccc-4813c08c76fb'),
+       ('16e2d99e-eafb-44fc-acd0-f35a2bad28f8', '来源', 'origin', 'predefined', '0'),
+       ('96a3b07a-3439-4557-a835-525faad60ca3', '系统预置', 'predefined', 'predefined', '16e2d99e-eafb-44fc-acd0-f35a2bad28f8'),
+       ('ec2cdd17-8b93-4a81-88c4-ac9e98d10757', '用户上传', 'customized', 'predefined', '16e2d99e-eafb-44fc-acd0-f35a2bad28f8'),
+       ('d8482257-7ee6-41a0-a914-8363c7db1db0', '收藏状态', 'starStatus', 'predefined', '0'),
+       ('79f2d35a-3b6c-4846-a892-2f2015f48f24', '已收藏', 'isStar', 'predefined', 'd8482257-7ee6-41a0-a914-8363c7db1db0');
 
 INSERT IGNORE INTO t_operator
 (id, name, description, version, inputs, outputs, runtime, settings, file_name, is_star)
@@ -116,7 +118,7 @@ INSERT IGNORE INTO t_operator_category_relation(category_id, operator_id)
 SELECT c.id, o.id
 FROM t_operator_category c
 CROSS JOIN t_operator o
-WHERE c.id IN (3, 8, 11)
+WHERE c.id IN ('d8a5df7a-52a9-42c2-83c4-01062e60f597', '9eda9d5d-072b-499b-916c-797a0a8750e1', '96a3b07a-3439-4557-a835-525faad60ca3')
 AND o.id IN ('TextFormatter', 'FileWithShortOrLongLengthFilter', 'FileWithHighRepeatPhraseRateFilter',
             'FileWithHighRepeatWordRateFilter', 'FileWithHighSpecialCharRateFilter', 'FileWithManySensitiveWordsFilter',
             'DuplicateFilesFilter', 'DuplicateSentencesFilter', 'AnonymizedCreditCardNumber', 'AnonymizedIdNumber',
@@ -129,7 +131,7 @@ INSERT IGNORE INTO t_operator_category_relation(category_id, operator_id)
 SELECT c.id, o.id
 FROM t_operator_category c
        CROSS JOIN t_operator o
-WHERE c.id IN (4, 8, 11)
+WHERE c.id IN ('de36b61c-9e8a-4422-8c31-d30585c7100f', '9eda9d5d-072b-499b-916c-797a0a8750e1', '96a3b07a-3439-4557-a835-525faad60ca3')
   AND o.id IN ('ImgFormatter', 'ImgBlurredImagesCleaner', 'ImgBrightness', 'ImgContrast', 'ImgDenoise',
                'ImgDuplicatedImagesCleaner', 'ImgPerspectiveTransformation', 'ImgResize', 'ImgSaturation',
                'ImgShadowRemove', 'ImgSharpness', 'ImgSimilarImagesCleaner', 'ImgTypeUnify');
@@ -138,5 +140,5 @@ INSERT IGNORE INTO t_operator_category_relation(category_id, operator_id)
 SELECT c.id, o.id
 FROM t_operator_category c
        CROSS JOIN t_operator o
-WHERE c.id IN (7, 8, 11)
-  AND o.id IN ('FileExporter', 'UnstructuredFormatter', 'ExternalPDFFormatter');
+WHERE c.id IN ('4d7dbd77-0a92-44f3-9056-2cd62d4a71e4', '9eda9d5d-072b-499b-916c-797a0a8750e1', '96a3b07a-3439-4557-a835-525faad60ca3')
+  AND o.id IN ('FileExporter', 'UnstructuredFormatter');

@@ -10,6 +10,7 @@ import com.datamate.cleaning.domain.repository.CleaningResultRepository;
 import com.datamate.cleaning.domain.repository.CleaningTaskRepository;
 import com.datamate.cleaning.domain.repository.OperatorInstanceRepository;
 
+import com.datamate.cleaning.infrastructure.validator.CleanTaskValidator;
 import com.datamate.cleaning.interfaces.dto.CleaningProcess;
 import com.datamate.cleaning.interfaces.dto.CleaningTaskDto;
 import com.datamate.cleaning.interfaces.dto.CreateCleaningTaskRequest;
@@ -59,6 +60,8 @@ public class CleaningTaskService {
 
     private final DatasetFileApplicationService datasetFileService;
 
+    private final CleanTaskValidator cleanTaskValidator;
+
     private final String DATASET_PATH = "/dataset";
 
     private final String FLOW_PATH = "/flow";
@@ -80,6 +83,9 @@ public class CleaningTaskService {
 
     @Transactional
     public CleaningTaskDto createTask(CreateCleaningTaskRequest request) {
+        cleanTaskValidator.checkNameDuplication(request.getName());
+        cleanTaskValidator.checkInputAndOutput(request.getInstance());
+
         CreateDatasetRequest createDatasetRequest = new CreateDatasetRequest();
         createDatasetRequest.setName(request.getDestDatasetName());
         createDatasetRequest.setDatasetType(DatasetType.valueOf(request.getDestDatasetType()));

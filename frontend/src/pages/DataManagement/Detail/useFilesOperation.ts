@@ -49,7 +49,6 @@ export function useFilesOperation(dataset: Dataset) {
   };
 
   const handleDownloadFile = async (file: DatasetFile) => {
-    console.log("批量下载文件:", selectedFiles);
     // 实际导出逻辑
     await downloadFileByIdUsingGet(dataset.id, file.id, file.fileName);
     // 假设导出成功
@@ -88,7 +87,6 @@ export function useFilesOperation(dataset: Dataset) {
       return;
     }
     // 执行批量导出逻辑
-    console.log("批量导出文件:", selectedFiles);
     exportDatasetUsingPost(dataset.id, { fileIds: selectedFiles })
       .then(() => {
         message.success({

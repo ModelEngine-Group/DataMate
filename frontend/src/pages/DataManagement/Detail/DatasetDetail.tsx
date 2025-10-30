@@ -92,17 +92,12 @@ export default function DatasetDetail() {
   };
 
   useEffect(() => {
-    const refreshDataset = () => {
-      fetchDataset();
-    };
     const refreshData = () => {
       handleRefresh(false);
     };
     window.addEventListener("update:dataset", refreshData);
-    window.addEventListener("update:dataset-status", () => refreshDataset());
     return () => {
       window.removeEventListener("update:dataset", refreshData);
-      window.removeEventListener("update:dataset-status", refreshDataset);
     };
   }, []);
 

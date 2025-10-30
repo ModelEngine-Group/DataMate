@@ -43,88 +43,81 @@ paths:
               schema:
                 type: "object"
                 properties:
-                  code:
-                    type: "string"
-                    description: "状态码"
-                  message:
-                    type: "string"
-                    description: "消息"
-                  data:
-                    type: "object"
-                    properties:
-                      page:
-                        type: "integer"
-                        description: ""
-                        format: "int64"
-                      size:
-                        type: "integer"
-                        description: ""
-                        format: "int64"
-                      totalElements:
-                        type: "integer"
-                        description: ""
-                        format: "int64"
-                      totalPages:
-                        type: "integer"
-                        description: ""
-                        format: "int64"
-                      content:
-                        type: "array"
-                        description: ""
-                        items:
-                          type: "object"
-                          properties:
-                            id:
-                              type: "string"
-                              description: ""
-                            name:
-                              type: "string"
-                              description: ""
-                            description:
-                              type: "string"
-                              description: ""
-                            version:
-                              type: "string"
-                              description: ""
-                            inputs:
-                              type: "string"
-                              description: ""
-                            outputs:
-                              type: "string"
-                              description: ""
-                            categories:
-                              type: "array"
-                              description: ""
-                              items:
-                                type: "integer"
-                            runtime:
-                              type: "string"
-                              description: ""
-                            settings:
-                              type: "string"
-                              description: ""
-                            isStar:
-                              type: "boolean"
-                              description: ""
-                            createdAt:
-                              type: "string"
-                              description: ""
-                            updatedAt:
-                              type: "string"
-                              description: ""
-                          description: "OperatorResponse"
-                    description: "数据"
+                  page:
+                    type: "integer"
+                    description: ""
+                    format: "int64"
+                  size:
+                    type: "integer"
+                    description: ""
+                    format: "int64"
+                  totalElements:
+                    type: "integer"
+                    description: ""
+                    format: "int64"
+                  totalPages:
+                    type: "integer"
+                    description: ""
+                    format: "int64"
+                  content:
+                    type: "array"
+                    description: ""
+                    items:
+                      type: "object"
+                      properties:
+                        id:
+                          type: "string"
+                          description: ""
+                        name:
+                          type: "string"
+                          description: ""
+                        description:
+                          type: "string"
+                          description: ""
+                        version:
+                          type: "string"
+                          description: ""
+                        inputs:
+                          type: "string"
+                          description: ""
+                        outputs:
+                          type: "string"
+                          description: ""
+                        categories:
+                          type: "array"
+                          description: ""
+                          items:
+                            type: "string"
+                        runtime:
+                          type: "string"
+                          description: ""
+                        settings:
+                          type: "string"
+                          description: ""
+                        fileName:
+                          type: "string"
+                          description: ""
+                        isStar:
+                          type: "boolean"
+                          description: ""
+                        createdAt:
+                          type: "string"
+                          description: ""
+                        updatedAt:
+                          type: "string"
+                          description: ""
+                      description: "OperatorDto"
   /operators/{id}:
     get:
       summary: "operatorsIdGet"
       description: "operatorsIdGet"
       parameters:
-        - name: "id"
-          in: "path"
-          description: ""
-          required: true
-          schema:
-            type: "string"
+      - name: "id"
+        in: "path"
+        description: ""
+        required: true
+        schema:
+          type: "string"
       responses:
         "200":
           description: ""
@@ -133,70 +126,66 @@ paths:
               schema:
                 type: "object"
                 properties:
-                  code:
+                  id:
                     type: "string"
-                    description: "状态码"
-                  message:
+                    description: ""
+                  name:
                     type: "string"
-                    description: "消息"
-                  data:
-                    type: "object"
-                    properties:
-                      id:
-                        type: "string"
-                        description: ""
-                      name:
-                        type: "string"
-                        description: ""
-                      description:
-                        type: "string"
-                        description: ""
-                      version:
-                        type: "string"
-                        description: ""
-                      inputs:
-                        type: "string"
-                        description: ""
-                      outputs:
-                        type: "string"
-                        description: ""
-                      categories:
-                        type: "array"
-                        description: ""
-                        items:
-                          type: "integer"
-                      runtime:
-                        type: "string"
-                        description: ""
-                      settings:
-                        type: "string"
-                        description: ""
-                      isStar:
-                        type: "boolean"
-                        description: ""
-                      createdAt:
-                        type: "string"
-                        description: ""
-                      updatedAt:
-                        type: "string"
-                        description: ""
-                    description: "数据"
+                    description: ""
+                  description:
+                    type: "string"
+                    description: ""
+                  version:
+                    type: "string"
+                    description: ""
+                  inputs:
+                    type: "string"
+                    description: ""
+                  outputs:
+                    type: "string"
+                    description: ""
+                  categories:
+                    type: "array"
+                    description: ""
+                    items:
+                      type: "string"
+                  runtime:
+                    type: "string"
+                    description: ""
+                  settings:
+                    type: "string"
+                    description: ""
+                  fileName:
+                    type: "string"
+                    description: ""
+                  isStar:
+                    type: "boolean"
+                    description: ""
+                  createdAt:
+                    type: "string"
+                    description: ""
+                  updatedAt:
+                    type: "string"
+                    description: ""
     put:
       summary: "operatorsIdPut"
       description: "operatorsIdPut"
       parameters:
-        - name: "id"
-          in: "path"
-          description: ""
-          required: true
-          schema:
-            type: "string"
+      - name: "id"
+        in: "path"
+        description: ""
+        required: true
+        schema:
+          type: "string"
       requestBody:
         content:
           application/json:
             schema:
               type: "object"
               properties:
+                id:
+                  type: "string"
+                  description: ""
                 name:
                   type: "string"
                   description: ""
@@ -216,11 +205,23 @@ paths:
                   type: "array"
                   description: ""
                   items:
-                    type: "integer"
+                    type: "string"
                 runtime:
                   type: "string"
                   description: ""
                 settings:
+                  type: "string"
+                  description: ""
+                fileName:
+                  type: "string"
+                  description: ""
+                isStar:
+                  type: "boolean"
+                  description: ""
+                createdAt:
+                  type: "string"
+                  description: ""
+                updatedAt:
                   type: "string"
                   description: ""
               description: ""
@@ -232,54 +233,47 @@ paths:
               schema:
                 type: "object"
                 properties:
-                  code:
+                  id:
                     type: "string"
-                    description: "状态码"
-                  message:
+                    description: ""
+                  name:
                     type: "string"
-                    description: "消息"
-                  data:
-                    type: "object"
-                    properties:
-                      id:
-                        type: "string"
-                        description: ""
-                      name:
-                        type: "string"
-                        description: ""
-                      description:
-                        type: "string"
-                        description: ""
-                      version:
-                        type: "string"
-                        description: ""
-                      inputs:
-                        type: "string"
-                        description: ""
-                      outputs:
-                        type: "string"
-                        description: ""
-                      categories:
-                        type: "array"
-                        description: ""
-                        items:
-                          type: "integer"
-                      runtime:
-                        type: "string"
-                        description: ""
-                      settings:
-                        type: "string"
-                        description: ""
-                      isStar:
-                        type: "boolean"
-                        description: ""
-                      createdAt:
-                        type: "string"
-                        description: ""
-                      updatedAt:
-                        type: "string"
-                        description: ""
-                    description: "数据"
+                    description: ""
+                  description:
+                    type: "string"
+                    description: ""
+                  version:
+                    type: "string"
+                    description: ""
+                  inputs:
+                    type: "string"
+                    description: ""
+                  outputs:
+                    type: "string"
+                    description: ""
+                  categories:
+                    type: "array"
+                    description: ""
+                    items:
+                      type: "string"
+                  runtime:
+                    type: "string"
+                    description: ""
+                  settings:
+                    type: "string"
+                    description: ""
+                  fileName:
+                    type: "string"
+                    description: ""
+                  isStar:
+                    type: "boolean"
+                    description: ""
+                  createdAt:
+                    type: "string"
+                    description: ""
+                  updatedAt:
+                    type: "string"
+                    description: ""
   /operators/create:
     post:
       summary: "operatorsCreatePost"
@@ -312,7 +306,7 @@ paths:
                   type: "array"
                   description: ""
                   items:
-                    type: "integer"
+                    type: "string"
                 runtime:
                   type: "string"
                   description: ""
@@ -322,230 +316,13 @@ paths:
                 fileName:
                   type: "string"
                   description: ""
-              description: ""
-      responses:
-        "200":
-          description: ""
-          content:
-            application/json:
-              schema:
-                type: "object"
-                properties:
-                  code:
-                    type: "string"
-                    description: "状态码"
-                  message:
-                    type: "string"
-                    description: "消息"
-                  data:
-                    type: "object"
-                    properties:
-                      id:
-                        type: "string"
-                        description: ""
-                      name:
-                        type: "string"
-                        description: ""
-                      description:
-                        type: "string"
-                        description: ""
-                      version:
-                        type: "string"
-                        description: ""
-                      inputs:
-                        type: "string"
-                        description: ""
-                      outputs:
-                        type: "string"
-                        description: ""
-                      categories:
-                        type: "array"
-                        description: ""
-                        items:
-                          type: "integer"
-                      runtime:
-                        type: "string"
-                        description: ""
-                      settings:
-                        type: "string"
-                        description: ""
-                      isStar:
-                        type: "boolean"
-                        description: ""
-                      createdAt:
-                        type: "string"
-                        description: ""
-                      updatedAt:
-                        type: "string"
-                        description: ""
-                    description: "数据"
-  /operators/upload:
-    post:
-      summary: "operatorsUploadPost"
-      description: "operatorsUploadPost"
-      parameters:
-        - name: "description"
-          in: "query"
-          description: ""
-          required: true
-          schema:
-            type: "string"
-            nullable: false
-      requestBody:
-        content:
-          multipart/form-data:
-            schema:
-              required:
-                - "file"
-              type: "object"
-              properties:
-                file:
+                isStar:
+                  type: "boolean"
+                  description: ""
+                createdAt:
                   type: "string"
                   description: ""
-                  format: "binary"
-        required: true
-      responses:
-        "200":
-          description: ""
-          content:
-            application/json:
-              schema:
-                type: "object"
-                properties:
-                  code:
-                    type: "string"
-                    description: "状态码"
-                  message:
-                    type: "string"
-                    description: "消息"
-                  data:
-                    type: "object"
-                    properties:
-                      id:
-                        type: "string"
-                        description: ""
-                      name:
-                        type: "string"
-                        description: ""
-                      description:
-                        type: "string"
-                        description: ""
-                      version:
-                        type: "string"
-                        description: ""
-                      inputs:
-                        type: "string"
-                        description: ""
-                      outputs:
-                        type: "string"
-                        description: ""
-                      categories:
-                        type: "array"
-                        description: ""
-                        items:
-                          type: "integer"
-                      runtime:
-                        type: "string"
-                        description: ""
-                      settings:
-                        type: "string"
-                        description: ""
-                      isStar:
-                        type: "boolean"
-                        description: ""
-                      createdAt:
-                        type: "string"
-                        description: ""
-                      updatedAt:
-                        type: "string"
-                        description: ""
-                    description: "数据"
-  /labels:
-    get:
-      summary: "labelsGet"
-      description: "labelsGet"
-      parameters:
-        - name: "page"
-          in: "query"
-          description: ""
-          required: true
-          schema:
-            type: "integer"
-            nullable: false
-        - name: "size"
-          in: "query"
-          description: ""
-          required: true
-          schema:
-            type: "integer"
-            nullable: false
-        - name: "keyword"
-          in: "query"
-          description: ""
-          required: true
-          schema:
-            type: "string"
-            nullable: false
-      responses:
-        "200":
-          description: ""
-          content:
-            application/json:
-              schema:
-                type: "object"
-                properties:
-                  code:
-                    type: "string"
-                    description: "状态码"
-                  message:
-                    type: "string"
-                    description: "消息"
-                  data:
-                    type: "object"
-                    properties:
-                      page:
-                        type: "integer"
-                        description: ""
-                        format: "int64"
-                      size:
-                        type: "integer"
-                        description: ""
-                        format: "int64"
-                      totalElements:
-                        type: "integer"
-                        description: ""
-                        format: "int64"
-                      totalPages:
-                        type: "integer"
-                        description: ""
-                        format: "int64"
-                      content:
-                        type: "array"
-                        description: ""
-                        items:
-                          type: "object"
-                          properties:
-                            id:
-                              type: "string"
-                              description: ""
-                            name:
-                              type: "string"
-                              description: ""
-                          description: "com.datamate.operator.interfaces.dto.Label"
-                    description: "数据"
-    post:
-      summary: "labelsPost"
-      description: "labelsPost"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: "object"
-              properties:
-                id:
-                  type: "string"
-                  description: ""
-                name:
+                updatedAt:
                   type: "string"
                   description: ""
               description: ""
@@ -555,36 +332,6 @@ paths:
           content:
             application/json:
               schema:
-                type: "object"
-                properties:
-                  code:
-                    type: "string"
-                    description: "状态码"
-                  message:
-                    type: "string"
-                    description: "消息"
-                  data:
-                    type: "object"
-                    properties: {}
-                    description: "数据"
-  /labels/{id}:
-    put:
-      summary: "labelsIdPut"
-      description: "labelsIdPut"
-      parameters:
-        - name: "id"
-          in: "path"
-          description: ""
-          required: true
-          schema:
-            type: "string"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: "array"
-              description: ""
-              items:
                 type: "object"
                 properties:
                   id:
@@ -593,6 +340,73 @@ paths:
                   name:
                     type: "string"
                     description: ""
+                  description:
+                    type: "string"
+                    description: ""
+                  version:
+                    type: "string"
+                    description: ""
+                  inputs:
+                    type: "string"
+                    description: ""
+                  outputs:
+                    type: "string"
+                    description: ""
+                  categories:
+                    type: "array"
+                    description: ""
+                    items:
+                      type: "string"
+                  runtime:
+                    type: "string"
+                    description: ""
+                  settings:
+                    type: "string"
+                    description: ""
+                  fileName:
+                    type: "string"
+                    description: ""
+                  isStar:
+                    type: "boolean"
+                    description: ""
+                  createdAt:
+                    type: "string"
+                    description: ""
+                  updatedAt:
+                    type: "string"
+                    description: ""
+  /operators/upload:
+    post:
+      summary: "operatorsUploadPost"
+      description: "operatorsUploadPost"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: "object"
+              properties:
+                reqId:
+                  type: "string"
+                  description: "预上传返回的id，用来确认同一个任务"
+                fileNo:
+                  type: "integer"
+                  description: "文件编号，用于标识批量上传中的第几个文件"
+                fileName:
+                  type: "string"
+                  description: "文件名称"
+                totalChunkNum:
+                  type: "integer"
+                  description: "文件总分块数量"
+                chunkNo:
+                  type: "integer"
+                  description: "当前分块编号，从1开始"
+                file:
+                  type: "string"
+                  description: "上传的文件分块内容"
+                checkSumHex:
+                  type: "string"
+                  description: "文件分块的校验和（十六进制字符串），用于验证文件完整性"
+              description: ""
       responses:
         "200":
           description: ""
@@ -601,99 +415,96 @@ paths:
               schema:
                 type: "object"
                 properties:
-                  code:
+                  id:
                     type: "string"
-                    description: "状态码"
-                  message:
+                    description: ""
+                  name:
                     type: "string"
-                    description: "消息"
-                  data:
-                    type: "object"
-                    properties: {}
-                    description: "数据"
-  /categories/tree:
-    get:
-      summary: "categoryTreeGet"
-      description: "categoryTreeGet"
+                    description: ""
+                  description:
+                    type: "string"
+                    description: ""
+                  version:
+                    type: "string"
+                    description: ""
+                  inputs:
+                    type: "string"
+                    description: ""
+                  outputs:
+                    type: "string"
+                    description: ""
+                  categories:
+                    type: "array"
+                    description: ""
+                    items:
+                      type: "string"
+                  runtime:
+                    type: "string"
+                    description: ""
+                  settings:
+                    type: "string"
+                    description: ""
+                  fileName:
+                    type: "string"
+                    description: ""
+                  isStar:
+                    type: "boolean"
+                    description: ""
+                  createdAt:
+                    type: "string"
+                    description: ""
+                  updatedAt:
+                    type: "string"
+                    description: ""
+  /operators/upload/pre-upload:
+    post:
+      summary: "preUpload"
+      description: "preUpload"
       responses:
         "200":
           description: ""
           content:
             application/json:
               schema:
-                type: "object"
-                properties:
-                  code:
-                    type: "string"
-                    description: "状态码"
-                  message:
-                    type: "string"
-                    description: "消息"
-                  data:
-                    type: "object"
-                    properties:
-                      page:
-                        type: "integer"
-                        description: ""
-                        format: "int64"
-                      size:
-                        type: "integer"
-                        description: ""
-                        format: "int64"
-                      totalElements:
-                        type: "integer"
-                        description: ""
-                        format: "int64"
-                      totalPages:
-                        type: "integer"
-                        description: ""
-                        format: "int64"
-                      content:
-                        type: "array"
-                        description: ""
-                        items:
-                          type: "object"
-                          properties:
-                            id:
-                              type: "integer"
-                              description: ""
-                            name:
-                              type: "string"
-                              description: ""
-                            count:
-                              type: "integer"
-                              description: ""
-                            categories:
-                              type: "array"
-                              description: ""
-                              items:
-                                type: "object"
-                                properties:
-                                  id:
-                                    type: "integer"
-                                    description: ""
-                                    format: "int64"
-                                  name:
-                                    type: "string"
-                                    description: ""
-                                  count:
-                                    type: "integer"
-                                    description: ""
-                                    format: "int64"
-                                  type:
-                                    type: "string"
-                                    description: ""
-                                  parentId:
-                                    type: "integer"
-                                    description: ""
-                                    format: "int64"
-                                description: "com.datamate.operator.interfaces.dto.SubCategory"
-                              default: "new ArrayList<>()"
-                          description: "com.datamate.operator.interfaces.dto.CategoryTreeResponse"
-                    description: "数据"
+                type: "string"
+  /operators/upload/chunk:
+    post:
+      summary: "chunkUpload"
+      description: "chunkUpload"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: "object"
+              properties:
+                reqId:
+                  type: "string"
+                  description: "预上传返回的id，用来确认同一个任务"
+                fileNo:
+                  type: "integer"
+                  description: "文件编号，用于标识批量上传中的第几个文件"
+                fileName:
+                  type: "string"
+                  description: "文件名称"
+                totalChunkNum:
+                  type: "integer"
+                  description: "文件总分块数量"
+                chunkNo:
+                  type: "integer"
+                  description: "当前分块编号，从1开始"
+                file:
+                  type: "string"
+                  description: "上传的文件分块内容"
+                checkSumHex:
+                  type: "string"
+                  description: "文件分块的校验和（十六进制字符串），用于验证文件完整性"
+              description: ""
+      responses:
+        "200":
+          description: "No Content"
 components:
   schemas:
-    OperatorResponse:
+    OperatorDto:
       type: "object"
       properties:
         id:
@@ -718,11 +529,14 @@ components:
           type: "array"
           description: ""
           items:
-            type: "integer"
+            type: "string"
         runtime:
           type: "string"
           description: ""
         settings:
+          type: "string"
+          description: ""
+        fileName:
           type: "string"
           description: ""
         isStar:
@@ -734,79 +548,4 @@ components:
         updatedAt:
           type: "string"
           description: ""
-      description: "数据"
-    com.datamate.operator.interfaces.dto.Label:
-      type: "object"
-      properties:
-        id:
-          type: "string"
-          description: ""
-        name:
-          type: "string"
-          description: ""
-      description: "com.datamate.operator.interfaces.dto.Label"
-    java.lang.Object:
-      type: "object"
-      properties: {}
-      description: "数据"
-    com.datamate.operator.interfaces.dto.SubCategory:
-      type: "object"
-      properties:
-        id:
-          type: "integer"
-          description: ""
-          format: "int64"
-        name:
-          type: "string"
-          description: ""
-        count:
-          type: "integer"
-          description: ""
-          format: "int64"
-        type:
-          type: "string"
-          description: ""
-        parentId:
-          type: "integer"
-          description: ""
-          format: "int64"
-      description: "com.datamate.operator.interfaces.dto.SubCategory"
-    com.datamate.operator.interfaces.dto.CategoryTreeResponse:
-      type: "object"
-      properties:
-        id:
-          type: "integer"
-          description: ""
-        name:
-          type: "string"
-          description: ""
-        count:
-          type: "integer"
-          description: ""
-        categories:
-          type: "array"
-          description: ""
-          items:
-            type: "object"
-            properties:
-              id:
-                type: "integer"
-                description: ""
-                format: "int64"
-              name:
-                type: "string"
-                description: ""
-              count:
-                type: "integer"
-                description: ""
-                format: "int64"
-              type:
-                type: "string"
-                description: ""
-              parentId:
-                type: "integer"
-                description: ""
-                format: "int64"
-            description: "com.datamate.operator.interfaces.dto.SubCategory"
-          default: "new ArrayList<>()"
-      description: "com.datamate.operator.interfaces.dto.CategoryTreeResponse"
+      description: "OperatorDto"
