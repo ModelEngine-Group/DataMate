@@ -51,11 +51,11 @@ export default function DatasetManagementPage() {
         },
         {
           title: "文件总数",
-          value: data?.totalFiles || "0 MB",
+          value: data?.totalFiles || 0,
         },
         {
           title: "总大小",
-          value: formatBytes(data?.totalSize) || 0,
+          value: formatBytes(data?.totalSize) || '0 B',
         },
       ],
       count: [

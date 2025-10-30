@@ -12,7 +12,7 @@ build: backend-docker-build frontend-docker-build runtime-docker-build
 
 .PHONY: create-namespace
 create-namespace:
-	@kubectl get namespace $(NAMESPACE) > /dev/null 2>&1 || kubectl create namespace $(NAMESPACE)
+	kubectl get namespace $(NAMESPACE) > /dev/null 2>&1 || kubectl create namespace $(NAMESPACE)
 
 .PHONY: install-%
 install-%:
@@ -73,37 +73,61 @@ runtime-docker-build:
 label-studio-adapter-docker-build:
 	docker build -t label-studio-adapter:$(VERSION) . -f scripts/images/label-studio-adapter/Dockerfile
 
+.PHONY: deer-flow-docker-build
+deer-flow-docker-build:
+	@if [ -d "../deer-flow/.git" ]; then \
+		cd ../deer-flow && git pull; \
+	else \
+		git clone git@github.com:bytedance/deer-flow.git ../deer-flow; \
+	fi
+	sed -i "s/dark/light/g" "../deer-flow/web/src/components/deer-flow/theme-provider-wrapper.tsx"
+	cp deployment/docker/deer-flow/.env.example ../deer-flow/.env
+	cp deployment/docker/deer-flow/conf.yaml.example ../deer-flow/conf.yaml
+	cd ../deer-flow && docker compose build
+
 .PHONY: backend-docker-install
 backend-docker-install:
-	cd deployment/docker/datamate && docker-compose up -d backend
+	cd deployment/docker/datamate && docker compose up -d backend
 
 .PHONY: backend-docker-uninstall
 backend-docker-uninstall:
-	cd deployment/docker/datamate && docker-compose down backend
+	cd deployment/docker/datamate && docker compose down backend
 
 .PHONY: frontend-docker-install
 frontend-docker-install:
-	cd deployment/docker/datamate && docker-compose up -d frontend
+	cd deployment/docker/datamate && docker compose up -d frontend
 
 .PHONY: frontend-docker-uninstall
 frontend-docker-uninstall:
-	cd deployment/docker/datamate && docker-compose down frontend
+	cd deployment/docker/datamate && docker compose down frontend
 
 .PHONY: runtime-docker-install
 runtime-docker-install:
-	cd deployment/docker/datamate && docker-compose up -d runtime
+	cd deployment/docker/datamate && docker compose up -d runtime
 
 .PHONY: runtime-docker-uninstall
 runtime-docker-uninstall:
-	cd deployment/docker/datamate && docker-compose down runtime
+	cd deployment/docker/datamate && docker compose down runtime
 
 .PHONY: datamate-docker-install
 datamate-docker-install:
-	cd deployment/docker/datamate && docker-compose up -d
+	cd deployment/docker/datamate && cp .env.example .env && docker compose -f docker-compose.yml up -d
 
 .PHONY: datamate-docker-uninstall
 datamate-docker-uninstall:
-	cd deployment/docker/datamate && docker-compose down
+	cd deployment/docker/datamate && docker compose -f docker-compose.yml down
+
+.PHONY: deer-flow-docker-install
+deer-flow-docker-install:
+	cd deployment/docker/datamate && cp .env.deer-flow.example .env && docker compose -f docker-compose.yml up -d
+	cd deployment/docker/deer-flow && cp .env.example .env && cp conf.yaml.example conf.yaml && docker compose -f docker-compose.yml up -d
+
+.PHONY: deer-flow-docker-uninstall
+deer-flow-docker-uninstall:
+	@if docker compose ls --filter name=datamate | grep -q datamate; then \
+		cd deployment/docker/datamate && docker compose -f docker-compose.yml up -d; \
+	fi
+	cd deployment/docker/deer-flow && docker compose -f docker-compose.yml down
 
 .PHONY: datamate-k8s-install
 datamate-k8s-install: create-namespace

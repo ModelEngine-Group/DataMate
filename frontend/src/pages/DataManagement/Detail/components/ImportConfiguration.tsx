@@ -152,40 +152,6 @@ export default function ImportConfiguration({
           </Form.Item>
         )}
 
-        {/* nas import */}
-        {importConfig?.source === DataSource.NAS && (
-          <div className="grid grid-cols-2 gap-3 p-4 bg-blue-50 rounded-lg">
-            <Form.Item
-              name="nasPath"
-              rules={[{ required: true }]}
-              label="NAS地址"
-            >
-              <Input placeholder="192.168.1.100" />
-            </Form.Item>
-            <Form.Item
-              name="sharePath"
-              rules={[{ required: true }]}
-              label="共享路径"
-            >
-              <Input placeholder="/share/importConfig" />
-            </Form.Item>
-            <Form.Item
-              name="username"
-              rules={[{ required: true }]}
-              label="用户名"
-            >
-              <Input placeholder="用户名" />
-            </Form.Item>
-            <Form.Item
-              name="password"
-              rules={[{ required: true }]}
-              label="密码"
-            >
-              <Input type="password" placeholder="密码" />
-            </Form.Item>
-          </div>
-        )}
-
         {/* obs import */}
         {importConfig?.source === DataSource.OBS && (
           <div className="grid grid-cols-2 gap-3 p-4 bg-blue-50 rounded-lg">

@@ -2,9 +2,7 @@ package com.datamate.common.models.domain.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.datamate.common.domain.model.base.BaseEntity;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 /**
  * 模型配置实体类
@@ -16,6 +14,9 @@ import lombok.Setter;
 @Setter
 @TableName("t_model_config")
 @Builder
+@ToString
+@NoArgsConstructor
+@AllArgsConstructor
 public class ModelConfig extends BaseEntity<String> {
     /**
      * 模型名称（如 qwen2）

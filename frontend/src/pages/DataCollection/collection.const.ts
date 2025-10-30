@@ -1,4 +1,9 @@
-import { LogStatus, SyncMode, TaskStatus, TriggerType } from "./collection.model";
+import {
+  LogStatus,
+  SyncMode,
+  TaskStatus,
+  TriggerType,
+} from "./collection.model";
 
 export const StatusMap: Record<
   TaskStatus,
@@ -67,3 +72,10 @@ export const LogTriggerTypeMap: Record<
   [TriggerType.SCHEDULED]: { label: "定时", value: TriggerType.SCHEDULED },
   [TriggerType.API]: { label: "API", value: TriggerType.API },
 };
+
+export function mapCollectionTask(task: CollectionTask): CollectionTask {
+  return {
+    ...task,
+    status: StatusMap[task.status],
+  };
+}

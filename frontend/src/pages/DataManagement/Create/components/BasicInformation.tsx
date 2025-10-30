@@ -23,6 +23,7 @@ export default function BasicInformation({
 
   // 获取标签
   const fetchTags = async () => {
+    if (hidden.includes("tags")) return;
     try {
       const { data } = await queryDatasetTagsUsingGet();
       const customTags = data.map((tag) => ({
@@ -47,9 +48,11 @@ export default function BasicInformation({
       >
         <Input placeholder="输入数据集名称" />
       </Form.Item>
-      <Form.Item name="description" label="描述">
-        <Input.TextArea placeholder="描述数据集的用途和内容" rows={3} />
-      </Form.Item>
+      {!hidden.includes("description") && (
+        <Form.Item name="description" label="描述">
+          <Input.TextArea placeholder="描述数据集的用途和内容" rows={3} />
+        </Form.Item>
+      )}
 
       {/* 数据集类型选择 - 使用卡片形式 */}
       {!hidden.includes("datasetType") && (
@@ -65,14 +68,16 @@ export default function BasicInformation({
           />
         </Form.Item>
       )}
-      <Form.Item name="tags" label="标签">
-        <Select
-          className="w-full"
-          mode="tags"
-          options={tagOptions}
-          placeholder="请选择标签"
-        />
-      </Form.Item>
+      {!hidden.includes("tags") && (
+        <Form.Item label="标签" name="tags">
+          <Select
+            className="w-full"
+            mode="tags"
+            options={tagOptions}
+            placeholder="请选择标签"
+          />
+        </Form.Item>
+      )}
     </>
   );
 }
