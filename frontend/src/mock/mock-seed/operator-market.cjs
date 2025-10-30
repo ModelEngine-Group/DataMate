@@ -34,6 +34,32 @@ function labelItem() {
 const labelList = new Array(50).fill(null).map(labelItem);
 
 module.exports = function (router) {
+  router.post(API.preUploadOperatorUsingPost, (req, res) => {
+    res.status(201).send(Mock.Random.guid());
+  });
+
+  // 上传切片
+  router.post(API.uploadFileChunkUsingPost, (req, res) => {
+    // res.status(500).send({ message: "Simulated upload failure" });
+    res.status(201).send({ data: "success" });
+  });
+
+  // 取消上传
+  router.put(API.cancelUploadOperatorUsingPut, (req, res) => {
+    res.status(201).send({ data: "success" });
+  });
+
+  router.post(API.uploadOperatorUsingPost, (req, res) => {
+    res.status(201).send({
+      code: "0",
+      msg: "Upload successful",
+      data: {
+        operatorId: Mock.Random.guid().replace(/[^a-zA-Z0-9]/g, ""),
+        // 其他返回数据
+      },
+    });
+  });
+
   // 获取算子标签列表
   router.get(API.queryLabelsUsingGet, (req, res) => {
     const { page = 0, size = 20, keyword = "" } = req.query;

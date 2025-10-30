@@ -1,4 +1,4 @@
-import { Button, Steps } from "antd";
+import { Button, App, Steps } from "antd";
 import {
   ArrowLeft,
   CheckCircle,
@@ -6,121 +6,101 @@ import {
   TagIcon,
   Upload,
 } from "lucide-react";
-import { useNavigate } from "react-router";
-import { useCallback, useState } from "react";
+import { useNavigate, useParams } from "react-router";
+import { useEffect, useState } from "react";
 import UploadStep from "./components/UploadStep";
 import ParsingStep from "./components/ParsingStep";
 import ConfigureStep from "./components/ConfigureStep";
 import PreviewStep from "./components/PreviewStep";
-
-interface ParsedOperatorInfo {
-  name: string;
-  version: string;
-  description: string;
-  author: string;
-  category: string;
-  modality: string[];
-  type: "preprocessing" | "training" | "inference" | "postprocessing";
-  framework: string;
-  language: string;
-  size: string;
-  dependencies: string[];
-  inputFormat: string[];
-  outputFormat: string[];
-  performance: {
-    accuracy?: number;
-    speed: string;
-    memory: string;
-  };
-  documentation?: string;
-  examples?: string[];
-}
+import { useFileSliceUpload } from "@/hooks/useSliceUpload";
+import {
+  createOperatorUsingPost,
+  preUploadOperatorUsingPost,
+  queryOperatorByIdUsingGet,
+  updateOperatorByIdUsingPut,
+  uploadOperatorChunkUsingPost,
+  uploadOperatorUsingPost,
+} from "../operator.api";
+import { sliceFile } from "@/utils/file.util";
 
 export default function OperatorPluginCreate() {
   const navigate = useNavigate();
+  const { id } = useParams();
+  const { message } = App.useApp();
   const [uploadStep, setUploadStep] = useState<
     "upload" | "parsing" | "configure" | "preview"
   >("upload");
   const [isUploading, setIsUploading] = useState(false);
-  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
-  const [parseProgress, setParseProgress] = useState(0);
-  const [parsedInfo, setParsedInfo] = useState<ParsedOperatorInfo | null>(null);
+  const [parsedInfo, setParsedInfo] = useState({});
   const [parseError, setParseError] = useState<string | null>(null);
+
+  const { handleUpload, createTask, taskList } = useFileSliceUpload(
+    {
+      preUpload: preUploadOperatorUsingPost,
+      uploadChunk: uploadOperatorChunkUsingPost,
+      cancelUpload: null,
+    },
+    false
+  );
+
   // 模拟文件上传
-  const handleFileUpload = useCallback((files: FileList) => {
+  const handleFileUpload = async (files: FileList) => {
     setIsUploading(true);
     setParseError(null);
-
-    // 模拟文件上传过程
-    setTimeout(() => {
-      const fileArray = Array.from(files).map((file) => ({
-        name: file.name,
-        size: file.size,
-        type: file.type,
-      }));
-      setUploadedFiles(fileArray);
-      setIsUploading(false);
-      setUploadStep("parsing");
-      startParsing();
-    }, 1000);
-  }, []);
-
-  // 模拟解析过程
-  const startParsing = useCallback(() => {
-    setParseProgress(0);
-    const interval = setInterval(() => {
-      setParseProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          // 模拟解析完成
-          setTimeout(() => {
-            setParsedInfo({
-              name: "图像预处理算子",
-              version: "1.2.0",
-              description:
-                "支持图像缩放、裁剪、旋转、颜色空间转换等常用预处理操作，优化了内存使用和处理速度",
-              author: "当前用户",
-              category: "图像处理",
-              modality: ["image"],
-              type: "preprocessing",
-              framework: "PyTorch",
-              language: "Python",
-              size: "2.3MB",
-              dependencies: [
-                "opencv-python>=4.5.0",
-                "pillow>=8.0.0",
-                "numpy>=1.20.0",
-              ],
-              inputFormat: ["jpg", "png", "bmp", "tiff"],
-              outputFormat: ["jpg", "png", "tensor"],
-              performance: {
-                accuracy: 99.5,
-                speed: "50ms/image",
-                memory: "128MB",
-              },
-              documentation:
-                "# 图像预处理算子\n\n这是一个高效的图像预处理算子...",
-              examples: [
-                "from operator import ImagePreprocessor\nprocessor = ImagePreprocessor()\nresult = processor.process(image)",
-              ],
-            });
-            setUploadStep("configure");
-          }, 500);
-          return 100;
-        }
-        return prev + 10;
+    setUploadStep("parsing");
+    try {
+      const fileName = files[0].name;
+      await handleUpload({
+        task: createTask({
+          dataset: { id: "operator-upload", name: "上传算子" },
+        }),
+        files: [
+          {
+            originFile: files[0],
+            slices: sliceFile(files[0]),
+            name: fileName,
+            size: files[0].size,
+          },
+        ], // 假设只上传一个文件
       });
-    }, 200);
-  }, []);
-
-  const handlePublish = () => {
-    // 模拟发布过程
-    setUploadStep("preview");
-    setTimeout(() => {
-      alert("算子发布成功！");
-      // 这里可以重置状态或跳转到其他页面
-    }, 2000);
+      setParsedInfo({ ...parsedInfo, fileName, percent: 100 }); // 上传完成，进度100%
+      // 解析文件过程
+      const res = await uploadOperatorUsingPost({ fileName });
+      setParsedInfo({ ...parsedInfo, ...res.data });
+    } catch (err) {
+      setParseError("文件解析失败，" + err.data.message);
+    } finally {
+      setIsUploading(false);
+      setUploadStep("configure");
+    }
   };
+
+  const handlePublish = async () => {
+    try {
+      if (id) {
+        await updateOperatorByIdUsingPut(id, parsedInfo!);
+      } else {
+        await createOperatorUsingPost(parsedInfo);
+      }
+      setUploadStep("preview");
+    } catch (err) {
+      message.error("算子发布失败，" + err.data.message);
+    }
+  };
+
+  const onFetchOperator = async (operatorId: string) => {
+    // 编辑模式，加载已有算子信息逻辑待实现
+    const { data } = await queryOperatorByIdUsingGet(operatorId);
+    setParsedInfo(data);
+    setUploadStep("configure");
+  };
+
+  useEffect(() => {
+    if (id) {
+      // 编辑模式，加载已有算子信息逻辑待实现
+      onFetchOperator(id);
+    }
+  }, [id]);
 
   return (
     <div className="flex-overflow-auto bg-gray-50">
@@ -174,13 +154,13 @@ export default function OperatorPluginCreate() {
           )}
           {uploadStep === "parsing" && (
             <ParsingStep
-              parseProgress={parseProgress}
-              uploadedFiles={uploadedFiles}
+              parseProgress={taskList[0]?.percent || parsedInfo.percent || 0}
+              uploadedFiles={taskList}
             />
           )}
           {uploadStep === "configure" && (
             <ConfigureStep
-              setUploadStep={setUploadStep}
+              setParsedInfo={setParsedInfo}
               parseError={parseError}
               parsedInfo={parsedInfo}
             />
@@ -192,7 +172,6 @@ export default function OperatorPluginCreate() {
         {uploadStep === "configure" && (
           <div className="flex justify-end gap-3 mt-8">
             <Button onClick={() => setUploadStep("upload")}>重新上传</Button>
-            <Button onClick={() => setUploadStep("preview")}>预览</Button>
             <Button type="primary" onClick={handlePublish}>
               发布算子
             </Button>

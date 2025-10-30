@@ -1,0 +1,16 @@
+name: '外部PDF文本抽取'
+name_en: 'External PDF Text Extraction'
+description: '基于外部API，抽取PDF中的文本。'
+description_en: 'Extracts text from PDF files based on external APIs.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'ExternalPDFFormatter'
+version: '1.0.0'
+types:
+  - 'collect'
+modal: 'text'
+effect:
+  before: ''
+  after: ''
+inputs: 'text'
+outputs: 'text'

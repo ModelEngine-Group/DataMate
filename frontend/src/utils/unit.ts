@@ -79,6 +79,7 @@ export const formatDuration = (seconds: number): string => {
 };
 
 export const formatNumber = (num: number): string => {
+  if (!num && num !== 0) return "0";
   if (num >= 1e9) {
     return (num / 1e9).toFixed(2).replace(/\.?0+$/, "") + "B";
   } else if (num >= 1e6) {
