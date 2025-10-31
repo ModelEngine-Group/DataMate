@@ -167,13 +167,5 @@ datamate:
 
   # RAG配置
   rag:
-    embedding:
-      model: ${RAG_EMBEDDING_MODEL:text-embedding-ada-002}
-      api-key: ${RAG_API_KEY:}
-      dimension: ${RAG_DIMENSION:1536}
-    chunk:
-      size: ${RAG_CHUNK_SIZE:512}
-      overlap: ${RAG_CHUNK_OVERLAP:50}
-    retrieval:
-      top-k: ${RAG_TOP_K:5}
-      score-threshold: ${RAG_SCORE_THRESHOLD:0.7}
+    milvus-host: ${MILVUS_HOST:milvus-standalone}
+    milvus-port: ${MILVUS_PORT:19530}

@@ -76,6 +76,13 @@
                 <scope>import</scope>
             </dependency>
             <dependency>
+                <groupId>com.google.protobuf</groupId>
+                <artifactId>protobuf-bom</artifactId>
+                <version>3.25.5</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
                 <groupId>org.springframework.cloud</groupId>
                 <artifactId>spring-cloud-dependencies</artifactId>
                 <version>${spring-cloud.version}</version>
@@ -163,12 +170,6 @@
                     <artifactId>spring-boot-starter-logging</artifactId>
                 </exclusion>
             </exclusions>
-        </dependency>
-
-        <dependency>
-          <groupId>org.springframework.ai</groupId>
-          <artifactId>spring-ai-starter-mcp-server-webmvc</artifactId>
-          <version>${spring-ai.version}</version>
         </dependency>
 
         <dependency>

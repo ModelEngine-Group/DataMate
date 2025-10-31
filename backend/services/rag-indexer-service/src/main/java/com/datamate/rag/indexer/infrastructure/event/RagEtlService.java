@@ -23,12 +23,11 @@ import dev.langchain4j.data.document.transformer.jsoup.HtmlToTextDocumentTransfo
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.embedding.EmbeddingModel;
-import dev.langchain4j.model.output.Response;
 import dev.langchain4j.store.embedding.EmbeddingStore;
 import dev.langchain4j.store.embedding.milvus.MilvusEmbeddingStore;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionPhase;
@@ -52,6 +51,11 @@ import java.util.concurrent.Semaphore;
 public class RagEtlService {
     private static final Semaphore SEMAPHORE = new Semaphore(10);
 
+    @Value("${datamate.rag.milvus-host}")
+    private String milvusHost;
+    @Value("${datamate.rag.milvus-port}")
+    private int milvusPort;
+
     private final RagFileRepository ragFileRepository;
 
     private final DatasetFileRepository datasetFileRepository;
@@ -64,7 +68,7 @@ public class RagEtlService {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void processAfterCommit(DataInsertedEvent event) {
         // 执行 RAG 处理流水线
-        List<RagFile> ragFiles = ragFileRepository.findByKnowledgeBaseId(event.knowledgeBaseId());
+        List<RagFile> ragFiles = ragFileRepository.findByKnowledgeBaseId(event.knowledgeBase().getId());
 
         ragFiles.forEach(ragFile -> {
                     try {
@@ -74,12 +78,13 @@ public class RagEtlService {
                                 // 执行 RAG 处理流水线
                                 ragFile.setStatus(FileStatus.PROCESSING);
                                 ragFileRepository.updateById(ragFile);
-                                processRagFile(ragFile, event.processType());
+                                processRagFile(ragFile, event);
                                 // 更新文件状态为已处理
                                 ragFile.setStatus(FileStatus.PROCESSED);
                                 ragFileRepository.updateById(ragFile);
                             } catch (Exception e) {
                                 // 处理异常
+                                log.error("Error processing RAG file: {}", ragFile.getFileId(), e);
                                 ragFile.setStatus(FileStatus.PROCESS_FAILED);
                                 ragFileRepository.updateById(ragFile);
                             } finally {
@@ -93,7 +98,7 @@ public class RagEtlService {
         );
     }
 
-    private void processRagFile(RagFile ragFile, ProcessType processType) {
+    private void processRagFile(RagFile ragFile, DataInsertedEvent event) {
         DatasetFile file = datasetFileRepository.getById(ragFile.getFileId());
         // 使用文档解析器解析文档
         DocumentParser parser = documentParser(file.getFileType());
@@ -101,10 +106,10 @@ public class RagEtlService {
         Document document = FileSystemDocumentLoader.loadDocument(file.getFilePath(), parser);
         // 对html文档进行转换
         if (Arrays.asList("html", "htm").contains(file.getFileType().toLowerCase())) {
-            document= new HtmlToTextDocumentTransformer().transform(document);
+            document = new HtmlToTextDocumentTransformer().transform(document);
         }
         // 使用文档分块器对文档进行分块
-        DocumentSplitter splitter = documentSplitter(processType);
+        DocumentSplitter splitter = documentSplitter(event.processType());
         List<TextSegment> split = splitter.split(document);
 
         // 更新分块数量
@@ -112,12 +117,12 @@ public class RagEtlService {
         ragFileRepository.updateById(ragFile);
 
         // 调用模型客户端获取嵌入模型
-        ModelConfig model = modelConfigRepository.getById("1");
+        ModelConfig model = modelConfigRepository.getById(event.knowledgeBase().getEmbeddingModel());
         EmbeddingModel embeddingModel = ModelClient.invokeEmbeddingModel(model);
         // 调用嵌入模型获取嵌入向量
-        Response<@NotNull List<Embedding>> response = embeddingModel.embedAll(split);
+        List<Embedding> content = embeddingModel.embedAll(split).content();
         // 存储嵌入向量到 Milvus
-        embeddingStore().addAll(response.content(), split);
+        embeddingStore(embeddingModel, ragFile.getKnowledgeBaseId()).addAll(content, split);
     }
 
     /**
@@ -139,19 +144,20 @@ public class RagEtlService {
 
     public DocumentSplitter documentSplitter(ProcessType processType) {
         return switch (processType) {
-            case CHAPTER_CHUNK -> new DocumentByParagraphSplitter(1000, 100);
-            case PARAGRAPH_CHUNK -> new DocumentByLineSplitter(1000, 100);
-            case LENGTH_CHUNK -> new DocumentBySentenceSplitter(1000, 100);
-            case CUSTOM_SEPARATOR_CHUNK -> new DocumentByWordSplitter(1000, 100);
-            case DEFAULT_CHUNK -> new DocumentByRegexSplitter("\\n\\n", "",1000, 100);
+            case PARAGRAPH_CHUNK -> new DocumentByParagraphSplitter(1000, 100);
+            case CHAPTER_CHUNK -> new DocumentByLineSplitter(1000, 100);
+            case CUSTOM_SEPARATOR_CHUNK -> new DocumentBySentenceSplitter(1000, 100);
+            case LENGTH_CHUNK -> new DocumentByWordSplitter(1000, 100);
+            case DEFAULT_CHUNK -> new DocumentByLineSplitter(1000, 100);
         };
     }
 
-    public EmbeddingStore<TextSegment> embeddingStore() {
+    public EmbeddingStore<TextSegment> embeddingStore(EmbeddingModel embeddingModel, String knowledgeBaseId) {
         return MilvusEmbeddingStore.builder()
-                .uri("http://milvus:19530")
-                .collectionName("rag_embeddings")
-                .dimension(1536)
+                .host(milvusHost)
+                .port(milvusPort)
+                .collectionName("datamate_" + knowledgeBaseId)
+                .dimension(embeddingModel.dimension())
                 .build();
     }
 }
