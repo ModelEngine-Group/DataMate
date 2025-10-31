@@ -53,7 +53,7 @@ export default function TaskUpload() {
               ></Button>
             </div>
 
-            <Progress size="small" percent={Number(task.percent.toFixed(2))} />
+            <Progress size="small" percent={task.percent} />
           </div>
         ))}
       {taskList.length === 0 && (

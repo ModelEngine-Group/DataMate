@@ -89,6 +89,7 @@ export function ListView({ operators = [], pagination, operations }) {
                 size="small"
                 title={operation.label}
                 icon={operation.icon}
+                danger={operation.danger}
                 onClick={() => operation.onClick(operator)}
               />
             )),
@@ -117,12 +118,12 @@ export function ListView({ operators = [], pagination, operations }) {
             description={
               <div className="space-y-2">
                 <div className="text-gray-600 ">{operator.description}</div>
-                <div className="flex items-center gap-4 text-xs text-gray-500">
+                {/* <div className="flex items-center gap-4 text-xs text-gray-500">
                   <span>作者: {operator.author}</span>
                   <span>类型: {operator.type}</span>
                   <span>框架: {operator.framework}</span>
                   <span>使用次数: {operator?.usage?.toLocaleString()}</span>
-                </div>
+                </div> */}
               </div>
             }
           />

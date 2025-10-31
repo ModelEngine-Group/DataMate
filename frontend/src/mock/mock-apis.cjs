@@ -120,10 +120,11 @@ const MockAPI = {
   queryKnowledgeBaseByIdUsingGet: "/knowledge-base/:baseId", // 根据ID获取知识库详情
   updateKnowledgeBaseByIdUsingPut: "/knowledge-base/:baseId", // 更新知识库
   deleteKnowledgeBaseByIdUsingDelete: "/knowledge-base/:baseId", // 删除知识库
-  queryKnowledgeGenerationTasksUsingPost: "/knowledge-base/tasks", // 获取知识生成任务列表
-  addKnowledgeGenerationFilesUsingPost: "/knowledge-base/:baseId/files", // 添加文件到知识库
-  queryKnowledgeGenerationFilesByIdUsingGet: "/knowledge-base/:baseId/files/:fileId", // 根据ID获取知识生成文件详情
-  deleteKnowledgeGenerationTaskByIdUsingDelete: "/knowledge-base/:baseId/files", // 删除知识生成文件
+  addKnowledgeBaseFilesUsingPost: "/knowledge-base/:baseId/files", // 添加文件到知识库
+  queryKnowledgeBaseFilesGet: "/knowledge-base/:baseId/files", // 根据ID获取知识生成文件列表
+  queryKnowledgeBaseFilesByIdUsingGet:
+    "/knowledge-base/:baseId/files/:fileId", // 根据ID获取知识生成文件详情
+  deleteKnowledgeBaseTaskByIdUsingDelete: "/knowledge-base/:baseId/files/:id", // 删除知识生成文件
 
   // 算子市场
   queryOperatorsUsingPost: "/operators/list", // 获取算子列表
