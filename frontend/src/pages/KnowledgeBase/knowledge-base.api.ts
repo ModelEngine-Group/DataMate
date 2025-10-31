@@ -2,8 +2,6 @@ import { get, post, put, del } from "@/utils/request";
 
 // 获取知识库列表
 export function queryKnowledgeBasesUsingPost(params: any) {
-  console.log("get tk", params);
-
   return post("/api/knowledge-base/list", params);
 }
 
