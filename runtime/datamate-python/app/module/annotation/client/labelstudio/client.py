@@ -99,19 +99,15 @@ class Client:
         title: str, 
         description: str = "", 
         label_config: Optional[str] = None,
-        data_type: str = "image"
     ) -> Optional[Dict[str, Any]]:
         """创建Label Studio项目"""
         try:
             logger.debug(f"Creating Label Studio project: {title}")
             
-            if not label_config:
-                label_config = self.get_label_config_by_type(data_type)
-            
             project_data = {
                 "title": title,
                 "description": description,
-                "label_config": label_config.strip()
+                "label_config": label_config or "<View></View>"
             }
             
             response = await self.client.post("/api/projects", json=project_data)

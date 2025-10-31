@@ -2,16 +2,20 @@ import type { DatasetType } from "@/pages/DataManagement/dataset.model";
 
 export enum AnnotationTaskStatus {
   ACTIVE = "active",
-  PROCESSING = "processing",
   INACTIVE = "inactive",
+  PROCESSING = "processing",
+  COMPLETED = "completed",
+  SKIPPED = "skipped",
 }
 
 export interface AnnotationTask {
   id: string;
   name: string;
-  annotationCount: number;
-  createdAt: string;
+  labelingProjId: string;
   datasetId: string;
+  
+  annotationCount: number;
+  
   description?: string;
   assignedTo?: string;
   progress: number;
@@ -23,5 +27,7 @@ export interface AnnotationTask {
   status: AnnotationTaskStatus;
   totalDataCount: number;
   type: DatasetType;
+  
+  createdAt: string;
   updatedAt: string;
 }

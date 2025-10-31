@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
+from app.db.models import LabelingProject
 from app.module.shared.schema import StandardResponse, PaginatedData
 from app.module.dataset import DatasetManagementService
 from app.core.logging import get_logger
@@ -12,6 +13,7 @@ from app.core.config import settings
 
 from ..client import LabelStudioClient
 from ..service.mapping import DatasetMappingService
+from ..service.sync import SyncService
 from ..schema import (
     DatasetMappingCreateRequest,
     DatasetMappingCreateResponse,
@@ -25,7 +27,7 @@ router = APIRouter(
 )
 logger = get_logger(__name__)
 
-@router.post("/", response_model=StandardResponse[DatasetMappingCreateResponse], status_code=201)
+@router.post("", response_model=StandardResponse[DatasetMappingCreateResponse], status_code=201)
 async def create_mapping(
     request: DatasetMappingCreateRequest,
     db: AsyncSession = Depends(get_db)
@@ -42,7 +44,8 @@ async def create_mapping(
         dm_client = DatasetManagementService(db)
         ls_client = LabelStudioClient(base_url=settings.label_studio_base_url,
                                       token=settings.label_studio_user_token)
-        service = DatasetMappingService(db)
+        mapping_service = DatasetMappingService(db)
+        sync_service = SyncService(dm_client, ls_client, mapping_service)
         
         logger.info(f"Create dataset mapping request: {request.dataset_id}")
         
@@ -54,24 +57,18 @@ async def create_mapping(
                 detail=f"Dataset not found in DM service: {request.dataset_id}"
             )
         
-        # 确定数据类型（基于数据集类型）
-        data_type = "image"  # 默认值
-        if dataset_info.type and dataset_info.type.code:
-            type_code = dataset_info.type.code.lower()
-            if "audio" in type_code:
-                data_type = "audio"
-            elif "video" in type_code:
-                data_type = "video"
-            elif "text" in type_code:
-                data_type = "text"
+        project_name = request.name or \
+                       dataset_info.name or \
+                       "A new project from DataMate"
         
-        project_name = f"{dataset_info.name}"
-        
+        project_description = request.description or \
+                              dataset_info.description or \
+                              f"Imported from DM dataset {dataset_info.name} ({dataset_info.id})"
+
         # 在Label Studio中创建项目
         project_data = await ls_client.create_project(
             title=project_name,
-            description=dataset_info.description or f"Imported from DM dataset {dataset_info.id}",
-            data_type=data_type
+            description=project_description,
         )
         
         if not project_data:
@@ -97,13 +94,18 @@ async def create_mapping(
             logger.warning(f"Failed to configure local storage for project {project_id}")
         else:
             logger.info(f"Local storage configured for project {project_id}: {local_storage_path}")
+
+        labeling_project = LabelingProject(
+                dataset_id=request.dataset_id,
+                labeling_project_id=str(project_id),
+                name=project_name,
+            )
+
+        # 创建映射关系，包含项目名称（先持久化映射以获得 mapping.id）
+        mapping = await mapping_service.create_mapping(labeling_project)
         
-        # 创建映射关系，包含项目名称
-        mapping = await service.create_mapping(
-            request, 
-            str(project_id),
-            project_name
-        )
+        # 进行一次同步，使用创建后的 mapping.id
+        await sync_service.sync_dataset_files(mapping.id, 100)
         
         response_data = DatasetMappingCreateResponse(
             id=mapping.id,
@@ -123,7 +125,7 @@ async def create_mapping(
         logger.error(f"Error while creating dataset mapping: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
     
-@router.get("/", response_model=StandardResponse[PaginatedData[DatasetMappingResponse]])
+@router.get("", response_model=StandardResponse[PaginatedData[DatasetMappingResponse]])
 async def list_mappings(
     page: int = Query(1, ge=1, description="页码（从1开始）"),
     page_size: int = Query(20, ge=1, le=100, description="每页记录数"),
@@ -260,7 +262,7 @@ async def get_mappings_by_source(
         logger.error(f"Error getting mappings: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
-@router.delete("/", response_model=StandardResponse[DeleteDatasetResponse])
+@router.delete("", response_model=StandardResponse[DeleteDatasetResponse])
 async def delete_mapping(
     m: Optional[str] = Query(None, description="映射UUID"),
     proj: Optional[str] = Query(None, description="Label Studio项目ID"),
@@ -279,8 +281,11 @@ async def delete_mapping(
     2. 软删除数据库中的映射记录
     """
     try:
+        # Log incoming request parameters for debugging
+        logger.debug(f"Delete mapping request received: m={m!r}, proj={proj!r}")
         # 至少需要提供一个参数
         if not m and not proj:
+            logger.debug("Missing both 'm' and 'proj' in delete request")
             raise HTTPException(
                 status_code=400,
                 detail="Either 'm' (mapping UUID) or 'proj' (project ID) must be provided"
@@ -300,6 +305,8 @@ async def delete_mapping(
             mapping = await service.get_mapping_by_labeling_project_id(proj)
         else:
             mapping = None
+
+        logger.debug(f"Mapping lookup result: {mapping}")
         
         if not mapping:
             raise HTTPException(
@@ -309,12 +316,12 @@ async def delete_mapping(
         
         id = mapping.id
         labeling_project_id = mapping.labeling_project_id
-        labeling_project_name = mapping.name
 
         logger.debug(f"Found mapping: {id}, Label Studio project ID: {labeling_project_id}")
         
         # 1. 删除 Label Studio 项目
         try:
+            logger.debug(f"Deleting Label Studio project: {labeling_project_id}")
             delete_success = await ls_client.delete_project(int(labeling_project_id))
             if delete_success:
                 logger.debug(f"Successfully deleted Label Studio project: {labeling_project_id}")
@@ -326,6 +333,7 @@ async def delete_mapping(
         
         # 2. 软删除映射记录
         soft_delete_success = await service.soft_delete_mapping(id)
+        logger.debug(f"Soft delete result for mapping {id}: {soft_delete_success}")
         
         if not soft_delete_success:
             raise HTTPException(

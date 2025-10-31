@@ -427,7 +427,8 @@ module.exports = function (router) {
   router.get(API.queryOperatorByIdUsingGet, (req, res) => {
     const { id } = req.params;
     const operator = operatorList.find((op) => op.id === id);
-
+    console.log("获取算子详情：", id, operator);
+    
     if (operator) {
       // 增加浏览次数模拟
       operator.viewCount = (operator.viewCount || 0) + 1;

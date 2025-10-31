@@ -1,5 +1,6 @@
+from .config import ConfigResponse
+
 from .mapping import (
-    _DatasetMappingBase,
     DatasetMappingCreateRequest,
     DatasetMappingCreateResponse,
     DatasetMappingUpdateRequest,
@@ -13,7 +14,7 @@ from .sync import (
 )
 
 __all__ = [
-    "_DatasetMappingBase",
+    "ConfigResponse",
     "DatasetMappingCreateRequest",
     "DatasetMappingCreateResponse",
     "DatasetMappingUpdateRequest",
