@@ -1,10 +1,8 @@
-export enum KBStatus {
-  READY = "ready",
-  PROCESSING = "processing",
-  VECTORIZING = "vectorizing",
-  IMPORTING = "importing",
-  ERROR = "error",
-  DISABLED = "disabled",
+export enum KBFileStatus {
+  UNPROCESSED = "UNPROCESSED",
+  PROCESSING = "PROCESSING",
+  PROCESSED = "PROCESSED",
+  PROCESS_FAILED = "PROCESS_FAILED",
 }
 
 export enum KBType {
@@ -25,17 +23,17 @@ export interface KnowledgeBaseItem {
 
 export interface KBFile {
   id: number;
-  name: string;
-  type: string;
-  size: string;
-  status: "processing" | "completed" | "error" | "disabled" | "vectorizing";
+  fileName: string;
+  name?: string;
+  createdAt: string;
+  updatedAt: string;
+  status: KBFileStatus;
   chunkCount: number;
-  progress: number;
-  uploadedAt: string;
-  source: "upload" | "dataset";
-  datasetId?: string;
-  chunks?: Chunk[];
-  vectorizationStatus?: "pending" | "processing" | "completed" | "failed";
+  metadata: Record<string, any>;
+  knowledgeBaseId: string;
+  fileId: string;
+  updatedBy: string;
+  createdBy: string;
 }
 
 interface Chunk {
@@ -73,13 +71,4 @@ interface VectorizationRecord {
     sliceMethod: string;
   };
   error?: string;
-}
-
-interface SliceOperator {
-  id: string;
-  name: string;
-  description: string;
-  type: "text" | "semantic" | "structure" | "custom";
-  icon: string;
-  params: Record<string, any>;
 }

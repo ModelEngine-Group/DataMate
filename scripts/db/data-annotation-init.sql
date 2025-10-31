@@ -1,3 +1,5 @@
+use datamate;
+
 CREATE TABLE t_dm_annotation_templates (
     id VARCHAR(36) PRIMARY KEY,
     name VARCHAR(32) NOT NULL COMMENT '模板名称',

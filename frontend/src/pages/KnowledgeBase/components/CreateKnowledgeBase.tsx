@@ -12,11 +12,15 @@ import { KnowledgeBaseItem } from "../knowledge-base.model";
 export default function CreateKnowledgeBase({
   isEdit,
   data,
+  showBtn = true,
   onUpdate,
+  onClose,
 }: {
   isEdit?: boolean;
+  showBtn?: boolean;
   data?: Partial<KnowledgeBaseItem> | null;
   onUpdate: () => void;
+  onClose: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const [form] = Form.useForm();
@@ -74,24 +78,32 @@ export default function CreateKnowledgeBase({
     }
   };
 
+  const handleCloseModal = () => {
+    setOpen(false);
+    onClose?.();
+  };
+
   return (
     <>
-      <Button
-        type="primary"
-        icon={<PlusOutlined />}
-        onClick={() => {
-          form.resetFields();
-          setOpen(true);
-        }}
-      >
-        创建知识库
-      </Button>
+      {showBtn && (
+        <Button
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={() => {
+            form.resetFields();
+            setOpen(true);
+          }}
+        >
+          创建知识库
+        </Button>
+      )}
       <Modal
         title={isEdit ? "编辑知识库" : "创建知识库"}
         open={open}
         okText="确定"
         cancelText="取消"
-        onCancel={() => setOpen(false)}
+        maskClosable={false}
+        onCancel={handleCloseModal}
         onOk={handleCreateKnowledgeBase}
       >
         <Form form={form} layout="vertical">

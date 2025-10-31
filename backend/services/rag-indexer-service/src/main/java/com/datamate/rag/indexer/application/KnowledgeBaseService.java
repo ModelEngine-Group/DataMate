@@ -93,13 +93,13 @@ public class KnowledgeBaseService {
         List<RagFile> ragFiles = request.getFiles().stream().map(fileInfo -> {
             RagFile ragFile = new RagFile();
             ragFile.setKnowledgeBaseId(knowledgeBase.getId());
-            ragFile.setFileId(fileInfo.fileId());
-            ragFile.setFileName(fileInfo.fileName());
+            ragFile.setFileId(fileInfo.id());
+            ragFile.setFileName(fileInfo.name());
             ragFile.setStatus(FileStatus.UNPROCESSED);
             return ragFile;
         }).toList();
         ragFileRepository.saveBatch(ragFiles, 100);
-        eventPublisher.publishEvent(new DataInsertedEvent(knowledgeBase.getId(), request.getProcessType()));
+        eventPublisher.publishEvent(new DataInsertedEvent(knowledgeBase, request.getProcessType()));
     }
 
     public PagedResponse<RagFile> listFiles(String knowledgeBaseId, RagFileReq request) {

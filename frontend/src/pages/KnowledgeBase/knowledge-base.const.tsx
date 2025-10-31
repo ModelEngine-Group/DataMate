@@ -1,29 +1,48 @@
 import {
   BookOpen,
   BookOpenText,
+  BookType,
+  ChartNoAxesColumn,
   CheckCircle,
+  CircleEllipsis,
   Clock,
   Database,
+  File,
+  VectorSquare,
   XCircle,
 } from "lucide-react";
-import { KBStatus, KBType, KnowledgeBaseItem } from "./knowledge-base.model";
+import {
+  KBFile,
+  KBFileStatus,
+  KBType,
+  KnowledgeBaseItem,
+} from "./knowledge-base.model";
 import { formatBytes, formatDateTime, formatNumber } from "@/utils/unit";
 
-export const KBStatusMap = {
-  [KBStatus.READY]: {
-    label: KBStatus.READY,
+export const KBFileStatusMap = {
+  [KBFileStatus.PROCESSED]: {
+    value: KBFileStatus.PROCESSED,
+    label: "已处理",
     icon: CheckCircle,
     color: "#389e0d",
   },
-  [KBStatus.VECTORIZING]: {
-    label: KBStatus.PROCESSING,
+  [KBFileStatus.PROCESSING]: {
+    value: KBFileStatus.PROCESSING,
+    label: "处理中",
     icon: Clock,
-    color: "#3b82f6",
+    color: "#faad14",
   },
-  [KBStatus.ERROR]: {
-    label: KBStatus.ERROR,
+  [KBFileStatus.PROCESS_FAILED]: {
+    value: KBFileStatus.PROCESS_FAILED,
+    label: "处理失败",
     icon: XCircle,
-    color: "#ef4444",
+    color: "#ff4d4f",
+  },
+  [KBFileStatus.UNPROCESSED]: {
+    value: KBFileStatus.UNPROCESSED,
+    label: "未处理",
+    icon: CircleEllipsis,
+    color: "#d9d9d9",
   },
 };
 
@@ -50,12 +69,47 @@ export function mapKnowledgeBase(kb: KnowledgeBaseItem): KnowledgeBaseItem {
     icon: <BookOpenText className="text-gray-400" />,
     description: kb.description,
     statistics: [
-      { label: "索引模型", value: kb.embeddingModel },
-      { label: "文本理解模型", value: kb.chatModel },
-      { label: "文件数", value: formatNumber(kb?.fileCount) || 0 },
-      { label: "大小", value: formatBytes(kb?.size) || "0 MB" },
+      {
+        label: "索引模型",
+        key: "embeddingModel",
+        icon: <VectorSquare className="w-4 h-4 text-blue-500" />,
+        value: kb.embeddingModel,
+      },
+      {
+        label: "文本理解模型",
+        key: "chatModel",
+        icon: <BookType className="w-4 h-4 text-green-500" />,
+        value: kb.chatModel,
+      },
+      {
+        label: "文件数",
+        key: "fileCount",
+        icon: <File className="w-4 h-4 text-yellow-500" />,
+        value: formatNumber(kb?.fileCount) || 0,
+      },
+      {
+        label: "大小",
+        key: "size",
+        icon: <ChartNoAxesColumn className="w-4 h-4 text-red-500" />,
+        value: formatBytes(kb?.size) || "0 MB",
+      },
     ],
     updatedAt: formatDateTime(kb.updatedAt),
     createdAt: formatDateTime(kb.createdAt),
+  };
+}
+
+export function mapFileData(file: Partial<KBFile>): KBFile {
+  return {
+    ...file,
+    name: file.fileName,
+    createdAt: formatDateTime(file.createdAt),
+    updatedAt: formatDateTime(file.updatedAt),
+    status: KBFileStatusMap[file.status] || {
+      value: file.status,
+      label: "未知状态",
+      icon: CircleEllipsis,
+      color: "#d9d9d9",
+    },
   };
 }

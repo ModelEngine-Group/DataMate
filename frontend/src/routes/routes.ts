@@ -31,7 +31,7 @@ import EvaluationTaskCreate from "@/pages/DataEvaluation/Create/CreateTask";
 import EvaluationTaskReport from "@/pages/DataEvaluation/Report/EvaluationReport";
 import ManualEvaluatePage from "@/pages/DataEvaluation/Evaluate/ManualEvaluate";
 
-import KnowledgeGenerationPage from "@/pages/KnowledgeBase/Home/KnowledgeGeneration";
+import KnowledgeBasePage from "@/pages/KnowledgeBase/Home/KnowledgeBasePage";
 import KnowledgeBaseDetailPage from "@/pages/KnowledgeBase/Detail/KnowledgeBaseDetail";
 import KnowledgeBaseFileDetailPage from "@/pages/KnowledgeBase/FileDetail/KnowledgeBaseFileDetail";
 
@@ -222,7 +222,7 @@ const router = createBrowserRouter([
           {
             path: "",
             index: true,
-            Component: KnowledgeGenerationPage,
+            Component: KnowledgeBasePage,
           },
           {
             path: "detail/:id",

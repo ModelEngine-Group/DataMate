@@ -29,16 +29,6 @@ export default function TaskUpload() {
     };
   }, []);
 
-  const formatPercent = (value: any) => {
-    const num = typeof value === "number" ? value : typeof value === "string" ? parseFloat(value) : NaN;
-    let val = Number.isFinite(num) ? num : 0;
-    // If incoming is a ratio (0-1), convert to 0-100
-    if (val > 0 && val <= 1) val = val * 100;
-    // Clamp and keep two decimals precision
-    val = Math.max(0, Math.min(100, val));
-    return Math.round(val * 100) / 100;
-  };
-
   return (
     <div
       className="w-90 max-w-90 max-h-96 overflow-y-auto p-2"
@@ -63,7 +53,7 @@ export default function TaskUpload() {
               ></Button>
             </div>
 
-            <Progress size="small" percent={formatPercent(task?.percent)} />
+            <Progress size="small" percent={task.percent} />
           </div>
         ))}
       {taskList.length === 0 && (

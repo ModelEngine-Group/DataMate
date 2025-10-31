@@ -1,11 +1,18 @@
 import { Alert, Input, Form } from "antd";
 import TextArea from "antd/es/input/TextArea";
+import { useEffect } from "react";
 
 export default function ConfigureStep({
   parsedInfo,
   parseError,
   setParsedInfo,
 }) {
+  const [form] = Form.useForm();
+  
+  useEffect(() => {
+    form.setFieldsValue(parsedInfo);
+  }, [parsedInfo]);
+  
   return (
     <>
       {/* 解析结果 */}
@@ -20,6 +27,7 @@ export default function ConfigureStep({
 
       {parsedInfo && (
         <Form
+        form={form}
           layout="vertical"
           initialValues={parsedInfo}
           onValuesChange={(_, allValues) => {

@@ -200,6 +200,7 @@ export function mapDataset(dataset: AnyObject): Dataset {
     datasetTypeMap[dataset?.datasetType] || {};
   return {
     ...dataset,
+    key: dataset.id,
     type: datasetTypeMap[dataset.datasetType]?.label || "未知",
     size: formatBytes(dataset.totalSize || 0),
     createdAt: formatDateTime(dataset.createdAt) || "--",
