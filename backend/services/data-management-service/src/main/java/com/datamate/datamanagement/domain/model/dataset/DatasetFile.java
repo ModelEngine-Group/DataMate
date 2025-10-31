@@ -2,6 +2,7 @@ package com.datamate.datamanagement.domain.model.dataset;
 
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.*;
 import org.apache.commons.lang3.StringUtils;
 
@@ -42,6 +43,11 @@ public class DatasetFile {
      * @return 标签列表
      */
     public List<String> analyzeTag() {
-        return StringUtils.isNoneBlank(tags) ? Arrays.asList(tags.split(",")) : Collections.emptyList();
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            return mapper.readValue(tags, List.class);
+        } catch (Exception e) {
+            return Collections.emptyList();
+        }
     }
 }
