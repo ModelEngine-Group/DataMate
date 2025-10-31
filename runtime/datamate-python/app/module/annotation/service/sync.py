@@ -94,22 +94,22 @@ class SyncService:
     
     async def sync_dataset_files(
         self, 
-        id: str, 
+        mapping_id: str, 
         batch_size: int = 50
     ) -> SyncDatasetResponse:
         """同步数据集文件到Label Studio"""
-        logger.info(f"Start syncing dataset by mapping: {id}")
+        logger.info(f"Start syncing dataset by mapping: {mapping_id}")
         
         # 获取映射关系
-        mapping = await self.mapping_service.get_mapping_by_uuid(id)
+        mapping = await self.mapping_service.get_mapping_by_uuid(mapping_id)
         if not mapping:
-            logger.error(f"Dataset mapping not found: {id}")
+            logger.error(f"Dataset mapping not found: {mapping_id}")
             return SyncDatasetResponse(
                 id="",
                 status="error",
                 synced_files=0,
                 total_files=0,
-                message=f"Dataset mapping not found: {id}"
+                message=f"Dataset mapping not found: {mapping_id}"
             )
         
         try:

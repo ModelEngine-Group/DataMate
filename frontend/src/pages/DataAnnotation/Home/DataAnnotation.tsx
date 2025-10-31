@@ -48,8 +48,8 @@ export default function DataAnnotation() {
     (async () => {
       try {
         const cfg = await getConfigUsingGet();
-        const url = cfg?.data?.labelStudioUrl || cfg?.data?.labelstudiourl || "";
-        if (mounted) setLabelStudioBase((url || "").replace(/\/+$/, "") || null);
+        const url = cfg?.data?.labelStudioUrl || "";
+        if (mounted) setLabelStudioBase((url).replace(/\/+$/, "") || null);
       } catch (e) {
         if (mounted) setLabelStudioBase(null);
       }

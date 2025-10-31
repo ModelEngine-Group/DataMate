@@ -23,18 +23,16 @@ class DatasetMappingService:
     
     async def create_mapping(
         self, 
-        mapping_data: DatasetMappingCreateRequest, 
-        labeling_project_id: str,
-        labeling_project_name: str
+        labeling_project: LabelingProject
     ) -> DatasetMappingResponse:
         """创建数据集映射"""
-        logger.info(f"Create dataset mapping: {mapping_data.dataset_id} -> {labeling_project_id}")
+        logger.info(f"Create dataset mapping: {labeling_project.dataset_id} -> {labeling_project.labeling_project_id}")
         
         db_mapping = LabelingProject(
             id=str(uuid.uuid4()),
-            dataset_id=mapping_data.dataset_id,
-            labeling_project_id=labeling_project_id,
-            name=labeling_project_name
+            dataset_id=labeling_project.dataset_id,
+            labeling_project_id=labeling_project.labeling_project_id,
+            name=labeling_project.name
         )
 
         self.db.add(db_mapping)

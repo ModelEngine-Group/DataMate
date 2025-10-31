@@ -7,7 +7,7 @@ export function queryAnnotationTasksUsingGet(params?: any) {
 
 // 获取应用配置（包含 Label Studio 基础 URL）
 export function getConfigUsingGet() {
-  return get("/api/config");
+  return get("/api/annotation/about");
 }
 
 export function createAnnotationTaskUsingPost(data: any) {

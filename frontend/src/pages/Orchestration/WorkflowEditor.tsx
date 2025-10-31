@@ -308,7 +308,7 @@ export default function WorkflowEditor({
                 className="cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow"
                 draggable
                 onDragStart={(event) => onDragStart(event, nodeType.type)}
-                bodyStyle={{ padding: 16 }}
+                styles={{ body: { padding: 16 } }}
               >
                 <div className="flex items-start gap-3">
                   <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -408,12 +408,12 @@ export default function WorkflowEditor({
                             nds.map((node) =>
                               node.id === selectedNode.id
                                 ? {
-                                    ...node,
-                                    data: {
-                                      ...node.data,
-                                      name: e.target.value,
-                                    },
-                                  }
+                                  ...node,
+                                  data: {
+                                    ...node.data,
+                                    name: e.target.value,
+                                  },
+                                }
                                 : node
                             )
                           );
@@ -436,12 +436,12 @@ export default function WorkflowEditor({
                             nds.map((node) =>
                               node.id === selectedNode.id
                                 ? {
-                                    ...node,
-                                    data: {
-                                      ...node.data,
-                                      description: e.target.value,
-                                    },
-                                  }
+                                  ...node,
+                                  data: {
+                                    ...node.data,
+                                    description: e.target.value,
+                                  },
+                                }
                                 : node
                             )
                           );
