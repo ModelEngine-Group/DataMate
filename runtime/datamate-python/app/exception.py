@@ -41,6 +41,10 @@ async def fastapi_http_exception_handler(request: Request, exc: HTTPException):
 # 自定义异常处理器：RequestValidationError
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     """将请求验证错误转换为标准响应格式"""
+    # 仅返回每个错误的简要 detail 文本（来自 Pydantic 错误的 `msg` 字段），不返回整个错误对象
+    raw_errors = exc.errors() or []
+    errors = [err.get("msg", "Validation error") for err in raw_errors]
+
     return JSONResponse(
         status_code=422,
         content={
@@ -48,9 +52,9 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
             "message": "error",
             "data": {
                 "detail": "Validation error",
-                "errors": exc.errors()
-            }
-        }
+                "errors": errors,
+            },
+        },
     )
 
 # 自定义异常处理器：未捕获的异常
