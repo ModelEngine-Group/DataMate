@@ -92,7 +92,6 @@ export default function OperatorPluginCreate() {
     // 编辑模式，加载已有算子信息逻辑待实现
     const { data } = await queryOperatorByIdUsingGet(operatorId);
     setParsedInfo(data);
-    setUploadStep("configure");
   };
 
   useEffect(() => {
