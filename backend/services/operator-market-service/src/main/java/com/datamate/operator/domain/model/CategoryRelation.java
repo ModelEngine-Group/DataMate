@@ -10,7 +10,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @TableName(value = "t_operator_category_relation", autoResultMap = true)
 public class CategoryRelation {
-    private Integer categoryId;
+    private String categoryId;
 
     private String operatorId;
 }

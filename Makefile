@@ -82,8 +82,8 @@ deer-flow-docker-build:
 		git clone git@github.com:bytedance/deer-flow.git ../deer-flow; \
 	fi
 	sed -i "s/dark/light/g" "../deer-flow/web/src/components/deer-flow/theme-provider-wrapper.tsx"
-	cp deployment/docker/deer-flow/.env.example ../deer-flow/.env
-	cp deployment/docker/deer-flow/conf.yaml.example ../deer-flow/conf.yaml
+	cp -n deployment/docker/deer-flow/.env.example ../deer-flow/.env
+	cp -n deployment/docker/deer-flow/conf.yaml.example ../deer-flow/conf.yaml
 	cd ../deer-flow && docker compose build
 
 .PHONY: mineru-docker-build
@@ -131,16 +131,16 @@ mineru-k8s-uninstall:
 
 .PHONY: datamate-docker-install
 datamate-docker-install:
-	cd deployment/docker/datamate && cp .env.example .env && docker compose -f docker-compose.yml up -d
+	cd deployment/docker/datamate && cp -n .env.example .env && docker compose -f docker-compose.yml up -d
 
 .PHONY: datamate-docker-uninstall
 datamate-docker-uninstall:
-	cd deployment/docker/datamate && docker compose -f docker-compose.yml down
+	cd deployment/docker/datamate && docker compose -f docker-compose.yml down -v
 
 .PHONY: deer-flow-docker-install
 deer-flow-docker-install:
-	cd deployment/docker/datamate && cp .env.deer-flow.example .env && docker compose -f docker-compose.yml up -d
-	cd deployment/docker/deer-flow && cp .env.example .env && cp conf.yaml.example conf.yaml && docker compose -f docker-compose.yml up -d
+	cd deployment/docker/datamate && cp -n .env.deer-flow.example .env && docker compose -f docker-compose.yml up -d
+	cd deployment/docker/deer-flow && cp -n .env.example .env && cp -n conf.yaml.example conf.yaml && docker compose -f docker-compose.yml up -d
 
 .PHONY: deer-flow-docker-uninstall
 deer-flow-docker-uninstall:

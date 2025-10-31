@@ -16,4 +16,6 @@ public interface CleaningTaskRepository extends IRepository<CleaningTask> {
     void updateTask(CleaningTaskDto task);
 
     void deleteTaskById(String taskId);
+
+    boolean isNameExist(String name);
 }

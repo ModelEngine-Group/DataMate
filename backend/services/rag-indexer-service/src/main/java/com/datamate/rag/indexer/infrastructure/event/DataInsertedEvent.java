@@ -1,0 +1,12 @@
+package com.datamate.rag.indexer.infrastructure.event;
+
+import com.datamate.rag.indexer.interfaces.dto.ProcessType;
+
+/**
+ * 数据插入事件
+ *
+ * @author dallas
+ * @since 2025-10-29
+ */
+public record DataInsertedEvent(String knowledgeBaseId, ProcessType processType) {
+}
