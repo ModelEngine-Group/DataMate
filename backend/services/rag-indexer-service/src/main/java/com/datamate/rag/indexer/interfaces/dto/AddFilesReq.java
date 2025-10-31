@@ -18,6 +18,6 @@ public class AddFilesReq {
     private ProcessType processType;
     private List<FileInfo> files;
 
-    public record FileInfo(String fileId, String fileName) {
+    public record FileInfo(String id, String name) {
     }
 }

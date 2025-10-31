@@ -29,7 +29,7 @@ export default function OperatorPluginCreate() {
   const { message } = App.useApp();
   const [uploadStep, setUploadStep] = useState<
     "upload" | "parsing" | "configure" | "preview"
-  >("upload");
+  >(id ? "configure" : "upload");
   const [isUploading, setIsUploading] = useState(false);
   const [parsedInfo, setParsedInfo] = useState({});
   const [parseError, setParseError] = useState<string | null>(null);
@@ -63,10 +63,10 @@ export default function OperatorPluginCreate() {
           },
         ], // 假设只上传一个文件
       });
-      setParsedInfo({ ...parsedInfo, fileName, percent: 100 }); // 上传完成，进度100%
+      setParsedInfo({ ...parsedInfo, percent: 100 }); // 上传完成，进度100%
       // 解析文件过程
       const res = await uploadOperatorUsingPost({ fileName });
-      setParsedInfo({ ...parsedInfo, ...res.data });
+      setParsedInfo({ ...parsedInfo, ...res.data, fileName });
     } catch (err) {
       setParseError("文件解析失败，" + err.data.message);
     } finally {
@@ -92,7 +92,6 @@ export default function OperatorPluginCreate() {
     // 编辑模式，加载已有算子信息逻辑待实现
     const { data } = await queryOperatorByIdUsingGet(operatorId);
     setParsedInfo(data);
-    setUploadStep("configure");
   };
 
   useEffect(() => {
@@ -110,7 +109,9 @@ export default function OperatorPluginCreate() {
           <Button type="text" onClick={() => navigate("/data/operator-market")}>
             <ArrowLeft className="w-4 h-4" />
           </Button>
-          <h1 className="text-xl font-bold text-gray-900">上传算子</h1>
+          <h1 className="text-xl font-bold text-gray-900">
+            {id ? "更新算子" : "上传算子"}
+          </h1>
         </div>
         <div className="w-1/2">
           <Steps
@@ -173,7 +174,7 @@ export default function OperatorPluginCreate() {
           <div className="flex justify-end gap-3 mt-8">
             <Button onClick={() => setUploadStep("upload")}>重新上传</Button>
             <Button type="primary" onClick={handlePublish}>
-              发布算子
+              {id ? "更新" : "发布"}算子
             </Button>
           </div>
         )}

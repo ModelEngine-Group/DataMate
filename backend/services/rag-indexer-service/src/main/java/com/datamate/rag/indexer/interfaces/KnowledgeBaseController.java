@@ -4,14 +4,14 @@ import com.datamate.rag.indexer.application.KnowledgeBaseService;
 import com.datamate.rag.indexer.domain.model.KnowledgeBase;
 import com.datamate.rag.indexer.domain.model.RagChunk;
 import com.datamate.rag.indexer.domain.model.RagFile;
-import com.datamate.common.infrastructure.common.Response;
 import com.datamate.common.interfaces.PagedResponse;
 import com.datamate.common.interfaces.PagingQuery;
 import com.datamate.rag.indexer.interfaces.dto.*;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
+
 
 /**
  * 知识库控制器
@@ -21,14 +21,9 @@ import javax.validation.Valid;
  */
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/v1/knowledge-base")
+@RequestMapping("/knowledge-base")
 public class KnowledgeBaseController {
     private final KnowledgeBaseService knowledgeBaseService;
-
-    @GetMapping(path = "/test1")
-    public String test() {
-        return "test1";
-    }
 
     /**
      * 创建知识库
@@ -105,7 +100,7 @@ public class KnowledgeBaseController {
      */
     @GetMapping("/{knowledgeBaseId}/files")
     public PagedResponse<RagFile> listFiles(@PathVariable("knowledgeBaseId") String knowledgeBaseId,
-                                            @RequestBody @Valid RagFileReq request) {
+                                            RagFileReq request) {
         return knowledgeBaseService.listFiles(knowledgeBaseId, request);
     }
 

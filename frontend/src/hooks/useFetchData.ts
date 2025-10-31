@@ -21,7 +21,7 @@ export default function useFetchData<T>(
   fetchFunc: (params?: any) => Promise<any>,
   mapDataFunc: (data: Partial<T>) => T = (data) => data as T,
   pollingInterval: number = 30000, // 默认30秒轮询一次
-  autoRefresh: boolean = true,
+  autoRefresh: boolean = false, // 是否自动开始轮询，默认 false
   additionalPollingFuncs: (() => Promise<any>)[] = [], // 额外的轮询函数
   pageOffset: number = 1
 ) {

@@ -1,5 +1,6 @@
 package com.datamate.rag.indexer.infrastructure.event;
 
+import com.datamate.rag.indexer.domain.model.KnowledgeBase;
 import com.datamate.rag.indexer.interfaces.dto.ProcessType;
 
 /**
@@ -8,5 +9,5 @@ import com.datamate.rag.indexer.interfaces.dto.ProcessType;
  * @author dallas
  * @since 2025-10-29
  */
-public record DataInsertedEvent(String knowledgeBaseId, ProcessType processType) {
+public record DataInsertedEvent(KnowledgeBase knowledgeBase, ProcessType processType) {
 }
