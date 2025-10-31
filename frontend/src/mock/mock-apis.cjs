@@ -129,9 +129,9 @@ const MockAPI = {
   // 算子市场
   queryOperatorsUsingPost: "/operators/list", // 获取算子列表
   queryCategoryTreeUsingGet: "/categories/tree", // 获取算子分类树
-  queryOperatorByIdUsingGet: "/operators/:operatorId", // 根据ID获取算子详情
+  queryOperatorByIdUsingGet: "/operators/:id", // 根据ID获取算子详情
   createOperatorUsingPost: "/operators/create", // 创建算子
-  updateOperatorByIdUsingPut: "/operators/:operatorId", // 更新算子
+  updateOperatorByIdUsingPut: "/operators/:id", // 更新算子
   uploadOperatorUsingPost: "/operators/upload", // 上传算子
   uploadFileChunkUsingPost: "/operators/upload/chunk", // 上传切片
   preUploadOperatorUsingPost: "/operators/upload/pre-upload", // 预上传文件

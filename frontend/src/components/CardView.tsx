@@ -4,6 +4,7 @@ import { ClockCircleOutlined, StarFilled } from "@ant-design/icons";
 import type { ItemType } from "antd/es/menu/interface";
 import { formatDateTime } from "@/utils/unit";
 import ActionDropdown from "./ActionDropdown";
+import { Database } from "lucide-react";
 
 interface BaseCardDataType {
   id: string | number;
@@ -193,12 +194,9 @@ function CardView<T extends BaseCardDataType>(props: CardViewProps<T>) {
                   <div className="flex items-center gap-3 min-w-0">
                     {item?.icon && (
                       <div
-                        className={`flex-shrink-0 w-12 h-12 ${
-                          item?.iconColor ||
-                          "bg-gradient-to-br from-blue-100 to-blue-200"
-                        } rounded-lg flex items-center justify-center`}
+                        className={`flex-shrink-0 w-12 h-12 bg-gradient-to-br from-sky-300 to-blue-500 text-white rounded-lg flex items-center justify-center`}
                       >
-                        {item?.icon}
+                        <div className="w-6 h-6 text-gray-50">{item?.icon}</div>
                       </div>
                     )}
                     <div className="flex-1 min-w-0">

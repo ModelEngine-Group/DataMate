@@ -49,13 +49,11 @@ function DetailHeader<T>({
       <div className="flex items-start justify-between">
         <div className="flex items-start gap-4 flex-1">
           <div
-            className={`w-16 h-16 text-white rounded-lg flex-center shadow-lg ${
-              data?.iconColor
-                ? data.iconColor
-                : "bg-gradient-to-br from-blue-100 to-blue-200"
-            }`}
+            className={`w-16 h-16 text-white rounded-lg flex-center shadow-lg bg-gradient-to-br from-sky-300 to-blue-500 text-white`}
           >
-            {data?.icon || <Database className="w-8 h-8" />}
+            {<div className="w-8 h-8 text-gray-50">{data?.icon}</div> || (
+              <Database className="w-8 h-8 text-white" />
+            )}
           </div>
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-2">
