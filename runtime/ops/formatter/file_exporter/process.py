@@ -23,6 +23,7 @@ class FileExporter(Mapper):
         super(FileExporter, self).__init__(*args, **kwargs)
         self.last_ops = True
         self.text_support_ext = kwargs.get("text_support_ext", ['txt', 'html', 'md', 'markdown',
+                                                                'xlsx', 'xls', 'csv', 'pptx', 'ppt',
                                                                 'xml', 'json', 'doc', 'docx', 'pdf'])
         self.data_support_ext = kwargs.get("data_support_ext", ['jpg', 'jpeg', 'png', 'bmp'])
         self.medical_support_ext = kwargs.get("medical_support_ext", ['svs', 'tif', 'tiff'])

@@ -1,8 +1,7 @@
 from pydantic import Field
-from typing import Optional
-from datetime import datetime
 
 from app.module.shared.schema import BaseResponseModel
+from app.module.shared.schema import StandardResponse
 
 
 class SyncDatasetRequest(BaseResponseModel):
@@ -17,3 +16,6 @@ class SyncDatasetResponse(BaseResponseModel):
     synced_files: int = Field(..., description="已同步文件数量")
     total_files: int = Field(0, description="总文件数量")
     message: str = Field(..., description="响应消息")
+
+class SyncDatasetResponseStd(StandardResponse[SyncDatasetResponse]):
+    pass

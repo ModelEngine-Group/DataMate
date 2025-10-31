@@ -1,24 +1,24 @@
 from .mapping import (
-    DatasetMappingBase,
+    _DatasetMappingBase,
     DatasetMappingCreateRequest,
     DatasetMappingCreateResponse,
     DatasetMappingUpdateRequest,
     DatasetMappingResponse,
-    DeleteDatasetResponse
+    DeleteDatasetResponse,
 )
 
 from .sync import (
     SyncDatasetRequest,
-    SyncDatasetResponse
+    SyncDatasetResponse,
 )
 
 __all__ = [
-    "DatasetMappingBase",
+    "_DatasetMappingBase",
     "DatasetMappingCreateRequest",
     "DatasetMappingCreateResponse",
     "DatasetMappingUpdateRequest",
     "DatasetMappingResponse",
     "SyncDatasetRequest",
     "SyncDatasetResponse",
-    "DeleteDatasetResponse"
+    "DeleteDatasetResponse",
 ]

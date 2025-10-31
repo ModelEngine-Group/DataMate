@@ -5,6 +5,8 @@ import com.datamate.cleaning.domain.repository.CleaningTemplateRepository;
 import com.datamate.cleaning.domain.repository.OperatorInstanceRepository;
 import com.datamate.cleaning.interfaces.dto.*;
 import com.datamate.cleaning.domain.model.entity.TemplateWithInstance;
+import com.datamate.operator.domain.repository.OperatorRepository;
+import com.datamate.operator.interfaces.dto.OperatorDto;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -24,8 +26,10 @@ public class CleaningTemplateService {
 
     private final OperatorInstanceRepository operatorInstanceRepo;
 
+    private final OperatorRepository operatorRepo;
+
     public List<CleaningTemplateDto> getTemplates(String keywords) {
-        List<OperatorDto> allOperators = operatorInstanceRepo.findAllOperators();
+        List<OperatorDto> allOperators = operatorRepo.findAllOperators();
         Map<String, OperatorDto> operatorsMap = allOperators.stream()
                 .collect(Collectors.toMap(OperatorDto::getId, Function.identity()));
         List<TemplateWithInstance> allTemplates = cleaningTemplateRepo.findAllTemplates(keywords);

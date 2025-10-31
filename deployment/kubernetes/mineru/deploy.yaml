@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: datamate-mineru
+  labels:
+    app: datamate
+    tier: mineru
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: datamate
+      tier: mineru
+  template:
+    metadata:
+      labels:
+        app: datamate
+        tier: mineru
+    spec:
+      containers:
+        - name: mineru
+          image: datamate-mineru
+          imagePullPolicy: IfNotPresent
+          command:
+            - python
+            - /opt/runtime/datamate/mineru/mineru_api.py
+            - --port
+            - "9001"
+          env:
+            - name: MINERU_MODEL_SOURCE
+              value: local
+            - name: MINERU_DEVICE_MODE
+              value: cpu
+            - name: MINERU_BACKEND_MODE
+              value: pipeline
+          ports:
+            - containerPort: 9001
+          volumeMounts:
+            - name: dataset-volume
+              mountPath: /dataset
+            - name: log-volume
+              mountPath: /var/log/datamate/mineru
+              subPath: mineru
+      volumes:
+        - name: dataset-volume
+          hostPath:
+            path: /opt/datamate/data/dataset
+            type: DirectoryOrCreate
+        - name: log-volume
+          hostPath:
+            path: /opt/datamate/data/log
+            type: DirectoryOrCreate
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: datamate-mineru
+  labels:
+    app: datamate
+    tier: mineru
+spec:
+  type: ClusterIP
+  ports:
+    - port: 9001
+      targetPort: 9001
+      protocol: TCP
+  selector:
+    app: datamate
+    tier: mineru
