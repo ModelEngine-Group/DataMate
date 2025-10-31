@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Description: 外部PDF文本抽取
+Description: MinerU PDF文本抽取
 Create: 2025/10/29 17:24
 """
 import json
