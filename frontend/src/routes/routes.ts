@@ -38,8 +38,8 @@ import KnowledgeBaseFileDetailPage from "@/pages/KnowledgeBase/FileDetail/Knowle
 import OperatorMarketPage from "@/pages/OperatorMarket/Home/OperatorMarket";
 import OperatorPluginCreate from "@/pages/OperatorMarket/Create/OperatorPluginCreate";
 import OperatorPluginDetail from "@/pages/OperatorMarket/Detail/OperatorPluginDetail";
-import RatioTasksPage from "@/pages/RatioTask/RatioTask";
-import CreateRatioTask from "@/pages/RatioTask/CreateRatioTask";
+import RatioTasksPage from "@/pages/RatioTask/Home/RatioTask.tsx";
+import CreateRatioTask from "@/pages/RatioTask/Create/CreateRatioTask.tsx";
 import OrchestrationPage from "@/pages/Orchestration/Orchestration";
 import WorkflowEditor from "@/pages/Orchestration/WorkflowEditor";
 import SettingsPage from "@/pages/SettingsPage/SettingsPage";
