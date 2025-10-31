@@ -9,6 +9,8 @@ services:
       - dataset_volume:/dataset
       - flow_volume:/flow
       - log_volume:/var/log/datamate
+      - operator-upload-volume:/operators/upload
+      - operator-runtime-volume:/operators/extract
     networks: [ datamate ]
     depends_on:
       - datamate-database
@@ -71,6 +73,7 @@ services:
       - log_volume:/var/log/datamate
       - dataset_volume:/dataset
       - flow_volume:/flow
+      - operator-runtime-volume:/opt/runtime/datamate/ops/user
     networks: [ datamate ]
 
   # 4) mineru
@@ -109,6 +112,10 @@ volumes:
     name: datamate-frontend-log-volume
   database_log_volume:
     name: datamate-database-log-volume
+  operator-upload-volume:
+    name: datamate-operator-upload-volume
+  operator-runtime-volume:
+    name: datamate-operator-runtime-volume
 
 networks:
   datamate:

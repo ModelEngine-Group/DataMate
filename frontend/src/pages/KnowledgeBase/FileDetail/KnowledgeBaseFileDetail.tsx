@@ -16,7 +16,7 @@ import { mockChunks, mockQAPairs, sliceOperators } from "@/mock/knowledgeBase";
 import type {
   KnowledgeBase,
   KBFile,
-} from "@/pages/KnowledgeGeneration/knowledge-base.model";
+} from "@/pages/KnowledgeBase/knowledge-base.model";
 import { Link, useNavigate } from "react-router";
 import DetailHeader from "@/components/DetailHeader";
 import DevelopmentInProgress from "@/components/DevelopmentInProgress";
@@ -258,11 +258,11 @@ const KnowledgeBaseFileDetail: React.FC = () => {
       <Breadcrumb
         items={[
           {
-            title: <Link to="/data/knowledge-generation">知识库</Link>,
+            title: <Link to="/data/knowledge-base">知识库</Link>,
           },
           {
             title: (
-              <Link to="/data/knowledge-generation/detail/1">
+              <Link to="/data/knowledge-base/detail/1">
                 {selectedKB?.name}
               </Link>
             ),

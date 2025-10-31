@@ -17,8 +17,8 @@ public class OperatorRepositoryImpl extends CrudRepository<OperatorMapper, Opera
     private final OperatorMapper mapper;
 
     @Override
-    public List<Operator> findAllOperators() {
-        return mapper.selectList(null);
+    public List<OperatorDto> findAllOperators() {
+        return OperatorConverter.INSTANCE.fromEntityToDto(mapper.selectList(null));
     }
 
     @Override
@@ -29,5 +29,10 @@ public class OperatorRepositoryImpl extends CrudRepository<OperatorMapper, Opera
     @Override
     public void insertOperator(OperatorDto operator) {
         mapper.insert(OperatorConverter.INSTANCE.fromDtoToEntity(operator));
+    }
+
+    @Override
+    public void deleteOperator(String id) {
+        mapper.deleteById(id);
     }
 }

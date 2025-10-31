@@ -51,4 +51,10 @@ public class CleaningTaskRepositoryImpl extends CrudRepository<CleaningTaskMappe
     public void deleteTaskById(String taskId) {
         mapper.deleteById(taskId);
     }
+
+    public boolean isNameExist(String name) {
+        LambdaQueryWrapper<CleaningTask> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(CleaningTask::getName, name);
+        return mapper.exists(queryWrapper);
+    }
 }

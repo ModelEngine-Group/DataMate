@@ -40,11 +40,17 @@ dataVolume: &dataVolume
     path: /opt/datamate/data/mysql
     type: DirectoryOrCreate
 
+operatorVolume: &operatorVolume
+  name: operator-volume
+  hostPath:
+    path: /opt/datamate/data/operator
+
 backend:
   volumes:
     - *datasetVolume
     - *flowVolume
     - *logVolume
+    - *operatorVolume
   volumeMounts:
     - name: dataset-volume
       mountPath: /dataset
@@ -52,14 +58,22 @@ backend:
       mountPath: /flow
     - name: log-volume
       mountPath: /var/log/datamate
+    - name: operator-volume
+      mountPath: /operators
 
 frontend:
   volumes:
     - *logVolume
+    - name: datamate-nginx-conf
+      configMap:
+        name: datamate-nginx-conf
   volumeMounts:
     - name: log-volume
       mountPath: /var/log/datamate/frontend
       subPath: frontend
+    - mountPath: /etc/nginx/conf.d/backend.conf
+      name: datamate-nginx-conf
+      subPath: backend.conf
 
 database:
   volumes:
@@ -81,3 +95,76 @@ database:
       mountPath: /docker-entrypoint-initdb.d
     - name: mysql-utf8-config
       mountPath: /etc/mysql/conf.d
+
+ray-cluster:
+  head:
+    volumes:
+      - *datasetVolume
+      - *flowVolume
+      - *logVolume
+      - *operatorVolume
+    volumeMounts:
+      - mountPath: /tmp/ray
+        name: log-volume
+        subPath: ray/head
+      - mountPath: /dataset
+        name: dataset-volume
+      - mountPath: /flow
+        name: flow-volume
+      - mountPath: /opt/runtime/datamate/ops/user
+        name: operator-volume
+        subPath: extract
+    sidecarContainers:
+      - name: runtime
+        image: datamate-runtime
+        imagePullPolicy: IfNotPresent
+        args:
+          - python
+          - /opt/runtime/datamate/operator_runtime.py
+          - --port
+          - "8081"
+        env:
+          - name: MYSQL_HOST
+            value: "datamate-database"
+          - name: MYSQL_PORT
+            value: "3306"
+          - name: MYSQL_USER
+            value: "root"
+          - name: MYSQL_PASSWORD
+            value: "password"
+          - name: MYSQL_DATABASE
+            value: "datamate"
+          - name: PDF_FORMATTER_BASE_URL
+            value: "http://datamate-mineru:9001"
+        ports:
+          - containerPort: 8081
+        volumeMounts:
+          - mountPath: /tmp/ray
+            name: log-volume
+            subPath: ray/head
+          - mountPath: /var/log/datamate
+            name: log-volume
+          - mountPath: /dataset
+            name: dataset-volume
+          - mountPath: /flow
+            name: flow-volume
+          - mountPath: /opt/runtime/datamate/ops/user
+            name: operator-volume
+            subPath: extract
+  worker:
+    volumes:
+      - *datasetVolume
+      - *flowVolume
+      - *logVolume
+      - *operatorVolume
+    volumeMounts:
+      - mountPath: /tmp/ray
+        name: log-volume
+        subPath: ray/worker
+      - mountPath: /dataset
+        name: dataset-volume
+      - mountPath: /flow
+        name: flow-volume
+      - mountPath: /opt/runtime/datamate/ops/user
+        name: operator-volume
+        subPath: extract

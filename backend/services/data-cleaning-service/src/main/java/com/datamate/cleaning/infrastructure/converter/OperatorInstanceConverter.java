@@ -3,10 +3,10 @@ package com.datamate.cleaning.infrastructure.converter;
 
 import com.datamate.cleaning.domain.model.entity.OperatorInstance;
 import com.datamate.cleaning.domain.model.entity.Operator;
-import com.datamate.cleaning.interfaces.dto.OperatorDto;
 import com.datamate.cleaning.interfaces.dto.OperatorInstanceDto;
 import com.datamate.common.infrastructure.exception.BusinessException;
 import com.datamate.common.infrastructure.exception.SystemErrorCode;
+import com.datamate.operator.interfaces.dto.OperatorDto;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.mapstruct.Mapper;

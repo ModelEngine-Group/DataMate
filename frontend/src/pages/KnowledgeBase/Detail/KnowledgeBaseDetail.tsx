@@ -30,62 +30,20 @@ import {
   Checkbox,
   Dropdown,
 } from "antd";
-import { mockKnowledgeBases } from "@/mock/knowledgeBase";
 import { useNavigate } from "react-router";
 import DetailHeader from "@/components/DetailHeader";
 import { SearchControls } from "@/components/SearchControls";
-import DevelopmentInProgress from "@/components/DevelopmentInProgress";
+import { KnowledgeBaseItem } from "../knowledge-base.model";
 
 const KnowledgeBaseDetailPage: React.FC = () => {
-  return <DevelopmentInProgress />;
   const navigate = useNavigate();
-  const knowledgeBase = mockKnowledgeBases[0];
-
+  const [knowledgeBase, setKnowledgeBase] = useState<KnowledgeBaseItem>(null);
   const [files, setFiles] = useState([]);
 
-  // --- 新增的状态 ---
-  const [fileSearchQuery, setFileSearchQuery] = useState("");
-  const [fileTypeFilter, setFileTypeFilter] = useState<string | null>(null);
-  const [fileStatusFilter, setFileStatusFilter] = useState<string | null>(null);
-  const [fileSortOrder, setFileSortOrder] = useState<
-    "ascend" | "descend" | null
-  >(null);
-
-  // 获取所有类型和状态选项
-  const allFileTypes = Array.from(
-    new Set((knowledgeBase.files ?? []).map((f: KBFile) => f.type))
-  ).filter(Boolean);
-
-  const allVectorizationStatuses = [
-    { label: "全部", value: null },
-    { label: "已完成", value: "completed" },
-    { label: "处理中", value: "processing" },
-    { label: "向量化中", value: "vectorizing" },
-    { label: "导入中", value: "importing" },
-    { label: "错误", value: "error" },
-    { label: "已禁用", value: "disabled" },
-  ];
-
-  useEffect(() => {
-    setFiles(knowledgeBase.files);
-  }, [knowledgeBase]);
-
-  const [showVectorizationDialog, setShowVectorizationDialog] = useState(false);
-  const [showEditFileDialog, setShowEditFileDialog] = useState<KBFile | null>(
-    null
-  );
 
   // File table logic
   const handleDeleteFile = (file: KBFile) => {};
 
-  const handleFileSelect = (file: KBFile) => {
-    setShowEditFileDialog(file);
-  };
-
-  const handleStartVectorization = (fileId?: string) => {
-    message.info(fileId ? `开始向量化文件 ${fileId}` : "批量向量化所有文件");
-    // 实际业务逻辑可在此实现
-  };
 
   const handleDeleteKB = (kb: KnowledgeBase) => {};
 
@@ -182,7 +140,7 @@ const KnowledgeBaseDetailPage: React.FC = () => {
         <Button
           type="link"
           onClick={() =>
-            navigate("/data/knowledge-generation/file-detail/" + file.id)
+            navigate("/data/knowledge-base/file-detail/" + file.id)
           }
         >
           {file.name}
@@ -296,7 +254,7 @@ const KnowledgeBaseDetailPage: React.FC = () => {
       <div className="mb-4">
         <Breadcrumb>
           <Breadcrumb.Item>
-            <a onClick={() => navigate("/data/knowledge-generation")}>知识库</a>
+            <a onClick={() => navigate("/data/knowledge-base")}>知识库</a>
           </Breadcrumb.Item>
           <Breadcrumb.Item>{knowledgeBase.name}</Breadcrumb.Item>
         </Breadcrumb>
