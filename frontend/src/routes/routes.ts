@@ -31,10 +31,9 @@ import EvaluationTaskCreate from "@/pages/DataEvaluation/Create/CreateTask";
 import EvaluationTaskReport from "@/pages/DataEvaluation/Report/EvaluationReport";
 import ManualEvaluatePage from "@/pages/DataEvaluation/Evaluate/ManualEvaluate";
 
-import KnowledgeGenerationPage from "@/pages/KnowledgeGeneration/Home/KnowledgeGeneration";
-import KnowledgeBaseCreatePage from "@/pages/KnowledgeGeneration/Create/KnowledgeBaseCreate";
-import KnowledgeBaseDetailPage from "@/pages/KnowledgeGeneration/Detail/KnowledgeBaseDetail";
-import KnowledgeBaseFileDetailPage from "@/pages/KnowledgeGeneration/FileDetail/KnowledgeBaseFileDetail";
+import KnowledgeBasePage from "@/pages/KnowledgeBase/Home/KnowledgeBasePage";
+import KnowledgeBaseDetailPage from "@/pages/KnowledgeBase/Detail/KnowledgeBaseDetail";
+import KnowledgeBaseFileDetailPage from "@/pages/KnowledgeBase/FileDetail/KnowledgeBaseFileDetail";
 
 import OperatorMarketPage from "@/pages/OperatorMarket/Home/OperatorMarket";
 import OperatorPluginCreate from "@/pages/OperatorMarket/Create/OperatorPluginCreate";
@@ -43,9 +42,9 @@ import RatioTasksPage from "@/pages/RatioTask/RatioTask";
 import CreateRatioTask from "@/pages/RatioTask/CreateRatioTask";
 import OrchestrationPage from "@/pages/Orchestration/Orchestration";
 import WorkflowEditor from "@/pages/Orchestration/WorkflowEditor";
-import AgentPage from "@/pages/Agent/Agent";
 import SettingsPage from "@/pages/SettingsPage/SettingsPage";
 import { withErrorBoundary } from "@/components/ErrorBoundary";
+import AgentPage from "@/pages/Agent/Agent.tsx";
 
 const router = createBrowserRouter([
   {
@@ -218,16 +217,12 @@ const router = createBrowserRouter([
         ],
       },
       {
-        path: "knowledge-generation",
+        path: "knowledge-base",
         children: [
           {
             path: "",
             index: true,
-            Component: KnowledgeGenerationPage,
-          },
-          {
-            path: "create/:id?",
-            Component: KnowledgeBaseCreatePage,
+            Component: KnowledgeBasePage,
           },
           {
             path: "detail/:id",
@@ -248,7 +243,7 @@ const router = createBrowserRouter([
             Component: OperatorMarketPage,
           },
           {
-            path: "create",
+            path: "create/:id?",
             Component: OperatorPluginCreate,
           },
           {

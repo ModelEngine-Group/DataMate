@@ -161,8 +161,6 @@ module.exports = function (router) {
       );
     }
     if (type) {
-      console.log("filter type:", type);
-
       filteredDatasets = filteredDatasets.filter(
         (dataset) => dataset.datasetType === type
       );

@@ -27,12 +27,13 @@ import {
   updateModelByIdUsingPut,
 } from "./settings.apis";
 
-interface ModelI {
+export interface ModelI {
   id: string;
-  name: string;
+  modelName: string;
   provider: string;
   model: string;
   apiKey: string;
+  type: string;
   isEnabled: boolean;
   createdAt: string;
   updatedAt: string;
