@@ -3,7 +3,7 @@ import {
   datasetTypeMap,
   mapDataset,
 } from "@/pages/DataManagement/dataset.const";
-import { Button, Form, Input, Modal, Select } from "antd";
+import { Button, Form, Input, Modal, Select, message } from "antd";
 import TextArea from "antd/es/input/TextArea";
 import { Database } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -21,6 +21,7 @@ export default function CreateAnnotationTask({
 }) {
   const [form] = Form.useForm();
   const [datasets, setDatasets] = useState<Dataset[]>([]);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -35,10 +36,21 @@ export default function CreateAnnotationTask({
   }, [open]);
 
   const handleSubmit = async () => {
-    const values = await form.validateFields();
-    await createAnnotationTaskUsingPost(values);
-    onClose();
-    onRefresh();
+    try {
+      const values = await form.validateFields();
+      setSubmitting(true);
+      await createAnnotationTaskUsingPost(values);
+      message?.success?.("创建标注任务成功");
+      onClose();
+      onRefresh();
+    } catch (err: any) {
+      console.error("Create annotation task failed", err);
+      const msg = err?.message || err?.data?.message || "创建失败，请稍后重试";
+      // show a user friendly message
+      (message as any)?.error?.(msg);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -48,14 +60,16 @@ export default function CreateAnnotationTask({
       title="创建标注任务"
       footer={
         <>
-          <Button onClick={onClose}>取消</Button>
-          <Button type="primary" onClick={handleSubmit}>
+          <Button onClick={onClose} disabled={submitting}>
+            取消
+          </Button>
+          <Button type="primary" onClick={handleSubmit} loading={submitting}>
             确定
           </Button>
         </>
       }
     >
-      <Form layout="vertical">
+      <Form form={form} layout="vertical">
         <Form.Item
           label="名称"
           name="name"
@@ -82,7 +96,7 @@ export default function CreateAnnotationTask({
                 label: (
                   <div className="flex items-center justify-between gap-3 py-2">
                     <div className="flex items-center font-sm text-gray-900">
-                      <span className="mr-2">{dataset.icon}</span>
+                      <span className="mr-2">{(dataset as any).icon}</span>
                       <span>{dataset.name}</span>
                     </div>
                     <div className="text-xs text-gray-500">{dataset.size}</div>
