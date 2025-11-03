@@ -1,0 +1,1104 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+###
+### K8S Settings
+###
+
+### Namespace to deploy pulsar
+# The namespace to use to deploy the pulsar components, if left empty
+# will default to .Release.Namespace (aka helm --namespace).
+namespace: ""
+namespaceCreate: false
+
+## clusterDomain as defined for your k8s cluster
+clusterDomain: cluster.local
+
+###
+### Global Settings
+###
+
+## Set to true on install
+initialize: false
+
+## Set cluster name
+# clusterName:
+
+## Pulsar Metadata Prefix
+##
+## By default, pulsar stores all the metadata at root path.
+## You can configure to have a prefix (e.g. "/my-pulsar-cluster").
+## If you do so, all the pulsar and bookkeeper metadata will
+## be stored under the provided path
+metadataPrefix: ""
+
+## Port name prefix
+##
+## Used for Istio support which depends on a standard naming of ports
+## See https://istio.io/latest/docs/ops/configuration/traffic-management/protocol-selection/#explicit-protocol-selection
+## Prefixes are disabled by default
+
+tcpPrefix: ""  # For Istio this will be "tcp-"
+tlsPrefix: ""  # For Istio this will be "tls-"
+
+## Persistence
+##
+## If persistence is enabled, components that have state will
+## be deployed with PersistentVolumeClaims, otherwise, for test
+## purposes, they will be deployed with emptyDir
+##
+## This is a global setting that is applied to all components.
+## If you need to disable persistence for a component,
+## you can set the `volume.persistence` setting to `false` for
+## that component.
+##
+## Deprecated in favor of using `volumes.persistence`
+persistence: true
+## Volume settings
+volumes:
+  persistence: true
+  # configure the components to use local persistent volume
+  # the local provisioner should be installed prior to enable local persistent volume
+  local_storage: false
+
+## RBAC
+##
+## Configure settings related to RBAC such as limiting broker access to single
+## namespece or enabling PSP
+
+rbac:
+  enabled: false
+  psp: false
+  limit_to_namespace: false
+
+
+## AntiAffinity
+##
+## Flag to enable and disable `AntiAffinity` for all components.
+## This is a global setting that is applied to all components.
+## If you need to disable AntiAffinity for a component, you can set
+## the `affinity.anti_affinity` settings to `false` for that component.
+affinity:
+  anti_affinity: true
+  # Set the anti affinity type. Valid values:
+  # requiredDuringSchedulingIgnoredDuringExecution - rules must be met for pod to be scheduled (hard) requires at least one node per replica
+  # preferredDuringSchedulingIgnoredDuringExecution - scheduler will try to enforce but not guranentee
+  type: requiredDuringSchedulingIgnoredDuringExecution
+
+## Components
+##
+## Control what components of Apache Pulsar to deploy for the cluster
+components:
+  # zookeeper
+  zookeeper: true
+  # bookkeeper
+  bookkeeper: true
+  # bookkeeper - autorecovery
+  autorecovery: true
+  # broker
+  broker: true
+  # functions
+  functions: true
+  # proxy
+  proxy: true
+  # toolset
+  toolset: true
+  # pulsar manager
+  pulsar_manager: true
+
+## Monitoring Components
+##
+## Control what components of the monitoring stack to deploy for the cluster
+monitoring:
+  # monitoring - prometheus
+  prometheus: true
+  # monitoring - grafana
+  grafana: true
+  # monitoring - node_exporter
+  node_exporter: true
+  # alerting - alert-manager
+  alert_manager: true
+
+## which extra components to deploy (Deprecated)
+extra:
+  # Pulsar proxy
+  proxy: false
+  # Bookkeeper auto-recovery
+  autoRecovery: false
+  # Pulsar dashboard
+  # Deprecated
+  # Replace pulsar-dashboard with pulsar-manager
+  dashboard: false
+  # pulsar manager
+  pulsar_manager: false
+  # Monitoring stack (prometheus and grafana)
+  monitoring: false
+  # Configure Kubernetes runtime for Functions
+  functionsAsPods: false
+
+## Images
+##
+## Control what images to use for each component
+images:
+  zookeeper:
+    repository: apachepulsar/pulsar-all
+    tag: 2.7.4
+    pullPolicy: IfNotPresent
+  bookie:
+    repository: apachepulsar/pulsar-all
+    tag: 2.7.4
+    pullPolicy: IfNotPresent
+  autorecovery:
+    repository: apachepulsar/pulsar-all
+    tag: 2.7.4
+    pullPolicy: IfNotPresent
+  broker:
+    repository: apachepulsar/pulsar-all
+    tag: 2.7.4
+    pullPolicy: IfNotPresent
+  proxy:
+    repository: apachepulsar/pulsar-all
+    tag: 2.7.4
+    pullPolicy: IfNotPresent
+  functions:
+    repository: apachepulsar/pulsar-all
+    tag: 2.7.4
+  prometheus:
+    repository: prom/prometheus
+    tag: v2.17.2
+    pullPolicy: IfNotPresent
+  grafana:
+    repository: streamnative/apache-pulsar-grafana-dashboard-k8s
+    tag: 0.0.10
+    pullPolicy: IfNotPresent
+  pulsar_manager:
+    repository: apachepulsar/pulsar-manager
+    tag: v0.1.0
+    pullPolicy: IfNotPresent
+    hasCommand: false
+
+## TLS
+## templates/tls-certs.yaml
+##
+## The chart is using cert-manager for provisioning TLS certs for
+## brokers and proxies.
+tls:
+  enabled: false
+  ca_suffix: ca-tls
+  # common settings for generating certs
+  common:
+    # 90d
+    duration: 2160h
+    # 15d
+    renewBefore: 360h
+    organization:
+      - pulsar
+    keySize: 4096
+    keyAlgorithm: rsa
+    keyEncoding: pkcs8
+  # settings for generating certs for proxy
+  proxy:
+    enabled: false
+    cert_name: tls-proxy
+  # settings for generating certs for broker
+  broker:
+    enabled: false
+    cert_name: tls-broker
+  # settings for generating certs for bookies
+  bookie:
+    enabled: false
+    cert_name: tls-bookie
+  # settings for generating certs for zookeeper
+  zookeeper:
+    enabled: false
+    cert_name: tls-zookeeper
+  # settings for generating certs for recovery
+  autorecovery:
+    cert_name: tls-recovery
+  # settings for generating certs for toolset
+  toolset:
+    cert_name: tls-toolset
+
+# Enable or disable broker authentication and authorization.
+auth:
+  authentication:
+    enabled: false
+    provider: "jwt"
+    jwt:
+      # Enable JWT authentication
+      # If the token is generated by a secret key, set the usingSecretKey as true.
+      # If the token is generated by a private key, set the usingSecretKey as false.
+      usingSecretKey: false
+  authorization:
+    enabled: false
+  superUsers:
+    # broker to broker communication
+    broker: "broker-admin"
+    # proxy to broker communication
+    proxy: "proxy-admin"
+    # pulsar-admin client to broker/proxy communication
+    client: "admin"
+
+######################################################################
+# External dependencies
+######################################################################
+
+## cert-manager
+## templates/tls-cert-issuer.yaml
+##
+## Cert manager is used for automatically provisioning TLS certificates
+## for components within a Pulsar cluster
+certs:
+  internal_issuer:
+    apiVersion: cert-manager.io/v1alpha2
+    enabled: false
+    component: internal-cert-issuer
+    type: selfsigning
+    # 90d
+    duration: 2160h
+    # 15d
+    renewBefore: 360h
+  issuers:
+    selfsigning:
+
+######################################################################
+# Below are settings for each component
+######################################################################
+
+## Pulsar: Zookeeper cluster
+## templates/zookeeper-statefulset.yaml
+##
+zookeeper:
+  # use a component name that matches your grafana configuration
+  # so the metrics are correctly rendered in grafana dashboard
+  component: zookeeper
+  # the number of zookeeper servers to run. it should be an odd number larger than or equal to 3.
+  replicaCount: 3
+  updateStrategy:
+    type: RollingUpdate
+  podManagementPolicy: OrderedReady
+  # If using Prometheus-Operator enable this PodMonitor to discover zookeeper scrape targets
+  # Prometheus-Operator does not add scrape targets based on k8s annotations
+  podMonitor:
+    enabled: false
+    interval: 10s
+    scrapeTimeout: 10s
+  # True includes annotation for statefulset that contains hash of corresponding configmap, which will cause pods to restart on configmap change
+  restartPodsOnConfigMapChange: false
+  ports:
+    http: 8000
+    client: 2181
+    clientTls: 2281
+    follower: 2888
+    leaderElection: 3888
+  # nodeSelector:
+    # cloud.google.com/gke-nodepool: default-pool
+  probe:
+    liveness:
+      enabled: true
+      failureThreshold: 10
+      initialDelaySeconds: 10
+      periodSeconds: 30
+      timeoutSeconds: 5
+    readiness:
+      enabled: true
+      failureThreshold: 10
+      initialDelaySeconds: 10
+      periodSeconds: 30
+      timeoutSeconds: 5
+    startup:
+      enabled: false
+      failureThreshold: 30
+      initialDelaySeconds: 10
+      periodSeconds: 30
+      timeoutSeconds: 5
+  affinity:
+    anti_affinity: true
+    # Set the anti affinity type. Valid values:
+    # requiredDuringSchedulingIgnoredDuringExecution - rules must be met for pod to be scheduled (hard) requires at least one node per replica
+    # preferredDuringSchedulingIgnoredDuringExecution - scheduler will try to enforce but not guranentee
+    type: requiredDuringSchedulingIgnoredDuringExecution
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8000"
+  tolerations: []
+  gracePeriod: 30
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 0.1
+  # extraVolumes and extraVolumeMounts allows you to mount other volumes
+  # Example Use Case: mount ssl certificates
+  # extraVolumes:
+  #   - name: ca-certs
+  #     secret:
+  #       defaultMode: 420
+  #       secretName: ca-certs
+  # extraVolumeMounts:
+  #   - name: ca-certs
+  #     mountPath: /certs
+  #     readOnly: true
+  extraVolumes: []
+  extraVolumeMounts: []
+  volumes:
+    # use a persistent volume or emptyDir
+    persistence: true
+    data:
+      name: data
+      size: 20Gi
+      local_storage: true
+      ## If you already have an existent storage class and want to reuse it, you can specify its name with the option below
+      ##
+      # storageClassName: existent-storage-class
+      #
+      ## Instead if you want to create a new storage class define it below
+      ## If left undefined no storage class will be defined along with PVC
+      ##
+      # storageClass:
+        # type: pd-ssd
+        # fsType: xfs
+        # provisioner: kubernetes.io/gce-pd
+  ## Zookeeper configmap
+  ## templates/zookeeper-configmap.yaml
+  ##
+  configData:
+    PULSAR_MEM: >
+      -Xms64m -Xmx128m
+    PULSAR_GC: >
+      -XX:+UseG1GC
+      -XX:MaxGCPauseMillis=10
+      -Dcom.sun.management.jmxremote
+      -Djute.maxbuffer=10485760
+      -XX:+ParallelRefProcEnabled
+      -XX:+UnlockExperimentalVMOptions
+      -XX:+DoEscapeAnalysis
+      -XX:+DisableExplicitGC
+      -XX:+PerfDisableSharedMem
+  ## Zookeeper service
+  ## templates/zookeeper-service.yaml
+  ##
+  service:
+    annotations:
+      service.alpha.kubernetes.io/tolerate-unready-endpoints: "true"
+  ## Zookeeper PodDisruptionBudget
+  ## templates/zookeeper-pdb.yaml
+  ##
+  pdb:
+    usePolicy: true
+    maxUnavailable: 1
+
+## Pulsar: Bookkeeper cluster
+## templates/bookkeeper-statefulset.yaml
+##
+bookkeeper:
+  # use a component name that matches your grafana configuration
+  # so the metrics are correctly rendered in grafana dashboard
+  component: bookie
+  ## BookKeeper Cluster Initialize
+  ## templates/bookkeeper-cluster-initialize.yaml
+  metadata:
+    ## Set the resources used for running `bin/bookkeeper shell initnewcluster`
+    ##
+    resources:
+      # requests:
+        # memory: 4Gi
+        # cpu: 2
+  replicaCount: 4
+  updateStrategy:
+    type: RollingUpdate
+  podManagementPolicy: Parallel
+  # If using Prometheus-Operator enable this PodMonitor to discover bookie scrape targets
+  # Prometheus-Operator does not add scrape targets based on k8s annotations
+  podMonitor:
+    enabled: false
+    interval: 10s
+    scrapeTimeout: 10s
+  # True includes annotation for statefulset that contains hash of corresponding configmap, which will cause pods to restart on configmap change
+  restartPodsOnConfigMapChange: false
+  ports:
+    http: 8000
+    bookie: 3181
+  # nodeSelector:
+    # cloud.google.com/gke-nodepool: default-pool
+  probe:
+    liveness:
+      enabled: true
+      failureThreshold: 60
+      initialDelaySeconds: 10
+      periodSeconds: 30
+      timeoutSeconds: 5
+    readiness:
+      enabled: true
+      failureThreshold: 60
+      initialDelaySeconds: 10
+      periodSeconds: 30
+      timeoutSeconds: 5
+    startup:
+      enabled: false
+      failureThreshold: 30
+      initialDelaySeconds: 60
+      periodSeconds: 30
+      timeoutSeconds: 5
+  affinity:
+    anti_affinity: true
+    # Set the anti affinity type. Valid values:
+    # requiredDuringSchedulingIgnoredDuringExecution - rules must be met for pod to be scheduled (hard) requires at least one node per replica
+    # preferredDuringSchedulingIgnoredDuringExecution - scheduler will try to enforce but not guranentee
+    type: requiredDuringSchedulingIgnoredDuringExecution
+  annotations: {}
+  tolerations: []
+  gracePeriod: 30
+  resources:
+    requests:
+      memory: 512Mi
+      cpu: 0.2
+  # extraVolumes and extraVolumeMounts allows you to mount other volumes
+  # Example Use Case: mount ssl certificates
+  # extraVolumes:
+  #   - name: ca-certs
+  #     secret:
+  #       defaultMode: 420
+  #       secretName: ca-certs
+  # extraVolumeMounts:
+  #   - name: ca-certs
+  #     mountPath: /certs
+  #     readOnly: true
+  extraVolumes: []
+  extraVolumeMounts: []
+  volumes:
+    # use a persistent volume or emptyDir
+    persistence: true
+    journal:
+      name: journal
+      size: 10Gi
+      local_storage: true
+      ## If you already have an existent storage class and want to reuse it, you can specify its name with the option below
+      ##
+      # storageClassName: existent-storage-class
+      #
+      ## Instead if you want to create a new storage class define it below
+      ## If left undefined no storage class will be defined along with PVC
+      ##
+      # storageClass:
+        # type: pd-ssd
+        # fsType: xfs
+        # provisioner: kubernetes.io/gce-pd
+    ledgers:
+      name: ledgers
+      size: 50Gi
+      local_storage: true
+      # storageClassName:
+      # storageClass:
+        # ...
+
+    ## use a single common volume for both journal and ledgers
+    useSingleCommonVolume: false
+    common:
+      name: common
+      size: 60Gi
+      local_storage: true
+      # storageClassName:
+      # storageClass: ## this is common too
+        # ...
+
+  ## Bookkeeper configmap
+  ## templates/bookkeeper-configmap.yaml
+  ##
+  configData:
+    # we use `bin/pulsar` for starting bookie daemons
+    PULSAR_MEM: >
+      -Xms128m
+      -Xmx256m
+      -XX:MaxDirectMemorySize=256m
+    PULSAR_GC: >
+      -XX:+UseG1GC
+      -XX:MaxGCPauseMillis=10
+      -XX:+ParallelRefProcEnabled
+      -XX:+UnlockExperimentalVMOptions
+      -XX:+DoEscapeAnalysis
+      -XX:ParallelGCThreads=4
+      -XX:ConcGCThreads=4
+      -XX:G1NewSizePercent=50
+      -XX:+DisableExplicitGC
+      -XX:-ResizePLAB
+      -XX:+ExitOnOutOfMemoryError
+      -XX:+PerfDisableSharedMem
+      -XX:+PrintGCDetails
+      -XX:+PrintGCTimeStamps
+      -XX:+PrintGCApplicationStoppedTime
+      -XX:+PrintHeapAtGC
+      -verbosegc
+      -Xloggc:/var/log/bookie-gc.log
+      -XX:G1LogLevel=finest
+    # configure the memory settings based on jvm memory settings
+    dbStorage_writeCacheMaxSizeMb: "32"
+    dbStorage_readAheadCacheMaxSizeMb: "32"
+    dbStorage_rocksDB_writeBufferSizeMB: "8"
+    dbStorage_rocksDB_blockCacheSize: "8388608"
+  ## Bookkeeper Service
+  ## templates/bookkeeper-service.yaml
+  ##
+  service:
+    spec:
+      publishNotReadyAddresses: true
+  ## Bookkeeper PodDisruptionBudget
+  ## templates/bookkeeper-pdb.yaml
+  ##
+  pdb:
+    usePolicy: true
+    maxUnavailable: 1
+
+## Pulsar: Bookkeeper AutoRecovery
+## templates/autorecovery-statefulset.yaml
+##
+autorecovery:
+  # use a component name that matches your grafana configuration
+  # so the metrics are correctly rendered in grafana dashboard
+  component: recovery
+  replicaCount: 1
+  # If using Prometheus-Operator enable this PodMonitor to discover autorecovery scrape targets
+  # # Prometheus-Operator does not add scrape targets based on k8s annotations
+  podMonitor:
+    enabled: false
+    interval: 10s
+    scrapeTimeout: 10s
+  # True includes annotation for statefulset that contains hash of corresponding configmap, which will cause pods to restart on configmap change
+  restartPodsOnConfigMapChange: false
+  ports:
+    http: 8000
+  # nodeSelector:
+    # cloud.google.com/gke-nodepool: default-pool
+  affinity:
+    anti_affinity: true
+    # Set the anti affinity type. Valid values:
+    # requiredDuringSchedulingIgnoredDuringExecution - rules must be met for pod to be scheduled (hard) requires at least one node per replica
+    # preferredDuringSchedulingIgnoredDuringExecution - scheduler will try to enforce but not guranentee
+    type: requiredDuringSchedulingIgnoredDuringExecution
+  annotations: {}
+  # tolerations: []
+  gracePeriod: 30
+  resources:
+    requests:
+      memory: 64Mi
+      cpu: 0.05
+  ## Bookkeeper auto-recovery configmap
+  ## templates/autorecovery-configmap.yaml
+  ##
+  configData:
+    BOOKIE_MEM: >
+      -Xms64m -Xmx64m
+
+## Pulsar Zookeeper metadata. The metadata will be deployed as
+## soon as the last zookeeper node is reachable. The deployment
+## of other components that depends on zookeeper, such as the
+## bookkeeper nodes, broker nodes, etc will only start to be
+## deployed when the zookeeper cluster is ready and with the
+## metadata deployed
+pulsar_metadata:
+  component: pulsar-init
+  image:
+    # the image used for running `pulsar-cluster-initialize` job
+    repository: apachepulsar/pulsar-all
+    tag: 2.7.4
+    pullPolicy: IfNotPresent
+  ## set an existing configuration store
+  # configurationStore:
+  configurationStoreMetadataPrefix: ""
+  configurationStorePort: 2181
+
+  ## optional, you can provide your own zookeeper metadata store for other components
+  # to use this, you should explicit set components.zookeeper to false
+  #
+  # userProvidedZookeepers: "zk01.example.com:2181,zk02.example.com:2181"
+
+# Can be used to run extra commands in the initialization jobs e.g. to quit istio sidecars etc.
+extraInitCommand: ""
+
+## Pulsar: Broker cluster
+## templates/broker-statefulset.yaml
+##
+broker:
+  # use a component name that matches your grafana configuration
+  # so the metrics are correctly rendered in grafana dashboard
+  component: broker
+  replicaCount: 3
+  # If using Prometheus-Operator enable this PodMonitor to discover broker scrape targets
+  # Prometheus-Operator does not add scrape targets based on k8s annotations
+  podMonitor:
+    enabled: false
+    interval: 10s
+    scrapeTimeout: 10s
+  # True includes annotation for statefulset that contains hash of corresponding configmap, which will cause pods to restart on configmap change
+  restartPodsOnConfigMapChange: false
+  ports:
+    http: 8080
+    https: 8443
+    pulsar: 6650
+    pulsarssl: 6651
+  # nodeSelector:
+    # cloud.google.com/gke-nodepool: default-pool
+  probe:
+    liveness:
+      enabled: true
+      failureThreshold: 10
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+    readiness:
+      enabled: true
+      failureThreshold: 10
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+    startup:
+      enabled: false
+      failureThreshold: 30
+      initialDelaySeconds: 60
+      periodSeconds: 10
+      timeoutSeconds: 5
+  affinity:
+    anti_affinity: true
+    # Set the anti affinity type. Valid values:
+    # requiredDuringSchedulingIgnoredDuringExecution - rules must be met for pod to be scheduled (hard) requires at least one node per replica
+    # preferredDuringSchedulingIgnoredDuringExecution - scheduler will try to enforce but not guranentee
+    type: preferredDuringSchedulingIgnoredDuringExecution
+  annotations: {}
+  tolerations: []
+  gracePeriod: 30
+  resources:
+    requests:
+      memory: 512Mi
+      cpu: 0.2
+  # extraVolumes and extraVolumeMounts allows you to mount other volumes
+  # Example Use Case: mount ssl certificates
+  # extraVolumes:
+  #   - name: ca-certs
+  #     secret:
+  #       defaultMode: 420
+  #       secretName: ca-certs
+  # extraVolumeMounts:
+  #   - name: ca-certs
+  #     mountPath: /certs
+  #     readOnly: true
+  extraVolumes: []
+  extraVolumeMounts: []
+  ## Broker configmap
+  ## templates/broker-configmap.yaml
+  ##
+  configData:
+    PULSAR_MEM: >
+      -Xms128m -Xmx256m -XX:MaxDirectMemorySize=256m
+    PULSAR_GC: >
+      -XX:+UseG1GC
+      -XX:MaxGCPauseMillis=10
+      -Dio.netty.leakDetectionLevel=disabled
+      -Dio.netty.recycler.linkCapacity=1024
+      -XX:+ParallelRefProcEnabled
+      -XX:+UnlockExperimentalVMOptions
+      -XX:+DoEscapeAnalysis
+      -XX:ParallelGCThreads=4
+      -XX:ConcGCThreads=4
+      -XX:G1NewSizePercent=50
+      -XX:+DisableExplicitGC
+      -XX:-ResizePLAB
+      -XX:+ExitOnOutOfMemoryError
+      -XX:+PerfDisableSharedMem
+    managedLedgerDefaultEnsembleSize: "2"
+    managedLedgerDefaultWriteQuorum: "2"
+    managedLedgerDefaultAckQuorum: "2"
+  ## Broker service
+  ## templates/broker-service.yaml
+  ##
+  service:
+    annotations: {}
+  ## Broker PodDisruptionBudget
+  ## templates/broker-pdb.yaml
+  ##
+  pdb:
+    usePolicy: true
+    maxUnavailable: 1
+  ### Broker service account
+  ## templates/broker-service-account.yaml
+  service_account:
+    annotations: {}
+
+## Pulsar: Functions Worker
+## templates/function-worker-configmap.yaml
+##
+functions:
+  component: functions-worker
+
+## Pulsar: Proxy Cluster
+## templates/proxy-statefulset.yaml
+##
+proxy:
+  # use a component name that matches your grafana configuration
+  # so the metrics are correctly rendered in grafana dashboard
+  component: proxy
+  replicaCount: 3
+  # If using Prometheus-Operator enable this PodMonitor to discover proxy scrape targets
+  # Prometheus-Operator does not add scrape targets based on k8s annotations
+  podMonitor:
+    enabled: false
+    interval: 10s
+    scrapeTimeout: 10s
+  # True includes annotation for statefulset that contains hash of corresponding configmap, which will cause pods to restart on configmap change
+  restartPodsOnConfigMapChange: false
+  # nodeSelector:
+    # cloud.google.com/gke-nodepool: default-pool
+  probe:
+    liveness:
+      enabled: true
+      failureThreshold: 10
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+    readiness:
+      enabled: true
+      failureThreshold: 10
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+    startup:
+      enabled: false
+      failureThreshold: 30
+      initialDelaySeconds: 60
+      periodSeconds: 10
+      timeoutSeconds: 5
+  affinity:
+    anti_affinity: true
+    # Set the anti affinity type. Valid values:
+    # requiredDuringSchedulingIgnoredDuringExecution - rules must be met for pod to be scheduled (hard) requires at least one node per replica
+    # preferredDuringSchedulingIgnoredDuringExecution - scheduler will try to enforce but not guranentee
+    type: requiredDuringSchedulingIgnoredDuringExecution
+  annotations: {}
+  tolerations: []
+  gracePeriod: 30
+  resources:
+    requests:
+      memory: 128Mi
+      cpu: 0.2
+  # extraVolumes and extraVolumeMounts allows you to mount other volumes
+  # Example Use Case: mount ssl certificates
+  # extraVolumes:
+  #   - name: ca-certs
+  #     secret:
+  #       defaultMode: 420
+  #       secretName: ca-certs
+  # extraVolumeMounts:
+  #   - name: ca-certs
+  #     mountPath: /certs
+  #     readOnly: true
+  extraVolumes: []
+  extraVolumeMounts: []
+  ## Proxy configmap
+  ## templates/proxy-configmap.yaml
+  ##
+  configData:
+    PULSAR_MEM: >
+      -Xms64m -Xmx64m -XX:MaxDirectMemorySize=64m
+    PULSAR_GC: >
+      -XX:+UseG1GC
+      -XX:MaxGCPauseMillis=10
+      -Dio.netty.leakDetectionLevel=disabled
+      -Dio.netty.recycler.linkCapacity=1024
+      -XX:+ParallelRefProcEnabled
+      -XX:+UnlockExperimentalVMOptions
+      -XX:+DoEscapeAnalysis
+      -XX:ParallelGCThreads=4
+      -XX:ConcGCThreads=4
+      -XX:G1NewSizePercent=50
+      -XX:+DisableExplicitGC
+      -XX:-ResizePLAB
+      -XX:+ExitOnOutOfMemoryError
+      -XX:+PerfDisableSharedMem
+  ## Proxy service
+  ## templates/proxy-service.yaml
+  ##
+  ports:
+    http: 80
+    https: 443
+    pulsar: 6650
+    pulsarssl: 6651
+  service:
+    annotations: {}
+    type: LoadBalancer
+  ## Proxy ingress
+  ## templates/proxy-ingress.yaml
+  ##
+  ingress:
+    enabled: false
+    annotations: {}
+    tls:
+      enabled: false
+
+      ## Optional. Leave it blank if your Ingress Controller can provide a default certificate.
+      secretName: ""
+
+    hostname: ""
+    path: "/"
+  ## Proxy PodDisruptionBudget
+  ## templates/proxy-pdb.yaml
+  ##
+  pdb:
+    usePolicy: true
+    maxUnavailable: 1
+
+## Pulsar Extra: Dashboard
+## templates/dashboard-deployment.yaml
+## Deprecated
+##
+dashboard:
+  component: dashboard
+  replicaCount: 1
+  # nodeSelector:
+    # cloud.google.com/gke-nodepool: default-pool
+  annotations: {}
+  tolerations: []
+  gracePeriod: 0
+  image:
+    repository: apachepulsar/pulsar-dashboard
+    tag: latest
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      memory: 1Gi
+      cpu: 250m
+  ## Dashboard service
+  ## templates/dashboard-service.yaml
+  ##
+  service:
+    annotations: {}
+    ports:
+    - name: server
+      port: 80
+  ingress:
+    enabled: false
+    annotations: {}
+    tls:
+      enabled: false
+
+      ## Optional. Leave it blank if your Ingress Controller can provide a default certificate.
+      secretName: ""
+
+    ## Required if ingress is enabled
+    hostname: ""
+    path: "/"
+    port: 80
+
+
+## Pulsar ToolSet
+## templates/toolset-deployment.yaml
+##
+toolset:
+  component: toolset
+  useProxy: true
+  replicaCount: 1
+  # True includes annotation for statefulset that contains hash of corresponding configmap, which will cause pods to restart on configmap change
+  restartPodsOnConfigMapChange: false
+  # nodeSelector:
+    # cloud.google.com/gke-nodepool: default-pool
+  annotations: {}
+  tolerations: []
+  gracePeriod: 30
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 0.1
+  # extraVolumes and extraVolumeMounts allows you to mount other volumes
+  # Example Use Case: mount ssl certificates
+  # extraVolumes:
+  #   - name: ca-certs
+  #     secret:
+  #       defaultMode: 420
+  #       secretName: ca-certs
+  # extraVolumeMounts:
+  #   - name: ca-certs
+  #     mountPath: /certs
+  #     readOnly: true
+  extraVolumes: []
+  extraVolumeMounts: []
+  ## Bastion configmap
+  ## templates/bastion-configmap.yaml
+  ##
+  configData:
+    PULSAR_MEM: >
+      -Xms64M
+      -Xmx128M
+      -XX:MaxDirectMemorySize=128M
+
+#############################################################
+### Monitoring Stack : Prometheus / Grafana
+#############################################################
+
+## Monitoring Stack: Prometheus
+## templates/prometheus-deployment.yaml
+##
+
+## Deprecated in favor of using `prometheus.rbac.enabled`
+prometheus_rbac: false
+prometheus:
+  component: prometheus
+  rbac:
+    enabled: true
+  replicaCount: 1
+  # True includes annotation for statefulset that contains hash of corresponding configmap, which will cause pods to restart on configmap change
+  restartPodsOnConfigMapChange: false
+  # nodeSelector:
+    # cloud.google.com/gke-nodepool: default-pool
+  annotations: {}
+  tolerations: []
+  gracePeriod: 5
+  port: 9090
+  enableAdminApi: false
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 0.1
+  volumes:
+    # use a persistent volume or emptyDir
+    persistence: true
+    data:
+      name: data
+      size: 10Gi
+      local_storage: true
+      ## If you already have an existent storage class and want to reuse it, you can specify its name with the option below
+      ##
+      # storageClassName: existent-storage-class
+      #
+      ## Instead if you want to create a new storage class define it below
+      ## If left undefined no storage class will be defined along with PVC
+      ##
+      # storageClass:
+        # type: pd-standard
+        # fsType: xfs
+        # provisioner: kubernetes.io/gce-pd
+  ## Prometheus service
+  ## templates/prometheus-service.yaml
+  ##
+  service:
+    annotations: {}
+
+## Monitoring Stack: Grafana
+## templates/grafana-deployment.yaml
+##
+grafana:
+  component: grafana
+  replicaCount: 1
+  # True includes annotation for statefulset that contains hash of corresponding configmap, which will cause pods to restart on configmap change
+  restartPodsOnConfigMapChange: false
+  # nodeSelector:
+    # cloud.google.com/gke-nodepool: default-pool
+  annotations: {}
+  tolerations: []
+  gracePeriod: 30
+  resources:
+    requests:
+      memory: 250Mi
+      cpu: 0.1
+  ## Grafana service
+  ## templates/grafana-service.yaml
+  ##
+  service:
+    type: LoadBalancer
+    port: 3000
+    targetPort: 3000
+    annotations: {}
+  plugins: []
+  ## Grafana configMap
+  ## templates/grafana-configmap.yaml
+  ##
+  configData: {}
+  ## Grafana ingress
+  ## templates/grafana-ingress.yaml
+  ##
+  ingress:
+    enabled: false
+    annotations: {}
+    labels: {}
+
+    tls: []
+
+    ## Optional. Leave it blank if your Ingress Controller can provide a default certificate.
+    ## - secretName: ""
+
+    ## Extra paths to prepend to every host configuration. This is useful when working with annotation based services.
+    extraPaths: []
+    hostname: ""
+    protocol: http
+    path: /grafana
+    port: 80
+  admin:
+    user: pulsar
+    password: pulsar
+
+## Components Stack: pulsar_manager
+## templates/pulsar-manager.yaml
+##
+pulsar_manager:
+  component: pulsar-manager
+  replicaCount: 1
+  # True includes annotation for statefulset that contains hash of corresponding configmap, which will cause pods to restart on configmap change
+  restartPodsOnConfigMapChange: false
+  # nodeSelector:
+  # cloud.google.com/gke-nodepool: default-pool
+  annotations: {}
+  tolerations: []
+  gracePeriod: 30
+  resources:
+    requests:
+      memory: 250Mi
+      cpu: 0.1
+  configData:
+    REDIRECT_HOST: "http://127.0.0.1"
+    REDIRECT_PORT: "9527"
+    DRIVER_CLASS_NAME: org.postgresql.Driver
+    URL: jdbc:postgresql://127.0.0.1:5432/pulsar_manager
+    LOG_LEVEL: DEBUG
+    ## If you enabled authentication support
+    ## JWT_TOKEN: <token>
+    ## SECRET_KEY: data:base64,<secret key>
+  ## Pulsar manager service
+  ## templates/pulsar-manager-service.yaml
+  ##
+  service:
+    type: LoadBalancer
+    port: 9527
+    targetPort: 9527
+    annotations: {}
+  ## Pulsar manager ingress
+  ## templates/pulsar-manager-ingress.yaml
+  ##
+  ingress:
+    enabled: false
+    annotations: {}
+    tls:
+      enabled: false
+
+      ## Optional. Leave it blank if your Ingress Controller can provide a default certificate.
+      secretName: ""
+
+    hostname: ""
+    path: "/"
+
+  ## If set use existing secret with specified name to set pulsar admin credentials.
+  existingSecretName:
+  admin:
+    user: pulsar
+    password: pulsar

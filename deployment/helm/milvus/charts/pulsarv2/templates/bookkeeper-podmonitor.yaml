@@ -1,0 +1,54 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+# deploy bookkeeper PodMonitor only when `$.Values.bookkeeper.podMonitor.enabled` is true
+{{- if $.Values.bookkeeper.podMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: {{ template "pulsar.name" . }}-bookie
+  labels:
+    app: {{ template "pulsar.name" . }}
+    chart: {{ template "pulsar.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  jobLabel: bookie
+  podMetricsEndpoints:
+    - port: http
+      path: /metrics
+      scheme: http
+      interval: {{ $.Values.bookkeeper.podMonitor.interval }}
+      scrapeTimeout: {{ $.Values.bookkeeper.podMonitor.scrapeTimeout }}
+      relabelings:
+        - action: labelmap
+          regex: __meta_kubernetes_pod_label_(.+)
+        - sourceLabels: [__meta_kubernetes_namespace]
+          action: replace
+          targetLabel: kubernetes_namespace
+        - sourceLabels: [__meta_kubernetes_pod_label_component]
+          action: replace
+          targetLabel: job
+        - sourceLabels: [__meta_kubernetes_pod_name]
+          action: replace
+          targetLabel: kubernetes_pod_name
+  selector:
+    matchLabels:
+      component: bookie
+{{- end }}

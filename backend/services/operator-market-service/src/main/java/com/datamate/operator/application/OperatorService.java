@@ -32,7 +32,7 @@ public class OperatorService {
 
     private final FileService fileService;
 
-    @Value("${operator.base.path:/operator}")
+    @Value("${operator.base.path:/operators}")
     private String operatorBasePath;
 
     public List<OperatorDto> getOperators(Integer page, Integer size, List<String> categories,
