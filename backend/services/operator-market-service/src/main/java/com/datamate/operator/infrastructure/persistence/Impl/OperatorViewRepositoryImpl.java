@@ -22,7 +22,7 @@ public class OperatorViewRepositoryImpl extends CrudRepository<OperatorViewMappe
 
     @Override
     public List<OperatorView> findOperatorsByCriteria(Integer page, Integer size, String operatorName,
-                                                      List<Integer> categories, Boolean isStar) {
+                                                      List<String> categories, Boolean isStar) {
         QueryWrapper<OperatorView> queryWrapper = Wrappers.query();
         queryWrapper.in(CollectionUtils.isNotEmpty(categories), "category_id", categories)
             .like(StringUtils.isNotBlank(operatorName), "operator_name", operatorName)
@@ -37,7 +37,7 @@ public class OperatorViewRepositoryImpl extends CrudRepository<OperatorViewMappe
     }
 
     @Override
-    public Integer countOperatorsByCriteria(String operatorName, List<Integer> categories, Boolean isStar) {
+    public Integer countOperatorsByCriteria(String operatorName, List<String> categories, Boolean isStar) {
         QueryWrapper<OperatorView> queryWrapper = Wrappers.query();
         queryWrapper.in(CollectionUtils.isNotEmpty(categories),"category_id", categories)
             .like(StringUtils.isNotBlank(operatorName), "operator_name", operatorName)

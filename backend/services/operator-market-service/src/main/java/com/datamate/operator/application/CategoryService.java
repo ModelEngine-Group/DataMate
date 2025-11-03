@@ -6,13 +6,16 @@ import com.datamate.operator.domain.repository.CategoryRepository;
 import com.datamate.operator.interfaces.dto.CategoryDto;
 import com.datamate.operator.interfaces.dto.CategoryRelationDto;
 import com.datamate.operator.interfaces.dto.CategoryTreeResponse;
-import com.datamate.operator.interfaces.dto.SubCategory;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,37 +29,40 @@ public class CategoryService {
         List<CategoryDto> allCategories = categoryRepo.findAllCategories();
         List<CategoryRelationDto> allRelations = categoryRelationRepo.findAllRelation();
 
-        Map<Integer, Integer> relationMap = allRelations.stream()
+        Map<String, Integer> relationMap = allRelations.stream()
                 .collect(Collectors.groupingBy(
                         CategoryRelationDto::getCategoryId,
                         Collectors.collectingAndThen(Collectors.counting(), Math::toIntExact)));
 
-        Map<Integer, String> nameMap = allCategories.stream()
-                .collect(Collectors.toMap(CategoryDto::getId, CategoryDto::getName));
-        Map<Integer, List<CategoryDto>> groupedByParentId = allCategories.stream()
-                .filter(relation -> relation.getParentId() > 0)
+        Map<String, CategoryDto> nameMap = allCategories.stream()
+                .collect(Collectors.toMap(CategoryDto::getId, Function.identity()));
+        Map<String, List<CategoryDto>> groupedByParentId = allCategories.stream()
+                .filter(relation -> !StringUtils.equals(relation.getParentId(), "0"))
                 .collect(Collectors.groupingBy(CategoryDto::getParentId));
 
         return groupedByParentId.entrySet().stream()
-                .sorted(Map.Entry.comparingByKey())
+                .sorted(categoryComparator(nameMap))
                 .map(entry -> {
-                    Integer parentId = entry.getKey();
+                    String parentId = entry.getKey();
                     List<CategoryDto> group = entry.getValue();
                     CategoryTreeResponse response = new CategoryTreeResponse();
                     response.setId(parentId);
-                    response.setName(nameMap.get(parentId));
+                    response.setName(nameMap.get(parentId).getName());
                     AtomicInteger totalCount = new AtomicInteger();
-                    response.setCategories(group.stream().map(category -> {
-                        SubCategory subCategory = new SubCategory();
-                        subCategory.setId(category.getId());
-                        subCategory.setName(category.getName());
-                        subCategory.setCount(relationMap.getOrDefault(category.getId(), 0));
+                    response.setCategories(group.stream().peek(category -> {
+                        category.setCount(relationMap.getOrDefault(category.getId(), 0));
                         totalCount.getAndAdd(relationMap.getOrDefault(category.getId(), 0));
-                        subCategory.setParentId(parentId);
-                        return subCategory;
-                    }).toList());
+                    }).sorted(Comparator.comparing(CategoryDto::getCreatedAt)).toList());
                     response.setCount(totalCount.get());
                     return response;
                 }).toList();
+    }
+
+    private Comparator<Map.Entry<String, List<CategoryDto>>> categoryComparator(Map<String, CategoryDto> categoryMap) {
+        return (entry1, entry2) -> {
+            LocalDateTime index1 = categoryMap.get(entry1.getKey()).getCreatedAt();
+            LocalDateTime index2 = categoryMap.get(entry2.getKey()).getCreatedAt();
+            return index1.compareTo(index2);
+        };
     }
 }

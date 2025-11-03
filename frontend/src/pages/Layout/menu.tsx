@@ -71,7 +71,7 @@ export const menuItems = [
     color: "bg-indigo-500",
   },
   {
-    id: "knowledge-generation",
+    id: "knowledge-base",
     title: "知识生成",
     icon: BookOpen,
     description: "面向RAG的知识库构建",

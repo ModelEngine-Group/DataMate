@@ -39,7 +39,7 @@ interface DetailHeaderProps<T> {
 }
 
 function DetailHeader<T>({
-  data,
+  data = {} as T,
   statistics,
   operations,
   tagConfig,
@@ -49,17 +49,15 @@ function DetailHeader<T>({
       <div className="flex items-start justify-between">
         <div className="flex items-start gap-4 flex-1">
           <div
-            className={`w-16 h-16 text-white rounded-lg flex-center shadow-lg ${
-              data?.iconColor
-                ? data.iconColor
-                : "bg-gradient-to-br from-blue-100 to-blue-200"
-            }`}
+            className={`w-16 h-16 text-white rounded-lg flex-center shadow-lg bg-gradient-to-br from-sky-300 to-blue-500 text-white`}
           >
-            {data?.icon || <Database className="w-8 h-8" />}
+            {<div className="w-8 h-8 text-gray-50">{data?.icon}</div> || (
+              <Database className="w-8 h-8 text-white" />
+            )}
           </div>
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-lg font-bold text-gray-900">{data.name}</h1>
+              <h1 className="text-lg font-bold text-gray-900">{data?.name}</h1>
               {data?.status && (
                 <Tag color={data.status?.color}>
                   <div className="flex items-center gap-2 text-xs">
@@ -86,7 +84,7 @@ function DetailHeader<T>({
                 )}
               </div>
             )}
-            <p className="text-gray-700 mb-4">{data.description}</p>
+            <p className="text-gray-700 mb-4">{data?.description}</p>
             <div className="flex items-center gap-6 text-sm">
               {statistics.map((stat) => (
                 <div key={stat.key} className="flex items-center gap-1">
@@ -112,13 +110,10 @@ function DetailHeader<T>({
                 <Tooltip key={op.key} title={op.label}>
                   <Popconfirm
                     key={op.key}
-                    title={op.confirm.title}
-                    description={op.confirm.description}
+                    {...op.confirm}
                     onConfirm={() => {
-                      op?.onClick();
+                      op?.confirm?.onConfirm?.();
                     }}
-                    okText={op.confirm.okText || "确定"}
-                    cancelText={op.confirm.cancelText || "取消"}
                     okType={op.danger ? "danger" : "primary"}
                     overlayStyle={{ zIndex: 9999 }}
                   >

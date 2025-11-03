@@ -6,6 +6,7 @@ export default function UploadStep({ isUploading, onUpload }) {
     { ext: ".py", desc: "Python 脚本文件" },
     { ext: ".zip", desc: "压缩包文件" },
     { ext: ".tar.gz", desc: "压缩包文件" },
+    { ext: ".tar", desc: "压缩包文件" },
     { ext: ".whl", desc: "Python Wheel 包" },
     { ext: ".yaml", desc: "配置文件" },
     { ext: ".yml", desc: "配置文件" },

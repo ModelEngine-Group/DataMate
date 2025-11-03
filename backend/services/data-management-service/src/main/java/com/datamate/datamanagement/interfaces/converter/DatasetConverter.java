@@ -1,5 +1,7 @@
 package com.datamate.datamanagement.interfaces.converter;
 
+import com.datamate.common.infrastructure.exception.BusinessException;
+import com.datamate.common.infrastructure.exception.SystemErrorCode;
 import com.datamate.datamanagement.interfaces.dto.CreateDatasetRequest;
 import com.datamate.datamanagement.interfaces.dto.DatasetFileResponse;
 import com.datamate.datamanagement.interfaces.dto.DatasetResponse;
@@ -7,11 +9,16 @@ import com.datamate.datamanagement.interfaces.dto.UploadFileRequest;
 import com.datamate.common.domain.model.ChunkUploadRequest;
 import com.datamate.datamanagement.domain.model.dataset.Dataset;
 import com.datamate.datamanagement.domain.model.dataset.DatasetFile;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.collections4.CollectionUtils;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.Named;
 import org.mapstruct.factory.Mappers;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 数据集文件转换器
@@ -26,6 +33,7 @@ public interface DatasetConverter {
      */
     @Mapping(source = "sizeBytes", target = "totalSize")
     @Mapping(source = "path", target = "targetLocation")
+    @Mapping(source = "files", target = "distribution", qualifiedByName = "getDistribution")
     DatasetResponse convertToResponse(Dataset dataset);
 
     /**
@@ -49,4 +57,28 @@ public interface DatasetConverter {
      * 将数据集文件转换为响应
      */
     DatasetFileResponse convertToResponse(DatasetFile datasetFile);
+
+    /**
+     * 获取数据文件的标签分布
+     *
+     * @param datasetFiles 数据集文件
+     * @return 标签分布
+     */
+    @Named("getDistribution")
+    default Map<String, Long> getDistribution(List<DatasetFile> datasetFiles) {
+        Map<String, Long> distribution = new HashMap<>();
+        if (CollectionUtils.isEmpty(datasetFiles)) {
+            return distribution;
+        }
+        for (DatasetFile datasetFile : datasetFiles) {
+            List<String> tags = datasetFile.analyzeTag();
+            if (CollectionUtils.isEmpty(tags)) {
+                continue;
+            }
+            for (String tag : tags) {
+                distribution.put(tag, distribution.getOrDefault(tag, 0L) + 1);
+            }
+        }
+        return distribution;
+    }
 }

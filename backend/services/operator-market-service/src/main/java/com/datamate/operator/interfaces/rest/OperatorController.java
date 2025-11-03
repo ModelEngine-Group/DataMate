@@ -1,14 +1,13 @@
 package com.datamate.operator.interfaces.rest;
 
-import com.datamate.common.infrastructure.common.Response;
 import com.datamate.common.interfaces.PagedResponse;
 import com.datamate.operator.application.OperatorService;
 import com.datamate.operator.interfaces.dto.OperatorDto;
 import com.datamate.operator.interfaces.dto.OperatorsListPostRequest;
+import com.datamate.operator.interfaces.dto.UploadOperatorRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -19,34 +18,48 @@ public class OperatorController {
     private final OperatorService operatorService;
 
     @PostMapping("/list")
-    public ResponseEntity<Response<PagedResponse<OperatorDto>>> operatorsListPost(@RequestBody OperatorsListPostRequest request) {
+    public PagedResponse<OperatorDto> operatorsListPost(@RequestBody OperatorsListPostRequest request) {
         List<OperatorDto> responses = operatorService.getOperators(request.getPage(), request.getSize(),
                 request.getCategories(), request.getOperatorName(), request.getIsStar());
         int count = operatorService.getOperatorsCount(request.getCategories(), request.getOperatorName(),
                 request.getIsStar());
         int totalPages = (count + request.getSize() + 1) / request.getSize();
-        return ResponseEntity.ok(Response.ok(PagedResponse.of(responses, request.getPage(), count, totalPages)));
+        return PagedResponse.of(responses, request.getPage(), count, totalPages);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Response<OperatorDto>> operatorsIdGet(@PathVariable("id") String id) {
-        return ResponseEntity.ok(Response.ok(operatorService.getOperatorById(id)));
+    public OperatorDto operatorsIdGet(@PathVariable("id") String id) {
+        return operatorService.getOperatorById(id);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Response<OperatorDto>> operatorsIdPut(@PathVariable("id") String id,
+    public OperatorDto operatorsIdPut(@PathVariable("id") String id,
                                                                 @RequestBody OperatorDto updateOperatorRequest) {
-        return ResponseEntity.ok(Response.ok(operatorService.updateOperator(id, updateOperatorRequest)));
+        return operatorService.updateOperator(id, updateOperatorRequest);
     }
 
     @PostMapping("/create")
-    public ResponseEntity<Response<OperatorDto>> operatorsCreatePost(@RequestBody OperatorDto createOperatorRequest) {
-        return ResponseEntity.ok(Response.ok(operatorService.createOperator(createOperatorRequest)));
+    public OperatorDto operatorsCreatePost(@RequestBody OperatorDto createOperatorRequest) {
+        return operatorService.createOperator(createOperatorRequest);
     }
 
     @PostMapping("/upload")
-    public ResponseEntity<Response<OperatorDto>> operatorsUploadPost(@RequestPart(value = "file") MultipartFile file,
-                                                                     @RequestParam(value = "description") String description) {
-        return ResponseEntity.ok(Response.ok(operatorService.uploadOperator(file, description)));
+    public OperatorDto operatorsUploadPost(@RequestBody UploadOperatorRequest request) {
+        return operatorService.uploadOperator(request.getFileName());
+    }
+
+    @PostMapping(value = "/upload/pre-upload", produces = MediaType.APPLICATION_JSON_VALUE)
+    public String preUpload() {
+        return operatorService.preUpload();
+    }
+
+    @PostMapping("/upload/chunk")
+    public void chunkUpload(@ModelAttribute UploadOperatorRequest request) {
+        operatorService.chunkUpload(request);
+    }
+
+    @DeleteMapping("/{id}")
+    public void operatorDelete(@PathVariable("id") String id) {
+        operatorService.deleteOperator(id);
     }
 }

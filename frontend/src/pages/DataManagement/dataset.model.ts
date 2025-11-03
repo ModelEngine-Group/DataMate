@@ -49,11 +49,13 @@ export interface Dataset {
   status: DatasetStatus;
   size?: string;
   itemCount?: number;
+  fileCount?: number;
   createdBy: string;
   createdAt: string;
   updatedAt: string;
   tags: string[];
   targetLocation?: string;
+  distribution?: Record<string, number>;
 }
 
 export interface TagItem {
@@ -98,4 +100,5 @@ export interface TaskItem {
   controller: AbortController;
   cancelFn?: () => void;
   updateEvent?: string;
+  size?: number;
 }

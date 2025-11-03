@@ -122,8 +122,6 @@ const Filters: React.FC<FiltersProps> = ({
     setSelectedFilters(newFilters);
   };
 
-  console.log(categoriesTree);
-
   const hasActiveFilters = Object.values(selectedFilters).some(
     (filters) => Array.isArray(filters) && filters.length > 0
   );
@@ -142,7 +140,7 @@ const Filters: React.FC<FiltersProps> = ({
               className="cursor-pointer hover:text-blue-500"
             ></Button>
           </Tooltip>
-          <h4>筛选器</h4>
+          <span>筛选器</span>
         </h3>
         {hasActiveFilters && (
           <span

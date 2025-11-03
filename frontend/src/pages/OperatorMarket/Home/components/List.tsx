@@ -1,11 +1,11 @@
 import { Button, List, Tag, Badge } from "antd";
-import { DeleteOutlined, EditOutlined, StarFilled } from "@ant-design/icons";
+import { StarFilled } from "@ant-design/icons";
 import { Zap, Settings, X } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { Operator } from "../../operator.model";
 
-export function ListView({ operators, pagination }) {
+export function ListView({ operators = [], pagination, operations }) {
   const navigate = useNavigate();
   const [favoriteOperators, setFavoriteOperators] = useState<Set<number>>(
     new Set([1, 3, 6])
@@ -59,52 +59,46 @@ export function ListView({ operators, pagination }) {
         <List.Item
           className="hover:bg-gray-50 transition-colors px-6 py-4"
           actions={[
-            <Button
-              key="edit"
-              type="text"
-              size="small"
-              onClick={() => handleUpdateOperator(operator)}
-              icon={<EditOutlined className="w-4 h-4" />}
-              title="更新算子"
-            />,
-            <Button
-              key="favorite"
-              type="text"
-              size="small"
-              onClick={() => handleToggleFavorite(operator.id)}
-              className={
-                favoriteOperators.has(operator.id)
-                  ? "text-yellow-500 hover:text-yellow-600"
-                  : "text-gray-400 hover:text-yellow-500"
-              }
-              icon={
-                <StarFilled
-                  style={{
-                    fontSize: "16px",
-                    color: favoriteOperators.has(operator.id)
-                      ? "#ffcc00ff"
-                      : "#d1d5db",
-                    cursor: "pointer",
-                  }}
-                  onClick={() => handleToggleFavorite(operator.id)}
-                />
-              }
-              title="收藏"
-            />,
-            <Button
-              key="delete"
-              type="text"
-              size="small"
-              danger
-              icon={<DeleteOutlined className="w-4 h-4" />}
-              title="删除算子"
-            />,
+            // <Button
+            //   key="favorite"
+            //   type="text"
+            //   size="small"
+            //   onClick={() => handleToggleFavorite(operator.id)}
+            //   className={
+            //     favoriteOperators.has(operator.id)
+            //       ? "text-yellow-500 hover:text-yellow-600"
+            //       : "text-gray-400 hover:text-yellow-500"
+            //   }
+            //   icon={
+            //     <StarFilled
+            //       style={{
+            //         fontSize: "16px",
+            //         color: favoriteOperators.has(operator.id)
+            //           ? "#ffcc00ff"
+            //           : "#d1d5db",
+            //         cursor: "pointer",
+            //       }}
+            //       onClick={() => handleToggleFavorite(operator.id)}
+            //     />
+            //   }
+            //   title="收藏"
+            // />,
+            ...operations.map((operation) => (
+              <Button
+                type="text"
+                size="small"
+                title={operation.label}
+                icon={operation.icon}
+                danger={operation.danger}
+                onClick={() => operation.onClick(operator)}
+              />
+            )),
           ]}
         >
           <List.Item.Meta
             avatar={
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg flex items-center justify-center">
-                {operator?.icon}
+              <div className="w-12 h-12 bg-gradient-to-br from-sky-300 to-blue-500 rounded-lg flex items-center justify-center">
+                <div className="w-8 h-8 text-white">{operator?.icon}</div>
               </div>
             }
             title={

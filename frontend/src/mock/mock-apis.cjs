@@ -115,28 +115,28 @@ const MockAPI = {
   batchEvaluationUsingPost: "/evaluation/batch-evaluate", // 批量评测
 
   // 知识生成接口
-  queryKnowledgeBasesUsingPost: "/knowledge/bases", // 获取知识库列表
-  createKnowledgeBaseUsingPost: "/knowledge/bases/create", // 创建知识库
-  queryKnowledgeBaseByIdUsingGet: "/knowledge/bases/:baseId", // 根据ID获取知识库详情
-  updateKnowledgeBaseByIdUsingPut: "/knowledge/bases/:baseId", // 更新知识库
-  deleteKnowledgeBaseByIdUsingDelete: "/knowledge/bases/:baseId", // 删除知识库
-  queryKnowledgeGenerationTasksUsingPost: "/knowledge/tasks", // 获取知识生成任务列表
-  createKnowledgeGenerationTaskUsingPost: "/knowledge/tasks/create", // 创建知识生成任务
-  queryKnowledgeGenerationTaskByIdUsingGet: "/knowledge/tasks/:taskId", // 根据ID获取知识生成任务详情
-  updateKnowledgeGenerationTaskByIdUsingPut: "/knowledge/tasks/:taskId", // 更新知识生成任务
-  deleteKnowledgeGenerationTaskByIdUsingDelete: "/knowledge/tasks/:taskId", // 删除知识生成任务
-  executeKnowledgeGenerationTaskByIdUsingPost:
-    "/knowledge/tasks/:taskId/execute", // 执行知识生成任务
-  stopKnowledgeGenerationTaskByIdUsingPost: "/knowledge/tasks/:taskId/stop", // 停止知识生成任务
-  queryKnowledgeStatisticsUsingGet: "/knowledge/statistics", // 获取知识生成
+  queryKnowledgeBasesUsingPost: "/knowledge-base/list", // 获取知识库列表
+  createKnowledgeBaseUsingPost: "/knowledge-base/create", // 创建知识库
+  queryKnowledgeBaseByIdUsingGet: "/knowledge-base/:baseId", // 根据ID获取知识库详情
+  updateKnowledgeBaseByIdUsingPut: "/knowledge-base/:baseId", // 更新知识库
+  deleteKnowledgeBaseByIdUsingDelete: "/knowledge-base/:baseId", // 删除知识库
+  addKnowledgeBaseFilesUsingPost: "/knowledge-base/:baseId/files", // 添加文件到知识库
+  queryKnowledgeBaseFilesGet: "/knowledge-base/:baseId/files", // 根据ID获取知识生成文件列表
+  queryKnowledgeBaseFilesByIdUsingGet:
+    "/knowledge-base/:baseId/files/:fileId", // 根据ID获取知识生成文件详情
+  deleteKnowledgeBaseTaskByIdUsingDelete: "/knowledge-base/:baseId/files/:id", // 删除知识生成文件
 
   // 算子市场
   queryOperatorsUsingPost: "/operators/list", // 获取算子列表
   queryCategoryTreeUsingGet: "/categories/tree", // 获取算子分类树
-  queryOperatorByIdUsingGet: "/operators/:operatorId", // 根据ID获取算子详情
+  queryOperatorByIdUsingGet: "/operators/:id", // 根据ID获取算子详情
   createOperatorUsingPost: "/operators/create", // 创建算子
-  updateOperatorByIdUsingPut: "/operators/:operatorId", // 更新算子
+  updateOperatorByIdUsingPut: "/operators/:id", // 更新算子
   uploadOperatorUsingPost: "/operators/upload", // 上传算子
+  uploadFileChunkUsingPost: "/operators/upload/chunk", // 上传切片
+  preUploadOperatorUsingPost: "/operators/upload/pre-upload", // 预上传文件
+  cancelUploadOperatorUsingPut: "/operators/upload/cancel-upload", // 取消上传
+
   createLabelUsingPost: "/operators/labels", // 创建算子标签
   queryLabelsUsingGet: "/labels", // 获取算子标签列表
   deleteLabelsUsingDelete: "/labels", // 删除算子标签
@@ -151,7 +151,6 @@ const MockAPI = {
   createModelUsingPost: "/models/create", // 创建模型
   updateModelUsingPut: "/models/:id", // 更新模型
   deleteModelUsingDelete: "/models/:id", // 删除模型
-  
 };
 
 module.exports = addMockPrefix("/api", MockAPI);

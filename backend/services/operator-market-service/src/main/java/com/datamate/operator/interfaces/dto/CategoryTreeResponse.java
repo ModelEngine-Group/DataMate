@@ -12,11 +12,11 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 public class CategoryTreeResponse {
-    private Integer id;
+    private String id;
 
     private String name;
 
     private Integer count;
 
-    private List<SubCategory> categories = new ArrayList<>();
+    private List<CategoryDto> categories = new ArrayList<>();
 }

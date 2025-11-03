@@ -119,6 +119,8 @@ public class DatasetApplicationService {
     public Dataset getDataset(String datasetId) {
         Dataset dataset = datasetRepository.getById(datasetId);
         BusinessAssert.notNull(dataset, DataManagementErrorCode.DATASET_NOT_FOUND);
+        List<DatasetFile> datasetFiles = datasetFileRepository.findAllByDatasetId(datasetId);
+        dataset.setFiles(datasetFiles);
         return dataset;
     }
 

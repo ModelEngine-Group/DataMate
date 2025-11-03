@@ -10,6 +10,7 @@ import com.datamate.common.interfaces.PagedResponse;
 import com.datamate.datamanagement.application.DatasetApplicationService;
 import com.datamate.datamanagement.domain.model.dataset.Dataset;
 import com.datamate.datamanagement.interfaces.converter.DatasetConverter;
+import com.datamate.datamanagement.interfaces.dto.DatasetResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,11 +36,13 @@ public class CollectionTaskController{
     public ResponseEntity<CollectionTaskResponse> createTask(@Valid @RequestBody CreateCollectionTaskRequest request) {
         CollectionTask task = CollectionTaskConverter.INSTANCE.toCollectionTask(request);
         String datasetId = null;
+        DatasetResponse dataset = null;
         if (Objects.nonNull(request.getDataset())) {
-            datasetId = datasetService.createDataset(request.getDataset()).getId();
+            dataset = DatasetConverter.INSTANCE.convertToResponse(datasetService.createDataset(request.getDataset()));
+            datasetId = dataset.getId();
         }
         CollectionTaskResponse response = CollectionTaskConverter.INSTANCE.toResponse(taskService.create(task, datasetId));
-        response.setDataset(DatasetConverter.INSTANCE.convertToResponse(datasetService.getDataset(datasetId)));
+        response.setDataset(dataset);
         return ResponseEntity.ok().body(response);
     }
 

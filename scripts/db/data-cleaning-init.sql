@@ -3,7 +3,7 @@ USE datamate;
 CREATE TABLE IF NOT EXISTS t_clean_template
 (
     id          varchar(64) primary key not null unique,
-    name        varchar(64),
+    name        varchar(64) unique,
     description varchar(256),
     created_at  timestamp default current_timestamp,
     updated_at  timestamp default current_timestamp,
@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS t_clean_template
 CREATE TABLE IF NOT EXISTS t_clean_task
 (
     id                varchar(64) primary key,
-    name              varchar(64),
+    name              varchar(64) unique,
     description       varchar(256),
     status            varchar(256),
     src_dataset_id    varchar(64),
