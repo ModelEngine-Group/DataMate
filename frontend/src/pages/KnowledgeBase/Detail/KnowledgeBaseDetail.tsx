@@ -55,7 +55,9 @@ const KnowledgeBaseDetailPage: React.FC = () => {
   // File table logic
   const handleDeleteFile = async (file: KBFile) => {
     try {
-      await deleteKnowledgeBaseFileByIdUsingDelete(knowledgeBase.id, file.id);
+      await deleteKnowledgeBaseFileByIdUsingDelete(knowledgeBase.id, {
+        ids: [file.id]
+      });
       message.success("文件已删除");
       fetchFiles();
     } catch (error) {
