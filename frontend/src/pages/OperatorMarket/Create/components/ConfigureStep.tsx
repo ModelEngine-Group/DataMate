@@ -8,26 +8,28 @@ export default function ConfigureStep({
   setParsedInfo,
 }) {
   const [form] = Form.useForm();
-  
+
   useEffect(() => {
     form.setFieldsValue(parsedInfo);
   }, [parsedInfo]);
-  
+
   return (
     <>
       {/* 解析结果 */}
       {parseError && (
-        <Alert
-          message="解析过程中发现问题"
-          description={parseError}
-          type="error"
-          showIcon
-        />
+        <div className="mb-4">
+          <Alert
+            message="解析过程中发现问题"
+            description={parseError}
+            type="error"
+            showIcon
+          />
+        </div>
       )}
 
-      {parsedInfo && (
+      {!parseError && parsedInfo && (
         <Form
-        form={form}
+          form={form}
           layout="vertical"
           initialValues={parsedInfo}
           onValuesChange={(_, allValues) => {
@@ -76,7 +78,7 @@ export default function ConfigureStep({
             </div>
           </div>
 
-          <h3 className="text-lg font-semibold text-gray-900 mt-8">高级配置</h3>
+          {/* <h3 className="text-lg font-semibold text-gray-900 mt-8">高级配置</h3> */}
         </Form>
       )}
     </>

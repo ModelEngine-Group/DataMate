@@ -1,6 +1,5 @@
 import { Button, Card, Badge, Breadcrumb } from "antd";
 import {
-  ArrowLeft,
   Download,
   Users,
   Scissors,
@@ -16,10 +15,10 @@ import {
   mockTasks,
   presetEvaluationDimensions,
 } from "@/mock/evaluation";
-import { Link, useNavigate } from "react-router";
+import { Link } from "react-router";
 
 const EvaluationTaskReport = () => {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const selectedTask = mockTasks[0]; // 假设我们只展示第一个任务的报告
 
   // 获取任务的所有维度
@@ -131,7 +130,7 @@ const EvaluationTaskReport = () => {
                 评估结果
               </span>
             }
-            bodyStyle={{ paddingTop: 0 }}
+            styles={{ body: { paddingTop: 0 } }}
           >
             {/* 维度评分 */}
             <div className="mt-4">
@@ -198,7 +197,7 @@ const EvaluationTaskReport = () => {
                 切片信息
               </span>
             }
-            bodyStyle={{ paddingTop: 0 }}
+            styles={{ body: { paddingTop: 0 } }}
           >
             <div className="space-y-4 mt-4">
               <div className="grid grid-cols-2 gap-4 text-sm">
@@ -257,7 +256,7 @@ const EvaluationTaskReport = () => {
               QA对详情
             </span>
           }
-          bodyStyle={{ paddingTop: 0 }}
+          styles={{ body: { paddingTop: 0 } }}
         >
           <div className="space-y-4 mt-4">
             {mockQAPairs.map((qa) => (
@@ -282,11 +281,10 @@ const EvaluationTaskReport = () => {
                         {[1, 2, 3, 4, 5].map((star) => (
                           <Star
                             key={star}
-                            className={`w-4 h-4 ${
-                              star <= qa.score
+                            className={`w-4 h-4 ${star <= qa.score
                                 ? "text-yellow-400"
                                 : "text-gray-300"
-                            }`}
+                              }`}
                             style={star <= qa.score ? { fill: "#facc15" } : {}}
                           />
                         ))}

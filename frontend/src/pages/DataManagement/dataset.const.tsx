@@ -205,14 +205,7 @@ export function mapDataset(dataset: AnyObject): Dataset {
     size: formatBytes(dataset.totalSize || 0),
     createdAt: formatDateTime(dataset.createdAt) || "--",
     updatedAt: formatDateTime(dataset?.updatedAt) || "--",
-    icon: IconComponent ? (
-      <IconComponent
-        className="w-5 h-5 text-gray-500"
-        // style={{ color: iconColor }}
-      />
-    ) : (
-      <Database />
-    ),
+    icon: IconComponent ? <IconComponent className="w-full h-full" /> : <Database />,
     status: datasetStatusMap[dataset.status],
     statistics: [
       { label: "文件数", value: dataset.fileCount || 0 },

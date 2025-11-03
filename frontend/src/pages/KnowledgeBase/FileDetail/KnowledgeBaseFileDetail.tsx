@@ -49,7 +49,6 @@ const getStatusColor = (status: string) => {
 };
 
 const KnowledgeBaseFileDetail: React.FC = () => {
-  return <DevelopmentInProgress showTime="2025.10.30" />;
   const navigate = useNavigate();
   // 假设通过 props 或路由参数获取 selectedFile/selectedKB
   const [selectedFile] = useState<KBFile>(

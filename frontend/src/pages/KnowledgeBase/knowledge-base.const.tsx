@@ -66,7 +66,7 @@ export const KBTypeMap = {
 export function mapKnowledgeBase(kb: KnowledgeBaseItem): KnowledgeBaseItem {
   return {
     ...kb,
-    icon: <BookOpenText className="text-gray-400" />,
+    icon: <BookOpenText className="w-full h-full" />,
     description: kb.description,
     statistics: [
       {
@@ -78,19 +78,19 @@ export function mapKnowledgeBase(kb: KnowledgeBaseItem): KnowledgeBaseItem {
       {
         label: "文本理解模型",
         key: "chatModel",
-        icon: <BookType className="w-4 h-4 text-green-500" />,
+        icon: <BookType className="w-4 h-4 text-blue-500" />,
         value: kb.chatModel,
       },
       {
         label: "文件数",
         key: "fileCount",
-        icon: <File className="w-4 h-4 text-yellow-500" />,
+        icon: <File className="w-4 h-4 text-blue-500" />,
         value: formatNumber(kb?.fileCount) || 0,
       },
       {
         label: "大小",
         key: "size",
-        icon: <ChartNoAxesColumn className="w-4 h-4 text-red-500" />,
+        icon: <ChartNoAxesColumn className="w-4 h-4 text-blue-500" />,
         value: formatBytes(kb?.size) || "0 MB",
       },
     ],

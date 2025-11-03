@@ -2,22 +2,41 @@ import { get, post, put, del, download } from "@/utils/request";
 
 // 标注任务管理相关接口
 export function queryAnnotationTasksUsingGet(params?: any) {
-  return get("/project/mappings/list", params);
+  return get("/api/annotation/project", params);
+}
+
+// 获取应用配置（包含 Label Studio 基础 URL）
+export function getConfigUsingGet() {
+  return get("/api/annotation/about");
 }
 
 export function createAnnotationTaskUsingPost(data: any) {
-  return post("/api/project/create", data);
+  return post("/api/annotation/project", data);
 }
 
 export function syncAnnotationTaskUsingPost(data: any) {
-  return post(`/api/project/sync`, data);
+  return post(`/api/annotation/task/sync`, data);
 }
 
-export function queryAnnotationTaskByIdUsingGet(taskId: string | number) {
-  return get(`/api/v1/annotation/tasks/${taskId}`);
+export function queryAnnotationTaskByIdUsingGet(mappingId: string | number) {
+  return get(`/api/annotation/project/${mappingId}`);
+}
+
+// 根据源 datasetId 查询映射关系（分页）
+export function queryMappingsBySourceUsingGet(datasetId: string, params?: any) {
+  return get(`/api/annotation/project/by-source/${datasetId}`, params);
 }
 export function deleteAnnotationTaskByIdUsingDelete(params?: any) {
-  return del(`/api/project/mappings`, params);
+  // Ensure query params are sent in the URL for backend endpoints that expect Query parameters
+  if (params && typeof params === "object" && !Array.isArray(params)) {
+    const pairs = Object.keys(params)
+      .filter((k) => params[k] !== undefined && params[k] !== null)
+      .map((k) => `${encodeURIComponent(k)}=${encodeURIComponent(params[k])}`);
+    const query = pairs.length ? `?${pairs.join("&")}` : "";
+    return del(`/api/annotation/project${query}`);
+  }
+
+  return del(`/api/annotation/project`, params);
 }
 
 // 智能预标注相关接口

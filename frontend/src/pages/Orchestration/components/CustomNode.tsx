@@ -54,12 +54,11 @@ const CustomNode = ({ data, selected }: { data: any; selected: boolean }) => {
       />
 
       <Card
-        className={`w-80 transition-all duration-200 ${
-          selected
+        className={`w-80 transition-all duration-200 ${selected
             ? "ring-2 ring-blue-500 shadow-lg"
             : "shadow-md hover:shadow-lg"
-        }`}
-        bodyStyle={{ padding: 0 }}
+          }`}
+        styles={{ body: { padding: 0 } }}
       >
         <div className="pb-3 bg-blue-50 border-b px-4 pt-4">
           <div className="flex items-center justify-between">

@@ -14,10 +14,9 @@ import {
   PlayCircleOutlined,
   CheckCircleOutlined,
   AlertOutlined,
-  DatabaseOutlined,
-  AppstoreOutlined,
   PauseCircleOutlined,
 } from "@ant-design/icons";
+import { BrushCleaning, Layout } from "lucide-react";
 
 export const templateTypesMap = {
   [TemplateType.TEXT]: {
@@ -99,8 +98,7 @@ export const mapTask = (task: CleansingTask) => {
     createdAt,
     startedAt,
     finishedAt,
-    icon: <DatabaseOutlined style={{ color: "#1677ff" }} />,
-    iconColor: "bg-blue-100",
+    icon: <BrushCleaning className="w-full h-full" />,
     status,
     duration,
     before,
@@ -128,8 +126,7 @@ export const mapTemplate = (template: CleansingTemplate) => ({
   ...template,
   createdAt: formatDateTime(template.createdAt),
   updatedAt: formatDateTime(template.updatedAt),
-  icon: <AppstoreOutlined style={{ color: "#1677ff" }} />,
-  iconColor: "bg-blue-100",
+  icon: <Layout className="w-full h-full" />,
   statistics: [{ label: "算子数量", value: template.instance?.length ?? 0 }],
   lastModified: formatDateTime(template.updatedAt),
 });

@@ -47,7 +47,6 @@ export default function OperatorPluginCreate() {
   const handleFileUpload = async (files: FileList) => {
     setIsUploading(true);
     setParseError(null);
-    setUploadStep("parsing");
     try {
       const fileName = files[0].name;
       await handleUpload({
@@ -67,6 +66,7 @@ export default function OperatorPluginCreate() {
       // 解析文件过程
       const res = await uploadOperatorUsingPost({ fileName });
       setParsedInfo({ ...parsedInfo, ...res.data, fileName });
+      setUploadStep("parsing");
     } catch (err) {
       setParseError("文件解析失败，" + err.data.message);
     } finally {
@@ -92,6 +92,7 @@ export default function OperatorPluginCreate() {
     // 编辑模式，加载已有算子信息逻辑待实现
     const { data } = await queryOperatorByIdUsingGet(operatorId);
     setParsedInfo(data);
+    setUploadStep("configure");
   };
 
   useEffect(() => {
