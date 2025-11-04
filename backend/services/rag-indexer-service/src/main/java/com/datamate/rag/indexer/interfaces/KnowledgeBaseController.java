@@ -113,7 +113,7 @@ public class KnowledgeBaseController {
     @DeleteMapping("/{knowledgeBaseId}/files")
     public void deleteFile(@PathVariable("knowledgeBaseId") String knowledgeBaseId,
                            @RequestBody DeleteFilesReq request) {
-        knowledgeBaseService.deleteFile(knowledgeBaseId, request);
+        knowledgeBaseService.deleteFiles(knowledgeBaseId, request);
     }
 
     /**

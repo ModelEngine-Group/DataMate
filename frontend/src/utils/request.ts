@@ -366,6 +366,7 @@ class Request {
       },
       credentials: "include",
       mode: "cors",
+      body: params ? JSON.stringify(params) : undefined,
       ...options,
     };
 
