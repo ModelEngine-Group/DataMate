@@ -84,20 +84,10 @@ label-studio-adapter-docker-build:
 
 .PHONY: deer-flow-docker-build
 deer-flow-docker-build:
-	@if [ -d "../deer-flow/.git" ]; then \
-		cd ../deer-flow && git pull; \
-	else \
-		git clone git@github.com:bytedance/deer-flow.git ../deer-flow; \
-	fi
-	cd ../deer-flow && \
-	if git apply --check ../DataMate/runtime/deer-flow/feature_collection.patch; then \
-		git apply ../DataMate/runtime/deer-flow/feature_collection.patch; \
-	fi
 	cp -n runtime/deer-flow/.env.example runtime/deer-flow/.env
 	cp -n runtime/deer-flow/conf.yaml.example runtime/deer-flow/conf.yaml
-	cp runtime/deer-flow/.env ../deer-flow/.env
-	cp runtime/deer-flow/conf.yaml ../deer-flow/conf.yaml
-	cd ../deer-flow && docker compose build
+	docker build -t deer-flow-backend:$(VERSION) . -f scripts/images/deer-flow-backend/Dockerfile
+	docker build -t deer-flow-frontend:$(VERSION) . -f scripts/images/deer-flow-frontend/Dockerfile
 
 .PHONY: mineru-docker-build
 mineru-docker-build:

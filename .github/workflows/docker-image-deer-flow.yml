@@ -1,0 +1,29 @@
+name: Backend Docker Image CI
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'runtime/deer-flow/**'
+      - 'scripts/images/deer-flow-backend/**'
+      - 'scripts/images/deer-flow-frontend/**'
+      - '.github/workflows/docker-image-deer-flow.yml'
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'runtime/deer-flow/**'
+      - 'scripts/images/deer-flow-backend/**'
+      - 'scripts/images/deer-flow-frontend/**'
+      - '.github/workflows/docker-image-deer-flow.yml'
+  workflow_dispatch:
+
+jobs:
+  call-docker-build:
+    name: Build and Push Backend Docker Image
+    uses: ./.github/workflows/docker-images-reusable.yml
+    permissions:
+      contents: read
+      packages: write
+    with:
+      service_name: deer-flow
+      build_dir: .
