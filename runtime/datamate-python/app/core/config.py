@@ -19,6 +19,8 @@ class Settings(BaseSettings):
     app_version: str = "1.0.0"
     app_description: str = "Adapter for integrating Data Management System with Label Studio"
 
+    # 日志配置
+    log_level: str = "INFO"
     debug: bool = True
     log_file_dir: str = "/var/log/datamate"
 
@@ -52,8 +54,6 @@ class Settings(BaseSettings):
                 self.database_url = f"mysql+aiomysql://{self.mysql_host}:{self.mysql_port}/{self.mysql_database}"
         return self
 
-    # 日志配置
-    log_level: str = "INFO"
 
     # =========================
     # Label Studio 服务配置
@@ -67,7 +67,6 @@ class Settings(BaseSettings):
     label_studio_file_path_prefix: str = "/data/local-files/?d="  # Label Studio本地文件服务路径前缀
 
     ls_task_page_size: int = 1000
-
 
     # =========================
     # Data Management 服务配置
