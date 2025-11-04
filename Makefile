@@ -89,7 +89,10 @@ deer-flow-docker-build:
 	else \
 		git clone git@github.com:bytedance/deer-flow.git ../deer-flow; \
 	fi
-	sed -i "s/dark/light/g" "../deer-flow/web/src/components/deer-flow/theme-provider-wrapper.tsx"
+	cd ../deer-flow && \
+	if git apply --check ../DataMate/runtime/deer-flow/feature_collection.patch; then \
+		git apply ../DataMate/runtime/deer-flow/feature_collection.patch; \
+	fi
 	cp -n runtime/deer-flow/.env.example runtime/deer-flow/.env
 	cp -n runtime/deer-flow/conf.yaml.example runtime/deer-flow/conf.yaml
 	cp runtime/deer-flow/.env ../deer-flow/.env
