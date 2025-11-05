@@ -15,11 +15,11 @@ from datamate.core.base_op import Mapper
 from datamate.common.utils.rest_client import http_request
 
 
-class ExternalPDFFormatter(Mapper):
+class MineruFormatter(Mapper):
     """基于外部API，抽取PDF中的文本"""
 
     def __init__(self, *args, **kwargs):
-        super(ExternalPDFFormatter, self).__init__(*args, **kwargs)
+        super(MineruFormatter, self).__init__(*args, **kwargs)
         self.base_url = os.getenv("EXTERNAL_PDF_BASE_URL", "http://datamate-mineru:9001")
         self.pdf_extract_url = f"{self.base_url}/api/pdf-extract"
 
@@ -31,8 +31,8 @@ class ExternalPDFFormatter(Mapper):
             response = http_request(method="POST", url=self.pdf_extract_url, data=data)
             sample[self.text_key] = json.loads(response.text).get("result")
             logger.info(
-                f"fileName: {filename}, method: ExternalPDFFormatter costs {(time.time() - start):6f} s")
+                f"fileName: {filename}, method: MineruFormatter costs {(time.time() - start):6f} s")
         except UnicodeDecodeError as err:
-            logger.exception(f"fileName: {filename}, method: ExternalPDFFormatter causes decode error: {err}")
+            logger.exception(f"fileName: {filename}, method: MineruFormatter causes decode error: {err}")
             raise
         return sample
