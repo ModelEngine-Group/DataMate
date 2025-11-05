@@ -60,5 +60,6 @@ jobs:
       - name: Push Docker Image
         if: github.event_name != 'pull_request'
         run: |
+          LOWERCASE_REPO=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           docker push ghcr.io/$LOWERCASE_REPO/deer-flow-backend:${{ steps.set-tag.outputs.TAGS }}
           docker push ghcr.io/$LOWERCASE_REPO/deer-flow-frontend:${{ steps.set-tag.outputs.TAGS }}
