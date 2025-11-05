@@ -108,7 +108,8 @@ public class KnowledgeBaseService {
         return PagedResponse.of(page.getRecords(), page.getCurrent(), page.getTotal(), page.getPages());
     }
 
-    public void deleteFile(String knowledgeBaseId, DeleteFilesReq request) {
+    public void deleteFiles(String knowledgeBaseId, DeleteFilesReq request) {
+        ragFileRepository.removeByIds(request.getIds());
     }
 
     public PagedResponse<RagChunk> getChunks(String knowledgeBaseId, String ragFileId, PagingQuery pagingQuery) {

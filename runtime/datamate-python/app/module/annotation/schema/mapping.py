@@ -21,7 +21,7 @@ class DatasetMappingCreateRequest(BaseModel):
 
     class Config:
         # allow population by field name when constructing model programmatically
-        allow_population_by_field_name = True
+        validate_by_name = True
 
 class DatasetMappingCreateResponse(BaseResponseModel):
     """数据集映射 创建 响应模型"""

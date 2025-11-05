@@ -1,0 +1,162 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+{{- if or .Release.IsInstall .Values.initialize }}
+{{- if .Values.components.pulsar_manager }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "{{ template "pulsar.fullname" . }}-{{ .Values.pulsar_manager.component }}-init"
+  namespace: {{ template "pulsar.namespace" . }}
+  labels:
+    {{- include "pulsar.standardLabels" . | nindent 4 }}
+    component: {{ .Values.pulsar_manager.component }}-init
+spec:
+  {{- if or .Values.job.ttl.enabled (semverCompare ">=1.23-0" .Capabilities.KubeVersion.Version) }}
+  ttlSecondsAfterFinished: {{ .Values.job.ttl.secondsAfterFinished | default 600 }}
+  {{- end }}
+  template:
+    spec:
+      nodeSelector:
+      {{- if .Values.pulsar_metadata.nodeSelector }}
+      {{ toYaml .Values.pulsar_metadata.nodeSelector | indent 8 }}
+      {{- end }}
+      tolerations:
+      {{- if .Values.pulsar_metadata.tolerations }}
+      {{ toYaml .Values.pulsar_metadata.tolerations | indent 8 }}
+      {{- end }}
+      restartPolicy: OnFailure
+      initContainers:
+        - name: wait-pulsar-manager-ready
+          image: "{{ template "pulsar.imageFullName" (dict "image" .Values.pulsar_metadata.image "root" .) }}"
+          imagePullPolicy: {{ .Values.pulsar_metadata.image.pullPolicy }}
+          resources: {{ toYaml .Values.initContainer.resources | nindent 12 }}
+          command: [ "sh", "-c" ]
+          args:
+            - |
+              ADMIN_URL={{ template "pulsar.fullname" . }}-{{ .Values.pulsar_manager.component }}-admin:{{ .Values.pulsar_manager.adminService.port }}
+              until $(curl -sS --fail -X GET http://${ADMIN_URL} > /dev/null 2>&1); do
+                  sleep 3;
+              done;
+        # This init container will wait for at least one broker to be ready before
+        # initializing the pulsar-manager
+        - name: wait-broker-ready
+          image: "{{ template "pulsar.imageFullName" (dict "image" .Values.images.proxy "root" .) }}"
+          imagePullPolicy: {{ .Values.images.proxy.pullPolicy }}
+          resources: {{ toYaml .Values.initContainer.resources | nindent 12 }}
+          command: [ "sh", "-c" ]
+          args:
+            - >-
+              set -e;
+              brokerServiceNumber="$(nslookup -timeout=10 {{ template "pulsar.fullname" . }}-{{ .Values.broker.component }} | grep Name | wc -l)";
+              until [ ${brokerServiceNumber} -ge 1 ]; do
+                echo "pulsar cluster {{ template "pulsar.cluster.name" . }} isn't initialized yet ... check in 10 seconds ...";
+                sleep 10;
+                brokerServiceNumber="$(nslookup -timeout=10 {{ template "pulsar.fullname" . }}-{{ .Values.broker.component }} | grep Name | wc -l)";
+              done;
+      containers:
+        - name: "{{ template "pulsar.fullname" . }}-{{ .Values.pulsar_manager.component }}-init"
+          image: "{{ template "pulsar.imageFullName" (dict "image" .Values.pulsar_metadata.image "root" .) }}"
+          imagePullPolicy: {{ .Values.pulsar_metadata.image.pullPolicy }}
+          {{- if .Values.pulsar_metadata.resources }}
+          resources: {{ toYaml .Values.pulsar_metadata.resources | nindent 12 }}
+          {{- end }}
+          command: [ "sh", "-c" ]
+          args:
+            - |
+              ADMIN_URL={{ template "pulsar.fullname" . }}-{{ .Values.pulsar_manager.component }}-admin:{{ .Values.pulsar_manager.adminService.port }}
+              CSRF_TOKEN=$(curl http://${ADMIN_URL}/pulsar-manager/csrf-token)
+              UI_URL={{ template "pulsar.fullname" . }}-{{ .Values.pulsar_manager.component }}:{{ .Values.pulsar_manager.service.port }}
+
+              {{/* check if account is already existing */}}
+              LOGIN_REPLY=$(curl -v \
+                -X POST http://${UI_URL}/pulsar-manager/login \
+                -H 'Accept: application/json, text/plain, */*' \
+                -H 'Content-Type: application/json' \
+                -H "X-XSRF-TOKEN: $CSRF_TOKEN" \
+                -H "Cookie: XSRF-TOKEN=$CSRF_TOKEN" \
+                -sS -D headers.txt \
+                -d '{"username": "'${USERNAME}'", "password": "'${PASSWORD}'"}')
+              echo "$LOGIN_REPLY"
+
+              if [ -n "$(echo "$LOGIN_REPLY" | grep 'success')" ]; then
+                echo "account already exists"
+              else
+                echo "creating account"
+                {{/* set admin credentials */}}
+                curl -v \
+                  -X PUT http://${ADMIN_URL}/pulsar-manager/users/superuser \
+                  -H "X-XSRF-TOKEN: $CSRF_TOKEN" \
+                  -H "Cookie: XSRF-TOKEN=$CSRF_TOKEN;" \
+                  -H 'Content-Type: application/json' \
+                  -d '{"name": "'"${USERNAME}"'", "password": "'"${PASSWORD}"'", "description": "Helm-managed Admin Account", "email": "'"${USERNAME}"'@pulsar.org"}'
+                {{/* login as admin */}}
+                LOGIN_REPLY=$(curl -v \
+                  -X POST http://${UI_URL}/pulsar-manager/login \
+                  -H 'Accept: application/json, text/plain, */*' \
+                  -H 'Content-Type: application/json' \
+                  -H "X-XSRF-TOKEN: $CSRF_TOKEN" \
+                  -H "Cookie: XSRF-TOKEN=$CSRF_TOKEN" \
+                  -sS -D headers.txt \
+                  -d '{"username": "'${USERNAME}'", "password": "'${PASSWORD}'"}')
+                echo "$LOGIN_REPLY"
+              fi
+
+              LOGIN_TOKEN=$(grep "token:" headers.txt | sed 's/^.*: //')
+              LOGIN_JSESSSIONID=$(grep -o "JSESSIONID=[a-zA-Z0-9_]*" headers.txt | sed 's/^.*=//')
+
+              {{/* create environment */}}
+              {{- if or (not .Values.tls.enabled) (not .Values.tls.broker.enabled) }}
+              BROKER_URL="http://{{ template "pulsar.fullname" . }}-{{ .Values.broker.component }}:{{ .Values.broker.ports.http }}"
+              {{- else }}
+              BROKER_URL="https://{{ template "pulsar.fullname" . }}-{{ .Values.broker.component }}:{{ .Values.broker.ports.https }}"
+              {{- end }}
+              BOOKIE_URL="http://{{ template "pulsar.fullname" . }}-{{ .Values.bookkeeper.component }}:{{ .Values.bookkeeper.ports.http }}"
+              echo '{ "name": "{{ template "pulsar.fullname" . }}", "broker": "'$BROKER_URL'", "bookie": "'$BOOKIE_URL'"}'
+
+              ENVIRONMENT_REPLY=$(curl -v \
+                -X PUT http://${UI_URL}/pulsar-manager/environments/environment \
+                -H 'Content-Type: application/json' \
+                -H "token: $LOGIN_TOKEN" \
+                -H "X-XSRF-TOKEN: $CSRF_TOKEN" \
+                -H "username: $USERNAME" \
+                -H "Cookie: XSRF-TOKEN=$CSRF_TOKEN; JSESSIONID=$LOGIN_JSESSSIONID;" \
+                -d '{ "name": "{{ template "pulsar.fullname" . }}", "broker": "'$BROKER_URL'", "bookie": "'$BOOKIE_URL'"}')
+              echo "$ENVIRONMENT_REPLY"
+
+              if [ -n "$(echo "$ENVIRONMENT_REPLY" | grep -e 'success' -e 'exist')" ]; then
+                echo "Successfully created / found existing environment"
+                exit 0
+              else
+                echo "Error creating environment"
+                exit 1
+              fi
+          env:
+            - name: USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ template "pulsar.fullname" . }}-{{ .Values.pulsar_manager.component }}-secret"
+                  key: UI_USERNAME
+            - name: PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ template "pulsar.fullname" . }}-{{ .Values.pulsar_manager.component }}-secret"
+                  key: UI_PASSWORD
+{{- end }}
+{{- end }}

@@ -1,5 +1,8 @@
 package com.datamate.rag.indexer.interfaces.dto;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.List;
 
 /**
@@ -8,6 +11,11 @@ import java.util.List;
  * @author dallas
  * @since 2025-10-29
  */
+@Setter
+@Getter
 public class DeleteFilesReq {
-    private List<String> fileIds;
+    /**
+     * Rag文件表主键ID列表
+     */
+    private List<String> ids;
 }

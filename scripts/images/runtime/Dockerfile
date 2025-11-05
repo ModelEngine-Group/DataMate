@@ -8,7 +8,7 @@ COPY scripts/images/runtime/start.sh /opt/runtime/start.sh
 ENV PYTHONPATH=/opt/runtime/datamate/
 
 RUN apt update \
-    && apt install -y libgl1 libglib2.0-0 vim libmagic1t64  libreoffice\
+    && apt install -y libgl1 libglib2.0-0 vim libmagic1t64 libreoffice dos2unix \
     && apt clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -19,7 +19,8 @@ RUN pip install -e . --trusted-host mirrors.huaweicloud.com -i https://mirrors.h
     && pip cache purge
 
 RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
-    && chmod +x /opt/runtime/start.sh
+    && chmod +x /opt/runtime/start.sh \
+    && dos2unix /opt/runtime/start.sh
 
 EXPOSE 8081
 

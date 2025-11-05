@@ -1,4 +1,4 @@
-FROM maven:3-openjdk-8-slim AS datax-builder
+FROM maven:3-eclipse-temurin-8 AS datax-builder
 
 RUN apt-get update && \
     apt-get install -y git && \
@@ -11,7 +11,7 @@ RUN cd DataX && \
     plugin-rdbms-util/src/main/java/com/alibaba/datax/plugin/rdbms/util/DataBaseType.java && \
     mvn -U clean package assembly:assembly -Dmaven.test.skip=true
 
-FROM maven:3-amazoncorretto-21-debian AS builder
+FROM maven:3-eclipse-temurin-21 AS builder
 
 COPY backend/ /opt/backend
 
@@ -19,7 +19,7 @@ RUN cd /opt/backend && \
     mvn -U clean package -Dmaven.test.skip=true
 
 
-FROM openjdk:21-jdk-slim
+FROM eclipse-temurin:21-jdk
 
 RUN apt-get update && \
     apt-get install -y vim wget curl nfs-common rsync python3 python3-pip python-is-python3 dos2unix && \
@@ -29,8 +29,6 @@ RUN apt-get update && \
 COPY --from=builder /opt/backend/services/main-application/target/data-mate.jar /opt/backend/data-mate.jar
 COPY --from=datax-builder /DataX/target/datax/datax /opt/datax
 
-COPY editions/community/config/application.yml /opt/backend/application.yml
-COPY editions/community/config/log4j2.xml /opt/backend/log4j2.xml
 COPY scripts/images/backend/start.sh /opt/backend/start.sh
 
 RUN dos2unix /opt/backend/start.sh \

@@ -1,0 +1,73 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+{{- if .Values.proxy.ingress.enabled }}
+{{- if semverCompare "<1.19-0" .Capabilities.KubeVersion.Version }}
+apiVersion: extensions/v1beta1
+{{- else }}
+apiVersion: networking.k8s.io/v1
+{{- end }}
+kind: Ingress
+metadata:
+  labels:
+    {{- include "pulsar.standardLabels" . | nindent 4 }}
+    component: {{ .Values.proxy.component }}
+  annotations:
+{{- with .Values.proxy.ingress.annotations }}
+{{ toYaml . | indent 4 }}
+{{- end }}
+  name: "{{ template "pulsar.fullname" . }}-{{ .Values.proxy.component }}"
+  namespace: {{ template "pulsar.namespace" . }}
+spec:
+{{- if .Values.proxy.ingress.tls.enabled }}
+  tls:
+    - hosts:
+        - {{ .Values.proxy.ingress.hostname }}
+      {{- with .Values.proxy.ingress.tls.secretName }}
+      secretName: {{ . }}
+      {{- end }}
+{{- end }}
+  rules:
+    - http:
+        paths:
+          - path: {{ .Values.proxy.ingress.path }}
+            {{- if semverCompare "<1.19-0" .Capabilities.KubeVersion.Version }}
+            backend:
+              serviceName: "{{ template "pulsar.fullname" . }}-{{ .Values.proxy.component }}"
+              {{- if and .Values.tls.enabled .Values.tls.proxy.enabled }}
+              servicePort: {{ .Values.proxy.ports.https }}
+              {{- else }}
+              servicePort: {{ .Values.proxy.ports.http }}
+              {{- end }}
+            {{- else }}
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: "{{ template "pulsar.fullname" . }}-{{ .Values.proxy.component }}"
+                port:
+                  {{- if and .Values.tls.enabled .Values.tls.proxy.enabled }}
+                  number: {{ .Values.proxy.ports.https }}
+                  {{- else }}
+                  number: {{ .Values.proxy.ports.http }}
+                  {{- end }}
+            {{- end }}
+      {{- if .Values.proxy.ingress.hostname }}
+      host: {{ .Values.proxy.ingress.hostname }}
+      {{- end }}
+{{- end }}

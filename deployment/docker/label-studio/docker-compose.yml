@@ -1,6 +1,6 @@
 services:
 
-  app:
+  label-studio:
     stdin_open: true
     tty: true
     image: heartexlabs/label-studio:latest
@@ -11,7 +11,7 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      - db
+      - pg-db
     environment:
       - DJANGO_DB=default
       - POSTGRE_NAME=postgres
@@ -23,17 +23,19 @@ services:
       - LOCAL_FILES_SERVING_ENABLED=true
       - LOCAL_FILES_DOCUMENT_ROOT=/label-studio/local
       - USE_USERNAME_FOR_LOGIN=true
-      - LABEL_STUDIO_USERNAME=admin@huawei.com
-      - LABEL_STUDIO_PASSWORD=admin1234
+      - LABEL_STUDIO_USERNAME=admin@demo.com
+      - LABEL_STUDIO_PASSWORD=demoadmin
       - LABEL_STUDIO_ENABLE_LEGACY_API_TOKEN=true
       - LABEL_STUDIO_USER_TOKEN=abc123abc123
-      - LOG_LEVEL=INFO
+      - LOG_LEVEL=DEBUG
     volumes:
       - label-studio-data:/label-studio/data:rw
       - dataset_volume:/label-studio/local:rw
+    networks:
+      - datamate
     command: label-studio-uwsgi
 
-  db:
+  pg-db:
     image: pgautoupgrade/pgautoupgrade:13-alpine
     hostname: db
     restart: unless-stopped
@@ -42,9 +44,16 @@ services:
       - POSTGRES_USER=postgres
     volumes:
       - label-studio-db:/var/lib/postgresql/data
+    networks:
+      - datamate
 
 volumes:
   label-studio-data:
   label-studio-db:
   dataset_volume:
     name: datamate-dataset-volume
+
+networks:
+  datamate:
+    driver: bridge
+    name: datamate-network
