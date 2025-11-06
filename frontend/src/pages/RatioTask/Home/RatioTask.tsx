@@ -68,6 +68,15 @@ export default function RatioTasksPage() {
       title: "任务名称",
       dataIndex: "name",
       key: "name",
+      render: (text: string, record: RatioTaskItem) => (
+        <a
+          onClick={() =>
+            navigate(`/data/synthesis/ratio-task/detail/${record.id}`)
+          }
+        >
+          {text}
+        </a>
+      ),
     },
     {
       title: "状态",
@@ -89,6 +98,15 @@ export default function RatioTasksPage() {
       title: "目标数据集",
       dataIndex: "target_dataset_name",
       key: "target_dataset_name",
+      render: (text: string, task: RatioTaskItem) => (
+        <a
+          onClick={() =>
+            navigate(`/data/management/detail/${task.target_dataset_id}`)
+          }
+        >
+          {text}
+        </a>
+      ),
     },
     {
       title: "创建时间",
@@ -178,6 +196,9 @@ export default function RatioTasksPage() {
             data={tableData}
             operations={operations}
             pagination={pagination}
+            onView={(task) => {
+              navigate(`/data/synthesis/ratio-task/detail/${task.id}`);
+            }}
           />
         )}
       </>

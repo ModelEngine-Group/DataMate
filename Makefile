@@ -4,6 +4,14 @@ WITH_MINERU ?= false  # 默认不构建mineru
 VERSION ?= latest
 NAMESPACE ?= datamate
 
+ifdef COMSPEC
+    # Windows 环境
+    MAKE := "C:/Program Files (x86)/GnuWin32/bin/make"
+else
+    # Linux/Mac 环境
+    MAKE := make
+endif
+
 .PHONY: build-%
 build-%:
 	$(MAKE) $*-docker-build
@@ -76,15 +84,10 @@ label-studio-adapter-docker-build:
 
 .PHONY: deer-flow-docker-build
 deer-flow-docker-build:
-	@if [ -d "../deer-flow/.git" ]; then \
-		cd ../deer-flow && git pull; \
-	else \
-		git clone git@github.com:bytedance/deer-flow.git ../deer-flow; \
-	fi
-	sed -i "s/dark/light/g" "../deer-flow/web/src/components/deer-flow/theme-provider-wrapper.tsx"
-	cp -n deployment/docker/deer-flow/.env.example ../deer-flow/.env
-	cp -n deployment/docker/deer-flow/conf.yaml.example ../deer-flow/conf.yaml
-	cd ../deer-flow && docker compose build
+	cp -n runtime/deer-flow/.env.example runtime/deer-flow/.env
+	cp -n runtime/deer-flow/conf.yaml.example runtime/deer-flow/conf.yaml
+	docker build -t deer-flow-backend:$(VERSION) . -f scripts/images/deer-flow-backend/Dockerfile
+	docker build -t deer-flow-frontend:$(VERSION) . -f scripts/images/deer-flow-frontend/Dockerfile
 
 .PHONY: mineru-docker-build
 mineru-docker-build:
@@ -131,7 +134,7 @@ mineru-k8s-uninstall:
 
 .PHONY: datamate-docker-install
 datamate-docker-install:
-	cd deployment/docker/datamate && cp -n .env.example .env && docker compose -f docker-compose.yml up -d
+	cd deployment/docker/datamate && cp .env.example .env && docker compose -f docker-compose.yml up -d
 
 .PHONY: datamate-docker-uninstall
 datamate-docker-uninstall:
@@ -139,8 +142,11 @@ datamate-docker-uninstall:
 
 .PHONY: deer-flow-docker-install
 deer-flow-docker-install:
-	cd deployment/docker/datamate && cp -n .env.deer-flow.example .env && docker compose -f docker-compose.yml up -d
-	cd deployment/docker/deer-flow && cp -n .env.example .env && cp -n conf.yaml.example conf.yaml && docker compose -f docker-compose.yml up -d
+	cd deployment/docker/datamate && cp .env.deer-flow.example .env && docker compose -f docker-compose.yml up -d
+	cp -n runtime/deer-flow/.env.example runtime/deer-flow/.env
+	cp -n runtime/deer-flow/conf.yaml.example runtime/deer-flow/conf.yaml
+	cp runtime/deer-flow/.env deployment/docker/deer-flow/.env && cp runtime/deer-flow/conf.yaml deployment/docker/deer-flow/conf.yaml
+	cd deployment/docker/deer-flow && docker compose -f docker-compose.yml up -d
 
 .PHONY: deer-flow-docker-uninstall
 deer-flow-docker-uninstall:
@@ -158,3 +164,22 @@ datamate-k8s-install: create-namespace
 datamate-k8s-uninstall:
 	helm uninstall datamate -n $(NAMESPACE) --ignore-not-found
 	kubectl delete configmap datamate-init-sql -n $(NAMESPACE) --ignore-not-found
+
+.PHONY: deer-flow-k8s-install
+deer-flow-k8s-install:
+	helm upgrade datamate deployment/helm/datamate/ -n $(NAMESPACE) --install --set global.deerFlow.enable=true
+	cp runtime/deer-flow/.env deployment/helm/deer-flow/charts/public/.env
+	cp runtime/deer-flow/conf.yaml deployment/helm/deer-flow/charts/public/conf.yaml
+	helm upgrade deer-flow deployment/helm/deer-flow -n $(NAMESPACE) --install
+
+.PHONY: deer-flow-k8s-uninstall
+deer-flow-k8s-uninstall:
+	helm uninstall deer-flow -n $(NAMESPACE) --ignore-not-found
+
+.PHONY: milvus-k8s-install
+milvus-k8s-install:
+	helm upgrade milvus deployment/helm/milvus -n $(NAMESPACE) --install
+
+.PHONY: milvus-k8s-uninstall
+milvus-k8s-uninstall:
+	helm uninstall milvus -n $(NAMESPACE) --ignore-not-found

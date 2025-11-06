@@ -51,7 +51,7 @@ class LazyLoader(ModuleType):
     def __init__(self,
                  package_name,
                  module_name=None,
-                 whl_path="/dataset/ops_whl",
+                 whl_path=None,
                  exact_version=None,
                  force_reinstall=False
                  ):
@@ -72,7 +72,7 @@ class LazyLoader(ModuleType):
         self._module_name = module_name if module_name else package_name
         self._package_name = package_name
 
-        self.whl_path = Path(whl_path).resolve()
+        self.whl_path = whl_path
         self.exact_version = exact_version
 
         self.force_reinstall = force_reinstall
@@ -126,7 +126,10 @@ class LazyLoader(ModuleType):
                 need_install = True
 
         if need_install:
-            self._pip_install_package(package_name)
+            if self.whl_path is None:
+                self._pip_install_package_pypi(package_name)
+            else:
+                self._pip_install_package_local(package_name)
             module = importlib.import_module(module_name)
             self._cached_module = module
             self._register_alias(module)
@@ -168,13 +171,26 @@ class LazyLoader(ModuleType):
                 return line.split()[-1]
         raise PackageNotFoundError()
 
-    def _pip_install_package(self, package_name: str):
+    def _pip_install_package_pypi(self, package_name: str):
+        if self.exact_version:
+            package_name += f"=={self.exact_version}"
+        try:
+            subprocess.check_call([
+                sys.executable, "-m", "pip", "install", str(package_name)
+            ], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+            logger.info(f"Successfully installed {package_name}")
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Installation failed: {e}")
+            raise RuntimeError(f"Installation failed: {e}") from e
+
+    def _pip_install_package_local(self, package_name: str):
         """安装逻辑 """
 
-        if not self.whl_path.exists():
+        whl_path = Path(self.whl_path).resolve()
+        if not whl_path.exists():
             raise FileNotFoundError(f"WHL directory not found: {self.whl_path}")
 
-        whl_files = list(self.whl_path.glob(f"{package_name}*.whl"))
+        whl_files = list(whl_path.glob(f"{package_name}*.whl"))
         if not whl_files:
             raise RuntimeError(f"No WHL files found for {package_name}")
 

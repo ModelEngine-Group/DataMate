@@ -6,17 +6,11 @@ from typing import AsyncGenerator
 
 logger = get_logger(__name__)
 
-# 获取数据库配置信息
-db_info = settings.get_database_info()
-logger.info(f"使用数据库: {db_info['type']} || 连接URL: {db_info['url']}")
-
 # 创建数据库引擎
 engine = create_async_engine(
-    settings.computed_database_url,
+    settings.database_url,
     echo=False,  # 关闭SQL调试日志以减少输出
-    future=True,
-    # SQLite特殊配置
-    connect_args={"check_same_thread": False} if "sqlite" in settings.computed_database_url else {}
+    future=True
 )
 
 # 创建会话工厂

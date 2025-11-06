@@ -78,14 +78,15 @@ export interface CreateRatioTaskResponse {
 }
 
 export interface RatioTaskItem {
-  id: string;
-  name: string;
-  description?: string;
-  status?: string;
-  totals?: number;
-  ratio_method?: RatioMethod;
-  target_dataset_id?: string;
-  target_dataset_name?: string;
-  created_at?: string;
-  updated_at?: string;
+  id: string
+  name: string
+  description?: string
+  status?: string
+  totals?: number
+  ratio_method?: RatioMethod
+  target_dataset_id?: string
+  target_dataset_name?: string
+  config: RatioConfigItem[]
+  created_at?: string
+  updated_at?: string
 }

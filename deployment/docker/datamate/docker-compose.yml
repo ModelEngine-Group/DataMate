@@ -15,6 +15,22 @@ services:
     depends_on:
       - datamate-database
 
+  # 1) backend (Python)
+  datamate-backend-python:
+    container_name: datamate-backend-python
+    image: datamate-backend-python
+    restart: on-failure
+    privileged: true
+    environment:
+      - log_level=DEBUG
+    volumes:
+      - dataset_volume:/dataset
+      - flow_volume:/flow
+      - log_volume:/var/log/datamate
+    networks: [ datamate ]
+    depends_on:
+      - datamate-database
+
   # 2) frontend（NodePort 30000）
   datamate-frontend:
     container_name: datamate-frontend
@@ -28,6 +44,7 @@ services:
     networks: [ datamate ]
     depends_on:
       - datamate-backend
+      - datamate-backend-python
 
   # 3) database
   datamate-database:
@@ -47,6 +64,8 @@ services:
       - ../../../scripts/db:/docker-entrypoint-initdb.d
       - ./utf8.cnf:/etc/mysql/conf.d/utf8.cnf:ro
       - database_log_volume:/var/log/datamate/database
+    ports:
+      - "3306:3306"
     networks: [ datamate ]
 
   # 3) runtime

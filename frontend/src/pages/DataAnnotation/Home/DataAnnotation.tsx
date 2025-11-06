@@ -47,11 +47,10 @@ export default function DataAnnotation() {
     let mounted = true;
     (async () => {
       try {
-        const cfg = await getConfigUsingGet();
-        const url = cfg?.data?.labelStudioUrl || "";
-        if (mounted) setLabelStudioBase((url).replace(/\/+$/, "") || null);
+      const baseUrl = `http://${window.location.hostname}:8000`;
+      if (mounted) setLabelStudioBase(baseUrl);
       } catch (e) {
-        if (mounted) setLabelStudioBase(null);
+      if (mounted) setLabelStudioBase(null);
       }
     })();
     return () => {

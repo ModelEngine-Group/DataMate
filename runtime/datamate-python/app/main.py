@@ -19,29 +19,32 @@ from .exception import (
     general_exception_handler
 )
 
-# 设置日志
 setup_logging()
 logger = get_logger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """应用程序生命周期管理"""
     
-    # 启动时初始化
+    # @startup
     logger.info("DataMate Python Backend starting...")
-    # 数据库连接验证
+
+    # Database connection validation
     try:
         async with AsyncSessionLocal() as session:
             await session.execute(text("SELECT 1"))
-        logger.info("Database connection validated successfully.")
+        logger.info(f"Database: mysql+aiomysql://{settings.mysql_user}:{settings.mysql_password}@{settings.mysql_host}:{settings.mysql_port}/{settings.mysql_database}")
     except Exception as e:
         logger.error(f"Database connection validation failed: {e}")
-        logger.debug(f"Connection details: {settings.computed_database_url}")
+        logger.debug(f"Connection details: {settings.database_url}")
         raise
+
+    # Label Studio
+    # TODO Add actual connectivity check if needed
+    logger.info(f"Label Studio: {settings.label_studio_base_url}")
 
     yield
     
-    # 关闭时清理
+    # @shutdown
     logger.info("DataMate Python Backend shutting down ...")
 
 # 创建FastAPI应用
@@ -53,19 +56,24 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# 配置CORS中间件
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.allowed_origins,
-    allow_credentials=True,
-    allow_methods=settings.allowed_methods,
-    allow_headers=settings.allowed_headers,
-)
+# CORS Middleware
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=settings.allowed_origins,
+#     allow_credentials=True,
+#     allow_methods=settings.allowed_methods,
+#     allow_headers=settings.allowed_headers,
+# )
 
 # 注册路由
 app.include_router(router)
 
-logger.debug("Registered routes: %s", [getattr(r, "path", None) for r in app.routes])
+# 输出注册的路由（每行一个）
+logger.debug("Registered routes:")
+for route in app.routes:
+    route_path = getattr(route, "path", None)
+    if route_path:
+        logger.debug(f"  {route_path}")
 
 # 注册全局异常处理器
 app.add_exception_handler(StarletteHTTPException, starlette_http_exception_handler) # type: ignore

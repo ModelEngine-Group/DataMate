@@ -3,6 +3,8 @@
 # Declare variables to be passed into your templates.
 
 global:
+  deerFlow:
+    enable: false
   image:
     repository: ""
     pullPolicy: "IfNotPresent"

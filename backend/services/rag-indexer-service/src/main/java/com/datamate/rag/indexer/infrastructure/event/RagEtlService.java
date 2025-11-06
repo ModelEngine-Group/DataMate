@@ -51,9 +51,9 @@ import java.util.concurrent.Semaphore;
 public class RagEtlService {
     private static final Semaphore SEMAPHORE = new Semaphore(10);
 
-    @Value("${datamate.rag.milvus-host}")
+    @Value("${datamate.rag.milvus-host:-milvus-standalone}")
     private String milvusHost;
-    @Value("${datamate.rag.milvus-port}")
+    @Value("${datamate.rag.milvus-port:-19530}")
     private int milvusPort;
 
     private final RagFileRepository ragFileRepository;
@@ -122,7 +122,7 @@ public class RagEtlService {
         // 调用嵌入模型获取嵌入向量
         List<Embedding> content = embeddingModel.embedAll(split).content();
         // 存储嵌入向量到 Milvus
-        embeddingStore(embeddingModel, ragFile.getKnowledgeBaseId()).addAll(content, split);
+        embeddingStore(embeddingModel, event.knowledgeBase().getName()).addAll(content, split);
     }
 
     /**
@@ -152,11 +152,11 @@ public class RagEtlService {
         };
     }
 
-    public EmbeddingStore<TextSegment> embeddingStore(EmbeddingModel embeddingModel, String knowledgeBaseId) {
+    public EmbeddingStore<TextSegment> embeddingStore(EmbeddingModel embeddingModel, String knowledgeBaseName) {
         return MilvusEmbeddingStore.builder()
                 .host(milvusHost)
                 .port(milvusPort)
-                .collectionName("datamate_" + knowledgeBaseId)
+                .collectionName(knowledgeBaseName)
                 .dimension(embeddingModel.dimension())
                 .build();
     }
