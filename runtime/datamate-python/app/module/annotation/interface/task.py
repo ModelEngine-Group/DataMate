@@ -42,9 +42,9 @@ async def sync_dataset_content(
         mapping_service = DatasetMappingService(db)
         sync_service = SyncService(dm_client, ls_client, mapping_service)
 
-        logger.info(f"Sync dataset content request: mapping_id={request.id}")
+        logger.debug(f"Sync dataset content request: mapping_id={request.id}")
 
-        # request.id 合法性校验
+        # request.id validation
         mapping = await mapping_service.get_mapping_by_uuid(request.id)
         if not mapping:
             raise HTTPException(
@@ -52,7 +52,8 @@ async def sync_dataset_content(
                 detail=f"Mapping not found: {request.id}"
             )
         
-        # 执行同步（使用映射中的源数据集UUID）
+        # Sync dataset files and annotations
+
         result = await sync_service.sync_dataset_files(request.id, request.batch_size)
         
         logger.info(f"Sync completed: {result.synced_files}/{result.total_files} files")

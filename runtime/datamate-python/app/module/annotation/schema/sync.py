@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import Field
 
 from app.module.shared.schema import BaseResponseModel
@@ -8,6 +10,8 @@ class SyncDatasetRequest(BaseResponseModel):
     """同步数据集请求模型"""
     id: str = Field(..., description="映射ID（mapping UUID）")
     batch_size: int = Field(50, ge=1, le=100, description="批处理大小")
+    file_priority: Literal[0, 1] = Field(0, description="0 数据集为主，1 标注平台为主")
+    label_priority: Literal[0, 1] = Field(0, description="0 数据集为主，1 标注平台为主")
 
 class SyncDatasetResponse(BaseResponseModel):
     """同步数据集响应模型"""

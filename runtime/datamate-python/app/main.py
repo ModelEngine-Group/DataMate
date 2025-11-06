@@ -45,7 +45,7 @@ async def lifespan(app: FastAPI):
     yield
     
     # @shutdown
-    logger.info("DataMate Python Backend shutting down ...")
+    logger.info("DataMate Python Backend shutting down ...\n\n")
 
 # 创建FastAPI应用
 app = FastAPI(
@@ -69,11 +69,7 @@ app = FastAPI(
 app.include_router(router)
 
 # 输出注册的路由（每行一个）
-logger.debug("Registered routes:")
-for route in app.routes:
-    route_path = getattr(route, "path", None)
-    if route_path:
-        logger.debug(f"  {route_path}")
+logger.debug(f"Registered routes refer to http://localhost:{settings.port}/redoc")
 
 # 注册全局异常处理器
 app.add_exception_handler(StarletteHTTPException, starlette_http_exception_handler) # type: ignore
@@ -102,7 +98,7 @@ async def root():
         data={
             "message": f"{settings.app_name} is running",
             "version": settings.app_version,
-            "docs_url": "/docs",
+            "docs_url": "/redoc",
             "label_studio_url": settings.label_studio_base_url
         }
     )
