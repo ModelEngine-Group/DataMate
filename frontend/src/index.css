@@ -58,12 +58,18 @@
     @apply border border-[#f0f0f0] rounded-lg bg-white;
   }
   .border {
-    @apply border border-gray-100;
+    @apply border border-[#f0f0f0];
   }
   .border-bottom {
-    @apply border-b border-gray-100;
+    @apply border-b border-[#f0f0f0];
   }
   .border-top {
-    @apply border-t border-gray-100;
+    @apply border-t border-[#f0f0f0];
+  }
+  .border-right {
+    @apply border-r border-[#f0f0f0];
+  }
+  .border-left {
+    @apply border-l border-[#f0f0f0];
   }
 }

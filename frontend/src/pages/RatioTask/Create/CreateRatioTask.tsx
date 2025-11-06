@@ -1,15 +1,15 @@
-import { useState } from "react";
-import { Button, Card, Form, Divider, message } from "antd";
-import { ArrowLeft, Play, BarChart3, Shuffle, PieChart } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Button, Form, message } from "antd";
+import { ArrowLeft, ChevronRight } from "lucide-react";
 import { createRatioTaskUsingPost } from "@/pages/RatioTask/ratio.api.ts";
 import type { Dataset } from "@/pages/DataManagement/dataset.model.ts";
 import { useNavigate } from "react-router";
 import SelectDataset from "@/pages/RatioTask/Create/components/SelectDataset.tsx";
 import BasicInformation from "@/pages/RatioTask/Create/components/BasicInformation.tsx";
 import RatioConfig from "@/pages/RatioTask/Create/components/RatioConfig.tsx";
+import RatioTransfer from "./components/RatioTransfer";
 
 export default function CreateRatioTask() {
-
   const navigate = useNavigate();
   const [form] = Form.useForm();
   // 配比任务相关状态
@@ -25,8 +25,9 @@ export default function CreateRatioTask() {
 
   const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [creating, setCreating] = useState(false);
-  const [distributions, setDistributions] = useState<Record<string, Record<string, number>>>({});
-
+  const [distributions, setDistributions] = useState<
+    Record<string, Record<string, number>>
+  >({});
 
   const handleCreateRatioTask = async () => {
     try {
@@ -36,7 +37,8 @@ export default function CreateRatioTask() {
         return;
       }
       // Build request payload
-      const ratio_method = ratioTaskForm.ratioType === "dataset" ? "DATASET" : "TAG";
+      const ratio_method =
+        ratioTaskForm.ratioType === "dataset" ? "DATASET" : "TAG";
       const totals = String(values.totalTargetCount);
       const config = ratioTaskForm.ratioConfigs.map((c) => {
         if (ratio_method === "DATASET") {
@@ -69,11 +71,19 @@ export default function CreateRatioTask() {
       message.success("配比任务创建成功");
       navigate("/data/synthesis/ratio-task");
     } catch {
-      // 校验失败
+      message.error("配比任务创建失败，请重试");
     } finally {
       setCreating(false);
     }
   };
+  const totalConfigured = useMemo(
+    () =>
+      ratioTaskForm?.ratioConfigs?.reduce?.(
+        (sum, c) => sum + (c.quantity || 0),
+        0
+      ) || 0,
+    [ratioTaskForm.ratioConfigs]
+  );
 
   // dataset selection is handled inside SelectDataset via onSelectedDatasetsChange
 
@@ -137,10 +147,16 @@ export default function CreateRatioTask() {
   };
 
   // 标签模式下，更新某数据集的某个标签的数量
-  const updateLabelRatioConfig = (datasetId: string, label: string, quantity: number) => {
+  const updateLabelRatioConfig = (
+    datasetId: string,
+    label: string,
+    quantity: number
+  ) => {
     const sourceKey = `${datasetId}_${label}`;
     setRatioTaskForm((prev) => {
-      const existingIndex = prev.ratioConfigs.findIndex((c) => c.source === sourceKey);
+      const existingIndex = prev.ratioConfigs.findIndex(
+        (c) => c.source === sourceKey
+      );
       const totalOtherQuantity = prev.ratioConfigs
         .filter((c) => c.source !== sourceKey)
         .reduce((sum, c) => sum + c.quantity, 0);
@@ -176,9 +192,9 @@ export default function CreateRatioTask() {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="h-full flex flex-col gap-4">
       {/* Header */}
-      <div className="flex items-center justify-between mb-2">
+      <div className="flex items-center justify-between">
         <div className="flex items-center">
           <Button
             type="text"
@@ -189,126 +205,85 @@ export default function CreateRatioTask() {
           <h1 className="text-xl font-bold bg-clip-text">创建配比任务</h1>
         </div>
       </div>
-      <Card className="overflow-y-auto p-2">
-        <Form
-          form={form}
-          initialValues={ratioTaskForm}
-          onValuesChange={handleValuesChange}
-          layout="vertical"
-        >
-          <div className="grid grid-cols-12 gap-6">
-            {/* 左侧：数据集选择 */}
-            <SelectDataset
-              selectedDatasets={ratioTaskForm.selectedDatasets}
-              ratioType={ratioTaskForm.ratioType}
-              onRatioTypeChange={(value) => setRatioTaskForm({ ...ratioTaskForm, ratioType: value, ratioConfigs: [] })}
-              onSelectedDatasetsChange={(next) => {
-                setRatioTaskForm((prev) => ({
-                  ...prev,
-                  selectedDatasets: next,
-                  ratioConfigs: prev.ratioConfigs.filter((c) => {
-                    const id = String(c.source);
-                    // keep only items whose dataset id remains selected
-                    const dsId = id.includes("_") ? id.split("_")[0] : id;
-                    return next.includes(dsId);
-                  }),
-                }));
-              }}
-              onDistributionsChange={(next) => setDistributions(next)}
-              onDatasetsChange={(list) => setDatasets(list)}
+      <div className="h-full flex-overflow-auto border-card">
+        <div className="h-full overflow-auto p-6">
+          <Form
+            form={form}
+            initialValues={ratioTaskForm}
+            onValuesChange={handleValuesChange}
+            layout="vertical"
+            className="h-full"
+          >
+            <BasicInformation
+              totalTargetCount={ratioTaskForm.totalTargetCount}
             />
-            {/* 右侧：配比配置 */}
-            <div className="col-span-7">
-              <h2 className="font-medium text-gray-900 text-lg mb-2 flex items-center gap-2">
-                <PieChart className="w-5 h-5" />
-                配比配置
-              </h2>
-              <Card>
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <span className="flex items-center gap-2 font-semibold">
-                      <BarChart3 className="w-5 h-5" />
-                      配比设置
-                    </span>
-                    <div className="text-gray-500 text-xs">
-                      设置每个数据集的配比数量
-                    </div>
-                  </div>
-                  <Button
-                    icon={<Shuffle />}
-                    size="small"
-                    onClick={generateAutoRatio}
-                    disabled={ratioTaskForm.selectedDatasets.length === 0}
-                  >
-                    平均分配
-                  </Button>
-                </div>
-                <BasicInformation totalTargetCount={ratioTaskForm.totalTargetCount} />
-                <RatioConfig
-                  ratioType={ratioTaskForm.ratioType}
-                  selectedDatasets={ratioTaskForm.selectedDatasets}
-                  datasets={datasets}
-                  ratioConfigs={ratioTaskForm.ratioConfigs as any}
-                  totalTargetCount={ratioTaskForm.totalTargetCount}
-                  distributions={distributions}
-                  onUpdateDatasetQuantity={(datasetId, quantity) => updateRatioConfig(datasetId, quantity)}
-                  onUpdateLabelQuantity={(datasetId, label, quantity) => updateLabelRatioConfig(datasetId, label, quantity)}
-                />
-                {/* 配比预览 */}
-                {ratioTaskForm.ratioConfigs.length > 0 && (
-                  <div className="mb-4">
-                    <span className="text-sm font-medium">配比预览</span>
-                    <div className="p-3 bg-gray-50 rounded-lg">
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <span className="text-gray-500">总配比数量:</span>
-                          <span className="ml-2 font-medium">
-                            {ratioTaskForm.ratioConfigs
-                              .reduce((sum, config) => sum + config.quantity, 0)
-                              .toLocaleString()}
-                          </span>
-                        </div>
-                        <div>
-                          <span className="text-gray-500">目标数量:</span>
-                          <span className="ml-2 font-medium">
-                            {ratioTaskForm.totalTargetCount.toLocaleString()}
-                          </span>
-                        </div>
-                        <div>
-                          <span className="text-gray-500">配比项目:</span>
-                          <span className="ml-2 font-medium">
-                            {ratioTaskForm.ratioConfigs.length}个
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                <Divider />
-                <div className="flex justify-end gap-2">
-                  <Button
-                    onClick={() => navigate("/data/synthesis/ratio-task")}
-                  >
-                    取消
-                  </Button>
-                  <Button
-                    type="primary"
-                    onClick={handleCreateRatioTask}
-                    loading={creating}
-                    disabled={
-                      !ratioTaskForm.name ||
-                      ratioTaskForm.ratioConfigs.length === 0
-                    }
-                  >
-                    <Play className="w-4 h-4 mr-2" />
-                    创建任务
-                  </Button>
-                </div>
-              </Card>
+
+            {/* <RatioTransfer
+              ratioTaskForm={ratioTaskForm}
+              distributions={distributions}
+              updateRatioConfig={updateRatioConfig}
+              updateLabelRatioConfig={updateLabelRatioConfig}
+            /> */}
+
+            <div className="flex h-full">
+              <SelectDataset
+                selectedDatasets={ratioTaskForm.selectedDatasets}
+                ratioType={ratioTaskForm.ratioType}
+                onRatioTypeChange={(value) =>
+                  setRatioTaskForm({
+                    ...ratioTaskForm,
+                    ratioType: value,
+                    ratioConfigs: [],
+                  })
+                }
+                onSelectedDatasetsChange={(next) => {
+                  setRatioTaskForm((prev) => ({
+                    ...prev,
+                    selectedDatasets: next,
+                    ratioConfigs: prev.ratioConfigs.filter((c) => {
+                      const id = String(c.source);
+                      // keep only items whose dataset id remains selected
+                      const dsId = id.includes("_") ? id.split("_")[0] : id;
+                      return next.includes(dsId);
+                    }),
+                  }));
+                }}
+                onDistributionsChange={(next) => setDistributions(next)}
+                onDatasetsChange={(list) => setDatasets(list)}
+              />
+              <ChevronRight className="self-center" />
+              <RatioConfig
+                ratioType={ratioTaskForm.ratioType}
+                selectedDatasets={ratioTaskForm.selectedDatasets}
+                datasets={datasets}
+                totalTargetCount={ratioTaskForm.totalTargetCount}
+                distributions={distributions}
+                onChange={(configs) =>
+                  setRatioTaskForm((prev) => ({
+                    ...prev,
+                    ratioConfigs: configs,
+                  }))
+                }
+              />
             </div>
-          </div>
-        </Form>
-      </Card>
+          </Form>
+        </div>
+        <div className="flex justify-end gap-2 p-6">
+          <Button onClick={() => navigate("/data/synthesis/ratio-task")}>
+            取消
+          </Button>
+          <Button
+            type="primary"
+            onClick={handleCreateRatioTask}
+            loading={creating}
+            disabled={
+              !ratioTaskForm.name || ratioTaskForm.ratioConfigs.length === 0
+            }
+          >
+            创建
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

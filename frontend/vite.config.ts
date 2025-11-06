@@ -19,8 +19,7 @@ export default defineConfig({
     // },
     proxy: {
       "^/api": {
-        // target: "http://localhost:8002", // 本地后端服务地址
-        target: "http://1.94.5.242:32530", // 远程后端服务地址
+        target: "http://localhost:8002", // 本地后端服务地址
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/api/, "/api"),
