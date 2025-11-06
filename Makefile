@@ -207,7 +207,7 @@ milvus-docker-uninstall:
 .PHONY: datamate-k8s-install
 datamate-k8s-install: create-namespace
 	kubectl create configmap datamate-init-sql --from-file=scripts/db/ --dry-run=client -o yaml | kubectl apply -f - -n $(NAMESPACE)
-	helm upgrade datamate deployment/helm/datamate/ -n $(NAMESPACE) --install
+	helm upgrade datamate deployment/helm/datamate/ -n $(NAMESPACE) --install --set global.image.repository=$(REPOSITORY)
 
 .PHONY: datamate-k8s-uninstall
 datamate-k8s-uninstall:
@@ -216,10 +216,10 @@ datamate-k8s-uninstall:
 
 .PHONY: deer-flow-k8s-install
 deer-flow-k8s-install:
-	helm upgrade datamate deployment/helm/datamate/ -n $(NAMESPACE) --install --set global.deerFlow.enable=true
+	helm upgrade datamate deployment/helm/datamate/ -n $(NAMESPACE) --install --set global.deerFlow.enable=true --set global.image.repository=$(REPOSITORY)
 	cp runtime/deer-flow/.env deployment/helm/deer-flow/charts/public/.env
 	cp runtime/deer-flow/conf.yaml deployment/helm/deer-flow/charts/public/conf.yaml
-	helm upgrade deer-flow deployment/helm/deer-flow -n $(NAMESPACE) --install
+	helm upgrade deer-flow deployment/helm/deer-flow -n $(NAMESPACE) --install --set global.image.repository=$(REPOSITORY)
 
 .PHONY: deer-flow-k8s-uninstall
 deer-flow-k8s-uninstall:
