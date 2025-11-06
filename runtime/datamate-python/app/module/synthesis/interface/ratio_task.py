@@ -18,9 +18,10 @@ from app.module.synthesis.schema.ratio_task import (
     PagedRatioTaskResponse,
     RatioTaskItem,
     TargetDatasetInfo,
+    RatioTaskDetailResponse,
 )
 from app.module.synthesis.service.ratio_task import RatioTaskService
-from app.db.models.ratio_task import RatioInstance, RatioRelation
+from app.db.models.ratio_task import RatioInstance, RatioRelation, RatioRelation as RatioRelationModel
 
 router = APIRouter(
     prefix="/ratio-task",
@@ -251,3 +252,78 @@ def get_target_dataset_type(source_types: Set[str]) -> str:
             # 仅有一种介质类型且无其它类型
             target_type = next(iter(media_involved))
     return target_type
+
+
+@router.get("/{task_id}", response_model=StandardResponse[RatioTaskDetailResponse], status_code=200)
+async def get_ratio_task(
+    task_id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    获取配比任务详情
+
+    Path: /api/synthesis/ratio-task/{task_id}
+    """
+    try:
+        # 查询任务实例
+        instance_res = await db.execute(
+            select(RatioInstance).where(RatioInstance.id == task_id)
+        )
+        instance = instance_res.scalar_one_or_none()
+        if not instance:
+            raise HTTPException(status_code=404, detail="Ratio task not found")
+
+        # 查询关联的配比关系
+        relations_res = await db.execute(
+            select(RatioRelationModel).where(RatioRelationModel.ratio_instance_id == task_id)
+        )
+        relations = list(relations_res.scalars().all())
+
+        # 查询目标数据集
+        target_ds = None
+        if instance.target_dataset_id:
+            ds_res = await db.execute(
+                select(Dataset).where(Dataset.id == instance.target_dataset_id)
+            )
+            target_ds = ds_res.scalar_one_or_none()
+
+        # 构建响应
+        config = [
+            {
+                "dataset_id": rel.source_dataset_id,
+                "counts": str(rel.counts) if rel.counts is not None else "0",
+                "filter_conditions": rel.filter_conditions or "",
+            }
+            for rel in relations
+        ]
+
+        target_dataset_info = {
+            "id": str(target_ds.id) if target_ds else None,
+            "name": target_ds.name if target_ds else None,
+            "type": target_ds.dataset_type if target_ds else None,
+            "status": target_ds.status if target_ds else None,
+            "file_count": target_ds.file_count if target_ds else 0,
+            "size_bytes": target_ds.size_bytes if target_ds else 0,
+        }
+
+        return StandardResponse(
+            code=200,
+            message="success",
+            data=RatioTaskDetailResponse(
+                id=instance.id,
+                name=instance.name or "",
+                description=instance.description,
+                status=instance.status or "UNKNOWN",
+                totals=instance.totals or 0,
+                ratio_method=instance.ratio_method or "",
+                config=config,
+                target_dataset=target_dataset_info,
+                created_at=instance.created_at,
+                updated_at=instance.updated_at,
+            )
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get ratio task {task_id}: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
