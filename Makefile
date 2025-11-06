@@ -3,6 +3,7 @@ MAKEFLAGS += --no-print-directory
 WITH_MINERU ?= false  # 默认不构建mineru
 VERSION ?= latest
 NAMESPACE ?= datamate
+REGISTRY ?= "ghcr.io/modelengine-group/"
 
 ifdef COMSPEC
     # Windows 环境
@@ -42,7 +43,7 @@ else
 endif
 
 .PHONY: install
-install: install-datamate
+install: install-datamate install-milvus
 
 .PHONY: uninstall-%
 uninstall-%:
@@ -118,7 +119,7 @@ runtime-docker-uninstall:
 
 .PHONY: mineru-docker-install
 mineru-docker-install:
-	cd deployment/docker/datamate && cp .env.example .env && docker compose up -d datamate-mineru
+	cd deployment/docker/datamate && export REGISTRY=$(REGISTRY) && docker compose up -d datamate-mineru
 
 .PHONY: mineru-docker-uninstall
 mineru-docker-uninstall:
@@ -134,7 +135,7 @@ mineru-k8s-uninstall:
 
 .PHONY: datamate-docker-install
 datamate-docker-install:
-	cd deployment/docker/datamate && cp .env.example .env && docker compose -f docker-compose.yml up -d
+	cd deployment/docker/datamate && export REGISTRY=$(REGISTRY) && docker compose -f docker-compose.yml up -d
 
 .PHONY: datamate-docker-uninstall
 datamate-docker-uninstall:
@@ -142,11 +143,11 @@ datamate-docker-uninstall:
 
 .PHONY: deer-flow-docker-install
 deer-flow-docker-install:
-	cd deployment/docker/datamate && cp .env.deer-flow.example .env && docker compose -f docker-compose.yml up -d
+	cd deployment/docker/datamate && export NGINX_CONF="./backend-with-deer-flow.conf" && export REGISTRY=$(REGISTRY) && docker compose -f docker-compose.yml up -d
 	cp -n runtime/deer-flow/.env.example runtime/deer-flow/.env
 	cp -n runtime/deer-flow/conf.yaml.example runtime/deer-flow/conf.yaml
 	cp runtime/deer-flow/.env deployment/docker/deer-flow/.env && cp runtime/deer-flow/conf.yaml deployment/docker/deer-flow/conf.yaml
-	cd deployment/docker/deer-flow && docker compose -f docker-compose.yml up -d
+	cd deployment/docker/deer-flow && export REGISTRY=$(REGISTRY) && docker compose -f docker-compose.yml up -d
 
 .PHONY: deer-flow-docker-uninstall
 deer-flow-docker-uninstall:
@@ -154,6 +155,14 @@ deer-flow-docker-uninstall:
 		cd deployment/docker/datamate && docker compose -f docker-compose.yml up -d; \
 	fi
 	cd deployment/docker/deer-flow && docker compose -f docker-compose.yml down
+
+.PHONY: milvus-docker-install
+milvus-docker-install:
+	cd deployment/docker/milvus && docker compose -f docker-compose.yml up -d
+
+.PHONY: milvus-docker-uninstall
+milvus-docker-uninstall:
+	cd deployment/docker/milvus && docker compose -f docker-compose.yml down
 
 .PHONY: datamate-k8s-install
 datamate-k8s-install: create-namespace
