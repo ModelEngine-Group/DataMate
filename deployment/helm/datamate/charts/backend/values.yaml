@@ -19,13 +19,7 @@ imagePullSecrets: []
 nameOverride: "datamate-backend"
 fullnameOverride: "datamate-backend"
 
-env:
-  - name: namespace
-    valueFrom:
-      fieldRef:
-        fieldPath: metadata.namespace
-  - name: SPRING_CONFIG_LOCATION
-    value: file:/opt/backend/application.yml
+env: []
 
 # This section builds out the service account more information can be found here: https://kubernetes.io/docs/concepts/security/service-accounts/
 serviceAccount:

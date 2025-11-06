@@ -21,7 +21,7 @@ def _import_operators():
     from . import file_exporter
     from . import slide_formatter
     from . import unstructured_formatter
-    from . import external_pdf_formatter
+    from . import mineru_formatter
 
 
 _import_operators()

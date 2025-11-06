@@ -5,6 +5,11 @@ export function queryRatioTasksUsingGet(params?: any) {
   return get("/api/synthesis/ratio-task", params);
 }
 
+// 查询配比任务详情
+export function getRatioTaskByIdUsingGet(id: string) {
+  return get(`/api/synthesis/ratio-task/${id}`);
+}
+
 // 创建配比任务
 export function createRatioTaskUsingPost(data: any) {
   return post("/api/synthesis/ratio-task", data);

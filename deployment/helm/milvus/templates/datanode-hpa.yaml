@@ -1,0 +1,23 @@
+{{- if and .Values.dataNode.enabled .Values.dataNode.hpa.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ template "milvus.datanode.fullname" . }}-hpa
+  namespace: {{ .Release.Namespace }}
+  labels:
+    component: "datanode"
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ template "milvus.datanode.fullname" . }}
+  minReplicas: {{ .Values.dataNode.hpa.minReplicas | default 1 }}
+  maxReplicas: {{ .Values.dataNode.hpa.maxReplicas | default 10 }}
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: {{ .Values.dataNode.hpa.cpuUtilization | default 40 }}
+{{- end }}

@@ -77,6 +77,7 @@ export interface RatioTaskItem {
   ratio_method?: RatioMethod
   target_dataset_id?: string
   target_dataset_name?: string
+  config: RatioConfigItem[]
   created_at?: string
   updated_at?: string
 }

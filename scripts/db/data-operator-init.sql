@@ -70,8 +70,8 @@ VALUES ('64465bec-b46b-11f0-8291-00155d0e4808', '模态', 'modal',  'predefined'
 INSERT IGNORE INTO t_operator
 (id, name, description, version, inputs, outputs, runtime, settings, file_name, is_star)
 VALUES ('TextFormatter', 'TXT文本抽取', '抽取TXT中的文本。', '1.0.0', 'text', 'text', null, null, '', false),
-       ('UnstructuredFormatter', '非结构化文本抽取', '抽取非结构化文件的文本，目前支持PowerPoint演示文稿、Word文档以及Excel工作簿。', '1.0.0', 'text', 'text', null, null, '', false),
-       ('ExternalPDFFormatter', 'MinerU PDF文本抽取', '基于MinerU API，抽取PDF中的文本。', '1.0.0', 'text', 'text', null, null, '', false),
+       ('UnstructuredFormatter', 'Unstructured文本抽取', '基于Unstructured抽取非结构化文件的文本，目前支持PowerPoint演示文稿、Word文档以及Excel工作簿。', '1.0.0', 'text', 'text', null, null, '', false),
+       ('MineruFormatter', 'MinerU PDF文本抽取', '基于MinerU API，抽取PDF中的文本。', '1.0.0', 'text', 'text', null, null, '', false),
        ('FileExporter', '落盘算子', '将文件保存到本地目录。', '1.0.0', 'all', 'all', null, null, '', false),
        ('FileWithHighRepeatPhraseRateFilter', '文档词重复率检查', '去除重复词过多的文档。', '1.0.0', 'text', 'text', null, '{"repeatPhraseRatio": {"name": "文档词重复率", "description": "某个词的统计数/文档总词数 > 设定值，该文档被去除。", "type": "slider", "defaultVal": 0.5, "min": 0, "max": 1, "step": 0.1}, "hitStopwords": {"name": "去除停用词", "description": "统计重复词时，选择是否要去除停用词。", "type": "switch", "defaultVal": false, "required": true, "checkedLabel": "去除", "unCheckedLabel": "不去除"}}', '', 'false'),
        ('FileWithHighRepeatWordRateFilter', '文档字重复率检查', '去除重复字过多的文档。', '1.0.0', 'text', 'text', null, '{"repeatWordRatio": {"name": "文档字重复率", "description": "某个字的统计数/文档总字数 > 设定值，该文档被去除。", "type": "slider", "defaultVal": 0.5, "min": 0, "max": 1, "step": 0.1}}', '', 'false'),

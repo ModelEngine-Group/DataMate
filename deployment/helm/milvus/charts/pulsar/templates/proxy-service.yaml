@@ -1,0 +1,68 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+{{- if .Values.components.proxy }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: "{{ template "pulsar.fullname" . }}-{{ .Values.proxy.component }}"
+  namespace: {{ template "pulsar.namespace" . }}
+  labels:
+    {{- include "pulsar.standardLabels" . | nindent 4 }}
+    component: {{ .Values.proxy.component }}
+  annotations:
+  {{- with .Values.proxy.service.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.proxy.service.type }}
+  {{- with .Values.proxy.service.loadBalancerIP }}
+  loadBalancerIP: {{ . }}
+  {{- end }}
+  {{- if .Values.proxy.service.externalTrafficPolicy }}
+  externalTrafficPolicy: {{ .Values.proxy.service.externalTrafficPolicy }}
+  {{- end }}
+  {{- if .Values.proxy.service.loadBalancerSourceRanges }}
+  loadBalancerSourceRanges: {{ toYaml .Values.proxy.service.loadBalancerSourceRanges | nindent 4 }}
+  {{- end }}
+  ports:
+    {{- if or (not .Values.tls.enabled) (not .Values.tls.proxy.enabled) }}
+    - name: http
+      port: {{ .Values.proxy.ports.http }}
+      protocol: TCP
+      targetPort: sts-http
+    - name: "{{ .Values.tcpPrefix }}pulsar"
+      port: {{ .Values.proxy.ports.pulsar }}
+      protocol: TCP
+      targetPort: "sts-{{ .Values.tcpPrefix }}pulsar"
+    {{- end }}
+    {{- if and .Values.tls.enabled .Values.tls.proxy.enabled }}
+    - name: https
+      port: {{ .Values.proxy.ports.https }}
+      protocol: TCP
+      targetPort: sts-https
+    - name: "{{ .Values.tlsPrefix }}pulsarssl"
+      port: {{ .Values.proxy.ports.pulsarssl }}
+      protocol: TCP
+      targetPort: "sts-{{ .Values.tlsPrefix }}pulsarssl"
+    {{- end }}
+  selector:
+    {{- include "pulsar.matchLabels" . | nindent 4 }}
+    component: {{ .Values.proxy.component }}
+{{- end }}

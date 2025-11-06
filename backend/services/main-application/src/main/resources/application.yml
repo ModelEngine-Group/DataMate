@@ -164,8 +164,3 @@ datamate:
     quality-control:
       enabled: ${QC_ENABLED:true}
       threshold: ${QC_THRESHOLD:0.8}
-
-  # RAG配置
-  rag:
-    milvus-host: ${MILVUS_HOST:milvus-standalone}
-    milvus-port: ${MILVUS_PORT:19530}

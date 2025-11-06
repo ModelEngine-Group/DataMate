@@ -67,9 +67,5 @@ Name of image
 {{- define "database.image" -}}
 {{- $name := default .Values.image.repository .Values.global.image.database.name }}
 {{- $tag := default .Values.image.tag .Values.global.image.database.tag }}
-{{- if .Values.global.image.repository }}
-{{- .Values.global.image.repository | trimSuffix "/" }}/{{ $name }}:{{ $tag }}
-{{- else }}
 {{- $name }}:{{ $tag }}
-{{- end }}
 {{- end }}
