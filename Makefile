@@ -18,7 +18,7 @@ build-%:
 	$(MAKE) $*-docker-build
 
 .PHONY: build
-build: backend-docker-build frontend-docker-build runtime-docker-build $(if $(WITH_MINERU),mineru-docker-build)
+build: backend-docker-build frontend-docker-build runtime-docker-build
 
 .PHONY: create-namespace
 create-namespace:
@@ -43,7 +43,24 @@ else
 endif
 
 .PHONY: install
-install: install-datamate install-milvus
+install:
+ifeq ($(origin INSTALLER), undefined)
+	@echo "Choose a deployment method:"
+	@echo "1. Docker/Docker-Compose"
+	@echo "2. Kubernetes/Helm"
+	@echo -n "Enter choice: "
+	@read choice; \
+	case $$choice in \
+		1) INSTALLER=docker ;; \
+		2) INSTALLER=k8s ;; \
+		*) echo "Invalid choice" && exit 1 ;; \
+	esac; \
+	$(MAKE) datamate-$$INSTALLER-install; \
+	$(MAKE) milvus-$$INSTALLER-install
+else
+	$(MAKE) datamate-$(INSTALLER)-install; \
+	$(MAKE) milvus-$(INSTALLER)-install
+endif
 
 .PHONY: uninstall-%
 uninstall-%:
@@ -64,7 +81,24 @@ else
 endif
 
 .PHONY: uninstall
-uninstall: uninstall-datamate
+uninstall:
+ifeq ($(origin INSTALLER), undefined)
+	@echo "Choose a deployment method:"
+	@echo "1. Docker/Docker-Compose"
+	@echo "2. Kubernetes/Helm"
+	@echo -n "Enter choice: "
+	@read choice; \
+	case $$choice in \
+		1) INSTALLER=docker ;; \
+		2) INSTALLER=k8s ;; \
+		*) echo "Invalid choice" && exit 1 ;; \
+	esac; \
+    $(MAKE) milvus-$$INSTALLER-uninstall; \
+	$(MAKE) datamate-$$INSTALLER-uninstall
+else
+	$(MAKE) milvus-$(INSTALLER)-uninstall; \
+	$(MAKE) datamate-$(INSTALLER)-uninstall
+endif
 
 # build
 .PHONY: backend-docker-build
@@ -144,20 +178,21 @@ datamate-docker-install:
 
 .PHONY: datamate-docker-uninstall
 datamate-docker-uninstall:
-	cd deployment/docker/datamate && docker compose -f docker-compose.yml down -v
+	cd deployment/docker/datamate && docker compose -f docker-compose.yml --profile mineru down -v
 
 .PHONY: deer-flow-docker-install
 deer-flow-docker-install:
 	cd deployment/docker/datamate && export NGINX_CONF="./backend-with-deer-flow.conf" && export REGISTRY=$(REGISTRY) && docker compose -f docker-compose.yml up -d
 	cp -n runtime/deer-flow/.env.example runtime/deer-flow/.env
 	cp -n runtime/deer-flow/conf.yaml.example runtime/deer-flow/conf.yaml
-	cp runtime/deer-flow/.env deployment/docker/deer-flow/.env && cp runtime/deer-flow/conf.yaml deployment/docker/deer-flow/conf.yaml
+	cp runtime/deer-flow/.env deployment/docker/deer-flow/.env
+	cp runtime/deer-flow/conf.yaml deployment/docker/deer-flow/conf.yaml
 	cd deployment/docker/deer-flow && export REGISTRY=$(REGISTRY) && docker compose -f docker-compose.yml up -d
 
 .PHONY: deer-flow-docker-uninstall
 deer-flow-docker-uninstall:
 	@if docker compose ls --filter name=datamate | grep -q datamate; then \
-		cd deployment/docker/datamate && docker compose -f docker-compose.yml up -d; \
+		cd deployment/docker/datamate && export REGISTRY=$(REGISTRY) && docker compose -f docker-compose.yml up -d; \
 	fi
 	cd deployment/docker/deer-flow && docker compose -f docker-compose.yml down
 
@@ -189,6 +224,9 @@ deer-flow-k8s-install:
 .PHONY: deer-flow-k8s-uninstall
 deer-flow-k8s-uninstall:
 	helm uninstall deer-flow -n $(NAMESPACE) --ignore-not-found
+	@if helm ls -n $(NAMESPACE) --filter datamate | grep -q datamate; then \
+		helm upgrade datamate deployment/helm/datamate/ -n $(NAMESPACE) --set global.deerFlow.enable=false; \
+	fi
 
 .PHONY: milvus-k8s-install
 milvus-k8s-install:
