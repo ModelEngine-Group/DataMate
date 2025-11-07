@@ -137,10 +137,6 @@ export default function OperatorPluginDetail() {
             key: "overview",
             label: "概览",
           },
-          {
-            key: "service",
-            label: "服务监控",
-          },
         ]}
         activeTabKey={activeTab}
         onTabChange={setActiveTab}
