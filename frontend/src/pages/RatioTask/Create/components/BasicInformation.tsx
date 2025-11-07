@@ -7,9 +7,11 @@ interface BasicInformationProps {
   totalTargetCount: number;
 }
 
-const BasicInformation: React.FC<BasicInformationProps> = ({ totalTargetCount }) => {
+const BasicInformation: React.FC<BasicInformationProps> = ({
+  totalTargetCount,
+}) => {
   return (
-    <div className="grid grid-cols-2 gap-4 mb-4">
+    <div className="grid grid-cols-2 gap-2">
       <Form.Item
         label="任务名称"
         name="name"

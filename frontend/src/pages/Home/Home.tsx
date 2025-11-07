@@ -134,7 +134,7 @@ export default function WelcomePage() {
             {menuItems.map((item) => (
               <Card
                 key={item.id}
-                onClick={() => navigate(`/data/${item.id}`)}
+                onClick={() => navigate(item.children ? `/data/${item.children[0].id}`: `/data/${item.id}`)}
                 className="cursor-pointer hover:shadow-lg transition-all duration-200 border-0 shadow-md relative overflow-hidden group"
               >
                 <div className="text-center relative">
