@@ -73,6 +73,9 @@ public interface DatasetConverter {
         }
         for (DatasetFile datasetFile : datasetFiles) {
             List<FileTag> tags = datasetFile.analyzeTag();
+            if (CollectionUtils.isEmpty(tags)) {
+                return distribution;
+            }
             for (FileTag tag : tags) {
                 tag.getTags().forEach(tagName -> distribution.put(tagName, distribution.getOrDefault(tagName, 0L) + 1));
             }
