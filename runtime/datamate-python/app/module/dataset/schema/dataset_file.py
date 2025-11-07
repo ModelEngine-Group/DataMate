@@ -15,6 +15,8 @@ class DatasetFileResponse(BaseModel):
     description: Optional[str] = Field(None, description="文件描述")
     uploadedBy: Optional[str] = Field(None, description="上传者")
     lastAccessTime: Optional[datetime] = Field(None, description="最后访问时间")
+    tags: Optional[List[Dict[str, Any]]] = Field(None, description="文件标签/标注信息")
+    tags_updated_at: Optional[datetime] = Field(None, description="标签最后更新时间", alias="tagsUpdatedAt")
 
 class PagedDatasetFileResponse(BaseModel):
     """DM服务分页文件响应模型"""

@@ -380,6 +380,148 @@ class Client:
             logger.error(f"Error while deleting project {project_id}: {e}")
             return False
     
+    async def get_task_annotations(
+        self,
+        task_id: int
+    ) -> Optional[List[Dict[str, Any]]]:
+        """获取任务的标注结果
+        
+        Args:
+            task_id: 任务ID
+            
+        Returns:
+            标注结果列表，每个标注包含完整的annotation信息
+        """
+        try:
+            logger.debug(f"Fetching annotations for task: {task_id}")
+            
+            response = await self.client.get(f"/api/tasks/{task_id}/annotations")
+            response.raise_for_status()
+            
+            annotations = response.json()
+            logger.debug(f"Fetched {len(annotations)} annotations for task {task_id}")
+            
+            return annotations
+            
+        except httpx.HTTPStatusError as e:
+            logger.error(f"Get task annotations failed HTTP {e.response.status_code}: {e.response.text}")
+            return None
+        except Exception as e:
+            logger.error(f"Error while getting task annotations: {e}")
+            return None
+    
+    async def create_annotation(
+        self,
+        task_id: int,
+        result: List[Dict[str, Any]],
+        completed_by: Optional[int] = None
+    ) -> Optional[Dict[str, Any]]:
+        """为任务创建新的标注
+        
+        Args:
+            task_id: 任务ID
+            result: 标注结果列表
+            completed_by: 完成标注的用户ID（可选）
+            
+        Returns:
+            创建的标注信息，失败返回None
+        """
+        try:
+            logger.debug(f"Creating annotation for task: {task_id}")
+            
+            annotation_data = {
+                "result": result,
+                "task": task_id
+            }
+            
+            if completed_by:
+                annotation_data["completed_by"] = completed_by
+            
+            response = await self.client.post(
+                f"/api/tasks/{task_id}/annotations",
+                json=annotation_data
+            )
+            response.raise_for_status()
+            
+            annotation = response.json()
+            logger.debug(f"Created annotation {annotation.get('id')} for task {task_id}")
+            
+            return annotation
+            
+        except httpx.HTTPStatusError as e:
+            logger.error(f"Create annotation failed HTTP {e.response.status_code}: {e.response.text}")
+            return None
+        except Exception as e:
+            logger.error(f"Error while creating annotation: {e}")
+            return None
+    
+    async def update_annotation(
+        self,
+        annotation_id: int,
+        result: List[Dict[str, Any]]
+    ) -> Optional[Dict[str, Any]]:
+        """更新已存在的标注
+        
+        Args:
+            annotation_id: 标注ID
+            result: 新的标注结果列表
+            
+        Returns:
+            更新后的标注信息，失败返回None
+        """
+        try:
+            logger.debug(f"Updating annotation: {annotation_id}")
+            
+            annotation_data = {
+                "result": result
+            }
+            
+            response = await self.client.patch(
+                f"/api/annotations/{annotation_id}",
+                json=annotation_data
+            )
+            response.raise_for_status()
+            
+            annotation = response.json()
+            logger.debug(f"Updated annotation {annotation_id}")
+            
+            return annotation
+            
+        except httpx.HTTPStatusError as e:
+            logger.error(f"Update annotation failed HTTP {e.response.status_code}: {e.response.text}")
+            return None
+        except Exception as e:
+            logger.error(f"Error while updating annotation: {e}")
+            return None
+    
+    async def delete_annotation(
+        self,
+        annotation_id: int
+    ) -> bool:
+        """删除标注
+        
+        Args:
+            annotation_id: 标注ID
+            
+        Returns:
+            成功返回True，失败返回False
+        """
+        try:
+            logger.debug(f"Deleting annotation: {annotation_id}")
+            
+            response = await self.client.delete(f"/api/annotations/{annotation_id}")
+            response.raise_for_status()
+            
+            logger.debug(f"Deleted annotation {annotation_id}")
+            return True
+            
+        except httpx.HTTPStatusError as e:
+            logger.error(f"Delete annotation failed HTTP {e.response.status_code}: {e.response.text}")
+            return False
+        except Exception as e:
+            logger.error(f"Error while deleting annotation: {e}")
+            return False
+    
     async def create_local_storage(
         self,
         project_id: int,
