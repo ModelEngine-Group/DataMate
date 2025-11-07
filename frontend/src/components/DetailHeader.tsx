@@ -112,7 +112,11 @@ function DetailHeader<T>({
                     key={op.key}
                     {...op.confirm}
                     onConfirm={() => {
-                      op?.confirm?.onConfirm?.();
+                      if (op.onClick) {
+                        op.onClick()
+                      } else {
+                        op?.confirm?.onConfirm?.();
+                      }
                     }}
                     okType={op.danger ? "danger" : "primary"}
                     overlayStyle={{ zIndex: 9999 }}

@@ -28,6 +28,8 @@ public class OperatorConstant {
 
     public static String CATEGORY_ALL_ID = "4d7dbd77-0a92-44f3-9056-2cd62d4a71e4";
 
+    public static String CATEGORY_STAR_ID = "51847c24-bba9-11f0-888b-5b143cb738aa";
+
     public static Map<String, String> CATEGORY_MAP = new HashMap<>();
 
     static {
