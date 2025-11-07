@@ -80,7 +80,7 @@ async def create_mapping(
         project_id = project_data["id"]
         
         # 配置本地存储：dataset/<id>
-        local_storage_path = f"{settings.label_studio_local_storage_dataset_base_path}/{request.dataset_id}"
+        local_storage_path = f"{settings.label_studio_local_document_root}/{request.dataset_id}"
         storage_result = await ls_client.create_local_storage(
             project_id=project_id,
             path=local_storage_path,

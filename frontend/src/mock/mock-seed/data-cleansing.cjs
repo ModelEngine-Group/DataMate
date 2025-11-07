@@ -10,6 +10,7 @@ function operatorItem() {
     inputs: Mock.Random.integer(1, 5),
     outputs: Mock.Random.integer(1, 5),
     settings: JSON.stringify({
+      host: { type: "input", name: "主机地址", defaultVal: "localhost" },
       fileLength: {
         name: "文档字数",
         description:
@@ -20,14 +21,28 @@ function operatorItem() {
         max: 10000000000000000,
         step: 1,
       },
-      host: { type: "input", name: "主机地址", defaultVal: "localhost" },
-      limit: {
+      range: {
         type: "range",
         name: "读取行数",
-        defaultVal: [1000, 2000],
-        min: 100,
-        max: 10000,
-        step: 100,
+        description: "某个词的统计数/文档总词数 > 设定值，该文档被去除。",
+        properties: [
+          {
+            name: "起始行",
+            type: "inputNumber",
+            defaultVal: 1000,
+            min: 100,
+            max: 10000,
+            step: 1,
+          },
+          {
+            name: "结束行",
+            type: "inputNumber",
+            defaultVal: 2000,
+            min: 100,
+            max: 10000,
+            step: 1,
+          },
+        ],
       },
       filepath: { type: "input", name: "文件路径", defaultVal: "/path" },
       encoding: {
@@ -428,7 +443,7 @@ module.exports = function (router) {
     const { id } = req.params;
     const operator = operatorList.find((op) => op.id === id);
     console.log("获取算子详情：", id, operator);
-    
+
     if (operator) {
       // 增加浏览次数模拟
       operator.viewCount = (operator.viewCount || 0) + 1;
