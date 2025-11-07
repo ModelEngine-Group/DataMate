@@ -6,6 +6,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * OperatorDto
@@ -31,6 +32,8 @@ public class OperatorDto {
     private String runtime;
 
     private String settings;
+
+    private Map<String, Object> overrides;
 
     private String fileName;
 

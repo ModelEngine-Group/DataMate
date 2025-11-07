@@ -227,7 +227,7 @@ const ParamConfig: React.FC<ParamConfigProps> = ({
       return (
         <div className="pl-4 border-l border-gray-300">
           {param.properties.map((subParam) => (
-            <Config
+            <ParamConfig
               key={subParam.key}
               operator={operator}
               paramKey={subParam.key}

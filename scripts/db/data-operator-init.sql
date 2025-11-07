@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS t_operator
     runtime     text,
     settings    text,
     file_name   text,
-    is_star     bool,
+    is_star     boolean,
     created_at  timestamp default current_timestamp,
     updated_at  timestamp default current_timestamp
 );
@@ -63,9 +63,7 @@ VALUES ('64465bec-b46b-11f0-8291-00155d0e4808', '模态', 'modal',  'predefined'
        ('b5bfc548-8ef6-417c-b8a6-a4197c078249', 'Java', 'java', 'predefined', '873000a2-65b3-474b-8ccc-4813c08c76fb'),
        ('16e2d99e-eafb-44fc-acd0-f35a2bad28f8', '来源', 'origin', 'predefined', '0'),
        ('96a3b07a-3439-4557-a835-525faad60ca3', '系统预置', 'predefined', 'predefined', '16e2d99e-eafb-44fc-acd0-f35a2bad28f8'),
-       ('ec2cdd17-8b93-4a81-88c4-ac9e98d10757', '用户上传', 'customized', 'predefined', '16e2d99e-eafb-44fc-acd0-f35a2bad28f8'),
-       ('d8482257-7ee6-41a0-a914-8363c7db1db0', '收藏状态', 'starStatus', 'predefined', '0'),
-       ('79f2d35a-3b6c-4846-a892-2f2015f48f24', '已收藏', 'isStar', 'predefined', 'd8482257-7ee6-41a0-a914-8363c7db1db0');
+       ('ec2cdd17-8b93-4a81-88c4-ac9e98d10757', '用户上传', 'customized', 'predefined', '16e2d99e-eafb-44fc-acd0-f35a2bad28f8');
 
 INSERT IGNORE INTO t_operator
 (id, name, description, version, inputs, outputs, runtime, settings, file_name, is_star)
@@ -100,18 +98,18 @@ VALUES ('TextFormatter', 'TXT文本抽取', '抽取TXT中的文本。', '1.0.0',
        ('AnonymizedUrlCleaner', 'URL网址匿名化', '将文档中的url网址匿名化。', '1.0.0', 'text', 'text', null, null, '', 'false'),
        ('XMLTagCleaner', 'XML标签去除', '去除XML中的标签。', '1.0.0', 'text', 'text', null, null, '', 'false'),
        ('ImgFormatter', '读取图片文件', '读取图片文件。', '1.0.0', 'image', 'image', null, null, '', 'false'),
-       ('ImgBlurredImagesCleaner', '模糊图片过滤', '去除模糊的图片。', '1.0.0', 'image', 'image', '{"blurredThreshold": {"name": "梯度函数值", "name_en": "Gradient Value", "description": "梯度函数值取值越小，图片模糊度越高。", "description_en": "A smaller gradient value indicates a higher image blur.", "type": "slider", "defaultVal": 1000, "min": 1, "max": 10000, "step": 1}}', null, '', 'false'),
+       ('ImgBlurredImagesCleaner', '模糊图片过滤', '去除模糊的图片。', '1.0.0', 'image', 'image', null, '{"blurredThreshold": {"name": "梯度函数值", "description": "梯度函数值取值越小，图片模糊度越高。", "type": "slider", "defaultVal": 1000, "min": 1, "max": 10000, "step": 1}}', '', 'false'),
        ('ImgBrightness', '图片亮度增强', '自适应调节图片的亮度。', '1.0.0', 'image', 'image', null, null, '', 'false'),
        ('ImgContrast', '图片对比度增强', '自适应调节图片的对比度。', '1.0.0', 'image', 'image', null, null, '', 'false'),
        ('ImgDenoise', '图片噪点去除', '去除图片中的噪点，主要适用于自然场景。', '1.0.0', 'image', 'image', null, null, '', 'false'),
        ('ImgDuplicatedImagesCleaner', '重复图片去除', '去除重复的图片。', '1.0.0', 'image', 'image', null, null, '', 'false'),
        ('ImgPerspectiveTransformation', '图片透视变换', '自适应校正图片的视角，主要适用于文档校正场景。', '1.0.0', 'image', 'image', null, null, '', 'false'),
-       ('ImgResize', '图片重采样', '将图片放大或缩小到指定像素。', '1.0.0', 'image', 'image', '{"targetSize": {"name": "重采样尺寸", "name_en": "Resample Size", "type": "multiple", "properties": [{"type": "inputNumber", "name": "宽度", "name_en": "Width", "description": "像素", "description_en": "Pixel", "defaultVal": 256, "min": 1, "max": 4096, "step": 1}, {"type": "inputNumber", "name": "高度", "name_en": "Height", "description": "像素", "description_en": "Pixel", "defaultVal": 256, "min": 1, "max": 4096, "step": 1}]}}', null, '', 'false'),
+       ('ImgResize', '图片重采样', '将图片放大或缩小到指定像素。', '1.0.0', 'image', 'image', null, '{"targetSize": {"name": "重采样尺寸", "name_en": "Resample Size", "type": "multiple", "properties": [{"type": "inputNumber", "name": "宽度", "description": "像素", "defaultVal": 256, "min": 1, "max": 4096, "step": 1}, {"type": "inputNumber", "name": "高度", "description": "像素", "defaultVal": 256, "min": 1, "max": 4096, "step": 1}]}}', '', 'false'),
        ('ImgSaturation', '图片饱和度增强', '自适应调节图片的饱和度，主要适用于自然场景图片。', '1.0.0', 'image', 'image', null, null, '', 'false'),
        ('ImgShadowRemove', '图片阴影去除', '去除图片中的阴影，主要适用于文档场景。', '1.0.0', 'image', 'image', null, null, '', 'false'),
        ('ImgSharpness', '图片锐度增强', '自适应调节图片的锐度，主要适用于自然场景图片。', '1.0.0', 'image', 'image', null, null, '', 'false'),
-       ('ImgSimilarImagesCleaner', '相似图片去除', '去除相似的图片。', '1.0.0', 'image', 'image', '{"similarThreshold": {"name": "相似度", "name_en": "Similarity", "description": "相似度取值越大，图片相似度越高。", "description_en": "A larger similarity value indicates a higher image similarity.", "type": "slider", "defaultVal": 0.8, "min": 0, "max": 1, "step": 0.01}}', null, '', 'false'),
-       ('ImgTypeUnify', '图片格式转换', '将图片编码格式统一为jpg、jpeg、png、bmp格式。', '1.0.0', 'image', 'image', '{"imgType": {"name": "图片编码格式", "name_en": "Image Encoding Format", "type": "select", "defaultVal": "jpg", "options": [{"label": "jpg", "label_en": "jpg", "value": "jpg"}, {"label": "png", "label_en": "png", "value": "png"}, {"label": "jpeg", "label_en": "jpeg", "value": "jpeg"}, {"label": "bmp", "label_en": "bmp", "value": "bmp"}]}}', null, '', 'false');
+       ('ImgSimilarImagesCleaner', '相似图片去除', '去除相似的图片。', '1.0.0', 'image', 'image', null, '{"similarThreshold": {"name": "相似度", "description": "相似度取值越大，图片相似度越高。", "type": "slider", "defaultVal": 0.8, "min": 0, "max": 1, "step": 0.01}}', '', 'false'),
+       ('ImgTypeUnify', '图片格式转换', '将图片编码格式统一为jpg、jpeg、png、bmp格式。', '1.0.0', 'image', 'image', null, '{"imgType": {"name": "图片编码格式", "type": "select", "defaultVal": "jpg", "options": [{"label": "jpg", "value": "jpg"}, {"label": "png", "value": "png"}, {"label": "jpeg", "value": "jpeg"}, {"label": "bmp", "value": "bmp"}]}}', '', 'false');
 
 
 INSERT IGNORE INTO t_operator_category_relation(category_id, operator_id)
