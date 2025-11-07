@@ -1,6 +1,6 @@
 services:
   deer-flow-backend:
-    image: deer-flow-backend
+    image: ${REGISTRY:-}deer-flow-backend
     container_name: deer-flow-backend
     env_file:
       - .env
@@ -11,7 +11,7 @@ services:
       - datamate
 
   deer-flow-frontend:
-    image: deer-flow-frontend
+    image: ${REGISTRY:-}deer-flow-frontend
     container_name: deer-flow-frontend
     env_file:
       - .env

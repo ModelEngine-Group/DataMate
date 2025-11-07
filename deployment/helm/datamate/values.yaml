@@ -6,13 +6,19 @@ global:
   deerFlow:
     enable: false
   image:
-    repository: ""
+    repository: "ghcr.io/modelengine-group/"
     pullPolicy: "IfNotPresent"
     backend:
       name: "datamate-backend"
       tag: "latest"
+    backendPython:
+      name: "datamate-backend-python"
+      tag: "latest"
     frontend:
       name: "datamate-frontend"
+      tag: "latest"
+    runtime:
+      name: "datamate-runtime"
       tag: "latest"
     database:
       name: "mysql"
@@ -136,8 +142,6 @@ ray-cluster:
             value: "password"
           - name: MYSQL_DATABASE
             value: "datamate"
-          - name: PDF_FORMATTER_BASE_URL
-            value: "http://datamate-mineru:9001"
         ports:
           - containerPort: 8081
         volumeMounts:

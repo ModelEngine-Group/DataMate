@@ -58,13 +58,8 @@ spec:
         {{- end }}
         containers:
         - name: ray-head
-          {{- if .Values.head.image }}
-          image: {{ .Values.head.image.repository }}:{{ .Values.head.image.tag }}
-          imagePullPolicy: {{ .Values.head.image.pullPolicy }}
-          {{- else }}
-          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
-          {{- end }}
+          image: {{ include "ray-cluster.image" . }}
+          imagePullPolicy: {{ default .Values.image.pullPolicy .Values.global.image.pullPolicy }}
           {{- with .Values.head.command }}
           command:
           {{- toYaml . | nindent 10 }}
@@ -101,8 +96,16 @@ spec:
           securityContext:
             {{- toYaml . | nindent 12 }}
           {{- end }}
+        {{- $defult := printf "%s:%s" .Values.image.repository .Values.image.tag }}
         {{- with .Values.head.sidecarContainers }}
-        {{- toYaml . | nindent 8 }}
+        {{- range $index, $container := . }}
+        {{- $image := default $defult $container.image -}}
+        {{- with $.Values.global.image.repository -}}
+        {{- $image = printf "%s/%s" (trimSuffix "/" .) (default $defult $container.image) -}}
+        {{- end -}}
+        {{- $mergedObj := mergeOverwrite $container (dict "image" $image) }}
+        - {{- toYaml $mergedObj | nindent 10 }}
+        {{- end }}
         {{- end }}
         {{- with .Values.imagePullSecrets }}
         imagePullSecrets:
@@ -185,13 +188,8 @@ spec:
         {{- end }}
         containers:
         - name: ray-worker
-          {{- if .Values.worker.image }}
-          image: {{ .Values.worker.image.repository }}:{{ .Values.worker.image.tag }}
-          imagePullPolicy: {{ .Values.worker.image.pullPolicy }}
-          {{- else }}
-          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
-          {{- end }}
+          image: {{ include "ray-cluster.image" . }}
+          imagePullPolicy: {{ default .Values.image.pullPolicy .Values.global.image.pullPolicy }}
           {{- with .Values.worker.command }}
           command:
           {{- toYaml . | nindent 10 }}

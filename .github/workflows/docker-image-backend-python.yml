@@ -1,0 +1,27 @@
+name: Python Backend Docker Image CI
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'backend/**'
+      - 'scripts/images/datamate-python/**'
+      - '.github/workflows/docker-image-backend-python.yml'
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'backend/**'
+      - 'scripts/images/datamate-python/**'
+      - '.github/workflows/docker-image-backend-python.yml'
+  workflow_dispatch:
+
+jobs:
+  call-docker-build:
+    name: Build and Push Backend Python Docker Image
+    uses: ./.github/workflows/docker-images-reusable.yml
+    permissions:
+      contents: read
+      packages: write
+    with:
+      service_name: backend-python
+      build_dir: .

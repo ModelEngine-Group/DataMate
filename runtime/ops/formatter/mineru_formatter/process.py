@@ -6,7 +6,6 @@ Description: MinerU PDF文本抽取
 Create: 2025/10/29 17:24
 """
 import json
-import os
 import time
 from loguru import logger
 from typing import Dict, Any
@@ -20,7 +19,7 @@ class MineruFormatter(Mapper):
 
     def __init__(self, *args, **kwargs):
         super(MineruFormatter, self).__init__(*args, **kwargs)
-        self.base_url = os.getenv("EXTERNAL_PDF_BASE_URL", "http://datamate-mineru:9001")
+        self.base_url = "http://datamate-mineru:9001"
         self.pdf_extract_url = f"{self.base_url}/api/pdf-extract"
 
     def execute(self, sample: Dict[str, Any]) -> Dict[str, Any]:

@@ -2,7 +2,7 @@ services:
   # 1) backend
   datamate-backend:
     container_name: datamate-backend
-    image: datamate-backend
+    image: ${REGISTRY:-}datamate-backend
     restart: on-failure
     privileged: true
     volumes:
@@ -18,7 +18,7 @@ services:
   # 1) backend (Python)
   datamate-backend-python:
     container_name: datamate-backend-python
-    image: datamate-backend-python
+    image: ${REGISTRY:-}datamate-backend-python
     restart: on-failure
     privileged: true
     environment:
@@ -34,13 +34,13 @@ services:
   # 2) frontend（NodePort 30000）
   datamate-frontend:
     container_name: datamate-frontend
-    image: datamate-frontend
+    image: ${REGISTRY:-}datamate-frontend
     restart: on-failure
     ports:
       - "30000:80"            # nodePort → hostPort
     volumes:
       - frontend_log_volume:/var/log/datamate/frontend
-      - $NGINX_CONF:/etc/nginx/conf.d/backend.conf
+      - ${NGINX_CONF:-./backend.conf}:/etc/nginx/conf.d/backend.conf
     networks: [ datamate ]
     depends_on:
       - datamate-backend
@@ -71,7 +71,7 @@ services:
   # 3) runtime
   datamate-runtime:
     container_name: datamate-runtime
-    image: datamate-runtime
+    image: ${REGISTRY:-}datamate-runtime
     restart: on-failure
     environment:
       RAY_DEDUP_LOGS: "0"
@@ -81,7 +81,6 @@ services:
       MYSQL_USER: "root"
       MYSQL_PASSWORD: "password"
       MYSQL_DATABASE: "datamate"
-      PDF_FORMATTER_BASE_URL: "http://datamate-mineru:9001"
     command:
       - python
       - /opt/runtime/datamate/operator_runtime.py
@@ -135,6 +134,8 @@ volumes:
     name: datamate-operator-upload-volume
   operator-runtime-volume:
     name: datamate-operator-runtime-volume
+  mineru_log_volume:
+    name: datamate-mineru_log_volume
 
 networks:
   datamate:
