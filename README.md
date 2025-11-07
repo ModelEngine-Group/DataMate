@@ -37,6 +37,14 @@ If you like this project, please give it a Star⭐️!
 - Kubernetes (for service deployment - k8s method)
 - Helm (for service deployment - k8s method)
 
+This project supports deployment via two methods: docker-compose and helm. After executing the command, please enter the corresponding number for the deployment method. The command echo is as follows:
+```shell
+Choose a deployment method:
+1. Docker/Docker-Compose
+2. Kubernetes/Helm
+Enter choice:
+```
+
 ### Clone the Code
 
 ```bash
@@ -44,22 +52,28 @@ git clone git@github.com:ModelEngine-Group/DataMate.git
 cd DataMate
 ```
 
-### Build Images
+### Deploy the basic services
 
+```bash
+make install
+```
+
+### Build and deploy Mineru Enhanced PDF Processing
+```bash
+make build-mineru
+make install-mineru
+```
+
+### Deploy the DeerFlow service
+1. Modify `runtime/deer-flow/.env.example` and add configurations for SEARCH_API_KEY and the EMBEDDING model.
+2. Modify `runtime/deer-flow/.conf.yaml.example` and add basic model service configurations.
+3. Execute `make install-deer-flow`
+
+### Local Development and Deployment
+After modifying the local code, please execute the following commands to build the image and deploy using the local image.
 ```bash
 make build
-```
-
-### Docker Installation
-
-```bash
-make install INSTALLER=docker
-```
-
-### Kubernetes Installation
-
-```bash
-make install INSTALLER=k8s
+make install REGISTRY=""
 ```
 
 ## 🤝 Contribution Guidelines
