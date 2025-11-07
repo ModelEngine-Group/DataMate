@@ -2,8 +2,10 @@ package com.datamate.datamanagement.domain.model.dataset;
 
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.*;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 import java.time.LocalDateTime;
@@ -17,6 +19,7 @@ import java.util.List;
 @Getter
 @Setter
 @Builder
+@Slf4j
 @NoArgsConstructor
 @AllArgsConstructor
 @TableName("t_dm_dataset_files")
@@ -42,11 +45,12 @@ public class DatasetFile {
      *
      * @return 标签列表
      */
-    public List<String> analyzeTag() {
+    public List<FileTag> analyzeTag() {
         try {
             ObjectMapper mapper = new ObjectMapper();
-            return mapper.readValue(tags, List.class);
+            return mapper.readValue(tags, new TypeReference<List<FileTag>>() {});
         } catch (Exception e) {
+            log.error(e.getMessage(), e);
             return Collections.emptyList();
         }
     }

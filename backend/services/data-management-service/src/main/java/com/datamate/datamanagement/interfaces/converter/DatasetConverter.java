@@ -2,6 +2,7 @@ package com.datamate.datamanagement.interfaces.converter;
 
 import com.datamate.common.infrastructure.exception.BusinessException;
 import com.datamate.common.infrastructure.exception.SystemErrorCode;
+import com.datamate.datamanagement.domain.model.dataset.FileTag;
 import com.datamate.datamanagement.interfaces.dto.CreateDatasetRequest;
 import com.datamate.datamanagement.interfaces.dto.DatasetFileResponse;
 import com.datamate.datamanagement.interfaces.dto.DatasetResponse;
@@ -71,12 +72,9 @@ public interface DatasetConverter {
             return distribution;
         }
         for (DatasetFile datasetFile : datasetFiles) {
-            List<String> tags = datasetFile.analyzeTag();
-            if (CollectionUtils.isEmpty(tags)) {
-                continue;
-            }
-            for (String tag : tags) {
-                distribution.put(tag, distribution.getOrDefault(tag, 0L) + 1);
+            List<FileTag> tags = datasetFile.analyzeTag();
+            for (FileTag tag : tags) {
+                tag.getTags().forEach(tagName -> distribution.put(tagName, distribution.getOrDefault(tagName, 0L) + 1));
             }
         }
         return distribution;
