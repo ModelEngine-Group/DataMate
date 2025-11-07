@@ -25,7 +25,17 @@ const ParamConfig: React.FC<ParamConfigProps> = ({
   onParamChange,
 }) => {
   if (!param) return null;
-  const [value, setValue] = React.useState(param.value || param.defaultVal);
+  let defaultVal: any = param.defaultVal;
+  if (param.type === "range") {
+    
+    defaultVal = Array.isArray(param.defaultVal)
+      ? param.defaultVal
+      : [
+          param?.properties?.[0]?.defaultVal,
+          param?.properties?.[1]?.defaultVal,
+        ];
+  }
+  const [value, setValue] = React.useState(param.value || defaultVal);
   const updateValue = (newValue: any) => {
     setValue(newValue);
     return onParamChange && onParamChange(operator.id, paramKey, newValue);
@@ -139,8 +149,9 @@ const ParamConfig: React.FC<ParamConfigProps> = ({
         </Form.Item>
       );
     case "range": {
-      const min = param.min || 0;
-      const max = param.max || 100;
+      const min = param.min || param?.properties?.[0]?.min || 0;
+      const max = param.max || param?.properties?.[0]?.max || 1;
+      const step = param.step || param?.properties?.[0]?.step || 0.1;
       return (
         <Form.Item
           label={param.name}
@@ -154,8 +165,8 @@ const ParamConfig: React.FC<ParamConfigProps> = ({
             }
             range
             min={min}
-            max={max}
-            step={param.step || 1}
+            max={max }
+            step={step}
             className="w-full"
           />
           <Space>
