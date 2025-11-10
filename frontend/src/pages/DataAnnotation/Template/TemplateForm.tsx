@@ -68,6 +68,8 @@ const TemplateForm: React.FC<TemplateFormProps> = ({
             const values = await form.validateFields();
             setLoading(true);
 
+            console.log("Form values:", values);
+
             const requestData = {
                 name: values.name,
                 description: values.description,
@@ -80,6 +82,8 @@ const TemplateForm: React.FC<TemplateFormProps> = ({
                     objects: values.objects,
                 },
             };
+
+            console.log("Request data:", requestData);
 
             let response;
             if (mode === "create") {
@@ -287,7 +291,25 @@ const TemplateForm: React.FC<TemplateFormProps> = ({
                                     key={field.key}
                                     size="small"
                                     style={{ marginBottom: 12 }}
-                                    title={`控件 ${fields.indexOf(field) + 1}`}
+                                    title={
+                                        <Space>
+                                            <span>控件 {fields.indexOf(field) + 1}</span>
+                                            <Form.Item noStyle shouldUpdate>
+                                                {() => {
+                                                    const controlType = form.getFieldValue(["labels", field.name, "type"]);
+                                                    const fromName = form.getFieldValue(["labels", field.name, "fromName"]);
+                                                    if (controlType || fromName) {
+                                                        return (
+                                                            <span style={{ fontSize: 12, fontWeight: 'normal', color: '#999' }}>
+                                                                ({fromName || '未命名'} - {controlType || '未设置类型'})
+                                                            </span>
+                                                        );
+                                                    }
+                                                    return null;
+                                                }}
+                                            </Form.Item>
+                                        </Space>
+                                    }
                                     extra={
                                         <MinusCircleOutlined
                                             style={{ color: "red" }}
@@ -295,26 +317,36 @@ const TemplateForm: React.FC<TemplateFormProps> = ({
                                         />
                                     }
                                 >
-                                    <Space direction="vertical" style={{ width: "100%" }}>
-                                        <Space style={{ width: "100%" }}>
+                                    <Space direction="vertical" style={{ width: "100%" }} size="middle">
+                                        {/* Row 1: 控件名称, 标注目标对象, 控件类型 */}
+                                        <div style={{ display: 'grid', gridTemplateColumns: '180px 220px 1fr auto', gap: 12, alignItems: 'flex-end' }}>
                                             <Form.Item
                                                 {...field}
                                                 label="来源名称"
                                                 name={[field.name, "fromName"]}
                                                 rules={[{ required: true, message: "必填" }]}
-                                                style={{ marginBottom: 0, width: 150 }}
+                                                style={{ marginBottom: 0 }}
+                                                tooltip="此控件的唯一标识符"
                                             >
                                                 <Input placeholder="例如：choice" />
                                             </Form.Item>
 
                                             <Form.Item
                                                 {...field}
-                                                label="目标名称"
+                                                label="标注目标对象"
                                                 name={[field.name, "toName"]}
                                                 rules={[{ required: true, message: "必填" }]}
-                                                style={{ marginBottom: 0, width: 150 }}
+                                                style={{ marginBottom: 0 }}
+                                                tooltip="选择此控件将标注哪个数据对象"
+                                                dependencies={['objects']}
                                             >
-                                                <Input placeholder="例如：image" />
+                                                <Select placeholder="选择数据对象">
+                                                    {(form.getFieldValue("objects") || []).map((obj: any, idx: number) => (
+                                                        <Option key={idx} value={obj?.name || ''}>
+                                                            {obj?.name || `对象 ${idx + 1}`} ({obj?.type || '未知类型'})
+                                                        </Option>
+                                                    ))}
+                                                </Select>
                                             </Form.Item>
 
                                             <Form.Item
@@ -322,7 +354,7 @@ const TemplateForm: React.FC<TemplateFormProps> = ({
                                                 label="控件类型"
                                                 name={[field.name, "type"]}
                                                 rules={[{ required: true, message: "必填" }]}
-                                                style={{ marginBottom: 0, width: 250 }}
+                                                style={{ marginBottom: 0 }}
                                             >
                                                 <Select placeholder="选择控件类型">
                                                     {controlTypes.map((t) => (
@@ -335,39 +367,45 @@ const TemplateForm: React.FC<TemplateFormProps> = ({
 
                                             <Form.Item
                                                 {...field}
-                                                label="必填"
+                                                label=" "
                                                 name={[field.name, "required"]}
                                                 valuePropName="checked"
                                                 style={{ marginBottom: 0 }}
                                             >
-                                                <Checkbox />
+                                                <Checkbox>必填</Checkbox>
                                             </Form.Item>
-                                        </Space>
+                                        </div>
 
+                                        {/* Row 2: 取值范围定义（添加选项） - Conditionally rendered based on type */}
                                         <Form.Item
-                                            {...field}
-                                            label="描述"
-                                            name={[field.name, "description"]}
-                                            style={{ marginBottom: 0 }}
+                                            noStyle
+                                            shouldUpdate={(prevValues, currentValues) => {
+                                                const prevType = prevValues.labels?.[field.name]?.type;
+                                                const currType = currentValues.labels?.[field.name]?.type;
+                                                return prevType !== currType;
+                                            }}
                                         >
-                                            <Input placeholder="标注人员的帮助文本" />
-                                        </Form.Item>
+                                            {({ getFieldValue }) => {
+                                                const controlType = getFieldValue(["labels", field.name, "type"]);
+                                                const fieldName = controlType === "Choices" ? "options" : "labels";
 
-                                        <Form.Item noStyle shouldUpdate>
-                                            {() => {
-                                                const controlType = form.getFieldValue(["labels", field.name, "type"]);
                                                 if (needsOptions(controlType)) {
                                                     return (
                                                         <Form.Item
                                                             {...field}
                                                             label={controlType === "Choices" ? "选项" : "标签"}
-                                                            name={[field.name, controlType === "Choices" ? "options" : "labels"]}
+                                                            name={[field.name, fieldName]}
                                                             rules={[{ required: true, message: "至少需要一个选项" }]}
                                                             style={{ marginBottom: 0 }}
                                                         >
                                                             <Select
                                                                 mode="tags"
-                                                                placeholder="输入后按回车添加"
+                                                                open={false}
+                                                                placeholder={
+                                                                    controlType === "Choices"
+                                                                        ? "输入选项内容，按回车添加。例如：是、否、不确定"
+                                                                        : "输入标签名称，按回车添加。例如：人物、车辆、建筑物"
+                                                                }
                                                                 style={{ width: "100%" }}
                                                             />
                                                         </Form.Item>
@@ -375,6 +413,17 @@ const TemplateForm: React.FC<TemplateFormProps> = ({
                                                 }
                                                 return null;
                                             }}
+                                        </Form.Item>
+
+                                        {/* Row 3: 描述 */}
+                                        <Form.Item
+                                            {...field}
+                                            label="描述"
+                                            name={[field.name, "description"]}
+                                            style={{ marginBottom: 0 }}
+                                            tooltip="向标注人员显示的帮助信息"
+                                        >
+                                            <Input placeholder="为标注人员提供此控件的使用说明" maxLength={200} />
                                         </Form.Item>
                                     </Space>
                                 </Card>

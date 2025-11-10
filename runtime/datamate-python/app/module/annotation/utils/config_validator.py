@@ -172,28 +172,36 @@ class LabelStudioConfigValidator:
         # 验证toName引用
         object_names = {obj['name'] for obj in config['objects']}
         for label in config['labels']:
-            if label.get('toName') not in object_names:
-                return False, f"Label '{label.get('fromName')}' references unknown object '{label.get('toName')}'"
+            to_name = label.get('toName') or label.get('to_name')
+            from_name = label.get('fromName') or label.get('from_name')
+            if to_name not in object_names:
+                return False, f"Label '{from_name}' references unknown object '{to_name}'"
         
         return True, None
     
     @staticmethod
     def _validate_label_definition(label: Dict) -> Tuple[bool, Optional[str]]:
         """验证标签定义"""
-        required_fields = ['fromName', 'toName', 'type']
+        # Support both camelCase and snake_case
+        from_name = label.get('fromName') or label.get('from_name')
+        to_name = label.get('toName') or label.get('to_name')
+        label_type = label.get('type')
         
-        for field in required_fields:
-            if field not in label:
-                return False, f"Missing required field '{field}'"
+        if not from_name:
+            return False, "Missing required field 'fromName'"
+        if not to_name:
+            return False, "Missing required field 'toName'"
+        if not label_type:
+            return False, "Missing required field 'type'"
         
         # 检查类型是否支持
-        if label['type'] not in LabelStudioConfigValidator.CONTROL_TYPES:
-            return False, f"Unsupported control type '{label['type']}'"
+        if label_type not in LabelStudioConfigValidator.CONTROL_TYPES:
+            return False, f"Unsupported control type '{label_type}'"
         
         # 检查标签型控件是否有选项或标签
-        if label['type'] in LabelStudioConfigValidator.LABEL_BASED_CONTROLS:
+        if label_type in LabelStudioConfigValidator.LABEL_BASED_CONTROLS:
             if 'options' not in label and 'labels' not in label:
-                return False, f"{label['type']} must have 'options' or 'labels' field"
+                return False, f"{label_type} must have 'options' or 'labels' field"
         
         return True, None
     

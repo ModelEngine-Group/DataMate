@@ -91,7 +91,7 @@ class AnnotationTemplateService:
         if not valid:
             raise HTTPException(status_code=400, detail=f"Invalid configuration: {error}")
         
-        # 生成Label Studio XML配置
+        # 生成Label Studio XML配置（用于验证，但不存储）
         label_config = self.generate_label_studio_config(request.configuration)
         
         # 验证生成的XML
@@ -99,7 +99,7 @@ class AnnotationTemplateService:
         if not valid:
             raise HTTPException(status_code=400, detail=f"Generated XML is invalid: {error}")
         
-        # 创建模板对象
+        # 创建模板对象（不包含label_config字段）
         template = AnnotationTemplate(
             id=str(uuid4()),
             name=request.name,
@@ -107,7 +107,6 @@ class AnnotationTemplateService:
             data_type=request.data_type,
             labeling_type=request.labeling_type,
             configuration=config_dict,
-            label_config=label_config,
             style=request.style,
             category=request.category,
             built_in=False,
@@ -250,7 +249,7 @@ class AnnotationTemplateService:
                 if not valid:
                     raise HTTPException(status_code=400, detail=f"Invalid configuration: {error}")
                 
-                # 重新生成Label Studio XML配置
+                # 重新生成Label Studio XML配置（用于验证）
                 label_config = self.generate_label_studio_config(value)
                 
                 # 验证生成的XML
@@ -258,7 +257,7 @@ class AnnotationTemplateService:
                 if not valid:
                     raise HTTPException(status_code=400, detail=f"Generated XML is invalid: {error}")
                 
-                setattr(template, 'label_config', label_config)
+                # 只更新configuration字段，不存储label_config
                 setattr(template, field, config_dict)
             else:
                 setattr(template, field, value)
@@ -312,8 +311,17 @@ class AnnotationTemplateService:
         Returns:
             模板响应对象
         """
+        # 将配置JSON转换为TemplateConfiguration对象
+        from typing import cast, Dict, Any
+        config_dict = cast(Dict[str, Any], template.configuration)
+        config = TemplateConfiguration(**config_dict)
+        
+        # 动态生成Label Studio XML配置
+        label_config = self.generate_label_studio_config(config)
+        
         # 使用model_validate从ORM对象创建响应对象
         response = AnnotationTemplateResponse.model_validate(template)
-        # 将配置JSON转换为TemplateConfiguration对象
-        response.configuration = TemplateConfiguration(**template.configuration)  # type: ignore
+        response.configuration = config
+        response.label_config = label_config  # type: ignore
+        
         return response
