@@ -1,0 +1,25 @@
+# Default values for datamate.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# This is to override the chart name.
+nameOverride: "datamate-public"
+fullnameOverride: "datamate-public"
+
+# This is for setting Kubernetes Annotations to a Pvc.
+# For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+annotations: {}
+
+persistentVolumeClaim:
+  ## If defined, storageClassName: <storageClass>
+  ## If undefined (the default) or set to null, no storageClassName spec is
+  ##   set, choosing the default provisioner.
+  ##
+  storageClass: ""
+  accessModes: ReadWriteMany
+  size:
+    dataset: 10Gi
+    flow: 1Gi
+    log: 1Gi
+    database: 1Gi
+    operator: 1Gi
