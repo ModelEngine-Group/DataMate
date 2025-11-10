@@ -46,19 +46,16 @@ jobs:
         run: |
           make build-${{ inputs.service_name }} VERSION=latest
 
-      - name: Tag Docker Image
-        run: |
-          docker tag datamate-${{ inputs.service_name }}:latest ${{ steps.set-tag.outputs.TAGS }}
-
-      - name: Push Docker Image
+      - name: Tag & Push Docker Image
         if: github.event_name != 'pull_request' && !startsWith(github.workflow, 'Package')
         run: |
+          docker tag datamate-${{ inputs.service_name }}:latest ${{ steps.set-tag.outputs.TAGS }}
           docker push ${{ steps.set-tag.outputs.TAGS }}
 
       - name: Save Docker Image
         if: startsWith(github.workflow, 'Package')
         run: |
-          docker save -o datamate-${{ inputs.service_name }}.tar ${{ steps.set-tag.outputs.TAGS }}
+          docker save -o datamate-${{ inputs.service_name }}.tar datamate-${{ inputs.service_name }}:latest
 
       - name: Upload Docker Image
         if: startsWith(github.workflow, 'Package')
