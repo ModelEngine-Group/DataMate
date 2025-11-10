@@ -14,7 +14,6 @@ import {
   deleteAnnotationTaskByIdUsingDelete,
   queryAnnotationTasksUsingGet,
   syncAnnotationTaskUsingPost,
-  getConfigUsingGet,
 } from "../annotation.api";
 import { mapAnnotationTask } from "../annotation.const";
 import CreateAnnotationTask from "../Create/components/CreateAnnptationTaskDialog";
@@ -47,7 +46,7 @@ export default function DataAnnotation() {
     let mounted = true;
     (async () => {
       try {
-      const baseUrl = `http://${window.location.hostname}:8000`;
+        const baseUrl = `http://${window.location.hostname}:${window.location.port + 1}`;
       if (mounted) setLabelStudioBase(baseUrl);
       } catch (e) {
       if (mounted) setLabelStudioBase(null);

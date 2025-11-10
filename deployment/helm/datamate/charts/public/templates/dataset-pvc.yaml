@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: datamate-dataset-pvc
+{{- with .Values.annotations  }}
+  annotations:
+    {{- toYaml . | indent 4 }}
+{{- end }}
+  labels:
+    {{- include "public.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - {{ .Values.persistentVolumeClaim.accessModes }}
+  {{- if .Values.persistentVolumeClaim.storageClass }}
+  storageClassName: {{ .Values.persistentVolumeClaim.storageClass }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.persistentVolumeClaim.size.dataset }}

@@ -9,7 +9,7 @@ services:
     expose:
       - "8000"
     ports:
-      - "8000:8000"
+      - "30001:8000"
     depends_on:
       - pg-db
     environment:
