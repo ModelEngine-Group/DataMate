@@ -16,6 +16,7 @@ on:
       - 'scripts/images/runtime/**'
       - '.github/workflows/docker-image-runtime.yml'
   workflow_dispatch:
+  workflow_call:
 
 jobs:
   call-docker-build:

@@ -1,0 +1,58 @@
+name: Package All
+
+on:
+  workflow_dispatch:
+
+jobs:
+  backend-docker-build:
+    name: Build and Push Backend Docker Image
+    uses: ./.github/workflows/docker-image-backend.yml
+
+  frontend-docker-build:
+    name: Build and Push Frontend Docker Image
+    uses: ./.github/workflows/docker-image-frontend.yml
+
+  database-docker-build:
+    name: Build and Push Database Docker Image
+    uses: ./.github/workflows/docker-image-database.yml
+
+  runtime-docker-build:
+    name: Build and Push Runtime Docker Image
+    uses: ./.github/workflows/docker-image-runtime.yml
+
+  backend-python-docker-build:
+    name: Build and Push Backend Python Docker Image
+    uses: ./.github/workflows/docker-image-backend-python.yml
+
+  package-all:
+    needs:
+      - backend-docker-build
+      - frontend-docker-build
+      - database-docker-build
+      - backend-python-docker-build
+      - runtime-docker-build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Save Image
+        uses: actions/download-artifact@v5
+        with:
+          path: images
+          pattern: datamate-*
+          merge-multiple: true
+
+      - name: Package
+        run: |
+          cp runtime/deer-flow/.env.example deployment/docker/deer-flow/.env
+          cp runtime/deer-flow/conf.yaml.example deployment/docker/deer-flow/conf.yaml
+          cp runtime/deer-flow/.env.example deployment/helm/deer-flow/charts/public/.env
+          cp runtime/deer-flow/conf.yaml.example deployment/helm/deer-flow/charts/public/conf.yaml
+          tar -cvf datamate.tar deployment/ images
+
+      - name: Upload Package
+        uses: actions/upload-artifact@v4
+        with:
+          name: package
+          path: datamate.tar
