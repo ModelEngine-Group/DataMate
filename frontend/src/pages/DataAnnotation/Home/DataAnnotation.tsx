@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Card, Button, Table, message, Modal } from "antd";
+import { Card, Button, Table, message, Modal, Tabs } from "antd";
 import {
   PlusOutlined,
   EditOutlined,
@@ -16,13 +16,14 @@ import {
   syncAnnotationTaskUsingPost,
 } from "../annotation.api";
 import { mapAnnotationTask } from "../annotation.const";
-import CreateAnnotationTask from "../Create/components/CreateAnnptationTaskDialog";
+import CreateAnnotationTask from "../Create/components/CreateAnnotationTaskDialog";
 import { ColumnType } from "antd/es/table";
+import { TemplateList } from "../Template";
 // Note: DevelopmentInProgress intentionally not used here
 
 export default function DataAnnotation() {
   // return <DevelopmentInProgress showTime="2025.10.30" />;
-  // navigate not needed for label studio external redirect
+  const [activeTab, setActiveTab] = useState("tasks");
   const [viewMode, setViewMode] = useState<"list" | "card">("list");
   const [showCreateDialog, setShowCreateDialog] = useState(false);
 
@@ -46,10 +47,10 @@ export default function DataAnnotation() {
     let mounted = true;
     (async () => {
       try {
-        const baseUrl = `http://${window.location.hostname}:${window.location.port + 1}`;
-      if (mounted) setLabelStudioBase(baseUrl);
+        const baseUrl = `http://${window.location.hostname}:${parseInt(window.location.port) + 1}`;
+        if (mounted) setLabelStudioBase(baseUrl);
       } catch (e) {
-      if (mounted) setLabelStudioBase(null);
+        if (mounted) setLabelStudioBase(null);
       }
     })();
     return () => {
@@ -294,73 +295,104 @@ export default function DataAnnotation() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold">数据标注</h1>
-        <div className="flex items-center space-x-2">
-          {/* Batch action buttons - availability depends on selection count */}
-          <div className="flex items-center space-x-1">
-            <Button
-              onClick={() => handleBatchSync(50)}
-              disabled={selectedRowKeys.length === 0}
-            >
-              批量同步
-            </Button>
-            <Button
-              danger
-              onClick={handleBatchDelete}
-              disabled={selectedRowKeys.length === 0}
-            >
-              批量删除
-            </Button>
-          </div>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => setShowCreateDialog(true)}
-          >
-            创建标注任务
-          </Button>
-        </div>
       </div>
 
-      {/* Filters Toolbar */}
-      <SearchControls
-        searchTerm={searchParams.keyword}
-        onSearchChange={(keyword) =>
-          setSearchParams({ ...searchParams, keyword })
-        }
-        searchPlaceholder="搜索任务名称、描述"
-        onFiltersChange={handleFiltersChange}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
-        showViewToggle={true}
-        onReload={fetchData}
-      />
-      {/* Task List/Card */}
-      {viewMode === "list" ? (
-        <Card>
-          <Table
-            key="id"
-            rowKey="id"
-            loading={loading}
-            columns={columns}
-            dataSource={tableData}
-            pagination={pagination}
-            rowSelection={{
-              selectedRowKeys,
-              onChange: (keys, rows) => {
-                setSelectedRowKeys(keys as (string | number)[]);
-                setSelectedRows(rows as any[]);
-              },
-            }}
-            scroll={{ x: "max-content", y: "calc(100vh - 20rem)" }}
-          />
-        </Card>
-      ) : (
-        <CardView data={tableData} operations={operations as any} pagination={pagination} loading={loading} />
-      )}
-      <CreateAnnotationTask
-        open={showCreateDialog}
-        onClose={() => setShowCreateDialog(false)}
-        onRefresh={fetchData}
+      {/* Tabs */}
+      <Tabs
+        activeKey={activeTab}
+        onChange={setActiveTab}
+        items={[
+          {
+            key: "tasks",
+            label: "标注任务",
+            children: (
+              <div className="flex flex-col gap-4">
+                {/* Search, Filters and Buttons in one row */}
+                <div className="flex items-center justify-between gap-2">
+                  {/* Left side: Search and view controls */}
+                  <div className="flex items-center gap-2">
+                    <SearchControls
+                      searchTerm={searchParams.keyword}
+                      onSearchChange={(keyword) =>
+                        setSearchParams({ ...searchParams, keyword })
+                      }
+                      searchPlaceholder="搜索任务名称、描述"
+                      onFiltersChange={handleFiltersChange}
+                      viewMode={viewMode}
+                      onViewModeChange={setViewMode}
+                      showViewToggle={true}
+                      onReload={fetchData}
+                    />
+                  </div>
+
+                  {/* Right side: All action buttons */}
+                  <div className="flex items-center gap-2">
+                    <Button
+                      onClick={() => handleBatchSync(50)}
+                      disabled={selectedRowKeys.length === 0}
+                    >
+                      批量同步
+                    </Button>
+                    <Button
+                      danger
+                      onClick={handleBatchDelete}
+                      disabled={selectedRowKeys.length === 0}
+                    >
+                      批量删除
+                    </Button>
+                    <Button
+                      type="primary"
+                      icon={<PlusOutlined />}
+                      onClick={() => setShowCreateDialog(true)}
+                    >
+                      创建标注任务
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Task List/Card */}
+                {viewMode === "list" ? (
+                  <Card>
+                    <Table
+                      key="id"
+                      rowKey="id"
+                      loading={loading}
+                      columns={columns}
+                      dataSource={tableData}
+                      pagination={pagination}
+                      rowSelection={{
+                        selectedRowKeys,
+                        onChange: (keys, rows) => {
+                          setSelectedRowKeys(keys as (string | number)[]);
+                          setSelectedRows(rows as any[]);
+                        },
+                      }}
+                      scroll={{ x: "max-content", y: "calc(100vh - 24rem)" }}
+                    />
+                  </Card>
+                ) : (
+                  <CardView
+                    data={tableData}
+                    operations={operations as any}
+                    pagination={pagination}
+                    loading={loading}
+                  />
+                )}
+
+                <CreateAnnotationTask
+                  open={showCreateDialog}
+                  onClose={() => setShowCreateDialog(false)}
+                  onRefresh={fetchData}
+                />
+              </div>
+            ),
+          },
+          {
+            key: "templates",
+            label: "标注模板",
+            children: <TemplateList />,
+          },
+        ]}
       />
     </div>
   );

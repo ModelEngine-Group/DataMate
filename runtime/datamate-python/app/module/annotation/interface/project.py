@@ -1,5 +1,6 @@
 from typing import Optional
 import math
+import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,6 +15,7 @@ from app.core.config import settings
 from ..client import LabelStudioClient
 from ..service.mapping import DatasetMappingService
 from ..service.sync import SyncService
+from ..service.template import AnnotationTemplateService
 from ..schema import (
     DatasetMappingCreateRequest,
     DatasetMappingCreateResponse,
@@ -39,6 +41,8 @@ async def create_mapping(
     在数据库中记录这一关联关系，返回Label Studio数据集的ID
     
     注意：一个数据集可以创建多个标注项目
+    
+    支持通过 template_id 指定标注模板，如果提供了模板ID，则使用模板的配置
     """
     try:
         dm_client = DatasetManagementService(db)
@@ -46,6 +50,7 @@ async def create_mapping(
                                       token=settings.label_studio_user_token)
         mapping_service = DatasetMappingService(db)
         sync_service = SyncService(dm_client, ls_client, mapping_service)
+        template_service = AnnotationTemplateService()
         
         logger.info(f"Create dataset mapping request: {request.dataset_id}")
         
@@ -65,10 +70,24 @@ async def create_mapping(
                               dataset_info.description or \
                               f"Imported from DM dataset {dataset_info.name} ({dataset_info.id})"
 
+        # 如果提供了模板ID，获取模板配置
+        label_config = None
+        if request.template_id:
+            logger.info(f"Using template: {request.template_id}")
+            template = await template_service.get_template(db, request.template_id)
+            if not template:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Template not found: {request.template_id}"
+                )
+            label_config = template.label_config
+            logger.debug(f"Template label config loaded for template: {template.name}")
+
         # 在Label Studio中创建项目
         project_data = await ls_client.create_project(
             title=project_name,
             description=project_description,
+            label_config=label_config  # 传递模板配置
         )
         
         if not project_data:
@@ -96,9 +115,11 @@ async def create_mapping(
             logger.info(f"Local storage configured for project {project_id}: {local_storage_path}")
 
         labeling_project = LabelingProject(
+                id=str(uuid.uuid4()),  # Generate UUID here
                 dataset_id=request.dataset_id,
                 labeling_project_id=str(project_id),
                 name=project_name,
+                template_id=request.template_id,  # Save template_id to database
             )
 
         # 创建映射关系，包含项目名称（先持久化映射以获得 mapping.id）
