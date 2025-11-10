@@ -48,7 +48,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class CleaningTaskService {
-    private final CleaningTaskRepository CleaningTaskRepo;
+    private final CleaningTaskRepository cleaningTaskRepo;
 
     private final OperatorInstanceRepository operatorInstanceRepo;
 
@@ -67,7 +67,7 @@ public class CleaningTaskService {
     private final String FLOW_PATH = "/flow";
 
     public List<CleaningTaskDto> getTasks(String status, String keywords, Integer page, Integer size) {
-        List<CleaningTaskDto> tasks = CleaningTaskRepo.findTasks(status, keywords, page, size);
+        List<CleaningTaskDto> tasks = cleaningTaskRepo.findTasks(status, keywords, page, size);
         tasks.forEach(this::setProcess);
         return tasks;
     }
@@ -78,7 +78,7 @@ public class CleaningTaskService {
     }
 
     public int countTasks(String status, String keywords) {
-        return CleaningTaskRepo.findTasks(status, keywords, null, null).size();
+        return cleaningTaskRepo.findTasks(status, keywords, null, null).size();
     }
 
     @Transactional
@@ -105,7 +105,7 @@ public class CleaningTaskService {
         task.setDestDatasetName(destDataset.getName());
         task.setBeforeSize(srcDataset.getSizeBytes());
         task.setFileCount(srcDataset.getFileCount().intValue());
-        CleaningTaskRepo.insertTask(task);
+        cleaningTaskRepo.insertTask(task);
 
         operatorInstanceRepo.insertInstance(taskId, request.getInstance());
 
@@ -116,14 +116,15 @@ public class CleaningTaskService {
     }
 
     public CleaningTaskDto getTask(String taskId) {
-        CleaningTaskDto task = CleaningTaskRepo.findTaskById(taskId);
+        CleaningTaskDto task = cleaningTaskRepo.findTaskById(taskId);
+        operatorInstanceRepo.
         setProcess(task);
         return task;
     }
 
     @Transactional
     public void deleteTask(String taskId) {
-        CleaningTaskRepo.deleteTaskById(taskId);
+        cleaningTaskRepo.deleteTaskById(taskId);
         operatorInstanceRepo.deleteByInstanceId(taskId);
         cleaningResultRepo.deleteByInstanceId(taskId);
     }

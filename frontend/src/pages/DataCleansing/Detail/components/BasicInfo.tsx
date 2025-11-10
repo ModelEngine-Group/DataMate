@@ -3,6 +3,7 @@ import { OperatorI } from "@/pages/OperatorMarket/operator.model";
 import { Button, Card, Descriptions, Progress, Tag } from "antd";
 import { Activity, AlertCircle, CheckCircle, Clock } from "lucide-react";
 import { useNavigate } from "react-router";
+import {formatExecutionDuration} from "@/utils/unit.ts";
 
 export default function BasicInfo({ task }: { task: CleansingTask }) {
   const navigate = useNavigate();
@@ -11,7 +12,7 @@ export default function BasicInfo({ task }: { task: CleansingTask }) {
     {
       key: "id",
       label: "任务ID",
-      children: <span className="font-mono">#{task?.id}</span>,
+      children: <span className="font-mono">{task?.id}</span>,
     },
     { key: "name", label: "任务名称", children: task?.name },
     {
@@ -19,6 +20,7 @@ export default function BasicInfo({ task }: { task: CleansingTask }) {
       label: "源数据集",
       children: (
         <Button
+          style={{ paddingLeft: 0, marginLeft: 0 }}
           type="link"
           size="small"
           onClick={() =>
@@ -34,6 +36,7 @@ export default function BasicInfo({ task }: { task: CleansingTask }) {
       label: "目标数据集",
       children: (
         <Button
+          style={{ paddingLeft: 0, marginLeft: 0 }}
           type="link"
           size="small"
           onClick={() =>
@@ -44,26 +47,13 @@ export default function BasicInfo({ task }: { task: CleansingTask }) {
         </Button>
       ),
     },
-    { key: "template", label: "使用模板", children: task?.template },
+    { key: "template", label: "使用模板", children: ( task?.description || "--" ) },
     { key: "startTime", label: "开始时间", children: task?.startedAt },
-    { key: "estimatedTime", label: "预计用时", children: task?.estimatedTime },
     {
       key: "description",
       label: "任务描述",
       children: (
-        <span className="text-gray-600">{task?.description || "暂无描述"}</span>
-      ),
-      span: 2,
-    },
-    {
-      key: "rules",
-      label: "处理算子",
-      children: (
-        <div className="flex flex-wrap gap-1">
-          {task?.instance?.map?.((op: OperatorI) => (
-            <Tag key={op.id}>{op.name}</Tag>
-          ))}
-        </div>
+        <span className="text-gray-600">{task?.description || "--"}</span>
       ),
       span: 2,
     },
@@ -77,28 +67,28 @@ export default function BasicInfo({ task }: { task: CleansingTask }) {
           <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg">
             <Clock className="w-8 h-8 text-blue-500 mb-2 mx-auto" />
             <div className="text-xl font-bold text-blue-500">
-              {task?.duration || "--"}
+              {formatExecutionDuration(task?.startedAt, task?.finishedAt) || "--"}
             </div>
             <div className="text-sm text-gray-600">总耗时</div>
           </div>
           <div className="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-lg">
             <CheckCircle className="w-8 h-8 text-green-500 mb-2 mx-auto" />
             <div className="text-xl font-bold text-green-500">
-              {task?.successFiles || "--"}
+              {task?.progress?.finishedFileNum || "0"}
             </div>
             <div className="text-sm text-gray-600">成功文件</div>
           </div>
           <div className="text-center p-4 bg-gradient-to-br from-red-50 to-red-100 rounded-lg">
             <AlertCircle className="w-8 h-8 text-red-500 mb-2 mx-auto" />
             <div className="text-xl font-bold text-red-500">
-              {task?.failedFiles || "--"}
+              {task?.progress?.totalFileNum - task?.progress?.finishedFileNum || "0"}
             </div>
             <div className="text-sm text-gray-600">失败文件</div>
           </div>
           <div className="text-center p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg">
             <Activity className="w-8 h-8 text-purple-500 mb-2 mx-auto" />
             <div className="text-xl font-bold text-purple-500">
-              {task?.progress || "--"}
+              {task?.progress?.process || "--"}
             </div>
             <div className="text-sm text-gray-600">成功率</div>
           </div>
@@ -120,21 +110,15 @@ export default function BasicInfo({ task }: { task: CleansingTask }) {
         {/* 处理进度 */}
         <div>
           <h3 className="text-lg font-semibold text-gray-900 mb-4">处理进度</h3>
-          <Progress percent={task?.progress} showInfo />
+          <Progress percent={task?.progress?.process} showInfo />
           <div className="grid grid-cols-2 gap-4 text-sm mt-4">
             <div className="flex items-center gap-2">
               <span className="w-3 h-3 bg-green-500 rounded-full inline-block" />
-              <span>已完成: {task?.processedFiles || "--"}</span>
+              <span>已完成: {task?.progress?.finishedFileNum || "0"}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-3 h-3 bg-blue-500 rounded-full inline-block" />
-              <span>处理中: {task?.processingFiles || "--"}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-3 bg-gray-300 rounded-full inline-block" />
-              <span>
-                待处理: {task?.totalFiles - task?.processedFiles || "--"}
-              </span>
+              <span>处理中: {task?.progress?.totalFileNum - task?.progress?.finishedFileNum || "0"}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-3 h-3 bg-red-500 rounded-full inline-block" />

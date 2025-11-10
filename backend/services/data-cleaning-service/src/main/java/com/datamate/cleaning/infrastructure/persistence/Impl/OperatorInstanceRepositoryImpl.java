@@ -37,4 +37,11 @@ public class OperatorInstanceRepositoryImpl extends CrudRepository<OperatorInsta
         lambdaWrapper.eq(OperatorInstance::getInstanceId, instanceId);
         mapper.delete(lambdaWrapper);
     }
+
+    public void findByInstanceId(String instanceId) {
+        LambdaQueryWrapper<OperatorInstance> lambdaWrapper = new LambdaQueryWrapper<>();
+        lambdaWrapper.eq(OperatorInstance::getInstanceId, instanceId);
+        List<OperatorInstance> operatorInstances = mapper.selectList(lambdaWrapper);
+
+    }
 }

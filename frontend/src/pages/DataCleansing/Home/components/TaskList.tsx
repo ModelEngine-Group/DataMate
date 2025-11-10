@@ -106,6 +106,18 @@ export default function TaskList() {
       fixed: "left",
       width: 150,
       ellipsis: true,
+      render: (_, task: CleansingTask) => {
+        return (
+          <Button
+            type="link"
+            onClick={() =>
+              navigate("/data/cleansing/task-detail/" + task.id)
+            }
+          >
+            {task.name}
+          </Button>
+        );
+      },
     },
     {
       title: "任务ID",
@@ -273,6 +285,9 @@ export default function TaskList() {
           data={tableData}
           operations={taskOperations}
           pagination={pagination}
+          onView={(tableData) => {
+            navigate("/data/cleansing/task-detail/" + tableData.id)
+          }}
         />
       ) : (
         <Card>
