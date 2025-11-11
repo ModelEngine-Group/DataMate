@@ -1,6 +1,5 @@
-import type { CleansingTask } from "@/pages/DataCleansing/cleansing.model";
-import { OperatorI } from "@/pages/OperatorMarket/operator.model";
-import { Button, Card, Descriptions, Progress, Tag } from "antd";
+import {CleansingTask, TaskStatus} from "@/pages/DataCleansing/cleansing.model";
+import { Button, Card, Descriptions, Progress } from "antd";
 import { Activity, AlertCircle, CheckCircle, Clock } from "lucide-react";
 import { useNavigate } from "react-router";
 import {formatExecutionDuration} from "@/utils/unit.ts";
@@ -47,7 +46,6 @@ export default function BasicInfo({ task }: { task: CleansingTask }) {
         </Button>
       ),
     },
-    { key: "template", label: "使用模板", children: ( task?.description || "--" ) },
     { key: "startTime", label: "开始时间", children: task?.startedAt },
     {
       key: "description",
@@ -74,21 +72,23 @@ export default function BasicInfo({ task }: { task: CleansingTask }) {
           <div className="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-lg">
             <CheckCircle className="w-8 h-8 text-green-500 mb-2 mx-auto" />
             <div className="text-xl font-bold text-green-500">
-              {task?.progress?.finishedFileNum || "0"}
+              {task?.progress?.succeedFileNum || "0"}
             </div>
             <div className="text-sm text-gray-600">成功文件</div>
           </div>
           <div className="text-center p-4 bg-gradient-to-br from-red-50 to-red-100 rounded-lg">
             <AlertCircle className="w-8 h-8 text-red-500 mb-2 mx-auto" />
             <div className="text-xl font-bold text-red-500">
-              {task?.progress?.totalFileNum - task?.progress?.finishedFileNum || "0"}
+              {(task?.status.value === TaskStatus.RUNNING || task?.status.value === TaskStatus.PENDING)  ?
+                task?.progress.failedFileNum :
+                task?.progress?.totalFileNum - task?.progress.succeedFileNum}
             </div>
             <div className="text-sm text-gray-600">失败文件</div>
           </div>
           <div className="text-center p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg">
             <Activity className="w-8 h-8 text-purple-500 mb-2 mx-auto" />
             <div className="text-xl font-bold text-purple-500">
-              {task?.progress?.process || "--"}
+              {task?.progress?.successRate ? task?.progress?.successRate + "%" : "--"}
             </div>
             <div className="text-sm text-gray-600">成功率</div>
           </div>
@@ -114,15 +114,18 @@ export default function BasicInfo({ task }: { task: CleansingTask }) {
           <div className="grid grid-cols-2 gap-4 text-sm mt-4">
             <div className="flex items-center gap-2">
               <span className="w-3 h-3 bg-green-500 rounded-full inline-block" />
-              <span>已完成: {task?.progress?.finishedFileNum || "0"}</span>
+              <span>已完成: {task?.progress?.succeedFileNum || "0"}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-3 h-3 bg-blue-500 rounded-full inline-block" />
-              <span>处理中: {task?.progress?.totalFileNum - task?.progress?.finishedFileNum || "0"}</span>
+              <span>处理中: {(task?.status.value === TaskStatus.RUNNING || task?.status.value === TaskStatus.PENDING)  ?
+                task?.progress?.totalFileNum - task?.progress.succeedFileNum : 0}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-3 h-3 bg-red-500 rounded-full inline-block" />
-              <span>失败: {task?.failedFiles || "--"}</span>
+              <span>失败: {(task?.status.value === TaskStatus.RUNNING || task?.status.value === TaskStatus.PENDING)  ?
+                task?.progress.failedFileNum :
+                task?.progress?.totalFileNum - task?.progress.succeedFileNum}</span>
             </div>
           </div>
         </div>

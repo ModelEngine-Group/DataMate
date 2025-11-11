@@ -11,10 +11,7 @@ import com.datamate.cleaning.domain.repository.CleaningTaskRepository;
 import com.datamate.cleaning.domain.repository.OperatorInstanceRepository;
 
 import com.datamate.cleaning.infrastructure.validator.CleanTaskValidator;
-import com.datamate.cleaning.interfaces.dto.CleaningProcess;
-import com.datamate.cleaning.interfaces.dto.CleaningTaskDto;
-import com.datamate.cleaning.interfaces.dto.CreateCleaningTaskRequest;
-import com.datamate.cleaning.interfaces.dto.OperatorInstanceDto;
+import com.datamate.cleaning.interfaces.dto.*;
 import com.datamate.common.infrastructure.exception.BusinessException;
 import com.datamate.common.infrastructure.exception.SystemErrorCode;
 import com.datamate.datamanagement.application.DatasetApplicationService;
@@ -40,9 +37,13 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 @Slf4j
 @Service
@@ -66,6 +67,11 @@ public class CleaningTaskService {
 
     private final String FLOW_PATH = "/flow";
 
+    private final Pattern LEVEL_PATTERN = Pattern.compile(
+            "\\b(TRACE|DEBUG|INFO|WARN|WARNING|ERROR|FATAL)\\b",
+            Pattern.CASE_INSENSITIVE
+    );
+
     public List<CleaningTaskDto> getTasks(String status, String keywords, Integer page, Integer size) {
         List<CleaningTaskDto> tasks = cleaningTaskRepo.findTasks(status, keywords, page, size);
         tasks.forEach(this::setProcess);
@@ -73,8 +79,8 @@ public class CleaningTaskService {
     }
 
     private void setProcess(CleaningTaskDto task) {
-        int count = cleaningResultRepo.countByInstanceId(task.getId());
-        task.setProgress(CleaningProcess.of(task.getFileCount(), count));
+        int[] count = cleaningResultRepo.countByInstanceId(task.getId());
+        task.setProgress(CleaningProcess.of(task.getFileCount(), count[0], count[1]));
     }
 
     public int countTasks(String status, String keywords) {
@@ -117,9 +123,44 @@ public class CleaningTaskService {
 
     public CleaningTaskDto getTask(String taskId) {
         CleaningTaskDto task = cleaningTaskRepo.findTaskById(taskId);
-        operatorInstanceRepo.
         setProcess(task);
+        task.setInstance(operatorInstanceRepo.findOperatorByInstanceId(taskId));
         return task;
+    }
+
+    public List<CleaningResultDto> getTaskResults(String taskId) {
+        return cleaningResultRepo.findByInstanceId(taskId);
+    }
+
+    public List<CleaningTaskLog> getTaskLog(String taskId) {
+        String logPath = FLOW_PATH + "/" + taskId + "/output.log";
+        try (Stream<String> lines = Files.lines(Paths.get(logPath))) {
+            List<CleaningTaskLog> logs = new ArrayList<>();
+            AtomicReference<String> lastLevel = new AtomicReference<>("INFO");
+            lines.forEach(line -> {
+                lastLevel.set(getLogLevel(line, lastLevel.get()));
+                CleaningTaskLog log = new CleaningTaskLog();
+                log.setLevel(lastLevel.get());
+                log.setMessage(line);
+                logs.add(log);
+            });
+            return logs;
+        } catch (IOException e) {
+            log.error("Fail to read log file {}", logPath, e);
+            return Collections.emptyList();
+        }
+    }
+
+    private String getLogLevel(String logLine, String defaultLevel) {
+        if (logLine == null || logLine.trim().isEmpty()) {
+            return defaultLevel;
+        }
+
+        Matcher matcher = LEVEL_PATTERN.matcher(logLine);
+        if (matcher.find()) {
+            return matcher.group(1).toUpperCase();
+        }
+        return defaultLevel;
     }
 
     @Transactional
@@ -191,7 +232,7 @@ public class CleaningTaskService {
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName))) {
             if (!mapList.isEmpty()) { // 检查列表是否为空，避免异常
-                String jsonString = objectMapper.writeValueAsString(mapList.get(0));
+                String jsonString = objectMapper.writeValueAsString(mapList.getFirst());
                 writer.write(jsonString);
 
                 for (int i = 1; i < mapList.size(); i++) {

@@ -13,6 +13,14 @@ export function queryCleaningTaskByIdUsingGet(taskId: string | number) {
   return get(`/api/cleaning/tasks/${taskId}`);
 }
 
+export function queryCleaningTaskResultByIdUsingGet(taskId: string | number) {
+  return get(`/api/cleaning/tasks/${taskId}/result`);
+}
+
+export function queryCleaningTaskLogByIdUsingGet(taskId: string | number) {
+  return get(`/api/cleaning/tasks/${taskId}/log`);
+}
+
 export function updateCleaningTaskByIdUsingPut(taskId: string | number, data: any) {
   return put(`/api/cleaning/tasks/${taskId}`, data);
 }
