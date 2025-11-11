@@ -1,0 +1,27 @@
+name: docker-image-save.yml
+on:
+  workflow_call:
+    inputs:
+      service_name:
+        required: true
+        type: string
+
+jobs:
+  pull-and-save:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pull Docker Image
+        run: |
+          LOWERCASE_REPO=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          docker pull ghcr.io/$LOWERCASE_REPO/datamate-${{ inputs.service_name }}:latest
+          docker tag ghcr.io/$LOWERCASE_REPO/datamate-${{ inputs.service_name }}:latest datamate-${{ inputs.service_name }}:latest
+
+      - name: Save Docker Image
+        run: |
+          docker save -o datamate-${{ inputs.service_name }}.tar datamate-${{ inputs.service_name }}:latest
+
+      - name: Upload Docker Image
+        uses: actions/upload-artifact@v4
+        with:
+          name: datamate-${{ inputs.service_name }}
+          path: datamate-${{ inputs.service_name }}.tar
