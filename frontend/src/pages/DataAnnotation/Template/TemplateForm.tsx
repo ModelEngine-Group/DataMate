@@ -17,6 +17,7 @@ import {
     updateAnnotationTemplateByIdUsingPut,
 } from "../annotation.api";
 import type { AnnotationTemplate } from "../annotation.model";
+import TagSelector from "./components/TagSelector";
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -110,22 +111,6 @@ const TemplateForm: React.FC<TemplateFormProps> = ({
             setLoading(false);
         }
     };
-
-    const controlTypes = [
-        { value: "Choices", label: "选项 (单选/多选)" },
-        { value: "RectangleLabels", label: "矩形框 (目标检测)" },
-        { value: "PolygonLabels", label: "多边形" },
-        { value: "Labels", label: "标签 (文本高亮)" },
-        { value: "TextArea", label: "文本区域" },
-        { value: "Rating", label: "评分" },
-    ];
-
-    const objectTypes = [
-        { value: "Image", label: "图像" },
-        { value: "Text", label: "文本" },
-        { value: "Audio", label: "音频" },
-        { value: "Video", label: "视频" },
-    ];
 
     const needsOptions = (type: string) => {
         return ["Choices", "RectangleLabels", "PolygonLabels", "Labels"].includes(type);
@@ -243,13 +228,7 @@ const TemplateForm: React.FC<TemplateFormProps> = ({
                                             rules={[{ required: true, message: "必填" }]}
                                             style={{ marginBottom: 0, width: 150 }}
                                         >
-                                            <Select>
-                                                {objectTypes.map((t) => (
-                                                    <Option key={t.value} value={t.value}>
-                                                        {t.label}
-                                                    </Option>
-                                                ))}
-                                            </Select>
+                                            <TagSelector type="object" />
                                         </Form.Item>
 
                                         <Form.Item
@@ -356,13 +335,7 @@ const TemplateForm: React.FC<TemplateFormProps> = ({
                                                 rules={[{ required: true, message: "必填" }]}
                                                 style={{ marginBottom: 0 }}
                                             >
-                                                <Select placeholder="选择控件类型">
-                                                    {controlTypes.map((t) => (
-                                                        <Option key={t.value} value={t.value}>
-                                                            {t.label}
-                                                        </Option>
-                                                    ))}
-                                                </Select>
+                                                <TagSelector type="control" />
                                             </Form.Item>
 
                                             <Form.Item

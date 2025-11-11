@@ -111,6 +111,10 @@ class Client:
                 "label_config": label_config or "<View></View>"
             }
             
+            # Log the request body for debugging
+            logger.debug(f"Request body: {project_data}")
+            logger.debug(f"Label config being sent:\n{project_data['label_config']}")
+            
             response = await self.client.post("/api/projects", json=project_data)
             response.raise_for_status()
             
@@ -127,7 +131,7 @@ class Client:
             logger.error(
                 f"Create project failed - HTTP {e.response.status_code}\n"
                 f"URL: {e.request.url}\n"
-                f"Response Headers: {dict(e.response.headers)}\n"
+                f"Request Body: {e.request.content.decode() if e.request.content else 'None'}\n"
                 f"Response Body: {e.response.text[:1000]}"  # First 1000 chars
             )
             return None

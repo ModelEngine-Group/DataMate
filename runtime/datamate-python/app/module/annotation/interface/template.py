@@ -15,7 +15,7 @@ from app.module.annotation.schema.template import (
 )
 from app.module.annotation.service.template import AnnotationTemplateService
 
-router = APIRouter(prefix="/templates", tags=["Annotation Template"])
+router = APIRouter(prefix="/templates", tags=["annotation/templates"])
 
 template_service = AnnotationTemplateService()
 

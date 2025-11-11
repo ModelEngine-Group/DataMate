@@ -3,29 +3,16 @@ Label Studio Configuration Validation Utilities
 """
 from typing import Dict, List, Tuple, Optional
 import xml.etree.ElementTree as ET
+from app.module.annotation.config import LabelStudioTagConfig
 
 
 class LabelStudioConfigValidator:
     """验证Label Studio配置的工具类"""
     
-    # 支持的控件类型
-    CONTROL_TYPES = {
-        'Choices', 'RectangleLabels', 'PolygonLabels', 'Labels', 
-        'TextArea', 'Rating', 'KeyPointLabels', 'BrushLabels',
-        'EllipseLabels', 'VideoRectangle', 'AudioPlus'
-    }
-    
-    # 支持的对象类型
-    OBJECT_TYPES = {
-        'Image', 'Text', 'Audio', 'Video', 'HyperText', 
-        'AudioPlus', 'Paragraphs', 'Table'
-    }
-    
-    # 需要子标签的控件类型
-    LABEL_BASED_CONTROLS = {
-        'Choices', 'RectangleLabels', 'PolygonLabels', 'Labels',
-        'KeyPointLabels', 'BrushLabels', 'EllipseLabels'
-    }
+    @staticmethod
+    def _get_config() -> LabelStudioTagConfig:
+        """获取标签配置实例"""
+        return LabelStudioTagConfig()
     
     @staticmethod
     def validate_xml(xml_string: str) -> Tuple[bool, Optional[str]]:
@@ -39,6 +26,7 @@ class LabelStudioConfigValidator:
             (是否有效, 错误信息)
         """
         try:
+            config = LabelStudioConfigValidator._get_config()
             root = ET.fromstring(xml_string)
             
             # 检查根元素
@@ -46,12 +34,14 @@ class LabelStudioConfigValidator:
                 return False, "Root element must be <View>"
             
             # 检查是否有对象定义
-            objects = [child for child in root if child.tag in LabelStudioConfigValidator.OBJECT_TYPES]
+            object_types = config.get_object_types()
+            objects = [child for child in root if child.tag in object_types]
             if not objects:
                 return False, "No data objects (Image, Text, etc.) found"
             
             # 检查是否有控件定义
-            controls = [child for child in root if child.tag in LabelStudioConfigValidator.CONTROL_TYPES]
+            control_types = config.get_control_types()
+            controls = [child for child in root if child.tag in control_types]
             if not controls:
                 return False, "No annotation controls found"
             
@@ -79,6 +69,8 @@ class LabelStudioConfigValidator:
         Returns:
             (是否有效, 错误信息)
         """
+        config = LabelStudioConfigValidator._get_config()
+        
         # 检查必需属性
         if 'name' not in control.attrib:
             return False, "Missing 'name' attribute"
@@ -86,16 +78,20 @@ class LabelStudioConfigValidator:
         if 'toName' not in control.attrib:
             return False, "Missing 'toName' attribute"
         
-        # 检查标签型控件是否有子标签
-        if control.tag in LabelStudioConfigValidator.LABEL_BASED_CONTROLS:
-            labels = control.findall('Label')
-            if not labels:
-                return False, f"{control.tag} must have at least one <Label> child"
+        # 检查控件是否需要子元素
+        if config.requires_children(control.tag):
+            child_tag = config.get_child_tag(control.tag)
+            if not child_tag:
+                return False, f"Configuration error: no child_tag defined for {control.tag}"
             
-            # 检查每个标签是否有value
-            for label in labels:
-                if 'value' not in label.attrib:
-                    return False, "Label missing 'value' attribute"
+            children = control.findall(child_tag)
+            if not children:
+                return False, f"{control.tag} must have at least one <{child_tag}> child"
+            
+            # 检查每个子元素是否有value
+            for child in children:
+                if 'value' not in child.attrib:
+                    return False, f"{child_tag} missing 'value' attribute"
         
         return True, None
     
@@ -111,16 +107,24 @@ class LabelStudioConfigValidator:
             字典，键为控件名称，值为标签值列表
         """
         result = {}
+        config = LabelStudioConfigValidator._get_config()
         
         try:
             root = ET.fromstring(xml_string)
-            controls = [child for child in root if child.tag in LabelStudioConfigValidator.LABEL_BASED_CONTROLS]
+            control_types = config.get_control_types()
+            controls = [child for child in root if child.tag in control_types]
             
             for control in controls:
+                if not config.requires_children(control.tag):
+                    continue
+                    
                 control_name = control.get('name', 'unknown')
-                labels = control.findall('Label')
-                label_values = [label.get('value', '') for label in labels]
-                result[control_name] = label_values
+                child_tag = config.get_child_tag(control.tag)
+                
+                if child_tag:
+                    children = control.findall(child_tag)
+                    label_values = [child.get('value', '') for child in children]
+                    result[control_name] = label_values
                 
         except Exception:
             pass
@@ -182,6 +186,9 @@ class LabelStudioConfigValidator:
     @staticmethod
     def _validate_label_definition(label: Dict) -> Tuple[bool, Optional[str]]:
         """验证标签定义"""
+        config = LabelStudioConfigValidator._get_config()
+        control_types = config.get_control_types()
+        
         # Support both camelCase and snake_case
         from_name = label.get('fromName') or label.get('from_name')
         to_name = label.get('toName') or label.get('to_name')
@@ -195,11 +202,11 @@ class LabelStudioConfigValidator:
             return False, "Missing required field 'type'"
         
         # 检查类型是否支持
-        if label_type not in LabelStudioConfigValidator.CONTROL_TYPES:
+        if label_type not in control_types:
             return False, f"Unsupported control type '{label_type}'"
         
-        # 检查标签型控件是否有选项或标签
-        if label_type in LabelStudioConfigValidator.LABEL_BASED_CONTROLS:
+        # 检查是否需要子元素(options 或 labels)
+        if config.requires_children(label_type):
             if 'options' not in label and 'labels' not in label:
                 return False, f"{label_type} must have 'options' or 'labels' field"
         
@@ -208,6 +215,9 @@ class LabelStudioConfigValidator:
     @staticmethod
     def _validate_object_definition(obj: Dict) -> Tuple[bool, Optional[str]]:
         """验证对象定义"""
+        config = LabelStudioConfigValidator._get_config()
+        object_types = config.get_object_types()
+        
         required_fields = ['name', 'type', 'value']
         
         for field in required_fields:
@@ -215,7 +225,7 @@ class LabelStudioConfigValidator:
                 return False, f"Missing required field '{field}'"
         
         # 检查类型是否支持
-        if obj['type'] not in LabelStudioConfigValidator.OBJECT_TYPES:
+        if obj['type'] not in object_types:
             return False, f"Unsupported object type '{obj['type']}'"
         
         # 检查value格式

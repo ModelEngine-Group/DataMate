@@ -100,6 +100,11 @@ export function getAnnotationStatisticsUsingGet(params?: any) {
   return get("/api/v1/annotation/statistics", params);
 }
 
+// 标签配置管理
+export function getTagConfigUsingGet() {
+  return get("/api/annotation/tags/config");
+}
+
 // 标注模板管理
 export function queryAnnotationTemplatesUsingGet(params?: any) {
   return get("/api/annotation/templates", params);
