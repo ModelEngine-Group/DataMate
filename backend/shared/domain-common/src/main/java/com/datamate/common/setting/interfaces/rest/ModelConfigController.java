@@ -1,11 +1,11 @@
-package com.datamate.common.models.interfaces.rest;
+package com.datamate.common.setting.interfaces.rest;
 
 
 import com.datamate.common.interfaces.PagedResponse;
-import com.datamate.common.models.application.ModelConfigApplicationService;
-import com.datamate.common.models.domain.entity.ModelConfig;
-import com.datamate.common.models.interfaces.rest.dto.CreateModelRequest;
-import com.datamate.common.models.interfaces.rest.dto.QueryModelRequest;
+import com.datamate.common.setting.application.ModelConfigApplicationService;
+import com.datamate.common.setting.domain.entity.ModelConfig;
+import com.datamate.common.setting.interfaces.rest.dto.CreateModelRequest;
+import com.datamate.common.setting.interfaces.rest.dto.QueryModelRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;

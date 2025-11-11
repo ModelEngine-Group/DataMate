@@ -1,4 +1,4 @@
-package com.datamate.common.models.domain.entity;
+package com.datamate.common.setting.domain.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.datamate.common.domain.model.base.BaseEntity;
