@@ -9,48 +9,44 @@ from pathlib import Path
 class LabelStudioTagConfig:
     """Label Studio标签配置管理器"""
     
-    _instance = None
-    _config = None
+    _instance: Optional['LabelStudioTagConfig'] = None
+    _config: Dict[str, Any] = {}
     
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
-            cls._load_config()
         return cls._instance
+    
+    def __init__(self):
+        """初始化时加载配置"""
+        if not self._config:
+            self._load_config()
     
     @classmethod
     def _load_config(cls):
         """加载YAML配置文件"""
         config_path = Path(__file__).parent / "label_studio_tags.yaml"
         with open(config_path, 'r', encoding='utf-8') as f:
-            cls._config = yaml.safe_load(f)
+            cls._config = yaml.safe_load(f) or {}
     
     @classmethod
     def get_object_types(cls) -> Set[str]:
         """获取所有支持的对象类型"""
-        if cls._config is None:
-            cls._load_config()
         return set(cls._config.get('objects', {}).keys())
     
     @classmethod
     def get_control_types(cls) -> Set[str]:
         """获取所有支持的控件类型"""
-        if cls._config is None:
-            cls._load_config()
         return set(cls._config.get('controls', {}).keys())
     
     @classmethod
     def get_control_config(cls, control_type: str) -> Optional[Dict[str, Any]]:
         """获取控件的配置信息"""
-        if cls._config is None:
-            cls._load_config()
         return cls._config.get('controls', {}).get(control_type)
     
     @classmethod
     def get_object_config(cls, object_type: str) -> Optional[Dict[str, Any]]:
         """获取对象的配置信息"""
-        if cls._config is None:
-            cls._load_config()
         return cls._config.get('objects', {}).get(object_type)
     
     @classmethod
@@ -68,9 +64,6 @@ class LabelStudioTagConfig:
     @classmethod
     def get_controls_with_child_tag(cls, child_tag: str) -> Set[str]:
         """获取使用指定子元素标签的所有控件类型"""
-        if cls._config is None:
-            cls._load_config()
-        
         controls = set()
         for control_type, config in cls._config.get('controls', {}).items():
             if config.get('child_tag') == child_tag:
@@ -99,7 +92,8 @@ class LabelStudioTagConfig:
         if isinstance(optional_attrs, list):
             return {attr: {} for attr in optional_attrs}
         
-        return optional_attrs
+        # 确保返回的是字典
+        return optional_attrs if isinstance(optional_attrs, dict) else {}
     
     @classmethod
     def validate_attr_value(cls, tag_type: str, attr_name: str, attr_value: Any, is_control: bool = True) -> Tuple[bool, Optional[str]]:
@@ -120,7 +114,11 @@ class LabelStudioTagConfig:
         if attr_name not in optional_attrs:
             return True, None  # 不在配置中的属性，不验证
         
-        attr_config = optional_attrs[attr_name]
+        attr_config = optional_attrs.get(attr_name, {})
+        
+        # 如果配置不是字典，跳过验证
+        if not isinstance(attr_config, dict):
+            return True, None
         
         # 检查类型
         expected_type = attr_config.get('type')
@@ -145,4 +143,8 @@ class LabelStudioTagConfig:
         """获取属性的默认值"""
         optional_attrs = cls.get_optional_attrs(tag_type, is_control)
         attr_config = optional_attrs.get(attr_name, {})
-        return attr_config.get('default')
+        
+        # 确保attr_config是字典后再访问
+        if isinstance(attr_config, dict):
+            return attr_config.get('default')
+        return None
