@@ -98,10 +98,10 @@ export default function CollectionTaskCreate() {
       // 构建最终 payload，不依赖异步 setState
       const payload = {
         ...newTask,
+        taskType:
+          templateType === "default" ? selectedTemplate : "CUSTOM",
         config: {
           ...((newTask && newTask.config) || {}),
-          templateType:
-            templateType === "default" ? selectedTemplate : "CUSTOM",
           ...(templateType === "custom" ? { dataxJson: customConfig } : {}),
         },
       };
