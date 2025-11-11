@@ -80,7 +80,7 @@ export default function ConfigureStep({
             <Input value={parsedInfo.outputs}/>
           </Form.Item>
 
-          {parsedInfo.configs && (
+          {parsedInfo.configs && Object.keys(parsedInfo.configs).length > 0 && (
             <>
               <h3 className="text-lg font-semibold text-gray-900 mt-10 mb-2">
                 高级配置

@@ -123,7 +123,7 @@ AND o.id IN ('TextFormatter', 'FileWithShortOrLongLengthFilter', 'FileWithHighRe
             'AnonymizedIpAddress', 'AnonymizedPhoneNumber', 'AnonymizedUrlCleaner', 'HtmlTagCleaner', 'XMLTagCleaner',
             'ContentCleaner', 'EmailNumberCleaner', 'EmojiCleaner', 'ExtraSpaceCleaner', 'FullWidthCharacterCleaner',
             'GrableCharactersCleaner', 'InvisibleCharactersCleaner', 'LegendCleaner', 'PoliticalWordCleaner',
-            'SexualAndViolentWordCleaner', 'TraditionalChineseCleaner', 'UnicodeSpaceCleaner');
+            'SexualAndViolentWordCleaner', 'TraditionalChineseCleaner', 'UnicodeSpaceCleaner', 'MineruFormatter');
 
 INSERT IGNORE INTO t_operator_category_relation(category_id, operator_id)
 SELECT c.id, o.id

@@ -14,6 +14,7 @@ on:
       - 'scripts/images/frontend/**'
       - '.github/workflows/docker-image-frontend.yml'
   workflow_dispatch:
+  workflow_call:
 
 jobs:
   call-docker-build:

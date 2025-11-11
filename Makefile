@@ -18,7 +18,7 @@ build-%:
 	$(MAKE) $*-docker-build
 
 .PHONY: build
-build: backend-docker-build frontend-docker-build runtime-docker-build
+build: database-docker-build backend-docker-build frontend-docker-build runtime-docker-build
 
 .PHONY: create-namespace
 create-namespace:
@@ -104,6 +104,10 @@ endif
 .PHONY: backend-docker-build
 backend-docker-build:
 	docker build -t datamate-backend:$(VERSION) . -f scripts/images/backend/Dockerfile
+
+.PHONY: database-docker-build
+database-docker-build:
+	docker build -t datamate-database:$(VERSION) . -f scripts/images/database/Dockerfile
 
 .PHONY: frontend-docker-build
 frontend-docker-build:
@@ -206,20 +210,18 @@ milvus-docker-uninstall:
 
 .PHONY: datamate-k8s-install
 datamate-k8s-install: create-namespace
-	kubectl create configmap datamate-init-sql --from-file=scripts/db/ --dry-run=client -o yaml | kubectl apply -f - -n $(NAMESPACE)
-	helm upgrade datamate deployment/helm/datamate/ -n $(NAMESPACE) --install --set global.image.repository=$(REPOSITORY)
+	helm upgrade datamate deployment/helm/datamate/ -n $(NAMESPACE) --install --set global.image.repository=$(REGISTRY)
 
 .PHONY: datamate-k8s-uninstall
 datamate-k8s-uninstall:
 	helm uninstall datamate -n $(NAMESPACE) --ignore-not-found
-	kubectl delete configmap datamate-init-sql -n $(NAMESPACE) --ignore-not-found
 
 .PHONY: deer-flow-k8s-install
 deer-flow-k8s-install:
-	helm upgrade datamate deployment/helm/datamate/ -n $(NAMESPACE) --install --set global.deerFlow.enable=true --set global.image.repository=$(REPOSITORY)
+	helm upgrade datamate deployment/helm/datamate/ -n $(NAMESPACE) --install --set global.deerFlow.enable=true --set global.image.repository=$(REGISTRY)
 	cp runtime/deer-flow/.env deployment/helm/deer-flow/charts/public/.env
 	cp runtime/deer-flow/conf.yaml deployment/helm/deer-flow/charts/public/conf.yaml
-	helm upgrade deer-flow deployment/helm/deer-flow -n $(NAMESPACE) --install --set global.image.repository=$(REPOSITORY)
+	helm upgrade deer-flow deployment/helm/deer-flow -n $(NAMESPACE) --install --set global.image.repository=$(REGISTRY)
 
 .PHONY: deer-flow-k8s-uninstall
 deer-flow-k8s-uninstall:
