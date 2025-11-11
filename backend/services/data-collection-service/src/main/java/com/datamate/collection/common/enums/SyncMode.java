@@ -7,6 +7,6 @@ public enum SyncMode {
     /** 一次性(ONCE) */
     ONCE,
     /// 定时(SCHEDULED)
-    SCHEDULED;
+    SCHEDULED
 }
 
