@@ -1,60 +1,56 @@
 import { useState } from "react";
-import { Tabs } from "antd";
+import { Button, Menu } from "antd";
 import { SettingOutlined, ApiOutlined } from "@ant-design/icons";
-import WebhookConfig from "./WebhookConfig";
-import ModelAccess from "./ModelAccess";
+import { Component, X } from "lucide-react";
+import { useNavigate } from "react-router";
 import SystemConfig from "./SystemConfig";
-import { Component } from "lucide-react";
+import ModelAccess from "./ModelAccess";
+import WebhookConfig from "./WebhookConfig";
 
 export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState("modelAccess");
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState("model-access");
 
   return (
-    <div className="h-full flex flex-col gap-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">系统设置</h1>
+    <div className="h-screen flex">
+      <div className="border-right h-full">
+        {/* <h1 className="min-w-[200px] w-full border-bottom flex gap-2 text-lg font-bold text-gray-900 p-4">
+          <Button icon={<X />} type="text" onClick={() => navigate(-1)} />
+          设置中心
+        </h1> */}
+        <div className="h-full">
+          <Menu
+            mode="inline"
+            items={[
+              {
+                key: "system-config",
+                icon: <SettingOutlined />,
+                label: "系统设置",
+              },
+              {
+                key: "model-access",
+                icon: <Component className="w-4 h-4" />,
+                label: "模型接入",
+              },
+              {
+                key: "webhook-config",
+                icon: <ApiOutlined />,
+                label: "Webhook",
+              },
+            ]}
+            selectedKeys={[activeTab]}
+            onClick={({ key }) => {
+              setActiveTab(key);
+            }}
+          />
         </div>
       </div>
-
-      {/* Settings Tabs */}
-      <Tabs
-        activeKey={activeTab}
-        onChange={setActiveTab}
-        items={[
-          // {
-          //   key: "system",
-          //   label: (
-          //     <span>
-          //       <SettingOutlined className="mr-1" />
-          //       系统设置
-          //     </span>
-          //   ),
-          //   children: <SystemConfig />,
-          // },
-          {
-            key: "modelAccess",
-            label: (
-              <span className="flex items-center">
-                <Component className="w-4 h-4 mr-1" />
-                模型接入
-              </span>
-            ),
-            children: <ModelAccess key="modelAccess" />,
-          },
-          // {
-          //   key: "webhook",
-          //   label: (
-          //     <span>
-          //       <ApiOutlined className="mr-1" />
-          //       Webhook
-          //     </span>
-          //   ),
-          //   children: <WebhookConfig />,
-          // },
-        ]}
-      />
+      <div className="flex-1 h-full p-4">
+        {/* 内容区域，根据 activeTab 渲染不同的组件 */}
+        {activeTab === "system-config" && <SystemConfig />}
+        {activeTab === "model-access" && <ModelAccess />}
+        {activeTab === "webhook-config" && <WebhookConfig />}
+      </div>
     </div>
   );
 }

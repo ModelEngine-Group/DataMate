@@ -209,7 +209,9 @@ function CardView<T extends BaseCardDataType>(props: CardViewProps<T>) {
                         {item?.status && (
                           <Tag color={item?.status?.color}>
                             <div className="flex items-center gap-2 text-xs py-0.5">
-                              <span>{item?.status?.icon}</span>
+                              {item?.status?.icon && (
+                                <span>{item?.status?.icon}</span>
+                              )}
                               <span>{item?.status?.label}</span>
                             </div>
                           </Tag>

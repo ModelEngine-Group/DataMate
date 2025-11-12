@@ -16,11 +16,6 @@ import CleansingTemplateCreate from "@/pages/DataCleansing/Create/CreateTemplate
 
 import DataAnnotation from "@/pages/DataAnnotation/Home/DataAnnotation";
 import AnnotationTaskCreate from "@/pages/DataAnnotation/Create/CreateTask";
-import AnnotationWorkspace from "@/pages/DataAnnotation/Annotate/AnnotationWorkSpace";
-import TextAnnotationWorkspace from "@/pages/DataAnnotation/Annotate/components/TextAnnotation";
-import ImageAnnotationWorkspace from "@/pages/DataAnnotation/Annotate/components/ImageAnnotation";
-import AudioAnnotationWorkspace from "@/pages/DataAnnotation/Annotate/components/AudioAnnotation";
-import VideoAnnotationWorkspace from "@/pages/DataAnnotation/Annotate/components/VideoAnnotation";
 
 import DataSynthesisPage from "@/pages/SynthesisTask/DataSynthesis";
 import InstructionTemplateCreate from "@/pages/SynthesisTask/CreateTemplate";
@@ -42,10 +37,10 @@ import RatioTasksPage from "@/pages/RatioTask/Home/RatioTask.tsx";
 import CreateRatioTask from "@/pages/RatioTask/Create/CreateRatioTask.tsx";
 import OrchestrationPage from "@/pages/Orchestration/Orchestration";
 import WorkflowEditor from "@/pages/Orchestration/WorkflowEditor";
-import SettingsPage from "@/pages/SettingsPage/SettingsPage";
 import { withErrorBoundary } from "@/components/ErrorBoundary";
 import AgentPage from "@/pages/Agent/Agent.tsx";
 import CleansingTemplateDetail from "@/pages/DataCleansing/Detail/TemplateDetail.tsx";
+import RatioTaskDetail from "@/pages/RatioTask/Detail/RatioTaskDetail";
 
 const router = createBrowserRouter([
   {
@@ -148,28 +143,6 @@ const router = createBrowserRouter([
             path: "create-task",
             Component: AnnotationTaskCreate,
           },
-          {
-            path: "task-annotate",
-            Component: AnnotationWorkspace,
-            children: [
-              {
-                path: "text/:id",
-                Component: TextAnnotationWorkspace,
-              },
-              {
-                path: "image/:id",
-                Component: ImageAnnotationWorkspace,
-              },
-              {
-                path: "audio/:id",
-                Component: AudioAnnotationWorkspace,
-              },
-              {
-                path: "video/:id",
-                Component: VideoAnnotationWorkspace,
-              },
-            ],
-          },
         ],
       },
       {
@@ -201,6 +174,10 @@ const router = createBrowserRouter([
             path: "create",
             Component: CreateRatioTask,
           },
+          {
+            path: "detail/:id",
+            Component: RatioTaskDetail,
+          }
         ],
       },
       {
@@ -260,10 +237,6 @@ const router = createBrowserRouter([
             Component: OperatorPluginDetail,
           },
         ],
-      },
-      {
-        path: "settings",
-        Component: SettingsPage,
       },
     ],
   },

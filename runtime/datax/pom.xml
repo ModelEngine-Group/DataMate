@@ -111,7 +111,7 @@
 <!--        <module>kuduwriter</module>-->
 <!--        <module>ftpwriter</module>-->
 <!--        <module>hdfswriter</module>-->
-<!--        <module>txtfilewriter</module>-->
+        <module>txtfilewriter</module>
 <!--        <module>streamwriter</module>-->
 
 <!--        <module>elasticsearchwriter</module>-->

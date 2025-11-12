@@ -52,8 +52,10 @@ volumes:
   label-studio-db:
   dataset_volume:
     name: datamate-dataset-volume
+    external: true
 
 networks:
   datamate:
     driver: bridge
     name: datamate-network
+    external: true

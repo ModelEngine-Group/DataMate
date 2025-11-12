@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button, Card, Table, Tooltip, App } from "antd";
+import { Button, Card, Table, App, Badge, Popconfirm } from "antd";
 import { Plus } from "lucide-react";
 import { DeleteOutlined } from "@ant-design/icons";
 import type { RatioTaskItem } from "@/pages/RatioTask/ratio.model";
@@ -11,7 +11,7 @@ import {
   queryRatioTasksUsingGet,
 } from "../ratio.api";
 import useFetchData from "@/hooks/useFetchData";
-import { mapRatioTask, ratioTaskStatusMap } from "../ratio.const";
+import { mapRatioTask } from "../ratio.const";
 
 export default function RatioTasksPage() {
   const { message } = App.useApp();
@@ -68,6 +68,8 @@ export default function RatioTasksPage() {
       title: "任务名称",
       dataIndex: "name",
       key: "name",
+      width: 200,
+      fixed: "left" as const,
       render: (text: string, record: RatioTaskItem) => (
         <a
           onClick={() =>
@@ -82,17 +84,28 @@ export default function RatioTasksPage() {
       title: "状态",
       dataIndex: "status",
       key: "status",
-      render: (status) => ratioTaskStatusMap[status]?.label,
+      width: 120,
+      render: (status) => {
+        return (
+          <Badge
+            color={status?.color}
+            icon={status?.icon}
+            text={status?.label}
+          />
+        );
+      },
     },
     {
       title: "配比方式",
       dataIndex: "ratio_method",
       key: "ratio_method",
+      width: 120,
     },
     {
       title: "目标数量",
       dataIndex: "totals",
       key: "totals",
+      width: 120,
     },
     {
       title: "目标数据集",
@@ -112,21 +125,35 @@ export default function RatioTasksPage() {
       title: "创建时间",
       dataIndex: "created_at",
       key: "created_at",
+      width: 180,
     },
     {
       title: "操作",
       key: "actions",
+      width: 120,
+      fixed: "right" as const,
       render: (_: any, task: RatioTaskItem) => (
         <div className="flex items-center gap-2">
-          {operations.map((op) => (
-            <Tooltip key={op.key} title={op.label}>
+          {operations.map((op) => {
+            if (op.confirm) {
+              <Popconfirm
+                title={op.confirm.title}
+                description={op.confirm.description}
+                onConfirm={() => op.onClick(task)}
+              >
+                <Button type="text" icon={op.icon} />
+              </Popconfirm>;
+            }
+            return (
               <Button
+                key={op.key}
                 type="text"
                 icon={op.icon}
+                danger={op.danger}
                 onClick={() => op.onClick(task)}
               />
-            </Tooltip>
-          ))}
+            );
+          })}
         </div>
       ),
     },
