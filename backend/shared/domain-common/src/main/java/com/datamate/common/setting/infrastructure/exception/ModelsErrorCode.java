@@ -1,4 +1,4 @@
-package com.datamate.common.models.infrastructure.exception;
+package com.datamate.common.setting.infrastructure.exception;
 
 import com.datamate.common.infrastructure.exception.ErrorCode;
 import lombok.AllArgsConstructor;

@@ -1,4 +1,4 @@
-package com.datamate.common.models.domain.entity;
+package com.datamate.common.setting.domain.entity;
 
 /**
  * 模型类型枚举类

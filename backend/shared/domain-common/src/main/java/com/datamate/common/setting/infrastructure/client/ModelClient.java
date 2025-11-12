@@ -1,8 +1,8 @@
-package com.datamate.common.models.infrastructure.client;
+package com.datamate.common.setting.infrastructure.client;
 
 import com.datamate.common.infrastructure.exception.BusinessException;
-import com.datamate.common.models.domain.entity.ModelConfig;
-import com.datamate.common.models.infrastructure.exception.ModelsErrorCode;
+import com.datamate.common.setting.domain.entity.ModelConfig;
+import com.datamate.common.setting.infrastructure.exception.ModelsErrorCode;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;

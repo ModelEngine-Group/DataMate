@@ -16,6 +16,9 @@ import java.util.List;
 public class AddFilesReq {
     private String knowledgeBaseId;
     private ProcessType processType;
+    private Integer chunkSize;
+    private Integer overlapSize;
+    private String customSeparator;
     private List<FileInfo> files;
 
     public record FileInfo(String id, String name) {

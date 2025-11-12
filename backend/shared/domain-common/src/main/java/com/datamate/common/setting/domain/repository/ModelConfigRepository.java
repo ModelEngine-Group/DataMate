@@ -1,9 +1,9 @@
-package com.datamate.common.models.domain.repository;
+package com.datamate.common.setting.domain.repository;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.repository.IRepository;
-import com.datamate.common.models.domain.entity.ModelConfig;
-import com.datamate.common.models.interfaces.rest.dto.QueryModelRequest;
+import com.datamate.common.setting.domain.entity.ModelConfig;
+import com.datamate.common.setting.interfaces.rest.dto.QueryModelRequest;
 
 /**
  * 模型配置仓库接口

@@ -1,7 +1,7 @@
-package com.datamate.common.models.infrastructure.persistence.mapper;
+package com.datamate.common.setting.infrastructure.persistence.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.datamate.common.models.domain.entity.ModelConfig;
+import com.datamate.common.setting.domain.entity.ModelConfig;
 import org.apache.ibatis.annotations.Mapper;
 
 /**

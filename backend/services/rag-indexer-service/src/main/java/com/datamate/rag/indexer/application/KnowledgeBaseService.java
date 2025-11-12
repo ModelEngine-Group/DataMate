@@ -99,7 +99,7 @@ public class KnowledgeBaseService {
             return ragFile;
         }).toList();
         ragFileRepository.saveBatch(ragFiles, 100);
-        eventPublisher.publishEvent(new DataInsertedEvent(knowledgeBase, request.getProcessType()));
+        eventPublisher.publishEvent(new DataInsertedEvent(knowledgeBase, request));
     }
 
     public PagedResponse<RagFile> listFiles(String knowledgeBaseId, RagFileReq request) {
