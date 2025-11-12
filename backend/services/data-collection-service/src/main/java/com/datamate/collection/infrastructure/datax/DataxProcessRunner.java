@@ -1,28 +1,24 @@
 package com.datamate.collection.infrastructure.datax;
 
+import com.datamate.collection.common.enums.TemplateType;
 import com.datamate.collection.domain.model.entity.CollectionTask;
 import com.datamate.collection.domain.process.ProcessRunner;
+import com.datamate.collection.infrastructure.datax.config.NasConfig;
 import com.datamate.common.infrastructure.exception.BusinessException;
 import com.datamate.common.infrastructure.exception.SystemErrorCode;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.exec.*;
+import org.apache.commons.io.output.TeeOutputStream;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @Slf4j
 @Component
@@ -61,10 +57,8 @@ public class DataxProcessRunner implements ProcessRunner {
         }
 
         ExecuteStreamHandler streamHandler = new PumpStreamHandler(
-            new org.apache.commons.io.output.TeeOutputStream(
-                new java.io.FileOutputStream(logFile, true), System.out),
-            new org.apache.commons.io.output.TeeOutputStream(
-                new java.io.FileOutputStream(logFile, true), System.err)
+            new TeeOutputStream(new FileOutputStream(logFile, true), System.out),
+            new TeeOutputStream(new FileOutputStream(logFile, true), System.err)
         );
         executor.setStreamHandler(streamHandler);
 
@@ -92,30 +86,18 @@ public class DataxProcessRunner implements ProcessRunner {
     private String getJobConfig(CollectionTask task) {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
-            Map<String, Object> parameter = objectMapper.readValue(
-                task.getConfig(),
-                new TypeReference<>() {
-                }
-            );
-            Map<String, Object> job = new HashMap<>();
-            Map<String, Object> content = new HashMap<>();
-            Map<String, Object> reader = new HashMap<>();
-            reader.put("name", "nfsreader");
-            reader.put("parameter", parameter);
-            content.put("reader", reader);
-            Map<String, Object> writer = new HashMap<>();
-            writer.put("name", "nfswriter");
-            writer.put("parameter", parameter);
-            content.put("writer", writer);
-            job.put("content", List.of(content));
-            Map<String, Object> setting = new HashMap<>();
-            Map<String, Object> channel = new HashMap<>();
-            channel.put("channel", 2);
-            setting.put("speed", channel);
-            job.put("setting", setting);
-            Map<String, Object> jobConfig = new HashMap<>();
-            jobConfig.put("job", job);
-            return objectMapper.writeValueAsString(jobConfig);
+            TemplateType templateType = task.getTaskType();
+            switch (templateType) {
+                case NAS:
+                    // NAS 特殊处理
+                    // 移除 templateType 字段
+                    NasConfig nasConfig = objectMapper.readValue(task.getConfig(), NasConfig.class);
+                    return nasConfig.toJobConfig(objectMapper, task);
+                case OBS:
+                case MYSQL:
+                default:
+                    throw BusinessException.of(SystemErrorCode.UNKNOWN_ERROR, "Unsupported template type: " + templateType);
+            }
         } catch (Exception e) {
             log.error("Failed to parse task config", e);
             throw new RuntimeException("Failed to parse task config", e);

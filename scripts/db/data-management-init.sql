@@ -55,6 +55,7 @@ CREATE TABLE IF NOT EXISTS t_dm_dataset_files (
     file_size BIGINT DEFAULT 0 COMMENT '文件大小(字节)',
     check_sum VARCHAR(64) COMMENT '文件校验和',
     tags      JSON COMMENT '文件标签信息',
+    tags_updated_at TIMESTAMP NULL COMMENT '标签最后更新时间',
     metadata JSON COMMENT '文件元数据',
     status VARCHAR(50) DEFAULT 'ACTIVE' COMMENT '文件状态：ACTIVE/DELETED/PROCESSING',
     upload_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '上传时间',

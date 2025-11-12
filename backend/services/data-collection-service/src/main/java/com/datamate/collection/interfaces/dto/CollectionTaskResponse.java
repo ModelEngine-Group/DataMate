@@ -29,7 +29,8 @@ public class CollectionTaskResponse {
 
   private String description;
 
-  @Valid
+  private String targetPath;
+
   private Map<String, Object> config = new HashMap<>();
 
   private TaskStatus status;

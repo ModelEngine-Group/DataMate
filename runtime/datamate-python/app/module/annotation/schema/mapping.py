@@ -11,13 +11,14 @@ class DatasetMappingCreateRequest(BaseModel):
 
     Accept both snake_case and camelCase field names from frontend JSON by
     declaring explicit aliases. Frontend sends `datasetId`, `name`,
-    `description` (camelCase), so provide aliases so pydantic will map them
+    `description`, `templateId` (camelCase), so provide aliases so pydantic will map them
     to the internal attributes used in the service code (dataset_id, name,
-    description).
+    description, template_id).
     """
     dataset_id: str = Field(..., alias="datasetId", description="源数据集ID")
     name: Optional[str] = Field(None, alias="name", description="标注项目名称")
     description: Optional[str] = Field(None, alias="description", description="标注项目描述")
+    template_id: Optional[str] = Field(None, alias="templateId", description="标注模板ID")
 
     class Config:
         # allow population by field name when constructing model programmatically
@@ -34,13 +35,16 @@ class DatasetMappingUpdateRequest(BaseResponseModel):
     dataset_id: Optional[str] = Field(None, description="源数据集ID")
 
 class DatasetMappingResponse(BaseModel):
-    dataset_id: str = Field(..., description="源数据集ID")
     """数据集映射 查询 响应模型"""
     id: str = Field(..., description="映射UUID")
-    labeling_project_id: str = Field(..., description="标注项目ID")
+    dataset_id: str = Field(..., alias="datasetId", description="源数据集ID")
+    dataset_name: Optional[str] = Field(None, alias="datasetName", description="数据集名称")
+    labeling_project_id: str = Field(..., alias="labelingProjectId", description="标注项目ID")
     name: Optional[str] = Field(None, description="标注项目名称")
-    created_at: datetime = Field(..., description="创建时间")
-    deleted_at: Optional[datetime] = Field(None, description="删除时间")
+    description: Optional[str] = Field(None, description="标注项目描述")
+    created_at: datetime = Field(..., alias="createdAt", description="创建时间")
+    updated_at: Optional[datetime] = Field(None, alias="updatedAt", description="更新时间")
+    deleted_at: Optional[datetime] = Field(None, alias="deletedAt", description="删除时间")
     
     class Config:
         from_attributes = True

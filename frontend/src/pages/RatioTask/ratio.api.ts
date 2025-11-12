@@ -16,8 +16,7 @@ export function createRatioTaskUsingPost(data: any) {
 }
 
 // 删除配比任务（支持批量）
-export function deleteRatioTasksUsingDelete(ids: string[]) {
-  const qs = (ids || []).map((id) => `ids=${encodeURIComponent(id)}`).join("&");
-  const url = qs ? `/api/synthesis/ratio-task?${qs}` : "/api/synthesis/ratio-task";
+export function deleteRatioTasksUsingDelete(id: string) {
+  const url = `/api/synthesis/ratio-task?ids=${id}`;
   return del(url);
 }

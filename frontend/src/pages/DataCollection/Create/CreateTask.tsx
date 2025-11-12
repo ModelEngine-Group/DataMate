@@ -14,7 +14,7 @@ const { TextArea } = Input;
 
 const defaultTemplates = [
   {
-    id: "nas",
+    id: "NAS",
     name: "NAS到本地",
     description: "从NAS文件系统导入数据到本地文件系统",
     config: {
@@ -23,7 +23,7 @@ const defaultTemplates = [
     },
   },
   {
-    id: "obs",
+    id: "OBS",
     name: "OBS到本地",
     description: "从OBS文件系统导入数据到本地文件系统",
     config: {
@@ -32,11 +32,11 @@ const defaultTemplates = [
     },
   },
   {
-    id: "web",
-    name: "Web到本地",
-    description: "从Web URL导入数据到本地文件系统",
+    id: "MYSQL",
+    name: "Mysql到本地",
+    description: "从Mysql中导入数据到本地文件系统",
     config: {
-      reader: "webreader",
+      reader: "mysqlreader",
       writer: "localwriter",
     },
   },
@@ -45,9 +45,9 @@ const defaultTemplates = [
 const syncModeOptions = Object.values(SyncModeMap);
 
 enum TemplateType {
-  NAS = "nas",
-  OBS = "obs",
-  WEB = "web",
+  NAS = "NAS",
+  OBS = "OBS",
+  MYSQL = "MYSQL",
 }
 
 export default function CollectionTaskCreate() {
@@ -58,16 +58,22 @@ export default function CollectionTaskCreate() {
   const [templateType, setTemplateType] = useState<"default" | "custom">(
     "default"
   );
-  const [selectedTemplate, setSelectedTemplate] = useState("nas");
+  // 默认模板类型设为 NAS
+  const [selectedTemplate, setSelectedTemplate] = useState<TemplateType>(
+    TemplateType.NAS
+  );
   const [customConfig, setCustomConfig] = useState("");
 
-  const [newTask, setNewTask] = useState({
+  // 将 newTask 设为 any，并初始化 config.templateType 为 NAS
+  const [newTask, setNewTask] = useState<any>({
     name: "",
     description: "",
     syncMode: SyncMode.ONCE,
     cronExpression: "",
     maxRetries: 10,
-    dataset: {},
+    dataset: null,
+    config: { templateType: TemplateType.NAS },
+    createDataset: false,
   });
   const [scheduleExpression, setScheduleExpression] = useState({
     type: SyncMode.SCHEDULED,
@@ -79,7 +85,7 @@ export default function CollectionTaskCreate() {
 
   const handleSubmit = async () => {
     try {
-      const formData = await form.validateFields();
+      await form.validateFields();
       if (templateType === "default" && !selectedTemplate) {
         window.alert("请选择默认模板");
         return;
@@ -88,8 +94,21 @@ export default function CollectionTaskCreate() {
         window.alert("请填写自定义配置");
         return;
       }
-      // Create task logic here
-      await createTaskUsingPost(newTask);
+
+      // 构建最终 payload，不依赖异步 setState
+      const payload = {
+        ...newTask,
+        taskType:
+          templateType === "default" ? selectedTemplate : "CUSTOM",
+        config: {
+          ...((newTask && newTask.config) || {}),
+          ...(templateType === "custom" ? { dataxJson: customConfig } : {}),
+        },
+      };
+
+      console.log("创建任务 payload:", payload);
+
+      await createTaskUsingPost(payload);
       message.success("任务创建成功");
       navigate("/data/collection");
     } catch (error) {
@@ -192,32 +211,47 @@ export default function CollectionTaskCreate() {
             </Form.Item> */}
             {templateType === "default" && (
               <>
-                {/* <Form.Item label="选择模板">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                    {defaultTemplates.map((template) => (
-                      <div
-                        key={template.id}
-                        className={`border p-4 rounded-md hover:shadow-lg transition-shadow ${
-                          selectedTemplate === template.id
-                            ? "border-blue-500"
-                            : "border-gray-300"
-                        }`}
-                        onClick={() => setSelectedTemplate(template.id)}
-                      >
-                        <div className="font-medium">{template.name}</div>
-                        <div className="text-gray-500">
-                          {template.description}
+                {
+                  <Form.Item label="选择模板">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                      {defaultTemplates.map((template) => (
+                        <div
+                          key={template.id}
+                          className={`border p-4 rounded-md hover:shadow-lg transition-shadow ${
+                            selectedTemplate === template.id
+                              ? "border-blue-500"
+                              : "border-gray-300"
+                          }`}
+                          onClick={() => {
+                            setSelectedTemplate(template.id as TemplateType);
+                            // 使用函数式更新，合并之前的 config
+                            setNewTask((prev: any) => ({
+                              ...prev,
+                              config: {
+                                templateType: template.id,
+                              },
+                            }));
+                            // 同步表单显示
+                            form.setFieldsValue({
+                              config: { templateType: template.id },
+                            });
+                          }}
+                        >
+                          <div className="font-medium">{template.name}</div>
+                          <div className="text-gray-500">
+                            {template.description}
+                          </div>
+                          <div className="text-gray-400">
+                            {template.config.reader} → {template.config.writer}
+                          </div>
                         </div>
-                        <div className="text-gray-400">
-                          {template.config.reader} → {template.config.writer}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </Form.Item> */}
+                      ))}
+                    </div>
+                  </Form.Item>
+                }
                 {/* nas import */}
                 {selectedTemplate === TemplateType.NAS && (
-                  <div className="grid grid-cols-2 gap-3 px-2 rounded">
+                  <div className="grid grid-cols-2 gap-3 px-2 bg-blue-50 rounded">
                     <Form.Item
                       name={["config", "ip"]}
                       rules={[{ required: true, message: "请输入NAS地址" }]}
@@ -246,7 +280,7 @@ export default function CollectionTaskCreate() {
                 {selectedTemplate === TemplateType.OBS && (
                   <div className="grid grid-cols-2 gap-3 p-4 bg-blue-50 rounded-lg">
                     <Form.Item
-                      name="endpoint"
+                      name={["config", "endpoint"]}
                       rules={[{ required: true }]}
                       label="Endpoint"
                     >
@@ -256,21 +290,21 @@ export default function CollectionTaskCreate() {
                       />
                     </Form.Item>
                     <Form.Item
-                      name="bucket"
+                      name={["config", "bucket"]}
                       rules={[{ required: true }]}
                       label="Bucket"
                     >
                       <Input className="h-8 text-xs" placeholder="my-bucket" />
                     </Form.Item>
                     <Form.Item
-                      name="accessKey"
+                      name={["config", "accessKey"]}
                       rules={[{ required: true }]}
                       label="Access Key"
                     >
                       <Input className="h-8 text-xs" placeholder="Access Key" />
                     </Form.Item>
                     <Form.Item
-                      name="secretKey"
+                      name={["config", "secretKey"]}
                       rules={[{ required: true }]}
                       label="Secret Key"
                     >
@@ -279,6 +313,54 @@ export default function CollectionTaskCreate() {
                         className="h-8 text-xs"
                         placeholder="Secret Key"
                       />
+                    </Form.Item>
+                  </div>
+                )}
+
+                {/* mysql import */}
+                {selectedTemplate === TemplateType.MYSQL && (
+                  <div className="grid grid-cols-2 gap-3 px-2 bg-blue-50 rounded">
+                    <Form.Item
+                      name={["config", "host"]}
+                      rules={[{ required: true, message: "请输入MYSQL主机名" }]}
+                      label="MYSQL主机名"
+                    >
+                      <Input placeholder="192.168.1.100" />
+                    </Form.Item>
+                    <Form.Item
+                      name={["config", "port"]}
+                      rules={[{ required: true, message: "请输入端口号" }]}
+                      label="端口号"
+                    >
+                      <Input placeholder="3306" />
+                    </Form.Item>
+                    <Form.Item
+                      name={["config", "user"]}
+                      rules={[{ required: true, message: "请输入用户名" }]}
+                      label="用户名"
+                    >
+                      <Input placeholder="mysql" />
+                    </Form.Item>
+                    <Form.Item
+                      name={["config", "password"]}
+                      rules={[{ required: true, message: "请输入密码" }]}
+                      label="密码"
+                    >
+                      <Input placeholder="" />
+                    </Form.Item>
+                    <Form.Item
+                      name={["config", "schema"]}
+                      rules={[{ required: true, message: "请输入数据库" }]}
+                      label="数据库"
+                    >
+                      <Input placeholder="public" />
+                    </Form.Item>
+                    <Form.Item
+                      name={["config", "sql"]}
+                      rules={[{ required: true, message: "请输入查询语句" }]}
+                      label="查询语句"
+                    >
+                      <Input placeholder="select * from your_table" />
                     </Form.Item>
                   </div>
                 )}
@@ -313,15 +395,17 @@ export default function CollectionTaskCreate() {
                     value={isCreateDataset}
                     onChange={(e) => {
                       const value = e.target.value;
-                      if (value === false) {
-                        form.setFieldsValue({
-                          dataset: {},
-                        });
-                        setNewTask({
-                          ...newTask,
-                          dataset: {},
-                        });
+                      let datasetInit = null;
+                      if (value === true) {
+                        datasetInit = {};
                       }
+                      form.setFieldsValue({
+                        dataset: datasetInit,
+                      });
+                      setNewTask((prev: any) => ({
+                        ...prev,
+                        dataset: datasetInit,
+                      }));
                       setIsCreateDataset(e.target.value);
                     }}
                   >
@@ -339,13 +423,13 @@ export default function CollectionTaskCreate() {
                       <Input
                         placeholder="输入数据集名称"
                         onChange={(e) => {
-                          setNewTask({
-                            ...newTask,
+                          setNewTask((prev: any) => ({
+                            ...prev,
                             dataset: {
-                              ...newTask.dataset,
+                              ...(prev.dataset || {}),
                               name: e.target.value,
                             },
-                          });
+                          }));
                         }}
                       />
                     </Form.Item>
@@ -356,15 +440,16 @@ export default function CollectionTaskCreate() {
                     >
                       <RadioCard
                         options={datasetTypes}
-                        value={newTask.dataset.datasetType}
+                        value={newTask.dataset?.datasetType}
                         onChange={(type) => {
                           form.setFieldValue(["dataset", "datasetType"], type);
-                          setNewTask({
-                            ...newTask,
+                          setNewTask((prev: any) => ({
+                            ...prev,
                             dataset: {
+                              ...(prev.dataset || {}),
                               datasetType: type as DatasetSubType,
                             },
-                          });
+                          }));
                         }}
                       />
                     </Form.Item>

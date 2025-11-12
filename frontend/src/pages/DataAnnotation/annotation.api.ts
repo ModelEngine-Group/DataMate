@@ -102,30 +102,30 @@ export function getAnnotationStatisticsUsingGet(params?: any) {
 
 // 标注模板管理
 export function queryAnnotationTemplatesUsingGet(params?: any) {
-  return get("/api/v1/annotation/templates", params);
+  return get("/api/annotation/templates", params);
 }
 
 export function createAnnotationTemplateUsingPost(data: any) {
-  return post("/api/v1/annotation/templates", data);
+  return post("/api/annotation/templates", data);
 }
 
 export function queryAnnotationTemplateByIdUsingGet(
   templateId: string | number
 ) {
-  return get(`/api/v1/annotation/templates/${templateId}`);
+  return get(`/api/annotation/templates/${templateId}`);
 }
 
 export function updateAnnotationTemplateByIdUsingPut(
   templateId: string | number,
   data: any
 ) {
-  return put(`/api/v1/annotation/templates/${templateId}`, data);
+  return put(`/api/annotation/templates/${templateId}`, data);
 }
 
 export function deleteAnnotationTemplateByIdUsingDelete(
   templateId: string | number
 ) {
-  return del(`/api/v1/annotation/templates/${templateId}`);
+  return del(`/api/annotation/templates/${templateId}`);
 }
 
 // 主动学习相关接口

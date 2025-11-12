@@ -285,12 +285,7 @@ public class DatasetApplicationService {
             return Collections.emptyList();
         }
         log.info("获取到归集任务详情: {}", taskDetail);
-        LocalCollectionConfig config = parseTaskConfig(taskDetail.getConfig());
-        if (config == null) {
-            log.warn("解析任务配置失败，任务ID: {}", dataSourceId);
-            return Collections.emptyList();
-        }
-        return config.getFilePaths();
+        return Collections.singletonList(taskDetail.getTargetPath());
     }
 
     /**

@@ -11,6 +11,8 @@ from .mapping import (
 from .sync import (
     SyncDatasetRequest,
     SyncDatasetResponse,
+    SyncAnnotationsRequest,
+    SyncAnnotationsResponse,
 )
 
 __all__ = [
@@ -21,5 +23,7 @@ __all__ = [
     "DatasetMappingResponse",
     "SyncDatasetRequest",
     "SyncDatasetResponse",
+    "SyncAnnotationsRequest",
+    "SyncAnnotationsResponse",
     "DeleteDatasetResponse",
 ]
