@@ -21,6 +21,8 @@ public interface OperatorConverter {
     @Mapping(target = "categories", source = "categories", qualifiedByName = "stringToList")
     OperatorDto fromEntityToDto(OperatorView operator);
 
+    List<OperatorDto> fromEntityViewToDto(List<OperatorView> operator);
+
     List<OperatorDto> fromEntityToDto(List<Operator> operator);
 
     @Named("stringToList")

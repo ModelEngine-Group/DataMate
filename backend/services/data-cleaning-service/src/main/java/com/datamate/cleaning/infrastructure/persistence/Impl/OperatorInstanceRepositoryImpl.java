@@ -41,6 +41,5 @@ public class OperatorInstanceRepositoryImpl extends CrudRepository<OperatorInsta
 
     public List<OperatorDto> findOperatorByInstanceId(String instanceId) {
         return OperatorInstanceConverter.INSTANCE.fromEntityToDto(mapper.findOperatorByInstanceId(instanceId));
-
     }
 }

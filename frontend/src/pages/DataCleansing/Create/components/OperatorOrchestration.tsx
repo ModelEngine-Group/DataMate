@@ -1,15 +1,16 @@
-import React, { useState } from "react";
+import React, {useMemo, useState} from "react";
 import { Card, Input, Tag, Select, Button } from "antd";
 import { DeleteOutlined } from "@ant-design/icons";
 import { CleansingTemplate } from "../../cleansing.model";
 import { Workflow } from "lucide-react";
-import { OperatorI } from "@/pages/OperatorMarket/operator.model";
+import {CategoryI, OperatorI} from "@/pages/OperatorMarket/operator.model";
 
 interface OperatorFlowProps {
   selectedOperators: OperatorI[];
   configOperator: OperatorI | null;
   templates: CleansingTemplate[];
   currentTemplate: CleansingTemplate | null;
+  categoryOptions: [];
   setCurrentTemplate: (template: CleansingTemplate | null) => void;
   removeOperator: (id: string) => void;
   setSelectedOperators: (operators: OperatorI[]) => void;
@@ -33,6 +34,7 @@ const OperatorFlow: React.FC<OperatorFlowProps> = ({
   configOperator,
   templates,
   currentTemplate,
+  categoryOptions,
   setSelectedOperators,
   setConfigOperator,
   removeOperator,
@@ -46,6 +48,16 @@ const OperatorFlow: React.FC<OperatorFlowProps> = ({
   handleDragEnd,
 }) => {
   const [editingIndex, setEditingIndex] = useState<string | null>(null);
+
+  const categoryMap = useMemo(() => {
+    const map: { [key: string]: CategoryI } = {};
+    categoryOptions.forEach((cat: any) => {
+      map[cat.id] = {
+        ...cat,
+      };
+    });
+    return map;
+  }, [categoryOptions]);
 
   // 添加编号修改处理函数
   const handleIndexChange = (operatorId: string, newIndex: string) => {
@@ -167,8 +179,9 @@ const OperatorFlow: React.FC<OperatorFlowProps> = ({
                   {operator.name}
                 </span>
               </div>
-              {/* 分类标签 */}
-              <Tag color="default">分类</Tag>
+              {operator?.categories?.map((categoryId) => {
+                return <Tag color="default">{categoryMap[categoryId].name}</Tag>
+              })}
               {/* 参数状态指示 */}
               {Object.values(operator.configs).some(
                 (param: any) =>
@@ -192,7 +205,7 @@ const OperatorFlow: React.FC<OperatorFlowProps> = ({
         ))}
         {selectedOperators.length === 0 && (
           <div className="text-center py-16 text-gray-400 border-2 border-dashed border-gray-100 rounded-lg">
-            <Workflow className="w-full w-10 h-10 mb-4 opacity-50" />
+            <Workflow className="w-full h-10 mb-4 opacity-50" />
             <div className="text-lg font-medium mb-2">开始构建您的算子流程</div>
             <div className="text-sm">
               从左侧算子库拖拽算子到此处，或点击算子添加

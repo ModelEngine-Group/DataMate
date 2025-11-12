@@ -2,10 +2,10 @@ package com.datamate.cleaning.infrastructure.converter;
 
 
 import com.datamate.cleaning.domain.model.entity.OperatorInstance;
-import com.datamate.cleaning.domain.model.entity.Operator;
 import com.datamate.cleaning.interfaces.dto.OperatorInstanceDto;
 import com.datamate.common.infrastructure.exception.BusinessException;
 import com.datamate.common.infrastructure.exception.SystemErrorCode;
+import com.datamate.operator.domain.model.OperatorView;
 import com.datamate.operator.interfaces.dto.OperatorDto;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -14,6 +14,8 @@ import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 import org.mapstruct.factory.Mappers;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -35,5 +37,16 @@ public interface OperatorInstanceConverter {
          }
     }
 
-    List<OperatorDto> fromEntityToDto(List<Operator> operator);
+    @Mapping(target = "categories", source = "categories", qualifiedByName = "stringToList")
+    OperatorDto fromEntityToDto(OperatorView operator);
+
+    List<OperatorDto> fromEntityToDto(List<OperatorView> operator);
+
+    @Named("stringToList")
+    default List<String> stringToList(String input) {
+        if (input == null || input.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return Arrays.stream(input.split(",")).toList();
+    }
 }

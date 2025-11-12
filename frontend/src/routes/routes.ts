@@ -12,7 +12,7 @@ import DatasetDetail from "@/pages/DataManagement/Detail/DatasetDetail";
 import DataCleansing from "@/pages/DataCleansing/Home/DataCleansing";
 import CleansingTaskCreate from "@/pages/DataCleansing/Create/CreateTask";
 import CleansingTaskDetail from "@/pages/DataCleansing/Detail/TaskDetail";
-import CleansingTemplateCreate from "@/pages/DataCleansing/Create/CreateTempate";
+import CleansingTemplateCreate from "@/pages/DataCleansing/Create/CreateTemplate";
 
 import DataAnnotation from "@/pages/DataAnnotation/Home/DataAnnotation";
 import AnnotationTaskCreate from "@/pages/DataAnnotation/Create/CreateTask";
@@ -45,6 +45,7 @@ import WorkflowEditor from "@/pages/Orchestration/WorkflowEditor";
 import SettingsPage from "@/pages/SettingsPage/SettingsPage";
 import { withErrorBoundary } from "@/components/ErrorBoundary";
 import AgentPage from "@/pages/Agent/Agent.tsx";
+import CleansingTemplateDetail from "@/pages/DataCleansing/Detail/TemplateDetail.tsx";
 
 const router = createBrowserRouter([
   {
@@ -123,6 +124,14 @@ const router = createBrowserRouter([
           },
           {
             path: "create-template",
+            Component: CleansingTemplateCreate,
+          },
+          {
+            path: "template-detail/:id",
+            Component: CleansingTemplateDetail,
+          },
+          {
+            path: "update-template/:id",
             Component: CleansingTemplateCreate,
           },
         ],
