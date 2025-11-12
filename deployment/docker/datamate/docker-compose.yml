@@ -49,7 +49,7 @@ services:
   # 3) database
   datamate-database:
     container_name: datamate-database
-    image: mysql:8
+    image: ${REGISTRY:-}datamate-database
     restart: on-failure
     environment:
       MYSQL_ROOT_PASSWORD: password
@@ -61,8 +61,6 @@ services:
       "
     volumes:
       - mysql_volume:/var/lib/mysql
-      - ../../../scripts/db:/docker-entrypoint-initdb.d
-      - ./utf8.cnf:/etc/mysql/conf.d/utf8.cnf:ro
       - database_log_volume:/var/log/datamate/database
     ports:
       - "3306:3306"

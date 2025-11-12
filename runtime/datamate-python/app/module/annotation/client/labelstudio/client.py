@@ -103,6 +103,7 @@ class Client:
         """创建Label Studio项目"""
         try:
             logger.debug(f"Creating Label Studio project: {title}")
+            logger.debug(f"Label Studio URL: {self.base_url}/api/projects")
             
             project_data = {
                 "title": title,
@@ -123,10 +124,28 @@ class Client:
             return project
         
         except httpx.HTTPStatusError as e:
-            logger.error(f"Create project failed HTTP {e.response.status_code}: {e.response.text}")
+            logger.error(
+                f"Create project failed - HTTP {e.response.status_code}\n"
+                f"URL: {e.request.url}\n"
+                f"Response Headers: {dict(e.response.headers)}\n"
+                f"Response Body: {e.response.text[:1000]}"  # First 1000 chars
+            )
+            return None
+        except httpx.ConnectError as e:
+            logger.error(
+                f"Failed to connect to Label Studio at {self.base_url}\n"
+                f"Error: {str(e)}\n"
+                f"Possible causes:\n"
+                f"  - Label Studio service is not running\n"
+                f"  - Incorrect URL configuration\n"
+                f"  - Network connectivity issue"
+            )
+            return None
+        except httpx.TimeoutException as e:
+            logger.error(f"Request to Label Studio timed out after {self.timeout}s: {str(e)}")
             return None
         except Exception as e:
-            logger.error(f"Error while creating Label Studio project: {e}")
+            logger.error(f"Error while creating Label Studio project: {str(e)}", exc_info=True)
             return None
     
     async def import_tasks(
