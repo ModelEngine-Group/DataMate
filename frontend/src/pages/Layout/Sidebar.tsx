@@ -1,5 +1,5 @@
 import { memo, useEffect, useState } from "react";
-import { Button, Menu, Popover } from "antd";
+import { Button, Drawer, Menu, Popover } from "antd";
 import {
   CloseOutlined,
   MenuOutlined,
@@ -9,6 +9,7 @@ import { ClipboardList, Sparkles, X } from "lucide-react";
 import { menuItems } from "@/pages/Layout/menu";
 import { NavLink, useLocation, useNavigate } from "react-router";
 import TaskUpload from "./TaskUpload";
+import SettingsPage from "../SettingsPage/SettingsPage";
 
 const AsiderAndHeaderLayout = () => {
   const { pathname } = useLocation();
@@ -16,6 +17,7 @@ const AsiderAndHeaderLayout = () => {
   const [activeItem, setActiveItem] = useState<string>("");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [taskCenterVisible, setTaskCenterVisible] = useState(false);
+  const [settingVisible, setSettingVisible] = useState(false);
 
   // Initialize active item based on current pathname
   const initActiveItem = () => {
@@ -138,7 +140,7 @@ const AsiderAndHeaderLayout = () => {
             <Button
               block
               onClick={() => {
-                navigate("/settings");
+                setSettingVisible(true);
               }}
             >
               设置
@@ -165,7 +167,7 @@ const AsiderAndHeaderLayout = () => {
             <Button
               block
               onClick={() => {
-                navigate("/settings");
+                setSettingVisible(true);
               }}
             >
               <SettingOutlined />
@@ -173,7 +175,17 @@ const AsiderAndHeaderLayout = () => {
           </div>
         )}
       </div>
-
+      <Drawer
+        title="设置"
+        placement="bottom"
+        width="100%"
+        height="100%"
+        open={settingVisible}
+        onClose={() => setSettingVisible(false)}
+        bodyStyle={{ padding: 0 }}
+      >
+        <SettingsPage></SettingsPage>
+      </Drawer>
       {/* 添加遮罩层，点击外部区域时关闭 */}
       {taskCenterVisible && (
         <div

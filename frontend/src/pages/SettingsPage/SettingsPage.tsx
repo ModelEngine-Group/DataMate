@@ -14,12 +14,13 @@ export default function SettingsPage() {
   return (
     <div className="h-screen flex">
       <div className="border-right h-full">
-        <h1 className="min-w-[200px] w-full border-bottom flex gap-2 text-lg font-bold text-gray-900 p-4">
+        {/* <h1 className="min-w-[200px] w-full border-bottom flex gap-2 text-lg font-bold text-gray-900 p-4">
           <Button icon={<X />} type="text" onClick={() => navigate(-1)} />
           设置中心
-        </h1>
+        </h1> */}
         <div className="h-full">
           <Menu
+            mode="inline"
             items={[
               {
                 key: "system-config",
