@@ -108,7 +108,9 @@ class Service:
                     uploadedAt=f.upload_time,  # type: ignore
                     description=None,
                     uploadedBy=None,
-                    lastAccessTime=f.last_access_time  # type: ignore
+                    lastAccessTime=f.last_access_time,  # type: ignore
+                    tags=f.tags,  # type: ignore
+                    tags_updated_at=f.tags_updated_at  # type: ignore
                 )
                 for f in files
             ]

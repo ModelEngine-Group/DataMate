@@ -14,7 +14,9 @@ public enum OperatorErrorCode implements ErrorCode {
 
     YAML_NOT_FOUND("op.0002", "算子中缺少元数据文件"),
 
-    FIELD_NOT_FOUND("op.0003", "缺少必要的字段");
+    FIELD_NOT_FOUND("op.0003", "缺少必要的字段"),
+
+    SETTINGS_PARSE_FAILED("op.0004", "settings字段解析失败");
 
     private final String code;
     private final String message;

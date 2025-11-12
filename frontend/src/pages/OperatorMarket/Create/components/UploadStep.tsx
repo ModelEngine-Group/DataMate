@@ -3,14 +3,8 @@ import { Upload, FileText } from "lucide-react";
 
 export default function UploadStep({ isUploading, onUpload }) {
   const supportedFormats = [
-    { ext: ".py", desc: "Python 脚本文件" },
     { ext: ".zip", desc: "压缩包文件" },
-    { ext: ".tar.gz", desc: "压缩包文件" },
     { ext: ".tar", desc: "压缩包文件" },
-    { ext: ".whl", desc: "Python Wheel 包" },
-    { ext: ".yaml", desc: "配置文件" },
-    { ext: ".yml", desc: "配置文件" },
-    { ext: ".json", desc: "JSON 配置文件" },
   ];
 
   return (
@@ -28,9 +22,9 @@ export default function UploadStep({ isUploading, onUpload }) {
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
           支持的文件格式
         </h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="flex gap-4">
           {supportedFormats.map((format, index) => (
-            <div key={index} className="p-3 border border-gray-200 rounded-lg">
+            <div key={index} className="p-3 border border-gray-200 rounded-lg flex-1">
               <div className="font-medium text-gray-900">{format.ext}</div>
               <div className="text-sm text-gray-500">{format.desc}</div>
             </div>
@@ -52,7 +46,7 @@ export default function UploadStep({ isUploading, onUpload }) {
         onClick={() => {
           const input = document.createElement("input");
           input.type = "file";
-          input.multiple = true;
+          input.multiple = false;
           input.accept = supportedFormats.map((f) => f.ext).join(",");
           input.onchange = (e) => {
             const files = (e.target as HTMLInputElement).files;
@@ -75,7 +69,7 @@ export default function UploadStep({ isUploading, onUpload }) {
               拖拽文件到此处或点击选择文件
             </p>
             <p className="text-sm text-gray-500">
-              支持单个文件或多个文件同时上传
+              仅支持单个文件上传
             </p>
           </div>
         )}

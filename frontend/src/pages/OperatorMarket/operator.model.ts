@@ -25,6 +25,9 @@ export interface OperatorI {
   id: string;
   name: string;
   type: string;
+  version: string;
+  inputs: string;
+  outputs: string;
   icon: React.ReactNode;
   description: string;
   tags: string[];
@@ -37,6 +40,8 @@ export interface OperatorI {
   configs: {
     [key: string]: ConfigI;
   };
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface CategoryI {

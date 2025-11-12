@@ -27,7 +27,8 @@ public class OperatorViewRepositoryImpl extends CrudRepository<OperatorViewMappe
         queryWrapper.in(CollectionUtils.isNotEmpty(categories), "category_id", categories)
             .like(StringUtils.isNotBlank(operatorName), "operator_name", operatorName)
             .eq(isStar != null, "is_star", isStar)
-            .groupBy("operator_id");
+            .groupBy("operator_id")
+            .orderByDesc("created_at");
         Page<OperatorView> queryPage = null;
         if (size != null && page != null) {
             queryPage = new Page<>(page + 1, size);

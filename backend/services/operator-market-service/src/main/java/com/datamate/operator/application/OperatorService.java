@@ -2,24 +2,35 @@ package com.datamate.operator.application;
 
 import com.datamate.common.domain.model.ChunkUploadPreRequest;
 import com.datamate.common.domain.service.FileService;
+import com.datamate.common.infrastructure.exception.BusinessException;
 import com.datamate.operator.domain.contants.OperatorConstant;
 import com.datamate.operator.infrastructure.converter.OperatorConverter;
 import com.datamate.operator.domain.model.OperatorView;
 import com.datamate.operator.domain.repository.CategoryRelationRepository;
 import com.datamate.operator.domain.repository.OperatorRepository;
 import com.datamate.operator.domain.repository.OperatorViewRepository;
+import com.datamate.operator.infrastructure.exception.OperatorErrorCode;
 import com.datamate.operator.infrastructure.parser.ParserHolder;
 import com.datamate.operator.interfaces.dto.OperatorDto;
 import com.datamate.operator.interfaces.dto.UploadOperatorRequest;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class OperatorService {
     private final OperatorRepository operatorRepo;
@@ -31,6 +42,8 @@ public class OperatorService {
     private final ParserHolder parserHolder;
 
     private final FileService fileService;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Value("${operator.base.path:/operators}")
     private String operatorBasePath;
@@ -53,19 +66,25 @@ public class OperatorService {
 
     @Transactional
     public OperatorDto createOperator(OperatorDto req) {
+        overrideSettings(req);
         operatorRepo.insertOperator(req);
         relationRepo.batchInsert(req.getId(), req.getCategories());
         parserHolder.extractTo(getFileType(req.getFileName()), getUploadPath(req.getFileName()),
-            getExtractPath(getFileNameWithoutExtension(req.getFileName())));
+                getExtractPath(getFileNameWithoutExtension(req.getFileName())));
         return getOperatorById(req.getId());
     }
 
     @Transactional
     public OperatorDto updateOperator(String id, OperatorDto req) {
+        overrideSettings(req);
         operatorRepo.updateOperator(req);
-        relationRepo.batchInsert(id, req.getCategories());
-        parserHolder.extractTo(getFileType(req.getFileName()), getUploadPath(req.getFileName()),
-            getExtractPath(getFileNameWithoutExtension(req.getFileName())));
+        if (CollectionUtils.isNotEmpty(req.getCategories())) {
+            relationRepo.batchUpdate(id, req.getCategories());
+        }
+        if (StringUtils.isNotBlank(req.getFileName())) {
+            parserHolder.extractTo(getFileType(req.getFileName()), getUploadPath(req.getFileName()),
+                    getExtractPath(getFileNameWithoutExtension(req.getFileName())));
+        }
         return getOperatorById(id);
     }
 
@@ -77,7 +96,7 @@ public class OperatorService {
 
     public OperatorDto uploadOperator(String fileName) {
         return parserHolder.parseYamlFromArchive(getFileType(fileName), new File(getUploadPath(fileName)),
-            OperatorConstant.YAML_PATH);
+                OperatorConstant.YAML_PATH);
     }
 
     public String preUpload() {
@@ -106,5 +125,77 @@ public class OperatorService {
 
     private String getExtractPath(String fileName) {
         return operatorBasePath + File.separator + "extract" + File.separator + fileName;
+    }
+
+    private void overrideSettings(OperatorDto operatorDto) {
+        if (StringUtils.isBlank(operatorDto.getSettings()) || MapUtils.isEmpty(operatorDto.getOverrides())) {
+            return;
+        }
+        try {
+            Map<String, Map<String, Object>> settings = objectMapper.readValue(operatorDto.getSettings(), Map.class);
+            for (Map.Entry<String, Object> entry : operatorDto.getOverrides().entrySet()) {
+                String key = entry.getKey();
+                if (!settings.containsKey(key)) {
+                    continue;
+                }
+                Object value = entry.getValue();
+                Map<String, Object> setting = settings.get(key);
+                String type = setting.get("type").toString();
+                switch (type) {
+                    case "slider":
+                    case "switch":
+                    case "select":
+                    case "input":
+                    case "radio":
+                        setting.put("defaultVal", value);
+                        break;
+                    case "checkbox":
+                        setting.put("defaultVal", convertObjectToListString(value));
+                        break;
+                    case "range":
+                        updateProperties(setting, value);
+                    default:
+                }
+                settings.put(key, setting);
+            }
+            operatorDto.setSettings(objectMapper.writeValueAsString(settings));
+        } catch (JsonProcessingException e) {
+            throw BusinessException.of(OperatorErrorCode.SETTINGS_PARSE_FAILED, e.getMessage());
+        }
+    }
+
+    private String convertObjectToListString(Object object) {
+        if (object == null) {
+            return null;
+        } else if (object instanceof List<?> list) {
+            List<String> result = new ArrayList<>();
+            for (Object item : list) {
+                result.add(String.valueOf(item));
+            }
+            return String.join(",", result);
+        } else {
+            return object.toString();
+        }
+    }
+
+    private void updateProperties(Map<String, Object> setting, Object value) {
+        List<Object> defaultValue = new ArrayList<>();
+        if (value instanceof List) {
+            defaultValue.addAll((List<?>) value);
+        }
+
+        Object properties = setting.get("properties");
+        if (properties instanceof List<?> list) {
+            if (defaultValue.size() != list.size()) {
+                return;
+            }
+            List<Map<String, Object>> result = new ArrayList<>();
+            for (int i = 0; i < list.size(); i++) {
+                Map<String, Object> map = objectMapper.convertValue(list.get(i), Map.class);
+                map.put("defaultVal", defaultValue.get(i));
+                result.add(map);
+            }
+            setting.put("properties", result);
+        }
     }
 }

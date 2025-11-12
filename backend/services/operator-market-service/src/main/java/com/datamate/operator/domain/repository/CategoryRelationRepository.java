@@ -12,5 +12,7 @@ public interface CategoryRelationRepository extends IRepository<CategoryRelation
 
     void batchInsert(String operatorId, List<String> categories);
 
+    void batchUpdate(String operatorId, List<String> categories);
+
     void deleteByOperatorId(String operatorId);
 }
