@@ -1,8 +1,10 @@
+// java
 package com.datamate.collection.infrastructure.datax;
 
 import com.datamate.collection.common.enums.TemplateType;
 import com.datamate.collection.domain.model.entity.CollectionTask;
 import com.datamate.collection.domain.process.ProcessRunner;
+import com.datamate.collection.infrastructure.datax.config.MysqlConfig;
 import com.datamate.collection.infrastructure.datax.config.NasConfig;
 import com.datamate.common.infrastructure.exception.BusinessException;
 import com.datamate.common.infrastructure.exception.SystemErrorCode;
@@ -15,10 +17,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.time.Duration;
+import java.util.*;
+import java.util.regex.Pattern;
 
 @Slf4j
 @Component
@@ -30,7 +32,10 @@ public class DataxProcessRunner implements ProcessRunner {
     @Override
     public int runJob(CollectionTask task, String executionId, int timeoutSeconds) throws Exception {
         Path job = buildJobFile(task);
-        return runJob(job.toFile(), executionId, Duration.ofSeconds(timeoutSeconds));
+        int code = runJob(job.toFile(), executionId, Duration.ofSeconds(timeoutSeconds));
+        // 任务成功后做后处理（仅针对 MYSQL 类型）
+        postProcess(task);
+        return code;
     }
 
     private int runJob(File jobFile, String executionId, Duration timeout) throws Exception {
@@ -90,17 +95,49 @@ public class DataxProcessRunner implements ProcessRunner {
             switch (templateType) {
                 case NAS:
                     // NAS 特殊处理
-                    // 移除 templateType 字段
                     NasConfig nasConfig = objectMapper.readValue(task.getConfig(), NasConfig.class);
                     return nasConfig.toJobConfig(objectMapper, task);
                 case OBS:
                 case MYSQL:
+                    MysqlConfig mysqlConfig = objectMapper.readValue(task.getConfig(), MysqlConfig.class);
+                    return mysqlConfig.toJobConfig(objectMapper, task);
                 default:
                     throw BusinessException.of(SystemErrorCode.UNKNOWN_ERROR, "Unsupported template type: " + templateType);
             }
         } catch (Exception e) {
             log.error("Failed to parse task config", e);
             throw new RuntimeException("Failed to parse task config", e);
+        }
+    }
+
+    private void postProcess(CollectionTask task) throws IOException {
+        if (task.getTaskType() != TemplateType.MYSQL) {
+            return;
+        }
+        String targetPath = task.getTargetPath();
+        // 将targetPath下所有不以.csv结尾的文件修改为以.csv结尾
+        Path dir = Paths.get(targetPath);
+        if (!Files.exists(dir) || !Files.isDirectory(dir)) {
+            log.info("Target path {} does not exist or is not a directory for task {}, skip post processing.", targetPath, task.getId());
+            return;
+        }
+
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir)) {
+            for (Path path : stream) {
+                if (!Files.isRegularFile(path)) continue;
+                String name = path.getFileName().toString();
+                if (name.toLowerCase().endsWith(".csv")) continue;
+
+                Path target = dir.resolve(name + ".csv");
+                try {
+                    Files.move(path, target, StandardCopyOption.REPLACE_EXISTING);
+                    log.info("Renamed file for task {}: {} -> {}", task.getId(), name, target.getFileName().toString());
+                } catch (IOException ex) {
+                    log.warn("Failed to rename file {} for task {}: {}", path, task.getId(), ex.getMessage(), ex);
+                }
+            }
+        } catch (IOException ioe) {
+            log.warn("Error scanning target directory {} for task {}: {}", targetPath, task.getId(), ioe.getMessage(), ioe);
         }
     }
 }

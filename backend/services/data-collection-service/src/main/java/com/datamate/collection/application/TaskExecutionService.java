@@ -1,5 +1,6 @@
 package com.datamate.collection.application;
 
+import com.datamate.collection.common.enums.TemplateType;
 import com.datamate.collection.domain.model.entity.CollectionTask;
 import com.datamate.collection.domain.model.entity.TaskExecution;
 import com.datamate.collection.common.enums.TaskStatus;
@@ -9,6 +10,7 @@ import com.datamate.collection.domain.repository.TaskExecutionRepository;
 import com.datamate.datamanagement.application.DatasetApplicationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,7 +52,9 @@ public class TaskExecutionService {
             executionRepository.completeExecution(executionId, TaskStatus.SUCCESS.name(), LocalDateTime.now(),
                 0, 0L, 0L, 0L, null);
             collectionTaskRepository.updateStatus(task.getId(), TaskStatus.SUCCESS.name());
-            datasetApplicationService.processDataSourceAsync(datasetId, task.getId());
+            if (StringUtils.isNotBlank(datasetId)) {
+                datasetApplicationService.processDataSourceAsync(datasetId, task.getId());
+            }
         } catch (Exception e) {
             log.error("DataX execution failed", e);
             executionRepository.completeExecution(executionId, TaskStatus.FAILED.name(), LocalDateTime.now(),

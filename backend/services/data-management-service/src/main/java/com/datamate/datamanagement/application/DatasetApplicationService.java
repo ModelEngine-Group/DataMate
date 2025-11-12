@@ -287,19 +287,4 @@ public class DatasetApplicationService {
         log.info("获取到归集任务详情: {}", taskDetail);
         return Collections.singletonList(taskDetail.getTargetPath());
     }
-
-    /**
-     * 解析任务配置
-     */
-    private LocalCollectionConfig parseTaskConfig(Map<String, Object> configMap) {
-        try {
-            if (configMap == null || configMap.isEmpty()) {
-                return null;
-            }
-            return objectMapper.convertValue(configMap, LocalCollectionConfig.class);
-        } catch (Exception e) {
-            log.error("解析任务配置失败", e);
-            return null;
-        }
-    }
 }
