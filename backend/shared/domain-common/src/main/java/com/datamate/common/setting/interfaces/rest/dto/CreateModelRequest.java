@@ -1,6 +1,6 @@
-package com.datamate.common.models.interfaces.rest.dto;
+package com.datamate.common.setting.interfaces.rest.dto;
 
-import com.datamate.common.models.domain.entity.ModelType;
+import com.datamate.common.setting.domain.entity.ModelType;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;

@@ -1,13 +1,13 @@
-package com.datamate.common.models.infrastructure.persistence.impl;
+package com.datamate.common.setting.infrastructure.persistence.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.repository.CrudRepository;
-import com.datamate.common.models.domain.entity.ModelConfig;
-import com.datamate.common.models.domain.repository.ModelConfigRepository;
-import com.datamate.common.models.infrastructure.persistence.mapper.ModelConfigMapper;
-import com.datamate.common.models.interfaces.rest.dto.QueryModelRequest;
+import com.datamate.common.setting.domain.entity.ModelConfig;
+import com.datamate.common.setting.domain.repository.ModelConfigRepository;
+import com.datamate.common.setting.infrastructure.persistence.mapper.ModelConfigMapper;
+import com.datamate.common.setting.interfaces.rest.dto.QueryModelRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;

@@ -1,7 +1,7 @@
-package com.datamate.common.models.interfaces.rest.dto;
+package com.datamate.common.setting.interfaces.rest.dto;
 
 import com.datamate.common.interfaces.PagingQuery;
-import com.datamate.common.models.domain.entity.ModelType;
+import com.datamate.common.setting.domain.entity.ModelType;
 import lombok.Getter;
 import lombok.Setter;
 

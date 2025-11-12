@@ -22,14 +22,6 @@ spring:
       idle-timeout: 600000
       max-lifetime: 1800000
 
-  # Elasticsearch配置
-  elasticsearch:
-    uris: ${ES_URIS:http://localhost:9200}
-    username: ${ES_USERNAME:}
-    password: ${ES_PASSWORD:}
-    connection-timeout: 10s
-    socket-timeout: 30s
-
   # Jackson配置
   jackson:
     time-zone: Asia/Shanghai
@@ -60,6 +52,21 @@ spring:
     import:
       - classpath:config/application-datacollection.yml
       - classpath:config/application-datamanagement.yml
+
+  # Redis配置
+  data:
+    redis:
+      host: datamate-redis
+      port: 6379
+      timeout: 2000
+      password: ${REDIS_PASSWORD:password}
+      lettuce:
+        pool:
+          max-active: 20
+          max-idle: 10
+          min-idle: 5
+          max-wait: 1000ms
+
 
 # MyBatis配置（需在顶层，不在 spring 下）
 mybatis-plus:

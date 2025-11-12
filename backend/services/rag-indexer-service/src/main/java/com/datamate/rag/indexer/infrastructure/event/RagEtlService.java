@@ -1,8 +1,8 @@
 package com.datamate.rag.indexer.infrastructure.event;
 
-import com.datamate.common.models.domain.entity.ModelConfig;
-import com.datamate.common.models.domain.repository.ModelConfigRepository;
-import com.datamate.common.models.infrastructure.client.ModelClient;
+import com.datamate.common.setting.domain.entity.ModelConfig;
+import com.datamate.common.setting.domain.repository.ModelConfigRepository;
+import com.datamate.common.setting.infrastructure.client.ModelClient;
 import com.datamate.rag.indexer.domain.model.FileStatus;
 import com.datamate.rag.indexer.domain.model.RagFile;
 import com.datamate.rag.indexer.domain.repository.RagFileRepository;
@@ -109,7 +109,7 @@ public class RagEtlService {
             document = new HtmlToTextDocumentTransformer().transform(document);
         }
         // 使用文档分块器对文档进行分块
-        DocumentSplitter splitter = documentSplitter(event.processType());
+        DocumentSplitter splitter = documentSplitter(event.addFilesReq().getProcessType());
         List<TextSegment> split = splitter.split(document);
 
         // 更新分块数量
