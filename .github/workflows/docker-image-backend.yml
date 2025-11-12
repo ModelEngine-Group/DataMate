@@ -14,6 +14,7 @@ on:
       - 'scripts/images/backend/**'
       - '.github/workflows/docker-image-backend.yml'
   workflow_dispatch:
+  workflow_call:
 
 jobs:
   call-docker-build:

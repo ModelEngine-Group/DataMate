@@ -3,10 +3,9 @@ import { mapDataset } from "@/pages/DataManagement/dataset.const";
 import { Button, Form, Input, Modal, Select, message } from "antd";
 import TextArea from "antd/es/input/TextArea";
 import { useEffect, useState } from "react";
-import { createAnnotationTaskUsingPost } from "../../annotation.api";
+import { createAnnotationTaskUsingPost, queryAnnotationTemplatesUsingGet } from "../../annotation.api";
 import { Dataset } from "@/pages/DataManagement/dataset.model";
-import LabelingConfigEditor from "./LabelingConfigEditor";
-import { useRef } from "react";
+import type { AnnotationTemplate } from "../../annotation.model";
 
 export default function CreateAnnotationTask({
   open,
@@ -19,21 +18,42 @@ export default function CreateAnnotationTask({
 }) {
   const [form] = Form.useForm();
   const [datasets, setDatasets] = useState<Dataset[]>([]);
+  const [templates, setTemplates] = useState<AnnotationTemplate[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [nameManuallyEdited, setNameManuallyEdited] = useState(false);
-  const editorRef = useRef<any>(null);
-  const EDITOR_LIST_HEIGHT = 420;
 
   useEffect(() => {
     if (!open) return;
-    const fetchDatasets = async () => {
-      const { data } = await queryDatasetsUsingGet({
-        page: 0,
-        size: 1000,
-      });
-      setDatasets(data.content.map(mapDataset) || []);
+    const fetchData = async () => {
+      try {
+        // Fetch datasets
+        const { data: datasetData } = await queryDatasetsUsingGet({
+          page: 0,
+          size: 1000,
+        });
+        setDatasets(datasetData.content.map(mapDataset) || []);
+
+        // Fetch templates
+        const templateResponse = await queryAnnotationTemplatesUsingGet({
+          page: 1,
+          size: 100,  // Backend max is 100
+        });
+
+        // The API returns: {code, message, data: {content, total, page, ...}}
+        if (templateResponse.code === 200 && templateResponse.data) {
+          const fetchedTemplates = templateResponse.data.content || [];
+          console.log("Fetched templates:", fetchedTemplates);
+          setTemplates(fetchedTemplates);
+        } else {
+          console.error("Failed to fetch templates:", templateResponse);
+          setTemplates([]);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        setTemplates([]);
+      }
     };
-    fetchDatasets();
+    fetchData();
   }, [open]);
 
   // Reset form and manual-edit flag when modal opens
@@ -48,24 +68,26 @@ export default function CreateAnnotationTask({
     try {
       const values = await form.validateFields();
       setSubmitting(true);
-      await createAnnotationTaskUsingPost(values);
+
+      // Send templateId instead of labelingConfig
+      const requestData = {
+        name: values.name,
+        description: values.description,
+        datasetId: values.datasetId,
+        templateId: values.templateId,
+      };
+
+      await createAnnotationTaskUsingPost(requestData);
       message?.success?.("创建标注任务成功");
       onClose();
       onRefresh();
     } catch (err: any) {
       console.error("Create annotation task failed", err);
       const msg = err?.message || err?.data?.message || "创建失败，请稍后重试";
-      // show a user friendly message
       (message as any)?.error?.(msg);
     } finally {
       setSubmitting(false);
     }
-  };
-
-  // Placeholder function: generates labeling interface from config
-  // For now it simply returns the parsed config (per requirement)
-  const generateLabelingInterface = (config: any) => {
-    return config;
   };
 
   return (
@@ -83,7 +105,7 @@ export default function CreateAnnotationTask({
           </Button>
         </>
       }
-      width={1200}
+      width={800}
     >
       <Form form={form} layout="vertical">
         {/* 数据集 与 标注工程名称 并排显示（数据集在左） */}
@@ -132,67 +154,41 @@ export default function CreateAnnotationTask({
             />
           </Form.Item>
         </div>
+
         {/* 描述变为可选 */}
         <Form.Item label="描述" name="description">
           <TextArea placeholder="（可选）详细描述标注任务的要求和目标" rows={3} />
         </Form.Item>
 
-        {/* 标注页面设计 模块：左侧为配置编辑，右侧为预览（作为表单的一部分，与其他字段同级） */}
-        <div style={{ marginTop: 8 }}>
-          <label className="block font-medium mb-2">标注页面设计</label>
-          <div style={{ display: "grid", gridTemplateColumns: "minmax(360px, 1fr) 1fr", gridTemplateRows: "auto 1fr", gap: 16 }}>
-            {/* Row 1: buttons on the left, spacer on the right so preview aligns with editor below */}
-            <div style={{ gridColumn: 1, gridRow: 1, display: 'flex', gap: 8 }}>
-              <Button onClick={() => editorRef.current?.addLabel?.()}>添加标签</Button>
-              <Button type="primary" onClick={() => editorRef.current?.generate?.()}>生成标注页面配置</Button>
-            </div>
-
-            {/* empty spacer to occupy top-right cell so preview starts on the second row */}
-            <div style={{ gridColumn: 2, gridRow: 1 }} />
-
-            {/* Row 2, Col 1: 编辑列表（固定高度） */}
-            <div style={{ gridColumn: 1, gridRow: 2, height: EDITOR_LIST_HEIGHT, overflowY: 'auto', paddingRight: 8, border: '1px solid #e6e6e6', borderRadius: 6, padding: 12 }}>
-              <LabelingConfigEditor
-                ref={editorRef}
-                hideFooter={true}
-                initial={undefined}
-                onGenerate={(config: any) => {
-                  form.setFieldsValue({ labelingConfig: JSON.stringify(config, null, 2), labelingInterface: JSON.stringify(generateLabelingInterface(config), null, 2) });
-                }}
-              />
-              <Form.Item
-                name="labelingConfig"
-                rules={[
-                  {
-                    validator: async (_, value) => {
-                      if (!value || value === "") return Promise.resolve();
-                      try {
-                        JSON.parse(value);
-                        return Promise.resolve();
-                      } catch (e) {
-                        return Promise.reject(new Error("请输入有效的 JSON"));
-                      }
-                    },
-                  },
-                ]}
-                style={{ display: "none" }}
-              >
-                <Input />
-              </Form.Item>
-            </div>
-
-            {/* Row 2, Col 2: 预览，与编辑列表在同一行，保持一致高度 */}
-            <div style={{ gridColumn: 2, gridRow: 2, display: 'flex', flexDirection: 'column' }}>
-              <Form.Item name="labelingInterface" style={{ flex: 1 }}>
-                <TextArea
-                  placeholder="标注页面设计（只读，由标注配置生成）"
-                  disabled
-                  style={{ height: EDITOR_LIST_HEIGHT, resize: 'none' }}
-                />
-              </Form.Item>
-            </div>
-          </div>
-        </div>
+        {/* 标注模板选择 */}
+        <Form.Item
+          label="标注模板"
+          name="templateId"
+          rules={[{ required: true, message: "请选择标注模板" }]}
+        >
+          <Select
+            placeholder={templates.length === 0 ? "暂无可用模板，请先创建模板" : "请选择标注模板"}
+            showSearch
+            optionFilterProp="label"
+            notFoundContent={templates.length === 0 ? "暂无模板，请前往「标注模板」页面创建" : "未找到匹配的模板"}
+            options={templates.map((template) => ({
+              label: template.name,
+              value: template.id,
+              // Add description as subtitle
+              title: template.description,
+            }))}
+            optionRender={(option) => (
+              <div>
+                <div style={{ fontWeight: 500 }}>{option.label}</div>
+                {option.data.title && (
+                  <div style={{ fontSize: 12, color: '#999', marginTop: 2 }}>
+                    {option.data.title}
+                  </div>
+                )}
+              </div>
+            )}
+          />
+        </Form.Item>
       </Form>
     </Modal>
   );

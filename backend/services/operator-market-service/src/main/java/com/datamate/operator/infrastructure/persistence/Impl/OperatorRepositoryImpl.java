@@ -1,5 +1,6 @@
 package com.datamate.operator.infrastructure.persistence.Impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.repository.CrudRepository;
 import com.datamate.operator.infrastructure.converter.OperatorConverter;
 import com.datamate.operator.domain.model.Operator;
@@ -34,5 +35,12 @@ public class OperatorRepositoryImpl extends CrudRepository<OperatorMapper, Opera
     @Override
     public void deleteOperator(String id) {
         mapper.deleteById(id);
+    }
+
+    @Override
+    public int countOperatorByStar(boolean isStar) {
+        LambdaQueryWrapper<Operator> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Operator::getIsStar, isStar);
+        return Math.toIntExact(mapper.selectCount(queryWrapper));
     }
 }

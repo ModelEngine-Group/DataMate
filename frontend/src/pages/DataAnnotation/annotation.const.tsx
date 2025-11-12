@@ -51,8 +51,9 @@ export function mapAnnotationTask(task: any) {
     projId: labelingProjId,
     name: task.name,
     description: task.description || "",
-    createdAt: task.createdAt,
-    updatedAt: task.updatedAt,
+    datasetName: task.datasetName || task.dataset_name || "-",
+    createdAt: task.createdAt || task.created_at || "-",
+    updatedAt: task.updatedAt || task.updated_at || "-",
     icon: <StickyNote />,
     iconColor: "bg-blue-100",
     status: {

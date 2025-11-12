@@ -123,7 +123,7 @@ export default function RatioTasksPage() {
               <Button
                 type="text"
                 icon={op.icon}
-                onClick={() => op.onClick(task.id)}
+                onClick={() => op.onClick(task)}
               />
             </Tooltip>
           ))}
