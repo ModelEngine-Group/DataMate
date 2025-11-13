@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS t_model_config
     api_key    VARCHAR(512) DEFAULT '' COMMENT 'API 密钥（无密钥则为空）',
     type       VARCHAR(50)  NOT NULL COMMENT '模型类型（如 chat、embedding）',
     is_enabled TINYINT      DEFAULT 1 COMMENT '是否启用：1-启用，0-禁用',
+    is_default TINYINT      DEFAULT 0 COMMENT '是否默认：1-默认，0-非默认',
     created_at TIMESTAMP    DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     updated_at TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     created_by VARCHAR(255) COMMENT '创建者',

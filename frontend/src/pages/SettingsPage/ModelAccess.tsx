@@ -8,7 +8,7 @@ import {
   Table,
   Tooltip,
   Popconfirm,
-  message,
+  message, Switch,
 } from "antd";
 import {
   EditOutlined,
@@ -373,6 +373,14 @@ export default function EnvironmentAccess() {
             rules={[{ required: true, message: "请选择模型类型" }]}
           >
             <Select options={typeOptions} placeholder="选择模型类型"></Select>
+          </Form.Item>
+          <Form.Item
+            name="isDefault"
+            label="设为默认"
+            required
+            tooltip="当模型类型下仅有一个模型服务时，自动将其设为默认值。"
+          >
+            <Switch />
           </Form.Item>
         </Form>
       </Modal>

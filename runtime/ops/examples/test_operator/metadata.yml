@@ -1,0 +1,85 @@
+name: '测试算子'
+description: '这是一个测试算子。'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'TestMapper'
+version: '1.0.0'
+modal: 'text'
+effect:
+  before: '使用方式很简单，只需要将代码放入Markdown文本中即可，富文本格式可直接复制表情😀使用。'
+  after: '使用方式很简单，只需要将代码放入Markdown文本中即可，富文本格式可直接复制表情使用。'
+inputs: 'text'
+outputs: 'text'
+settings:
+  sliderTest:
+    name: '滑窗测试'
+    description: '这是一个测试滑窗。'
+    type: 'slider'
+    defaultVal: 0.5
+    min: 0
+    max: 1
+    step: 0.1
+  switchTest:
+    name: '开关测试'
+    description: '这是一个开关测试。'
+    type: 'switch'
+    defaultVal: 'true'
+    required: false
+    checkedLabel: '选中'
+    unCheckedLabel: '未选中'
+  radioTest:
+    name: '单选测试'
+    description: '这是一个单选测试。'
+    type: 'radio'
+    defaultVal: 'option1'
+    required: false
+    options:
+      - label: '选项1'
+        value: 'option1'
+      - label: '选项2'
+        value: 'option2'
+  selectTest:
+    name: '下拉框测试'
+    description: '这是一个下拉框测试。'
+    type: 'select'
+    defaultVal: 'option1'
+    required: false
+    options:
+      - label: '选项1'
+        value: 'option1'
+      - label: '选项2'
+        value: 'option2'
+  rangeTest:
+    name: '范围测试'
+    description: '这是一个范围框测试。'
+    type: 'range'
+    properties:
+      - name: 'rangeLeft'
+        type: 'inputNumber'
+        defaultVal: 100
+        min: 0
+        max: 10000
+        step: 1
+      - name: 'rangeRight'
+        type: 'inputNumber'
+        defaultVal: 8000
+        min: 0
+        max: 10000
+        step: 1
+  checkboxTest:
+    name: '多选框测试'
+    description: '这是一个多选框测试。'
+    type: 'checkbox'
+    defaultVal: 'option1,option2'
+    required: false
+    options:
+      - label: '选项1'
+        value: 'option1'
+      - label: '选项2'
+        value: 'option2'
+  inputTest:
+    name: '输入框测试'
+    description: '这是一个输入框测试。'
+    type: 'input'
+    defaultVal: 'Test Input'
+    required: false

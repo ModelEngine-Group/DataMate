@@ -58,9 +58,10 @@ public class ModelConfigApplicationService {
                 .baseUrl(modelConfig.getBaseUrl())
                 .apiKey(modelConfig.getApiKey())
                 .isEnabled(true)
+                .isDefault(modelConfig.getIsDefault())
                 .build();
         ModelClient.checkHealth(newConfig);
-        modelConfigRepository.save(newConfig);
+        modelConfigRepository.saveAndSetDefault(newConfig);
         return newConfig;
     }
 
@@ -74,7 +75,7 @@ public class ModelConfigApplicationService {
         modelConfig.setApiKey(updateModelRequest.getApiKey());
         modelConfig.setIsEnabled(true);
         ModelClient.checkHealth(modelConfig);
-        modelConfigRepository.updateById(modelConfig);
+        modelConfigRepository.updateAndSetDefault(modelConfig, updateModelRequest.getIsDefault());
         return modelConfig;
     }
 

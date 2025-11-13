@@ -26,10 +26,7 @@ ARG NEXT_PUBLIC_API_URL="/deer-flow-backend"
 
 RUN git clone https://github.com/bytedance/deer-flow.git /deer-flow
 
-COPY runtime/deer-flow/feature_collection.patch /deer-flow/feature_collection.patch
-
 RUN cd /deer-flow \
-    && git apply feature_collection.patch \
     && mv /deer-flow/web/* /app \
     && rm -rf /deer-flow
 
