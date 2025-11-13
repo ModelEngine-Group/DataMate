@@ -39,8 +39,8 @@ import OrchestrationPage from "@/pages/Orchestration/Orchestration";
 import WorkflowEditor from "@/pages/Orchestration/WorkflowEditor";
 import { withErrorBoundary } from "@/components/ErrorBoundary";
 import AgentPage from "@/pages/Agent/Agent.tsx";
-import CleansingTemplateDetail from "@/pages/DataCleansing/Detail/TemplateDetail.tsx";
 import RatioTaskDetail from "@/pages/RatioTask/Detail/RatioTaskDetail";
+import CleansingTemplateDetail from "@/pages/DataCleansing/Detail/TemplateDetail";
 
 const router = createBrowserRouter([
   {

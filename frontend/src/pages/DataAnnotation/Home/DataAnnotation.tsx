@@ -111,7 +111,7 @@ export default function DataAnnotation() {
       cancelText: "取消",
       onOk: async () => {
         try {
-          await deleteAnnotationTaskByIdUsingDelete({ m: task.id, proj: task.labelingProjId });
+          await deleteAnnotationTaskByIdUsingDelete(task.id);
           message.success("映射删除成功");
           fetchData();
           // clear selection if deleted item was selected
@@ -198,7 +198,7 @@ export default function DataAnnotation() {
       onOk: async () => {
         try {
           await Promise.all(
-            selectedRows.map((r) => deleteAnnotationTaskByIdUsingDelete({ m: r.id, proj: r.labelingProjId }))
+            selectedRows.map((r) => deleteAnnotationTaskByIdUsingDelete(r.id))
           );
           message.success("批量删除已完成");
           fetchData();

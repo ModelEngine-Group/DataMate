@@ -83,7 +83,7 @@ class DatasetMappingService:
         labeling_project: LabelingProject
     ) -> DatasetMappingResponse:
         """创建数据集映射"""
-        logger.info(f"Create dataset mapping: {labeling_project.dataset_id} -> {labeling_project.labeling_project_id}")
+        logger.debug(f"Create dataset mapping: {labeling_project.dataset_id} -> {labeling_project.labeling_project_id}")
         
         # Use the passed object directly
         self.db.add(labeling_project)
@@ -201,7 +201,7 @@ class DatasetMappingService:
         )
         await self.db.commit()
         
-        if result.rowcount > 0:
+        if result.rowcount and result.rowcount > 0:  # type: ignore
             return await self.get_mapping_by_uuid(mapping_id)
         return None
     
@@ -219,7 +219,7 @@ class DatasetMappingService:
         )
         await self.db.commit()
         
-        success = result.rowcount > 0
+        success = result.rowcount and result.rowcount > 0  # type: ignore
         if success:
             logger.info(f"Mapping soft-deleted: {mapping_id}")
         else:

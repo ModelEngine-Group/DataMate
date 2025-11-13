@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
 from app.module.shared.schema import StandardResponse
-from app.module.annotation.schema.template import (
+from app.module.annotation.schema import (
     CreateAnnotationTemplateRequest,
     UpdateAnnotationTemplateRequest,
     AnnotationTemplateResponse,
@@ -15,7 +15,7 @@ from app.module.annotation.schema.template import (
 )
 from app.module.annotation.service.template import AnnotationTemplateService
 
-router = APIRouter(prefix="/templates", tags=["Annotation Template"])
+router = APIRouter(prefix="/template", tags=["annotation/template"])
 
 template_service = AnnotationTemplateService()
 
@@ -23,7 +23,6 @@ template_service = AnnotationTemplateService()
 @router.post(
     "",
     response_model=StandardResponse[AnnotationTemplateResponse],
-    summary="创建标注模板"
 )
 async def create_template(
     request: CreateAnnotationTemplateRequest,
@@ -47,7 +46,6 @@ async def create_template(
 @router.get(
     "/{template_id}",
     response_model=StandardResponse[AnnotationTemplateResponse],
-    summary="获取模板详情"
 )
 async def get_template(
     template_id: str,
@@ -65,9 +63,8 @@ async def get_template(
 @router.get(
     "",
     response_model=StandardResponse[AnnotationTemplateListResponse],
-    summary="获取模板列表"
 )
-async def list_templates(
+async def list_template(
     page: int = Query(1, ge=1, description="页码"),
     size: int = Query(10, ge=1, le=100, description="每页大小"),
     category: Optional[str] = Query(None, description="分类筛选"),
@@ -101,7 +98,6 @@ async def list_templates(
 @router.put(
     "/{template_id}",
     response_model=StandardResponse[AnnotationTemplateResponse],
-    summary="更新模板"
 )
 async def update_template(
     template_id: str,
@@ -122,7 +118,6 @@ async def update_template(
 @router.delete(
     "/{template_id}",
     response_model=StandardResponse[bool],
-    summary="删除模板"
 )
 async def delete_template(
     template_id: str,

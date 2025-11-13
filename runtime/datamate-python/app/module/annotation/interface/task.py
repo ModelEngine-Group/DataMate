@@ -1,6 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Path
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
+from datetime import datetime
+from pydantic import BaseModel, Field, ConfigDict
 
 from app.db.session import get_db
 from app.module.shared.schema import StandardResponse
@@ -17,6 +19,10 @@ from ..schema import (
     SyncDatasetResponse,
     SyncAnnotationsRequest,
     SyncAnnotationsResponse,
+    UpdateFileTagsRequest,
+    UpdateFileTagsResponse,
+    UpdateFileTagsRequest,
+    UpdateFileTagsResponse
 )
 
 
@@ -32,24 +38,10 @@ async def sync_dataset_content(
     db: AsyncSession = Depends(get_db)
 ):
     """
-    同步数据集内容（包括文件和标注）
+    Sync Dataset Content (Files and Annotations)
     
     根据指定的mapping ID，同步DM程序数据集中的内容到Label Studio数据集中。
     默认同时同步文件和标注数据。
-    
-    Args:
-        request: 同步请求，包含:
-            - id: 映射ID（mapping UUID）
-            - batchSize: 批处理大小
-            - filePriority: 文件同步优先级
-            - labelPriority: 标签同步优先级
-            - syncAnnotations: 是否同步标注（默认True）
-            - annotationDirection: 标注同步方向（默认bidirectional）
-            - overwrite: 是否允许覆盖DataMate中的标注（默认True）
-            - overwriteLabelingProject: 是否允许覆盖Label Studio中的标注（默认True）
-    
-    Returns:
-        同步结果
     """
     try:
         ls_client = LabelStudioClient(base_url=settings.label_studio_base_url,
@@ -123,28 +115,10 @@ async def sync_annotations(
     db: AsyncSession = Depends(get_db)
 ):
     """
-    仅同步标注结果（支持双向同步）
-    
-    根据指定的mapping ID和同步方向，在DM数据集和Label Studio之间同步标注结果。
-    标注结果存储在数据集文件表的tags字段中，使用简化格式。
-    
-    同步策略：
-    - 默认为双向同步，基于时间戳自动解决冲突
-    - overwrite: 控制是否允许用Label Studio的标注覆盖DataMate（基于时间戳比较）
-    - overwriteLabelingProject: 控制是否允许用DataMate的标注覆盖Label Studio（基于时间戳比较）
-    - 如果Label Studio标注的updated_at更新，且overwrite=True，则覆盖DataMate
-    - 如果DataMate标注的updated_at更新，且overwriteLabelingProject=True，则覆盖Label Studio
-    
-    Args:
-        request: 同步请求，包含:
-            - id: 映射ID（mapping UUID）
-            - batchSize: 批处理大小
-            - direction: 同步方向 (ls_to_dm/dm_to_ls/bidirectional)
-            - overwrite: 是否允许覆盖DataMate中的标注（默认True）
-            - overwriteLabelingProject: 是否允许覆盖Label Studio中的标注（默认True）
-    
-    Returns:
-        同步结果，包含同步统计信息和冲突解决情况
+    Sync Annotations Only (Bidirectional Support)
+
+    同步指定 mapping 下的标注数据，支持单向或双向同步，基于时间戳自动解决冲突。
+    请求与响应由 Pydantic 模型 `SyncAnnotationsRequest` / `SyncAnnotationsResponse` 定义。
     """
     try:
         ls_client = LabelStudioClient(base_url=settings.label_studio_base_url,
@@ -207,9 +181,9 @@ async def sync_annotations(
 @router.get("/check-ls-connection")
 async def check_label_studio_connection():
     """
-    检查Label Studio连接状态
-    
-    用于诊断Label Studio连接问题，返回连接状态和配置信息
+    Check Label Studio Connection Status
+
+    诊断 Label Studio 连接并返回简要连接信息（状态、base URL、token 摘要、项目统计）。
     """
     try:
         ls_client = LabelStudioClient(
@@ -259,3 +233,54 @@ async def check_label_studio_connection():
     except Exception as e:
         logger.error(f"Error checking Label Studio connection: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.put(
+    "/{file_id}",
+    response_model=StandardResponse[UpdateFileTagsResponse],
+)
+async def update_file_tags(
+    request: UpdateFileTagsRequest,
+    file_id: str = Path(..., description="文件ID"),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Update File Tags (Partial Update)
+
+    接收部分标签更新并合并到指定文件（只修改提交的标签，其余保持不变），并更新 `tags_updated_at`。
+    请求与响应使用 Pydantic 模型 `UpdateFileTagsRequest` / `UpdateFileTagsResponse`。
+    """
+    service = DatasetManagementService(db)
+    
+    success, error_msg, updated_at = await service.update_file_tags_partial(
+        file_id=file_id,
+        new_tags=request.tags
+    )
+    
+    if not success:
+        if "not found" in (error_msg or "").lower():
+            raise HTTPException(status_code=404, detail=error_msg)
+        raise HTTPException(status_code=500, detail=error_msg or "更新标签失败")
+    
+    # 获取更新后的完整标签列表
+    from sqlalchemy.future import select
+    from app.db.models import DatasetFiles
+    
+    result = await db.execute(
+        select(DatasetFiles).where(DatasetFiles.id == file_id)
+    )
+    file_record = result.scalar_one_or_none()
+    
+    if not file_record:
+        raise HTTPException(status_code=404, detail=f"File not found: {file_id}")
+    
+    response_data = UpdateFileTagsResponse(
+        fileId=file_id,
+        tags=file_record.tags or [],  # type: ignore
+        tagsUpdatedAt=updated_at or datetime.now()
+    )
+    
+    return StandardResponse(
+        code=200,
+        message="标签更新成功",
+        data=response_data
+    )

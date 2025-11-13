@@ -23,20 +23,20 @@ export default function SettingsPage() {
             mode="inline"
             items={[
               {
-                key: "system-config",
-                icon: <SettingOutlined />,
-                label: "系统设置",
-              },
-              {
                 key: "model-access",
                 icon: <Component className="w-4 h-4" />,
                 label: "模型接入",
               },
-              {
-                key: "webhook-config",
-                icon: <ApiOutlined />,
-                label: "Webhook",
-              },
+              // {
+              //   key: "system-config",
+              //   icon: <SettingOutlined />,
+              //   label: "参数配置",
+              // },
+              // {
+              //   key: "webhook-config",
+              //   icon: <ApiOutlined />,
+              //   label: "Webhook",
+              // },
             ]}
             selectedKeys={[activeTab]}
             onClick={({ key }) => {

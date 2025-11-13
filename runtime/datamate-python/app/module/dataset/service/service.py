@@ -1,7 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import func
-from typing import Optional
+from typing import Optional, List, Dict, Any
+from datetime import datetime
 
 from app.core.config import settings
 from app.core.logging import get_logger
@@ -22,12 +23,12 @@ class Service:
             db: 数据库会话
         """
         self.db = db
-        logger.info("Initialize DM service client (Database mode)")
+        logger.debug("Initialize DM service client (Database mode)")
 
     async def get_dataset(self, dataset_id: str) -> Optional[DatasetResponse]:
         """获取数据集详情"""
         try:
-            logger.info(f"Getting dataset detail: {dataset_id} ...")
+            logger.debug(f"Getting dataset detail: {dataset_id} ...")
             
             result = await self.db.execute(
                 select(Dataset).where(Dataset.id == dataset_id)
@@ -66,7 +67,7 @@ class Service:
     ) -> Optional[PagedDatasetFileResponse]:
         """获取数据集文件列表"""
         try:
-            logger.info(f"Get dataset files: dataset={dataset_id}, page={page}, size={size}")
+            logger.debug(f"Get dataset files: dataset={dataset_id}, page={page}, size={size}")
             
             # 构建查询
             query = select(DatasetFiles).where(DatasetFiles.dataset_id == dataset_id)
@@ -160,3 +161,66 @@ class Service:
     async def close(self):
         """关闭客户端连接（数据库模式下无需操作）"""
         logger.info("DM service client closed (Database mode)")
+    
+    async def update_file_tags_partial(
+        self, 
+        file_id: str, 
+        new_tags: List[Dict[str, Any]]
+    ) -> tuple[bool, Optional[str], Optional[datetime]]:
+        """
+        部分更新文件标签
+        
+        Args:
+            file_id: 文件ID
+            new_tags: 新的标签列表（部分更新）
+        
+        Returns:
+            (成功标志, 错误信息, 更新时间)
+        """
+        try:
+            logger.info(f"Partial updating tags for file: {file_id}")
+            
+            # 获取文件记录
+            result = await self.db.execute(
+                select(DatasetFiles).where(DatasetFiles.id == file_id)
+            )
+            file_record = result.scalar_one_or_none()
+            
+            if not file_record:
+                logger.error(f"File not found: {file_id}")
+                return False, f"File not found: {file_id}", None
+            
+            # 获取现有标签
+            existing_tags: List[Dict[str, Any]] = file_record.tags or []  # type: ignore
+            
+            # 创建标签ID到索引的映射
+            tag_id_map = {tag.get('id'): idx for idx, tag in enumerate(existing_tags) if tag.get('id')}
+            
+            # 更新或追加标签
+            for new_tag in new_tags:
+                tag_id = new_tag.get('id')
+                if tag_id and tag_id in tag_id_map:
+                    # 更新现有标签
+                    idx = tag_id_map[tag_id]
+                    existing_tags[idx] = new_tag
+                    logger.debug(f"Updated existing tag with id: {tag_id}")
+                else:
+                    # 追加新标签
+                    existing_tags.append(new_tag)
+                    logger.debug(f"Added new tag with id: {tag_id}")
+            
+            # 更新数据库
+            update_time = datetime.utcnow()
+            file_record.tags = existing_tags  # type: ignore
+            file_record.tags_updated_at = update_time  # type: ignore
+            
+            await self.db.commit()
+            await self.db.refresh(file_record)
+            
+            logger.info(f"Successfully updated tags for file: {file_id}")
+            return True, None, update_time
+            
+        except Exception as e:
+            logger.error(f"Failed to update tags for file {file_id}: {e}")
+            await self.db.rollback()
+            return False, str(e), None
