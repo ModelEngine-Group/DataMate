@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 # Single-stage image with build cache optimization using BuildKit cache mounts.
 # Note: to use the cache mount syntax you must build with BuildKit enabled:
@@ -33,9 +33,6 @@ RUN --mount=type=cache,target=$POETRY_CACHE_DIR \
 
 # Copy the rest of the application
 COPY runtime/datamate-python /app
-
-# Install the project itself
-RUN poetry install --only-root
 
 COPY runtime/datamate-python/deploy/docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh || true
