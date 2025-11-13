@@ -32,7 +32,7 @@ async def lifespan(app: FastAPI):
     try:
         async with AsyncSessionLocal() as session:
             await session.execute(text("SELECT 1"))
-        logger.info(f"Database: mysql+aiomysql://{settings.mysql_user}:{settings.mysql_password}@{settings.mysql_host}:{settings.mysql_port}/{settings.mysql_database}")
+        logger.info(f"Database: mysql+aiomysql://{'*' * len(settings.mysql_user)}:{'*' * len(settings.mysql_password)}@{settings.mysql_host}:{settings.mysql_port}/{settings.mysql_database}")
     except Exception as e:
         logger.error(f"Database connection validation failed: {e}")
         logger.debug(f"Connection details: {settings.database_url}")

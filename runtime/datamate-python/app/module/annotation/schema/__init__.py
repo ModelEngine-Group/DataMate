@@ -1,4 +1,7 @@
-from .config import ConfigResponse
+from .config import (
+    ConfigResponse,
+    TagConfigResponse
+)
 
 from .mapping import (
     DatasetMappingCreateRequest,
@@ -15,8 +18,21 @@ from .sync import (
     SyncAnnotationsResponse,
 )
 
+from .tag import (
+    UpdateFileTagsRequest,
+    UpdateFileTagsResponse,
+)
+
+from .template import (
+    CreateAnnotationTemplateRequest,
+    UpdateAnnotationTemplateRequest,
+    AnnotationTemplateResponse,
+    AnnotationTemplateListResponse
+)
+
 __all__ = [
     "ConfigResponse",
+    "TagConfigResponse",
     "DatasetMappingCreateRequest",
     "DatasetMappingCreateResponse",
     "DatasetMappingUpdateRequest",
@@ -26,4 +42,10 @@ __all__ = [
     "SyncAnnotationsRequest",
     "SyncAnnotationsResponse",
     "DeleteDatasetResponse",
+    "UpdateFileTagsRequest",
+    "UpdateFileTagsResponse",
+    "CreateAnnotationTemplateRequest",
+    "UpdateAnnotationTemplateRequest",
+    "AnnotationTemplateResponse",
+    "AnnotationTemplateListResponse",
 ]

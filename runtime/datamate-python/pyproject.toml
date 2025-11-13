@@ -20,7 +20,8 @@ dependencies = [
     "pydantic-settings (>=2.12.0,<3.0.0)",
     "python-multipart (>=0.0.20,<0.0.21)",
     "python-dotenv (>=1.2.1,<2.0.0)",
-    "python-dateutil (>=2.9.0.post0,<3.0.0)"
+    "python-dateutil (>=2.9.0.post0,<3.0.0)",
+    "pyyaml (>=6.0.3,<7.0.0)"
 ]
 
 

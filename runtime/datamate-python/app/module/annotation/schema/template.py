@@ -1,7 +1,7 @@
 """
 Annotation Template Schemas
 """
-from typing import List, Dict, Any, Optional, Literal
+from typing import List, Dict, Any, Optional
 from datetime import datetime
 from pydantic import BaseModel, Field, ConfigDict
 

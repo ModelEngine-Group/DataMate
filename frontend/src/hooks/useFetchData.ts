@@ -110,7 +110,7 @@ export default function useFetchData<T>(
             status: getFirstOfArray(filter?.status) || undefined,
             tags: filter?.tags?.length ? filter.tags.join(",") : undefined,
             page: current - pageOffset,
-            size: pageSize,
+            pageSize: pageSize,  // Use camelCase for HTTP query params
           }),
           ...additionalPollingFuncs.map((func) => func()),
         ];
