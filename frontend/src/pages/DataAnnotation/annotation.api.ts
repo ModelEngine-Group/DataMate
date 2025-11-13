@@ -109,20 +109,20 @@ export function createAnnotationTemplateUsingPost(data: any) {
 export function queryAnnotationTemplateByIdUsingGet(
   templateId: string | number
 ) {
-  return get(`/api/annotation/template/${templateId}`);
+  return get(`/api/v1/annotation/templates/${templateId}`);
 }
 
 export function updateAnnotationTemplateByIdUsingPut(
   templateId: string | number,
   data: any
 ) {
-  return put(`/api/annotation/template/${templateId}`, data);
+  return put(`/api/v1/annotation/templates/${templateId}`, data);
 }
 
 export function deleteAnnotationTemplateByIdUsingDelete(
   templateId: string | number
 ) {
-  return del(`/api/annotation/template/${templateId}`);
+  return del(`/api/v1/annotation/templates/${templateId}`);
 }
 
 // 主动学习相关接口

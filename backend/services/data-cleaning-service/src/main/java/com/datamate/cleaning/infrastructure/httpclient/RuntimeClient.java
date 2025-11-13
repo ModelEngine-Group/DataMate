@@ -3,6 +3,8 @@ package com.datamate.cleaning.infrastructure.httpclient;
 import com.datamate.common.infrastructure.exception.BusinessException;
 import com.datamate.common.infrastructure.exception.SystemErrorCode;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.net.URI;
@@ -13,24 +15,36 @@ import java.text.MessageFormat;
 import java.time.Duration;
 
 @Slf4j
+@Component
 public class RuntimeClient {
-    private static final String BASE_URL = "http://datamate-runtime:8081/api";
+    private final String CREATE_TASK_URL = "/api/task/{0}/submit";
 
-    private static final String CREATE_TASK_URL = BASE_URL + "/task/{0}/submit";
+    private final String STOP_TASK_URL = "/api/task/{0}/stop";
 
-    private static final String STOP_TASK_URL = BASE_URL + "/task/{0}/stop";
+    @Value("${runtime.protocol:http}")
+    private String protocol;
 
-    private static final HttpClient CLIENT = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
+    @Value("${runtime.host:datamate-runtime}")
+    private String host;
 
-    public static void submitTask(String taskId) {
-        send(MessageFormat.format(CREATE_TASK_URL, taskId));
+    @Value("${runtime.port:8081}")
+    private int port;
+
+    private final HttpClient CLIENT = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
+
+    public void submitTask(String taskId) {
+        send(MessageFormat.format(getRequestUrl(CREATE_TASK_URL), taskId));
     }
 
-    public static void stopTask(String taskId) {
-        send(MessageFormat.format(STOP_TASK_URL, taskId));
+    public void stopTask(String taskId) {
+        send(MessageFormat.format(getRequestUrl(STOP_TASK_URL), taskId));
     }
 
-    private static void send(String url) {
+    private String getRequestUrl(String url) {
+        return protocol + "://" + host + ":" + port + url;
+    }
+
+    private void send(String url) {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .timeout(Duration.ofSeconds(30))

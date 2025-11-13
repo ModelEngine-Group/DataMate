@@ -10,14 +10,13 @@ from .scheduler import Task, TaskStatus, TaskResult, TaskScheduler
 class CommandTask(Task):
     """命令任务包装类"""
 
-    def __init__(self, task_id: str, command: str, shell: bool = True,
+    def __init__(self, task_id: str, command: str, log_path = None, shell: bool = True,
                  timeout: Optional[int] = None, *args, **kwargs):
         super().__init__(task_id, *args, **kwargs)
+        self.log_path = log_path
         self.command = command
         self.shell = shell
         self.timeout = timeout
-        self.stdout = None
-        self.stderr = None
         self.return_code = None
         self._process = None
 
@@ -35,56 +34,54 @@ class CommandTask(Task):
             self.status = TaskStatus.RUNNING
             self.started_at = datetime.now()
 
-            # 使用 asyncio.create_subprocess_shell 或 create_subprocess_exec
-            if self.shell:
-                process = await asyncio.create_subprocess_shell(
-                    self.command,
-                    stdout=asyncio.subprocess.PIPE,
-                    stderr=asyncio.subprocess.PIPE,
-                    **self.kwargs
-                )
-            else:
-                process = await asyncio.create_subprocess_exec(
-                    *self.command.split(),
-                    stdout=asyncio.subprocess.PIPE,
-                    stderr=asyncio.subprocess.PIPE,
-                    **self.kwargs
-                )
-
-            self._process = process
-
-            # 等待进程完成（带超时）
-            try:
-                if self.timeout:
-                    stdout, stderr = await asyncio.wait_for(
-                        process.communicate(),
-                        timeout=self.timeout
+            with open(self.log_path, 'a') as f:
+                # 使用 asyncio.create_subprocess_shell 或 create_subprocess_exec
+                if self.shell:
+                    process = await asyncio.create_subprocess_shell(
+                        self.command,
+                        stdout=f,
+                        stderr=asyncio.subprocess.STDOUT,
+                        **self.kwargs
                     )
                 else:
-                    stdout, stderr = await process.communicate()
+                    process = await asyncio.create_subprocess_exec(
+                        *self.command.split(),
+                        stdout=f,
+                        stderr=asyncio.subprocess.STDOUT,
+                        **self.kwargs
+                    )
 
-                self.stdout = stdout.decode() if stdout else ""
-                self.stderr = stderr.decode() if stderr else ""
-                self.return_code = process.returncode
+                self._process = process
 
-                if self._cancelled:
-                    self.status = TaskStatus.CANCELLED
-                elif process.returncode == 0:
-                    self.status = TaskStatus.COMPLETED
-                else:
-                    self.status = TaskStatus.FAILED
-
-            except asyncio.TimeoutError:
-                # 超时处理
-                self._process.terminate()
+                # 等待进程完成（带超时）
                 try:
-                    await asyncio.wait_for(self._process.wait(), timeout=5.0)
-                except asyncio.TimeoutError:
-                    self._process.kill()
-                    await self._process.wait()
+                    if self.timeout:
+                        await asyncio.wait_for(
+                            process.wait(),
+                            timeout=self.timeout
+                        )
+                    else:
+                        await process.wait()
+                    self.return_code = process.returncode
 
-                self.status = TaskStatus.FAILED
-                self.stderr = f"Command timed out after {self.timeout} seconds"
+                    if self._cancelled:
+                        self.status = TaskStatus.CANCELLED
+                    elif process.returncode == 0:
+                        self.status = TaskStatus.COMPLETED
+                    else:
+                        self.status = TaskStatus.FAILED
+
+                except asyncio.TimeoutError:
+                    # 超时处理
+                    self._process.terminate()
+                    try:
+                        await asyncio.wait_for(self._process.wait(), timeout=5.0)
+                    except asyncio.TimeoutError:
+                        self._process.kill()
+                        await self._process.wait()
+
+                    self.status = TaskStatus.FAILED
+                    f.write(f"\nCommand timed out after {self.timeout} seconds\n")
 
         except asyncio.CancelledError:
             # 任务被取消
@@ -101,7 +98,7 @@ class CommandTask(Task):
 
         except Exception as e:
             self.status = TaskStatus.FAILED
-            self.stderr = str(e)
+            logger.error(f"Task(id: {self.task_id}) run failed. Cause: {e}")
         finally:
             self.completed_at = datetime.now()
 
@@ -127,8 +124,6 @@ class CommandTask(Task):
         """转换为结果对象"""
         self.result = {
             "command": self.command,
-            "stdout": self.stdout,
-            "stderr": self.stderr,
             "return_code": self.return_code,
         }
         return super().to_result()
@@ -140,10 +135,13 @@ class CommandScheduler(TaskScheduler):
     def __init__(self, max_concurrent: int = 5):
         super().__init__(max_concurrent)
 
-    async def submit(self, task_id, command: str, shell: bool = True,
+    async def submit(self, task_id, command: str, log_path = None, shell: bool = True,
                      timeout: Optional[int] = None, **kwargs) -> str:
+        if log_path is None:
+            log_path = f"/flow/{task_id}/output.log"
+
         """提交命令任务"""
-        task = CommandTask(task_id, command, shell, timeout, **kwargs)
+        task = CommandTask(task_id, command, log_path, shell, timeout, **kwargs)
         self.tasks[task_id] = task
 
         # 使用信号量限制并发

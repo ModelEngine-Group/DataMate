@@ -3,6 +3,7 @@ package com.datamate.collection.domain.model.entity;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.datamate.collection.common.enums.SyncMode;
 import com.datamate.collection.common.enums.TaskStatus;
+import com.datamate.collection.common.enums.TemplateType;
 import com.datamate.common.domain.model.base.BaseEntity;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -24,6 +25,8 @@ import java.util.UUID;
 public class CollectionTask extends BaseEntity<String> {
     private String name;
     private String description;
+    private TemplateType taskType; // 任务类型
+    private String targetPath; // 目标存储路径
     private String config; // DataX JSON 配置，包含源端和目标端配置信息
     private TaskStatus status;
     private SyncMode syncMode; // ONCE / SCHEDULED
@@ -51,7 +54,7 @@ public class CollectionTask extends BaseEntity<String> {
 
     public void initCreateParam() {
         this.id = UUID.randomUUID().toString();
-        this.addPath();
+        this.targetPath = "/dataset/local/" + id;
         this.status = TaskStatus.READY;
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();

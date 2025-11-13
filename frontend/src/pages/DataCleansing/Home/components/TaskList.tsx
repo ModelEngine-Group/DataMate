@@ -43,10 +43,6 @@ export default function TaskList() {
     handleFiltersChange,
   } = useFetchData(queryCleaningTasksUsingGet, mapTask);
 
-  const handleViewTask = (task: any) => {
-    navigate("/data/cleansing/task-detail/" + task.id);
-  };
-
   const pauseTask = async (item: CleansingTask) => {
     await stopCleaningTaskUsingPost(item.id);
     message.success("任务已暂停");
@@ -86,8 +82,12 @@ export default function TaskList() {
       onClick: startTask, // implement pause/play logic
     };
     return [
-      isRunning && pauseBtn,
-      showStart && startBtn,
+      ...(isRunning
+        ? [ pauseBtn ]
+        : []),
+      ...(showStart
+        ? [ startBtn ]
+        : []),
       {
         key: "delete",
         label: "删除",
@@ -106,6 +106,18 @@ export default function TaskList() {
       fixed: "left",
       width: 150,
       ellipsis: true,
+      render: (_, task: CleansingTask) => {
+        return (
+          <Button
+            type="link"
+            onClick={() =>
+              navigate("/data/cleansing/task-detail/" + task.id)
+            }
+          >
+            {task.name}
+          </Button>
+        );
+      },
     },
     {
       title: "任务ID",
@@ -273,6 +285,9 @@ export default function TaskList() {
           data={tableData}
           operations={taskOperations}
           pagination={pagination}
+          onView={(tableData) => {
+            navigate("/data/cleansing/task-detail/" + tableData.id)
+          }}
         />
       ) : (
         <Card>

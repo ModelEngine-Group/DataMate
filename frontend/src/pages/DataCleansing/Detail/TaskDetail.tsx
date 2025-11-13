@@ -1,29 +1,30 @@
 import { useEffect, useState } from "react";
-import { Card, Breadcrumb, App } from "antd";
+import {Breadcrumb, App, Tabs} from "antd";
 import {
   Play,
   Pause,
   Clock,
   CheckCircle,
   AlertCircle,
-  Database,
   Trash2,
-  Activity,
+  Activity, LayoutList,
 } from "lucide-react";
 import DetailHeader from "@/components/DetailHeader";
 import { Link, useNavigate, useParams } from "react-router";
 import {
   deleteCleaningTaskByIdUsingDelete,
   executeCleaningTaskUsingPost,
-  queryCleaningTaskByIdUsingGet,
+  queryCleaningTaskByIdUsingGet, queryCleaningTaskLogByIdUsingGet, queryCleaningTaskResultByIdUsingGet,
   stopCleaningTaskUsingPost,
 } from "../cleansing.api";
-import { TaskStatusMap } from "../cleansing.const";
-import { TaskStatus } from "@/pages/DataCleansing/cleansing.model";
+import {mapTask, TaskStatusMap} from "../cleansing.const";
+import {CleansingResult, TaskStatus} from "@/pages/DataCleansing/cleansing.model";
 import BasicInfo from "./components/BasicInfo";
 import OperatorTable from "./components/OperatorTable";
 import FileTable from "./components/FileTable";
 import LogsTable from "./components/LogsTable";
+import {formatExecutionDuration} from "@/utils/unit.ts";
+import {ReloadOutlined} from "@ant-design/icons";
 
 // 任务详情页面组件
 export default function CleansingTaskDetail() {
@@ -35,7 +36,7 @@ export default function CleansingTaskDetail() {
     if (!id) return;
     try {
       const { data } = await queryCleaningTaskByIdUsingGet(id);
-      setTask(data);
+      setTask(mapTask(data));
     } catch (error) {
       message.error("获取任务详情失败");
       navigate("/data/cleansing");
@@ -60,6 +61,38 @@ export default function CleansingTaskDetail() {
     navigate("/data/cleansing");
   };
 
+  const [result, setResult] = useState<CleansingResult[]>();
+
+  const fetchTaskResult = async () => {
+    if (!id) return;
+    try {
+      const { data } = await queryCleaningTaskResultByIdUsingGet(id);
+      setResult(data);
+    } catch (error) {
+      message.error("获取清洗结果失败");
+      navigate("/data/cleansing/task-detail/" + id);
+    }
+  };
+
+  const [taskLog, setTaskLog] = useState();
+
+  const fetchTaskLog = async () => {
+    if (!id) return;
+    try {
+      const { data } = await queryCleaningTaskLogByIdUsingGet(id);
+      setTaskLog(data);
+    } catch (error) {
+      message.error("获取清洗日志失败");
+      navigate("/data/cleansing/task-detail/" + id);
+    }
+  };
+
+  const handleRefresh = async () => {
+    fetchTaskDetail();
+    {activeTab === "files" && await fetchTaskResult()}
+    {activeTab === "logs" && await fetchTaskLog()}
+  };
+
   useEffect(() => {
     fetchTaskDetail();
   }, [id]);
@@ -69,9 +102,9 @@ export default function CleansingTaskDetail() {
 
   const headerData = {
     ...task,
-    icon: <Database className="w-8 h-8" />,
+    icon: <LayoutList className="w-8 h-8" />,
     status: TaskStatusMap[task?.status],
-    createdAt: task?.startTime,
+    createdAt: task?.createdAt,
     lastUpdated: task?.updatedAt,
   };
 
@@ -79,22 +112,24 @@ export default function CleansingTaskDetail() {
     {
       icon: <Clock className="w-4 h-4 text-blue-500" />,
       label: "总耗时",
-      value: task?.duration || "--",
+      value: formatExecutionDuration(task?.startedAt, task?.finishedAt) || "--",
     },
     {
       icon: <CheckCircle className="w-4 h-4 text-green-500" />,
       label: "成功文件",
-      value: task?.successFiles || "--",
+      value: task?.progress?.succeedFileNum || "0",
     },
     {
       icon: <AlertCircle className="w-4 h-4 text-red-500" />,
       label: "失败文件",
-      value: task?.failedFiles || "--",
+      value: (task?.status.value === TaskStatus.RUNNING || task?.status.value === TaskStatus.PENDING)  ?
+        task?.progress.failedFileNum :
+        task?.progress?.totalFileNum - task?.progress.succeedFileNum,
     },
     {
       icon: <Activity className="w-4 h-4 text-purple-500" />,
       label: "成功率",
-      value: `${task?.progress}%`,
+      value: task?.progress?.successRate ? task?.progress?.successRate + "%" : "--",
     },
   ];
 
@@ -109,7 +144,7 @@ export default function CleansingTaskDetail() {
           },
         ]
       : []),
-    ...(task?.status === TaskStatus.PENDING
+    ...([TaskStatus.PENDING, TaskStatus.STOPPED, TaskStatus.FAILED].includes(task?.status?.value)
       ? [
           {
             key: "start",
@@ -119,6 +154,12 @@ export default function CleansingTaskDetail() {
           },
         ]
       : []),
+    {
+      key: "refresh",
+      label: "更新任务",
+      icon: <ReloadOutlined className="w-4 h-4" />,
+      onClick: handleRefresh,
+    },
     {
       key: "delete",
       label: "删除任务",
@@ -131,20 +172,20 @@ export default function CleansingTaskDetail() {
   const tabList = [
     {
       key: "basic",
-      tab: "基本信息",
-      children: <BasicInfo task={task} />,
+      label: "基本信息",
     },
     {
       key: "operators",
-      tab: "处理算子",
-      children: <OperatorTable task={task} />,
+      label: "处理算子",
     },
     {
       key: "files",
-      tab: "处理文件",
-      children: <FileTable task={task} />,
+      label: "处理文件",
     },
-    { key: "logs", tab: "运行日志", children: <LogsTable task={task} /> },
+    {
+      key: "logs",
+      label: "运行日志",
+    },
   ];
 
   const breadItems = [
@@ -157,7 +198,7 @@ export default function CleansingTaskDetail() {
   ];
 
   return (
-    <div className="min-h-screen">
+    <>
       <Breadcrumb items={breadItems} />
       <div className="mb-4 mt-4">
         <DetailHeader
@@ -166,11 +207,17 @@ export default function CleansingTaskDetail() {
           operations={operations}
         />
       </div>
-      <Card
-        tabList={tabList}
-        activeTabKey={activeTab}
-        onTabChange={setActiveTab}
-      ></Card>
-    </div>
+      <div className="flex-overflow-auto p-6 pt-2 bg-white rounded-md shadow">
+        <Tabs activeKey={activeTab} items={tabList} onChange={setActiveTab} />
+        <div className="h-full flex-1 overflow-auto">
+          {activeTab === "basic" && (
+            <BasicInfo task={task} />
+          )}
+          {activeTab === "operators" && <OperatorTable task={task} />}
+          {activeTab === "files" && <FileTable result={result} fetchTaskResult={fetchTaskResult} />}
+          {activeTab === "logs" && <LogsTable taskLog={taskLog} fetchTaskLog={fetchTaskLog} />}
+        </div>
+      </div>
+    </>
   );
 }

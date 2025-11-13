@@ -4,16 +4,19 @@ on:
   push:
     branches: [ "main" ]
     paths:
-      - 'runtime/**'
+      - 'runtime/ops/**'
+      - 'runtime/python-executor/**'
       - 'scripts/images/runtime/**'
       - '.github/workflows/docker-image-runtime.yml'
   pull_request:
     branches: [ "main" ]
     paths:
-      - 'runtime/**'
+      - 'runtime/ops/**'
+      - 'runtime/python-executor/**'
       - 'scripts/images/runtime/**'
       - '.github/workflows/docker-image-runtime.yml'
   workflow_dispatch:
+  workflow_call:
 
 jobs:
   call-docker-build:

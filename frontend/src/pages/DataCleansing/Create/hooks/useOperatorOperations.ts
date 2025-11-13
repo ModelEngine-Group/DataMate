@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
 import { OperatorI } from "@/pages/OperatorMarket/operator.model";
 import { CleansingTemplate } from "../../cleansing.model";
-import { queryCleaningTemplatesUsingGet } from "../../cleansing.api";
+import {queryCleaningTemplateByIdUsingGet, queryCleaningTemplatesUsingGet} from "../../cleansing.api";
 import {
   queryCategoryTreeUsingGet,
   queryOperatorsUsingPost,
 } from "@/pages/OperatorMarket/operator.api";
+import {useParams} from "react-router";
 
 export function useOperatorOperations() {
+  const { id = "" } = useParams();
   const [currentStep, setCurrentStep] = useState(1);
 
   const [operators, setOperators] = useState<OperatorI[]>([]);
@@ -21,7 +23,7 @@ export function useOperatorOperations() {
   // 将后端返回的算子数据映射为前端需要的格式
   const mapOperator = (op: OperatorI) => {
     const configs =
-      op.settings && typeof op.settings === "string"
+      op.settings
         ? JSON.parse(op.settings)
         : {};
     const defaultParams: Record<string, string> = {};
@@ -64,14 +66,26 @@ export function useOperatorOperations() {
   };
 
   const initTemplates = async () => {
-    const { data } = await queryCleaningTemplatesUsingGet();
-    const newTemplates =
-      data.content?.map?.((item) => ({
-        ...item,
-        label: item.name,
-        value: item.id,
-      })) || [];
-    setTemplates(newTemplates);
+    if (id) {
+      const { data } = await queryCleaningTemplateByIdUsingGet(id);
+      const template = {
+        ...data,
+        label: data.name,
+        value: data.id,
+      }
+      setTemplates([template])
+      setCurrentTemplate(template)
+    } else {
+      const { data } = await queryCleaningTemplatesUsingGet();
+      const newTemplates =
+        data.content?.map?.((item) => ({
+          ...item,
+          label: item.name,
+          value: item.id,
+        })) || [];
+      setTemplates(newTemplates);
+      setCurrentTemplate(newTemplates?.[0])
+    }
   };
 
   useEffect(() => {

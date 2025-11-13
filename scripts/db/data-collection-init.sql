@@ -46,6 +46,8 @@ CREATE TABLE t_dc_collection_tasks (
     name VARCHAR(255) NOT NULL COMMENT '任务名称',
     description TEXT COMMENT '任务描述',
     sync_mode VARCHAR(20) DEFAULT 'ONCE' COMMENT '同步模式：ONCE/SCHEDULED',
+    task_type VARCHAR(20) DEFAULT 'NAS' COMMENT '任务类型：NAS/OBS/MYSQL/CUSTOM',
+    target_path VARCHAR(1000) DEFAULT '' COMMENT '目标存储路径',
     config TEXT  NOT NULL COMMENT '归集配置（DataX配置），包含源端和目标端配置信息',
     schedule_expression VARCHAR(255) COMMENT 'Cron调度表达式',
     status VARCHAR(20) DEFAULT 'DRAFT' COMMENT '任务状态：DRAFT/READY/RUNNING/SUCCESS/FAILED/STOPPED',

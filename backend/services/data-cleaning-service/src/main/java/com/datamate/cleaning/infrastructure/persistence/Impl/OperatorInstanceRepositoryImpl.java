@@ -7,6 +7,7 @@ import com.datamate.cleaning.interfaces.dto.OperatorInstanceDto;
 import com.datamate.cleaning.domain.model.entity.OperatorInstance;
 import com.datamate.cleaning.domain.repository.OperatorInstanceRepository;
 import com.datamate.cleaning.infrastructure.persistence.mapper.OperatorInstanceMapper;
+import com.datamate.operator.interfaces.dto.OperatorDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -36,5 +37,9 @@ public class OperatorInstanceRepositoryImpl extends CrudRepository<OperatorInsta
         LambdaQueryWrapper<OperatorInstance> lambdaWrapper = new LambdaQueryWrapper<>();
         lambdaWrapper.eq(OperatorInstance::getInstanceId, instanceId);
         mapper.delete(lambdaWrapper);
+    }
+
+    public List<OperatorDto> findOperatorByInstanceId(String instanceId) {
+        return OperatorInstanceConverter.INSTANCE.fromEntityToDto(mapper.findOperatorByInstanceId(instanceId));
     }
 }

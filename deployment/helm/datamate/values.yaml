@@ -21,39 +21,52 @@ global:
       name: "datamate-runtime"
       tag: "latest"
     database:
-      name: "mysql"
-      tag: "8"
+      name: "datamate-database"
+      tag: "latest"
 
 datasetVolume: &datasetVolume
   name: dataset-volume
-  hostPath:
-    path: /opt/datamate/data/dataset
-    type: DirectoryOrCreate
+  persistentVolumeClaim:
+    claimName: datamate-dataset-pvc
 
 flowVolume: &flowVolume
   name: flow-volume
-  hostPath:
-    path: /opt/datamate/data/flow
-    type: DirectoryOrCreate
+  persistentVolumeClaim:
+    claimName: datamate-flow-pvc
 
 logVolume: &logVolume
   name: log-volume
-  hostPath:
-    path: /opt/datamate/data/log
-    type: DirectoryOrCreate
+  persistentVolumeClaim:
+    claimName: datamate-log-pvc
 
 dataVolume: &dataVolume
   name: data-volume
-  hostPath:
-    path: /opt/datamate/data/mysql
-    type: DirectoryOrCreate
+  persistentVolumeClaim:
+    claimName: datamate-database-pvc
 
 operatorVolume: &operatorVolume
   name: operator-volume
-  hostPath:
-    path: /opt/datamate/data/operator
+  persistentVolumeClaim:
+    claimName: datamate-operator-pvc
+
+database:
+  env:
+    - name: MYSQL_ROOT_PASSWORD
+      value: &dbPass "password"
+  volumes:
+    - *dataVolume
+    - *logVolume
+  volumeMounts:
+    - name: data-volume
+      mountPath: /var/lib/mysql
+    - name: log-volume
+      mountPath: /var/log/datamate/database
+      subPath: database
 
 backend:
+  env:
+    - name: DB_PASSWORD
+      value: *dbPass
   volumes:
     - *datasetVolume
     - *flowVolume
@@ -82,27 +95,6 @@ frontend:
     - mountPath: /etc/nginx/conf.d/backend.conf
       name: datamate-nginx-conf
       subPath: backend.conf
-
-database:
-  volumes:
-    - *dataVolume
-    - *logVolume
-    - name: init-sql
-      configMap:
-        name: datamate-init-sql
-    - name: mysql-utf8-config
-      configMap:
-        name: datamate-mysql-utf8-config
-  volumeMounts:
-    - name: data-volume
-      mountPath: /var/lib/mysql
-    - name: log-volume
-      mountPath: /var/log/datamate/database
-      subPath: database
-    - name: init-sql
-      mountPath: /docker-entrypoint-initdb.d
-    - name: mysql-utf8-config
-      mountPath: /etc/mysql/conf.d
 
 ray-cluster:
   head:

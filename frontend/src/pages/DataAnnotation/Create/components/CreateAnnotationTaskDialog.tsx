@@ -68,7 +68,6 @@ export default function CreateAnnotationTask({
     try {
       const values = await form.validateFields();
       setSubmitting(true);
-
       // Send templateId instead of labelingConfig
       const requestData = {
         name: values.name,
@@ -76,7 +75,6 @@ export default function CreateAnnotationTask({
         datasetId: values.datasetId,
         templateId: values.templateId,
       };
-
       await createAnnotationTaskUsingPost(requestData);
       message?.success?.("创建标注任务成功");
       onClose();
@@ -154,7 +152,6 @@ export default function CreateAnnotationTask({
             />
           </Form.Item>
         </div>
-
         {/* 描述变为可选 */}
         <Form.Item label="描述" name="description">
           <TextArea placeholder="（可选）详细描述标注任务的要求和目标" rows={3} />
