@@ -21,6 +21,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.apache.ibatis.session.RowBounds;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -279,25 +280,25 @@ public class DatasetFileApplicationService {
                 continue;
             }
             String fileName = sourcePath.getFileName().toString();
-            String fileType = AnalyzerUtils.getExtension(fileName);
-            long fileSize;
+            File targetFile = new File(dataset.getPath(), fileName);
             try {
-                fileSize = Files.size(sourcePath);
+                FileUtils.copyInputStreamToFile(Files.newInputStream(sourcePath), targetFile);
             } catch (IOException e) {
-                log.error("Failed to get file size for: {}", sourceFilePath, e);
+                log.error("Failed to copy file: {}", sourceFilePath, e);
                 continue;
             }
+
             LocalDateTime currentTime = LocalDateTime.now();
             DatasetFile datasetFile = DatasetFile.builder()
-                .id(UUID.randomUUID().toString())
-                .datasetId(datasetId)
-                .fileName(fileName)
-                .fileType(fileType)
-                .fileSize(fileSize)
-                .filePath(sourceFilePath)
-                .uploadTime(currentTime)
-                .lastAccessTime(currentTime)
-                .build();
+                    .id(UUID.randomUUID().toString())
+                    .datasetId(datasetId)
+                    .fileName(fileName)
+                    .fileType(AnalyzerUtils.getExtension(fileName))
+                    .fileSize(targetFile.length())
+                    .filePath(targetFile.getPath())
+                    .uploadTime(currentTime)
+                    .lastAccessTime(currentTime)
+                    .build();
             datasetFileRepository.save(datasetFile);
             dataset.addFile(datasetFile);
             copiedFiles.add(datasetFile);
