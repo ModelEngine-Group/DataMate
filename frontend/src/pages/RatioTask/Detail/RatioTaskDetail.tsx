@@ -21,20 +21,23 @@ import { post } from "@/utils/request";
 import type { RatioTaskItem } from "@/pages/RatioTask/ratio.model";
 import { mapRatioTask } from "../ratio.const";
 import { Copy, Pause, PlayIcon } from "lucide-react";
+import DataRatioChart from "./DataRatioChart";
+import RatioDisplay from "./RatioDisplay";
+import DataMetrics from "./DataMetrics";
 
 const tabList = [
   {
     key: "overview",
     label: "概览",
   },
-  {
-    key: "analysis",
-    label: "配比分析",
-  },
-  {
-    key: "config",
-    label: "配比配置",
-  },
+  // {
+  //   key: "analysis",
+  //   label: "配比分析",
+  // },
+  // {
+  //   key: "config",
+  //   label: "配比配置",
+  // },
 ];
 
 export default function RatioTaskDetail() {
@@ -105,20 +108,20 @@ export default function RatioTaskDetail() {
 
   // 操作列表
   const operations = [
-    {
-      key: "execute",
-      label: "启动",
-      icon: <PlayIcon className="w-4 h-4 text-gray-500" />,
-      onClick: handleExecute,
-      disabled: ratioTask.status === "RUNNING",
-    },
-    {
-      key: "stop",
-      label: "停止",
-      icon: <Pause className="w-4 h-4 text-gray-500" />,
-      onClick: handleStop,
-      disabled: ratioTask.status !== "RUNNING",
-    },
+    // {
+    //   key: "execute",
+    //   label: "启动",
+    //   icon: <PlayIcon className="w-4 h-4 text-gray-500" />,
+    //   onClick: handleExecute,
+    //   disabled: ratioTask.status === "RUNNING",
+    // },
+    // {
+    //   key: "stop",
+    //   label: "停止",
+    //   icon: <Pause className="w-4 h-4 text-gray-500" />,
+    //   onClick: handleStop,
+    //   disabled: ratioTask.status !== "RUNNING",
+    // },
     {
       key: "refresh",
       label: "刷新",
@@ -154,6 +157,11 @@ export default function RatioTaskDetail() {
       children: ratioTask.name,
     },
     {
+      key: "totals",
+      label: "目标数量",
+      children: ratioTask.totals,
+    },
+    {
       key: "dataset",
       label: "目标数据集",
       children: (
@@ -164,30 +172,20 @@ export default function RatioTaskDetail() {
     },
     {
       key: "status",
-      label: "数据大小",
+      label: "状态",
       children: (
         <Badge color={ratioTask.status?.color} text={ratioTask.status?.label} />
       ),
     },
     {
       key: "type",
-      label: "类型",
+      label: "配比方式",
       children: ratioTask.type || "未知",
-    },
-    {
-      key: "status",
-      label: "状态",
-      children: ratioTask?.status?.label || "未知",
     },
     {
       key: "createdBy",
       label: "创建者",
       children: ratioTask.createdBy || "未知",
-    },
-    {
-      key: "targetLocation",
-      label: "输出路径",
-      children: ratioTask.targetLocation || "未知",
     },
     {
       key: "createdAt",
@@ -215,6 +213,7 @@ export default function RatioTaskDetail() {
         statistics={ratioTask?.statistics || []}
         operations={operations}
       />
+      {/* <DataMetrics /> */}
       <div className="flex-overflow-auto p-6 pt-2 bg-white rounded-md shadow">
         <Tabs activeKey={activeTab} items={tabList} onChange={setActiveTab} />
         <div className="h-full overflow-auto">
@@ -227,63 +226,10 @@ export default function RatioTaskDetail() {
                 items={items}
                 column={5}
               />
-              <h2 className="text-base font-semibold mt-8 mb-4">配比详情</h2>
-              <div className="grid grid-cols-2 gap-4">
-                {/* 目标配比 */}
-                <Card title="目标配比">
-                  <div className="space-y-4">
-                    {ratioTask.targetRatio &&
-                      Object.entries(ratioTask.targetRatio).map(
-                        ([category, ratio]) => (
-                          <div key={category} className="space-y-2">
-                            <div className="flex justify-between items-center">
-                              <span className="text-sm font-medium text-gray-700">
-                                {category}
-                              </span>
-                              <span className="text-sm font-semibold text-blue-600">
-                                {ratioTask.ratio}%
-                              </span>
-                            </div>
-                            <Progress value={ratio} className="h-2" />
-                          </div>
-                        )
-                      )}
-                  </div>
-                </Card>
-
-                {/* 当前配比 */}
-                <Card title="当前配比">
-                  <div className="space-y-4">
-                    {ratioTask.currentRatio &&
-                    Object.entries(ratioTask.currentRatio).length > 0 ? (
-                      Object.entries(ratioTask.currentRatio)?.map(
-                        ([category, ratio]) => (
-                          <div key={category} className="space-y-2">
-                            <div className="flex justify-between items-center">
-                              <span className="text-sm font-medium text-gray-700">
-                                {category}
-                              </span>
-                              <span className="text-sm font-semibold text-green-600">
-                                {ratioTask.ratio}%
-                              </span>
-                            </div>
-                            <Progress value={ratio} className="h-2" />
-                          </div>
-                        )
-                      )
-                    ) : (
-                      <p className="text-sm text-gray-500">等待处理开始</p>
-                    )}
-                  </div>
-                </Card>
-              </div>
+              {/* <RatioDisplay /> */}
             </>
           )}
-          {activeTab === "analysis" && (
-            <div className="text-center py-20 text-gray-500">
-              配比分析功能正在开发中，敬请期待！
-            </div>
-          )}
+          {activeTab === "analysis" && <DataRatioChart />}
           {activeTab === "config" && (
             <div className="bg-gray-50 rounded-lg p-4 font-mono text-xs overflow-x-auto">
               <pre className="text-gray-700 whitespace-pre-wrap break-words">
