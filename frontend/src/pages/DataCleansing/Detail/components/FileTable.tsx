@@ -1,70 +1,30 @@
-import { Button, Modal, Table, Badge, Input } from "antd";
-import { Download, FileText } from "lucide-react";
-import { useState } from "react";
+import {Button, Modal, Table, Badge, Input} from "antd";
+import { Download } from "lucide-react";
+import {useEffect, useState} from "react";
+import {useParams} from "react-router";
+import {TaskStatus} from "@/pages/DataCleansing/cleansing.model.ts";
+import {TaskStatusMap} from "@/pages/DataCleansing/cleansing.const.tsx";
 
 // 模拟文件列表数据
-const fileList = [
-  {
-    id: 1,
-    fileName: "lung_cancer_001.svs",
-    originalSize: "15.2MB",
-    processedSize: "8.5MB",
-    status: "已完成",
-    duration: "2分15秒",
-    processedAt: "2024-01-20 09:32:40",
-  },
-  {
-    id: 2,
-    fileName: "lung_cancer_002.svs",
-    originalSize: "18.7MB",
-    processedSize: "10.2MB",
-    status: "已完成",
-    duration: "2分38秒",
-    processedAt: "2024-01-20 09:35:18",
-  },
-  {
-    id: 3,
-    fileName: "lung_cancer_003.svs",
-    originalSize: "12.3MB",
-    processedSize: "6.8MB",
-    status: "已完成",
-    duration: "1分52秒",
-    processedAt: "2024-01-20 09:37:10",
-  },
-  {
-    id: 4,
-    fileName: "lung_cancer_004.svs",
-    originalSize: "20.1MB",
-    processedSize: "-",
-    status: "失败",
-    duration: "0分45秒",
-    processedAt: "2024-01-20 09:38:55",
-  },
-  {
-    id: 5,
-    fileName: "lung_cancer_005.svs",
-    originalSize: "16.8MB",
-    processedSize: "9.3MB",
-    status: "已完成",
-    duration: "2分22秒",
-    processedAt: "2024-01-20 09:41:17",
-  },
-];
-
-export default function FileTable() {
+export default function FileTable({result, fetchTaskResult}) {
+  const { id = "" } = useParams();
   const [showFileCompareDialog, setShowFileCompareDialog] = useState(false);
-  const [showFileLogDialog, setShowFileLogDialog] = useState(false);
   const [selectedFile, setSelectedFile] = useState<any>(null);
-  const [selectedFileIds, setSelectedFileIds] = useState<number[]>([]);
+  const [selectedFileIds, setSelectedFileIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    fetchTaskResult();
+  }, [id]);
+
   const handleSelectAllFiles = (checked: boolean) => {
     if (checked) {
-      setSelectedFileIds(fileList.map((file) => file.id));
+      setSelectedFileIds(result.map((file) => file.instanceId));
     } else {
       setSelectedFileIds([]);
     }
   };
 
-  const handleSelectFile = (fileId: number, checked: boolean) => {
+  const handleSelectFile = (fileId: string, checked: boolean) => {
     if (checked) {
       setSelectedFileIds([...selectedFileIds, fileId]);
     } else {
@@ -79,116 +39,16 @@ export default function FileTable() {
     // 实际下载逻辑
   };
 
-  const handleBatchDeleteFiles = () => {
-    // 实际删除逻辑
-    setSelectedFileIds([]);
-  };
-  const handleViewFileLog = (file: any) => {
-    setSelectedFile(file);
-    setShowFileLogDialog(true);
-  };
+  function formatFileSize(bytes: number, decimals: number = 2): string {
+    if (bytes === 0) return '0 Bytes';
 
-  // 模拟单个文件的处理日志
-  const getFileProcessLog = (fileName: string) => [
-    {
-      time: "09:30:18",
-      step: "开始处理",
-      operator: "格式转换",
-      status: "INFO",
-      message: `开始处理文件: ${fileName}`,
-    },
-    {
-      time: "09:30:19",
-      step: "文件验证",
-      operator: "格式转换",
-      status: "INFO",
-      message: "验证文件格式和完整性",
-    },
-    {
-      time: "09:30:20",
-      step: "格式解析",
-      operator: "格式转换",
-      status: "INFO",
-      message: "解析SVS格式文件",
-    },
-    {
-      time: "09:30:25",
-      step: "格式转换",
-      operator: "格式转换",
-      status: "SUCCESS",
-      message: "成功转换为JPEG格式",
-    },
-    {
-      time: "09:30:26",
-      step: "噪声检测",
-      operator: "噪声去除",
-      status: "INFO",
-      message: "检测图像噪声水平",
-    },
-    {
-      time: "09:30:28",
-      step: "噪声去除",
-      operator: "噪声去除",
-      status: "INFO",
-      message: "应用高斯滤波去除噪声",
-    },
-    {
-      time: "09:30:31",
-      step: "噪声去除完成",
-      operator: "噪声去除",
-      status: "SUCCESS",
-      message: "噪声去除处理完成",
-    },
-    {
-      time: "09:30:32",
-      step: "尺寸检测",
-      operator: "尺寸标准化",
-      status: "INFO",
-      message: "检测当前图像尺寸: 2048x1536",
-    },
-    {
-      time: "09:30:33",
-      step: "尺寸调整",
-      operator: "尺寸标准化",
-      status: "INFO",
-      message: "调整图像尺寸至512x512",
-    },
-    {
-      time: "09:30:35",
-      step: "尺寸标准化完成",
-      operator: "尺寸标准化",
-      status: "SUCCESS",
-      message: "图像尺寸标准化完成",
-    },
-    {
-      time: "09:30:36",
-      step: "质量检查",
-      operator: "质量检查",
-      status: "INFO",
-      message: "检查图像质量指标",
-    },
-    {
-      time: "09:30:38",
-      step: "分辨率检查",
-      operator: "质量检查",
-      status: "SUCCESS",
-      message: "分辨率符合要求",
-    },
-    {
-      time: "09:30:39",
-      step: "清晰度检查",
-      operator: "质量检查",
-      status: "SUCCESS",
-      message: "图像清晰度良好",
-    },
-    {
-      time: "09:30:40",
-      step: "处理完成",
-      operator: "质量检查",
-      status: "SUCCESS",
-      message: `文件 ${fileName} 处理完成`,
-    },
-  ];
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(decimals)) + ' ' + sizes[i];
+  }
 
   const fileColumns = [
     {
@@ -196,7 +56,7 @@ export default function FileTable() {
         <input
           type="checkbox"
           checked={
-            selectedFileIds.length === fileList.length && fileList.length > 0
+            selectedFileIds.length === result?.length && result?.length > 0
           }
           onChange={(e) => handleSelectAllFiles(e.target.checked)}
           className="w-4 h-4"
@@ -205,7 +65,7 @@ export default function FileTable() {
       dataIndex: "select",
       key: "select",
       width: 50,
-      render: (text: string, record: any) => (
+      render: (_text: string, record: any) => (
         <input
           type="checkbox"
           checked={selectedFileIds.includes(record.id)}
@@ -216,8 +76,8 @@ export default function FileTable() {
     },
     {
       title: "文件名",
-      dataIndex: "fileName",
-      key: "fileName",
+      dataIndex: "srcName",
+      key: "srcName",
       filterDropdown: ({
         setSelectedKeys,
         selectedKeys,
@@ -245,15 +105,87 @@ export default function FileTable() {
         </div>
       ),
       onFilter: (value: string, record: any) =>
-        record.fileName.toLowerCase().includes(value.toLowerCase()),
+        record.srcName.toLowerCase().includes(value.toLowerCase()),
+      render: (text: string) => (
+        <span className="font-mono text-sm">{text?.replace(/\.[^/.]+$/, "")}</span>
+      ),
+    },
+    {
+      title: "文件类型",
+      dataIndex: "srcType",
+      key: "srcType",
+      filterDropdown: ({
+                         setSelectedKeys,
+                         selectedKeys,
+                         confirm,
+                         clearFilters,
+                       }: any) => (
+        <div className="p-4 w-64">
+          <Input
+            placeholder="搜索文件类型"
+            value={selectedKeys[0]}
+            onChange={(e) =>
+              setSelectedKeys(e.target.value ? [e.target.value] : [])
+            }
+            onPressEnter={() => confirm()}
+            className="mb-2"
+          />
+          <div className="flex gap-2">
+            <Button size="small" onClick={() => confirm()}>
+              搜索
+            </Button>
+            <Button size="small" onClick={() => clearFilters()}>
+              重置
+            </Button>
+          </div>
+        </div>
+      ),
+      onFilter: (value: string, record: any) =>
+        record.srcType.toLowerCase().includes(value.toLowerCase()),
+      render: (text: string) => (
+        <span className="font-mono text-sm">{text}</span>
+      ),
+    },
+    {
+      title: "清洗后文件类型",
+      dataIndex: "destType",
+      key: "destType",
+      filterDropdown: ({
+                         setSelectedKeys,
+                         selectedKeys,
+                         confirm,
+                         clearFilters,
+                       }: any) => (
+        <div className="p-4 w-64">
+          <Input
+            placeholder="搜索文件类型"
+            value={selectedKeys[0]}
+            onChange={(e) =>
+              setSelectedKeys(e.target.value ? [e.target.value] : [])
+            }
+            onPressEnter={() => confirm()}
+            className="mb-2"
+          />
+          <div className="flex gap-2">
+            <Button size="small" onClick={() => confirm()}>
+              搜索
+            </Button>
+            <Button size="small" onClick={() => clearFilters()}>
+              重置
+            </Button>
+          </div>
+        </div>
+      ),
+      onFilter: (value: string, record: any) =>
+        record.destType.toLowerCase().includes(value.toLowerCase()),
       render: (text: string) => (
         <span className="font-mono text-sm">{text}</span>
       ),
     },
     {
       title: "清洗前大小",
-      dataIndex: "originalSize",
-      key: "originalSize",
+      dataIndex: "srcSize",
+      key: "srcSize",
       sorter: (a: any, b: any) => {
         const getSizeInBytes = (size: string) => {
           if (!size || size === "-") return 0;
@@ -265,11 +197,14 @@ export default function FileTable() {
         };
         return getSizeInBytes(a.originalSize) - getSizeInBytes(b.originalSize);
       },
+      render: (number: number) => (
+        <span className="font-mono text-sm">{formatFileSize(number)}</span>
+      ),
     },
     {
       title: "清洗后大小",
-      dataIndex: "processedSize",
-      key: "processedSize",
+      dataIndex: "destSize",
+      key: "destSize",
       sorter: (a: any, b: any) => {
         const getSizeInBytes = (size: string) => {
           if (!size || size === "-") return 0;
@@ -283,6 +218,9 @@ export default function FileTable() {
           getSizeInBytes(a.processedSize) - getSizeInBytes(b.processedSize)
         );
       },
+      render: (number: number) => (
+        <span className="font-mono text-sm">{formatFileSize(number)}</span>
+      ),
     },
     {
       title: "状态",
@@ -297,43 +235,22 @@ export default function FileTable() {
       render: (status: string) => (
         <Badge
           status={
-            status === "已完成"
+            status === "COMPLETED"
               ? "success"
-              : status === "失败"
+              : status === "FAILED"
               ? "error"
               : "processing"
           }
-          text={status}
+          text={TaskStatusMap[status as TaskStatus].label}
         />
       ),
     },
     {
-      title: "执行耗时",
-      dataIndex: "duration",
-      key: "duration",
-      sorter: (a: any, b: any) => {
-        const getTimeInSeconds = (duration: string) => {
-          const parts = duration.split(/[分秒]/);
-          const minutes = Number.parseInt(parts[0]) || 0;
-          const seconds = Number.parseInt(parts[1]) || 0;
-          return minutes * 60 + seconds;
-        };
-        return getTimeInSeconds(a.duration) - getTimeInSeconds(b.duration);
-      },
-    },
-    {
       title: "操作",
       key: "action",
-      render: (text: string, record: any) => (
+      render: (_text: string, record: any) => (
         <div className="flex">
-          <Button
-            type="link"
-            size="small"
-            onClick={() => handleViewFileLog(record)}
-          >
-            日志
-          </Button>
-          {record.status === "已完成" && (
+          {record.status === "COMPLETED" && (
             <Button
               type="link"
               size="small"
@@ -371,53 +288,12 @@ export default function FileTable() {
       )}
       <Table
         columns={fileColumns}
-        dataSource={fileList}
+        dataSource={result}
         pagination={{ pageSize: 10, showSizeChanger: true }}
         size="middle"
         rowKey="id"
       />
 
-      {/* 文件日志弹窗 */}
-      <Modal
-        open={showFileLogDialog}
-        onCancel={() => setShowFileLogDialog(false)}
-        footer={null}
-        width={700}
-        title={
-          <span>
-            <FileText className="w-4 h-4 mr-2 inline" />
-            文件处理日志 - {selectedFile?.fileName}
-          </span>
-        }
-      >
-        <div className="py-4">
-          <div className="bg-gray-900 rounded-lg p-4 max-h-96 overflow-y-auto">
-            <div className="font-mono text-sm">
-              {selectedFile &&
-                getFileProcessLog(selectedFile.fileName).map((log, index) => (
-                  <div key={index} className="flex gap-3">
-                    <span className="text-gray-500 min-w-20">{log.time}</span>
-                    <span className="text-blue-400 min-w-24">
-                      [{log.operator}]
-                    </span>
-                    <span
-                      className={`min-w-20 ${
-                        log.status === "ERROR"
-                          ? "text-red-400"
-                          : log.status === "SUCCESS"
-                          ? "text-green-400"
-                          : "text-yellow-400"
-                      }`}
-                    >
-                      {log.step}
-                    </span>
-                    <span className="text-gray-100">{log.message}</span>
-                  </div>
-                ))}
-            </div>
-          </div>
-        </div>
-      </Modal>
       {/* 文件对比弹窗 */}
       <Modal
         open={showFileCompareDialog}
@@ -434,22 +310,13 @@ export default function FileTable() {
                 <div className="w-16 h-16 bg-gray-300 rounded-lg mx-auto mb-2" />
                 <div className="text-sm">原始文件预览</div>
                 <div className="text-xs text-gray-400">
-                  大小: {selectedFile?.originalSize}
+                  大小: {formatFileSize(selectedFile?.srcSize)}
                 </div>
               </div>
             </div>
             <div className="text-sm text-gray-600 mt-3 space-y-1">
               <div>
-                <span className="font-medium">文件格式:</span> SVS
-              </div>
-              <div>
-                <span className="font-medium">分辨率:</span> 2048x1536
-              </div>
-              <div>
-                <span className="font-medium">色彩空间:</span> RGB
-              </div>
-              <div>
-                <span className="font-medium">压缩方式:</span> 无压缩
+                <span className="font-medium">文件格式:</span> {selectedFile?.srcType}
               </div>
             </div>
           </div>
@@ -460,22 +327,13 @@ export default function FileTable() {
                 <div className="w-16 h-16 bg-blue-300 rounded-lg mx-auto mb-2" />
                 <div className="text-sm">处理后文件预览</div>
                 <div className="text-xs text-gray-400">
-                  大小: {selectedFile?.processedSize}
+                  大小: {formatFileSize(selectedFile?.destSize)}
                 </div>
               </div>
             </div>
             <div className="text-sm text-gray-600 mt-3 space-y-1">
               <div>
-                <span className="font-medium">文件格式:</span> JPEG
-              </div>
-              <div>
-                <span className="font-medium">分辨率:</span> 512x512
-              </div>
-              <div>
-                <span className="font-medium">色彩空间:</span> RGB
-              </div>
-              <div>
-                <span className="font-medium">压缩方式:</span> JPEG压缩
+                <span className="font-medium">文件格式:</span> {selectedFile?.destType}
               </div>
             </div>
           </div>
@@ -485,15 +343,7 @@ export default function FileTable() {
           <div className="grid grid-cols-3 gap-4 text-sm">
             <div className="bg-green-50 p-4 rounded-lg">
               <div className="font-medium text-green-700">文件大小优化</div>
-              <div className="text-green-600">减少了 44.1%</div>
-            </div>
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <div className="font-medium text-blue-700">处理时间</div>
-              <div className="text-blue-600">{selectedFile?.duration}</div>
-            </div>
-            <div className="bg-purple-50 p-4 rounded-lg">
-              <div className="font-medium text-purple-700">质量评分</div>
-              <div className="text-purple-600">优秀 (9.2/10)</div>
+              <div className="text-green-600">减少了 {(100 * (selectedFile?.srcSize - selectedFile?.destSize) / selectedFile?.srcSize).toFixed(2)}%</div>
             </div>
           </div>
         </div>

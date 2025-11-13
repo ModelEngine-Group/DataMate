@@ -1,7 +1,9 @@
 package com.datamate.cleaning.interfaces.rest;
 
 import com.datamate.cleaning.application.CleaningTaskService;
+import com.datamate.cleaning.interfaces.dto.CleaningResultDto;
 import com.datamate.cleaning.interfaces.dto.CleaningTaskDto;
+import com.datamate.cleaning.interfaces.dto.CleaningTaskLog;
 import com.datamate.cleaning.interfaces.dto.CreateCleaningTaskRequest;
 import com.datamate.common.interfaces.PagedResponse;
 import lombok.RequiredArgsConstructor;
@@ -53,5 +55,15 @@ public class CleaningTaskController {
     public String cleaningTasksTaskIdDelete(@PathVariable("taskId") String taskId) {
         cleaningTaskService.deleteTask(taskId);
         return taskId;
+    }
+
+    @GetMapping("/{taskId}/result")
+    public List<CleaningResultDto> cleaningTasksTaskIdGetResult(@PathVariable("taskId") String taskId) {
+        return cleaningTaskService.getTaskResults(taskId);
+    }
+
+    @GetMapping("/{taskId}/log")
+    public List<CleaningTaskLog> cleaningTasksTaskIdGetLog(@PathVariable("taskId") String taskId) {
+        return cleaningTaskService.getTaskLog(taskId);
     }
 }

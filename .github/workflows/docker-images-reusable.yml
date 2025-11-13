@@ -47,19 +47,7 @@ jobs:
           make build-${{ inputs.service_name }} VERSION=latest
 
       - name: Tag & Push Docker Image
-        if: github.event_name != 'pull_request' && !startsWith(github.workflow, 'Package')
+        if: github.event_name != 'pull_request'
         run: |
           docker tag datamate-${{ inputs.service_name }}:latest ${{ steps.set-tag.outputs.TAGS }}
           docker push ${{ steps.set-tag.outputs.TAGS }}
-
-      - name: Save Docker Image
-        if: startsWith(github.workflow, 'Package')
-        run: |
-          docker save -o datamate-${{ inputs.service_name }}.tar datamate-${{ inputs.service_name }}:latest
-
-      - name: Upload Docker Image
-        if: startsWith(github.workflow, 'Package')
-        uses: actions/upload-artifact@v4
-        with:
-          name: datamate-${{ inputs.service_name }}
-          path: datamate-${{ inputs.service_name }}.tar

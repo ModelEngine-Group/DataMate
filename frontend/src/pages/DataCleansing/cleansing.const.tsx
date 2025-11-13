@@ -98,6 +98,11 @@ export const mapTask = (task: CleansingTask) => {
     createdAt,
     startedAt,
     finishedAt,
+    updatedAt: formatDateTime(
+      new Date(Math.max(...[
+        new Date(task.finishedAt).getTime(),
+        new Date(task.startedAt).getTime(),
+        new Date(task.createdAt).getTime()])).toISOString()),
     icon: <BrushCleaning className="w-full h-full" />,
     status,
     duration,

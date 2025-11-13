@@ -1,19 +1,39 @@
-import { useState } from "react";
-import { Card, Button, Steps, Form, Divider } from "antd";
-import { Link, useNavigate } from "react-router";
+import {useEffect, useState} from "react";
+import {Button, Steps, Form, message} from "antd";
+import {Link, useNavigate, useParams} from "react-router";
 
 import { ArrowLeft } from "lucide-react";
-import { createCleaningTemplateUsingPost } from "../cleansing.api";
+import {
+  createCleaningTemplateUsingPost,
+  queryCleaningTemplateByIdUsingGet,
+  updateCleaningTemplateByIdUsingPut
+} from "../cleansing.api";
 import CleansingTemplateStepOne from "./components/CreateTemplateStepOne";
 import { useCreateStepTwo } from "./hooks/useCreateStepTwo";
 
 export default function CleansingTemplateCreate() {
+  const { id = "" } = useParams()
   const navigate = useNavigate();
   const [form] = Form.useForm();
   const [templateConfig, setTemplateConfig] = useState({
     name: "",
     description: "",
   });
+
+  const fetchTemplateDetail = async () => {
+    if (!id) return;
+    try {
+      const { data } = await queryCleaningTemplateByIdUsingGet(id);
+      setTemplateConfig(data);
+    } catch (error) {
+      message.error("获取任务详情失败");
+      navigate("/data/cleansing");
+    }
+  };
+
+  useEffect(() => {
+    fetchTemplateDetail()
+  }, [id]);
 
   const handleSave = async () => {
     const template = {
@@ -27,7 +47,8 @@ export default function CleansingTemplateCreate() {
       })),
     };
 
-    await createCleaningTemplateUsingPost(template);
+    !id && await createCleaningTemplateUsingPost(template) && message.success("模板创建成功");
+    id && await updateCleaningTemplateByIdUsingPut(id, template) && message.success("模板更新成功");
     navigate("/data/cleansing?view=template");
   };
 
@@ -79,7 +100,7 @@ export default function CleansingTemplateCreate() {
               <ArrowLeft className="w-4 h-4 mr-1" />
             </Button>
           </Link>
-          <h1 className="text-xl font-bold">创建清洗模板</h1>
+          <h1 className="text-xl font-bold">{id ? '更新清洗模板' : '创建清洗模板'}</h1>
         </div>
         <div className="w-1/2">
           <Steps
@@ -101,7 +122,7 @@ export default function CleansingTemplateCreate() {
               onClick={handleSave}
               disabled={!canProceed()}
             >
-              创建模板
+              {id ? '更新模板' : '创建模板'}
             </Button>
           ) : (
             <Button

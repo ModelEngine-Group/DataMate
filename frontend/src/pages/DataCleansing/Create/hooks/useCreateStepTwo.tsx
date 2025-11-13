@@ -55,6 +55,7 @@ export function useCreateStepTwo() {
         configOperator={configOperator}
         templates={templates}
         currentTemplate={currentTemplate}
+        categoryOptions={categoryOptions}
         setSelectedOperators={setSelectedOperators}
         setConfigOperator={setConfigOperator}
         setCurrentTemplate={setCurrentTemplate}

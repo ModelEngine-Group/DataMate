@@ -1,6 +1,6 @@
-import {Alert, Input, Form} from "antd";
+import { Alert, Input, Form } from "antd";
 import TextArea from "antd/es/input/TextArea";
-import React, {useEffect} from "react";
+import React, { useEffect } from "react";
 import ParamConfig from "@/pages/DataCleansing/Create/components/ParamConfig.tsx";
 
 export default function ConfigureStep({
@@ -22,14 +22,14 @@ export default function ConfigureStep({
     setParsedInfo((op) =>
       op.id === operatorId
         ? {
-          ...op,
-          overrides: {
-            ...(op?.overrides || op?.defaultParams),
-            [paramKey]: value,
-          },
-        }
+            ...op,
+            overrides: {
+              ...(op?.overrides || op?.defaultParams),
+              [paramKey]: value,
+            },
+          }
         : op
-    )
+    );
   };
 
   return (
@@ -52,32 +52,40 @@ export default function ConfigureStep({
           layout="vertical"
           initialValues={parsedInfo}
           onValuesChange={(_, allValues) => {
-            setParsedInfo({...parsedInfo, ...allValues});
+            setParsedInfo({ ...parsedInfo, ...allValues });
           }}
         >
           {/* 基本信息 */}
           <h3 className="text-lg font-semibold text-gray-900">基本信息</h3>
-          <Form.Item label="ID" name="id" rules={[{required: true}]}>
-            <Input value={parsedInfo.id} readOnly/>
+          <Form.Item label="ID" name="id" rules={[{ required: true }]}>
+            <Input value={parsedInfo.id} readOnly />
           </Form.Item>
-          <Form.Item label="名称" name="name" rules={[{required: true}]}>
-            <Input value={parsedInfo.name}/>
+          <Form.Item label="名称" name="name" rules={[{ required: true }]}>
+            <Input value={parsedInfo.name} />
           </Form.Item>
-          <Form.Item label="版本" name="version" rules={[{required: true}]}>
-            <Input value={parsedInfo.version}/>
+          <Form.Item label="版本" name="version" rules={[{ required: true }]}>
+            <Input value={parsedInfo.version} />
           </Form.Item>
           <Form.Item
             label="描述"
             name="description"
-            rules={[{required: false}]}
+            rules={[{ required: false }]}
           >
-            <TextArea value={parsedInfo.description}/>
+            <TextArea value={parsedInfo.description} />
           </Form.Item>
-          <Form.Item label="输入类型" name="inputs" rules={[{required: true}]}>
-            <Input value={parsedInfo.inputs}/>
+          <Form.Item
+            label="输入类型"
+            name="inputs"
+            rules={[{ required: true }]}
+          >
+            <Input value={parsedInfo.inputs} />
           </Form.Item>
-          <Form.Item label="输出类型" name="outputs" rules={[{required: true}]}>
-            <Input value={parsedInfo.outputs}/>
+          <Form.Item
+            label="输出类型"
+            name="outputs"
+            rules={[{ required: true }]}
+          >
+            <Input value={parsedInfo.outputs} />
           </Form.Item>
 
           {parsedInfo.configs && Object.keys(parsedInfo.configs).length > 0 && (
@@ -85,19 +93,17 @@ export default function ConfigureStep({
               <h3 className="text-lg font-semibold text-gray-900 mt-10 mb-2">
                 高级配置
               </h3>
-              <div className="border p-4 rounded-lg grid grid-cols-2 gap-4">
-                <Form layout="vertical">
-                  {Object.entries(parsedInfo?.configs).map(([key, param]) =>
-                    <ParamConfig
-                      key={key}
-                      operator={parsedInfo}
-                      paramKey={key}
-                      param={param}
-                      onParamChange={handleConfigChange}
-                    />
-                  )}
-                </Form>
-              </div>
+              <Form layout="vertical">
+                {Object.entries(parsedInfo?.configs).map(([key, param]) => (
+                  <ParamConfig
+                    key={key}
+                    operator={parsedInfo}
+                    paramKey={key}
+                    param={param}
+                    onParamChange={handleConfigChange}
+                  />
+                ))}
+              </Form>
             </>
           )}
 

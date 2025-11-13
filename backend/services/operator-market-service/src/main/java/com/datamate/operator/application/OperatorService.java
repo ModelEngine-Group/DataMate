@@ -50,9 +50,7 @@ public class OperatorService {
 
     public List<OperatorDto> getOperators(Integer page, Integer size, List<String> categories,
                                           String operatorName, Boolean isStar) {
-        List<OperatorView> filteredOperators = operatorViewRepo.findOperatorsByCriteria(page, size, operatorName,
-                categories, isStar);
-        return filteredOperators.stream().map(OperatorConverter.INSTANCE::fromEntityToDto).toList();
+        return operatorViewRepo.findOperatorsByCriteria(page, size, operatorName, categories, isStar);
     }
 
     public int getOperatorsCount(List<String> categories, String operatorName, Boolean isStar) {
