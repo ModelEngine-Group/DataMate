@@ -18,7 +18,7 @@ build-%:
 	$(MAKE) $*-docker-build
 
 .PHONY: build
-build: backend-docker-build frontend-docker-build runtime-docker-build backend-python-docker-build
+build:  database-docker-build backend-docker-build frontend-docker-build runtime-docker-build backend-python-docker-build
 
 .PHONY: create-namespace
 create-namespace:
