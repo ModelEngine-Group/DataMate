@@ -61,7 +61,7 @@ function DetailHeader<T>({
               {data?.status && (
                 <Tag color={data.status?.color}>
                   <div className="flex items-center gap-2 text-xs">
-                    <span>{data.status?.icon}</span>
+                   {data.status?.icon && <span>{data.status?.icon}</span>}
                     <span>{data.status?.label}</span>
                   </div>
                 </Tag>

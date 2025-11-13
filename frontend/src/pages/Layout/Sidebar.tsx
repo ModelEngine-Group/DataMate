@@ -183,6 +183,7 @@ const AsiderAndHeaderLayout = () => {
         open={settingVisible}
         onClose={() => setSettingVisible(false)}
         bodyStyle={{ padding: 0 }}
+        destroyOnHidden={true}
       >
         <SettingsPage></SettingsPage>
       </Drawer>
