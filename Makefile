@@ -128,10 +128,6 @@ deer-flow-docker-build:
 mineru-docker-build:
 	docker build -t datamate-mineru:$(VERSION) . -f scripts/images/mineru/Dockerfile
 
-.PHONY: backend-python-docker-build
-backend-python-docker-build:
-	docker build -t datamate-backend-python:$(VERSION) . -f scripts/images/datamate-python/Dockerfile
-
 .PHONY: backend-docker-install
 backend-docker-install:
 	cd deployment/docker/datamate && docker compose up -d backend
