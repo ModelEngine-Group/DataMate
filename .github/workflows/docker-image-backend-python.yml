@@ -4,13 +4,11 @@ on:
   push:
     branches: [ "main" ]
     paths:
-      - 'backend/**'
       - 'scripts/images/datamate-python/**'
       - '.github/workflows/docker-image-backend-python.yml'
   pull_request:
     branches: [ "main" ]
     paths:
-      - 'backend/**'
       - 'scripts/images/datamate-python/**'
       - '.github/workflows/docker-image-backend-python.yml'
   workflow_dispatch:
