@@ -49,7 +49,7 @@ public class DatasetApplicationService {
     private final FileMetadataService fileMetadataService;
     private final ObjectMapper objectMapper;
 
-    @Value("${dataset.base.path:/dataset}")
+    @Value("${datamate.data-management.base-path:/dataset}")
     private String datasetBasePath;
 
     /**

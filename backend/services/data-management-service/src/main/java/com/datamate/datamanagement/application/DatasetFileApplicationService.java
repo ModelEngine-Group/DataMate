@@ -4,6 +4,7 @@ import com.datamate.common.domain.model.ChunkUploadPreRequest;
 import com.datamate.common.domain.model.FileUploadResult;
 import com.datamate.common.domain.service.FileService;
 import com.datamate.common.domain.utils.AnalyzerUtils;
+import com.datamate.common.infrastructure.exception.BusinessAssert;
 import com.datamate.common.infrastructure.exception.BusinessException;
 import com.datamate.common.infrastructure.exception.SystemErrorCode;
 import com.datamate.datamanagement.domain.contants.DatasetConstant;
@@ -13,6 +14,7 @@ import com.datamate.datamanagement.domain.model.dataset.DatasetFileUploadCheckIn
 import com.datamate.datamanagement.infrastructure.persistence.repository.DatasetFileRepository;
 import com.datamate.datamanagement.infrastructure.persistence.repository.DatasetRepository;
 import com.datamate.datamanagement.interfaces.converter.DatasetConverter;
+import com.datamate.datamanagement.interfaces.dto.CopyFilesRequest;
 import com.datamate.datamanagement.interfaces.dto.UploadFileRequest;
 import com.datamate.datamanagement.interfaces.dto.UploadFilesPreRequest;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -57,7 +59,7 @@ public class DatasetFileApplicationService {
     private final DatasetRepository datasetRepository;
     private final FileService fileService;
 
-    @Value("${dataset.base.path:/dataset}")
+    @Value("${datamate.data-management.base-path:/dataset}")
     private String datasetBasePath;
 
     @Autowired
@@ -256,5 +258,52 @@ public class DatasetFileApplicationService {
         dataset.addFile(datasetFile);
         dataset.active();
         datasetRepository.updateById(dataset);
+    }
+
+    /**
+     * 复制文件到数据集目录
+     *
+     * @param datasetId 数据集id
+     * @param req 复制文件请求
+     * @return 复制的文件列表
+     */
+    @Transactional
+    public List<DatasetFile> copyFilesToDatasetDir(String datasetId, CopyFilesRequest req) {
+        Dataset dataset = datasetRepository.getById(datasetId);
+        BusinessAssert.notNull(dataset, SystemErrorCode.RESOURCE_NOT_FOUND);
+        List<DatasetFile> copiedFiles = new ArrayList<>();
+        for (String sourceFilePath : req.sourcePaths()) {
+            Path sourcePath = Paths.get(sourceFilePath);
+            if (!Files.exists(sourcePath) || !Files.isRegularFile(sourcePath)) {
+                log.warn("Source file does not exist or is not a regular file: {}", sourceFilePath);
+                continue;
+            }
+            String fileName = sourcePath.getFileName().toString();
+            String fileType = AnalyzerUtils.getExtension(fileName);
+            long fileSize;
+            try {
+                fileSize = Files.size(sourcePath);
+            } catch (IOException e) {
+                log.error("Failed to get file size for: {}", sourceFilePath, e);
+                continue;
+            }
+            LocalDateTime currentTime = LocalDateTime.now();
+            DatasetFile datasetFile = DatasetFile.builder()
+                .id(UUID.randomUUID().toString())
+                .datasetId(datasetId)
+                .fileName(fileName)
+                .fileType(fileType)
+                .fileSize(fileSize)
+                .filePath(sourceFilePath)
+                .uploadTime(currentTime)
+                .lastAccessTime(currentTime)
+                .build();
+            datasetFileRepository.save(datasetFile);
+            dataset.addFile(datasetFile);
+            copiedFiles.add(datasetFile);
+        }
+        dataset.active();
+        datasetRepository.updateById(dataset);
+        return copiedFiles;
     }
 }
