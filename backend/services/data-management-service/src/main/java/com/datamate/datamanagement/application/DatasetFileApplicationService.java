@@ -44,6 +44,7 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -297,7 +298,7 @@ public class DatasetFileApplicationService {
         datasetFileRepository.saveBatch(copiedFiles, 100);
         dataset.active();
         datasetRepository.updateById(dataset);
-        copyFilesToDatasetDir(req.sourcePaths(), dataset);
+        CompletableFuture.runAsync(() -> copyFilesToDatasetDir(req.sourcePaths(), dataset));
         return copiedFiles;
     }
 
