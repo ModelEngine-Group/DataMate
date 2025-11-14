@@ -1,9 +1,12 @@
 from pydantic import Field, BaseModel
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 from datetime import datetime
 
 from app.module.shared.schema import BaseResponseModel
 from app.module.shared.schema import StandardResponse
+
+if TYPE_CHECKING:
+    from .template import AnnotationTemplateResponse
 
 
 class DatasetMappingCreateRequest(BaseModel):
@@ -42,6 +45,8 @@ class DatasetMappingResponse(BaseModel):
     labeling_project_id: str = Field(..., alias="labelingProjectId", description="标注项目ID")
     name: Optional[str] = Field(None, description="标注项目名称")
     description: Optional[str] = Field(None, description="标注项目描述")
+    template_id: Optional[str] = Field(None, alias="templateId", description="关联的模板ID")
+    template: Optional['AnnotationTemplateResponse'] = Field(None, description="关联的标注模板详情")
     created_at: datetime = Field(..., alias="createdAt", description="创建时间")
     updated_at: Optional[datetime] = Field(None, alias="updatedAt", description="更新时间")
     deleted_at: Optional[datetime] = Field(None, alias="deletedAt", description="删除时间")
