@@ -21,7 +21,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.apache.ibatis.session.RowBounds;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -76,7 +75,7 @@ public class DatasetFileApplicationService {
      */
     @Transactional(readOnly = true)
     public Page<DatasetFile> getDatasetFiles(String datasetId, String fileType,
-                                           String status, Pageable pageable) {
+                                             String status, Pageable pageable) {
         RowBounds bounds = new RowBounds(pageable.getPageNumber() * pageable.getPageSize(), pageable.getPageSize());
         List<DatasetFile> content = datasetFileRepository.findByCriteria(datasetId, fileType, status, bounds);
         long total = content.size() < pageable.getPageSize() && pageable.getPageNumber() == 0 ? content.size() : content.size() + (long) pageable.getPageNumber() * pageable.getPageSize();
@@ -148,7 +147,7 @@ public class DatasetFileApplicationService {
         fileRename(allByDatasetId);
         response.setContentType("application/zip");
         String zipName = String.format("dataset_%s.zip",
-            LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
+                LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
         response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + zipName);
         try (ZipOutputStream zos = new ZipOutputStream(response.getOutputStream())) {
             for (DatasetFile file : allByDatasetId) {
@@ -203,7 +202,7 @@ public class DatasetFileApplicationService {
      * 预上传
      *
      * @param chunkUploadRequest 上传请求
-     * @param datasetId 数据集id
+     * @param datasetId          数据集id
      * @return 请求id
      */
     @Transactional
@@ -245,15 +244,15 @@ public class DatasetFileApplicationService {
         File savedFile = fileUploadResult.getSavedFile();
         LocalDateTime currentTime = LocalDateTime.now();
         DatasetFile datasetFile = DatasetFile.builder()
-            .id(UUID.randomUUID().toString())
-            .datasetId(datasetId)
-            .fileSize(savedFile.length())
-            .uploadTime(currentTime)
-            .lastAccessTime(currentTime)
-            .fileName(uploadFile.getFileName())
-            .filePath(savedFile.getPath())
-            .fileType(AnalyzerUtils.getExtension(uploadFile.getFileName()))
-            .build();
+                .id(UUID.randomUUID().toString())
+                .datasetId(datasetId)
+                .fileSize(savedFile.length())
+                .uploadTime(currentTime)
+                .lastAccessTime(currentTime)
+                .fileName(uploadFile.getFileName())
+                .filePath(savedFile.getPath())
+                .fileType(AnalyzerUtils.getExtension(uploadFile.getFileName()))
+                .build();
 
         datasetFileRepository.save(datasetFile);
         dataset.addFile(datasetFile);
@@ -265,7 +264,7 @@ public class DatasetFileApplicationService {
      * 复制文件到数据集目录
      *
      * @param datasetId 数据集id
-     * @param req 复制文件请求
+     * @param req       复制文件请求
      * @return 复制的文件列表
      */
     @Transactional
@@ -280,31 +279,38 @@ public class DatasetFileApplicationService {
                 continue;
             }
             String fileName = sourcePath.getFileName().toString();
-            File targetFile = new File(dataset.getPath(), fileName);
-            try {
-                FileUtils.copyInputStreamToFile(Files.newInputStream(sourcePath), targetFile);
-            } catch (IOException e) {
-                log.error("Failed to copy file: {}", sourceFilePath, e);
-                continue;
-            }
-
+            File sourceFile = sourcePath.toFile();
             LocalDateTime currentTime = LocalDateTime.now();
             DatasetFile datasetFile = DatasetFile.builder()
                     .id(UUID.randomUUID().toString())
                     .datasetId(datasetId)
                     .fileName(fileName)
                     .fileType(AnalyzerUtils.getExtension(fileName))
-                    .fileSize(targetFile.length())
-                    .filePath(targetFile.getPath())
+                    .fileSize(sourceFile.length())
+                    .filePath(Paths.get(dataset.getPath(), fileName).toString())
                     .uploadTime(currentTime)
                     .lastAccessTime(currentTime)
                     .build();
-            datasetFileRepository.save(datasetFile);
             dataset.addFile(datasetFile);
             copiedFiles.add(datasetFile);
         }
+        datasetFileRepository.saveBatch(copiedFiles, 100);
         dataset.active();
         datasetRepository.updateById(dataset);
+        copyFilesToDatasetDir(req.sourcePaths(), dataset);
         return copiedFiles;
+    }
+
+    private void copyFilesToDatasetDir(List<String> sourcePaths, Dataset dataset) {
+        for (String sourcePath : sourcePaths) {
+            Path sourceFilePath = Paths.get(sourcePath);
+            Path targetFilePath = Paths.get(dataset.getPath(), sourceFilePath.getFileName().toString());
+            try {
+                Files.createDirectories(Path.of(dataset.getPath()));
+                Files.copy(sourceFilePath, targetFilePath);
+            } catch (IOException e) {
+                log.error("Failed to copy file from {} to {}", sourcePath, targetFilePath, e);
+            }
+        }
     }
 }
