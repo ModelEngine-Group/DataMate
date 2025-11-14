@@ -53,7 +53,7 @@ interface ProviderI {
   isEnabled: boolean;
 }
 
-export default function EnvironmentAccess() {
+export default function ModelAccess() {
   const [form] = Form.useForm();
   const [showModelDialog, setShowModelDialog] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
