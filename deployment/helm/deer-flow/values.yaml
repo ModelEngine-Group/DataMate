@@ -24,10 +24,16 @@ backend:
     - name: deer-flow-conf
       secret:
         secretName: deer-flow-conf
+    - name: log-volume
+      persistentVolumeClaim:
+        claimName: datamate-log-pvc
   volumeMounts:
     - name: deer-flow-conf
       mountPath: /app/conf.yaml
       subPath: conf.yaml
+    - name: log-volume
+      mountPath: /var/log/deer-flow
+      subPath: deer-flow
 
 frontend:
   envFrom:

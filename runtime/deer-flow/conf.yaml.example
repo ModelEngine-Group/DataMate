@@ -6,10 +6,10 @@
 # - Set `verify_ssl` to `false` if your LLM server uses self-signed certificates
 # - A restart is required every time you change the `conf.yaml` file.
 
-BASIC_MODEL:
-  base_url: https://ark.cn-beijing.volces.com/api/v3
-  model: "doubao-1-5-pro-32k-250115"
-  api_key: xxxx
+  # BASIC_MODEL:
+  #  base_url: https://ark.cn-beijing.volces.com/api/v3
+  #  model: "doubao-1-5-pro-32k-250115"
+  #  api_key: xxxx
   # max_retries: 3 # Maximum number of retries for LLM calls
   # verify_ssl: false  # Uncomment this line to disable SSL certificate verification for self-signed certificates
 
