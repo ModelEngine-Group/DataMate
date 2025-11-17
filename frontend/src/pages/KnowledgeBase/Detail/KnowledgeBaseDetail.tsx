@@ -48,7 +48,7 @@ const KnowledgeBaseDetailPage: React.FC = () => {
     setSearchParams,
     handleFiltersChange,
   } = useFetchData<KBFile>(
-    (params) => queryKnowledgeBaseFilesUsingGet(knowledgeBase?.id, params),
+    (params) => id ? queryKnowledgeBaseFilesUsingGet(id, params) : Promise.resolve({ data: [] }),
     mapFileData
   );
 

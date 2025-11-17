@@ -8,6 +8,7 @@ import com.datamate.datamanagement.infrastructure.persistence.repository.Dataset
 import com.datamate.rag.indexer.domain.model.FileStatus;
 import com.datamate.rag.indexer.domain.model.RagFile;
 import com.datamate.rag.indexer.domain.repository.RagFileRepository;
+import com.datamate.rag.indexer.infrastructure.milvus.MilvusService;
 import com.datamate.rag.indexer.interfaces.dto.ProcessType;
 import com.google.common.collect.Lists;
 import dev.langchain4j.data.document.Document;
@@ -27,11 +28,8 @@ import dev.langchain4j.data.document.transformer.jsoup.HtmlToTextDocumentTransfo
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.embedding.EmbeddingModel;
-import dev.langchain4j.store.embedding.EmbeddingStore;
-import dev.langchain4j.store.embedding.milvus.MilvusEmbeddingStore;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionPhase;
@@ -55,10 +53,7 @@ import java.util.concurrent.Semaphore;
 public class RagEtlService {
     private static final Semaphore SEMAPHORE = new Semaphore(10);
 
-    @Value("${datamate.rag.milvus-host:milvus-standalone}")
-    private String milvusHost;
-    @Value("${datamate.rag.milvus-port:19530}")
-    private int milvusPort;
+    private final MilvusService milvusService;
 
     private final RagFileRepository ragFileRepository;
 
@@ -112,7 +107,7 @@ public class RagEtlService {
         if (Arrays.asList("html", "htm").contains(file.getFileType().toLowerCase())) {
             document = new HtmlToTextDocumentTransformer().transform(document);
         }
-        document.metadata().put("fileId", ragFile.getFileId());
+        document.metadata().put("rag_file_id", ragFile.getId());
         // 使用文档分块器对文档进行分块
         DocumentSplitter splitter = documentSplitter(event.addFilesReq().getProcessType());
         List<TextSegment> split = splitter.split(document);
@@ -129,7 +124,7 @@ public class RagEtlService {
         Lists.partition(split, 20).forEach(partition -> {
             List<Embedding> content = embeddingModel.embedAll(partition).content();
             // 存储嵌入向量到 Milvus
-            embeddingStore(embeddingModel, event.knowledgeBase().getName()).addAll(content, partition);
+            milvusService.embeddingStore(embeddingModel, event.knowledgeBase().getName()).addAll(content, partition);
         });
     }
 
@@ -158,14 +153,5 @@ public class RagEtlService {
             case LENGTH_CHUNK -> new DocumentByWordSplitter(1000, 100);
             case DEFAULT_CHUNK -> new DocumentByLineSplitter(1000, 100);
         };
-    }
-
-    public EmbeddingStore<TextSegment> embeddingStore(EmbeddingModel embeddingModel, String knowledgeBaseName) {
-        return MilvusEmbeddingStore.builder()
-                .host(milvusHost)
-                .port(milvusPort)
-                .collectionName(knowledgeBaseName)
-                .dimension(embeddingModel.dimension())
-                .build();
     }
 }

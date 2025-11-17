@@ -2,6 +2,10 @@ package com.datamate.rag.indexer.application;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.datamate.common.infrastructure.exception.BusinessException;
+import com.datamate.common.infrastructure.exception.KnowledgeBaseErrorCode;
+import com.datamate.common.interfaces.PagedResponse;
+import com.datamate.common.interfaces.PagingQuery;
 import com.datamate.common.setting.domain.repository.ModelConfigRepository;
 import com.datamate.rag.indexer.domain.model.FileStatus;
 import com.datamate.rag.indexer.domain.model.KnowledgeBase;
@@ -10,11 +14,10 @@ import com.datamate.rag.indexer.domain.model.RagFile;
 import com.datamate.rag.indexer.domain.repository.KnowledgeBaseRepository;
 import com.datamate.rag.indexer.domain.repository.RagFileRepository;
 import com.datamate.rag.indexer.infrastructure.event.DataInsertedEvent;
-import com.datamate.common.infrastructure.exception.BusinessException;
-import com.datamate.common.infrastructure.exception.KnowledgeBaseErrorCode;
-import com.datamate.common.interfaces.PagedResponse;
-import com.datamate.common.interfaces.PagingQuery;
 import com.datamate.rag.indexer.interfaces.dto.*;
+import io.milvus.client.MilvusClient;
+import io.milvus.param.collection.DropCollectionParam;
+import io.milvus.param.dml.DeleteParam;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.BeanUtils;
@@ -39,7 +42,7 @@ public class KnowledgeBaseService {
     private final RagFileRepository ragFileRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final ModelConfigRepository modelConfigRepository;
-
+    private final MilvusClient milvusClient;
 
     /**
      * 创建知识库
@@ -72,10 +75,13 @@ public class KnowledgeBaseService {
         knowledgeBaseRepository.updateById(knowledgeBase);
     }
 
+    @Transactional
     public void delete(String knowledgeBaseId) {
+        KnowledgeBase knowledgeBase = Optional.ofNullable(knowledgeBaseRepository.getById(knowledgeBaseId))
+                .orElseThrow(() -> BusinessException.of(KnowledgeBaseErrorCode.KNOWLEDGE_BASE_NOT_FOUND));
         knowledgeBaseRepository.removeById(knowledgeBaseId);
         ragFileRepository.removeByKnowledgeBaseId(knowledgeBaseId);
-        //  TODO: 删除知识库关联的所有文档
+        milvusClient.dropCollection(DropCollectionParam.newBuilder().withCollectionName(knowledgeBase.getName()).build());
     }
 
     public KnowledgeBaseResp getById(String knowledgeBaseId) {
@@ -136,8 +142,15 @@ public class KnowledgeBaseService {
         return PagedResponse.of(page.getRecords(), page.getCurrent(), page.getTotal(), page.getPages());
     }
 
+    @Transactional(rollbackFor = Exception.class)
     public void deleteFiles(String knowledgeBaseId, DeleteFilesReq request) {
+        KnowledgeBase knowledgeBase = Optional.ofNullable(knowledgeBaseRepository.getById(knowledgeBaseId))
+                .orElseThrow(() -> BusinessException.of(KnowledgeBaseErrorCode.KNOWLEDGE_BASE_NOT_FOUND));
         ragFileRepository.removeByIds(request.getIds());
+        milvusClient.delete(DeleteParam.newBuilder()
+                .withCollectionName(knowledgeBase.getName())
+                .withExpr("metadata[\"rag_file_id\"] in [" + org.apache.commons.lang3.StringUtils.join(request.getIds().stream().map(id -> "\"" + id + "\"").toArray(), ",") + "]")
+                .build());
     }
 
     public PagedResponse<RagChunk> getChunks(String knowledgeBaseId, String ragFileId, PagingQuery pagingQuery) {
