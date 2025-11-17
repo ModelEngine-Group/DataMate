@@ -19,6 +19,10 @@ export interface KnowledgeBaseItem {
   updatedAt: string;
   embeddingModel: string;
   chatModel: string;
+  fileCount: number;
+  chunkCount: number;
+  embedding: never;
+  chat: never;
 }
 
 export interface KBFile {

@@ -63,24 +63,26 @@ export const KBTypeMap = {
   },
 };
 
-export function mapKnowledgeBase(kb: KnowledgeBaseItem): KnowledgeBaseItem {
+export function mapKnowledgeBase(kb: KnowledgeBaseItem, showModelFields: boolean = true): KnowledgeBaseItem {
   return {
     ...kb,
     icon: <BookOpenText className="w-full h-full" />,
     description: kb.description,
     statistics: [
-      {
-        label: "索引模型",
-        key: "embeddingModel",
-        icon: <VectorSquare className="w-4 h-4 text-blue-500" />,
-        value: kb.embeddingModel,
-      },
-      {
-        label: "文本理解模型",
-        key: "chatModel",
-        icon: <BookType className="w-4 h-4 text-blue-500" />,
-        value: kb.chatModel,
-      },
+      ...(showModelFields ? [
+        {
+          label: "索引模型",
+          key: "embeddingModel",
+          icon: <VectorSquare className="w-4 h-4 text-blue-500" />,
+          value: kb.embedding?.modelName + (kb.embedding?.provider ? ` (${kb.embedding.provider})` : "") || "无",
+        },
+        {
+          label: "文本理解模型",
+          key: "chatModel",
+          icon: <BookType className="w-4 h-4 text-blue-500" />,
+          value: kb.chat?.modelName + (kb.chat?.provider ? ` (${kb.chat.provider})` : "") || "无",
+        },
+      ] : []),
       {
         label: "文件数",
         key: "fileCount",
@@ -88,10 +90,10 @@ export function mapKnowledgeBase(kb: KnowledgeBaseItem): KnowledgeBaseItem {
         value: formatNumber(kb?.fileCount) || 0,
       },
       {
-        label: "大小",
-        key: "size",
+        label: "分块数",
+        key: "chunkCount",
         icon: <ChartNoAxesColumn className="w-4 h-4 text-blue-500" />,
-        value: formatBytes(kb?.size) || "0 MB",
+        value: formatNumber(kb?.chunkCount) || 0,
       },
     ],
     updatedAt: formatDateTime(kb.updatedAt),

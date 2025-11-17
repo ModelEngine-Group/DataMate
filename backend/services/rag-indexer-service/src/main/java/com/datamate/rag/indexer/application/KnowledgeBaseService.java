@@ -2,6 +2,7 @@ package com.datamate.rag.indexer.application;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.datamate.common.setting.domain.repository.ModelConfigRepository;
 import com.datamate.rag.indexer.domain.model.FileStatus;
 import com.datamate.rag.indexer.domain.model.KnowledgeBase;
 import com.datamate.rag.indexer.domain.model.RagChunk;
@@ -15,6 +16,7 @@ import com.datamate.common.interfaces.PagedResponse;
 import com.datamate.common.interfaces.PagingQuery;
 import com.datamate.rag.indexer.interfaces.dto.*;
 import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -36,6 +38,7 @@ public class KnowledgeBaseService {
     private final KnowledgeBaseRepository knowledgeBaseRepository;
     private final RagFileRepository ragFileRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final ModelConfigRepository modelConfigRepository;
 
 
     /**
@@ -75,15 +78,39 @@ public class KnowledgeBaseService {
         //  TODO: 删除知识库关联的所有文档
     }
 
-    public KnowledgeBase getById(String knowledgeBaseId) {
-        return Optional.ofNullable(knowledgeBaseRepository.getById(knowledgeBaseId))
+    public KnowledgeBaseResp getById(String knowledgeBaseId) {
+        KnowledgeBase knowledgeBase = Optional.ofNullable(knowledgeBaseRepository.getById(knowledgeBaseId))
                 .orElseThrow(() -> BusinessException.of(KnowledgeBaseErrorCode.KNOWLEDGE_BASE_NOT_FOUND));
+        KnowledgeBaseResp resp = getKnowledgeBaseResp(knowledgeBase);
+        resp.setEmbedding(modelConfigRepository.getById(knowledgeBase.getEmbeddingModel()));
+        resp.setChat(modelConfigRepository.getById(knowledgeBase.getChatModel()));
+        return resp;
     }
 
-    public PagedResponse<KnowledgeBase> list(KnowledgeBaseQueryReq request) {
+    @NotNull
+    private KnowledgeBaseResp getKnowledgeBaseResp(KnowledgeBase knowledgeBase) {
+        KnowledgeBaseResp resp = new KnowledgeBaseResp();
+        BeanUtils.copyProperties(knowledgeBase, resp);
+
+        // 获取该知识库的所有文件
+        List<RagFile> files = ragFileRepository.findAllByKnowledgeBaseId(knowledgeBase.getId());
+        resp.setFileCount((long) files.size());
+
+        // 计算分片总数
+        long totalChunkCount = files.stream()
+                .mapToLong(file -> file.getChunkCount() != null ? file.getChunkCount() : 0)
+                .sum();
+        resp.setChunkCount(totalChunkCount);
+        return resp;
+    }
+
+    public PagedResponse<KnowledgeBaseResp> list(KnowledgeBaseQueryReq request) {
         IPage<KnowledgeBase> page = new Page<>(request.getPage(), request.getSize());
         page = knowledgeBaseRepository.page(page, request);
-        return PagedResponse.of(page.getRecords(), page.getCurrent(), page.getTotal(), page.getPages());
+
+        // 将 KnowledgeBase 转换为 KnowledgeBaseResp，并计算 fileCount 和 chunkCount
+        List<KnowledgeBaseResp> respList = page.getRecords().stream().map(this::getKnowledgeBaseResp).toList();
+        return PagedResponse.of(respList, page.getCurrent(), page.getTotal(), page.getPages());
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -104,7 +131,8 @@ public class KnowledgeBaseService {
 
     public PagedResponse<RagFile> listFiles(String knowledgeBaseId, RagFileReq request) {
         IPage<RagFile> page = new Page<>(request.getPage(), request.getSize());
-        page = ragFileRepository.page(page);
+        request.setKnowledgeBaseId(knowledgeBaseId);
+        page = ragFileRepository.page(page, request);
         return PagedResponse.of(page.getRecords(), page.getCurrent(), page.getTotal(), page.getPages());
     }
 
