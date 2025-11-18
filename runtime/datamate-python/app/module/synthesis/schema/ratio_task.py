@@ -1,4 +1,5 @@
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
+from datetime import datetime
 from pydantic import BaseModel, Field, field_validator
 
 class RatioConfigItem(BaseModel):
@@ -84,3 +85,22 @@ class PagedRatioTaskResponse(BaseModel):
     totalPages: int
     page: int
     size: int
+
+
+class RatioTaskDetailResponse(BaseModel):
+    """Detailed response for a ratio task."""
+    id: str = Field(..., description="任务ID")
+    name: str = Field(..., description="任务名称")
+    description: Optional[str] = Field(None, description="任务描述")
+    status: str = Field(..., description="任务状态")
+    totals: int = Field(..., description="目标总数")
+    ratio_method: str = Field(..., description="配比方式")
+    config: List[Dict[str, Any]] = Field(..., description="配比配置")
+    target_dataset: Dict[str, Any] = Field(..., description="目标数据集信息")
+    created_at: Optional[datetime] = Field(None, description="创建时间")
+    updated_at: Optional[datetime] = Field(None, description="更新时间")
+
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.isoformat() if v else None
+        }

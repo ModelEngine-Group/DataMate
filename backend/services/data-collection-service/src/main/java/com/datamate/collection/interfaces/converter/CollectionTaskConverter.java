@@ -41,8 +41,7 @@ public interface CollectionTaskConverter {
     default Map<String, Object> parseJsonToMap(String json) {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
-            return
-                objectMapper.readValue(json, Map.class);
+            return objectMapper.readValue(json, Map.class);
         } catch (Exception e) {
             throw BusinessException.of(SystemErrorCode.INVALID_PARAMETER);
         }

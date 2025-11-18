@@ -110,9 +110,6 @@ export function ListView({ operators = [], pagination, operations }) {
                   {operator.name}
                 </span>
                 <Tag color="default">v{operator.version}</Tag>
-                <Badge color={getStatusBadge(operator.status).color}>
-                  {getStatusBadge(operator.status).label}
-                </Badge>
               </div>
             }
             description={

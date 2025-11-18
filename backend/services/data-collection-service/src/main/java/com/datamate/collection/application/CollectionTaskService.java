@@ -5,12 +5,9 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.datamate.collection.domain.model.entity.CollectionTask;
 import com.datamate.collection.domain.model.entity.TaskExecution;
-import com.datamate.collection.common.enums.TaskStatus;
 import com.datamate.collection.domain.repository.CollectionTaskRepository;
 import com.datamate.collection.common.enums.SyncMode;
 import com.datamate.common.domain.utils.ChunksSaver;
-import com.datamate.datamanagement.application.DatasetApplicationService;
-import com.datamate.datamanagement.domain.model.dataset.Dataset;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,7 +22,6 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class CollectionTaskService {
     private final TaskExecutionService taskExecutionService;
-    private final DatasetApplicationService datasetApplicationService;
     private final CollectionTaskRepository collectionTaskRepository;
 
     @Transactional

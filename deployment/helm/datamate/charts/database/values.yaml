@@ -7,11 +7,11 @@ replicaCount: 1
 
 # This sets the container image more information can be found here: https://kubernetes.io/docs/concepts/containers/images/
 image:
-  repository: "mysql"
+  repository: "datamate-database"
   # This sets the pull policy for images.
   pullPolicy: "IfNotPresent"
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "8"
+  tag: "latest"
 
 # This is for the secrets for pulling an image from a private repository more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
 imagePullSecrets: []
@@ -19,9 +19,7 @@ imagePullSecrets: []
 nameOverride: "datamate-database"
 fullnameOverride: "datamate-database"
 
-env:
-  - name: MYSQL_ROOT_PASSWORD
-    value: "password"
+env: []
 
 initContainers:
   - name: init-log

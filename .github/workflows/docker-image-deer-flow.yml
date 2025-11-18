@@ -16,6 +16,7 @@ on:
       - 'scripts/images/deer-flow-frontend/**'
       - '.github/workflows/docker-image-deer-flow.yml'
   workflow_dispatch:
+  workflow_call:
 
 jobs:
   build-and-push:

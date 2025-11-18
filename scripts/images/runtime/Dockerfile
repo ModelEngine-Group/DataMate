@@ -1,4 +1,9 @@
-FROM python:3.11
+FROM ghcr.io/astral-sh/uv:python3.11-bookworm
+
+RUN --mount=type=cache,target=/var/cache/apt \
+    --mount=type=cache,target=/var/lib/apt \
+    apt update \
+    && apt install -y libgl1 libglib2.0-0 vim libmagic1 libreoffice dos2unix
 
 COPY runtime/python-executor /opt/runtime
 COPY runtime/ops /opt/runtime/datamate/ops
@@ -7,16 +12,11 @@ COPY scripts/images/runtime/start.sh /opt/runtime/start.sh
 
 ENV PYTHONPATH=/opt/runtime/datamate/
 
-RUN apt update \
-    && apt install -y libgl1 libglib2.0-0 vim libmagic1t64 libreoffice dos2unix \
-    && apt clean \
-    && rm -rf /var/lib/apt/lists/*
-
 WORKDIR /opt/runtime
 
-RUN pip install -e . --trusted-host mirrors.huaweicloud.com -i https://mirrors.huaweicloud.com/repository/pypi/simple \
-    && pip install -r /opt/runtime/datamate/ops/requirements.txt --trusted-host mirrors.huaweicloud.com -i https://mirrors.huaweicloud.com/repository/pypi/simple \
-    && pip cache purge
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv pip install -e . --system \
+    && uv pip install -r /opt/runtime/datamate/ops/requirements.txt --system
 
 RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
     && chmod +x /opt/runtime/start.sh \

@@ -1,0 +1,467 @@
+# Label Studio Tag Configuration
+# Defines supported tags, their properties, and child element requirements
+
+# Object tags - represent data to be annotated
+objects:
+  Audio:
+    description: "Display audio files"
+    required_attrs: [name, value]
+    optional_attrs: []
+    category: media
+  Bitmask:
+    description: "Display bitmask images for segmentation"
+    required_attrs: [name, value]
+    optional_attrs: []
+    category: image
+  PDF:
+    description: "Display PDF documents"
+    required_attrs: [name, value]
+    optional_attrs: []
+    category: document
+  Markdown:
+    description: "Display Markdown content"
+    required_attrs: [name, value]
+    optional_attrs: []
+    category: document
+  ParagraphLabels:
+    description: "Display paragraphs with label support"
+    required_attrs: [name, value]
+    optional_attrs: []
+    category: text
+  Timeseries:
+    description: "Display timeseries data"
+    required_attrs: [name, value]
+    optional_attrs: []
+    category: data
+  Vector:
+    description: "Display vector data for annotation"
+    required_attrs: [name, value]
+    optional_attrs: []
+    category: data
+  Chat:
+    description: "Display chat data for annotation"
+    required_attrs: [name, value]
+    optional_attrs: []
+    category: text
+
+  HyperText:
+    description: "Display HTML content"
+    required_attrs: [name, value]
+    optional_attrs: []
+    category: document
+  Image:
+    description: "Display images for annotation"
+    required_attrs: [name, value]
+    optional_attrs: []
+    category: image
+  Text:
+    description: "Display text for annotation"
+    required_attrs: [name, value]
+    optional_attrs: []
+    category: text
+  Video:
+    description: "Display video files"
+    required_attrs: [name, value]
+    optional_attrs: []
+    category: media
+  AudioPlus:
+    description: "Advanced audio player"
+    required_attrs: [name, value]
+    optional_attrs: []
+    category: media
+  Paragraphs:
+    description: "Display paragraphs of text"
+    required_attrs: [name, value]
+    optional_attrs: []
+    category: text
+  Table:
+    description: "Display tabular data"
+    required_attrs: [name, value]
+    optional_attrs: []
+    category: data
+
+# Control tags - tools for annotation
+# Categories:
+#   - labeling: Controls used for annotating/labeling objects (shown in template form)
+#   - layout: UI/layout elements not used for labeling (hidden from template form by default)
+controls:
+  # Choice-based controls (use <Choice> children)
+  Choices:
+    description: "Multiple choice classification"
+    required_attrs: [name, toName]
+    optional_attrs:
+      required:
+        type: boolean
+        description: "Whether the choice is required"
+      choice:
+        type: string
+        values: [single, multiple]
+        default: single
+        description: "Selection mode: single or multiple"
+      showInline:
+        type: boolean
+        default: true
+        description: "Show choices inline or as dropdown"
+    requires_children: true
+    child_tag: Choice
+    child_required_attrs: [value]
+    category: labeling
+
+  Taxonomy:
+    description: "Hierarchical multi-label classification"
+    required_attrs: [name, toName]
+    optional_attrs:
+      required:
+        type: boolean
+      maxDepth:
+        type: number
+        default: 3
+        description: "Maximum depth of taxonomy tree"
+    requires_children: true
+    child_tag: Path
+    child_required_attrs: [value]
+    category: labeling
+
+  Ranker:
+    description: "Rank items in order"
+    required_attrs: [name, toName]
+    optional_attrs:
+      required:
+        type: boolean
+      maxChoices:
+        type: number
+        default: 5
+        description: "Maximum number of choices to rank"
+    requires_children: true
+    child_tag: Choice
+    child_required_attrs: [value]
+    category: layout
+
+  List:
+    description: "List selection control"
+    required_attrs: [name, toName]
+    optional_attrs:
+      required:
+        type: boolean
+      mode:
+        type: string
+        values: [single, multiple]
+        default: single
+    requires_children: true
+    child_tag: Item
+    child_required_attrs: [value]
+    category: layout
+
+  Filter:
+    description: "Filter control for annotation"
+    required_attrs: [name, toName]
+    optional_attrs:
+      required:
+        type: boolean
+    requires_children: false
+    category: layout
+
+  Collapse:
+    description: "Collapsible UI section"
+    required_attrs: [name]
+    optional_attrs:
+      collapsed:
+        type: boolean
+        default: false
+    requires_children: false
+    category: layout
+
+  Header:
+    description: "Section header for UI grouping"
+    required_attrs: [name]
+    optional_attrs:
+      level:
+        type: number
+        default: 1
+        description: "Header level (1-6)"
+    requires_children: false
+    category: layout
+
+  Shortcut:
+    description: "Keyboard shortcut definition"
+    required_attrs: [name, toName]
+    optional_attrs:
+      key:
+        type: string
+        description: "Shortcut key"
+    requires_children: false
+    category: layout
+
+  Style:
+    description: "Custom style for annotation UI"
+    required_attrs: [name]
+    optional_attrs:
+      value:
+        type: string
+        description: "CSS style value"
+    requires_children: false
+    category: layout
+
+  MagicWand:
+    description: "Magic wand segmentation tool"
+    required_attrs: [name, toName]
+    optional_attrs:
+      required:
+        type: boolean
+    requires_children: false
+    category: labeling
+
+  BitmaskLabels:
+    description: "Bitmask segmentation with labels"
+    required_attrs: [name, toName]
+    optional_attrs: [required]
+    requires_children: true
+    child_tag: Label
+    child_required_attrs: [value]
+    category: labeling
+
+  TimeseriesLabels:
+    description: "Labels for timeseries data"
+    required_attrs: [name, toName]
+    optional_attrs: [required]
+    requires_children: true
+    child_tag: Label
+    child_required_attrs: [value]
+    category: labeling
+
+  VectorLabels:
+    description: "Labels for vector data"
+    required_attrs: [name, toName]
+    optional_attrs: [required]
+    requires_children: true
+    child_tag: Label
+    child_required_attrs: [value]
+    category: labeling
+
+  ParagraphLabels:
+    description: "Labels for paragraphs"
+    required_attrs: [name, toName]
+    optional_attrs: [required]
+    requires_children: true
+    child_tag: Label
+    child_required_attrs: [value]
+    category: labeling
+
+  Relation:
+    description: "Draw relation between objects"
+    required_attrs: [name, toName]
+    optional_attrs:
+      required:
+        type: boolean
+    requires_children: false
+    category: layout
+
+  Relations:
+    description: "Draw multiple relations between objects"
+    required_attrs: [name, toName]
+    optional_attrs:
+      required:
+        type: boolean
+    requires_children: false
+    category: layout
+
+  Pairwise:
+    description: "Pairwise comparison control"
+    required_attrs: [name, toName]
+    optional_attrs:
+      required:
+        type: boolean
+    requires_children: false
+    category: layout
+
+  DateTime:
+    description: "Date and time input"
+    required_attrs: [name, toName]
+    optional_attrs:
+      required:
+        type: boolean
+      format:
+        type: string
+        default: "YYYY-MM-DD HH:mm:ss"
+    requires_children: false
+    category: labeling
+
+  Number:
+    description: "Numeric input field"
+    required_attrs: [name, toName]
+    optional_attrs:
+      required:
+        type: boolean
+      min:
+        type: number
+      max:
+        type: number
+      step:
+        type: number
+        default: 1
+    requires_children: false
+    category: labeling
+
+  # Label-based controls (use <Label> children)
+  RectangleLabels:
+    description: "Rectangle bounding boxes with labels"
+    required_attrs: [name, toName]
+    optional_attrs:
+      required:
+        type: boolean
+        description: "Whether annotation is required"
+      strokeWidth:
+        type: number
+        default: 3
+        description: "Width of the bounding box border"
+      canRotate:
+        type: boolean
+        default: true
+        description: "Allow rotation of rectangles"
+    requires_children: true
+    child_tag: Label
+    child_required_attrs: [value]
+    category: labeling
+
+  PolygonLabels:
+    description: "Polygon annotations with labels"
+    required_attrs: [name, toName]
+    optional_attrs:
+      required:
+        type: boolean
+      strokeWidth:
+        type: number
+        default: 3
+      pointSize:
+        type: string
+        values: [small, medium, large]
+        default: medium
+    requires_children: true
+    child_tag: Label
+    child_required_attrs: [value]
+    category: labeling
+
+  Labels:
+    description: "Generic labels for classification"
+    required_attrs: [name, toName]
+    optional_attrs: [required]
+    requires_children: true
+    child_tag: Label
+    child_required_attrs: [value]
+    category: labeling
+
+  KeyPointLabels:
+    description: "Keypoint annotations with labels"
+    required_attrs: [name, toName]
+    optional_attrs: [required]
+    requires_children: true
+    child_tag: Label
+    child_required_attrs: [value]
+    category: labeling
+
+  BrushLabels:
+    description: "Brush/semantic segmentation with labels"
+    required_attrs: [name, toName]
+    optional_attrs: [required]
+    requires_children: true
+    child_tag: Label
+    child_required_attrs: [value]
+    category: labeling
+
+  EllipseLabels:
+    description: "Ellipse annotations with labels"
+    required_attrs: [name, toName]
+    optional_attrs: [required]
+    requires_children: true
+    child_tag: Label
+    child_required_attrs: [value]
+    category: labeling
+
+  # Simple controls (no children required)
+  Rectangle:
+    description: "Rectangle bounding box without labels"
+    required_attrs: [name, toName]
+    optional_attrs: [required]
+    requires_children: false
+    category: labeling
+
+  Polygon:
+    description: "Polygon annotation without labels"
+    required_attrs: [name, toName]
+    optional_attrs: [required]
+    requires_children: false
+    category: labeling
+
+  Ellipse:
+    description: "Ellipse annotation without labels"
+    required_attrs: [name, toName]
+    optional_attrs: [required]
+    requires_children: false
+    category: labeling
+
+  KeyPoint:
+    description: "Keypoint annotation without labels"
+    required_attrs: [name, toName]
+    optional_attrs: [required]
+    requires_children: false
+    category: labeling
+
+  Brush:
+    description: "Brush annotation without labels"
+    required_attrs: [name, toName]
+    optional_attrs: [required]
+    requires_children: false
+    category: labeling
+
+  TextArea:
+    description: "Text input field"
+    required_attrs: [name, toName]
+    optional_attrs:
+      required:
+        type: boolean
+      placeholder:
+        type: string
+        description: "Placeholder text"
+      maxSubmissions:
+        type: number
+        description: "Maximum number of submissions"
+      rows:
+        type: number
+        default: 3
+        description: "Number of rows in textarea"
+      editable:
+        type: boolean
+        default: true
+    requires_children: false
+    category: labeling
+
+  Rating:
+    description: "Star rating or numeric rating"
+    required_attrs: [name, toName]
+    optional_attrs:
+      required:
+        type: boolean
+      maxRating:
+        type: number
+        default: 5
+        description: "Maximum rating value"
+      defaultValue:
+        type: number
+        description: "Default rating value"
+      size:
+        type: string
+        values: [small, medium, large]
+        default: medium
+      icon:
+        type: string
+        values: [star, heart, fire, thumbs]
+        default: star
+    requires_children: false
+    category: labeling
+
+  VideoRectangle:
+    description: "Rectangle annotations for video"
+    required_attrs: [name, toName]
+    optional_attrs: [required]
+    requires_children: false
+    category: labeling

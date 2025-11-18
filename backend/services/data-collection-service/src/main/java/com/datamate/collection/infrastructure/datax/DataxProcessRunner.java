@@ -1,28 +1,26 @@
+// java
 package com.datamate.collection.infrastructure.datax;
 
+import com.datamate.collection.common.enums.TemplateType;
 import com.datamate.collection.domain.model.entity.CollectionTask;
 import com.datamate.collection.domain.process.ProcessRunner;
+import com.datamate.collection.infrastructure.datax.config.MysqlConfig;
+import com.datamate.collection.infrastructure.datax.config.NasConfig;
 import com.datamate.common.infrastructure.exception.BusinessException;
 import com.datamate.common.infrastructure.exception.SystemErrorCode;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.exec.*;
+import org.apache.commons.io.output.TeeOutputStream;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.io.*;
+import java.nio.file.*;
 import java.time.Duration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.regex.Pattern;
 
 @Slf4j
 @Component
@@ -34,7 +32,10 @@ public class DataxProcessRunner implements ProcessRunner {
     @Override
     public int runJob(CollectionTask task, String executionId, int timeoutSeconds) throws Exception {
         Path job = buildJobFile(task);
-        return runJob(job.toFile(), executionId, Duration.ofSeconds(timeoutSeconds));
+        int code = runJob(job.toFile(), executionId, Duration.ofSeconds(timeoutSeconds));
+        // 任务成功后做后处理（仅针对 MYSQL 类型）
+        postProcess(task);
+        return code;
     }
 
     private int runJob(File jobFile, String executionId, Duration timeout) throws Exception {
@@ -61,10 +62,8 @@ public class DataxProcessRunner implements ProcessRunner {
         }
 
         ExecuteStreamHandler streamHandler = new PumpStreamHandler(
-            new org.apache.commons.io.output.TeeOutputStream(
-                new java.io.FileOutputStream(logFile, true), System.out),
-            new org.apache.commons.io.output.TeeOutputStream(
-                new java.io.FileOutputStream(logFile, true), System.err)
+            new TeeOutputStream(new FileOutputStream(logFile, true), System.out),
+            new TeeOutputStream(new FileOutputStream(logFile, true), System.err)
         );
         executor.setStreamHandler(streamHandler);
 
@@ -92,33 +91,53 @@ public class DataxProcessRunner implements ProcessRunner {
     private String getJobConfig(CollectionTask task) {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
-            Map<String, Object> parameter = objectMapper.readValue(
-                task.getConfig(),
-                new TypeReference<>() {
-                }
-            );
-            Map<String, Object> job = new HashMap<>();
-            Map<String, Object> content = new HashMap<>();
-            Map<String, Object> reader = new HashMap<>();
-            reader.put("name", "nfsreader");
-            reader.put("parameter", parameter);
-            content.put("reader", reader);
-            Map<String, Object> writer = new HashMap<>();
-            writer.put("name", "nfswriter");
-            writer.put("parameter", parameter);
-            content.put("writer", writer);
-            job.put("content", List.of(content));
-            Map<String, Object> setting = new HashMap<>();
-            Map<String, Object> channel = new HashMap<>();
-            channel.put("channel", 2);
-            setting.put("speed", channel);
-            job.put("setting", setting);
-            Map<String, Object> jobConfig = new HashMap<>();
-            jobConfig.put("job", job);
-            return objectMapper.writeValueAsString(jobConfig);
+            TemplateType templateType = task.getTaskType();
+            switch (templateType) {
+                case NAS:
+                    // NAS 特殊处理
+                    NasConfig nasConfig = objectMapper.readValue(task.getConfig(), NasConfig.class);
+                    return nasConfig.toJobConfig(objectMapper, task);
+                case OBS:
+                case MYSQL:
+                    MysqlConfig mysqlConfig = objectMapper.readValue(task.getConfig(), MysqlConfig.class);
+                    return mysqlConfig.toJobConfig(objectMapper, task);
+                default:
+                    throw BusinessException.of(SystemErrorCode.UNKNOWN_ERROR, "Unsupported template type: " + templateType);
+            }
         } catch (Exception e) {
             log.error("Failed to parse task config", e);
             throw new RuntimeException("Failed to parse task config", e);
+        }
+    }
+
+    private void postProcess(CollectionTask task) throws IOException {
+        if (task.getTaskType() != TemplateType.MYSQL) {
+            return;
+        }
+        String targetPath = task.getTargetPath();
+        // 将targetPath下所有不以.csv结尾的文件修改为以.csv结尾
+        Path dir = Paths.get(targetPath);
+        if (!Files.exists(dir) || !Files.isDirectory(dir)) {
+            log.info("Target path {} does not exist or is not a directory for task {}, skip post processing.", targetPath, task.getId());
+            return;
+        }
+
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir)) {
+            for (Path path : stream) {
+                if (!Files.isRegularFile(path)) continue;
+                String name = path.getFileName().toString();
+                if (name.toLowerCase().endsWith(".csv")) continue;
+
+                Path target = dir.resolve(name + ".csv");
+                try {
+                    Files.move(path, target, StandardCopyOption.REPLACE_EXISTING);
+                    log.info("Renamed file for task {}: {} -> {}", task.getId(), name, target.getFileName().toString());
+                } catch (IOException ex) {
+                    log.warn("Failed to rename file {} for task {}: {}", path, task.getId(), ex.getMessage(), ex);
+                }
+            }
+        } catch (IOException ioe) {
+            log.warn("Error scanning target directory {} for task {}: {}", targetPath, task.getId(), ioe.getMessage(), ioe);
         }
     }
 }

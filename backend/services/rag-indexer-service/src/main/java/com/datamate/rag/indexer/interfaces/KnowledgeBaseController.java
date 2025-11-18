@@ -1,11 +1,10 @@
 package com.datamate.rag.indexer.interfaces;
 
-import com.datamate.rag.indexer.application.KnowledgeBaseService;
-import com.datamate.rag.indexer.domain.model.KnowledgeBase;
-import com.datamate.rag.indexer.domain.model.RagChunk;
-import com.datamate.rag.indexer.domain.model.RagFile;
 import com.datamate.common.interfaces.PagedResponse;
 import com.datamate.common.interfaces.PagingQuery;
+import com.datamate.rag.indexer.application.KnowledgeBaseService;
+import com.datamate.rag.indexer.domain.model.RagChunk;
+import com.datamate.rag.indexer.domain.model.RagFile;
 import com.datamate.rag.indexer.interfaces.dto.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -65,7 +64,7 @@ public class KnowledgeBaseController {
      * @return 知识库
      */
     @GetMapping("/{knowledgeBaseId}")
-    public KnowledgeBase get(@PathVariable("knowledgeBaseId") String knowledgeBaseId) {
+    public KnowledgeBaseResp get(@PathVariable("knowledgeBaseId") String knowledgeBaseId) {
         return knowledgeBaseService.getById(knowledgeBaseId);
     }
 
@@ -75,7 +74,7 @@ public class KnowledgeBaseController {
      * @return 知识库列表
      */
     @PostMapping("/list")
-    public PagedResponse<KnowledgeBase> list(@RequestBody @Valid KnowledgeBaseQueryReq request) {
+    public PagedResponse<KnowledgeBaseResp> list(@RequestBody @Valid KnowledgeBaseQueryReq request) {
         return knowledgeBaseService.list(request);
     }
 

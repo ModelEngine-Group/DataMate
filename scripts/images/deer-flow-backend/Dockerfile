@@ -11,12 +11,9 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 
 # Copy the application into the container.
-RUN git clone https://github.com/bytedance/deer-flow.git /app
-COPY runtime/deer-flow/feature_collection.patch /app/feature_collection.patch
+RUN git clone https://github.com/ModelEngine-Group/deer-flow.git /app
 COPY runtime/deer-flow/.env /app/.env
 COPY runtime/deer-flow/conf.yaml /app/conf.yaml
-
-RUN git apply feature_collection.patch
 
 # Pre-cache the application dependencies.
 RUN --mount=type=cache,target=/root/.cache/uv \

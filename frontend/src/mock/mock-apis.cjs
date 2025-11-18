@@ -92,6 +92,17 @@ const MockAPI = {
   deleteInstructionTemplateByIdUsingDelete: "/synthesis/templates/:templateId", // 删除指令模板
   instructionTuningUsingPost: "/synthesis/instruction-tuning", // 指令微调
   cotDistillationUsingPost: "/synthesis/cot-distillation", // Cot蒸馏
+  
+  // 数据配比接口
+  createRatioTaskUsingPost: "/synthesis/ratio-task", // 创建配比任务
+  queryRatioTasksUsingGet: "/synthesis/ratio-task", // 获取配比任务列表
+  queryRatioTaskByIdUsingGet: "/synthesis/ratio-task/:taskId", // 根据ID获取配比任务详情
+  deleteRatioTaskByIdUsingDelete: "/synthesis/ratio-task/:taskId", // 删除配比任务
+  updateRatioTaskByIdUsingPut: "/synthesis/ratio-task/:taskId", // 更新配比任务
+  executeRatioTaskByIdUsingPost: "/synthesis/ratio-task/:taskId/execute", // 执行配比任务
+  stopRatioTaskByIdUsingPost: "/synthesis/ratio-task/:taskId/stop", // 停止配比任务
+  queryRatioJobStatusUsingGet: "/synthesis/ratio-task/:taskId/status", // 获取配比任务状态
+  queryRatioModelsUsingGet: "/synthesis/ratio-models", // 获取配比模型列表
 
   // 数据评测接口
   queryEvaluationTasksUsingPost: "/evaluation/tasks", // 获取评测任务列表

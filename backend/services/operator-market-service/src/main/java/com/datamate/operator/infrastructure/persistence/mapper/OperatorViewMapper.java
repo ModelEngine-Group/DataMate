@@ -24,7 +24,7 @@ public interface OperatorViewMapper extends BaseMapper<OperatorView> {
 
     @Select("SELECT operator_id AS id, operator_name AS name, description, version, inputs, outputs, runtime, " +
         "settings, is_star, created_at, updated_at, " +
-        "GROUP_CONCAT(category_id ORDER BY created_at DESC SEPARATOR ',') AS categories " +
+        "GROUP_CONCAT(category_name ORDER BY created_at DESC SEPARATOR ',') AS categories " +
         "FROM v_operator WHERE operator_id = #{id}")
     OperatorView findOperatorById(@Param("id") String id);
 }

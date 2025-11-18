@@ -1,192 +1,54 @@
 import { useState } from "react";
-import { Button, Card, Table, Tooltip, App } from "antd";
-import { Plus, Clock, Play, CheckCircle, AlertCircle, Pause, BarChart3 } from "lucide-react";
+import { Button, Card, Table, App, Badge, Popconfirm } from "antd";
+import { Plus } from "lucide-react";
 import { DeleteOutlined } from "@ant-design/icons";
-import type { RatioTaskItem } from "@/pages/RatioTask/ratio.model.ts";
+import type { RatioTaskItem } from "@/pages/RatioTask/ratio.model";
 import { useNavigate } from "react-router";
-import CardView from "@/components/CardView.tsx";
-import { SearchControls } from "@/components/SearchControls.tsx";
-import { queryRatioTasksUsingGet, deleteRatioTasksUsingDelete } from "@/pages/RatioTask/ratio.api.ts";
+import CardView from "@/components/CardView";
+import { SearchControls } from "@/components/SearchControls";
+import {
+  deleteRatioTasksUsingDelete,
+  queryRatioTasksUsingGet,
+} from "../ratio.api";
 import useFetchData from "@/hooks/useFetchData";
+import { mapRatioTask } from "../ratio.const";
 
 export default function RatioTasksPage() {
-  const navigate = useNavigate();
-  const [viewMode, setViewMode] = useState<"card" | "list">("card");
   const { message } = App.useApp();
+  const navigate = useNavigate();
+  const [viewMode, setViewMode] = useState<"card" | "list">("list");
 
-  const { loading, tableData, pagination, searchParams, setSearchParams, handleFiltersChange, fetchData } =
-    useFetchData<RatioTaskItem>(queryRatioTasksUsingGet, (d) => d as RatioTaskItem, 30000, true, [], 0);
-
-  const handleDelete = async (id: string) => {
-    await deleteRatioTasksUsingDelete([id]);
-    message.success("删除成功");
-    await fetchData();
-  };
-
-  const getStatusBadge = (status: string) => {
-    const s = (status || "").toUpperCase();
-    const statusConfig = {
-      PENDING: {
-        label: "等待中",
-        color: "#f09e10ff",
-        icon: <Clock className="w-4 h-4 inline mr-1" />,
-      },
-      RUNNING: {
-        label: "运行中",
-        color: "#007bff",
-        icon: <Play className="w-4 h-4 inline mr-1" />,
-      },
-      SUCCESS: {
-        label: "已完成",
-        color: "#28a745",
-        icon: <CheckCircle className="w-4 h-4 inline mr-1" />,
-      },
-      FAILED: {
-        label: "失败",
-        color: "#dc3545",
-        icon: <AlertCircle className="w-4 h-4 inline mr-1" />,
-      },
-      PAUSED: {
-        label: "已暂停",
-        color: "#6c757d",
-        icon: <Pause className="w-4 h-4 inline mr-1" />,
-      },
-    };
-    return statusConfig[s as keyof typeof statusConfig] || statusConfig.PENDING;
-  };
-
-  const columns = [
-    {
-      title: "任务名称",
-      dataIndex: "name",
-      key: "name",
-    },
-    {
-      title: "状态",
-      dataIndex: "status",
-      key: "status",
-      render: (v: string) => getStatusBadge(v).label,
-    },
-    {
-      title: "配比方式",
-      dataIndex: "ratio_method",
-      key: "ratio_method",
-    },
-    {
-      title: "目标数量",
-      dataIndex: "totals",
-      key: "totals",
-    },
-    {
-      title: "目标数据集",
-      dataIndex: "target_dataset_name",
-      key: "target_dataset_name",
-    },
-    {
-      title: "创建时间",
-      dataIndex: "created_at",
-      key: "created_at",
-    },
-    {
-      title: "操作",
-      key: "actions",
-      render: (_: any, task: RatioTaskItem) => (
-        <div className="flex items-center gap-2">
-          {operations.map((op) => (
-            <Tooltip key={op.key} title={op.label}>
-              <Button
-                type="text"
-                icon={op.icon}
-                onClick={() => op.onClick(task.id)}
-              />
-            </Tooltip>
-          ))}
-        </div>
-      ),
-    },
-  ];
-
-  const renderTableView = () => (
-    <Card>
-      <Table
-        columns={columns}
-        dataSource={tableData}
-        rowKey="id"
-        loading={loading}
-        pagination={pagination}
-        scroll={{ x: "max-content" }}
-        locale={{
-          emptyText: (
-            <div className="text-center py-8">
-              <BarChart3 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                暂无配比任务
-              </h3>
-              <p className="text-gray-500 mb-4">
-                {searchParams.keyword || (searchParams.filter?.status?.[0] && searchParams.filter?.status?.[0] !== "all")
-                  ? "没有找到匹配的任务"
-                  : "开始创建您的第一个配比任务"}
-              </p>
-              {!searchParams.keyword && (!searchParams.filter?.status?.length || searchParams.filter?.status?.[0] === "all") && (
-                  <Button
-                    onClick={() =>
-                      navigate("/data/synthesis/ratio-task/create")
-                    }
-                    type="primary"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    创建配比任务
-                  </Button>
-                )}
-            </div>
-          ),
-        }}
-      />
-    </Card>
+  const {
+    loading,
+    tableData,
+    pagination,
+    searchParams,
+    setSearchParams,
+    handleFiltersChange,
+    fetchData,
+  } = useFetchData<RatioTaskItem>(
+    queryRatioTasksUsingGet,
+    mapRatioTask,
+    30000,
+    true,
+    [],
+    0
   );
-  const operations = [
-    {
-      key: "delete",
-      label: "删除",
-      danger: true,
-      confirm: {
-        title: "确认删除该数据集？",
-        description: "删除后该数据集将无法恢复，请谨慎操作。",
-        okText: "删除",
-        cancelText: "取消",
-        okType: "danger",
-      },
-      icon: <DeleteOutlined />,
-      onClick: (item) => handleDelete(String(item.id)),
+
+  const handleDeleteTask = async (task: RatioTaskItem) => {
+    try {
+      // 调用删除接口
+      await deleteRatioTasksUsingDelete(task.id);
+      message.success("任务删除成功");
+      // 重新加载数据
+      fetchData();
+    } catch (error) {
+      message.error("任务删除失败，请稍后重试");
     }
-  ];
-  const renderCardView = () => (
-    <CardView
-      loading={loading}
-      data={tableData.map((task) => ({
-        ...task,
-        description: task.ratio_method === "DATASET" ? "按数据集配比" : "按标签配比",
-        icon: <BarChart3 className="w-6 h-6" />,
-        iconColor: task.ratio_method === "DATASET" ? "bg-blue-100" : "bg-green-100",
-        statistics: [
-          {
-            label: "目标数量",
-            value: (task.totals ?? 0).toLocaleString(),
-          },
-          {
-            label: "创建时间",
-            value: task.created_at || "-",
-          },
-        ],
-        status: getStatusBadge(task.status),
-      }))}
-      pagination={pagination}
-      operations={operations}
-    />
-  );
+  };
 
   // 搜索、筛选和视图控制相关
-  const searchFilters = [
+  const filters = [
     {
       key: "status",
       label: "状态筛选",
@@ -201,20 +63,121 @@ export default function RatioTasksPage() {
     },
   ];
 
-  // 处理 SearchControls 的筛选变化
-  const handleSearchControlsFiltersChange = (
-    filters: Record<string, string[]>
-  ) => {
-    handleFiltersChange(filters);
-  };
+  const columns = [
+    {
+      title: "任务名称",
+      dataIndex: "name",
+      key: "name",
+      width: 200,
+      fixed: "left" as const,
+      render: (text: string, record: RatioTaskItem) => (
+        <a
+          onClick={() =>
+            navigate(`/data/synthesis/ratio-task/detail/${record.id}`)
+          }
+        >
+          {text}
+        </a>
+      ),
+    },
+    {
+      title: "状态",
+      dataIndex: "status",
+      key: "status",
+      width: 120,
+      render: (status) => {
+        return (
+          <Badge
+            color={status?.color}
+            icon={status?.icon}
+            text={status?.label}
+          />
+        );
+      },
+    },
+    {
+      title: "配比方式",
+      dataIndex: "ratio_method",
+      key: "ratio_method",
+      width: 120,
+    },
+    {
+      title: "目标数量",
+      dataIndex: "totals",
+      key: "totals",
+      width: 120,
+    },
+    {
+      title: "目标数据集",
+      dataIndex: "target_dataset_name",
+      key: "target_dataset_name",
+      render: (text: string, task: RatioTaskItem) => (
+        <a
+          onClick={() =>
+            navigate(`/data/management/detail/${task.target_dataset_id}`)
+          }
+        >
+          {text}
+        </a>
+      ),
+    },
+    {
+      title: "创建时间",
+      dataIndex: "created_at",
+      key: "created_at",
+      width: 180,
+    },
+    {
+      title: "操作",
+      key: "actions",
+      width: 120,
+      fixed: "right" as const,
+      render: (_: any, task: RatioTaskItem) => (
+        <div className="flex items-center gap-2">
+          {operations.map((op) => {
+            if (op.confirm) {
+              <Popconfirm
+                title={op.confirm.title}
+                description={op.confirm.description}
+                onConfirm={() => op.onClick(task)}
+              >
+                <Button type="text" icon={op.icon} />
+              </Popconfirm>;
+            }
+            return (
+              <Button
+                key={op.key}
+                type="text"
+                icon={op.icon}
+                danger={op.danger}
+                onClick={() => op.onClick(task)}
+              />
+            );
+          })}
+        </div>
+      ),
+    },
+  ];
 
-  // 处理视图切换
-  const handleViewModeChange = (mode: "card" | "list") => {
-    setViewMode(mode === "card" ? "card" : "list");
-  };
+  const operations = [
+    {
+      key: "delete",
+      label: "删除",
+      danger: true,
+      confirm: {
+        title: "确认删除该任务？",
+        description: "删除后该任务将无法恢复，请谨慎操作。",
+        okText: "删除",
+        cancelText: "取消",
+        okType: "danger",
+      },
+      icon: <DeleteOutlined />,
+      onClick: handleDeleteTask,
+    },
+  ];
 
   return (
-    <div className="">
+    <div className="h-full flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold">配比任务</h2>
         <Button
@@ -229,17 +192,42 @@ export default function RatioTasksPage() {
         {/* 搜索、筛选和视图控制 */}
         <SearchControls
           searchTerm={searchParams.keyword}
-          onSearchChange={(keyword) => setSearchParams({ ...searchParams, keyword })}
-          searchPlaceholder="搜索任务名称"
-          filters={searchFilters}
-          onFiltersChange={handleSearchControlsFiltersChange}
-          onClearFilters={() => setSearchParams({ ...searchParams, filter: {} })}
-          viewMode={viewMode === "card" ? "card" : "list"}
-          onViewModeChange={handleViewModeChange}
-          showViewToggle={true}
+          onSearchChange={(keyword) =>
+            setSearchParams({ ...searchParams, keyword })
+          }
+          searchPlaceholder="搜索任务名称..."
+          filters={filters}
+          onFiltersChange={handleFiltersChange}
+          onClearFilters={() =>
+            setSearchParams({ ...searchParams, filter: {} })
+          }
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          showViewToggle
+          onReload={fetchData}
         />
         {/* 任务列表 */}
-        {viewMode === "list" ? renderTableView() : renderCardView()}
+        {viewMode === "list" ? (
+          <Card>
+            <Table
+              columns={columns}
+              dataSource={tableData}
+              pagination={pagination}
+              rowKey="id"
+              scroll={{ x: "max-content", y: "calc(100vh - 30rem)" }}
+            />
+          </Card>
+        ) : (
+          <CardView
+            loading={loading}
+            data={tableData}
+            operations={operations}
+            pagination={pagination}
+            onView={(task) => {
+              navigate(`/data/synthesis/ratio-task/detail/${task.id}`);
+            }}
+          />
+        )}
       </>
     </div>
   );

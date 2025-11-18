@@ -1,6 +1,7 @@
 package com.datamate.collection.interfaces.dto;
 
 import com.datamate.collection.common.enums.SyncMode;
+import com.datamate.collection.common.enums.TemplateType;
 import com.datamate.datamanagement.interfaces.dto.CreateDatasetRequest;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -34,6 +35,11 @@ public class CreateCollectionTaskRequest {
     @Schema(name = "description", description = "任务描述", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     @JsonProperty("description")
     private String description;
+
+    @NotNull
+    @Schema(name = "taskType", description = "任务类型", requiredMode = Schema.RequiredMode.REQUIRED)
+    @JsonProperty("taskType")
+    private TemplateType taskType;
 
     @Valid
     @NotNull

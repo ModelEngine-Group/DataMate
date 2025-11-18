@@ -1,17 +1,9 @@
-import React, { useMemo, useState } from "react";
-import {
-  Card,
-  Input,
-  Select,
-  Tooltip,
-  Collapse,
-  Tag,
-  Checkbox,
-  Button,
-} from "antd";
-import { StarFilled, StarOutlined, SearchOutlined } from "@ant-design/icons";
-import { CategoryI, OperatorI } from "@/pages/OperatorMarket/operator.model";
-import { Layers } from "lucide-react";
+import React, {useEffect, useMemo, useState} from "react";
+import {Button, Card, Checkbox, Collapse, Input, Select, Tag, Tooltip,} from "antd";
+import {SearchOutlined, StarFilled, StarOutlined} from "@ant-design/icons";
+import {CategoryI, OperatorI} from "@/pages/OperatorMarket/operator.model";
+import {Layers} from "lucide-react";
+import {updateOperatorByIdUsingPut} from "@/pages/OperatorMarket/operator.api.ts";
 
 interface OperatorListProps {
   operators: OperatorI[];
@@ -27,12 +19,20 @@ interface OperatorListProps {
   ) => void;
 }
 
+const handleStar = async (operator: OperatorI, toggleFavorite: (id: string) => void) => {
+  const data = {
+    id: operator.id,
+    isStar: !operator.isStar
+  };
+  await updateOperatorByIdUsingPut(operator.id, data);
+  toggleFavorite(operator.id)
+}
+
 const OperatorList: React.FC<OperatorListProps> = ({
   operators,
   favorites,
   toggleFavorite,
   toggleOperator,
-  showPoppular,
   selectedOperators,
   onDragOperator,
 }) => (
@@ -56,17 +56,9 @@ const OperatorList: React.FC<OperatorListProps> = ({
                 {operator.name}
               </span>
             </div>
-            {showPoppular && operator.isStar && (
-              <Tag color="gold" className="text-xs">
-                热门
-              </Tag>
-            )}
             <span
               className="cursor-pointer"
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleFavorite(operator.id);
-              }}
+              onClick={() => handleStar(operator, toggleFavorite)}
             >
               {favorites.has(operator.id) ? (
                 <StarFilled style={{ color: "#FFD700" }} />
@@ -156,10 +148,9 @@ const OperatorLibrary: React.FC<OperatorLibraryProps> = ({
 
   // 过滤算子
   const filteredOperators = useMemo(() => {
-    const filtered = Object.values(groupedOperators).flatMap(
+    return Object.values(groupedOperators).flatMap(
       (category) => category.operators
     );
-    return filtered;
   }, [groupedOperators]);
 
   // 收藏切换
@@ -172,6 +163,18 @@ const OperatorLibrary: React.FC<OperatorLibraryProps> = ({
     }
     setFavorites(newFavorites);
   };
+
+  const fetchFavorite = async () => {
+    const newFavorites = new Set(favorites);
+    operatorList.forEach(item => {
+      item.isStar && newFavorites.add(item.id);
+    });
+    setFavorites(newFavorites);
+  }
+
+  useEffect(() => {
+    fetchFavorite()
+  }, [operatorList]);
 
   // 全选分类算子
   const handleSelectAll = (operators: OperatorI[]) => {
@@ -257,7 +260,6 @@ const OperatorLibrary: React.FC<OperatorLibraryProps> = ({
                 }
               >
                 <OperatorList
-                  showPoppular
                   selectedOperators={selectedOperators}
                   operators={category.operators}
                   favorites={favorites}

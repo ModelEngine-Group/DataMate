@@ -1,4 +1,5 @@
 import { Input, Form } from "antd";
+import {useEffect} from "react";
 
 const { TextArea } = Input;
 
@@ -16,6 +17,11 @@ export default function CreateTemplateStepOne({
   const handleValuesChange = (_, allValues) => {
     setTemplateConfig({ ...templateConfig, ...allValues });
   };
+
+  useEffect(() => {
+    form.setFieldsValue(templateConfig);
+  }, [templateConfig]);
+
   return (
     <Form
       form={form}

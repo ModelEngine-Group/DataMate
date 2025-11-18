@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
+import com.datamate.common.interfaces.PagingQuery;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -13,12 +14,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class OperatorsListPostRequest {
-
-  private Integer page;
-
-  private Integer size;
-
+public class OperatorsListPostRequest extends PagingQuery {
   private List<String> categories = new ArrayList<>();
 
   private String operatorName;
