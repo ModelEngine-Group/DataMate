@@ -314,6 +314,13 @@ export default function CollectionTaskCreate() {
                         placeholder="Secret Key"
                       />
                     </Form.Item>
+                    <Form.Item
+                      name={["config", "prefix"]}
+                      rules={[{ required: true }]}
+                      label="Prefix"
+                    >
+                      <Input className="h-8 text-xs" placeholder="Prefix" />
+                    </Form.Item>
                   </div>
                 )}
 
