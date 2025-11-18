@@ -221,7 +221,7 @@ const KnowledgeBaseDetailPage: React.FC = () => {
               showReload={false}
             />
           </div>
-          <AddDataDialog knowledgeBase={knowledgeBase} />
+          <AddDataDialog knowledgeBase={knowledgeBase} onDataAdded={handleRefreshPage} />
         </div>
 
         <Table
