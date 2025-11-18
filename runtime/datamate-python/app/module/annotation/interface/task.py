@@ -244,16 +244,53 @@ async def update_file_tags(
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Update File Tags (Partial Update)
+    Update File Tags (Partial Update with Auto Format Conversion)
 
     接收部分标签更新并合并到指定文件（只修改提交的标签，其余保持不变），并更新 `tags_updated_at`。
+    
+    支持两种标签格式：
+    1. 简化格式（外部用户提交）:
+       [{"from_name": "label", "to_name": "image", "values": ["cat", "dog"]}]
+    
+    2. 完整格式（内部存储）:
+       [{"id": "...", "from_name": "label", "to_name": "image", "type": "choices", 
+         "value": {"choices": ["cat", "dog"]}}]
+    
+    系统会自动根据数据集关联的模板将简化格式转换为完整格式。
     请求与响应使用 Pydantic 模型 `UpdateFileTagsRequest` / `UpdateFileTagsResponse`。
     """
     service = DatasetManagementService(db)
     
+    # 首先获取文件所属的数据集
+    from sqlalchemy.future import select
+    from app.db.models import DatasetFiles
+    
+    result = await db.execute(
+        select(DatasetFiles).where(DatasetFiles.id == file_id)
+    )
+    file_record = result.scalar_one_or_none()
+    
+    if not file_record:
+        raise HTTPException(status_code=404, detail=f"File not found: {file_id}")
+    
+    dataset_id = str(file_record.dataset_id)  # type: ignore - Convert Column to str
+    
+    # 查找数据集关联的模板ID
+    from ..service.mapping import DatasetMappingService
+    
+    mapping_service = DatasetMappingService(db)
+    template_id = await mapping_service.get_template_id_by_dataset_id(dataset_id)
+    
+    if template_id:
+        logger.info(f"Found template {template_id} for dataset {dataset_id}, will auto-convert tag format")
+    else:
+        logger.warning(f"No template found for dataset {dataset_id}, tags must be in full format")
+    
+    # 更新标签（如果有模板ID则自动转换格式）
     success, error_msg, updated_at = await service.update_file_tags_partial(
         file_id=file_id,
-        new_tags=request.tags
+        new_tags=request.tags,
+        template_id=template_id  # 传递模板ID以启用自动转换
     )
     
     if not success:
@@ -261,10 +298,7 @@ async def update_file_tags(
             raise HTTPException(status_code=404, detail=error_msg)
         raise HTTPException(status_code=500, detail=error_msg or "更新标签失败")
     
-    # 获取更新后的完整标签列表
-    from sqlalchemy.future import select
-    from app.db.models import DatasetFiles
-    
+    # 重新获取更新后的文件记录（获取完整标签列表）
     result = await db.execute(
         select(DatasetFiles).where(DatasetFiles.id == file_id)
     )

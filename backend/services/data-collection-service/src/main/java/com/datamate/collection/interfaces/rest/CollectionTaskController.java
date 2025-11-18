@@ -8,7 +8,6 @@ import com.datamate.collection.interfaces.converter.CollectionTaskConverter;
 import com.datamate.collection.interfaces.dto.*;
 import com.datamate.common.interfaces.PagedResponse;
 import com.datamate.datamanagement.application.DatasetApplicationService;
-import com.datamate.datamanagement.domain.model.dataset.Dataset;
 import com.datamate.datamanagement.interfaces.converter.DatasetConverter;
 import com.datamate.datamanagement.interfaces.dto.DatasetResponse;
 import jakarta.validation.Valid;

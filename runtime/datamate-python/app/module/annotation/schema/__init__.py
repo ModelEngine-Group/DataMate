@@ -3,14 +3,6 @@ from .config import (
     TagConfigResponse
 )
 
-from .mapping import (
-    DatasetMappingCreateRequest,
-    DatasetMappingCreateResponse,
-    DatasetMappingUpdateRequest,
-    DatasetMappingResponse,
-    DeleteDatasetResponse,
-)
-
 from .sync import (
     SyncDatasetRequest,
     SyncDatasetResponse,
@@ -29,6 +21,17 @@ from .template import (
     AnnotationTemplateResponse,
     AnnotationTemplateListResponse
 )
+
+from .mapping import (
+    DatasetMappingCreateRequest,
+    DatasetMappingCreateResponse,
+    DatasetMappingUpdateRequest,
+    DatasetMappingResponse,
+    DeleteDatasetResponse,
+)
+
+# Rebuild model to resolve forward references
+DatasetMappingResponse.model_rebuild()
 
 __all__ = [
     "ConfigResponse",

@@ -6,6 +6,7 @@ services:
       - .env
     volumes:
       - ./conf.yaml:/app/conf.yaml:ro
+      - deer-flow-log-volume:/var/log/deer-flow
     restart: unless-stopped
     networks:
       - datamate
@@ -20,6 +21,10 @@ services:
     restart: unless-stopped
     networks:
       - datamate
+
+volumes:
+  deer-flow-log-volume:
+    name: deer-flow-log-volume
 
 networks:
   datamate:

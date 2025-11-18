@@ -28,7 +28,7 @@ export default function KnowledgeBasePage() {
     handleFiltersChange,
   } = useFetchData<KnowledgeBaseItem>(
     queryKnowledgeBasesUsingPost,
-    mapKnowledgeBase
+    (kb) => mapKnowledgeBase(kb, false) // 在首页不显示索引模型和文本理解模型字段
   );
 
   const handleDeleteKB = async (kb: KnowledgeBaseItem) => {
@@ -83,20 +83,6 @@ export default function KnowledgeBasePage() {
           {kb.name}
         </Button>
       ),
-    },
-    {
-      title: "向量数据库",
-      dataIndex: "embeddingModel",
-      key: "embeddingModel",
-      width: 150,
-      ellipsis: true,
-    },
-    {
-      title: "大语言模型",
-      dataIndex: "chatModel",
-      key: "chatModel",
-      width: 150,
-      ellipsis: true,
     },
     {
       title: "创建时间",

@@ -118,23 +118,15 @@ management:
 
 # 平台配置
 datamate:
-  # JWT配置
-  jwt:
-    secret: ${JWT_SECRET:dataMateSecretKey2024ForJWTTokenGeneration}
-    expiration: ${JWT_EXPIRATION:86400} # 24小时，单位秒
-    header: Authorization
-    prefix: "Bearer "
+  # 通用配置
+
 
   # 文件存储配置
   storage:
     type: ${STORAGE_TYPE:local} # local, minio, s3
     local:
       base-path: ${STORAGE_LOCAL_PATH:./data/storage}
-    minio:
-      endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
-      access-key: ${MINIO_ACCESS_KEY:minioadmin}
-      secret-key: ${MINIO_SECRET_KEY:minioadmin}
-      bucket-name: ${MINIO_BUCKET:data-mate}
+
 
   # Ray执行器配置
   ray:
@@ -147,6 +139,12 @@ datamate:
         - "pandas"
         - "numpy"
         - "data-juicer"
+
+  # 模块配置
+
+  # 数据管理服务配置
+  data-management:
+    base-path: /dataset
 
   # 数据归集服务配置（可由模块导入叠加）
   data-collection: {}

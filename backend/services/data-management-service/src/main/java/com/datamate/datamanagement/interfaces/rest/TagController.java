@@ -74,7 +74,7 @@ public class TagController {
     }
 
     @DeleteMapping
-    public ResponseEntity<Response<Valid>> deleteTag(@RequestParam(value = "ids") @Valid @Size(max = 10) List<String> ids) {
+    public ResponseEntity<Response<Void>> deleteTag(@RequestParam(value = "ids") @Valid @Size(max = 10) List<String> ids) {
         try {
             tagApplicationService.deleteTag(ids.stream().filter(StringUtils::isNoneBlank).distinct().toList());
             return ResponseEntity.ok(Response.ok(null));

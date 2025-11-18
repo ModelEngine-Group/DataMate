@@ -1,16 +1,13 @@
 package com.datamate.datamanagement.interfaces.converter;
 
-import com.datamate.common.infrastructure.exception.BusinessException;
-import com.datamate.common.infrastructure.exception.SystemErrorCode;
+import com.datamate.common.domain.model.ChunkUploadRequest;
+import com.datamate.datamanagement.domain.model.dataset.Dataset;
+import com.datamate.datamanagement.domain.model.dataset.DatasetFile;
 import com.datamate.datamanagement.domain.model.dataset.FileTag;
 import com.datamate.datamanagement.interfaces.dto.CreateDatasetRequest;
 import com.datamate.datamanagement.interfaces.dto.DatasetFileResponse;
 import com.datamate.datamanagement.interfaces.dto.DatasetResponse;
 import com.datamate.datamanagement.interfaces.dto.UploadFileRequest;
-import com.datamate.common.domain.model.ChunkUploadRequest;
-import com.datamate.datamanagement.domain.model.dataset.Dataset;
-import com.datamate.datamanagement.domain.model.dataset.DatasetFile;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.collections4.CollectionUtils;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -58,6 +55,13 @@ public interface DatasetConverter {
      * 将数据集文件转换为响应
      */
     DatasetFileResponse convertToResponse(DatasetFile datasetFile);
+
+
+     /**
+     * 将数据集文件列表转换为响应
+     */
+    List<DatasetFileResponse> convertToResponseList(List<DatasetFile> datasetFiles);
+
 
     /**
      * 获取数据文件的标签分布

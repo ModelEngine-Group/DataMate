@@ -23,8 +23,8 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @EnableAsync
 @EnableScheduling
 @EnableCaching
-public class DataMatePlatformApplication {
+public class DataMateApplication {
     public static void main(String[] args) {
-        SpringApplication.run(DataMatePlatformApplication.class, args);
+        SpringApplication.run(DataMateApplication.class, args);
     }
 }

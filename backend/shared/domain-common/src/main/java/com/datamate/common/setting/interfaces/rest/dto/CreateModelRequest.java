@@ -43,4 +43,9 @@ public class CreateModelRequest {
      * 是否启用：1-启用，0-禁用
      */
     private Boolean isEnabled;
+
+    /**
+     * 是否默认：1-默认，0-非默认
+     */
+    private Boolean isDefault;
 }

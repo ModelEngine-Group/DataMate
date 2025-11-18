@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -31,7 +32,9 @@ public class SysParamApplicationService {
      * @return 系统参数列表
      */
     public List<SysParam> list() {
-        return sysParamRepository.list();
+        List<SysParam> sysParams = sysParamRepository.list();
+        sysParams.sort(Comparator.comparing(SysParam::getParamType));
+        return sysParams;
     }
 
     /**
