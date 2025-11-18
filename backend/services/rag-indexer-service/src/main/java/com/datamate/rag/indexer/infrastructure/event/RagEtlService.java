@@ -51,7 +51,7 @@ import java.util.concurrent.Semaphore;
 public class RagEtlService {
     private static final Semaphore SEMAPHORE = new Semaphore(10);
 
-    @Value("${datamate.rag.milvus-host:milvus-standalone}")
+    @Value("${datamate.rag.milvus-host:milvus}")
     private String milvusHost;
     @Value("${datamate.rag.milvus-port:19530}")
     private int milvusPort;
