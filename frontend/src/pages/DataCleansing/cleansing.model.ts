@@ -18,10 +18,13 @@ export interface CleansingTask {
   startedAt: string;
   progress: {
     finishedFileNum: number;
-    process: 100,
+    succeedFileNum: number;
+    failedFileNum: number;
+    process: 100;
     totalFileNum: number;
+    successRate: 100;
   };
-  operators: OperatorI[];
+  instance: OperatorI[];
   createdAt: string;
   updatedAt: string;
   finishedAt: string;
@@ -69,4 +72,18 @@ export enum TemplateType {
   VIDEO = "VIDEO",
   AUDIO = "AUDIO",
   IMAGE2TEXT = "IMAGE2TEXT",
+}
+
+export interface CleansingResult {
+  instanceId: string;
+  srcFileId: string;
+  destFileId: string;
+  srcName: string;
+  destName: string;
+  srcType: string;
+  destType: string;
+  srcSize: number;
+  destSize: number;
+  status: string;
+  result: string;
 }

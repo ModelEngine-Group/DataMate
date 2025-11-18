@@ -44,9 +44,6 @@ export function queryKnowledgeBaseFilesByIdUsingGet(
 }
 
 // 删除知识生成文件
-export function deleteKnowledgeBaseFileByIdUsingDelete(
-  baseId: string,
-  fileId: string
-) {
-  return del(`/api/knowledge-base/${baseId}/files/${fileId}`);
+export function deleteKnowledgeBaseFileByIdUsingDelete(baseId: string, data: any) {
+  return del(`/api/knowledge-base/${baseId}/files`, data);
 }

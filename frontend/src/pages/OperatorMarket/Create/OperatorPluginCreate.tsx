@@ -65,7 +65,15 @@ export default function OperatorPluginCreate() {
       setParsedInfo({ ...parsedInfo, percent: 100 }); // 上传完成，进度100%
       // 解析文件过程
       const res = await uploadOperatorUsingPost({ fileName });
-      setParsedInfo({ ...parsedInfo, ...res.data, fileName });
+      const configs = res.data.settings && typeof res.data.settings === "string"
+        ? JSON.parse(res.data.settings)
+        : {};
+      const defaultParams: Record<string, string> = {};
+      Object.keys(configs).forEach((key) => {
+        const { value } = configs[key];
+        defaultParams[key] = value;
+      });
+      setParsedInfo({ ...res.data, fileName, configs, defaultParams});
       setUploadStep("parsing");
     } catch (err) {
       setParseError("文件解析失败，" + err.data.message);
@@ -91,7 +99,15 @@ export default function OperatorPluginCreate() {
   const onFetchOperator = async (operatorId: string) => {
     // 编辑模式，加载已有算子信息逻辑待实现
     const { data } = await queryOperatorByIdUsingGet(operatorId);
-    setParsedInfo(data);
+    const configs = data.settings && typeof data.settings === "string"
+      ? JSON.parse(data.settings)
+      : {};
+    const defaultParams: Record<string, string> = {};
+    Object.keys(configs).forEach((key) => {
+      const { value } = configs[key];
+      defaultParams[key] = value;
+    });
+    setParsedInfo({ ...data, configs, defaultParams});
     setUploadStep("configure");
   };
 
@@ -127,7 +143,7 @@ export default function OperatorPluginCreate() {
                 icon: <Settings />,
               },
               {
-                title: "配置标签",
+                title: "配置信息",
                 icon: <TagIcon />,
               },
               {

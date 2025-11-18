@@ -6,10 +6,7 @@ import com.datamate.common.infrastructure.exception.SystemErrorCode;
 import com.datamate.datamanagement.application.DatasetFileApplicationService;
 import com.datamate.datamanagement.domain.model.dataset.DatasetFile;
 import com.datamate.datamanagement.interfaces.converter.DatasetConverter;
-import com.datamate.datamanagement.interfaces.dto.DatasetFileResponse;
-import com.datamate.datamanagement.interfaces.dto.PagedDatasetFileResponse;
-import com.datamate.datamanagement.interfaces.dto.UploadFileRequest;
-import com.datamate.datamanagement.interfaces.dto.UploadFilesPreRequest;
+import com.datamate.datamanagement.interfaces.dto.*;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
@@ -23,8 +20,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -44,20 +41,20 @@ public class DatasetFileController {
 
     @GetMapping
     public ResponseEntity<Response<PagedDatasetFileResponse>> getDatasetFiles(
-        @PathVariable("datasetId") String datasetId,
-        @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
-        @RequestParam(value = "size", required = false, defaultValue = "20") Integer size,
-        @RequestParam(value = "fileType", required = false) String fileType,
-        @RequestParam(value = "status", required = false) String status) {
+            @PathVariable("datasetId") String datasetId,
+            @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
+            @RequestParam(value = "size", required = false, defaultValue = "20") Integer size,
+            @RequestParam(value = "fileType", required = false) String fileType,
+            @RequestParam(value = "status", required = false) String status) {
         Pageable pageable = PageRequest.of(page != null ? page : 0, size != null ? size : 20);
 
         Page<DatasetFile> filesPage = datasetFileApplicationService.getDatasetFiles(
-            datasetId, fileType, status, pageable);
+                datasetId, fileType, status, pageable);
 
         PagedDatasetFileResponse response = new PagedDatasetFileResponse();
         response.setContent(filesPage.getContent().stream()
-            .map(DatasetConverter.INSTANCE::convertToResponse)
-            .collect(Collectors.toList()));
+                .map(DatasetConverter.INSTANCE::convertToResponse)
+                .collect(Collectors.toList()));
         response.setPage(filesPage.getNumber());
         response.setSize(filesPage.getSize());
         response.setTotalElements((int) filesPage.getTotalElements());
@@ -70,8 +67,8 @@ public class DatasetFileController {
 
     @GetMapping("/{fileId}")
     public ResponseEntity<Response<DatasetFileResponse>> getDatasetFileById(
-        @PathVariable("datasetId") String datasetId,
-        @PathVariable("fileId") String fileId) {
+            @PathVariable("datasetId") String datasetId,
+            @PathVariable("fileId") String fileId) {
         try {
             DatasetFile datasetFile = datasetFileApplicationService.getDatasetFile(datasetId, fileId);
             return ResponseEntity.ok(Response.ok(DatasetConverter.INSTANCE.convertToResponse(datasetFile)));
@@ -82,8 +79,8 @@ public class DatasetFileController {
 
     @DeleteMapping("/{fileId}")
     public ResponseEntity<Response<Void>> deleteDatasetFile(
-        @PathVariable("datasetId") String datasetId,
-        @PathVariable("fileId") String fileId) {
+            @PathVariable("datasetId") String datasetId,
+            @PathVariable("fileId") String fileId) {
         try {
             datasetFileApplicationService.deleteDatasetFile(datasetId, fileId);
             return ResponseEntity.ok().build();
@@ -101,10 +98,10 @@ public class DatasetFileController {
             Resource resource = datasetFileApplicationService.downloadFile(datasetId, fileId);
 
             return ResponseEntity.ok()
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .header(HttpHeaders.CONTENT_DISPOSITION,
-                    "attachment; filename=\"" + datasetFile.getFileName() + "\"")
-                .body(resource);
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .header(HttpHeaders.CONTENT_DISPOSITION,
+                            "attachment; filename=\"" + datasetFile.getFileName() + "\"")
+                    .body(resource);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         } catch (Exception e) {
@@ -136,11 +133,26 @@ public class DatasetFileController {
      * @param uploadFileRequest 上传文件请求
      */
     @PostMapping("/upload/chunk")
-    public ResponseEntity<Void> chunkUpload(@PathVariable("datasetId") String datasetId, @Valid UploadFileRequest uploadFileRequest) {
+    public ResponseEntity<Void> chunkUpload(@PathVariable("datasetId") String datasetId,
+                                            @Valid UploadFileRequest uploadFileRequest) {
         log.info("file upload reqId:{}, fileNo:{}, total chunk num:{}, current chunkNo:{}",
-            uploadFileRequest.getReqId(), uploadFileRequest.getFileNo(), uploadFileRequest.getTotalChunkNum(),
-            uploadFileRequest.getChunkNo());
+                uploadFileRequest.getReqId(), uploadFileRequest.getFileNo(), uploadFileRequest.getTotalChunkNum(),
+                uploadFileRequest.getChunkNo());
         datasetFileApplicationService.chunkUpload(datasetId, uploadFileRequest);
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * 将指定路径中的文件拷贝到数据集目录下
+     *
+     * @param datasetId 数据集ID
+     * @param req       源文件路径列表
+     * @return 数据集文件响应DTO列表
+     */
+    @PostMapping("/upload/copy")
+    public List<DatasetFileResponse> copyFilesToDatasetDir(@PathVariable("datasetId") String datasetId,
+                                                      @RequestBody @Valid CopyFilesRequest req) {
+        List<DatasetFile> datasetFiles = datasetFileApplicationService.copyFilesToDatasetDir(datasetId, req);
+        return DatasetConverter.INSTANCE.convertToResponseList(datasetFiles);
     }
 }

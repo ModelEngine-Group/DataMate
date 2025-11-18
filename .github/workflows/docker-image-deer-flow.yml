@@ -1,0 +1,66 @@
+name: Deer Flow Docker Image CI
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'runtime/deer-flow/**'
+      - 'scripts/images/deer-flow-backend/**'
+      - 'scripts/images/deer-flow-frontend/**'
+      - '.github/workflows/docker-image-deer-flow.yml'
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'runtime/deer-flow/**'
+      - 'scripts/images/deer-flow-backend/**'
+      - 'scripts/images/deer-flow-frontend/**'
+      - '.github/workflows/docker-image-deer-flow.yml'
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to GitHub Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set Docker Image Tag
+        id: set-tag
+        run: |
+          if [[ $GITHUB_REF == refs/tags/v* ]]; then
+            TAG=${GITHUB_REF#refs/tags/v}
+            echo "TAGS=$TAG" >> $GITHUB_OUTPUT
+          elif [[ $GITHUB_REF == refs/heads/main ]]; then
+            echo "TAGS=latest" >> $GITHUB_OUTPUT
+          else
+            echo "TAGS=temp" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build Docker Image
+        run: |
+          make build-deer-flow VERSION=latest
+
+      - name: Tag Docker Image
+        run: |
+          LOWERCASE_REPO=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          docker tag deer-flow-backend:latest ghcr.io/$LOWERCASE_REPO/deer-flow-backend:${{ steps.set-tag.outputs.TAGS }}
+          docker tag deer-flow-frontend:latest ghcr.io/$LOWERCASE_REPO/deer-flow-frontend:${{ steps.set-tag.outputs.TAGS }}
+
+      - name: Push Docker Image
+        if: github.event_name != 'pull_request'
+        run: |
+          LOWERCASE_REPO=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          docker push ghcr.io/$LOWERCASE_REPO/deer-flow-backend:${{ steps.set-tag.outputs.TAGS }}
+          docker push ghcr.io/$LOWERCASE_REPO/deer-flow-frontend:${{ steps.set-tag.outputs.TAGS }}

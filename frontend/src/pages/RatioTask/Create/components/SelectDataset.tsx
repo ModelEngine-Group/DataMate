@@ -1,15 +1,21 @@
 import React, { useEffect, useState } from "react";
 import { Badge, Button, Card, Checkbox, Input, Pagination, Select } from "antd";
-import { Database, Search as SearchIcon } from "lucide-react";
+import { Search as SearchIcon } from "lucide-react";
 import type { Dataset } from "@/pages/DataManagement/dataset.model.ts";
-import { queryDatasetsUsingGet, queryDatasetByIdUsingGet, queryDatasetStatisticsByIdUsingGet } from "@/pages/DataManagement/dataset.api.ts";
+import {
+  queryDatasetsUsingGet,
+  queryDatasetByIdUsingGet,
+  queryDatasetStatisticsByIdUsingGet,
+} from "@/pages/DataManagement/dataset.api.ts";
 
 interface SelectDatasetProps {
   selectedDatasets: string[];
   ratioType: "dataset" | "label";
   onRatioTypeChange: (val: "dataset" | "label") => void;
   onSelectedDatasetsChange: (next: string[]) => void;
-  onDistributionsChange?: (next: Record<string, Record<string, number>>) => void;
+  onDistributionsChange?: (
+    next: Record<string, Record<string, number>>
+  ) => void;
   onDatasetsChange?: (list: Dataset[]) => void;
 }
 
@@ -25,7 +31,9 @@ const SelectDataset: React.FC<SelectDatasetProps> = ({
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [pagination, setPagination] = useState({ page: 1, size: 10, total: 0 });
-  const [distributions, setDistributions] = useState<Record<string, Record<string, number>>>({});
+  const [distributions, setDistributions] = useState<
+    Record<string, Record<string, number>>
+  >({});
 
   // Fetch dataset list
   useEffect(() => {
@@ -40,7 +48,10 @@ const SelectDataset: React.FC<SelectDatasetProps> = ({
         const list = data?.content || data?.data || [];
         setDatasets(list);
         onDatasetsChange?.(list);
-        setPagination((prev) => ({ ...prev, total: data?.totalElements ?? data?.total ?? 0 }));
+        setPagination((prev) => ({
+          ...prev,
+          total: data?.totalElements ?? data?.total ?? 0,
+        }));
       } finally {
         setLoading(false);
       }
@@ -52,7 +63,9 @@ const SelectDataset: React.FC<SelectDatasetProps> = ({
   useEffect(() => {
     const fetchDistributions = async () => {
       if (ratioType !== "label" || !datasets?.length) return;
-      const idsToFetch = datasets.map((d) => String(d.id)).filter((id) => !distributions[id]);
+      const idsToFetch = datasets
+        .map((d) => String(d.id))
+        .filter((id) => !distributions[id]);
       if (!idsToFetch.length) return;
       try {
         const results = await Promise.all(
@@ -66,7 +79,9 @@ const SelectDataset: React.FC<SelectDatasetProps> = ({
           })
         );
 
-        const next: Record<string, Record<string, number>> = { ...distributions };
+        const next: Record<string, Record<string, number>> = {
+          ...distributions,
+        };
         for (const { id, stats } of results) {
           let dist: Record<string, number> | undefined = undefined;
           if (stats) {
@@ -77,13 +92,16 @@ const SelectDataset: React.FC<SelectDatasetProps> = ({
               (stats as any).labels,
               (stats as any).distribution,
             ];
-            let picked = candidates.find((c) => c && (typeof c === "object" || Array.isArray(c)));
+            let picked = candidates.find(
+              (c) => c && (typeof c === "object" || Array.isArray(c))
+            );
             if (Array.isArray(picked)) {
               const obj: Record<string, number> = {};
               picked.forEach((it: any) => {
                 const key = it?.label ?? it?.name ?? it?.tag ?? it?.key;
                 const val = it?.count ?? it?.value ?? it?.num ?? it?.total;
-                if (key != null && typeof val === "number") obj[String(key)] = val;
+                if (key != null && typeof val === "number")
+                  obj[String(key)] = val;
               });
               dist = obj;
             } else if (picked && typeof picked === "object") {
@@ -107,7 +125,8 @@ const SelectDataset: React.FC<SelectDatasetProps> = ({
                   picked.forEach((it: any) => {
                     const key = it?.label ?? it?.name ?? it?.tag ?? it?.key;
                     const val = it?.count ?? it?.value ?? it?.num ?? it?.total;
-                    if (key != null && typeof val === "number") obj[String(key)] = val;
+                    if (key != null && typeof val === "number")
+                      obj[String(key)] = val;
                   });
                   dist = obj;
                 } else if (picked && typeof picked === "object") {
@@ -135,7 +154,9 @@ const SelectDataset: React.FC<SelectDatasetProps> = ({
       const next = Array.from(new Set([...selectedDatasets, datasetId]));
       onSelectedDatasetsChange(next);
     } else {
-      onSelectedDatasetsChange(selectedDatasets.filter((id) => id !== datasetId));
+      onSelectedDatasetsChange(
+        selectedDatasets.filter((id) => id !== datasetId)
+      );
     }
   };
 
@@ -144,36 +165,47 @@ const SelectDataset: React.FC<SelectDatasetProps> = ({
   };
 
   return (
-    <div className="col-span-5">
-      <h2 className="font-medium text-gray-900 text-lg mb-2 flex items-center gap-2">
-        <Database className="w-5 h-5" />
-        数据集选择
-      </h2>
-      <Card>
-        <div className="flex items-center gap-4 mb-4">
-            <span className="text-sm">配比方式:</span>
-            <Select
-              style={{ width: 120 }}
-              value={ratioType}
-              onChange={(v) => onRatioTypeChange(v)}
-              options={[
-                { label: "按数据集", value: "dataset" },
-                { label: "按标签", value: "label" },
-              ]}
-            />
+    <div className="border-card flex-1 flex flex-col min-w-[320px]">
+      <div className="flex items-center justify-between p-4 border-bottom">
+        <div className="flex items-center gap-4">
+          <span className="text-sm font-medium">
+            选择数据集
+            <span className="text-xs text-gray-500">
+              (已选择: {selectedDatasets.length}/{pagination.total})
+            </span>
+          </span>
         </div>
-          <Input
-            prefix={<SearchIcon className="text-gray-400" />}
-            placeholder="搜索数据集"
-            value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value);
-              setPagination((p) => ({ ...p, page: 1 }));
-            }}
+        <Button type="link" size="small" onClick={onClearSelection}>
+          清空选择
+        </Button>
+      </div>
+      <div className="flex-overflow-auto gap-4 p-4">
+        <div className="flex items-center gap-4">
+          <span className="text-sm">配比方式:</span>
+          <Select
+            className="flex-1 min-w-[120px]"
+            value={ratioType}
+            onChange={(v) => onRatioTypeChange(v)}
+            options={[
+              { label: "按数据集", value: "dataset" },
+              { label: "按标签", value: "label" },
+            ]}
           />
-        <div style={{ maxHeight: 500, overflowY: "auto" }}>
+        </div>
+        <Input
+          prefix={<SearchIcon className="text-gray-400" />}
+          placeholder="搜索数据集"
+          value={searchQuery}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            setPagination((p) => ({ ...p, page: 1 }));
+          }}
+        />
+        <div className="flex-1 overflow-auto">
           {loading && (
-            <div className="text-center text-gray-500 py-8">正在加载数据集...</div>
+            <div className="text-center text-gray-500 py-8">
+              正在加载数据集...
+            </div>
           )}
           {!loading &&
             datasets.map((dataset) => {
@@ -183,7 +215,9 @@ const SelectDataset: React.FC<SelectDatasetProps> = ({
                 <Card
                   key={dataset.id}
                   size="small"
-                  className={`mb-2 cursor-pointer ${checked ? "border-blue-500" : "hover:border-blue-200"}`}
+                  className={`cursor-pointer ${
+                    checked ? "border-blue-500" : "hover:border-blue-200"
+                  }`}
                   onClick={() => onToggleDataset(idStr, !checked)}
                 >
                   <div className="flex items-start gap-3">
@@ -193,10 +227,14 @@ const SelectDataset: React.FC<SelectDatasetProps> = ({
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="font-medium text-sm truncate">{dataset.name}</span>
+                        <span className="font-medium text-sm truncate">
+                          {dataset.name}
+                        </span>
                         <Badge color="blue">{dataset.datasetType}</Badge>
                       </div>
-                      <div className="text-xs text-gray-500 mt-1">{dataset.description}</div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        {dataset.description}
+                      </div>
                       <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
                         <span>{dataset.fileCount}条</span>
                         <span>{dataset.size}</span>
@@ -209,14 +247,21 @@ const SelectDataset: React.FC<SelectDatasetProps> = ({
                                 {Object.entries(distributions[idStr])
                                   .slice(0, 8)
                                   .map(([tag, count]) => (
-                                    <Badge key={tag} color="gray">{`${tag}: ${count}`}</Badge>
+                                    <Badge
+                                      key={tag}
+                                      color="gray"
+                                    >{`${tag}: ${count}`}</Badge>
                                   ))}
                               </div>
                             ) : (
-                              <div className="text-xs text-gray-400">未检测到标签分布</div>
+                              <div className="text-xs text-gray-400">
+                                未检测到标签分布
+                              </div>
                             )
                           ) : (
-                            <div className="text-xs text-gray-400">加载标签分布...</div>
+                            <div className="text-xs text-gray-400">
+                              加载标签分布...
+                            </div>
                           )}
                         </div>
                       )}
@@ -227,22 +272,20 @@ const SelectDataset: React.FC<SelectDatasetProps> = ({
             })}
         </div>
         <div className="flex justify-between mt-3 items-center">
-          <span className="text-sm text-gray-600">已选择 {selectedDatasets.length} 个数据集</span>
           <div className="flex items-center gap-3">
-            <Button size="small" onClick={onClearSelection}>
-              清空选择
-            </Button>
             <Pagination
               size="small"
               current={pagination.page}
               pageSize={pagination.size}
               total={pagination.total}
               showSizeChanger
-              onChange={(p, ps) => setPagination((prev) => ({ ...prev, page: p, size: ps }))}
+              onChange={(p, ps) =>
+                setPagination((prev) => ({ ...prev, page: p, size: ps }))
+              }
             />
           </div>
         </div>
-      </Card>
+      </div>
     </div>
   );
 };

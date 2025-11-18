@@ -11,7 +11,7 @@ export enum KBType {
 }
 
 export interface KnowledgeBaseItem {
-  id: number;
+  id: string;
   name: string;
   description: string;
   type: KBType;
@@ -19,10 +19,14 @@ export interface KnowledgeBaseItem {
   updatedAt: string;
   embeddingModel: string;
   chatModel: string;
+  fileCount: number;
+  chunkCount: number;
+  embedding: never;
+  chat: never;
 }
 
 export interface KBFile {
-  id: number;
+  id: string;
   fileName: string;
   name?: string;
   createdAt: string;

@@ -46,12 +46,8 @@ jobs:
         run: |
           make build-${{ inputs.service_name }} VERSION=latest
 
-      - name: Tag Docker Image
-        run: |
-          docker tag datamate-${{ inputs.service_name }}:latest ${{ steps.set-tag.outputs.TAGS }}
-
-      - name: Push Docker Image
+      - name: Tag & Push Docker Image
         if: github.event_name != 'pull_request'
         run: |
+          docker tag datamate-${{ inputs.service_name }}:latest ${{ steps.set-tag.outputs.TAGS }}
           docker push ${{ steps.set-tag.outputs.TAGS }}
-

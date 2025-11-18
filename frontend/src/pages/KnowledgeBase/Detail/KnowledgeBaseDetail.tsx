@@ -48,14 +48,16 @@ const KnowledgeBaseDetailPage: React.FC = () => {
     setSearchParams,
     handleFiltersChange,
   } = useFetchData<KBFile>(
-    (params) => queryKnowledgeBaseFilesUsingGet(knowledgeBase?.id, params),
+    (params) => id ? queryKnowledgeBaseFilesUsingGet(id, params) : Promise.resolve({ data: [] }),
     mapFileData
   );
 
   // File table logic
   const handleDeleteFile = async (file: KBFile) => {
     try {
-      await deleteKnowledgeBaseFileByIdUsingDelete(knowledgeBase.id, file.id);
+      await deleteKnowledgeBaseFileByIdUsingDelete(knowledgeBase.id, {
+        ids: [file.id]
+      });
       message.success("文件已删除");
       fetchFiles();
     } catch (error) {

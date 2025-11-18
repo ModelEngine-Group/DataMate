@@ -1,17 +1,18 @@
 services:
   deer-flow-backend:
-    image: deer-flow-backend
+    image: ${REGISTRY:-}deer-flow-backend
     container_name: deer-flow-backend
     env_file:
       - .env
     volumes:
       - ./conf.yaml:/app/conf.yaml:ro
+      - deer-flow-log-volume:/var/log/deer-flow
     restart: unless-stopped
     networks:
       - datamate
 
   deer-flow-frontend:
-    image: deer-flow-frontend
+    image: ${REGISTRY:-}deer-flow-frontend
     container_name: deer-flow-frontend
     env_file:
       - .env
@@ -20,6 +21,10 @@ services:
     restart: unless-stopped
     networks:
       - datamate
+
+volumes:
+  deer-flow-log-volume:
+    name: deer-flow-log-volume
 
 networks:
   datamate:

@@ -6,7 +6,7 @@ import {
   FilterOutlined,
   PlusOutlined,
 } from "@ant-design/icons";
-import { Boxes, Edit } from "lucide-react";
+import { Boxes } from "lucide-react";
 import { SearchControls } from "@/components/SearchControls";
 import CardView from "@/components/CardView";
 import { useNavigate } from "react-router";
@@ -186,6 +186,7 @@ export default function OperatorMarketPage() {
                   data={tableData}
                   pagination={pagination}
                   operations={operations}
+                  onView={(item) => navigate(`/data/operator-market/plugin-detail/${item.id}`)}
                 />
               ) : (
                 <ListView

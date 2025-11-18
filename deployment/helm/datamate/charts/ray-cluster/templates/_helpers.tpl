@@ -53,3 +53,28 @@ Create the name of the service account to use
     {{ default "default" .Values.serviceAccount.name }}
 {{- end -}}
 {{- end -}}
+
+{{/*
+Name of image
+*/}}
+{{- define "ray-cluster.image" -}}
+{{- $name := default .Values.image.repository .Values.global.image.runtime.name }}
+{{- $tag := default .Values.image.tag .Values.global.image.runtime.tag }}
+{{- if .Values.global.image.repository }}
+{{- .Values.global.image.repository | trimSuffix "/" }}/{{ $name }}:{{ $tag }}
+{{- else }}
+{{- $name }}:{{ $tag }}
+{{- end }}
+{{- end }}
+
+{{/*
+Name of sidecar image
+*/}}
+{{- define "ray-cluster-sidecar.image" -}}
+{{- $name := default (printf "%s:%s" .Values.image.repository .Values.image.tag) .Values.head.sidecarContainers.image }}
+{{- if .Values.global.image.repository }}
+{{- .Values.global.image.repository | trimSuffix "/" }}/{{ $name }}
+{{- else }}
+{{- $name }}
+{{- end }}
+{{- end }}

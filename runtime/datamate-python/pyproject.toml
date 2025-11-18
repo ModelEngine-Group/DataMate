@@ -1,0 +1,30 @@
+[project]
+name = "datamate-python"
+version = "0.1.0"
+description = "This is the Python backend of DataMate."
+authors = [
+    {name = "Jason Wang",email = "jasonwong2019@outlook.com"}
+]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi (>=0.121.1,<0.122.0)",
+    "uvicorn[standard] (>=0.38.0,<0.39.0)",
+    "sqlalchemy (>=2.0.44,<3.0.0)",
+    "aiomysql (>=0.3.2,<0.4.0)",
+    "pymysql (>=1.1.2,<2.0.0)",
+    "aiosqlite (>=0.21.0,<0.22.0)",
+    "httpx (>=0.28.1,<0.29.0)",
+    "pydantic (>=2.12.4,<3.0.0)",
+    "pydantic-settings (>=2.12.0,<3.0.0)",
+    "python-multipart (>=0.0.20,<0.0.21)",
+    "python-dotenv (>=1.2.1,<2.0.0)",
+    "python-dateutil (>=2.9.0.post0,<3.0.0)",
+    "pyyaml (>=6.0.3,<7.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

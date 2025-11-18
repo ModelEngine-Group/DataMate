@@ -129,6 +129,7 @@ export default function CreateKnowledgeBase({
             <Select
               placeholder="请选择索引模型"
               options={embeddingModelOptions}
+              disabled={isEdit} // 编辑模式下禁用索引模型修改
             />
           </Form.Item>
           <Form.Item

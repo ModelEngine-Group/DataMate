@@ -49,7 +49,7 @@ public class DatasetApplicationService {
     private final FileMetadataService fileMetadataService;
     private final ObjectMapper objectMapper;
 
-    @Value("${dataset.base.path:/dataset}")
+    @Value("${datamate.data-management.base-path:/dataset}")
     private String datasetBasePath;
 
     /**
@@ -285,26 +285,6 @@ public class DatasetApplicationService {
             return Collections.emptyList();
         }
         log.info("获取到归集任务详情: {}", taskDetail);
-        LocalCollectionConfig config = parseTaskConfig(taskDetail.getConfig());
-        if (config == null) {
-            log.warn("解析任务配置失败，任务ID: {}", dataSourceId);
-            return Collections.emptyList();
-        }
-        return config.getFilePaths();
-    }
-
-    /**
-     * 解析任务配置
-     */
-    private LocalCollectionConfig parseTaskConfig(Map<String, Object> configMap) {
-        try {
-            if (configMap == null || configMap.isEmpty()) {
-                return null;
-            }
-            return objectMapper.convertValue(configMap, LocalCollectionConfig.class);
-        } catch (Exception e) {
-            log.error("解析任务配置失败", e);
-            return null;
-        }
+        return Collections.singletonList(taskDetail.getTargetPath());
     }
 }

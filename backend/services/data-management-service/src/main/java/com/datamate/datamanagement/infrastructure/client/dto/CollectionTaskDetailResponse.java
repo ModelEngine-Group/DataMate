@@ -13,6 +13,7 @@ public class CollectionTaskDetailResponse {
     private String id;
     private String name;
     private String description;
+    private String targetPath;
     private Map<String, Object> config;
     private String status;
     private String syncMode;

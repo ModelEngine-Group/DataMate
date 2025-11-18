@@ -160,7 +160,7 @@ class Mapper(BaseOp):
             sample["execute_status"] = execute_status
             task_info = TaskInfoPersistence()
             task_info.persistence_task_info(sample)
-            return sample
+            raise e
 
         sample["execute_status"] = execute_status
         # 加载文件成功执行信息到数据库

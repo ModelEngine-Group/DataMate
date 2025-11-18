@@ -16,6 +16,8 @@ import java.util.concurrent.Executors;
 public class CleaningTaskScheduler {
     private final CleaningTaskRepository cleaningTaskRepo;
 
+    private final RuntimeClient runtimeClient;
+
     private final ExecutorService taskExecutor = Executors.newFixedThreadPool(5);
 
     public void executeTask(String taskId) {
@@ -28,11 +30,11 @@ public class CleaningTaskScheduler {
         task.setStatus(CleaningTaskStatusEnum.RUNNING);
         task.setStartedAt(LocalDateTime.now());
         cleaningTaskRepo.updateTask(task);
-        RuntimeClient.submitTask(taskId);
+        runtimeClient.submitTask(taskId);
     }
 
     public void stopTask(String taskId) {
-        RuntimeClient.stopTask(taskId);
+        runtimeClient.stopTask(taskId);
         CleaningTaskDto task = new CleaningTaskDto();
         task.setId(taskId);
         task.setStatus(CleaningTaskStatusEnum.STOPPED);

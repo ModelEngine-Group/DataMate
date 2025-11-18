@@ -1,7 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import func
-from typing import Optional
+from typing import Optional, List, Dict, Any
+from datetime import datetime
 
 from app.core.config import settings
 from app.core.logging import get_logger
@@ -22,12 +23,12 @@ class Service:
             db: 数据库会话
         """
         self.db = db
-        logger.info("Initialize DM service client (Database mode)")
+        logger.debug("Initialize DM service client (Database mode)")
 
     async def get_dataset(self, dataset_id: str) -> Optional[DatasetResponse]:
         """获取数据集详情"""
         try:
-            logger.info(f"Getting dataset detail: {dataset_id} ...")
+            logger.debug(f"Getting dataset detail: {dataset_id} ...")
             
             result = await self.db.execute(
                 select(Dataset).where(Dataset.id == dataset_id)
@@ -66,7 +67,7 @@ class Service:
     ) -> Optional[PagedDatasetFileResponse]:
         """获取数据集文件列表"""
         try:
-            logger.info(f"Get dataset files: dataset={dataset_id}, page={page}, size={size}")
+            logger.debug(f"Get dataset files: dataset={dataset_id}, page={page}, size={size}")
             
             # 构建查询
             query = select(DatasetFiles).where(DatasetFiles.dataset_id == dataset_id)
@@ -108,7 +109,9 @@ class Service:
                     uploadedAt=f.upload_time,  # type: ignore
                     description=None,
                     uploadedBy=None,
-                    lastAccessTime=f.last_access_time  # type: ignore
+                    lastAccessTime=f.last_access_time,  # type: ignore
+                    tags=f.tags,  # type: ignore
+                    tags_updated_at=f.tags_updated_at  # type: ignore
                 )
                 for f in files
             ]
@@ -158,3 +161,104 @@ class Service:
     async def close(self):
         """关闭客户端连接（数据库模式下无需操作）"""
         logger.info("DM service client closed (Database mode)")
+    
+    async def update_file_tags_partial(
+        self, 
+        file_id: str, 
+        new_tags: List[Dict[str, Any]],
+        template_id: Optional[str] = None
+    ) -> tuple[bool, Optional[str], Optional[datetime]]:
+        """
+        部分更新文件标签，支持自动格式转换
+        
+        如果提供了 template_id，会自动将简化格式的标签转换为完整格式。
+        简化格式: {"from_name": "x", "to_name": "y", "values": [...]}
+        完整格式: {"id": "...", "from_name": "x", "to_name": "y", "type": "...", "value": {"type": [...]}}
+        
+        Args:
+            file_id: 文件ID
+            new_tags: 新的标签列表（部分更新），可以是简化格式或完整格式
+            template_id: 可选的模板ID，用于格式转换
+        
+        Returns:
+            (成功标志, 错误信息, 更新时间)
+        """
+        try:
+            logger.info(f"Partial updating tags for file: {file_id}")
+            
+            # 获取文件记录
+            result = await self.db.execute(
+                select(DatasetFiles).where(DatasetFiles.id == file_id)
+            )
+            file_record = result.scalar_one_or_none()
+            
+            if not file_record:
+                logger.error(f"File not found: {file_id}")
+                return False, f"File not found: {file_id}", None
+            
+            # 如果提供了 template_id，尝试进行格式转换
+            processed_tags = new_tags
+            if template_id:
+                logger.debug(f"Converting tags using template: {template_id}")
+                
+                try:
+                    # 获取模板配置
+                    from app.db.models import AnnotationTemplate
+                    template_result = await self.db.execute(
+                        select(AnnotationTemplate).where(
+                            AnnotationTemplate.id == template_id,
+                            AnnotationTemplate.deleted_at.is_(None)
+                        )
+                    )
+                    template = template_result.scalar_one_or_none()
+                    
+                    if not template:
+                        logger.warning(f"Template {template_id} not found, skipping conversion")
+                    else:
+                        # 使用 converter 转换标签格式
+                        from app.module.annotation.utils import create_converter_from_template_config
+                        
+                        converter = create_converter_from_template_config(template.configuration)  # type: ignore
+                        processed_tags = converter.convert_if_needed(new_tags)
+                        
+                        logger.info(f"Converted {len(new_tags)} tags to full format")
+                        
+                except Exception as e:
+                    logger.error(f"Failed to convert tags using template: {e}")
+                    # 继续使用原始标签格式
+                    logger.warning("Continuing with original tag format")
+            
+            # 获取现有标签
+            existing_tags: List[Dict[str, Any]] = file_record.tags or []  # type: ignore
+            
+            # 创建标签ID到索引的映射
+            tag_id_map = {tag.get('id'): idx for idx, tag in enumerate(existing_tags) if tag.get('id')}
+            
+            # 更新或追加标签
+            for new_tag in processed_tags:
+                tag_id = new_tag.get('id')
+                if tag_id and tag_id in tag_id_map:
+                    # 更新现有标签
+                    idx = tag_id_map[tag_id]
+                    existing_tags[idx] = new_tag
+                    logger.debug(f"Updated existing tag with id: {tag_id}")
+                else:
+                    # 追加新标签
+                    existing_tags.append(new_tag)
+                    logger.debug(f"Added new tag with id: {tag_id}")
+            
+            # 更新数据库
+            update_time = datetime.utcnow()
+            file_record.tags = existing_tags  # type: ignore
+            file_record.tags_updated_at = update_time  # type: ignore
+            
+            await self.db.commit()
+            await self.db.refresh(file_record)
+            
+            logger.info(f"Successfully updated tags for file: {file_id}")
+            return True, None, update_time
+            
+        except Exception as e:
+            logger.error(f"Failed to update tags for file {file_id}: {e}")
+            await self.db.rollback()
+            return False, str(e), None

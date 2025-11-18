@@ -1,5 +1,6 @@
 from typing import List, Optional, Dict, Any
 import random
+import json
 import os
 import shutil
 import asyncio
@@ -12,6 +13,7 @@ from app.core.logging import get_logger
 from app.db.models.ratio_task import RatioInstance, RatioRelation
 from app.db.models import Dataset, DatasetFiles
 from app.db.session import AsyncSessionLocal
+from app.module.dataset.schema.dataset_file import DatasetFileTag
 
 logger = get_logger(__name__)
 
@@ -218,65 +220,46 @@ class RatioTaskService:
         """
         if not conditions:
             return set()
-        raw = conditions.replace("\n", " ")
-        seps = [",", ";", " "]
-        tokens = [raw]
-        for sep in seps:
-            nxt = []
-            for t in tokens:
-                nxt.extend(t.split(sep))
-            tokens = nxt
-        return {t.strip() for t in tokens if t and t.strip()}
+        data = json.loads(conditions)
+        required_tags = set()
+        if data.get("label"):
+            required_tags.add(data["label"])
+        return required_tags
 
     @staticmethod
-    def _file_contains_tags(f: DatasetFiles, required: set[str]) -> bool:
+    def _file_contains_tags(file: DatasetFiles, required: set[str]) -> bool:
         if not required:
             return True
-        tags = f.tags
+        tags = file.tags
         if not tags:
             return False
         try:
             # tags could be a list of strings or list of objects with 'name'
-            tag_names = set()
-            if isinstance(tags, list):
-                for item in tags:
-                    if isinstance(item, str):
-                        tag_names.add(item)
-                    elif isinstance(item, dict):
-                        name = item.get("name") or item.get("label") or item.get("tag")
-                        if isinstance(name, str):
-                            tag_names.add(name)
-            elif isinstance(tags, dict):
-                # flat dict of name->... treat keys as tags
-                tag_names = set(map(str, tags.keys()))
-            else:
-                return False
-            logger.info(f">>>>>{tags}>>>>>{required}, {tag_names}")
+            tag_names = RatioTaskService.get_all_tags(tags)
             return required.issubset(tag_names)
-        except Exception:
+        except Exception as e:
+            logger.exception(f"Failed to get tags for {file}", e)
             return False
 
     @staticmethod
-    async def get_new_file(f, rel: RatioRelation, target_ds: Dataset) -> DatasetFiles:
-        new_path = f.file_path
-        src_prefix = f"/dataset/{rel.source_dataset_id}"
-        if isinstance(f.file_path, str) and f.file_path.startswith(src_prefix):
-            dst_prefix = f"/dataset/{target_ds.id}"
-            new_path = f.file_path.replace(src_prefix, dst_prefix, 1)
-            dst_dir = os.path.dirname(new_path)
-            # Ensure directory and copy the file in a thread to avoid blocking the event loop
-            await asyncio.to_thread(os.makedirs, dst_dir, exist_ok=True)
-            await asyncio.to_thread(shutil.copy2, f.file_path, new_path)
+    def get_all_tags(tags) -> set[str]:
+        """获取所有处理后的标签字符串列表"""
+        all_tags = set()
+        if not tags:
+            return all_tags
 
-        new_file = DatasetFiles(
-            dataset_id=target_ds.id,  # type: ignore
-            file_name=f.file_name,
-            file_path=new_path,
-            file_type=f.file_type,
-            file_size=f.file_size,
-            check_sum=f.check_sum,
-            tags=f.tags,
-            dataset_filemetadata=f.dataset_filemetadata,
-            status="ACTIVE",
-        )
-        return new_file
+        file_tags = []
+        for tag_data in tags:
+            # 处理可能的命名风格转换（下划线转驼峰）
+            processed_data = {}
+            for key, value in tag_data.items():
+                # 将驼峰转为下划线以匹配 Pydantic 模型字段
+                processed_data[key] = value
+            # 创建 DatasetFileTag 对象
+            file_tag = DatasetFileTag(**processed_data)
+            file_tags.append(file_tag)
+
+        for file_tag in file_tags:
+            for tag_data in file_tag.get_tags():
+                all_tags.add(tag_data)
+        return all_tags

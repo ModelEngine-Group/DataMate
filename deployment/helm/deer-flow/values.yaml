@@ -1,0 +1,40 @@
+# Default values for deer-flow.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+global:
+  image:
+    repository: "ghcr.io/modelengine-group/"
+    pullPolicy: "IfNotPresent"
+    backend:
+      name: "deer-flow-backend"
+      tag: "latest"
+    frontend:
+      name: "deer-flow-frontend"
+      tag: "latest"
+
+envFrom: &envFrom
+  secretRef:
+    name: deer-flow-env
+
+backend:
+  envFrom:
+    - *envFrom
+  volumes:
+    - name: deer-flow-conf
+      secret:
+        secretName: deer-flow-conf
+    - name: log-volume
+      persistentVolumeClaim:
+        claimName: datamate-log-pvc
+  volumeMounts:
+    - name: deer-flow-conf
+      mountPath: /app/conf.yaml
+      subPath: conf.yaml
+    - name: log-volume
+      mountPath: /var/log/deer-flow
+      subPath: deer-flow
+
+frontend:
+  envFrom:
+    - *envFrom

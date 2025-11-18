@@ -7,7 +7,7 @@
 ![GitHub Stars](https://img.shields.io/github/stars/ModelEngine-Group/DataMate)
 ![GitHub Forks](https://img.shields.io/github/forks/ModelEngine-Group/DataMate)
 ![GitHub Issues](https://img.shields.io/github/issues/ModelEngine-Group/DataMate)
-![GitHub License](https://img.shields.io/github/license/ModelEngine-Group/DataMate)
+![GitHub License](https://img.shields.io/github/license/ModelEngine-Group/datamate-docs)
 
 **DataMate是面向模型微调与RAG检索的企业级数据处理平台，支持数据归集、数据管理、算子市场、数据清洗、数据合成、数据标注、数据评估、知识生成等核心功能。**
 
@@ -34,6 +34,14 @@
 - kubernetes (用于部署服务-k8s方式)
 - Helm (用于部署服务-k8s方式)
 
+本项目支持docker-compose和helm两种方式部署，请在执行命令后输入部署方式的对应编号，命令回显如下所示：
+```shell
+Choose a deployment method:
+1. Docker/Docker-Compose
+2. Kubernetes/Helm
+Enter choice:
+```
+
 ### 拉取代码
 
 ```bash
@@ -41,22 +49,28 @@ git clone git@github.com:ModelEngine-Group/DataMate.git
 cd DataMate
 ```
 
-### 镜像构建
+### 部署基础服务
 
+```bash
+make install
+```
+
+### 构建并部署Mineru增强pdf处理
+```bash
+make build-mineru
+make install-mineru
+```
+
+### 部署DeerFlow服务
+1. 修改runtime/deer-flow/.env.example，添加SEARCH_API_KEY和EMBEDDING模型配置
+2. 修改runtime/deer-flow/.conf.yaml.example，添加基础模型服务配置
+3. 执行`make install-deer-flow`
+
+### 本地开发部署
+本地代码修改后，请执行以下命令构建镜像并使用本地镜像部署
 ```bash
 make build
-```
-
-### Docker安装
-
-```bash
-make install INSTALLER=docker
-```
-
-### kubernetes安装
-
-```bash
-make install INSTALLER=k8s
+make install REGISTRY=""
 ```
 
 ## 🤝 贡献指南

@@ -1,6 +1,10 @@
 from .dataset_file import (
     DatasetFileResponse,
     PagedDatasetFileResponse,
+    BatchUpdateFileTagsRequest,
+    BatchUpdateFileTagsResponse,
+    FileTagUpdateResult,
+    FileTagUpdate,
 )
 
 from .dataset import (
@@ -13,4 +17,8 @@ __all__ = [
     "DatasetFileResponse",
     "PagedDatasetFileResponse",
     "DatasetTypeResponse",
+    "BatchUpdateFileTagsRequest",
+    "BatchUpdateFileTagsResponse",
+    "FileTagUpdateResult",
+    "FileTagUpdate",
 ]

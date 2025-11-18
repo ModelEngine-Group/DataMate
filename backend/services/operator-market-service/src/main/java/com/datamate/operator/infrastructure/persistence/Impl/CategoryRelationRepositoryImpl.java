@@ -32,6 +32,17 @@ public class CategoryRelationRepositoryImpl extends CrudRepository<CategoryRelat
     }
 
     @Override
+    public void batchUpdate(String operatorId, List<String> categories) {
+        List<CategoryRelation> categoryRelations = categories.stream()
+                .map(category -> new CategoryRelation(category, operatorId))
+                .toList();
+        LambdaQueryWrapper<CategoryRelation> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(CategoryRelation::getOperatorId, operatorId);
+        mapper.delete(queryWrapper);
+        mapper.insert(categoryRelations);
+    }
+
+    @Override
     public void deleteByOperatorId(String operatorId) {
         LambdaQueryWrapper<CategoryRelation> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(CategoryRelation::getOperatorId, operatorId);

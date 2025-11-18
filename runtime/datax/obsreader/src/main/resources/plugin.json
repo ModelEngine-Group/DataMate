@@ -1,0 +1,6 @@
+{
+  "name": "obsreader",
+  "class": "com.datamate.plugin.reader.obsreader.ObsReader",
+  "description": "read from obs file system",
+  "developer": "datamate"
+}

@@ -1,0 +1,32 @@
+{{- if and .Values.attu.enabled .Values.attu.route.enabled }}
+{{- $attuServiceName := include "milvus.attu.fullname" . -}}
+{{- $attuServicePort := .Values.attu.service.port -}}
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: {{ template "milvus.attu.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{ include "milvus.labels" . | indent 4 }}
+{{- if .Values.attu.route.labels }}
+{{ toYaml .Values.attu.route.labels | indent 4 }}
+{{- end }}
+{{- with .Values.attu.route.annotations }}
+  annotations:
+{{ toYaml . | indent 4 }}
+{{- end }}
+spec:
+  {{- if .Values.attu.route.host }}
+  host: {{ .Values.attu.route.host }}
+  {{- end }}
+  port:
+    targetPort: {{ $attuServicePort }}
+  to:
+    kind: Service
+    name: {{ $attuServiceName }}
+    weight: 100
+  {{- if .Values.attu.route.tls }}
+  tls:
+    {{- toYaml .Values.attu.route.tls | nindent 4 }}
+  {{- end }}
+{{- end }}

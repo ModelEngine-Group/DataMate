@@ -13,10 +13,11 @@ spec:
       {{- include "frontend.selectorLabels" . | nindent 6 }}
   template:
     metadata:
-      {{- with .Values.podAnnotations }}
       annotations:
+        checksum/nginx: {{ include (print .Template.BasePath "/configmap.yaml") . | sha256sum }}
+        {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}
-      {{- end }}
+        {{- end }}
       labels:
         {{- include "frontend.labels" . | nindent 8 }}
         {{- with .Values.podLabels }}
@@ -39,7 +40,7 @@ spec:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           image: "{{ include "frontend.image" . }}"
-          imagePullPolicy: {{ default .Values.global.image.pullPolicy .Values.image.pullPolicy }}
+          imagePullPolicy: {{ default .Values.image.pullPolicy .Values.global.image.pullPolicy }}
           ports:
             - name: http
               containerPort: {{ .Values.service.port }}

@@ -5,7 +5,7 @@ import com.datamate.cleaning.domain.repository.CleaningTemplateRepository;
 import com.datamate.cleaning.domain.repository.OperatorInstanceRepository;
 import com.datamate.cleaning.interfaces.dto.*;
 import com.datamate.cleaning.domain.model.entity.TemplateWithInstance;
-import com.datamate.operator.domain.repository.OperatorRepository;
+import com.datamate.operator.domain.repository.OperatorViewRepository;
 import com.datamate.operator.interfaces.dto.OperatorDto;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -26,10 +26,11 @@ public class CleaningTemplateService {
 
     private final OperatorInstanceRepository operatorInstanceRepo;
 
-    private final OperatorRepository operatorRepo;
+    private final OperatorViewRepository operatorViewRepo;
 
     public List<CleaningTemplateDto> getTemplates(String keywords) {
-        List<OperatorDto> allOperators = operatorRepo.findAllOperators();
+        List<OperatorDto> allOperators =
+                operatorViewRepo.findOperatorsByCriteria(null, null, null, null, null);
         Map<String, OperatorDto> operatorsMap = allOperators.stream()
                 .collect(Collectors.toMap(OperatorDto::getId, Function.identity()));
         List<TemplateWithInstance> allTemplates = cleaningTemplateRepo.findAllTemplates(keywords);
@@ -39,8 +40,8 @@ public class CleaningTemplateService {
             List<TemplateWithInstance> value = twi.getValue();
             CleaningTemplateDto template = new CleaningTemplateDto();
             template.setId(twi.getKey());
-            template.setName(value.get(0).getName());
-            template.setDescription(value.get(0).getDescription());
+            template.setName(value.getFirst().getName());
+            template.setDescription(value.getFirst().getDescription());
             template.setInstance(value.stream().filter(v -> StringUtils.isNotBlank(v.getOperatorId()))
                     .sorted(Comparator.comparingInt(TemplateWithInstance::getOpIndex))
                     .map(v -> {
@@ -50,8 +51,8 @@ public class CleaningTemplateService {
                         }
                         return operator;
                     }).toList());
-            template.setCreatedAt(value.get(0).getCreatedAt());
-            template.setUpdatedAt(value.get(0).getUpdatedAt());
+            template.setCreatedAt(value.getFirst().getCreatedAt());
+            template.setUpdatedAt(value.getFirst().getUpdatedAt());
             return template;
         }).toList();
     }
@@ -70,17 +71,22 @@ public class CleaningTemplateService {
     }
 
     public CleaningTemplateDto getTemplate(String templateId) {
-        return cleaningTemplateRepo.findTemplateById(templateId);
+        CleaningTemplateDto template = cleaningTemplateRepo.findTemplateById(templateId);
+        template.setInstance(operatorInstanceRepo.findOperatorByInstanceId(templateId));
+        return template;
     }
 
     @Transactional
     public CleaningTemplateDto updateTemplate(String templateId, UpdateCleaningTemplateRequest request) {
         CleaningTemplateDto template = cleaningTemplateRepo.findTemplateById(templateId);
-        if (template != null) {
-            template.setName(request.getName());
-            template.setDescription(request.getDescription());
-            cleaningTemplateRepo.updateTemplate(template);
+        if (template == null) {
+            return null;
         }
+        template.setName(request.getName());
+        template.setDescription(request.getDescription());
+        cleaningTemplateRepo.updateTemplate(template);
+        operatorInstanceRepo.deleteByInstanceId(templateId);
+        operatorInstanceRepo.insertInstance(templateId, request.getInstance());
         return template;
     }
 

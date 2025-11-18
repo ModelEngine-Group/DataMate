@@ -315,13 +315,13 @@
 <!--            </includes>-->
 <!--            <outputDirectory>datax</outputDirectory>-->
 <!--        </fileSet>-->
-<!--        <fileSet>-->
-<!--            <directory>txtfilewriter/target/datax/</directory>-->
-<!--            <includes>-->
-<!--                <include>**/*.*</include>-->
-<!--            </includes>-->
-<!--            <outputDirectory>datax</outputDirectory>-->
-<!--        </fileSet>-->
+        <fileSet>
+            <directory>txtfilewriter/target/datax/</directory>
+            <includes>
+                <include>**/*.*</include>
+            </includes>
+            <outputDirectory>datax</outputDirectory>
+        </fileSet>
 <!--        <fileSet>-->
 <!--            <directory>ftpwriter/target/datax/</directory>-->
 <!--            <includes>-->
@@ -576,6 +576,20 @@
 <!--        </fileSet>-->
         <fileSet>
             <directory>nfswriter/target/datax/</directory>
+            <includes>
+                <include>**/*.*</include>
+            </includes>
+            <outputDirectory>datax</outputDirectory>
+        </fileSet>
+        <fileSet>
+            <directory>obsreader/target/datax/</directory>
+            <includes>
+                <include>**/*.*</include>
+            </includes>
+            <outputDirectory>datax</outputDirectory>
+        </fileSet>
+        <fileSet>
+            <directory>obswriter/target/datax/</directory>
             <includes>
                 <include>**/*.*</include>
             </includes>
