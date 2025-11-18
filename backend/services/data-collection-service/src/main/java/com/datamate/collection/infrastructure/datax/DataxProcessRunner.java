@@ -6,6 +6,7 @@ import com.datamate.collection.domain.model.entity.CollectionTask;
 import com.datamate.collection.domain.process.ProcessRunner;
 import com.datamate.collection.infrastructure.datax.config.MysqlConfig;
 import com.datamate.collection.infrastructure.datax.config.NasConfig;
+import com.datamate.collection.infrastructure.datax.config.ObsConfig;
 import com.datamate.common.infrastructure.exception.BusinessException;
 import com.datamate.common.infrastructure.exception.SystemErrorCode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -92,18 +93,21 @@ public class DataxProcessRunner implements ProcessRunner {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             TemplateType templateType = task.getTaskType();
-            switch (templateType) {
-                case NAS:
+            return switch (templateType) {
+                case NAS -> {
                     // NAS 特殊处理
                     NasConfig nasConfig = objectMapper.readValue(task.getConfig(), NasConfig.class);
-                    return nasConfig.toJobConfig(objectMapper, task);
-                case OBS:
-                case MYSQL:
+                    yield nasConfig.toJobConfig(objectMapper, task);
+                }
+                case OBS -> {
+                    ObsConfig obsConfig = objectMapper.readValue(task.getConfig(), ObsConfig.class);
+                    yield obsConfig.toJobConfig(objectMapper, task);
+                }
+                case MYSQL -> {
                     MysqlConfig mysqlConfig = objectMapper.readValue(task.getConfig(), MysqlConfig.class);
-                    return mysqlConfig.toJobConfig(objectMapper, task);
-                default:
-                    throw BusinessException.of(SystemErrorCode.UNKNOWN_ERROR, "Unsupported template type: " + templateType);
-            }
+                    yield mysqlConfig.toJobConfig(objectMapper, task);
+                }
+            };
         } catch (Exception e) {
             log.error("Failed to parse task config", e);
             throw new RuntimeException("Failed to parse task config", e);
