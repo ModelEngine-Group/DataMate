@@ -24,4 +24,6 @@ public class QueryModelRequest extends PagingQuery {
     private ModelType type;
 
     private Boolean isEnabled;
+
+    private Boolean isDefault;
 }

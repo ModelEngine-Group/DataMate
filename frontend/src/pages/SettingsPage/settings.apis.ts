@@ -28,3 +28,13 @@ export function deleteModelByIdUsingDelete(id: string | number) {
   return del(`/api/models/${id}`);
 }
 
+
+// 获取系统参数列表
+export function getSysParamList() {
+    return get('/api/sys-param/list');
+}
+
+// 更新系统参数值
+export const updateSysParamValue = async (params: { id: string; paramValue: string }) => {
+  return put(`/api/sys-param/${params.id}`, params);
+};

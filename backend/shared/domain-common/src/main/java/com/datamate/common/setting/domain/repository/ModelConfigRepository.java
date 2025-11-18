@@ -3,6 +3,7 @@ package com.datamate.common.setting.domain.repository;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.repository.IRepository;
 import com.datamate.common.setting.domain.entity.ModelConfig;
+import com.datamate.common.setting.domain.entity.ModelType;
 import com.datamate.common.setting.interfaces.rest.dto.QueryModelRequest;
 
 /**
@@ -19,4 +20,10 @@ public interface ModelConfigRepository extends IRepository<ModelConfig> {
      * @return 模型配置列表
      */
     IPage<ModelConfig> page(QueryModelRequest queryModelRequest);
+
+    void saveAndSetDefault(ModelConfig modelConfig);
+
+    void removeDefault(ModelType type);
+
+    void updateAndSetDefault(ModelConfig modelConfig, Boolean isDefault);
 }

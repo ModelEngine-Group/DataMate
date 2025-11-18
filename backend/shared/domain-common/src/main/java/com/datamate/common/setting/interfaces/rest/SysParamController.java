@@ -1,6 +1,7 @@
 package com.datamate.common.setting.interfaces.rest;
 
 import com.datamate.common.setting.application.SysParamApplicationService;
+import com.datamate.common.setting.interfaces.rest.dto.ParamRequest;
 import com.datamate.common.setting.domain.entity.SysParam;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -29,15 +30,15 @@ public class SysParamController {
         return sysParamApplicationService.list();
     }
 
-     /**
+    /**
      * 根据参数id修改系统参数值
      *
      * @param paramId    参数id
-     * @param paramValue 参数值
+     * @param paramRequest 参数值请求体
      */
     @PutMapping("/{paramId}")
-    public void updateParamValueById(@PathVariable("paramId") String paramId, @RequestBody String paramValue) {
-        sysParamApplicationService.updateParamValueById(paramId, paramValue);
+    public void updateParamValueById(@PathVariable("paramId") String paramId, @RequestBody ParamRequest paramRequest) {
+        sysParamApplicationService.updateParamValueById(paramId, paramRequest.paramValue());
     }
 
     /**
@@ -50,3 +51,4 @@ public class SysParamController {
         sysParamApplicationService.deleteParamById(paramId);
     }
 }
+
