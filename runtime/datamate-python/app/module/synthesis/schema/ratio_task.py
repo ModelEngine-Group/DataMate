@@ -2,6 +2,9 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime
 from pydantic import BaseModel, Field, field_validator
 
+from app.module.shared.schema.common import TaskStatus
+
+
 class RatioConfigItem(BaseModel):
     dataset_id: str = Field(..., alias="datasetId", description="数据集id")
     counts: str = Field(..., description="数量")
@@ -59,7 +62,7 @@ class CreateRatioTaskResponse(BaseModel):
     description: Optional[str] = None
     totals: int
     ratio_method: str
-    status: str
+    status: TaskStatus
     # echoed config
     config: List[RatioConfigItem]
     # created dataset

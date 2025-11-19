@@ -14,6 +14,7 @@ from app.db.models.ratio_task import RatioInstance, RatioRelation
 from app.db.models import Dataset, DatasetFiles
 from app.db.session import AsyncSessionLocal
 from app.module.dataset.schema.dataset_file import DatasetFileTag
+from app.module.shared.schema import TaskStatus
 
 logger = get_logger(__name__)
 
@@ -97,11 +98,11 @@ class RatioTaskService:
                 relations: List[RatioRelation] = list(rel_res.scalars().all())
 
                 # Mark running
-                instance.status = "RUNNING"
+                instance.status = TaskStatus.RUNNING
 
                 if instance.ratio_method not in {"DATASET", "TAG"}:
                     logger.info(f"Instance {instance_id} ratio_method={instance.ratio_method} not supported yet")
-                    instance.status = "SUCCESS"
+                    instance.status = TaskStatus.COMPLETED
                     return
 
                 # Load target dataset
@@ -109,7 +110,7 @@ class RatioTaskService:
                 target_ds: Optional[Dataset] = ds_res.scalar_one_or_none()
                 if not target_ds:
                     logger.error(f"Target dataset not found for instance {instance_id}")
-                    instance.status = "FAILED"
+                    instance.status = TaskStatus.FAILED
                     return
 
                 # Preload existing target file paths for deduplication
@@ -194,7 +195,7 @@ class RatioTaskService:
                     target_ds.status = "ACTIVE"
 
                 # Done
-                instance.status = "SUCCESS"
+                instance.status = TaskStatus.COMPLETED
                 logger.info(f"Dataset ratio execution completed: instance={instance_id}, files={added_count}, size={added_size}")
 
             except Exception as e:
@@ -204,7 +205,7 @@ class RatioTaskService:
                     inst_res = await session.execute(select(RatioInstance).where(RatioInstance.id == instance_id))
                     instance = inst_res.scalar_one_or_none()
                     if instance:
-                        instance.status = "FAILED"
+                        instance.status = TaskStatus.FAILED
                 finally:
                     pass
             finally:

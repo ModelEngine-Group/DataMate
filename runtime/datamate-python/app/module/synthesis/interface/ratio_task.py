@@ -12,7 +12,7 @@ from app.core.logging import get_logger
 from app.db.models import Dataset
 from app.db.session import get_db
 from app.module.dataset import DatasetManagementService
-from app.module.shared.schema import StandardResponse
+from app.module.shared.schema import StandardResponse, TaskStatus
 from app.module.synthesis.schema.ratio_task import (
     CreateRatioTaskResponse,
     CreateRatioTaskRequest,
@@ -86,16 +86,13 @@ async def create_ratio_task(
         # 异步执行配比任务（支持 DATASET / TAG）
         asyncio.create_task(RatioTaskService.execute_dataset_ratio_task(instance.id))
 
-        return StandardResponse(
-            code=200,
-            message="success",
-            data=CreateRatioTaskResponse(
+        response_data = CreateRatioTaskResponse(
                 id=instance.id,
                 name=instance.name,
                 description=instance.description,
                 totals=instance.totals or 0,
                 ratio_method=instance.ratio_method or req.ratio_method,
-                status=instance.status or "PENDING",
+                status=instance.status or TaskStatus.PENDING,
                 config=req.config,
                 targetDataset=TargetDatasetInfo(
                     id=str(target_dataset.id),
@@ -104,6 +101,10 @@ async def create_ratio_task(
                     status=str(target_dataset.status),
                 )
             )
+        return StandardResponse(
+            code=200,
+            message="success",
+            data=response_data
         )
     except HTTPException:
         await db.rollback()
