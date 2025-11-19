@@ -49,8 +49,8 @@ async def create_ratio_task(
 
         await valid_exists(db, req)
 
-        # 创建目标数据集：名称使用“<任务名称>-配比生成-时间戳”
-        target_dataset_name = f"{req.name}-配比生成-{datetime.now().strftime('%Y%m%d%H%M%S')}"
+        # 创建目标数据集：名称使用“<任务名称>-时间戳”
+        target_dataset_name = f"{req.name}-{datetime.now().strftime('%Y%m%d%H%M%S')}"
 
         target_type = get_target_dataset_type(source_types)
 
