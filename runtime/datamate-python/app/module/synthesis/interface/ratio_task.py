@@ -53,15 +53,16 @@ async def create_ratio_task(
         target_dataset_name = f"{req.name}-{datetime.now().strftime('%Y%m%d%H%M%S')}"
 
         target_type = get_target_dataset_type(source_types)
+        target_dataset_id = uuid.uuid4()
 
         target_dataset = Dataset(
-            id=str(uuid.uuid4()),
+            id=str(target_dataset_id),
             name=target_dataset_name,
             description=req.description or "",
             dataset_type=target_type,
             status="DRAFT",
+            path=f"/dataset/{target_dataset_id}",
         )
-        target_dataset.path = f"/dataset/{target_dataset.id}"
         db.add(target_dataset)
         await db.flush()  # 获取 target_dataset.id
 
