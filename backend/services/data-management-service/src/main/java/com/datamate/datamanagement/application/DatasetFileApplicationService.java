@@ -261,7 +261,8 @@ public class DatasetFileApplicationService {
                 .filePath(savedFile.getPath())
                 .fileType(AnalyzerUtils.getExtension(uploadFile.getFileName()))
                 .build();
-        setDatasetFileId(datasetFile, datasetFileRepository.findAllByDatasetId(datasetId));
+        dataset.setFiles(datasetFileRepository.findAllByDatasetId(datasetId));
+        setDatasetFileId(datasetFile, dataset);
         datasetFileRepository.saveOrUpdate(datasetFile);
         dataset.addFile(datasetFile);
         dataset.active();
@@ -272,11 +273,11 @@ public class DatasetFileApplicationService {
      * 为数据集文件设置文件id
      *
      * @param datasetFile 要设置id的文件
-     * @param existDatasetFils 已存在的数据集id列表
+     * @param dataset 数据集（包含文件列表）
      */
-    private void setDatasetFileId(DatasetFile datasetFile, List<DatasetFile> existDatasetFils) {
-        Map<String, DatasetFile> existDatasetFilMap = existDatasetFils.stream().collect(Collectors.toMap(DatasetFile::getFilePath, Function.identity()));
-        DatasetFile existDatasetFile = existDatasetFilMap.get(datasetFile.getFileName());
+    private void setDatasetFileId(DatasetFile datasetFile, Dataset dataset) {
+        Map<String, DatasetFile> existDatasetFilMap = dataset.getFiles().stream().collect(Collectors.toMap(DatasetFile::getFilePath, Function.identity()));
+        DatasetFile existDatasetFile = existDatasetFilMap.get(datasetFile.getFilePath());
         if (Objects.isNull(existDatasetFile)) {
             return;
         }
@@ -285,6 +286,7 @@ public class DatasetFileApplicationService {
             throw BusinessException.of(DataManagementErrorCode.DATASET_FILE_ALREADY_EXISTS);
         }
         if (duplicateMethod == DuplicateMethod.COVER) {
+            dataset.removeFile(existDatasetFile);
             datasetFile.setId(existDatasetFile.getId());
         }
     }
@@ -302,6 +304,7 @@ public class DatasetFileApplicationService {
         BusinessAssert.notNull(dataset, SystemErrorCode.RESOURCE_NOT_FOUND);
         List<DatasetFile> copiedFiles = new ArrayList<>();
         List<DatasetFile> existDatasetFiles = datasetFileRepository.findAllByDatasetId(datasetId);
+        dataset.setFiles(existDatasetFiles);
         for (String sourceFilePath : req.sourcePaths()) {
             Path sourcePath = Paths.get(sourceFilePath);
             if (!Files.exists(sourcePath) || !Files.isRegularFile(sourcePath)) {
@@ -321,7 +324,7 @@ public class DatasetFileApplicationService {
                     .uploadTime(currentTime)
                     .lastAccessTime(currentTime)
                     .build();
-            setDatasetFileId(datasetFile, existDatasetFiles);
+            setDatasetFileId(datasetFile, dataset);
             dataset.addFile(datasetFile);
             copiedFiles.add(datasetFile);
         }

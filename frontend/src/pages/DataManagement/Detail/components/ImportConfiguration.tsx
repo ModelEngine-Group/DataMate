@@ -84,7 +84,7 @@ export default function ImportConfiguration({
     form.resetFields();
     setFileList([]);
     form.setFieldsValue({ files: null });
-    setImportConfig({ source: DataSource.UPLOAD });
+    setImportConfig({ source: importConfig.source ? importConfig.source : DataSource.UPLOAD });
   };
 
   const handleImportData = async () => {
