@@ -18,7 +18,7 @@ build-%:
 	$(MAKE) $*-docker-build
 
 .PHONY: build
-build: database-docker-build backend-docker-build frontend-docker-build runtime-docker-build
+build:  database-docker-build backend-docker-build frontend-docker-build runtime-docker-build backend-python-docker-build
 
 .PHONY: create-namespace
 create-namespace:
@@ -117,9 +117,9 @@ frontend-docker-build:
 runtime-docker-build:
 	docker build -t datamate-runtime:$(VERSION) . -f scripts/images/runtime/Dockerfile
 
-.PHONY: label-studio-adapter-docker-build
-label-studio-adapter-docker-build:
-	docker build -t label-studio-adapter:$(VERSION) . -f scripts/images/label-studio-adapter/Dockerfile
+.PHONY: backend-python-docker-build
+backend-python-docker-build:
+	docker build -t datamate-backend-python:$(VERSION) . -f scripts/images/datamate-python/Dockerfile
 
 .PHONY: deer-flow-docker-build
 deer-flow-docker-build:
@@ -131,10 +131,6 @@ deer-flow-docker-build:
 .PHONY: mineru-docker-build
 mineru-docker-build:
 	docker build -t datamate-mineru:$(VERSION) . -f scripts/images/mineru/Dockerfile
-
-.PHONY: backend-python-docker-build
-backend-python-docker-build:
-	docker build -t datamate-backend-python:$(VERSION) . -f scripts/images/datamate-python/Dockerfile
 
 .PHONY: backend-docker-install
 backend-docker-install:
@@ -178,7 +174,11 @@ mineru-k8s-uninstall:
 
 .PHONY: datamate-docker-install
 datamate-docker-install:
-	cd deployment/docker/datamate && export REGISTRY=$(REGISTRY) && docker compose -f docker-compose.yml up -d
+	@if docker compose ls --filter name=deer-flow | grep -q deer-flow; then \
+		cd deployment/docker/datamate && export NGINX_CONF="./backend-with-deer-flow.conf" && export REGISTRY=$(REGISTRY) && docker compose -f docker-compose.yml up -d; \
+	else \
+		cd deployment/docker/datamate && export REGISTRY=$(REGISTRY) && docker compose -f docker-compose.yml up -d; \
+	fi
 
 .PHONY: datamate-docker-uninstall
 datamate-docker-uninstall:

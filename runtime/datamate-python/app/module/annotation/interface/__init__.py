@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from .about import router as about_router
+from .config import router as about_router
 from .project import router as project_router
 from .task import router as task_router
 from .template import router as template_router

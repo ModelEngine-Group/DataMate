@@ -33,6 +33,7 @@
         <junit-version>4.13.1</junit-version>
         <tddl.version>5.1.22-1</tddl.version>
         <swift-version>1.0.0</swift-version>
+        <amazon.awssdk-version>2.20.0</amazon.awssdk-version>
 
         <project-sourceEncoding>UTF-8</project-sourceEncoding>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -137,7 +138,9 @@
         <module>plugin-unstructured-storage-util</module>
         <module>gaussdbreader</module>
         <module>gaussdbwriter</module>
-<!--        <module>datax-example</module>-->
+        <module>obsreader</module>
+        <module>obswriter</module>
+        <!--        <module>datax-example</module>-->
 
     </modules>
 
@@ -224,6 +227,11 @@
                 <groupId>org.apache.logging.log4j</groupId>
                 <artifactId>log4j-core</artifactId>
                 <version>2.17.1</version>
+            </dependency>
+            <dependency>
+                <groupId>software.amazon.awssdk</groupId>
+                <artifactId>s3</artifactId>
+                <version>${amazon.awssdk-version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

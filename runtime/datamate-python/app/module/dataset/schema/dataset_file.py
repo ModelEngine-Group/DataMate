@@ -49,3 +49,42 @@ class DatasetFileTag(BaseModel):
             tags = [f"{self.from_name} {tag}" for tag in tags]
 
         return tags
+
+
+class FileTagUpdate(BaseModel):
+    """单个文件的标签更新请求"""
+    file_id: str = Field(..., alias="fileId", description="文件ID")
+    tags: List[Dict[str, Any]] = Field(..., description="要更新的标签列表（部分更新）")
+    
+    class Config:
+        populate_by_name = True
+
+
+class BatchUpdateFileTagsRequest(BaseModel):
+    """批量更新文件标签请求"""
+    updates: List[FileTagUpdate] = Field(..., description="文件标签更新列表", min_length=1)
+    
+    class Config:
+        populate_by_name = True
+
+
+class FileTagUpdateResult(BaseModel):
+    """单个文件标签更新结果"""
+    file_id: str = Field(..., alias="fileId", description="文件ID")
+    success: bool = Field(..., description="是否更新成功")
+    message: Optional[str] = Field(None, description="结果信息")
+    tags_updated_at: Optional[datetime] = Field(None, alias="tagsUpdatedAt", description="标签更新时间")
+    
+    class Config:
+        populate_by_name = True
+
+
+class BatchUpdateFileTagsResponse(BaseModel):
+    """批量更新文件标签响应"""
+    results: List[FileTagUpdateResult] = Field(..., description="更新结果列表")
+    total: int = Field(..., description="总更新数量")
+    success_count: int = Field(..., alias="successCount", description="成功数量")
+    failure_count: int = Field(..., alias="failureCount", description="失败数量")
+    
+    class Config:
+        populate_by_name = True

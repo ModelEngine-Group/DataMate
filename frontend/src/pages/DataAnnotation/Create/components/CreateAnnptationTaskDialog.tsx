@@ -29,14 +29,14 @@ export default function CreateAnnotationTask({
         // Fetch datasets
         const { data: datasetData } = await queryDatasetsUsingGet({
           page: 0,
-          size: 1000,
+          pageSize: 1000,  // Use camelCase for HTTP params
         });
         setDatasets(datasetData.content.map(mapDataset) || []);
 
         // Fetch templates
         const templateResponse = await queryAnnotationTemplatesUsingGet({
           page: 1,
-          size: 100,  // Backend max is 100
+          size: 100,  // Backend max is 100 (template API uses 'size' not 'pageSize')
         });
 
         // The API returns: {code, message, data: {content, total, page, ...}}

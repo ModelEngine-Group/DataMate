@@ -2,7 +2,7 @@ from typing import Optional
 import math
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Path
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
@@ -149,13 +149,20 @@ async def create_mapping(
 @router.get("", response_model=StandardResponse[PaginatedData[DatasetMappingResponse]])
 async def list_mappings(
     page: int = Query(1, ge=1, description="页码（从1开始）"),
-    page_size: int = Query(20, ge=1, le=100, description="每页记录数"),
+    page_size: int = Query(20, ge=1, le=100, description="每页记录数", alias="pageSize"),
+    include_template: bool = Query(False, description="是否包含模板详情", alias="includeTemplate"),
     db: AsyncSession = Depends(get_db)
 ):
     """
     查询所有映射关系（分页）
     
-    返回所有有效的数据集映射关系（未被软删除的），支持分页查询
+    返回所有有效的数据集映射关系（未被软删除的），支持分页查询。
+    可选择是否包含完整的标注模板信息（默认不包含，以提高列表查询性能）。
+    
+    参数:
+    - page: 页码（从1开始）
+    - pageSize: 每页记录数
+    - includeTemplate: 是否包含模板详情（默认false）
     """
     try:
         service = DatasetMappingService(db)
@@ -163,12 +170,14 @@ async def list_mappings(
         # 计算 skip
         skip = (page - 1) * page_size
         
-        logger.info(f"Listing mappings, page={page}, page_size={page_size}")
+        logger.info(f"List mappings: page={page}, page_size={page_size}, include_template={include_template}")
         
         # 获取数据和总数
         mappings, total = await service.get_all_mappings_with_count(
-            skip=skip, 
-            limit=page_size
+            skip=skip,
+            limit=page_size,
+            include_deleted=False,
+            include_template=include_template
         )
         
         # 计算总页数
@@ -183,7 +192,7 @@ async def list_mappings(
             content=mappings
         )
         
-        logger.info(f"Found {len(mappings)} mappings on page {page}, total: {total}")
+        logger.info(f"List mappings: page={page}, returned {len(mappings)}/{total}, templates_included: {include_template}")
         
         return StandardResponse(
             code=200,
@@ -201,14 +210,21 @@ async def get_mapping(
     db: AsyncSession = Depends(get_db)
 ):
     """
-    根据 UUID 查询单个映射关系
+    根据 UUID 查询单个映射关系（包含关联的标注模板详情）
+    
+    返回数据集映射关系以及关联的完整标注模板信息，包括：
+    - 映射基本信息
+    - 数据集信息
+    - Label Studio 项目信息
+    - 完整的标注模板配置（如果存在）
     """
     try:
         service = DatasetMappingService(db)
         
-        logger.info(f"Get mapping: {mapping_id}")
+        logger.info(f"Get mapping with template details: {mapping_id}")
         
-        mapping = await service.get_mapping_by_uuid(mapping_id)
+        # 获取映射，并包含完整的模板信息
+        mapping = await service.get_mapping_by_uuid(mapping_id, include_template=True)
         
         if not mapping:
             raise HTTPException(
@@ -216,7 +232,7 @@ async def get_mapping(
                 detail=f"Mapping not found: {mapping_id}"
             )
         
-        logger.info(f"Found mapping: {mapping.id}")
+        logger.info(f"Found mapping: {mapping.id}, template_included: {mapping.template is not None}")
         
         return StandardResponse(
             code=200,
@@ -234,13 +250,21 @@ async def get_mapping(
 async def get_mappings_by_source(
     dataset_id: str,
     page: int = Query(1, ge=1, description="页码（从1开始）"),
-    page_size: int = Query(20, ge=1, le=100, description="每页记录数"),
+    page_size: int = Query(20, ge=1, le=100, description="每页记录数", alias="pageSize"),
+    include_template: bool = Query(True, description="是否包含模板详情", alias="includeTemplate"),
     db: AsyncSession = Depends(get_db)
 ):
     """
-    根据源数据集 ID 查询所有映射关系（分页）
+    根据源数据集 ID 查询所有映射关系（分页，包含模板详情）
     
-    返回该数据集创建的所有标注项目（不包括已删除的），支持分页查询
+    返回该数据集创建的所有标注项目（不包括已删除的），支持分页查询。
+    默认包含关联的完整标注模板信息。
+    
+    参数:
+    - dataset_id: 数据集ID
+    - page: 页码（从1开始）
+    - pageSize: 每页记录数
+    - includeTemplate: 是否包含模板详情（默认true）
     """
     try:
         service = DatasetMappingService(db)
@@ -248,13 +272,14 @@ async def get_mappings_by_source(
         # 计算 skip
         skip = (page - 1) * page_size
         
-        logger.info(f"Get mappings by source dataset id: {dataset_id}, page={page}, page_size={page_size}")
+        logger.info(f"Get mappings by source dataset id: {dataset_id}, page={page}, page_size={page_size}, include_template={include_template}")
         
-        # 获取数据和总数
+        # 获取数据和总数（包含模板信息）
         mappings, total = await service.get_mappings_by_source_with_count(
             dataset_id=dataset_id,
             skip=skip,
-            limit=page_size
+            limit=page_size,
+            include_template=include_template
         )
         
         # 计算总页数
@@ -269,7 +294,7 @@ async def get_mappings_by_source(
             content=mappings
         )
         
-        logger.info(f"Found {len(mappings)} mappings on page {page}, total: {total}")
+        logger.info(f"Found {len(mappings)} mappings on page {page}, total: {total}, templates_included: {include_template}")
         
         return StandardResponse(
             code=200,
@@ -283,49 +308,30 @@ async def get_mappings_by_source(
         logger.error(f"Error getting mappings: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
-@router.delete("", response_model=StandardResponse[DeleteDatasetResponse])
+@router.delete("/{project_id}", response_model=StandardResponse[DeleteDatasetResponse])
 async def delete_mapping(
-    m: Optional[str] = Query(None, description="映射UUID"),
-    proj: Optional[str] = Query(None, description="Label Studio项目ID"),
+    project_id: str = Path(..., description="映射UUID（path param）"),
     db: AsyncSession = Depends(get_db)
 ):
     """
     删除映射关系和对应的 Label Studio 项目
-    
-    可以通过以下任一方式指定要删除的映射：
-    - m: 映射UUID
-    - proj: Label Studio项目ID
-    - 两者都提供（优先使用 m）
-    
+
+    通过 path 参数 `project_id` 指定要删除的映射（映射的 UUID）。
+
     此操作会：
     1. 删除 Label Studio 中的项目
     2. 软删除数据库中的映射记录
     """
     try:
-        # Log incoming request parameters for debugging
-        logger.debug(f"Delete mapping request received: m={m!r}, proj={proj!r}")
-        # 至少需要提供一个参数
-        if not m and not proj:
-            logger.debug("Missing both 'm' and 'proj' in delete request")
-            raise HTTPException(
-                status_code=400,
-                detail="Either 'm' (mapping UUID) or 'proj' (project ID) must be provided"
-            )
+        logger.debug(f"Delete mapping request received: project_id={project_id!r}")
 
         ls_client = LabelStudioClient(base_url=settings.label_studio_base_url,
                                       token=settings.label_studio_user_token)
         service = DatasetMappingService(db)
         
-        # 优先使用 mapping_id 查询
-        if m:
-            logger.debug(f"Deleting by mapping UUID: {m}")
-            mapping = await service.get_mapping_by_uuid(m)
-        # 如果没有提供 m，使用 proj 查询
-        elif proj:
-            logger.debug(f"Deleting by project ID: {proj}")
-            mapping = await service.get_mapping_by_labeling_project_id(proj)
-        else:
-            mapping = None
+        # 使用 mapping UUID 查询映射记录
+        logger.debug(f"Deleting by mapping UUID: {project_id}")
+        mapping = await service.get_mapping_by_uuid(project_id)
 
         logger.debug(f"Mapping lookup result: {mapping}")
         

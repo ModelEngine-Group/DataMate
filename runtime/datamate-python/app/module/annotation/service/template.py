@@ -17,6 +17,7 @@ from app.module.annotation.schema.template import (
     TemplateConfiguration
 )
 from app.module.annotation.utils.config_validator import LabelStudioConfigValidator
+from app.module.annotation.config import LabelStudioTagConfig
 
 
 class AnnotationTemplateService:
@@ -33,6 +34,7 @@ class AnnotationTemplateService:
         Returns:
             Label Studio XML字符串
         """
+        tag_config = LabelStudioTagConfig()
         xml_parts = ['<View>']
         
         # 生成对象定义
@@ -56,15 +58,22 @@ class AnnotationTemplateService:
             
             tag_type = label.type.capitalize() if label.type else "Choices"
             
-            # 处理带选项的标签类型
+            # 检查是否需要子元素
             if label.options or label.labels:
                 choices = label.options or label.labels or []
                 xml_parts.append(f'  <{tag_type} {" ".join(label_attrs)}>')
+                
+                # 从配置获取子元素标签名
+                child_tag = tag_config.get_child_tag(tag_type)
+                if not child_tag:
+                    # 默认使用 Label
+                    child_tag = "Label"
+                
                 for choice in choices:
-                    xml_parts.append(f'    <Label value="{choice}"/>')
+                    xml_parts.append(f'    <{child_tag} value="{choice}"/>')
                 xml_parts.append(f'  </{tag_type}>')
             else:
-                # 处理简单标签类型
+                # 处理简单标签类型（不需要子元素）
                 xml_parts.append(f'  <{tag_type} {" ".join(label_attrs)}/>')
         
         xml_parts.append('</View>')

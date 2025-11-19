@@ -4,7 +4,7 @@ FROM node:20-alpine AS deps
 RUN apk add --no-cache libc6-compat openssl git
 WORKDIR /app
 
-RUN git clone https://github.com/bytedance/deer-flow.git /deer-flow \
+RUN git clone https://github.com/ModelEngine-Group/deer-flow.git /deer-flow \
     && mv /deer-flow/web/* /app \
     && rm -rf /deer-flow
 # Install dependencies based on the preferred package manager
@@ -24,12 +24,9 @@ RUN apk add --no-cache git
 WORKDIR /app
 ARG NEXT_PUBLIC_API_URL="/deer-flow-backend"
 
-RUN git clone https://github.com/bytedance/deer-flow.git /deer-flow
-
-COPY runtime/deer-flow/feature_collection.patch /deer-flow/feature_collection.patch
+RUN git clone https://github.com/ModelEngine-Group/deer-flow.git /deer-flow
 
 RUN cd /deer-flow \
-    && git apply feature_collection.patch \
     && mv /deer-flow/web/* /app \
     && rm -rf /deer-flow
 

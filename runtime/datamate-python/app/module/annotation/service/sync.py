@@ -122,7 +122,7 @@ class SyncService:
                 return {}
             
             all_tasks = result.get("tasks", [])
-            logger.info(f"Successfully fetched {len(all_tasks)} tasks")
+            logger.debug(f"Successfully fetched {len(all_tasks)} tasks")
 
             # 使用字典推导式构建映射
             dm_file_to_task_mapping = {
@@ -131,7 +131,7 @@ class SyncService:
                 if task.get('data', {}).get('file_id') is not None
             }
             
-            logger.info(f"Found {len(dm_file_to_task_mapping)} existing task mappings")
+            logger.debug(f"Found {len(dm_file_to_task_mapping)} existing task mappings")
             return dm_file_to_task_mapping
 
         except Exception as e:
@@ -163,10 +163,10 @@ class SyncService:
             )
             
             if not files_response or not files_response.content:
-                logger.info(f"No more files on page {page + 1}")
+                logger.debug(f"No more files on page {page + 1}")
                 break
             
-            logger.info(f"Processing page {page + 1}, {len(files_response.content)} files")
+            logger.debug(f"Processing page {page + 1}, {len(files_response.content)} files")
             
             # 筛选新文件并构建任务数据
             new_tasks = []
@@ -178,7 +178,7 @@ class SyncService:
                     task_data = self._build_task_data(file_info, dataset_id)
                     new_tasks.append(task_data)
             
-            logger.info(f"Page {page + 1}: {len(new_tasks)} new files, {len(files_response.content) - len(new_tasks)} existing")
+            logger.debug(f"Page {page + 1}: {len(new_tasks)} new files, {len(files_response.content) - len(new_tasks)} existing")
             
             # 批量创建任务
             if new_tasks:
@@ -202,16 +202,16 @@ class SyncService:
         deleted_file_ids = set(existing_dm_file_mapping.keys()) - current_file_ids
         
         if not deleted_file_ids:
-            logger.info("No tasks to delete")
+            logger.debug("No tasks to delete")
             return 0
         
         tasks_to_delete = [existing_dm_file_mapping[fid] for fid in deleted_file_ids]
-        logger.info(f"Deleting {len(tasks_to_delete)} orphaned tasks")
+        logger.debug(f"Deleting {len(tasks_to_delete)} orphaned tasks")
         
         delete_result = await self.ls_client.delete_tasks_batch(tasks_to_delete)
         deleted_count = delete_result.get("successful", 0)
         
-        logger.info(f"Successfully deleted {deleted_count} tasks")
+        logger.debug(f"Successfully deleted {deleted_count} tasks")
         return deleted_count
     
     async def sync_dataset_files(
@@ -229,7 +229,7 @@ class SyncService:
         Returns:
             同步结果响应
         """
-        logger.info(f"Start syncing dataset files by mapping: {mapping_id}")
+        logger.debug(f"Start syncing dataset files by mapping: {mapping_id}")
         
         # 获取映射关系
         mapping = await self.mapping_service.get_mapping_by_uuid(mapping_id)
@@ -247,7 +247,7 @@ class SyncService:
             # 委托给sync_files执行实际同步
             result = await self.sync_files(mapping, batch_size)
             
-            logger.info(f"Sync completed: created={result['created']}, deleted={result['deleted']}, total={result['total']}")
+            logger.info(f"Sync files completed: created={result['created']}, deleted={result['deleted']}, total={result['total']}")
             
             return SyncDatasetResponse(
                 id=mapping.id,
@@ -342,7 +342,7 @@ class SyncService:
         Returns:
             同步统计信息: {"created": int, "deleted": int, "total": int}
         """
-        logger.info(f"Syncing files for dataset {mapping.dataset_id} to project {mapping.labeling_project_id}")
+        logger.debug(f"Syncing files for dataset {mapping.dataset_id} to project {mapping.labeling_project_id}")
         
         # 获取DM数据集信息
         dataset_info = await self.dm_client.get_dataset(mapping.dataset_id)
@@ -350,12 +350,12 @@ class SyncService:
             raise NoDatasetInfoFoundError(mapping.dataset_id)
         
         total_files = dataset_info.fileCount
-        logger.info(f"Total files in DM dataset: {total_files}")
+        logger.debug(f"Total files in DM dataset: {total_files}")
 
         # 获取Label Studio中已存在的文件映射
         existing_dm_file_mapping = await self.get_existing_dm_file_mapping(mapping.labeling_project_id)
         existing_file_ids = set(existing_dm_file_mapping.keys())
-        logger.info(f"{len(existing_file_ids)} tasks already exist in Label Studio")
+        logger.debug(f"{len(existing_file_ids)} tasks already exist in Label Studio")
         
         # 分页获取DM文件并创建新任务
         current_file_ids, created_count = await self._fetch_dm_files_paginated(
@@ -371,7 +371,7 @@ class SyncService:
             current_file_ids
         )
         
-        logger.info(f"File sync completed: total={total_files}, created={created_count}, deleted={deleted_count}")
+        logger.debug(f"File sync completed: total={total_files}, created={created_count}, deleted={deleted_count}")
         
         return {
             "created": created_count,

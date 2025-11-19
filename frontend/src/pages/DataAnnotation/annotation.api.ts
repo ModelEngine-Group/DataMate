@@ -26,17 +26,9 @@ export function queryAnnotationTaskByIdUsingGet(mappingId: string | number) {
 export function queryMappingsBySourceUsingGet(datasetId: string, params?: any) {
   return get(`/api/annotation/project/by-source/${datasetId}`, params);
 }
-export function deleteAnnotationTaskByIdUsingDelete(params?: any) {
-  // Ensure query params are sent in the URL for backend endpoints that expect Query parameters
-  if (params && typeof params === "object" && !Array.isArray(params)) {
-    const pairs = Object.keys(params)
-      .filter((k) => params[k] !== undefined && params[k] !== null)
-      .map((k) => `${encodeURIComponent(k)}=${encodeURIComponent(params[k])}`);
-    const query = pairs.length ? `?${pairs.join("&")}` : "";
-    return del(`/api/annotation/project${query}`);
-  }
-
-  return del(`/api/annotation/project`, params);
+export function deleteAnnotationTaskByIdUsingDelete(mappingId: string) {
+  // Backend expects mapping UUID as path parameter
+  return del(`/api/annotation/project/${mappingId}`);
 }
 
 // 智能预标注相关接口
@@ -100,32 +92,37 @@ export function getAnnotationStatisticsUsingGet(params?: any) {
   return get("/api/v1/annotation/statistics", params);
 }
 
+// 标签配置管理
+export function getTagConfigUsingGet() {
+  return get("/api/annotation/tags/config");
+}
+
 // 标注模板管理
 export function queryAnnotationTemplatesUsingGet(params?: any) {
-  return get("/api/annotation/templates", params);
+  return get("/api/annotation/template", params);
 }
 
 export function createAnnotationTemplateUsingPost(data: any) {
-  return post("/api/annotation/templates", data);
+  return post("/api/annotation/template", data);
 }
 
 export function queryAnnotationTemplateByIdUsingGet(
   templateId: string | number
 ) {
-  return get(`/api/annotation/templates/${templateId}`);
+  return get(`/api/v1/annotation/templates/${templateId}`);
 }
 
 export function updateAnnotationTemplateByIdUsingPut(
   templateId: string | number,
   data: any
 ) {
-  return put(`/api/annotation/templates/${templateId}`, data);
+  return put(`/api/v1/annotation/templates/${templateId}`, data);
 }
 
 export function deleteAnnotationTemplateByIdUsingDelete(
   templateId: string | number
 ) {
-  return del(`/api/annotation/templates/${templateId}`);
+  return del(`/api/v1/annotation/templates/${templateId}`);
 }
 
 // 主动学习相关接口

@@ -1,11 +1,6 @@
-from .config import ConfigResponse
-
-from .mapping import (
-    DatasetMappingCreateRequest,
-    DatasetMappingCreateResponse,
-    DatasetMappingUpdateRequest,
-    DatasetMappingResponse,
-    DeleteDatasetResponse,
+from .config import (
+    ConfigResponse,
+    TagConfigResponse
 )
 
 from .sync import (
@@ -15,8 +10,32 @@ from .sync import (
     SyncAnnotationsResponse,
 )
 
+from .tag import (
+    UpdateFileTagsRequest,
+    UpdateFileTagsResponse,
+)
+
+from .template import (
+    CreateAnnotationTemplateRequest,
+    UpdateAnnotationTemplateRequest,
+    AnnotationTemplateResponse,
+    AnnotationTemplateListResponse
+)
+
+from .mapping import (
+    DatasetMappingCreateRequest,
+    DatasetMappingCreateResponse,
+    DatasetMappingUpdateRequest,
+    DatasetMappingResponse,
+    DeleteDatasetResponse,
+)
+
+# Rebuild model to resolve forward references
+DatasetMappingResponse.model_rebuild()
+
 __all__ = [
     "ConfigResponse",
+    "TagConfigResponse",
     "DatasetMappingCreateRequest",
     "DatasetMappingCreateResponse",
     "DatasetMappingUpdateRequest",
@@ -26,4 +45,10 @@ __all__ = [
     "SyncAnnotationsRequest",
     "SyncAnnotationsResponse",
     "DeleteDatasetResponse",
+    "UpdateFileTagsRequest",
+    "UpdateFileTagsResponse",
+    "CreateAnnotationTemplateRequest",
+    "UpdateAnnotationTemplateRequest",
+    "AnnotationTemplateResponse",
+    "AnnotationTemplateListResponse",
 ]

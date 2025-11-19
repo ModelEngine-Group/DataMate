@@ -162,7 +162,7 @@
                 <version>${spring-boot.version}</version>
                 <configuration>
                     <finalName>data-mate</finalName>
-                    <mainClass>com.datamate.main.DataMatePlatformApplication</mainClass>
+                    <mainClass>com.datamate.main.DataMateApplication</mainClass>
                 </configuration>
                 <executions>
                   <execution>
