@@ -14,8 +14,8 @@ import com.datamate.rag.indexer.domain.model.RagFile;
 import com.datamate.rag.indexer.domain.repository.KnowledgeBaseRepository;
 import com.datamate.rag.indexer.domain.repository.RagFileRepository;
 import com.datamate.rag.indexer.infrastructure.event.DataInsertedEvent;
+import com.datamate.rag.indexer.infrastructure.milvus.MilvusService;
 import com.datamate.rag.indexer.interfaces.dto.*;
-import io.milvus.client.MilvusClient;
 import io.milvus.param.collection.DropCollectionParam;
 import io.milvus.param.dml.DeleteParam;
 import lombok.RequiredArgsConstructor;
@@ -42,7 +42,7 @@ public class KnowledgeBaseService {
     private final RagFileRepository ragFileRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final ModelConfigRepository modelConfigRepository;
-    private final MilvusClient milvusClient;
+    private final MilvusService milvusService;
 
     /**
      * 创建知识库
@@ -81,7 +81,7 @@ public class KnowledgeBaseService {
                 .orElseThrow(() -> BusinessException.of(KnowledgeBaseErrorCode.KNOWLEDGE_BASE_NOT_FOUND));
         knowledgeBaseRepository.removeById(knowledgeBaseId);
         ragFileRepository.removeByKnowledgeBaseId(knowledgeBaseId);
-        milvusClient.dropCollection(DropCollectionParam.newBuilder().withCollectionName(knowledgeBase.getName()).build());
+        milvusService.getMilvusClient().dropCollection(DropCollectionParam.newBuilder().withCollectionName(knowledgeBase.getName()).build());
     }
 
     public KnowledgeBaseResp getById(String knowledgeBaseId) {
@@ -147,7 +147,7 @@ public class KnowledgeBaseService {
         KnowledgeBase knowledgeBase = Optional.ofNullable(knowledgeBaseRepository.getById(knowledgeBaseId))
                 .orElseThrow(() -> BusinessException.of(KnowledgeBaseErrorCode.KNOWLEDGE_BASE_NOT_FOUND));
         ragFileRepository.removeByIds(request.getIds());
-        milvusClient.delete(DeleteParam.newBuilder()
+        milvusService.getMilvusClient().delete(DeleteParam.newBuilder()
                 .withCollectionName(knowledgeBase.getName())
                 .withExpr("metadata[\"rag_file_id\"] in [" + org.apache.commons.lang3.StringUtils.join(request.getIds().stream().map(id -> "\"" + id + "\"").toArray(), ",") + "]")
                 .build());

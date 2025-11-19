@@ -51,10 +51,14 @@ public class DatasetRepositoryImpl extends CrudRepository<DatasetMapper, Dataset
     @Override
     public IPage<Dataset> findByCriteria(IPage<Dataset> page, DatasetPagingQuery query) {
         LambdaQueryWrapper<Dataset> wrapper = new LambdaQueryWrapper<Dataset>()
-            .eq(query.getType() != null, Dataset::getDatasetType, query.getType())
-            .eq(query.getStatus() != null, Dataset::getStatus, query.getStatus())
-            .like(StringUtils.isNotBlank(query.getKeyword()), Dataset::getName, query.getKeyword())
-            .like(StringUtils.isNotBlank(query.getKeyword()), Dataset::getDescription, query.getKeyword());
+                .eq(query.getType() != null, Dataset::getDatasetType, query.getType())
+                .eq(query.getStatus() != null, Dataset::getStatus, query.getStatus());
+
+        if (StringUtils.isNotBlank(query.getKeyword())) {
+            wrapper.and(w ->
+                    w.like(Dataset::getName, query.getKeyword()).or()
+                            .like(Dataset::getDescription, query.getKeyword()));
+        }
 
         /*
           标签过滤 {@link Tag}
