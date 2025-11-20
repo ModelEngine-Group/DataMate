@@ -1,4 +1,5 @@
 import asyncio
+import uuid
 from typing import Set
 from datetime import datetime
 
@@ -54,11 +55,13 @@ async def create_ratio_task(
         target_type = get_target_dataset_type(source_types)
 
         target_dataset = Dataset(
+            id=str(uuid.uuid4()),
             name=target_dataset_name,
             description=req.description or "",
             dataset_type=target_type,
             status="DRAFT",
         )
+        target_dataset.path = f"/dataset/{target_dataset.id}"
         db.add(target_dataset)
         await db.flush()  # 获取 target_dataset.id
 
@@ -212,16 +215,18 @@ async def delete_ratio_tasks(
         raise HTTPException(status_code=500, detail=f"Fail to delete ratio task: {e}")
 
 
-async def valid_exists(db, req: CreateRatioTaskRequest):
-    # 校验配比任务名称不能重复
-    exist_task_q = await db.execute(
-        select(RatioInstance).where(RatioInstance.name == req.name)
-    )
-    try:
-        exist_task_q.scalar_one_or_none()
-    except Exception as e:
-        logger.error(f"create ratio task failed: ratio task {req.name} already exists")
-        raise HTTPException(status_code=400, detail=f"ratio task {req.name} already exists")
+async def valid_exists(db: AsyncSession, req: CreateRatioTaskRequest) -> None:
+    """校验配比任务名称不能重复（精确匹配，去除首尾空格）。"""
+    name = (req.name or "").strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="ratio task name is required")
+
+    # 查询是否已存在同名任务
+    ratio_task = await db.execute(select(RatioInstance.id).where(RatioInstance.name == name))
+    exists = ratio_task.scalar_one_or_none()
+    if exists is not None:
+        logger.error(f"create ratio task failed: ratio task '{name}' already exists (id={exists})")
+        raise HTTPException(status_code=400, detail=f"ratio task '{name}' already exists")
 
 
 async def get_dataset_types(dm_service: DatasetManagementService, req: CreateRatioTaskRequest) -> Set[str]:

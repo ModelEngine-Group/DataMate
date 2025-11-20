@@ -11,14 +11,12 @@ import com.datamate.datamanagement.domain.model.dataset.DatasetFile;
 import com.datamate.datamanagement.domain.model.dataset.Tag;
 import com.datamate.datamanagement.infrastructure.client.CollectionTaskClient;
 import com.datamate.datamanagement.infrastructure.client.dto.CollectionTaskDetailResponse;
-import com.datamate.datamanagement.infrastructure.client.dto.LocalCollectionConfig;
 import com.datamate.datamanagement.infrastructure.exception.DataManagementErrorCode;
 import com.datamate.datamanagement.infrastructure.persistence.mapper.TagMapper;
 import com.datamate.datamanagement.infrastructure.persistence.repository.DatasetFileRepository;
 import com.datamate.datamanagement.infrastructure.persistence.repository.DatasetRepository;
 import com.datamate.datamanagement.interfaces.converter.DatasetConverter;
 import com.datamate.datamanagement.interfaces.dto.*;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -28,11 +26,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * 数据集应用服务（对齐 DB schema，使用 UUID 字符串主键）
@@ -46,8 +46,7 @@ public class DatasetApplicationService {
     private final TagMapper tagMapper;
     private final DatasetFileRepository datasetFileRepository;
     private final CollectionTaskClient collectionTaskClient;
-    private final FileMetadataService fileMetadataService;
-    private final ObjectMapper objectMapper;
+    private final DatasetFileApplicationService datasetFileApplicationService;
 
     @Value("${datamate.data-management.base-path:/dataset}")
     private String datasetBasePath;
@@ -223,68 +222,38 @@ public class DatasetApplicationService {
     @Async
     public void processDataSourceAsync(String datasetId, String dataSourceId) {
         try {
-            log.info("开始处理数据源文件扫描，数据集ID: {}, 数据源ID: {}", datasetId, dataSourceId);
+            log.info("Initiating data source file scanning, dataset ID: {}, collection task ID: {}", datasetId, dataSourceId);
             List<String> filePaths = getFilePaths(dataSourceId);
             if (CollectionUtils.isEmpty(filePaths)) {
                 return;
             }
-            log.info("开始扫描文件，共 {} 个文件路径", filePaths.size());
-
-            List<DatasetFile> datasetFiles = fileMetadataService.scanFiles(filePaths, datasetId);
-            // 查询数据集中已存在的文件
-            List<DatasetFile> existDatasetFileList = datasetFileRepository.findAllByDatasetId(datasetId);
-            Map<String, DatasetFile> existDatasetFilePathMap = existDatasetFileList.stream().collect(Collectors.toMap(DatasetFile::getFilePath, Function.identity()));
-            Dataset dataset = datasetRepository.getById(datasetId);
-            dataset.setFiles(existDatasetFileList);
-
-            // 批量同步数据集文件表
-            asyncDatasetFile(datasetFiles, existDatasetFilePathMap, dataset, existDatasetFileList, filePaths);
-            datasetRepository.updateById(dataset);
+            log.info("Starting file scan, total files: {}", filePaths.size());
+            datasetFileApplicationService.copyFilesToDatasetDir(datasetId, new CopyFilesRequest(filePaths));
         } catch (Exception e) {
             log.error("处理数据源文件扫描失败，数据集ID: {}, 数据源ID: {}", datasetId, dataSourceId, e);
-        }
-    }
-
-    private void asyncDatasetFile(List<DatasetFile> datasetFiles, Map<String, DatasetFile> existDatasetFilePathMap, Dataset dataset, List<DatasetFile> existDatasetFileList, List<String> filePaths) {
-        if (CollectionUtils.isNotEmpty(datasetFiles)) {
-            for (DatasetFile datasetFile : datasetFiles) {
-                if (existDatasetFilePathMap.containsKey(datasetFile.getFilePath())) {
-                    DatasetFile existDatasetFile = existDatasetFilePathMap.get(datasetFile.getFilePath());
-                    dataset.removeFile(existDatasetFile);
-                    existDatasetFile.setFileSize(datasetFile.getFileSize());
-                    dataset.addFile(existDatasetFile);
-                    dataset.active();
-                    datasetFileRepository.updateById(existDatasetFile);
-                } else {
-                    dataset.addFile(datasetFile);
-                    dataset.active();
-                    datasetFileRepository.save(datasetFile);
-                }
-            }
-            log.info("文件元数据写入完成，共写入 {} 条记录", datasetFiles.size());
-        } else {
-            log.warn("未扫描到有效文件");
-        }
-        for (DatasetFile datasetFile : existDatasetFileList) {
-            String existFilePath = datasetFile.getFilePath();
-            for (String filePath : filePaths) {
-                if (existFilePath.equals(filePath) || existFilePath.startsWith(filePath)) {
-                    if (Files.notExists(Paths.get(existFilePath))) {
-                        dataset.removeFile(datasetFile);
-                        datasetFileRepository.removeById(datasetFile.getId());
-                    }
-                }
-            }
         }
     }
 
     private List<String> getFilePaths(String dataSourceId) {
         CollectionTaskDetailResponse taskDetail = collectionTaskClient.getTaskDetail(dataSourceId).getData();
         if (taskDetail == null) {
-            log.warn("获取归集任务详情失败，任务ID: {}", dataSourceId);
+            log.warn("Fail to get collection task detail, task ID: {}", dataSourceId);
             return Collections.emptyList();
         }
-        log.info("获取到归集任务详情: {}", taskDetail);
-        return Collections.singletonList(taskDetail.getTargetPath());
+        Path targetPath = Paths.get(taskDetail.getTargetPath());
+        if (!Files.exists(targetPath) || !Files.isDirectory(targetPath)) {
+            log.warn("Target path not exists or is not a directory: {}", taskDetail.getTargetPath());
+            return Collections.emptyList();
+        }
+
+        try (Stream<Path> paths = Files.walk(targetPath, 1)) {
+            return paths
+                .filter(Files::isRegularFile)  // 只保留文件，排除目录
+                .map(Path::toString)           // 转换为字符串路径
+                .collect(Collectors.toList());
+        } catch (IOException e) {
+            log.error("Fail to scan directory: {}", targetPath, e);
+            return Collections.emptyList();
+        }
     }
 }
