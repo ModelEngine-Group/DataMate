@@ -4,11 +4,24 @@ from pydantic import BaseModel, Field, field_validator
 
 from app.module.shared.schema.common import TaskStatus
 
+class FilterCondition(BaseModel):
+    dataRange: str = Field(..., description="数据范围")
+    label: str = Field(..., description="标签")
+
+    @field_validator("dataRange")
+    @classmethod
+    def validate_data_range(cls, v: str) -> str:
+        # ensure it's a numeric string
+        try:
+            int(v)
+        except Exception:
+            raise ValueError("counts must be a numeric string")
+        return v
 
 class RatioConfigItem(BaseModel):
     dataset_id: str = Field(..., alias="datasetId", description="数据集id")
     counts: str = Field(..., description="数量")
-    filter_conditions: str = Field(..., description="过滤条件")
+    filter_conditions: FilterCondition = Field(..., description="过滤条件")
 
     @field_validator("counts")
     @classmethod
@@ -25,16 +38,7 @@ class CreateRatioTaskRequest(BaseModel):
     name: str = Field(..., description="名称")
     description: Optional[str] = Field(None, description="描述")
     totals: str = Field(..., description="目标数量")
-    ratio_method: str = Field(..., description="配比方式", alias="ratio_method")
     config: List[RatioConfigItem] = Field(..., description="配比设置列表")
-
-    @field_validator("ratio_method")
-    @classmethod
-    def validate_ratio_method(cls, v: str) -> str:
-        allowed = {"TAG", "DATASET"}
-        if v not in allowed:
-            raise ValueError(f"ratio_method must be one of {allowed}")
-        return v
 
     @field_validator("totals")
     @classmethod

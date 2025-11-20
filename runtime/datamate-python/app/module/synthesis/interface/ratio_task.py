@@ -49,41 +49,10 @@ async def create_ratio_task(
 
         await valid_exists(db, req)
 
-        # 创建目标数据集：名称使用“<任务名称>-时间戳”
-        target_dataset_name = f"{req.name}-{datetime.now().strftime('%Y%m%d%H%M%S')}"
+        target_dataset = await create_target_dataset(db, req, source_types)
 
-        target_type = get_target_dataset_type(source_types)
-        target_dataset_id = uuid.uuid4()
+        instance = await create_ratio_instance(db, req, target_dataset)
 
-        target_dataset = Dataset(
-            id=str(target_dataset_id),
-            name=target_dataset_name,
-            description=req.description or "",
-            dataset_type=target_type,
-            status="DRAFT",
-            path=f"/dataset/{target_dataset_id}",
-        )
-        db.add(target_dataset)
-        await db.flush()  # 获取 target_dataset.id
-
-        service = RatioTaskService(db)
-        instance = await service.create_task(
-            name=req.name,
-            description=req.description,
-            totals=int(req.totals),
-            ratio_method=req.ratio_method,
-            config=[
-                {
-                    "dataset_id": item.dataset_id,
-                    "counts": int(item.counts),
-                    "filter_conditions": item.filter_conditions,
-                }
-                for item in req.config
-            ],
-            target_dataset_id=target_dataset.id,
-        )
-
-        # 异步执行配比任务（支持 DATASET / TAG）
         asyncio.create_task(RatioTaskService.execute_dataset_ratio_task(instance.id))
 
         response_data = CreateRatioTaskResponse(
@@ -113,6 +82,46 @@ async def create_ratio_task(
         await db.rollback()
         logger.error(f"Failed to create ratio task: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
+
+
+async def create_ratio_instance(db, req: CreateRatioTaskRequest, target_dataset: Dataset) -> RatioInstance:
+    service = RatioTaskService(db)
+    instance = await service.create_task(
+        name=req.name,
+        description=req.description,
+        totals=int(req.totals),
+        ratio_method=req.ratio_method,
+        config=[
+            {
+                "dataset_id": item.dataset_id,
+                "counts": int(item.counts),
+                "filter_conditions": item.filter_conditions,
+            }
+            for item in req.config
+        ],
+        target_dataset_id=target_dataset.id,
+    )
+    return instance
+
+
+async def create_target_dataset(db, req: CreateRatioTaskRequest, source_types: set[str]) -> Dataset:
+    # 创建目标数据集：名称使用“<任务名称>-时间戳”
+    target_dataset_name = f"{req.name}-{datetime.now().strftime('%Y%m%d%H%M%S')}"
+
+    target_type = get_target_dataset_type(source_types)
+    target_dataset_id = uuid.uuid4()
+
+    target_dataset = Dataset(
+        id=str(target_dataset_id),
+        name=target_dataset_name,
+        description=req.description or "",
+        dataset_type=target_type,
+        status="DRAFT",
+        path=f"/dataset/{target_dataset_id}",
+    )
+    db.add(target_dataset)
+    await db.flush()  # 获取 target_dataset.id
+    return target_dataset
 
 
 @router.get("", response_model=StandardResponse[PagedRatioTaskResponse], status_code=200)
