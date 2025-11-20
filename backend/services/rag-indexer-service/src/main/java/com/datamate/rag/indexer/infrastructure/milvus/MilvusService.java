@@ -36,6 +36,11 @@ public class MilvusService {
                 .build();
     }
 
+    /**
+     * 单例模式获取 Milvus 客户端，不依赖 Spring 容器
+     *
+     * @return MilvusClient
+     */
     public MilvusClient getMilvusClient() {
         if (milvusClient == null) {
             synchronized (this) {

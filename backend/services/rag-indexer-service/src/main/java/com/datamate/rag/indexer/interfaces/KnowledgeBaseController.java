@@ -11,7 +11,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 
-
 /**
  * 知识库控制器
  *
@@ -124,8 +123,20 @@ public class KnowledgeBaseController {
      */
     @GetMapping("/{knowledgeBaseId}/files/{ragFileId}")
     public PagedResponse<RagChunk> getChunks(@PathVariable("knowledgeBaseId") String knowledgeBaseId,
-                                             @PathVariable("ragFileId") String ragFileId,
-                                             PagingQuery pagingQuery) {
+                                                  @PathVariable("ragFileId") String ragFileId,
+                                                  PagingQuery pagingQuery) {
         return knowledgeBaseService.getChunks(knowledgeBaseId, ragFileId, pagingQuery);
+    }
+
+    /**
+     * 检索知识库内容
+     *
+     * @param knowledgeBaseId 知识库 ID
+     */
+    @PostMapping("/{knowledgeBaseId}/retrieve")
+    public PagedResponse<RagChunk> retrieve(@PathVariable("knowledgeBaseId") String knowledgeBaseId,
+                                            @RequestBody @Valid RetrieveReq request,
+                                            PagingQuery pagingQuery) {
+        return knowledgeBaseService.retrieve(knowledgeBaseId, request, pagingQuery);
     }
 }

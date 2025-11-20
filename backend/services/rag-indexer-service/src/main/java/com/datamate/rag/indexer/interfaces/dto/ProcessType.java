@@ -8,26 +8,27 @@ package com.datamate.rag.indexer.interfaces.dto;
  */
 public enum ProcessType {
     /**
-     * 章节分块
-     */
-    CHAPTER_CHUNK,
-    /**
      * 段落分块
      */
     PARAGRAPH_CHUNK,
 
     /**
-     * 按长度分块
+     * 按句子分块
+     */
+    SENTENCE_CHUNK,
+
+    /**
+     * 按长度分块，字符串分块
      */
     LENGTH_CHUNK,
+
+    /**
+     * 默认分块，按单词分块
+     */
+    DEFAULT_CHUNK,
 
     /**
      * 自定义分割符分块
      */
     CUSTOM_SEPARATOR_CHUNK,
-
-    /**
-     * 默认分块
-     */
-    DEFAULT_CHUNK,
 }
