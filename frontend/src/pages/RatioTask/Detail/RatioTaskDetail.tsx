@@ -178,11 +178,6 @@ export default function RatioTaskDetail() {
       ),
     },
     {
-      key: "type",
-      label: "配比方式",
-      children: ratioTask.type || "未知",
-    },
-    {
       key: "createdBy",
       label: "创建者",
       children: ratioTask.createdBy || "未知",
