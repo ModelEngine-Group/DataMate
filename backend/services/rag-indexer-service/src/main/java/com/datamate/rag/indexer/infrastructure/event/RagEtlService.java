@@ -119,16 +119,19 @@ public class RagEtlService {
         EmbeddingModel embeddingModel = ModelClient.invokeEmbeddingModel(model);
         // 调用嵌入模型获取嵌入向量
 
+        if (!milvusService.hasCollection(event.knowledgeBase().getName())) {
+            milvusService.createCollection(event.knowledgeBase().getName(), embeddingModel.dimension());
+        }
+
         Lists.partition(split, 20).forEach(partition -> {
-            List<Embedding> content = embeddingModel.embedAll(partition).content();
-            // 存储嵌入向量到 Milvus
-            milvusService.embeddingStore(embeddingModel, event.knowledgeBase().getName()).addAll(content, partition);
+            List<Embedding> embeddings = embeddingModel.embedAll(partition).content();
+            milvusService.addAll(event.knowledgeBase().getName(),partition, embeddings);
         });
     }
 
     /**
      * 根据文件类型返回对应的文档解析器
-     *
+     *x
      * @param fileType 文件类型
      * @return 文档解析器
      */

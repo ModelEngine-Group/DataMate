@@ -17,13 +17,11 @@ import com.datamate.rag.indexer.infrastructure.event.DataInsertedEvent;
 import com.datamate.rag.indexer.infrastructure.milvus.MilvusService;
 import com.datamate.rag.indexer.interfaces.dto.*;
 import com.google.gson.JsonObject;
-import io.milvus.grpc.QueryResults;
-import io.milvus.param.R;
-import io.milvus.param.collection.DropCollectionParam;
-import io.milvus.param.collection.RenameCollectionParam;
-import io.milvus.param.dml.DeleteParam;
-import io.milvus.param.dml.QueryParam;
-import io.milvus.response.QueryResultsWrapper;
+import io.milvus.v2.service.collection.request.DropCollectionReq;
+import io.milvus.v2.service.collection.request.RenameCollectionReq;
+import io.milvus.v2.service.vector.request.DeleteReq;
+import io.milvus.v2.service.vector.request.QueryReq;
+import io.milvus.v2.service.vector.response.QueryResp;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.BeanUtils;
@@ -34,7 +32,6 @@ import org.springframework.util.StringUtils;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -78,9 +75,9 @@ public class KnowledgeBaseService {
         KnowledgeBase knowledgeBase = Optional.ofNullable(knowledgeBaseRepository.getById(knowledgeBaseId))
                 .orElseThrow(() -> BusinessException.of(KnowledgeBaseErrorCode.KNOWLEDGE_BASE_NOT_FOUND));
         if (StringUtils.hasText(request.getName())) {
-            milvusService.getMilvusClient().renameCollection(RenameCollectionParam.newBuilder()
-                    .withOldCollectionName(knowledgeBase.getName())
-                    .withNewCollectionName(request.getName())
+            milvusService.getMilvusClient().renameCollection(RenameCollectionReq.builder()
+                    .collectionName(knowledgeBase.getName())
+                    .newCollectionName(request.getName())
                     .build());
             knowledgeBase.setName(request.getName());
         }
@@ -102,7 +99,7 @@ public class KnowledgeBaseService {
                 .orElseThrow(() -> BusinessException.of(KnowledgeBaseErrorCode.KNOWLEDGE_BASE_NOT_FOUND));
         knowledgeBaseRepository.removeById(knowledgeBaseId);
         ragFileRepository.removeByKnowledgeBaseId(knowledgeBaseId);
-        milvusService.getMilvusClient().dropCollection(DropCollectionParam.newBuilder().withCollectionName(knowledgeBase.getName()).build());
+        milvusService.getMilvusClient().dropCollection(DropCollectionReq.builder().collectionName(knowledgeBase.getName()).build());
     }
 
     public KnowledgeBaseResp getById(String knowledgeBaseId) {
@@ -168,41 +165,39 @@ public class KnowledgeBaseService {
         KnowledgeBase knowledgeBase = Optional.ofNullable(knowledgeBaseRepository.getById(knowledgeBaseId))
                 .orElseThrow(() -> BusinessException.of(KnowledgeBaseErrorCode.KNOWLEDGE_BASE_NOT_FOUND));
         ragFileRepository.removeByIds(request.getIds());
-        milvusService.getMilvusClient().delete(DeleteParam.newBuilder()
-                .withCollectionName(knowledgeBase.getName())
-                .withExpr("metadata[\"rag_file_id\"] in [" + org.apache.commons.lang3.StringUtils.join(request.getIds().stream().map(id -> "\"" + id + "\"").toArray(), ",") + "]")
+        milvusService.getMilvusClient().delete(DeleteReq.builder()
+                .collectionName(knowledgeBase.getName())
+                .filter("metadata[\"rag_file_id\"] in [" + org.apache.commons.lang3.StringUtils.join(request.getIds().stream().map(id -> "\"" + id + "\"").toArray(), ",") + "]")
                 .build());
     }
 
     public PagedResponse<RagChunk> getChunks(String knowledgeBaseId, String ragFileId, PagingQuery pagingQuery) {
         KnowledgeBase knowledgeBase = Optional.ofNullable(knowledgeBaseRepository.getById(knowledgeBaseId))
                 .orElseThrow(() -> BusinessException.of(KnowledgeBaseErrorCode.KNOWLEDGE_BASE_NOT_FOUND));
-        R<QueryResults> results = milvusService.getMilvusClient().query(QueryParam.newBuilder()
-                .withCollectionName(knowledgeBase.getName())
-                .withExpr("metadata[\"rag_file_id\"] == \"" + ragFileId + "\"")
-                .withOutFields(Collections.singletonList("*"))
-                .withLimit(Long.valueOf(pagingQuery.getSize()))
-                .withOffset((long) (pagingQuery.getPage() - 1) * pagingQuery.getSize())
+        QueryResp results = milvusService.getMilvusClient().query(QueryReq.builder()
+                .collectionName(knowledgeBase.getName())
+                .filter("metadata[\"rag_file_id\"] == \"" + ragFileId + "\"")
+                .outputFields(Collections.singletonList("*"))
+                .limit(Long.valueOf(pagingQuery.getSize()))
+                .offset((long) (pagingQuery.getPage() - 1) * pagingQuery.getSize())
                 .build());
-        QueryResultsWrapper wrapper = new QueryResultsWrapper(results.getData());
-        List<Map<String, Object>> list = wrapper.getRowRecords().stream().map(QueryResultsWrapper.RowRecord::getFieldValues).toList();
-
-        List<RagChunk> ragChunks = list.stream().map(item -> new RagChunk(
-                item.get("id").toString(),
-                item.get("text").toString(),
-                item.get("metadata").toString()
-        )).toList();
+        List<QueryResp.QueryResult> queryResults = results.getQueryResults();
+        List<RagChunk> ragChunks = queryResults.stream()
+                .map(QueryResp.QueryResult::getEntity)
+                .map(item -> new RagChunk(
+                        item.get("id").toString(),
+                        item.get("text").toString(),
+                        item.get("metadata").toString()
+                )).toList();
 
         // 获取总数
-        R<QueryResults> countResults = milvusService.getMilvusClient().query(QueryParam.newBuilder()
-                .withCollectionName(knowledgeBase.getName())
-                .withExpr("metadata[\"rag_file_id\"] == \"" + ragFileId + "\"")
-                .withOutFields(Collections.singletonList("count(*)"))
+        QueryResp countResults = milvusService.getMilvusClient().query(QueryReq.builder()
+                .collectionName(knowledgeBase.getName())
+                .filter("metadata[\"rag_file_id\"] == \"" + ragFileId + "\"")
+                .outputFields(Collections.singletonList("count(*)"))
                 .build());
-        QueryResultsWrapper countWrapper = new QueryResultsWrapper(countResults.getData());
-        List<Map<String, Object>> countList = countWrapper.getRowRecords().stream().map(QueryResultsWrapper.RowRecord::getFieldValues).toList();
-        long totalCount = Long.parseLong(countList.getFirst().get("count(*)").toString());
 
+        long totalCount = Long.parseLong(countResults.getQueryResults().getFirst().getEntity().get("count(*)").toString());
         return PagedResponse.of(ragChunks, pagingQuery.getPage(), totalCount, (int) Math.ceil((double) totalCount / pagingQuery.getSize()));
     }
 }

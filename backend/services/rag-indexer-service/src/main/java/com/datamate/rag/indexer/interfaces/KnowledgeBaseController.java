@@ -133,10 +133,10 @@ public class KnowledgeBaseController {
      *
      * @param knowledgeBaseId 知识库 ID
      */
-    @PostMapping("/{knowledgeBaseId}/retrieve")
-    public PagedResponse<RagChunk> retrieve(@PathVariable("knowledgeBaseId") String knowledgeBaseId,
-                                            @RequestBody @Valid RetrieveReq request,
-                                            PagingQuery pagingQuery) {
-        return knowledgeBaseService.retrieve(knowledgeBaseId, request, pagingQuery);
-    }
+//    @PostMapping("/{knowledgeBaseId}/retrieve")
+//    public PagedResponse<RagChunk> retrieve(@PathVariable("knowledgeBaseId") String knowledgeBaseId,
+//                                            @RequestBody @Valid RetrieveReq request,
+//                                            PagingQuery pagingQuery) {
+//        return knowledgeBaseService.retrieve(knowledgeBaseId, request, pagingQuery);
+//    }
 }
