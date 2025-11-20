@@ -2,26 +2,36 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime
 from pydantic import BaseModel, Field, field_validator
 
+from app.core.logging import get_logger
 from app.module.shared.schema.common import TaskStatus
 
-class FilterCondition(BaseModel):
-    dataRange: str = Field(..., description="数据范围")
-    label: str = Field(..., description="标签")
+logger = get_logger(__name__)
 
-    @field_validator("dataRange")
+class FilterCondition(BaseModel):
+    date_range: Optional[str] = Field(None, description="数据范围", alias="dateRange")
+    label: Optional[str] = Field(None, description="标签")
+
+    @field_validator("date_range")
     @classmethod
-    def validate_data_range(cls, v: str) -> str:
-        # ensure it's a numeric string
+    def validate_date_range(cls, v: Optional[str]) -> Optional[str]:
+        # ensure it's a numeric string if provided
+        if not v:
+            return v
         try:
             int(v)
-        except Exception:
-            raise ValueError("counts must be a numeric string")
-        return v
+            return v
+        except (ValueError, TypeError) as e:
+            raise ValueError("date_range must be a numeric string")
+
+    class Config:
+        # allow population by field name when constructing model programmatically
+        validate_by_name = True
+
 
 class RatioConfigItem(BaseModel):
     dataset_id: str = Field(..., alias="datasetId", description="数据集id")
     counts: str = Field(..., description="数量")
-    filter_conditions: FilterCondition = Field(..., description="过滤条件")
+    filter_conditions: FilterCondition = Field(..., alias="filterConditions", description="过滤条件")
 
     @field_validator("counts")
     @classmethod
@@ -65,7 +75,6 @@ class CreateRatioTaskResponse(BaseModel):
     name: str
     description: Optional[str] = None
     totals: int
-    ratio_method: str
     status: TaskStatus
     # echoed config
     config: List[RatioConfigItem]

@@ -60,8 +60,7 @@ async def create_ratio_task(
                 name=instance.name,
                 description=instance.description,
                 totals=instance.totals or 0,
-                ratio_method=instance.ratio_method or req.ratio_method,
-                status=instance.status or TaskStatus.PENDING,
+                status=instance.status or TaskStatus.PENDING.name,
                 config=req.config,
                 targetDataset=TargetDatasetInfo(
                     id=str(target_dataset.id),
@@ -86,11 +85,11 @@ async def create_ratio_task(
 
 async def create_ratio_instance(db, req: CreateRatioTaskRequest, target_dataset: Dataset) -> RatioInstance:
     service = RatioTaskService(db)
+    logger.info(f"create_ratio_instance: {req}")
     instance = await service.create_task(
         name=req.name,
         description=req.description,
         totals=int(req.totals),
-        ratio_method=req.ratio_method,
         config=[
             {
                 "dataset_id": item.dataset_id,

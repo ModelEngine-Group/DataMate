@@ -32,7 +32,6 @@ class RatioTaskService:
         name: str,
         description: Optional[str],
         totals: int,
-        ratio_method: str,
         config: List[Dict[str, Any]],
         target_dataset_id: Optional[str] = None,
     ) -> RatioInstance:
@@ -40,12 +39,11 @@ class RatioTaskService:
 
         config item format: {"dataset_id": str, "counts": int, "filter_conditions": str}
         """
-        logger.info(f"Creating ratio task: name={name}, method={ratio_method}, totals={totals}, items={len(config or [])}")
+        logger.info(f"Creating ratio task: name={name}, totals={totals}, items={len(config or [])}")
 
         instance = RatioInstance(
             name=name,
             description=description,
-            ratio_method=ratio_method,
             totals=totals,
             target_dataset_id=target_dataset_id,
             status="PENDING",
@@ -58,8 +56,12 @@ class RatioTaskService:
                 ratio_instance_id=instance.id,
                 source_dataset_id=item.get("dataset_id"),
                 counts=int(item.get("counts", 0)),
-                filter_conditions=json.dumps(item.get("filter_conditions"))
+                filter_conditions=json.dumps({
+                    'date_range': item.get("filter_conditions").date_range,
+                    'label': item.get("filter_conditions").label,
+                })
             )
+            logger.info(f"Relation created: {relation.id}, {relation}, {item}, {config}")
             self.db.add(relation)
 
         await self.db.commit()
@@ -99,14 +101,14 @@ class RatioTaskService:
                 relations: List[RatioRelation] = list(rel_res.scalars().all())
 
                 # Mark running
-                instance.status = TaskStatus.RUNNING
+                instance.status = TaskStatus.RUNNING.name
 
                 # Load target dataset
                 ds_res = await session.execute(select(Dataset).where(Dataset.id == instance.target_dataset_id))
                 target_ds: Optional[Dataset] = ds_res.scalar_one_or_none()
                 if not target_ds:
                     logger.error(f"Target dataset not found for instance {instance_id}")
-                    instance.status = TaskStatus.FAILED
+                    instance.status = TaskStatus.FAILED.name
                     return
 
                 added_count, added_size = await RatioTaskService.handle_ratio_relations(relations,session, target_ds)
@@ -119,8 +121,8 @@ class RatioTaskService:
                     target_ds.status = "ACTIVE"
 
                 # Done
-                instance.status = TaskStatus.COMPLETED
-                logger.info(f"Dataset ratio execution completed: instance={instance_id}, files={added_count}, size={added_size}")
+                instance.status = TaskStatus.COMPLETED.name
+                logger.info(f"Dataset ratio execution completed: instance={instance_id}, files={added_count}, size={added_size}, {instance.status}")
 
             except Exception as e:
                 logger.exception(f"Dataset ratio execution failed for {instance_id}: {e}")
@@ -129,7 +131,7 @@ class RatioTaskService:
                     inst_res = await session.execute(select(RatioInstance).where(RatioInstance.id == instance_id))
                     instance = inst_res.scalar_one_or_none()
                     if instance:
-                        instance.status = TaskStatus.FAILED
+                        instance.status = TaskStatus.FAILED.name
                 finally:
                     pass
             finally:
@@ -232,32 +234,44 @@ class RatioTaskService:
     # ------------------------- helpers for TAG filtering ------------------------- #
 
     @staticmethod
-    def _parse_conditions(conditions: Optional[str]) -> FilterCondition | None:
-        """Parse filter_conditions into a set of required tag strings.
+    def _parse_conditions(conditions: Optional[str]) -> Optional[FilterCondition]:
+        """Parse filter_conditions JSON string into a FilterCondition object.
 
-        Supports simple separators: comma, semicolon, space. Empty/None -> empty set.
+        Args:
+            conditions: JSON string containing filter conditions
+
+        Returns:
+            FilterCondition object if conditions is not None/empty, otherwise None
         """
         if not conditions:
             return None
-        data = json.loads(conditions)
-        return data
+        try:
+            data = json.loads(conditions)
+            return FilterCondition(**data)
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse filter conditions: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"Error creating FilterCondition: {e}")
+            return None
 
     @staticmethod
     def _filter_file(file: DatasetFiles, conditions: FilterCondition) -> bool:
         if not conditions:
             return True
+        logger.info(f"start filter file: {file}, conditions: {conditions}")
 
         # Check data range condition if provided
-        if conditions.dataRange:
+        if conditions.date_range:
             try:
                 from datetime import datetime, timedelta
-                data_range_days = int(conditions.dataRange)
+                data_range_days = int(conditions.date_range)
                 if data_range_days > 0:
                     cutoff_date = datetime.now() - timedelta(days=data_range_days)
                     if file.tags_updated_at and file.tags_updated_at < cutoff_date:
                         return False
             except (ValueError, TypeError) as e:
-                logger.warning(f"Invalid dataRange value: {conditions.dataRange}", e)
+                logger.warning(f"Invalid data_range value: {conditions.date_range}", e)
                 return False
 
         # Check label condition if provided
