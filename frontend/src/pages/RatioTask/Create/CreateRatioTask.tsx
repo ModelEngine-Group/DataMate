@@ -40,7 +40,7 @@ export default function CreateRatioTask() {
         return {
           datasetId: c.id,
           counts: String(c.quantity ?? 0),
-          filterConditions: { label: c.labelFilter, dateRange: c.dateRange},
+          filterConditions: { label: c.labelFilter, dateRange: String(c.dateRange ?? 0)},
         };
       });
 
