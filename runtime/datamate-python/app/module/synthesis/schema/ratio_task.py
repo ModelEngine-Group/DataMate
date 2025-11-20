@@ -88,7 +88,6 @@ class RatioTaskItem(BaseModel):
     description: Optional[str] = None
     status: Optional[str] = None
     totals: Optional[int] = None
-    ratio_method: Optional[str] = None
     target_dataset_id: Optional[str] = None
     target_dataset_name: Optional[str] = None
     created_at: Optional[str] = None
@@ -110,7 +109,6 @@ class RatioTaskDetailResponse(BaseModel):
     description: Optional[str] = Field(None, description="任务描述")
     status: str = Field(..., description="任务状态")
     totals: int = Field(..., description="目标总数")
-    ratio_method: str = Field(..., description="配比方式")
     config: List[Dict[str, Any]] = Field(..., description="配比配置")
     target_dataset: Dict[str, Any] = Field(..., description="目标数据集信息")
     created_at: Optional[datetime] = Field(None, description="创建时间")
