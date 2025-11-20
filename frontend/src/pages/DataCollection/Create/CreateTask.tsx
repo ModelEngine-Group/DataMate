@@ -98,8 +98,7 @@ export default function CollectionTaskCreate() {
       // 构建最终 payload，不依赖异步 setState
       const payload = {
         ...newTask,
-        taskType:
-          templateType === "default" ? selectedTemplate : "CUSTOM",
+        taskType: templateType === "default" ? selectedTemplate : "CUSTOM",
         config: {
           ...((newTask && newTask.config) || {}),
           ...(templateType === "custom" ? { dataxJson: customConfig } : {}),
@@ -314,13 +313,6 @@ export default function CollectionTaskCreate() {
                         placeholder="Secret Key"
                       />
                     </Form.Item>
-                    <Form.Item
-                      name={["config", "prefix"]}
-                      rules={[{ required: true }]}
-                      label="Prefix"
-                    >
-                      <Input className="h-8 text-xs" placeholder="Prefix" />
-                    </Form.Item>
                   </div>
                 )}
 
@@ -328,15 +320,21 @@ export default function CollectionTaskCreate() {
                 {selectedTemplate === TemplateType.MYSQL && (
                   <div className="grid grid-cols-2 gap-3 px-2 bg-blue-50 rounded">
                     <Form.Item
-                      name={["config", "jdbcUrl"]}
-                      rules={[{ required: true, message: "请输入数据库链接" }]}
-                      label="数据库链接"
-                      className="col-span-2"
+                      name={["config", "host"]}
+                      rules={[{ required: true, message: "请输入MYSQL主机名" }]}
+                      label="MYSQL主机名"
                     >
-                      <Input placeholder="jdbc:mysql://localhost:3306/mysql?useUnicode=true&characterEncoding=utf8" />
+                      <Input placeholder="192.168.1.100" />
                     </Form.Item>
                     <Form.Item
-                      name={["config", "username"]}
+                      name={["config", "port"]}
+                      rules={[{ required: true, message: "请输入端口号" }]}
+                      label="端口号"
+                    >
+                      <Input placeholder="3306" />
+                    </Form.Item>
+                    <Form.Item
+                      name={["config", "user"]}
                       rules={[{ required: true, message: "请输入用户名" }]}
                       label="用户名"
                     >
@@ -347,21 +345,21 @@ export default function CollectionTaskCreate() {
                       rules={[{ required: true, message: "请输入密码" }]}
                       label="密码"
                     >
-                      <Input type="password" className="h-8 text-xs" placeholder="Secret Key" />
+                      <Input placeholder="" />
                     </Form.Item>
                     <Form.Item
-                      name={["config", "querySql"]}
+                      name={["config", "schema"]}
+                      rules={[{ required: true, message: "请输入数据库" }]}
+                      label="数据库"
+                    >
+                      <Input placeholder="public" />
+                    </Form.Item>
+                    <Form.Item
+                      name={["config", "sql"]}
                       rules={[{ required: true, message: "请输入查询语句" }]}
                       label="查询语句"
                     >
                       <Input placeholder="select * from your_table" />
-                    </Form.Item>
-                    <Form.Item
-                      name={["config", "headers"]}
-                      label="列名"
-                      className="col-span-2"
-                    >
-                      <Select placeholder="请输入列名" mode="tags" />
                     </Form.Item>
                   </div>
                 )}

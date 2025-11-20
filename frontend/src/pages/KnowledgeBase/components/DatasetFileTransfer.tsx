@@ -105,12 +105,13 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
   const toggleSelectFile = (dataset: Dataset, record: DatasetFile) => {
     const datasetFiles = selectedMap[dataset.id] || [];
     const hasSelected = datasetFiles.find((file) => file.id === record.id);
-    let files = [];
+    let files = [...datasetFiles];
     if (!hasSelected) {
       files.push(record);
     } else {
       files = datasetFiles.filter((file) => file.id !== record.id);
     }
+
     const newMap = { ...selectedMap, [dataset.id]: files };
     if (files.length === 0) {
       delete newMap[dataset.id];
@@ -120,7 +121,7 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
 
   const datasetCols = [
     {
-      title: "名称",
+      title: "数据集名称",
       dataIndex: "name",
       key: "name",
       ellipsis: true,
@@ -158,7 +159,7 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
   return (
     <div className="grid grid-cols-25 gap-4 w-full" {...props}>
       <div className="border-card flex flex-col col-span-12">
-        <div className="border-bottom p-2 font-bold">选择数据集</div>
+        <div className="border-bottom p-2 font-bold">选择数据集文件</div>
         <div className="p-2">
           <Input
             placeholder="搜索数据集名称..."
@@ -227,7 +228,9 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
       </div>
       <RightOutlined />
       <div className="border-card flex flex-col col-span-12">
-        <div className="border-bottom p-2 font-bold">选择文件</div>
+        <div className="border-bottom p-2 font-bold">
+          已选文件（{selectedFiles.length}）
+        </div>
         <div className="p-2">
           <Input
             placeholder="搜索文件名称..."

@@ -9,11 +9,14 @@ import {
   Play,
   DownloadIcon,
   CheckCircle,
+  Check,
+  StopCircle,
 } from "lucide-react";
 import type { SynthesisTask } from "@/pages/SynthesisTask/synthesis";
 import { mockSynthesisTasks } from "@/mock/synthesis";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { SearchControls } from "@/components/SearchControls";
+import { formatDateTime } from "@/utils/unit";
 
 export default function SynthesisTaskTab() {
   const navigate = useNavigate();
@@ -73,28 +76,28 @@ export default function SynthesisTaskTab() {
   const getStatusBadge = (status: string) => {
     const statusConfig = {
       pending: {
-        span: "等待中",
-        color: "bg-yellow-50 text-yellow-700 border-yellow-200",
+        label: "等待中",
+        color: "#F59E0B",
         icon: Pause,
       },
       running: {
-        span: "运行中",
-        color: "bg-blue-50 text-blue-700 border-blue-200",
+        label: "运行中",
+        color: "#3B82F6",
         icon: Play,
       },
       completed: {
-        span: "已完成",
-        color: "bg-green-50 text-green-700 border-green-200",
+        label: "已完成",
+        color: "#10B981",
         icon: CheckCircle,
       },
       failed: {
-        span: "失败",
-        color: "bg-red-50 text-red-700 border-red-200",
+        label: "失败",
+        color: "#EF4444",
         icon: Pause,
       },
       paused: {
-        span: "已暂停",
-        color: "bg-gray-50 text-gray-700 border-gray-200",
+        label: "已暂停",
+        color: "#E5E7EB",
         icon: Pause,
       },
     };
@@ -130,6 +133,7 @@ export default function SynthesisTaskTab() {
       ),
       dataIndex: "name",
       key: "name",
+      fixed: "left" as const,
       render: (text: string, task: SynthesisTask) => (
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center shadow-sm">
@@ -139,7 +143,7 @@ export default function SynthesisTaskTab() {
             </span>
           </div>
           <div>
-            <div className="font-medium text-gray-900 text-sm">{task.name}</div>
+            <Link to={`/data/synthesis/task/${task.id}`}>{task.name}</Link>
             <div className="text-xs text-gray-500">{task.template}</div>
           </div>
         </div>
@@ -149,11 +153,7 @@ export default function SynthesisTaskTab() {
       title: "类型",
       dataIndex: "type",
       key: "type",
-      render: (type: string) => (
-        <Badge className="bg-blue-50 text-blue-700 border-blue-200 text-xs">
-          {type?.toUpperCase()}
-        </Badge>
-      ),
+      render: (type: string) => type.toUpperCase(),
     },
     {
       title: "状态",
@@ -161,38 +161,17 @@ export default function SynthesisTaskTab() {
       key: "status",
       render: (status: string) => {
         const statusConfig = getStatusBadge(status);
-        const StatusIcon = statusConfig.icon;
-        return (
-          <Badge
-            className={`${statusConfig.color} flex items-center gap-1 w-fit text-xs`}
-          >
-            <StatusIcon className="w-3 h-3" />
-            {statusConfig.span}
-          </Badge>
-        );
+        return <Badge color={statusConfig.color} text={statusConfig.label} />;
       },
     },
     {
       title: "进度",
       dataIndex: "progress",
       key: "progress",
-      render: (_: any, task: SynthesisTask) =>
-        task.status === "running" ? (
-          <div className="space-y-1">
-            <Progress percent={task.progress} size="small" showInfo={false} />
-            <div className="text-xs text-gray-500">
-              {Math.round(task.progress)}%
-            </div>
-          </div>
-        ) : (
-          <div className="text-sm text-gray-600">
-            {task.status === "completed"
-              ? "100%"
-              : task.status === "failed"
-              ? `${Math.round(task.progress)}%`
-              : "-"}
-          </div>
-        ),
+      width: 150,
+      render: (_: any, task: SynthesisTask) => (
+        <Progress percent={task.progress} size="small" />
+      ),
     },
     {
       title: "源数据集",
@@ -217,48 +196,18 @@ export default function SynthesisTaskTab() {
       title: "质量评分",
       dataIndex: "quality",
       key: "quality",
-      render: (quality: number) =>
-        quality ? (
-          <Badge className="font-medium text-xs text-green-600 bg-green-50 border-green-200">
-            {quality}%
-          </Badge>
-        ) : (
-          <span className="text-sm text-gray-400">-</span>
-        ),
+      render: (quality: number) => (quality ? `${quality}%` : "-"),
     },
     {
-      title: (
-        <Button
-          type="text"
-          onClick={() => {
-            if (sortBy === "createdAt") {
-              setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-            } else {
-              setSortBy("createdAt");
-              setSortOrder("desc");
-            }
-          }}
-          className="h-auto p-0 font-semibold text-gray-700 hover:bg-transparent"
-        >
-          创建时间
-          {sortBy === "createdAt" &&
-            (sortOrder === "asc" ? (
-              <ArrowUp className="w-3 h-3 ml-1" />
-            ) : (
-              <ArrowDown className="w-3 h-3 ml-1" />
-            ))}
-        </Button>
-      ),
+      title: "创建时间",
       dataIndex: "createdAt",
       key: "createdAt",
-      render: (createdAt: string) => (
-        <div className="text-sm text-gray-600">{createdAt}</div>
-      ),
+      render: formatDateTime,
     },
     {
       title: "操作",
       key: "actions",
-      align: "center" as const,
+      fixed: "right" as const,
       render: (_: any, task: SynthesisTask) => (
         <div className="flex items-center justify-center gap-1">
           {task.status === "running" && (
@@ -266,36 +215,24 @@ export default function SynthesisTaskTab() {
               onClick={() => handleTaskAction(task.id, "pause")}
               className="hover:bg-orange-50 p-1 h-7 w-7"
               type="text"
-            >
-              <Pause className="w-3 h-3" />
-            </Button>
+              icon={<Pause className="w-4 h-4" />}
+            ></Button>
           )}
           {task.status === "paused" && (
             <Button
               onClick={() => handleTaskAction(task.id, "resume")}
               className="hover:bg-green-50 p-1 h-7 w-7"
               type="text"
-            >
-              <Play className="w-3 h-3" />
-            </Button>
+              icon={<Play className="w-4 h-4" />}
+            ></Button>
           )}
-          <Button
-            className="hover:bg-blue-50 p-2 h-7 w-7"
-            type="text"
-            onClick={() => navigate(`/data/synthesis/task/${task.id}`)}
-          >
-            审核
-          </Button>
-          <Button className="hover:bg-green-50 p-1 h-7 w-7" type="text">
-            <DownloadIcon className="w-3 h-3" />
-          </Button>
         </div>
       ),
     },
   ];
 
   return (
-    <div className="">
+    <div className="space-y-4">
       {/* 搜索和筛选 */}
       <SearchControls
         searchTerm={searchQuery}

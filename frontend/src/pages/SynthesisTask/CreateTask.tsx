@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Dataset } from "@/pages/DataManagement/dataset.model";
 import {
   Steps,
@@ -36,18 +36,21 @@ import {
   Brain,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router";
-import DevelopmentInProgress from "@/components/DevelopmentInProgress";
+import { queryDatasetsUsingGet } from "../DataManagement/dataset.api";
+import { formatBytes } from "@/utils/unit";
+import DatasetFileTransfer from "../KnowledgeBase/components/DatasetFileTransfer";
 
 const { TextArea } = Input;
 
 export default function SynthesisTaskCreate() {
-  return <DevelopmentInProgress showTime="2025.11.30" />;
   const navigate = useNavigate();
   const [form] = Form.useForm();
   const [searchQuery, setSearchQuery] = useState("");
   const [createStep, setCreateStep] = useState(1);
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
-  const [datasets] = useState<Dataset[]>([]);
+  const [selectedMap, setSelectedMap] = useState<Record<string, DatasetFile[]>>(
+    {}
+  );
   const [files] = useState<File[]>([]);
   const [selectedSynthesisTypes, setSelectedSynthesisTypes] = useState<
     string[]
@@ -58,6 +61,15 @@ export default function SynthesisTaskCreate() {
     "qa",
     "distillation",
   ]);
+
+  const fetchDatasets = async () => {
+    const { data } = await queryDatasetsUsingGet({ page: 1, size: 1000 });
+    setDatasets(data.content || []);
+  };
+
+  useEffect(() => {
+    fetchDatasets();
+  }, []);
 
   // 表单数据
   const [formValues, setFormValues] = useState({
@@ -270,7 +282,7 @@ export default function SynthesisTaskCreate() {
   const renderCreateTaskPage = () => {
     if (createStep === 1) {
       return (
-        <Card className="overflow-y-auto p-2">
+        <div className="flex-1 p-4 overflow-auto">
           <Form
             form={form}
             layout="vertical"
@@ -305,152 +317,11 @@ export default function SynthesisTaskCreate() {
                 className="resize-none text-sm"
               />
             </Form.Item>
-            <Form.Item
-              label="源数据集"
-              name="sourceDataset"
-              rules={[{ required: true, message: "请选择数据集" }]}
-            >
-              <Select
-                className="w-full"
-                placeholder="选择数据集"
-                options={datasets.map((dataset) => ({
-                  label: (
-                    <div key={dataset.id}>
-                      <div className="flex flex-col py-1">
-                        <span className="font-medium text-sm">
-                          {dataset.name}
-                        </span>
-                        <span className="text-xs text-gray-500">
-                          {dataset.type} • {dataset.total}条 • {dataset.size}
-                        </span>
-                      </div>
-                    </div>
-                  ),
-                  value: dataset.id,
-                }))}
-              />
-            </Form.Item>
-            {form.getFieldValue("sourceDataset") && (
-              <div className="space-y-2">
-                <span className="text-sm font-semibold text-gray-700">
-                  选择文件
-                </span>
-                <div className="grid grid-cols-2 gap-4">
-                  {/* 文件选择区域 */}
-                  <Card className="border-gray-200">
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="relative flex-1">
-                          <Search className="w-3 h-3 absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                          <Input
-                            placeholder="搜索文件..."
-                            className="pl-7 h-8 text-sm"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                          />
-                        </div>
-                        <Button
-                          onClick={handleSelectAllFiles}
-                          className="ml-2 text-xs"
-                          type="default"
-                        >
-                          {selectedFiles.length ===
-                          files.filter((file) =>
-                            file.name
-                              .toLowerCase()
-                              .includes(searchQuery.toLowerCase())
-                          ).length
-                            ? "取消全选"
-                            : "全选"}
-                        </Button>
-                      </div>
-                      <div className="space-y-1">
-                        {files
-                          .filter((file) =>
-                            file.name
-                              .toLowerCase()
-                              .includes(searchQuery.toLowerCase())
-                          )
-                          .map((file) => (
-                            <div
-                              key={file.id}
-                              className="flex items-center space-x-2 p-2 hover:bg-gray-50 rounded"
-                            >
-                              <Checkbox
-                                checked={selectedFiles.includes(file.id)}
-                                onChange={(e) => {
-                                  if (e.target.checked) {
-                                    setSelectedFiles([
-                                      ...selectedFiles,
-                                      file.id,
-                                    ]);
-                                  } else {
-                                    setSelectedFiles(
-                                      selectedFiles.filter(
-                                        (id) => id !== file.id
-                                      )
-                                    );
-                                  }
-                                }}
-                              />
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-gray-900 truncate">
-                                  {file.name}
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                  {file.size} • {file.type}
-                                </p>
-                              </div>
-                            </div>
-                          ))}
-                      </div>
-                    </div>
-                  </Card>
-                  {/* 已选文件列表 */}
-                  <Card className="border-gray-200">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">已选文件</span>
-                      <Badge count={selectedFiles.length} className="text-xs" />
-                    </div>
-                    <div className="space-y-1">
-                      {selectedFiles.length === 0 ? (
-                        <div className="text-center py-4 text-xs text-gray-500">
-                          暂未选择文件
-                        </div>
-                      ) : (
-                        selectedFiles.map((fileId) => {
-                          const file = files.find((f) => f.id === fileId);
-                          if (!file) return null;
-                          return (
-                            <div
-                              key={fileId}
-                              className="flex items-center justify-between p-2 bg-blue-50 rounded border border-blue-200"
-                            >
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-blue-900 truncate">
-                                  {file.name}
-                                </p>
-                                <p className="text-xs text-blue-600">
-                                  {file.size} • {file.type}
-                                </p>
-                              </div>
-                              <Button
-                                type="text"
-                                onClick={() => handleRemoveSelectedFile(fileId)}
-                                className="p-1 h-6 w-6 hover:bg-blue-100"
-                              >
-                                <X className="w-3 h-3" />
-                              </Button>
-                            </div>
-                          );
-                        })
-                      )}
-                    </div>
-                  </Card>
-                </div>
-              </div>
-            )}
-
+            <DatasetFileTransfer
+              open
+              selectedMap={selectedMap}
+              onSelectedChange={setSelectedMap}
+            />
             <h2 className="font-medium text-gray-900 text-lg mt-6 mb-2">
               任务配置
             </h2>
@@ -514,32 +385,8 @@ export default function SynthesisTaskCreate() {
                 </Form.Item>
               </div>
             </div>
-            <Divider />
-            <div className="flex gap-2 justify-end">
-              <Button onClick={() => navigate("/data/synthesis/task")}>
-                取消
-              </Button>
-              <Button
-                type="primary"
-                onClick={() => {
-                  form
-                    .validateFields()
-                    .then(() => setCreateStep(2))
-                    .catch(() => {});
-                }}
-                disabled={
-                  !form.getFieldValue("name") ||
-                  !form.getFieldValue("sourceDataset") ||
-                  selectedFiles.length === 0 ||
-                  !form.getFieldValue("targetCount")
-                }
-              >
-                下一步
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </div>
           </Form>
-        </Card>
+        </div>
       );
     }
 
@@ -1224,26 +1071,47 @@ export default function SynthesisTaskCreate() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="p-6">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-2">
-          <div className="flex items-center">
-            <Link to="/data/synthesis/task">
-              <Button type="text">
-                <ArrowLeft className="w-4 h-4 mr-1" />
-              </Button>
-            </Link>
-            <h1 className="text-xl font-bold bg-clip-text">创建合成任务</h1>
-          </div>
-          <Steps
-            current={createStep - 1}
-            size="small"
-            items={[{ title: "基本信息" }, { title: "算子编排" }]}
-            style={{ width: "50%", marginLeft: "auto" }}
-          />
+    <div className="h-full flex flex-col">
+      {/* Header */}
+      <div className="flex justify-between items-center mb-2">
+        <div className="flex items-center">
+          <Link to="/data/synthesis/task">
+            <Button type="text">
+              <ArrowLeft className="w-4 h-4 mr-1" />
+            </Button>
+          </Link>
+          <h1 className="text-xl font-bold bg-clip-text">创建合成任务</h1>
         </div>
+        <Steps
+          current={createStep - 1}
+          size="small"
+          items={[{ title: "基本信息" }, { title: "算子编排" }]}
+          style={{ width: "50%", marginLeft: "auto" }}
+        />
+      </div>
+      <div className="border-card flex-overflow-auto">
         {renderCreateTaskPage()}
+        <div className="flex gap-2 justify-end p-4 border-top">
+          <Button onClick={() => navigate("/data/synthesis/task")}>取消</Button>
+          <Button
+            type="primary"
+            onClick={() => {
+              form
+                .validateFields()
+                .then(() => setCreateStep(2))
+                .catch(() => {});
+            }}
+            disabled={
+              !form.getFieldValue("name") ||
+              !form.getFieldValue("sourceDataset") ||
+              selectedFiles.length === 0 ||
+              !form.getFieldValue("targetCount")
+            }
+          >
+            下一步
+            <ArrowRight className="w-4 h-4 ml-2" />
+          </Button>
+        </div>
       </div>
     </div>
   );
