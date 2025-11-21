@@ -33,4 +33,6 @@ public class CreateDatasetRequest {
     private List<String> tags;
     /** 数据源 */
     private String dataSource;
+    /** 保留天数 */
+    private Integer retentionDays;
 }

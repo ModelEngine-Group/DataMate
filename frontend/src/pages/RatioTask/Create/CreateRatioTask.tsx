@@ -7,7 +7,6 @@ import { useNavigate } from "react-router";
 import SelectDataset from "@/pages/RatioTask/Create/components/SelectDataset.tsx";
 import BasicInformation from "@/pages/RatioTask/Create/components/BasicInformation.tsx";
 import RatioConfig from "@/pages/RatioTask/Create/components/RatioConfig.tsx";
-import RatioTransfer from "./components/RatioTransfer";
 
 export default function CreateRatioTask() {
   const navigate = useNavigate();
@@ -36,27 +35,12 @@ export default function CreateRatioTask() {
         message.error("请配置配比项");
         return;
       }
-      // Build request payload
-      const ratio_method =
-        ratioTaskForm.ratioType === "dataset" ? "DATASET" : "TAG";
       const totals = String(values.totalTargetCount);
       const config = ratioTaskForm.ratioConfigs.map((c) => {
-        if (ratio_method === "DATASET") {
-          return {
-            datasetId: String(c.source),
-            counts: String(c.quantity ?? 0),
-            filter_conditions: "",
-          };
-        }
-        // TAG mode: source key like `${datasetId}_${label}`
-        const source = String(c.source || "");
-        const idx = source.indexOf("_");
-        const datasetId = idx > 0 ? source.slice(0, idx) : source;
-        const label = idx > 0 ? source.slice(idx + 1) : "";
         return {
-          datasetId,
+          datasetId: c.id,
           counts: String(c.quantity ?? 0),
-          filter_conditions: label ? JSON.stringify({ label }) : "",
+          filterConditions: { label: c.labelFilter, dateRange: String(c.dateRange ?? 0)},
         };
       });
 
@@ -65,7 +49,6 @@ export default function CreateRatioTask() {
         name: values.name,
         description: values.description,
         totals,
-        ratio_method,
         config,
       });
       message.success("配比任务创建成功");
@@ -107,13 +90,6 @@ export default function CreateRatioTask() {
             <BasicInformation
               totalTargetCount={ratioTaskForm.totalTargetCount}
             />
-
-            {/* <RatioTransfer
-              ratioTaskForm={ratioTaskForm}
-              distributions={distributions}
-              updateRatioConfig={updateRatioConfig}
-              updateLabelRatioConfig={updateLabelRatioConfig}
-            /> */}
 
             <div className="flex h-full">
               <SelectDataset

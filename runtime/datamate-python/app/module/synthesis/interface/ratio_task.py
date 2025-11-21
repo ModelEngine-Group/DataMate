@@ -1,4 +1,5 @@
 import asyncio
+import uuid
 from typing import Set
 from datetime import datetime
 
@@ -11,7 +12,7 @@ from app.core.logging import get_logger
 from app.db.models import Dataset
 from app.db.session import get_db
 from app.module.dataset import DatasetManagementService
-from app.module.shared.schema import StandardResponse
+from app.module.shared.schema import StandardResponse, TaskStatus
 from app.module.synthesis.schema.ratio_task import (
     CreateRatioTaskResponse,
     CreateRatioTaskRequest,
@@ -48,50 +49,18 @@ async def create_ratio_task(
 
         await valid_exists(db, req)
 
-        # 创建目标数据集：名称使用“<任务名称>-配比生成-时间戳”
-        target_dataset_name = f"{req.name}-配比生成-{datetime.now().strftime('%Y%m%d%H%M%S')}"
+        target_dataset = await create_target_dataset(db, req, source_types)
 
-        target_type = get_target_dataset_type(source_types)
+        instance = await create_ratio_instance(db, req, target_dataset)
 
-        target_dataset = Dataset(
-            name=target_dataset_name,
-            description=req.description or "",
-            dataset_type=target_type,
-            status="DRAFT",
-        )
-        db.add(target_dataset)
-        await db.flush()  # 获取 target_dataset.id
-
-        service = RatioTaskService(db)
-        instance = await service.create_task(
-            name=req.name,
-            description=req.description,
-            totals=int(req.totals),
-            ratio_method=req.ratio_method,
-            config=[
-                {
-                    "dataset_id": item.dataset_id,
-                    "counts": int(item.counts),
-                    "filter_conditions": item.filter_conditions,
-                }
-                for item in req.config
-            ],
-            target_dataset_id=target_dataset.id,
-        )
-
-        # 异步执行配比任务（支持 DATASET / TAG）
         asyncio.create_task(RatioTaskService.execute_dataset_ratio_task(instance.id))
 
-        return StandardResponse(
-            code=200,
-            message="success",
-            data=CreateRatioTaskResponse(
+        response_data = CreateRatioTaskResponse(
                 id=instance.id,
                 name=instance.name,
                 description=instance.description,
                 totals=instance.totals or 0,
-                ratio_method=instance.ratio_method or req.ratio_method,
-                status=instance.status or "PENDING",
+                status=instance.status or TaskStatus.PENDING.name,
                 config=req.config,
                 targetDataset=TargetDatasetInfo(
                     id=str(target_dataset.id),
@@ -100,6 +69,10 @@ async def create_ratio_task(
                     status=str(target_dataset.status),
                 )
             )
+        return StandardResponse(
+            code=200,
+            message="success",
+            data=response_data
         )
     except HTTPException:
         await db.rollback()
@@ -108,6 +81,46 @@ async def create_ratio_task(
         await db.rollback()
         logger.error(f"Failed to create ratio task: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
+
+
+async def create_ratio_instance(db, req: CreateRatioTaskRequest, target_dataset: Dataset) -> RatioInstance:
+    service = RatioTaskService(db)
+    logger.info(f"create_ratio_instance: {req}")
+    instance = await service.create_task(
+        name=req.name,
+        description=req.description,
+        totals=int(req.totals),
+        config=[
+            {
+                "dataset_id": item.dataset_id,
+                "counts": int(item.counts),
+                "filter_conditions": item.filter_conditions,
+            }
+            for item in req.config
+        ],
+        target_dataset_id=target_dataset.id,
+    )
+    return instance
+
+
+async def create_target_dataset(db, req: CreateRatioTaskRequest, source_types: set[str]) -> Dataset:
+    # 创建目标数据集：名称使用“<任务名称>-时间戳”
+    target_dataset_name = f"{req.name}-{datetime.now().strftime('%Y%m%d%H%M%S')}"
+
+    target_type = get_target_dataset_type(source_types)
+    target_dataset_id = uuid.uuid4()
+
+    target_dataset = Dataset(
+        id=str(target_dataset_id),
+        name=target_dataset_name,
+        description=req.description or "",
+        dataset_type=target_type,
+        status="DRAFT",
+        path=f"/dataset/{target_dataset_id}",
+    )
+    db.add(target_dataset)
+    await db.flush()  # 获取 target_dataset.id
+    return target_dataset
 
 
 @router.get("", response_model=StandardResponse[PagedRatioTaskResponse], status_code=200)
@@ -212,16 +225,18 @@ async def delete_ratio_tasks(
         raise HTTPException(status_code=500, detail=f"Fail to delete ratio task: {e}")
 
 
-async def valid_exists(db, req: CreateRatioTaskRequest):
-    # 校验配比任务名称不能重复
-    exist_task_q = await db.execute(
-        select(RatioInstance).where(RatioInstance.name == req.name)
-    )
-    try:
-        exist_task_q.scalar_one_or_none()
-    except Exception as e:
-        logger.error(f"create ratio task failed: ratio task {req.name} already exists")
-        raise HTTPException(status_code=400, detail=f"ratio task {req.name} already exists")
+async def valid_exists(db: AsyncSession, req: CreateRatioTaskRequest) -> None:
+    """校验配比任务名称不能重复（精确匹配，去除首尾空格）。"""
+    name = (req.name or "").strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="ratio task name is required")
+
+    # 查询是否已存在同名任务
+    ratio_task = await db.execute(select(RatioInstance.id).where(RatioInstance.name == name))
+    exists = ratio_task.scalar_one_or_none()
+    if exists is not None:
+        logger.error(f"create ratio task failed: ratio task '{name}' already exists (id={exists})")
+        raise HTTPException(status_code=400, detail=f"ratio task '{name}' already exists")
 
 
 async def get_dataset_types(dm_service: DatasetManagementService, req: CreateRatioTaskRequest) -> Set[str]:

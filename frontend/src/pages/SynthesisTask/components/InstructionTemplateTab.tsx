@@ -1,14 +1,7 @@
 import { useState } from "react";
 import { Card, Table, Badge, Button } from "antd";
-import {
-  Plus,
-  FileText,
-  Search,
-  Edit,
-  Copy,
-  Trash2,
-  MoreHorizontal,
-} from "lucide-react";
+import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
+import { Plus, FileText } from "lucide-react";
 import type { Template } from "@/pages/SynthesisTask/synthesis";
 import { useNavigate } from "react-router";
 import { mockTemplates } from "@/mock/synthesis";
@@ -45,6 +38,7 @@ export default function InstructionTemplateTab() {
       title: "模板名称",
       dataIndex: "name",
       key: "name",
+      fixed: "left",
       render: (text: string, template: Template) => (
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center shadow-sm">
@@ -103,14 +97,7 @@ export default function InstructionTemplateTab() {
       title: "质量评分",
       dataIndex: "quality",
       key: "quality",
-      render: (quality: number) =>
-        quality ? (
-          <Badge className={`font-medium text-xs ${getQualityColor(quality)}`}>
-            {quality}%
-          </Badge>
-        ) : (
-          <span className="text-sm text-gray-400">-</span>
-        ),
+      render: (quality: number) => (quality ? `${quality}%` : "-"),
     },
     {
       title: "最后使用",
@@ -123,25 +110,14 @@ export default function InstructionTemplateTab() {
     {
       title: "操作",
       key: "actions",
-      align: "center" as const,
+      fixed: "right",
       render: (_: any, template: Template) => (
-        <div className="flex items-center justify-center gap-1">
-          <Button
-            onClick={() =>
-              navigate(`/data/synthesis/task/create-template/${template.id}`)
-            }
-            type="text"
-          >
-            <Edit className="w-3 h-3" />
-          </Button>
+        <div className="flex items-center justify-center">
           <Button type="text">
-            <Copy className="w-3 h-3" />
+            <EditOutlined />
           </Button>
-          <Button type="text">
-            <Trash2 className="w-3 h-3" />
-          </Button>
-          <Button type="text">
-            <MoreHorizontal className="w-3 h-3" />
+          <Button type="text" danger>
+            <DeleteOutlined />
           </Button>
         </div>
       ),
