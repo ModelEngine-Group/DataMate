@@ -6,6 +6,7 @@ import { datasetTypeMap } from "../../dataset.const";
 export default function Overview({ dataset, filesOperation }) {
   const {
     fileList,
+    pagination,
     selectedFiles,
     setSelectedFiles,
     previewVisible,
@@ -179,7 +180,10 @@ export default function Overview({ dataset, filesOperation }) {
             dataSource={fileList}
             // rowSelection={rowSelection}
             scroll={{ x: "max-content", y: 600 }}
-            pagination={{ showTotal: (total) => `共 ${total} 条` }}
+            pagination={{
+              ...pagination,
+              showTotal: (total) => `共 ${total} 条`,
+            }}
           />
         </div>
       </div>

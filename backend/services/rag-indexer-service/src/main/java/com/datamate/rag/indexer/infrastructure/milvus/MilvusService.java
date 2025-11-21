@@ -38,7 +38,7 @@ import static dev.langchain4j.internal.Utils.randomUUID;
 @Slf4j
 @Component
 public class MilvusService {
-    @Value("${datamate.rag.milvus-host:milvus-standalone}")
+    @Value("${datamate.rag.milvus-host:milvus}")
     private String milvusHost;
     @Value("${datamate.rag.milvus-port:19530}")
     private int milvusPort;

@@ -8,12 +8,13 @@ import {
   Modal,
   Steps,
   Descriptions,
+  Table,
 } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import { addKnowledgeBaseFilesUsingPost } from "../knowledge-base.api";
-import DatasetFileTransfer from "./DatasetFileTransfer";
+import DatasetFileTransfer from "../../../components/DatasetFileTransfer";
 import { DescriptionsItemType } from "antd/es/descriptions";
-import { DatasetFile } from "@/pages/DataManagement/dataset.model";
+import { DatasetFileCols } from "../knowledge-base.const";
 
 const sliceOptions = [
   { label: "默认分块", value: "DEFAULT_CHUNK" },
@@ -29,9 +30,7 @@ export default function AddDataDialog({ knowledgeBase, onDataAdded }) {
   const [form] = Form.useForm();
   const [currentStep, setCurrentStep] = useState(0);
 
-  const [selectedMap, setSelectedMap] = useState<Record<string, DatasetFile[]>>(
-    {}
-  );
+  const [selectedFilesMap, setSelectedFilesMap] = useState({});
 
   // 定义分块选项
   const sliceOptions = [
@@ -67,8 +66,8 @@ export default function AddDataDialog({ knowledgeBase, onDataAdded }) {
 
   // 获取已选择文件总数
   const getSelectedFilesCount = () => {
-    return Object.values(selectedMap).reduce(
-      (total, files) => total + files.length,
+    return Object.values(selectedFilesMap).reduce(
+      (total, ids) => total + ids.length,
       0
     );
   };
@@ -117,23 +116,13 @@ export default function AddDataDialog({ knowledgeBase, onDataAdded }) {
       delimiter: "",
     });
     form.resetFields();
+    setSelectedFilesMap({});
   };
 
   const handleAddData = async () => {
-    const files = [];
+    const selectedFiles = [];
 
-    Object.entries(selectedMap).forEach(([datasetId, fileList]) => {
-      files.push(
-        ...fileList.map((file) => ({
-          ...file,
-          id: file.id,
-          name: file.fileName,
-          datasetId,
-        }))
-      );
-    });
-
-    if (files.length === 0) {
+    if (selectedFiles.length === 0) {
       message.warning("请至少选择一个文件");
       return;
     }
@@ -141,7 +130,7 @@ export default function AddDataDialog({ knowledgeBase, onDataAdded }) {
     try {
       // 构造符合API要求的请求数据
       const requestData = {
-        files,
+        files: Object.entries(selectedFilesMap),
         processType: newKB.processType,
         chunkSize: Number(newKB.chunkSize), // 确保是数字类型
         overlapSize: Number(newKB.overlapSize), // 确保是数字类型
@@ -155,7 +144,6 @@ export default function AddDataDialog({ knowledgeBase, onDataAdded }) {
 
       message.success("数据添加成功");
       // 重置状态
-      handleReset();
       setOpen(false);
     } catch (error) {
       message.error("数据添加失败，请重试");
@@ -164,7 +152,6 @@ export default function AddDataDialog({ knowledgeBase, onDataAdded }) {
   };
 
   const handleModalCancel = () => {
-    handleReset();
     setOpen(false);
   };
 
@@ -180,14 +167,9 @@ export default function AddDataDialog({ knowledgeBase, onDataAdded }) {
       children: "数据集",
     },
     {
-      label: "选择的数据集数",
-      key: "selectedDatasetCount",
-      children: Object.keys(selectedMap).length,
-    },
-    {
       label: "文件总数",
       key: "totalFileCount",
-      children: getSelectedFilesCount(),
+      children: Object.keys(selectedFilesMap).length,
     },
     {
       label: "分块方式",
@@ -214,6 +196,20 @@ export default function AddDataDialog({ knowledgeBase, onDataAdded }) {
           },
         ]
       : []),
+    {
+      label: "文件列表",
+      key: "fileList",
+      span: 3,
+      children: (
+        <Table
+          scroll={{ y: 400 }}
+          rowKey="id"
+          size="small"
+          dataSource={Object.values(selectedFilesMap)}
+          columns={DatasetFileCols}
+        />
+      ),
+    },
   ];
 
   return (
@@ -221,7 +217,10 @@ export default function AddDataDialog({ knowledgeBase, onDataAdded }) {
       <Button
         type="primary"
         icon={<PlusOutlined />}
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          handleReset();
+          setOpen(true);
+        }}
       >
         添加数据
       </Button>
@@ -231,13 +230,25 @@ export default function AddDataDialog({ knowledgeBase, onDataAdded }) {
         onCancel={handleModalCancel}
         footer={
           <div className="space-x-2">
+            {currentStep === 0 && (
+              <Button onClick={handleModalCancel}>取消</Button>
+            )}
             {currentStep > 0 && (
               <Button disabled={false} onClick={handlePrev}>
                 上一步
               </Button>
             )}
             {currentStep < steps.length - 1 ? (
-              <Button type="primary" onClick={handleNext}>
+              <Button
+                type="primary"
+                disabled={
+                  Object.keys(selectedFilesMap).length === 0 ||
+                  !newKB.chunkSize ||
+                  !newKB.overlapSize ||
+                  !newKB.processType
+                }
+                onClick={handleNext}
+              >
                 下一步
               </Button>
             ) : (
@@ -259,12 +270,13 @@ export default function AddDataDialog({ knowledgeBase, onDataAdded }) {
           />
 
           {/* 步骤内容 */}
-          <DatasetFileTransfer
-            hidden={currentStep !== 0}
-            open={open}
-            selectedMap={selectedMap}
-            onSelectedChange={setSelectedMap}
-          />
+          {currentStep === 0 && (
+            <DatasetFileTransfer
+              open={open}
+              selectedFilesMap={selectedFilesMap}
+              onSelectedFilesChange={setSelectedFilesMap}
+            />
+          )}
 
           <Form
             hidden={currentStep !== 1}
@@ -328,9 +340,9 @@ export default function AddDataDialog({ knowledgeBase, onDataAdded }) {
           </Form>
 
           <div className="space-y-6" hidden={currentStep !== 2}>
-            <div className="p-4 bg-blue-50 rounded-lg">
+            <div className="">
               <div className="text-lg font-medium mb-3">上传信息确认</div>
-              <Descriptions items={descItems} />
+              <Descriptions layout="vertical" size="small" items={descItems} />
             </div>
             <div className="text-sm text-yellow-600">
               提示：上传后系统将自动处理文件，请耐心等待
