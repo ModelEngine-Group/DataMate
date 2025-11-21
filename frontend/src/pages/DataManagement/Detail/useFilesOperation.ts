@@ -19,6 +19,11 @@ export function useFilesOperation(dataset: Dataset) {
   // 文件相关状态
   const [fileList, setFileList] = useState<DatasetFile[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<number[]>([]);
+  const [pagination, setPagination] = useState<{
+    current: number;
+    pageSize: number;
+    total: number;
+  }>({ current: 1, pageSize: 10, total: 0 });
 
   // 文件预览相关状态
   const [previewVisible, setPreviewVisible] = useState(false);
@@ -26,7 +31,10 @@ export function useFilesOperation(dataset: Dataset) {
   const [previewFileName, setPreviewFileName] = useState("");
 
   const fetchFiles = async () => {
-    const { data } = await queryDatasetFilesUsingGet(id!);
+    const { data } = await queryDatasetFilesUsingGet(id!, {
+      page: pagination.current - 1,
+      size: pagination.pageSize,
+    });
     setFileList(data.content || []);
   };
 
@@ -105,6 +113,7 @@ export function useFilesOperation(dataset: Dataset) {
     fileList,
     selectedFiles,
     setSelectedFiles,
+    setPagination,
     previewVisible,
     setPreviewVisible,
     previewContent,
