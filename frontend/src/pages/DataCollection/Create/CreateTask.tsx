@@ -192,9 +192,6 @@ export default function CollectionTaskCreate() {
                 />
               </Form.Item>
             )}
-            <Form.Item name="maxRetries" label="最大执行次数">
-              <InputNumber min={1} style={{ width: "100%" }} />
-            </Form.Item>
 
             {/* 模板配置 */}
             <h2 className="font-medium text-gray-900 pt-6 mb-2 text-lg">
@@ -313,6 +310,13 @@ export default function CollectionTaskCreate() {
                         className="h-8 text-xs"
                         placeholder="Secret Key"
                       />
+                    </Form.Item>
+                    <Form.Item
+                      name={["config", "prefix"]}
+                      rules={[{ required: true }]}
+                      label="Prefix"
+                    >
+                      <Input className="h-8 text-xs" placeholder="Prefix" />
                     </Form.Item>
                   </div>
                 )}

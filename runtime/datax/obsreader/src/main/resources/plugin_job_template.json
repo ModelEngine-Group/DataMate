@@ -1,0 +1,10 @@
+{
+  "name": "obsreader",
+  "parameter": {
+    "endpoint": "127.0.0.1",
+    "bucket": "test",
+    "accessKey": "ak-xxx",
+    "secretKey": "sk-xxx",
+    "prefix": "/test"
+  }
+}

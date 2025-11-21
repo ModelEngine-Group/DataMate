@@ -2,10 +2,36 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime
 from pydantic import BaseModel, Field, field_validator
 
+from app.core.logging import get_logger
+from app.module.shared.schema.common import TaskStatus
+
+logger = get_logger(__name__)
+
+class FilterCondition(BaseModel):
+    date_range: Optional[str] = Field(None, description="数据范围", alias="dateRange")
+    label: Optional[str] = Field(None, description="标签")
+
+    @field_validator("date_range")
+    @classmethod
+    def validate_date_range(cls, v: Optional[str]) -> Optional[str]:
+        # ensure it's a numeric string if provided
+        if not v:
+            return v
+        try:
+            int(v)
+            return v
+        except (ValueError, TypeError) as e:
+            raise ValueError("date_range must be a numeric string")
+
+    class Config:
+        # allow population by field name when constructing model programmatically
+        validate_by_name = True
+
+
 class RatioConfigItem(BaseModel):
     dataset_id: str = Field(..., alias="datasetId", description="数据集id")
     counts: str = Field(..., description="数量")
-    filter_conditions: str = Field(..., description="过滤条件")
+    filter_conditions: FilterCondition = Field(..., alias="filterConditions", description="过滤条件")
 
     @field_validator("counts")
     @classmethod
@@ -22,16 +48,7 @@ class CreateRatioTaskRequest(BaseModel):
     name: str = Field(..., description="名称")
     description: Optional[str] = Field(None, description="描述")
     totals: str = Field(..., description="目标数量")
-    ratio_method: str = Field(..., description="配比方式", alias="ratio_method")
     config: List[RatioConfigItem] = Field(..., description="配比设置列表")
-
-    @field_validator("ratio_method")
-    @classmethod
-    def validate_ratio_method(cls, v: str) -> str:
-        allowed = {"TAG", "DATASET"}
-        if v not in allowed:
-            raise ValueError(f"ratio_method must be one of {allowed}")
-        return v
 
     @field_validator("totals")
     @classmethod
@@ -58,8 +75,7 @@ class CreateRatioTaskResponse(BaseModel):
     name: str
     description: Optional[str] = None
     totals: int
-    ratio_method: str
-    status: str
+    status: TaskStatus
     # echoed config
     config: List[RatioConfigItem]
     # created dataset

@@ -7,10 +7,12 @@ import com.datamate.common.domain.utils.AnalyzerUtils;
 import com.datamate.common.infrastructure.exception.BusinessAssert;
 import com.datamate.common.infrastructure.exception.BusinessException;
 import com.datamate.common.infrastructure.exception.SystemErrorCode;
+import com.datamate.datamanagement.common.enums.DuplicateMethod;
 import com.datamate.datamanagement.domain.contants.DatasetConstant;
 import com.datamate.datamanagement.domain.model.dataset.Dataset;
 import com.datamate.datamanagement.domain.model.dataset.DatasetFile;
 import com.datamate.datamanagement.domain.model.dataset.DatasetFileUploadCheckInfo;
+import com.datamate.datamanagement.infrastructure.exception.DataManagementErrorCode;
 import com.datamate.datamanagement.infrastructure.persistence.repository.DatasetFileRepository;
 import com.datamate.datamanagement.infrastructure.persistence.repository.DatasetRepository;
 import com.datamate.datamanagement.interfaces.converter.DatasetConverter;
@@ -45,6 +47,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -62,6 +66,9 @@ public class DatasetFileApplicationService {
 
     @Value("${datamate.data-management.base-path:/dataset}")
     private String datasetBasePath;
+
+    @Value("${datamate.data-management.file.duplicate:COVER}")
+    private DuplicateMethod duplicateMethod;
 
     @Autowired
     public DatasetFileApplicationService(DatasetFileRepository datasetFileRepository,
@@ -254,11 +261,34 @@ public class DatasetFileApplicationService {
                 .filePath(savedFile.getPath())
                 .fileType(AnalyzerUtils.getExtension(uploadFile.getFileName()))
                 .build();
-
-        datasetFileRepository.save(datasetFile);
+        dataset.setFiles(datasetFileRepository.findAllByDatasetId(datasetId));
+        setDatasetFileId(datasetFile, dataset);
+        datasetFileRepository.saveOrUpdate(datasetFile);
         dataset.addFile(datasetFile);
         dataset.active();
         datasetRepository.updateById(dataset);
+    }
+
+    /**
+     * 为数据集文件设置文件id
+     *
+     * @param datasetFile 要设置id的文件
+     * @param dataset 数据集（包含文件列表）
+     */
+    private void setDatasetFileId(DatasetFile datasetFile, Dataset dataset) {
+        Map<String, DatasetFile> existDatasetFilMap = dataset.getFiles().stream().collect(Collectors.toMap(DatasetFile::getFilePath, Function.identity()));
+        DatasetFile existDatasetFile = existDatasetFilMap.get(datasetFile.getFilePath());
+        if (Objects.isNull(existDatasetFile)) {
+            return;
+        }
+        if (duplicateMethod == DuplicateMethod.ERROR) {
+            log.error("file {} already exists in dataset {}", datasetFile.getFileName(), datasetFile.getDatasetId());
+            throw BusinessException.of(DataManagementErrorCode.DATASET_FILE_ALREADY_EXISTS);
+        }
+        if (duplicateMethod == DuplicateMethod.COVER) {
+            dataset.removeFile(existDatasetFile);
+            datasetFile.setId(existDatasetFile.getId());
+        }
     }
 
     /**
@@ -273,6 +303,8 @@ public class DatasetFileApplicationService {
         Dataset dataset = datasetRepository.getById(datasetId);
         BusinessAssert.notNull(dataset, SystemErrorCode.RESOURCE_NOT_FOUND);
         List<DatasetFile> copiedFiles = new ArrayList<>();
+        List<DatasetFile> existDatasetFiles = datasetFileRepository.findAllByDatasetId(datasetId);
+        dataset.setFiles(existDatasetFiles);
         for (String sourceFilePath : req.sourcePaths()) {
             Path sourcePath = Paths.get(sourceFilePath);
             if (!Files.exists(sourcePath) || !Files.isRegularFile(sourcePath)) {
@@ -292,10 +324,11 @@ public class DatasetFileApplicationService {
                     .uploadTime(currentTime)
                     .lastAccessTime(currentTime)
                     .build();
+            setDatasetFileId(datasetFile, dataset);
             dataset.addFile(datasetFile);
             copiedFiles.add(datasetFile);
         }
-        datasetFileRepository.saveBatch(copiedFiles, 100);
+        datasetFileRepository.saveOrUpdateBatch(copiedFiles, 100);
         dataset.active();
         datasetRepository.updateById(dataset);
         CompletableFuture.runAsync(() -> copyFilesToDatasetDir(req.sourcePaths(), dataset));

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Button,
   App,
@@ -6,314 +6,336 @@ import {
   Select,
   Form,
   Modal,
-  UploadFile,
-  Radio,
-  Tree,
+  Steps,
+  Descriptions,
 } from "antd";
-import { InboxOutlined, PlusOutlined } from "@ant-design/icons";
-import { KnowledgeBaseItem } from "../knowledge-base.model";
-import Dragger from "antd/es/upload/Dragger";
-import {
-  queryDatasetFilesUsingGet,
-  queryDatasetsUsingGet,
-} from "@/pages/DataManagement/dataset.api";
-import { datasetTypeMap } from "@/pages/DataManagement/dataset.const";
+import { PlusOutlined } from "@ant-design/icons";
 import { addKnowledgeBaseFilesUsingPost } from "../knowledge-base.api";
-import { DatasetType } from "@/pages/DataManagement/dataset.model";
-
-const dataSourceOptions = [
-  { label: "本地上传", value: "local" },
-  { label: "数据集", value: "dataset" },
-];
+import DatasetFileTransfer from "./DatasetFileTransfer";
+import { DescriptionsItemType } from "antd/es/descriptions";
+import { DatasetFile } from "@/pages/DataManagement/dataset.model";
 
 const sliceOptions = [
+  { label: "默认分块", value: "DEFAULT_CHUNK" },
   { label: "章节分块", value: "CHAPTER_CHUNK" },
   { label: "段落分块", value: "PARAGRAPH_CHUNK" },
   { label: "长度分块", value: "LENGTH_CHUNK" },
   { label: "自定义分割符分块", value: "CUSTOM_SEPARATOR_CHUNK" },
-  { label: "默认分块", value: "DEFAULT_CHUNK" },
 ];
 
-const columns = [
-  {
-    dataIndex: "name",
-    title: "名称",
-    ellipsis: true,
-  },
-  {
-    dataIndex: "datasetType",
-    title: "类型",
-    ellipsis: true,
-    render: (type) => datasetTypeMap[type].label,
-  },
-  {
-    dataIndex: "size",
-    title: "大小",
-    ellipsis: true,
-  },
-  {
-    dataIndex: "fileCount",
-    title: "文件数",
-    ellipsis: true,
-  },
-];
-
-export default function AddDataDialog({ knowledgeBase }) {
-  const [isOpen, setIsOpen] = useState(false);
+export default function AddDataDialog({ knowledgeBase, onDataAdded }) {
+  const [open, setOpen] = useState(false);
   const { message } = App.useApp();
   const [form] = Form.useForm();
-  const [fileList, setFileList] = useState<UploadFile[]>([]);
+  const [currentStep, setCurrentStep] = useState(0);
 
-  // Form initial values
-  const [newKB, setNewKB] = useState<Partial<KnowledgeBaseItem>>({
-    dataSource: "dataset",
+  const [selectedMap, setSelectedMap] = useState<Record<string, DatasetFile[]>>(
+    {}
+  );
+
+  // 定义分块选项
+  const sliceOptions = [
+    { label: "默认分块", value: "DEFAULT_CHUNK" },
+    { label: "按章节分块", value: "CHAPTER_CHUNK" },
+    { label: "按段落分块", value: "PARAGRAPH_CHUNK" },
+    { label: "固定长度分块", value: "FIXED_LENGTH_CHUNK" },
+    { label: "自定义分隔符分块", value: "CUSTOM_SEPARATOR_CHUNK" },
+  ];
+
+  // 定义初始状态
+  const [newKB, setNewKB] = useState({
     processType: "DEFAULT_CHUNK",
     chunkSize: 500,
-    overlap: 50,
-    datasetIds: [],
+    overlapSize: 50,
+    delimiter: "",
   });
 
-  const [filesTree, setFilesTree] = useState<any[]>([]);
+  const steps = [
+    {
+      title: "选择数据集文件",
+      description: "从多个数据集中选择文件",
+    },
+    {
+      title: "配置参数",
+      description: "设置数据处理参数",
+    },
+    {
+      title: "确认上传",
+      description: "确认信息并上传",
+    },
+  ];
 
-  const fetchDatasets = async () => {
-    const { data } = await queryDatasetsUsingGet({
-      page: 0,
-      size: 1000,
-      type: DatasetType.TEXT,
-    });
-    const datasets =
-      data.content.map((item) => ({
-        ...item,
-        key: item.id,
-        title: item.name,
-        isLeaf: item.fileCount === 0,
-        disabled: item.fileCount === 0,
-      })) || [];
-    setFilesTree(datasets);
+  // 获取已选择文件总数
+  const getSelectedFilesCount = () => {
+    return Object.values(selectedMap).reduce(
+      (total, files) => total + files.length,
+      0
+    );
   };
 
-  useEffect(() => {
-    if (isOpen) fetchDatasets();
-  }, [isOpen]);
-
-  const updateTreeData = (list, key: React.Key, children) =>
-    list.map((node) => {
-      if (node.key === key) {
-        return {
-          ...node,
-          children,
-        };
-      }
-      if (node.children) {
-        return {
-          ...node,
-          children: updateTreeData(node.children, key, children),
-        };
-      }
-      return node;
-    });
-
-  const onLoadFiles = async ({ key, children }) =>
-    new Promise<void>((resolve) => {
-      if (children) {
-        resolve();
+  const handleNext = () => {
+    // 验证当前步骤
+    if (currentStep === 0) {
+      if (getSelectedFilesCount() === 0) {
+        message.warning("请至少选择一个文件");
         return;
       }
-      queryDatasetFilesUsingGet(key, {
-        page: 0,
-        size: 1000,
-      }).then(({ data }) => {
-        const children = data.content.map((file) => ({
-          title: file.fileName,
-          key: file.id,
-          isLeaf: true,
-        }));
-        setFilesTree((origin) => updateTreeData(origin, key, children));
-        resolve();
-      });
-    });
-
-  const handleBeforeUpload = (_, files: UploadFile[]) => {
-    setFileList([...fileList, ...files]);
-    return false;
+    }
+    if (currentStep === 1) {
+      // 验证切片参数
+      if (!newKB.processType) {
+        message.warning("请选择分块方式");
+        return;
+      }
+      if (!newKB.chunkSize || Number(newKB.chunkSize) <= 0) {
+        message.warning("请输入有效的分块大小");
+        return;
+      }
+      if (!newKB.overlapSize || Number(newKB.overlapSize) < 0) {
+        message.warning("请输入有效的重叠长度");
+        return;
+      }
+      if (newKB.processType === "CUSTOM_SEPARATOR_CHUNK" && !newKB.delimiter) {
+        message.warning("请输入分隔符");
+        return;
+      }
+    }
+    setCurrentStep(currentStep + 1);
   };
 
-  const handleRemoveFile = (file: UploadFile) => {
-    setFileList((prev) => prev.filter((f) => f.uid !== file.uid));
+  const handlePrev = () => {
+    setCurrentStep(currentStep - 1);
+  };
+
+  // 重置所有状态
+  const handleReset = () => {
+    setCurrentStep(0);
+    setNewKB({
+      processType: "DEFAULT_CHUNK",
+      chunkSize: 500,
+      overlapSize: 50,
+      delimiter: "",
+    });
+    form.resetFields();
   };
 
   const handleAddData = async () => {
-    await addKnowledgeBaseFilesUsingPost(knowledgeBase.id, {
-      knowledgeBaseId: knowledgeBase.id,
-      files: newKB.dataSource === "local" ? fileList : newKB.files,
-      processType: newKB.processType,
-      chunkSize: newKB.chunkSize,
-      overlap: newKB.overlap,
-      delimiter: newKB.delimiter,
+    const files = [];
+
+    Object.entries(selectedMap).forEach(([datasetId, fileList]) => {
+      files.push(
+        ...fileList.map((file) => ({
+          ...file,
+          id: file.id,
+          name: file.fileName,
+          datasetId,
+        }))
+      );
     });
-    message.success("数据添加成功");
-    form.resetFields();
-    setIsOpen(false);
+
+    if (files.length === 0) {
+      message.warning("请至少选择一个文件");
+      return;
+    }
+
+    try {
+      // 构造符合API要求的请求数据
+      const requestData = {
+        files,
+        processType: newKB.processType,
+        chunkSize: Number(newKB.chunkSize), // 确保是数字类型
+        overlapSize: Number(newKB.overlapSize), // 确保是数字类型
+        delimiter: newKB.delimiter,
+      };
+
+      await addKnowledgeBaseFilesUsingPost(knowledgeBase.id, requestData);
+
+      // 先通知父组件刷新数据（确保刷新发生在重置前）
+      onDataAdded?.();
+
+      message.success("数据添加成功");
+      // 重置状态
+      handleReset();
+      setOpen(false);
+    } catch (error) {
+      message.error("数据添加失败，请重试");
+      console.error("添加文件失败:", error);
+    }
   };
+
+  const handleModalCancel = () => {
+    handleReset();
+    setOpen(false);
+  };
+
+  const descItems: DescriptionsItemType[] = [
+    {
+      label: "知识库名称",
+      key: "knowledgeBaseName",
+      children: knowledgeBase?.name,
+    },
+    {
+      label: "数据来源",
+      key: "dataSource",
+      children: "数据集",
+    },
+    {
+      label: "选择的数据集数",
+      key: "selectedDatasetCount",
+      children: Object.keys(selectedMap).length,
+    },
+    {
+      label: "文件总数",
+      key: "totalFileCount",
+      children: getSelectedFilesCount(),
+    },
+    {
+      label: "分块方式",
+      key: "chunkingMethod",
+      children:
+        sliceOptions.find((opt) => opt.value === newKB.processType)?.label ||
+        "",
+    },
+    {
+      label: "分块大小",
+      key: "chunkSize",
+      children: newKB.chunkSize,
+    },
+    {
+      label: "重叠长度",
+      key: "overlapSize",
+      children: newKB.overlapSize,
+    },
+    ...(newKB.processType === "CUSTOM_SEPARATOR_CHUNK" && newKB.delimiter
+      ? [
+          {
+            label: "分隔符",
+            children: <span className="font-mono">{newKB.delimiter}</span>,
+          },
+        ]
+      : []),
+  ];
 
   return (
     <>
       <Button
         type="primary"
         icon={<PlusOutlined />}
-        onClick={() => setIsOpen(true)}
+        onClick={() => setOpen(true)}
       >
         添加数据
       </Button>
       <Modal
         title="添加数据"
-        open={isOpen}
-        onCancel={() => setIsOpen(false)}
-        onOk={handleAddData}
-        okText="确定"
-        cancelText="取消"
+        open={open}
+        onCancel={handleModalCancel}
+        footer={
+          <div className="space-x-2">
+            {currentStep > 0 && (
+              <Button disabled={false} onClick={handlePrev}>
+                上一步
+              </Button>
+            )}
+            {currentStep < steps.length - 1 ? (
+              <Button type="primary" onClick={handleNext}>
+                下一步
+              </Button>
+            ) : (
+              <Button type="primary" onClick={handleAddData}>
+                确认上传
+              </Button>
+            )}
+          </div>
+        }
         width={1000}
       >
-        <div className="overflow-auto p-6">
+        <div>
+          {/* 步骤导航 */}
+          <Steps
+            current={currentStep}
+            size="small"
+            items={steps}
+            labelPlacement="vertical"
+          />
+
+          {/* 步骤内容 */}
+          <DatasetFileTransfer
+            hidden={currentStep !== 0}
+            open={open}
+            selectedMap={selectedMap}
+            onSelectedChange={setSelectedMap}
+          />
+
           <Form
+            hidden={currentStep !== 1}
             form={form}
             layout="vertical"
             initialValues={newKB}
             onValuesChange={(_, allValues) => setNewKB(allValues)}
           >
-            <Form.Item
-              label="分块方式"
-              name="processType"
-              required
-              rules={[{ required: true }]}
-            >
-              <Select options={sliceOptions}></Select>
-            </Form.Item>
+            <div className="space-y-6">
+              <Form.Item
+                label="分块方式"
+                name="processType"
+                required
+                rules={[{ required: true }]}
+              >
+                <Select options={sliceOptions} />
+              </Form.Item>
 
-            <div className="grid grid-cols-2 gap-3">
-              <Form.Item
-                label="分块大小"
-                name="chunkSize"
-                rules={[
-                  {
-                    required: true,
-                    message: "请输入分块大小",
-                  },
-                ]}
-              >
-                <Input type="number" />
-              </Form.Item>
-              <Form.Item
-                label="重叠长度"
-                name="overlap"
-                rules={[
-                  {
-                    required: true,
-                    message: "请输入重叠长度",
-                  },
-                ]}
-              >
-                <Input type="number" />
-              </Form.Item>
-            </div>
-            {newKB.processType === "CUSTOM_SEPARATOR_CHUNK" && (
-              <Form.Item
-                label="分隔符"
-                name="delimiter"
-                rules={[
-                  {
-                    required: true,
-                    message: "请输入分隔符",
-                  },
-                ]}
-              >
-                <Input placeholder="输入分隔符，如 \\n\\n" />
-              </Form.Item>
-            )}
-            <Form.Item
-              label="数据来源"
-              name="dataSource"
-              rules={[
-                {
-                  required: true,
-                  message: "请选择数据来源",
-                },
-              ]}
-            >
-              <Radio.Group options={dataSourceOptions} />
-            </Form.Item>
-            {newKB.dataSource === "local" && (
-              <Form.Item
-                label="上传文件"
-                name="files"
-                rules={[
-                  {
-                    required: true,
-                    message: "请上传文件",
-                  },
-                ]}
-              >
-                <Dragger
-                  className="w-full"
-                  onRemove={handleRemoveFile}
-                  beforeUpload={handleBeforeUpload}
-                  multiple
+              <div className="grid grid-cols-2 gap-6">
+                <Form.Item
+                  label="分块大小"
+                  name="chunkSize"
+                  rules={[
+                    {
+                      required: true,
+                      message: "请输入分块大小",
+                    },
+                  ]}
                 >
-                  <p className="ant-upload-drag-icon">
-                    <InboxOutlined />
-                  </p>
-                  <p className="ant-upload-text">本地文件上传</p>
-                  <p className="ant-upload-hint">
-                    拖拽文件到此处或点击选择文件
-                  </p>
-                </Dragger>
-              </Form.Item>
-            )}
-            {newKB.dataSource === "dataset" && (
-              <Form.Item
-                label="选择数据集文件"
-                name="datasetId"
-                rules={[
-                  {
-                    required: true,
-                    message: "请选择数据集",
-                  },
-                ]}
-              >
-                <div className="border-card p-4 overflow-auto h-[300px]">
-                  <Tree
-                    blockNode
-                    multiple
-                    loadData={onLoadFiles}
-                    treeData={filesTree}
-                    onSelect={(_, { selectedNodes }) => {
-                      console.log({
-                        ...newKB,
-                        files: selectedNodes
-                          .filter((node) => node.isLeaf)
-                          .map((node) => ({
-                            ...node,
-                            id: node.key,
-                            name: node.title,
-                          })),
-                      });
+                  <Input type="number" placeholder="请输入分块大小" />
+                </Form.Item>
+                <Form.Item
+                  label="重叠长度"
+                  name="overlapSize"
+                  rules={[
+                    {
+                      required: true,
+                      message: "请输入重叠长度",
+                    },
+                  ]}
+                >
+                  <Input type="number" placeholder="请输入重叠长度" />
+                </Form.Item>
+              </div>
 
-                      setNewKB({
-                        ...newKB,
-                        files: selectedNodes
-                          .filter((node) => node.isLeaf)
-                          .map((node) => ({
-                            ...node,
-                            id: node.key,
-                            name: node.title,
-                          })),
-                      });
-                    }}
-                  />
-                </div>
-              </Form.Item>
-            )}
+              {newKB.processType === "CUSTOM_SEPARATOR_CHUNK" && (
+                <Form.Item
+                  label="分隔符"
+                  name="delimiter"
+                  rules={[
+                    {
+                      required: true,
+                      message: "请输入分隔符",
+                    },
+                  ]}
+                >
+                  <Input placeholder="输入分隔符，如 \n\n" />
+                </Form.Item>
+              )}
+            </div>
           </Form>
+
+          <div className="space-y-6" hidden={currentStep !== 2}>
+            <div className="p-4 bg-blue-50 rounded-lg">
+              <div className="text-lg font-medium mb-3">上传信息确认</div>
+              <Descriptions items={descItems} />
+            </div>
+            <div className="text-sm text-yellow-600">
+              提示：上传后系统将自动处理文件，请耐心等待
+            </div>
+          </div>
         </div>
       </Modal>
     </>
