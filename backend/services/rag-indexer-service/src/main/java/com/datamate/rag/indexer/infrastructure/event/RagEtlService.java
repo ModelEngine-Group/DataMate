@@ -8,6 +8,7 @@ import com.datamate.datamanagement.infrastructure.persistence.repository.Dataset
 import com.datamate.rag.indexer.domain.model.FileStatus;
 import com.datamate.rag.indexer.domain.model.RagFile;
 import com.datamate.rag.indexer.domain.repository.RagFileRepository;
+import com.datamate.rag.indexer.infrastructure.milvus.MilvusService;
 import com.datamate.rag.indexer.interfaces.dto.ProcessType;
 import com.google.common.collect.Lists;
 import dev.langchain4j.data.document.Document;
