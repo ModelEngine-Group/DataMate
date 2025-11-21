@@ -1,5 +1,6 @@
 package com.datamate.datamanagement.application;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.datamate.common.domain.model.ChunkUploadPreRequest;
 import com.datamate.common.domain.model.FileUploadResult;
 import com.datamate.common.domain.service.FileService;
@@ -7,6 +8,8 @@ import com.datamate.common.domain.utils.AnalyzerUtils;
 import com.datamate.common.infrastructure.exception.BusinessAssert;
 import com.datamate.common.infrastructure.exception.BusinessException;
 import com.datamate.common.infrastructure.exception.SystemErrorCode;
+import com.datamate.common.interfaces.PagedResponse;
+import com.datamate.common.interfaces.PagingQuery;
 import com.datamate.datamanagement.common.enums.DuplicateMethod;
 import com.datamate.datamanagement.domain.contants.DatasetConstant;
 import com.datamate.datamanagement.domain.model.dataset.Dataset;
@@ -23,14 +26,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.ibatis.session.RowBounds;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -82,12 +81,10 @@ public class DatasetFileApplicationService {
      * 获取数据集文件列表
      */
     @Transactional(readOnly = true)
-    public Page<DatasetFile> getDatasetFiles(String datasetId, String fileType,
-                                             String status, Pageable pageable) {
-        RowBounds bounds = new RowBounds(pageable.getPageNumber() * pageable.getPageSize(), pageable.getPageSize());
-        List<DatasetFile> content = datasetFileRepository.findByCriteria(datasetId, fileType, status, bounds);
-        long total = content.size() < pageable.getPageSize() && pageable.getPageNumber() == 0 ? content.size() : content.size() + (long) pageable.getPageNumber() * pageable.getPageSize();
-        return new PageImpl<>(content, pageable, total);
+    public PagedResponse<DatasetFile> getDatasetFiles(String datasetId, String fileType, String status, String name, PagingQuery pagingQuery) {
+        IPage<DatasetFile> page = new com.baomidou.mybatisplus.extension.plugins.pagination.Page<>(pagingQuery.getPage(), pagingQuery.getSize());
+        IPage<DatasetFile> files = datasetFileRepository.findByCriteria(datasetId, fileType, status, name, page);
+        return PagedResponse.of(files);
     }
 
     /**

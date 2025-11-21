@@ -14,7 +14,13 @@ import io.milvus.v2.common.IndexParam;
 import io.milvus.v2.service.collection.request.AddFieldReq;
 import io.milvus.v2.service.collection.request.CreateCollectionReq;
 import io.milvus.v2.service.collection.request.HasCollectionReq;
+import io.milvus.v2.service.vector.request.AnnSearchReq;
+import io.milvus.v2.service.vector.request.HybridSearchReq;
 import io.milvus.v2.service.vector.request.InsertReq;
+import io.milvus.v2.service.vector.request.data.BaseVector;
+import io.milvus.v2.service.vector.request.data.EmbeddedText;
+import io.milvus.v2.service.vector.request.data.FloatVec;
+import io.milvus.v2.service.vector.response.SearchResp;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -174,11 +180,39 @@ public class MilvusService {
         return data;
     }
 
-    List<String> generateIds(int n) {
-        List<String> ids = new ArrayList<>();
-        for (int i = 0; i < n; i++) {
-            ids.add(randomUUID());
-        }
-        return ids;
+    public SearchResp hybridSearch(String collectionName, String query, float[] queryDense, int topK) {
+        List<BaseVector> queryTexts = Collections.singletonList(new EmbeddedText(query));
+        List<BaseVector> queryVectors = Collections.singletonList(new FloatVec(queryDense));
+
+        List<AnnSearchReq> searchRequests = new ArrayList<>();
+        searchRequests.add(AnnSearchReq.builder()
+                .vectorFieldName("vector")
+                .vectors(queryVectors)
+                .params("{\"nprobe\": 10}")
+                .topK(topK)
+                .build());
+        searchRequests.add(AnnSearchReq.builder()
+                .vectorFieldName("sparse")
+                .vectors(queryTexts)
+                .params("{\"drop_ratio_search\": 0.2}")
+                .topK(topK)
+                .build());
+        CreateCollectionReq.Function ranker = CreateCollectionReq.Function.builder()
+                .name("rrf")
+                .functionType(FunctionType.RERANK)
+                .param("reranker", "rrf")
+                .param("k", "60")
+                .build();
+
+
+
+        SearchResp searchResp = this.getMilvusClient().hybridSearch(HybridSearchReq.builder()
+                .collectionName(collectionName)
+                .searchRequests(searchRequests)
+                .ranker(ranker)
+                .outFields(Arrays.asList("id", "text", "metadata"))
+                .topK(topK)
+                .build());
+        return searchResp;
     }
 }

@@ -6,6 +6,7 @@ import com.datamate.rag.indexer.application.KnowledgeBaseService;
 import com.datamate.rag.indexer.domain.model.RagChunk;
 import com.datamate.rag.indexer.domain.model.RagFile;
 import com.datamate.rag.indexer.interfaces.dto.*;
+import io.milvus.v2.service.vector.response.SearchResp;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -131,12 +132,11 @@ public class KnowledgeBaseController {
     /**
      * 检索知识库内容
      *
-     * @param knowledgeBaseId 知识库 ID
+     * @param request 检索请求
+     * @return 检索结果
      */
-//    @PostMapping("/{knowledgeBaseId}/retrieve")
-//    public PagedResponse<RagChunk> retrieve(@PathVariable("knowledgeBaseId") String knowledgeBaseId,
-//                                            @RequestBody @Valid RetrieveReq request,
-//                                            PagingQuery pagingQuery) {
-//        return knowledgeBaseService.retrieve(knowledgeBaseId, request, pagingQuery);
-//    }
+    @PostMapping("/retrieve")
+    public SearchResp retrieve(@RequestBody @Valid RetrieveReq request) {
+        return knowledgeBaseService.retrieve(request);
+    }
 }

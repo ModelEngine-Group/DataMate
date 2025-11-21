@@ -150,8 +150,8 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
     },
     {
       title: "大小",
-      dataIndex: "size",
-      key: "size",
+      dataIndex: "fileSize",
+      key: "fileSize",
       ellipsis: true,
       render: formatBytes,
     },
