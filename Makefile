@@ -119,7 +119,7 @@ runtime-docker-build:
 
 .PHONY: backend-python-docker-build
 backend-python-docker-build:
-	docker build -t datamate-backend-python:$(VERSION) . -f scripts/images/datamate-python/Dockerfile
+	docker build -t datamate-backend-python:$(VERSION) . -f scripts/images/backend-python/Dockerfile
 
 .PHONY: deer-flow-docker-build
 deer-flow-docker-build:
