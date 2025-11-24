@@ -20,7 +20,7 @@ import java.util.Map;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class FileTag {
-    private Map<String, Object> value;
+    private Map<String, Object> values;
 
     private String type;
 
@@ -30,7 +30,7 @@ public class FileTag {
 
     public List<String> getTags() {
         List<String> tags = new ArrayList<>();
-        Object tagValues = value.get(type);
+        Object tagValues = values.get(type);
         if (tagValues instanceof List) {
             for (Object tag : (List<?>) tagValues) {
                 if (tag instanceof String) {
