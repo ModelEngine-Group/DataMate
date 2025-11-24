@@ -144,6 +144,7 @@ jobs:
 
       - name: Manifest Docker Image
         run: |
+          LOWERCASE_REPO=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           docker manifest create ghcr.io/$LOWERCASE_REPO/deer-flow-backend:${{ steps.set-tag.outputs.TAGS }} \
             ghcr.io/$LOWERCASE_REPO/deer-flow-backend:${{ steps.set-tag.outputs.AMD_TAGS }} \
             ghcr.io/$LOWERCASE_REPO/deer-flow-backend:${{ steps.set-tag.outputs.ARM_TAGS }}
