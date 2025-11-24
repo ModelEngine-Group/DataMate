@@ -3,6 +3,7 @@
 # Declare variables to be passed into your templates.
 
 global:
+  namespace: datamate
   deerFlow:
     enable: false
   image:
@@ -27,6 +28,8 @@ global:
 public:
   persistentVolumeClaim:
     storageClass: ""
+    storagePath: ""
+    storageNode: ""
     size:
       dataset: 10Gi
       flow: 1Gi
