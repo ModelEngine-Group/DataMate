@@ -42,12 +42,23 @@ jobs:
             echo "TAGS=$BASE_IMAGE:temp" >> $GITHUB_OUTPUT
           fi
 
-      - name: Build Docker Image
+      - name: Build AMD Docker Image
         run: |
-          make build-${{ inputs.service_name }} VERSION=latest
+          docker build -t datamate-${{ inputs.service_name }} . -f scripts/images/${{ inputs.service_name }}/Dockerfile --platform amd64
 
-      - name: Tag & Push Docker Image
+      - name: Tag & Push AMD Docker Image
         if: github.event_name != 'pull_request'
         run: |
           docker tag datamate-${{ inputs.service_name }}:latest ${{ steps.set-tag.outputs.TAGS }}
-          docker push ${{ steps.set-tag.outputs.TAGS }}
+          docker push ${{ steps.set-tag.outputs.TAGS }} --platform amd64
+
+      - name: Build ARM Docker Image
+        if: github.event_name != 'pull_request'
+        run: |
+          docker build -t datamate-${{ inputs.service_name }} . -f scripts/images/${{ inputs.service_name }}/Dockerfile --platform arm64
+
+      - name: Tag & Push ARM Docker Image
+        if: github.event_name != 'pull_request'
+        run: |
+          docker tag datamate-${{ inputs.service_name }}:latest ${{ steps.set-tag.outputs.TAGS }}
+          docker push ${{ steps.set-tag.outputs.TAGS }} --platform arm64
