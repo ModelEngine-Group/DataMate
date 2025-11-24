@@ -174,7 +174,7 @@ class RatioTaskService:
     @staticmethod
     async def handle_selected_file(existing_paths: set[Any], f, session, target_ds: Dataset):
         src_path = f.file_path
-        dst_prefix = f"/dataset/{target_ds.id}"
+        dst_prefix = f"/dataset/{target_ds.id}/"
         file_name = RatioTaskService.get_new_file_name(dst_prefix, existing_paths, f)
 
         new_path = dst_prefix + file_name
