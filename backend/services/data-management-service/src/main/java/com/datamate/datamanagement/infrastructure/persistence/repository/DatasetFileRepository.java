@@ -1,8 +1,8 @@
 package com.datamate.datamanagement.infrastructure.persistence.repository;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.repository.IRepository;
 import com.datamate.datamanagement.domain.model.dataset.DatasetFile;
-import org.apache.ibatis.session.RowBounds;
 
 import java.util.List;
 
@@ -23,5 +23,6 @@ public interface DatasetFileRepository extends IRepository<DatasetFile> {
 
     DatasetFile findByDatasetIdAndFileName(String datasetId, String fileName);
 
-    List<DatasetFile> findByCriteria(String datasetId, String fileType, String status, RowBounds bounds);
+    IPage<DatasetFile> findByCriteria(String datasetId, String fileType, String status, String name,
+                                      IPage<DatasetFile> page);
 }

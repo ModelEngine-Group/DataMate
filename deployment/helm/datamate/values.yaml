@@ -24,6 +24,16 @@ global:
       name: "datamate-database"
       tag: "latest"
 
+public:
+  persistentVolumeClaim:
+    storageClass: ""
+    size:
+      dataset: 10Gi
+      flow: 1Gi
+      log: 1Gi
+      database: 1Gi
+      operator: 1Gi
+
 datasetVolume: &datasetVolume
   name: dataset-volume
   persistentVolumeClaim:

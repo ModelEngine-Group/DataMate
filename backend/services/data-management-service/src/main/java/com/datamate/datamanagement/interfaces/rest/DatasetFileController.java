@@ -3,18 +3,20 @@ package com.datamate.datamanagement.interfaces.rest;
 import com.datamate.common.infrastructure.common.IgnoreResponseWrap;
 import com.datamate.common.infrastructure.common.Response;
 import com.datamate.common.infrastructure.exception.SystemErrorCode;
+import com.datamate.common.interfaces.PagedResponse;
+import com.datamate.common.interfaces.PagingQuery;
 import com.datamate.datamanagement.application.DatasetFileApplicationService;
 import com.datamate.datamanagement.domain.model.dataset.DatasetFile;
 import com.datamate.datamanagement.interfaces.converter.DatasetConverter;
-import com.datamate.datamanagement.interfaces.dto.*;
+import com.datamate.datamanagement.interfaces.dto.CopyFilesRequest;
+import com.datamate.datamanagement.interfaces.dto.DatasetFileResponse;
+import com.datamate.datamanagement.interfaces.dto.UploadFileRequest;
+import com.datamate.datamanagement.interfaces.dto.UploadFilesPreRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -22,7 +24,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * 数据集文件 REST 控制器（UUID 模式）
@@ -40,29 +41,17 @@ public class DatasetFileController {
     }
 
     @GetMapping
-    public ResponseEntity<Response<PagedDatasetFileResponse>> getDatasetFiles(
+    public Response<PagedResponse<DatasetFile>> getDatasetFiles(
             @PathVariable("datasetId") String datasetId,
             @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
             @RequestParam(value = "size", required = false, defaultValue = "20") Integer size,
             @RequestParam(value = "fileType", required = false) String fileType,
-            @RequestParam(value = "status", required = false) String status) {
-        Pageable pageable = PageRequest.of(page != null ? page : 0, size != null ? size : 20);
-
-        Page<DatasetFile> filesPage = datasetFileApplicationService.getDatasetFiles(
-                datasetId, fileType, status, pageable);
-
-        PagedDatasetFileResponse response = new PagedDatasetFileResponse();
-        response.setContent(filesPage.getContent().stream()
-                .map(DatasetConverter.INSTANCE::convertToResponse)
-                .collect(Collectors.toList()));
-        response.setPage(filesPage.getNumber());
-        response.setSize(filesPage.getSize());
-        response.setTotalElements((int) filesPage.getTotalElements());
-        response.setTotalPages(filesPage.getTotalPages());
-        response.setFirst(filesPage.isFirst());
-        response.setLast(filesPage.isLast());
-
-        return ResponseEntity.ok(Response.ok(response));
+            @RequestParam(value = "status", required = false) String status,
+            @RequestParam(value = "name", required = false) String name) {
+        PagingQuery pagingQuery = new PagingQuery(page, size);
+        PagedResponse<DatasetFile> filesPage = datasetFileApplicationService.getDatasetFiles(
+                datasetId, fileType, status, name, pagingQuery);
+        return Response.ok(filesPage);
     }
 
     @GetMapping("/{fileId}")

@@ -37,8 +37,7 @@ import {
 } from "lucide-react";
 import { Link, useNavigate } from "react-router";
 import { queryDatasetsUsingGet } from "../DataManagement/dataset.api";
-import { formatBytes } from "@/utils/unit";
-import DatasetFileTransfer from "../KnowledgeBase/components/DatasetFileTransfer";
+import DatasetFileTransfer from "../../components/DatasetFileTransfer";
 
 const { TextArea } = Input;
 
