@@ -120,9 +120,7 @@ export default function AddDataDialog({ knowledgeBase, onDataAdded }) {
   };
 
   const handleAddData = async () => {
-    const selectedFiles = [];
-
-    if (selectedFiles.length === 0) {
+    if (getSelectedFilesCount() === 0) {
       message.warning("请至少选择一个文件");
       return;
     }
@@ -130,7 +128,7 @@ export default function AddDataDialog({ knowledgeBase, onDataAdded }) {
     try {
       // 构造符合API要求的请求数据
       const requestData = {
-        files: Object.entries(selectedFilesMap),
+        files: Object.values(selectedFilesMap),
         processType: newKB.processType,
         chunkSize: Number(newKB.chunkSize), // 确保是数字类型
         overlapSize: Number(newKB.overlapSize), // 确保是数字类型

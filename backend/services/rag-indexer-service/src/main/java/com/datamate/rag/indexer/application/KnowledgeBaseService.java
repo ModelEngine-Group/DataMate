@@ -147,7 +147,7 @@ public class KnowledgeBaseService {
             RagFile ragFile = new RagFile();
             ragFile.setKnowledgeBaseId(knowledgeBase.getId());
             ragFile.setFileId(fileInfo.id());
-            ragFile.setFileName(fileInfo.name());
+            ragFile.setFileName(fileInfo.fileName());
             ragFile.setStatus(FileStatus.UNPROCESSED);
             return ragFile;
         }).toList();
