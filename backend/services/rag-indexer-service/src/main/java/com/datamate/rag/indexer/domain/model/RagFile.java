@@ -44,4 +44,6 @@ public class RagFile extends BaseEntity<String> {
     private Map<String, Object> metadata;
 
     private FileStatus status;
+
+    private String errMsg;
 }

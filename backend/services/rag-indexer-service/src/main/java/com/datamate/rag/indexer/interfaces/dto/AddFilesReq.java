@@ -18,7 +18,7 @@ public class AddFilesReq {
     private ProcessType processType;
     private Integer chunkSize;
     private Integer overlapSize;
-    private String customSeparator;
+    private String delimiter;
     private List<FileInfo> files;
 
     public record FileInfo(String id, String name) {

@@ -6,10 +6,10 @@ import com.datamate.rag.indexer.application.KnowledgeBaseService;
 import com.datamate.rag.indexer.domain.model.RagChunk;
 import com.datamate.rag.indexer.domain.model.RagFile;
 import com.datamate.rag.indexer.interfaces.dto.*;
+import io.milvus.v2.service.vector.response.SearchResp;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-
 
 
 /**
@@ -124,8 +124,19 @@ public class KnowledgeBaseController {
      */
     @GetMapping("/{knowledgeBaseId}/files/{ragFileId}")
     public PagedResponse<RagChunk> getChunks(@PathVariable("knowledgeBaseId") String knowledgeBaseId,
-                                             @PathVariable("ragFileId") String ragFileId,
-                                             PagingQuery pagingQuery) {
+                                                  @PathVariable("ragFileId") String ragFileId,
+                                                  PagingQuery pagingQuery) {
         return knowledgeBaseService.getChunks(knowledgeBaseId, ragFileId, pagingQuery);
+    }
+
+    /**
+     * 检索知识库内容
+     *
+     * @param request 检索请求
+     * @return 检索结果
+     */
+    @PostMapping("/retrieve")
+    public SearchResp retrieve(@RequestBody @Valid RetrieveReq request) {
+        return knowledgeBaseService.retrieve(request);
     }
 }

@@ -22,6 +22,7 @@ create table if not exists t_rag_file
   chunk_count       INT COMMENT '切片数',
   metadata          JSON COMMENT '元数据',
   status            VARCHAR(50) COMMENT '文件状态',
+  err_msg           text NULL COMMENT '错误信息',
   created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   updated_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   created_by        VARCHAR(255) COMMENT '创建者',

@@ -8,6 +8,7 @@ on:
       - 'runtime/python-executor/**'
       - 'scripts/images/runtime/**'
       - '.github/workflows/docker-image-runtime.yml'
+      - '.github/workflows/docker-images-reusable.yml'
   pull_request:
     branches: [ "main" ]
     paths:
@@ -15,6 +16,7 @@ on:
       - 'runtime/python-executor/**'
       - 'scripts/images/runtime/**'
       - '.github/workflows/docker-image-runtime.yml'
+      - '.github/workflows/docker-images-reusable.yml'
   workflow_dispatch:
   workflow_call:
 

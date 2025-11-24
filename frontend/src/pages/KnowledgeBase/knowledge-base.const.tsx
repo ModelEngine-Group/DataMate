@@ -63,26 +63,37 @@ export const KBTypeMap = {
   },
 };
 
-export function mapKnowledgeBase(kb: KnowledgeBaseItem, showModelFields: boolean = true): KnowledgeBaseItem {
+export function mapKnowledgeBase(
+  kb: KnowledgeBaseItem,
+  showModelFields: boolean = true
+): KnowledgeBaseItem {
   return {
     ...kb,
     icon: <BookOpenText className="w-full h-full" />,
     description: kb.description,
     statistics: [
-      ...(showModelFields ? [
-        {
-          label: "索引模型",
-          key: "embeddingModel",
-          icon: <VectorSquare className="w-4 h-4 text-blue-500" />,
-          value: kb.embedding?.modelName + (kb.embedding?.provider ? ` (${kb.embedding.provider})` : "") || "无",
-        },
-        {
-          label: "文本理解模型",
-          key: "chatModel",
-          icon: <BookType className="w-4 h-4 text-blue-500" />,
-          value: kb.chat?.modelName + (kb.chat?.provider ? ` (${kb.chat.provider})` : "") || "无",
-        },
-      ] : []),
+      ...(showModelFields
+        ? [
+            {
+              label: "索引模型",
+              key: "embeddingModel",
+              icon: <VectorSquare className="w-4 h-4 text-blue-500" />,
+              value:
+                kb.embedding?.modelName +
+                  (kb.embedding?.provider
+                    ? ` (${kb.embedding.provider})`
+                    : "") || "无",
+            },
+            {
+              label: "文本理解模型",
+              key: "chatModel",
+              icon: <BookType className="w-4 h-4 text-blue-500" />,
+              value:
+                kb.chat?.modelName +
+                  (kb.chat?.provider ? ` (${kb.chat.provider})` : "") || "无",
+            },
+          ]
+        : []),
       {
         label: "文件数",
         key: "fileCount",
@@ -115,3 +126,25 @@ export function mapFileData(file: Partial<KBFile>): KBFile {
     },
   };
 }
+
+export const DatasetFileCols = [
+  {
+    title: "所属数据集",
+    dataIndex: "datasetName",
+    key: "datasetName",
+    ellipsis: true,
+  },
+  {
+    title: "文件名",
+    dataIndex: "fileName",
+    key: "fileName",
+    ellipsis: true,
+  },
+  {
+    title: "大小",
+    dataIndex: "fileSize",
+    key: "fileSize",
+    ellipsis: true,
+    render: formatBytes,
+  },
+];

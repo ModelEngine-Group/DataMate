@@ -11,7 +11,7 @@ on:
         type: string
 
 jobs:
-  build-and-push:
+  build-and-push-amd:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -35,19 +35,99 @@ jobs:
           BASE_IMAGE=ghcr.io/$LOWERCASE_REPO/datamate-${{ inputs.service_name }}
           if [[ $GITHUB_REF == refs/tags/v* ]]; then
             TAG=${GITHUB_REF#refs/tags/v}
-            echo "TAGS=$BASE_IMAGE:$TAG" >> $GITHUB_OUTPUT
+            echo "TAGS=$BASE_IMAGE:amd64-$TAG" >> $GITHUB_OUTPUT
           elif [[ $GITHUB_REF == refs/heads/main ]]; then
-            echo "TAGS=$BASE_IMAGE:latest" >> $GITHUB_OUTPUT
+            echo "TAGS=$BASE_IMAGE:amd64" >> $GITHUB_OUTPUT
           else
-            echo "TAGS=$BASE_IMAGE:temp" >> $GITHUB_OUTPUT
+            echo "TAGS=$BASE_IMAGE:amd64-temp" >> $GITHUB_OUTPUT
           fi
 
       - name: Build Docker Image
         run: |
-          make build-${{ inputs.service_name }} VERSION=latest
+          docker build -t datamate-${{ inputs.service_name }}:amd64 . -f scripts/images/${{ inputs.service_name }}/Dockerfile --platform amd64
 
       - name: Tag & Push Docker Image
         if: github.event_name != 'pull_request'
         run: |
-          docker tag datamate-${{ inputs.service_name }}:latest ${{ steps.set-tag.outputs.TAGS }}
+          docker tag datamate-${{ inputs.service_name }}:amd64 ${{ steps.set-tag.outputs.TAGS }}
           docker push ${{ steps.set-tag.outputs.TAGS }}
+
+  build-and-push-arm:
+    runs-on: ubuntu-24.04-arm
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to GitHub Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set Docker Image Tag
+        id: set-tag
+        run: |
+          LOWERCASE_REPO=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          BASE_IMAGE=ghcr.io/$LOWERCASE_REPO/datamate-${{ inputs.service_name }}
+          if [[ $GITHUB_REF == refs/tags/v* ]]; then
+            TAG=${GITHUB_REF#refs/tags/v}
+            echo "TAGS=$BASE_IMAGE:arm64-$TAG" >> $GITHUB_OUTPUT
+          elif [[ $GITHUB_REF == refs/heads/main ]]; then
+            echo "TAGS=$BASE_IMAGE:arm64" >> $GITHUB_OUTPUT
+          else
+            echo "TAGS=$BASE_IMAGE:arm64-temp" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build Docker Image
+        run: |
+          docker build -t datamate-${{ inputs.service_name }}:arm64 . -f scripts/images/${{ inputs.service_name }}/Dockerfile --platform arm64
+
+      - name: Tag & Push Docker Image
+        if: github.event_name != 'pull_request'
+        run: |
+          docker tag datamate-${{ inputs.service_name }}:arm64 ${{ steps.set-tag.outputs.TAGS }}
+          docker push ${{ steps.set-tag.outputs.TAGS }}
+
+  manifest:
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    needs: [ build-and-push-amd, build-and-push-arm ]
+    steps:
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set Docker Image Tag
+        id: set-tag
+        run: |
+          LOWERCASE_REPO=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          BASE_IMAGE=ghcr.io/$LOWERCASE_REPO/datamate-${{ inputs.service_name }}
+          if [[ $GITHUB_REF == refs/tags/v* ]]; then
+            TAG=${GITHUB_REF#refs/tags/v}
+            echo "TAGS=$BASE_IMAGE:$TAG" >> $GITHUB_OUTPUT
+            echo "ARM_TAGS=$BASE_IMAGE:arm64-$TAG" >> $GITHUB_OUTPUT
+            echo "AMD_TAGS=$BASE_IMAGE:amd64-$TAG" >> $GITHUB_OUTPUT
+          elif [[ $GITHUB_REF == refs/heads/main ]]; then
+            echo "TAGS=$BASE_IMAGE:latest" >> $GITHUB_OUTPUT
+            echo "ARM_TAGS=$BASE_IMAGE:arm64" >> $GITHUB_OUTPUT
+            echo "AMD_TAGS=$BASE_IMAGE:amd64" >> $GITHUB_OUTPUT
+          else
+            echo "TAGS=$BASE_IMAGE:temp" >> $GITHUB_OUTPUT
+            echo "ARM_TAGS=$BASE_IMAGE:arm64-temp" >> $GITHUB_OUTPUT
+            echo "AMD_TAGS=$BASE_IMAGE:amd64-temp" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Manifest Docker Image
+        run: |
+          docker manifest create ${{ steps.set-tag.outputs.TAGS }} \
+            ${{ steps.set-tag.outputs.AMD_TAGS }} \
+            ${{ steps.set-tag.outputs.ARM_TAGS }}
+          docker manifest push ${{ steps.set-tag.outputs.TAGS }}

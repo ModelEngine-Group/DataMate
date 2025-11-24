@@ -6,7 +6,9 @@ import com.datamate.common.infrastructure.exception.BusinessException;
 import com.datamate.common.infrastructure.exception.KnowledgeBaseErrorCode;
 import com.datamate.common.interfaces.PagedResponse;
 import com.datamate.common.interfaces.PagingQuery;
+import com.datamate.common.setting.domain.entity.ModelConfig;
 import com.datamate.common.setting.domain.repository.ModelConfigRepository;
+import com.datamate.common.setting.infrastructure.client.ModelClient;
 import com.datamate.rag.indexer.domain.model.FileStatus;
 import com.datamate.rag.indexer.domain.model.KnowledgeBase;
 import com.datamate.rag.indexer.domain.model.RagChunk;
@@ -16,8 +18,14 @@ import com.datamate.rag.indexer.domain.repository.RagFileRepository;
 import com.datamate.rag.indexer.infrastructure.event.DataInsertedEvent;
 import com.datamate.rag.indexer.infrastructure.milvus.MilvusService;
 import com.datamate.rag.indexer.interfaces.dto.*;
-import io.milvus.param.collection.DropCollectionParam;
-import io.milvus.param.dml.DeleteParam;
+import dev.langchain4j.data.embedding.Embedding;
+import dev.langchain4j.model.embedding.EmbeddingModel;
+import io.milvus.v2.service.collection.request.DropCollectionReq;
+import io.milvus.v2.service.collection.request.RenameCollectionReq;
+import io.milvus.v2.service.vector.request.DeleteReq;
+import io.milvus.v2.service.vector.request.QueryReq;
+import io.milvus.v2.service.vector.response.QueryResp;
+import io.milvus.v2.service.vector.response.SearchResp;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.BeanUtils;
@@ -26,6 +34,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -63,10 +72,15 @@ public class KnowledgeBaseService {
      * @param knowledgeBaseId 知识库 ID
      * @param request         知识库更新请求
      */
+    @Transactional(rollbackFor = Exception.class)
     public void update(String knowledgeBaseId, KnowledgeBaseUpdateReq request) {
         KnowledgeBase knowledgeBase = Optional.ofNullable(knowledgeBaseRepository.getById(knowledgeBaseId))
                 .orElseThrow(() -> BusinessException.of(KnowledgeBaseErrorCode.KNOWLEDGE_BASE_NOT_FOUND));
         if (StringUtils.hasText(request.getName())) {
+            milvusService.getMilvusClient().renameCollection(RenameCollectionReq.builder()
+                    .collectionName(knowledgeBase.getName())
+                    .newCollectionName(request.getName())
+                    .build());
             knowledgeBase.setName(request.getName());
         }
         if (StringUtils.hasText(request.getDescription())) {
@@ -75,13 +89,19 @@ public class KnowledgeBaseService {
         knowledgeBaseRepository.updateById(knowledgeBase);
     }
 
-    @Transactional
+
+    /**
+     * 删除知识库
+     *
+     * @param knowledgeBaseId 知识库 ID
+     */
+    @Transactional(rollbackFor = Exception.class)
     public void delete(String knowledgeBaseId) {
         KnowledgeBase knowledgeBase = Optional.ofNullable(knowledgeBaseRepository.getById(knowledgeBaseId))
                 .orElseThrow(() -> BusinessException.of(KnowledgeBaseErrorCode.KNOWLEDGE_BASE_NOT_FOUND));
         knowledgeBaseRepository.removeById(knowledgeBaseId);
         ragFileRepository.removeByKnowledgeBaseId(knowledgeBaseId);
-        milvusService.getMilvusClient().dropCollection(DropCollectionParam.newBuilder().withCollectionName(knowledgeBase.getName()).build());
+        milvusService.getMilvusClient().dropCollection(DropCollectionReq.builder().collectionName(knowledgeBase.getName()).build());
     }
 
     public KnowledgeBaseResp getById(String knowledgeBaseId) {
@@ -147,14 +167,65 @@ public class KnowledgeBaseService {
         KnowledgeBase knowledgeBase = Optional.ofNullable(knowledgeBaseRepository.getById(knowledgeBaseId))
                 .orElseThrow(() -> BusinessException.of(KnowledgeBaseErrorCode.KNOWLEDGE_BASE_NOT_FOUND));
         ragFileRepository.removeByIds(request.getIds());
-        milvusService.getMilvusClient().delete(DeleteParam.newBuilder()
-                .withCollectionName(knowledgeBase.getName())
-                .withExpr("metadata[\"rag_file_id\"] in [" + org.apache.commons.lang3.StringUtils.join(request.getIds().stream().map(id -> "\"" + id + "\"").toArray(), ",") + "]")
+        milvusService.getMilvusClient().delete(DeleteReq.builder()
+                .collectionName(knowledgeBase.getName())
+                .filter("metadata[\"rag_file_id\"] in [" + org.apache.commons.lang3.StringUtils.join(request.getIds().stream().map(id -> "\"" + id + "\"").toArray(), ",") + "]")
                 .build());
     }
 
     public PagedResponse<RagChunk> getChunks(String knowledgeBaseId, String ragFileId, PagingQuery pagingQuery) {
-        IPage<RagChunk> page = new Page<>(pagingQuery.getPage(), pagingQuery.getSize());
-        return PagedResponse.of(page.getRecords(), page.getCurrent(), page.getTotal(), page.getPages());
+        KnowledgeBase knowledgeBase = Optional.ofNullable(knowledgeBaseRepository.getById(knowledgeBaseId))
+                .orElseThrow(() -> BusinessException.of(KnowledgeBaseErrorCode.KNOWLEDGE_BASE_NOT_FOUND));
+        QueryResp results = milvusService.getMilvusClient().query(QueryReq.builder()
+                .collectionName(knowledgeBase.getName())
+                .filter("metadata[\"rag_file_id\"] == \"" + ragFileId + "\"")
+                .outputFields(Collections.singletonList("*"))
+                .limit(Long.valueOf(pagingQuery.getSize()))
+                .offset((long) (pagingQuery.getPage() - 1) * pagingQuery.getSize())
+                .build());
+        List<QueryResp.QueryResult> queryResults = results.getQueryResults();
+        List<RagChunk> ragChunks = queryResults.stream()
+                .map(QueryResp.QueryResult::getEntity)
+                .map(item -> new RagChunk(
+                        item.get("id").toString(),
+                        item.get("text").toString(),
+                        item.get("metadata").toString()
+                )).toList();
+
+        // 获取总数
+        QueryResp countResults = milvusService.getMilvusClient().query(QueryReq.builder()
+                .collectionName(knowledgeBase.getName())
+                .filter("metadata[\"rag_file_id\"] == \"" + ragFileId + "\"")
+                .outputFields(Collections.singletonList("count(*)"))
+                .build());
+
+        long totalCount = Long.parseLong(countResults.getQueryResults().getFirst().getEntity().get("count(*)").toString());
+        return PagedResponse.of(ragChunks, pagingQuery.getPage(), totalCount, (int) Math.ceil((double) totalCount / pagingQuery.getSize()));
+    }
+
+    /**
+     * 检索知识库内容
+     *
+     * @param request 检索请求
+     * @return 检索结果
+     */
+    public SearchResp retrieve(RetrieveReq request) {
+        KnowledgeBase knowledgeBase = Optional.ofNullable(knowledgeBaseRepository.getById(request.getKnowledgeBaseIds().getFirst()))
+                .orElseThrow(() -> BusinessException.of(KnowledgeBaseErrorCode.KNOWLEDGE_BASE_NOT_FOUND));
+        ModelConfig modelConfig = modelConfigRepository.getById(knowledgeBase.getEmbeddingModel());
+        EmbeddingModel embeddingModel = ModelClient.invokeEmbeddingModel(modelConfig);
+        Embedding embedding = embeddingModel.embed(request.getQuery()).content();
+        SearchResp searchResp = milvusService.hybridSearch(knowledgeBase.getName(), request.getQuery(), embedding.vector(), request.getTopK());
+        return searchResp;
+
+//        request.getKnowledgeBaseIds().forEach(knowledgeId -> {
+//            KnowledgeBase knowledgeBase = Optional.ofNullable(knowledgeBaseRepository.getById(knowledgeId))
+//                    .orElseThrow(() -> BusinessException.of(KnowledgeBaseErrorCode.KNOWLEDGE_BASE_NOT_FOUND));
+//            ModelConfig modelConfig = modelConfigRepository.getById(knowledgeBase.getEmbeddingModel());
+//            EmbeddingModel embeddingModel = ModelClient.invokeEmbeddingModel(modelConfig);
+//            Embedding embedding = embeddingModel.embed(request.getQuery()).content();
+//            searchResp = milvusService.hybridSearch(knowledgeBase.getName(), request.getQuery(), embedding.vector(), request.getTopK());
+//        });
+//        return searchResp;
     }
 }

@@ -4,16 +4,16 @@ package com.datamate.cleaning.application;
 import com.datamate.cleaning.application.scheduler.CleaningTaskScheduler;
 import com.datamate.cleaning.common.enums.CleaningTaskStatusEnum;
 import com.datamate.cleaning.common.enums.ExecutorType;
-
 import com.datamate.cleaning.domain.model.TaskProcess;
 import com.datamate.cleaning.domain.repository.CleaningResultRepository;
 import com.datamate.cleaning.domain.repository.CleaningTaskRepository;
 import com.datamate.cleaning.domain.repository.OperatorInstanceRepository;
-
 import com.datamate.cleaning.infrastructure.validator.CleanTaskValidator;
 import com.datamate.cleaning.interfaces.dto.*;
 import com.datamate.common.infrastructure.exception.BusinessException;
 import com.datamate.common.infrastructure.exception.SystemErrorCode;
+import com.datamate.common.interfaces.PagedResponse;
+import com.datamate.common.interfaces.PagingQuery;
 import com.datamate.datamanagement.application.DatasetApplicationService;
 import com.datamate.datamanagement.application.DatasetFileApplicationService;
 import com.datamate.datamanagement.common.enums.DatasetType;
@@ -26,8 +26,6 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.yaml.snakeyaml.DumperOptions;
@@ -208,10 +206,10 @@ public class CleaningTaskService {
     private void scanDataset(String taskId, String srcDatasetId) {
         int pageNumber = 0;
         int pageSize = 500;
-        PageRequest pageRequest = PageRequest.of(pageNumber, pageSize);
-        Page<DatasetFile> datasetFiles;
+        PagingQuery pageRequest = new PagingQuery(pageNumber, pageSize);
+        PagedResponse<DatasetFile> datasetFiles;
         do {
-            datasetFiles = datasetFileService.getDatasetFiles(srcDatasetId, null, null, pageRequest);
+            datasetFiles = datasetFileService.getDatasetFiles(srcDatasetId, null, null,null, pageRequest);
             if (datasetFiles.getContent().isEmpty()) {
                 break;
             }

@@ -6,5 +6,10 @@ package com.datamate.rag.indexer.domain.model;
  * @author dallas
  * @since 2025-10-29
  */
-public class RagChunk {
+
+public record RagChunk(
+        String id,
+        String text,
+        String metadata
+) {
 }

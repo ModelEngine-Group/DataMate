@@ -9,7 +9,7 @@ import com.datamate.rag.indexer.domain.model.FileStatus;
 import com.datamate.rag.indexer.domain.model.RagFile;
 import com.datamate.rag.indexer.domain.repository.RagFileRepository;
 import com.datamate.rag.indexer.infrastructure.milvus.MilvusService;
-import com.datamate.rag.indexer.interfaces.dto.ProcessType;
+import com.datamate.rag.indexer.interfaces.dto.AddFilesReq;
 import com.google.common.collect.Lists;
 import dev.langchain4j.data.document.Document;
 import dev.langchain4j.data.document.DocumentParser;
@@ -20,10 +20,7 @@ import dev.langchain4j.data.document.parser.apache.pdfbox.ApachePdfBoxDocumentPa
 import dev.langchain4j.data.document.parser.apache.poi.ApachePoiDocumentParser;
 import dev.langchain4j.data.document.parser.apache.tika.ApacheTikaDocumentParser;
 import dev.langchain4j.data.document.parser.markdown.MarkdownDocumentParser;
-import dev.langchain4j.data.document.splitter.DocumentByLineSplitter;
-import dev.langchain4j.data.document.splitter.DocumentByParagraphSplitter;
-import dev.langchain4j.data.document.splitter.DocumentBySentenceSplitter;
-import dev.langchain4j.data.document.splitter.DocumentByWordSplitter;
+import dev.langchain4j.data.document.splitter.*;
 import dev.langchain4j.data.document.transformer.jsoup.HtmlToTextDocumentTransformer;
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.data.segment.TextSegment;
@@ -85,6 +82,7 @@ public class RagEtlService {
                                 // 处理异常
                                 log.error("Error processing RAG file: {}", ragFile.getFileId(), e);
                                 ragFile.setStatus(FileStatus.PROCESS_FAILED);
+                                ragFile.setErrMsg(e.getMessage());
                                 ragFileRepository.updateById(ragFile);
                             } finally {
                                 SEMAPHORE.release();
@@ -109,7 +107,7 @@ public class RagEtlService {
         }
         document.metadata().put("rag_file_id", ragFile.getId());
         // 使用文档分块器对文档进行分块
-        DocumentSplitter splitter = documentSplitter(event.addFilesReq().getProcessType());
+        DocumentSplitter splitter = documentSplitter(event.addFilesReq());
         List<TextSegment> split = splitter.split(document);
 
         // 更新分块数量
@@ -121,16 +119,19 @@ public class RagEtlService {
         EmbeddingModel embeddingModel = ModelClient.invokeEmbeddingModel(model);
         // 调用嵌入模型获取嵌入向量
 
+        if (!milvusService.hasCollection(event.knowledgeBase().getName())) {
+            milvusService.createCollection(event.knowledgeBase().getName(), embeddingModel.dimension());
+        }
+
         Lists.partition(split, 20).forEach(partition -> {
-            List<Embedding> content = embeddingModel.embedAll(partition).content();
-            // 存储嵌入向量到 Milvus
-            milvusService.embeddingStore(embeddingModel, event.knowledgeBase().getName()).addAll(content, partition);
+            List<Embedding> embeddings = embeddingModel.embedAll(partition).content();
+            milvusService.addAll(event.knowledgeBase().getName(),partition, embeddings);
         });
     }
 
     /**
      * 根据文件类型返回对应的文档解析器
-     *
+     *x
      * @param fileType 文件类型
      * @return 文档解析器
      */
@@ -145,13 +146,14 @@ public class RagEtlService {
         };
     }
 
-    public DocumentSplitter documentSplitter(ProcessType processType) {
-        return switch (processType) {
-            case PARAGRAPH_CHUNK -> new DocumentByParagraphSplitter(1000, 100);
-            case CHAPTER_CHUNK -> new DocumentByLineSplitter(1000, 100);
-            case CUSTOM_SEPARATOR_CHUNK -> new DocumentBySentenceSplitter(1000, 100);
-            case LENGTH_CHUNK -> new DocumentByWordSplitter(1000, 100);
-            case DEFAULT_CHUNK -> new DocumentByLineSplitter(1000, 100);
+    public DocumentSplitter documentSplitter(AddFilesReq req) {
+        return switch (req.getProcessType()) {
+            case PARAGRAPH_CHUNK -> new DocumentByParagraphSplitter(req.getChunkSize(), req.getOverlapSize());
+            case SENTENCE_CHUNK -> new DocumentBySentenceSplitter(req.getChunkSize(), req.getOverlapSize());
+            case LENGTH_CHUNK -> new DocumentByCharacterSplitter(req.getChunkSize(), req.getOverlapSize());
+            case DEFAULT_CHUNK -> new DocumentByWordSplitter(req.getChunkSize(), req.getOverlapSize());
+            case CUSTOM_SEPARATOR_CHUNK ->
+                    new DocumentByRegexSplitter(req.getDelimiter(), "", req.getChunkSize(), req.getOverlapSize());
         };
     }
 }

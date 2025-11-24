@@ -1,13 +1,14 @@
 package com.datamate.datamanagement.infrastructure.persistence.repository.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.repository.CrudRepository;
 import com.datamate.datamanagement.domain.model.dataset.DatasetFile;
 import com.datamate.datamanagement.infrastructure.persistence.mapper.DatasetFileMapper;
 import com.datamate.datamanagement.infrastructure.persistence.repository.DatasetFileRepository;
 import lombok.RequiredArgsConstructor;
-import org.apache.ibatis.session.RowBounds;
 import org.springframework.stereotype.Repository;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 
@@ -47,8 +48,12 @@ public class DatasetFileRepositoryImpl extends CrudRepository<DatasetFileMapper,
         return datasetFileMapper.findByDatasetIdAndFileName(datasetId, fileName);
     }
 
-    @Override
-    public List<DatasetFile> findByCriteria(String datasetId, String fileType, String status, RowBounds bounds) {
-        return datasetFileMapper.findByCriteria(datasetId, fileType, status, bounds);
+    public IPage<DatasetFile> findByCriteria(String datasetId, String fileType, String status, String name,
+                                             IPage<DatasetFile> page) {
+        return datasetFileMapper.selectPage(page, new LambdaQueryWrapper<DatasetFile>()
+                .eq(DatasetFile::getDatasetId, datasetId)
+                .eq(StringUtils.hasText(fileType), DatasetFile::getFileType, fileType)
+                .eq(StringUtils.hasText(status), DatasetFile::getStatus, status)
+                .like(StringUtils.hasText(name), DatasetFile::getFileName, name));
     }
 }
