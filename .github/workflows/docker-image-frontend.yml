@@ -7,12 +7,14 @@ on:
       - 'frontend/**'
       - 'scripts/images/frontend/**'
       - '.github/workflows/docker-image-frontend.yml'
+      - '.github/workflows/docker-images-reusable.yml'
   pull_request:
     branches: [ "main" ]
     paths:
       - 'frontend/**'
       - 'scripts/images/frontend/**'
       - '.github/workflows/docker-image-frontend.yml'
+      - '.github/workflows/docker-images-reusable.yml'
   workflow_dispatch:
   workflow_call:
 

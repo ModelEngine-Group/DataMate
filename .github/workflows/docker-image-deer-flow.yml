@@ -8,6 +8,7 @@ on:
       - 'scripts/images/deer-flow-backend/**'
       - 'scripts/images/deer-flow-frontend/**'
       - '.github/workflows/docker-image-deer-flow.yml'
+      - '.github/workflows/docker-images-reusable.yml'
   pull_request:
     branches: [ "main" ]
     paths:
@@ -15,6 +16,7 @@ on:
       - 'scripts/images/deer-flow-backend/**'
       - 'scripts/images/deer-flow-frontend/**'
       - '.github/workflows/docker-image-deer-flow.yml'
+      - '.github/workflows/docker-images-reusable.yml'
   workflow_dispatch:
   workflow_call:
 
