@@ -38,7 +38,7 @@ export default function CreateRatioTask() {
       const totals = String(values.totalTargetCount);
       const config = ratioTaskForm.ratioConfigs.map((c) => {
         return {
-          datasetId: c.id,
+          datasetId: c.source,
           counts: String(c.quantity ?? 0),
           filterConditions: { label: c.labelFilter, dateRange: String(c.dateRange ?? 0)},
         };
