@@ -111,7 +111,7 @@ VALID_BUILD_TARGETS := backend database frontend runtime backend-python deer-flo
 # Automatically prefixes image names with "datamate-" unless it's deer-flow
 .PHONY: %-docker-build
 %-docker-build:
-	@if ! echo "$(VALID_BUILD_TARGETS)" | grep -wq "$*"; then \
+	@if ! echo " $(VALID_BUILD_TARGETS) " | grep -q " $* "; then \
 		echo "Error: Unknown build target '$*'"; \
 		echo "Valid build targets are:"; \
 		for target in $(VALID_BUILD_TARGETS); do \
@@ -181,7 +181,7 @@ VALID_SERVICE_TARGETS := datamate backend frontend runtime label-studio mineru d
 # Generic docker service install target
 .PHONY: %-docker-install
 %-docker-install:
-	@if ! echo "$(VALID_SERVICE_TARGETS)" | grep -wq "$*"; then \
+	@if ! echo " $(VALID_SERVICE_TARGETS) " | grep -q " $* "; then \
 		echo "Error: Unknown service target '$*'"; \
 		echo "Valid service targets are:"; \
 		for target in $(VALID_SERVICE_TARGETS); do \
@@ -217,7 +217,7 @@ VALID_SERVICE_TARGETS := datamate backend frontend runtime label-studio mineru d
 # Generic docker service uninstall target
 .PHONY: %-docker-uninstall
 %-docker-uninstall:
-	@if ! echo "$(VALID_SERVICE_TARGETS)" | grep -wq "$*"; then \
+	@if ! echo " $(VALID_SERVICE_TARGETS) " | grep -q " $* "; then \
 		echo "Error: Unknown service target '$*'"; \
 		echo "Valid service targets are:"; \
 		for target in $(VALID_SERVICE_TARGETS); do \
@@ -251,7 +251,7 @@ VALID_K8S_TARGETS := mineru datamate deer-flow milvus
 # Generic k8s install target
 .PHONY: %-k8s-install
 %-k8s-install: create-namespace
-	@if ! echo "$(VALID_K8S_TARGETS)" | grep -wq "$*"; then \
+	@if ! echo " $(VALID_K8S_TARGETS) " | grep -q " $* "; then \
 		echo "Error: Unknown k8s target '$*'"; \
 		echo "Valid k8s targets are:"; \
 		for target in $(VALID_K8S_TARGETS); do \
@@ -275,7 +275,7 @@ VALID_K8S_TARGETS := mineru datamate deer-flow milvus
 # Generic k8s uninstall target
 .PHONY: %-k8s-uninstall
 %-k8s-uninstall:
-	@if ! echo "$(VALID_K8S_TARGETS)" | grep -wq "$*"; then \
+	@if ! echo " $(VALID_K8S_TARGETS) " | grep -q " $* "; then \
 		echo "Error: Unknown k8s target '$*'"; \
 		echo "Valid k8s targets are:"; \
 		for target in $(VALID_K8S_TARGETS); do \
@@ -304,7 +304,7 @@ VALID_UPGRADE_TARGETS := datamate
 # Generic docker upgrade target
 .PHONY: %-docker-upgrade
 %-docker-upgrade:
-	@if ! echo "$(VALID_UPGRADE_TARGETS)" | grep -wq "$*"; then \
+	@if ! echo " $(VALID_UPGRADE_TARGETS) " | grep -q " $* "; then \
 		echo "Error: Unknown upgrade target '$*'"; \
 		echo "Valid upgrade targets are:"; \
 		for target in $(VALID_UPGRADE_TARGETS); do \
