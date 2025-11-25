@@ -3,7 +3,7 @@ MAKEFLAGS += --no-print-directory
 WITH_MINERU ?= false  # 默认不构建mineru
 VERSION ?= latest
 NAMESPACE ?= datamate
-REGISTRY ?= "ghcr.io/modelengine-group/"
+REGISTRY ?= ghcr.io/modelengine-group/
 
 ifdef COMSPEC
     # Windows 环境
@@ -156,6 +156,14 @@ runtime-docker-install:
 runtime-docker-uninstall:
 	cd deployment/docker/datamate && docker compose down runtime
 
+.PHONY: label-studio-docker-install
+label-studio-docker-install:
+	cd deployment/docker/label-studio && docker compose up -d label-studio
+
+.PHONY: label-studio-docker-uninstall
+label-studio-docker-uninstall:
+	cd deployment/docker/label-studio && docker compose down label-studio
+
 .PHONY: mineru-docker-install
 mineru-docker-install:
 	cd deployment/docker/datamate && export REGISTRY=$(REGISTRY) && docker compose up -d datamate-mineru
@@ -175,14 +183,21 @@ mineru-k8s-uninstall:
 .PHONY: datamate-docker-install
 datamate-docker-install:
 	@if docker compose ls --filter name=deer-flow | grep -q deer-flow; then \
-		cd deployment/docker/datamate && export NGINX_CONF="./backend-with-deer-flow.conf" && export REGISTRY=$(REGISTRY) && docker compose -f docker-compose.yml up -d; \
+		(cd deployment/docker/datamate && NGINX_CONF="./backend-with-deer-flow.conf" REGISTRY=$(REGISTRY) docker compose -f docker-compose.yml up -d) && \
+		$(MAKE) label-studio-docker-install; \
 	else \
-		cd deployment/docker/datamate && export REGISTRY=$(REGISTRY) && docker compose -f docker-compose.yml up -d; \
+		(cd deployment/docker/datamate && REGISTRY=$(REGISTRY) docker compose -f docker-compose.yml up -d) && \
+		$(MAKE) label-studio-docker-install; \
 	fi
 
 .PHONY: datamate-docker-uninstall
 datamate-docker-uninstall:
 	cd deployment/docker/datamate && docker compose -f docker-compose.yml --profile mineru down -v
+	$(MAKE) label-studio-docker-uninstall
+
+.PHONY: datamate-docker-upgrade
+datamate-docker-upgrade:
+	cd deployment/docker/datamate && docker compose -f docker-compose.yml --profile mineru up -d --force-recreate --remove-orphans
 
 .PHONY: deer-flow-docker-install
 deer-flow-docker-install:
