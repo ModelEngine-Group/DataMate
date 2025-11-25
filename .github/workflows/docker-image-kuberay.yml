@@ -1,4 +1,4 @@
-name: Runtime Docker Image CI
+name: Kuberay Docker Image CI
 
 on:
   push:
