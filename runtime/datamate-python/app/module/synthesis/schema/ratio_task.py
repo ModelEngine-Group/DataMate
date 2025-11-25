@@ -7,9 +7,13 @@ from app.module.shared.schema.common import TaskStatus
 
 logger = get_logger(__name__)
 
+class LabelFilter(BaseModel):
+    label: Optional[str] = Field(..., description="标签")
+    value: Optional[str] = Field(None, description="标签值")
+
 class FilterCondition(BaseModel):
     date_range: Optional[str] = Field(None, description="数据范围", alias="dateRange")
-    label: Optional[str] = Field(None, description="标签")
+    label: Optional[LabelFilter] = Field(None, description="标签")
 
     @field_validator("date_range")
     @classmethod

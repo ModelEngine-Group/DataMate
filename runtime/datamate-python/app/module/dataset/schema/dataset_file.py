@@ -46,8 +46,7 @@ class DatasetFileTag(BaseModel):
             tags.append(tag_values)
         # 如果 from_name 不为空，添加前缀
         if self.from_name:
-            tags = [f"{self.from_name} {tag}" for tag in tags]
-
+            tags = [f"{self.from_name}@{tag}" for tag in tags]
         return tags
 
 

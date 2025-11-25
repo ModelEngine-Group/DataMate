@@ -2,14 +2,12 @@ import React, { useMemo, useState, useEffect, FC } from "react";
 import {
   Badge,
   Card,
-  Progress,
   Button,
   Select,
   Table,
   InputNumber,
-  Space,
 } from "antd";
-import { BarChart3, Filter } from "lucide-react";
+import { BarChart3 } from "lucide-react";
 import type { Dataset } from "@/pages/DataManagement/dataset.model.ts";
 
 const TIME_RANGE_OPTIONS = [
@@ -20,6 +18,11 @@ const TIME_RANGE_OPTIONS = [
   { label: '最近30天', value: 30 },
 ];
 
+interface LabelFilter {
+  label: string;
+  value: string;
+}
+
 interface RatioConfigItem {
   id: string;
   name: string;
@@ -27,7 +30,7 @@ interface RatioConfigItem {
   quantity: number;
   percentage: number;
   source: string; // dataset id
-  labelFilter?: string;
+  labelFilter?: LabelFilter;
   dateRange?: number;
 }
 
@@ -36,7 +39,8 @@ interface RatioConfigProps {
   selectedDatasets: string[];
   datasets: Dataset[];
   totalTargetCount: number;
-  distributions: Record<string, Record<string, number>>;
+  // distributions now: { datasetId: { labelName: { labelValue: count } } }
+  distributions: Record<string, Record<string, Record<string, number>>>;
   onChange?: (configs: RatioConfigItem[]) => void;
 }
 
@@ -61,6 +65,10 @@ const RatioConfig: FC<RatioConfigProps> = ({
   const getDatasetLabels = (datasetId: string): string[] => {
     const dist = distributions[String(datasetId)] || {};
     return Object.keys(dist);
+  };
+
+  const getLabelValues = (datasetId: string, label: string): string[] => {
+    return Object.keys(distributions[String(datasetId)]?.[label] || {});
   };
 
   const addConfig = (datasetId: string) => {
@@ -208,46 +216,85 @@ const RatioConfig: FC<RatioConfigProps> = ({
               );
 
               const labels = getDatasetLabels(datasetId);
-              const usedLabels = datasetConfigs
-                .map((c) => c.labelFilter)
-                .filter(Boolean) as string[];
+
+              // helper: used values per label for this dataset (exclude a given row when needed)
+              const getUsedValuesForLabel = (label: string, excludeId?: string) => {
+                return new Set(
+                  datasetConfigs
+                    .filter((c) => c.id !== excludeId && c.labelFilter?.label === label)
+                    .map((c) => c.labelFilter?.value)
+                    .filter(Boolean) as string[]
+                );
+              };
 
               const columns = [
                 {
-                  title: "配比项",
-                  dataIndex: "id",
-                  key: "id",
-                  render: (_: any, record: RatioConfigItem) => (
-                    <Space>
-                      <Filter size={14} className="text-gray-400" />
-                      <span className="text-sm">{record.name}</span>
-                    </Space>
-                  ),
-                },
-                {
-                  title: "标签筛选",
+                  title: "标签",
                   dataIndex: "labelFilter",
                   key: "labelFilter",
                   render: (_: any, record: RatioConfigItem) => {
                     const availableLabels = labels
-                      .map((l) => ({ label: l, value: l }))
-                      .filter(
-                        (opt) =>
-                          opt.value === record.labelFilter ||
-                          !usedLabels.includes(opt.value)
-                      );
+                      .map((l) => ({
+                        label: l,
+                        value: l,
+                        disabled: getLabelValues(datasetId, l).every((v) => getUsedValuesForLabel(l, record.id).has(v)),
+                      }))
                     return (
                       <Select
                         style={{ width: "160px" }}
                         placeholder="选择标签"
-                        value={record.labelFilter}
+                        value={record.labelFilter?.label}
                         options={availableLabels}
                         allowClear
-                        onChange={(value) =>
+                        onChange={(value) => {
+                          if (!value) {
+                            updateConfig(record.id, { labelFilter: undefined });
+                          } else {
+                            // reset value when label changes
+                            updateConfig(record.id, {
+                              labelFilter: { label: value, value: "" },
+                            });
+                          }
+                        }}
+                      />
+                    );
+                  },
+                },
+                {
+                  title: "标签值",
+                  dataIndex: "labelValue",
+                  key: "labelValue",
+                  render: (_: any, record: RatioConfigItem) => {
+                    const selectedLabel = record.labelFilter?.label;
+                    const options = selectedLabel
+                      ? getLabelValues(datasetId, selectedLabel).map((v) => ({
+                        label: v,
+                        value: v,
+                        disabled: datasetConfigs.some(
+                          (c) =>
+                            c.id !== record.id &&
+                            c.labelFilter?.label === selectedLabel &&
+                            c.labelFilter?.value === v
+                        ),
+                      }))
+                      : [];
+                    return (
+                      <Select
+                        style={{ width: "180px" }}
+                        placeholder="选择标签值"
+                        value={record.labelFilter?.value || undefined}
+                        options={options}
+                        allowClear
+                        disabled={!selectedLabel}
+                        onChange={(value) => {
+                          if (!selectedLabel) return;
                           updateConfig(record.id, {
-                            labelFilter: value || undefined,
-                          })
-                        }
+                            labelFilter: {
+                              label: selectedLabel,
+                              value: value || "",
+                            },
+                          });
+                        }}
                       />
                     );
                   },
@@ -284,23 +331,6 @@ const RatioConfig: FC<RatioConfigProps> = ({
                         updateConfig(record.id, { quantity: Number(v || 0) })
                       }
                     />
-                  ),
-                },
-                {
-                  title: "占比",
-                  dataIndex: "percentage",
-                  key: "percentage",
-                  render: (_: any, record: RatioConfigItem) => (
-                    <div style={{ minWidth: 140 }}>
-                      <div className="text-xs mb-1">
-                        {record.percentage ?? 0}%
-                      </div>
-                      <Progress
-                        percent={record.percentage ?? 0}
-                        size="small"
-                        showInfo={false}
-                      />
-                    </div>
                   ),
                 },
                 {

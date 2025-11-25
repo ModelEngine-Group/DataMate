@@ -55,7 +55,7 @@ export interface Dataset {
   updatedAt: string;
   tags: string[];
   targetLocation?: string;
-  distribution?: Record<string, number>;
+  distribution?: Record<string, Record<string, number>>;
 }
 
 export interface TagItem {

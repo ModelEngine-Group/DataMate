@@ -180,7 +180,6 @@ export default function DataEvaluationPage() {
     setTasks(tasks.filter((task) => task.id !== taskId));
   };
 
-  return <DevelopmentInProgress showTime="2025.11.30" />;
   // 主列表界面
   return (
     <div>

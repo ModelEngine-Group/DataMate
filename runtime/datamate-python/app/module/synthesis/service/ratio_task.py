@@ -59,7 +59,10 @@ class RatioTaskService:
                 counts=int(item.get("counts", 0)),
                 filter_conditions=json.dumps({
                     'date_range': item.get("filter_conditions").date_range,
-                    'label': item.get("filter_conditions").label,
+                    'label': {
+                        "label":item.get("filter_conditions").label.label,
+                        "value":item.get("filter_conditions").label.value,
+                    },
                 })
             )
             logger.info(f"Relation created: {relation.id}, {relation}, {item}, {config}")
@@ -285,7 +288,7 @@ class RatioTaskService:
             try:
                 # tags could be a list of strings or list of objects with 'name'
                 tag_names = RatioTaskService.get_all_tags(tags)
-                return conditions.label in tag_names
+                return f"{conditions.label.label}@{conditions.label.value}" in tag_names
             except Exception as e:
                 logger.exception(f"Failed to get tags for {file}", e)
                 return False
