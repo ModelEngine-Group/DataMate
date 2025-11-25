@@ -47,4 +47,5 @@ values ('1', 'sys.knowledge.base.count', '200', 'number', '10,200,500', '知识�
        ('4', 'BRAVE_SEARCH_API_KEY', 'api-xxx', 'string', '', 'deer-flow使用的搜索引擎所需的apiKey', 1, 1, 1, 'system',
         'system'),
        ('5', 'JINA_API_KEY', '', 'string', '', 'deer-flow使用的JINA搜索引擎所需的apiKey', 1, 1, 1, 'system', 'system'),
-       ('6', 'test_bool', 'true', 'boolean', '', '测试布尔值', 1, 1, 1, 'system', 'system');
+       ('6', 'sys.management.dataset.pvc.name', 'dataset-pvc', 'string', '', '数据集所在pvc名称', 1, 0, 1, 'system', 'system'),
+       ('7', 'test_bool', 'true', 'boolean', '', '测试布尔值', 1, 1, 1, 'system', 'system');
