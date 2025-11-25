@@ -290,7 +290,7 @@ const KnowledgeBaseDetailPage: React.FC = () => {
           />
         ) : (
           <div className="p-2">
-            <div style={{ fontSize: 16, fontWeight: 350, marginBottom: 8 }}>基于语义文本检索和全文检索后的加权平均结果</div>
+            <div style={{ fontSize: 14, fontWeight: 300, marginBottom: 8 }}>基于语义文本检索和全文检索后的加权平均结果</div>
             <div className="flex items-center mb-4">
               <Input.Search
                 value={recallQuery}
