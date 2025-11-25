@@ -25,8 +25,9 @@ const KnowledgeBaseDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const { message } = App.useApp();
   const { id } = useParams<{ id: string }>();
-  const [knowledgeBase, setKnowledgeBase] = useState<KnowledgeBaseItem>(null);
+  const [knowledgeBase, setKnowledgeBase] = useState<KnowledgeBaseItem | undefined>(undefined);
   const [showEdit, setShowEdit] = useState(false);
+  const [activeTab, setActiveTab] = useState<'fileList' | 'recallTest'>('fileList');
 
   const fetchKnowledgeBaseDetails = async (id: string) => {
     const { data } = await queryKnowledgeBaseByIdUsingGet(id);
@@ -55,12 +56,12 @@ const KnowledgeBaseDetailPage: React.FC = () => {
   // File table logic
   const handleDeleteFile = async (file: KBFile) => {
     try {
-      await deleteKnowledgeBaseFileByIdUsingDelete(knowledgeBase.id, {
+      await deleteKnowledgeBaseFileByIdUsingDelete(knowledgeBase!.id, {
         ids: [file.id]
       });
       message.success("文件已删除");
       fetchFiles();
-    } catch (error) {
+    } catch {
       message.error("文件删除失败");
     }
   };
@@ -72,7 +73,9 @@ const KnowledgeBaseDetailPage: React.FC = () => {
   };
 
   const handleRefreshPage = () => {
-    fetchKnowledgeBaseDetails(knowledgeBase.id);
+    if (knowledgeBase) {
+      fetchKnowledgeBaseDetails(knowledgeBase.id);
+    }
     fetchFiles();
     setShowEdit(false);
   };
@@ -104,7 +107,7 @@ const KnowledgeBaseDetailPage: React.FC = () => {
         cancelText: "取消",
         okText: "删除",
         okType: "danger",
-        onConfirm: () => handleDeleteKB(knowledgeBase),
+        onConfirm: () => knowledgeBase && handleDeleteKB(knowledgeBase),
       },
       icon: <DeleteOutlined className="w-4 h-4" />,
     },
@@ -134,9 +137,13 @@ const KnowledgeBaseDetailPage: React.FC = () => {
       dataIndex: "status",
       key: "vectorizationStatus",
       width: 120,
-      render: (status: any) => (
-        <Badge color={status?.color} text={status?.label} />
-      ),
+      render: (status: unknown) => {
+        if (typeof status === 'object' && status !== null) {
+          const s = status as { color?: string; label?: string };
+          return <Badge color={s.color} text={s.label} />;
+        }
+        return <Badge color="default" text={String(status)} />;
+      },
     },
     {
       title: "分块数",
@@ -164,7 +171,7 @@ const KnowledgeBaseDetailPage: React.FC = () => {
       key: "actions",
       align: "right" as const,
       width: 100,
-      render: (_: any, file: KBFile) => (
+      render: (_: unknown, file: KBFile) => (
         <div>
           {fileOps.map((op) => (
             <Tooltip key={op.key} title={op.label}>
@@ -193,7 +200,9 @@ const KnowledgeBaseDetailPage: React.FC = () => {
       </div>
       <DetailHeader
         data={knowledgeBase}
-        statistics={knowledgeBase?.statistics || []}
+        statistics={knowledgeBase && Array.isArray((knowledgeBase as { statistics?: unknown[] }).statistics)
+          ? ((knowledgeBase as { statistics?: unknown[] }).statistics ?? [])
+          : []}
         operations={operations}
       />
       <CreateKnowledgeBase
@@ -205,33 +214,45 @@ const KnowledgeBaseDetailPage: React.FC = () => {
       />
       <div className="flex-1 border-card p-6 mt-4">
         <div className="flex items-center justify-between mb-4 gap-3">
-          <div className="flex-1">
-            <SearchControls
-              searchTerm={searchParams.keyword}
-              onSearchChange={(keyword) =>
-                setSearchParams({ ...searchParams, keyword })
-              }
-              searchPlaceholder="搜索文件名..."
-              filters={[]}
-              onFiltersChange={handleFiltersChange}
-              onClearFilters={() =>
-                setSearchParams({ ...searchParams, filter: {} })
-              }
-              showViewToggle={false}
-              showReload={false}
-            />
+          <div className="flex items-center gap-2">
+            <Button type={activeTab === 'fileList' ? 'primary' : 'default'} onClick={() => setActiveTab('fileList')}>
+              文件列表
+            </Button>
+            <Button type={activeTab === 'recallTest' ? 'primary' : 'default'} onClick={() => setActiveTab('recallTest')}>
+              召回测试
+            </Button>
           </div>
-          <AddDataDialog knowledgeBase={knowledgeBase} onDataAdded={handleRefreshPage} />
+          {activeTab === 'fileList' && (
+            <>
+              <div className="flex-1">
+                <SearchControls
+                  searchTerm={searchParams.keyword}
+                  onSearchChange={(keyword) => setSearchParams({ ...searchParams, keyword })}
+                  searchPlaceholder="搜索文件名..."
+                  filters={[]}
+                  onFiltersChange={handleFiltersChange}
+                  onClearFilters={() => setSearchParams({ ...searchParams, filter: { type: [], status: [], tags: [] } })}
+                  showViewToggle={false}
+                  showReload={false}
+                />
+              </div>
+              <AddDataDialog knowledgeBase={knowledgeBase} onDataAdded={handleRefreshPage} />
+            </>
+          )}
         </div>
 
-        <Table
-          loading={loading}
-          columns={fileColumns}
-          dataSource={files}
-          rowKey="id"
-          pagination={pagination}
-          scroll={{ y: "calc(100vh - 30rem)" }}
-        />
+        {activeTab === 'fileList' ? (
+          <Table
+            loading={loading}
+            columns={fileColumns}
+            dataSource={files}
+            rowKey="id"
+            pagination={pagination}
+            scroll={{ y: "calc(100vh - 30rem)" }}
+          />
+        ) : (
+          <div className="p-8 text-center text-lg text-gray-500">召回测试功能待开发</div>
+        )}
       </div>
     </div>
   );

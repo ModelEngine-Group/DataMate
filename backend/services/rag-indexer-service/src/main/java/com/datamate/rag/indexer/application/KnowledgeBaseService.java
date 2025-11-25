@@ -76,16 +76,14 @@ public class KnowledgeBaseService {
     public void update(String knowledgeBaseId, KnowledgeBaseUpdateReq request) {
         KnowledgeBase knowledgeBase = Optional.ofNullable(knowledgeBaseRepository.getById(knowledgeBaseId))
                 .orElseThrow(() -> BusinessException.of(KnowledgeBaseErrorCode.KNOWLEDGE_BASE_NOT_FOUND));
-        if (StringUtils.hasText(request.getName())) {
+        if (StringUtils.hasText(request.getName()) && !knowledgeBase.getName().equals(request.getName())) {
             milvusService.getMilvusClient().renameCollection(RenameCollectionReq.builder()
                     .collectionName(knowledgeBase.getName())
                     .newCollectionName(request.getName())
                     .build());
             knowledgeBase.setName(request.getName());
         }
-        if (StringUtils.hasText(request.getDescription())) {
-            knowledgeBase.setDescription(request.getDescription());
-        }
+        knowledgeBase.setDescription(request.getDescription());
         knowledgeBaseRepository.updateById(knowledgeBase);
     }
 
