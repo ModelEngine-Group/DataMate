@@ -56,6 +56,7 @@ help:
 	@echo "  make uninstall-<component>          Uninstall specific component (prompts)"
 	@echo "  make <component>-docker-uninstall   Uninstall component via Docker"
 	@echo "  make <component>-k8s-uninstall      Uninstall component via Kubernetes"
+	@echo "  Note: Docker uninstall will prompt whether to delete volumes"
 	@echo ""
 	@echo "Upgrade Commands:"
 	@echo "  make datamate-docker-upgrade   Upgrade datamate deployment"
@@ -90,6 +91,30 @@ define prompt-installer
 	$(MAKE) $(1)
 endef
 
+# Prompt user to choose installer and volume deletion for uninstall
+define prompt-uninstaller
+	@echo "Choose a deployment method:"
+	@echo "1. Docker/Docker-Compose"
+	@echo "2. Kubernetes/Helm"
+	@echo -n "Enter choice: "
+	@read installer_choice; \
+	case $$installer_choice in \
+		1) INSTALLER=docker ;; \
+		2) INSTALLER=k8s ;; \
+		*) echo "Invalid choice" && exit 1 ;; \
+	esac; \
+	if [ "$$INSTALLER" = "docker" ]; then \
+		echo "Delete volumes? (This will remove all data)"; \
+		echo "1. Yes - Delete volumes"; \
+		echo "2. No - Keep volumes"; \
+		echo -n "Enter choice (default: 2): "; \
+		read DELETE_VOLUMES_CHOICE; \
+		$(MAKE) $(1) DELETE_VOLUMES_CHOICE=$$DELETE_VOLUMES_CHOICE; \
+	else \
+		$(MAKE) $(1); \
+	fi
+endef
+
 # Generic docker build function
 # Usage: $(call docker-build,service-name,image-name)
 define docker-build
@@ -100,6 +125,19 @@ endef
 # Usage: $(call docker-compose-service,service-name,action,compose-dir)
 define docker-compose-service
 	cd $(3) && docker compose $(2) $(1)
+endef
+
+# Prompt user to choose whether to delete volumes
+define prompt-volume-deletion
+	@echo "Delete volumes? (This will remove all data)"
+	@echo "1. Yes - Delete volumes"
+	@echo "2. No - Keep volumes"
+	@echo -n "Enter choice (default: 2): "
+	@read choice; \
+	case $$choice in \
+		1) echo "-v" ;; \
+		*) echo "" ;; \
+	esac
 endef
 
 # ========== Build Targets ==========
@@ -159,7 +197,7 @@ endif
 .PHONY: uninstall-%
 uninstall-%:
 ifeq ($(origin INSTALLER), undefined)
-	$(call prompt-installer,$*-$$INSTALLER-uninstall)
+	$(call prompt-uninstaller,$*-$$INSTALLER-uninstall)
 else
 	$(MAKE) $*-$(INSTALLER)-uninstall
 endif
@@ -167,16 +205,23 @@ endif
 .PHONY: uninstall
 uninstall:
 ifeq ($(origin INSTALLER), undefined)
-	$(call prompt-installer,milvus-$$INSTALLER-uninstall datamate-$$INSTALLER-uninstall)
+	$(call prompt-uninstaller,milvus-$$INSTALLER-uninstall label-studio-$$INSTALLER-uninstall datamate-$$INSTALLER-uninstall)
 else
-	$(MAKE) milvus-$(INSTALLER)-uninstall
-	$(MAKE) datamate-$(INSTALLER)-uninstall
+	@echo "Delete volumes? (This will remove all data)"; \
+	echo "1. Yes - Delete volumes"; \
+	echo "2. No - Keep volumes"; \
+	echo -n "Enter choice (default: 2): "; \
+	read DELETE_VOLUMES_CHOICE; \
+	export DELETE_VOLUMES_CHOICE; \
+	$(MAKE) milvus-$(INSTALLER)-uninstall DELETE_VOLUMES_CHOICE=$$DELETE_VOLUMES_CHOICE; \
+	$(MAKE) label-studio-$(INSTALLER)-uninstall DELETE_VOLUMES_CHOICE=$$DELETE_VOLUMES_CHOICE; \
+	$(MAKE) datamate-$(INSTALLER)-uninstall DELETE_VOLUMES_CHOICE=$$DELETE_VOLUMES_CHOICE
 endif
 
 # ========== Docker Install/Uninstall Targets ==========
 
 # Valid service targets for docker install/uninstall
-VALID_SERVICE_TARGETS := datamate backend frontend runtime label-studio mineru deer-flow milvus
+VALID_SERVICE_TARGETS := datamate backend frontend runtime mineru "deer-flow" milvus "label-studio"
 
 # Generic docker service install target
 .PHONY: %-docker-install
@@ -226,19 +271,30 @@ VALID_SERVICE_TARGETS := datamate backend frontend runtime label-studio mineru d
 		exit 1; \
 	fi
 	@if [ "$*" = "label-studio" ]; then \
-		$(call docker-compose-service,label-studio,down,deployment/docker/label-studio); \
+		if [ "$(DELETE_VOLUMES_CHOICE)" = "1" ]; then \
+			cd deployment/docker/label-studio && docker compose down -v; \
+		else \
+			cd deployment/docker/label-studio && docker compose down; \
+		fi; \
 	elif [ "$*" = "mineru" ]; then \
 		$(call docker-compose-service,datamate-mineru,down,deployment/docker/datamate); \
 	elif [ "$*" = "datamate" ]; then \
-		cd deployment/docker/datamate && docker compose -f docker-compose.yml --profile mineru down -v; \
-		$(MAKE) label-studio-docker-uninstall; \
+		if [ "$(DELETE_VOLUMES_CHOICE)" = "1" ]; then \
+			cd deployment/docker/datamate && docker compose -f docker-compose.yml --profile mineru down -v; \
+		else \
+			cd deployment/docker/datamate && docker compose -f docker-compose.yml --profile mineru down; \
+		fi; \
 	elif [ "$*" = "deer-flow" ]; then \
 		if docker compose ls --filter name=datamate | grep -q datamate; then \
 			cd deployment/docker/datamate && export REGISTRY=$(REGISTRY) && docker compose -f docker-compose.yml up -d; \
 		fi; \
 		cd deployment/docker/deer-flow && docker compose -f docker-compose.yml down; \
 	elif [ "$*" = "milvus" ]; then \
-		cd deployment/docker/milvus && docker compose -f docker-compose.yml down; \
+		if [ "$(DELETE_VOLUMES_CHOICE)" = "1" ]; then \
+			cd deployment/docker/milvus && docker compose -f docker-compose.yml down -v; \
+		else \
+			cd deployment/docker/milvus && docker compose -f docker-compose.yml down; \
+		fi; \
 	else \
 		$(call docker-compose-service,$*,down,deployment/docker/datamate); \
 	fi

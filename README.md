@@ -45,6 +45,8 @@ Choose a deployment method:
 Enter choice:
 ```
 
+When running make uninstall, the installer will prompt once whether to delete volumes; that single choice is applied to all components. The uninstall order is: milvus -> label-studio -> datamate, which ensures the datamate network is removed cleanly after services that use it have stopped.
+
 ### Clone the Code
 
 ```bash
@@ -56,6 +58,12 @@ cd DataMate
 
 ```bash
 make install
+```
+
+To list all available Make targets, flags and help text, run:
+
+```bash
+make help
 ```
 
 ### Build and deploy Mineru Enhanced PDF Processing
