@@ -52,10 +52,11 @@ jobs:
 
       - name: pull & push
         run: |
+          echo ${{ secrets.GITHUB_TOKEN }}
           LOWERCASE_REPO=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           docker pull quay.io/kuberay/operator:v1.4.2
-          docker tag quay.io/kuberay/operator:v1.4.2 ghcr.io/$LOWERCASE_REPO/operator:v1.4.2-arm64
-          docker push ghcr.io/$LOWERCASE_REPO/operator:v1.4.2-arm64
+          docker tag quay.io/kuberay/operator:v1.4.2 ghcr.io/$LOWERCASE_REPO/quay.io/kuberay/operator:v1.4.2-arm64
+          docker push ghcr.io/$LOWERCASE_REPO/quay.io/kuberay/operator:v1.4.2-arm64
 
   kuberay-manifest:
     runs-on: ubuntu-latest
