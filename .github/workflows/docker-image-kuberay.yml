@@ -1,0 +1,71 @@
+name: Runtime Docker Image CI
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - '.github/workflows/docker-image-kuberay.yml'
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - '.github/workflows/docker-image-kuberay.yml'
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+  kuberay-push-amd:
+    name: Pull & Push Kuberay AMD Image
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    steps:
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: pull & push
+        run: |
+          LOWERCASE_REPO=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          docker pull quay.io/kuberay/operator:v1.4.2
+          docker tag quay.io/kuberay/operator:v1.4.2 ghcr.io/$LOWERCASE_REPO/quay.io/kuberay/operator:v1.4.2-amd64
+          docker push ghcr.io/$LOWERCASE_REPO/quay.io/kuberay/operator:v1.4.2-amd64
+
+  kuberay-push-arm:
+    name: Pull & Push Kuberay ARM Image
+    runs-on: ubuntu-24.04-arm
+    if: github.event_name != 'pull_request'
+    steps:
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: pull & push
+        run: |
+          LOWERCASE_REPO=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          docker pull quay.io/kuberay/operator:v1.4.2
+          docker tag quay.io/kuberay/operator:v1.4.2 ghcr.io/$LOWERCASE_REPO/quay.io/kuberay/operator:v1.4.2-arm64
+          docker push ghcr.io/$LOWERCASE_REPO/quay.io/kuberay/operator:v1.4.2-arm64
+
+  kuberay-manifest:
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    steps:
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: pull & push
+        run: |
+          LOWERCASE_REPO=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          docker manifest create ghcr.io/$LOWERCASE_REPO/quay.io/kuberay/operator:v1.4.2 \
+            ghcr.io/$LOWERCASE_REPO/quay.io/kuberay/operator:v1.4.2-arm64 \
+            ghcr.io/$LOWERCASE_REPO/quay.io/kuberay/operator:v1.4.2-amd64
+          docker manifest push ghcr.io/$LOWERCASE_REPO/quay.io/kuberay/operator:v1.4.2

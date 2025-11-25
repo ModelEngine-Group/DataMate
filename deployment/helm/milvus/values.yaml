@@ -11,7 +11,7 @@ cluster:
 image:
   all:
     repository: milvusdb/milvus
-    tag: v2.6.2
+    tag: v2.6.5
     pullPolicy: IfNotPresent
     ## Optionally specify an array of imagePullSecrets.
     ## Secrets must be manually created in the namespace.
@@ -197,8 +197,6 @@ log:
     ## If false, use emptyDir
     ##
     enabled: false
-    annotations:
-      helm.sh/resource-policy: keep
     persistentVolumeClaim:
       existingClaim: ""
       ## Milvus Logs Persistent Volume Storage Class
@@ -254,8 +252,6 @@ standalone:
     ## If false, use emptyDir
     ##
     enabled: true
-    annotations:
-      helm.sh/resource-policy: keep
     persistentVolumeClaim:
       existingClaim: ""
       ## Milvus Persistent Volume Storage Class
@@ -627,7 +623,6 @@ attu:
 minio:
   enabled: true
   name: minio
-  replicas: 1
   mode: standalone
   image:
     tag: "RELEASE.2024-12-18T13-15-44Z"
