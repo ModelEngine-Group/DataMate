@@ -15,6 +15,7 @@ import io.milvus.v2.service.collection.request.AddFieldReq;
 import io.milvus.v2.service.collection.request.CreateCollectionReq;
 import io.milvus.v2.service.collection.request.HasCollectionReq;
 import io.milvus.v2.service.vector.request.AnnSearchReq;
+import io.milvus.v2.service.vector.request.FunctionScore;
 import io.milvus.v2.service.vector.request.HybridSearchReq;
 import io.milvus.v2.service.vector.request.InsertReq;
 import io.milvus.v2.service.vector.request.data.BaseVector;
@@ -197,21 +198,26 @@ public class MilvusService {
                 .params("{\"drop_ratio_search\": 0.2}")
                 .topK(topK)
                 .build());
+
         CreateCollectionReq.Function ranker = CreateCollectionReq.Function.builder()
-                .name("rrf")
+                .name("weight")
                 .functionType(FunctionType.RERANK)
-                .param("reranker", "rrf")
-                .param("k", "60")
+                .param("reranker", "weighted")
+                .param("weights", "[0.1, 0.9]")
+                .param("norm_score", "true")
                 .build();
 
+        FunctionScore functionScore = FunctionScore.builder()
+                .functions(Collections.singletonList(ranker))
+                .build();
 
 
         SearchResp searchResp = this.getMilvusClient().hybridSearch(HybridSearchReq.builder()
                 .collectionName(collectionName)
                 .searchRequests(searchRequests)
-                .ranker(ranker)
+                .functionScore(functionScore)
                 .outFields(Arrays.asList("id", "text", "metadata"))
-                .topK(topK)
+                .limit(topK)
                 .build());
         return searchResp;
     }
