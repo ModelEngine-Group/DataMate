@@ -16,6 +16,9 @@ jobs:
   kuberay-push-amd:
     name: Pull & Push Kuberay AMD Image
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     if: github.event_name != 'pull_request'
     steps:
       - name: Login to GitHub Container Registry
@@ -35,6 +38,9 @@ jobs:
   kuberay-push-arm:
     name: Pull & Push Kuberay ARM Image
     runs-on: ubuntu-24.04-arm
+    permissions:
+      contents: read
+      packages: write
     if: github.event_name != 'pull_request'
     steps:
       - name: Login to GitHub Container Registry
@@ -53,7 +59,11 @@ jobs:
 
   kuberay-manifest:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     if: github.event_name != 'pull_request'
+    needs: [ kuberay-push-amd, kuberay-push-arm ]
     steps:
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
