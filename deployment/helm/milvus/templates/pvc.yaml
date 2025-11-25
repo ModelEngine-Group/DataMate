@@ -1,11 +1,40 @@
 {{- if not .Values.cluster.enabled }}
 {{- $pvc := .Values.standalone.persistence.persistentVolumeClaim -}}
 {{- if and .Values.standalone.persistence.enabled (not $pvc.existingClaim) }}
+{{- if and $pvc.storageClass (eq $pvc.storageClass "local-storage") }}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ .Release.Namespace }}-{{ printf "%s" (include "milvus.fullname" . | trunc 58)}}-pv
+spec:
+  capacity:
+    storage: {{ $pvc.size | quote }}
+  volumeMode: Filesystem
+  accessModes:
+    - {{ $pvc.accessModes | quote }}
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: {{ $pvc.storageClass }}
+  local: # local类型
+    path: {{ $pvc.storagePath | default "/opt/milvus/data" }}/milvus
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: {{ printf "%s" (include "milvus.fullname" . | trunc 58)}}
+    namespace: {{ .Values.global.namespace | default "datamate" }}
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - {{ $pvc.storageNode }}
+
+---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: {{ printf "%s" (include "milvus.fullname" . | trunc 58)}}
-  namespace: {{ .Release.Namespace }}
 {{- with .Values.standalone.persistence.annotations  }}
   annotations:
 {{ toYaml . | indent 4 }}
@@ -14,30 +43,75 @@ metadata:
 {{ include "milvus.labels" . | indent 4 }}
 spec:
   accessModes:
-  - {{ $pvc.accessModes | quote }}
-  {{- if $pvc.storageClass }}
-    {{- if eq "-" $pvc.storageClass }}
-  storageClassName: ""
-    {{- else }}
+    - {{ $pvc.accessModes | quote }}
+  volumeName: {{ .Release.Namespace }}-{{ printf "%s" (include "milvus.fullname" . | trunc 58)}}-pv
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: {{ $pvc.size | quote }}
   storageClassName: {{ $pvc.storageClass }}
-    {{- end }}
+
+{{- else }}
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ printf "%s" (include "milvus.fullname" . | trunc 58)}}
+{{- with .Values.standalone.persistence.annotations  }}
+  annotations:
+{{ toYaml . | indent 4 }}
+{{- end }}
+  labels:
+{{ include "milvus.labels" . | indent 4 }}
+spec:
+  accessModes:
+    - {{ $pvc.accessModes | quote }}
+  {{- if $pvc.storageClass }}
+  storageClassName: {{ $pvc.storageClass }}
   {{- end }}
   resources:
     requests:
-      storage: {{ $pvc.size }}
+      storage: {{ $pvc.size | quote }}
 {{- end }}
 {{- end }}
 
 {{- $pvc := .Values.log.persistence.persistentVolumeClaim -}}
 {{- if and .Values.log.persistence.enabled (not $pvc.existingClaim)}}
+---
+{{- if and $pvc.storageClass (eq $pvc.storageClass "local-storage") }}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ .Release.Namespace }}-{{ printf "%s-logs" (include "milvus.fullname" . | trunc 58)}}-pv
+spec:
+  capacity:
+    storage: {{ $pvc.size | quote }}
+  volumeMode: Filesystem
+  accessModes:
+    - {{ $pvc.accessModes | quote }}
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: {{ $pvc.storageClass }}
+  local: # local类型
+    path: {{ $pvc.storagePath | default "/opt/milvus/data" }}/milvus-log
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: {{ printf "%s-logs" (include "milvus.fullname" . | trunc 58)}}
+    namespace: {{ .Release.Namespace }}
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - {{ $pvc.storageNode }}
 
 ---
-
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: {{ printf "%s-logs" (include "milvus.fullname" . | trunc 58)}}
-  namespace: {{ .Release.Namespace }}
 {{- with .Values.log.persistence.annotations  }}
   annotations:
 {{ toYaml . | indent 4 }}
@@ -46,15 +120,36 @@ metadata:
 {{ include "milvus.labels" . | indent 4 }}
 spec:
   accessModes:
-  - {{ $pvc.accessModes | quote }}
-  {{- if $pvc.storageClass }}
-    {{- if eq "-" $pvc.storageClass }}
-  storageClassName: ""
-    {{- else }}
+    - {{ $pvc.accessModes | quote }}
+  volumeName: {{ .Release.Namespace }}-{{ printf "%s-logs" (include "milvus.fullname" . | trunc 58)}}-pv
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: {{ $pvc.size | quote }}
   storageClassName: {{ $pvc.storageClass }}
-    {{- end }}
+
+{{- else }}
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ printf "%s-logs" (include "milvus.fullname" . | trunc 58)}}
+{{- with .Values.log.persistence.annotations  }}
+  annotations:
+{{ toYaml . | indent 4 }}
+{{- end }}
+  labels:
+{{ include "milvus.labels" . | indent 4 }}
+spec:
+  accessModes:
+    - {{ $pvc.accessModes | quote }}
+  {{- if $pvc.storageClass }}
+  storageClassName: {{ $pvc.storageClass }}
   {{- end }}
   resources:
     requests:
-      storage: {{ $pvc.size }}
+      storage: {{ $pvc.size | quote }}
+{{- end }}
+{{- end }}
+
 {{- end }}

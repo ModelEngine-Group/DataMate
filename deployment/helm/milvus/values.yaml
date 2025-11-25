@@ -196,7 +196,7 @@ log:
     ## If true, create/use a Persistent Volume Claim
     ## If false, use emptyDir
     ##
-    enabled: false
+    enabled: true
     persistentVolumeClaim:
       existingClaim: ""
       ## Milvus Logs Persistent Volume Storage Class
@@ -210,6 +210,8 @@ log:
       accessModes: ReadWriteMany
       size: 10Gi
       subPath: ""
+      storagePath:
+      storageNode:
 
 ## Heaptrack traces all memory allocations and annotates these events with stack traces.
 ## See more: https://github.com/KDE/heaptrack
@@ -264,6 +266,8 @@ standalone:
       accessModes: ReadWriteOnce
       size: 50Gi
       subPath: ""
+      storagePath:
+      storageNode:
 
 proxy:
   enabled: true
@@ -652,6 +656,8 @@ minio:
     storageClass:
     accessMode: ReadWriteOnce
     size: 500Gi
+    storagePath:
+    storageNode:
 
   livenessProbe:
     enabled: true
@@ -684,6 +690,7 @@ minio:
 etcd:
   enabled: true
   name: etcd
+  workload: statefulSet
   replicaCount: 1
   pdb:
     create: false
@@ -709,6 +716,8 @@ etcd:
     storageClass:
     accessMode: ReadWriteOnce
     size: 10Gi
+    storagePath:
+    storageNode:
 
   ## Change default timeout periods to mitigate zoobie probe process
   livenessProbe:

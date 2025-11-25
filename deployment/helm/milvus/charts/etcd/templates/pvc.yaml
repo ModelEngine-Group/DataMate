@@ -1,0 +1,78 @@
+{{- if eq (.Values.workload | lower) "deployment" }}
+{{- if and .Values.persistence.storageClass (eq .Values.persistence.storageClass "local-storage") }}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ .Release.Namespace }}-{{ .Values.persistence.existingClaim | default (include "common.names.fullname" .) }}-pv
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+  labels: {{- include "common.labels.standard" . | nindent 8 }}
+spec:
+  capacity:
+    storage: {{ .Values.persistence.size | quote }}
+  volumeMode: Filesystem
+  accessModes:
+  {{- range .Values.persistence.accessModes }}
+    - {{ . | quote }}
+  {{- end }}
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: {{ include "common.storage.class" (dict "persistence" .Values.persistence "global" .Values.global) }}
+  local: # local类型
+    path: {{ .Values.persistence.storagePath | default "/opt/milvus/data" }}/etcd
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: {{ .Values.persistence.existingClaim | default (include "common.names.fullname" .) }}
+    namespace: {{ .Release.Namespace | quote }}
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - {{ .Values.persistence.storageNode }}
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.persistence.existingClaim | default (include "common.names.fullname" .) }}
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+  labels: {{- include "common.labels.standard" . | nindent 8 }}
+spec:
+  accessModes:
+  {{- range .Values.persistence.accessModes }}
+    - {{ . | quote }}
+  {{- end }}
+  volumeName: {{ .Release.Namespace }}-{{ .Values.persistence.existingClaim | default (include "common.names.fullname" .) }}-pv
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: {{ .Values.persistence.size | quote }}
+  {{ include "common.storage.class" (dict "persistence" .Values.persistence "global" .Values.global) }}
+
+{{- else }}
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.persistence.existingClaim | default (include "common.names.fullname" .) }}
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+  labels: {{- include "common.labels.standard" . | nindent 8 }}
+spec:
+  accessModes:
+  {{- range .Values.persistence.accessModes }}
+    - {{ . | quote }}
+  {{- end }}
+  {{ include "common.storage.class" (dict "persistence" .Values.persistence "global" .Values.global) }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.size | quote }}
+{{- end }}
+{{- end }}

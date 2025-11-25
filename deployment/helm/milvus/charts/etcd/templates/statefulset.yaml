@@ -1,3 +1,4 @@
+{{- if eq (.Values.workload | lower) "statefulset" }}
 apiVersion: {{ include "common.capabilities.statefulset.apiVersion" . }}
 kind: StatefulSet
 metadata:
@@ -425,3 +426,4 @@ spec:
         {{- end }}
         {{ include "common.storage.class" (dict "persistence" .Values.persistence "global" .Values.global) }}
   {{- end }}
+{{- end }}
