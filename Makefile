@@ -28,7 +28,7 @@ help:
 	@echo "Usage: make <target> [options]"
 	@echo ""
 	@echo "Options:"
-	@echo "  --dev              Use local images instead of registry (empty REGISTRY)"
+	@echo "  dev=true           Use local images instead of registry (empty REGISTRY)"
 	@echo "  VERSION=<version>  Set image version (default: latest)"
 	@echo "  NAMESPACE=<name>   Set Kubernetes namespace (default: datamate)"
 	@echo "  INSTALLER=<type>   Set installer type: docker or k8s"
@@ -65,9 +65,9 @@ help:
 	@echo "  make help                      Show this help message"
 	@echo ""
 	@echo "Examples:"
-	@echo "  make build --dev               Build all images for local development"
+	@echo "  make build dev=true            Build all images for local development"
 	@echo "  make install INSTALLER=docker  Install via Docker Compose"
-	@echo "  make install --dev             Install using local images"
+	@echo "  make install dev=true          Install using local images"
 	@echo "  make datamate-docker-upgrade   Upgrade running datamate services"
 	@echo ""
 
@@ -209,7 +209,7 @@ VALID_SERVICE_TARGETS := datamate backend frontend runtime label-studio mineru d
 		cp runtime/deer-flow/conf.yaml deployment/docker/deer-flow/conf.yaml; \
 		cd deployment/docker/deer-flow && export REGISTRY=$(REGISTRY) && docker compose -f docker-compose.yml up -d; \
 	elif [ "$*" = "milvus" ]; then \
-		$(call docker-compose-service,--file docker-compose.yml,up -d,deployment/docker/milvus); \
+		cd deployment/docker/milvus && docker compose -f docker-compose.yml up -d; \
 	else \
 		$(call docker-compose-service,$*,up -d,deployment/docker/datamate); \
 	fi
@@ -238,7 +238,7 @@ VALID_SERVICE_TARGETS := datamate backend frontend runtime label-studio mineru d
 		fi; \
 		cd deployment/docker/deer-flow && docker compose -f docker-compose.yml down; \
 	elif [ "$*" = "milvus" ]; then \
-		$(call docker-compose-service,--file docker-compose.yml,down,deployment/docker/milvus); \
+		cd deployment/docker/milvus && docker compose -f docker-compose.yml down; \
 	else \
 		$(call docker-compose-service,$*,down,deployment/docker/datamate); \
 	fi
