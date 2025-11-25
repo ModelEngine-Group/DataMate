@@ -16,6 +16,10 @@ import { mockTemplates } from "@/mock/annotation";
 const { TextArea } = Input;
 
 export default function InstructionTemplateCreate() {
+<<<<<<< Updated upstream
+=======
+  // return <DevelopmentInProgress showTime="2025.11.30" />;
+>>>>>>> Stashed changes
   const navigate = useNavigate();
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(
     null

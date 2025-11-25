@@ -28,6 +28,8 @@ services:
       - flow_volume:/flow
       - log_volume:/var/log/datamate
     networks: [ datamate ]
+    ports: 
+      - "18000:18000"
     depends_on:
       - datamate-database
 
@@ -49,7 +51,7 @@ services:
   # 3) database
   datamate-database:
     container_name: datamate-database
-    image: ${REGISTRY:-}datamate-database
+    image: ghcr.io/modelengine-group/datamate-database
     restart: on-failure
     environment:
       MYSQL_ROOT_PASSWORD: password
@@ -65,6 +67,8 @@ services:
     ports:
       - "3306:3306"
     networks: [ datamate ]
+
+
 
   # 3) runtime
   datamate-runtime:

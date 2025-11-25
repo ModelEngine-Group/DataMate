@@ -18,8 +18,26 @@ export default defineConfig({
     //     "Origin, X-Requested-With, Content-Type, Accept",
     // },
     proxy: {
-      "^/api": {
+      "^/api/generation": {
         target: "http://localhost:8080", // 本地后端服务地址
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/api\/generation/, "/api/generation"),
+        configure: (proxy, options) => {
+          // proxy 是 'http-proxy' 的实例
+          proxy.on("proxyReq", (proxyReq, req, res) => {
+            // 可以在这里修改请求头
+            proxyReq.removeHeader("referer");
+            proxyReq.removeHeader("origin");
+          });
+          proxy.on("proxyRes", (proxyRes, req, res) => {
+            delete proxyRes.headers["set-cookie"];
+            proxyRes.headers["cookies"] = ""; // 清除 cookies 头
+          });
+        },
+      },
+      "^/api": {
+        target: "http://localhost:30000", // 本地后端服务地址
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/api/, "/api"),

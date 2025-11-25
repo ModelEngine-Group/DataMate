@@ -187,3 +187,5 @@ Thumbs.db
 .vscode/
 *.sublime-project
 *.sublime-workspace
+
+deployment/docker/milvus/volumes/

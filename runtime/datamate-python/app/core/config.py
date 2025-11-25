@@ -29,7 +29,9 @@ class Settings(BaseSettings):
     log_file_dir: str = "/var/log/datamate"
 
     # Database
-    mysql_host: str = "datamate-database"
+
+    mysql_host: str = "127.0.0.1"
+    #mysql_host: str = "datamate-database"
     mysql_port: int = 3306
     mysql_user: str = "root"
     mysql_password: str = "password"

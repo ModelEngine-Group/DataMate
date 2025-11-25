@@ -42,6 +42,10 @@ import DatasetFileTransfer from "../../components/DatasetFileTransfer";
 const { TextArea } = Input;
 
 export default function SynthesisTaskCreate() {
+<<<<<<< Updated upstream
+=======
+  // return <DevelopmentInProgress showTime="2025.11.30" />;
+>>>>>>> Stashed changes
   const navigate = useNavigate();
   const [form] = Form.useForm();
   const [searchQuery, setSearchQuery] = useState("");
