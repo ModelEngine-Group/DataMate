@@ -17,7 +17,7 @@ spec:
     - {{ . | quote }}
   {{- end }}
   persistentVolumeReclaimPolicy: Delete
-  storageClassName: {{ include "common.storage.class" (dict "persistence" .Values.persistence "global" .Values.global) }}
+  {{ include "common.storage.class" (dict "persistence" .Values.persistence "global" .Values.global) }}
   local: # local类型
     path: {{ .Values.persistence.storagePath | default "/opt/milvus/data" }}/etcd
   claimRef:
