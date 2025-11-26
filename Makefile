@@ -209,7 +209,7 @@ endif
 .PHONY: uninstall
 uninstall:
 ifeq ($(origin INSTALLER), undefined)
-	$(call prompt-uninstaller,milvus-$$INSTALLER-uninstall label-studio-$$INSTALLER-uninstall datamate-$$INSTALLER-uninstall)
+	$(call prompt-uninstaller,milvus-$$INSTALLER-uninstall datamate-$$INSTALLER-uninstall)
 else
 	@echo "Delete volumes? (This will remove all data)"; \
 	echo "1. Yes - Delete volumes"; \
