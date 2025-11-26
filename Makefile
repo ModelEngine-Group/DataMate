@@ -166,6 +166,10 @@ VALID_BUILD_TARGETS := backend database frontend runtime backend-python deer-flo
 		$(call docker-build,$*,datamate-$*); \
 	fi
 
+.PHONY: build-%
+build-%: %-docker-build
+	@:
+
 .PHONY: build
 build: database-docker-build backend-docker-build frontend-docker-build runtime-docker-build backend-python-docker-build
 
