@@ -11,7 +11,7 @@ cluster:
 image:
   all:
     repository: milvusdb/milvus
-    tag: v2.6.2
+    tag: v2.6.5
     pullPolicy: IfNotPresent
     ## Optionally specify an array of imagePullSecrets.
     ## Secrets must be manually created in the namespace.
@@ -196,9 +196,7 @@ log:
     ## If true, create/use a Persistent Volume Claim
     ## If false, use emptyDir
     ##
-    enabled: false
-    annotations:
-      helm.sh/resource-policy: keep
+    enabled: true
     persistentVolumeClaim:
       existingClaim: ""
       ## Milvus Logs Persistent Volume Storage Class
@@ -212,6 +210,8 @@ log:
       accessModes: ReadWriteMany
       size: 10Gi
       subPath: ""
+      storagePath:
+      storageNode:
 
 ## Heaptrack traces all memory allocations and annotates these events with stack traces.
 ## See more: https://github.com/KDE/heaptrack
@@ -254,8 +254,6 @@ standalone:
     ## If false, use emptyDir
     ##
     enabled: true
-    annotations:
-      helm.sh/resource-policy: keep
     persistentVolumeClaim:
       existingClaim: ""
       ## Milvus Persistent Volume Storage Class
@@ -268,6 +266,8 @@ standalone:
       accessModes: ReadWriteOnce
       size: 50Gi
       subPath: ""
+      storagePath:
+      storageNode:
 
 proxy:
   enabled: true
@@ -627,7 +627,6 @@ attu:
 minio:
   enabled: true
   name: minio
-  replicas: 1
   mode: standalone
   image:
     tag: "RELEASE.2024-12-18T13-15-44Z"
@@ -657,6 +656,8 @@ minio:
     storageClass:
     accessMode: ReadWriteOnce
     size: 500Gi
+    storagePath:
+    storageNode:
 
   livenessProbe:
     enabled: true
@@ -689,6 +690,7 @@ minio:
 etcd:
   enabled: true
   name: etcd
+  workload: statefulSet
   replicaCount: 1
   pdb:
     create: false
@@ -714,6 +716,8 @@ etcd:
     storageClass:
     accessMode: ReadWriteOnce
     size: 10Gi
+    storagePath:
+    storageNode:
 
   ## Change default timeout periods to mitigate zoobie probe process
   livenessProbe:

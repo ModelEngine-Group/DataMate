@@ -486,9 +486,9 @@ topologySpreadConstraints: []
 ## @param persistentVolumeClaimRetentionPolicy.whenScaled Volume retention behavior when the replica count of the StatefulSet is reduced
 ## @param persistentVolumeClaimRetentionPolicy.whenDeleted Volume retention behavior that applies when the StatefulSet is deleted
 persistentVolumeClaimRetentionPolicy:
-  enabled: false
+  enabled: true
   whenScaled: Retain
-  whenDeleted: Retain
+  whenDeleted: Delete
 ## @section Traffic exposure parameters
 ##
 
