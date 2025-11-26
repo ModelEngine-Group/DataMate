@@ -8,10 +8,7 @@ import InstructionTemplateTab from "./components/InstructionTemplateTab";
 import SynthesisTaskTab from "./components/SynthesisTaskTab";
 
 export default function DataSynthesisPage() {
-<<<<<<< Updated upstream
-=======
   // return <DevelopmentInProgress showTime="2025.11.30" />;
->>>>>>> Stashed changes
   const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState("tasks");
