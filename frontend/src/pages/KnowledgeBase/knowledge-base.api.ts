@@ -35,15 +35,17 @@ export function addKnowledgeBaseFilesUsingPost(baseId: string, data: any) {
   return post(`/api/knowledge-base/${baseId}/files`, data);
 }
 
-// 获取知识生成文件详情
-export function queryKnowledgeBaseFilesByIdUsingGet(
-  baseId: string,
-  fileId: string
-) {
-  return get(`/api/knowledge-base/${baseId}/files/${fileId}`);
-}
-
 // 删除知识生成文件
 export function deleteKnowledgeBaseFileByIdUsingDelete(baseId: string, data: any) {
   return del(`/api/knowledge-base/${baseId}/files`, data);
+}
+
+// 检索知识库内容
+export function retrieveKnowledgeBaseContent(data: {
+  query: string;
+  topK?: number;
+  threshold?: number;
+  knowledgeBaseIds: string[];
+}) {
+  return post("/api/knowledge-base/retrieve", data);
 }

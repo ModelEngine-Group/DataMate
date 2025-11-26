@@ -11,6 +11,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 
 /**
  * 知识库控制器
@@ -136,7 +138,7 @@ public class KnowledgeBaseController {
      * @return 检索结果
      */
     @PostMapping("/retrieve")
-    public SearchResp retrieve(@RequestBody @Valid RetrieveReq request) {
+    public List<SearchResp.SearchResult> retrieve(@RequestBody @Valid RetrieveReq request) {
         return knowledgeBaseService.retrieve(request);
     }
 }

@@ -3,6 +3,7 @@ package com.datamate.cleaning.application;
 
 import com.datamate.cleaning.domain.repository.CleaningTemplateRepository;
 import com.datamate.cleaning.domain.repository.OperatorInstanceRepository;
+import com.datamate.cleaning.infrastructure.validator.CleanTaskValidator;
 import com.datamate.cleaning.interfaces.dto.*;
 import com.datamate.cleaning.domain.model.entity.TemplateWithInstance;
 import com.datamate.operator.domain.repository.OperatorViewRepository;
@@ -27,6 +28,8 @@ public class CleaningTemplateService {
     private final OperatorInstanceRepository operatorInstanceRepo;
 
     private final OperatorViewRepository operatorViewRepo;
+
+    private final CleanTaskValidator cleanTaskValidator;
 
     public List<CleaningTemplateDto> getTemplates(String keywords) {
         List<OperatorDto> allOperators =
@@ -59,6 +62,7 @@ public class CleaningTemplateService {
 
     @Transactional
     public CleaningTemplateDto createTemplate(CreateCleaningTemplateRequest request) {
+        cleanTaskValidator.checkInputAndOutput(request.getInstance());
         CleaningTemplateDto template = new CleaningTemplateDto();
         String templateId = UUID.randomUUID().toString();
         template.setId(templateId);

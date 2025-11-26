@@ -42,4 +42,12 @@ public class OperatorInstanceRepositoryImpl extends CrudRepository<OperatorInsta
     public List<OperatorDto> findOperatorByInstanceId(String instanceId) {
         return OperatorInstanceConverter.INSTANCE.fromEntityToDto(mapper.findOperatorByInstanceId(instanceId));
     }
+
+    @Override
+    public List<OperatorInstanceDto> findInstanceByInstanceId(String instanceId) {
+        LambdaQueryWrapper<OperatorInstance> lambdaWrapper = new LambdaQueryWrapper<>();
+        lambdaWrapper.eq(OperatorInstance::getInstanceId, instanceId)
+                .orderByAsc(OperatorInstance::getOpIndex);
+        return OperatorInstanceConverter.INSTANCE.fromEntityToDtoList(mapper.selectList(lambdaWrapper));
+    }
 }
