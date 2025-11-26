@@ -20,7 +20,7 @@ spec:
     apiVersion: v1
     kind: PersistentVolumeClaim
     name: {{ printf "%s" (include "milvus.fullname" . | trunc 58)}}
-    namespace: {{ .Values.global.namespace | default "datamate" }}
+    namespace: {{ .Release.Namespace | default "datamate" }}
   nodeAffinity:
     required:
       nodeSelectorTerms:

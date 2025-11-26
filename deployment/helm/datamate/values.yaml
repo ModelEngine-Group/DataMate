@@ -96,6 +96,9 @@ backend:
       mountPath: /operators
 
 frontend:
+  service:
+    type: NodePort
+    nodePort: 30000
   volumes:
     - *logVolume
     - name: datamate-nginx-conf
