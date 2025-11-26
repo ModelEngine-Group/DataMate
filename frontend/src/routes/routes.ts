@@ -22,7 +22,6 @@ import InstructionTemplateCreate from "@/pages/SynthesisTask/CreateTemplate";
 import SynthesisTaskCreate from "@/pages/SynthesisTask/CreateTask";
 
 import DataEvaluationPage from "@/pages/DataEvaluation/Home/DataEvaluation";
-import EvaluationTaskCreate from "@/pages/DataEvaluation/Create/CreateTask";
 import EvaluationTaskReport from "@/pages/DataEvaluation/Report/EvaluationReport";
 import ManualEvaluatePage from "@/pages/DataEvaluation/Evaluate/ManualEvaluate";
 
@@ -187,10 +186,6 @@ const router = createBrowserRouter([
             path: "",
             index: true,
             Component: DataEvaluationPage,
-          },
-          {
-            path: "create-task",
-            Component: EvaluationTaskCreate,
           },
           {
             path: "task-report/:id",

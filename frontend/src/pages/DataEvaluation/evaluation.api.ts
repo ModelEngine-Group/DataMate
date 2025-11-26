@@ -1,4 +1,18 @@
 import { get, post, put, del, download } from "@/utils/request";
+import {deleteRatioTasksUsingDelete} from "@/pages/RatioTask/ratio.api.ts";
+
+export function createEvaluationTaskUsingPost(data: any) {
+  return post("/api/evaluation/tasks", data);
+}
+
+export function getPagedEvaluationTaskUsingGet(params?: any) {
+  return get("/api/evaluation/tasks", params);
+}
+
+export function deleteEvaluationTaskUsingGet(id: string) {
+  const url = `/api/evaluation/tasks?ids=${id}`;
+  return del(url);
+}
 
 // 数据质量评估相关接口
 export function evaluateDataQualityUsingPost(data: any) {
@@ -111,10 +125,6 @@ export function getDatasetEvaluationSummaryUsingGet(datasetId: string | number) 
 // 评估任务管理
 export function queryEvaluationTasksUsingGet(params?: any) {
   return get("/api/v1/evaluation/tasks", params);
-}
-
-export function createEvaluationTaskUsingPost(data: any) {
-  return post("/api/v1/evaluation/tasks", data);
 }
 
 export function getEvaluationTaskByIdUsingGet(taskId: string | number) {
