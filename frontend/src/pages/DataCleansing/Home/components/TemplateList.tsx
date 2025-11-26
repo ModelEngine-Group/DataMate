@@ -46,6 +46,13 @@ export default function TemplateList() {
 
   const templateColumns = [
     {
+      title: "模板ID",
+      dataIndex: "id",
+      key: "id",
+      fixed: "left",
+      width: 100,
+    },
+    {
       title: "模板名称",
       dataIndex: "name",
       key: "name",

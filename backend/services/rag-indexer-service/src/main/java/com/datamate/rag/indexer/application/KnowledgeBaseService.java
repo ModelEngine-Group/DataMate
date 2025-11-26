@@ -76,16 +76,14 @@ public class KnowledgeBaseService {
     public void update(String knowledgeBaseId, KnowledgeBaseUpdateReq request) {
         KnowledgeBase knowledgeBase = Optional.ofNullable(knowledgeBaseRepository.getById(knowledgeBaseId))
                 .orElseThrow(() -> BusinessException.of(KnowledgeBaseErrorCode.KNOWLEDGE_BASE_NOT_FOUND));
-        if (StringUtils.hasText(request.getName())) {
+        if (StringUtils.hasText(request.getName()) && !knowledgeBase.getName().equals(request.getName())) {
             milvusService.getMilvusClient().renameCollection(RenameCollectionReq.builder()
                     .collectionName(knowledgeBase.getName())
                     .newCollectionName(request.getName())
                     .build());
             knowledgeBase.setName(request.getName());
         }
-        if (StringUtils.hasText(request.getDescription())) {
-            knowledgeBase.setDescription(request.getDescription());
-        }
+        knowledgeBase.setDescription(request.getDescription());
         knowledgeBaseRepository.updateById(knowledgeBase);
     }
 
@@ -147,7 +145,7 @@ public class KnowledgeBaseService {
             RagFile ragFile = new RagFile();
             ragFile.setKnowledgeBaseId(knowledgeBase.getId());
             ragFile.setFileId(fileInfo.id());
-            ragFile.setFileName(fileInfo.name());
+            ragFile.setFileName(fileInfo.fileName());
             ragFile.setStatus(FileStatus.UNPROCESSED);
             return ragFile;
         }).toList();
@@ -209,23 +207,19 @@ public class KnowledgeBaseService {
      * @param request 检索请求
      * @return 检索结果
      */
-    public SearchResp retrieve(RetrieveReq request) {
+    public List<SearchResp.SearchResult> retrieve(RetrieveReq request) {
         KnowledgeBase knowledgeBase = Optional.ofNullable(knowledgeBaseRepository.getById(request.getKnowledgeBaseIds().getFirst()))
                 .orElseThrow(() -> BusinessException.of(KnowledgeBaseErrorCode.KNOWLEDGE_BASE_NOT_FOUND));
         ModelConfig modelConfig = modelConfigRepository.getById(knowledgeBase.getEmbeddingModel());
         EmbeddingModel embeddingModel = ModelClient.invokeEmbeddingModel(modelConfig);
         Embedding embedding = embeddingModel.embed(request.getQuery()).content();
         SearchResp searchResp = milvusService.hybridSearch(knowledgeBase.getName(), request.getQuery(), embedding.vector(), request.getTopK());
-        return searchResp;
+        List<SearchResp.SearchResult> searchResults = searchResp.getSearchResults().getFirst();
 
-//        request.getKnowledgeBaseIds().forEach(knowledgeId -> {
-//            KnowledgeBase knowledgeBase = Optional.ofNullable(knowledgeBaseRepository.getById(knowledgeId))
-//                    .orElseThrow(() -> BusinessException.of(KnowledgeBaseErrorCode.KNOWLEDGE_BASE_NOT_FOUND));
-//            ModelConfig modelConfig = modelConfigRepository.getById(knowledgeBase.getEmbeddingModel());
-//            EmbeddingModel embeddingModel = ModelClient.invokeEmbeddingModel(modelConfig);
-//            Embedding embedding = embeddingModel.embed(request.getQuery()).content();
-//            searchResp = milvusService.hybridSearch(knowledgeBase.getName(), request.getQuery(), embedding.vector(), request.getTopK());
-//        });
-//        return searchResp;
+        searchResults.forEach(item -> {
+            String metadata = item.getEntity().get("metadata").toString();
+            item.getEntity().put("metadata", metadata);
+        });
+        return searchResults;
     }
 }

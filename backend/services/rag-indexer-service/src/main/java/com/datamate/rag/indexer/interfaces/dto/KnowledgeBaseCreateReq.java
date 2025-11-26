@@ -20,12 +20,12 @@ public class KnowledgeBaseCreateReq {
      */
     @NotEmpty(message = "知识库名称不能为空")
     @Size(min = 1, max = 255, message = "知识库名称长度必须在 1 到 255 之间")
-    @Pattern(regexp = "^[a-zA-Z0-9_]+$", message = "知识库名称只能包含字母、数字和下划线")
+    @Pattern(regexp = "^[a-zA-Z][a-zA-Z0-9_]*$", message = "知识库名称只能包含字母、数字和下划线")
     private String name;
     /**
      * 知识库描述
      */
-    @Size(min = 1, max = 512, message = "知识库描述长度必须在 1 到 512 之间")
+    @Size(max = 512, message = "知识库描述长度必须在 0 到 512 之间")
     private String description;
 
     /**

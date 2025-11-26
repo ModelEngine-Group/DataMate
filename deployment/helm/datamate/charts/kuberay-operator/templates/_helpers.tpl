@@ -320,3 +320,16 @@ rules:
   - watch
 {{- end -}}
 {{- end -}}
+
+{{/*
+Name of image
+*/}}
+{{- define "kuberay.image" -}}
+{{- $name := .Values.image.repository }}
+{{- $tag := .Values.image.tag }}
+{{- if .Values.global.image.repository }}
+{{- .Values.global.image.repository | trimSuffix "/" }}/{{ $name }}:{{ $tag }}
+{{- else }}
+{{- $name }}:{{ $tag }}
+{{- end }}
+{{- end }}
