@@ -27,6 +27,8 @@ public class CreateCleaningTaskRequest {
 
   private String destDatasetType;
 
+  private String templateId;
+
   private List<OperatorInstanceDto> instance = new ArrayList<>();
 }
 

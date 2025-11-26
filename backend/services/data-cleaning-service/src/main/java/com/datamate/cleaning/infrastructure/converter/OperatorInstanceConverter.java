@@ -8,6 +8,7 @@ import com.datamate.common.infrastructure.exception.SystemErrorCode;
 import com.datamate.operator.domain.model.OperatorView;
 import com.datamate.operator.interfaces.dto.OperatorDto;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -23,18 +24,37 @@ import java.util.Map;
 public interface OperatorInstanceConverter {
     OperatorInstanceConverter INSTANCE = Mappers.getMapper(OperatorInstanceConverter.class);
 
+    ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
     @Mapping(target = "settingsOverride", source = "overrides", qualifiedByName = "mapToString")
     @Mapping(target = "operatorId", source = "id")
     OperatorInstance fromDtoToEntity(OperatorInstanceDto instance);
 
+    @Mapping(target = "overrides", source = "settingsOverride", qualifiedByName = "stringToMap")
+    @Mapping(target = "id", source = "operatorId")
+    OperatorInstanceDto fromEntityToDto(OperatorInstance instance);
+
+    List<OperatorInstanceDto> fromEntityToDtoList(List<OperatorInstance> instance);
+
     @Named("mapToString")
     static String mapToString(Map<String, Object> objects) {
-         ObjectMapper objectMapper = new ObjectMapper();
          try {
-             return objectMapper.writeValueAsString(objects);
+             return OBJECT_MAPPER.writeValueAsString(objects);
          } catch (JsonProcessingException e) {
              throw BusinessException.of(SystemErrorCode.UNKNOWN_ERROR);
          }
+    }
+
+    @Named("stringToMap")
+    static Map<String, Object> stringToMap(String json) {
+        if (json == null) {
+            return Collections.emptyMap();
+        }
+        try {
+            return OBJECT_MAPPER.readValue(json, new TypeReference<>() {});
+        } catch (JsonProcessingException e) {
+            throw BusinessException.of(SystemErrorCode.UNKNOWN_ERROR);
+        }
     }
 
     @Mapping(target = "categories", source = "categories", qualifiedByName = "stringToList")

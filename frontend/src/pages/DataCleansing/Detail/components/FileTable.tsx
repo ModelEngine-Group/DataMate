@@ -107,7 +107,7 @@ export default function FileTable({result, fetchTaskResult}) {
       onFilter: (value: string, record: any) =>
         record.srcName.toLowerCase().includes(value.toLowerCase()),
       render: (text: string) => (
-        <span className="font-mono text-sm">{text?.replace(/\.[^/.]+$/, "")}</span>
+        <span>{text?.replace(/\.[^/.]+$/, "")}</span>
       ),
     },
     {

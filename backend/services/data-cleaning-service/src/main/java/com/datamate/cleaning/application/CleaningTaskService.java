@@ -248,4 +248,8 @@ public class CleaningTaskService {
     public void stopTask(String taskId) {
         taskScheduler.stopTask(taskId);
     }
+
+    public List<OperatorInstanceDto> getInstanceByTemplateId(String templateId) {
+        return operatorInstanceRepo.findInstanceByInstanceId(templateId);
+    }
 }

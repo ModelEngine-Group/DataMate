@@ -13,4 +13,6 @@ public interface OperatorInstanceRepository extends IRepository<OperatorInstance
     void deleteByInstanceId(String instanceId);
 
     List<OperatorDto> findOperatorByInstanceId(String instanceId);
+
+    List<OperatorInstanceDto> findInstanceByInstanceId(String instanceId);
 }
