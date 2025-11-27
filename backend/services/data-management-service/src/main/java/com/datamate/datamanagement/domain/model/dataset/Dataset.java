@@ -113,7 +113,9 @@ public class Dataset extends BaseEntity<String> {
     public void initCreateParam(String datasetBasePath) {
         this.id = UUID.randomUUID().toString();
         this.path = datasetBasePath + File.separator + this.id;
-        this.status = DatasetStatusType.DRAFT;
+        if (this.status == null) {
+            this.status = DatasetStatusType.DRAFT;
+        }
     }
 
     public void updateBasicInfo(String name, String description, String category) {

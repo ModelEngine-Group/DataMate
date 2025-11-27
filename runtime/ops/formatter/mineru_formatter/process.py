@@ -25,6 +25,8 @@ class MineruFormatter(Mapper):
     def execute(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         start = time.time()
         filename = sample[self.filename_key]
+        if not filename.lower().endswith(".pdf"):
+            return sample
         try:
             data = {"source_path": sample[self.filepath_key], "export_path": sample[self.export_path_key]}
             response = http_request(method="POST", url=self.pdf_extract_url, data=data)

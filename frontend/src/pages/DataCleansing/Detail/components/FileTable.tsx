@@ -1,4 +1,4 @@
-import {Button, Modal, Table, Badge, Input} from "antd";
+import {Button, Modal, Table, Badge, Input, Popover} from "antd";
 import { Download } from "lucide-react";
 import {useEffect, useState} from "react";
 import {useParams} from "react-router";
@@ -259,9 +259,9 @@ export default function FileTable({result, fetchTaskResult}) {
               对比
             </Button>
           )}
-          <Button type="link" size="small">
-            下载
-          </Button>
+          <Popover content="暂未开放">
+              <Button type="link" size="small" disabled>下载</Button>
+          </Popover>
         </div>
       ),
     },

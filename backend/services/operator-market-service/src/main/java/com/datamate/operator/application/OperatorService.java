@@ -88,6 +88,9 @@ public class OperatorService {
 
     @Transactional
     public void deleteOperator(String id) {
+        if (operatorRepo.operatorInTemplateOrRunning(id)) {
+            throw BusinessException.of(OperatorErrorCode.OPERATOR_IN_INSTANCE);
+        }
         operatorRepo.deleteOperator(id);
         relationRepo.deleteByOperatorId(id);
     }

@@ -93,6 +93,7 @@ public class CleaningTaskService {
         CreateDatasetRequest createDatasetRequest = new CreateDatasetRequest();
         createDatasetRequest.setName(request.getDestDatasetName());
         createDatasetRequest.setDatasetType(DatasetType.valueOf(request.getDestDatasetType()));
+        createDatasetRequest.setStatus("ACTIVE");
         Dataset destDataset = datasetService.createDataset(createDatasetRequest);
 
         Dataset srcDataset = datasetService.getDataset(request.getSrcDatasetId());

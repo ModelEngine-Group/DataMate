@@ -25,6 +25,8 @@ class UnstructuredFormatter(Mapper):
         start = time.time()
         filepath = sample.get(self.filepath_key)
         filename = sample.get(self.filename_key)
+        if not filename.lower().endswith((".ppt", ".pptx", "docx", "xlsx", ".csv")):
+            return sample
         try:
             elements = partition(filename=filepath)
             sample[self.text_key] = "\n\n".join([str(el) for el in elements])

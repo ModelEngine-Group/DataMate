@@ -16,7 +16,9 @@ public enum OperatorErrorCode implements ErrorCode {
 
     FIELD_NOT_FOUND("op.0003", "缺少必要的字段"),
 
-    SETTINGS_PARSE_FAILED("op.0004", "settings字段解析失败");
+    SETTINGS_PARSE_FAILED("op.0004", "settings字段解析失败"),
+
+    OPERATOR_IN_INSTANCE("op.0005", "算子已被编排在模板或未完成的任务中");
 
     private final String code;
     private final String message;
