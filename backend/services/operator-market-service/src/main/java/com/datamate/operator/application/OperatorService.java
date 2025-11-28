@@ -128,7 +128,7 @@ public class OperatorService {
         return operatorBasePath + File.separator + "extract" + File.separator + fileName;
     }
 
-    private void overrideSettings(OperatorDto operatorDto) {
+    public void overrideSettings(OperatorDto operatorDto) {
         if (StringUtils.isBlank(operatorDto.getSettings()) || MapUtils.isEmpty(operatorDto.getOverrides())) {
             return;
         }
