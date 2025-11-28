@@ -110,7 +110,10 @@ export default function BasicInfo({ task }: { task: CleansingTask }) {
         {/* 处理进度 */}
         <div>
           <h3 className="text-lg font-semibold text-gray-900 mb-4">处理进度</h3>
-          <Progress percent={task?.progress?.process} showInfo />
+          { task?.status?.value === TaskStatus.FAILED ?
+            <Progress percent={task?.progress?.process} size="small" status="exception" />
+            : <Progress percent={task?.progress?.process} size="small"/>
+          }
           <div className="grid grid-cols-2 gap-4 text-sm mt-4">
             <div className="flex items-center gap-2">
               <span className="w-3 h-3 bg-green-500 rounded-full inline-block" />

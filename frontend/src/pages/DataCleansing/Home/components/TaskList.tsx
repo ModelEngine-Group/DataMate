@@ -177,10 +177,13 @@ export default function TaskList() {
       title: "进度",
       dataIndex: "process",
       key: "process",
-      width: 200,
-      render: (progress: number) => (
-        <Progress percent={progress} size="small" />
-      ),
+      width: 150,
+      render: (_, record: CleansingTask) => {
+          if (record?.status?.value == TaskStatus.FAILED) {
+              return <Progress percent={record?.progress?.process} size="small" status="exception" />;
+          }
+          return <Progress percent={record?.progress?.process} size="small"/>;
+      },
     },
     {
       title: "已处理文件数",

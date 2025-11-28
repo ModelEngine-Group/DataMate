@@ -91,10 +91,10 @@ class ImgDuplicatedImagesCleaner(Filter):
         with self.conn as connection:
             connection.execute(text(create_tables_sql))
             # 判断是否有重复文件
-            result = connection.execute(text(query_sql, query_sql_params)).fetchall()
+            result = connection.execute(text(query_sql), query_sql_params).fetchall()
             # 查询记录为空，无重复图片, 插入新文件特征
             if not result:
-                connection.execute(text(insert_sql, insert_sql_params))
+                connection.execute(text(insert_sql), insert_sql_params)
                 return img_bytes
             logger.info(f"taskId: {self.task_uuid} fileName: {file_name}, method: Duplicate ImagesCleaner. "
                         f"The image is duplicated and filtered ")

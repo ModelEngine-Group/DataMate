@@ -250,11 +250,19 @@ export default function FileTable({result, fetchTaskResult}) {
       key: "action",
       render: (_text: string, record: any) => (
         <div className="flex">
-          {record.status === "COMPLETED" && (
+          {record.status === "COMPLETED" ? (
             <Button
               type="link"
               size="small"
               onClick={() => handleViewFileCompare(record)}
+            >
+              对比
+            </Button>
+          ) : (
+            <Button
+              type="link"
+              size="small"
+              disabled
             >
               对比
             </Button>
