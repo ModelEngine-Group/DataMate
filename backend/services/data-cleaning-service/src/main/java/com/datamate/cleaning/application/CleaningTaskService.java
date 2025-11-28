@@ -41,6 +41,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Slf4j
@@ -116,7 +117,7 @@ public class CleaningTaskService {
 
         prepareTask(task, request.getInstance());
         scanDataset(taskId, request.getSrcDatasetId());
-        executeTask(taskId);
+        taskScheduler.executeTask(taskId);
         return task;
     }
 
@@ -170,6 +171,11 @@ public class CleaningTaskService {
     }
 
     public void executeTask(String taskId) {
+        List<CleaningResultDto> failed = cleaningResultRepo.findByInstanceId(taskId, "FAILED");
+        Set<String> failedSet = failed.stream().map(CleaningResultDto::getSrcFileId).collect(Collectors.toSet());
+        CleaningTaskDto task = cleaningTaskRepo.findTaskById(taskId);
+        scanDataset(taskId, task.getSrcDatasetId(), failedSet);
+        cleaningResultRepo.deleteByInstanceId(taskId, "FAILED");
         taskScheduler.executeTask(taskId);
     }
 
@@ -215,6 +221,29 @@ public class CleaningTaskService {
                 break;
             }
             List<Map<String, Object>> files = datasetFiles.getContent().stream()
+                    .map(content -> Map.of("fileName", (Object) content.getFileName(),
+                            "fileSize", content.getFileSize(),
+                            "filePath", content.getFilePath(),
+                            "fileType", content.getFileType(),
+                            "fileId", content.getId()))
+                    .toList();
+            writeListMapToJsonlFile(files, FLOW_PATH + "/" + taskId + "/dataset.jsonl");
+            pageNumber += 1;
+        } while (pageNumber < datasetFiles.getTotalPages());
+    }
+
+    private void scanDataset(String taskId, String srcDatasetId, Set<String> failedFiles) {
+        int pageNumber = 0;
+        int pageSize = 500;
+        PagingQuery pageRequest = new PagingQuery(pageNumber, pageSize);
+        PagedResponse<DatasetFile> datasetFiles;
+        do {
+            datasetFiles = datasetFileService.getDatasetFiles(srcDatasetId, null, null,null, pageRequest);
+            if (datasetFiles.getContent().isEmpty()) {
+                break;
+            }
+            List<Map<String, Object>> files = datasetFiles.getContent().stream()
+                    .filter(content -> failedFiles.contains(content.getId()))
                     .map(content -> Map.of("fileName", (Object) content.getFileName(),
                             "fileSize", content.getFileSize(),
                             "filePath", content.getFilePath(),
