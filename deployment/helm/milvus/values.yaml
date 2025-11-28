@@ -8,6 +8,9 @@ fullnameOverride: ""
 cluster:
   enabled: false
 
+global:
+  imageRegistry: ""
+
 image:
   all:
     repository: milvusdb/milvus

@@ -97,7 +97,7 @@ head:
     limits:
       cpu: "2"
       # To avoid out-of-memory issues, never allocate less than 2G memory for the Ray head.
-      memory: "4G"
+      memory: "8G"
     requests:
       cpu: "1"
       memory: "2G"
