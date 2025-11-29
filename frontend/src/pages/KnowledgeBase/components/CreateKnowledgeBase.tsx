@@ -1,6 +1,7 @@
 import { Button, Form, Input, message, Modal, Select } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import { useEffect, useState } from "react";
+import { useDispatch } from "react-redux";
 import { queryModelListUsingGet } from "@/pages/SettingsPage/settings.apis";
 import { ModelI } from "@/pages/SettingsPage/ModelAccess";
 import {
@@ -8,6 +9,7 @@ import {
   updateKnowledgeBaseByIdUsingPut,
 } from "../knowledge-base.api";
 import { KnowledgeBaseItem } from "../knowledge-base.model";
+import { showSettings } from "@/store/slices/settingsSlice";
 
 export default function CreateKnowledgeBase({
   isEdit,
@@ -25,6 +27,7 @@ export default function CreateKnowledgeBase({
   const [open, setOpen] = useState(false);
   const [form] = Form.useForm();
   const [models, setModels] = useState<ModelI[]>([]);
+  const dispatch = useDispatch();
 
   const embeddingModelOptions = models
     .filter((model) => model.type === "EMBEDDING")
@@ -130,6 +133,19 @@ export default function CreateKnowledgeBase({
               placeholder="请选择索引模型"
               options={embeddingModelOptions}
               disabled={isEdit} // 编辑模式下禁用索引模型修改
+              popupRender={(menu) => (
+                <>
+                  {menu}
+                  <Button
+                    block
+                    type="link"
+                    icon={<PlusOutlined />}
+                    onClick={() => dispatch(showSettings())}
+                  >
+                    添加模型
+                  </Button>
+                </>
+              )}
             />
           </Form.Item>
           <Form.Item

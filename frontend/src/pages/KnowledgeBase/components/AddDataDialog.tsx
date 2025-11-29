@@ -12,7 +12,7 @@ import {
 } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import { addKnowledgeBaseFilesUsingPost } from "../knowledge-base.api";
-import DatasetFileTransfer from "../../../components/DatasetFileTransfer";
+import DatasetFileTransfer from "@/components/business/DatasetFileTransfer";
 import { DescriptionsItemType } from "antd/es/descriptions";
 import { DatasetFileCols } from "../knowledge-base.const";
 

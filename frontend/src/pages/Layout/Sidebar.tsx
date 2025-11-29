@@ -10,6 +10,8 @@ import { menuItems } from "@/pages/Layout/menu";
 import { NavLink, useLocation, useNavigate } from "react-router";
 import TaskUpload from "./TaskUpload";
 import SettingsPage from "../SettingsPage/SettingsPage";
+import { useAppSelector, useAppDispatch } from "@/store/hooks";
+import { showSettings, hideSettings } from "@/store/slices/settingsSlice";
 
 const AsiderAndHeaderLayout = () => {
   const { pathname } = useLocation();
@@ -17,7 +19,8 @@ const AsiderAndHeaderLayout = () => {
   const [activeItem, setActiveItem] = useState<string>("");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [taskCenterVisible, setTaskCenterVisible] = useState(false);
-  const [settingVisible, setSettingVisible] = useState(false);
+  const settingVisible = useAppSelector((state) => state.settings.visible);
+  const dispatch = useAppDispatch();
 
   // Initialize active item based on current pathname
   const initActiveItem = () => {
@@ -140,7 +143,7 @@ const AsiderAndHeaderLayout = () => {
             <Button
               block
               onClick={() => {
-                setSettingVisible(true);
+                dispatch(showSettings());
               }}
             >
               设置
@@ -167,7 +170,7 @@ const AsiderAndHeaderLayout = () => {
             <Button
               block
               onClick={() => {
-                setSettingVisible(true);
+                dispatch(showSettings());
               }}
             >
               <SettingOutlined />
@@ -181,7 +184,7 @@ const AsiderAndHeaderLayout = () => {
         width="100%"
         height="100%"
         open={settingVisible}
-        onClose={() => setSettingVisible(false)}
+        onClose={() => dispatch(hideSettings())}
         bodyStyle={{ padding: 0 }}
         destroyOnHidden={true}
       >

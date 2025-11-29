@@ -13,7 +13,6 @@ import {
 } from "@/pages/DataManagement/dataset.api";
 import { formatBytes } from "@/utils/unit";
 import { useDebouncedEffect } from "@/hooks/useDebouncedEffect";
-import { DatasetFileCols as fileCols } from "../pages/KnowledgeBase/knowledge-base.const";
 
 interface DatasetFileTransferProps
   extends React.HTMLAttributes<HTMLDivElement> {
@@ -21,6 +20,28 @@ interface DatasetFileTransferProps
   selectedFilesMap: { [key: string]: DatasetFile };
   onSelectedFilesChange: (filesMap: { [key: string]: DatasetFile }) => void;
 }
+
+const fileCols = [
+  {
+    title: "所属数据集",
+    dataIndex: "datasetName",
+    key: "datasetName",
+    ellipsis: true,
+  },
+  {
+    title: "文件名",
+    dataIndex: "fileName",
+    key: "fileName",
+    ellipsis: true,
+  },
+  {
+    title: "大小",
+    dataIndex: "fileSize",
+    key: "fileSize",
+    ellipsis: true,
+    render: formatBytes,
+  },
+];
 
 // Customize Table Transfer
 const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({

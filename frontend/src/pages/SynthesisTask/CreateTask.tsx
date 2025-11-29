@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { Dataset } from "@/pages/DataManagement/dataset.model";
+import type { DatasetFile } from "@/pages/DataManagement/dataset.model";
 import {
   Steps,
   Card,
@@ -37,7 +37,7 @@ import {
 } from "lucide-react";
 import { Link, useNavigate } from "react-router";
 import { queryDatasetsUsingGet } from "../DataManagement/dataset.api";
-import DatasetFileTransfer from "../../components/DatasetFileTransfer";
+import DatasetFileTransfer from "@/components/business/DatasetFileTransfer";
 
 const { TextArea } = Input;
 
@@ -47,7 +47,7 @@ export default function SynthesisTaskCreate() {
   const [searchQuery, setSearchQuery] = useState("");
   const [createStep, setCreateStep] = useState(1);
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
-  const [selectedMap, setSelectedMap] = useState<Record<string, DatasetFile[]>>(
+  const [selectedMap, setSelectedMap] = useState<Record<string, DatasetFile>>(
     {}
   );
   const [files] = useState<File[]>([]);
@@ -318,8 +318,8 @@ export default function SynthesisTaskCreate() {
             </Form.Item>
             <DatasetFileTransfer
               open
-              selectedMap={selectedMap}
-              onSelectedChange={setSelectedMap}
+              selectedFilesMap={selectedMap}
+              onSelectedFilesChange={setSelectedMap}
             />
             <h2 className="font-medium text-gray-900 text-lg mt-6 mb-2">
               任务配置

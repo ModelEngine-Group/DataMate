@@ -15,7 +15,7 @@ import type {
   OperatorI,
 } from "@/pages/OperatorMarket/operator.model";
 import Filters from "./components/Filters";
-import TagManagement from "@/components/TagManagement";
+import TagManagement from "@/components/business/TagManagement";
 import { ListView } from "./components/List";
 import useFetchData from "@/hooks/useFetchData";
 import {

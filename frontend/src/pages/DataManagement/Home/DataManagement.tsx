@@ -6,7 +6,7 @@ import {
   PlusOutlined,
   UploadOutlined,
 } from "@ant-design/icons";
-import TagManager from "@/components/TagManagement";
+import TagManager from "@/components/business/TagManagement";
 import { Link, useNavigate } from "react-router";
 import { useEffect, useMemo, useState } from "react";
 import { SearchControls } from "@/components/SearchControls";
