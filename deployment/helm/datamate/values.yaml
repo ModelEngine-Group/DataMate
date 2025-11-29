@@ -3,6 +3,7 @@
 # Declare variables to be passed into your templates.
 
 global:
+  namespace: datamate
   deerFlow:
     enable: false
   image:
@@ -23,6 +24,18 @@ global:
     database:
       name: "datamate-database"
       tag: "latest"
+
+public:
+  persistentVolumeClaim:
+    storageClass: ""
+    storagePath: ""
+    storageNode: ""
+    size:
+      dataset: 10Gi
+      flow: 1Gi
+      log: 1Gi
+      database: 1Gi
+      operator: 1Gi
 
 datasetVolume: &datasetVolume
   name: dataset-volume
@@ -83,6 +96,9 @@ backend:
       mountPath: /operators
 
 frontend:
+  service:
+    type: NodePort
+    nodePort: 30000
   volumes:
     - *logVolume
     - name: datamate-nginx-conf

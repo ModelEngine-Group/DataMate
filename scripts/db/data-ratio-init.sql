@@ -6,7 +6,6 @@ CREATE TABLE IF NOT EXISTS t_st_ratio_instances
     name        varchar(64) COMMENT '名称',
     description TEXT COMMENT '描述',
     target_dataset_id     varchar(64) COMMENT '模板数据集ID',
-    ratio_method      varchar(50) COMMENT '配比方式，按标签（TAG）,按数据集（DATASET）',
     ratio_parameters     JSON COMMENT '配比参数',
     merge_method     varchar(50) COMMENT '合并方式',
     status    varchar(20) COMMENT '状态',

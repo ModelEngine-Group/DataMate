@@ -96,12 +96,6 @@ export default function RatioTasksPage() {
       },
     },
     {
-      title: "配比方式",
-      dataIndex: "ratio_method",
-      key: "ratio_method",
-      width: 120,
-    },
-    {
       title: "目标数量",
       dataIndex: "totals",
       key: "totals",

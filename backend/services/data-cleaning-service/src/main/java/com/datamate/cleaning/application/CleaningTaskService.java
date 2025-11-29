@@ -4,16 +4,16 @@ package com.datamate.cleaning.application;
 import com.datamate.cleaning.application.scheduler.CleaningTaskScheduler;
 import com.datamate.cleaning.common.enums.CleaningTaskStatusEnum;
 import com.datamate.cleaning.common.enums.ExecutorType;
-
 import com.datamate.cleaning.domain.model.TaskProcess;
 import com.datamate.cleaning.domain.repository.CleaningResultRepository;
 import com.datamate.cleaning.domain.repository.CleaningTaskRepository;
 import com.datamate.cleaning.domain.repository.OperatorInstanceRepository;
-
 import com.datamate.cleaning.infrastructure.validator.CleanTaskValidator;
 import com.datamate.cleaning.interfaces.dto.*;
 import com.datamate.common.infrastructure.exception.BusinessException;
 import com.datamate.common.infrastructure.exception.SystemErrorCode;
+import com.datamate.common.interfaces.PagedResponse;
+import com.datamate.common.interfaces.PagingQuery;
 import com.datamate.datamanagement.application.DatasetApplicationService;
 import com.datamate.datamanagement.application.DatasetFileApplicationService;
 import com.datamate.datamanagement.common.enums.DatasetType;
@@ -26,8 +26,6 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.yaml.snakeyaml.DumperOptions;
@@ -43,6 +41,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Slf4j
@@ -95,6 +94,7 @@ public class CleaningTaskService {
         CreateDatasetRequest createDatasetRequest = new CreateDatasetRequest();
         createDatasetRequest.setName(request.getDestDatasetName());
         createDatasetRequest.setDatasetType(DatasetType.valueOf(request.getDestDatasetType()));
+        createDatasetRequest.setStatus("ACTIVE");
         Dataset destDataset = datasetService.createDataset(createDatasetRequest);
 
         Dataset srcDataset = datasetService.getDataset(request.getSrcDatasetId());
@@ -117,7 +117,7 @@ public class CleaningTaskService {
 
         prepareTask(task, request.getInstance());
         scanDataset(taskId, request.getSrcDatasetId());
-        executeTask(taskId);
+        taskScheduler.executeTask(taskId);
         return task;
     }
 
@@ -171,6 +171,11 @@ public class CleaningTaskService {
     }
 
     public void executeTask(String taskId) {
+        List<CleaningResultDto> failed = cleaningResultRepo.findByInstanceId(taskId, "FAILED");
+        Set<String> failedSet = failed.stream().map(CleaningResultDto::getSrcFileId).collect(Collectors.toSet());
+        CleaningTaskDto task = cleaningTaskRepo.findTaskById(taskId);
+        scanDataset(taskId, task.getSrcDatasetId(), failedSet);
+        cleaningResultRepo.deleteByInstanceId(taskId, "FAILED");
         taskScheduler.executeTask(taskId);
     }
 
@@ -208,14 +213,37 @@ public class CleaningTaskService {
     private void scanDataset(String taskId, String srcDatasetId) {
         int pageNumber = 0;
         int pageSize = 500;
-        PageRequest pageRequest = PageRequest.of(pageNumber, pageSize);
-        Page<DatasetFile> datasetFiles;
+        PagingQuery pageRequest = new PagingQuery(pageNumber, pageSize);
+        PagedResponse<DatasetFile> datasetFiles;
         do {
-            datasetFiles = datasetFileService.getDatasetFiles(srcDatasetId, null, null, pageRequest);
+            datasetFiles = datasetFileService.getDatasetFiles(srcDatasetId, null, null,null, pageRequest);
             if (datasetFiles.getContent().isEmpty()) {
                 break;
             }
             List<Map<String, Object>> files = datasetFiles.getContent().stream()
+                    .map(content -> Map.of("fileName", (Object) content.getFileName(),
+                            "fileSize", content.getFileSize(),
+                            "filePath", content.getFilePath(),
+                            "fileType", content.getFileType(),
+                            "fileId", content.getId()))
+                    .toList();
+            writeListMapToJsonlFile(files, FLOW_PATH + "/" + taskId + "/dataset.jsonl");
+            pageNumber += 1;
+        } while (pageNumber < datasetFiles.getTotalPages());
+    }
+
+    private void scanDataset(String taskId, String srcDatasetId, Set<String> failedFiles) {
+        int pageNumber = 0;
+        int pageSize = 500;
+        PagingQuery pageRequest = new PagingQuery(pageNumber, pageSize);
+        PagedResponse<DatasetFile> datasetFiles;
+        do {
+            datasetFiles = datasetFileService.getDatasetFiles(srcDatasetId, null, null,null, pageRequest);
+            if (datasetFiles.getContent().isEmpty()) {
+                break;
+            }
+            List<Map<String, Object>> files = datasetFiles.getContent().stream()
+                    .filter(content -> failedFiles.contains(content.getId()))
                     .map(content -> Map.of("fileName", (Object) content.getFileName(),
                             "fileSize", content.getFileSize(),
                             "filePath", content.getFilePath(),
@@ -249,5 +277,9 @@ public class CleaningTaskService {
 
     public void stopTask(String taskId) {
         taskScheduler.stopTask(taskId);
+    }
+
+    public List<OperatorInstanceDto> getInstanceByTemplateId(String templateId) {
+        return operatorInstanceRepo.findInstanceByInstanceId(templateId);
     }
 }

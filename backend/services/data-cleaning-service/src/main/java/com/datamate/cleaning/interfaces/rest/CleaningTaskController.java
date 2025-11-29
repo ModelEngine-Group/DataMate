@@ -1,12 +1,10 @@
 package com.datamate.cleaning.interfaces.rest;
 
 import com.datamate.cleaning.application.CleaningTaskService;
-import com.datamate.cleaning.interfaces.dto.CleaningResultDto;
-import com.datamate.cleaning.interfaces.dto.CleaningTaskDto;
-import com.datamate.cleaning.interfaces.dto.CleaningTaskLog;
-import com.datamate.cleaning.interfaces.dto.CreateCleaningTaskRequest;
+import com.datamate.cleaning.interfaces.dto.*;
 import com.datamate.common.interfaces.PagedResponse;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -31,6 +29,9 @@ public class CleaningTaskController {
 
     @PostMapping
     public CleaningTaskDto cleaningTasksPost(@RequestBody CreateCleaningTaskRequest request) {
+        if (request.getInstance().isEmpty() && StringUtils.isNotBlank(request.getTemplateId())) {
+            request.setInstance(cleaningTaskService.getInstanceByTemplateId(request.getTemplateId()));
+        }
         return cleaningTaskService.createTask(request);
     }
 
@@ -55,6 +56,13 @@ public class CleaningTaskController {
     public String cleaningTasksTaskIdDelete(@PathVariable("taskId") String taskId) {
         cleaningTaskService.deleteTask(taskId);
         return taskId;
+    }
+
+    @DeleteMapping
+    public void cleaningTasksDelete(@RequestParam List<String> taskIds) {
+        for (String taskId : taskIds) {
+            cleaningTaskService.deleteTask(taskId);
+        }
     }
 
     @GetMapping("/{taskId}/result")

@@ -120,9 +120,7 @@ export default function AddDataDialog({ knowledgeBase, onDataAdded }) {
   };
 
   const handleAddData = async () => {
-    const selectedFiles = [];
-
-    if (selectedFiles.length === 0) {
+    if (getSelectedFilesCount() === 0) {
       message.warning("请至少选择一个文件");
       return;
     }

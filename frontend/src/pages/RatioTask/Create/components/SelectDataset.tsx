@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Badge, Button, Card, Checkbox, Input, Pagination, Select } from "antd";
+import { Badge, Button, Card, Checkbox, Input, Pagination } from "antd";
 import { Search as SearchIcon } from "lucide-react";
 import type { Dataset } from "@/pages/DataManagement/dataset.model.ts";
 import {
@@ -10,8 +10,6 @@ import {
 
 interface SelectDatasetProps {
   selectedDatasets: string[];
-  ratioType: "dataset" | "label";
-  onRatioTypeChange: (val: "dataset" | "label") => void;
   onSelectedDatasetsChange: (next: string[]) => void;
   onDistributionsChange?: (
     next: Record<string, Record<string, number>>
@@ -21,8 +19,6 @@ interface SelectDatasetProps {
 
 const SelectDataset: React.FC<SelectDatasetProps> = ({
   selectedDatasets,
-  ratioType,
-  onRatioTypeChange,
   onSelectedDatasetsChange,
   onDistributionsChange,
   onDatasetsChange,
@@ -62,7 +58,7 @@ const SelectDataset: React.FC<SelectDatasetProps> = ({
   // Fetch label distributions when in label mode
   useEffect(() => {
     const fetchDistributions = async () => {
-      if (ratioType !== "label" || !datasets?.length) return;
+      if (!datasets?.length) return;
       const idsToFetch = datasets
         .map((d) => String(d.id))
         .filter((id) => !distributions[id]);
@@ -147,7 +143,7 @@ const SelectDataset: React.FC<SelectDatasetProps> = ({
     };
     fetchDistributions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ratioType, datasets]);
+  }, [datasets]);
 
   const onToggleDataset = (datasetId: string, checked: boolean) => {
     if (checked) {
@@ -180,18 +176,6 @@ const SelectDataset: React.FC<SelectDatasetProps> = ({
         </Button>
       </div>
       <div className="flex-overflow-auto gap-4 p-4">
-        <div className="flex items-center gap-4">
-          <span className="text-sm">配比方式:</span>
-          <Select
-            className="flex-1 min-w-[120px]"
-            value={ratioType}
-            onChange={(v) => onRatioTypeChange(v)}
-            options={[
-              { label: "按数据集", value: "dataset" },
-              { label: "按标签", value: "label" },
-            ]}
-          />
-        </div>
         <Input
           prefix={<SearchIcon className="text-gray-400" />}
           placeholder="搜索数据集"
@@ -239,32 +223,30 @@ const SelectDataset: React.FC<SelectDatasetProps> = ({
                         <span>{dataset.fileCount}条</span>
                         <span>{dataset.size}</span>
                       </div>
-                      {ratioType === "label" && (
-                        <div className="mt-2">
-                          {distributions[idStr] ? (
-                            Object.entries(distributions[idStr]).length > 0 ? (
-                              <div className="flex flex-wrap gap-2 text-xs">
-                                {Object.entries(distributions[idStr])
-                                  .slice(0, 8)
-                                  .map(([tag, count]) => (
-                                    <Badge
-                                      key={tag}
-                                      color="gray"
-                                    >{`${tag}: ${count}`}</Badge>
-                                  ))}
-                              </div>
-                            ) : (
-                              <div className="text-xs text-gray-400">
-                                未检测到标签分布
-                              </div>
-                            )
+                      <div className="mt-2">
+                        {distributions[idStr] ? (
+                          Object.entries(distributions[idStr]).length > 0 ? (
+                            <div className="flex flex-wrap gap-2 text-xs">
+                              {Object.entries(distributions[idStr])
+                                .slice(0, 8)
+                                .map(([tag, count]) => (
+                                  <Badge
+                                    key={tag}
+                                    color="gray"
+                                  >{`${tag}: ${count}`}</Badge>
+                                ))}
+                            </div>
                           ) : (
                             <div className="text-xs text-gray-400">
-                              加载标签分布...
+                              未检测到标签分布
                             </div>
-                          )}
-                        </div>
-                      )}
+                          )
+                        ) : (
+                          <div className="text-xs text-gray-400">
+                            加载标签分布...
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </Card>

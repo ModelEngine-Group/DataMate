@@ -88,6 +88,9 @@ public class OperatorService {
 
     @Transactional
     public void deleteOperator(String id) {
+        if (operatorRepo.operatorInTemplateOrRunning(id)) {
+            throw BusinessException.of(OperatorErrorCode.OPERATOR_IN_INSTANCE);
+        }
         operatorRepo.deleteOperator(id);
         relationRepo.deleteByOperatorId(id);
     }
@@ -125,7 +128,7 @@ public class OperatorService {
         return operatorBasePath + File.separator + "extract" + File.separator + fileName;
     }
 
-    private void overrideSettings(OperatorDto operatorDto) {
+    public void overrideSettings(OperatorDto operatorDto) {
         if (StringUtils.isBlank(operatorDto.getSettings()) || MapUtils.isEmpty(operatorDto.getOverrides())) {
             return;
         }

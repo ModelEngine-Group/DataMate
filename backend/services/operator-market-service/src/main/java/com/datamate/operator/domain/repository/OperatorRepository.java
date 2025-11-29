@@ -16,4 +16,6 @@ public interface OperatorRepository extends IRepository<Operator> {
     void deleteOperator(String id);
 
     int countOperatorByStar(boolean isStar);
+
+    boolean operatorInTemplateOrRunning(String operatorId);
 }

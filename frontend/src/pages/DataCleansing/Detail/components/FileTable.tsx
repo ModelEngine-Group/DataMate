@@ -1,4 +1,4 @@
-import {Button, Modal, Table, Badge, Input} from "antd";
+import {Button, Modal, Table, Badge, Input, Popover} from "antd";
 import { Download } from "lucide-react";
 import {useEffect, useState} from "react";
 import {useParams} from "react-router";
@@ -107,7 +107,7 @@ export default function FileTable({result, fetchTaskResult}) {
       onFilter: (value: string, record: any) =>
         record.srcName.toLowerCase().includes(value.toLowerCase()),
       render: (text: string) => (
-        <span className="font-mono text-sm">{text?.replace(/\.[^/.]+$/, "")}</span>
+        <span>{text?.replace(/\.[^/.]+$/, "")}</span>
       ),
     },
     {
@@ -250,7 +250,7 @@ export default function FileTable({result, fetchTaskResult}) {
       key: "action",
       render: (_text: string, record: any) => (
         <div className="flex">
-          {record.status === "COMPLETED" && (
+          {record.status === "COMPLETED" ? (
             <Button
               type="link"
               size="small"
@@ -258,10 +258,18 @@ export default function FileTable({result, fetchTaskResult}) {
             >
               对比
             </Button>
+          ) : (
+            <Button
+              type="link"
+              size="small"
+              disabled
+            >
+              对比
+            </Button>
           )}
-          <Button type="link" size="small">
-            下载
-          </Button>
+          <Popover content="暂未开放">
+              <Button type="link" size="small" disabled>下载</Button>
+          </Popover>
         </div>
       ),
     },

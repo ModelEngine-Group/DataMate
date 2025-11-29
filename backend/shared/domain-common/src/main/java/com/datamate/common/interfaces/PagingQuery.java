@@ -1,8 +1,10 @@
 package com.datamate.common.interfaces;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
+@NoArgsConstructor
 public class PagingQuery {
     /**
      * 页码，从0开始
@@ -27,5 +29,10 @@ public class PagingQuery {
         } else {
             this.size = size;
         }
+    }
+
+    public PagingQuery(Integer page, Integer size) {
+        setPage(page);
+        setSize(size);
     }
 }

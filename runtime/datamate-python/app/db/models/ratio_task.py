@@ -28,7 +28,6 @@ class RatioInstance(Base):
     name = Column(String(64), nullable=True, comment="名称")
     description = Column(Text, nullable=True, comment="描述")
     target_dataset_id = Column(String(64), nullable=True, comment="模板数据集ID")
-    ratio_method = Column(String(50), nullable=True, comment="配比方式，按标签（TAG）,按数据集（DATASET）")
     ratio_parameters = Column(JSON, nullable=True, comment="配比参数")
     merge_method = Column(String(50), nullable=True, comment="合并方式")
     status = Column(String(20), nullable=True, comment="状态")
@@ -39,7 +38,7 @@ class RatioInstance(Base):
     updated_by = Column(String(255), nullable=True, comment="更新者")
 
     def __repr__(self) -> str:
-        return f"<RatioInstance(id={self.id}, name={self.name}, method={self.ratio_method}, status={self.status})>"
+        return f"<RatioInstance(id={self.id}, name={self.name}, status={self.status})>"
 
 
 class RatioRelation(Base):

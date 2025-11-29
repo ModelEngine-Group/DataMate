@@ -10,6 +10,9 @@ fullnameOverride: ""
 ##
 clusterDomain: cluster.local
 
+global:
+  imageRegistry: ""
+
 ## Set default image, imageTag, and imagePullPolicy. mode is used to indicate the
 ##
 image:
@@ -121,8 +124,6 @@ trustedCertsSecret: ""
 ##
 persistence:
   enabled: true
-  annotations:
-    helm.sh/resource-policy: "keep"
 
   ## A manually managed Persistent Volume and Claim
   ## Requires persistence.enabled: true

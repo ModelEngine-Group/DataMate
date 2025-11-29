@@ -10,7 +10,11 @@ import java.util.List;
 public interface CleaningResultRepository extends IRepository<CleaningResult> {
     void deleteByInstanceId(String instanceId);
 
+    void deleteByInstanceId(String instanceId, String status);
+
     int[] countByInstanceId(String instanceId);
 
     List<CleaningResultDto> findByInstanceId(String instanceId);
+
+    List<CleaningResultDto> findByInstanceId(String instanceId, String status);
 }

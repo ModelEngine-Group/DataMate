@@ -335,7 +335,7 @@ The following table lists the configurable parameters of the Milvus Service and 
 | `route.annotations`                       | Route annotations                            | `{}`                                                   |
 | `route.labels`                           | Route labels                                 | `{}`                                                   |
 | `image.all.repository`                    | Image repository                              | `milvusdb/milvus`                                       |
-| `image.all.tag`                           | Image tag                                     | `v2.6.4`                           |
+| `image.all.tag`                           | Image tag                                     | `v2.6.5`                           |
 | `image.all.pullPolicy`                    | Image pull policy                             | `IfNotPresent`                                          |
 | `image.all.pullSecrets`                   | Image pull secrets                            | `{}`                                                    |
 | `image.tools.repository`                  | Config image repository                       | `milvusdb/milvus-config-tool`                                       |

@@ -1,8 +1,9 @@
 """
 通用响应模型
 """
-from typing import Generic, TypeVar, Optional, List, Type
+from typing import Generic, TypeVar, List
 from pydantic import BaseModel, Field
+from enum import Enum
 
 # 定义泛型类型变量
 T = TypeVar('T')
@@ -16,7 +17,7 @@ def to_camel(string: str) -> str:
 
 class BaseResponseModel(BaseModel):
     """基础响应模型，启用别名生成器"""
-    
+
     class Config:
         populate_by_name = True
         alias_generator = to_camel
@@ -24,7 +25,7 @@ class BaseResponseModel(BaseModel):
 class StandardResponse(BaseResponseModel, Generic[T]):
     """
     标准API响应格式
-    
+
     所有API端点应返回此格式，确保响应的一致性
     """
     code: int = Field(..., description="HTTP状态码")
@@ -42,3 +43,9 @@ class PaginatedData(BaseResponseModel, Generic[T]):
     total_elements: int = Field(..., description="总条数")
     total_pages: int = Field(..., description="总页数")
     content: List[T] = Field(..., description="当前页数据")
+
+class TaskStatus(Enum):
+    PENDING = "PENDING"
+    RUNNING = "RUNNING"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"

@@ -14,7 +14,9 @@ Return  the proper Storage Class
 
 {{- if $storageClass -}}
   {{- if (eq "-" $storageClass) -}}
+{{- /*
       {{- printf "storageClassName: \"\"" -}}
+*/}}
   {{- else }}
       {{- printf "storageClassName: %s" $storageClass -}}
   {{- end -}}

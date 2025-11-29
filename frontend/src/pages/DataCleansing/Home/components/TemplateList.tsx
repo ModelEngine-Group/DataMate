@@ -65,6 +65,13 @@ export default function TemplateList() {
         );
       }},
       {
+          title: "模板ID",
+          dataIndex: "id",
+          key: "id",
+          fixed: "left",
+          width: 150,
+      },
+      {
         title: "算子数量",
         dataIndex: "num",
         key: "num",

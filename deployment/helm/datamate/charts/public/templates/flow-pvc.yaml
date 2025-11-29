@@ -1,3 +1,55 @@
+{{- if and .Values.persistentVolumeClaim.storageClass (eq .Values.persistentVolumeClaim.storageClass "local-storage") }}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ .Values.global.namespace | default "datamate" }}-flow-pv
+spec:
+  capacity:
+    storage: {{ .Values.persistentVolumeClaim.size.flow | default "10Gi" }}
+  volumeMode: Filesystem
+  accessModes:
+    - {{ .Values.persistentVolumeClaim.accessModes }}
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: {{ .Values.persistentVolumeClaim.storageClass }}
+  local: # local类型
+    path: {{ .Values.persistentVolumeClaim.storagePath | default "/opt/datamate/data" }}/flow
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: datamate-flow-pvc
+    namespace: {{ .Values.global.namespace | default "datamate" }}
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - {{ .Values.persistentVolumeClaim.storageNode }}
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: datamate-flow-pvc
+{{- with .Values.annotations  }}
+  annotations:
+    {{- toYaml . | indent 4 }}
+{{- end }}
+  labels:
+    {{- include "public.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - {{ .Values.persistentVolumeClaim.accessModes }}
+  volumeName: {{ .Values.global.namespace | default "datamate" }}-flow-pv
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: {{ .Values.persistentVolumeClaim.size.flow | default "10Gi" }}
+  storageClassName: {{ .Values.persistentVolumeClaim.storageClass }}
+  
+{{- else }}
+
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -16,4 +68,5 @@ spec:
   {{- end }}
   resources:
     requests:
-      storage: {{ .Values.persistentVolumeClaim.size.flow }}
+      storage: {{ .Values.persistentVolumeClaim.size.flow | default "10Gi" }}
+{{- end }}
