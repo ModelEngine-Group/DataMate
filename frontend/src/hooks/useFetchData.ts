@@ -71,6 +71,14 @@ export default function useFetchData<T>(
     });
   };
 
+  const handleKeywordChange = (keyword: string) => {
+    setSearchParams({
+        ...searchParams,
+        current: 1,
+        keyword: keyword,
+    });
+  };
+
   function getFirstOfArray(arr: string[]) {
     if (!arr || arr.length === 0 || !Array.isArray(arr)) return undefined;
     if (arr[0] === "all") return undefined;
@@ -217,6 +225,7 @@ export default function useFetchData<T>(
     setSearchParams,
     setPagination,
     handleFiltersChange,
+    handleKeywordChange,
     fetchData,
     isPolling,
     startPolling,

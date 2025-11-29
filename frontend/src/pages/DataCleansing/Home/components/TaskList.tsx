@@ -41,6 +41,7 @@ export default function TaskList() {
     setSearchParams,
     fetchData,
     handleFiltersChange,
+    handleKeywordChange,
   } = useFetchData(queryCleaningTasksUsingGet, mapTask);
 
   const pauseTask = async (item: CleansingTask) => {
@@ -270,9 +271,7 @@ export default function TaskList() {
       {/* Search and Filters */}
       <SearchControls
         searchTerm={searchParams.keyword}
-        onSearchChange={(keyword) =>
-          setSearchParams({ ...searchParams, keyword })
-        }
+        onSearchChange={handleKeywordChange}
         searchPlaceholder="搜索任务名称、描述"
         filters={filterOptions}
         onFiltersChange={handleFiltersChange}

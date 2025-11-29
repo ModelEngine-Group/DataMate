@@ -172,11 +172,11 @@ spec:
               # 警告：以下 Env Vars 依赖 StatefulSet 命名 (headless service 和 ordered names)
               # 在 Deployment 中如果不修改副本数为 1，这些配置会导致集群发现失败。
               - name: ETCD_ADVERTISE_CLIENT_URLS
-                value: "{{ $etcdClientProtocol }}://$(MY_POD_NAME).{{ $etcdHeadlessServiceName }}.{{ .Release.Namespace }}.svc.{{ $clusterDomain }}:{{ .Values.containerPorts.client }},{{ $etcdClientProtocol }}://{{ $etcdFullname }}.{{ .Release.Namespace }}.svc.{{ $clusterDomain }}:{{ coalesce .Values.service.ports.client .Values.service.port }}"
+                value: "{{ $etcdClientProtocol }}://{{ $etcdHeadlessServiceName }}.{{ .Release.Namespace }}.svc.{{ $clusterDomain }}:{{ .Values.containerPorts.client }},{{ $etcdClientProtocol }}://{{ $etcdFullname }}.{{ .Release.Namespace }}.svc.{{ $clusterDomain }}:{{ coalesce .Values.service.ports.client .Values.service.port }}"
               - name: ETCD_LISTEN_CLIENT_URLS
                 value: "{{ $etcdClientProtocol }}://0.0.0.0:{{ .Values.containerPorts.client }}"
               - name: ETCD_INITIAL_ADVERTISE_PEER_URLS
-                value: "{{ $etcdPeerProtocol }}://$(MY_POD_NAME).{{ $etcdHeadlessServiceName }}.{{ .Release.Namespace }}.svc.{{ $clusterDomain }}:{{ .Values.containerPorts.peer }}"
+                value: "{{ $etcdPeerProtocol }}://{{ $etcdHeadlessServiceName }}.{{ .Release.Namespace }}.svc.{{ $clusterDomain }}:{{ .Values.containerPorts.peer }}"
               - name: ETCD_LISTEN_PEER_URLS
                 value: "{{ $etcdPeerProtocol }}://0.0.0.0:{{ .Values.containerPorts.peer }}"
               {{- if .Values.autoCompactionMode }}

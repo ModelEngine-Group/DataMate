@@ -120,6 +120,7 @@ export default function DatasetManagementPage() {
     fetchData,
     setSearchParams,
     handleFiltersChange,
+    handleKeywordChange,
   } = useFetchData<Dataset>(
     queryDatasetsUsingGet,
     mapDataset,
@@ -370,9 +371,7 @@ export default function DatasetManagementPage() {
       </div>
       <SearchControls
         searchTerm={searchParams.keyword}
-        onSearchChange={(keyword) =>
-          setSearchParams({ ...searchParams, keyword })
-        }
+        onSearchChange={handleKeywordChange}
         searchPlaceholder="搜索数据集名称、描述或标签..."
         filters={filterOptions}
         onFiltersChange={handleFiltersChange}
