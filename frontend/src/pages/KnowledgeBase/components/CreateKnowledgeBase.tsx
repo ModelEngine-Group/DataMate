@@ -156,6 +156,19 @@ export default function CreateKnowledgeBase({
             <Select
               placeholder="请选择文本理解模型"
               options={chatModelOptions}
+              popupRender={(menu) => (
+                <>
+                  {menu}
+                  <Button
+                    block
+                    type="link"
+                    icon={<PlusOutlined />}
+                    onClick={() => dispatch(showSettings())}
+                  >
+                    添加模型
+                  </Button>
+                </>
+              )}
             />
           </Form.Item>
         </Form>
