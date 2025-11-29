@@ -24,6 +24,7 @@ export default function TemplateList() {
     setSearchParams,
     fetchData,
     handleFiltersChange,
+    handleKeywordChange,
   } = useFetchData(queryCleaningTemplatesUsingGet, mapTemplate);
 
   const templateOperations = () => {
@@ -120,9 +121,7 @@ export default function TemplateList() {
       {/* Search and Filters */}
       <SearchControls
         searchTerm={searchParams.keyword}
-        onSearchChange={(keyword) =>
-          setSearchParams({ ...searchParams, keyword })
-        }
+        onSearchChange={handleKeywordChange}
         searchPlaceholder="搜索模板名称、描述"
         onFiltersChange={handleFiltersChange}
         viewMode={viewMode}

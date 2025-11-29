@@ -29,8 +29,8 @@ public class OperatorController {
             categories.remove(OperatorConstant.CATEGORY_STAR_ID);
         }
         List<OperatorDto> responses = operatorService.getOperators(request.getPage(), request.getSize(),
-                categories, request.getOperatorName(), isStar);
-        int count = operatorService.getOperatorsCount(categories, request.getOperatorName(), isStar);
+                categories, request.getKeyword(), isStar);
+        int count = operatorService.getOperatorsCount(categories, request.getKeyword(), isStar);
         int totalPages = (count + request.getSize() + 1) / request.getSize();
         return PagedResponse.of(responses, request.getPage(), count, totalPages);
     }

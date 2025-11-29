@@ -26,6 +26,7 @@ export default function RatioTasksPage() {
     setSearchParams,
     handleFiltersChange,
     fetchData,
+    handleKeywordChange,
   } = useFetchData<RatioTaskItem>(
     queryRatioTasksUsingGet,
     mapRatioTask,
@@ -186,9 +187,7 @@ export default function RatioTasksPage() {
         {/* 搜索、筛选和视图控制 */}
         <SearchControls
           searchTerm={searchParams.keyword}
-          onSearchChange={(keyword) =>
-            setSearchParams({ ...searchParams, keyword })
-          }
+          onSearchChange={handleKeywordChange}
           searchPlaceholder="搜索任务名称..."
           filters={filters}
           onFiltersChange={handleFiltersChange}

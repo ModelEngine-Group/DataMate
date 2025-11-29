@@ -26,6 +26,7 @@ export default function KnowledgeBasePage() {
     fetchData,
     setSearchParams,
     handleFiltersChange,
+    handleKeywordChange,
   } = useFetchData<KnowledgeBaseItem>(
     queryKnowledgeBasesUsingPost,
     (kb) => mapKnowledgeBase(kb, false) // 在首页不显示索引模型和文本理解模型字段
@@ -146,9 +147,7 @@ export default function KnowledgeBasePage() {
 
       <SearchControls
         searchTerm={searchParams.keyword}
-        onSearchChange={(keyword) =>
-          setSearchParams({ ...searchParams, keyword })
-        }
+        onSearchChange={handleKeywordChange}
         searchPlaceholder="搜索知识库..."
         filters={[]}
         onFiltersChange={handleFiltersChange}

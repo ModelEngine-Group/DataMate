@@ -49,9 +49,9 @@ export default function OperatorMarketPage() {
     tableData,
     pagination,
     searchParams,
-    setSearchParams,
     fetchData,
     handleFiltersChange,
+    handleKeywordChange,
   } = useFetchData(queryOperatorsUsingPost, mapOperator);
 
   const handleUploadOperator = () => {
@@ -157,9 +157,7 @@ export default function OperatorMarketPage() {
             <div className="flex-1 mb-4">
               <SearchControls
                 searchTerm={searchParams.keyword}
-                onSearchChange={(keyword) =>
-                  setSearchParams({ ...searchParams, keyword })
-                }
+                onSearchChange={handleKeywordChange}
                 searchPlaceholder="搜索算子名称、描述..."
                 filters={[]}
                 onFiltersChange={handleFiltersChange}

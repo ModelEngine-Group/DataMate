@@ -49,12 +49,12 @@ public class OperatorService {
     private String operatorBasePath;
 
     public List<OperatorDto> getOperators(Integer page, Integer size, List<String> categories,
-                                          String operatorName, Boolean isStar) {
-        return operatorViewRepo.findOperatorsByCriteria(page, size, operatorName, categories, isStar);
+                                          String keyword, Boolean isStar) {
+        return operatorViewRepo.findOperatorsByCriteria(page, size, keyword, categories, isStar);
     }
 
-    public int getOperatorsCount(List<String> categories, String operatorName, Boolean isStar) {
-        return operatorViewRepo.countOperatorsByCriteria(operatorName, categories, isStar);
+    public int getOperatorsCount(List<String> categories, String keyword, Boolean isStar) {
+        return operatorViewRepo.countOperatorsByCriteria(keyword, categories, isStar);
     }
 
     public OperatorDto getOperatorById(String id) {

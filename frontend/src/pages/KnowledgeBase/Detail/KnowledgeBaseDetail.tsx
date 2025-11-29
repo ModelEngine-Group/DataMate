@@ -69,6 +69,7 @@ const KnowledgeBaseDetailPage: React.FC = () => {
     fetchData: fetchFiles,
     setSearchParams,
     handleFiltersChange,
+    handleKeywordChange,
   } = useFetchData<KBFile>(
     (params) => id ? queryKnowledgeBaseFilesUsingGet(id, params) : Promise.resolve({ data: [] }),
     mapFileData
@@ -265,7 +266,7 @@ const KnowledgeBaseDetailPage: React.FC = () => {
               <div className="flex-1">
                 <SearchControls
                   searchTerm={searchParams.keyword}
-                  onSearchChange={(keyword) => setSearchParams({ ...searchParams, keyword })}
+                  onSearchChange={handleKeywordChange}
                   searchPlaceholder="搜索文件名..."
                   filters={[]}
                   onFiltersChange={handleFiltersChange}

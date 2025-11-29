@@ -20,9 +20,9 @@ public class CleaningTaskController {
     public PagedResponse<CleaningTaskDto> cleaningTasksGet(
             @RequestParam("page") Integer page,
             @RequestParam("size") Integer size, @RequestParam(value = "status", required = false) String status,
-            @RequestParam(value = "keywords", required = false) String keywords) {
-        List<CleaningTaskDto> tasks = cleaningTaskService.getTasks(status, keywords, page, size);
-        int count = cleaningTaskService.countTasks(status, keywords);
+            @RequestParam(value = "keyword", required = false) String keyword) {
+        List<CleaningTaskDto> tasks = cleaningTaskService.getTasks(status, keyword, page, size);
+        int count = cleaningTaskService.countTasks(status, keyword);
         int totalPages = (count + size + 1) / size;
         return PagedResponse.of(tasks, page, count, totalPages);
     }
