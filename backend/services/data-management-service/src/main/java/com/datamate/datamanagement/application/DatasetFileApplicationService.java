@@ -364,11 +364,11 @@ public class DatasetFileApplicationService {
         boolean softAdd = req.softAdd();
         String metadata;
         try {
-            Map<String, Boolean> aa = Map.of("softAdd", softAdd);
+            Map<String, Boolean> metadataMap = Map.of("softAdd", softAdd);
             ObjectMapper objectMapper = new ObjectMapper();
-            metadata = objectMapper.writeValueAsString(aa);
+            metadata = objectMapper.writeValueAsString(metadataMap);
         } catch (JsonProcessingException e) {
-            log.error("Failed to serialize aa", e);
+            log.error("Failed to serialize metadataMap", e);
             throw BusinessException.of(SystemErrorCode.UNKNOWN_ERROR);
         }
 
