@@ -49,7 +49,7 @@ spec:
         - /bin/bash
         - -c
         - "cp -r /opt/heaptrack /milvus/tools"
-        image: "{{ .Values.heaptrack.image.repository }}:{{ .Values.heaptrack.image.tag }}"
+        image: "{{ .Values.global.imageRegistry | trimSuffix "/" }}/{{ .Values.heaptrack.image.repository }}:{{ .Values.heaptrack.image.tag }}"
         imagePullPolicy: {{ .Values.heaptrack.image.pullPolicy }}
         {{ if and (.Values.containerSecurityContext) (not .Values.standalone.containerSecurityContext) }}
         securityContext:
@@ -65,7 +65,11 @@ spec:
       {{- end }}
       containers:
       - name: standalone
+        {{- if .Values.global.imageRegistry }}
+        image: "{{ .Values.global.imageRegistry | trimSuffix "/" }}/{{ .Values.image.all.repository }}:{{ .Values.image.all.tag }}"
+        {{- else }}
         image: "{{ .Values.image.all.repository }}:{{ .Values.image.all.tag }}"
+        {{- end }}
         imagePullPolicy: {{ .Values.image.all.pullPolicy }}
         {{ if and (.Values.containerSecurityContext) (not .Values.standalone.containerSecurityContext) }}
         securityContext:
