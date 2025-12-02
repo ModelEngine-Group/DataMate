@@ -18,7 +18,7 @@ Return the proper image name
     {{- $termination = .imageRoot.digest | toString -}}
 {{- end -}}
 {{- if $registryName }}
-    {{- printf "%s/%s%s%s" $registryName $repositoryName $separator $termination -}}
+    {{- printf "%s/%s%s%s" ($registryName | trimSuffix "/") $repositoryName $separator $termination -}}
 {{- else -}}
     {{- printf "%s%s%s"  $repositoryName $separator $termination -}}
 {{- end -}}

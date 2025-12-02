@@ -19,6 +19,7 @@ import com.datamate.datamanagement.infrastructure.exception.DataManagementErrorC
 import com.datamate.datamanagement.infrastructure.persistence.repository.DatasetFileRepository;
 import com.datamate.datamanagement.infrastructure.persistence.repository.DatasetRepository;
 import com.datamate.datamanagement.interfaces.converter.DatasetConverter;
+import com.datamate.datamanagement.interfaces.dto.AddFilesRequest;
 import com.datamate.datamanagement.interfaces.dto.CopyFilesRequest;
 import com.datamate.datamanagement.interfaces.dto.UploadFileRequest;
 import com.datamate.datamanagement.interfaces.dto.UploadFilesPreRequest;
@@ -343,5 +344,60 @@ public class DatasetFileApplicationService {
                 log.error("Failed to copy file from {} to {}", sourcePath, targetFilePath, e);
             }
         }
+    }
+
+    /**
+     * 添加文件到数据集（仅创建数据库记录，不执行文件系统操作）
+     *
+     * @param datasetId 数据集id
+     * @param req       添加文件请求
+     * @return 添加的文件列表
+     */
+    @Transactional
+    public List<DatasetFile> addFilesToDataset(String datasetId, AddFilesRequest req) {
+        Dataset dataset = datasetRepository.getById(datasetId);
+        BusinessAssert.notNull(dataset, SystemErrorCode.RESOURCE_NOT_FOUND);
+        List<DatasetFile> addedFiles = new ArrayList<>();
+        List<DatasetFile> existDatasetFiles = datasetFileRepository.findAllByDatasetId(datasetId);
+        dataset.setFiles(existDatasetFiles);
+
+        boolean softAdd = req.softAdd();
+        String metadata;
+        try {
+            Map<String, Boolean> metadataMap = Map.of("softAdd", softAdd);
+            ObjectMapper objectMapper = new ObjectMapper();
+            metadata = objectMapper.writeValueAsString(metadataMap);
+        } catch (JsonProcessingException e) {
+            log.error("Failed to serialize metadataMap", e);
+            throw BusinessException.of(SystemErrorCode.UNKNOWN_ERROR);
+        }
+
+        for (String sourceFilePath : req.sourcePaths()) {
+            Path sourcePath = Paths.get(sourceFilePath);
+            String fileName = sourcePath.getFileName().toString();
+            File sourceFile = sourcePath.toFile();
+            LocalDateTime currentTime = LocalDateTime.now();
+
+            DatasetFile datasetFile = DatasetFile.builder()
+                .id(UUID.randomUUID().toString())
+                .datasetId(datasetId)
+                .fileName(fileName)
+                .fileType(AnalyzerUtils.getExtension(fileName))
+                .fileSize(sourceFile.length())
+                .filePath(sourceFilePath)
+                .uploadTime(currentTime)
+                .lastAccessTime(currentTime)
+                .metadata(metadata)
+                .build();
+            setDatasetFileId(datasetFile, dataset);
+            dataset.addFile(datasetFile);
+            addedFiles.add(datasetFile);
+        }
+        datasetFileRepository.saveOrUpdateBatch(addedFiles, 100);
+        dataset.active();
+        datasetRepository.updateById(dataset);
+        // Note: addFilesToDataset only creates DB records, no file system operations
+        // If file copy is needed, use copyFilesToDatasetDir endpoint instead
+        return addedFiles;
     }
 }

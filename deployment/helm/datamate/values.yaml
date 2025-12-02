@@ -112,7 +112,45 @@ frontend:
       name: datamate-nginx-conf
       subPath: backend.conf
 
+runtime:
+  enabled: false
+  args: &runtimeArgs
+    - python
+    - /opt/runtime/datamate/operator_runtime.py
+    - --port
+    - "8081"
+  env: &runtimeEnv
+    - name: MYSQL_HOST
+      value: "datamate-database"
+    - name: MYSQL_PORT
+      value: "3306"
+    - name: MYSQL_USER
+      value: "root"
+    - name: MYSQL_PASSWORD
+      value: *dbPass
+    - name: MYSQL_DATABASE
+      value: "datamate"
+  volumes:
+    - *datasetVolume
+    - *flowVolume
+    - *logVolume
+    - *operatorVolume
+  volumeMounts: &runtimeVolumeMounts
+    - mountPath: /tmp/ray
+      name: log-volume
+      subPath: ray/head
+    - mountPath: /var/log/datamate
+      name: log-volume
+    - mountPath: /dataset
+      name: dataset-volume
+    - mountPath: /flow
+      name: flow-volume
+    - mountPath: /opt/runtime/datamate/ops/user
+      name: operator-volume
+      subPath: extract
+
 ray-cluster:
+  enabled: true
   head:
     volumes:
       - *datasetVolume
@@ -134,37 +172,11 @@ ray-cluster:
       - name: runtime
         image: datamate-runtime
         imagePullPolicy: IfNotPresent
-        args:
-          - python
-          - /opt/runtime/datamate/operator_runtime.py
-          - --port
-          - "8081"
-        env:
-          - name: MYSQL_HOST
-            value: "datamate-database"
-          - name: MYSQL_PORT
-            value: "3306"
-          - name: MYSQL_USER
-            value: "root"
-          - name: MYSQL_PASSWORD
-            value: "password"
-          - name: MYSQL_DATABASE
-            value: "datamate"
+        args: *runtimeArgs
+        env: *runtimeEnv
         ports:
           - containerPort: 8081
-        volumeMounts:
-          - mountPath: /tmp/ray
-            name: log-volume
-            subPath: ray/head
-          - mountPath: /var/log/datamate
-            name: log-volume
-          - mountPath: /dataset
-            name: dataset-volume
-          - mountPath: /flow
-            name: flow-volume
-          - mountPath: /opt/runtime/datamate/ops/user
-            name: operator-volume
-            subPath: extract
+        volumeMounts: *runtimeVolumeMounts
   worker:
     volumes:
       - *datasetVolume
