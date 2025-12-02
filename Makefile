@@ -221,16 +221,20 @@ endif
 .PHONY: uninstall
 uninstall:
 ifeq ($(origin INSTALLER), undefined)
-	$(call prompt-uninstaller,milvus-$$INSTALLER-uninstall datamate-$$INSTALLER-uninstall)
+	$(call prompt-uninstaller,label-studio-$$INSTALLER-uninstall milvus-$$INSTALLER-uninstall deer-flow-$$INSTALLER-uninstall datamate-$$INSTALLER-uninstall)
 else
-	@echo "Delete volumes? (This will remove all data)"; \
-	echo "1. Yes - Delete volumes"; \
-	echo "2. No - Keep volumes"; \
-	echo -n "Enter choice (default: 2): "; \
-	read DELETE_VOLUMES_CHOICE; \
-	export DELETE_VOLUMES_CHOICE; \
+	@if [ "$(INSTALLER)" = "docker" ]; then \
+		echo "Delete volumes? (This will remove all data)"; \
+    	echo "1. Yes - Delete volumes"; \
+    	echo "2. No - Keep volumes"; \
+    	echo -n "Enter choice (default: 2): "; \
+    	read DELETE_VOLUMES_CHOICE; \
+    	export DELETE_VOLUMES_CHOICE; \
+	fi
+	@$(MAKE) label-studio-$(INSTALLER)-uninstall DELETE_VOLUMES_CHOICE=$$DELETE_VOLUMES_CHOICE; \
 	$(MAKE) milvus-$(INSTALLER)-uninstall DELETE_VOLUMES_CHOICE=$$DELETE_VOLUMES_CHOICE; \
-	$(MAKE) label-studio-$(INSTALLER)-uninstall DELETE_VOLUMES_CHOICE=$$DELETE_VOLUMES_CHOICE; \
+	$(MAKE) datamate-$(INSTALLER)-uninstall DELETE_VOLUMES_CHOICE=$$DELETE_VOLUMES_CHOICE; \
+	$(MAKE) deer-flow-$(INSTALLER)-uninstall DELETE_VOLUMES_CHOICE=$$DELETE_VOLUMES_CHOICE; \
 	$(MAKE) datamate-$(INSTALLER)-uninstall DELETE_VOLUMES_CHOICE=$$DELETE_VOLUMES_CHOICE
 endif
 
@@ -253,22 +257,22 @@ VALID_SERVICE_TARGETS := datamate backend frontend runtime mineru "deer-flow" mi
 	@if [ "$*" = "label-studio" ]; then \
 		$(call docker-compose-service,label-studio,up -d,deployment/docker/label-studio); \
 	elif [ "$*" = "mineru" ]; then \
-		cd deployment/docker/datamate && export REGISTRY=$(REGISTRY) && docker compose up -d datamate-mineru; \
+		REGISTRY=$(REGISTRY) && docker compose -f deployment/docker/datamate/docker-compose.yml up -d datamate-mineru; \
 	elif [ "$*" = "datamate" ]; then \
 		if docker compose ls --filter name=deer-flow | grep -q deer-flow; then \
-			(cd deployment/docker/datamate && NGINX_CONF="./backend-with-deer-flow.conf" REGISTRY=$(REGISTRY) docker compose -f docker-compose.yml up -d); \
+			(NGINX_CONF="./backend-with-deer-flow.conf" REGISTRY=$(REGISTRY) docker compose -f deployment/docker/datamate/docker-compose.yml up -d); \
 		else \
-			(cd deployment/docker/datamate && REGISTRY=$(REGISTRY) docker compose -f docker-compose.yml up -d); \
+			(REGISTRY=$(REGISTRY) docker compose -f deployment/docker/datamate/docker-compose.yml up -d); \
 		fi; \
 	elif [ "$*" = "deer-flow" ]; then \
-		cd deployment/docker/datamate && export NGINX_CONF="./backend-with-deer-flow.conf" && export REGISTRY=$(REGISTRY) && docker compose -f docker-compose.yml up -d; \
 		cp -n runtime/deer-flow/.env.example runtime/deer-flow/.env; \
 		cp -n runtime/deer-flow/conf.yaml.example runtime/deer-flow/conf.yaml; \
 		cp runtime/deer-flow/.env deployment/docker/deer-flow/.env; \
 		cp runtime/deer-flow/conf.yaml deployment/docker/deer-flow/conf.yaml; \
-		cd deployment/docker/deer-flow && export REGISTRY=$(REGISTRY) && docker compose -f docker-compose.yml up -d; \
+		REGISTRY=$(REGISTRY) docker compose -f deployment/docker/deer-flow/docker-compose.yml up -d; \
+		NGINX_CONF="./backend-with-deer-flow.conf" REGISTRY=$(REGISTRY) docker compose -f deployment/docker/datamate/docker-compose.yml up -d; \
 	elif [ "$*" = "milvus" ]; then \
-		cd deployment/docker/milvus && docker compose -f docker-compose.yml up -d; \
+		docker compose -f deployment/docker/milvus/docker-compose.yml up -d; \
 	else \
 		$(call docker-compose-service,$*,up -d,deployment/docker/datamate); \
 	fi
@@ -286,28 +290,28 @@ VALID_SERVICE_TARGETS := datamate backend frontend runtime mineru "deer-flow" mi
 	fi
 	@if [ "$*" = "label-studio" ]; then \
 		if [ "$(DELETE_VOLUMES_CHOICE)" = "1" ]; then \
-			cd deployment/docker/label-studio && docker compose down -v; \
+			cd deployment/docker/label-studio && docker compose down -v && cd - >/dev/null; \
 		else \
-			cd deployment/docker/label-studio && docker compose down; \
+			cd deployment/docker/label-studio && docker compose down && cd - >/dev/null; \
 		fi; \
 	elif [ "$*" = "mineru" ]; then \
 		$(call docker-compose-service,datamate-mineru,down,deployment/docker/datamate); \
 	elif [ "$*" = "datamate" ]; then \
 		if [ "$(DELETE_VOLUMES_CHOICE)" = "1" ]; then \
-			cd deployment/docker/datamate && docker compose -f docker-compose.yml --profile mineru down -v; \
+			docker compose -f deployment/docker/datamate/docker-compose.yml --profile mineru down -v; \
 		else \
-			cd deployment/docker/datamate && docker compose -f docker-compose.yml --profile mineru down; \
+			docker compose -f deployment/docker/datamate/docker-compose.yml --profile mineru down; \
 		fi; \
 	elif [ "$*" = "deer-flow" ]; then \
+	  	docker compose -f deployment/docker/deer-flow/docker-compose.yml down; \
 		if docker compose ls --filter name=datamate | grep -q datamate; then \
-			cd deployment/docker/datamate && export REGISTRY=$(REGISTRY) && docker compose -f docker-compose.yml up -d; \
+			REGISTRY=$(REGISTRY) docker compose -f deployment/docker/datamate/docker-compose.yml up -d; \
 		fi; \
-		cd deployment/docker/deer-flow && docker compose -f docker-compose.yml down; \
 	elif [ "$*" = "milvus" ]; then \
 		if [ "$(DELETE_VOLUMES_CHOICE)" = "1" ]; then \
-			cd deployment/docker/milvus && docker compose -f docker-compose.yml down -v; \
+			docker compose -f deployment/docker/milvus/docker-compose.yml down -v; \
 		else \
-			cd deployment/docker/milvus && docker compose -f docker-compose.yml down; \
+			docker compose -f deployment/docker/milvus/docker-compose.yml down; \
 		fi; \
 	else \
 		$(call docker-compose-service,$*,down,deployment/docker/datamate); \
@@ -316,7 +320,7 @@ VALID_SERVICE_TARGETS := datamate backend frontend runtime mineru "deer-flow" mi
 # ========== Kubernetes Install/Uninstall Targets ==========
 
 # Valid k8s targets
-VALID_K8S_TARGETS := mineru datamate deer-flow milvus
+VALID_K8S_TARGETS := mineru datamate deer-flow milvus label-studio
 
 # Generic k8s install target
 .PHONY: %-k8s-install
@@ -334,10 +338,10 @@ VALID_K8S_TARGETS := mineru datamate deer-flow milvus
 	elif [ "$*" = "datamate" ]; then \
 		helm upgrade datamate deployment/helm/datamate/ -n $(NAMESPACE) --install --set global.image.repository=$(REGISTRY); \
 	elif [ "$*" = "deer-flow" ]; then \
-		helm upgrade datamate deployment/helm/datamate/ -n $(NAMESPACE) --install --set global.deerFlow.enable=true --set global.image.repository=$(REGISTRY); \
 		cp runtime/deer-flow/.env deployment/helm/deer-flow/charts/public/.env; \
 		cp runtime/deer-flow/conf.yaml deployment/helm/deer-flow/charts/public/conf.yaml; \
 		helm upgrade deer-flow deployment/helm/deer-flow -n $(NAMESPACE) --install --set global.image.repository=$(REGISTRY); \
+		helm upgrade datamate deployment/helm/datamate/ -n $(NAMESPACE) --install --set global.deerFlow.enable=true --set global.image.repository=$(REGISTRY); \
 	elif [ "$*" = "milvus" ]; then \
 		helm upgrade milvus deployment/helm/milvus -n $(NAMESPACE) --install; \
 	fi
@@ -383,7 +387,7 @@ VALID_UPGRADE_TARGETS := datamate
 		exit 1; \
 	fi
 	@if [ "$*" = "datamate" ]; then \
-		cd deployment/docker/datamate && docker compose -f docker-compose.yml --profile mineru up -d --force-recreate --remove-orphans; \
+		docker compose -f deployment/docker/datamate/docker-compose.yml --profile mineru up -d --force-recreate --remove-orphans; \
 	fi
 
 # ========== Download Targets ==========
