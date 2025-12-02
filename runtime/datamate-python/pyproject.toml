@@ -21,7 +21,13 @@ dependencies = [
     "python-multipart (>=0.0.20,<0.0.21)",
     "python-dotenv (>=1.2.1,<2.0.0)",
     "python-dateutil (>=2.9.0.post0,<3.0.0)",
-    "pyyaml (>=6.0.3,<7.0.0)"
+    "pyyaml (>=6.0.3,<7.0.0)",
+    "greenlet (>=3.2.4,<4.0.0)",
+    "loguru (>=0.7.2,<0.7.3)",
+    "langchain (>=1.0.0)",
+    "langchain-community (>0.4,<0.4.1)",
+    "unstructured[all]",
+    "markdown"
 ]
 
 

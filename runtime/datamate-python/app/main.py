@@ -24,7 +24,7 @@ logger = get_logger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    
+
     # @startup
     logger.info("DataMate Python Backend starting...")
 
@@ -43,7 +43,7 @@ async def lifespan(app: FastAPI):
     logger.info(f"Label Studio: {settings.label_studio_base_url}")
 
     yield
-    
+
     # @shutdown
     logger.info("DataMate Python Backend shutting down ...\n\n")
 
@@ -105,7 +105,7 @@ async def root():
 
 if __name__ == "__main__":
     import uvicorn
-    
+
     uvicorn.run(
         "app.main:app",
         host=settings.host,
