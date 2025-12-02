@@ -1,23 +1,22 @@
-from fastapi import FastAPI, Request, HTTPException, status
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.exceptions import RequestValidationError
-from starlette.exceptions import HTTPException as StarletteHTTPException
-
 from contextlib import asynccontextmanager
 from typing import Dict, Any
+
+from fastapi import FastAPI, HTTPException
+from fastapi.exceptions import RequestValidationError
 from sqlalchemy import text
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from .core.config import settings
 from .core.logging import setup_logging, get_logger
-from .db.session import engine, AsyncSessionLocal
-from .module.shared.schema import StandardResponse
-from .module import router
+from .db.session import AsyncSessionLocal
 from .exception import (
     starlette_http_exception_handler,
     fastapi_http_exception_handler,
     validation_exception_handler,
     general_exception_handler
 )
+from .module import router
+from .module.shared.schema import StandardResponse
 
 setup_logging()
 logger = get_logger(__name__)
