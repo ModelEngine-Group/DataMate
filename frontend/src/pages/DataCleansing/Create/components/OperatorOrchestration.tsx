@@ -185,10 +185,10 @@ const OperatorFlow: React.FC<OperatorFlowProps> = ({
               {/* 参数状态指示 */}
               {Object.values(operator.configs).some(
                 (param: any) =>
-                  (param.type === "input" && !param.value) ||
+                  (param.type === "input" && !param.defaultValue) ||
                   (param.type === "checkbox" &&
-                    Array.isArray(param.value) &&
-                    param.value.length === 0)
+                    Array.isArray(param.defaultValue) &&
+                    param.defaultValue.length === 0)
               ) && <Tag color="red">待配置</Tag>}
               {/* 操作按钮 */}
               <span
