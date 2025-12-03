@@ -40,24 +40,34 @@ class EvaluationExecutor:
     async def execute(self):
         eval_config = json.loads(self.task.eval_config)
         model_config = await get_model_by_id(self.db, eval_config.get("model_id"))
-        offset = 0
-        size = 2
-        items = (await self.db.execute(
-            select(EvaluationItem).where(EvaluationItem.task_id == self.task.id).offset(offset).limit(size)
+        semaphore = asyncio.Semaphore(10)
+        files = (await self.db.execute(
+            select(EvaluationFile).where(EvaluationFile.task_id == self.task.id)
         )).scalars().all()
-        while len(items) > 0:
-            for item in items:
-                prompt_text = self.get_eval_prompt(item)
-                resp_text = await asyncio.to_thread(
-                    call_openai_style_model, model_config.base_url, model_config.api_key, model_config.model_name,
-                    prompt_text
-                )
-                item.eval_result = resp_text
-                item.status = TaskStatus.COMPLETED.value
-            offset += size
+        for file in files:
             items = (await self.db.execute(
-                select(EvaluationItem).where(EvaluationItem.task_id == self.task.id).offset(offset).limit(size)
+                select(EvaluationItem).where(EvaluationItem.task_id == self.task.id)
+                .where(EvaluationItem.file_id == file.file_id)
             )).scalars().all()
+            tasks = [
+                self.evaluate_item(model_config, item, semaphore)
+                for item in items
+            ]
+            await asyncio.gather(*tasks, return_exceptions=True)
+            file.evaluated_count = len(items)
+            await self.db.commit()
+
+    async def evaluate_item(self, model_config, item: EvaluationItem, semaphore: asyncio.Semaphore):
+        async with semaphore:
+            prompt_text = self.get_eval_prompt(item)
+            resp_text = await asyncio.to_thread(
+                call_openai_style_model, model_config.base_url, model_config.api_key, model_config.model_name,
+                prompt_text,
+            )
+            item.eval_result = resp_text
+            item.status = TaskStatus.COMPLETED.value
+            await self.db.commit()
+
 
     def get_source_type(self) -> SourceType:
         pass
@@ -115,7 +125,28 @@ class SynthesisEvaluationExecutor(EvaluationExecutor):
             synthesis_datas = ((await self.db.execute(select(SynthesisData)
                                                      .where(SynthesisData.synthesis_file_instance_id == synthesis_file.id)))
                                .scalars().all())
-            logger.info(f"parse {len(synthesis_datas)} items from file {synthesis_file.file_name}")
+            logger.info(f"get {len(synthesis_datas)} items from file {synthesis_file.file_name}")
+            for synthesis_data in synthesis_datas:
+                self.db.add(EvaluationItem(
+                    id=str(uuid.uuid4()),
+                    task_id=self.task.id,
+                    file_id=synthesis_file.id,
+                    item_id=synthesis_data.id,
+                    eval_content=synthesis_data.data,
+                    status=TaskStatus.PENDING.value,
+                    created_by=self.task.created_by,
+                    updated_by=self.task.updated_by,
+                ))
+            self.db.add(EvaluationFile(
+                id=str(uuid.uuid4()),
+                task_id=self.task.id,
+                file_id=synthesis_file.id,
+                file_name=synthesis_file.file_name,
+                total_count=len(synthesis_datas),
+                evaluated_count=0,
+                created_by=self.task.created_by,
+                updated_by=self.task.updated_by,
+            ))
         pass
 
     def get_source_type(self) -> SourceType:

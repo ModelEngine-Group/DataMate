@@ -6,6 +6,17 @@ import { queryEvaluationFilesUsingGet, queryEvaluationItemsUsingGet } from '../.
 const { Text } = Typography;
 
 const COLUMN_WIDTH = 520;
+ const MONO_FONT = 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
+ const codeBlockStyle = {
+   fontFamily: MONO_FONT,
+   fontSize: 12,
+   lineHeight: '20px',
+   color: '#334155',
+   backgroundColor: '#f8fafc',
+   border: '1px solid #f0f0f0',
+   borderRadius: 6,
+   padding: 8,
+ } as const;
 
 type EvalFile = {
   taskId: string;
@@ -138,14 +149,14 @@ export default function EvaluationItems({ task }: { task: any }) {
     return (
       <Tooltip
         color="#fff"
-        title={<pre style={{ margin: 0, maxWidth: COLUMN_WIDTH, whiteSpace: 'pre-wrap', color: '#000' }}>{jsonString}</pre>}
+        title={<pre style={{ ...codeBlockStyle, margin: 0, maxWidth: COLUMN_WIDTH, whiteSpace: 'pre-wrap' }}>{jsonString}</pre>}
         overlayInnerStyle={{ maxHeight: 600, overflow: 'auto', width: COLUMN_WIDTH }}
       >
         <Typography.Paragraph
-          style={{ margin: 0, whiteSpace: 'pre-wrap' }}
+          style={{ margin: 0, whiteSpace: 'pre-wrap', fontFamily: MONO_FONT, fontSize: 12, lineHeight: '20px', color: '#334155' }}
           ellipsis={{ rows: 6 }}
         >
-          <pre style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{jsonString}</pre>
+          <pre style={{ ...codeBlockStyle, whiteSpace: 'pre-wrap', margin: 0 }}>{jsonString}</pre>
         </Typography.Paragraph>
       </Tooltip>
     );
@@ -176,14 +187,14 @@ export default function EvaluationItems({ task }: { task: any }) {
     return (
       <Tooltip
         color="#fff"
-        title={<pre style={{ margin: 0, maxWidth: 800, whiteSpace: 'pre-wrap', color: '#000' }}>{jsonString}</pre>}
+        title={<pre style={{ ...codeBlockStyle, margin: 0, maxWidth: 800, whiteSpace: 'pre-wrap' }}>{jsonString}</pre>}
         overlayInnerStyle={{ maxHeight: 600, overflow: 'auto' }}
       >
         <Typography.Paragraph
-          style={{ margin: 0, whiteSpace: 'pre-wrap' }}
+          style={{ margin: 0, whiteSpace: 'pre-wrap', fontFamily: MONO_FONT, fontSize: 12, lineHeight: '20px', color: '#334155' }}
           ellipsis={{ rows: 6 }}
         >
-          <pre style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{jsonString}</pre>
+          <pre style={{ ...codeBlockStyle, whiteSpace: 'pre-wrap', margin: 0 }}>{jsonString}</pre>
         </Typography.Paragraph>
       </Tooltip>
     );
