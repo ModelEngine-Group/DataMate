@@ -5,7 +5,6 @@ description = "Data Processing for and with Foundation Models."
 authors = [
     { name = "Huawei datamate team" }
 ]
-readme = "README.md"
 license = { text = "Apache-2.0" }
 requires-python = ">=3.10"
 urls = { repository = "https://github.com/ModelEngine-Group/datamate" }
