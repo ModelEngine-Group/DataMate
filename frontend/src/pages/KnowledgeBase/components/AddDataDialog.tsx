@@ -12,7 +12,7 @@ import {
 } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import { addKnowledgeBaseFilesUsingPost } from "../knowledge-base.api";
-import DatasetFileTransfer from "../../../components/DatasetFileTransfer";
+import DatasetFileTransfer from "@/components/business/DatasetFileTransfer";
 import { DescriptionsItemType } from "antd/es/descriptions";
 import { DatasetFileCols } from "../knowledge-base.const";
 
@@ -128,7 +128,7 @@ export default function AddDataDialog({ knowledgeBase, onDataAdded }) {
     try {
       // 构造符合API要求的请求数据
       const requestData = {
-        files: Object.values(selectedFilesMap),
+        files: Object.entries(selectedFilesMap),
         processType: newKB.processType,
         chunkSize: Number(newKB.chunkSize), // 确保是数字类型
         overlapSize: Number(newKB.overlapSize), // 确保是数字类型

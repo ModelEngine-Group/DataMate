@@ -24,6 +24,7 @@ export default function TemplateList() {
     setSearchParams,
     fetchData,
     handleFiltersChange,
+    handleKeywordChange,
   } = useFetchData(queryCleaningTemplatesUsingGet, mapTemplate);
 
   const templateOperations = () => {
@@ -46,13 +47,6 @@ export default function TemplateList() {
 
   const templateColumns = [
     {
-      title: "模板ID",
-      dataIndex: "id",
-      key: "id",
-      fixed: "left",
-      width: 100,
-    },
-    {
       title: "模板名称",
       dataIndex: "name",
       key: "name",
@@ -71,6 +65,13 @@ export default function TemplateList() {
           </Button>
         );
       }},
+      {
+          title: "模板ID",
+          dataIndex: "id",
+          key: "id",
+          fixed: "left",
+          width: 150,
+      },
       {
         title: "算子数量",
         dataIndex: "num",
@@ -120,9 +121,7 @@ export default function TemplateList() {
       {/* Search and Filters */}
       <SearchControls
         searchTerm={searchParams.keyword}
-        onSearchChange={(keyword) =>
-          setSearchParams({ ...searchParams, keyword })
-        }
+        onSearchChange={handleKeywordChange}
         searchPlaceholder="搜索模板名称、描述"
         onFiltersChange={handleFiltersChange}
         viewMode={viewMode}

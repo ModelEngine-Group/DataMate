@@ -41,6 +41,7 @@ export default function TaskList() {
     setSearchParams,
     fetchData,
     handleFiltersChange,
+    handleKeywordChange,
   } = useFetchData(queryCleaningTasksUsingGet, mapTask);
 
   const pauseTask = async (item: CleansingTask) => {
@@ -177,16 +178,19 @@ export default function TaskList() {
       title: "进度",
       dataIndex: "process",
       key: "process",
-      width: 200,
-      render: (progress: number) => (
-        <Progress percent={progress} size="small" />
-      ),
+      width: 150,
+      render: (_, record: CleansingTask) => {
+          if (record?.status?.value == TaskStatus.FAILED) {
+              return <Progress percent={record?.progress?.process} size="small" status="exception" />;
+          }
+          return <Progress percent={record?.progress?.process} size="small"/>;
+      },
     },
     {
       title: "已处理文件数",
       dataIndex: "finishedFileNum",
       key: "finishedFileNum",
-      width: 150,
+      width: 120,
       align: "right",
       ellipsis: true,
     },
@@ -194,7 +198,7 @@ export default function TaskList() {
       title: "总文件数",
       dataIndex: "totalFileNum",
       key: "totalFileNum",
-      width: 150,
+      width: 100,
       align: "right",
       ellipsis: true,
     },
@@ -202,7 +206,7 @@ export default function TaskList() {
       title: "执行耗时",
       dataIndex: "duration",
       key: "duration",
-      width: 180,
+      width: 100,
       ellipsis: true,
     },
     {
@@ -267,9 +271,7 @@ export default function TaskList() {
       {/* Search and Filters */}
       <SearchControls
         searchTerm={searchParams.keyword}
-        onSearchChange={(keyword) =>
-          setSearchParams({ ...searchParams, keyword })
-        }
+        onSearchChange={handleKeywordChange}
         searchPlaceholder="搜索任务名称、描述"
         filters={filterOptions}
         onFiltersChange={handleFiltersChange}

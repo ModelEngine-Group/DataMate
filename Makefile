@@ -3,6 +3,8 @@ MAKEFLAGS += --no-print-directory
 WITH_MINERU ?= false  # 默认不构建mineru
 VERSION ?= latest
 NAMESPACE ?= datamate
+PLATFORM ?= linux/amd64  # Default platform for image downloads
+SAVE ?= false  # Default: only pull images, don't save to dist/
 
 # Registry configuration: use --dev for local images, otherwise use GitHub registry
 ifdef dev
@@ -28,10 +30,13 @@ help:
 	@echo "Usage: make <target> [options]"
 	@echo ""
 	@echo "Options:"
-	@echo "  dev=true           Use local images instead of registry (empty REGISTRY)"
-	@echo "  VERSION=<version>  Set image version (default: latest)"
-	@echo "  NAMESPACE=<name>   Set Kubernetes namespace (default: datamate)"
-	@echo "  INSTALLER=<type>   Set installer type: docker or k8s"
+	@echo "  dev=true             Use local images instead of registry (empty REGISTRY)"
+	@echo "  VERSION=<version>    Set image version (default: latest)"
+	@echo "  NAMESPACE=<name>     Set Kubernetes namespace (default: datamate)"
+	@echo "  INSTALLER=<type>     Set installer type: docker or k8s"
+	@echo "  PLATFORM=<platform>  Set platform for downloads (default: linux/amd64)"
+	@echo "                       Options: linux/amd64, linux/arm64"
+	@echo "  SAVE=true            Save images to dist/ during download (default: false)"
 	@echo ""
 	@echo "Build Commands:"
 	@echo "  make build                     Build all core images"
@@ -60,6 +65,13 @@ help:
 	@echo ""
 	@echo "Upgrade Commands:"
 	@echo "  make datamate-docker-upgrade   Upgrade datamate deployment"
+	@echo ""
+	@echo "Download Commands:"
+	@echo "  make download                       Pull all images (no save by default)"
+	@echo "  make download SAVE=true             Download and save images to dist/"
+	@echo "  make download PLATFORM=linux/arm64  Download ARM64 images"
+	@echo "  make download SAVE=true PLATFORM=linux/arm64  Save ARM64 images"
+	@echo "  make load-images                    Load all downloaded images from dist/"
 	@echo ""
 	@echo "Utility Commands:"
 	@echo "  make create-namespace          Create Kubernetes namespace"
@@ -209,16 +221,20 @@ endif
 .PHONY: uninstall
 uninstall:
 ifeq ($(origin INSTALLER), undefined)
-	$(call prompt-uninstaller,milvus-$$INSTALLER-uninstall datamate-$$INSTALLER-uninstall)
+	$(call prompt-uninstaller,label-studio-$$INSTALLER-uninstall milvus-$$INSTALLER-uninstall deer-flow-$$INSTALLER-uninstall datamate-$$INSTALLER-uninstall)
 else
-	@echo "Delete volumes? (This will remove all data)"; \
-	echo "1. Yes - Delete volumes"; \
-	echo "2. No - Keep volumes"; \
-	echo -n "Enter choice (default: 2): "; \
-	read DELETE_VOLUMES_CHOICE; \
-	export DELETE_VOLUMES_CHOICE; \
+	@if [ "$(INSTALLER)" = "docker" ]; then \
+		echo "Delete volumes? (This will remove all data)"; \
+    	echo "1. Yes - Delete volumes"; \
+    	echo "2. No - Keep volumes"; \
+    	echo -n "Enter choice (default: 2): "; \
+    	read DELETE_VOLUMES_CHOICE; \
+    	export DELETE_VOLUMES_CHOICE; \
+	fi
+	@$(MAKE) label-studio-$(INSTALLER)-uninstall DELETE_VOLUMES_CHOICE=$$DELETE_VOLUMES_CHOICE; \
 	$(MAKE) milvus-$(INSTALLER)-uninstall DELETE_VOLUMES_CHOICE=$$DELETE_VOLUMES_CHOICE; \
-	$(MAKE) label-studio-$(INSTALLER)-uninstall DELETE_VOLUMES_CHOICE=$$DELETE_VOLUMES_CHOICE; \
+	$(MAKE) datamate-$(INSTALLER)-uninstall DELETE_VOLUMES_CHOICE=$$DELETE_VOLUMES_CHOICE; \
+	$(MAKE) deer-flow-$(INSTALLER)-uninstall DELETE_VOLUMES_CHOICE=$$DELETE_VOLUMES_CHOICE; \
 	$(MAKE) datamate-$(INSTALLER)-uninstall DELETE_VOLUMES_CHOICE=$$DELETE_VOLUMES_CHOICE
 endif
 
@@ -241,24 +257,22 @@ VALID_SERVICE_TARGETS := datamate backend frontend runtime mineru "deer-flow" mi
 	@if [ "$*" = "label-studio" ]; then \
 		$(call docker-compose-service,label-studio,up -d,deployment/docker/label-studio); \
 	elif [ "$*" = "mineru" ]; then \
-		cd deployment/docker/datamate && export REGISTRY=$(REGISTRY) && docker compose up -d datamate-mineru; \
+		REGISTRY=$(REGISTRY) && docker compose -f deployment/docker/datamate/docker-compose.yml up -d datamate-mineru; \
 	elif [ "$*" = "datamate" ]; then \
 		if docker compose ls --filter name=deer-flow | grep -q deer-flow; then \
-			(cd deployment/docker/datamate && NGINX_CONF="./backend-with-deer-flow.conf" REGISTRY=$(REGISTRY) docker compose -f docker-compose.yml up -d) && \
-			$(MAKE) label-studio-docker-install; \
+			(NGINX_CONF="./backend-with-deer-flow.conf" REGISTRY=$(REGISTRY) docker compose -f deployment/docker/datamate/docker-compose.yml up -d); \
 		else \
-			(cd deployment/docker/datamate && REGISTRY=$(REGISTRY) docker compose -f docker-compose.yml up -d) && \
-			$(MAKE) label-studio-docker-install; \
+			(REGISTRY=$(REGISTRY) docker compose -f deployment/docker/datamate/docker-compose.yml up -d); \
 		fi; \
 	elif [ "$*" = "deer-flow" ]; then \
-		cd deployment/docker/datamate && export NGINX_CONF="./backend-with-deer-flow.conf" && export REGISTRY=$(REGISTRY) && docker compose -f docker-compose.yml up -d; \
 		cp -n runtime/deer-flow/.env.example runtime/deer-flow/.env; \
 		cp -n runtime/deer-flow/conf.yaml.example runtime/deer-flow/conf.yaml; \
 		cp runtime/deer-flow/.env deployment/docker/deer-flow/.env; \
 		cp runtime/deer-flow/conf.yaml deployment/docker/deer-flow/conf.yaml; \
-		cd deployment/docker/deer-flow && export REGISTRY=$(REGISTRY) && docker compose -f docker-compose.yml up -d; \
+		REGISTRY=$(REGISTRY) docker compose -f deployment/docker/deer-flow/docker-compose.yml up -d; \
+		NGINX_CONF="./backend-with-deer-flow.conf" REGISTRY=$(REGISTRY) docker compose -f deployment/docker/datamate/docker-compose.yml up -d; \
 	elif [ "$*" = "milvus" ]; then \
-		cd deployment/docker/milvus && docker compose -f docker-compose.yml up -d; \
+		docker compose -f deployment/docker/milvus/docker-compose.yml up -d; \
 	else \
 		$(call docker-compose-service,$*,up -d,deployment/docker/datamate); \
 	fi
@@ -276,28 +290,28 @@ VALID_SERVICE_TARGETS := datamate backend frontend runtime mineru "deer-flow" mi
 	fi
 	@if [ "$*" = "label-studio" ]; then \
 		if [ "$(DELETE_VOLUMES_CHOICE)" = "1" ]; then \
-			cd deployment/docker/label-studio && docker compose down -v; \
+			cd deployment/docker/label-studio && docker compose down -v && cd - >/dev/null; \
 		else \
-			cd deployment/docker/label-studio && docker compose down; \
+			cd deployment/docker/label-studio && docker compose down && cd - >/dev/null; \
 		fi; \
 	elif [ "$*" = "mineru" ]; then \
 		$(call docker-compose-service,datamate-mineru,down,deployment/docker/datamate); \
 	elif [ "$*" = "datamate" ]; then \
 		if [ "$(DELETE_VOLUMES_CHOICE)" = "1" ]; then \
-			cd deployment/docker/datamate && docker compose -f docker-compose.yml --profile mineru down -v; \
+			docker compose -f deployment/docker/datamate/docker-compose.yml --profile mineru down -v; \
 		else \
-			cd deployment/docker/datamate && docker compose -f docker-compose.yml --profile mineru down; \
+			docker compose -f deployment/docker/datamate/docker-compose.yml --profile mineru down; \
 		fi; \
 	elif [ "$*" = "deer-flow" ]; then \
+	  	docker compose -f deployment/docker/deer-flow/docker-compose.yml down; \
 		if docker compose ls --filter name=datamate | grep -q datamate; then \
-			cd deployment/docker/datamate && export REGISTRY=$(REGISTRY) && docker compose -f docker-compose.yml up -d; \
+			REGISTRY=$(REGISTRY) docker compose -f deployment/docker/datamate/docker-compose.yml up -d; \
 		fi; \
-		cd deployment/docker/deer-flow && docker compose -f docker-compose.yml down; \
 	elif [ "$*" = "milvus" ]; then \
 		if [ "$(DELETE_VOLUMES_CHOICE)" = "1" ]; then \
-			cd deployment/docker/milvus && docker compose -f docker-compose.yml down -v; \
+			docker compose -f deployment/docker/milvus/docker-compose.yml down -v; \
 		else \
-			cd deployment/docker/milvus && docker compose -f docker-compose.yml down; \
+			docker compose -f deployment/docker/milvus/docker-compose.yml down; \
 		fi; \
 	else \
 		$(call docker-compose-service,$*,down,deployment/docker/datamate); \
@@ -306,7 +320,7 @@ VALID_SERVICE_TARGETS := datamate backend frontend runtime mineru "deer-flow" mi
 # ========== Kubernetes Install/Uninstall Targets ==========
 
 # Valid k8s targets
-VALID_K8S_TARGETS := mineru datamate deer-flow milvus
+VALID_K8S_TARGETS := mineru datamate deer-flow milvus label-studio
 
 # Generic k8s install target
 .PHONY: %-k8s-install
@@ -324,10 +338,10 @@ VALID_K8S_TARGETS := mineru datamate deer-flow milvus
 	elif [ "$*" = "datamate" ]; then \
 		helm upgrade datamate deployment/helm/datamate/ -n $(NAMESPACE) --install --set global.image.repository=$(REGISTRY); \
 	elif [ "$*" = "deer-flow" ]; then \
-		helm upgrade datamate deployment/helm/datamate/ -n $(NAMESPACE) --install --set global.deerFlow.enable=true --set global.image.repository=$(REGISTRY); \
 		cp runtime/deer-flow/.env deployment/helm/deer-flow/charts/public/.env; \
 		cp runtime/deer-flow/conf.yaml deployment/helm/deer-flow/charts/public/conf.yaml; \
 		helm upgrade deer-flow deployment/helm/deer-flow -n $(NAMESPACE) --install --set global.image.repository=$(REGISTRY); \
+		helm upgrade datamate deployment/helm/datamate/ -n $(NAMESPACE) --install --set global.deerFlow.enable=true --set global.image.repository=$(REGISTRY); \
 	elif [ "$*" = "milvus" ]; then \
 		helm upgrade milvus deployment/helm/milvus -n $(NAMESPACE) --install; \
 	fi
@@ -373,5 +387,106 @@ VALID_UPGRADE_TARGETS := datamate
 		exit 1; \
 	fi
 	@if [ "$*" = "datamate" ]; then \
-		cd deployment/docker/datamate && docker compose -f docker-compose.yml --profile mineru up -d --force-recreate --remove-orphans; \
+		docker compose -f deployment/docker/datamate/docker-compose.yml --profile mineru up -d --force-recreate --remove-orphans; \
+	fi
+
+# ========== Download Targets ==========
+
+# List of all images to download
+DOWNLOAD_IMAGES := \
+	datamate-backend \
+	datamate-database \
+	datamate-frontend \
+	datamate-runtime \
+	datamate-backend-python
+
+# Download all images for offline installation
+.PHONY: download
+download:
+	@echo "Downloading images for platform: $(PLATFORM)"
+	@echo "Registry: $(REGISTRY)"
+	@echo "Version: $(VERSION)"
+	@echo "Save to dist/: $(SAVE)"
+	@echo ""
+	@if [ "$(SAVE)" = "true" ]; then \
+		mkdir -p dist; \
+	fi
+	@if [ -z "$(REGISTRY)" ] && [ "$(SAVE)" != "true" ]; then \
+		echo "Error: REGISTRY is empty and SAVE=false"; \
+		echo "Either set REGISTRY to pull images, or use SAVE=true to save local images"; \
+		exit 1; \
+	fi
+	@failed=0; \
+	for image in $(DOWNLOAD_IMAGES); do \
+		if [ -z "$(REGISTRY)" ]; then \
+			full_image="$$image:$(VERSION)"; \
+			if [ "$(SAVE)" = "true" ]; then \
+				echo "Saving local image $$full_image to dist/$$image-$(VERSION).tar..."; \
+				if docker save -o dist/$$image-$(VERSION).tar $$full_image; then \
+					echo "Compressing to dist/$$image-$(VERSION).tar.gz..."; \
+					gzip -f dist/$$image-$(VERSION).tar; \
+					echo "✓ Saved $$image to dist/$$image-$(VERSION).tar.gz"; \
+				else \
+					echo "✗ Failed to save $$full_image (image may not exist locally)"; \
+					failed=$$((failed + 1)); \
+				fi; \
+			fi; \
+		else \
+			full_image="$(REGISTRY)$$image:$(VERSION)"; \
+			echo "Pulling $$full_image for $(PLATFORM)..."; \
+			if docker pull --platform $(PLATFORM) $$full_image; then \
+				echo "✓ Pulled $$image"; \
+				if [ "$(SAVE)" = "true" ]; then \
+					echo "Saving $$full_image to dist/$$image-$(VERSION).tar..."; \
+					docker save -o dist/$$image-$(VERSION).tar $$full_image; \
+					echo "Compressing to dist/$$image-$(VERSION).tar.gz..."; \
+					gzip -f dist/$$image-$(VERSION).tar; \
+					echo "✓ Saved $$image to dist/$$image-$(VERSION).tar.gz"; \
+				fi; \
+			else \
+				echo "✗ Failed to pull $$full_image"; \
+				failed=$$((failed + 1)); \
+			fi; \
+		fi; \
+		echo ""; \
+	done; \
+	if [ $$failed -eq 0 ]; then \
+		if [ "$(SAVE)" = "true" ]; then \
+			echo "All images downloaded successfully to dist/"; \
+			echo "To load images on target machine: docker load -i <image-file>.tar.gz"; \
+		else \
+			echo "All images pulled successfully"; \
+			echo "Use SAVE=true to save images to dist/ for offline installation"; \
+		fi; \
+	else \
+		echo "Failed to download $$failed image(s)"; \
+		echo "Please check your registry credentials and image availability"; \
+		exit 1; \
+	fi
+
+# Load all downloaded images from dist/ directory
+.PHONY: load-images
+load-images:
+	@if [ ! -d "dist" ]; then \
+		echo "Error: dist/ directory not found"; \
+		echo "Please run 'make download' first to download images"; \
+		exit 1; \
+	fi
+	@echo "Loading images from dist/..."
+	@count=0; \
+	for tarfile in dist/*.tar.gz; do \
+		if [ -f "$$tarfile" ]; then \
+			echo "Loading $$tarfile..."; \
+			docker load -i "$$tarfile"; \
+			count=$$((count + 1)); \
+			echo "✓ Loaded $$tarfile"; \
+			echo ""; \
+		fi; \
+	done; \
+	if [ $$count -eq 0 ]; then \
+		echo "No image files found in dist/"; \
+		echo "Please run 'make download' first"; \
+		exit 1; \
+	else \
+		echo "Successfully loaded $$count image(s)"; \
 	fi

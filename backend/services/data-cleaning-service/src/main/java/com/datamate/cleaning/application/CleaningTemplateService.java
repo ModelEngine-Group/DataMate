@@ -6,8 +6,13 @@ import com.datamate.cleaning.domain.repository.OperatorInstanceRepository;
 import com.datamate.cleaning.infrastructure.validator.CleanTaskValidator;
 import com.datamate.cleaning.interfaces.dto.*;
 import com.datamate.cleaning.domain.model.entity.TemplateWithInstance;
+import com.datamate.common.infrastructure.exception.BusinessException;
+import com.datamate.operator.application.OperatorService;
 import com.datamate.operator.domain.repository.OperatorViewRepository;
+import com.datamate.operator.infrastructure.exception.OperatorErrorCode;
 import com.datamate.operator.interfaces.dto.OperatorDto;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -31,6 +36,10 @@ public class CleaningTemplateService {
 
     private final CleanTaskValidator cleanTaskValidator;
 
+    private final OperatorService operatorService;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
     public List<CleaningTemplateDto> getTemplates(String keywords) {
         List<OperatorDto> allOperators =
                 operatorViewRepo.findOperatorsByCriteria(null, null, null, null, null);
@@ -50,7 +59,12 @@ public class CleaningTemplateService {
                     .map(v -> {
                         OperatorDto operator = operatorsMap.get(v.getOperatorId());
                         if (StringUtils.isNotBlank(v.getSettingsOverride())) {
-                            operator.setSettings(v.getSettingsOverride());
+                            try {
+                                operator.setOverrides(objectMapper.readValue(v.getSettingsOverride(), Map.class));
+                            } catch (JsonProcessingException e) {
+                                throw BusinessException.of(OperatorErrorCode.SETTINGS_PARSE_FAILED, e.getMessage());
+                            }
+                            operatorService.overrideSettings(operator);
                         }
                         return operator;
                     }).toList());

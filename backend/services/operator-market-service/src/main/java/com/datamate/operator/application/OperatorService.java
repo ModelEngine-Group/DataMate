@@ -49,12 +49,12 @@ public class OperatorService {
     private String operatorBasePath;
 
     public List<OperatorDto> getOperators(Integer page, Integer size, List<String> categories,
-                                          String operatorName, Boolean isStar) {
-        return operatorViewRepo.findOperatorsByCriteria(page, size, operatorName, categories, isStar);
+                                          String keyword, Boolean isStar) {
+        return operatorViewRepo.findOperatorsByCriteria(page, size, keyword, categories, isStar);
     }
 
-    public int getOperatorsCount(List<String> categories, String operatorName, Boolean isStar) {
-        return operatorViewRepo.countOperatorsByCriteria(operatorName, categories, isStar);
+    public int getOperatorsCount(List<String> categories, String keyword, Boolean isStar) {
+        return operatorViewRepo.countOperatorsByCriteria(keyword, categories, isStar);
     }
 
     public OperatorDto getOperatorById(String id) {
@@ -88,6 +88,9 @@ public class OperatorService {
 
     @Transactional
     public void deleteOperator(String id) {
+        if (operatorRepo.operatorInTemplateOrRunning(id)) {
+            throw BusinessException.of(OperatorErrorCode.OPERATOR_IN_INSTANCE);
+        }
         operatorRepo.deleteOperator(id);
         relationRepo.deleteByOperatorId(id);
     }
@@ -125,7 +128,7 @@ public class OperatorService {
         return operatorBasePath + File.separator + "extract" + File.separator + fileName;
     }
 
-    private void overrideSettings(OperatorDto operatorDto) {
+    public void overrideSettings(OperatorDto operatorDto) {
         if (StringUtils.isBlank(operatorDto.getSettings()) || MapUtils.isEmpty(operatorDto.getOverrides())) {
             return;
         }

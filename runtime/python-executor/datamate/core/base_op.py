@@ -288,7 +288,7 @@ class Filter(BaseOp):
                          f"{str(get_exception_info(e))}")
             task_info = TaskInfoPersistence()
             task_info.persistence_task_info(sample)
-            return False
+            raise e
 
         sample["execute_status"] = execute_status
         # 文件无内容会被过滤

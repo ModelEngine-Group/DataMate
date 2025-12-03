@@ -246,3 +246,13 @@ false
     {{- end -}}
 {{- end -}}
 {{- end -}}
+
+{{- define "runtime.image" -}}
+{{- $name := default .Values.image.repository .Values.global.image.runtime.name }}
+{{- $tag := default .Values.image.tag .Values.global.image.runtime.tag }}
+{{- if .Values.global.image.repository }}
+{{- .Values.global.image.repository | trimSuffix "/" }}/{{ $name }}:{{ $tag }}
+{{- else }}
+{{- $name }}:{{ $tag }}
+{{- end }}
+{{- end }}

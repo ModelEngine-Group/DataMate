@@ -106,6 +106,7 @@ public class RagEtlService {
             document = new HtmlToTextDocumentTransformer().transform(document);
         }
         document.metadata().put("rag_file_id", ragFile.getId());
+        document.metadata().put("original_file_id", ragFile.getFileId());
         // 使用文档分块器对文档进行分块
         DocumentSplitter splitter = documentSplitter(event.addFilesReq());
         List<TextSegment> split = splitter.split(document);

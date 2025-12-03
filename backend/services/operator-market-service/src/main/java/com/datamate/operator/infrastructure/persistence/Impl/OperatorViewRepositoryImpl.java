@@ -23,13 +23,18 @@ public class OperatorViewRepositoryImpl extends CrudRepository<OperatorViewMappe
     private final OperatorViewMapper mapper;
 
     @Override
-    public List<OperatorDto> findOperatorsByCriteria(Integer page, Integer size, String operatorName,
+    public List<OperatorDto> findOperatorsByCriteria(Integer page, Integer size, String keyword,
                                                      List<String> categories, Boolean isStar) {
         QueryWrapper<OperatorView> queryWrapper = Wrappers.query();
         queryWrapper.in(CollectionUtils.isNotEmpty(categories), "category_id", categories)
-            .like(StringUtils.isNotBlank(operatorName), "operator_name", operatorName)
-            .eq(isStar != null, "is_star", isStar)
-            .groupBy("operator_id")
+            .eq(isStar != null, "is_star", isStar);
+        if (StringUtils.isNotEmpty(keyword)) {
+            queryWrapper.and(w ->
+                    w.like("operator_name", keyword)
+                    .or()
+                    .like("description", keyword));
+        }
+        queryWrapper.groupBy("operator_id")
             .orderByDesc("created_at");
         Page<OperatorView> queryPage;
         if (size != null && page != null) {
@@ -43,11 +48,16 @@ public class OperatorViewRepositoryImpl extends CrudRepository<OperatorViewMappe
     }
 
     @Override
-    public Integer countOperatorsByCriteria(String operatorName, List<String> categories, Boolean isStar) {
+    public Integer countOperatorsByCriteria(String keyword, List<String> categories, Boolean isStar) {
         QueryWrapper<OperatorView> queryWrapper = Wrappers.query();
         queryWrapper.in(CollectionUtils.isNotEmpty(categories),"category_id", categories)
-            .like(StringUtils.isNotBlank(operatorName), "operator_name", operatorName)
             .eq(isStar != null, "is_star", isStar);
+        if (StringUtils.isNotEmpty(keyword)) {
+            queryWrapper.and(w ->
+                    w.like("operator_name", keyword)
+                    .or()
+                    .like("description", keyword));
+        }
         return mapper.countOperatorsByCriteria(queryWrapper);
     }
 

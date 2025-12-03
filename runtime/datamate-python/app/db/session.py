@@ -15,8 +15,8 @@ engine = create_async_engine(
 
 # 创建会话工厂
 AsyncSessionLocal = async_sessionmaker(
-    engine, 
-    class_=AsyncSession, 
+    engine,
+    class_=AsyncSession,
     expire_on_commit=False
 )
 
@@ -29,4 +29,3 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
             yield session
         finally:
             await session.close()
-            

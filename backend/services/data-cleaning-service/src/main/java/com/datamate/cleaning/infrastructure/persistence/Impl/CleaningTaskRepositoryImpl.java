@@ -24,9 +24,14 @@ public class CleaningTaskRepositoryImpl extends CrudRepository<CleaningTaskMappe
 
     public List<CleaningTaskDto> findTasks(String status, String keywords, Integer page, Integer size) {
         LambdaQueryWrapper<CleaningTask> lambdaWrapper = new LambdaQueryWrapper<>();
-        lambdaWrapper.eq(StringUtils.isNotBlank(status), CleaningTask::getStatus, status)
-            .like(StringUtils.isNotBlank(keywords), CleaningTask::getName, keywords)
-            .orderByDesc(CleaningTask::getCreatedAt);
+        lambdaWrapper.eq(StringUtils.isNotBlank(status), CleaningTask::getStatus, status);
+        if (StringUtils.isNotBlank(keywords)) {
+            lambdaWrapper.and(w ->
+                    w.like(CleaningTask::getName, keywords)
+                    .or()
+                    .like(CleaningTask::getDescription, keywords));
+        }
+        lambdaWrapper.orderByDesc(CleaningTask::getCreatedAt);
         if (size != null && page != null) {
             Page<CleaningTask> queryPage = new Page<>(page + 1, size);
             IPage<CleaningTask> resultPage = mapper.selectPage(queryPage, lambdaWrapper);

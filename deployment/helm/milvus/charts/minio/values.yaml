@@ -10,6 +10,9 @@ fullnameOverride: ""
 ##
 clusterDomain: cluster.local
 
+global:
+  imageRegistry: ""
+
 ## Set default image, imageTag, and imagePullPolicy. mode is used to indicate the
 ##
 image:

@@ -22,8 +22,14 @@ public class CleaningResultRepositoryImpl extends CrudRepository<CleaningResultM
 
     @Override
     public void deleteByInstanceId(String instanceId) {
+        deleteByInstanceId(instanceId, null);
+    }
+
+    @Override
+    public void deleteByInstanceId(String instanceId, String status) {
         LambdaQueryWrapper<CleaningResult> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(CleaningResult::getInstanceId, instanceId);
+        queryWrapper.eq(CleaningResult::getInstanceId, instanceId)
+                .eq(StringUtils.isNotBlank(status), CleaningResult::getStatus, status);
         mapper.delete(queryWrapper);
     }
 
@@ -40,8 +46,13 @@ public class CleaningResultRepositoryImpl extends CrudRepository<CleaningResultM
     }
 
     public List<CleaningResultDto> findByInstanceId(String instanceId) {
+        return findByInstanceId(instanceId, null);
+    }
+
+    public List<CleaningResultDto> findByInstanceId(String instanceId, String status) {
         LambdaQueryWrapper<CleaningResult> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(CleaningResult::getInstanceId, instanceId);
+        queryWrapper.eq(CleaningResult::getInstanceId, instanceId)
+                .eq(StringUtils.isNotBlank(status), CleaningResult::getStatus, status);
         return CleaningResultConverter.INSTANCE.convertEntityToDto(mapper.selectList(queryWrapper));
     }
 }

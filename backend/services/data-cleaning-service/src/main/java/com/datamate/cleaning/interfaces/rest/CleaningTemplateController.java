@@ -30,7 +30,7 @@ public class CleaningTemplateController {
     public PagedResponse<CleaningTemplateDto> cleaningTemplatesGet(
             @RequestParam(value = "page", required = false) Integer page,
             @RequestParam(value = "size", required = false) Integer size,
-            @RequestParam(value = "keywords", required = false) String keyword) {
+            @RequestParam(value = "keyword", required = false) String keyword) {
         List<CleaningTemplateDto> templates = cleaningTemplateService.getTemplates(keyword);
         if (page == null || size == null) {
             return PagedResponse.of(templates.stream()

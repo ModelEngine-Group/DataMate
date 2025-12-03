@@ -22,3 +22,23 @@ version: 0.0.1
 # follow Semantic Versioning. They should reflect the version the application is using.
 # It is recommended to use it with quotes.
 appVersion: "0.0.1"
+
+dependencies:
+  - name: backend
+    version: 0.0.1
+  - name: frontend
+    version: 0.0.1
+  - name: database
+    version: 0.0.1
+  - name: backend-python
+    version: 0.0.1
+  - name: kuberay-operator
+    version: 1.4.2
+    condition: ray-cluster.enabled
+  - name: ray-cluster
+    version: 1.4.2
+    condition: ray-cluster.enabled
+  - name: runtime
+    version: 0.0.1
+    condition: runtime.enabled
+

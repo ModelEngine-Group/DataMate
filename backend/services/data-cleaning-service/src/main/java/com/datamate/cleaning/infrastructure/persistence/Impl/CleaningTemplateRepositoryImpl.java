@@ -25,8 +25,12 @@ public class CleaningTemplateRepositoryImpl extends CrudRepository<CleaningTempl
     @Override
     public List<TemplateWithInstance> findAllTemplates(String keywords) {
         QueryWrapper<TemplateWithInstance> queryWrapper = new QueryWrapper<>();
-        queryWrapper.like(StringUtils.isNotBlank(keywords), "name", keywords)
-            .orderByDesc("created_at");
+        if (StringUtils.isNotBlank(keywords)) {
+            queryWrapper.like("name", keywords)
+                    .or()
+                    .like("description", keywords);
+        }
+        queryWrapper.orderByDesc("created_at");
         return mapper.findAllTemplates(queryWrapper);
     }
 
