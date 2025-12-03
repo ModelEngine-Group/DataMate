@@ -7,7 +7,6 @@ import shutil
 import asyncio
 
 from sqlalchemy import select
-
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import get_logger
@@ -16,7 +15,7 @@ from app.db.models import Dataset, DatasetFiles
 from app.db.session import AsyncSessionLocal
 from app.module.dataset.schema.dataset_file import DatasetFileTag
 from app.module.shared.schema import TaskStatus
-from app.module.synthesis.schema.ratio_task import FilterCondition
+from app.module.ratio.schema.ratio_task import FilterCondition
 
 logger = get_logger(__name__)
 

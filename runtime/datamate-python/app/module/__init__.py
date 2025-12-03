@@ -2,7 +2,7 @@ from fastapi import APIRouter
 
 from .system.interface import router as system_router
 from .annotation.interface import router as annotation_router
-from .synthesis.interface import router as ratio_router
+from .ratio.interface import router as ratio_router
 from .generation.interface import router as generation_router
 from .evaluation.interface import router as evaluation_router
 
