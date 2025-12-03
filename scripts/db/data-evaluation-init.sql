@@ -21,20 +21,16 @@ CREATE TABLE IF NOT EXISTS t_de_eval_task (
     created_by VARCHAR(255) COMMENT '创建者',
     updated_by VARCHAR(255) COMMENT '更新者',
     INDEX idx_dm_status (status),
-    INDEX idx_dm_public (is_public),
-    INDEX idx_dm_featured (is_featured),
     INDEX idx_dm_created_at (created_at)
 ) COMMENT='评估任务表（UUID 主键）';
 
 CREATE TABLE IF NOT EXISTS t_de_eval_item (
     id VARCHAR(36) PRIMARY KEY COMMENT 'UUID',
     task_id VARCHAR(36) NOT NULL COMMENT '评估任务ID',
+    file_id VARCHAR(36) COMMENT '文件ID',
     item_id VARCHAR(36) NOT NULL COMMENT '评估条目ID',
+    eval_content TEXT COMMENT '评估内容',
     eval_score DOUBLE PRECISION NOT NULL DEFAULT 0 COMMENT '评估分数',
     eval_result TEXT COMMENT '评估结果',
-    status VARCHAR(50) DEFAULT 'PENDING' COMMENT '状态：PENDING/EVALUATED',
-    INDEX idx_dm_status (status),
-    INDEX idx_dm_public (is_public),
-    INDEX idx_dm_featured (is_featured),
-    INDEX idx_dm_created_at (created_at)
+    status VARCHAR(50) DEFAULT 'PENDING' COMMENT '状态：PENDING/EVALUATED'
 ) COMMENT='评估条目表（UUID 主键）';

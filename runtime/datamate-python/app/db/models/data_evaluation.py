@@ -55,7 +55,9 @@ class EvaluationItem(Base):
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()), comment="UUID")
     task_id = Column(String(36), ForeignKey('t_de_eval_task.id'), nullable=False, comment="评估任务ID")
+    file_id = Column(String(36), ForeignKey('t_dm_dataset_files.id'), nullable=True, comment="文件ID")
     item_id = Column(String(36), nullable=False, comment="评估条目ID")
+    eval_content = Column(Text, nullable=True, comment="评估内容")
     eval_score = Column(Float, nullable=False, server_default="0", comment="评估分数")
     eval_result = Column(Text, nullable=True, comment="评估结果")
     status = Column(String(50), server_default="PENDING", nullable=False, comment="状态：PENDING/EVALUATED")

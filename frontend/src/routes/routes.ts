@@ -40,6 +40,7 @@ import { withErrorBoundary } from "@/components/ErrorBoundary";
 import AgentPage from "@/pages/Agent/Agent.tsx";
 import RatioTaskDetail from "@/pages/RatioTask/Detail/RatioTaskDetail";
 import CleansingTemplateDetail from "@/pages/DataCleansing/Detail/TemplateDetail";
+import EvaluationDetailPage from "@/pages/DataEvaluation/Detail/TaskDetail.tsx";
 
 const router = createBrowserRouter([
   {
@@ -186,6 +187,10 @@ const router = createBrowserRouter([
             path: "",
             index: true,
             Component: DataEvaluationPage,
+          },
+          {
+            path: "detail/:id",
+            Component: EvaluationDetailPage,
           },
           {
             path: "task-report/:id",

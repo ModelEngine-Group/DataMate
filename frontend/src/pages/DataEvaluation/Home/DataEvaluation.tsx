@@ -12,12 +12,7 @@ import {
 } from "antd";
 import {
   PlusOutlined,
-  DeleteOutlined,
-  CheckCircleOutlined,
-  CloseCircleOutlined,
-  ClockCircleOutlined,
-  SyncOutlined,
-  PauseCircleOutlined
+  DeleteOutlined
 } from "@ant-design/icons";
 import { SearchControls } from "@/components/SearchControls";
 import { useNavigate } from "react-router";
@@ -27,16 +22,15 @@ import CreateTaskModal from "@/pages/DataEvaluation/Create/CreateTask.tsx";
 import useFetchData from "@/hooks/useFetchData.ts";
 import { EvaluationTask } from "@/pages/DataEvaluation/evaluation.model.ts";
 import { mapEvaluationTask } from "@/pages/DataEvaluation/evaluation.const.tsx";
-import {deleteRatioTasksUsingDelete} from "@/pages/RatioTask/ratio.api.ts";
 
 const { Text, Title } = Typography;
 
 const statusMap = {
-  PENDING: { text: '等待中', color: 'warning', icon: <ClockCircleOutlined /> },
-  RUNNING: { text: '运行中', color: 'processing', icon: <SyncOutlined spin /> },
-  COMPLETED: { text: '已完成', color: 'success', icon: <CheckCircleOutlined /> },
-  STOPPED: { text: '已停止', color: 'default', icon: <PauseCircleOutlined /> },
-  FAILED: { text: '失败', color: 'error', icon: <CloseCircleOutlined /> },
+  PENDING: { text: '等待中', color: 'warning'},
+  RUNNING: { text: '运行中', color: 'processing'},
+  COMPLETED: { text: '已完成', color: 'success'},
+  STOPPED: { text: '已停止', color: 'default'},
+  FAILED: { text: '失败', color: 'error'},
 };
 
 export default function DataEvaluationPage() {
@@ -105,11 +99,13 @@ export default function DataEvaluationPage() {
       title: '任务名称',
       dataIndex: 'name',
       key: 'name',
-      render: (text: string, record: EvaluationTask) => (
-        <Space direction="vertical" size={4}>
-          <Text strong>{text}</Text>
-          <Text type="secondary" style={{ fontSize: 12 }}>{record.description}</Text>
-        </Space>
+      render: (name, record) => (
+        <Button
+          type="link"
+          onClick={() => navigate(`/data/evaluation/detail/${record.id}`)}
+        >
+          {name}
+        </Button>
       ),
     },
     {
@@ -136,13 +132,8 @@ export default function DataEvaluationPage() {
       title: '状态',
       dataIndex: 'status',
       key: 'status',
-      render: (status: keyof typeof statusMap) => {
-        const statusInfo = statusMap[status] || statusMap.PENDING;
-        return (
-          <Tag icon={statusInfo.icon} color={statusInfo.color}>
-            {statusInfo.text}
-          </Tag>
-        );
+      render: (status: any) => {
+        return (<Tag color={status.color}> {status.label} </Tag>);
       },
     },
     {
@@ -257,9 +248,9 @@ export default function DataEvaluationPage() {
             data={tableData}
             operations={operations}
             pagination={pagination}
-            // onView={(task) => {
-            //   navigate(`/data/synthesis/ratio-task/detail/${task.id}`);
-            // }}
+            onView={(task) => {
+              navigate(`/data/evaluation/detail/${task.id}`);
+            }}
           />
         )}
       </>
