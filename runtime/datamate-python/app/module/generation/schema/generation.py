@@ -70,6 +70,35 @@ class PagedDataSynthesisTaskResponse(BaseModel):
     page: int
     size: int
 
+
+class DataSynthesisFileTaskItem(BaseModel):
+    """数据合成任务下的文件任务项"""
+    id: str
+    synthesis_instance_id: str
+    file_name: str
+    source_file_id: str
+    target_file_location: str
+    status: Optional[str] = None
+    total_chunks: int
+    processed_chunks: int
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+
+    class Config:
+        orm_mode = True
+
+
+class PagedDataSynthesisFileTaskResponse(BaseModel):
+    """分页数据合成任务文件任务响应"""
+    content: List[DataSynthesisFileTaskItem]
+    totalElements: int
+    totalPages: int
+    page: int
+    size: int
+
+
 class ChatRequest(BaseModel):
     """聊天请求参数"""
     model_id: str

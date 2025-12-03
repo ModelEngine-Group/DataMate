@@ -168,11 +168,11 @@ class GenerationService:
             self.db.add(chunk_record)
 
         # 更新文件任务的分块数量
-        file_task.chunk_count = len(chunks)
+        file_task.total_chunks = len(chunks)
         file_task.status = "processing"
 
-        await self.db.refresh(file_task)
         await self.db.commit()
+        await self.db.refresh(file_task)
 
     async def _invoke_llm_for_chunks(
         self,

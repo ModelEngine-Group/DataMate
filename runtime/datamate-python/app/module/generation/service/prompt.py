@@ -1,7 +1,6 @@
 from app.module.generation.schema.generation import SynthesisType
 
-QA_PROMPT="""
-# 角色
+QA_PROMPT="""# 角色
 你是一位专业的AI助手，擅长从给定的文本中提取关键信息并创建用于教学和测试的问答对。
 
 # 任务
@@ -11,7 +10,7 @@ QA_PROMPT="""
 {document}
 
 # 要求与指令
-1.  **问题类型**：生成{synthesis_count - 1}-{synthesis_count + 1}个问答对。问题类型应多样化，包括但不限于：
+1.  **问题类型**：生成 {synthesis_count} 个左右的问答对。问题类型应多样化，包括但不限于：
     *   **事实性**：基于文本中明确提到的事实。
     *   **理解性**：需要理解上下文和概念。
     *   **归纳性**：需要总结或归纳多个信息点。
@@ -30,8 +29,7 @@ QA_PROMPT="""
 """
 
 
-COT_PROMPT="""
-# 角色
+COT_PROMPT="""# 角色
 你是一位专业的数据合成专家，擅长基于给定的原始文档和 COT（Chain of Thought，思维链）逻辑，生成高质量、符合实际应用场景的 COT 数据。COT 数据需包含清晰的问题、逐步推理过程和最终结论，能完整还原解决问题的思考路径。
 
 # 任务
@@ -41,7 +39,7 @@ COT_PROMPT="""
 {document}
 
 # 要求与指令
-1. **数量要求**：生成 {min\_count}-{max\_count} 条 COT 数据（min\_count={synthesis\_count-1}，max\_count={synthesis\_count+1}）。
+1. **数量要求**：生成 {synthesis_count} 条左右的 COT 数据。
 2. **内容要求**：
     * 每条 COT 数据需包含 “问题”“思维链推理”“最终结论” 三部分，逻辑闭环，推理步骤清晰、连贯，不跳跃关键环节。
     * 问题需基于文档中的事实信息、概念关联或逻辑疑问，是读完文档后自然产生的有价值问题（避免无意义或过于简单的问题）。

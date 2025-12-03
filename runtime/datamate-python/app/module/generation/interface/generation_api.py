@@ -18,7 +18,11 @@ from app.db.session import get_db
 from app.module.generation.schema.generation import (
     CreateSynthesisTaskRequest,
     DataSynthesisTaskItem,
-    PagedDataSynthesisTaskResponse, SynthesisType)
+    PagedDataSynthesisTaskResponse,
+    SynthesisType,
+    DataSynthesisFileTaskItem,
+    PagedDataSynthesisFileTaskResponse,
+)
 from app.module.generation.service.generation_service import GenerationService
 from app.module.generation.service.prompt import get_prompt
 from app.module.shared.schema import StandardResponse
@@ -257,4 +261,66 @@ async def get_prompt_by_type(
         code=200,
         message="Success",
         data=prompt,
+    )
+
+@router.get("/task/{task_id}/files", response_model=StandardResponse[PagedDataSynthesisFileTaskResponse])
+async def list_synthesis_file_tasks(
+    task_id: str,
+    page: int = 1,
+    page_size: int = 10,
+    db: AsyncSession = Depends(get_db),
+):
+    """分页获取某个数据合成任务下的文件任务列表"""
+    # 先校验任务是否存在
+    task = await db.get(DataSynthesisInstance, task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Synthesis task not found")
+
+    base_query = select(DataSynthesisFileInstance).where(
+        DataSynthesisFileInstance.synthesis_instance_id == task_id
+    )
+
+    count_q = select(func.count()).select_from(base_query.subquery())
+    total = (await db.execute(count_q)).scalar_one()
+
+    if page < 1:
+        page = 1
+    if page_size < 1:
+        page_size = 10
+
+    result = await db.execute(
+        base_query.offset((page - 1) * page_size).limit(page_size)
+    )
+    rows = result.scalars().all()
+
+    file_items = [
+        DataSynthesisFileTaskItem(
+            id=row.id,
+            synthesis_instance_id=row.synthesis_instance_id,
+            file_name=row.file_name,
+            source_file_id=row.source_file_id,
+            target_file_location=row.target_file_location,
+            status=row.status,
+            total_chunks=row.total_chunks,
+            processed_chunks=row.processed_chunks,
+            created_at=row.created_at,
+            updated_at=row.updated_at,
+            created_by=row.created_by,
+            updated_by=row.updated_by,
+        )
+        for row in rows
+    ]
+
+    paged = PagedDataSynthesisFileTaskResponse(
+        content=file_items,
+        totalElements=total,
+        totalPages=(total + page_size - 1) // page_size,
+        page=page,
+        size=page_size,
+    )
+
+    return StandardResponse(
+        code=200,
+        message="Success",
+        data=paged,
     )
