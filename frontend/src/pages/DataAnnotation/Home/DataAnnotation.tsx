@@ -32,9 +32,9 @@ export default function DataAnnotation() {
     tableData,
     pagination,
     searchParams,
-    setSearchParams,
     fetchData,
     handleFiltersChange,
+    handleKeywordChange,
   } = useFetchData(queryAnnotationTasksUsingGet, mapAnnotationTask, 30000, true, [], 0);
 
   const [labelStudioBase, setLabelStudioBase] = useState<string | null>(null);
@@ -313,9 +313,7 @@ export default function DataAnnotation() {
                   <div className="flex items-center gap-2">
                     <SearchControls
                       searchTerm={searchParams.keyword}
-                      onSearchChange={(keyword) =>
-                        setSearchParams({ ...searchParams, keyword })
-                      }
+                      onSearchChange={handleKeywordChange}
                       searchPlaceholder="搜索任务名称、描述"
                       onFiltersChange={handleFiltersChange}
                       viewMode={viewMode}

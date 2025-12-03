@@ -19,21 +19,26 @@ python -m venv .venv
 source .venv/bin/activate
 ```
 
-3. 安装依赖：
+3. 安装依赖
+由于项目使用poetry管理依赖，你可以使用以下命令安装：
 
 ```bash
-pip install -r requirements.txt
+pip install poetry
+poetry install
+```
+或者直接使用pip安装（如果poetry不可用）：
+
+```bash
+pip install -e .
 ```
 
-4. 准备环境变量（示例）
+4. 配置环境变量
+复制环境变量示例文件并配置：
 
-创建 `.env` 并设置必要的变量，例如：
-
-- DATABASE_URL（或根据项目配置使用具体变量）
-- LABEL_STUDIO_BASE_URL
-- LABEL_STUDIO_USER_TOKEN
-
-（具体变量请参考 `.env.example`）
+```bash
+cp .env.example .env
+```
+编辑.env文件，设置必要的环境变量，如数据库连接、Label Studio配置等。
 
 5. 数据库迁移（开发环境）：
 

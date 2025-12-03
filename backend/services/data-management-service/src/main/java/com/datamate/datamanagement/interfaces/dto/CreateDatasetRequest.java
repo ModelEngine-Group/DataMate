@@ -35,4 +35,6 @@ public class CreateDatasetRequest {
     private String dataSource;
     /** 保留天数 */
     private Integer retentionDays;
+    /** 数据集状态 */
+    private String status;
 }

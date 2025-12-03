@@ -43,4 +43,9 @@ public class OperatorRepositoryImpl extends CrudRepository<OperatorMapper, Opera
         queryWrapper.eq(Operator::getIsStar, isStar);
         return Math.toIntExact(mapper.selectCount(queryWrapper));
     }
+
+    @Override
+    public boolean operatorInTemplateOrRunning(String operatorId) {
+        return mapper.operatorInTemplate(operatorId) > 0 && mapper.operatorInUnstopTask(operatorId) > 0;
+    }
 }

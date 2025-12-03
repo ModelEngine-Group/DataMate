@@ -7,10 +7,10 @@ import com.datamate.operator.interfaces.dto.OperatorDto;
 import java.util.List;
 
 public interface OperatorViewRepository extends IRepository<OperatorView> {
-    List<OperatorDto> findOperatorsByCriteria(Integer page, Integer size, String operatorName,
+    List<OperatorDto> findOperatorsByCriteria(Integer page, Integer size, String keyword,
                                               List<String> categories, Boolean isStar);
 
-    Integer countOperatorsByCriteria(String operatorName, List<String> categories, Boolean isStar);
+    Integer countOperatorsByCriteria(String keyword, List<String> categories, Boolean isStar);
 
     OperatorView findOperatorById(String id);
 }

@@ -69,7 +69,7 @@ spec:
       {{- end }}
       containers:
       - name: streamingnode
-        image: "{{ .Values.image.all.repository }}:{{ .Values.image.all.tag }}"
+        image: "{{ .Values.global.imageRegistry }}{{ .Values.image.all.repository }}:{{ .Values.image.all.tag }}"
         imagePullPolicy: {{ .Values.image.all.pullPolicy }}
         {{ if and (.Values.containerSecurityContext) (not .Values.streamingNode.containerSecurityContext) }}
         securityContext:

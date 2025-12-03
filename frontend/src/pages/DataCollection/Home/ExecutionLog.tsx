@@ -37,6 +37,7 @@ export default function ExecutionLog() {
     searchParams,
     setSearchParams,
     handleFiltersChange,
+    handleKeywordChange,
   } = useFetchData(queryExecutionLogUsingPost);
 
   const columns: ColumnsType<CollectionLog> = [
@@ -113,12 +114,7 @@ export default function ExecutionLog() {
       <div className="flex items-center justify-between gap-4">
         <SearchControls
           searchTerm={searchParams.keyword}
-          onSearchChange={(keyword: string) =>
-            setSearchParams({
-              ...searchParams,
-              keyword,
-            })
-          }
+          onSearchChange={handleKeywordChange}
           filters={filterOptions}
           onFiltersChange={handleFiltersChange}
           showViewToggle={false}

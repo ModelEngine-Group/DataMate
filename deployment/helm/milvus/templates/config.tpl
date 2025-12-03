@@ -28,6 +28,9 @@ etcd:
   {{- range .Values.externalEtcd.endpoints }}
     - {{ . }}
   {{- end }}
+{{- else if eq (.Values.etcd.workload | lower) "deployment" }}
+  endpoints:
+  - {{ $etcdReleaseName }}-headless.{{ $namespace }}.svc.{{ $.Values.etcd.clusterDomain }}:{{ $etcdPort }}
 {{- else }}
   endpoints:
 {{- range $i := until ( .Values.etcd.replicaCount | int ) }}

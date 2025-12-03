@@ -35,6 +35,7 @@ Common labels
 */}}
 {{- define "backend.labels" -}}
 helm.sh/chart: {{ include "backend.chart" . }}
+app: {{ .Release.Name }}
 {{ include "backend.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}

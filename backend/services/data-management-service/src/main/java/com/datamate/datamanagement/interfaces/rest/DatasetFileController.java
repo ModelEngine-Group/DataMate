@@ -8,6 +8,7 @@ import com.datamate.common.interfaces.PagingQuery;
 import com.datamate.datamanagement.application.DatasetFileApplicationService;
 import com.datamate.datamanagement.domain.model.dataset.DatasetFile;
 import com.datamate.datamanagement.interfaces.converter.DatasetConverter;
+import com.datamate.datamanagement.interfaces.dto.AddFilesRequest;
 import com.datamate.datamanagement.interfaces.dto.CopyFilesRequest;
 import com.datamate.datamanagement.interfaces.dto.DatasetFileResponse;
 import com.datamate.datamanagement.interfaces.dto.UploadFileRequest;
@@ -142,6 +143,20 @@ public class DatasetFileController {
     public List<DatasetFileResponse> copyFilesToDatasetDir(@PathVariable("datasetId") String datasetId,
                                                       @RequestBody @Valid CopyFilesRequest req) {
         List<DatasetFile> datasetFiles = datasetFileApplicationService.copyFilesToDatasetDir(datasetId, req);
+        return DatasetConverter.INSTANCE.convertToResponseList(datasetFiles);
+    }
+
+    /**
+     * 添加文件到数据集（仅创建数据库记录，不执行文件系统操作）
+     *
+     * @param datasetId 数据集ID
+     * @param req       添加文件请求（包含源文件路径列表和softAdd标志）
+     * @return 数据集文件响应DTO列表
+     */
+    @PostMapping("/upload/add")
+    public List<DatasetFileResponse> addFilesToDataset(@PathVariable("datasetId") String datasetId,
+                                                        @RequestBody @Valid AddFilesRequest req) {
+        List<DatasetFile> datasetFiles = datasetFileApplicationService.addFilesToDataset(datasetId, req);
         return DatasetConverter.INSTANCE.convertToResponseList(datasetFiles);
     }
 }

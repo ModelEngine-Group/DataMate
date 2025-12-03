@@ -17,7 +17,7 @@ class Settings(BaseSettings):
 
     host: str = "0.0.0.0"
     port: int = 18000
-    
+
     # CORS
     # allowed_origins: List[str] = ["*"]
     # allowed_methods: List[str] = ["*"]
@@ -36,7 +36,7 @@ class Settings(BaseSettings):
     mysql_database: str = "datamate"
 
     database_url: str = ""  # Will be overridden by build_database_url() if not provided
-    
+
     @model_validator(mode='after')
     def build_database_url(self):
         """如果没有提供 database_url，则根据 MySQL 配置构建"""

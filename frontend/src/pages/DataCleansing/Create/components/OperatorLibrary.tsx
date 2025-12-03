@@ -58,7 +58,10 @@ const OperatorList: React.FC<OperatorListProps> = ({
             </div>
             <span
               className="cursor-pointer"
-              onClick={() => handleStar(operator, toggleFavorite)}
+              onClick={(event) => {
+                  event.stopPropagation();
+                  handleStar(operator, toggleFavorite);
+              }}
             >
               {favorites.has(operator.id) ? (
                 <StarFilled style={{ color: "#FFD700" }} />

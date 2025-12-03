@@ -7,7 +7,7 @@ authors = [
 ]
 license = {text = "MIT"}
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python =">=3.12,<4.0.0"
 dependencies = [
     "fastapi (>=0.121.1,<0.122.0)",
     "uvicorn[standard] (>=0.38.0,<0.39.0)",
@@ -21,7 +21,12 @@ dependencies = [
     "python-multipart (>=0.0.20,<0.0.21)",
     "python-dotenv (>=1.2.1,<2.0.0)",
     "python-dateutil (>=2.9.0.post0,<3.0.0)",
-    "pyyaml (>=6.0.3,<7.0.0)"
+    "pyyaml (>=6.0.3,<7.0.0)",
+    "unstructured (>=0.18.21,<0.19.0)",
+    "markdown (>=3.10,<4.0)",
+    "langchain (>=1.1.0,<2.0.0)",
+    "langchain-community (>=0.4.1,<0.5.0)",
+    "langchain-openai (>=1.1.0,<2.0.0)",
 ]
 
 
