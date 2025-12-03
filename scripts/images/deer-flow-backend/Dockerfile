@@ -26,4 +26,4 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 EXPOSE 8000
 
 # Run the application.
-CMD ["uv", "run", "python", "server.py", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uv", "run", "--no-sync", "python", "server.py", "--host", "0.0.0.0", "--port", "8000"]
