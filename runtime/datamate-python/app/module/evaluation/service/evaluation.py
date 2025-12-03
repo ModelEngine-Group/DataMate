@@ -8,6 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.exception import BusinessErrorCodeEnum, BusinessException
 from app.core.logging import get_logger
 from app.db.models import EvaluationItem, EvaluationTask, DatasetFiles
+from app.db.models.data_evaluation import EvaluationFile
+from app.db.models.data_synthesis import DataSynthesisFileInstance, SynthesisData
 from app.db.session import AsyncSessionLocal
 from app.module.evaluation.schema.evaluation import SourceType
 from app.module.shared.schema import TaskStatus
@@ -27,7 +29,13 @@ class EvaluationExecutor:
         pass
 
     def get_eval_prompt(self, item: EvaluationItem) -> str:
-        pass
+        prompt_text = get_prompt(self.task.task_type, json.loads(self.task.eval_config).get("dimensions"))
+        eval_content = json.loads(item.eval_content)
+        if self.task.task_type == "QA":
+            prompt_text = ((prompt_text.replace("{content}", eval_content.get("input"))
+                            .replace("{question}", eval_content.get("instruction")))
+                           .replace("{answer}", eval_content.get("output")))
+        return prompt_text
 
     async def execute(self):
         eval_config = json.loads(self.task.eval_config)
@@ -60,8 +68,9 @@ class DatasetEvaluationExecutor(EvaluationExecutor):
         super().__init__(db, task)
 
     async def save_eval_items(self):
-        dataset_files = (await self.db.execute(select(DatasetFiles)
-                                               .where(DatasetFiles.dataset_id == self.task.source_id))).scalars().all()
+        dataset_files = ((await self.db.execute(select(DatasetFiles)
+                                               .where(DatasetFiles.dataset_id == self.task.source_id)))
+                         .scalars().all())
         handler = StructuredFileHandlerFactory().get_handler(self.task.task_type)
         for dataset_file in dataset_files:
             if dataset_file.file_type.upper() != "JSON" and dataset_file.file_type.upper() != "JSONL":
@@ -76,33 +85,41 @@ class DatasetEvaluationExecutor(EvaluationExecutor):
                     item_id=item.get("id") if item.get("id") else str(uuid.uuid4()),
                     eval_content=json.dumps(item, ensure_ascii=False),
                     status=TaskStatus.PENDING.value,
+                    created_by=self.task.created_by,
+                    updated_by=self.task.updated_by,
                 ))
+            self.db.add(EvaluationFile(
+                id=str(uuid.uuid4()),
+                task_id=self.task.id,
+                file_id=dataset_file.id,
+                file_name=dataset_file.file_name,
+                total_count=len(items),
+                evaluated_count=0,
+                created_by=self.task.created_by,
+                updated_by=self.task.updated_by,
+            ))
 
     def get_source_type(self) -> SourceType:
         return SourceType.DATASET
-
-    def get_eval_prompt(self, item: EvaluationItem) -> str:
-        prompt_text = get_prompt(self.task.task_type, json.loads(self.task.eval_config).get("dimensions"))
-        eval_content = json.loads(item.eval_content)
-        if self.task.task_type == "QA":
-            prompt_text = ((prompt_text.replace("{content}", eval_content.get("input"))
-                           .replace("{question}", eval_content.get("instruction")))
-                           .replace("{answer}", eval_content.get("output")))
-        return prompt_text
 
 
 class SynthesisEvaluationExecutor(EvaluationExecutor):
     def __init__(self, db: AsyncSession, task: EvaluationTask):
         super().__init__(db, task)
 
-    def save_eval_items(self):
+    async def save_eval_items(self):
+        synthesis_files = ((await self.db.execute(select(DataSynthesisFileInstance)
+                               .where(DataSynthesisFileInstance.task_id == self.task.source_id)))
+                           .scalars().all())
+        for synthesis_file in synthesis_files:
+            synthesis_datas = ((await self.db.execute(select(SynthesisData)
+                                                     .where(SynthesisData.synthesis_file_instance_id == synthesis_file.id)))
+                               .scalars().all())
+            logger.info(f"parse {len(synthesis_datas)} items from file {synthesis_file.file_name}")
         pass
 
     def get_source_type(self) -> SourceType:
         return SourceType.SYNTHESIS
-
-    def get_eval_prompt(self, item: EvaluationItem) -> str:
-        pass
 
 
 class EvaluationExecutorFactory:

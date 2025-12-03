@@ -7,7 +7,7 @@ Derived from scripts/db/data-evaluation-init.sql
 """
 
 import uuid
-from sqlalchemy import Column, String, Text, Float, TIMESTAMP, ForeignKey
+from sqlalchemy import Column, String, Text, Float, TIMESTAMP, ForeignKey, Integer
 from sqlalchemy.sql import func
 
 from app.db.session import Base
@@ -40,8 +40,22 @@ class EvaluationTask(Base):
     created_by = Column(String(255), nullable=True, comment="创建者")
     updated_by = Column(String(255), nullable=True, comment="更新者")
 
-    def __repr__(self) -> str:
-        return f"<EvaluationTask(id={self.id}, name={self.name}, status={self.status}, task_type={self.task_type})>"
+
+class EvaluationFile(Base):
+    """评估条目表（UUID 主键） -> t_de_eval_file"""
+
+    __tablename__ = "t_de_eval_file"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()), comment="UUID")
+    task_id = Column(String(36), ForeignKey('t_de_eval_task.id'), nullable=False, comment="评估任务ID")
+    file_id = Column(String(36), ForeignKey('t_dm_dataset_files.id'), nullable=True, comment="文件ID")
+    file_name = Column(String(255), nullable=False, comment="文件名")
+    total_count = Column(Integer, nullable=False, default=0, comment="总数")
+    evaluated_count = Column(Integer, nullable=False, default=0, comment="已评估数")
+    created_at = Column(TIMESTAMP, server_default=func.current_timestamp(), comment="创建时间")
+    updated_at = Column(TIMESTAMP, server_default=func.current_timestamp(), onupdate=func.current_timestamp(), comment="更新时间")
+    created_by = Column(String(255), nullable=True, comment="创建者")
+    updated_by = Column(String(255), nullable=True, comment="更新者")
 
 
 class EvaluationItem(Base):
@@ -61,6 +75,7 @@ class EvaluationItem(Base):
     eval_score = Column(Float, nullable=False, server_default="0", comment="评估分数")
     eval_result = Column(Text, nullable=True, comment="评估结果")
     status = Column(String(50), server_default="PENDING", nullable=False, comment="状态：PENDING/EVALUATED")
-
-    def __repr__(self) -> str:
-        return f"<EvaluationItem(id={self.id}, task_id={self.task_id}, item_id={self.item_id}, score={self.eval_score})>"
+    created_at = Column(TIMESTAMP, server_default=func.current_timestamp(), comment="创建时间")
+    updated_at = Column(TIMESTAMP, server_default=func.current_timestamp(), onupdate=func.current_timestamp(), comment="更新时间")
+    created_by = Column(String(255), nullable=True, comment="创建者")
+    updated_by = Column(String(255), nullable=True, comment="更新者")

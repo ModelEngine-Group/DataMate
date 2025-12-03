@@ -8,6 +8,7 @@ from sqlalchemy import select, func, or_, text, and_
 from pydantic import ValidationError
 
 from app.core.logging import get_logger
+from app.db.models.data_evaluation import EvaluationFile
 from app.db.session import get_db
 from app.db.models import EvaluationTask, EvaluationItem, DatasetFiles
 from app.module.evaluation.schema.evaluation import (
@@ -19,7 +20,6 @@ from app.module.evaluation.schema.evaluation import (
 )
 from app.module.evaluation.schema.prompt import get_prompt
 from app.module.evaluation.schema.prompt_template import PromptTemplateResponse
-from app.module.evaluation.schema.sql import SELECT_EVALUATED_FILE, COUNT_EVALUATED_FILE
 from app.module.evaluation.service.prompt_template_service import PromptTemplateService
 from app.module.evaluation.service.evaluation import EvaluationTaskService
 from app.module.shared.schema.common import StandardResponse, TaskStatus
@@ -212,26 +212,20 @@ async def list_evaluation_items(
         task = await db.get(EvaluationTask, task_id)
         if not task:
             raise HTTPException(status_code=404, detail="Evaluation task not found")
-        sql = text(SELECT_EVALUATED_FILE)
-        count_sql = text(COUNT_EVALUATED_FILE)
         offset = (page - 1) * size
-        files = (await db.execute(sql, {"task_id": task_id, "limit": size, "offset": offset})).fetchall()
-        total = (await db.execute(count_sql, {"task_id": task_id})).scalar_one()
+        query = select(EvaluationFile).where(EvaluationFile.task_id == task_id)
+        count_query = select(func.count()).select_from(query.subquery())
+        total = (await db.execute(count_query)).scalar_one()
+        files = (await db.execute(query.offset(offset).limit(size))).scalars().all()
         total_pages = (total + size - 1) // size if size > 0 else 0
-        logger.info(f">>>>>>>>>>>{files}")
-        file_ids = [
-            file.file_id for file in files
-        ]
-        dataset_files = (await db.execute(select(DatasetFiles).where(DatasetFiles.id.in_(file_ids)))).scalars().all()
-        file_map = {file.id: file.file_name for file in dataset_files if file.id}
         file_responses = [
             EvaluationFileResponse(
                 taskId=file.task_id,
                 fileId=file.file_id,
-                fileName=file_map.get(file.file_id) if file_map.get(file.file_id) else file.file_id,
+                fileName=file.file_name,
                 totalCount=file.total_count,
                 evaluatedCount=file.evaluated_count,
-                pendingCount=file.pending_count
+                pendingCount=file.total_count - file.evaluated_count
             )
             for file in files
         ]

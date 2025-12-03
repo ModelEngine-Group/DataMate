@@ -24,6 +24,19 @@ CREATE TABLE IF NOT EXISTS t_de_eval_task (
     INDEX idx_dm_created_at (created_at)
 ) COMMENT='评估任务表（UUID 主键）';
 
+CREATE TABLE IF NOT EXISTS t_de_eval_file (
+    id VARCHAR(36) PRIMARY KEY COMMENT 'UUID',
+    task_id VARCHAR(36) NOT NULL COMMENT '评估任务ID',
+    file_id VARCHAR(36) COMMENT '文件ID',
+    file_name VARCHAR(255) COMMENT '文件名',
+    total_count INT DEFAULT 0 COMMENT '总数',
+    evaluated_count INT DEFAULT 0 COMMENT '已评估数',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    created_by VARCHAR(255) COMMENT '创建者',
+    updated_by VARCHAR(255) COMMENT '更新者'
+) COMMENT='评估文件表（UUID 主键）';
+
 CREATE TABLE IF NOT EXISTS t_de_eval_item (
     id VARCHAR(36) PRIMARY KEY COMMENT 'UUID',
     task_id VARCHAR(36) NOT NULL COMMENT '评估任务ID',
@@ -32,5 +45,9 @@ CREATE TABLE IF NOT EXISTS t_de_eval_item (
     eval_content TEXT COMMENT '评估内容',
     eval_score DOUBLE PRECISION NOT NULL DEFAULT 0 COMMENT '评估分数',
     eval_result TEXT COMMENT '评估结果',
-    status VARCHAR(50) DEFAULT 'PENDING' COMMENT '状态：PENDING/EVALUATED'
+    status VARCHAR(50) DEFAULT 'PENDING' COMMENT '状态：PENDING/EVALUATED',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    created_by VARCHAR(255) COMMENT '创建者',
+    updated_by VARCHAR(255) COMMENT '更新者'
 ) COMMENT='评估条目表（UUID 主键）';
