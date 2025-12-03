@@ -171,10 +171,10 @@ public class CleaningTaskService {
     }
 
     public void executeTask(String taskId) {
-        List<CleaningResultDto> failed = cleaningResultRepo.findByInstanceId(taskId, "FAILED");
-        Set<String> failedSet = failed.stream().map(CleaningResultDto::getSrcFileId).collect(Collectors.toSet());
+        List<CleaningResultDto> succeed = cleaningResultRepo.findByInstanceId(taskId, "COMPLETED");
+        Set<String> succeedSet = succeed.stream().map(CleaningResultDto::getSrcFileId).collect(Collectors.toSet());
         CleaningTaskDto task = cleaningTaskRepo.findTaskById(taskId);
-        scanDataset(taskId, task.getSrcDatasetId(), failedSet);
+        scanDataset(taskId, task.getSrcDatasetId(), succeedSet);
         cleaningResultRepo.deleteByInstanceId(taskId, "FAILED");
         taskScheduler.executeTask(taskId);
     }
@@ -232,7 +232,7 @@ public class CleaningTaskService {
         } while (pageNumber < datasetFiles.getTotalPages());
     }
 
-    private void scanDataset(String taskId, String srcDatasetId, Set<String> failedFiles) {
+    private void scanDataset(String taskId, String srcDatasetId, Set<String> succeedFiles) {
         int pageNumber = 0;
         int pageSize = 500;
         PagingQuery pageRequest = new PagingQuery(pageNumber, pageSize);
@@ -243,7 +243,7 @@ public class CleaningTaskService {
                 break;
             }
             List<Map<String, Object>> files = datasetFiles.getContent().stream()
-                    .filter(content -> failedFiles.contains(content.getId()))
+                    .filter(content -> !succeedFiles.contains(content.getId()))
                     .map(content -> Map.of("fileName", (Object) content.getFileName(),
                             "fileSize", content.getFileSize(),
                             "filePath", content.getFilePath(),

@@ -70,15 +70,15 @@ make install-mineru
 ```
 
 ### 部署DeerFlow服务
-1. 修改runtime/deer-flow/.env.example，添加SEARCH_API_KEY和EMBEDDING模型配置
-2. 修改runtime/deer-flow/.conf.yaml.example，添加基础模型服务配置
-3. 执行`make install-deer-flow`
+```bash
+make install-deer-flow
+```
 
 ### 本地开发部署
 本地代码修改后，请执行以下命令构建镜像并使用本地镜像部署
 ```bash
 make build
-make install REGISTRY=""
+make install dev=true
 ```
 
 ## 🤝 贡献指南
