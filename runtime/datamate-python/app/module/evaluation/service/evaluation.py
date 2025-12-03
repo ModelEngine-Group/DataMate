@@ -10,11 +10,11 @@ from app.core.logging import get_logger
 from app.db.models import EvaluationItem, EvaluationTask, DatasetFiles
 from app.db.session import AsyncSessionLocal
 from app.module.evaluation.schema.evaluation import SourceType
-from app.module.setting.service.model_config_service import ModelConfigService
 from app.module.shared.schema import TaskStatus
 from app.module.shared.util.model_chat import call_openai_style_model
 from app.module.evaluation.schema.prompt import get_prompt
 from app.module.shared.util.structured_file import StructuredFileHandlerFactory
+from app.module.system.service.common_service import get_model_by_id
 
 logger = get_logger(__name__)
 
@@ -31,8 +31,7 @@ class EvaluationExecutor:
 
     async def execute(self):
         eval_config = json.loads(self.task.eval_config)
-        model_config_service = ModelConfigService(self.db)
-        model_config = await model_config_service.get_model_config(eval_config.get("model_id"))
+        model_config = await get_model_by_id(self.db, eval_config.get("model_id"))
         offset = 0
         size = 2
         items = (await self.db.execute(
