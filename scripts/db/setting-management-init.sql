@@ -20,8 +20,7 @@ CREATE TABLE IF NOT EXISTS t_model_config
 
 CREATE TABLE IF NOT EXISTS t_sys_param
 (
-    id          VARCHAR(36) PRIMARY KEY COMMENT '主键ID',
-    param_key   VARCHAR(100) NOT NULL COMMENT '设置项键',
+    id          VARCHAR(100) PRIMARY KEY COMMENT '主键ID,设置项键',
     param_value TEXT         NOT NULL COMMENT '设置项值',
     param_type  VARCHAR(50)  DEFAULT 'string' COMMENT '设置项类型（仅 string、number、boolean 三种类型）',
     option_list TEXT COMMENT '选项列表（逗号分隔，仅对 enum 类型有效）',
@@ -32,20 +31,17 @@ CREATE TABLE IF NOT EXISTS t_sys_param
     created_at  TIMESTAMP    DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     updated_at  TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     created_by  VARCHAR(255) COMMENT '创建者',
-    updated_by  VARCHAR(255) COMMENT '更新者',
-    UNIQUE KEY uk_sys_param (param_key) COMMENT '避免设置项键重复'
+    updated_by  VARCHAR(255) COMMENT '更新者'
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='设置管理表';
 
-insert ignore into t_sys_param (id, param_key, param_value, param_type, option_list, description, is_built_in,
+insert ignore into t_sys_param (id, param_value, param_type, option_list, description, is_built_in,
                                 can_modify,
                                 is_enabled, created_by, updated_by)
-values ('1', 'sys.knowledge.base.count', '200', 'number', '10,200,500', '知识库最大数量', 1, 1, 1, 'system', 'system'),
-       ('2', 'SEARCH_API', 'tavily', 'string', '', 'deer-flow使用的搜索引擎', 1, 1, 1, 'system', 'system'),
-       ('3', 'TAVILY_API_KEY', 'tvly-dev-xxx', 'string', '', 'deer-flow使用的搜索引擎所需的apiKey', 1, 1, 1, 'system',
-        'system'),
-       ('4', 'BRAVE_SEARCH_API_KEY', 'api-xxx', 'string', '', 'deer-flow使用的搜索引擎所需的apiKey', 1, 1, 1, 'system',
-        'system'),
-       ('5', 'JINA_API_KEY', '', 'string', '', 'deer-flow使用的JINA搜索引擎所需的apiKey', 1, 1, 1, 'system', 'system'),
-       ('6', 'sys.management.dataset.pvc.name', 'dataset-pvc', 'string', '', '数据集所在pvc名称', 1, 0, 1, 'system', 'system'),
-       ('7', 'test_bool', 'true', 'boolean', '', '测试布尔值', 1, 1, 1, 'system', 'system');
+values ('sys.knowledge.base.count', '200', 'number', '10,200,500', '知识库最大数量', 1, 1, 1, 'system', 'system'),
+       ('SEARCH_API', 'tavily', 'string', 'tavily,infoquest,duckduckgo,brave_search,arxiv', 'deer-flow使用的搜索引擎', 1, 1, 1, 'system', 'system'),
+       ('TAVILY_API_KEY', 'tvly-dev-xxx', 'string', '', 'deer-flow使用的搜索引擎所需的apiKey', 1, 1, 1, 'system', 'system'),
+       ('BRAVE_SEARCH_API_KEY', 'api-xxx', 'string', '', 'deer-flow使用的搜索引擎所需的apiKey', 1, 1, 1, 'system', 'system'),
+       ('JINA_API_KEY', '', 'string', '', 'deer-flow使用的JINA搜索引擎所需的apiKey', 1, 1, 1, 'system', 'system'),
+       ('sys.management.dataset.pvc.name', 'dataset-pvc', 'string', '', '数据集所在pvc名称', 1, 0, 1, 'system', 'system'),
+       ('test_bool', 'true', 'boolean', '', '测试布尔值', 1, 1, 1, 'system', 'system');

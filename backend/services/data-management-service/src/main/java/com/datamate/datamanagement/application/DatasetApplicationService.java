@@ -3,6 +3,7 @@ package com.datamate.datamanagement.application;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.datamate.common.domain.utils.ChunksSaver;
+import com.datamate.common.setting.application.SysParamApplicationService;
 import com.datamate.datamanagement.interfaces.dto.*;
 import com.datamate.common.infrastructure.exception.BusinessAssert;
 import com.datamate.common.interfaces.PagedResponse;
@@ -21,7 +22,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,7 +49,7 @@ public class DatasetApplicationService {
     private final DatasetFileRepository datasetFileRepository;
     private final CollectionTaskClient collectionTaskClient;
     private final DatasetFileApplicationService datasetFileApplicationService;
-    private final StringRedisTemplate redisTemplate;
+    private final SysParamApplicationService sysParamService;
 
     @Value("${datamate.data-management.base-path:/dataset}")
     private String datasetBasePath;
@@ -80,7 +80,7 @@ public class DatasetApplicationService {
     }
 
     public String getDatasetPvcName() {
-        return redisTemplate.opsForValue().get(DATASET_PVC_NAME);
+        return sysParamService.getParamByKey(DATASET_PVC_NAME);
     }
 
     public Dataset updateDataset(String datasetId, UpdateDatasetRequest updateDatasetRequest) {

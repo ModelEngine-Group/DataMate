@@ -4,10 +4,10 @@ import com.datamate.common.infrastructure.exception.BusinessAssert;
 import com.datamate.common.infrastructure.exception.SystemErrorCode;
 import com.datamate.common.setting.domain.entity.SysParam;
 import com.datamate.common.setting.domain.repository.SysParamRepository;
+import com.datamate.common.setting.infrastructure.client.RedisClient;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
@@ -24,7 +24,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SysParamApplicationService {
     private final SysParamRepository sysParamRepository;
-    private final StringRedisTemplate redisTemplate;
+    private final RedisClient redisClient;
 
     /**
      * 列表查询系统参数
@@ -48,14 +48,25 @@ public class SysParamApplicationService {
         BusinessAssert.notNull(sysParam, SystemErrorCode.RESOURCE_NOT_FOUND);
         sysParam.setParamValue(paramValue);
         sysParamRepository.updateById(sysParam);
-        redisTemplate.opsForValue().set(sysParam.getParamKey(), paramValue);
+        redisClient.setParam(sysParam.getId(), paramValue);
     }
 
-    public void deleteParamById(String paramId) {
-        SysParam sysParam = sysParamRepository.getById(paramId);
+    public void deleteParamById(String paramKey) {
+        SysParam sysParam = sysParamRepository.getById(paramKey);
         BusinessAssert.notNull(sysParam, SystemErrorCode.RESOURCE_NOT_FOUND);
-        sysParamRepository.removeById(paramId);
-        redisTemplate.delete(sysParam.getParamKey());
+        sysParamRepository.removeById(paramKey);
+        redisClient.delParam(sysParam.getId());
+    }
+
+    public String getParamByKey(String paramId) {
+        String value = redisClient.getParam(paramId);
+        if (value == null) {
+            SysParam sysParam = sysParamRepository.getById(paramId);
+            if (sysParam != null) {
+                value = sysParam.getParamValue();
+            }
+        }
+        return value;
     }
 
     /**
@@ -65,7 +76,7 @@ public class SysParamApplicationService {
     public void init() {
         try {
             List<SysParam> sysParams = sysParamRepository.list();
-            sysParams.forEach(sysParam -> redisTemplate.opsForValue().set(sysParam.getParamKey(), sysParam.getParamValue()));
+            sysParams.forEach(sysParam -> redisClient.setParam(sysParam.getId(), sysParam.getParamValue()));
         } catch (Exception e) {
             log.error("Init sys params to redis error", e);
         }
