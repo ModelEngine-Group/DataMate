@@ -1,8 +1,6 @@
 FROM maven:3-eclipse-temurin-8 AS datax-builder
 
-RUN sed -i "s@http://.*archive.ubuntu.com@http://mirrors.huaweicloud.com@g" /etc/apt/sources.list && \
-    sed -i "s@http://.*security.ubuntu.com@http://mirrors.huaweicloud.com@g" /etc/apt/sources.list && \
-    apt-get update && \
+RUN apt-get update && \
     apt-get install -y git && \
     git clone https://github.com/alibaba/DataX.git
 
