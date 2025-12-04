@@ -97,6 +97,14 @@ export default function SynthFileTask() {
       title: "文件名",
       dataIndex: "file_name",
       key: "file_name",
+      render: (text: string, record) => (
+        <Button
+          type="link"
+          onClick={() => navigate(`/data/synthesis/task/file/${record.id}/detail`, { state: { fileName: record.file_name, taskId } })}
+        >
+          {text}
+        </Button>
+      ),
     },
     {
       title: "状态",
