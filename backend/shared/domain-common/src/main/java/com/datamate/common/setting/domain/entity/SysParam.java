@@ -16,11 +16,6 @@ import lombok.Setter;
 @TableName("t_sys_param")
 public class SysParam extends BaseEntity<String> {
     /**
-     * 设置项键（唯一）
-     */
-    private String paramKey;
-
-    /**
      * 设置项值
      */
     private String paramValue;

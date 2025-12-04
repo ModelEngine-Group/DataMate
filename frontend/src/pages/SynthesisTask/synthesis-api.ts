@@ -45,3 +45,8 @@ export function querySynthesisDataByChunkUsingGet(chunkId: string) {
 export function getPromptByTypeUsingGet(synthType: string) {
   return get(`/api/synthesis/gen/prompt`, { synth_type: synthType });
 }
+
+// 将合成任务数据归档到已存在的数据集中
+export function archiveSynthesisTaskToDatasetUsingPost(taskId: string, datasetId: string) {
+  return post(`/api/synthesis/gen/task/${taskId}/export-dataset/${datasetId}`);
+}

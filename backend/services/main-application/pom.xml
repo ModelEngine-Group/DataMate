@@ -161,7 +161,7 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <version>${spring-boot.version}</version>
                 <configuration>
-                    <finalName>data-mate</finalName>
+                    <finalName>datamate</finalName>
                     <mainClass>com.datamate.main.DataMateApplication</mainClass>
                 </configuration>
                 <executions>

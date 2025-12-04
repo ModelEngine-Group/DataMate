@@ -1,10 +1,9 @@
-import { Divider, Input, Select, Switch, Button, Table, Spin } from "antd";
+import { Input, Select, Switch, Button, Table, Spin } from "antd";
 import { useEffect, useState } from "react";
 import { getSysParamList, updateSysParamValue } from './settings.apis';
 
 interface SystemParam {
   id: string;
-  paramKey: string;
   paramValue: string;
   description: string;
   isEnabled: boolean;
@@ -120,10 +119,9 @@ export default function SystemConfig() {
   const columns = [
     {
       title: "参数名",
-      dataIndex: "paramKey",
-      key: "paramKey",
+      dataIndex: "id",
+      key: "id",
       width: 180,
-
     },
     {
       title: "参数值",
