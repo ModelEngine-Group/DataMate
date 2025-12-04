@@ -1,5 +1,6 @@
 import asyncio
 import uuid
+import math
 import json
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
@@ -171,7 +172,7 @@ async def list_evaluation_tasks(
 
         # 转换为响应模型
         items = [_map_to_task_detail_response(task) for task in tasks]
-        total_pages = (total + size - 1) // size if size > 0 else 0
+        total_pages = math.ceil(total / size) if total > 0 else 0
 
         return StandardResponse(
             code=200,
@@ -217,7 +218,7 @@ async def list_evaluation_items(
         count_query = select(func.count()).select_from(query.subquery())
         total = (await db.execute(count_query)).scalar_one()
         files = (await db.execute(query.offset(offset).limit(size))).scalars().all()
-        total_pages = (total + size - 1) // size if size > 0 else 0
+        total_pages = math.ceil(total / size) if total > 0 else 0
         file_responses = [
             EvaluationFileResponse(
                 taskId=file.task_id,
@@ -306,7 +307,7 @@ async def list_evaluation_items(
             for item in items
         ]
 
-        total_pages = (total + size - 1) // size if size > 0 else 0
+        total_pages = math.ceil(total / size) if total > 0 else 0
 
         return StandardResponse(
             code=200,

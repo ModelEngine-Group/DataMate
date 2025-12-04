@@ -1,3 +1,4 @@
+// TypeScript
 import React, { useState, useEffect } from 'react';
 import { Button, Form, Input, Select, message, Modal, Row, Col, Table, Space } from 'antd';
 import { EyeOutlined } from '@ant-design/icons';
@@ -36,6 +37,7 @@ interface CreateTaskModalProps {
 
 const TASK_TYPES = [
   { label: 'QA评估', value: 'QA' },
+  { label: 'COT评估', value: 'COT' },
 ];
 
 const EVAL_METHODS = [
@@ -55,7 +57,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onCancel, on
     dimension: '',
     description: ''
   });
-  const [taskType, setTaskType] = useState<string>("QA");
+  const [taskType, setTaskType] = useState<string>(DEFAULT_TASK_TYPE);
   const [promptTemplates, setPromptTemplates] = useState<PromptTemplate[]>([]);
   const [previewVisible, setPreviewVisible] = useState(false);
   const [evaluationPrompt, setEvaluationPrompt] = useState('');
@@ -82,8 +84,23 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onCancel, on
       fetchDatasets().then();
       fetchModels().then();
       fetchPromptTemplates().then();
+      // sync form with local taskType default
+      form.setFieldsValue({ taskType: DEFAULT_TASK_TYPE });
     }
   }, [visible]);
+
+  // when promptTemplates or taskType change, switch dimensions to template defaults (COT/QA)
+  useEffect(() => {
+    if (!promptTemplates || promptTemplates.length === 0) return;
+    const template = promptTemplates.find(t => t.evalType === taskType);
+    if (template && template.defaultDimensions) {
+      setDimensions(template.defaultDimensions.map((dim: any, index: number) => ({
+        key: `dim-${index}`,
+        dimension: dim.dimension,
+        description: dim.description
+      })));
+    }
+  }, [taskType, promptTemplates]);
 
   const fetchDatasets = async () => {
     try {
@@ -120,17 +137,16 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onCancel, on
   const fetchPromptTemplates = async () => {
     try {
       const response = await queryPromptTemplatesUsingGet();
-      const templates: PromptTemplate[] = response.data?.templates
-      setPromptTemplates(templates)
-      if (taskType) {
-        const template = templates.find(t => t.evalType === taskType);
-        if (template) {
-          setDimensions(template.defaultDimensions.map((dim: any, index: number) => ({
-            key: `dim-${index}`,
-            dimension: dim.dimension,
-            description: dim.description
-          })));
-        }
+      const templates: PromptTemplate[] = response.data?.templates || [];
+      setPromptTemplates(templates);
+      // if a template exists for current taskType, initialize dimensions (handled also by useEffect)
+      const template = templates.find(t => t.evalType === taskType);
+      if (template) {
+        setDimensions(template.defaultDimensions.map((dim: any, index: number) => ({
+          key: `dim-${index}`,
+          dimension: dim.dimension,
+          description: dim.description
+        })));
       }
     } catch (error) {
       console.error('Error fetching prompt templates:', error);
@@ -144,8 +160,11 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onCancel, on
       return;
     }
     const template = promptTemplates.find(t => t.evalType === taskType);
-    setEvaluationPrompt(template?.prompt.replace("{dimensions}", formatDimensionsForPrompt(dimensions))
-      .replace('{result_example}', formatResultExample(dimensions)));
+    const basePrompt = template?.prompt || '';
+    const filled = basePrompt
+      .replace('{dimensions}', formatDimensionsForPrompt(dimensions))
+      .replace('{result_example}', formatResultExample(dimensions));
+    setEvaluationPrompt(filled);
     setPreviewVisible(true);
   };
 
@@ -242,6 +261,13 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onCancel, on
         initialValues={{
           evalMethod: DEFAULT_EVAL_METHOD,
           taskType: DEFAULT_TASK_TYPE,
+        }}
+        onValuesChange={(changed) => {
+          if (changed.taskType) {
+            setTaskType(changed.taskType);
+            setEvaluationPrompt('');
+            setPreviewVisible(false);
+          }
         }}
       >
         <Row gutter={16}>
