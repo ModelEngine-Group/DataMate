@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Table, Typography, Button, Space, Spin, Empty, message, Tooltip } from 'antd';
+import { Table, Typography, Button, Space, Empty, Tooltip } from 'antd';
 import { FolderOpen, FileText, ArrowLeft } from 'lucide-react';
 import { queryEvaluationFilesUsingGet, queryEvaluationItemsUsingGet } from '../../evaluation.api';
+import useFetchData from '@/hooks/useFetchData';
 
 const { Text } = Typography;
 
@@ -39,63 +40,52 @@ type EvalItem = {
 };
 
 export default function EvaluationItems({ task }: { task: any }) {
-  const [loadingFiles, setLoadingFiles] = useState<boolean>(false);
-  const [files, setFiles] = useState<EvalFile[]>([]);
-  const [filePagination, setFilePagination] = useState({ current: 1, pageSize: 10, total: 0 });
-
   const [selectedFile, setSelectedFile] = useState<{ fileId: string; fileName: string } | null>(null);
-  const [loadingItems, setLoadingItems] = useState<boolean>(false);
-  const [items, setItems] = useState<EvalItem[]>([]);
-  const [itemPagination, setItemPagination] = useState({ current: 1, pageSize: 10, total: 0 });
 
-  // Fetch files list
-  useEffect(() => {
-    if (!task?.id || selectedFile) return;
-    const fetchFiles = async () => {
-      setLoadingFiles(true);
-      try {
-        const res = await queryEvaluationFilesUsingGet({ taskId: task.id, page: filePagination.current, size: filePagination.pageSize });
-        const data = res?.data;
-        const list: EvalFile[] = data?.content || [];
-        setFiles(list);
-        setFilePagination((p) => ({ ...p, total: data?.totalElements || 0 }));
-      } catch (e) {
-        message.error('加载评估文件失败');
-        console.error(e);
-      } finally {
-        setLoadingFiles(false);
-      }
-    };
-    fetchFiles();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [task?.id, filePagination.current, filePagination.pageSize, selectedFile]);
+  // 文件列表数据（使用 useFetchData），pageOffset=0 表示后端分页为 1 基
+  const {
+    loading: loadingFiles,
+    tableData: files,
+    pagination: filePagination,
+    setSearchParams: setFileSearchParams,
+  } = useFetchData<EvalFile>(
+    (params) => queryEvaluationFilesUsingGet({ taskId: task?.id, ...params }),
+    (d) => d as unknown as EvalFile,
+    30000,
+    false,
+    [],
+    0
+  );
 
-  // Fetch items of selected file
-  useEffect(() => {
-    if (!task?.id || !selectedFile) return;
-    const fetchItems = async () => {
-      setLoadingItems(true);
-      try {
-        const res = await queryEvaluationItemsUsingGet({
-          taskId: task.id,
-          page: itemPagination.current,
-          size: itemPagination.pageSize,
-          file_id: selectedFile.fileId,
-        });
-        const data = res?.data;
-        const list: EvalItem[] = data?.content || [];
-        setItems(list);
-        setItemPagination((p) => ({ ...p, total: data?.totalElements || 0 }));
-      } catch (e) {
-        message.error('加载评估条目失败');
-        console.error(e);
-      } finally {
-        setLoadingItems(false);
+  // 评估条目数据（使用 useFetchData），依赖选中文件
+  const {
+    loading: loadingItems,
+    tableData: items,
+    pagination: itemPagination,
+    setSearchParams: setItemSearchParams,
+    fetchData: fetchItems,
+  } = useFetchData<EvalItem>(
+    (params) => {
+      if (!task?.id || !selectedFile?.fileId) {
+        return Promise.resolve({ data: { content: [], totalElements: 0 } });
       }
-    };
-    fetchItems();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [task?.id, selectedFile?.fileId, itemPagination.current, itemPagination.pageSize]);
+      return queryEvaluationItemsUsingGet({ taskId: task.id, file_id: selectedFile.fileId, ...params });
+    },
+    (d) => d as unknown as EvalItem,
+    30000,
+    false,
+    [],
+    0
+  );
+
+  // 当选择文件变化时，主动触发一次条目查询，避免仅依赖 searchParams 变更导致未触发
+  useEffect(() => {
+    if (task?.id && selectedFile?.fileId) {
+      setItemSearchParams((prev: any) => ({ ...prev, current: 1 }));
+      // 立即拉取一次，保证点击后立刻出现数据
+      fetchItems();
+    }
+  }, [task?.id, selectedFile?.fileId]);
 
   const fileColumns = [
     {
@@ -228,19 +218,20 @@ export default function EvaluationItems({ task }: { task: any }) {
           dataSource={files}
           loading={loadingFiles}
           size="middle"
-          onRow={(record) => ({ onClick: () => setSelectedFile({ fileId: record.fileId, fileName: record.fileName }) })}
-          pagination={{
-            current: filePagination.current,
-            pageSize: filePagination.pageSize,
-            total: filePagination.total,
-            onChange: (current, pageSize) => setFilePagination({ current, pageSize, total: filePagination.total }),
-          }}
+          onRow={(record) => ({
+            onClick: () => {
+              setSelectedFile({ fileId: record.fileId, fileName: record.fileName });
+              // 切换文件时，重置条目表到第一页
+              setItemSearchParams((prev: any) => ({ ...prev, current: 1 }));
+            },
+          })}
+          pagination={filePagination}
         />
       ) : (
         <div className="flex flex-col gap-3">
           <div className="sticky top-0 z-10 bg-white py-2" style={{ borderBottom: '1px solid #f0f0f0' }}>
             <Space wrap>
-              <Button icon={<ArrowLeft size={16} />} onClick={() => { setSelectedFile(null); setItems([]); }}>
+              <Button icon={<ArrowLeft size={16} />} onClick={() => { setSelectedFile(null); }}>
                 返回文件列表
               </Button>
               <Space>
@@ -257,12 +248,7 @@ export default function EvaluationItems({ task }: { task: any }) {
             dataSource={items}
             loading={loadingItems}
             size="middle"
-            pagination={{
-              current: itemPagination.current,
-              pageSize: itemPagination.pageSize,
-              total: itemPagination.total,
-              onChange: (current, pageSize) => setItemPagination({ current, pageSize, total: itemPagination.total }),
-            }}
+            pagination={itemPagination}
           />
         </div>
       )}

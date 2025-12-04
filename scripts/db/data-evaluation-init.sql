@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS t_de_eval_task (
     source_id VARCHAR(36) COMMENT '待评估对象ID',
     source_name VARCHAR(255) COMMENT '待评估对象名称',
     status VARCHAR(50) DEFAULT 'PENDING' COMMENT '状态：PENDING/RUNNING/COMPLETED/STOPPED/FAILED',
-    eval_method VARCHAR(50) DEFAULT 'AUTO' COMMENT '状态：AUTO/MANUAL',
+    eval_method VARCHAR(50) DEFAULT 'AUTO' COMMENT '评估方式：AUTO/MANUAL',
     eval_process DOUBLE PRECISION NOT NULL DEFAULT 0 COMMENT '评估进度',
     eval_prompt TEXT COMMENT '评估提示词',
     eval_config TEXT COMMENT '评估配置',

@@ -32,6 +32,7 @@ class EvaluationTask(Base):
     source_id = Column(String(36), nullable=True, comment="待评估对象ID")
     source_name = Column(String(255), nullable=True, comment="待评估对象名称")
     status = Column(String(50), server_default="PENDING", nullable=False, comment="状态：PENDING/RUNNING/COMPLETED/STOPPED/FAILED")
+    eval_method = Column(String(50), server_default="AUTO", nullable=False, comment="评估方式：AUTO/MANUAL")
     eval_process = Column(Float, nullable=False, server_default="0", comment="评估进度")
     eval_prompt = Column(Text, nullable=True, comment="评估提示词")
     eval_config = Column(Text, nullable=True, comment="评估配置")

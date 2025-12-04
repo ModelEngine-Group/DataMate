@@ -82,6 +82,7 @@ export default function DataEvaluationPage() {
       label: '任务类型',
       options: [
         { value: 'QA', label: 'QA评估' },
+        { value: 'COT', label: 'COPT评估' },
       ],
     },
     {
@@ -89,7 +90,6 @@ export default function DataEvaluationPage() {
       label: '评估方式',
       options: [
         { value: 'AUTO', label: '自动评估' },
-        { value: 'MANUAL', label: '人工评估' },
       ],
     },
   ];

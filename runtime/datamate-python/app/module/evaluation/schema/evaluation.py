@@ -36,6 +36,7 @@ class EvaluationTaskItem(BaseModel):
     source_id: Optional[str] = Field(..., alias="sourceId", description="数据源ID")
     source_name: Optional[str] = Field(None, alias="sourceName", description="数据源名称")
     status: TaskStatus = Field(..., description="任务状态")
+    eval_method: Optional[str] = Field(None, alias="evalMethod", description="评估方式")
     eval_process: Optional[float] = Field(0, alias="evalProcess", description="评估进度")
     created_at: Optional[str] = Field(None, alias="createdAt", description="创建时间")
     updated_at: Optional[str] = Field(None, alias="updatedAt", description="更新时间")

@@ -426,6 +426,7 @@ def _map_to_task_detail_response(
         sourceId=task.source_id,
         sourceName=task.source_name,
         status=task.status,
+        evalMethod=task.eval_method,
         evalProcess=task.eval_process,
         evalPrompt=task.eval_prompt,
         evalConfig=json.loads(task.eval_config),
