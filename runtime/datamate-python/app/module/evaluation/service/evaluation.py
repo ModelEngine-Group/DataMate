@@ -119,7 +119,7 @@ class SynthesisEvaluationExecutor(EvaluationExecutor):
 
     async def save_eval_items(self):
         synthesis_files = ((await self.db.execute(select(DataSynthesisFileInstance)
-                               .where(DataSynthesisFileInstance.task_id == self.task.source_id)))
+                               .where(DataSynthesisFileInstance.synthesis_instance_id == self.task.source_id)))
                            .scalars().all())
         for synthesis_file in synthesis_files:
             synthesis_datas = ((await self.db.execute(select(SynthesisData)
@@ -132,7 +132,7 @@ class SynthesisEvaluationExecutor(EvaluationExecutor):
                     task_id=self.task.id,
                     file_id=synthesis_file.id,
                     item_id=synthesis_data.id,
-                    eval_content=synthesis_data.data,
+                    eval_content=json.dumps(synthesis_data.data),
                     status=TaskStatus.PENDING.value,
                     created_by=self.task.created_by,
                     updated_by=self.task.updated_by,
