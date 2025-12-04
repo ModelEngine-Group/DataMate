@@ -42,6 +42,7 @@ import RatioTaskDetail from "@/pages/RatioTask/Detail/RatioTaskDetail";
 import CleansingTemplateDetail from "@/pages/DataCleansing/Detail/TemplateDetail";
 import SynthFileTask from "@/pages/SynthesisTask/SynthFileTask.tsx";
 import EvaluationDetailPage from "@/pages/DataEvaluation/Detail/TaskDetail.tsx";
+import SynthDataDetail from "@/pages/SynthesisTask/SynthDataDetail.tsx";
 
 const router = createBrowserRouter([
   {
@@ -161,7 +162,14 @@ const router = createBrowserRouter([
             path: "create",
             Component: SynthesisTaskCreate,
           },
-            {path: ":id", Component: SynthFileTask},
+          {
+            path: ":id",
+            Component: SynthFileTask
+          },
+          {
+            path: "file/:id/detail",
+            Component: SynthDataDetail,
+          }
         ],
       },
       {
