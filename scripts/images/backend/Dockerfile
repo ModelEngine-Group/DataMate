@@ -1,6 +1,8 @@
 FROM maven:3-eclipse-temurin-8 AS datax-builder
 
-RUN apt-get update && \
+RUN sed -i "s@http://.*archive.ubuntu.com@http://mirrors.huaweicloud.com@g" /etc/apt/sources.list && \
+    sed -i "s@http://.*security.ubuntu.com@http://mirrors.huaweicloud.com@g" /etc/apt/sources.list && \
+    apt-get update && \
     apt-get install -y git && \
     git clone https://github.com/alibaba/DataX.git
 
@@ -26,7 +28,7 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-COPY --from=builder /opt/backend/services/main-application/target/data-mate.jar /opt/backend/data-mate.jar
+COPY --from=builder /opt/backend/services/main-application/target/datamate.jar /opt/backend/datamate.jar
 COPY --from=datax-builder /DataX/target/datax/datax /opt/datax
 
 COPY scripts/images/backend/start.sh /opt/backend/start.sh
@@ -39,4 +41,4 @@ EXPOSE 8080
 
 ENTRYPOINT ["/opt/backend/start.sh"]
 
-CMD ["java", "-Duser.timezone=Asia/Shanghai", "-jar", "/opt/backend/data-mate.jar"]
+CMD ["java", "-Duser.timezone=Asia/Shanghai", "-jar", "/opt/backend/datamate.jar"]

@@ -464,6 +464,14 @@ download:
 		exit 1; \
 	fi
 
+DEER_FLOW_IMAGES := \
+	deer-flow-backend \
+	deer-flow-frontend
+
+.PHONY: download-deer-flow
+download-deer-flow:
+	$(MAKE) download DOWNLOAD_IMAGES="$(DEER_FLOW_IMAGES)"
+
 # Load all downloaded images from dist/ directory
 .PHONY: load-images
 load-images:
