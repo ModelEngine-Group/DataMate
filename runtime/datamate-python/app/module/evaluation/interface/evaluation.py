@@ -387,6 +387,12 @@ async def delete_eval_tasks(
             .where(EvaluationItem.task_id == task_id)
         )
 
+        # 删除评估文件
+        await db.execute(
+            EvaluationFile.__table__.delete()
+            .where(EvaluationFile.task_id == task_id)
+        )
+
         # 删除任务
         await db.delete(task)
         await db.commit()
