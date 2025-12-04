@@ -299,7 +299,7 @@ async def list_evaluation_items(
                 taskId=item.task_id,
                 itemId=item.item_id,
                 fileId=item.file_id,
-                evalContent=json.loads(item.eval_content),
+                evalContent=json.loads(item.eval_content) if item.eval_content else None,
                 evalScore=float(item.eval_score) if item.eval_score else None,
                 evalResult=json.loads(item.eval_result),
                 status=item.status
