@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useCallback, useEffect } from "react";
 import { Button, Input, Table } from "antd";
 import { RightOutlined } from "@ant-design/icons";
 import { mapDataset } from "@/pages/DataManagement/dataset.const";
@@ -19,6 +19,7 @@ interface DatasetFileTransferProps
   open: boolean;
   selectedFilesMap: { [key: string]: DatasetFile };
   onSelectedFilesChange: (filesMap: { [key: string]: DatasetFile }) => void;
+  onDatasetSelect?: (dataset: Dataset | null) => void;
 }
 
 const fileCols = [
@@ -48,6 +49,7 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
   open,
   selectedFilesMap,
   onSelectedFilesChange,
+  onDatasetSelect,
   ...props
 }) => {
   const [datasets, setDatasets] = React.useState<Dataset[]>([]);
@@ -96,7 +98,7 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
     300
   );
 
-  const fetchFiles = async () => {
+  const fetchFiles = useCallback(async () => {
     if (!selectedDataset) return;
     const { data } = await queryDatasetFilesUsingGet(selectedDataset.id, {
       page: filesPagination.current - 1,
@@ -104,23 +106,25 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
       keyword: filesSearch,
     });
     setFiles(
-      data.content.map((item) => ({
+      (data.content || []).map((item: DatasetFile) => ({
         ...item,
         key: item.id,
         datasetName: selectedDataset.name,
-      })) || []
+      }))
     );
     setFilesPagination((prev) => ({
       ...prev,
       total: data.totalElements,
     }));
-  };
+  }, [filesPagination.current, filesPagination.pageSize, filesSearch, selectedDataset]);
 
   useEffect(() => {
-    if (selectedDataset) {
-      fetchFiles();
-    }
-  }, [selectedDataset]);
+    fetchFiles().catch(() => {});
+  }, [fetchFiles]);
+
+  useEffect(() => {
+    onDatasetSelect?.(selectedDataset);
+  }, [selectedDataset, onDatasetSelect]);
 
   const toggleSelectFile = (record: DatasetFile) => {
     if (!selectedFilesMap[record.id]) {
@@ -147,8 +151,9 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
       setShowFiles(false);
       setSelectedDataset(null);
       setDatasetSelections([]);
+      onDatasetSelect?.(null);
     }
-  }, [open]);
+  }, [open, onDatasetSelect]);
 
   const datasetCols = [
     {
@@ -206,7 +211,15 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
             })}
             dataSource={datasets}
             columns={datasetCols}
-            pagination={datasetPagination}
+            pagination={{
+                ...datasetPagination,
+                onChange: (page, pageSize) =>
+                    setDatasetPagination({
+                        current: page,
+                        pageSize: pageSize || datasetPagination.pageSize,
+                        total: datasetPagination.total,
+                    }),
+            }}
           />
         </div>
         <RightOutlined />
@@ -231,21 +244,11 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
             })}
             rowSelection={{
               type: "checkbox",
-              onSelectAll: (selected, _, changeRows) => {
-                const newSelectedFiles = { ...selectedFilesMap };
-                if (selected) {
-                  changeRows.forEach((row) => {
-                    newSelectedFiles[row.id] = row;
-                  });
-                } else {
-                  changeRows.forEach((row) => {
-                    delete newSelectedFiles[row.id];
-                  });
-                }
-                onSelectedFilesChange(newSelectedFiles);
-              },
               selectedRowKeys: Object.keys(selectedFilesMap),
               onSelect: toggleSelectFile,
+              getCheckboxProps: (record: DatasetFile) => ({
+                name: record.fileName,
+              }),
             }}
           />
         </div>

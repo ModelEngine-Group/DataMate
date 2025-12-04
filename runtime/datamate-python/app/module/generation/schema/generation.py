@@ -70,6 +70,67 @@ class PagedDataSynthesisTaskResponse(BaseModel):
     page: int
     size: int
 
+
+class DataSynthesisFileTaskItem(BaseModel):
+    """数据合成任务下的文件任务项"""
+    id: str
+    synthesis_instance_id: str
+    file_name: str
+    source_file_id: str
+    target_file_location: str
+    status: Optional[str] = None
+    total_chunks: int
+    processed_chunks: int
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+
+    class Config:
+        orm_mode = True
+
+
+class PagedDataSynthesisFileTaskResponse(BaseModel):
+    """分页数据合成任务文件任务响应"""
+    content: List[DataSynthesisFileTaskItem]
+    totalElements: int
+    totalPages: int
+    page: int
+    size: int
+
+
+class DataSynthesisChunkItem(BaseModel):
+    """数据合成文件下的 chunk 记录"""
+    id: str
+    synthesis_file_instance_id: str
+    chunk_index: Optional[int] = None
+    chunk_content: Optional[str] = None
+    chunk_metadata: Optional[Dict[str, Any]] = None
+
+    class Config:
+        orm_mode = True
+
+
+class PagedDataSynthesisChunkResponse(BaseModel):
+    """分页 chunk 列表响应"""
+    content: List[DataSynthesisChunkItem]
+    totalElements: int
+    totalPages: int
+    page: int
+    size: int
+
+
+class SynthesisDataItem(BaseModel):
+    """合成结果数据项"""
+    id: str
+    data: Optional[Dict[str, Any]] = None
+    synthesis_file_instance_id: str
+    chunk_instance_id: str
+
+    class Config:
+        orm_mode = True
+
+
 class ChatRequest(BaseModel):
     """聊天请求参数"""
     model_id: str
