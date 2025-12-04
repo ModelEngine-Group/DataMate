@@ -123,15 +123,31 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onCancel, on
   };
 
   const formatDimensionsForPrompt = (dimensions: Dimension[]) => {
-    let result = "\n";
+    let result = "";
     dimensions.forEach((dim, index) => {
-      result += `### ${index + 1}. ${dim.dimension}\n**评估标准：**\n${dim.description}\n\n`;
+      if (index > 0) {
+        result += "\n";
+      }
+      result += `### ${index + 1}. ${dim.dimension}\n**评估标准：**\n${dim.description}`;
+      if (index < dimensions.length - 1) {
+        result += "\n";
+      }
     });
     return result;
   };
 
   const formatResultExample = (dimensions: Dimension[]) => {
-    return dimensions.map(dim => `\n    "${dim.dimension}": "Y",`).join('');
+    let result = "";
+    dimensions.forEach((dim, index) => {
+      if (index > 0) {
+        result += "\n    ";
+      }
+      result += `"${dim.dimension}": "Y"`;
+      if (index < dimensions.length - 1) {
+        result += ",";
+      }
+    });
+    return result;
   };
 
   const fetchPromptTemplates = async () => {

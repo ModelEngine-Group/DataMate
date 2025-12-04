@@ -75,7 +75,7 @@ class EvaluationExecutor:
                 )
                 resp_text = _extract_json_substring(resp_text)
                 try:
-                    parsed = json.loads(resp_text)
+                    json.loads(resp_text)
                 except Exception as e:
                     logger.error(
                         f"Failed to parse LLM answer as JSON for task={self.task.id}, file={item.file_id}: {e}. Raw answer: {resp_text!r}"
@@ -85,6 +85,7 @@ class EvaluationExecutor:
                 item.eval_result = resp_text
                 item.status = TaskStatus.COMPLETED.value
                 await self.db.commit()
+                return
 
 
     def get_source_type(self) -> SourceType:

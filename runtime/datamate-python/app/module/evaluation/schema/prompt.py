@@ -1,3 +1,7 @@
+from app.core.logging import get_logger
+
+logger = get_logger(__name__)
+
 EVALUATION_PROMPT_TEMPLATE = [
     {
         "evalType": "QA",
@@ -51,7 +55,8 @@ EVALUATION_PROMPT_TEMPLATE = [
 请按照以下JSON格式输出评估结果，评估结果为Y/N，符合标注输出Y，不符合标准输出N：
 
 {
-  "result": {{result_example}
+  "result": {
+    {result_example}
   },
   "evaluation": "这是一个高质量的问答数据集。问题表述清晰具体，答案准确完整且逻辑性强，与原始文本高度相关。建议：可以进一步丰富答案的细节描述。"
 }
@@ -103,7 +108,8 @@ EVALUATION_PROMPT_TEMPLATE = [
 请按照以下JSON格式输出评估结果，评估结果为Y/N，符合标注输出Y，不符合标准输出N；将评估结论写到evaluation中：
 
 {
-  "result": {{result_example}
+  "result": {
+    {result_example}
   },
   "evaluation": "这是一个高质量的COT数据。思维链逻辑连贯，推理步骤合理，信息完整。建议：部分表达可以进一步优化，以及个别步骤的过渡可以更加平滑。"
 }
@@ -112,17 +118,27 @@ EVALUATION_PROMPT_TEMPLATE = [
 ]
 
 def get_dimensions_for_qa(dimensions: list[dict]) -> str:
-    dimensions_str = "\n"
+    dimensions_str = ""
     index = 1
     for dimension in dimensions:
-        dimensions_str += f"### {index}. {dimension.get("dimension")}\n**评估标准：**\n{dimension.get("description")}\n\n"
+        if index > 1:
+            dimensions_str += "\n"
+        dimensions_str += f"### {index}. {dimension.get("dimension")}\n**评估标准：**\n{dimension.get("description")}"
+        if index < len(dimensions):
+            dimensions_str += "\n"
         index += 1
     return dimensions_str
 
 def get_result_example_for_qa(dimensions: list[dict]) -> str:
     result_example = ""
+    index = 1
     for dimension in dimensions:
-        result_example += f'\n    "{dimension.get("dimension")}": "Y",'
+        if index > 1:
+            result_example += "\n    "
+        result_example += f'"{dimension.get("dimension")}": "Y"'
+        if index < len(dimensions):
+            result_example += ","
+        index += 1
     return result_example
 
 def get_prompt(task_type: str, dimensions: list[dict]) -> str:
