@@ -21,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,11 +43,13 @@ import java.util.stream.Stream;
 @Transactional
 @RequiredArgsConstructor
 public class DatasetApplicationService {
+    private static final String DATASET_PVC_NAME = "sys.management.dataset.pvc.name";
     private final DatasetRepository datasetRepository;
     private final TagMapper tagMapper;
     private final DatasetFileRepository datasetFileRepository;
     private final CollectionTaskClient collectionTaskClient;
     private final DatasetFileApplicationService datasetFileApplicationService;
+    private final StringRedisTemplate redisTemplate;
 
     @Value("${datamate.data-management.base-path:/dataset}")
     private String datasetBasePath;
@@ -74,6 +77,10 @@ public class DatasetApplicationService {
             processDataSourceAsync(dataset.getId(), createDatasetRequest.getDataSource());
         }
         return dataset;
+    }
+
+    public String getDatasetPvcName() {
+        return redisTemplate.opsForValue().get(DATASET_PVC_NAME);
     }
 
     public Dataset updateDataset(String datasetId, UpdateDatasetRequest updateDatasetRequest) {
@@ -130,7 +137,10 @@ public class DatasetApplicationService {
     public PagedResponse<DatasetResponse> getDatasets(DatasetPagingQuery query) {
         IPage<Dataset> page = new Page<>(query.getPage(), query.getSize());
         page = datasetRepository.findByCriteria(page, query);
-        return PagedResponse.of(DatasetConverter.INSTANCE.convertToResponse(page.getRecords()), page.getCurrent(), page.getTotal(), page.getPages());
+        String datasetPvcName = getDatasetPvcName();
+        List<DatasetResponse> datasetResponses = DatasetConverter.INSTANCE.convertToResponse(page.getRecords());
+        datasetResponses.forEach(dataset -> dataset.setPvcName(datasetPvcName));
+        return PagedResponse.of(datasetResponses, page.getCurrent(), page.getTotal(), page.getPages());
     }
 
     /**

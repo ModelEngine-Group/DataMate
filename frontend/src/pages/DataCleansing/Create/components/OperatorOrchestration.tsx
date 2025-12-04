@@ -182,14 +182,6 @@ const OperatorFlow: React.FC<OperatorFlowProps> = ({
               {operator?.categories?.map((categoryId) => {
                 return <Tag color="default">{categoryMap[categoryId].name}</Tag>
               })}
-              {/* 参数状态指示 */}
-              {Object.values(operator.configs).some(
-                (param: any) =>
-                  (param.type === "input" && !param.value) ||
-                  (param.type === "checkbox" &&
-                    Array.isArray(param.value) &&
-                    param.value.length === 0)
-              ) && <Tag color="red">待配置</Tag>}
               {/* 操作按钮 */}
               <span
                 className="cursor-pointer text-red-500"

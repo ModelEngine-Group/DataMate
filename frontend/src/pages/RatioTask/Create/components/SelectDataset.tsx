@@ -1,3 +1,4 @@
+// typescript
 import React, { useEffect, useState } from "react";
 import { Badge, Button, Card, Checkbox, Input, Pagination } from "antd";
 import { Search as SearchIcon } from "lucide-react";
@@ -5,31 +6,47 @@ import type { Dataset } from "@/pages/DataManagement/dataset.model.ts";
 import {
   queryDatasetsUsingGet,
   queryDatasetByIdUsingGet,
-  queryDatasetStatisticsByIdUsingGet,
 } from "@/pages/DataManagement/dataset.api.ts";
 
 interface SelectDatasetProps {
   selectedDatasets: string[];
   onSelectedDatasetsChange: (next: string[]) => void;
+  // distributions now: { datasetId: { labelName: { labelValue: count } } }
   onDistributionsChange?: (
-    next: Record<string, Record<string, number>>
+    next: Record<string, Record<string, Record<string, number>>>
   ) => void;
   onDatasetsChange?: (list: Dataset[]) => void;
 }
 
 const SelectDataset: React.FC<SelectDatasetProps> = ({
-  selectedDatasets,
-  onSelectedDatasetsChange,
-  onDistributionsChange,
-  onDatasetsChange,
-}) => {
+                                                       selectedDatasets,
+                                                       onSelectedDatasetsChange,
+                                                       onDistributionsChange,
+                                                       onDatasetsChange,
+                                                     }) => {
   const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [pagination, setPagination] = useState({ page: 1, size: 10, total: 0 });
   const [distributions, setDistributions] = useState<
-    Record<string, Record<string, number>>
+    Record<string, Record<string, Record<string, number>>>
   >({});
+
+  // Helper: flatten nested distribution for preview and filter logic
+  const flattenDistribution = (
+    dist?: Record<string, Record<string, number>>
+  ): Array<{ label: string; value: string; count: number }> => {
+    if (!dist) return [];
+    const items: Array<{ label: string; value: string; count: number }> = [];
+    Object.entries(dist).forEach(([label, values]) => {
+      if (values && typeof values === "object") {
+        Object.entries(values).forEach(([val, cnt]) => {
+          items.push({ label, value: val, count: cnt });
+        });
+      }
+    });
+    return items;
+  };
 
   // Fetch dataset list
   useEffect(() => {
@@ -52,10 +69,10 @@ const SelectDataset: React.FC<SelectDatasetProps> = ({
         setLoading(false);
       }
     };
-    fetchDatasets();
+    fetchDatasets().then(() => {});
   }, [pagination.page, pagination.size, searchQuery]);
 
-  // Fetch label distributions when in label mode
+  // Fetch label distributions when datasets change
   useEffect(() => {
     const fetchDistributions = async () => {
       if (!datasets?.length) return;
@@ -64,74 +81,25 @@ const SelectDataset: React.FC<SelectDatasetProps> = ({
         .filter((id) => !distributions[id]);
       if (!idsToFetch.length) return;
       try {
-        const results = await Promise.all(
-          idsToFetch.map(async (id) => {
-            try {
-              const statRes = await queryDatasetStatisticsByIdUsingGet(id);
-              return { id, stats: statRes?.data };
-            } catch {
-              return { id, stats: null };
-            }
-          })
-        );
-
-        const next: Record<string, Record<string, number>> = {
-          ...distributions,
-        };
-        for (const { id, stats } of results) {
-          let dist: Record<string, number> | undefined = undefined;
-          if (stats) {
-            const candidates: any[] = [
-              (stats as any).labelDistribution,
-              (stats as any).tagDistribution,
-              (stats as any).label_stats,
-              (stats as any).labels,
-              (stats as any).distribution,
-            ];
-            let picked = candidates.find(
-              (c) => c && (typeof c === "object" || Array.isArray(c))
-            );
-            if (Array.isArray(picked)) {
-              const obj: Record<string, number> = {};
-              picked.forEach((it: any) => {
-                const key = it?.label ?? it?.name ?? it?.tag ?? it?.key;
-                const val = it?.count ?? it?.value ?? it?.num ?? it?.total;
-                if (key != null && typeof val === "number")
-                  obj[String(key)] = val;
-              });
-              dist = obj;
-            } else if (picked && typeof picked === "object") {
-              dist = picked as Record<string, number>;
-            }
-          }
-          if (!dist) {
-            try {
-              const detRes = await queryDatasetByIdUsingGet(id);
-              const det = detRes?.data;
-              if (det) {
-                let picked =
-                  (det as any).distribution ||
-                  (det as any).labelDistribution ||
-                  (det as any).tagDistribution ||
-                  (det as any).label_stats ||
-                  (det as any).labels ||
-                  undefined;
-                if (Array.isArray(picked)) {
-                  const obj: Record<string, number> = {};
-                  picked.forEach((it: any) => {
-                    const key = it?.label ?? it?.name ?? it?.tag ?? it?.key;
-                    const val = it?.count ?? it?.value ?? it?.num ?? it?.total;
-                    if (key != null && typeof val === "number")
-                      obj[String(key)] = val;
-                  });
-                  dist = obj;
-                } else if (picked && typeof picked === "object") {
-                  dist = picked as Record<string, number>;
-                }
+        const next: Record<
+          string,
+          Record<string, Record<string, number>>
+        > = { ...distributions };
+        for (const id of idsToFetch) {
+          let dist: Record<string, Record<string, number>> | undefined =
+            undefined;
+          try {
+            const detRes = await queryDatasetByIdUsingGet(id);
+            const det = detRes?.data;
+            if (det) {
+              const picked = det?.distribution;
+              if (picked && typeof picked === "object") {
+                // Assume picked is now { labelName: { labelValue: count } }
+                dist = picked as Record<string, Record<string, number>>;
               }
-            } catch {
-              dist = undefined;
             }
+          } catch {
+            dist = undefined;
           }
           next[String(id)] = dist || {};
         }
@@ -141,7 +109,7 @@ const SelectDataset: React.FC<SelectDatasetProps> = ({
         // ignore
       }
     };
-    fetchDistributions();
+    fetchDistributions().then(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [datasets]);
 
@@ -195,6 +163,8 @@ const SelectDataset: React.FC<SelectDatasetProps> = ({
             datasets.map((dataset) => {
               const idStr = String(dataset.id);
               const checked = selectedDatasets.includes(idStr);
+              const distFor = distributions[idStr];
+              const flat = flattenDistribution(distFor);
               return (
                 <Card
                   key={dataset.id}
@@ -224,17 +194,15 @@ const SelectDataset: React.FC<SelectDatasetProps> = ({
                         <span>{dataset.size}</span>
                       </div>
                       <div className="mt-2">
-                        {distributions[idStr] ? (
-                          Object.entries(distributions[idStr]).length > 0 ? (
+                        {distFor ? (
+                          flat.length > 0 ? (
                             <div className="flex flex-wrap gap-2 text-xs">
-                              {Object.entries(distributions[idStr])
-                                .slice(0, 8)
-                                .map(([tag, count]) => (
-                                  <Badge
-                                    key={tag}
-                                    color="gray"
-                                  >{`${tag}: ${count}`}</Badge>
-                                ))}
+                              {flat.slice(0, 8).map((it) => (
+                                <Badge
+                                  key={`${it.label}_${it.value}`}
+                                  color="gray"
+                                >{`${it.label}/${it.value}: ${it.count}`}</Badge>
+                              ))}
                             </div>
                           ) : (
                             <div className="text-xs text-gray-400">

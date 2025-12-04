@@ -46,5 +46,7 @@ public class DatasetResponse {
     /** 更新者 */
     private String updatedBy;
     /** 分布 */
-    private Map<String, Long> distribution ;
+    private Map<String, Map<String, Long>> distribution;
+    /** 数据集pvc名称 */
+    private String pvcName;
 }

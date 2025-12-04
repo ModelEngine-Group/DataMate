@@ -16,6 +16,11 @@ from .annotation_management import (
     LabelingProject
 )
 
+from .data_evaluation import (
+    EvaluationTask,
+    EvaluationItem
+)
+
 __all__ = [
     "Dataset",
     "DatasetTag",
@@ -25,4 +30,6 @@ __all__ = [
     "User",
     "AnnotationTemplate",
     "LabelingProject",
+    "EvaluationTask",
+    "EvaluationItem",
 ]

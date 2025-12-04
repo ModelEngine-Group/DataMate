@@ -1,5 +1,46 @@
 import { get, post, put, del, download } from "@/utils/request";
 
+export function createEvaluationTaskUsingPost(data: any) {
+  return post("/api/evaluation/tasks", data);
+}
+
+export function getPagedEvaluationTaskUsingGet(params?: any) {
+  return get("/api/evaluation/tasks", params);
+}
+
+export function deleteEvaluationTaskUsingGet(id: string) {
+  const url = `/api/evaluation/tasks?ids=${id}`;
+  return del(url);
+}
+
+export function queryPromptTemplatesUsingGet() {
+  return get("/api/evaluation/prompt-templates");
+}
+
+export function getEvaluationTaskByIdUsingGet(taskId: string | number) {
+  return get(`/api/evaluation/tasks/${taskId}`);
+}
+
+export function queryEvaluationFilesUsingGet(params: {
+  taskId: string;
+  page?: number;
+  size?: number;
+}) {
+  const { taskId, ...rest } = params;
+  return get(`/api/evaluation/tasks/${taskId}/files`, rest);
+}
+
+export function queryEvaluationItemsUsingGet(params: {
+  taskId: string;
+  page?: number;
+  size?: number;
+  status?: string;
+  file_id?: string;
+}) {
+  const { taskId, ...rest } = params;
+  return get(`/api/evaluation/tasks/${taskId}/items`, rest);
+}
+
 // 数据质量评估相关接口
 export function evaluateDataQualityUsingPost(data: any) {
   return post("/api/v1/evaluation/quality", data);
@@ -111,14 +152,6 @@ export function getDatasetEvaluationSummaryUsingGet(datasetId: string | number) 
 // 评估任务管理
 export function queryEvaluationTasksUsingGet(params?: any) {
   return get("/api/v1/evaluation/tasks", params);
-}
-
-export function createEvaluationTaskUsingPost(data: any) {
-  return post("/api/v1/evaluation/tasks", data);
-}
-
-export function getEvaluationTaskByIdUsingGet(taskId: string | number) {
-  return get(`/api/v1/evaluation/tasks/${taskId}`);
 }
 
 export function cancelEvaluationTaskUsingPost(taskId: string | number) {

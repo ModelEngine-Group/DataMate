@@ -13,7 +13,7 @@ from app.db.models import Dataset
 from app.db.session import get_db
 from app.module.dataset import DatasetManagementService
 from app.module.shared.schema import StandardResponse, TaskStatus
-from app.module.synthesis.schema.ratio_task import (
+from app.module.ratio.schema.ratio_task import (
     CreateRatioTaskResponse,
     CreateRatioTaskRequest,
     PagedRatioTaskResponse,
@@ -21,7 +21,7 @@ from app.module.synthesis.schema.ratio_task import (
     TargetDatasetInfo,
     RatioTaskDetailResponse,
 )
-from app.module.synthesis.service.ratio_task import RatioTaskService
+from app.module.ratio.service.ratio_task import RatioTaskService
 from app.db.models.ratio_task import RatioInstance, RatioRelation, RatioRelation as RatioRelationModel
 
 router = APIRouter(

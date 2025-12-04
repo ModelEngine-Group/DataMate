@@ -58,8 +58,9 @@ public class DatasetController {
      */
     @GetMapping("/{datasetId}")
     public DatasetResponse getDatasetById(@PathVariable("datasetId") String datasetId) {
-        Dataset dataset = datasetApplicationService.getDataset(datasetId);
-        return DatasetConverter.INSTANCE.convertToResponse(dataset);
+        DatasetResponse dataset = DatasetConverter.INSTANCE.convertToResponse(datasetApplicationService.getDataset(datasetId));
+        dataset.setPvcName(datasetApplicationService.getDatasetPvcName());
+        return dataset;
     }
 
     /**
