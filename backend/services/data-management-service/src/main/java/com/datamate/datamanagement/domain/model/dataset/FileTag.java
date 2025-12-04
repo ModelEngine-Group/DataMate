@@ -28,7 +28,7 @@ public class FileTag {
 
     private String fromName;
 
-    public List<String> getTags() {
+    public List<String> getTagValues() {
         List<String> tags = new ArrayList<>();
         Object tagValues = values.get(type);
         if (tagValues instanceof List) {
@@ -39,9 +39,6 @@ public class FileTag {
             }
         } else if (tagValues instanceof String) {
             tags.add((String) tagValues);
-        }
-        if(StringUtils.isNotEmpty(fromName)) {
-            return tags.stream().map(tag -> fromName + " " + tag).toList();
         }
         return tags;
     }

@@ -22,7 +22,6 @@ import InstructionTemplateCreate from "@/pages/SynthesisTask/CreateTemplate";
 import SynthesisTaskCreate from "@/pages/SynthesisTask/CreateTask";
 
 import DataEvaluationPage from "@/pages/DataEvaluation/Home/DataEvaluation";
-import EvaluationTaskCreate from "@/pages/DataEvaluation/Create/CreateTask";
 import EvaluationTaskReport from "@/pages/DataEvaluation/Report/EvaluationReport";
 import ManualEvaluatePage from "@/pages/DataEvaluation/Evaluate/ManualEvaluate";
 
@@ -41,6 +40,8 @@ import { withErrorBoundary } from "@/components/ErrorBoundary";
 import AgentPage from "@/pages/Agent/Agent.tsx";
 import RatioTaskDetail from "@/pages/RatioTask/Detail/RatioTaskDetail";
 import CleansingTemplateDetail from "@/pages/DataCleansing/Detail/TemplateDetail";
+import SynthFileTask from "@/pages/SynthesisTask/SynthFileTask.tsx";
+import EvaluationDetailPage from "@/pages/DataEvaluation/Detail/TaskDetail.tsx";
 
 const router = createBrowserRouter([
   {
@@ -160,6 +161,7 @@ const router = createBrowserRouter([
             path: "create",
             Component: SynthesisTaskCreate,
           },
+            {path: ":id", Component: SynthFileTask},
         ],
       },
       {
@@ -189,8 +191,8 @@ const router = createBrowserRouter([
             Component: DataEvaluationPage,
           },
           {
-            path: "create-task",
-            Component: EvaluationTaskCreate,
+            path: "detail/:id",
+            Component: EvaluationDetailPage,
           },
           {
             path: "task-report/:id",

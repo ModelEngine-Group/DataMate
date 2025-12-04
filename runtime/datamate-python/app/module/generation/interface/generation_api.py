@@ -18,7 +18,14 @@ from app.db.session import get_db
 from app.module.generation.schema.generation import (
     CreateSynthesisTaskRequest,
     DataSynthesisTaskItem,
-    PagedDataSynthesisTaskResponse, SynthesisType)
+    PagedDataSynthesisTaskResponse,
+    SynthesisType,
+    DataSynthesisFileTaskItem,
+    PagedDataSynthesisFileTaskResponse,
+    DataSynthesisChunkItem,
+    PagedDataSynthesisChunkResponse,
+    SynthesisDataItem,
+)
 from app.module.generation.service.generation_service import GenerationService
 from app.module.generation.service.prompt import get_prompt
 from app.module.shared.schema import StandardResponse
@@ -219,19 +226,26 @@ async def delete_synthesis_task(
         data=None,
     )
 
+
 @router.delete("/task/{task_id}/{file_id}", response_model=StandardResponse[None])
 async def delete_synthesis_file_task(
     task_id: str,
     file_id: str,
     db: AsyncSession = Depends(get_db)
 ):
-    """删除数据合成任务中的文件任务"""
+    """删除数据合成任务中的文件任务，同时刷新任务表中的文件/切片数量"""
+    # 先获取任务和文件任务记录
+    task = await db.get(DataSynthesisInstance, task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Synthesis task not found")
+
     file_task = await db.get(DataSynthesisFileInstance, file_id)
     if not file_task:
         raise HTTPException(status_code=404, detail="Synthesis file task not found")
 
     # 删除 SynthesisData（根据文件任务ID）
-    await db.execute(delete(SynthesisData).where(
+    await db.execute(
+        delete(SynthesisData).where(
             SynthesisData.synthesis_file_instance_id == file_id
         )
     )
@@ -243,10 +257,27 @@ async def delete_synthesis_file_task(
     )
 
     # 删除文件任务记录
-    await db.execute(delete(DataSynthesisFileInstance).where(
+    await db.execute(
+        delete(DataSynthesisFileInstance).where(
             DataSynthesisFileInstance.id == file_id
         )
     )
+
+    # 刷新任务级别统计字段：总文件数、总文本块数、已处理文本块数
+    if task.total_files and task.total_files > 0:
+        task.total_files -= 1
+        if task.total_files < 0:
+            task.total_files = 0
+
+    await db.commit()
+    await db.refresh(task)
+
+    return StandardResponse(
+        code=200,
+        message="success",
+        data=None,
+    )
+
 
 @router.get("/prompt", response_model=StandardResponse[str])
 async def get_prompt_by_type(
@@ -257,4 +288,158 @@ async def get_prompt_by_type(
         code=200,
         message="Success",
         data=prompt,
+    )
+
+
+@router.get("/task/{task_id}/files", response_model=StandardResponse[PagedDataSynthesisFileTaskResponse])
+async def list_synthesis_file_tasks(
+    task_id: str,
+    page: int = 1,
+    page_size: int = 10,
+    db: AsyncSession = Depends(get_db),
+):
+    """分页获取某个数据合成任务下的文件任务列表"""
+    # 先校验任务是否存在
+    task = await db.get(DataSynthesisInstance, task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Synthesis task not found")
+
+    base_query = select(DataSynthesisFileInstance).where(
+        DataSynthesisFileInstance.synthesis_instance_id == task_id
+    )
+
+    count_q = select(func.count()).select_from(base_query.subquery())
+    total = (await db.execute(count_q)).scalar_one()
+
+    if page < 1:
+        page = 1
+    if page_size < 1:
+        page_size = 10
+
+    result = await db.execute(
+        base_query.offset((page - 1) * page_size).limit(page_size)
+    )
+    rows = result.scalars().all()
+
+    file_items = [
+        DataSynthesisFileTaskItem(
+            id=row.id,
+            synthesis_instance_id=row.synthesis_instance_id,
+            file_name=row.file_name,
+            source_file_id=row.source_file_id,
+            target_file_location=row.target_file_location,
+            status=row.status,
+            total_chunks=row.total_chunks,
+            processed_chunks=row.processed_chunks,
+            created_at=row.created_at,
+            updated_at=row.updated_at,
+            created_by=row.created_by,
+            updated_by=row.updated_by,
+        )
+        for row in rows
+    ]
+
+    paged = PagedDataSynthesisFileTaskResponse(
+        content=file_items,
+        totalElements=total,
+        totalPages=(total + page_size - 1) // page_size,
+        page=page,
+        size=page_size,
+    )
+
+    return StandardResponse(
+        code=200,
+        message="Success",
+        data=paged,
+    )
+
+
+@router.get("/file/{file_id}/chunks", response_model=StandardResponse[PagedDataSynthesisChunkResponse])
+async def list_chunks_by_file(
+    file_id: str,
+    page: int = 1,
+    page_size: int = 10,
+    db: AsyncSession = Depends(get_db),
+):
+    """根据文件任务 ID 分页查询 chunk 记录"""
+    # 校验文件任务是否存在
+    file_task = await db.get(DataSynthesisFileInstance, file_id)
+    if not file_task:
+        raise HTTPException(status_code=404, detail="Synthesis file task not found")
+
+    base_query = select(DataSynthesisChunkInstance).where(
+        DataSynthesisChunkInstance.synthesis_file_instance_id == file_id
+    )
+
+    count_q = select(func.count()).select_from(base_query.subquery())
+    total = (await db.execute(count_q)).scalar_one()
+
+    if page < 1:
+        page = 1
+    if page_size < 1:
+        page_size = 10
+
+    result = await db.execute(
+        base_query.order_by(DataSynthesisChunkInstance.chunk_index.asc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    )
+    rows = result.scalars().all()
+
+    chunk_items = [
+        DataSynthesisChunkItem(
+            id=row.id,
+            synthesis_file_instance_id=row.synthesis_file_instance_id,
+            chunk_index=row.chunk_index,
+            chunk_content=row.chunk_content,
+            chunk_metadata=getattr(row, "chunk_metadata", None),
+        )
+        for row in rows
+    ]
+
+    paged = PagedDataSynthesisChunkResponse(
+        content=chunk_items,
+        totalElements=total,
+        totalPages=(total + page_size - 1) // page_size,
+        page=page,
+        size=page_size,
+    )
+
+    return StandardResponse(
+        code=200,
+        message="Success",
+        data=paged,
+    )
+
+
+@router.get("/chunk/{chunk_id}/data", response_model=StandardResponse[list[SynthesisDataItem]])
+async def list_synthesis_data_by_chunk(
+    chunk_id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """根据 chunk ID 查询所有合成结果数据"""
+    # 可选：校验 chunk 是否存在
+    chunk = await db.get(DataSynthesisChunkInstance, chunk_id)
+    if not chunk:
+        raise HTTPException(status_code=404, detail="Chunk not found")
+
+    result = await db.execute(
+        select(SynthesisData).where(SynthesisData.chunk_instance_id == chunk_id)
+    )
+    rows = result.scalars().all()
+
+    items = [
+        SynthesisDataItem(
+            id=row.id,
+            data=row.data,
+            synthesis_file_instance_id=row.synthesis_file_instance_id,
+            chunk_instance_id=row.chunk_instance_id,
+        )
+        for row in rows
+    ]
+
+    return StandardResponse(
+        code=200,
+        message="Success",
+        data=items,
     )

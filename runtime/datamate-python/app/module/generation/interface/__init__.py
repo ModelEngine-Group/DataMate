@@ -1,8 +1,8 @@
 from fastapi import APIRouter
 
 router = APIRouter(
-    prefix="/synth",
-    tags = ["synth"]
+    prefix="/synthesis",
+    tags = ["synthesis"]
 )
 
 # Include sub-routers

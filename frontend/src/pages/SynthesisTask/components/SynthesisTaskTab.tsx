@@ -1,112 +1,116 @@
-import { useState } from "react";
-import { Card, Button, Badge, Table, Progress } from "antd";
+import { useState, useEffect, ElementType } from "react";
+import { Card, Button, Badge, Table, Modal, message, Tooltip } from "antd";
 import {
   Plus,
-  Sparkles,
   ArrowUp,
   ArrowDown,
   Pause,
   Play,
-  DownloadIcon,
   CheckCircle,
-  Check,
-  StopCircle,
+  Sparkles,
 } from "lucide-react";
-import type { SynthesisTask } from "@/pages/SynthesisTask/synthesis";
-import { mockSynthesisTasks } from "@/mock/synthesis";
+import { DeleteOutlined, EyeOutlined } from "@ant-design/icons";
 import { Link, useNavigate } from "react-router";
 import { SearchControls } from "@/components/SearchControls";
 import { formatDateTime } from "@/utils/unit";
+import {
+  querySynthesisTasksUsingGet,
+  deleteSynthesisTaskByIdUsingDelete,
+} from "@/pages/SynthesisTask/synthesis-api";
+
+interface SynthesisTask {
+  id: string;
+  name: string;
+  description?: string;
+  status: string;
+  synthesis_type: string;
+  model_id: string;
+  progress?: number;
+  result_data_location?: string;
+  text_split_config?: {
+    chunk_size: number;
+    chunk_overlap: number;
+  };
+  synthesis_config?: {
+    temperature?: number | null;
+    prompt_template?: string;
+    synthesis_count?: number | null;
+  };
+  source_file_id?: string[];
+  total_files?: number;
+  processed_files?: number;
+  total_chunks?: number;
+  processed_chunks?: number;
+  total_synthesis_data?: number;
+  created_at: string;
+  updated_at?: string;
+  created_by?: string;
+  updated_by?: string;
+}
 
 export default function SynthesisTaskTab() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
-  const [tasks, setTasks] = useState<SynthesisTask[]>(mockSynthesisTasks);
+  const [tasks, setTasks] = useState<SynthesisTask[]>([]);
   const [filterStatus, setFilterStatus] = useState("all");
   const [sortBy, setSortBy] = useState<"createdAt" | "name">("createdAt");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(false);
 
-  // 过滤任务
-  const filteredTasks = tasks.filter((task) => {
-    const matchesSearch =
-      task.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      task.template.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus =
-      filterStatus === "all" || task.status === filterStatus;
-    return matchesSearch && matchesStatus;
-  });
-
-  // 排序任务
-  const sortedTasks = [...filteredTasks].sort((a, b) => {
-    if (sortBy === "createdAt") {
-      const dateA = new Date(a.createdAt).getTime();
-      const dateB = new Date(b.createdAt).getTime();
-      return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
-    } else if (sortBy === "name") {
-      return sortOrder === "asc"
-        ? a.name.localeCompare(b.name)
-        : b.name.localeCompare(a.name);
+  // 获取任务列表
+  const loadTasks = async () => {
+    setLoading(true);
+    try {
+      const params = {
+        page: page,
+        page_size: pageSize,
+      } as {
+        page?: number;
+        page_size?: number;
+        synthesis_type?: string;
+        status?: string;
+        name?: string;
+      };
+      if (searchQuery) params.name = searchQuery;
+      if (filterStatus !== "all") params.synthesis_type = filterStatus;
+      const res = await querySynthesisTasksUsingGet(params);
+      setTasks(res?.data?.content || []);
+      setTotal(res?.data?.totalElements || 0);
+    } catch {
+      setTasks([]);
+      setTotal(0);
+    } finally {
+      setLoading(false);
     }
-    return 0;
-  });
-  const handleTaskAction = (taskId: number, action: string) => {
-    setTasks((prev) =>
-      prev.map((task) => {
-        if (task.id === taskId) {
-          switch (action) {
-            case "pause":
-              return { ...task, status: "paused" as const };
-            case "resume":
-              return { ...task, status: "running" as const };
-            case "stop":
-              return {
-                ...task,
-                status: "failed" as const,
-                progress: task.progress,
-              };
-            default:
-              return task;
-          }
-        }
-        return task;
-      })
-    );
   };
+
+  useEffect(() => {
+    loadTasks();
+    // eslint-disable-next-line
+  }, [searchQuery, filterStatus, page, pageSize]);
+
   // 状态徽章
   const getStatusBadge = (status: string) => {
-    const statusConfig = {
-      pending: {
-        label: "等待中",
-        color: "#F59E0B",
-        icon: Pause,
-      },
-      running: {
-        label: "运行中",
-        color: "#3B82F6",
-        icon: Play,
-      },
-      completed: {
-        label: "已完成",
-        color: "#10B981",
-        icon: CheckCircle,
-      },
-      failed: {
-        label: "失败",
-        color: "#EF4444",
-        icon: Pause,
-      },
-      paused: {
-        label: "已暂停",
-        color: "#E5E7EB",
-        icon: Pause,
-      },
+    const statusConfig: Record<string, { label: string; color: string; icon: ElementType }> = {
+      pending: { label: "等待中", color: "#F59E0B", icon: Pause },
+      running: { label: "运行中", color: "#3B82F6", icon: Play },
+      completed: { label: "已完成", color: "#10B981", icon: CheckCircle },
+      failed: { label: "失败", color: "#EF4444", icon: Pause },
+      paused: { label: "已暂停", color: "#E5E7EB", icon: Pause },
     };
-    return (
-      statusConfig[status as keyof typeof statusConfig] || statusConfig.pending
-    );
+    return statusConfig[status] ?? statusConfig["pending"];
   };
 
-  // 任务表格列
+  // 类型映射
+  const typeMap: Record<string, string> = {
+    QA: "问答对生成",
+    COT: "链式推理生成",
+  };
+
+  // 表格列
   const taskColumns = [
     {
       title: (
@@ -134,98 +138,77 @@ export default function SynthesisTaskTab() {
       dataIndex: "name",
       key: "name",
       fixed: "left" as const,
-      render: (text: string, task: SynthesisTask) => (
+      render: (_: unknown, task: SynthesisTask) => (
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center shadow-sm">
-            {/* 可根据 type 渲染不同图标 */}
             <span className="text-white font-bold text-base">
-              {task.type?.toUpperCase()?.slice(0, 1) || "T"}
+              {task.synthesis_type?.toUpperCase()?.slice(0, 1) || "T"}
             </span>
           </div>
           <div>
             <Link to={`/data/synthesis/task/${task.id}`}>{task.name}</Link>
-            <div className="text-xs text-gray-500">{task.template}</div>
           </div>
         </div>
       ),
     },
     {
       title: "类型",
-      dataIndex: "type",
-      key: "type",
-      render: (type: string) => type.toUpperCase(),
+      dataIndex: "synthesis_type",
+      key: "synthesis_type",
+      render: (type: string) => typeMap[type] || type,
     },
     {
-      title: "状态",
-      dataIndex: "status",
-      key: "status",
-      render: (status: string) => {
-        const statusConfig = getStatusBadge(status);
-        return <Badge color={statusConfig.color} text={statusConfig.label} />;
-      },
-    },
-    {
-      title: "进度",
-      dataIndex: "progress",
-      key: "progress",
-      width: 150,
-      render: (_: any, task: SynthesisTask) => (
-        <Progress percent={task.progress} size="small" />
-      ),
-    },
-    {
-      title: "源数据集",
-      dataIndex: "sourceDataset",
-      key: "sourceDataset",
-      render: (text: string) => (
-        <div className="text-sm text-gray-900">{text}</div>
-      ),
-    },
-    {
-      title: "生成数量",
-      dataIndex: "generatedCount",
-      key: "generatedCount",
-      render: (_: any, task: SynthesisTask) => (
-        <div className="text-sm font-medium text-gray-900">
-          {task.generatedCount?.toLocaleString?.()} /{" "}
-          {task.targetCount?.toLocaleString?.()}
-        </div>
-      ),
-    },
-    {
-      title: "质量评分",
-      dataIndex: "quality",
-      key: "quality",
-      render: (quality: number) => (quality ? `${quality}%` : "-"),
+      title: "文件数",
+      dataIndex: "total_files",
+      key: "total_files",
+      render: (num: number, task: SynthesisTask) => <span>{num ?? (task.source_file_id?.length ?? 0)}</span>,
     },
     {
       title: "创建时间",
-      dataIndex: "createdAt",
-      key: "createdAt",
-      render: formatDateTime,
+      dataIndex: "created_at",
+      key: "created_at",
+      render: (val: string) => formatDateTime(val),
     },
     {
       title: "操作",
       key: "actions",
       fixed: "right" as const,
-      render: (_: any, task: SynthesisTask) => (
+      render: (_: unknown, task: SynthesisTask) => (
         <div className="flex items-center justify-center gap-1">
-          {task.status === "running" && (
+          <Tooltip title="查看详情">
             <Button
-              onClick={() => handleTaskAction(task.id, "pause")}
-              className="hover:bg-orange-50 p-1 h-7 w-7"
+              onClick={() => navigate(`/data/synthesis/task/${task.id}`)}
+              className="hover:bg-blue-50 p-1 h-7 w-7"
               type="text"
-              icon={<Pause className="w-4 h-4" />}
-            ></Button>
-          )}
-          {task.status === "paused" && (
+              icon={<EyeOutlined />}
+            />
+          </Tooltip>
+          <Tooltip title="删除任务">
             <Button
-              onClick={() => handleTaskAction(task.id, "resume")}
-              className="hover:bg-green-50 p-1 h-7 w-7"
+              danger
               type="text"
-              icon={<Play className="w-4 h-4" />}
-            ></Button>
-          )}
+              className="hover:bg-red-50 p-1 h-7 w-7"
+              icon={<DeleteOutlined />}
+              onClick={() => {
+                Modal.confirm({
+                  title: `确认删除任务？`,
+                  content: `任务名：${task.name}`,
+                  okText: "删除",
+                  okType: "danger",
+                  cancelText: "取消",
+                  onOk: async () => {
+                    try {
+                      await deleteSynthesisTaskByIdUsingDelete(task.id);
+                      message.success("删除成功");
+                      loadTasks();
+                    } catch {
+                      message.error("删除失败");
+                    }
+                  },
+                });
+              }}
+            />
+          </Tooltip>
         </div>
       ),
     },
@@ -237,18 +220,15 @@ export default function SynthesisTaskTab() {
       <SearchControls
         searchTerm={searchQuery}
         onSearchChange={setSearchQuery}
-        searchPlaceholder="搜索任务名称或模板..."
+        searchPlaceholder="搜索任务名称..."
         filters={[
           {
             key: "status",
-            label: "状态",
+            label: "类型",
             options: [
-              { label: "全部状态", value: "all" },
-              { label: "等待中", value: "pending" },
-              { label: "运行中", value: "running" },
-              { label: "已完成", value: "completed" },
-              { label: "失败", value: "failed" },
-              { label: "已暂停", value: "paused" },
+              { label: "全部类型", value: "all" },
+              { label: "问答对生成", value: "QA" },
+              { label: "链式推理生成", value: "COT" },
             ],
           },
         ]}
@@ -259,13 +239,23 @@ export default function SynthesisTaskTab() {
         showFilters
         showViewToggle={false}
       />
-
       {/* 任务表格 */}
       <Card>
         <Table
           columns={taskColumns}
-          dataSource={sortedTasks}
+          dataSource={tasks}
           rowKey="id"
+          loading={loading}
+          pagination={{
+            current: page,
+            pageSize: pageSize,
+            total: total,
+            onChange: (p, ps) => {
+              setPage(p);
+              setPageSize(ps);
+            },
+            showSizeChanger: true,
+          }}
           scroll={{ x: "max-content" }}
           locale={{
             emptyText: (

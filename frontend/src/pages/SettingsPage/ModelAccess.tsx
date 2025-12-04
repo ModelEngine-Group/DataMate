@@ -32,6 +32,7 @@ export interface ModelI {
   modelName: string;
   provider: string;
   model: string;
+  baseUrl: string;
   apiKey: string;
   type: string;
   isEnabled: boolean;

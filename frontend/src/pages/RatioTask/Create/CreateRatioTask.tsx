@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Button, Form, message } from "antd";
 import { ArrowLeft, ChevronRight } from "lucide-react";
 import { createRatioTaskUsingPost } from "@/pages/RatioTask/ratio.api.ts";

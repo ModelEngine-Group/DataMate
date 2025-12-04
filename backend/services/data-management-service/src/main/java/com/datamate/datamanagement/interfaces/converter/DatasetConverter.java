@@ -70,8 +70,8 @@ public interface DatasetConverter {
      * @return 标签分布
      */
     @Named("getDistribution")
-    default Map<String, Long> getDistribution(List<DatasetFile> datasetFiles) {
-        Map<String, Long> distribution = new HashMap<>();
+    default Map<String, Map<String, Long>> getDistribution(List<DatasetFile> datasetFiles) {
+        Map<String, Map<String, Long>> distribution = new HashMap<>();
         if (CollectionUtils.isEmpty(datasetFiles)) {
             return distribution;
         }
@@ -81,7 +81,9 @@ public interface DatasetConverter {
                 return distribution;
             }
             for (FileTag tag : tags) {
-                tag.getTags().forEach(tagName -> distribution.put(tagName, distribution.getOrDefault(tagName, 0L) + 1));
+                Map<String, Long> tagValueMap = distribution.getOrDefault(tag.getFromName(), new HashMap<>());
+                tag.getTagValues().forEach(tagValue -> tagValueMap.put(tagValue, tagValueMap.getOrDefault(tagValue, 0L) + 1));
+                distribution.put(tag.getFromName(), tagValueMap);
             }
         }
         return distribution;

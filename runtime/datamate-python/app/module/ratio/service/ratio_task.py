@@ -7,7 +7,6 @@ import shutil
 import asyncio
 
 from sqlalchemy import select
-
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import get_logger
@@ -16,7 +15,7 @@ from app.db.models import Dataset, DatasetFiles
 from app.db.session import AsyncSessionLocal
 from app.module.dataset.schema.dataset_file import DatasetFileTag
 from app.module.shared.schema import TaskStatus
-from app.module.synthesis.schema.ratio_task import FilterCondition
+from app.module.ratio.schema.ratio_task import FilterCondition
 
 logger = get_logger(__name__)
 
@@ -59,7 +58,10 @@ class RatioTaskService:
                 counts=int(item.get("counts", 0)),
                 filter_conditions=json.dumps({
                     'date_range': item.get("filter_conditions").date_range,
-                    'label': item.get("filter_conditions").label,
+                    'label': {
+                        "label":item.get("filter_conditions").label.label,
+                        "value":item.get("filter_conditions").label.value,
+                    },
                 })
             )
             logger.info(f"Relation created: {relation.id}, {relation}, {item}, {config}")
@@ -285,7 +287,7 @@ class RatioTaskService:
             try:
                 # tags could be a list of strings or list of objects with 'name'
                 tag_names = RatioTaskService.get_all_tags(tags)
-                return conditions.label in tag_names
+                return f"{conditions.label.label}@{conditions.label.value}" in tag_names
             except Exception as e:
                 logger.exception(f"Failed to get tags for {file}", e)
                 return False
