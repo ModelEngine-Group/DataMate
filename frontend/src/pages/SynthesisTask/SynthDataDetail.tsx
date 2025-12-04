@@ -15,7 +15,7 @@ interface ChunkItem {
   synthesis_file_instance_id: string;
   chunk_index: number;
   chunk_content: string;
-  chunk_metadata?: any;
+  chunk_metadata?: Record<string, unknown>;
 }
 
 interface PagedChunkResponse {
@@ -28,7 +28,7 @@ interface PagedChunkResponse {
 
 interface SynthesisDataItem {
   id: string;
-  data: any;
+  data: Record<string, unknown>;
   synthesis_file_instance_id: string;
   chunk_instance_id: string;
 }
@@ -45,7 +45,7 @@ interface SynthesisTaskInfo {
 const { Title, Text } = Typography;
 
 export default function SynthDataDetail() {
-  const { fileId = "" } = useParams();
+  const { id: fileId = "" } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const state = (location.state || {}) as LocationState;
@@ -132,6 +132,11 @@ export default function SynthDataDetail() {
     [chunks, selectedChunkId]
   );
 
+  // 将合成数据的 data 转换成键值对数组，方便以表格形式展示
+  const getDataEntries = (data: Record<string, unknown>) => {
+    return Object.entries(data || {});
+  };
+
   return (
     <div className="p-4 bg-white rounded-lg h-full flex flex-col overflow-hidden">
       {/* 顶部信息和返回 */}
@@ -167,17 +172,13 @@ export default function SynthDataDetail() {
             </div>
           )}
         </div>
-        <Button
-          onClick={() => navigate(-1)}
-        >
-          返回
-        </Button>
+        <Button onClick={() => navigate(-1)}>返回</Button>
       </div>
 
       {/* 主体左右布局 */}
       <div className="flex flex-1 min-h-0 gap-4">
-        {/* 左侧 Chunk 列表 */}
-        <div className="w-80 border rounded-lg flex flex-col overflow-hidden">
+        {/* 左侧 Chunk 列表：占比 2/5 */}
+        <div className="basis-2/5 max-w-[40%] border rounded-lg flex flex-col overflow-hidden">
           <div className="px-3 py-2 border-b text-sm font-medium bg-gray-50">
             Chunk 列表
           </div>
@@ -210,7 +211,8 @@ export default function SynthDataDetail() {
                             text={active ? "当前" : ""}
                           />
                         </div>
-                        <div className="text-xs text-gray-500 line-clamp-2 break-all">
+                        {/* 展示 chunk 全部内容，不截断 */}
+                        <div className="text-xs text-gray-600 whitespace-pre-wrap break-words">
                           {item.chunk_content}
                         </div>
                       </div>
@@ -233,8 +235,8 @@ export default function SynthDataDetail() {
           </div>
         </div>
 
-        {/* 右侧合成数据展示 */}
-        <div className="flex-1 border rounded-lg flex flex-col min-w-0 overflow-hidden">
+        {/* 右侧合成数据展示：占比 3/5 */}
+        <div className="basis-3/5 max-w-[60%] border rounded-lg flex flex-col min-w-0 overflow-hidden">
           <div className="px-3 py-2 border-b flex items-center justify-between bg-gray-50 text-sm font-medium">
             <span>合成数据</span>
             {currentChunk && (
@@ -257,15 +259,33 @@ export default function SynthDataDetail() {
                 {synthDataList.map((item, index) => (
                   <div
                     key={item.id || index}
-                    className="border rounded-md p-3 bg-white shadow-sm overflow-auto"
+                    className="border border-gray-100 rounded-md p-3 bg-white shadow-sm/50"
                   >
                     <div className="mb-2 text-xs text-gray-500 flex justify-between">
                       <span>记录 {index + 1}</span>
                       <span>ID：{item.id}</span>
                     </div>
-                    <pre className="text-xs bg-gray-50 rounded p-2 overflow-auto max-h-80">
-                      {JSON.stringify(item.data, null, 2)}
-                    </pre>
+                    {/* 淡化表格样式的 key-value 展示 */}
+                    <div className="w-full border border-gray-100 rounded-md overflow-hidden">
+                      {getDataEntries(item.data).map(([key, value], rowIdx) => (
+                        <div
+                          key={key + rowIdx}
+                          className={
+                            "grid grid-cols-[120px,1fr] text-xs " +
+                            (rowIdx % 2 === 0 ? "bg-gray-50/60" : "bg-white")
+                          }
+                        >
+                          <div className="px-3 py-2 border-r border-gray-100 font-medium text-gray-600 break-words">
+                            {key}
+                          </div>
+                          <div className="px-3 py-2 text-gray-700 whitespace-pre-wrap break-words">
+                            {typeof value === "string" || typeof value === "number"
+                              ? String(value)
+                              : JSON.stringify(value, null, 2)}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -276,4 +296,3 @@ export default function SynthDataDetail() {
     </div>
   );
 }
-
