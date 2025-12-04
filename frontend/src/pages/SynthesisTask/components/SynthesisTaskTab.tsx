@@ -16,7 +16,9 @@ import { formatDateTime } from "@/utils/unit";
 import {
   querySynthesisTasksUsingGet,
   deleteSynthesisTaskByIdUsingDelete,
+  archiveSynthesisTaskToDatasetUsingPost,
 } from "@/pages/SynthesisTask/synthesis-api";
+import { createDatasetUsingPost } from "@/pages/DataManagement/dataset.api";
 
 interface SynthesisTask {
   id: string;
@@ -183,6 +185,23 @@ export default function SynthesisTaskTab() {
               icon={<EyeOutlined />}
             />
           </Tooltip>
+          <Tooltip title="归档到数据集">
+            <Button
+              type="text"
+              className="hover:bg-green-50 p-1 h-7 w-7"
+              onClick={() => {
+                Modal.confirm({
+                  title: "确认归档该合成任务?",
+                  content: `任务名称：${task.name}`,
+                  okText: "归档",
+                  cancelText: "取消",
+                  onOk: () => handleArchiveTask(task),
+                });
+              }}
+            >
+              归档
+            </Button>
+          </Tooltip>
           <Tooltip title="删除任务">
             <Button
               danger
@@ -191,7 +210,7 @@ export default function SynthesisTaskTab() {
               icon={<DeleteOutlined />}
               onClick={() => {
                 Modal.confirm({
-                  title: `确认删除任务？`,
+                  title: `确认删除任务?`,
                   content: `任务名：${task.name}`,
                   okText: "删除",
                   okType: "danger",
@@ -213,6 +232,37 @@ export default function SynthesisTaskTab() {
       ),
     },
   ];
+
+  const handleArchiveTask = async (task: SynthesisTask) => {
+    try {
+      // 1. 创建目标数据集（使用简单的默认命名 + 随机后缀，可后续扩展为弹窗自定义）
+      const randomSuffix = Math.random().toString(36).slice(2, 8);
+      const datasetReq = {
+        name: `${task.name}-合成数据留用${randomSuffix}`,
+        description: `由合成任务 ${task.id} 留用生成`,
+        datasetType: "TEXT",
+        category: "SYNTHESIS",
+        format: "JSONL",
+        status: "DRAFT",
+      } as any;
+      const datasetRes = await createDatasetUsingPost(datasetReq);
+      const datasetId = datasetRes?.data?.id;
+      if (!datasetId) {
+        message.error("创建数据集失败");
+        return;
+      }
+
+      // 2. 调用后端归档接口，将合成数据写入该数据集
+      await archiveSynthesisTaskToDatasetUsingPost(task.id, datasetId);
+
+      message.success("归档成功");
+      // 3. 可选：跳转到数据集详情页
+      navigate(`/data/management/detail/${datasetId}`);
+    } catch (e) {
+      console.error(e);
+      message.error("归档失败");
+    }
+  };
 
   return (
     <div className="space-y-4">

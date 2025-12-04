@@ -28,6 +28,7 @@ from app.module.generation.schema.generation import (
 )
 from app.module.generation.service.generation_service import GenerationService
 from app.module.generation.service.prompt import get_prompt
+from app.module.generation.service.export_service import SynthesisDatasetExporter, SynthesisExportError
 from app.module.shared.schema import StandardResponse
 
 router = APIRouter(
@@ -442,4 +443,36 @@ async def list_synthesis_data_by_chunk(
         code=200,
         message="Success",
         data=items,
+    )
+
+
+@router.post("/task/{task_id}/export-dataset/{dataset_id}", response_model=StandardResponse[str])
+async def export_synthesis_task_to_dataset(
+    task_id: str,
+    dataset_id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """将指定合成任务的全部合成数据归档到已有数据集中。
+
+    规则：
+    - 以原始文件为维度，每个原始文件生成一个 JSONL 文件；
+    - JSONL 文件名称与原始文件名称完全一致；
+    - 仅写入文件，不再创建数据集。
+    """
+    exporter = SynthesisDatasetExporter(db)
+    try:
+        dataset = await exporter.export_task_to_dataset(task_id, dataset_id)
+    except SynthesisExportError as e:
+        logger.error(
+            "Failed to export synthesis task %s to dataset %s: %s",
+            task_id,
+            dataset_id,
+            e,
+        )
+        raise HTTPException(status_code=400, detail=str(e))
+
+    return StandardResponse(
+        code=200,
+        message="success",
+        data=dataset.id,
     )
