@@ -1,5 +1,5 @@
 import { useState, useEffect, ElementType } from "react";
-import { Card, Button, Badge, Table, Modal, message } from "antd";
+import { Card, Button, Badge, Table, Modal, message, Tooltip } from "antd";
 import {
   Plus,
   ArrowUp,
@@ -9,6 +9,7 @@ import {
   CheckCircle,
   Sparkles,
 } from "lucide-react";
+import { DeleteOutlined, EyeOutlined } from "@ant-design/icons";
 import { Link, useNavigate } from "react-router";
 import { SearchControls } from "@/components/SearchControls";
 import { formatDateTime } from "@/utils/unit";
@@ -169,48 +170,45 @@ export default function SynthesisTaskTab() {
       render: (val: string) => formatDateTime(val),
     },
     {
-      title: "状态",
-      dataIndex: "status",
-      key: "status",
-      render: (status: string) => {
-        const statusConfig = getStatusBadge(status);
-        return <Badge color={statusConfig.color} text={statusConfig.label} />;
-      },
-    },
-    {
       title: "操作",
       key: "actions",
       fixed: "right" as const,
       render: (_: unknown, task: SynthesisTask) => (
         <div className="flex items-center justify-center gap-1">
-          <Button
-            onClick={() => navigate(`/data/synthesis/task/${task.id}`)}
-            className="hover:bg-blue-50 p-1 h-7 w-7"
-            type="text"
-          >详情</Button>
-          <Button
-            danger
-            type="text"
-            className="hover:bg-red-50 p-1 h-7 w-7"
-            onClick={() => {
-              Modal.confirm({
-                title: `确认删除任务？`,
-                content: `任务名：${task.name}`,
-                okText: "删除",
-                okType: "danger",
-                cancelText: "取消",
-                onOk: async () => {
-                  try {
-                    await deleteSynthesisTaskByIdUsingDelete(task.id);
-                    message.success("删除成功");
-                    loadTasks();
-                  } catch {
-                    message.error("删除失败");
-                  }
-                },
-              });
-            }}
-          >删除</Button>
+          <Tooltip title="查看详情">
+            <Button
+              onClick={() => navigate(`/data/synthesis/task/${task.id}`)}
+              className="hover:bg-blue-50 p-1 h-7 w-7"
+              type="text"
+              icon={<EyeOutlined />}
+            />
+          </Tooltip>
+          <Tooltip title="删除任务">
+            <Button
+              danger
+              type="text"
+              className="hover:bg-red-50 p-1 h-7 w-7"
+              icon={<DeleteOutlined />}
+              onClick={() => {
+                Modal.confirm({
+                  title: `确认删除任务？`,
+                  content: `任务名：${task.name}`,
+                  okText: "删除",
+                  okType: "danger",
+                  cancelText: "取消",
+                  onOk: async () => {
+                    try {
+                      await deleteSynthesisTaskByIdUsingDelete(task.id);
+                      message.success("删除成功");
+                      loadTasks();
+                    } catch {
+                      message.error("删除失败");
+                    }
+                  },
+                });
+              }}
+            />
+          </Tooltip>
         </div>
       ),
     },

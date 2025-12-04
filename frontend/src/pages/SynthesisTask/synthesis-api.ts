@@ -26,11 +26,6 @@ export function deleteSynthesisTaskByIdUsingDelete(taskId: string) {
   return del(`/api/synthesis/gen/task/${taskId}`);
 }
 
-// 删除数据合成任务中的某个文件任务
-export function deleteSynthesisFileTaskByIdUsingDelete(taskId: string, fileId: string) {
-  return del(`/api/synthesis/gen/task/${taskId}/${fileId}`);
-}
-
 // 分页查询某个任务下的文件任务列表
 export function querySynthesisFileTasksUsingGet(taskId: string, params: { page?: number; page_size?: number }) {
   return get(`/api/synthesis/gen/task/${taskId}/files`, params as any);

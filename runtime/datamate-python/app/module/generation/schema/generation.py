@@ -99,6 +99,38 @@ class PagedDataSynthesisFileTaskResponse(BaseModel):
     size: int
 
 
+class DataSynthesisChunkItem(BaseModel):
+    """数据合成文件下的 chunk 记录"""
+    id: str
+    synthesis_file_instance_id: str
+    chunk_index: Optional[int] = None
+    chunk_content: Optional[str] = None
+    chunk_metadata: Optional[Dict[str, Any]] = None
+
+    class Config:
+        orm_mode = True
+
+
+class PagedDataSynthesisChunkResponse(BaseModel):
+    """分页 chunk 列表响应"""
+    content: List[DataSynthesisChunkItem]
+    totalElements: int
+    totalPages: int
+    page: int
+    size: int
+
+
+class SynthesisDataItem(BaseModel):
+    """合成结果数据项"""
+    id: str
+    data: Optional[Dict[str, Any]] = None
+    synthesis_file_instance_id: str
+    chunk_instance_id: str
+
+    class Config:
+        orm_mode = True
+
+
 class ChatRequest(BaseModel):
     """聊天请求参数"""
     model_id: str

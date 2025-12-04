@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router";
+import { useParams, useNavigate } from "react-router";
 import { Table, Badge, Button } from "antd";
 import type { ColumnsType, TablePaginationConfig } from "antd/es/table";
-import { querySynthesisFileTasksUsingGet, deleteSynthesisFileTaskByIdUsingDelete } from "./synthesis-api";
+import { querySynthesisFileTasksUsingGet, querySynthesisTaskByIdUsingGet } from "@/pages/SynthesisTask/synthesis-api";
+import type { BadgeProps } from "antd";
+import { formatDateTime } from "@/utils/unit";
 
 interface SynthesisFileTaskItem {
   id: string;
@@ -25,8 +27,18 @@ interface PagedResponse<T> {
   size: number;
 }
 
+interface SynthesisTaskInfo {
+  id: string;
+  name: string;
+  synthesis_type: string;
+  status: string;
+  created_at: string;
+  model_id: string;
+}
+
 export default function SynthFileTask() {
   const { id: taskId = "" } = useParams();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<SynthesisFileTaskItem[]>([]);
   const [pagination, setPagination] = useState<TablePaginationConfig>({
@@ -34,6 +46,15 @@ export default function SynthFileTask() {
     pageSize: 10,
     total: 0,
   });
+  const [taskInfo, setTaskInfo] = useState<SynthesisTaskInfo | null>(null);
+
+  // 查询总任务详情
+  useEffect(() => {
+    if (!taskId) return;
+    querySynthesisTaskByIdUsingGet(taskId).then((res) => {
+      setTaskInfo(res?.data?.data || null);
+    });
+  }, [taskId]);
 
   const fetchData = async (page = 1, pageSize = 10) => {
     if (!taskId) return;
@@ -43,12 +64,19 @@ export default function SynthFileTask() {
         page,
         page_size: pageSize,
       });
-      const payload: PagedResponse<SynthesisFileTaskItem> = res.data.data;
+      const payload: PagedResponse<SynthesisFileTaskItem> =
+        res?.data?.data ?? res?.data ?? {
+          content: [],
+          totalElements: 0,
+          totalPages: 0,
+          page,
+          size: pageSize,
+        };
       setData(payload.content || []);
       setPagination({
-        current: payload.page,
-        pageSize: payload.size,
-        total: payload.totalElements,
+        current: payload.page ?? page,
+        pageSize: payload.size ?? pageSize,
+        total: payload.totalElements ?? payload.content?.length ?? 0,
       });
     } finally {
       setLoading(false);
@@ -64,12 +92,6 @@ export default function SynthFileTask() {
     fetchData(pag.current || 1, pag.pageSize || 10);
   };
 
-  const handleDelete = async (record: SynthesisFileTaskItem) => {
-    if (!taskId) return;
-    await deleteSynthesisFileTaskByIdUsingDelete(taskId, record.id);
-    fetchData(pagination.current || 1, pagination.pageSize || 10);
-  };
-
   const columns: ColumnsType<SynthesisFileTaskItem> = [
     {
       title: "文件名",
@@ -81,7 +103,7 @@ export default function SynthFileTask() {
       dataIndex: "status",
       key: "status",
       render: (status?: string) => {
-        let badgeStatus: any = "default";
+        let badgeStatus: BadgeProps["status"] = "default";
         let text = status || "未知";
         if (status === "pending" || status === "processing") {
           badgeStatus = "processing";
@@ -112,21 +134,45 @@ export default function SynthFileTask() {
       ellipsis: true,
     },
     {
-      title: "操作",
-      key: "action",
-      render: (_text, record) => (
-        <Button type="link" danger onClick={() => handleDelete(record)}>
-          删除
-        </Button>
-      ),
+      title: "创建时间",
+      dataIndex: "created_at",
+      key: "created_at",
+      render: (val?: string) => (val ? formatDateTime(val) : "-"),
+    },
+    {
+      title: "更新时间",
+      dataIndex: "updated_at",
+      key: "updated_at",
+      render: (val?: string) => (val ? formatDateTime(val) : "-"),
     },
   ];
 
   return (
     <div className="p-4 bg-white rounded-lg h-full flex flex-col">
+      {/* 顶部任务信息和返回按钮 */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-medium">文件任务列表</h2>
+        <div className="space-y-1">
+          {taskInfo && (
+            <>
+              <div className="text-lg font-medium flex items-center gap-2">
+                <span>{taskInfo.name}</span>
+                <span className="text-xs px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
+                  {taskInfo.synthesis_type === "QA" ? "问答对生成" : taskInfo.synthesis_type === "COT" ? "链式推理生成" : taskInfo.synthesis_type}
+                </span>
+                <span className="text-xs px-2 py-0.5 rounded bg-gray-50 text-gray-700 border border-gray-200">
+                  状态：{taskInfo.status === "pending" ? "等待中" : taskInfo.status === "completed" ? "已完成" : taskInfo.status === "failed" ? "失败" : taskInfo.status}
+                </span>
+              </div>
+              <div className="text-xs text-gray-500 flex gap-4">
+                <span>创建时间：{formatDateTime(taskInfo.created_at)}</span>
+                <span>模型ID：{taskInfo.model_id}</span>
+              </div>
+            </>
+          )}
+        </div>
+        <Button type="default" onClick={() => navigate("/data/synthesis/task")}>返回任务首页</Button>
       </div>
+      {/* 文件任务表格 */}
       <Table<SynthesisFileTaskItem>
         rowKey="id"
         loading={loading}
