@@ -227,6 +227,7 @@ class ImgSimilarImagesCleaner(Filter):
     def execute(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         """去除相似图片算子执行入口"""
         start = time.time()
+        self.read_file_first(sample)
         file_name = sample[self.filename_key]
         img_bytes = sample[self.data_key]
         data = bytes_to_numpy(img_bytes) if img_bytes else np.array([])

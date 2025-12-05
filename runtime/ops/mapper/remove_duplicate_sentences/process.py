@@ -47,8 +47,8 @@ def duplicate_sentences_filter(input_data: str, file_name: str, duplicate_th: in
                 paragraph_counts[paragraph_strip] = -1
 
     except Exception as err:
-        logger.exception(f"fileName: ｛file_name｝, method: RemoveDuplicateSentencess. An error occurred when using "
-                         f"filtering duplicate sentences. The error is: ｛err｝")
+        logger.exception(f"fileName: {file_name}, method: RemoveDuplicateSentencess. An error occurred when using "
+                         f"filtering duplicate sentences. The error is: {err}")
         return input_data
 
     # 将去重后的段落重新组合成文本
@@ -63,6 +63,7 @@ class DuplicateSentencesFilter(Filter):
         duplicate_th = 5  # 段落重复次数阈值
         file_name = sample[self.filename_key]
         start = time.time()
+        self.read_file_first(sample)
         sample[self.text_key] = duplicate_sentences_filter(sample[self.text_key], file_name, duplicate_th)
         logger.info(f"fileName: {file_name}, RemoveDuplicateSentencess costs {time.time() - start:6f} s")
         return sample

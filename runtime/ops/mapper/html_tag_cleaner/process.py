@@ -64,6 +64,7 @@ class HtmlTagCleaner(Mapper):
 
     def execute(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         start = time.time()
+        self.read_file_first(sample)
         if sample[self.filetype_key] != "xml":
             sample[self.text_key] = self._remove_html_tags(sample[self.text_key])
             logger.info(

@@ -67,9 +67,7 @@ VALUES ('64465bec-b46b-11f0-8291-00155d0e4808', '模态', 'modal',  'predefined'
 
 INSERT IGNORE INTO t_operator
 (id, name, description, version, inputs, outputs, runtime, settings, file_name, is_star)
-VALUES ('TextFormatter', 'TXT文本抽取', '抽取TXT中的文本。', '1.0.0', 'text', 'text', null, null, '', false),
-       ('UnstructuredFormatter', 'Unstructured文本抽取', '基于Unstructured抽取非结构化文件的文本，目前支持PowerPoint演示文稿、Word文档以及Excel工作簿。', '1.0.0', 'text', 'text', null, null, '', false),
-       ('MineruFormatter', 'MinerU PDF文本抽取', '基于MinerU API，抽取PDF中的文本。', '1.0.0', 'text', 'text', null, null, '', false),
+VALUES ('MineruFormatter', 'MinerU PDF文本抽取', '基于MinerU API，抽取PDF中的文本。', '1.0.0', 'text', 'text', null, null, '', false),
        ('FileExporter', '落盘算子', '将文件保存到本地目录。', '1.0.0', 'multimodal', 'multimodal', null, null, '', false),
        ('FileWithHighRepeatPhraseRateFilter', '文档词重复率检查', '去除重复词过多的文档。', '1.0.0', 'text', 'text', null, '{"repeatPhraseRatio": {"name": "文档词重复率", "description": "某个词的统计数/文档总词数 > 设定值，该文档被去除。", "type": "slider", "defaultVal": 0.5, "min": 0, "max": 1, "step": 0.1}, "hitStopwords": {"name": "去除停用词", "description": "统计重复词时，选择是否要去除停用词。", "type": "switch", "defaultVal": false, "required": true, "checkedLabel": "去除", "unCheckedLabel": "不去除"}}', '', 'false'),
        ('FileWithHighRepeatWordRateFilter', '文档字重复率检查', '去除重复字过多的文档。', '1.0.0', 'text', 'text', null, '{"repeatWordRatio": {"name": "文档字重复率", "description": "某个字的统计数/文档总字数 > 设定值，该文档被去除。", "type": "slider", "defaultVal": 0.5, "min": 0, "max": 1, "step": 0.1}}', '', 'false'),
@@ -97,7 +95,6 @@ VALUES ('TextFormatter', 'TXT文本抽取', '抽取TXT中的文本。', '1.0.0',
        ('UnicodeSpaceCleaner', '空格标准化', '将文档中不同的 unicode 空格，如 u2008，转换为正常空格\\u0020。', '1.0.0', 'text', 'text', null, null, '', 'false'),
        ('AnonymizedUrlCleaner', 'URL网址匿名化', '将文档中的url网址匿名化。', '1.0.0', 'text', 'text', null, null, '', 'false'),
        ('XMLTagCleaner', 'XML标签去除', '去除XML中的标签。', '1.0.0', 'text', 'text', null, null, '', 'false'),
-       ('ImgFormatter', '读取图片文件', '读取图片文件。', '1.0.0', 'image', 'image', null, null, '', 'false'),
        ('ImgBlurredImagesCleaner', '模糊图片过滤', '去除模糊的图片。', '1.0.0', 'image', 'image', null, '{"blurredThreshold": {"name": "梯度函数值", "description": "梯度函数值取值越小，图片模糊度越高。", "type": "slider", "defaultVal": 1000, "min": 1, "max": 10000, "step": 1}}', '', 'false'),
        ('ImgBrightness', '图片亮度增强', '自适应调节图片的亮度。', '1.0.0', 'image', 'image', null, null, '', 'false'),
        ('ImgContrast', '图片对比度增强', '自适应调节图片的对比度。', '1.0.0', 'image', 'image', null, null, '', 'false'),
@@ -117,7 +114,7 @@ SELECT c.id, o.id
 FROM t_operator_category c
 CROSS JOIN t_operator o
 WHERE c.id IN ('d8a5df7a-52a9-42c2-83c4-01062e60f597', '9eda9d5d-072b-499b-916c-797a0a8750e1', '96a3b07a-3439-4557-a835-525faad60ca3')
-AND o.id IN ('TextFormatter', 'FileWithShortOrLongLengthFilter', 'FileWithHighRepeatPhraseRateFilter',
+AND o.id IN ('FileWithShortOrLongLengthFilter', 'FileWithHighRepeatPhraseRateFilter',
             'FileWithHighRepeatWordRateFilter', 'FileWithHighSpecialCharRateFilter', 'FileWithManySensitiveWordsFilter',
             'DuplicateFilesFilter', 'DuplicateSentencesFilter', 'AnonymizedCreditCardNumber', 'AnonymizedIdNumber',
             'AnonymizedIpAddress', 'AnonymizedPhoneNumber', 'AnonymizedUrlCleaner', 'HtmlTagCleaner', 'XMLTagCleaner',
@@ -130,7 +127,7 @@ SELECT c.id, o.id
 FROM t_operator_category c
        CROSS JOIN t_operator o
 WHERE c.id IN ('de36b61c-9e8a-4422-8c31-d30585c7100f', '9eda9d5d-072b-499b-916c-797a0a8750e1', '96a3b07a-3439-4557-a835-525faad60ca3')
-  AND o.id IN ('ImgFormatter', 'ImgBlurredImagesCleaner', 'ImgBrightness', 'ImgContrast', 'ImgDenoise',
+  AND o.id IN ('ImgBlurredImagesCleaner', 'ImgBrightness', 'ImgContrast', 'ImgDenoise',
                'ImgDuplicatedImagesCleaner', 'ImgPerspectiveTransformation', 'ImgResize', 'ImgSaturation',
                'ImgShadowRemove', 'ImgSharpness', 'ImgSimilarImagesCleaner', 'ImgTypeUnify');
 
@@ -139,4 +136,4 @@ SELECT c.id, o.id
 FROM t_operator_category c
        CROSS JOIN t_operator o
 WHERE c.id IN ('4d7dbd77-0a92-44f3-9056-2cd62d4a71e4', '9eda9d5d-072b-499b-916c-797a0a8750e1', '96a3b07a-3439-4557-a835-525faad60ca3')
-  AND o.id IN ('FileExporter', 'UnstructuredFormatter');
+  AND o.id IN ('FileExporter');

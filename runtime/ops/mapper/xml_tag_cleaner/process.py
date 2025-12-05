@@ -52,6 +52,7 @@ class XMLTagCleaner(Mapper):
 
     def execute(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         start = time.time()
+        self.read_file_first(sample)
         file_name = sample[self.filename_key]
         if sample[self.filetype_key] == "xml":
             try:

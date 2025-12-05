@@ -26,6 +26,7 @@ class FileWithHighSpecialCharRateFilter(Filter):
 
     def execute(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         start = time.time()
+        self.read_file_first(sample)
         sample[self.text_key] = self._file_with_high_special_char_rate_filter(sample[self.text_key],
                                                                               sample[self.filename_key])
         logger.info(f"fileName: {sample[self.filename_key]}, "

@@ -119,6 +119,8 @@ class RayDataset(BasicDataset):
 
             # 加载Ops module
             temp_ops = self.load_ops_module(op_name)
+            if index == 0:
+                init_kwargs["is_first_op"] = True
 
             if index == len(cfg_process) - 1:
                 init_kwargs["is_last_op"] = True
@@ -182,7 +184,8 @@ class RayDataset(BasicDataset):
                                           fn_kwargs=kwargs,
                                           resources=resources,
                                           num_cpus=0.05,
-                                          concurrency=(1, 1 if operators_cls.use_model else int(max_actor_nums)))
+                                          compute=rd.ActorPoolStrategy(min_size=1,
+                                                                       max_size=int(max_actor_nums)))
 
             elif issubclass(operators_cls, (Slicer, RELATIVE_Slicer)):
                 self.data = self.data.flat_map(operators_cls,
@@ -190,7 +193,8 @@ class RayDataset(BasicDataset):
                                                fn_kwargs=kwargs,
                                                resources=resources,
                                                num_cpus=0.05,
-                                               concurrency=(1, int(max_actor_nums)))
+                                               compute=rd.ActorPoolStrategy(min_size=1,
+                                                                            max_size=int(max_actor_nums)))
 
             elif issubclass(operators_cls, (Filter, RELATIVE_Filter)):
                 self.data = self.data.filter(operators_cls,
@@ -198,7 +202,8 @@ class RayDataset(BasicDataset):
                                              fn_kwargs=kwargs,
                                              resources=resources,
                                              num_cpus=0.05,
-                                             concurrency=(1, int(max_actor_nums)))
+                                             compute=rd.ActorPoolStrategy(min_size=1,
+                                                                          max_size=int(max_actor_nums)))
             else:
                 logger.error(
                     'Ray executor only support Filter, Mapper and Slicer OPs for now')

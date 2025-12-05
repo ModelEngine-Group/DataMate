@@ -21,6 +21,7 @@ class ImgTypeUnify(Mapper):
 
     def execute(self, sample):
         start = time.time()
+        self.read_file_first(sample)
         file_name = sample[self.filename_key]
         origin_file_type = sample[self.filetype_key]
         if origin_file_type == self._setting_type:

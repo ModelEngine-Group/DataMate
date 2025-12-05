@@ -35,6 +35,7 @@ class KnowledgeRelationSlice(Mapper):
 
     def execute(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         start_time = time.time()
+        self.read_file_first(sample)
 
         chunk_item = get_json_list(sample[self.text_key], chunk_size=self.chunk_size, overlap_size=self.overlap_size)
         chunk_item_json = json.dumps(chunk_item, ensure_ascii=False)

@@ -5,7 +5,10 @@ import os
 import traceback
 from typing import List, Dict, Any, Tuple
 
+import cv2
+import numpy as np
 from loguru import logger
+from unstructured.partition.auto import partition
 
 from datamate.common.error_code import ERROR_CODE_TABLE, UNKNOWN_ERROR_CODE
 from datamate.common.utils.llm_request import LlmReq
@@ -52,6 +55,7 @@ class BaseOp:
     def __init__(self, *args, **kwargs):
         self.accelerator = kwargs.get('accelerator', "cpu")
         self.is_last_op = kwargs.get('is_last_op', False)
+        self.is_first_op = kwargs.get('is_first_op', False)
         self._name = kwargs.get('op_name', None)
         self.infer_model = None
         self.text_key = kwargs.get('text_key', "text")
@@ -122,10 +126,10 @@ class BaseOp:
         raise NotImplementedError("This is in BaseOp, plese re-define this method in Sub-classes")
 
     def fill_sample_params(self, sample: Dict[str, Any], **kwargs):
-        if not sample.get("text", None):
+        if not sample.get(self.text_key, None):
             sample[self.text_key] = ""
 
-        if not sample.get("data", None):
+        if not sample.get(self.data_key, None):
             sample[self.data_key] = b""
 
         if not sample[self.data_key] and not sample[self.text_key]:
@@ -136,6 +140,27 @@ class BaseOp:
         error_code, exc_info = self._get_error_info(excp)
         failed_reason = {"op_name": op_name, "error_code": error_code, "reason": exc_info}
         sample["failed_reason"] = failed_reason
+
+    def read_file(self, sample):
+        filepath = sample[self.filepath_key]
+        filetype = sample[self.filetype_key]
+        if filetype in ["ppt", "pptx", "docx", "doc", "xlsx"]:
+            elements = partition(filename=filepath)
+            sample[self.text_key] = "\n\n".join([str(el) for el in elements])
+        elif filetype in ["txt", "md", "markdown", "xml", "html", "csv", "json", "jsonl"]:
+            with open(filepath, 'rb') as f:
+                content = f.read()
+                sample[self.text_key] = content.decode("utf-8-sig").replace("\r\n", "\n")
+        elif filetype in ['jpg', 'jpeg', 'png', 'bmp']:
+            image_np = cv2.imdecode(np.fromfile(filepath, dtype=np.uint8), -1)
+            if image_np.size:
+                data = cv2.imencode(filetype, image_np)[1]
+                image_bytes = data.tobytes()
+                sample[self.data_key] = image_bytes
+
+    def read_file_first(self, sample):
+        if self.is_first_op:
+            self.read_file(sample)
 
 
 class Mapper(BaseOp):

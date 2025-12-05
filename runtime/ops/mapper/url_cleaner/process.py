@@ -26,6 +26,7 @@ class AnonymizedUrlCleaner(Mapper):
 
     def execute(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         start = time.time()
+        self.read_file_first(sample)
         sample[self.text_key] = self._url_filter(sample[self.text_key])
         logger.info(f"fileName: {sample[self.filename_key]}, method: UrlCleaner costs {time.time() - start:6f} s")
         return sample

@@ -59,8 +59,7 @@ VALUES ('26ae585c-8310-4679-adc0-e53215e6e69b', '文本清洗模板', '文本清
        ('4421504e-c6c9-4760-b55a-509d17429597', '图片清洗模板', '图片清洗模板');
 
 INSERT IGNORE INTO t_operator_instance(instance_id, operator_id, op_index, settings_override)
-VALUES ('26ae585c-8310-4679-adc0-e53215e6e69b', 'TextFormatter', 1, null),
-       ('26ae585c-8310-4679-adc0-e53215e6e69b', 'FileWithShortOrLongLengthFilter', 2, null),
+VALUES ('26ae585c-8310-4679-adc0-e53215e6e69b', 'FileWithShortOrLongLengthFilter', 2, null),
        ('26ae585c-8310-4679-adc0-e53215e6e69b', 'FileWithHighRepeatWordRateFilter', 3, null),
        ('26ae585c-8310-4679-adc0-e53215e6e69b', 'FileWithHighRepeatPhraseRateFilter', 4, null),
        ('26ae585c-8310-4679-adc0-e53215e6e69b', 'FileWithHighSpecialCharRateFilter', 5, null),
@@ -86,9 +85,10 @@ VALUES ('26ae585c-8310-4679-adc0-e53215e6e69b', 'TextFormatter', 1, null),
        ('26ae585c-8310-4679-adc0-e53215e6e69b', 'AnonymizedIpAddress', 25, null),
        ('26ae585c-8310-4679-adc0-e53215e6e69b', 'AnonymizedIdNumber', 26, null),
        ('26ae585c-8310-4679-adc0-e53215e6e69b', 'AnonymizedUrlCleaner', 27, null),
-       ('26ae585c-8310-4679-adc0-e53215e6e69b', 'FileExporter', 28, null),
-       ('4421504e-c6c9-4760-b55a-509d17429597', 'ImgFormatter', 1, null),
-       ('4421504e-c6c9-4760-b55a-509d17429597', 'ImgBlurredImagesCleaner', 2, null),
+       ('26ae585c-8310-4679-adc0-e53215e6e69b', 'FileExporter', 28, null);
+
+INSERT IGNORE INTO t_operator_instance(instance_id, operator_id, op_index, settings_override)
+VALUES ('4421504e-c6c9-4760-b55a-509d17429597', 'ImgBlurredImagesCleaner', 2, null),
        ('4421504e-c6c9-4760-b55a-509d17429597', 'ImgDuplicatedImagesCleaner', 3, null),
        ('4421504e-c6c9-4760-b55a-509d17429597', 'ImgSimilarImagesCleaner', 4, null),
        ('4421504e-c6c9-4760-b55a-509d17429597', 'ImgBrightness', 5, null),

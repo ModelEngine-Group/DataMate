@@ -61,6 +61,7 @@ class TextToWord(Mapper):
     def execute(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         """将文本信息转换为docx文件流"""
         start = time.time()
+        self.read_file_first(sample)
         sample[self.data_key] = self._txt_to_docx(sample[self.text_key])  # 将文字转换为word字符串流
         sample[self.text_key] = ""
         sample["target_type"] = "docx"

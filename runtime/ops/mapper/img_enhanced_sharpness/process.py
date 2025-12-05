@@ -57,6 +57,7 @@ class ImgSharpness(Mapper):
 
     def execute(self, sample: Dict[str, Any]):
         start = time.time()
+        self.read_file_first(sample)
         img_bytes = sample[self.data_key]
         file_name = sample[self.filename_key]
         file_type = "." + sample[self.filetype_key]

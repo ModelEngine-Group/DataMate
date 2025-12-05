@@ -1,6 +1,0 @@
-# -*- coding: utf-8 -*-
-
-from datamate.core.base_op import OPERATORS
-
-OPERATORS.register_module(module_name='TextFormatter',
-                          module_path="ops.formatter.text_formatter.process")
