@@ -227,9 +227,8 @@ export default function FileTable({result, fetchTaskResult}) {
       dataIndex: "status",
       key: "status",
       filters: [
-        { text: "已完成", value: "已完成" },
-        { text: "失败", value: "失败" },
-        { text: "处理中", value: "处理中" },
+        { text: "已完成", value: "COMPLETED" },
+        { text: "失败", value: "FAILED" },
       ],
       onFilter: (value: string, record: any) => record.status === value,
       render: (status: string) => (
@@ -237,9 +236,7 @@ export default function FileTable({result, fetchTaskResult}) {
           status={
             status === "COMPLETED"
               ? "success"
-              : status === "FAILED"
-              ? "error"
-              : "processing"
+              : "error"
           }
           text={TaskStatusMap[status as TaskStatus].label}
         />
@@ -248,6 +245,7 @@ export default function FileTable({result, fetchTaskResult}) {
     {
       title: "操作",
       key: "action",
+      width: 200,
       render: (_text: string, record: any) => (
         <div className="flex">
           {record.status === "COMPLETED" ? (

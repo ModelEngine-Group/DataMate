@@ -15,7 +15,6 @@ _configure_importer()
 
 
 def _import_operators():
-    from . import file_exporter
     from . import slide_formatter
     from . import mineru_formatter
 

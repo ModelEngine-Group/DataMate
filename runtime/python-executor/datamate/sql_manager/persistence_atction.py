@@ -25,13 +25,13 @@ class TaskInfoPersistence:
         with open(sql_config_path, 'r', encoding='utf-8') as f:
             return json.load(f)
 
-    def persistence_task_info(self, sample: Dict[str, Any]):
+    def update_task_result(self, sample, file_id = str(uuid.uuid4())):
         instance_id = str(sample.get("instance_id"))
         src_file_name = str(sample.get("sourceFileName"))
         src_file_type = str(sample.get("sourceFileType"))
         src_file_id = str(sample.get("sourceFileId"))
         src_file_size = int(sample.get("sourceFileSize"))
-        file_id = str(uuid.uuid4())
+
         file_size = str(sample.get("fileSize"))
         file_type = str(sample.get("fileType"))
         file_name = str(sample.get("fileName"))
@@ -53,6 +53,10 @@ class TaskInfoPersistence:
         }
         self.insert_result(result_data, str(self.sql_dict.get("insert_clean_result_sql")))
 
+    def update_file_result(self, sample, file_id):
+        file_size = str(sample.get("fileSize"))
+        file_type = str(sample.get("fileType"))
+        file_name = str(sample.get("fileName"))
         dataset_id = str(sample.get("dataset_id"))
         file_path = str(sample.get("filePath"))
         create_time = datetime.now()
@@ -71,6 +75,11 @@ class TaskInfoPersistence:
             "updated_at": create_time
         }
         self.insert_result(file_data, str(self.sql_dict.get("insert_dataset_file_sql")))
+
+    def persistence_task_info(self, sample: Dict[str, Any]):
+        file_id = str(uuid.uuid4())
+        self.update_task_result(sample, file_id)
+        self.update_file_result(sample, file_id)
 
     @staticmethod
     def insert_result(data, sql):

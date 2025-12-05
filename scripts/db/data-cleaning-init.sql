@@ -84,8 +84,7 @@ VALUES ('26ae585c-8310-4679-adc0-e53215e6e69b', 'FileWithShortOrLongLengthFilter
        ('26ae585c-8310-4679-adc0-e53215e6e69b', 'EmailNumberCleaner', 24, null),
        ('26ae585c-8310-4679-adc0-e53215e6e69b', 'AnonymizedIpAddress', 25, null),
        ('26ae585c-8310-4679-adc0-e53215e6e69b', 'AnonymizedIdNumber', 26, null),
-       ('26ae585c-8310-4679-adc0-e53215e6e69b', 'AnonymizedUrlCleaner', 27, null),
-       ('26ae585c-8310-4679-adc0-e53215e6e69b', 'FileExporter', 28, null);
+       ('26ae585c-8310-4679-adc0-e53215e6e69b', 'AnonymizedUrlCleaner', 27, null);
 
 INSERT IGNORE INTO t_operator_instance(instance_id, operator_id, op_index, settings_override)
 VALUES ('4421504e-c6c9-4760-b55a-509d17429597', 'ImgBlurredImagesCleaner', 2, null),
@@ -99,5 +98,4 @@ VALUES ('4421504e-c6c9-4760-b55a-509d17429597', 'ImgBlurredImagesCleaner', 2, nu
        ('4421504e-c6c9-4760-b55a-509d17429597', 'ImgShadowRemove', 10, null),
        ('4421504e-c6c9-4760-b55a-509d17429597', 'ImgPerspectiveTransformation', 11, null),
        ('4421504e-c6c9-4760-b55a-509d17429597', 'ImgResize', 12, null),
-       ('4421504e-c6c9-4760-b55a-509d17429597', 'ImgTypeUnify', 13, null),
-       ('4421504e-c6c9-4760-b55a-509d17429597', 'FileExporter', 14, null);
+       ('4421504e-c6c9-4760-b55a-509d17429597', 'ImgTypeUnify', 13, null);
