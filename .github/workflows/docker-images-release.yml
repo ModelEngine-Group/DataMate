@@ -1,0 +1,48 @@
+name: Release Docker Images
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  frontend:
+    name: Frontend Image
+    uses: ./.github/workflows/docker-images-reusable.yml
+    with:
+      service_name: frontend
+      build_dir: .
+
+  backend:
+    name: Backend Image
+    uses: ./.github/workflows/docker-images-reusable.yml
+    with:
+      service_name: backend
+      build_dir: .
+
+  backend-python:
+    name: Backend Python Image
+    uses: ./.github/workflows/docker-images-reusable.yml
+    with:
+      service_name: backend-python
+      build_dir: .
+
+  database:
+    name: Database Image
+    uses: ./.github/workflows/docker-images-reusable.yml
+    with:
+      service_name: database
+      build_dir: .
+
+  runtime:
+    name: Runtime Image
+    uses: ./.github/workflows/docker-images-reusable.yml
+    with:
+      service_name: runtime
+      build_dir: .
+
+  deer-flow:
+    name: Deer Flow Images
+    uses: ./.github/workflows/docker-image-deer-flow.yml
+
