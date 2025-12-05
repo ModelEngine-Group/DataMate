@@ -150,6 +150,7 @@ const OperatorFlow: React.FC<OperatorFlowProps> = ({
                   max={selectedOperators.length}
                   defaultValue={index + 1}
                   className="w-10 h-6 text-xs text-center"
+                  style={{ width: 60 }}
                   autoFocus
                   onBlur={(e) => handleIndexChange(operator.id, e.target.value)}
                   onKeyDown={(e) => {
