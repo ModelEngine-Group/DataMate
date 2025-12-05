@@ -16,7 +16,7 @@ WORKDIR /opt/runtime
 
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv pip install -e . --system \
-    && uv pip install -r /opt/runtime/datamate/ops/requirements.txt --system
+    && uv pip install -r /opt/runtime/datamate/ops/pyproject.toml --system
 
 RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
     && chmod +x /opt/runtime/start.sh \
