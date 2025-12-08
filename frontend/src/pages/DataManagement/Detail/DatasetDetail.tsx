@@ -222,7 +222,7 @@ export default function DatasetDetail() {
         <Tabs activeKey={activeTab} items={tabList} onChange={setActiveTab} />
         <div className="h-full overflow-auto">
           {activeTab === "overview" && (
-            <Overview dataset={dataset} filesOperation={filesOperation} />
+            <Overview dataset={dataset} filesOperation={filesOperation} fetchDataset={fetchDataset}/>
           )}
           {activeTab === "lineage" && <DataLineageFlow dataset={dataset} />}
           {activeTab === "quality" && <DataQuality />}
