@@ -111,7 +111,9 @@ export default function useFetchData<T>(
         // 同时执行主要数据获取和额外的轮询函数
         const promises = [
           fetchFunc({
-            ...filter,
+            ...Object.fromEntries(
+              Object.entries(filter).filter(([_, value]) => value != null && value.length > 0)
+            ),
             ...extraParams,
             keyword,
             type: getFirstOfArray(filter?.type) || undefined,
