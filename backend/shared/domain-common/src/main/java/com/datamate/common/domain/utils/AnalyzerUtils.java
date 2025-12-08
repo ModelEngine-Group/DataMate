@@ -37,4 +37,15 @@ public class AnalyzerUtils {
         }
         return filename.substring(firstDotIndex + 1).toLowerCase(Locale.ROOT);
     }
+
+    /**
+     * 判断是否为压缩包
+     *
+     * @param filePath 文件路径
+     * @return 返回信息
+     */
+    public static boolean isPackage(String filePath) {
+        String extension = getExtension(filePath);
+        return extension.toLowerCase(Locale.ROOT).equals(TYPE_ZIP) || extension.toLowerCase(Locale.ROOT).equals(TYPE_TAR_GZ);
+    }
 }

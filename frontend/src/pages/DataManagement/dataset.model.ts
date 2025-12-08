@@ -101,4 +101,5 @@ export interface TaskItem {
   cancelFn?: () => void;
   updateEvent?: string;
   size?: number;
+  hasArchive?: boolean;
 }

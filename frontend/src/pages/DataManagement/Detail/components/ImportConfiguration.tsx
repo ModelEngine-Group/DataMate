@@ -1,4 +1,4 @@
-import { Select, Input, Form, Radio, Modal, Button, UploadFile } from "antd";
+import { Select, Input, Form, Radio, Modal, Button, UploadFile, Switch } from "antd";
 import { InboxOutlined } from "@ant-design/icons";
 import { dataSourceOptions } from "../../dataset.const";
 import { Dataset, DataSource } from "../../dataset.model";
@@ -51,6 +51,7 @@ export default function ImportConfiguration({
           dataset,
           files: fileSliceList,
           updateEvent,
+          hasArchive: importConfig.hasArchive,
         },
       })
     );
@@ -195,29 +196,39 @@ export default function ImportConfiguration({
 
         {/* Local Upload Component */}
         {importConfig?.source === DataSource.UPLOAD && (
-          <Form.Item
-            label="上传文件"
-            name="files"
-            rules={[
-              {
-                required: true,
-                message: "请上传文件",
-              },
-            ]}
-          >
-            <Dragger
-              className="w-full"
-              onRemove={handleRemoveFile}
-              beforeUpload={handleBeforeUpload}
-              multiple
+          <>
+            <Form.Item
+              label="自动解压上传的压缩包"
+              name="hasArchive"
+              valuePropName="checked"
+              initialValue={true}
             >
-              <p className="ant-upload-drag-icon">
-                <InboxOutlined />
-              </p>
-              <p className="ant-upload-text">本地文件上传</p>
-              <p className="ant-upload-hint">拖拽文件到此处或点击选择文件</p>
-            </Dragger>
-          </Form.Item>
+              <Switch />
+            </Form.Item>
+            <Form.Item
+              label="上传文件"
+              name="files"
+              rules={[
+                {
+                  required: true,
+                  message: "请上传文件",
+                },
+              ]}
+            >
+              <Dragger
+                className="w-full"
+                onRemove={handleRemoveFile}
+                beforeUpload={handleBeforeUpload}
+                multiple
+              >
+                <p className="ant-upload-drag-icon">
+                  <InboxOutlined />
+                </p>
+                <p className="ant-upload-text">本地文件上传</p>
+                <p className="ant-upload-hint">拖拽文件到此处或点击选择文件</p>
+              </Dragger>
+            </Form.Item>
+          </>
         )}
 
         {/* Target Configuration */}

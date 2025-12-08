@@ -1,7 +1,8 @@
 package com.datamate.datamanagement.domain.model.dataset;
 
-import com.datamate.common.domain.model.UploadCheckInfo;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -9,7 +10,9 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-public class DatasetFileUploadCheckInfo extends UploadCheckInfo {
+@NoArgsConstructor
+@AllArgsConstructor
+public class DatasetFileUploadCheckInfo {
     /** 数据集id */
     private String datasetId;
 
