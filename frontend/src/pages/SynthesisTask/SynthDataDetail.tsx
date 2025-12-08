@@ -1,8 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router";
-import { Badge, Button, Empty, List, Pagination, Spin, Typography } from "antd";
+import { Badge, Button, Empty, List, Pagination, Spin, Typography, Popconfirm, message, Dropdown, Input } from "antd";
 import type { PaginationProps } from "antd";
-import { queryChunksByFileUsingGet, querySynthesisDataByChunkUsingGet, querySynthesisTaskByIdUsingGet } from "@/pages/SynthesisTask/synthesis-api";
+import { MoreOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
+import {
+  queryChunksByFileUsingGet,
+  querySynthesisDataByChunkUsingGet,
+  querySynthesisTaskByIdUsingGet,
+  deleteChunkWithDataUsingDelete,
+  batchDeleteSynthesisDataUsingDelete,
+  updateSynthesisDataUsingPatch,
+} from "@/pages/SynthesisTask/synthesis-api";
 import { formatDateTime } from "@/utils/unit";
 
 interface LocationState {
@@ -107,6 +115,24 @@ export default function SynthDataDetail() {
     fetchChunks(page, pageSize || 10);
   };
 
+  // 删除当前选中的 Chunk 及其合成数据
+  const handleDeleteCurrentChunk = async () => {
+    if (!selectedChunkId) return;
+    try {
+      const res = await deleteChunkWithDataUsingDelete(selectedChunkId);
+      if (res?.data?.code === 200 || res?.code === 200) {
+        message.success("删除成功");
+      } else {
+        message.success("删除成功");
+      }
+      setSelectedChunkId(null);
+      fetchChunks(1, chunkPagination.size);
+    } catch (error) {
+      console.error("Failed to delete chunk", error);
+      message.error("删除失败，请稍后重试");
+    }
+  };
+
   // 加载选中 chunk 的所有合成数据
   const fetchSynthData = async (chunkId: string) => {
     setDataLoading(true);
@@ -135,6 +161,80 @@ export default function SynthDataDetail() {
   // 将合成数据的 data 转换成键值对数组，方便以表格形式展示
   const getDataEntries = (data: Record<string, unknown>) => {
     return Object.entries(data || {});
+  };
+
+  // 单条合成数据删除
+  const handleDeleteSingleSynthesisData = async (dataId: string) => {
+    try {
+      await batchDeleteSynthesisDataUsingDelete({ ids: [dataId] });
+      message.success("删除成功");
+      if (selectedChunkId) {
+        fetchSynthData(selectedChunkId);
+      }
+    } catch (error) {
+      console.error("Failed to delete synthesis data", error);
+      message.error("删除失败，请稍后重试");
+    }
+  };
+
+  // 编辑状态：仅编辑各个 key 的 value
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingMap, setEditingMap] = useState<Record<string, string>>({});
+
+  const startEdit = (item: SynthesisDataItem) => {
+    setEditingId(item.id);
+    const map: Record<string, string> = {};
+    Object.entries(item.data || {}).forEach(([k, v]) => {
+      if (typeof v === "string" || typeof v === "number" || typeof v === "boolean") {
+        map[k] = String(v);
+      } else {
+        map[k] = JSON.stringify(v);
+      }
+    });
+    setEditingMap(map);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditingMap({});
+  };
+
+  const handleSaveEdit = async (item: SynthesisDataItem) => {
+    if (editingId !== item.id) return;
+    try {
+      const newData: Record<string, unknown> = { ...item.data };
+      Object.entries(editingMap).forEach(([k, v]) => {
+        const original = item.data?.[k];
+        if (typeof original === "object" && original !== null) {
+          try {
+            newData[k] = JSON.parse(v);
+          } catch {
+            newData[k] = v;
+          }
+        } else if (typeof original === "number") {
+          const n = Number(v);
+          newData[k] = Number.isNaN(n) ? v : n;
+        } else if (typeof original === "boolean") {
+          if (v === "true" || v === "false") {
+            newData[k] = v === "true";
+          } else {
+            newData[k] = v;
+          }
+        } else {
+          newData[k] = v;
+        }
+      });
+
+      await updateSynthesisDataUsingPatch(item.id, { data: newData });
+      message.success("保存成功");
+      cancelEdit();
+      if (selectedChunkId) {
+        fetchSynthData(selectedChunkId);
+      }
+    } catch (error) {
+      console.error("Failed to update synthesis data", error);
+      message.error("保存失败，请稍后重试");
+    }
   };
 
   return (
@@ -198,22 +298,62 @@ export default function SynthDataDetail() {
                   return (
                     <List.Item
                       className={
-                        "cursor-pointer px-3 py-2 !border-0 " +
+                        "px-3 py-2 !border-0 " +
                         (active ? "bg-blue-50" : "hover:bg-gray-50")
                       }
-                      onClick={() => setSelectedChunkId(item.id)}
                     >
                       <div className="flex flex-col gap-1 w-full">
-                        <div className="flex items-center justify-between text-xs">
+                        <div
+                          className="flex items-center justify-between text-xs cursor-pointer"
+                          onClick={() => setSelectedChunkId(item.id)}
+                        >
                           <span className="font-medium">Chunk #{item.chunk_index}</span>
                           <Badge
                             color={active ? "blue" : "default"}
                             text={active ? "当前" : ""}
                           />
                         </div>
-                        {/* 展示 chunk 全部内容，不截断 */}
-                        <div className="text-xs text-gray-600 whitespace-pre-wrap break-words">
+                        <div
+                          className="text-xs text-gray-600 whitespace-pre-wrap break-words cursor-pointer"
+                          onClick={() => setSelectedChunkId(item.id)}
+                        >
                           {item.chunk_content}
+                        </div>
+                        <div className="flex justify-end mt-1">
+                          <Dropdown
+                            menu={{
+                              items: [
+                                {
+                                  key: "delete-chunk",
+                                  danger: true,
+                                  label: (
+                                    <Popconfirm
+                                      title="确认删除该 Chunk 及其合成数据？"
+                                      onConfirm={() => {
+                                        setSelectedChunkId(item.id);
+                                        handleDeleteCurrentChunk();
+                                      }}
+                                      okText="删除"
+                                      cancelText="取消"
+                                    >
+                                      <span className="flex items-center gap-1">
+                                        <DeleteOutlined />
+                                        删除该 Chunk 及合成数据
+                                      </span>
+                                    </Popconfirm>
+                                  ),
+                                },
+                              ],
+                            }}
+                            trigger={["click"]}
+                          >
+                            <Button
+                              size="small"
+                              type="text"
+                              shape="circle"
+                              icon={<MoreOutlined />}
+                            />
+                          </Dropdown>
                         </div>
                       </div>
                     </List.Item>
@@ -256,38 +396,127 @@ export default function SynthDataDetail() {
               <Empty description="该 Chunk 暂无合成数据" style={{ marginTop: 40 }} />
             ) : (
               <div className="space-y-4">
-                {synthDataList.map((item, index) => (
-                  <div
-                    key={item.id || index}
-                    className="border border-gray-100 rounded-md p-3 bg-white shadow-sm/50"
-                  >
-                    <div className="mb-2 text-xs text-gray-500 flex justify-between">
-                      <span>记录 {index + 1}</span>
-                      <span>ID：{item.id}</span>
-                    </div>
-                    {/* 淡化表格样式的 key-value 展示 */}
-                    <div className="w-full border border-gray-100 rounded-md overflow-hidden">
-                      {getDataEntries(item.data).map(([key, value], rowIdx) => (
-                        <div
-                          key={key + rowIdx}
-                          className={
-                            "grid grid-cols-[120px,1fr] text-xs " +
-                            (rowIdx % 2 === 0 ? "bg-gray-50/60" : "bg-white")
-                          }
+                {synthDataList.map((item, index) => {
+                  const isEditing = editingId === item.id;
+                  return (
+                    <div
+                      key={item.id || index}
+                      className="border border-gray-100 rounded-md p-3 bg-white shadow-sm/50 relative"
+                    >
+                      <div className="mb-2 text-xs text-gray-500 flex justify-between">
+                        <span>记录 {index + 1}</span>
+                        <span>ID：{item.id}</span>
+                      </div>
+
+                      {/* 右下角更多操作按钮：编辑 & 删除 */}
+                      <div className="absolute bottom-2 right-2 flex gap-1">
+                        <Dropdown
+                          menu={{
+                            items: [
+                              {
+                                key: "edit-data",
+                                label: (
+                                  <span className="flex items-center gap-1">
+                                    <EditOutlined />
+                                    编辑
+                                  </span>
+                                ),
+                                onClick: (info) => {
+                                  info.domEvent.stopPropagation();
+                                  startEdit(item);
+                                },
+                              },
+                              {
+                                key: "delete-data",
+                                danger: true,
+                                label: (
+                                  <Popconfirm
+                                    title="确认删除该条合成数据？"
+                                    onConfirm={(e) => {
+                                      e?.stopPropagation();
+                                      handleDeleteSingleSynthesisData(item.id);
+                                    }}
+                                    okText="删除"
+                                    cancelText="取消"
+                                  >
+                                    <span className="flex items-center gap-1">
+                                      <DeleteOutlined />
+                                      删除
+                                    </span>
+                                  </Popconfirm>
+                                ),
+                              },
+                            ],
+                          }}
+                          trigger={["click"]}
                         >
-                          <div className="px-3 py-2 border-r border-gray-100 font-medium text-gray-600 break-words">
-                            {key}
-                          </div>
-                          <div className="px-3 py-2 text-gray-700 whitespace-pre-wrap break-words">
-                            {typeof value === "string" || typeof value === "number"
+                          <Button
+                            size="small"
+                            type="text"
+                            shape="circle"
+                            icon={<MoreOutlined />}
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </Dropdown>
+                      </div>
+
+                      {/* 表格形式的 key-value 展示 + 可编辑 value */}
+                      <div className="w-full border border-gray-100 rounded-md overflow-hidden mt-2">
+                        {getDataEntries(item.data).map(([key, value], rowIdx) => {
+                          const displayValue =
+                            typeof value === "string" ||
+                            typeof value === "number" ||
+                            typeof value === "boolean"
                               ? String(value)
-                              : JSON.stringify(value, null, 2)}
-                          </div>
+                              : JSON.stringify(value, null, 2);
+
+                          return (
+                            <div
+                              key={key + rowIdx}
+                              className={
+                                "grid grid-cols-[120px,1fr] text-xs " +
+                                (rowIdx % 2 === 0 ? "bg-gray-50/60" : "bg-white")
+                              }
+                            >
+                              <div className="px-3 py-2 border-r border-gray-100 font-medium text-gray-600 break-words">
+                                {key}
+                              </div>
+                              <div className="px-3 py-2 text-gray-700 whitespace-pre-wrap break-words">
+                                {isEditing ? (
+                                  <Input.TextArea
+                                    value={editingMap[key] ?? displayValue}
+                                    onChange={(e) => {
+                                      const v = e.target.value;
+                                      setEditingMap((prev) => ({ ...prev, [key]: v }));
+                                    }}
+                                    autoSize={{ minRows: 1, maxRows: 4 }}
+                                  />
+                                ) : (
+                                  displayValue
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {isEditing && (
+                        <div className="flex justify-end gap-2 mt-2">
+                          <Button size="small" onClick={cancelEdit}>
+                            取消
+                          </Button>
+                          <Button
+                            size="small"
+                            type="primary"
+                            onClick={() => handleSaveEdit(item)}
+                          >
+                            确定
+                          </Button>
                         </div>
-                      ))}
+                      )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
