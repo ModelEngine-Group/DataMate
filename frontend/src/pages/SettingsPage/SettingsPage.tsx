@@ -36,6 +36,8 @@ export default function SettingsPage() {
                 key: "webhook-config",
                 icon: <ApiOutlined />,
                 label: "Webhook",
+                disabled: true,
+                title: "暂未开放"
               },
             ]}
             selectedKeys={[activeTab]}
