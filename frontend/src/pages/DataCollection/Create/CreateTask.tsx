@@ -76,7 +76,7 @@ export default function CollectionTaskCreate() {
     createDataset: false,
   });
   const [scheduleExpression, setScheduleExpression] = useState({
-    type: SyncMode.SCHEDULED,
+    type: "once",
     time: "00:00",
     cronExpression: "0 0 0 * * ?",
   });
@@ -388,6 +388,7 @@ export default function CollectionTaskCreate() {
                   name="createDataset"
                   required
                   rules={[{ required: true, message: "请选择是否创建数据集" }]}
+                  tooltip={"支持后续在【数据管理】中手动创建数据集并关联至此任务。"}
                 >
                   <Radio.Group
                     value={isCreateDataset}
