@@ -21,12 +21,13 @@ export default function WelcomePage() {
   // 检查接口连通性的函数
   const checkDeerFlowDeploy = async (): Promise<boolean> => {
     try {
-      const response = await fetch('/deer-flow-backend/config', { // 替换为你的实际接口地址
+      const response = await fetch('/deer-flow-backend/config', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
         timeout: 5000, // 5秒超时
+        cache: 'no-store'
       });
 
       // 检查 HTTP 状态码在 200-299 范围内
