@@ -219,6 +219,19 @@ export default function DatasetManagementPage() {
       width: 100,
     },
     {
+      title: "状态",
+      dataIndex: "status",
+      key: "status",
+      render: (status: any) => {
+        return (
+          <Tag icon={status?.icon} color={status?.color}>
+            {status?.label}
+          </Tag>
+        );
+      },
+      width: 120,
+    },
+    {
       title: "大小",
       dataIndex: "size",
       key: "size",
@@ -230,12 +243,12 @@ export default function DatasetManagementPage() {
       key: "fileCount",
       width: 100,
     },
-    {
-      title: "创建者",
-      dataIndex: "createdBy",
-      key: "createdBy",
-      width: 120,
-    },
+    // {
+    //   title: "创建者",
+    //   dataIndex: "createdBy",
+    //   key: "createdBy",
+    //   width: 120,
+    // },
     {
       title: "存储路径",
       dataIndex: "targetLocation",
@@ -254,26 +267,6 @@ export default function DatasetManagementPage() {
       dataIndex: "updatedAt",
       key: "updatedAt",
       width: 180,
-    },
-    {
-      title: "描述",
-      dataIndex: "description",
-      key: "description",
-      width: 200,
-      ellipsis: true,
-    },
-    {
-      title: "状态",
-      dataIndex: "status",
-      key: "status",
-      render: (status: any) => {
-        return (
-          <Tag icon={status?.icon} color={status?.color}>
-            {status?.label}
-          </Tag>
-        );
-      },
-      width: 120,
     },
     {
       title: "操作",
@@ -372,7 +365,7 @@ export default function DatasetManagementPage() {
       <SearchControls
         searchTerm={searchParams.keyword}
         onSearchChange={handleKeywordChange}
-        searchPlaceholder="搜索数据集名称、描述或标签..."
+        searchPlaceholder="搜索数据集名称、描述"
         filters={filterOptions}
         onFiltersChange={handleFiltersChange}
         onClearFilters={() => setSearchParams({ ...searchParams, filter: {} })}
