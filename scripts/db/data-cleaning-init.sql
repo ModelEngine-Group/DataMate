@@ -97,5 +97,6 @@ VALUES ('4421504e-c6c9-4760-b55a-509d17429597', 'ImgBlurredImagesCleaner', 2, nu
        ('4421504e-c6c9-4760-b55a-509d17429597', 'ImgDenoise', 9, null),
        ('4421504e-c6c9-4760-b55a-509d17429597', 'ImgShadowRemove', 10, null),
        ('4421504e-c6c9-4760-b55a-509d17429597', 'ImgPerspectiveTransformation', 11, null),
-       ('4421504e-c6c9-4760-b55a-509d17429597', 'ImgResize', 12, null),
-       ('4421504e-c6c9-4760-b55a-509d17429597', 'ImgTypeUnify', 13, null);
+       ('4421504e-c6c9-4760-b55a-509d17429597', 'ImgDirectionCorrect', 12, null),
+       ('4421504e-c6c9-4760-b55a-509d17429597', 'ImgResize', 13, null),
+       ('4421504e-c6c9-4760-b55a-509d17429597', 'ImgTypeUnify', 14, null);

@@ -3,7 +3,12 @@ FROM ghcr.io/astral-sh/uv:python3.11-bookworm
 RUN --mount=type=cache,target=/var/cache/apt \
     --mount=type=cache,target=/var/lib/apt \
     apt update \
-    && apt install -y libgl1 libglib2.0-0 vim libmagic1 libreoffice dos2unix
+    && apt install -y libgl1 libglib2.0-0 vim libmagic1 libreoffice dos2unix swig
+
+RUN mkdir -p /home/models \
+    && wget https://paddleocr.bj.bcebos.com/dygraph_v2.0/ch/ch_ppocr_mobile_v2.0_cls_infer.tar \
+    && tar -xf ch_ppocr_mobile_v2.0_cls_infer.tar -C /home/models \
+    && rm -f ch_*.tar
 
 COPY runtime/python-executor /opt/runtime
 COPY runtime/ops /opt/runtime/datamate/ops
