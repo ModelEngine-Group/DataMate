@@ -95,6 +95,24 @@ backend:
     - name: operator-volume
       mountPath: /operators
 
+backend-python:
+  env:
+    - name: DB_PASSWORD
+      value: *dbPass
+  volumes:
+    - *datasetVolume
+    - *flowVolume
+    - *logVolume
+  volumeMounts:
+    - name: dataset-volume
+      mountPath: /dataset
+    - name: flow-volume
+      mountPath: /flow
+    - name: log-volume
+      mountPath: /var/log/datamate
+    - name: operator-volume
+      mountPath: /operators
+
 frontend:
   service:
     type: NodePort
