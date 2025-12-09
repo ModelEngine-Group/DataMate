@@ -98,6 +98,13 @@ data:
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         }
 
+        location /api/evaluation/ {
+            proxy_pass http://datamate-backend-python:18000/api/evaluation/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        }
+
         location /api/annotation/ {
             proxy_pass http://datamate-backend-python:18000/api/annotation/;
             proxy_set_header Host $host;
