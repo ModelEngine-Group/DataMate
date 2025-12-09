@@ -73,15 +73,15 @@ make install-mineru
 ```
 
 ### Deploy the DeerFlow service
-1. Modify `runtime/deer-flow/.env.example` and add configurations for SEARCH_API_KEY and the EMBEDDING model.
-2. Modify `runtime/deer-flow/.conf.yaml.example` and add basic model service configurations.
-3. Execute `make install-deer-flow`
+```bash
+make install-deer-flow
+```
 
 ### Local Development and Deployment
 After modifying the local code, please execute the following commands to build the image and deploy using the local image.
 ```bash
 make build
-make install REGISTRY=""
+make install dev=true
 ```
 
 ## 🤝 Contribution Guidelines

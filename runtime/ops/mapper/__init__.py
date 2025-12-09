@@ -23,7 +23,6 @@ def _import_operators():
     from . import garble_characters_cleaner
     from . import html_tag_cleaner
     from . import id_number_cleaner
-    from . import img_watermark_remove
     from . import invisible_characters_cleaner
     from . import ip_address_cleaner
     from . import legend_cleaner
