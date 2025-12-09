@@ -330,6 +330,35 @@ paths:
                 type: string
                 format: binary
 
+  /data-management/datasets/{datasetId}/files/upload/add:
+      post:
+          tags: [ DatasetFile ]
+          operationId: addFilesToDataset
+          summary: 添加文件到数据集（仅创建数据库记录）
+          description: 将指定源文件路径列表添加到数据集，仅在数据库中创建记录，不执行物理文件系统操作。
+          parameters:
+              -   name: datasetId
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+                  description: 数据集ID
+          requestBody:
+              required: true
+              content:
+                  application/json:
+                      schema:
+                          $ref: '#/components/schemas/AddFilesRequest'
+          responses:
+              '200':
+                  description: 添加成功，返回创建的文件记录列表
+                  content:
+                      application/json:
+                          schema:
+                              type: array
+                              items:
+                                  $ref: '#/components/schemas/DatasetFileResponse'
+
   /data-management/datasets/{datasetId}/files/upload/pre-upload:
     post:
       tags: [ DatasetFile ]
@@ -805,3 +834,19 @@ components:
         path:
           type: string
           description: 请求路径
+
+    AddFilesRequest:
+        type: object
+        description: 将源文件路径添加到数据集的请求
+        properties:
+            sourcePaths:
+                type: array
+                items:
+                    type: string
+                description: 源文件路径列表（相对或绝对路径），每个元素表示一个要添加的文件或目录路径
+            softAdd:
+                type: boolean
+                description: 如果为 true，则仅在数据库中创建记录（默认 false）
+                default: false
+        required:
+            - sourcePaths
