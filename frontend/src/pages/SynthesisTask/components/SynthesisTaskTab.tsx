@@ -19,7 +19,6 @@ import { createDatasetUsingPost } from "@/pages/DataManagement/dataset.api";
 import { createEvaluationTaskUsingPost } from "@/pages/DataEvaluation/evaluation.api";
 import { queryModelListUsingGet } from "@/pages/SettingsPage/settings.apis";
 import { ModelI } from "@/pages/SettingsPage/ModelAccess";
-import { fetchSynthesisDataByChunk, batchDeleteSynthesisData, updateSynthesisData, deleteChunkWithData, deleteSynthesisDataByChunk } from '@/api/synthesis';
 
 interface SynthesisTask {
   id: string;
@@ -366,74 +365,6 @@ export default function SynthesisTaskTab() {
     }
   };
 
-  // 加载合成数据
-  const loadSynthesisData = useCallback(async (chunkId: string) => {
-    setActiveChunkId(chunkId);
-    const data = await fetchSynthesisDataByChunk(chunkId);
-    setSynthesisData(data || []);
-    setSelectedDataIds([]);
-  }, []);
-
-  // 批量删除合成数据
-  const handleBatchDeleteData = useCallback(async () => {
-    if (!selectedDataIds.length) return;
-    await batchDeleteSynthesisData(selectedDataIds);
-    if (activeChunkId) {
-      const data = await fetchSynthesisDataByChunk(activeChunkId);
-      setSynthesisData(data || []);
-      setSelectedDataIds([]);
-    }
-  }, [selectedDataIds, activeChunkId]);
-
-  // 更新合成数据字段
-  const handleUpdateField = useCallback(
-    async (dataId: string, key: string, value: any) => {
-      setSynthesisData((prev) => {
-        const next = prev.map((item) => {
-          if (item.id !== dataId) return item;
-          const currentData = (item as any).data || {};
-          const newData = { ...currentData, [key]: value } as Record<string, unknown>;
-          // 乐观更新本地
-          return { ...item, data: newData } as SynthesisDataItem;
-        });
-        // 找到最新的数据对象并提交到后端做整体覆盖
-        const target = next.find((i) => i.id === dataId);
-        if (target && target.data) {
-          void updateSynthesisData(dataId, target.data as Record<string, unknown>);
-        }
-        return next;
-      });
-    },
-    [],
-  );
-
-  // 删除分块及其合成数据
-  const handleDeleteChunkWithData = useCallback(
-    async (chunkId: string) => {
-      await deleteChunkWithData(chunkId);
-      if (activeChunkId === chunkId) {
-        setActiveChunkId(null);
-        setSynthesisData([]);
-        setSelectedDataIds([]);
-      }
-      // TODO: 触发刷新 chunk 列表的已有逻辑
-    },
-    [activeChunkId],
-  );
-
-  // 清空分块合成数据
-  const handleDeleteDataByChunk = useCallback(
-    async (chunkId: string) => {
-      await deleteSynthesisDataByChunk(chunkId);
-      if (activeChunkId === chunkId) {
-        const data = await fetchSynthesisDataByChunk(chunkId);
-        setSynthesisData(data || []);
-        setSelectedDataIds([]);
-      }
-    },
-    [activeChunkId],
-  );
-
   return (
     <div className="space-y-4">
       {/* 搜索和筛选 */}
@@ -582,58 +513,6 @@ export default function SynthesisTaskTab() {
           )}
         </Form>
       </Modal>
-
-      {/* 合成数据展示与编辑 */}
-      {activeChunkId && (
-        <Card title="合成数据" extra={
-          <div className="flex gap-2">
-            <Button
-              onClick={() => loadSynthesisData(activeChunkId)}
-              loading={loading}
-              icon={<EyeOutlined />}
-            >
-              查看合成数据
-            </Button>
-            <Button
-              danger
-              onClick={() => handleDeleteChunkWithData(activeChunkId)}
-              icon={<DeleteOutlined />}
-            >
-              删除分块及合成数据
-            </Button>
-            <Button
-              danger
-              onClick={() => handleDeleteDataByChunk(activeChunkId)}
-              icon={<DeleteOutlined />}
-            >
-              清空该分块合成数据
-            </Button>
-          </div>
-        }>
-          <Table
-            rowKey="id"
-            dataSource={synthesisData}
-            loading={loading}
-            pagination={false}
-            rowSelection={{
-              selectedRowKeys: selectedDataIds,
-              onChange: (keys) => setSelectedDataIds(keys as string[]),
-            }}
-            columns={Object.keys(synthesisData[0] || {}).map((key) => ({
-              title: key,
-              dataIndex: key,
-              key,
-              render: (_: unknown, record: SynthesisDataItem) => (
-                <Input
-                  value={(record as any)[key]}
-                  onChange={(e) => handleUpdateField(record.id, key, e.target.value)}
-                  placeholder={`请输入${key}`}
-                />
-              ),
-            }))}
-          />
-        </Card>
-      )}
     </div>
   );
 }

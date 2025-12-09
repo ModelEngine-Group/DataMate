@@ -120,7 +120,7 @@ async def list_synthesis_tasks(
     name: str | None = None,
     db: AsyncSession = Depends(get_db)
 ):
-    """分页列出所有数据合成任务"""
+    """分页列出所有数据合成任务，默认按创建时间倒序"""
     query = select(DataSynthesisInstance)
     if synthesis_type:
         query = query.filter(DataSynthesisInstance.synthesis_type == synthesis_type)
@@ -128,6 +128,9 @@ async def list_synthesis_tasks(
         query = query.filter(DataSynthesisInstance.status == status)
     if name:
         query = query.filter(DataSynthesisInstance.name.like(f"%{name}%"))
+
+    # 默认按创建时间倒序排列
+    query = query.order_by(DataSynthesisInstance.created_at.desc())
 
     count_q = select(func.count()).select_from(query.subquery())
     total = (await db.execute(count_q)).scalar_one()
