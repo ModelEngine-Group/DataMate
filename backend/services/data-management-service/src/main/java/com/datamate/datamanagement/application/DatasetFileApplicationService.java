@@ -230,7 +230,6 @@ public class DatasetFileApplicationService {
         }
         List<DatasetFile> allByDatasetId = datasetFileRepository.findAllByDatasetId(datasetId);
         Set<String> filePaths = allByDatasetId.stream().map(DatasetFile::getFilePath).collect(Collectors.toSet());
-        fileRename(allByDatasetId);
         String datasetPath = dataset.getPath();
         Path downloadPath = Path.of(datasetPath);
         response.setContentType("application/zip");
@@ -281,27 +280,6 @@ public class DatasetFileApplicationService {
             }
             zos.closeArchiveEntry();
         }
-    }
-
-    private void fileRename(List<DatasetFile> files) {
-        Set<String> uniqueFilenames = new HashSet<>();
-        for (DatasetFile file : files) {
-            String originalFilename = file.getFileName();
-            if (!uniqueFilenames.add(originalFilename)) {
-                String newFilename;
-                int counter = 1;
-                do {
-                    newFilename = generateNewFilename(originalFilename, counter);
-                    counter++;
-                } while (!uniqueFilenames.add(newFilename));
-                file.setFileName(newFilename);
-            }
-        }
-    }
-
-    private String generateNewFilename(String oldFilename, int counter) {
-        int dotIndex = oldFilename.lastIndexOf(".");
-        return oldFilename.substring(0, dotIndex) + "-(" + counter + ")" + oldFilename.substring(dotIndex);
     }
 
     /**
