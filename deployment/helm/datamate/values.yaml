@@ -80,6 +80,8 @@ backend:
   env:
     - name: DB_PASSWORD
       value: *dbPass
+    - name: datamate.rag.milvus-uri
+      value: "http://milvus:19530"
   volumes:
     - *datasetVolume
     - *flowVolume

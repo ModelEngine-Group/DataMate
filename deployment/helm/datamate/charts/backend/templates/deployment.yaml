@@ -60,6 +60,8 @@ spec:
           env:
             {{- toYaml . | nindent 12 }}
           {{- end }}
+            - name: datamate.rag.milvus-uri
+              value: {{ .Values.milvus.uri | default "http://milvus:19530" | quote }}
           {{- with .Values.volumeMounts }}
           volumeMounts:
             {{- toYaml . | nindent 12 }}

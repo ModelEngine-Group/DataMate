@@ -39,10 +39,6 @@ import static dev.langchain4j.internal.Utils.randomUUID;
 @Slf4j
 @Component
 public class MilvusService {
-    @Value("${datamate.rag.milvus-host:milvus}")
-    private String milvusHost;
-    @Value("${datamate.rag.milvus-port:19530}")
-    private int milvusPort;
     @Value("${datamate.rag.milvus-uri:http://milvus-standalone:19530}")
     private String milvusUri;
     private static final Gson GSON;
