@@ -23,19 +23,35 @@ export function useFilesOperation(dataset: Dataset) {
     current: number;
     pageSize: number;
     total: number;
-  }>({ current: 1, pageSize: 10, total: 0 });
+    prefix?: string;
+  }>({ current: 1, pageSize: 10, total: 0, prefix: '' });
 
   // 文件预览相关状态
   const [previewVisible, setPreviewVisible] = useState(false);
   const [previewContent, setPreviewContent] = useState("");
   const [previewFileName, setPreviewFileName] = useState("");
 
-  const fetchFiles = async () => {
-    const { data } = await queryDatasetFilesUsingGet(id!, {
-      page: pagination.current - 1,
-      size: pagination.pageSize,
-    });
+  const fetchFiles = async (prefix: string = '', current, pageSize) => {
+    const params: any = {
+      page: current ? current : pagination.current,
+      size: pageSize ? pageSize : pagination.pageSize,
+    };
+
+    if (prefix !== undefined) {
+      params.prefix = prefix;
+    } else if (pagination.prefix) {
+      params.prefix = pagination.prefix;
+    }
+
+    const { data } = await queryDatasetFilesUsingGet(id!, params);
     setFileList(data.content || []);
+
+    // Update pagination with current prefix
+    setPagination(prev => ({
+      ...prev,
+      prefix: prefix !== undefined ? prefix : prev.prefix,
+      total: data.totalElements || 0,
+    }));
   };
 
   const handleBatchDeleteFiles = () => {
@@ -113,6 +129,7 @@ export function useFilesOperation(dataset: Dataset) {
     fileList,
     selectedFiles,
     setSelectedFiles,
+    pagination,
     setPagination,
     previewVisible,
     setPreviewVisible,

@@ -12,6 +12,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
+import org.apache.commons.io.FileUtils;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -145,7 +146,7 @@ public class ArchiveAnalyzer {
         Path path = Paths.get(archivePath.getParent().toString(), archiveEntry.getName());
         File file = path.toFile();
         long fileSize = 0L;
-        String extension = AnalyzerUtils.getExtension(archiveEntry.getName());
+        FileUtils.createParentDirectories(file);
 
         long supportFileSize = 1024*1024*1024; // 上传大小暂定为1个G
         try (OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(file.toPath()))) {

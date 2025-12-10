@@ -1,6 +1,6 @@
 import { Button, Descriptions, DescriptionsProps, Modal, Table } from "antd";
 import { formatBytes, formatDateTime } from "@/utils/unit";
-import { Download, Trash2 } from "lucide-react";
+import { Download, Trash2, Folder, File } from "lucide-react";
 import { datasetTypeMap } from "../../dataset.const";
 
 export default function Overview({ dataset, filesOperation, fetchDataset }) {
@@ -102,13 +102,58 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
       dataIndex: "fileName",
       key: "fileName",
       fixed: "left",
+      render: (text: string, record: any) => {
+        const isDirectory = record.id.startsWith('directory-');
+        const iconSize = 16;
+
+        const content = (
+          <div className="flex items-center">
+            {isDirectory ? (
+              <Folder className="mr-2 text-blue-500" size={iconSize} />
+            ) : (
+              <File className="mr-2 text-black" size={iconSize} />
+            )}
+            <span className="truncate text-black">{text}</span>
+          </div>
+        );
+
+        if (isDirectory) {
+          return (
+            <Button
+              type="link"
+              onClick={(e) => {
+                const currentPath = filesOperation.pagination.prefix || '';
+                const newPath = `${currentPath}${record.fileName}`;
+                filesOperation.fetchFiles(newPath);
+              }}
+            >
+              {content}
+            </Button>
+          );
+        }
+
+        return (
+            <Button
+              type="link"
+              onClick={(e) => {}}
+            >
+              {content}
+            </Button>
+          );
+      },
     },
     {
       title: "大小",
       dataIndex: "fileSize",
       key: "fileSize",
       width: 150,
-      render: (text) => formatBytes(text),
+      render: (text: number, record: any) => {
+        const isDirectory = record.id.startsWith('directory-');
+        if (isDirectory) {
+          return "-";
+        }
+        return formatBytes(text)
+      },
     },
     {
       title: "上传时间",
@@ -122,7 +167,12 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
       key: "action",
       width: 180,
       fixed: "right",
-      render: (_, record) => (
+      render: (_, record) => {
+        const isDirectory = record.id.startsWith('directory-');
+        if (isDirectory) {
+          return <div className="flex"/>;
+        }
+        return (
         <div className="flex">
           <Button
             size="small"
@@ -143,9 +193,10 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
             删除
           </Button>
         </div>
-      ),
+      )},
     },
   ];
+
   return (
     <>
       <div className=" flex flex-col gap-4">
@@ -182,6 +233,43 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
           </div>
         )}
         <div className="overflow-x-auto">
+          <div className="mb-2">
+            {(filesOperation.pagination.prefix || '') !== '' && (
+              <Button
+                type="link"
+                onClick={() => {
+                  // 获取上一级目录
+                  const currentPath = filesOperation.pagination.prefix || '';
+                  const pathParts = currentPath.split('/').filter(Boolean);
+                  pathParts.pop(); // 移除最后一个目录
+                  const parentPath = pathParts.length > 0 ? `${pathParts.join('/')}/` : '';
+                  filesOperation.fetchFiles(parentPath);
+                }}
+                className="p-0"
+              >
+                <span className="flex items-center text-blue-500">
+                  <svg
+                    className="w-4 h-4 mr-1"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                    />
+                  </svg>
+                  返回上一级
+                </span>
+              </Button>
+            )}
+            {filesOperation.pagination.prefix && (
+              <span className="ml-2 text-gray-600">当前路径: {filesOperation.pagination.prefix}</span>
+            )}
+          </div>
           <Table
             size="middle"
             rowKey="id"
@@ -192,6 +280,14 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
             pagination={{
               ...pagination,
               showTotal: (total) => `共 ${total} 条`,
+              onChange: (page, pageSize) => {
+                filesOperation.setPagination(prev => ({
+                    ...prev,
+                    current: page,
+                    pageSize: pageSize
+                }));
+                filesOperation.fetchFiles(pagination.prefix, page, pageSize);
+              }
             }}
           />
         </div>
