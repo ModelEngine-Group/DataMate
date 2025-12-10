@@ -1,20 +1,8 @@
 import asyncio
-import uuid
 import json
+import uuid
 from pathlib import Path
 
-from langchain_community.document_loaders import (
-    TextLoader,
-    CSVLoader,
-    JSONLoader,
-    UnstructuredMarkdownLoader,
-    UnstructuredHTMLLoader,
-    UnstructuredFileLoader,
-    PyPDFLoader,
-    UnstructuredWordDocumentLoader,
-    UnstructuredPowerPointLoader,
-    UnstructuredExcelLoader,
-)
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -30,6 +18,7 @@ from app.db.models.model_config import get_model_by_id
 from app.db.session import logger
 from app.module.shared.util.model_chat import _extract_json_substring
 from app.module.system.service.common_service import get_chat_client, chat
+from app.common.document_loaders import load_documents
 
 
 class GenerationService:
@@ -250,8 +239,7 @@ class GenerationService:
 
         保留每个 Document 的 metadata，方便后续追加例如文件ID、chunk序号等信息。
         """
-        loader = self._build_loader(file_path)
-        docs = loader.load()
+        docs = load_documents(file_path)
 
         splitter = RecursiveCharacterTextSplitter(
             chunk_size=chunk_size,
@@ -262,67 +250,6 @@ class GenerationService:
         split_docs = splitter.split_documents(docs)
         return split_docs
 
-    @staticmethod
-    def _build_loader(file_path: str):
-        """根据文件扩展名选择合适的 LangChain 文本加载器，尽量覆盖常见泛文本格式。
-
-        优先按格式选择专门的 Loader，找不到匹配时退回到 TextLoader。
-        """
-        path = Path(file_path)
-        suffix = path.suffix.lower()
-        path_str = str(path)
-
-        # 1. 纯文本类
-        if suffix in {".txt", "", ".log"}:  # "" 兼容无扩展名
-            return TextLoader(path_str, encoding="utf-8")
-
-        # 2. Markdown
-        if suffix in {".md", ".markdown"}:
-            # UnstructuredMarkdownLoader 会保留更多结构信息
-            return UnstructuredMarkdownLoader(path_str)
-
-        # 3. HTML / HTM
-        if suffix in {".html", ".htm"}:
-            return UnstructuredHTMLLoader(path_str)
-
-        # 4. JSON
-        if suffix == ".json":
-            # 使用 JSONLoader 将 JSON 中的内容展开成文档
-            # 这里使用默认 jq_schema，后续需要更精细地提取可以在此调整
-            return JSONLoader(file_path=path_str, jq_schema=".")
-
-        # 5. CSV / TSV
-        if suffix in {".csv", ".tsv"}:
-            # CSVLoader 默认将每一行作为一条 Document
-            return CSVLoader(file_path=path_str)
-
-        # 6. YAML
-        if suffix in {".yaml", ".yml"}:
-            # 暂时按纯文本加载
-            return TextLoader(path_str, encoding="utf-8")
-
-        # 7. PDF
-        if suffix == ".pdf":
-            return PyPDFLoader(path_str)
-
-        # 8. Word 文档
-        if suffix in {".docx", ".doc"}:
-            # UnstructuredWordDocumentLoader 支持 .docx/.doc 文本抽取
-            return UnstructuredWordDocumentLoader(path_str)
-
-        # 9. PowerPoint
-        if suffix in {".ppt", ".pptx"}:
-            return UnstructuredPowerPointLoader(path_str)
-
-        # 10. Excel
-        if suffix in {".xls", ".xlsx"}:
-            return UnstructuredExcelLoader(path_str)
-
-        # 11. 兜底：使用 UnstructuredFileLoader 或 TextLoader 作为纯文本
-        try:
-            return UnstructuredFileLoader(path_str)
-        except Exception:
-            return TextLoader(path_str, encoding="utf-8")
 
     @staticmethod
     def _build_qa_prompt(chunk: str, synthesis_cfg: dict) -> str:

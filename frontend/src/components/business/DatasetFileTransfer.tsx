@@ -78,6 +78,7 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
 
   const fetchDatasets = async () => {
     const { data } = await queryDatasetsUsingGet({
+      // Ant Design Table pagination.current is 1-based; ensure backend also receives 1-based value
       page: datasetPagination.current,
       size: datasetPagination.pageSize,
       keyword: datasetSearch,
@@ -98,29 +99,49 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
     300
   );
 
-  const fetchFiles = useCallback(async () => {
-    if (!selectedDataset) return;
-    const { data } = await queryDatasetFilesUsingGet(selectedDataset.id, {
-      page: filesPagination.current - 1,
-      size: filesPagination.pageSize,
-      keyword: filesSearch,
-    });
-    setFiles(
-      (data.content || []).map((item: DatasetFile) => ({
-        ...item,
-        key: item.id,
-        datasetName: selectedDataset.name,
-      }))
-    );
-    setFilesPagination((prev) => ({
-      ...prev,
-      total: data.totalElements,
-    }));
-  }, [filesPagination.current, filesPagination.pageSize, filesSearch, selectedDataset]);
+  const fetchFiles = useCallback(
+    async (
+      options?: Partial<{ page: number; pageSize: number; keyword: string }>
+    ) => {
+      if (!selectedDataset) return;
+      const page = options?.page ?? filesPagination.current;
+      const pageSize = options?.pageSize ?? filesPagination.pageSize;
+      const keyword = options?.keyword ?? filesSearch;
+
+      const { data } = await queryDatasetFilesUsingGet(selectedDataset.id, {
+        page,
+        size: pageSize,
+        keyword,
+      });
+      setFiles(
+        (data.content || []).map((item: DatasetFile) => ({
+          ...item,
+          key: item.id,
+          datasetName: selectedDataset.name,
+        }))
+      );
+      setFilesPagination((prev) => ({
+        ...prev,
+        current: page,
+        pageSize,
+        total: data.totalElements,
+      }));
+    },
+    [selectedDataset, filesPagination.current, filesPagination.pageSize, filesSearch]
+  );
 
   useEffect(() => {
-    fetchFiles().catch(() => {});
-  }, [fetchFiles]);
+    // 当数据集变化时，重置文件分页并拉取第一页文件，避免额外的循环请求
+    if (selectedDataset) {
+      setFilesPagination({ current: 1, pageSize: 10, total: 0 });
+      fetchFiles({ page: 1, pageSize: 10 }).catch(() => {});
+    } else {
+      setFiles([]);
+      setFilesPagination({ current: 1, pageSize: 10, total: 0 });
+    }
+    // 只在 selectedDataset 变化时触发
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDataset]);
 
   useEffect(() => {
     onDatasetSelect?.(selectedDataset);
@@ -238,7 +259,18 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
             size="small"
             dataSource={files}
             columns={fileCols.slice(1, fileCols.length)}
-            pagination={filesPagination}
+            pagination={{
+              ...filesPagination,
+              onChange: (page, pageSize) => {
+                const nextPageSize = pageSize || filesPagination.pageSize;
+                setFilesPagination((prev) => ({
+                  ...prev,
+                  current: page,
+                  pageSize: nextPageSize,
+                }));
+                fetchFiles({ page, pageSize: nextPageSize }).catch(() => {});
+              },
+            }}
             onRow={(record: DatasetFile) => ({
               onClick: () => toggleSelectFile(record),
             })}
@@ -247,7 +279,7 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
               selectedRowKeys: Object.keys(selectedFilesMap),
 
               // 单选
-              onSelect: (record: DatasetFile, selected: boolean) => {
+              onSelect: (record: DatasetFile) => {
                 toggleSelectFile(record);
               },
 
@@ -255,7 +287,7 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
               onSelectAll: (selected, selectedRows: DatasetFile[]) => {
                 if (selected) {
                   // ✔ 全选 -> 将 files 列表全部加入 selectedFilesMap
-                  const newMap: Record<string, DatasetFile> = {};
+                  const newMap: Record<string, DatasetFile> = { ...selectedFilesMap };
                   selectedRows.forEach((f) => {
                     newMap[f.id] = f;
                   });
@@ -264,7 +296,7 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
                   // ✘ 取消全选 -> 清空 map
                   const newMap = { ...selectedFilesMap };
                   Object.keys(newMap).forEach((id) => {
-                    if (files.find((f) => f.id === id)) {
+                    if (files.some((f) => String(f.id) === id)) {
                       // 仅移除当前页对应文件
                       delete newMap[id];
                     }
@@ -277,15 +309,6 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
                 name: record.fileName,
               }),
             }}
-
-            // rowSelection={{
-            //   type: "checkbox",
-            //   selectedRowKeys: Object.keys(selectedFilesMap),
-            //   onSelect: toggleSelectFile,
-            //   getCheckboxProps: (record: DatasetFile) => ({
-            //     name: record.fileName,
-            //   }),
-            // }}
           />
         </div>
       </div>

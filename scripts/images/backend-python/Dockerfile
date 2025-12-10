@@ -32,7 +32,7 @@ RUN --mount=type=cache,target=$POETRY_CACHE_DIR \
     poetry install --no-root --only main
 
 # Download NLTK data
-RUN python -c "import nltk; nltk.download('punkt_tab', download_dir='/usr/local/nltk_data')"
+RUN python -c "import nltk; nltk.download(['punkt_tab','averaged_perceptron_tagger_eng'], download_dir='/usr/local/nltk_data')"
 ENV NLTK_DATA=/usr/local/nltk_data
 
 # Copy the rest of the application

@@ -46,7 +46,7 @@ public class DatasetFileController {
             @PathVariable("datasetId") String datasetId,
             @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
             @RequestParam(value = "size", required = false, defaultValue = "20") Integer size,
-            @RequestParam(value = "prefix", required = false) String prefix) {
+            @RequestParam(value = "prefix", required = false, defaultValue = "") String prefix) {
         PagingQuery pagingQuery = new PagingQuery(page, size);
         PagedResponse<DatasetFile> filesPage = datasetFileApplicationService.getDatasetFilesWithDirectory(
                 datasetId, prefix, pagingQuery);
