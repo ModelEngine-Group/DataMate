@@ -4,7 +4,7 @@ import { CheckCircle, XCircle, Clock as ClockIcon } from 'lucide-react';
 import { EyeOutlined } from '@ant-design/icons';
 import { EvaluationStatus } from '../../evaluation.model';
 import PreviewPromptModal from "@/pages/DataEvaluation/Create/PreviewPrompt.tsx";
-import {formatDate} from "@/utils/unit.ts";
+import { formatDateTime } from "@/utils/unit.ts";
 
 const statusMap = {
   [EvaluationStatus.PENDING]: { color: 'blue', text: '待处理', icon: <ClockIcon className="mr-1" size={14} /> },
@@ -56,12 +56,12 @@ const Overview = ({ task }) => {
     {
       key: "createdAt",
       label: "创建时间",
-      children: formatDate(task.createdAt),
+      children: formatDateTime(task.createdAt),
     },
     {
       key: "updatedAt",
       label: "更新时间",
-      children: formatDate(task.updatedAt),
+      children: formatDateTime(task.updatedAt),
     },
     {
       key: "description",

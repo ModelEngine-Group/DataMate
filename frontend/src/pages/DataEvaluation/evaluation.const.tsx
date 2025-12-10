@@ -1,4 +1,4 @@
-import { formatDate } from "@/utils/unit";
+import { formatDateTime } from "@/utils/unit";
 import { BarChart3 } from "lucide-react";
 import { EvaluationStatus, EvaluationTask } from "@/pages/DataEvaluation/evaluation.model.ts";
 
@@ -41,8 +41,8 @@ export function mapEvaluationTask(task: Partial<EvaluationTask>): EvaluationTask
   return {
     ...task,
     status: evalTaskStatusMap[task.status || EvaluationStatus.PENDING],
-    createdAt: formatDate(task.createdAt),
-    updatedAt: formatDate(task.updatedAt),
+    createdAt: formatDateTime(task.createdAt),
+    updatedAt: formatDateTime(task.updatedAt),
     description: task.description,
     icon: <BarChart3 />,
     iconColor: task.ratio_method === "DATASET" ? "bg-blue-100" : "bg-green-100",

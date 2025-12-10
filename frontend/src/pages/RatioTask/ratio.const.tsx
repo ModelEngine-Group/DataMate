@@ -1,4 +1,4 @@
-import { formatDate } from "@/utils/unit";
+import { formatDateTime } from "@/utils/unit";
 import { RatioTaskItem, RatioStatus } from "./ratio.model";
 import { BarChart3, Calendar, Database } from "lucide-react";
 import { Link } from "react-router";
@@ -43,8 +43,8 @@ export function mapRatioTask(task: Partial<RatioTaskItem>): RatioTaskItem {
   return {
     ...task,
     status: ratioTaskStatusMap[task.status || RatioStatus.PENDING],
-    createdAt: formatDate(task.created_at),
-    updatedAt: formatDate(task.updated_at),
+    createdAt: formatDateTime(task.created_at),
+    updatedAt: formatDateTime(task.updated_at),
     description: task.description,
     icon: <BarChart3 />,
     iconColor: task.ratio_method === "DATASET" ? "bg-blue-100" : "bg-green-100",
