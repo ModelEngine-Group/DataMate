@@ -43,7 +43,7 @@ class EvaluationExecutor:
 
     async def execute(self):
         eval_config = json.loads(self.task.eval_config)
-        model_config = await get_model_by_id(self.db, eval_config.get("model_id"))
+        model_config = await get_model_by_id(self.db, eval_config.get("modelId"))
         semaphore = asyncio.Semaphore(10)
         files = (await self.db.execute(
             select(EvaluationFile).where(EvaluationFile.task_id == self.task.id)

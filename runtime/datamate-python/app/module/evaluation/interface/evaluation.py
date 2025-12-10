@@ -24,6 +24,7 @@ from app.module.evaluation.schema.prompt_template import PromptTemplateResponse
 from app.module.evaluation.service.prompt_template_service import PromptTemplateService
 from app.module.evaluation.service.evaluation import EvaluationTaskService
 from app.module.shared.schema.common import StandardResponse, TaskStatus
+from app.module.system.service.common_service import get_model_by_id
 
 router = APIRouter(
     prefix="",
@@ -79,6 +80,10 @@ async def create_evaluation_task(
         if existing_task.scalar_one_or_none():
             raise HTTPException(status_code=400, detail=f"Evaluation task with name '{request.name}' already exists")
 
+        model_config = await get_model_by_id(db, request.eval_config.model_id)
+        if not model_config:
+            raise HTTPException(status_code=400, detail=f"Model with id '{request.eval_config.model_id}' not found")
+
         # 创建评估任务
         task = EvaluationTask(
             id=str(uuid.uuid4()),
@@ -90,7 +95,8 @@ async def create_evaluation_task(
             source_name=request.source_name,
             eval_prompt=request.eval_prompt,
             eval_config=json.dumps({
-                "model_id": request.eval_config.model_id,
+                "modelId": request.eval_config.model_id,
+                "modelName": model_config.model_name,
                 "dimensions": request.eval_config.dimensions,
             }),
             status=TaskStatus.PENDING.value,
