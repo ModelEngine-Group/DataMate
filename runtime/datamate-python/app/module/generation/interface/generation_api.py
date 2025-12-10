@@ -25,6 +25,8 @@ from app.module.generation.schema.generation import (
     DataSynthesisChunkItem,
     PagedDataSynthesisChunkResponse,
     SynthesisDataItem,
+    SynthesisDataUpdateRequest,
+    BatchDeleteSynthesisDataRequest,
 )
 from app.module.generation.service.generation_service import GenerationService
 from app.module.generation.service.prompt import get_prompt
@@ -118,7 +120,7 @@ async def list_synthesis_tasks(
     name: str | None = None,
     db: AsyncSession = Depends(get_db)
 ):
-    """分页列出所有数据合成任务"""
+    """分页列出所有数据合成任务，默认按创建时间倒序"""
     query = select(DataSynthesisInstance)
     if synthesis_type:
         query = query.filter(DataSynthesisInstance.synthesis_type == synthesis_type)
@@ -126,6 +128,9 @@ async def list_synthesis_tasks(
         query = query.filter(DataSynthesisInstance.status == status)
     if name:
         query = query.filter(DataSynthesisInstance.name.like(f"%{name}%"))
+
+    # 默认按创建时间倒序排列
+    query = query.order_by(DataSynthesisInstance.created_at.desc())
 
     count_q = select(func.count()).select_from(query.subquery())
     total = (await db.execute(count_q)).scalar_one()
@@ -179,7 +184,7 @@ async def list_synthesis_tasks(
     )
 
 
-@router.delete("/task/{task_id}", response_model=StandardResponse[None])
+@router.delete("/task/{task_id}", response_model=StandardResponse)
 async def delete_synthesis_task(
     task_id: str,
     db: AsyncSession = Depends(get_db)
@@ -228,7 +233,7 @@ async def delete_synthesis_task(
     )
 
 
-@router.delete("/task/{task_id}/{file_id}", response_model=StandardResponse[None])
+@router.delete("/task/{task_id}/{file_id}", response_model=StandardResponse)
 async def delete_synthesis_file_task(
     task_id: str,
     file_id: str,
@@ -475,4 +480,101 @@ async def export_synthesis_task_to_dataset(
         code=200,
         message="success",
         data=dataset.id,
+    )
+
+
+@router.delete("/chunk/{chunk_id}", response_model=StandardResponse)
+async def delete_chunk_with_data(
+    chunk_id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """删除单条 t_data_synthesis_chunk_instances 记录及其关联的所有 t_data_synthesis_data"""
+    chunk = await db.get(DataSynthesisChunkInstance, chunk_id)
+    if not chunk:
+        raise HTTPException(status_code=404, detail="Chunk not found")
+
+    # 先删除与该 chunk 关联的合成数据
+    await db.execute(
+        delete(SynthesisData).where(SynthesisData.chunk_instance_id == chunk_id)
+    )
+
+    # 再删除 chunk 本身
+    await db.execute(
+        delete(DataSynthesisChunkInstance).where(
+            DataSynthesisChunkInstance.id == chunk_id
+        )
+    )
+
+    await db.commit()
+
+    return StandardResponse(code=200, message="success", data=None)
+
+
+@router.delete("/chunk/{chunk_id}/data", response_model=StandardResponse)
+async def delete_synthesis_data_by_chunk(
+    chunk_id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """仅删除指定 chunk 下的全部 t_data_synthesis_data 记录，返回删除条数"""
+    chunk = await db.get(DataSynthesisChunkInstance, chunk_id)
+    if not chunk:
+        raise HTTPException(status_code=404, detail="Chunk not found")
+
+    result = await db.execute(
+        delete(SynthesisData).where(SynthesisData.chunk_instance_id == chunk_id)
+    )
+    deleted = result.rowcount or 0
+
+    await db.commit()
+
+    return StandardResponse(code=200, message="success", data=deleted)
+
+
+@router.delete("/data/batch", response_model=StandardResponse)
+async def batch_delete_synthesis_data(
+    request: BatchDeleteSynthesisDataRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """批量删除 t_data_synthesis_data 记录"""
+    if not request.ids:
+        return StandardResponse(code=200, message="success", data=0)
+
+    result = await db.execute(
+        delete(SynthesisData).where(SynthesisData.id.in_(request.ids))
+    )
+    deleted = result.rowcount or 0
+    await db.commit()
+
+    return StandardResponse(code=200, message="success", data=deleted)
+
+
+@router.patch("/data/{data_id}", response_model=StandardResponse)
+async def update_synthesis_data_field(
+    data_id: str,
+    body: SynthesisDataUpdateRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """修改单条 t_data_synthesis_data.data 的完整 JSON
+
+    前端传入完整 JSON，后端直接覆盖原有 data 字段，不做局部 merge。
+    """
+    record = await db.get(SynthesisData, data_id)
+    if not record:
+        raise HTTPException(status_code=404, detail="Synthesis data not found")
+
+    # 直接整体覆盖 data 字段
+    record.data = body.data
+
+    await db.commit()
+    await db.refresh(record)
+
+    return StandardResponse(
+        code=200,
+        message="success",
+        data=SynthesisDataItem(
+            id=record.id,
+            data=record.data,
+            synthesis_file_instance_id=record.synthesis_file_instance_id,
+            chunk_instance_id=record.chunk_instance_id,
+        ),
     )

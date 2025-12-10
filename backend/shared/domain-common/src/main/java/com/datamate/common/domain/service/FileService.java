@@ -4,6 +4,8 @@ import com.datamate.common.domain.model.ChunkUploadPreRequest;
 import com.datamate.common.domain.model.ChunkUploadRequest;
 import com.datamate.common.domain.model.FileUploadResult;
 import com.datamate.common.domain.utils.ChunksSaver;
+import com.datamate.common.infrastructure.exception.BusinessException;
+import com.datamate.common.infrastructure.exception.CommonErrorCode;
 import com.datamate.common.infrastructure.mapper.ChunkUploadRequestMapper;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,7 +48,7 @@ public class FileService {
         uploadFileRequest.setFileSize(uploadFileRequest.getFile().getSize());
         ChunkUploadPreRequest preRequest = chunkUploadRequestMapper.findById(uploadFileRequest.getReqId());
         if (preRequest == null || preRequest.isUploadComplete() || preRequest.isRequestTimeout()) {
-            throw new IllegalArgumentException("预上传请求不存在");
+            throw BusinessException.of(CommonErrorCode.PRE_UPLOAD_REQUEST_NOT_EXIST);
         }
         File savedFile;
         if (uploadFileRequest.getTotalChunkNum() > 1) {
@@ -55,7 +57,7 @@ public class FileService {
             savedFile = uploadFile(uploadFileRequest, preRequest);
         }
         if (chunkUploadRequestMapper.update(preRequest) == 0) {
-            throw new IllegalArgumentException("预上传请求不存在");
+            throw BusinessException.of(CommonErrorCode.PRE_UPLOAD_REQUEST_NOT_EXIST);
         }
         boolean isFinish = Objects.equals(preRequest.getUploadedFileNum(), preRequest.getTotalFileNum());
         if (isFinish) {

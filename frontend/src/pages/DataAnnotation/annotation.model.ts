@@ -78,3 +78,30 @@ export interface AnnotationTemplateListResponse {
   size: number;
   totalPages: number;
 }
+
+export enum DataType {
+  TEXT = "text",
+  IMAGE = "image",
+  AUDIO = "audio",
+  VIDEO = "video",
+}
+
+export enum Classification {
+  COMPUTER_VERSION = "computer-vision",
+  NLP = "nlp",
+  AUDIO = "audio",
+  QUALITY_CONTROL = "quality-control",
+  CUSTOM = "custom"
+}
+
+export enum AnnotationType {
+  CLASSIFICATION = "classification",
+  OBJECT_DETECTION = "object-detection",
+  SEGMENTATION = "segmentation",
+  NER = "ner"
+}
+
+export enum TemplateType {
+  SYSTEM = "true",
+  CUSTOM = "false"
+}

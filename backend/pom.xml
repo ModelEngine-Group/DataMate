@@ -37,6 +37,7 @@
         <lombok-mapstruct-binding.version>0.2.0</lombok-mapstruct-binding.version>
         <poi.version>5.4.0</poi.version>
         <log4j2.version>2.21.1</log4j2.version>
+        <commons-compress.version>1.26.1</commons-compress.version>
     </properties>
 
     <modules>
@@ -149,6 +150,12 @@
                 <groupId>io.milvus</groupId>
                 <artifactId>milvus-sdk-java</artifactId>
                 <version>2.6.6</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-compress</artifactId>
+                <version>${commons-compress.version}</version>
             </dependency>
 
         </dependencies>

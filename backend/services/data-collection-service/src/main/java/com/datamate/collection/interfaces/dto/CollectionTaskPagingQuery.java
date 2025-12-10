@@ -21,5 +21,5 @@ public class CollectionTaskPagingQuery extends PagingQuery {
     /**
      * 任务名称
      */
-    private String name;
+    private String keyword;
 }

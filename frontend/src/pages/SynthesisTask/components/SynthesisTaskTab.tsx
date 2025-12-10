@@ -1,15 +1,12 @@
-import { useState, useEffect, ElementType } from "react";
-import { Card, Button, Badge, Table, Modal, message, Tooltip } from "antd";
+import { useState, useEffect, useCallback } from "react";
+import { Card, Button, Table, Modal, message, Tooltip, Form, Input, Select } from "antd";
 import {
   Plus,
   ArrowUp,
   ArrowDown,
-  Pause,
-  Play,
-  CheckCircle,
   Sparkles,
 } from "lucide-react";
-import { DeleteOutlined, EyeOutlined } from "@ant-design/icons";
+import { FolderOpenOutlined, DeleteOutlined, EyeOutlined, ExperimentOutlined } from "@ant-design/icons";
 import { Link, useNavigate } from "react-router";
 import { SearchControls } from "@/components/SearchControls";
 import { formatDateTime } from "@/utils/unit";
@@ -19,6 +16,9 @@ import {
   archiveSynthesisTaskToDatasetUsingPost,
 } from "@/pages/SynthesisTask/synthesis-api";
 import { createDatasetUsingPost } from "@/pages/DataManagement/dataset.api";
+import { createEvaluationTaskUsingPost } from "@/pages/DataEvaluation/evaluation.api";
+import { queryModelListUsingGet } from "@/pages/SettingsPage/settings.apis";
+import { ModelI } from "@/pages/SettingsPage/ModelAccess";
 
 interface SynthesisTask {
   id: string;
@@ -50,6 +50,11 @@ interface SynthesisTask {
   updated_by?: string;
 }
 
+interface SynthesisDataItem {
+  id: string;
+  [key: string]: any;
+}
+
 export default function SynthesisTaskTab() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
@@ -61,6 +66,18 @@ export default function SynthesisTaskTab() {
   const [pageSize, setPageSize] = useState(10);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [evalModalVisible, setEvalModalVisible] = useState(false);
+  const [currentEvalTask, setCurrentEvalTask] = useState<SynthesisTask | null>(null);
+  const [evalLoading, setEvalLoading] = useState(false);
+  const [models, setModels] = useState<ModelI[]>([]);
+  const [modelLoading, setModelLoading] = useState(false);
+
+  const [evalForm] = Form.useForm();
+
+  // 合成数据相关状态
+  const [activeChunkId, setActiveChunkId] = useState<string | null>(null);
+  const [synthesisData, setSynthesisData] = useState<SynthesisDataItem[]>([]);
+  const [selectedDataIds, setSelectedDataIds] = useState<string[]>([]);
 
   // 获取任务列表
   const loadTasks = async () => {
@@ -93,18 +110,6 @@ export default function SynthesisTaskTab() {
     loadTasks();
     // eslint-disable-next-line
   }, [searchQuery, filterStatus, page, pageSize]);
-
-  // 状态徽章
-  const getStatusBadge = (status: string) => {
-    const statusConfig: Record<string, { label: string; color: string; icon: ElementType }> = {
-      pending: { label: "等待中", color: "#F59E0B", icon: Pause },
-      running: { label: "运行中", color: "#3B82F6", icon: Play },
-      completed: { label: "已完成", color: "#10B981", icon: CheckCircle },
-      failed: { label: "失败", color: "#EF4444", icon: Pause },
-      paused: { label: "已暂停", color: "#E5E7EB", icon: Pause },
-    };
-    return statusConfig[status] ?? statusConfig["pending"];
-  };
 
   // 类型映射
   const typeMap: Record<string, string> = {
@@ -176,19 +181,28 @@ export default function SynthesisTaskTab() {
       key: "actions",
       fixed: "right" as const,
       render: (_: unknown, task: SynthesisTask) => (
-        <div className="flex items-center justify-center gap-1">
+        <div className="flex items-center justify-start gap-1">
           <Tooltip title="查看详情">
             <Button
               onClick={() => navigate(`/data/synthesis/task/${task.id}`)}
-              className="hover:bg-blue-50 p-1 h-7 w-7"
+              className="hover:bg-blue-50 p-1 h-7 w-7 flex items-center justify-center"
               type="text"
               icon={<EyeOutlined />}
             />
           </Tooltip>
-          <Tooltip title="归档到数据集">
+          <Tooltip title="立即评估">
             <Button
               type="text"
-              className="hover:bg-green-50 p-1 h-7 w-7"
+              className="hover:bg-purple-50 p-1 h-7 w-7 flex items-center justify-center text-purple-600"
+              icon={<ExperimentOutlined />}
+              onClick={() => openEvalModal(task)}
+            />
+          </Tooltip>
+          <Tooltip title="留用合成数据到数据集">
+            <Button
+              type="text"
+              className="hover:bg-green-50 p-1 h-7 w-7 flex items-center justify-center text-green-600"
+              icon={<FolderOpenOutlined />}
               onClick={() => {
                 Modal.confirm({
                   title: "确认归档该合成任务?",
@@ -198,15 +212,13 @@ export default function SynthesisTaskTab() {
                   onOk: () => handleArchiveTask(task),
                 });
               }}
-            >
-              归档
-            </Button>
+            />
           </Tooltip>
           <Tooltip title="删除任务">
             <Button
               danger
               type="text"
-              className="hover:bg-red-50 p-1 h-7 w-7"
+              className="hover:bg-red-50 p-1 h-7 w-7 flex items-center justify-center"
               icon={<DeleteOutlined />}
               onClick={() => {
                 Modal.confirm({
@@ -237,14 +249,21 @@ export default function SynthesisTaskTab() {
     try {
       // 1. 创建目标数据集（使用简单的默认命名 + 随机后缀，可后续扩展为弹窗自定义）
       const randomSuffix = Math.random().toString(36).slice(2, 8);
-      const datasetReq = {
+      const datasetReq: {
+        name: string;
+        description: string;
+        datasetType: string;
+        category: string;
+        format: string;
+        status: string;
+      } = {
         name: `${task.name}-合成数据留用${randomSuffix}`,
         description: `由合成任务 ${task.id} 留用生成`,
         datasetType: "TEXT",
         category: "SYNTHESIS",
         format: "JSONL",
         status: "DRAFT",
-      } as any;
+      };
       const datasetRes = await createDatasetUsingPost(datasetReq);
       const datasetId = datasetRes?.data?.id;
       if (!datasetId) {
@@ -261,6 +280,88 @@ export default function SynthesisTaskTab() {
     } catch (e) {
       console.error(e);
       message.error("归档失败");
+    }
+  };
+
+  const openEvalModal = (task: SynthesisTask) => {
+    setCurrentEvalTask(task);
+    setEvalModalVisible(true);
+    evalForm.setFieldsValue({
+      name: `${task.name}-数据评估`,
+      taskType: task.synthesis_type || "QA",
+      evalMethod: "AUTO",
+    });
+    // 懒加载模型列表
+    if (!models.length) {
+      loadModels();
+    }
+  };
+
+  const loadModels = async () => {
+    try {
+      setModelLoading(true);
+      const { data } = await queryModelListUsingGet({ page: 0, size: 1000 });
+      setModels(data?.content || []);
+    } catch (e) {
+      console.error(e);
+      message.error("获取模型列表失败");
+    } finally {
+      setModelLoading(false);
+    }
+  };
+
+  const chatModelOptions = models
+    .filter((m) => m.type === "CHAT")
+    .map((m) => ({
+      label: `${m.modelName} (${m.provider})`,
+      value: m.id,
+    }));
+
+  const handleCreateEvaluation = async () => {
+    if (!currentEvalTask) return;
+    try {
+      const values = await evalForm.validateFields();
+      setEvalLoading(true);
+      const taskType = currentEvalTask.synthesis_type || "QA";
+      const payload = {
+        name: values.name,
+        taskType,
+        evalMethod: values.evalMethod,
+        sourceType: "SYNTHESIS",
+        sourceId: currentEvalTask.id,
+        sourceName: currentEvalTask.name,
+        evalConfig: {
+          modelId: values.modelId,
+          dimensions: [
+            {
+              dimension: "问题是否独立",
+              description:
+                "仅分析问题，问题的主体和客体都比较明确，即使有省略，也符合语言习惯。在不需要补充其他信息的情况下不会引起疑惑。",
+            },
+            {
+              dimension: "语法是否错误",
+              description:
+                "问题为疑问句，答案为陈述句; 不存在词语搭配不当的情况;连接词和标点符号不存在错用情况；逻辑混乱的情况不存在；语法结构都正确且完整。",
+            },
+            {
+              dimension: "回答是否有针对性",
+              description:
+                "回答应对问题中的所有疑问点提供正面、直接的回答，不应引起疑惑。同时，答案不应有任何内容的遗漏，需构成一个完整的陈述。",
+            },
+          ],
+        },
+      };
+      await createEvaluationTaskUsingPost(payload);
+      message.success("评估任务创建成功");
+      setEvalModalVisible(false);
+      setCurrentEvalTask(null);
+      evalForm.resetFields();
+    } catch (error) {
+      const err = error as { errorFields?: unknown; response?: { data?: { message?: string } } };
+      if (err?.errorFields) return; // 表单校验错误
+      message.error(err?.response?.data?.message || "评估任务创建失败");
+    } finally {
+      setEvalLoading(false);
     }
   };
 
@@ -333,6 +434,85 @@ export default function SynthesisTaskTab() {
           }}
         />
       </Card>
+
+      <Modal
+        title="创建评估任务"
+        open={evalModalVisible}
+        onCancel={() => {
+          setEvalModalVisible(false);
+          setCurrentEvalTask(null);
+          evalForm.resetFields();
+        }}
+        onOk={handleCreateEvaluation}
+        confirmLoading={evalLoading}
+        okText="开始评估"
+        cancelText="取消"
+      >
+        <Form
+          form={evalForm}
+          layout="vertical"
+          initialValues={{
+            evalMethod: "AUTO",
+          }}
+        >
+          <Form.Item
+            label="评估任务名称"
+            name="name"
+            rules={[{ required: true, message: "请输入评估任务名称" }]}
+          >
+            <Input placeholder="例如：数据评估" />
+          </Form.Item>
+          <Form.Item
+            label="任务类型"
+            name="taskType"
+          >
+            <Select
+              disabled
+              options={[
+                {
+                  label:
+                    currentEvalTask?.synthesis_type === "COT"
+                      ? "COT评估"
+                      : "QA评估",
+                  value: currentEvalTask?.synthesis_type || "QA",
+                },
+              ]}
+            />
+          </Form.Item>
+          <Form.Item
+            label="评估方式"
+            name="evalMethod"
+            rules={[{ required: true, message: "请选择评估方式" }]}
+          >
+            <Select
+              options={[
+                { label: "模型自动评估", value: "AUTO" },
+              ]}
+            />
+          </Form.Item>
+          <Form.Item
+            label="评估模型"
+            name="modelId"
+            rules={[{ required: true, message: "请选择评估模型" }]}
+          >
+            <Select
+              placeholder={modelLoading ? "加载模型中..." : "请选择用于评估的模型"}
+              loading={modelLoading}
+              options={chatModelOptions}
+              showSearch
+              optionFilterProp="label"
+            />
+          </Form.Item>
+          {currentEvalTask && (
+            <Form.Item label="评估对象">
+              <div className="text-xs text-gray-500">
+                源类型：合成任务（SYNTHESIS）<br />
+                源名称：{currentEvalTask.name}
+              </div>
+            </Form.Item>
+          )}
+        </Form>
+      </Modal>
     </div>
   );
 }

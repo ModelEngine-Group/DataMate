@@ -5,8 +5,10 @@ import com.datamate.common.domain.model.ChunkUploadPreRequest;
 import com.datamate.common.domain.model.FileUploadResult;
 import com.datamate.common.domain.service.FileService;
 import com.datamate.common.domain.utils.AnalyzerUtils;
+import com.datamate.common.domain.utils.ArchiveAnalyzer;
 import com.datamate.common.infrastructure.exception.BusinessAssert;
 import com.datamate.common.infrastructure.exception.BusinessException;
+import com.datamate.common.infrastructure.exception.CommonErrorCode;
 import com.datamate.common.infrastructure.exception.SystemErrorCode;
 import com.datamate.common.interfaces.PagedResponse;
 import com.datamate.common.interfaces.PagingQuery;
@@ -213,6 +215,9 @@ public class DatasetFileApplicationService {
      */
     @Transactional
     public String preUpload(UploadFilesPreRequest chunkUploadRequest, String datasetId) {
+        if (Objects.isNull(datasetRepository.getById(datasetId))) {
+            throw BusinessException.of(DataManagementErrorCode.DATASET_NOT_FOUND);
+        }
         ChunkUploadPreRequest request = ChunkUploadPreRequest.builder().build();
         request.setUploadPath(datasetBasePath + File.separator + datasetId);
         request.setTotalFileNum(chunkUploadRequest.getTotalFileNum());
@@ -225,7 +230,7 @@ public class DatasetFileApplicationService {
             String checkInfoJson = objectMapper.writeValueAsString(checkInfo);
             request.setCheckInfo(checkInfoJson);
         } catch (JsonProcessingException e) {
-            throw new IllegalArgumentException("Failed to serialize checkInfo to JSON", e);
+            log.warn("Failed to serialize checkInfo to JSON", e);
         }
         return fileService.preUpload(request);
     }
@@ -238,31 +243,54 @@ public class DatasetFileApplicationService {
     @Transactional
     public void chunkUpload(String datasetId, UploadFileRequest uploadFileRequest) {
         FileUploadResult uploadResult = fileService.chunkUpload(DatasetConverter.INSTANCE.toChunkUploadRequest(uploadFileRequest));
-        saveFileInfoToDb(uploadResult, uploadFileRequest, datasetId);
+        saveFileInfoToDb(uploadResult, datasetId);
     }
 
-    private void saveFileInfoToDb(FileUploadResult fileUploadResult, UploadFileRequest uploadFile, String datasetId) {
+    private void saveFileInfoToDb(FileUploadResult fileUploadResult, String datasetId) {
         if (Objects.isNull(fileUploadResult.getSavedFile())) {
             // 文件切片上传没有完成
             return;
         }
+        DatasetFileUploadCheckInfo checkInfo;
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            checkInfo = objectMapper.readValue(fileUploadResult.getCheckInfo(), DatasetFileUploadCheckInfo.class);
+            if (!Objects.equals(checkInfo.getDatasetId(), datasetId)) {
+                throw BusinessException.of(DataManagementErrorCode.DATASET_NOT_FOUND);
+            }
+        } catch (IllegalArgumentException | JsonProcessingException e) {
+            log.warn("Failed to convert checkInfo to DatasetFileUploadCheckInfo", e);
+            throw BusinessException.of(CommonErrorCode.PRE_UPLOAD_REQUEST_NOT_EXIST);
+        }
+        List<FileUploadResult> files;
+        if (checkInfo.isHasArchive() && AnalyzerUtils.isPackage(fileUploadResult.getSavedFile().getPath())) {
+            files = ArchiveAnalyzer.process(fileUploadResult);
+        } else {
+            files = Collections.singletonList(fileUploadResult);
+        }
+        addFileToDataset(datasetId, files);
+    }
+
+    private void addFileToDataset(String datasetId, List<FileUploadResult> unpacked) {
         Dataset dataset = datasetRepository.getById(datasetId);
-        File savedFile = fileUploadResult.getSavedFile();
-        LocalDateTime currentTime = LocalDateTime.now();
-        DatasetFile datasetFile = DatasetFile.builder()
+        dataset.setFiles(datasetFileRepository.findAllByDatasetId(datasetId));
+        for (FileUploadResult file : unpacked) {
+            File savedFile = file.getSavedFile();
+            LocalDateTime currentTime = LocalDateTime.now();
+            DatasetFile datasetFile = DatasetFile.builder()
                 .id(UUID.randomUUID().toString())
                 .datasetId(datasetId)
                 .fileSize(savedFile.length())
                 .uploadTime(currentTime)
                 .lastAccessTime(currentTime)
-                .fileName(uploadFile.getFileName())
+                .fileName(file.getFileName())
                 .filePath(savedFile.getPath())
-                .fileType(AnalyzerUtils.getExtension(uploadFile.getFileName()))
+                .fileType(AnalyzerUtils.getExtension(file.getFileName()))
                 .build();
-        dataset.setFiles(datasetFileRepository.findAllByDatasetId(datasetId));
-        setDatasetFileId(datasetFile, dataset);
-        datasetFileRepository.saveOrUpdate(datasetFile);
-        dataset.addFile(datasetFile);
+            setDatasetFileId(datasetFile, dataset);
+            datasetFileRepository.saveOrUpdate(datasetFile);
+            dataset.addFile(datasetFile);
+        }
         dataset.active();
         datasetRepository.updateById(dataset);
     }

@@ -72,7 +72,8 @@ public class CollectionTaskController{
         Page<CollectionTask> page = new Page<>(query.getPage(), query.getSize());
         LambdaQueryWrapper<CollectionTask> wrapper = new LambdaQueryWrapper<CollectionTask>()
             .eq(query.getStatus() != null, CollectionTask::getStatus, query.getStatus())
-            .like(StringUtils.isNotBlank(query.getName()), CollectionTask::getName, query.getName());
+            .like(StringUtils.isNotBlank(query.getKeyword()), CollectionTask::getName, query.getKeyword())
+            .orderByDesc(CollectionTask::getCreatedAt);
         return ResponseEntity.ok(CollectionTaskConverter.INSTANCE.toResponse(taskService.getTasks(page, wrapper)));
     }
 }
