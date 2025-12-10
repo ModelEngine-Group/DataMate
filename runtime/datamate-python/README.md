@@ -1,6 +1,6 @@
-# Label Studio Adapter (DataMate)
+# DataMate Python Service (DataMate)
 
-这是 DataMate 的 Label Studio Adapter 服务，负责将 DataMate 的项目与 Label Studio 同步并提供对外的 HTTP API（基于 FastAPI）。
+这是 DataMate 的 Python 服务，负责DataMate的数据合成、数据标注、数据评估等功能。
 
 ## 简要说明
 
@@ -11,19 +11,30 @@
 
 ## 快速开始（开发）
 
-1. 克隆仓库并进入项目目录
-2. 创建并激活虚拟环境：
+### 前置条件
 
+- Python 3.11+
+- poetry 包管理器
+
+1. 克隆仓库
 ```bash
-python -m venv .venv
-source .venv/bin/activate
+git clone git@github.com:ModelEngine-Group/DataMate.git
+```
+2. 进入项目目录
+```bash
+cd runtime/datamate-python
+```
+
+3. 安装依赖
+由于项目使用poetry管理依赖，你可以使用以下命令安装：：
+```bash
+poetry install
 ```
 
 3. 安装依赖
 由于项目使用poetry管理依赖，你可以使用以下命令安装：
 
 ```bash
-pip install poetry
 poetry install
 ```
 或者直接使用pip安装（如果poetry不可用）：
@@ -51,7 +62,11 @@ alembic upgrade head
 - 本地开发（默认 host/port，自动重载）：
 
 ```bash
-uvicorn app.main:app --reload
+set -a && source .env && set +a && poetry run uvicorn app.main:app --port 18000 --reload
+```
+或者
+```bash
+poetry run python -m app.main
 ```
 
 - 指定主机与端口并打开调试日志：
@@ -82,6 +97,14 @@ HOST=0.0.0.0 PORT=8000 uvicorn app.main:app --reload
 
 - Swagger UI: http://127.0.0.1:8000/docs
 - ReDoc: http://127.0.0.1:8000/redoc （推荐使用）
+
+## 开发新功能
+- 安装开发依赖：
+
+```bash
+poetry  add xxx
+```
+
 
 ## 使用（简要）
 
