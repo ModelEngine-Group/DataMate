@@ -1,4 +1,3 @@
-// TypeScript
 import React, { useState, useEffect } from 'react';
 import { Button, Form, Input, Select, message, Modal, Row, Col, Table, Space } from 'antd';
 import { EyeOutlined } from '@ant-design/icons';
@@ -9,6 +8,7 @@ import { ModelI } from "@/pages/SettingsPage/ModelAccess.tsx";
 import { createEvaluationTaskUsingPost } from "@/pages/DataEvaluation/evaluation.api.ts";
 import { queryPromptTemplatesUsingGet } from "@/pages/DataEvaluation/evaluation.api.ts";
 import PreviewPromptModal from "@/pages/DataEvaluation/Create/PreviewPrompt.tsx";
+import { EVAL_METHODS, TASK_TYPES } from "@/pages/DataEvaluation/evaluation.const.tsx";
 
 interface Dataset {
   id: string;
@@ -34,15 +34,6 @@ interface CreateTaskModalProps {
   onCancel: () => void;
   onSuccess: () => void;
 }
-
-const TASK_TYPES = [
-  { label: 'QA评估', value: 'QA' },
-  { label: 'COT评估', value: 'COT' },
-];
-
-const EVAL_METHODS = [
-  { label: '模型自动评估', value: 'AUTO' },
-];
 
 const DEFAULT_EVAL_METHOD = 'AUTO';
 const DEFAULT_TASK_TYPE = 'QA';
