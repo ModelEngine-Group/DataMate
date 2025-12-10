@@ -46,6 +46,7 @@ def _import_operators():
     from . import img_resize
     from . import remove_duplicate_sentences
     from . import knowledge_relation_slice
+    from . import pii_ner_detection
 
 
 _import_operators()

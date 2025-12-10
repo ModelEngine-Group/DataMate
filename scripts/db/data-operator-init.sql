@@ -106,7 +106,8 @@ VALUES ('MineruFormatter', 'MinerU PDF文本抽取', '基于MinerU API，抽取P
        ('ImgSharpness', '图片锐度增强', '自适应调节图片的锐度，主要适用于自然场景图片。', '1.0.0', 'image', 'image', null, null, '', 'false'),
        ('ImgSimilarImagesCleaner', '相似图片去除', '去除相似的图片。', '1.0.0', 'image', 'image', null, '{"similarThreshold": {"name": "相似度", "description": "相似度取值越大，图片相似度越高。", "type": "slider", "defaultVal": 0.8, "min": 0, "max": 1, "step": 0.01}}', '', 'false'),
        ('ImgTypeUnify', '图片格式转换', '将图片编码格式统一为jpg、jpeg、png、bmp格式。', '1.0.0', 'image', 'image', null, '{"imgType": {"name": "图片编码格式", "type": "select", "defaultVal": "jpg", "options": [{"label": "jpg", "value": "jpg"}, {"label": "png", "value": "png"}, {"label": "jpeg", "value": "jpeg"}, {"label": "bmp", "value": "bmp"}]}}', '', 'false'),
-       ('ImgDirectionCorrect', '图片方向校正', '将含有文字的图片校正到文字水平方向，主要适用于文档场景。', '1.0.0', 'image', 'image', null, null, '', 'false');
+       ('ImgDirectionCorrect', '图片方向校正', '将含有文字的图片校正到文字水平方向，主要适用于文档场景。', '1.0.0', 'image', 'image', null, null, '', 'false'),
+       ('PiiDetector', '高级匿名化', '高级匿名化算子，检测命名实体并匿名化。', '1.0.0', 'text', 'text', null, null, '', 'false');
 
 INSERT IGNORE INTO t_operator_category_relation(category_id, operator_id)
 SELECT c.id, o.id
@@ -119,7 +120,8 @@ AND o.id IN ('FileWithShortOrLongLengthFilter', 'FileWithHighRepeatPhraseRateFil
             'AnonymizedIpAddress', 'AnonymizedPhoneNumber', 'AnonymizedUrlCleaner', 'HtmlTagCleaner', 'XMLTagCleaner',
             'ContentCleaner', 'EmailNumberCleaner', 'EmojiCleaner', 'ExtraSpaceCleaner', 'FullWidthCharacterCleaner',
             'GrableCharactersCleaner', 'InvisibleCharactersCleaner', 'LegendCleaner', 'PoliticalWordCleaner',
-            'SexualAndViolentWordCleaner', 'TraditionalChineseCleaner', 'UnicodeSpaceCleaner', 'MineruFormatter');
+            'SexualAndViolentWordCleaner', 'TraditionalChineseCleaner', 'UnicodeSpaceCleaner', 'MineruFormatter',
+            'PiiDetector');
 
 INSERT IGNORE INTO t_operator_category_relation(category_id, operator_id)
 SELECT c.id, o.id
