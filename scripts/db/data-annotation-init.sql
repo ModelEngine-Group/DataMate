@@ -44,23 +44,14 @@ CREATE TABLE t_dm_labeling_projects (
 
 -- 1. 图像分类模板
 INSERT INTO t_dm_annotation_templates (
-    id, 
-    name, 
-    description, 
-    data_type, 
-    labeling_type, 
-    configuration, 
-    style, 
-    category, 
-    built_in, 
-    version, 
-    created_at
+    id, name, description, data_type, labeling_type,
+    configuration, style, category, built_in, version, created_at
 ) VALUES (
     'tpl-image-classification-001',
-    'Image Classification',
-    'Simple image classification with multiple choice labels',
-    'image',
-    'classification',
+    '图像分类',
+    '简单的多标签图像分类模板',
+    '图像',
+    '分类',
     JSON_OBJECT(
         'labels', JSON_ARRAY(
             JSON_OBJECT(
@@ -69,7 +60,7 @@ INSERT INTO t_dm_annotation_templates (
                 'type', 'Choices',
                 'options', JSON_ARRAY('Cat', 'Dog', 'Bird', 'Other'),
                 'required', true,
-                'description', 'Select the category that best describes the image'
+                'description', '选择最符合图像内容的标签'
             )
         ),
         'objects', JSON_ARRAY(
@@ -81,7 +72,7 @@ INSERT INTO t_dm_annotation_templates (
         )
     ),
     'horizontal',
-    'computer-vision',
+    '计算机视觉',
     1,
     '1.0.0',
     NOW()
@@ -98,25 +89,17 @@ ON DUPLICATE KEY UPDATE
     version = VALUES(version),
     updated_at = NOW();
 
+
 -- 2. 目标检测模板（矩形框）
 INSERT INTO t_dm_annotation_templates (
-    id, 
-    name, 
-    description, 
-    data_type, 
-    labeling_type, 
-    configuration, 
-    style, 
-    category, 
-    built_in, 
-    version, 
-    created_at
+    id, name, description, data_type, labeling_type,
+    configuration, style, category, built_in, version, created_at
 ) VALUES (
     'tpl-object-detection-001',
-    'Object Detection (Bounding Box)',
-    'Object detection using rectangular bounding boxes',
-    'image',
-    'object-detection',
+    '目标检测（边界框）',
+    '使用矩形边界框进行目标检测',
+    '图像',
+    '目标检测',
     JSON_OBJECT(
         'labels', JSON_ARRAY(
             JSON_OBJECT(
@@ -125,7 +108,7 @@ INSERT INTO t_dm_annotation_templates (
                 'type', 'RectangleLabels',
                 'labels', JSON_ARRAY('Person', 'Vehicle', 'Animal', 'Object'),
                 'required', false,
-                'description', 'Draw bounding boxes around objects'
+                'description', '在图像中框出目标并标注类别'
             )
         ),
         'objects', JSON_ARRAY(
@@ -137,7 +120,7 @@ INSERT INTO t_dm_annotation_templates (
         )
     ),
     'horizontal',
-    'computer-vision',
+    '计算机视觉',
     1,
     '1.0.0',
     NOW()
@@ -154,25 +137,17 @@ ON DUPLICATE KEY UPDATE
     version = VALUES(version),
     updated_at = NOW();
 
+
 -- 3. 图像分割模板（多边形）
 INSERT INTO t_dm_annotation_templates (
-    id, 
-    name, 
-    description, 
-    data_type, 
-    labeling_type, 
-    configuration, 
-    style, 
-    category, 
-    built_in, 
-    version, 
-    created_at
+    id, name, description, data_type, labeling_type,
+    configuration, style, category, built_in, version, created_at
 ) VALUES (
     'tpl-image-segmentation-001',
-    'Image Segmentation (Polygon)',
-    'Semantic segmentation using polygon annotations',
-    'image',
-    'segmentation',
+    '图像分割（多边形）',
+    '使用多边形标注进行语义分割',
+    '图像',
+    '分割',
     JSON_OBJECT(
         'labels', JSON_ARRAY(
             JSON_OBJECT(
@@ -181,7 +156,7 @@ INSERT INTO t_dm_annotation_templates (
                 'type', 'PolygonLabels',
                 'labels', JSON_ARRAY('Background', 'Foreground', 'Person', 'Car'),
                 'required', false,
-                'description', 'Draw polygons to segment regions'
+                'description', '使用多边形框选需要分割的区域'
             )
         ),
         'objects', JSON_ARRAY(
@@ -193,7 +168,7 @@ INSERT INTO t_dm_annotation_templates (
         )
     ),
     'horizontal',
-    'computer-vision',
+    '计算机视觉',
     1,
     '1.0.0',
     NOW()
@@ -210,25 +185,17 @@ ON DUPLICATE KEY UPDATE
     version = VALUES(version),
     updated_at = NOW();
 
+
 -- 4. 文本分类模板
 INSERT INTO t_dm_annotation_templates (
-    id, 
-    name, 
-    description, 
-    data_type, 
-    labeling_type, 
-    configuration, 
-    style, 
-    category, 
-    built_in, 
-    version, 
-    created_at
+    id, name, description, data_type, labeling_type,
+    configuration, style, category, built_in, version, created_at
 ) VALUES (
     'tpl-text-classification-001',
-    'Text Classification',
-    'Classify text into predefined categories',
-    'text',
-    'classification',
+    '文本分类',
+    '将文本划分到预定义的类别',
+    '文本',
+    '分类',
     JSON_OBJECT(
         'labels', JSON_ARRAY(
             JSON_OBJECT(
@@ -237,7 +204,7 @@ INSERT INTO t_dm_annotation_templates (
                 'type', 'Choices',
                 'options', JSON_ARRAY('Positive', 'Negative', 'Neutral'),
                 'required', true,
-                'description', 'Sentiment classification'
+                'description', '对文本的情感或类别进行选择'
             )
         ),
         'objects', JSON_ARRAY(
@@ -249,7 +216,7 @@ INSERT INTO t_dm_annotation_templates (
         )
     ),
     'vertical',
-    'nlp',
+    '自然语言处理',
     1,
     '1.0.0',
     NOW()
@@ -266,25 +233,17 @@ ON DUPLICATE KEY UPDATE
     version = VALUES(version),
     updated_at = NOW();
 
--- 5. 命名实体识别（NER）模板
+
+-- 5. 命名实体识别（NER）
 INSERT INTO t_dm_annotation_templates (
-    id, 
-    name, 
-    description, 
-    data_type, 
-    labeling_type, 
-    configuration, 
-    style, 
-    category, 
-    built_in, 
-    version, 
-    created_at
+    id, name, description, data_type, labeling_type,
+    configuration, style, category, built_in, version, created_at
 ) VALUES (
     'tpl-ner-001',
-    'Named Entity Recognition',
-    'Extract and label named entities in text',
-    'text',
-    'ner',
+    '命名实体识别',
+    '从文本中抽取并标注命名实体',
+    '文本',
+    '实体识别',
     JSON_OBJECT(
         'labels', JSON_ARRAY(
             JSON_OBJECT(
@@ -293,7 +252,7 @@ INSERT INTO t_dm_annotation_templates (
                 'type', 'Labels',
                 'labels', JSON_ARRAY('PERSON', 'ORG', 'LOC', 'DATE', 'MISC'),
                 'required', false,
-                'description', 'Highlight and classify named entities'
+                'description', '在文本中标注人物、地点等实体'
             )
         ),
         'objects', JSON_ARRAY(
@@ -305,7 +264,7 @@ INSERT INTO t_dm_annotation_templates (
         )
     ),
     'vertical',
-    'nlp',
+    '自然语言处理',
     1,
     '1.0.0',
     NOW()
@@ -322,25 +281,17 @@ ON DUPLICATE KEY UPDATE
     version = VALUES(version),
     updated_at = NOW();
 
+
 -- 6. 音频分类模板
 INSERT INTO t_dm_annotation_templates (
-    id, 
-    name, 
-    description, 
-    data_type, 
-    labeling_type, 
-    configuration, 
-    style, 
-    category, 
-    built_in, 
-    version, 
-    created_at
+    id, name, description, data_type, labeling_type,
+    configuration, style, category, built_in, version, created_at
 ) VALUES (
     'tpl-audio-classification-001',
-    'Audio Classification',
-    'Classify audio clips into categories',
-    'audio',
-    'classification',
+    '音频分类',
+    '将音频片段划分到不同类别',
+    '音频',
+    '分类',
     JSON_OBJECT(
         'labels', JSON_ARRAY(
             JSON_OBJECT(
@@ -349,7 +300,7 @@ INSERT INTO t_dm_annotation_templates (
                 'type', 'Choices',
                 'options', JSON_ARRAY('Speech', 'Music', 'Noise', 'Silence'),
                 'required', true,
-                'description', 'Audio content classification'
+                'description', '选择音频片段对应的类别'
             )
         ),
         'objects', JSON_ARRAY(
@@ -361,7 +312,7 @@ INSERT INTO t_dm_annotation_templates (
         )
     ),
     'horizontal',
-    'audio',
+    '音频',
     1,
     '1.0.0',
     NOW()
@@ -377,3 +328,4 @@ ON DUPLICATE KEY UPDATE
     built_in = VALUES(built_in),
     version = VALUES(version),
     updated_at = NOW();
+

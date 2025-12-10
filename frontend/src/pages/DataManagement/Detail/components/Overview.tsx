@@ -3,7 +3,7 @@ import { formatBytes, formatDateTime } from "@/utils/unit";
 import { Download, Trash2 } from "lucide-react";
 import { datasetTypeMap } from "../../dataset.const";
 
-export default function Overview({ dataset, filesOperation }) {
+export default function Overview({ dataset, filesOperation, fetchDataset }) {
   const {
     fileList,
     pagination,
@@ -74,6 +74,11 @@ export default function Overview({ dataset, filesOperation }) {
       children: dataset.targetLocation || "未知",
     },
     {
+      key: "pvcName",
+      label: "存储名称",
+      children: dataset.pvcName || "未知",
+    },
+    {
       key: "createdAt",
       label: "创建时间",
       children: dataset.createdAt,
@@ -129,7 +134,11 @@ export default function Overview({ dataset, filesOperation }) {
           <Button
             size="small"
             type="link"
-            onClick={() => handleDeleteFile(record)}
+            onClick={async () => {
+              await handleDeleteFile(record);
+              fetchDataset()
+            }
+          }
           >
             删除
           </Button>

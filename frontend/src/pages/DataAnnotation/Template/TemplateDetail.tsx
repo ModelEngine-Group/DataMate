@@ -19,61 +19,61 @@ const TemplateDetail: React.FC<TemplateDetailProps> = ({
 
     return (
         <Modal
-            title="Template Details"
+            title="模板详情"
             open={visible}
             onCancel={onClose}
             footer={null}
             width={800}
         >
             <Descriptions bordered column={2}>
-                <Descriptions.Item label="Name" span={2}>
+                <Descriptions.Item label="名称" span={2}>
                     {template.name}
                 </Descriptions.Item>
-                <Descriptions.Item label="Description" span={2}>
+                <Descriptions.Item label="描述" span={2}>
                     {template.description || "-"}
                 </Descriptions.Item>
-                <Descriptions.Item label="Data Type">
+                <Descriptions.Item label="数据类型">
                     <Tag color="cyan">{template.dataType}</Tag>
                 </Descriptions.Item>
-                <Descriptions.Item label="Labeling Type">
+                <Descriptions.Item label="标注类型">
                     <Tag color="geekblue">{template.labelingType}</Tag>
                 </Descriptions.Item>
-                <Descriptions.Item label="Category">
+                <Descriptions.Item label="分类">
                     <Tag color="blue">{template.category}</Tag>
                 </Descriptions.Item>
-                <Descriptions.Item label="Style">
+                <Descriptions.Item label="样式">
                     {template.style}
                 </Descriptions.Item>
-                <Descriptions.Item label="Type">
+                <Descriptions.Item label="类型">
                     <Tag color={template.builtIn ? "gold" : "default"}>
-                        {template.builtIn ? "Built-in" : "Custom"}
+                        {template.builtIn ? "系统内置" : "自定义"}
                     </Tag>
                 </Descriptions.Item>
-                <Descriptions.Item label="Version">
+                <Descriptions.Item label="版本">
                     {template.version}
                 </Descriptions.Item>
-                <Descriptions.Item label="Created At" span={2}>
+                <Descriptions.Item label="创建时间" span={2}>
                     {new Date(template.createdAt).toLocaleString()}
                 </Descriptions.Item>
                 {template.updatedAt && (
-                    <Descriptions.Item label="Updated At" span={2}>
+                    <Descriptions.Item label="更新时间" span={2}>
                         {new Date(template.updatedAt).toLocaleString()}
                     </Descriptions.Item>
                 )}
             </Descriptions>
 
-            <Divider>Configuration</Divider>
+            <Divider>配置详情</Divider>
 
-            <Card title="Data Objects" size="small" style={{ marginBottom: 16 }}>
+            <Card title="数据对象" size="small" style={{ marginBottom: 16 }}>
                 <Space direction="vertical" style={{ width: "100%" }}>
                     {template.configuration.objects.map((obj, index) => (
                         <Card key={index} size="small" type="inner">
                             <Space>
-                                <Text strong>Name:</Text>
+                                <Text strong>名称：</Text>
                                 <Tag>{obj.name}</Tag>
-                                <Text strong>Type:</Text>
+                                <Text strong>类型：</Text>
                                 <Tag color="blue">{obj.type}</Tag>
-                                <Text strong>Value:</Text>
+                                <Text strong>值：</Text>
                                 <Tag color="green">{obj.value}</Tag>
                             </Space>
                         </Card>
@@ -81,31 +81,34 @@ const TemplateDetail: React.FC<TemplateDetailProps> = ({
                 </Space>
             </Card>
 
-            <Card title="Label Controls" size="small" style={{ marginBottom: 16 }}>
+            <Card title="标注控件" size="small" style={{ marginBottom: 16 }}>
                 <Space direction="vertical" style={{ width: "100%" }} size="middle">
                     {template.configuration.labels.map((label, index) => (
-                        <Card key={index} size="small" type="inner" title={`Control ${index + 1}`}>
+                        <Card key={index} size="small" type="inner" title={`控件 ${index + 1}`}>
                             <Space direction="vertical" style={{ width: "100%" }}>
                                 <div>
-                                    <Text strong>From Name: </Text>
+                                    <Text strong>来源名称：</Text>
                                     <Tag>{label.fromName}</Tag>
-                                    <Text strong style={{ marginLeft: 16 }}>To Name: </Text>
+
+                                    <Text strong style={{ marginLeft: 16 }}>目标名称：</Text>
                                     <Tag>{label.toName}</Tag>
-                                    <Text strong style={{ marginLeft: 16 }}>Type: </Text>
+
+                                    <Text strong style={{ marginLeft: 16 }}>类型：</Text>
                                     <Tag color="purple">{label.type}</Tag>
-                                    {label.required && <Tag color="red">Required</Tag>}
+
+                                    {label.required && <Tag color="red">必填</Tag>}
                                 </div>
 
                                 {label.description && (
                                     <div>
-                                        <Text strong>Description: </Text>
+                                        <Text strong>描述：</Text>
                                         <Text type="secondary">{label.description}</Text>
                                     </div>
                                 )}
 
                                 {label.options && label.options.length > 0 && (
                                     <div>
-                                        <Text strong>Options: </Text>
+                                        <Text strong>选项：</Text>
                                         <div style={{ marginTop: 4 }}>
                                             {label.options.map((opt, i) => (
                                                 <Tag key={i} color="cyan">{opt}</Tag>
@@ -116,7 +119,7 @@ const TemplateDetail: React.FC<TemplateDetailProps> = ({
 
                                 {label.labels && label.labels.length > 0 && (
                                     <div>
-                                        <Text strong>Labels: </Text>
+                                        <Text strong>标签：</Text>
                                         <div style={{ marginTop: 4 }}>
                                             {label.labels.map((lbl, i) => (
                                                 <Tag key={i} color="geekblue">{lbl}</Tag>
@@ -131,7 +134,7 @@ const TemplateDetail: React.FC<TemplateDetailProps> = ({
             </Card>
 
             {template.labelConfig && (
-                <Card title="Label Studio XML Configuration" size="small">
+                <Card title="Label Studio XML 配置" size="small">
                     <Paragraph>
                         <pre style={{
                             background: "#f5f5f5",
