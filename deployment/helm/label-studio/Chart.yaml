@@ -1,0 +1,10 @@
+apiVersion: v2
+name: label-studio
+version: 0.1.0
+description: A Helm chart for deploying Label Studio with PostgreSQL on Kubernetes
+
+# Application metadata
+appVersion: "latest"
+
+# This chart is designed to mirror the behavior of deployment/docker/label-studio/docker-compose.yml
+

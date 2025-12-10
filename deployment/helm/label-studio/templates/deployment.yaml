@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "label-studio.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "label-studio.name" . }}
+    helm.sh/chart: {{ include "label-studio.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "label-studio.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "label-studio.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: label-studio
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args: ["label-studio-uwsgi"]
+          env:
+            - name: DJANGO_DB
+              value: {{ .Values.env.DJANGO_DB | quote }}
+            - name: POSTGRE_NAME
+              value: {{ .Values.env.POSTGRE_NAME | quote }}
+            - name: POSTGRE_USER
+              value: {{ .Values.env.POSTGRE_USER | quote }}
+            - name: POSTGRE_PASSWORD
+              value: {{ .Values.env.POSTGRE_PASSWORD | quote }}
+            - name: POSTGRE_PORT
+              value: {{ .Values.env.POSTGRE_PORT | quote }}
+            - name: POSTGRE_HOST
+              value: {{ .Values.env.POSTGRE_HOST | quote }}
+            - name: LABEL_STUDIO_HOST
+              value: {{ .Values.env.LABEL_STUDIO_HOST | quote }}
+            - name: LOCAL_FILES_SERVING_ENABLED
+              value: {{ .Values.env.LOCAL_FILES_SERVING_ENABLED | quote }}
+            - name: LOCAL_FILES_DOCUMENT_ROOT
+              value: {{ .Values.env.LOCAL_FILES_DOCUMENT_ROOT | quote }}
+            - name: USE_USERNAME_FOR_LOGIN
+              value: {{ .Values.env.USE_USERNAME_FOR_LOGIN | quote }}
+            - name: LABEL_STUDIO_USERNAME
+              value: {{ .Values.env.LABEL_STUDIO_USERNAME | quote }}
+            - name: LABEL_STUDIO_PASSWORD
+              value: {{ .Values.env.LABEL_STUDIO_PASSWORD | quote }}
+            - name: LABEL_STUDIO_ENABLE_LEGACY_API_TOKEN
+              value: {{ .Values.env.LABEL_STUDIO_ENABLE_LEGACY_API_TOKEN | quote }}
+            - name: LABEL_STUDIO_USER_TOKEN
+              value: {{ .Values.env.LABEL_STUDIO_USER_TOKEN | quote }}
+            - name: LOG_LEVEL
+              value: {{ .Values.env.LOG_LEVEL | quote }}
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          volumeMounts:
+            - name: data
+              mountPath: /label-studio/data
+            - name: dataset
+              mountPath: /label-studio/local
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ if .Values.persistence.existingClaim }}{{ .Values.persistence.existingClaim }}{{ else }}{{ include "label-studio.fullname" . }}-data{{ end }}
+        - name: dataset
+          {{- if and .Values.datasetVolume.enabled .Values.datasetVolume.claimName }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.datasetVolume.claimName }}
+          {{- else }}
+          persistentVolumeClaim:
+            claimName: {{ if .Values.persistence.existingClaim }}{{ .Values.persistence.existingClaim }}{{ else }}{{ include "label-studio.fullname" . }}-dataset{{ end }}
+          {{- end }}
+

@@ -1,0 +1,79 @@
+# Default values for label-studio Helm chart.
+# This mirrors the configuration from deployment/docker/label-studio/docker-compose.yml
+
+replicaCount: 1
+
+image:
+  repository: heartexlabs/label-studio
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+postgres:
+  enabled: true
+  image:
+    repository: pgautoupgrade/pgautoupgrade
+    tag: "13-alpine"
+    pullPolicy: IfNotPresent
+  username: postgres
+  # In docker-compose, POSTGRES_HOST_AUTH_METHOD=trust is used (no password).
+  # For production, you should set a password and disable trust auth.
+  password: ""
+  authMethod: trust
+  persistence:
+    enabled: true
+    size: 10Gi
+
+service:
+  type: ClusterIP
+  port: 8000
+  nodePort: null
+
+# Corresponds to docker-compose port mapping 30001:8000
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: ""
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+resources: {}
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+env:
+  DJANGO_DB: "default"
+  POSTGRE_NAME: "postgres"
+  POSTGRE_USER: "postgres"
+  POSTGRE_PASSWORD: ""
+  POSTGRE_PORT: 5432
+  POSTGRE_HOST: "db"
+  LABEL_STUDIO_HOST: "" # can be overridden
+  LOCAL_FILES_SERVING_ENABLED: "true"
+  LOCAL_FILES_DOCUMENT_ROOT: "/label-studio/local"
+  USE_USERNAME_FOR_LOGIN: "true"
+  LABEL_STUDIO_USERNAME: "admin@demo.com"
+  LABEL_STUDIO_PASSWORD: "demoadmin"
+  LABEL_STUDIO_ENABLE_LEGACY_API_TOKEN: "true"
+  LABEL_STUDIO_USER_TOKEN: "abc123abc123"
+  LOG_LEVEL: "DEBUG"
+
+persistence:
+  enabled: true
+  existingClaim: "" # if you already have PVC that maps to external datamate-dataset-volume
+  size: 10Gi
+  storageClassName: ""
+
+# Name of the Kubernetes PVC to simulate external Docker volume `datamate-dataset-volume`
+# If not set and persistence.enabled=true, a PVC will be created automatically.
+datasetVolume:
+  enabled: true
+  claimName: "" # if empty, uses same PVC as persistence or creates a dedicated one
+
