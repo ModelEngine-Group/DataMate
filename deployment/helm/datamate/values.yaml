@@ -112,8 +112,6 @@ backend-python:
       mountPath: /flow
     - name: log-volume
       mountPath: /var/log/datamate
-    - name: operator-volume
-      mountPath: /operators
 
 frontend:
   service:
