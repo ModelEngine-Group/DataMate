@@ -400,18 +400,17 @@ export default function SynthDataDetail() {
                             <span title={item.id}>ID：{item.id}</span>
                           </div>
 
-                          {/* 顶部操作按钮：编辑 & 删除，更显眼 */}
-                          <div className="mb-2 flex items-center justify-end gap-2 text-[12px]">
+                          {/* 顶部操作按钮：编辑 & 删除，改为仅图标按钮 */}
+                          <div className="mb-2 flex items-center justify-end gap-1 text-[12px]">
                             {!isEditing && (
                               <>
                                 <Button
-                                  type="link"
+                                  type="text"
                                   size="small"
-                                  icon={<EditOutlined />}
+                                  shape="circle"
+                                  icon={<EditOutlined className="text-[13px]" />}
                                   onClick={() => startEdit(item)}
-                                >
-                                  编辑
-                                </Button>
+                                />
                                 <Popconfirm
                                   title="确认删除该条合成数据？"
                                   okText="删除"
@@ -419,13 +418,13 @@ export default function SynthDataDetail() {
                                   onConfirm={() => handleDeleteSingleSynthesisData(item.id)}
                                 >
                                   <Button
-                                    type="link"
+                                    type="text"
                                     size="small"
+                                    shape="circle"
                                     danger
-                                    icon={<DeleteOutlined />}
-                                  >
-                                    删除
-                                  </Button>
+                                    icon={<DeleteOutlined className="text-[13px]" />}
+                                    onClick={(e) => e.stopPropagation()}
+                                  />
                                 </Popconfirm>
                               </>
                             )}
