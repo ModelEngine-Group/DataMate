@@ -59,6 +59,7 @@ cd DataMate
 ```bash
 make install
 ```
+Once the container is running, access http://localhost:30000 in a browser to view the front-end interface.
 
 To list all available Make targets, flags and help text, run:
 

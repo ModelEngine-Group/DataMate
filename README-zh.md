@@ -56,6 +56,7 @@ cd DataMate
 ```bash
 make install
 ```
+当容器运行后，请在浏览器打开 http://localhost:30000 查看前端界面。
 
 要查看所有可用的 Make 目标、选项和帮助信息，请运行：
 
