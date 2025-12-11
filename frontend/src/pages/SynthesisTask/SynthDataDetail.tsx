@@ -83,7 +83,8 @@ export default function SynthDataDetail() {
   const [chunkLoading, setChunkLoading] = useState(false);
   const [dataLoading, setDataLoading] = useState(false);
   const [synthDataList, setSynthDataList] = useState<SynthesisDataItem[]>([]);
-  // 展开/收起逻辑已去除，尽量直接展示完整数据
+  const [chunkConfirmVisibleId, setChunkConfirmVisibleId] = useState<string | null>(null);
+  const [dataConfirmVisibleId, setDataConfirmVisibleId] = useState<string | null>(null);
 
   // 加载任务信息（用于顶部展示）
   useEffect(() => {
@@ -268,9 +269,72 @@ export default function SynthDataDetail() {
     },
   ];
 
+  const showChunkConfirm = (id: string) => setChunkConfirmVisibleId(id);
+  const hideChunkConfirm = () => setChunkConfirmVisibleId(null);
+
+  const showDataConfirm = (id: string) => setDataConfirmVisibleId(id);
+  const hideDataConfirm = () => setDataConfirmVisibleId(null);
+
   return (
     <>
       <Breadcrumb items={breadItems} />
+      {/* 全局删除确认遮罩：Chunk */}
+      {chunkConfirmVisibleId && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/30">
+          <div className="bg-white rounded-lg px-6 py-4 shadow-lg min-w-[320px] max-w-[420px]">
+            <div className="text-sm font-medium mb-2">确认删除该 Chunk 及其合成数据？</div>
+            <div className="text-xs text-gray-500 mb-4 break-all">
+              ID: {chunkConfirmVisibleId}
+            </div>
+            <div className="flex justify-end gap-2 text-sm">
+              <Button size="small" onClick={hideChunkConfirm}>
+                取消
+              </Button>
+              <Button
+                size="small"
+                type="primary"
+                danger
+                onClick={async () => {
+                  setSelectedChunkId(chunkConfirmVisibleId);
+                  await handleDeleteCurrentChunk();
+                  hideChunkConfirm();
+                }}
+              >
+                删除
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 全局删除确认遮罩：合成数据 */}
+      {dataConfirmVisibleId && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/30">
+          <div className="bg-white rounded-lg px-6 py-4 shadow-lg min-w-[320px] max-w-[480px]">
+            <div className="text-sm font-medium mb-2">确认删除该条合成数据？</div>
+            <div className="text-xs text-gray-500 mb-4 break-all">
+              ID: {dataConfirmVisibleId}
+            </div>
+            <div className="flex justify-end gap-2 text-sm">
+              <Button size="small" onClick={hideDataConfirm}>
+                取消
+              </Button>
+              <Button
+                size="small"
+                type="primary"
+                danger
+                onClick={async () => {
+                  await handleDeleteSingleSynthesisData(dataConfirmVisibleId);
+                  hideDataConfirm();
+                }}
+              >
+                删除
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="mt-4 flex flex-1 flex-col overflow-hidden rounded-lg bg-transparent">
         <div className="flex flex-1 min-h-0 gap-4">
           {/* 左侧 Chunk 列表 */}
@@ -318,26 +382,17 @@ export default function SynthDataDetail() {
                                 <span className="text-[11px] text-gray-400" title={item.id}>
                                   ID: {item.id}
                                 </span>
-                                {/* 删除该 Chunk 按钮 */}
-                                <Popconfirm
-                                  title="确认删除该 Chunk 及其合成数据？"
-                                  okText="删除"
-                                  cancelText="取消"
-                                  onConfirm={(e) => {
-                                    e?.stopPropagation();
-                                    setSelectedChunkId(item.id);
-                                    handleDeleteCurrentChunk();
+                                <Button
+                                  type="text"
+                                  size="small"
+                                  shape="circle"
+                                  danger
+                                  icon={<DeleteOutlined className="text-[12px]" />}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    showChunkConfirm(item.id);
                                   }}
-                                  onCancel={(e) => e?.stopPropagation()}
-                                >
-                                  <Button
-                                    type="text"
-                                    size="small"
-                                    danger
-                                    icon={<DeleteOutlined className="text-[12px]" />}
-                                    onClick={(e) => e.stopPropagation()}
-                                  />
-                                </Popconfirm>
+                                />
                               </div>
                             </div>
                             <div className="text-xs text-gray-600 whitespace-pre-wrap break-words leading-relaxed">
@@ -397,37 +452,31 @@ export default function SynthDataDetail() {
                         >
                           <div className="mb-2 text-[12px] text-gray-500 flex justify-between items-center">
                             <span>记录 {index + 1}</span>
-                            <span title={item.id}>ID：{item.id}</span>
-                          </div>
-
-                          {/* 顶部操作按钮：编辑 & 删除，改为仅图标按钮 */}
-                          <div className="mb-2 flex items-center justify-end gap-1 text-[12px]">
-                            {!isEditing && (
-                              <>
-                                <Button
-                                  type="text"
-                                  size="small"
-                                  shape="circle"
-                                  icon={<EditOutlined className="text-[13px]" />}
-                                  onClick={() => startEdit(item)}
-                                />
-                                <Popconfirm
-                                  title="确认删除该条合成数据？"
-                                  okText="删除"
-                                  cancelText="取消"
-                                  onConfirm={() => handleDeleteSingleSynthesisData(item.id)}
-                                >
+                            <div className="flex items-center gap-2">
+                              <span title={item.id}>ID：{item.id}</span>
+                              {!isEditing && (
+                                <>
+                                  <Button
+                                    type="text"
+                                    size="small"
+                                    shape="circle"
+                                    icon={<EditOutlined className="text-[13px]" />}
+                                    onClick={() => startEdit(item)}
+                                  />
                                   <Button
                                     type="text"
                                     size="small"
                                     shape="circle"
                                     danger
                                     icon={<DeleteOutlined className="text-[13px]" />}
-                                    onClick={(e) => e.stopPropagation()}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      showDataConfirm(item.id);
+                                    }}
                                   />
-                                </Popconfirm>
-                              </>
-                            )}
+                                </>
+                              )}
+                            </div>
                           </div>
 
                           {/* key-value 展示区域：不再截断，完整展示 */}
