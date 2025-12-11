@@ -456,9 +456,8 @@ class FileExporter(BaseOp):
                 new_file_name = base_name + '.' + file_type
                 sample[self.filename_key] = new_file_name
 
-                base_name, _ = os.path.splitext(save_path)
-                sample[self.filepath_key] = base_name
-                file_size = os.path.getsize(base_name)
+                sample[self.filepath_key] = save_path
+                file_size = os.path.getsize(save_path)
                 sample[self.filesize_key] = f"{file_size}"
 
             logger.info(f"origin file named {file_name} has been save to {save_path}")
@@ -514,16 +513,15 @@ class FileExporter(BaseOp):
         return sample, save_path
 
     def save_file(self, sample, save_path):
-        file_name, _ = os.path.splitext(save_path)
         # 以二进制格式保存文件
         file_sample = sample[self.text_key].encode('utf-8') if sample[self.text_key] else sample[self.data_key]
-        with open(file_name, 'wb') as f:
+        with open(save_path, 'wb') as f:
             f.write(file_sample)
             # 获取父目录路径
 
-        parent_dir = os.path.dirname(file_name)
+        parent_dir = os.path.dirname(save_path)
         os.chmod(parent_dir, 0o770)
-        os.chmod(file_name, 0o640)
+        os.chmod(save_path, 0o640)
 
     def _get_from_data(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         sample[self.data_key] = bytes(sample[self.data_key])
