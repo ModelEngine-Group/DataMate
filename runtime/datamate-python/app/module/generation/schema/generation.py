@@ -2,7 +2,7 @@ from datetime import datetime
 from enum import Enum
 from typing import List, Optional, Dict, Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class TextSplitConfig(BaseModel):
@@ -27,12 +27,20 @@ class SynthesisType(Enum):
 class CreateSynthesisTaskRequest(BaseModel):
     """创建数据合成任务请求"""
     name: str = Field(..., description="合成任务名称")
-    description: str = Field(None, description="合成任务描述")
+    description: Optional[str] = Field(None, description="合成任务描述")
     model_id: str = Field(..., description="模型ID")
     source_file_id: list[str] = Field(..., description="原始文件ID列表")
     text_split_config: TextSplitConfig = Field(None, description="文本切片配置")
     synthesis_config: SynthesisConfig = Field(..., description="合成配置")
     synthesis_type: SynthesisType = Field(..., description="合成类型")
+
+    @field_validator("description")
+    @classmethod
+    def empty_string_to_none(cls, v: Optional[str]) -> Optional[str]:
+        """前端如果传入空字符串，将其统一转换为 None，避免存库时看起来像有描述但实际上为空。"""
+        if isinstance(v, str) and v.strip() == "":
+            return None
+        return v
 
 
 class DataSynthesisTaskItem(BaseModel):

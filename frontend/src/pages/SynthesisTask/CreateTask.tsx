@@ -146,9 +146,8 @@ export default function SynthesisTaskCreate() {
       }
 
       // 构造后端要求的参数格式
-      const payload = {
-        name: values.name || form.getFieldValue("name"), // 必选，确保传递
-        description: values.description ?? "", // 可选，始终传递
+      const payload: Record<string, unknown> = {
+        name: values.name || form.getFieldValue("name"),
         model_id: selectedModel,
         source_file_id: selectedFiles,
         text_split_config: {
@@ -161,10 +160,14 @@ export default function SynthesisTaskCreate() {
         synthesis_type: taskType === "qa" ? "QA" : "COT",
       };
 
+      // 只有在有真实内容时携带 description，避免强制传空字符串
+      const desc = values.description ?? form.getFieldValue("description");
+      if (typeof desc === "string" && desc.trim().length > 0) {
+        payload.description = desc.trim();
+      }
+
       setSubmitting(true);
-      const res = (await createSynthesisTaskUsingPost(
-        payload as unknown as Record<string, unknown>
-      )) as CreateTaskApiResponse;
+      const res = (await createSynthesisTaskUsingPost(payload)) as CreateTaskApiResponse;
 
       const ok =
         res?.success === true ||
