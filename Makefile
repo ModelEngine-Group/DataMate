@@ -170,8 +170,6 @@ VALID_BUILD_TARGETS := backend database frontend runtime backend-python deer-flo
 		exit 1; \
 	fi
 	@if [ "$*" = "deer-flow" ]; then \
-		cp -n runtime/deer-flow/.env.example runtime/deer-flow/.env; \
-		cp -n runtime/deer-flow/conf.yaml.example runtime/deer-flow/conf.yaml; \
 		$(call docker-build,deer-flow-backend,deer-flow-backend); \
 		$(call docker-build,deer-flow-frontend,deer-flow-frontend); \
 	else \
@@ -265,8 +263,6 @@ VALID_SERVICE_TARGETS := datamate backend frontend runtime mineru "deer-flow" mi
 			(REGISTRY=$(REGISTRY) docker compose -f deployment/docker/datamate/docker-compose.yml up -d); \
 		fi; \
 	elif [ "$*" = "deer-flow" ]; then \
-		cp -n runtime/deer-flow/.env.example runtime/deer-flow/.env; \
-		cp -n runtime/deer-flow/conf.yaml.example runtime/deer-flow/conf.yaml; \
 		cp runtime/deer-flow/.env deployment/docker/deer-flow/.env; \
 		cp runtime/deer-flow/conf.yaml deployment/docker/deer-flow/conf.yaml; \
 		REGISTRY=$(REGISTRY) docker compose -f deployment/docker/deer-flow/docker-compose.yml up -d; \

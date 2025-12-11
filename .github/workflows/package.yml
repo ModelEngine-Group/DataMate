@@ -55,10 +55,10 @@ jobs:
 
       - name: Package
         run: |
-          cp runtime/deer-flow/.env.example deployment/docker/deer-flow/.env
-          cp runtime/deer-flow/conf.yaml.example deployment/docker/deer-flow/conf.yaml
-          cp runtime/deer-flow/.env.example deployment/helm/deer-flow/charts/public/.env
-          cp runtime/deer-flow/conf.yaml.example deployment/helm/deer-flow/charts/public/conf.yaml
+          cp runtime/deer-flow/.env deployment/docker/deer-flow/.env
+          cp runtime/deer-flow/conf.yaml deployment/docker/deer-flow/conf.yaml
+          cp runtime/deer-flow/.env deployment/helm/deer-flow/charts/public/.env
+          cp runtime/deer-flow/conf.yaml deployment/helm/deer-flow/charts/public/conf.yaml
           tar -cvf datamate.tar deployment/ images
 
       - name: Upload Package
