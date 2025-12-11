@@ -147,6 +147,7 @@ class RatioTaskService:
             select(DatasetFiles.file_path).where(DatasetFiles.dataset_id == target_ds.id)
         )
         existing_paths = set(p for p in existing_path_rows.scalars().all() if p)
+        source_paths = set()
 
         added_count = 0
         added_size = 0
@@ -164,10 +165,13 @@ class RatioTaskService:
             chosen = random.sample(files, pick_n) if pick_n < len(files) else files
 
             # Copy into target dataset with de-dup by target path
-            for f in chosen:
-                await RatioTaskService.handle_selected_file(existing_paths, f, session, target_ds)
+            for file in chosen:
+                if file.file_path in source_paths:
+                    continue
+                await RatioTaskService.handle_selected_file(existing_paths, file, session, target_ds)
+                source_paths.add(file.file_path)
                 added_count += 1
-                added_size += int(f.file_size or 0)
+                added_size += int(file.file_size or 0)
 
             # Periodically flush to avoid huge transactions
             await session.flush()
