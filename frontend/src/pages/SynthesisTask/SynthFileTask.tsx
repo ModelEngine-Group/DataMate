@@ -2,7 +2,7 @@ import { App } from "antd";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { DeleteOutlined, ReloadOutlined } from "@ant-design/icons";
-import { Badge, Breadcrumb, Button, Table, Tabs } from "antd";
+import { Badge, Breadcrumb, Button, Table, Tabs, Progress, Tooltip } from "antd";
 import type { BadgeProps } from "antd";
 import type { ColumnsType, TablePaginationConfig } from "antd/es/table";
 
@@ -13,7 +13,7 @@ import {
   deleteSynthesisTaskByIdUsingDelete,
 } from "@/pages/SynthesisTask/synthesis-api";
 import { formatDateTime } from "@/utils/unit";
-import { Folder, Sparkles } from "lucide-react";
+import { Folder, Sparkles, Trash2 } from "lucide-react";
 
 interface SynthesisFileTaskItem {
   id: string;
@@ -131,20 +131,22 @@ export default function SynthFileTask() {
 
   const columns: ColumnsType<SynthesisFileTaskItem> = [
     {
-      title: "文件名",
-      dataIndex: "file_name",
-      key: "file_name",
-      render: (text: string, record) => (
-        <Button
-          type="link"
-          onClick={() =>
-            navigate(`/data/synthesis/task/file/${record.id}/detail`, {
-              state: { fileName: record.file_name, taskId },
-            })
-          }
-        >
-          {text}
-        </Button>
+      title: "文件",
+      key: "file",
+      render: (_text, record) => (
+        <div className="flex items-center gap-2">
+          <Folder className="w-4 h-4 text-blue-500" />
+          <Button
+            type="link"
+            onClick={() =>
+              navigate(`/data/synthesis/task/file/${record.id}/detail`, {
+                state: { fileName: record.file_name, taskId },
+              })
+            }
+          >
+            {record.file_name}
+          </Button>
+        </div>
       ),
     },
     {
@@ -168,19 +170,28 @@ export default function SynthFileTask() {
       },
     },
     {
-      title: "切片进度",
-      key: "chunks",
-      render: (_text, record) => (
-        <span>
-          {record.processed_chunks}/{record.total_chunks}
-        </span>
-      ),
+      title: "切片总数",
+      dataIndex: "total_chunks",
+      key: "total_chunks",
     },
     {
-      title: "目标文件路径",
-      dataIndex: "target_file_location",
-      key: "target_file_location",
-      ellipsis: true,
+      title: "处理进度",
+      key: "progress",
+      render: (_text, record) => {
+        const total = record.total_chunks || 0;
+        const processed = record.processed_chunks || 0;
+        const percent = total > 0 ? Math.min(100, Math.round((processed / total) * 100)) : 0;
+        return (
+          <div style={{ minWidth: 160 }}>
+            <Progress
+              percent={percent}
+              size="small"
+              status={percent === 100 ? "success" : undefined}
+              format={() => `${processed}/${total}`}
+            />
+          </div>
+        );
+      },
     },
     {
       title: "创建时间",
@@ -193,6 +204,20 @@ export default function SynthFileTask() {
       dataIndex: "updated_at",
       key: "updated_at",
       render: (val?: string) => (val ? formatDateTime(val) : "-"),
+    },
+    {
+      title: "操作",
+      key: "actions",
+      render: () => (
+        <Tooltip title="删除">
+          <Button
+            type="text"
+            danger
+            disabled
+            icon={<Trash2 className="w-4 h-4" />}
+          />
+        </Tooltip>
+      ),
     },
   ];
 
