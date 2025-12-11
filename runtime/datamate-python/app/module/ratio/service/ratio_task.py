@@ -61,7 +61,7 @@ class RatioTaskService:
                     'label': {
                         "label":item.get("filter_conditions").label.label,
                         "value":item.get("filter_conditions").label.value,
-                    },
+                    } if item.get("filter_conditions").label else None,
                 })
             )
             logger.info(f"Relation created: {relation.id}, {relation}, {item}, {config}")
