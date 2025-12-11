@@ -299,7 +299,7 @@ export default function SynthDataDetail() {
                       return (
                         <List.Item
                           className={
-                            "!border-0 px-4 py-3 transition-colors cursor-pointer rounded-none " +
+                            "!border-0 px-4 py-3 transition-colors rounded-none " +
                             (active
                               ? "bg-blue-200 hover:bg-blue-300"
                               : "hover:bg-blue-50")
@@ -313,10 +313,32 @@ export default function SynthDataDetail() {
                                   Chunk #{item.chunk_index}
                                 </span>
                               </div>
-                              {/* 右侧显示 Chunk ID，完整展示 */}
-                              <span className="text-[11px] text-gray-400" title={item.id}>
-                                ID: {item.id}
-                              </span>
+                              <div className="flex items-center gap-2">
+                                {/* 右侧显示 Chunk ID，完整展示 */}
+                                <span className="text-[11px] text-gray-400" title={item.id}>
+                                  ID: {item.id}
+                                </span>
+                                {/* 删除该 Chunk 按钮 */}
+                                <Popconfirm
+                                  title="确认删除该 Chunk 及其合成数据？"
+                                  okText="删除"
+                                  cancelText="取消"
+                                  onConfirm={(e) => {
+                                    e?.stopPropagation();
+                                    setSelectedChunkId(item.id);
+                                    handleDeleteCurrentChunk();
+                                  }}
+                                  onCancel={(e) => e?.stopPropagation()}
+                                >
+                                  <Button
+                                    type="text"
+                                    size="small"
+                                    danger
+                                    icon={<DeleteOutlined className="text-[12px]" />}
+                                    onClick={(e) => e.stopPropagation()}
+                                  />
+                                </Popconfirm>
+                              </div>
                             </div>
                             <div className="text-xs text-gray-600 whitespace-pre-wrap break-words leading-relaxed">
                               {item.chunk_content}
