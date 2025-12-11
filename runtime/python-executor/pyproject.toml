@@ -19,10 +19,20 @@ dependencies = [
     "fastapi>=0.123.9",
     "jsonargparse>=4.44.0",
     "loguru>=0.7.3",
-    "opencv-python-headless>=4.12.0.88",
+    "opencv-python-headless==4.7.0.72",
     "ray[data,default]==2.52.1",
     "unstructured[csv,docx,pptx,xlsx]==0.18.15",
     "uvicorn[standard]>=0.38.0",
+]
+
+[project.optional-dependencies]
+dj = [
+    "py-data-juicer~=1.4.4"
+]
+
+# All dependencies
+all = [
+    "datamate[dj]"
 ]
 
 [build-system]
