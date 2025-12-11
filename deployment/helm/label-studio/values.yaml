@@ -1,5 +1,6 @@
 # Default values for label-studio Helm chart.
 # This mirrors the configuration from deployment/docker/label-studio/docker-compose.yml
+fullnameOverride: label-studio
 
 replicaCount: 1
 
@@ -24,9 +25,9 @@ postgres:
     size: 10Gi
 
 service:
-  type: ClusterIP
+  type: NodePort
   port: 8000
-  nodePort: null
+  nodePort: 30001
 
 # Corresponds to docker-compose port mapping 30001:8000
 ingress:
@@ -54,7 +55,7 @@ env:
   POSTGRE_USER: "postgres"
   POSTGRE_PASSWORD: ""
   POSTGRE_PORT: 5432
-  POSTGRE_HOST: "db"
+  POSTGRE_HOST: "label-studio-postgres"
   LABEL_STUDIO_HOST: "" # can be overridden
   LOCAL_FILES_SERVING_ENABLED: "true"
   LOCAL_FILES_DOCUMENT_ROOT: "/label-studio/local"
@@ -75,5 +76,6 @@ persistence:
 # If not set and persistence.enabled=true, a PVC will be created automatically.
 datasetVolume:
   enabled: true
-  claimName: "" # if empty, uses same PVC as persistence or creates a dedicated one
+  claimName: datamate-dataset-pvc # if empty, uses same PVC as persistence or creates a dedicated one
+
 
