@@ -1,0 +1,73 @@
+name: docker-push-to-huaweicloud.yml
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'image version (e.g. latest or v0.0.1-beta)'
+        required: true
+        default: 'latest'
+        type: string
+
+jobs:
+  frontend:
+    name: Push Frontend Image
+    uses: ./.github/workflows/docker-push-to-huaweicloud-reusable.yml
+    with:
+      service_name: datamate-frontend
+      version: ${{ inputs.version}}
+    secrets:
+      HUAWEI_CLOUD_SWR_LOGIN_PWD: ${{ secrets.HUAWEI_CLOUD_SWR_LOGIN_PWD}}
+
+  backend:
+    name: Push Backend Image
+    uses: ./.github/workflows/docker-push-to-huaweicloud-reusable.yml
+    with:
+      service_name: datamate-backend
+      version: ${{ inputs.version}}
+    secrets:
+      HUAWEI_CLOUD_SWR_LOGIN_PWD: ${{ secrets.HUAWEI_CLOUD_SWR_LOGIN_PWD}}
+
+  backend-python:
+    name: Push Backend-Python Image
+    uses: ./.github/workflows/docker-push-to-huaweicloud-reusable.yml
+    with:
+      service_name: datamate-backend-python
+      version: ${{ inputs.version}}
+    secrets:
+      HUAWEI_CLOUD_SWR_LOGIN_PWD: ${{ secrets.HUAWEI_CLOUD_SWR_LOGIN_PWD}}
+
+  runtime:
+    name: Push Runtime Image
+    uses: ./.github/workflows/docker-push-to-huaweicloud-reusable.yml
+    with:
+      service_name: datamate-runtime
+      version: ${{ inputs.version}}
+    secrets:
+      HUAWEI_CLOUD_SWR_LOGIN_PWD: ${{ secrets.HUAWEI_CLOUD_SWR_LOGIN_PWD}}
+
+  database:
+    name: Push Database Image
+    uses: ./.github/workflows/docker-push-to-huaweicloud-reusable.yml
+    with:
+      service_name: datamate-database
+      version: ${{ inputs.version}}
+    secrets:
+      HUAWEI_CLOUD_SWR_LOGIN_PWD: ${{ secrets.HUAWEI_CLOUD_SWR_LOGIN_PWD}}
+
+  deer-flow-backend:
+    name: Push deer-flow-backend Image
+    uses: ./.github/workflows/docker-push-to-huaweicloud-reusable.yml
+    with:
+      service_name: deer-flow-backend
+      version: ${{ inputs.version}}
+    secrets:
+      HUAWEI_CLOUD_SWR_LOGIN_PWD: ${{ secrets.HUAWEI_CLOUD_SWR_LOGIN_PWD}}
+
+  deer-flow-frontend:
+    name: Push deer-flow-frontend Image
+    uses: ./.github/workflows/docker-push-to-huaweicloud-reusable.yml
+    with:
+      service_name: deer-flow-frontend
+      version: ${{ inputs.version}}
+    secrets:
+      HUAWEI_CLOUD_SWR_LOGIN_PWD: ${{ secrets.HUAWEI_CLOUD_SWR_LOGIN_PWD}}
