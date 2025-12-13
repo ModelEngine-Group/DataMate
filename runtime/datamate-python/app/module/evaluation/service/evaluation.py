@@ -13,7 +13,7 @@ from app.db.models.data_synthesis import DataSynthesisFileInstance, SynthesisDat
 from app.db.session import AsyncSessionLocal
 from app.module.evaluation.schema.evaluation import SourceType
 from app.module.shared.schema import TaskStatus
-from app.module.shared.util.model_chat import call_openai_style_model, _extract_json_substring
+from app.module.shared.util.model_chat import call_openai_style_model, extract_json_substring
 from app.module.evaluation.schema.prompt import get_prompt
 from app.module.shared.util.structured_file import StructuredFileHandlerFactory
 from app.module.system.service.common_service import get_model_by_id
@@ -73,7 +73,7 @@ class EvaluationExecutor:
                     call_openai_style_model, model_config.base_url, model_config.api_key, model_config.model_name,
                     prompt_text,
                 )
-                resp_text = _extract_json_substring(resp_text)
+                resp_text = extract_json_substring(resp_text)
                 try:
                     json.loads(resp_text)
                 except Exception as e:

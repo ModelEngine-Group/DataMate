@@ -3,124 +3,103 @@ import json
 import uuid
 from pathlib import Path
 
-from langchain_text_splitters import RecursiveCharacterTextSplitter
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.data_synthesis import (
-    DataSynthesisInstance,
+    DataSynthInstance,
     DataSynthesisFileInstance,
     DataSynthesisChunkInstance,
     SynthesisData,
 )
 from app.db.models.dataset_management import DatasetFiles
-from app.db.models.model_config import get_model_by_id
 from app.db.session import logger
-from app.module.shared.util.model_chat import _extract_json_substring
-from app.module.system.service.common_service import get_chat_client, chat
-from app.common.document_loaders import load_documents
+from app.module.generation.schema.generation import Config
+from app.module.shared.common.document_loaders import load_documents
+from app.module.shared.common.text_split import DocumentSplitter
+from app.module.shared.util.model_chat import extract_json_substring
+from app.module.system.service.common_service import chat
 
 
 class GenerationService:
     def __init__(self, db: AsyncSession):
         self.db = db
+        self.semaphore = asyncio.Semaphore(10)
 
     async def process_task(self, task_id: str):
         """处理数据合成任务入口：根据任务ID加载任务并逐个处理源文件。"""
-        synthesis_task: DataSynthesisInstance | None = await self.db.get(DataSynthesisInstance, task_id)
-        if not synthesis_task:
+        synth_task: DataSynthInstance | None = await self.db.get(DataSynthInstance, task_id)
+        if not synth_task:
             logger.error(f"Synthesis task {task_id} not found, abort processing")
             return
 
-        logger.info(f"Processing synthesis task {task_id}")
-        file_ids = synthesis_task.source_file_id or []
+        logger.info(f"Start processing synthe task {task_id}")
 
-        # 获取模型客户端
-        model_result = await get_model_by_id(self.db, str(synthesis_task.model_id))
-        if not model_result:
-            logger.error(
-                f"Model config not found for id={synthesis_task.model_id}, abort task {synthesis_task.id}"
-            )
+        # 获取任务关联的文件原始ID列表
+        file_ids = await self._get_file_ids_for_task(task_id)
+        if not file_ids:
+            logger.warning(f"No files associated with task {task_id}, abort processing")
             return
-        chat_client = get_chat_client(model_result)
-
-        # 控制并发度的信号量（限制全任务范围内最多 10 个并发调用）
-        semaphore = asyncio.Semaphore(10)
 
         # 逐个文件处理
         for file_id in file_ids:
             try:
-                success = await self._process_single_file(
-                    synthesis_task=synthesis_task,
-                    file_id=file_id,
-                    chat_client=chat_client,
-                    semaphore=semaphore,
-                )
+                success = await self._process_single_file(synth_task,file_id)
             except Exception as e:
                 logger.exception(f"Unexpected error when processing file {file_id} for task {task_id}: {e}")
                 # 确保对应文件任务状态标记为失败
-                await self._mark_file_failed(str(synthesis_task.id), file_id, str(e))
+                await self._mark_file_failed(str(synth_task.id), file_id, str(e))
                 success = False
 
             if success:
                 # 每处理完一个文件，简单增加 processed_files 计数
-                synthesis_task.processed_files = (synthesis_task.processed_files or 0) + 1
+                synth_task.processed_files = (synth_task.processed_files or 0) + 1
                 await self.db.commit()
-                await self.db.refresh(synthesis_task)
+                await self.db.refresh(synth_task)
 
-        logger.info(f"Finished processing synthesis task {synthesis_task.id}")
+        logger.info(f"Finished processing synthesis task {synth_task.id}")
 
     async def _process_single_file(
         self,
-        synthesis_task: DataSynthesisInstance,
-        file_id: str,
-        chat_client,
-        semaphore: asyncio.Semaphore,
+        synth_task: DataSynthInstance,
+        file_id: str
     ) -> bool:
         """处理单个源文件：解析路径、切片、保存分块并触发 LLM 调用。"""
         file_path = await self._resolve_file_path(file_id)
         if not file_path:
             logger.warning(f"File path not found for file_id={file_id}, skip")
-            await self._mark_file_failed(str(synthesis_task.id), file_id, "file_path_not_found")
+            await self._mark_file_failed(str(synth_task.id), file_id, "file_path_not_found")
             return False
 
         logger.info(f"Processing file_id={file_id}, path={file_path}")
 
-        split_cfg = synthesis_task.text_split_config or {}
-        synthesis_cfg = synthesis_task.synthesis_config or {}
-        chunk_size = int(split_cfg.get("chunk_size", 800))
-        chunk_overlap = int(split_cfg.get("chunk_overlap", 50))
-        # 加载并切片
-        try:
-            chunks = self._load_and_split(file_path, chunk_size, chunk_overlap)
-        except Exception as e:
-            logger.error(f"Failed to load/split file {file_path}: {e}")
-            await self._mark_file_failed(str(synthesis_task.id), file_id, f"load_split_error: {e}")
-            return False
+        synth_config = synth_task.synth_config or {}
+        config = Config(**synth_config)
 
+        chunks = self._load_and_split(file_path, config.text_split_config.chunk_size,
+                                  config.text_split_config.chunk_overlap)
         if not chunks:
             logger.warning(f"No chunks generated for file_id={file_id}")
-            await self._mark_file_failed(str(synthesis_task.id), file_id, "no_chunks_generated")
+            await self._mark_file_failed(str(synth_task.id), file_id, "no_chunks_generated")
             return False
 
         logger.info(f"File {file_id} split into {len(chunks)} chunks by LangChain")
 
         # 保存文件任务记录 + 分块记录
         file_task = await self._get_or_create_file_instance(
-            synthesis_task_id=str(synthesis_task.id),
+            synthesis_task_id=str(synth_task.id),
             source_file_id=file_id,
             file_path=file_path,
         )
-        await self._persist_chunks(synthesis_task, file_task, file_id, chunks)
+        await self._persist_chunks(synth_task, file_task, file_id, chunks)
 
         # 针对每个切片并发调用大模型
         await self._invoke_llm_for_chunks(
-            synthesis_task=synthesis_task,
+            synthesis_task=synth_task,
             file_id=file_id,
             chunks=chunks,
             synthesis_cfg=synthesis_cfg,
-            chat_client=chat_client,
-            semaphore=semaphore,
+            chat_client=chat_client
         )
 
         # 如果执行到此处，说明该文件的切片与 LLM 调用流程均未抛出异常，标记为完成
@@ -132,7 +111,7 @@ class GenerationService:
 
     async def _persist_chunks(
         self,
-        synthesis_task: DataSynthesisInstance,
+        synthesis_task: DataSynthInstance,
         file_task: DataSynthesisFileInstance,
         file_id: str,
         chunks,
@@ -166,17 +145,16 @@ class GenerationService:
 
     async def _invoke_llm_for_chunks(
         self,
-        synthesis_task: DataSynthesisInstance,
+        synthesis_task: DataSynthInstance,
         file_id: str,
         chunks,
         synthesis_cfg: dict,
         chat_client,
-        semaphore: asyncio.Semaphore,
     ) -> None:
         """针对每个分片并发调用大模型生成数据。"""
         # 需要将 answer 和对应 chunk 建立关系，因此这里保留 chunk_index
         tasks = [
-            self._call_llm(doc, file_id, idx, synthesis_task, synthesis_cfg, chat_client, semaphore)
+            self._call_llm(doc, file_id, idx, synthesis_task, synthesis_cfg, chat_client)
             for idx, doc in enumerate(chunks, start=1)
         ]
         await asyncio.gather(*tasks, return_exceptions=True)
@@ -189,7 +167,6 @@ class GenerationService:
         synthesis_task,
         synthesis_cfg: dict,
         chat_client,
-        semaphore: asyncio.Semaphore,
     ):
         """单次大模型调用逻辑，带并发控制。
 
@@ -199,7 +176,7 @@ class GenerationService:
         - 在拿到 LLM 返回后，解析为 JSON 并批量写入 SynthesisData，
           同时更新文件级 processed_chunks / 进度等信息。
         """
-        async with semaphore:
+        async with self.semaphore:
             prompt = self._build_qa_prompt(doc.page_content, synthesis_cfg)
             try:
                 loop = asyncio.get_running_loop()
@@ -230,25 +207,21 @@ class GenerationService:
             return None
         return file_obj.file_path
 
-    def _load_and_split(self, file_path: str, chunk_size: int, chunk_overlap: int):
+    @staticmethod
+    def _load_and_split(file_path: str, chunk_size: int, chunk_overlap: int):
         """使用 LangChain 加载文本并进行切片，直接返回 Document 列表。
-
-        当前实现：
-        - 使用 TextLoader 加载纯文本/Markdown/JSON 等文本文件
-        - 使用 RecursiveCharacterTextSplitter 做基于字符的递归切片
-
-        保留每个 Document 的 metadata，方便后续追加例如文件ID、chunk序号等信息。
+        Args:
+            file_path: 待切片的文件路径
+            chunk_size: 切片大小
+            chunk_overlap: 切片重叠大小
         """
-        docs = load_documents(file_path)
-
-        splitter = RecursiveCharacterTextSplitter(
-            chunk_size=chunk_size,
-            chunk_overlap=chunk_overlap,
-            # 尝试按这些分隔符优先切分，再退化到字符级
-            separators=["\n\n", "\n", "。", "！", "？", "!", "?", "。\n", "\t", " "]
-        )
-        split_docs = splitter.split_documents(docs)
-        return split_docs
+        try:
+            docs = load_documents(file_path)
+            split_docs = DocumentSplitter.auto_split(docs, chunk_size, chunk_overlap)
+            return split_docs
+        except Exception as e:
+            logger.error(f"Error loading or splitting file {file_path}: {e}")
+            raise
 
 
     @staticmethod
@@ -293,7 +266,7 @@ class GenerationService:
             return
 
         # 1. 预处理原始回答：尝试从中截取出最可能的 JSON 片段
-        cleaned = _extract_json_substring(raw_answer)
+        cleaned = extract_json_substring(raw_answer)
 
         # 2. 解析 JSON，统一成列表结构
         try:
@@ -378,8 +351,7 @@ class GenerationService:
             return file_task
 
         # 查询任务以获取 result_data_location
-        task = await self.db.get(DataSynthesisInstance, synthesis_task_id)
-        target_location = task.result_data_location if task else ""
+        task = await self.db.get(DataSynthInstance, synthesis_task_id)
 
         # 创建新的文件任务记录，初始状态为 processing
         file_task = DataSynthesisFileInstance(
@@ -387,7 +359,6 @@ class GenerationService:
             synthesis_instance_id=synthesis_task_id,
             file_name=Path(file_path).name,
             source_file_id=source_file_id,
-            target_file_location=target_location or "",
             status="processing",
             total_chunks=0,
             processed_chunks=0,
@@ -399,7 +370,7 @@ class GenerationService:
         await self.db.refresh(file_task)
         return file_task
 
-    async def _mark_file_failed(self, synthesis_task_id: str, file_id: str, reason: str | None = None) -> None:
+    async def _mark_file_failed(self, synth_task_id: str, file_id: str, reason: str | None = None) -> None:
         """将指定任务下的单个文件任务标记为失败状态，兜底错误处理。
 
         - 如果找到对应的 DataSynthesisFileInstance，则更新其 status="failed"。
@@ -409,14 +380,14 @@ class GenerationService:
         try:
             result = await self.db.execute(
                 select(DataSynthesisFileInstance).where(
-                    DataSynthesisFileInstance.synthesis_instance_id == synthesis_task_id,
+                    DataSynthesisFileInstance.synthesis_instance_id == synth_task_id,
                     DataSynthesisFileInstance.source_file_id == file_id,
                 )
             )
             file_task = result.scalar_one_or_none()
             if not file_task:
                 logger.warning(
-                    f"Failed to mark file as failed: no DataSynthesisFileInstance found for task={synthesis_task_id}, file_id={file_id}, reason={reason}"
+                    f"Failed to mark file as failed: no DataSynthesisFileInstance found for task={synth_task_id}, file_id={file_id}, reason={reason}"
                 )
                 return
 
@@ -424,10 +395,19 @@ class GenerationService:
             await self.db.commit()
             await self.db.refresh(file_task)
             logger.info(
-                f"Marked file task as failed for task={synthesis_task_id}, file_id={file_id}, reason={reason}"
+                f"Marked file task as failed for task={synth_task_id}, file_id={file_id}, reason={reason}"
             )
         except Exception as e:
             # 兜底日志，避免异常向外传播影响其它文件处理
             logger.exception(
-                f"Unexpected error when marking file failed for task={synthesis_task_id}, file_id={file_id}, original_reason={reason}, error={e}"
+                f"Unexpected error when marking file failed for task={synth_task_id}, file_id={file_id}, original_reason={reason}, error={e}"
             )
+
+    async def _get_file_ids_for_task(self, synth_task_id: str):
+        """根据任务ID查询关联的文件原始ID列表"""
+        result = await self.db.execute(
+            select(DataSynthesisFileInstance.source_file_id)
+            .where(DataSynthesisFileInstance.synthesis_instance_id == synth_task_id)
+        )
+        file_ids = result.scalars().all()
+        return file_ids
