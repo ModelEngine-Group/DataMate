@@ -14,7 +14,7 @@ def call_openai_style_model(base_url, api_key, model_name, prompt, **kwargs):
     )
     return response.choices[0].message.content
 
-def _extract_json_substring(raw: str) -> str:
+def extract_json_substring(raw: str) -> str:
     """从 LLM 的原始回答中提取最可能的 JSON 字符串片段。
 
     处理思路：

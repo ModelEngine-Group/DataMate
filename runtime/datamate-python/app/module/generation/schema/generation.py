@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Union
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -11,11 +11,18 @@ class TextSplitConfig(BaseModel):
     chunk_overlap: int = Field(..., description="重叠令牌数")
 
 
-class SynthesisConfig(BaseModel):
+class SyntheConfig(BaseModel):
     """合成配置"""
+    model_id: str = Field(..., description="模型ID")
     prompt_template: str = Field(..., description="合成提示模板")
-    synthesis_count: int = Field(None, description="单个chunk合成的数据数量")
+    number: int = Field(None, description="单个chunk合成的数据数量")
     temperature: Optional[float] = Field(None, description="温度参数")
+
+class Config(BaseModel):
+    """配置"""
+    text_split_config: TextSplitConfig = Field(None, description="文本切片配置")
+    question_synth_config: SyntheConfig = Field(None, description="问题合成配置")
+    answer_synth_config: SyntheConfig = Field(None, description="答案合成配置")
 
 
 class SynthesisType(Enum):
@@ -28,11 +35,9 @@ class CreateSynthesisTaskRequest(BaseModel):
     """创建数据合成任务请求"""
     name: str = Field(..., description="合成任务名称")
     description: Optional[str] = Field(None, description="合成任务描述")
-    model_id: str = Field(..., description="模型ID")
-    source_file_id: list[str] = Field(..., description="原始文件ID列表")
-    text_split_config: TextSplitConfig = Field(None, description="文本切片配置")
-    synthesis_config: SynthesisConfig = Field(..., description="合成配置")
     synthesis_type: SynthesisType = Field(..., description="合成类型")
+    source_file_id: list[str] = Field(..., description="原始文件ID列表")
+    synth_config: Config = Field(..., description="合成配置")
 
     @field_validator("description")
     @classmethod
