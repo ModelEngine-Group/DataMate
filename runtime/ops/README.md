@@ -13,7 +13,7 @@ language: 'python'
 vendor: 'huawei'
 raw_id: 'TestMapper'
 version: '1.0.0'
-modal: 'text'
+modal: 'text'   # text/image/audio/video/multimodal
 inputs: 'text'
 outputs: 'text'
 ```
@@ -35,7 +35,7 @@ class TestMapper(Mapper):
         sample[self.text_key] += "\n新增的数据"
         return sample
 
-    
+
 # Filter用于过滤和选择性保留数据，使用时将需要过滤的数据的text或data置为空值
 from datamate.core.base_op import Filter
 

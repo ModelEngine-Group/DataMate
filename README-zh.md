@@ -42,8 +42,6 @@ Choose a deployment method:
 Enter choice:
 ```
 
-在运行 `make uninstall` 时，卸载流程会只询问一次是否删除卷（数据），该选择会应用到所有组件。卸载顺序为：milvus -> label-studio -> datamate，确保在移除 datamate 网络前，所有使用该网络的服务已先停止。
-
 ### 拉取代码
 
 ```bash
@@ -56,6 +54,20 @@ cd DataMate
 ```bash
 make install
 ```
+
+若您使用的机器没有make，请执行如下命令部署:
+```bash
+# Windows
+set REGISTRY=ghcr.io/modelengine-group/
+docker compose -f ./deployment/docker/datamate/docker-compose.yml up -d
+docker compose -f ./deployment/docker/milvus/docker-compose.yml up -d
+
+# Linux/Mac
+export REGISTRY=ghcr.io/modelengine-group/
+docker compose -f ./deployment/docker/datamate/docker-compose.yml up -d
+docker compose -f ./deployment/docker/milvus/docker-compose.yml up -d
+```
+
 当容器运行后，请在浏览器打开 http://localhost:30000 查看前端界面。
 
 要查看所有可用的 Make 目标、选项和帮助信息，请运行：
@@ -81,6 +93,13 @@ make install-deer-flow
 make build
 make install dev=true
 ```
+
+### 卸载服务
+```bash
+make uninstall
+```
+
+在运行 `make uninstall` 时，卸载流程会只询问一次是否删除卷（数据），该选择会应用到所有组件。卸载顺序为：milvus -> label-studio -> datamate，确保在移除 datamate 网络前，所有使用该网络的服务已先停止。
 
 ## 🤝 贡献指南
 

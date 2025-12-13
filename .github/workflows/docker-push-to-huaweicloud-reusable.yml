@@ -1,0 +1,47 @@
+name: docker-push-to-huaweicloud-reusable.yml
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: 'image version (e.g. latest or v0.0.1-beta)'
+        required: true
+        default: 'latest'
+        type: string
+      service_name:
+        description: 'image version (e.g. latest or v0.0.1-beta)'
+        required: true
+        default: 'latest'
+        type: string
+    secrets:
+      HUAWEI_CLOUD_SWR_LOGIN_PWD:
+        description: 'login pwd'
+        required: true
+
+jobs:
+  retag-and-push:
+    name: Retag and Push to Huawei Cloud SWR
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pull source image and retag (amd)
+        shell: bash
+        run: |
+          SOURCE_IMAGE=ghcr.io/modelengine-group/${{ inputs.service_name}}:${{ inputs.version}}
+          TARGET_IMAGE=swr.cn-east-3.myhuaweicloud.com/data-mate/${{ inputs.service_name}}:${{ inputs.version}}
+          docker pull "${SOURCE_IMAGE}"
+          docker tag "${SOURCE_IMAGE}" "${TARGET_IMAGE}"-amd
+      - name: Pull source image and retag (arm)
+        shell: bash
+        run: |
+          SOURCE_IMAGE=ghcr.io/modelengine-group/${{ inputs.service_name}}:${{ inputs.version}}
+          TARGET_IMAGE=swr.cn-east-3.myhuaweicloud.com/data-mate/${{ inputs.service_name}}:${{ inputs.version}}
+          docker pull "${SOURCE_IMAGE}" --platform=linux/arm64
+          docker tag "${SOURCE_IMAGE}" "${TARGET_IMAGE}"-arm
+      - name: Push image to Huawei SWR using
+        shell: bash
+        run: |
+          TARGET_IMAGE=swr.cn-east-3.myhuaweicloud.com/data-mate/${{ inputs.service_name}}:${{ inputs.version}}
+          echo "${{ secrets.HUAWEI_CLOUD_SWR_LOGIN_PWD}}" | docker login swr.cn-east-3.myhuaweicloud.com --username=cn-east-3@HPUA3ZGOTQFAFMM59DB9 --password-stdin
+          docker push "${TARGET_IMAGE}"-amd
+          docker push "${TARGET_IMAGE}"-arm
+          docker manifest create "${TARGET_IMAGE}" "${TARGET_IMAGE}"-amd "${TARGET_IMAGE}"-arm
+          docker manifest push "${TARGET_IMAGE}"
