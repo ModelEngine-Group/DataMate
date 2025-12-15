@@ -43,5 +43,5 @@ values ('sys.knowledge.base.count', '200', 'number', '10,200,500', '知识库最
        ('TAVILY_API_KEY', 'tvly-dev-xxx', 'string', '', 'deer-flow使用的搜索引擎所需的apiKey', 1, 1, 1, 'system', 'system'),
        ('BRAVE_SEARCH_API_KEY', 'api-xxx', 'string', '', 'deer-flow使用的搜索引擎所需的apiKey', 1, 1, 1, 'system', 'system'),
        ('JINA_API_KEY', '', 'string', '', 'deer-flow使用的JINA搜索引擎所需的apiKey', 1, 1, 1, 'system', 'system'),
-       ('sys.management.dataset.pvc.name', 'dataset-pvc', 'string', '', '数据集所在pvc名称', 1, 0, 1, 'system', 'system'),
+       ('sys.management.dataset.pvc.name', 'datamate-dataset-pvc', 'string', '', '数据集所在pvc名称', 1, 0, 1, 'system', 'system'),
        ('test_bool', 'true', 'boolean', '', '测试布尔值', 1, 1, 1, 'system', 'system');
