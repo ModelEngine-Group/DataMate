@@ -30,7 +30,7 @@ create table if not exists t_data_synthesis_file_instances
     synthesis_instance_id VARCHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT '数据合成任务ID',
     file_name VARCHAR(255) NOT NULL COMMENT '文件名',
     source_file_id VARCHAR(255) NOT NULL COMMENT '原始文件ID',
-    target_file_location VARCHAR(1000) NOT NULL COMMENT '目标文件存储位置',
+    target_file_location VARCHAR(1000) NULL COMMENT '目标文件存储位置',
     status VARCHAR(20) COMMENT '任务状态',
     total_chunks INT DEFAULT 0 COMMENT '总文本块数',
     processed_chunks INT DEFAULT 0 COMMENT '已处理文本块数',

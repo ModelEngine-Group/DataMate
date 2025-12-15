@@ -14,7 +14,6 @@ from app.db.models.data_synthesis import (
     SynthesisData,
 )
 from app.db.models.dataset_management import DatasetFiles
-from app.db.models.model_config import get_model_by_id
 from app.db.session import get_db
 from app.module.generation.schema.generation import (
     CreateSynthesisTaskRequest,
@@ -29,9 +28,9 @@ from app.module.generation.schema.generation import (
     SynthesisDataUpdateRequest,
     BatchDeleteSynthesisDataRequest,
 )
+from app.module.generation.service.export_service import SynthesisDatasetExporter, SynthesisExportError
 from app.module.generation.service.generation_service import GenerationService
 from app.module.generation.service.prompt import get_prompt
-from app.module.generation.service.export_service import SynthesisDatasetExporter, SynthesisExportError
 from app.module.shared.schema import StandardResponse
 
 router = APIRouter(
@@ -48,10 +47,6 @@ async def create_synthesis_task(
     db: AsyncSession = Depends(get_db),
 ):
     """创建数据合成任务"""
-    result = await get_model_by_id(db, request.model_id)
-    if not result:
-        raise HTTPException(status_code=404, detail="Model not found")
-
     # 先根据 source_file_id 在 DatasetFiles 中查出已有文件信息
     file_ids = request.source_file_id or []
     dataset_files = []
@@ -90,12 +85,6 @@ async def create_synthesis_task(
     background_tasks.add_task(generation_service.process_task, synthesis_task.id)
 
     # 将 ORM 对象包装成 DataSynthesisTaskItem，兼容新字段从 synth_config 还原
-    synth_cfg = getattr(synthesis_task, "synth_config", {}) or {}
-    text_split_cfg = synth_cfg.get("text_split_config") or {}
-    synthesis_cfg = synth_cfg.get("synthesis_config") or {}
-    source_file_ids = synth_cfg.get("source_file_id") or request.source_file_id or []
-    model_id = synth_cfg.get("model_id") or request.model_id
-    result_location = synth_cfg.get("result_data_location")
 
     task_item = DataSynthesisTaskItem(
         id=synthesis_task.id,
@@ -103,17 +92,7 @@ async def create_synthesis_task(
         description=synthesis_task.description,
         status=synthesis_task.status,
         synthesis_type=synthesis_task.synth_type,
-        model_id=model_id,
-        progress=synthesis_task.progress,
-        result_data_location=result_location,
-        text_split_config=text_split_cfg,
-        synthesis_config=synthesis_cfg,
-        source_file_id=list(source_file_ids),
         total_files=synthesis_task.total_files,
-        processed_files=synthesis_task.processed_files,
-        total_chunks=synthesis_task.total_chunks,
-        processed_chunks=synthesis_task.processed_chunks,
-        total_synthesis_data=synthesis_task.total_synth_data,
         created_at=synthesis_task.created_at,
         updated_at=synthesis_task.updated_at,
         created_by=synthesis_task.created_by,
@@ -133,14 +112,26 @@ async def get_synthesis_task(
     db: AsyncSession = Depends(get_db)
 ):
     """获取数据合成任务详情"""
-    result = await db.get(DataSynthInstance, task_id)
-    if not result:
+    synthesis_task = await db.get(DataSynthInstance, task_id)
+    if not synthesis_task:
         raise HTTPException(status_code=404, detail="Synthesis task not found")
 
+    task_item = DataSynthesisTaskItem(
+        id=synthesis_task.id,
+        name=synthesis_task.name,
+        description=synthesis_task.description,
+        status=synthesis_task.status,
+        synthesis_type=synthesis_task.synth_type,
+        total_files=synthesis_task.total_files,
+        created_at=synthesis_task.created_at,
+        updated_at=synthesis_task.updated_at,
+        created_by=synthesis_task.created_by,
+        updated_by=synthesis_task.updated_by,
+    )
     return StandardResponse(
         code=200,
         message="success",
-        data=result,
+        data=task_item,
     )
 
 
@@ -374,7 +365,6 @@ async def list_synthesis_file_tasks(
             synthesis_instance_id=row.synthesis_instance_id,
             file_name=row.file_name,
             source_file_id=row.source_file_id,
-            target_file_location=row.target_file_location,
             status=row.status,
             total_chunks=row.total_chunks,
             processed_chunks=row.processed_chunks,

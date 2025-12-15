@@ -14,7 +14,7 @@ class TextSplitConfig(BaseModel):
 class SyntheConfig(BaseModel):
     """合成配置"""
     model_id: str = Field(..., description="模型ID")
-    prompt_template: str = Field(..., description="合成提示模板")
+    prompt_template: str = Field(None, description="合成提示模板")
     number: int = Field(None, description="单个chunk合成的数据数量")
     temperature: Optional[float] = Field(None, description="温度参数")
 
@@ -55,17 +55,7 @@ class DataSynthesisTaskItem(BaseModel):
     description: Optional[str] = None
     status: Optional[str] = None
     synthesis_type: str
-    model_id: str
-    progress: int
-    result_data_location: Optional[str] = None
-    text_split_config: Dict[str, Any]
-    synthesis_config: Dict[str, Any]
-    source_file_id: list[str]
     total_files: int
-    processed_files: int
-    total_chunks: int
-    processed_chunks: int
-    total_synthesis_data: int
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     created_by: Optional[str] = None
@@ -90,7 +80,6 @@ class DataSynthesisFileTaskItem(BaseModel):
     synthesis_instance_id: str
     file_name: str
     source_file_id: str
-    target_file_location: str
     status: Optional[str] = None
     total_chunks: int
     processed_chunks: int

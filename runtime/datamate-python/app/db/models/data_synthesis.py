@@ -18,16 +18,6 @@ async def save_synthesis_task(db_session, synthesis_task: CreateSynthesisTaskReq
     # 兼容旧请求结构：从请求对象中提取必要字段，
     #   - 合成类型：synthesis_type -> synth_type
     #   - 合成配置：text_split_config + synthesis_config 合并后写入 synth_config
-    synth_config = {
-        "text_split_config": synthesis_task.text_split_config.model_dump()
-        if synthesis_task.text_split_config
-        else None,
-        "synthesis_config": synthesis_task.synthesis_config.model_dump()
-        if synthesis_task.synthesis_config
-        else None,
-        "model_id": synthesis_task.model_id,
-        "source_file_id": list(synthesis_task.source_file_id or []),
-    }
 
     synth_task_instance = DataSynthInstance(
         id=gid,
@@ -36,7 +26,7 @@ async def save_synthesis_task(db_session, synthesis_task: CreateSynthesisTaskReq
         status="pending",
         synth_type=synthesis_task.synthesis_type.value,
         progress=0,
-        synth_config=synth_config,
+        synth_config=synthesis_task.synth_config.model_dump(),
         total_files=len(synthesis_task.source_file_id or []),
         processed_files=0,
         total_chunks=0,
@@ -134,7 +124,7 @@ class DataSynthesisFileInstance(Base):
     )
     file_name = Column(String(255), nullable=False, comment="文件名")
     source_file_id = Column(String(255), nullable=False, comment="原始文件ID")
-    target_file_location = Column(String(1000), nullable=False, comment="目标文件存储位置")
+    target_file_location = Column(String(1000), nullable=True, comment="目标文件存储位置")
     status = Column(String(20), nullable=True, comment="任务状态")
     total_chunks = Column(Integer, nullable=False, default=0, comment="总文本块数")
     processed_chunks = Column(Integer, nullable=False, default=0, comment="已处理文本块数")

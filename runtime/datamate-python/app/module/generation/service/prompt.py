@@ -58,7 +58,7 @@ ANSWER_GENERATOR_PROMPT=f"""
 5. 基于给定参考内容，用自然流畅的语言整合成一个完整答案，不需要提及文献来源或引用标记
 
 ## Workflow:
-1. Take a deep breath and work on this problem step-by-step.
+1. 请一步一步地解决这个问题
 2. 首先，分析给定的文件内容
 3. 然后，从内容中提取关键信息
 4. 接着，生成与问题相关的准确答案
@@ -78,8 +78,6 @@ ANSWER_GENERATOR_PROMPT=f"""
 2. 答案必须准确，必须与问题相关，不能胡编乱造
 3. 答案必须充分、详细、包含所有必要的信息、适合微调大模型训练使用
 4. 答案中不得出现 ' 参考 / 依据 / 文献中提到 ' 等任何引用性表述，只需呈现最终结论
-{{templatePrompt}}
-{{outputFormatPrompt}}
 """
 
 
