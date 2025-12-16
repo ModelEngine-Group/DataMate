@@ -35,6 +35,7 @@ export function useFilesOperation(dataset: Dataset) {
     const params: any = {
       page: current ? current : pagination.current,
       size: pageSize ? pageSize : pagination.pageSize,
+      isWithDirectory: true,
     };
 
     if (prefix !== undefined) {
