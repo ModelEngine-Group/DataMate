@@ -146,10 +146,10 @@ class BaseOp:
     def read_file(self, sample):
         filepath = sample[self.filepath_key]
         filetype = sample[self.filetype_key]
-        if filetype in ["ppt", "pptx", "docx", "doc", "xlsx"]:
+        if filetype in ["ppt", "pptx", "docx", "doc", "xlsx", "csv", "md", "pdf"]:
             elements = partition(filename=filepath)
             sample[self.text_key] = "\n\n".join([str(el) for el in elements])
-        elif filetype in ["txt", "md", "markdown", "xml", "html", "csv", "json", "jsonl"]:
+        elif filetype in ["txt", "md", "markdown", "xml", "html", "json", "jsonl"]:
             with open(filepath, 'rb') as f:
                 content = f.read()
                 sample[self.text_key] = content.decode("utf-8-sig").replace("\r\n", "\n")
