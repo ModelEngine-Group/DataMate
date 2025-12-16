@@ -44,12 +44,17 @@ public class DatasetFileController {
     @GetMapping
     public Response<PagedResponse<DatasetFile>> getDatasetFiles(
             @PathVariable("datasetId") String datasetId,
+            @RequestParam(value = "isWithDirectory", required = false) boolean isWithDirectory,
             @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
             @RequestParam(value = "size", required = false, defaultValue = "20") Integer size,
             @RequestParam(value = "prefix", required = false, defaultValue = "") String prefix) {
         PagingQuery pagingQuery = new PagingQuery(page, size);
-        PagedResponse<DatasetFile> filesPage = datasetFileApplicationService.getDatasetFilesWithDirectory(
-                datasetId, prefix, pagingQuery);
+        PagedResponse<DatasetFile> filesPage;
+        if (isWithDirectory) {
+            filesPage = datasetFileApplicationService.getDatasetFilesWithDirectory(datasetId, prefix, pagingQuery);
+        } else {
+            filesPage = datasetFileApplicationService.getDatasetFiles(datasetId, null, null, null, pagingQuery);
+        }
         return Response.ok(filesPage);
     }
 
