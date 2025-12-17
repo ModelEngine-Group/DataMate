@@ -175,7 +175,6 @@ ray-cluster:
   enabled: true
   head:
     rayStartParams:
-      object-store-memory: '78643200'
       num-cpus: '0'
     containerEnv:
       - name: RAY_DEDUP_LOGS
@@ -194,8 +193,8 @@ ray-cluster:
         value: "datamate"
     resources:
       limits:
-        cpu: "2"
-        memory: "8G"
+        cpu: "4"
+        memory: "16G"
       requests:
         cpu: "1"
         memory: "2G"
