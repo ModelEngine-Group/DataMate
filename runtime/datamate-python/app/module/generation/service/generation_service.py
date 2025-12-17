@@ -202,8 +202,19 @@ class GenerationService:
         chunk_index = chunk.chunk_index
         chunk_text = chunk.chunk_content or ""
         if not chunk_text.strip():
-            logger.warning(f"Empty chunk text for file_task={file_task.id}, chunk_index={chunk_index}")
+            logger.warning(
+                f"Empty chunk text for file_task={file_task.id}, chunk_index={chunk_index}"
+            )
+            # 无论成功或失败，均视为该 chunk 已处理完成
+            try:
+                await self._increment_processed_chunks(file_task.id, 1)
+            except Exception as e:
+                logger.exception(
+                    f"Failed to increment processed_chunks for file_task={file_task.id}, chunk_index={chunk_index}: {e}"
+                )
             return False
+
+        success_any = False
 
         # 1. 生成问题
         try:
@@ -216,31 +227,30 @@ class GenerationService:
             logger.error(
                 f"Generate questions failed for file_task={file_task.id}, chunk_index={chunk_index}: {e}"
             )
-            return False
+            questions = []
 
         if not questions:
             logger.info(
                 f"No questions generated for file_task={file_task.id}, chunk_index={chunk_index}"
             )
-            return False
+        else:
+            # 2. 针对每个问题生成答案并入库
+            qa_success = await self._generate_answers_for_one_chunk(
+                file_task=file_task,
+                chunk=chunk,
+                questions=questions,
+                answer_cfg=answer_cfg,
+                answer_chat=answer_chat,
+            )
+            success_any = bool(qa_success)
 
-        # 2. 针对每个问题生成答案并入库
-        success_any = await self._generate_answers_for_one_chunk(
-            file_task=file_task,
-            chunk=chunk,
-            questions=questions,
-            answer_cfg=answer_cfg,
-            answer_chat=answer_chat,
-        )
-
-        # 每次处理完一个chunk，若至少生成一条QA，则安全更新已处理的chunk数量，避免并发冲突
-        if success_any:
-            try:
-                await self._increment_processed_chunks(file_task.id, 1)
-            except Exception as e:
-                logger.exception(
-                    f"Failed to increment processed_chunks for file_task={file_task.id}, chunk_index={chunk_index}: {e}"
-                )
+        # 无论本 chunk 处理是否成功，都增加 processed_chunks 计数，避免任务长时间卡住
+        try:
+            await self._increment_processed_chunks(file_task.id, 1)
+        except Exception as e:
+            logger.exception(
+                f"Failed to increment processed_chunks for file_task={file_task.id}, chunk_index={chunk_index}: {e}"
+            )
 
         return success_any
 
