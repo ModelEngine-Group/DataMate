@@ -99,19 +99,28 @@ services:
     restart: on-failure
     environment:
       MINERU_MODEL_SOURCE: local
-      MINERU_DEVICE_MODE: cpu  # cpu|cuda|npu|mps
-      MINERU_BACKEND_MODE: pipeline
+      MINERU_DEVICE_MODE: npu  # cpu|cuda|npu|mps
+      VLLM_WORKER_MULTIPROC_METHOD: spawn
     privileged: true
     command:
-      - python
-      - /opt/runtime/datamate/mineru/mineru_api.py
-      - --port
-      - "9001"
+      - mineru-openai-server
+      - --engine vllm
+      - --host 0.0.0.0
+      - --port "8000"
     volumes:
       - dataset_volume:/dataset
       - mineru_log_volume:/var/log/datamate/mineru
+      - /var/log/npu/:/usr/slog
+      - /usr/local/dcmi:/usr/local/dcmi
+      - /usr/local/bin/npu-smi:/usr/local/bin/npu-smi
+      - /usr/local/Ascend/driver:/usr/local/Ascend/driver
     networks: [ datamate ]
     profiles: [ mineru ]
+    devices:
+      - /dev/davinci0
+      - /dev/davinci_manager
+      - /dev/devmm_svm
+      - /dev/hisi_hdc
 
   # 5) redis
   datamate-redis:

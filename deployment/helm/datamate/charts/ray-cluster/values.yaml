@@ -58,25 +58,10 @@ head:
   # in the headGroupSpec. See https://github.com/ray-project/kuberay/pull/1128 for more details.
   serviceAccountName: ""
   restartPolicy: ""
-  rayStartParams:
-    object-store-memory: '78643200'
+  rayStartParams: {}
   # containerEnv specifies environment variables for the Ray container,
   # Follows standard K8s container env schema.
-  containerEnv:
-    - name: RAY_DEDUP_LOGS
-      value: "0"
-    - name: RAY_TQDM_PATCH_PRINT
-      value: "0"
-    - name: MYSQL_HOST
-      value: "datamate-database"
-    - name: MYSQL_PORT
-      value: "3306"
-    - name: MYSQL_USER
-      value: "root"
-    - name: MYSQL_PASSWORD
-      value: "password"
-    - name: MYSQL_DATABASE
-      value: "datamate"
+  containerEnv: []
   # - name: EXAMPLE_ENV
   #   value: "1"
   envFrom: []
@@ -93,14 +78,7 @@ head:
   # It is usually best to set requests equal to limits.
   # See https://docs.ray.io/en/latest/cluster/kubernetes/user-guides/config.html#resources
   # for further guidance.
-  resources:
-    limits:
-      cpu: "2"
-      # To avoid out-of-memory issues, never allocate less than 2G memory for the Ray head.
-      memory: "8G"
-    requests:
-      cpu: "1"
-      memory: "2G"
+  resources: {}
   annotations: {}
   nodeSelector: {}
   tolerations: []
@@ -156,21 +134,7 @@ worker:
   initContainers: []
   # containerEnv specifies environment variables for the Ray container,
   # Follows standard K8s container env schema.
-  containerEnv:
-    - name: RAY_DEDUP_LOGS
-      value: "0"
-    - name: RAY_TQDM_PATCH_PRINT
-      value: "0"
-    - name: MYSQL_HOST
-      value: "datamate-database"
-    - name: MYSQL_PORT
-      value: "3306"
-    - name: MYSQL_USER
-      value: "root"
-    - name: MYSQL_PASSWORD
-      value: "password"
-    - name: MYSQL_DATABASE
-      value: "datamate"
+  containerEnv: []
   # - name: EXAMPLE_ENV
   #   value: "1"
   envFrom: []
@@ -187,13 +151,7 @@ worker:
   # It is usually best to set requests equal to limits.
   # See https://docs.ray.io/en/latest/cluster/kubernetes/user-guides/config.html#resources
   # for further guidance.
-  resources:
-    limits:
-      cpu: "4"
-      memory: "8G"
-    requests:
-      cpu: "1"
-      memory: "1G"
+  resources: {}
   annotations: {}
   nodeSelector: {}
   tolerations: []

@@ -22,26 +22,32 @@ spec:
           image: datamate-mineru
           imagePullPolicy: IfNotPresent
           command:
-            - python
-            - /opt/runtime/datamate/mineru/mineru_api.py
+            - mineru-openai-server
+          args:
+            - --engine
+            - vllm
+            - --host
+            - 0.0.0.0
             - --port
-            - "9001"
+            - "8000"
           env:
             - name: MINERU_MODEL_SOURCE
               value: local
             - name: MINERU_DEVICE_MODE
-              value: cpu
-            - name: MINERU_BACKEND_MODE
-              value: pipeline
+              value: npu
+            - name: VLLM_WORKER_MULTIPROC_METHOD
+              value: spawn
           ports:
-            - containerPort: 9001
+            - containerPort: 8000
           resources:
             limits:
-              cpu: 16
+              cpu: 8
               memory: 32Gi
+              huawei.com/Ascend910: 1
             requests:
               cpu: 100m
               memory: 100Mi
+              huawei.com/Ascend910: 1
           volumeMounts:
             - name: dataset-volume
               mountPath: /dataset
@@ -67,8 +73,8 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-    - port: 9001
-      targetPort: 9001
+    - port: 8000
+      targetPort: 8000
       protocol: TCP
   selector:
     app: datamate
