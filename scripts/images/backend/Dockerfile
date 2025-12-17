@@ -1,6 +1,8 @@
 FROM maven:3-eclipse-temurin-8 AS datax-builder
 
-RUN apt-get update && \
+RUN sed -i "s@http://.*archive.ubuntu.com@http://mirrors.huaweicloud.com@g" /etc/apt/sources.list && \
+    sed -i "s@http://.*security.ubuntu.com@http://mirrors.huaweicloud.com@g" /etc/apt/sources.list && \
+    apt-get update && \
     apt-get install -y git && \
     git clone https://github.com/alibaba/DataX.git
 
@@ -21,7 +23,9 @@ RUN cd /opt/backend && \
 
 FROM eclipse-temurin:21-jdk
 
-RUN apt-get update && \
+RUN sed -i "s@http://.*archive.ubuntu.com@http://mirrors.huaweicloud.com@g" /etc/apt/sources.list && \
+    sed -i "s@http://.*security.ubuntu.com@http://mirrors.huaweicloud.com@g" /etc/apt/sources.list && \
+    apt-get update && \
     apt-get install -y vim wget curl nfs-common rsync python3 python3-pip python-is-python3 dos2unix && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
