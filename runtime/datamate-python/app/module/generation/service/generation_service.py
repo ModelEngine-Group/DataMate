@@ -29,8 +29,8 @@ class GenerationService:
     def __init__(self, db: AsyncSession):
         self.db = db
         # 全局并发信号量：保证任意时刻最多 10 次模型调用
-        self.question_semaphore = asyncio.Semaphore(10)
-        self.answer_semaphore = asyncio.Semaphore(10)
+        self.question_semaphore = asyncio.Semaphore(100)
+        self.answer_semaphore = asyncio.Semaphore(100)
 
     async def process_task(self, task_id: str):
         """处理数据合成任务入口：根据任务ID加载任务并逐个处理源文件。"""
@@ -147,9 +147,8 @@ class GenerationService:
         answer_chat = get_chat_client(answer_model)
 
         # 分批次从 DB 读取并处理 chunk
-        batch_size = 16
+        batch_size = 100
         current_index = 1
-        processed_chunks = 0
 
         while current_index <= total_chunks:
             end_index = min(current_index + batch_size - 1, total_chunks)
@@ -234,7 +233,14 @@ class GenerationService:
             answer_chat=answer_chat,
         )
 
-        # todo：每次处理完一个chunk，更新已经处理的chunk数量，要避免并发写冲突
+        # 每次处理完一个chunk，若至少生成一条QA，则安全更新已处理的chunk数量，避免并发冲突
+        if success_any:
+            try:
+                await self._increment_processed_chunks(file_task.id, 1)
+            except Exception as e:
+                logger.exception(
+                    f"Failed to increment processed_chunks for file_task={file_task.id}, chunk_index={chunk_index}: {e}"
+                )
 
         return success_any
 
@@ -246,6 +252,8 @@ class GenerationService:
     ) -> list[str]:
         """针对单个 chunk 文本，调用 question_chat 生成问题列表。"""
         number = question_cfg.number or 5
+        number = number if number is not None else 5
+        number = int(len(chunk_text) / 1000 * number)
         template = getattr(question_cfg, "prompt_template", QUESTION_GENERATOR_PROMPT)
         template = template if (template is not None and template.strip() != "") else QUESTION_GENERATOR_PROMPT
 
@@ -507,12 +515,6 @@ class GenerationService:
         return list(result.scalars().all())
 
     async def _increment_processed_chunks(self, file_task_id: str, delta: int) -> None:
-        """安全地增加文件级 processed_chunks 计数。
-
-        本方法在单协程上下文中被顺序调用（每个文件一个逻辑写入者），
-        避免了并发写冲突；同时采用读取 + 增加 + 提交的方式保证最终一致性。
-        """
-        # 重新加载最新的 file_task 记录，避免使用过期实例
         result = await self.db.execute(
             select(DataSynthesisFileInstance).where(
                 DataSynthesisFileInstance.id == file_task_id,
