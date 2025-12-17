@@ -20,10 +20,9 @@ ENV PYTHONPATH=/opt/runtime/datamate/
 WORKDIR /opt/runtime
 
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv pip install -e . --system \
+    UV_EXTRA_INDEX_URL="https://download.pytorch.org/whl/cpu" uv pip install -e . --system --index-strategy unsafe-best-match \
     && UV_EXTRA_INDEX_URL="https://download.pytorch.org/whl/cpu" uv pip install -r /opt/runtime/datamate/ops/pyproject.toml --system \
-    && uv pip uninstall torch torchvision triton --system \
-    && uv pip list | grep -E '^nvidia-' | awk '{print $1}' | xargs -r uv pip uninstall --system \
+    && uv pip uninstall torch torchvision --system \
     && python -m spacy download zh_core_web_sm
 
 RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
