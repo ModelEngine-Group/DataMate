@@ -31,7 +31,7 @@ class MineruFormatter(Mapper):
         start = time.time()
         filename = sample[self.filename_key]
         filename_without_ext = os.path.splitext(filename)[0]
-        if not filename.lower().endswith(".png", ".jpeg", ".jpg", ".webp", ".gif", ".pdf"):
+        if not filename.lower().endswith((".png", ".jpeg", ".jpg", ".webp", ".gif", ".pdf")):
             return sample
         try:
             filepath = sample[self.filepath_key]
@@ -39,7 +39,7 @@ class MineruFormatter(Mapper):
             pdf_bytes = read_fn(filepath)
             total_page = len(PdfReader(filepath).pages)
             content = ""
-            for page in range(total_page, 0, 10):
+            for page in range(0, total_page, 10):
                 do_parse(
                     output_dir=self.output_dir,
                     pdf_file_names=[filename_without_ext],
@@ -48,7 +48,7 @@ class MineruFormatter(Mapper):
                     backend=self.backend,
                     server_url=self.server_url,
                     start_page_id=page,
-                    end_page_id=min(page + 10, total_page - 1),
+                    end_page_id=min(page + 9, total_page - 1),
                 )
                 if os.path.exists(parse_dir):
                     content += get_infer_result(".md", filename_without_ext, parse_dir)
