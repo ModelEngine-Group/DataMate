@@ -102,11 +102,11 @@ services:
       MINERU_DEVICE_MODE: npu  # cpu|cuda|npu|mps
       VLLM_WORKER_MULTIPROC_METHOD: spawn
     privileged: true
+    entrypoint: mineru-openai-server
     command:
-      - mineru-openai-server
-      - --engine vllm
-      - --host 0.0.0.0
-      - --port "8000"
+      --engine vllm
+      --host 0.0.0.0
+      --port 8000
     volumes:
       - dataset_volume:/dataset
       - mineru_log_volume:/var/log/datamate/mineru
