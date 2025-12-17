@@ -77,6 +77,10 @@ database:
       subPath: database
 
 backend:
+  securityContext:
+    capabilities:
+      add:
+        - SYS_ADMIN
   env:
     - name: DB_PASSWORD
       value: *dbPass
@@ -170,6 +174,31 @@ runtime:
 ray-cluster:
   enabled: true
   head:
+    rayStartParams:
+      object-store-memory: '78643200'
+      num-cpus: '0'
+    containerEnv:
+      - name: RAY_DEDUP_LOGS
+        value: "0"
+      - name: RAY_TQDM_PATCH_PRINT
+        value: "0"
+      - name: MYSQL_HOST
+        value: "datamate-database"
+      - name: MYSQL_PORT
+        value: "3306"
+      - name: MYSQL_USER
+        value: "root"
+      - name: MYSQL_PASSWORD
+        value: *dbPass
+      - name: MYSQL_DATABASE
+        value: "datamate"
+    resources:
+      limits:
+        cpu: "2"
+        memory: "8G"
+      requests:
+        cpu: "1"
+        memory: "2G"
     volumes:
       - *datasetVolume
       - *flowVolume
@@ -196,6 +225,28 @@ ray-cluster:
           - containerPort: 8081
         volumeMounts: *runtimeVolumeMounts
   worker:
+    containerEnv:
+      - name: RAY_DEDUP_LOGS
+        value: "0"
+      - name: RAY_TQDM_PATCH_PRINT
+        value: "0"
+      - name: MYSQL_HOST
+        value: "datamate-database"
+      - name: MYSQL_PORT
+        value: "3306"
+      - name: MYSQL_USER
+        value: "root"
+      - name: MYSQL_PASSWORD
+        value: *dbPass
+      - name: MYSQL_DATABASE
+        value: "datamate"
+    resources:
+      limits:
+        cpu: "8"
+        memory: "64G"
+      requests:
+        cpu: "1"
+        memory: "2G"
     volumes:
       - *datasetVolume
       - *flowVolume
