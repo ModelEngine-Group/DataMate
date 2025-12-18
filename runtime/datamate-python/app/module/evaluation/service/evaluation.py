@@ -36,8 +36,8 @@ class EvaluationExecutor:
                             .replace("{question}", eval_content.get("instruction")))
                            .replace("{answer}", eval_content.get("output")))
         if self.task.task_type == "COT":
-            prompt_text = ((prompt_text.replace("{question}", eval_content.get("question"))
-                            .replace("{conclusion}", eval_content.get("conclusion")))
+            prompt_text = ((prompt_text.replace("{question}", eval_content.get("instruction"))
+                            .replace("{conclusion}", eval_content.get("output")))
                            .replace("{chain_of_thought}", eval_content.get("chain_of_thought")))
         return prompt_text
 

@@ -29,7 +29,7 @@ class GenerationService:
     def __init__(self, db: AsyncSession):
         self.db = db
         # 全局并发信号量：保证任意时刻最多 10 次模型调用
-        self.question_semaphore = asyncio.Semaphore(100)
+        self.question_semaphore = asyncio.Semaphore(10)
         self.answer_semaphore = asyncio.Semaphore(100)
 
     async def process_task(self, task_id: str):
@@ -263,7 +263,7 @@ class GenerationService:
         """针对单个 chunk 文本，调用 question_chat 生成问题列表。"""
         number = question_cfg.number or 5
         number = number if number is not None else 5
-        number = int(len(chunk_text) / 1000 * number)
+        number = max(int(len(chunk_text) / 1000 * number), 1)
         template = getattr(question_cfg, "prompt_template", QUESTION_GENERATOR_PROMPT)
         template = template if (template is not None and template.strip() != "") else QUESTION_GENERATOR_PROMPT
 
@@ -327,7 +327,30 @@ class GenerationService:
                     prompt_local,
                 )
 
-            data_obj = {"instruction": question, "output": answer}
+            # 默认结构：与 ANSWER_GENERATOR_PROMPT 一致，并补充 instruction 字段
+            base_obj: dict[str, object] = {
+                "input": chunk_text,
+                "output": answer,
+            }
+
+            # 如果模型已经按照 ANSWER_GENERATOR_PROMPT 返回了 JSON，则尝试解析并在其上增加 instruction
+            parsed_obj: dict[str, object] | None = None
+            if isinstance(answer, str):
+                cleaned = extract_json_substring(answer)
+                try:
+                  parsed = json.loads(cleaned)
+                  if isinstance(parsed, dict):
+                      parsed_obj = parsed
+                except Exception:
+                  parsed_obj = None
+
+            if parsed_obj is not None:
+                parsed_obj["instruction"] = question
+                data_obj = parsed_obj
+            else:
+                base_obj["instruction"] = question
+                data_obj = base_obj
+
             record = SynthesisData(
                 id=str(uuid.uuid4()),
                 data=data_obj,
