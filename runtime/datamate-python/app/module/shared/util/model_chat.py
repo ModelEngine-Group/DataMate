@@ -24,18 +24,41 @@ def extract_json_substring(raw: str) -> str:
     - 再从后向前找最后一个 '}' 或 ']' 作为结束；
     - 如果找不到合适的边界，就退回原始字符串。
     - 部分模型可能会在回复中加入 `<think>...</think>` 内部思考内容，应在解析前先去除。
+    - 也有模型会在 JSON 前后增加如 <reasoning>...</reasoning>、<analysis>...</analysis> 等标签，本方法会一并去除。
     该方法不会保证截取的一定是合法 JSON，但能显著提高 json.loads 的成功率。
     """
     if not raw:
         return raw
 
-    # 先移除所有 <think>...</think> 段落（包括跨多行的情况）
     try:
         import re
 
-        raw = re.sub(r"<think>[\s\S]*?</think>", "", raw, flags=re.IGNORECASE)
+        # 1. 先把所有完整的思考标签块整体去掉：<think>...</think> 等
+        thought_tags = [
+            "think",
+            "thinking",
+            "analysis",
+            "reasoning",
+            "reflection",
+            "inner_thoughts",
+        ]
+        for tag in thought_tags:
+            pattern = rf"<{tag}>[\s\S]*?</{tag}>"
+            raw = re.sub(pattern, "", raw, flags=re.IGNORECASE)
+
+        # 2. 再做一次“截取最后一个 </think>（或其它思考标签结束）之后的内容”的兜底
+        #    这样就算标签不成对或嵌套异常，也能保留尾部真正的回答
+        last_pos = -1
+        for tag in thought_tags:
+            # 匹配类似 </think> 或 </THINK>
+            m = list(re.finditer(rf"</{tag}>", raw, flags=re.IGNORECASE))
+            if m:
+                last_pos = max(last_pos, m[-1].end())
+        if last_pos != -1 and last_pos < len(raw):
+            raw = raw[last_pos:]
+
     except Exception:
-        # 正则异常时不影响后续逻辑，继续使用原始文本
+        # 正则异常时不影响后续逻辑，继续使用当前文本
         pass
 
     start = None
