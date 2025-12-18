@@ -269,9 +269,9 @@ class GenerationService:
 
         prompt = (
             template
-            .replace("{{text}}", chunk_text)
-            .replace("{{number}}", str(number))
-            .replace("{{textLength}}", str(len(chunk_text)))
+            .replace("{text}", chunk_text)
+            .replace("{number}", str(number))
+            .replace("{textLength}", str(len(chunk_text)))
         )
 
         async with self.question_semaphore:
@@ -312,7 +312,7 @@ class GenerationService:
         success_flags: list[bool] = []
 
         async def process_single_question(question: str):
-            prompt = template.replace("{{text}}", chunk_text).replace("{{question}}", question)
+            prompt = template.replace("{text}", chunk_text).replace("{question}", question)
             for k, v in extra_vars.items():
                 prompt.replace(f"{{{{{k}}}}}", str(v))
             else:

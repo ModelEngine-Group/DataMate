@@ -14,6 +14,7 @@ def call_openai_style_model(base_url, api_key, model_name, prompt, **kwargs):
     )
     return response.choices[0].message.content
 
+
 def extract_json_substring(raw: str) -> str:
     """从 LLM 的原始回答中提取最可能的 JSON 字符串片段。
 
@@ -22,10 +23,20 @@ def extract_json_substring(raw: str) -> str:
     - 优先在文本中查找第一个 '{' 或 '[' 作为 JSON 起始；
     - 再从后向前找最后一个 '}' 或 ']' 作为结束；
     - 如果找不到合适的边界，就退回原始字符串。
+    - 部分模型可能会在回复中加入 `<think>...</think>` 内部思考内容，应在解析前先去除。
     该方法不会保证截取的一定是合法 JSON，但能显著提高 json.loads 的成功率。
     """
     if not raw:
         return raw
+
+    # 先移除所有 <think>...</think> 段落（包括跨多行的情况）
+    try:
+        import re
+
+        raw = re.sub(r"<think>[\s\S]*?</think>", "", raw, flags=re.IGNORECASE)
+    except Exception:
+        # 正则异常时不影响后续逻辑，继续使用原始文本
+        pass
 
     start = None
     end = None

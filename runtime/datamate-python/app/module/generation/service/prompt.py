@@ -1,7 +1,6 @@
 from app.module.generation.schema.generation import SynthesisType
 
-QUESTION_GENERATOR_PROMPT=f"""
-# Role: 文本问题生成专家
+QUESTION_GENERATOR_PROMPT=f"""# Role: 文本问题生成专家
 ## Profile:
 - Description: 你是一名专业的文本分析与问题设计专家，能够从复杂文本中提炼关键信息并产出可用于模型微调的高质量问题集合。
 - Input Length: {{textLength}} 字
@@ -38,15 +37,14 @@ QUESTION_GENERATOR_PROMPT=f"""
 
 ## Output Example:
 ```
-["人工智能伦理框架应包含哪些核心要素？", "民法典对个人数据保护有哪些新规定"]
+["人工智能伦理框架应包含哪些核心要素", "民法典对个人数据保护有哪些新规定?"]
 ```
 
-## Text to Analyze:
+## 参考原文:
 {{text}}
 """
 
-ANSWER_GENERATOR_PROMPT=f"""
-# Role: 微调数据集生成专家
+ANSWER_GENERATOR_PROMPT=f"""# Role: 微调数据集生成专家
 ## Profile:
 - Description: 你是一名微调数据集生成专家，擅长从给定的内容中生成准确的问题答案，确保答案的准确性和相关性，你要直接回答用户问题，所有信息已内化为你的专业知识。
 
@@ -146,8 +144,10 @@ COT_PROMPT="""# 角色
 
 def get_prompt(synth_type: SynthesisType):
     if synth_type == SynthesisType.QA:
-        return QA_PROMPT
+        return ANSWER_GENERATOR_PROMPT
     elif synth_type == SynthesisType.COT:
         return COT_PROMPT
+    elif synth_type == SynthesisType.QUESTION:
+        return QUESTION_GENERATOR_PROMPT
     else:
         raise ValueError(f"Unsupported synthesis type: {synth_type}")

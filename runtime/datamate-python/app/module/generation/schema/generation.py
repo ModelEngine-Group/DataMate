@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from typing import List, Optional, Dict, Any, Union
+from typing import List, Optional, Dict, Any
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -15,20 +15,27 @@ class SyntheConfig(BaseModel):
     """合成配置"""
     model_id: str = Field(..., description="模型ID")
     prompt_template: str = Field(None, description="合成提示模板")
-    number: int = Field(None, description="单个chunk合成的数据数量")
+    number: Optional[int] = Field(None, description="单个chunk合成的数据数量")
     temperature: Optional[float] = Field(None, description="温度参数")
+
 
 class Config(BaseModel):
     """配置"""
     text_split_config: TextSplitConfig = Field(None, description="文本切片配置")
     question_synth_config: SyntheConfig = Field(None, description="问题合成配置")
     answer_synth_config: SyntheConfig = Field(None, description="答案合成配置")
+    # 新增：整个任务允许生成的 QA 总上限（问题/答案对数量）
+    max_qa_pairs: Optional[int] = Field(
+        default=None,
+        description="整个任务允许生成的 QA 对总量上限；为 None 或 <=0 表示不限制",
+    )
 
 
 class SynthesisType(Enum):
     """合成类型"""
     QA = "QA"
     COT = "COT"
+    QUESTION = "QUESTION"
 
 
 class CreateSynthesisTaskRequest(BaseModel):
@@ -42,7 +49,7 @@ class CreateSynthesisTaskRequest(BaseModel):
     @field_validator("description")
     @classmethod
     def empty_string_to_none(cls, v: Optional[str]) -> Optional[str]:
-        """前端如果传入空字符串，将其统一转换为 None，避免存库时看起来像有描述但实际上为空。"""
+        """前端如果传入空字符串，将其统一转化为 None，避免存库时看起来像有描述但实际上为空。"""
         if isinstance(v, str) and v.strip() == "":
             return None
         return v
@@ -102,7 +109,7 @@ class PagedDataSynthesisFileTaskResponse(BaseModel):
 
 
 class DataSynthesisChunkItem(BaseModel):
-    """数据合成文件下的 chunk 记录"""
+    """数据合成任务下的 chunk 记录"""
     id: str
     synthesis_file_instance_id: str
     chunk_index: Optional[int] = None
