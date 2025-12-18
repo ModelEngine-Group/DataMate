@@ -8,6 +8,7 @@ Create: 2025/10/29 17:24
 import os
 import shutil
 import time
+from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, Any
 
 from datamate.common.utils.rest_client import http_request
@@ -39,20 +40,24 @@ class MineruFormatter(Mapper):
             pdf_bytes = read_fn(filepath)
             total_page = len(PdfReader(filepath).pages)
             content = ""
-            for page in range(0, total_page, 10):
-                do_parse(
-                    output_dir=self.output_dir,
-                    pdf_file_names=[filename_without_ext],
-                    pdf_bytes_list=[pdf_bytes],
-                    p_lang_list=["ch"],
-                    backend=self.backend,
-                    server_url=self.server_url,
-                    start_page_id=page,
-                    end_page_id=min(page + 9, total_page - 1),
-                )
-                if os.path.exists(parse_dir):
-                    content += get_infer_result(".md", filename_without_ext, parse_dir)
-                    shutil.rmtree(parse_dir)
+            with ThreadPoolExecutor(max_workers=1) as executor:
+                for page in range(0, total_page, 10):
+                    # 使用 executor.submit 将 SDK 调用提交到子线程
+                    # .result() 会阻塞等待直到该次解析完成，保证了原有的循环逻辑顺序
+                    executor.submit(
+                        do_parse,
+                        output_dir=self.output_dir,
+                        pdf_file_names=[filename_without_ext],
+                        pdf_bytes_list=[pdf_bytes],
+                        p_lang_list=["ch"],
+                        backend=self.backend,
+                        server_url=self.server_url,
+                        start_page_id=page,
+                        end_page_id=min(page + 9, total_page - 1),
+                    ).result()
+                    if os.path.exists(parse_dir):
+                        content += get_infer_result(".md", filename_without_ext, parse_dir)
+                        shutil.rmtree(parse_dir)
             sample[self.text_key] = content
             logger.info(
                 f"fileName: {filename}, method: MineruFormatter costs {(time.time() - start):6f} s")
