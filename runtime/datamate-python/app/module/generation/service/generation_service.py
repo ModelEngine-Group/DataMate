@@ -41,6 +41,13 @@ class GenerationService:
 
         logger.info(f"Start processing synthe task {task_id}")
 
+        # 从 synth_config 中读取 max_qa_pairs，全局控制 QA 总量上限；<=0 或异常则视为不限制
+        try:
+            cfg = Config(**(synth_task.synth_config or {}))
+            max_qa_pairs = cfg.max_qa_pairs if (cfg and cfg.max_qa_pairs and cfg.max_qa_pairs > 0) else None
+        except Exception:
+            max_qa_pairs = None
+
         # 获取任务关联的文件原始ID列表
         file_ids = await self._get_file_ids_for_task(task_id)
         if not file_ids:
@@ -50,7 +57,7 @@ class GenerationService:
         # 逐个文件处理
         for file_id in file_ids:
             try:
-                success = await self._process_single_file(synth_task, file_id)
+                success = await self._process_single_file(synth_task, file_id, max_qa_pairs=max_qa_pairs)
             except Exception as e:
                 logger.exception(f"Unexpected error when processing file {file_id} for task {task_id}: {e}")
                 # 确保对应文件任务状态标记为失败
@@ -70,6 +77,7 @@ class GenerationService:
         self,
         synth_task: DataSynthInstance,
         file_id: str,
+        max_qa_pairs: int | None = None,
     ) -> bool:
         """按 chunk 批量流式处理单个源文件。
 
@@ -147,7 +155,7 @@ class GenerationService:
         answer_chat = get_chat_client(answer_model)
 
         # 分批次从 DB 读取并处理 chunk
-        batch_size = 100
+        batch_size = 20
         current_index = 1
 
         while current_index <= total_chunks:
@@ -173,6 +181,8 @@ class GenerationService:
                     answer_cfg=answer_cfg,
                     question_chat=question_chat,
                     answer_chat=answer_chat,
+                    synth_task_id=str(synth_task.id),
+                    max_qa_pairs=max_qa_pairs,
                 )
 
             tasks = [process_one(chunk) for chunk in chunk_batch]
@@ -194,11 +204,50 @@ class GenerationService:
         answer_cfg: SyntheConfig,
         question_chat: BaseChatModel,
         answer_chat: BaseChatModel,
+        synth_task_id: str,
+        max_qa_pairs: int | None = None,
     ) -> bool:
         """处理单个 chunk：生成问题列表，然后为每个问题生成答案并落库。
 
-        返回：该 chunk 是否至少成功生成一条 QA。
+        为了全局控制 QA 总量：在本方法开始处，根据 synth_task_id 查询当前已落盘的
+        SynthesisData 条数，如果 >= max_qa_pairs，则不再对当前 chunk 做任何 QA 生成，
+        并将当前文件任务标记为 completed，processed_chunks = total_chunks。
+
+        已经进入后续流程的任务（例如其它协程正在生成答案）允许自然执行完。
         """
+        # 如果没有全局上限配置，维持原有行为
+        if max_qa_pairs is not None and max_qa_pairs > 0:
+            from sqlalchemy import func
+
+            # 统计当前整个任务下已生成的 QA 总数
+            result = await self.db.execute(
+                select(func.count(SynthesisData.id)).where(
+                    SynthesisData.synthesis_file_instance_id.in_(
+                        select(DataSynthesisFileInstance.id).where(
+                            DataSynthesisFileInstance.synthesis_instance_id == synth_task_id
+                        )
+                    )
+                )
+            )
+            current_qa_count = int(result.scalar() or 0)
+
+            if current_qa_count >= max_qa_pairs:
+                logger.info(
+                    "max_qa_pairs reached: current=%s, max=%s, task_id=%s, file_task_id=%s, skip new QA generation for this chunk.",
+                    current_qa_count,
+                    max_qa_pairs,
+                    synth_task_id,
+                    file_task.id,
+                )
+                # 将文件任务标记为已完成，并认为所有 chunk 均已处理
+                file_task.status = "completed"
+                if file_task.total_chunks is not None:
+                    file_task.processed_chunks = file_task.total_chunks
+                await self.db.commit()
+                await self.db.refresh(file_task)
+                return False
+
+        # ---- 下面保持原有逻辑不变 ----
         chunk_index = chunk.chunk_index
         chunk_text = chunk.chunk_content or ""
         if not chunk_text.strip():
@@ -558,6 +607,14 @@ class GenerationService:
             logger.error(f"Failed to increment processed_chunks: file_task {file_task_id} not found")
             return
 
-        file_task.processed_chunks = (file_task.processed_chunks or 0) + int(delta)
+        # 原始自增
+        new_value = (file_task.processed_chunks or 0) + int(delta)
+
+        # 如果存在 total_chunks，上限为 total_chunks，避免超过
+        total = file_task.total_chunks
+        if isinstance(total, int) and total >= 0:
+            new_value = min(new_value, total)
+
+        file_task.processed_chunks = new_value
         await self.db.commit()
         await self.db.refresh(file_task)
