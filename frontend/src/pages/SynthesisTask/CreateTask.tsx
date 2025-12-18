@@ -50,7 +50,7 @@ export default function SynthesisTaskCreate() {
       | "PARAGRAPH_CHUNK"
       | "FIXED_LENGTH_CHUNK"
       | "CUSTOM_SEPARATOR_CHUNK",
-    chunkSize: 2000,
+    chunkSize: 3000,
     overlapSize: 100,
     delimiter: "",
   });
@@ -560,7 +560,10 @@ export default function SynthesisTaskCreate() {
                     </div>
                     <div className="grid grid-cols-12 gap-3 mb-3">
                       <div className="col-span-4">
-                        <span className="text-[11px] font-medium text-gray-600">每千tokens生成的问题数量</span>
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-[11px] font-medium text-gray-600">问题生成数量</span>
+                          <span className="text-[10px] text-slate-400">每千tokens生成的问题条数</span>
+                        </div>
                         <InputNumber
                           className="mt-1 w-full"
                           min={1}
@@ -573,7 +576,10 @@ export default function SynthesisTaskCreate() {
                         />
                       </div>
                       <div className="col-span-4">
-                        <span className="text-[11px] font-medium text-gray-600">温度 (Temperature)</span>
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-[11px] font-medium text-gray-600">温度 (Temperature)</span>
+                          <span className="text-[10px] text-slate-400">数值越大，问题越发散、多样</span>
+                        </div>
                         <InputNumber
                           className="mt-1 w-full"
                           min={0}
@@ -590,7 +596,10 @@ export default function SynthesisTaskCreate() {
                         />
                       </div>
                       <div className="col-span-4">
-                        <span className="text-[11px] font-medium text-gray-600">使用模型</span>
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-[11px] font-medium text-gray-600">使用模型</span>
+                          <span className="text-[10px] text-slate-400">用于生成问题的对话模型</span>
+                        </div>
                         <Select
                           className="mt-1 w-full"
                           size="small"
@@ -602,6 +611,9 @@ export default function SynthesisTaskCreate() {
                       </div>
                     </div>
                     <span className="text-[11px] font-medium text-gray-600">问题 Prompt 模板</span>
+                    <p className="mt-0.5 text-[10px] text-slate-400">
+                      用于指导模型如何从切片文本中生成高质量问题，可在保持变量占位符不变的前提下个性化修改。
+                    </p>
                     <TextArea
                       value={questionPrompt}
                       onChange={(e) => setQuestionPrompt(e.target.value)}
@@ -624,9 +636,12 @@ export default function SynthesisTaskCreate() {
                       </div>
                       <span className="text-[10px] text-slate-400">控制答案生成的稳定性与风格</span>
                     </div>
-                    <div className="grid grid-cols-3 gap-3 mb-3">
-                      <div>
-                        <span className="text-[11px] font-medium text-gray-600">温度 (Temperature)</span>
+                    <div className="grid grid-cols-12 gap-3 mb-3">
+                      <div className="col-span-4">
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-[11px] font-medium text-gray-600">温度 (Temperature)</span>
+                          <span className="text-[10px] text-slate-400">数值越小，答案越稳定、保守</span>
+                        </div>
                         <InputNumber
                           className="mt-1 w-full"
                           min={0}
@@ -642,8 +657,11 @@ export default function SynthesisTaskCreate() {
                           }
                         />
                       </div>
-                      <div>
-                        <span className="text-[11px] font-medium text-gray-600">使用模型</span>
+                      <div className="col-span-4">
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-[11px] font-medium text-gray-600">使用模型</span>
+                          <span className="text-[10px] text-slate-400">用于生成答案的对话模型</span>
+                        </div>
                         <Select
                           className="mt-1 w-full"
                           size="small"
@@ -655,6 +673,9 @@ export default function SynthesisTaskCreate() {
                       </div>
                     </div>
                     <span className="text-[11px] font-medium text-gray-600">答案 Prompt 模板</span>
+                    <p className="mt-0.5 text-[10px] text-slate-400">
+                      用于约束模型回答的风格与内容范围，例如是否需要分步推理、是否必须引用原文关键信息等。
+                    </p>
                     <TextArea
                       value={answerPrompt}
                       onChange={(e) => setAnswerPrompt(e.target.value)}
