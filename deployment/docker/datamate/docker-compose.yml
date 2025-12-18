@@ -90,6 +90,7 @@ services:
       - dataset_volume:/dataset
       - flow_volume:/flow
       - operator-runtime-volume:/opt/runtime/datamate/ops/user
+      - operator-packages-volume:/usr/local/lib/ops/site-packages
     networks: [ datamate ]
 
   # 4) mineru
@@ -150,6 +151,8 @@ volumes:
     name: datamate-operator-upload-volume
   operator-runtime-volume:
     name: datamate-operator-runtime-volume
+  operator-packages-volume:
+    name: datamate-operator-packages-volume
   mineru_log_volume:
     name: datamate-mineru_log_volume
 
