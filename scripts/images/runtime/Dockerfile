@@ -23,7 +23,8 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     UV_EXTRA_INDEX_URL="https://download.pytorch.org/whl/cpu" uv pip install -e . --system --index-strategy unsafe-best-match \
     && UV_EXTRA_INDEX_URL="https://download.pytorch.org/whl/cpu" uv pip install -r /opt/runtime/datamate/ops/pyproject.toml --system \
     && uv pip uninstall torch torchvision --system \
-    && python -m spacy download zh_core_web_sm
+    && python -m spacy download zh_core_web_sm \
+    && echo "/usr/local/lib/ops/site-packages" > /usr/local/lib/python3.11/site-packages/ops.pth
 
 RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
     && chmod +x /opt/runtime/start.sh \

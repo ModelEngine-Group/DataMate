@@ -25,6 +25,17 @@ from app.module.shared.util.model_chat import extract_json_substring
 from app.module.system.service.common_service import chat, get_model_by_id, get_chat_client
 
 
+def _filter_docs(split_docs, chunk_size):
+    """
+    过滤文档，移除长度小于 chunk_size 的文档
+    """
+    filtered_docs = []
+    for doc in split_docs:
+        if len(doc.page_content) >= chunk_size * 0.7:
+            filtered_docs.append(doc)
+    return filtered_docs
+
+
 class GenerationService:
     def __init__(self, db: AsyncSession):
         self.db = db
@@ -464,7 +475,7 @@ class GenerationService:
         try:
             docs = load_documents(file_path)
             split_docs = DocumentSplitter.auto_split(docs, chunk_size, chunk_overlap)
-            return split_docs
+            return _filter_docs(split_docs, chunk_size)
         except Exception as e:
             logger.error(f"Error loading or splitting file {file_path}: {e}")
             raise
