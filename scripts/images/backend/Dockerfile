@@ -31,6 +31,8 @@ COPY --from=datax-builder /DataX/target/datax/datax /opt/datax
 
 COPY scripts/images/backend/start.sh /opt/backend/start.sh
 
+COPY runtime/ops/examples/test_operator/test_operator.tar /opt/backend/test_operator.tar
+
 RUN dos2unix /opt/backend/start.sh \
     && chmod +x /opt/backend/start.sh \
     && ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime

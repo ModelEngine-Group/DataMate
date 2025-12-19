@@ -3,6 +3,7 @@ package com.datamate.operator.application;
 import com.datamate.common.domain.model.ChunkUploadPreRequest;
 import com.datamate.common.domain.service.FileService;
 import com.datamate.common.infrastructure.exception.BusinessException;
+import com.datamate.common.infrastructure.exception.SystemErrorCode;
 import com.datamate.operator.domain.contants.OperatorConstant;
 import com.datamate.operator.infrastructure.converter.OperatorConverter;
 import com.datamate.operator.domain.model.OperatorView;
@@ -21,10 +22,13 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
+import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -162,6 +166,20 @@ public class OperatorService {
             operatorDto.setSettings(objectMapper.writeValueAsString(settings));
         } catch (JsonProcessingException e) {
             throw BusinessException.of(OperatorErrorCode.SETTINGS_PARSE_FAILED, e.getMessage());
+        }
+    }
+
+    public Resource downloadExampleOperator(File file) {
+        try {
+            Resource resource = new UrlResource(file.toURI());
+            if (resource.exists()) {
+                return resource;
+            } else {
+                throw BusinessException.of(SystemErrorCode.RESOURCE_NOT_FOUND);
+            }
+        } catch (MalformedURLException ex) {
+            log.error("File not found: {}", file.getName(), ex);
+            throw BusinessException.of(SystemErrorCode.RESOURCE_NOT_FOUND);
         }
     }
 

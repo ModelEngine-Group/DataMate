@@ -48,6 +48,11 @@ export function uploadOperatorChunkUsingPost(_, data: FormData, config?: any) {
     ...config,
   });
 }
+
+export function downloadExampleOperatorUsingGet() {
+  return download("/api/operators/examples/download");
+}
+
 // 发布算子
 export function publishOperatorUsingPost(operatorId: string | number) {
   return post(`/api/operators/${operatorId}/publish`);
