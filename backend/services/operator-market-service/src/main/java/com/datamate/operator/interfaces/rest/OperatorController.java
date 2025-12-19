@@ -85,6 +85,7 @@ public class OperatorController {
             Resource resource = operatorService.downloadExampleOperator(file);
             return ResponseEntity.ok()
                     .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, HttpHeaders.CONTENT_DISPOSITION)
                     .header(HttpHeaders.CONTENT_DISPOSITION,
                             "attachment; filename=\"" + file.getName() + "\"")
                     .body(resource);

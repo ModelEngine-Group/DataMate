@@ -128,7 +128,6 @@ export default function OperatorMarketPage() {
         <div className="flex gap-2">
           {/*<TagManagement />*/}
           <Button
-            type="primary"
             icon={<DownloadOutlined />}
             onClick={handleDownload}
           >
