@@ -6,12 +6,16 @@ Description: MinerU PDF文本抽取
 Create: 2025/10/29 17:24
 """
 import asyncio
+import glob
 import os
 import shutil
 import time
+import uuid
+from pathlib import Path
 from typing import Dict, Any
 
-from datamate.core.base_op import Mapper
+from datamate.core.base_op import Mapper, FileExporter
+from datamate.sql_manager.persistence_atction import TaskInfoPersistence
 from loguru import logger
 from mineru.cli.common import aio_do_parse, read_fn
 from mineru.cli.fast_api import get_infer_result
@@ -26,6 +30,7 @@ class MineruFormatter(Mapper):
         self.server_url = "http://datamate-mineru:8000"
         self.backend = "vlm-http-client"
         self.output_dir = "/dataset/outputs"
+        self.target_type = kwargs.get("exportType", "md")
 
     def execute(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         start = time.time()
@@ -34,6 +39,7 @@ class MineruFormatter(Mapper):
             return sample
         try:
             sample[self.text_key] = asyncio.run(self.async_process_file(sample))
+            sample[self.target_type_key] = self.target_type
             logger.info(
                 f"fileName: {filename}, method: MineruFormatter costs {(time.time() - start):6f} s")
         except Exception as e:
@@ -63,5 +69,23 @@ class MineruFormatter(Mapper):
             )
             if os.path.exists(parse_dir):
                 content += get_infer_result(".md", filename_without_ext, parse_dir)
+                self.save_images(parse_dir, sample["dataset_id"], os.path.abspath(sample[self.export_path_key]) + "/images")
                 shutil.rmtree(parse_dir)
         return content
+
+    def save_images(self, parse_dir, dataset_id, export_path):
+        Path(export_path).mkdir(parents=True, exist_ok=True)
+
+        images_dir = os.path.join(parse_dir, "images")
+        image_paths = glob.glob(os.path.join(glob.escape(images_dir), "*.jpg"))
+        for image_path in image_paths:
+            shutil.copy(image_path, export_path)
+            image_sample = {}
+            image = Path(image_path)
+            image_name = image.name
+            image_sample[self.filename_key] = image_name
+            image_sample[self.filetype_key] = "jpg"
+            image_sample[self.filesize_key] = image.stat().st_size
+            image_sample["dataset_id"] = dataset_id
+            image_sample[self.filepath_key] = export_path
+            TaskInfoPersistence().update_file_result(image_sample, str(uuid.uuid4()))
