@@ -87,5 +87,5 @@ class MineruFormatter(Mapper):
             image_sample[self.filetype_key] = "jpg"
             image_sample[self.filesize_key] = image.stat().st_size
             image_sample["dataset_id"] = dataset_id
-            image_sample[self.filepath_key] = export_path
+            image_sample[self.filepath_key] = export_path + "/" + image_name
             TaskInfoPersistence().update_file_result(image_sample, str(uuid.uuid4()))
