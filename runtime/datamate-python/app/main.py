@@ -8,7 +8,8 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from .core.config import settings
 from .core.logging import setup_logging, get_logger
-from .db.session import AsyncSessionLocal
+from .db.session import AsyncSessionLocal, engine
+from .db.models.annotation_management import AutoAnnotationTask
 from .exception import (
     starlette_http_exception_handler,
     fastapi_http_exception_handler,
@@ -36,6 +37,14 @@ async def lifespan(app: FastAPI):
         logger.error(f"Database connection validation failed: {e}")
         logger.debug(f"Connection details: {settings.database_url}")
         raise
+
+    # Ensure auto annotation task table exists (for upgraded environments where init SQL didn't run)
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(AutoAnnotationTask.__table__.create, checkfirst=True)
+        logger.info("Ensured table t_dm_auto_annotation_tasks exists")
+    except Exception as e:  # pragma: no cover - 防御性日志
+        logger.error(f"Failed to ensure table t_dm_auto_annotation_tasks: {e}")
 
     # Label Studio
     # TODO Add actual connectivity check if needed

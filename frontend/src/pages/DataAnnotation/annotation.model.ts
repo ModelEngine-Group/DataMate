@@ -105,3 +105,49 @@ export enum TemplateType {
   SYSTEM = "true",
   CUSTOM = "false"
 }
+
+// 自动标注任务相关类型
+export enum AutoAnnotationStatus {
+  PENDING = "pending",
+  RUNNING = "running",
+  COMPLETED = "completed",
+  FAILED = "failed",
+  CANCELLED = "cancelled",
+}
+
+export interface AutoAnnotationConfig {
+  modelSize: "n" | "s" | "m" | "l" | "x";
+  confThreshold: number;
+  targetClasses: number[];
+}
+
+export interface AutoAnnotationTask {
+  id: string;
+  name: string;
+  datasetId: string;
+  datasetName?: string;
+  config: AutoAnnotationConfig;
+  status: AutoAnnotationStatus;
+  progress: number;
+  totalImages: number;
+  processedImages: number;
+  detectedObjects: number;
+  outputPath?: string;
+  errorMessage?: string;
+  createdAt: string;
+  updatedAt?: string;
+  completedAt?: string;
+}
+
+export interface AutoAnnotationResult {
+  taskId: string;
+  outputDatasetPath: string;
+  annotationFiles: string[];
+  statistics: {
+    totalImages: number;
+    successfulImages: number;
+    failedImages: number;
+    totalDetections: number;
+    averageDetectionsPerImage: number;
+  };
+}

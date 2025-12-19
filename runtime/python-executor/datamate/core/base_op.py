@@ -72,7 +72,6 @@ class BaseOp:
         self.filesize_key = kwargs.get('fileSize_key', "fileSize")
         self.export_path_key = kwargs.get('export_path_key', "export_path")
         self.ext_params_key = kwargs.get('ext_params_key', "ext_params")
-        self.target_type_key = kwargs.get('target_type_key', "target_type")
 
     @property
     def name(self):
@@ -341,6 +340,23 @@ class Filter(BaseOp):
         raise NotImplementedError("This is in Filter Class, plese re-define this method in Sub-classes")
 
 
+class Annotator(Mapper):
+    """标注算子基类，用于图像/视频/音频等数据的自动标注。
+
+    标注算子继承自 Mapper，会逐个处理 sample，并在 sample 中添加标注结果。
+    子类需要实现 execute() 方法完成具体的标注逻辑。
+    """
+
+    def __init__(self, *args, **kwargs):
+        super(Annotator, self).__init__(*args, **kwargs)
+        # 标注算子通常需要读取原始文件（如图像），因此默认的 image_key 可选
+        self.image_key = kwargs.get("imageKey", "image")
+
+    def execute(self, sample: Dict[str, Any]) -> Dict[str, Any]:
+        """执行标注（子类实现）"""
+        raise NotImplementedError("This is in Annotator Class, please re-define this method in Sub-classes")
+
+
 class LLM(Mapper):
     def __init__(self, *args, **kwargs):
         super(LLM, self).__init__(*args, **kwargs)
@@ -438,7 +454,7 @@ class FileExporter(BaseOp):
             elif file_type in self.medical_support_ext:
                 sample, save_path = self.get_medicalfile_handler(sample)
             else:
-                return False
+                raise TypeError(f"{file_type} is unsupported! please check support_ext in FileExporter Ops")
 
             if sample[self.text_key] == '' and sample[self.data_key] == b'':
                 sample[self.filesize_key] = "0"
@@ -484,11 +500,11 @@ class FileExporter(BaseOp):
 
         # target_type存在则保存为扫描件, docx格式
         if target_type:
-            sample = self._get_from_text_or_data(sample)
+            sample = self._get_from_data(sample)
             save_path = self.get_save_path(sample, target_type)
         # 不存在则保存为txt文件，正常文本清洗
         else:
-            sample = self._get_from_text_or_data(sample)
+            sample = self._get_from_text(sample)
             save_path = self.get_save_path(sample, 'txt')
         return sample, save_path
 
@@ -497,11 +513,11 @@ class FileExporter(BaseOp):
 
         # target_type存在, 图转文保存为target_type，markdown格式
         if target_type:
-            sample = self._get_from_text_or_data(sample)
+            sample = self._get_from_text(sample)
             save_path = self.get_save_path(sample, target_type)
         # 不存在则保存为原本图片文件格式，正常图片清洗
         else:
-            sample = self._get_from_text_or_data(sample)
+            sample = self._get_from_data(sample)
             save_path = self.get_save_path(sample, sample[self.filetype_key])
         return sample, save_path
 
@@ -533,13 +549,6 @@ class FileExporter(BaseOp):
         sample[self.data_key] = b''
         sample[self.text_key] = str(sample[self.text_key])
         return sample
-
-    def _get_from_text_or_data(self, sample: Dict[str, Any]) -> Dict[str, Any]:
-        if sample[self.data_key] is not None and sample[self.data_key] != b'':
-            return self._get_from_data(sample)
-        else:
-            return self._get_from_text(sample)
-
 
     @staticmethod
     def _get_uuid():

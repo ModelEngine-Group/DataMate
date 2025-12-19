@@ -170,9 +170,6 @@ runtime:
     - mountPath: /opt/runtime/datamate/ops/user
       name: operator-volume
       subPath: extract
-    - mountPath: /usr/local/lib/ops/site-packages
-      name: operator-volume
-      subPath: site-packages
 
 ray-cluster:
   enabled: true
@@ -217,9 +214,6 @@ ray-cluster:
       - mountPath: /opt/runtime/datamate/ops/user
         name: operator-volume
         subPath: extract
-      - mountPath: /usr/local/lib/ops/site-packages
-        name: operator-volume
-        subPath: site-packages
     sidecarContainers:
       - name: runtime
         image: datamate-runtime
@@ -268,6 +262,3 @@ ray-cluster:
       - mountPath: /opt/runtime/datamate/ops/user
         name: operator-volume
         subPath: extract
-      - mountPath: /usr/local/lib/ops/site-packages
-        name: operator-volume
-        subPath: site-packages

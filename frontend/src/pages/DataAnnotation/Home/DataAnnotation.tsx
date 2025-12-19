@@ -19,6 +19,7 @@ import { mapAnnotationTask } from "../annotation.const";
 import CreateAnnotationTask from "../Create/components/CreateAnnotationTaskDialog";
 import { ColumnType } from "antd/es/table";
 import { TemplateList } from "../Template";
+import AutoAnnotation from "../AutoAnnotation/AutoAnnotation";
 // Note: DevelopmentInProgress intentionally not used here
 
 export default function DataAnnotation() {
@@ -389,6 +390,11 @@ export default function DataAnnotation() {
             key: "templates",
             label: "标注模板",
             children: <TemplateList />,
+          },
+          {
+            key: "autoAnnotation",
+            label: "自动标注",
+            children: <AutoAnnotation />,
           },
         ]}
       />

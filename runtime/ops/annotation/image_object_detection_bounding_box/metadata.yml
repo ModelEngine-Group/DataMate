@@ -1,0 +1,67 @@
+name: '图像目标检测'
+name_en: 'Image Object Detection'
+description: '使用 YOLOv8 模型对图像进行目标检测，标注检测框和类别信息。'
+description_en: 'Detect objects in images using YOLOv8 model and annotate with bounding boxes and class labels.'
+language: 'python'
+vendor: 'ultralytics'
+raw_id: 'ImageObjectDetectionBoundingBox'
+version: '1.0.0'
+types:
+  - 'annotation'
+modal: 'image'
+effect:
+  before: '原始图像'
+  after: '带有目标检测框的图像'
+inputs: 'image'
+outputs: 'image'
+settings:
+  modelSize:
+    name: 模型规模
+    description: 选择 YOLOv8 模型的大小，n(nano)最快但精度较低，x(xlarge)最慢但精度最高。
+    type: select
+    defaultVal: 'l'
+    options:
+      - value: 'n'
+        label: 'YOLOv8n (最快)'
+      - value: 's'
+        label: 'YOLOv8s'
+      - value: 'm'
+        label: 'YOLOv8m'
+      - value: 'l'
+        label: 'YOLOv8l (推荐)'
+      - value: 'x'
+        label: 'YOLOv8x (最精确)'
+  confThreshold:
+    name: 置信度阈值
+    description: 只保留置信度大于此阈值的检测结果。
+    type: slider
+    defaultVal: 0.7
+    min: 0
+    max: 1
+    step: 0.05
+  targetClasses:
+    name: 目标类别
+    description: 选择要检测的目标类别，留空表示检测所有类别。
+    type: multiselect
+    defaultVal: []
+    options:
+      - value: 0
+        label: 'person (人)'
+      - value: 1
+        label: 'bicycle (自行车)'
+      - value: 2
+        label: 'car (汽车)'
+      - value: 3
+        label: 'motorcycle (摩托车)'
+      - value: 5
+        label: 'bus (公交车)'
+      - value: 6
+        label: 'train (火车)'
+      - value: 7
+        label: 'truck (卡车)'
+      - value: 14
+        label: 'bird (鸟)'
+      - value: 15
+        label: 'cat (猫)'
+      - value: 16
+        label: 'dog (狗)'

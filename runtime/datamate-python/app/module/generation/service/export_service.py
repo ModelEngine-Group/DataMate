@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import get_logger
 from app.db.models.data_synthesis import (
-    DataSynthInstance,
+    DataSynthesisInstance,
     DataSynthesisFileInstance,
     SynthesisData,
 )
@@ -43,7 +43,7 @@ class SynthesisDatasetExporter:
 
         Optimized to process one file at a time to reduce memory usage.
         """
-        task = await self._db.get(DataSynthInstance, task_id)
+        task = await self._db.get(DataSynthesisInstance, task_id)
         if not task:
             raise SynthesisExportError(f"Synthesis task {task_id} not found")
 

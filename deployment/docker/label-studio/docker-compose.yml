@@ -4,7 +4,6 @@ services:
     stdin_open: true
     tty: true
     image: heartexlabs/label-studio:latest
-    privileged: true
     restart: unless-stopped
     user: root
     expose:
