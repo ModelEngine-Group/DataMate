@@ -15,6 +15,9 @@ global:
     backendPython:
       name: "datamate-backend-python"
       tag: "latest"
+    gateway:
+      name: "datamate-gateway"
+      tag: "latest"
     frontend:
       name: "datamate-frontend"
       tag: "latest"
@@ -116,6 +119,17 @@ backend-python:
       mountPath: /flow
     - name: log-volume
       mountPath: /var/log/datamate
+
+gateway:
+  service:
+    type: NodePort
+    nodePort: 30000
+  volumes:
+    - *logVolume
+  volumeMounts:
+    - name: log-volume
+      mountPath: /var/log/datamate/gateway
+      subPath: gateway
 
 frontend:
   service:

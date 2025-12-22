@@ -51,6 +51,7 @@ class EvaluationFile(Base):
     task_id = Column(String(36), ForeignKey('t_de_eval_task.id'), nullable=False, comment="评估任务ID")
     file_id = Column(String(36), ForeignKey('t_dm_dataset_files.id'), nullable=True, comment="文件ID")
     file_name = Column(String(255), nullable=False, comment="文件名")
+    error_message = Column(Text, nullable=True, comment="错误信息")
     total_count = Column(Integer, nullable=False, default=0, comment="总数")
     evaluated_count = Column(Integer, nullable=False, default=0, comment="已评估数")
     created_at = Column(TIMESTAMP, server_default=func.current_timestamp(), comment="创建时间")

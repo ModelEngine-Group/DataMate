@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS t_de_eval_file (
     file_name VARCHAR(255) COMMENT '文件名',
     total_count INT DEFAULT 0 COMMENT '总数',
     evaluated_count INT DEFAULT 0 COMMENT '已评估数',
+    error_message TEXT COMMENT '错误信息',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     created_by VARCHAR(255) COMMENT '创建者',
