@@ -17,7 +17,7 @@ data:
         add_header Set-Cookie "NEXT_LOCALE=zh";
 
         location /api/ {
-            proxy_pass http://datamate-backend:8080/api/;
+            proxy_pass http://datamate-gateway:8080/api/;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -71,7 +71,7 @@ data:
         client_max_body_size 1024M;
 
         location /api/ {
-            proxy_pass http://datamate-backend:8080/api/;
+            proxy_pass http://datamate-gateway:8080/api/;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
