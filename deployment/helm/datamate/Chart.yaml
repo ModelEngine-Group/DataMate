@@ -26,6 +26,8 @@ appVersion: "0.0.1"
 dependencies:
   - name: backend
     version: 0.0.1
+  - name: gateway
+    version: 0.0.1
   - name: frontend
     version: 0.0.1
   - name: database
