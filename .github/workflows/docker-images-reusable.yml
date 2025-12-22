@@ -39,7 +39,8 @@ jobs:
           elif [[ $GITHUB_REF == refs/heads/main ]]; then
             echo "TAGS=$BASE_IMAGE:amd64" >> $GITHUB_OUTPUT
           else
-            echo "TAGS=$BASE_IMAGE:amd64-temp" >> $GITHUB_OUTPUT
+            BRANCH_NAME=$(echo "${GITHUB_REF#refs/heads/}" | sed 's/[^a-zA-Z0-9._-]/-/g')
+            echo "TAGS=$BASE_IMAGE:amd64-$BRANCH_NAME" >> $GITHUB_OUTPUT
           fi
 
       - name: Build Docker Image
@@ -80,7 +81,8 @@ jobs:
           elif [[ $GITHUB_REF == refs/heads/main ]]; then
             echo "TAGS=$BASE_IMAGE:arm64" >> $GITHUB_OUTPUT
           else
-            echo "TAGS=$BASE_IMAGE:arm64-temp" >> $GITHUB_OUTPUT
+            BRANCH_NAME=$(echo "${GITHUB_REF#refs/heads/}" | sed 's/[^a-zA-Z0-9._-]/-/g')
+            echo "TAGS=$BASE_IMAGE:arm64-$BRANCH_NAME" >> $GITHUB_OUTPUT
           fi
 
       - name: Build Docker Image
@@ -120,9 +122,10 @@ jobs:
             echo "ARM_TAGS=$BASE_IMAGE:arm64" >> $GITHUB_OUTPUT
             echo "AMD_TAGS=$BASE_IMAGE:amd64" >> $GITHUB_OUTPUT
           else
-            echo "TAGS=$BASE_IMAGE:temp" >> $GITHUB_OUTPUT
-            echo "ARM_TAGS=$BASE_IMAGE:arm64-temp" >> $GITHUB_OUTPUT
-            echo "AMD_TAGS=$BASE_IMAGE:amd64-temp" >> $GITHUB_OUTPUT
+            BRANCH_NAME=$(echo "${GITHUB_REF#refs/heads/}" | sed 's/[^a-zA-Z0-9._-]/-/g')
+            echo "TAGS=$BASE_IMAGE:$BRANCH_NAME" >> $GITHUB_OUTPUT
+            echo "ARM_TAGS=$BASE_IMAGE:arm64-$BRANCH_NAME" >> $GITHUB_OUTPUT
+            echo "AMD_TAGS=$BASE_IMAGE:amd64-$BRANCH_NAME" >> $GITHUB_OUTPUT
           fi
 
       - name: Manifest Docker Image

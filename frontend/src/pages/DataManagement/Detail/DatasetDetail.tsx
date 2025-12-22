@@ -32,14 +32,14 @@ const tabList = [
     key: "overview",
     label: "概览",
   },
-  {
-    key: "lineage",
-    label: "数据血缘",
-  },
-  {
-    key: "quality",
-    label: "数据质量",
-  },
+  // {
+  //   key: "lineage",
+  //   label: "数据血缘",
+  // },
+  // {
+  //   key: "quality",
+  //   label: "数据质量",
+  // },
 ];
 
 export default function DatasetDetail() {

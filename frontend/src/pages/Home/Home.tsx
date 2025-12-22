@@ -1,7 +1,6 @@
 import {
   FolderOpen,
   Settings,
-  ArrowRight,
   Sparkles,
   Target,
   Zap,
@@ -26,7 +25,6 @@ export default function WelcomePage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        timeout: 5000, // 5秒超时
         cache: 'no-store'
       });
 
@@ -96,13 +94,6 @@ export default function WelcomePage() {
               <MessageSquare className="mr-2 w-4 h-4" />
                       {isChecking ? '检查中...' : '对话助手'}
             </span>
-            <span
-              onClick={() => navigate("/orchestration")}
-              className="cursor-pointer rounded px-4 py-2 inline-flex items-center bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white shadow-lg"
-            >
-              数据智能编排
-              <ArrowRight className="ml-2 w-4 h-4" />
-            </span>
           </div>
         </div>
 
@@ -157,73 +148,6 @@ export default function WelcomePage() {
               </Card>
             ))}
           </div>
-        </div>
-
-        {/* Data Orchestration Highlight */}
-        <div className="mb-16">
-          <Card className="bg-gradient-to-br from-orange-50 to-amber-50 border-orange-200 shadow-lg">
-            <div className="p-8">
-              <div className="text-center mb-6">
-                <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-amber-500 rounded-xl flex items-center justify-center mx-auto mb-4">
-                  <GitBranch className="w-8 h-8 text-white" />
-                </div>
-                <h3 className="text-2xl font-bold text-orange-900 mb-2">
-                  数据智能编排 - 可视化流程设计
-                </h3>
-                <p className="text-orange-700">
-                  拖拽式设计复杂数据清洗管道，让数据流转更加直观高效
-                </p>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-8 mb-6">
-                <div className="space-y-3">
-                  <h4 className="font-semibold text-orange-900">
-                    🎯 核心功能：
-                  </h4>
-                  <div className="space-y-2">
-                    <div className="bg-white/60 rounded-lg p-3 text-sm text-orange-800">
-                      可视化流程设计器
-                    </div>
-                    <div className="bg-white/60 rounded-lg p-3 text-sm text-orange-800">
-                      丰富的数据清洗组件库
-                    </div>
-                    <div className="bg-white/60 rounded-lg p-3 text-sm text-orange-800">
-                      实时流程执行监控
-                    </div>
-                  </div>
-                </div>
-                <div className="space-y-3">
-                  <h4 className="font-semibold text-orange-900">
-                    ⚡ 智能特性：
-                  </h4>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm text-orange-800">
-                      <Zap className="w-4 h-4 text-orange-500" />
-                      自动优化数据流转路径
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-orange-800">
-                      <Target className="w-4 h-4 text-orange-500" />
-                      智能错误检测和修复建议
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-orange-800">
-                      <Sparkles className="w-4 h-4 text-orange-500" />
-                      模板化流程快速复用
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="text-center">
-                <span
-                  onClick={() => navigate("/orchestration")}
-                  className="cursor-pointer rounded px-4 py-2 inline-flex items-center bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white shadow-lg"
-                >
-                  <GitBranch className="mr-2 w-4 h-4" />
-                  开始编排
-                </span>
-              </div>
-            </div>
-          </Card>
         </div>
 
         {/* Data Agent Highlight */}
