@@ -7,9 +7,9 @@
 
     <parent>
         <groupId>com.datamate</groupId>
-        <artifactId>datamate</artifactId>
+        <artifactId>services</artifactId>
         <version>1.0.0-SNAPSHOT</version>
-        <relativePath>../../pom.xml</relativePath>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>pipeline-orchestration-service</artifactId>
