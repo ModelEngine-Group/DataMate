@@ -61,7 +61,7 @@ export default function OperatorMarketPage() {
   };
 
   const handleDownload = async () => {
-    await downloadExampleOperatorUsingGet();
+    await downloadExampleOperatorUsingGet("test_operator.tar");
     message.success("文件下载成功");
   };
 
