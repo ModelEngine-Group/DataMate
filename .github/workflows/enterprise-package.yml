@@ -61,7 +61,7 @@ jobs:
         run: |
           mkdir -p images/datamate
           LOWERCASE_REPO=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-          services=("runtime" "backend" "frontend" "database" "backend-python")
+          services=("runtime" "backend" "frontend" "database" "backend-python" "gateway")
           for service in "${services[@]}"; do
             docker pull ghcr.io/$LOWERCASE_REPO/datamate-$service:latest --platform arm64
             docker tag ghcr.io/$LOWERCASE_REPO/datamate-$service:latest datamate-$service:latest

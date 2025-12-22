@@ -34,6 +34,12 @@ jobs:
     with:
       service_name: backend-python
 
+  gateway-docker-build:
+    name: Build and Push Frontend Docker Image
+    uses: ./.github/workflows/docker-image-save.yml
+    with:
+      service_name: gateway
+
   package-all:
     needs:
       - backend-docker-build
@@ -41,6 +47,7 @@ jobs:
       - database-docker-build
       - backend-python-docker-build
       - runtime-docker-build
+      - gateway-docker-build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

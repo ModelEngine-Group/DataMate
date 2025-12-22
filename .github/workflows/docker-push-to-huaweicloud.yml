@@ -18,6 +18,15 @@ jobs:
     secrets:
       HUAWEI_CLOUD_SWR_LOGIN_PWD: ${{ secrets.HUAWEI_CLOUD_SWR_LOGIN_PWD}}
 
+  gateway:
+    name: Push Gateway Image
+    uses: ./.github/workflows/docker-push-to-huaweicloud-reusable.yml
+    with:
+      service_name: datamate-gateway
+      version: ${{ inputs.version}}
+    secrets:
+      HUAWEI_CLOUD_SWR_LOGIN_PWD: ${{ secrets.HUAWEI_CLOUD_SWR_LOGIN_PWD}}
+
   backend:
     name: Push Backend Image
     uses: ./.github/workflows/docker-push-to-huaweicloud-reusable.yml
