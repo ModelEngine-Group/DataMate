@@ -49,7 +49,7 @@ class GenerationService:
     def __init__(self, db: AsyncSession):
         self.db = db
         # 全局并发信号量：保证任意时刻最多 10 次模型调用
-        self.question_semaphore = asyncio.Semaphore(10)
+        self.question_semaphore = asyncio.Semaphore(20)
         self.answer_semaphore = asyncio.Semaphore(100)
 
     async def process_task(self, task_id: str):
