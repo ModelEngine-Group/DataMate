@@ -175,7 +175,7 @@ class GenerationService:
         answer_chat = get_chat_client(answer_model)
 
         # 分批次从 DB 读取并处理 chunk
-        batch_size = 20
+        batch_size = 100
         current_index = 1
 
         while current_index <= total_chunks:
