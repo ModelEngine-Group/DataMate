@@ -31,6 +31,13 @@ services:
     depends_on:
       - datamate-database
 
+  datamate-gateway:
+    container_name: datamate-gateway
+    image: ${REGISTRY:-}datamate-gateway
+    restart: on-failure
+    privileged: true
+    networks: [ datamate ]
+
   # 2) frontend（NodePort 30000）
   datamate-frontend:
     container_name: datamate-frontend
