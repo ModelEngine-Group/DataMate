@@ -155,7 +155,7 @@ endef
 # ========== Build Targets ==========
 
 # Valid build targets
-VALID_BUILD_TARGETS := backend database frontend runtime backend-python deer-flow mineru mineru-npu
+VALID_BUILD_TARGETS := backend database frontend runtime backend-python deer-flow mineru mineru-npu gateway
 
 # Generic docker build target with service name as parameter
 # Automatically prefixes image names with "datamate-" unless it's deer-flow

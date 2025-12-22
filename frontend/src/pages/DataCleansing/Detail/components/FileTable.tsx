@@ -78,6 +78,7 @@ export default function FileTable({result, fetchTaskResult}) {
       title: "文件名",
       dataIndex: "srcName",
       key: "srcName",
+      width: 200,
       filterDropdown: ({
         setSelectedKeys,
         selectedKeys,
@@ -106,6 +107,43 @@ export default function FileTable({result, fetchTaskResult}) {
       ),
       onFilter: (value: string, record: any) =>
         record.srcName.toLowerCase().includes(value.toLowerCase()),
+      render: (text: string) => (
+        <span>{text?.replace(/\.[^/.]+$/, "")}</span>
+      ),
+    },
+    {
+      title: "清洗后文件名",
+      dataIndex: "destName",
+      key: "destName",
+      width: 200,
+      filterDropdown: ({
+                         setSelectedKeys,
+                         selectedKeys,
+                         confirm,
+                         clearFilters,
+                       }: any) => (
+        <div className="p-4 w-64">
+          <Input
+            placeholder="搜索文件名"
+            value={selectedKeys[0]}
+            onChange={(e) =>
+              setSelectedKeys(e.target.value ? [e.target.value] : [])
+            }
+            onPressEnter={() => confirm()}
+            className="mb-2"
+          />
+          <div className="flex gap-2">
+            <Button size="small" onClick={() => confirm()}>
+              搜索
+            </Button>
+            <Button size="small" onClick={() => clearFilters()}>
+              重置
+            </Button>
+          </div>
+        </div>
+      ),
+      onFilter: (value: string, record: any) =>
+        record.destName.toLowerCase().includes(value.toLowerCase()),
       render: (text: string) => (
         <span>{text?.replace(/\.[^/.]+$/, "")}</span>
       ),

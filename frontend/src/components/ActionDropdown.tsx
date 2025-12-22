@@ -68,6 +68,7 @@ const ActionDropdown = ({
                 <Button
                   type="text"
                   size="small"
+                  disabled={action.disabled || false}
                   className="w-full text-left"
                   danger={action.danger}
                   icon={action.icon}
@@ -84,6 +85,7 @@ const ActionDropdown = ({
               className="w-full"
               size="small"
               type="text"
+              disabled={action.disabled || false}
               danger={action.danger}
               icon={action.icon}
               onClick={() => handleActionClick(action)}

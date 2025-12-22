@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import importlib
 import sys
+import uuid
 from abc import ABC, abstractmethod
 
 import pyarrow as pa
@@ -119,12 +120,14 @@ class RayDataset(BasicDataset):
 
             # 加载Ops module
             temp_ops = self.load_ops_module(op_name)
+            operators_cls_list.append(temp_ops)
+
             if index == 0:
                 init_kwargs["is_first_op"] = True
 
             if index == len(cfg_process) - 1:
                 init_kwargs["is_last_op"] = True
-            operators_cls_list.append(temp_ops)
+            init_kwargs["instance_id"] = kwargs.get("instance_id", str(uuid.uuid4()))
             init_kwargs_list.append(init_kwargs)
 
         for cls_id, operators_cls in enumerate(operators_cls_list):

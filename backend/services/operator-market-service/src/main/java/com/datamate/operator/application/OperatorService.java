@@ -95,6 +95,9 @@ public class OperatorService {
         if (operatorRepo.operatorInTemplateOrRunning(id)) {
             throw BusinessException.of(OperatorErrorCode.OPERATOR_IN_INSTANCE);
         }
+        if (relationRepo.operatorIsPredefined(id)) {
+            throw BusinessException.of(OperatorErrorCode.CANT_DELETE_PREDEFINED_OPERATOR);
+        }
         operatorRepo.deleteOperator(id);
         relationRepo.deleteByOperatorId(id);
     }

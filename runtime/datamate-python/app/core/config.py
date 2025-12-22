@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     # Log
     log_level: str = "INFO"
     debug: bool = True
-    log_file_dir: str = "/var/log/datamate"
+    log_file_dir: str = "/var/log/datamate/backend-python"
 
     # Database
     mysql_host: str = "datamate-database"

@@ -118,7 +118,7 @@ class DuplicateFilesFilter(Filter):
         query_sql = self.sql_dict.get("query_sql")
         for i in range(0, total_count, self.page_size):
             rows = connection.execute(
-                text(query_sql), {"task_uuid": self.task_uuid, "ge": self.page_size, "le": i}).fetchall()
+                text(query_sql), {"task_uuid": self.task_uuid, "file_name": file_name, "ge": self.page_size, "le": i}).fetchall()
             # 对应任务uuid，最后一页没有数据，跳出循环
             if not rows:
                 break

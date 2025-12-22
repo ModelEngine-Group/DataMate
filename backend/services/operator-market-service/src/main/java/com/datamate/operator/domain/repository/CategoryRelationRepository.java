@@ -15,4 +15,6 @@ public interface CategoryRelationRepository extends IRepository<CategoryRelation
     void batchUpdate(String operatorId, List<String> categories);
 
     void deleteByOperatorId(String operatorId);
+
+    boolean operatorIsPredefined(String operatorId);
 }
