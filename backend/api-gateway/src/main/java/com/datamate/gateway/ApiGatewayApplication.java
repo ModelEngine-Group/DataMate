@@ -33,6 +33,16 @@ public class ApiGatewayApplication {
             .route("data-evaluation", r -> r.path("/api/evaluation/**")
                 .uri("http://datamate-backend-python:18000"))
 
+            .route("deer-flow-frontend", r -> r.path("/chat/**")
+                .uri("http://deer-flow-frontend:3000"))
+
+            .route("deer-flow-static", r -> r.path("/_next/**")
+                .uri("http://deer-flow-frontend:3000"))
+
+            .route("deer-flow-backend", r -> r.path("/deer-flow-backend/**")
+                .filters(f -> f.stripPrefix(1).prefixPath("/api"))
+                .uri("http://deer-flow-backend:8000"))
+
             // 其他后端服务
             .route("default", r -> r.path("/api/**")
                         .uri("http://datamate-backend:8080"))

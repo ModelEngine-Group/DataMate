@@ -1,4 +1,3 @@
-{{- if .Values.global.deerFlow.enable }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -24,57 +23,32 @@ data:
         }
 
         location /chat {
-            proxy_pass http://deer-flow-frontend:3000/chat;
+            proxy_pass http://datamate-gateway:8080/chat;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+            proxy_intercept_errors on;
+            error_page 500 501 502 503 504 =200 @static_fallback;
         }
 
         location /_next {
-            proxy_pass http://deer-flow-frontend:3000/_next;
+            proxy_pass http://datamate-gateway:8080/_next;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         }
 
-        location /deer-flow-backend/ {
-            proxy_pass http://deer-flow-backend:8000/api/;
+        location /deer-flow-backend {
+            proxy_pass http://datamate-gateway:8080/deer-flow-backend;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         }
 
-        location / {
-            if ($query_string ~* "_rsc=pmmii") {
-                proxy_pass http://deer-flow-frontend:3000;
-                break;
-            }
-
+        location @static_fallback {
             root   /opt/frontend;
             try_files $uri $uri/ /index.html;
-        }
-    }
-{{- else }}
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: datamate-nginx-conf
-data:
-  backend.conf: |
-    server {
-        listen       80;
-        server_name  0.0.0.0;
-
-        access_log /var/log/datamate/frontend/access.log main;
-        error_log /var/log/datamate/frontend/error.log notice;
-
-        client_max_body_size 1024M;
-
-        location /api/ {
-            proxy_pass http://datamate-gateway:8080/api/;
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         }
 
         location / {
@@ -82,4 +56,3 @@ data:
             try_files $uri $uri/ /index.html;
         }
     }
-{{- end }}

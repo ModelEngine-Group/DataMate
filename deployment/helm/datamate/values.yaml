@@ -4,8 +4,6 @@
 
 global:
   namespace: datamate
-  deerFlow:
-    enable: false
   image:
     repository: "ghcr.io/modelengine-group/"
     pullPolicy: "IfNotPresent"
