@@ -187,7 +187,10 @@ public class CleaningTaskService {
         process.setExportPath(DATASET_PATH + "/" + task.getDestDatasetId());
         process.setExecutorType(ExecutorType.DATAMATE.getValue());
         process.setProcess(instances.stream()
-                .map(instance -> Map.of(instance.getId(), instance.getOverrides()))
+                .map(instance -> {
+
+                    return Map.of(instance.getId(), instance.getOverrides());
+                })
                 .toList());
 
         ObjectMapper jsonMapper = new ObjectMapper(new YAMLFactory());

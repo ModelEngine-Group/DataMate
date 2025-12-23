@@ -189,8 +189,20 @@ runtime:
 ray-cluster:
   enabled: true
   head:
+    enableInTreeAutoscaling: true
+    autoscalerOptions:
+      upscalingMode: Conservative
+      idleTimeoutSeconds: 60
+      imagePullPolicy: IfNotPresent
+      resources:
+        limits:
+          cpu: "500m"
+          memory: "512Mi"
+        requests:
+          cpu: "500m"
+          memory: "512Mi"
     rayStartParams:
-      num-cpus: '0'
+      num-cpus: "0"
     containerEnv:
       - name: RAY_DEDUP_LOGS
         value: "0"
@@ -206,6 +218,8 @@ ray-cluster:
         value: *dbPass
       - name: MYSQL_DATABASE
         value: "datamate"
+      - name: RAY_enable_autoscaler_v2
+        value: "1"
     resources:
       limits:
         cpu: "4"
