@@ -17,7 +17,7 @@ RUN cd /opt/gateway/api-gateway && \
 FROM eclipse-temurin:21-jdk
 
 RUN apt-get update && \
-    apt-get install -y vim wget curl dos2unix && \
+    apt-get install -y vim wget curl python3 python3-pip python-is-python3 dos2unix && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
