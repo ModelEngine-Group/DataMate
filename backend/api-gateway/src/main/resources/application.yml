@@ -10,6 +10,12 @@ spring:
         fail-fast: false
         # 显式设置端口
         port: ${server.port:30000}  # 与服务端口一致
+        server-addr: ${NACOS_ADDR:https://consulservice:18302}
+        username: consul
+        password:
+        ip: ${spring.application.name}
+        secure: true
+        cluster-name: DEFAULT
 
   # 服务器端口配置
 server:
