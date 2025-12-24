@@ -31,6 +31,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -76,9 +77,12 @@ public class CleaningTaskService {
 
     private final String FLOW_PATH = "/flow";
 
-    private final Pattern LEVEL_PATTERN = Pattern.compile(
-            "\\b(TRACE|DEBUG|INFO|WARN|WARNING|ERROR|FATAL)\\b",
-            Pattern.CASE_INSENSITIVE
+    private static final Pattern STANDARD_LEVEL_PATTERN = Pattern.compile(
+            "\\b(DEBUG|Debug|INFO|Info|WARN|Warn|WARNING|Warning|ERROR|Error|FATAL|Fatal)\\b"
+    );
+
+    private static final Pattern EXCEPTION_SUFFIX_PATTERN = Pattern.compile(
+            "\\b\\w+(Warning|Error|Exception)\\b"
     );
 
     private final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
@@ -168,9 +172,16 @@ public class CleaningTaskService {
             return defaultLevel;
         }
 
-        Matcher matcher = LEVEL_PATTERN.matcher(logLine);
-        if (matcher.find()) {
-            return matcher.group(1).toUpperCase();
+        Matcher stdMatcher = STANDARD_LEVEL_PATTERN.matcher(logLine);
+        if (stdMatcher.find()) {
+            return stdMatcher.group(1).toUpperCase();
+        }
+
+        Matcher exMatcher = EXCEPTION_SUFFIX_PATTERN.matcher(logLine);
+        if (exMatcher.find()) {
+            String match = exMatcher.group(1).toUpperCase();
+            if ("WARNING".equals(match)) return "WARN";
+            if ("ERROR".equals(match) || "EXCEPTION".equals(match)) return "ERROR";
         }
         return defaultLevel;
     }
@@ -180,6 +191,11 @@ public class CleaningTaskService {
         cleaningTaskRepo.deleteTaskById(taskId);
         operatorInstanceRepo.deleteByInstanceId(taskId);
         cleaningResultRepo.deleteByInstanceId(taskId);
+        try {
+            FileUtils.deleteDirectory(new File(FLOW_PATH + "/" + taskId));
+        } catch (IOException e) {
+            log.warn("Can't delete flow path with task id: {}.", taskId, e);
+        }
     }
 
     public void executeTask(String taskId) {

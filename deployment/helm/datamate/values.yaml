@@ -320,13 +320,19 @@ ray-cluster:
           value: *dbPass
         - name: MYSQL_DATABASE
           value: "datamate"
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
       resources:
         limits:
           cpu: "8"
           memory: "64G"
+          huawei.com/Ascend910: 1
         requests:
           cpu: "1"
           memory: "2G"
+          huawei.com/Ascend910: 1
       volumes:
         - *datasetVolume
         - *flowVolume
@@ -335,7 +341,7 @@ ray-cluster:
       volumeMounts:
         - mountPath: /tmp/ray
           name: log-volume
-          subPath: ray/worker
+          subPathExpr: ray/$(POD_NAME)
         - mountPath: /dataset
           name: dataset-volume
         - mountPath: /flow
