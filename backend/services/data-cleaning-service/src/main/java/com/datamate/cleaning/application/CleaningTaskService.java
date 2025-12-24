@@ -20,12 +20,18 @@ import com.datamate.datamanagement.common.enums.DatasetType;
 import com.datamate.datamanagement.domain.model.dataset.Dataset;
 import com.datamate.datamanagement.domain.model.dataset.DatasetFile;
 import com.datamate.datamanagement.interfaces.dto.CreateDatasetRequest;
+import com.datamate.operator.domain.repository.OperatorRepository;
+import com.datamate.operator.infrastructure.exception.OperatorErrorCode;
+import com.datamate.operator.interfaces.dto.OperatorDto;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.yaml.snakeyaml.DumperOptions;
@@ -39,6 +45,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -52,6 +59,8 @@ public class CleaningTaskService {
     private final CleaningTaskRepository cleaningTaskRepo;
 
     private final OperatorInstanceRepository operatorInstanceRepo;
+
+    private final OperatorRepository operatorRepo;
 
     private final CleaningResultRepository cleaningResultRepo;
 
@@ -183,6 +192,11 @@ public class CleaningTaskService {
     }
 
     private void prepareTask(CleaningTaskDto task, List<OperatorInstanceDto> instances) {
+        List<OperatorDto> allOperators = operatorRepo.findAllOperators();
+        Map<String, OperatorDto> defaultSettings = allOperators.stream()
+                .filter(operatorDto -> StringUtils.isNotBlank(operatorDto.getSettings()))
+                .collect(Collectors.toMap(OperatorDto::getId, Function.identity()));
+
         TaskProcess process = new TaskProcess();
         process.setInstanceId(task.getId());
         process.setDatasetId(task.getDestDatasetId());
@@ -191,8 +205,12 @@ public class CleaningTaskService {
         process.setExecutorType(ExecutorType.DATAMATE.getValue());
         process.setProcess(instances.stream()
                 .map(instance -> {
-
-                    return Map.of(instance.getId(), instance.getOverrides());
+                    OperatorDto operatorDto = defaultSettings.get(instance.getId());
+                    Map<String, Object> stringObjectMap = getDefaultValue(operatorDto);
+                    stringObjectMap.putAll(instance.getOverrides());
+                    Map<String, Object> runtime = getRuntime(operatorDto);
+                    stringObjectMap.putAll(runtime);
+                    return Map.of(instance.getId(), stringObjectMap);
                 })
                 .toList());
 
@@ -213,6 +231,69 @@ public class CleaningTaskService {
         } catch (IOException e) {
             log.error("Failed to prepare process.yaml.", e);
             throw BusinessException.of(SystemErrorCode.FILE_SYSTEM_ERROR);
+        }
+    }
+
+    private Map<String, Object> getDefaultValue(OperatorDto operatorDto) {
+        if (StringUtils.isBlank(operatorDto.getSettings())) {
+            return new HashMap<>();
+        }
+
+        Map<String, Object> defaultSettings = new HashMap<>();
+        try {
+            Map<String, Map<String, Object>> settings = OBJECT_MAPPER.readValue(operatorDto.getSettings(), Map.class);
+            for  (Map.Entry<String, Map<String, Object>> entry : settings.entrySet()) {
+                String key = entry.getKey();
+                Map<String, Object> setting = entry.getValue();
+                String type = setting.get("type").toString();
+                switch (type) {
+                    case "slider":
+                    case "switch":
+                    case "select":
+                    case "input":
+                    case "radio":
+                    case "checkbox":
+                        if (setting.containsKey("defaultVal")) {
+                            defaultSettings.put(key, setting.get("defaultVal"));
+                        }
+                        break;
+                    case "range":
+                        List<Object> rangeDefault = getRangeDefault(setting);
+                        if (CollectionUtils.isNotEmpty(rangeDefault)) {
+                            defaultSettings.put(key, rangeDefault);
+                        }
+                        break;
+                    default:
+                }
+            }
+            return defaultSettings;
+        } catch (JsonProcessingException e) {
+            throw BusinessException.of(OperatorErrorCode.SETTINGS_PARSE_FAILED, e.getMessage());
+        }
+    }
+
+    private List<Object> getRangeDefault(Map<String, Object> setting) {
+        List<Object> defaultValue = new ArrayList<>();
+        Object properties = setting.get("properties");
+        if (properties instanceof List<?> list) {
+            for (Object o : list) {
+                Map<String, Object> map = OBJECT_MAPPER.convertValue(o, Map.class);
+                if (map.containsKey("defaultVal")) {
+                    defaultValue.add(map.get("defaultVal"));
+                }
+            }
+        }
+        return defaultValue;
+    }
+
+    private Map<String, Object> getRuntime(OperatorDto operatorDto) {
+        if (StringUtils.isBlank(operatorDto.getRuntime())) {
+            return new HashMap<>();
+        }
+        try {
+            return OBJECT_MAPPER.readValue(operatorDto.getRuntime(), Map.class);
+        } catch (JsonProcessingException e) {
+            throw BusinessException.of(OperatorErrorCode.SETTINGS_PARSE_FAILED, e.getMessage());
         }
     }
 

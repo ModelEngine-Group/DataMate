@@ -181,7 +181,7 @@ build-%: %-docker-build
 	@:
 
 .PHONY: build
-build: database-docker-build backend-docker-build frontend-docker-build runtime-docker-build backend-python-docker-build
+build: database-docker-build gateway-docker-build backend-docker-build frontend-docker-build runtime-docker-build backend-python-docker-build
 
 # ========== Utility Targets ==========
 
