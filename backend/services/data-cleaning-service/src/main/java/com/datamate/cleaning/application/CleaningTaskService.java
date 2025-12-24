@@ -39,6 +39,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -70,6 +71,8 @@ public class CleaningTaskService {
             "\\b(TRACE|DEBUG|INFO|WARN|WARNING|ERROR|FATAL)\\b",
             Pattern.CASE_INSENSITIVE
     );
+
+    private final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     public List<CleaningTaskDto> getTasks(String status, String keywords, Integer page, Integer size) {
         List<CleaningTaskDto> tasks = cleaningTaskRepo.findTasks(status, keywords, page, size);
@@ -214,66 +217,48 @@ public class CleaningTaskService {
     }
 
     private void scanDataset(String taskId, String srcDatasetId) {
-        int pageNumber = 0;
-        int pageSize = 500;
-        PagingQuery pageRequest = new PagingQuery(pageNumber, pageSize);
-        PagedResponse<DatasetFile> datasetFiles;
-        do {
-            datasetFiles = datasetFileService.getDatasetFiles(srcDatasetId, null, null,null, pageRequest);
-            if (datasetFiles.getContent().isEmpty()) {
-                break;
-            }
-            List<Map<String, Object>> files = datasetFiles.getContent().stream()
-                    .map(content -> Map.of("fileName", (Object) content.getFileName(),
-                            "fileSize", content.getFileSize(),
-                            "filePath", content.getFilePath(),
-                            "fileType", content.getFileType(),
-                            "fileId", content.getId()))
-                    .toList();
-            writeListMapToJsonlFile(files, FLOW_PATH + "/" + taskId + "/dataset.jsonl");
-            pageNumber += 1;
-        } while (pageNumber < datasetFiles.getTotalPages());
+        doScan(taskId, srcDatasetId, file -> true);
     }
 
     private void scanDataset(String taskId, String srcDatasetId, Set<String> succeedFiles) {
+        doScan(taskId, srcDatasetId, file -> !succeedFiles.contains(file.getId()));
+    }
+
+    private void doScan(String taskId, String srcDatasetId, Predicate<DatasetFile> filterCondition) {
+        String targetFilePath = FLOW_PATH + "/" + taskId + "/dataset.jsonl";
+        File targetFile = new File(targetFilePath);
+        if (targetFile.getParentFile() != null && !targetFile.getParentFile().exists()) {
+            targetFile.getParentFile().mkdirs();
+        }
+
         int pageNumber = 0;
         int pageSize = 500;
-        PagingQuery pageRequest = new PagingQuery(pageNumber, pageSize);
-        PagedResponse<DatasetFile> datasetFiles;
-        do {
-            datasetFiles = datasetFileService.getDatasetFiles(srcDatasetId, null, null,null, pageRequest);
-            if (datasetFiles.getContent().isEmpty()) {
-                break;
-            }
-            List<Map<String, Object>> files = datasetFiles.getContent().stream()
-                    .filter(content -> !succeedFiles.contains(content.getId()))
-                    .map(content -> Map.of("fileName", (Object) content.getFileName(),
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(targetFile))) {
+            PagedResponse<DatasetFile> datasetFiles;
+            do {
+                PagingQuery pageRequest = new PagingQuery(pageNumber, pageSize);
+                datasetFiles = datasetFileService.getDatasetFiles(srcDatasetId, null, null, null, pageRequest);
+                if (datasetFiles.getContent().isEmpty()) {
+                    break;
+                }
+                for (DatasetFile content : datasetFiles.getContent()) {
+                    if (!filterCondition.test(content)) {
+                        continue;
+                    }
+                    Map<String, Object> fileMap = Map.of(
+                            "fileName", content.getFileName(),
                             "fileSize", content.getFileSize(),
                             "filePath", content.getFilePath(),
                             "fileType", content.getFileType(),
-                            "fileId", content.getId()))
-                    .toList();
-            writeListMapToJsonlFile(files, FLOW_PATH + "/" + taskId + "/dataset.jsonl");
-            pageNumber += 1;
-        } while (pageNumber < datasetFiles.getTotalPages());
-    }
-
-    private void writeListMapToJsonlFile(List<Map<String, Object>> mapList, String fileName) {
-        ObjectMapper objectMapper = new ObjectMapper();
-
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName))) {
-            if (!mapList.isEmpty()) { // 检查列表是否为空，避免异常
-                String jsonString = objectMapper.writeValueAsString(mapList.getFirst());
-                writer.write(jsonString);
-
-                for (int i = 1; i < mapList.size(); i++) {
+                            "fileId", content.getId()
+                    );
+                    writer.write(OBJECT_MAPPER.writeValueAsString(fileMap));
                     writer.newLine();
-                    jsonString = objectMapper.writeValueAsString(mapList.get(i));
-                    writer.write(jsonString);
                 }
-            }
+                pageNumber++;
+            } while (pageNumber < datasetFiles.getTotalPages());
         } catch (IOException e) {
-            log.error("Failed to prepare dataset.jsonl.", e);
+            log.error("Failed to write dataset.jsonl for taskId: {}", taskId, e);
             throw BusinessException.of(SystemErrorCode.FILE_SYSTEM_ERROR);
         }
     }
