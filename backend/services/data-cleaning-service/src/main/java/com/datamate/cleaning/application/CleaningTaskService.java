@@ -149,6 +149,7 @@ public class CleaningTaskService {
     }
 
     public List<CleaningTaskLog> getTaskLog(String taskId) {
+        cleanTaskValidator.checkTaskId(taskId);
         String logPath = FLOW_PATH + "/" + taskId + "/output.log";
         try (Stream<String> lines = Files.lines(Paths.get(logPath))) {
             List<CleaningTaskLog> logs = new ArrayList<>();
@@ -188,6 +189,7 @@ public class CleaningTaskService {
 
     @Transactional
     public void deleteTask(String taskId) {
+        cleanTaskValidator.checkTaskId(taskId);
         cleaningTaskRepo.deleteTaskById(taskId);
         operatorInstanceRepo.deleteByInstanceId(taskId);
         cleaningResultRepo.deleteByInstanceId(taskId);
@@ -322,6 +324,7 @@ public class CleaningTaskService {
     }
 
     private void doScan(String taskId, String srcDatasetId, Predicate<DatasetFile> filterCondition) {
+        cleanTaskValidator.checkTaskId(taskId);
         String targetFilePath = FLOW_PATH + "/" + taskId + "/dataset.jsonl";
         File targetFile = new File(targetFilePath);
         if (targetFile.getParentFile() != null && !targetFile.getParentFile().exists()) {

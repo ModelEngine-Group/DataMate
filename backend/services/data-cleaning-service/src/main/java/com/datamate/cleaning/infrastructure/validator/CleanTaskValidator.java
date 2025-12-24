@@ -4,18 +4,24 @@ import com.datamate.cleaning.common.exception.CleanErrorCode;
 import com.datamate.cleaning.domain.repository.CleaningTaskRepository;
 import com.datamate.cleaning.interfaces.dto.OperatorInstanceDto;
 import com.datamate.common.infrastructure.exception.BusinessException;
+import com.datamate.common.infrastructure.exception.SystemErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Pattern;
 
 
 @Component
 @RequiredArgsConstructor
 public class CleanTaskValidator {
     private final CleaningTaskRepository cleaningTaskRepo;
+
+    private final Pattern UUID_PATTERN = Pattern.compile(
+            "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+    );
 
     public void checkNameDuplication(String name) {
         if (cleaningTaskRepo.isNameExist(name)) {
@@ -37,6 +43,12 @@ public class CleanTaskValidator {
             throw BusinessException.of(CleanErrorCode.IN_AND_OUT_NOT_MATCH,
                     String.format(Locale.ROOT, "ops(name: [%s, %s]) inputs and outputs does not match",
                             front.getName(), back.getName()));
+        }
+    }
+
+    public void checkTaskId(String id) {
+        if (id == null || !UUID_PATTERN.matcher(id).matches()) {
+            throw BusinessException.of(SystemErrorCode.INVALID_PARAMETER);
         }
     }
 }
