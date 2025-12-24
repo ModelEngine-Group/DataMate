@@ -294,7 +294,7 @@ class RatioTaskService:
                 for tag in all_tags:
                     if conditions.label.label and tag.get("label") != conditions.label.label:
                         continue
-                    if conditions.label.value is not None:
+                    if conditions.label.value is None:
                         return True
                     if tag.get("value") == conditions.label.value:
                         return True
