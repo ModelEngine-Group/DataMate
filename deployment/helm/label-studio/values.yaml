@@ -26,6 +26,7 @@ postgres:
   persistence:
     enabled: true
     size: 10Gi
+    storageClass: ""
 
 service:
   type: NodePort
@@ -73,7 +74,7 @@ persistence:
   enabled: true
   existingClaim: "" # if you already have PVC that maps to external datamate-dataset-volume
   size: 10Gi
-  storageClassName: ""
+  storageClass: ""
 
 # Name of the Kubernetes PVC to simulate external Docker volume `datamate-dataset-volume`
 # If not set and persistence.enabled=true, a PVC will be created automatically.
