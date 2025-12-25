@@ -126,6 +126,7 @@ export interface AutoAnnotationTask {
   name: string;
   datasetId: string;
   datasetName?: string;
+  sourceDatasets?: string[];
   config: AutoAnnotationConfig;
   status: AutoAnnotationStatus;
   progress: number;

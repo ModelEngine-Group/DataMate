@@ -3,7 +3,8 @@ import { Modal, Form, Input, Select, Slider, message, Checkbox } from "antd";
 import { createAutoAnnotationTaskUsingPost } from "../../annotation.api";
 import { queryDatasetsUsingGet } from "@/pages/DataManagement/dataset.api";
 import { mapDataset } from "@/pages/DataManagement/dataset.const";
-import { DatasetType } from "@/pages/DataManagement/dataset.model";
+import { DatasetType, type DatasetFile, type Dataset } from "@/pages/DataManagement/dataset.model";
+import DatasetFileTransfer from "@/components/business/DatasetFileTransfer";
 
 const { Option } = Select;
 
@@ -106,6 +107,9 @@ export default function CreateAutoAnnotationDialog({
   const [loading, setLoading] = useState(false);
   const [datasets, setDatasets] = useState<any[]>([]);
   const [selectAllClasses, setSelectAllClasses] = useState(true);
+  const [selectedFilesMap, setSelectedFilesMap] = useState<Record<string, DatasetFile>>({});
+  const [selectedDataset, setSelectedDataset] = useState<Dataset | null>(null);
+  const [imageFileCount, setImageFileCount] = useState(0);
 
   useEffect(() => {
     if (visible) {
@@ -137,14 +141,41 @@ export default function CreateAutoAnnotationDialog({
     }
   };
 
+  // 统计选中的图像文件数量
+  useEffect(() => {
+    const imageExtensions = ['.jpg', '.jpeg', '.png', '.bmp', '.gif', '.tiff', '.webp'];
+    const count = Object.values(selectedFilesMap).filter(file => {
+      const ext = file.fileName?.toLowerCase().match(/\.[^.]+$/)?.[0] || '';
+      return imageExtensions.includes(ext);
+    }).length;
+    setImageFileCount(count);
+  }, [selectedFilesMap]);
+
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
+      
+      // 验证是否选择了文件
+      if (imageFileCount === 0) {
+        message.error("请至少选择一个图像文件");
+        return;
+      }
+      
       setLoading(true);
+
+      // 过滤出图像文件的ID列表
+      const imageExtensions = ['.jpg', '.jpeg', '.png', '.bmp', '.gif', '.tiff', '.webp'];
+      const imageFileIds = Object.values(selectedFilesMap)
+        .filter(file => {
+          const ext = file.fileName?.toLowerCase().match(/\.[^.]+$/)?.[0] || '';
+          return imageExtensions.includes(ext);
+        })
+        .map(file => file.id);
 
       const payload = {
         name: values.name,
         datasetId: values.datasetId,
+        fileIds: imageFileIds, // 传递选中的图像文件ID列表
         config: {
           modelSize: values.modelSize,
           confThreshold: values.confThreshold,
@@ -203,21 +234,29 @@ export default function CreateAutoAnnotationDialog({
         </Form.Item>
 
         <Form.Item
-          name="datasetId"
-          label="选择数据集"
-          rules={[{ required: true, message: "请选择数据集" }]}
+          label="选择数据集和图像文件"
+          required
         >
-          <Select
-            placeholder="请选择要标注的图像数据集"
-            showSearch
-            optionFilterProp="children"
-          >
-            {datasets.map((dataset) => (
-              <Option key={dataset.id} value={dataset.id}>
-                {dataset.name} ({dataset.fileCount || 0} 张图片)
-              </Option>
-            ))}
-          </Select>
+          <DatasetFileTransfer
+            open
+            selectedFilesMap={selectedFilesMap}
+            onSelectedFilesChange={setSelectedFilesMap}
+            onDatasetSelect={(dataset) => {
+              setSelectedDataset(dataset);
+              form.setFieldsValue({ datasetId: dataset?.id ?? "" });
+            }}
+            datasetTypeFilter={DatasetType.IMAGE}
+          />
+          {selectedDataset && (
+            <div className="mt-2 p-2 bg-blue-50 rounded border border-blue-200 text-xs">
+              当前数据集：<span className="font-medium">{selectedDataset.name}</span>
+              {" "}- 已选择 <span className="font-medium text-blue-600">{imageFileCount}</span> 个图像文件
+            </div>
+          )}
+        </Form.Item>
+        
+        <Form.Item hidden name="datasetId" rules={[{ required: true, message: "请选择数据集" }]}>
+          <Input type="hidden" />
         </Form.Item>
 
         <Form.Item

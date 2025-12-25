@@ -65,10 +65,11 @@ async def create_auto_annotation_task(
     """
 
     logger.info(
-        "Creating auto annotation task: name=%s, dataset_id=%s, config=%s",
+        "Creating auto annotation task: name=%s, dataset_id=%s, config=%s, file_ids=%s",
         request.name,
         request.dataset_id,
         request.config.model_dump(by_alias=True),
+        request.file_ids,
     )
 
     # 尝试获取数据集名称和文件数量用于冗余字段，失败时不阻塞任务创建
@@ -80,7 +81,11 @@ async def create_auto_annotation_task(
         dataset = await dm_client.get_dataset(request.dataset_id)
         if dataset is not None:
             dataset_name = dataset.name
-            total_images = getattr(dataset, "fileCount", 0) or 0
+            # 如果提供了 file_ids，则 total_images 为选中文件数；否则使用数据集文件数
+            if request.file_ids:
+                total_images = len(request.file_ids)
+            else:
+                total_images = getattr(dataset, "fileCount", 0) or 0
     except Exception as e:  # pragma: no cover - 容错
         logger.warning("Failed to fetch dataset name for auto task: %s", e)
 

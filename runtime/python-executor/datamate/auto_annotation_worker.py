@@ -47,10 +47,11 @@ except Exception as e:  # pragma: no cover - 导入失败时仅记录日志，�
 
 POLL_INTERVAL_SECONDS = float(os.getenv("AUTO_ANNOTATION_POLL_INTERVAL", "5"))
 
-# 结果输出基础目录，默认写到 /dataset 卷，
-# 这样 backend-python 也能通过同一个卷访问并提供下载。
+# 结果输出基础目录默认不再使用单独的 auto-annotations 目录，
+# 而是优先写入原始数据集的 path 目录下，便于在同一数据集中直接查看。
+# 仅当无法从 t_dm_datasets 中查询到 path 时，才退回到该根目录下。
 DEFAULT_OUTPUT_ROOT = os.getenv(
-    "AUTO_ANNOTATION_OUTPUT_ROOT", "/dataset/auto-annotations"
+    "AUTO_ANNOTATION_OUTPUT_ROOT", "/dataset"
 )
 
 
@@ -62,7 +63,7 @@ def _fetch_pending_task() -> Optional[Dict[str, Any]]:
 
     sql = text(
         """
-        SELECT id, name, dataset_id, dataset_name, config, status,
+        SELECT id, name, dataset_id, dataset_name, config, file_ids, status,
                total_images, processed_images, detected_objects, output_path
         FROM t_dm_auto_annotation_tasks
         WHERE status = 'pending' AND deleted_at IS NULL
@@ -77,11 +78,22 @@ def _fetch_pending_task() -> Optional[Dict[str, Any]]:
             return None
         row = dict(result._mapping)  # type: ignore[attr-defined]
 
-    # config 存储为 JSON
+    # config 与 file_ids 存储为 JSON 字符串，这里做一次解析
     try:
         row["config"] = json.loads(row["config"]) if row.get("config") else {}
     except Exception:
         row["config"] = {}
+
+    try:
+        raw_ids = row.get("file_ids")
+        if not raw_ids:
+            row["file_ids"] = None
+        elif isinstance(raw_ids, str):
+            row["file_ids"] = json.loads(raw_ids)
+        else:
+            row["file_ids"] = raw_ids
+    except Exception:
+        row["file_ids"] = None
     return row
 
 
@@ -140,17 +152,17 @@ def _update_task_status(
         conn.execute(sql, params)
 
 
-def _load_dataset_files(dataset_id: str) -> List[Tuple[str, str]]:
-    """加载数据集下的所有已完成文件。
+def _load_dataset_files(dataset_id: str) -> List[Tuple[str, str, str]]:
+    """加载指定数据集下的所有已完成文件。
 
-    返回 (file_path, file_name) 列表。
+    返回 (file_id, file_path, file_name) 列表。
     """
 
     # 数据管理模块中，t_dm_dataset_files 的正常状态为 ACTIVE，
     # 不存在 deleted_at 字段，这里仅按 dataset_id + ACTIVE 过滤。
     sql = text(
         """
-        SELECT file_path, file_name
+        SELECT id, file_path, file_name
         FROM t_dm_dataset_files
         WHERE dataset_id = :dataset_id
           AND status = 'ACTIVE'
@@ -160,32 +172,99 @@ def _load_dataset_files(dataset_id: str) -> List[Tuple[str, str]]:
 
     with SQLManager.create_connect() as conn:
         rows = conn.execute(sql, {"dataset_id": dataset_id}).fetchall()
-        return [(str(r[0]), str(r[1])) for r in rows]
+        return [(str(r[0]), str(r[1]), str(r[2])) for r in rows]
 
 
-def _ensure_output_dir(task_id: str) -> str:
-    """为任务创建输出目录并返回路径。"""
+def _load_files_by_ids(file_ids: List[str]) -> List[Tuple[str, str, str]]:
+    """根据文件ID列表加载文件记录，支持跨多个数据集。
 
-    root = DEFAULT_OUTPUT_ROOT.rstrip("/")
-    output_dir = os.path.join(root, task_id)
+    返回 (file_id, file_path, file_name) 列表。
+    """
+
+    if not file_ids:
+        return []
+
+    # 使用参数化方式构造 IN 子句，避免 SQL 注入
+    placeholders = ", ".join(f":id{i}" for i in range(len(file_ids)))
+    sql = text(
+        f"""
+        SELECT id, file_path, file_name
+        FROM t_dm_dataset_files
+        WHERE id IN ({placeholders})
+          AND status = 'ACTIVE'
+        ORDER BY created_at ASC
+        """
+    )
+    params = {f"id{i}": str(fid) for i, fid in enumerate(file_ids)}
+
+    with SQLManager.create_connect() as conn:
+        rows = conn.execute(sql, params).fetchall()
+        return [(str(r[0]), str(r[1]), str(r[2])) for r in rows]
+
+
+def _ensure_output_dir(output_dir: str) -> str:
+    """确保输出目录及其 images/、annotations/ 子目录存在。"""
+
     os.makedirs(output_dir, exist_ok=True)
-    # 同时创建 images/ 和 annotations/ 子目录，便于浏览
     os.makedirs(os.path.join(output_dir, "images"), exist_ok=True)
     os.makedirs(os.path.join(output_dir, "annotations"), exist_ok=True)
     return output_dir
 
 
+def _create_output_dataset(
+    source_dataset_id: str,
+    source_dataset_name: str,
+    output_dataset_name: str,
+) -> Tuple[str, str]:
+    """为自动标注结果创建一个新的数据集并返回 (dataset_id, path)。
+
+    - 新数据集使用 IMAGE 类型；
+    - 路径遵循后端约定：{base_path}/{dataset_id}，其中 base_path 与 DEFAULT_OUTPUT_ROOT 对齐；
+    - 不依赖前端/后端的额外服务，直接写入 t_dm_datasets 表。
+    """
+
+    new_dataset_id = str(uuid.uuid4())
+    dataset_base_path = DEFAULT_OUTPUT_ROOT.rstrip("/") or "/dataset"
+    output_dir = os.path.join(dataset_base_path, new_dataset_id)
+
+    description = (
+        f"Auto annotations for dataset {source_dataset_name or source_dataset_id}"[:255]
+    )
+
+    sql = text(
+        """
+        INSERT INTO t_dm_datasets (id, name, description, dataset_type, path, status)
+        VALUES (:id, :name, :description, :dataset_type, :path, :status)
+        """
+    )
+    params = {
+        "id": new_dataset_id,
+        "name": output_dataset_name,
+        "description": description,
+        "dataset_type": "IMAGE",
+        "path": output_dir,
+        "status": "ACTIVE",
+    }
+
+    with SQLManager.create_connect() as conn:
+        conn.execute(sql, params)
+
+    return new_dataset_id, output_dir
+
+
 def _register_output_dataset(
     task_id: str,
-    source_dataset_id: str,
+    output_dataset_id: str,
     output_dir: str,
     output_dataset_name: str,
     total_images: int,
 ) -> None:
-    """将自动标注结果注册为新的数据集。
+    """将自动标注结果注册到**新建的数据集**中。
 
-    - 在 t_dm_datasets 中创建一条新记录；
-    - 在 t_dm_dataset_files 中为输出目录下的 images/ 和 annotations/ 文件创建文件记录。
+    - 假定目标数据集记录已存在（由 _create_output_dataset 创建）；
+    - 在 t_dm_dataset_files 中为输出目录下的 images/ 和 annotations/ 文件
+      创建文件记录，dataset_id 使用新数据集 ID；
+    - 同时累加该数据集的 file_count 与 size_bytes。
 
     失败不会影响任务本身，仅记录日志。
     """
@@ -237,40 +316,7 @@ def _register_output_dataset(
         )
         return
 
-    # 尝试继承源数据集类型，若失败则默认为 IMAGE
-    dataset_type = "IMAGE"
-    try:
-        sql_type = text(
-            """
-            SELECT dataset_type
-            FROM t_dm_datasets
-            WHERE id = :dataset_id
-            LIMIT 1
-            """
-        )
-        with SQLManager.create_connect() as conn:
-            row = conn.execute(sql_type, {"dataset_id": source_dataset_id}).fetchone()
-        if row and row[0]:
-            dataset_type = str(row[0])
-    except Exception as e:  # pragma: no cover - 容错
-        logger.warning(
-            "Failed to fetch dataset_type for source dataset {} when registering auto-annotation dataset: {}",
-            source_dataset_id,
-            e,
-        )
-
-    new_dataset_id = str(uuid.uuid4())
-
-    insert_dataset_sql = text(
-        """
-        INSERT INTO t_dm_datasets (
-            id, name, dataset_type, path, status, file_count, size_bytes
-        ) VALUES (
-            :id, :name, :dataset_type, :path, :status, :file_count, :size_bytes
-        )
-        """
-    )
-
+    # 准备 SQL：向目标数据集追加文件记录，并更新统计字段
     insert_file_sql = text(
         """
         INSERT INTO t_dm_dataset_files (
@@ -280,30 +326,26 @@ def _register_output_dataset(
         )
         """
     )
+    update_dataset_stat_sql = text(
+        """
+        UPDATE t_dm_datasets
+        SET file_count = COALESCE(file_count, 0) + :add_count,
+            size_bytes = COALESCE(size_bytes, 0) + :add_size
+        WHERE id = :dataset_id
+        """
+    )
 
     with SQLManager.create_connect() as conn:
-        # 创建数据集记录
-        conn.execute(
-            insert_dataset_sql,
-            {
-                "id": new_dataset_id,
-                "name": output_dataset_name,
-                "dataset_type": dataset_type,
-                "path": output_dir,
-                "status": "ACTIVE",
-                "file_count": len(image_files),
-                "size_bytes": int(total_size),
-            },
-        )
+        # 为目标数据集追加文件记录：先图片，再 JSON 标注
+        added_count = 0
 
-        # 创建文件记录：先图片，再 JSON 标注
         for file_name, file_path, file_size in image_files:
             ext = os.path.splitext(file_name)[1].lstrip(".").upper() or None
             conn.execute(
                 insert_file_sql,
                 {
                     "id": str(uuid.uuid4()),
-                    "dataset_id": new_dataset_id,
+                    "dataset_id": output_dataset_id,
                     "file_name": file_name,
                     "file_path": file_path,
                     "file_type": ext,
@@ -311,6 +353,7 @@ def _register_output_dataset(
                     "status": "ACTIVE",
                 },
             )
+            added_count += 1
 
         for file_name, file_path, file_size in annotation_files:
             ext = os.path.splitext(file_name)[1].lstrip(".").upper() or None
@@ -318,7 +361,7 @@ def _register_output_dataset(
                 insert_file_sql,
                 {
                     "id": str(uuid.uuid4()),
-                    "dataset_id": new_dataset_id,
+                    "dataset_id": output_dataset_id,
                     "file_name": file_name,
                     "file_path": file_path,
                     "file_type": ext,
@@ -326,15 +369,26 @@ def _register_output_dataset(
                     "status": "ACTIVE",
                 },
             )
+            added_count += 1
+
+        # 更新目标数据集的统计字段
+        if added_count > 0:
+            conn.execute(
+                update_dataset_stat_sql,
+                {
+                    "dataset_id": output_dataset_id,
+                    "add_count": added_count,
+                    "add_size": int(total_size),
+                },
+            )
 
     logger.info(
-        "Registered auto-annotation output as dataset: new_dataset_id={}, name={}, file_count={}, size_bytes={}, task_id={}, source_dataset_id={}, output_dir={}",
-        new_dataset_id,
+        "Registered auto-annotation output into dataset: dataset_id={}, name={}, added_files={}, added_size_bytes={}, task_id={}, output_dir={}",
+        output_dataset_id,
         output_dataset_name,
         len(image_files) + len(annotation_files),
         total_size,
         task_id,
-        source_dataset_id,
         output_dir,
     )
 
@@ -359,6 +413,7 @@ def _process_single_task(task: Dict[str, Any]) -> None:
     task_name = str(task.get("name") or "")
     source_dataset_name = str(task.get("dataset_name") or "")
     cfg: Dict[str, Any] = task.get("config") or {}
+    selected_file_ids: Optional[List[str]] = task.get("file_ids") or None
 
     model_size = cfg.get("modelSize", "l")
     conf_threshold = float(cfg.get("confThreshold", 0.7))
@@ -383,7 +438,16 @@ def _process_single_task(task: Dict[str, Any]) -> None:
     # 标记为 running
     _update_task_status(task_id, status="running", progress=0)
 
-    files = _load_dataset_files(dataset_id)
+    # 加载待处理文件：
+    # - 如果未提供 file_ids，则处理该数据集下的全部文件；
+    # - 如果提供了 file_ids，则按 ID 跨数据集精确加载，支持多数据集混合。
+    if selected_file_ids:
+            all_files = _load_files_by_ids(selected_file_ids)
+    else:
+            all_files = _load_dataset_files(dataset_id)
+
+    files = [(path, name) for _, path, name in all_files]
+
     total_images = len(files)
     if total_images == 0:
         logger.warning("No files found for dataset {} when running auto-annotation task {}", dataset_id, task_id)
@@ -399,7 +463,13 @@ def _process_single_task(task: Dict[str, Any]) -> None:
         )
         return
 
-    output_dir = _ensure_output_dir(task_id)
+    # 为本次任务创建一个新的“输出数据集”，并以其路径作为 YOLO 输出目录
+    output_dataset_id, output_dir = _create_output_dataset(
+            source_dataset_id=dataset_id,
+            source_dataset_name=source_dataset_name,
+            output_dataset_name=output_dataset_name,
+    )
+    output_dir = _ensure_output_dir(output_dir)
 
     # 初始化检测算子
     try:
@@ -481,11 +551,11 @@ def _process_single_task(task: Dict[str, Any]) -> None:
     )
 
     # 如果配置了输出数据集名称，则尝试将结果注册为新的数据集
-    if output_dataset_name:
+    if output_dataset_name and output_dataset_id:
         try:
             _register_output_dataset(
                 task_id=task_id,
-                source_dataset_id=dataset_id,
+                        output_dataset_id=output_dataset_id,
                 output_dir=output_dir,
                 output_dataset_name=output_dataset_name,
                 total_images=total_images,

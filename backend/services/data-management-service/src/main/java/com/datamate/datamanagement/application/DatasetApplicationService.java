@@ -127,6 +127,11 @@ public class DatasetApplicationService {
         BusinessAssert.notNull(dataset, DataManagementErrorCode.DATASET_NOT_FOUND);
         List<DatasetFile> datasetFiles = datasetFileRepository.findAllByDatasetId(datasetId);
         dataset.setFiles(datasetFiles);
+        // 实时按文件表统计，避免继承旧的 file_count/size_bytes
+        Long totalFiles = datasetFileRepository.countByDatasetId(datasetId);
+        Long totalSize = datasetFileRepository.sumSizeByDatasetId(datasetId);
+        dataset.setFileCount(totalFiles == null ? 0L : totalFiles);
+        dataset.setSizeBytes(totalSize == null ? 0L : totalSize);
         return dataset;
     }
 
@@ -138,6 +143,14 @@ public class DatasetApplicationService {
         IPage<Dataset> page = new Page<>(query.getPage(), query.getSize());
         page = datasetRepository.findByCriteria(page, query);
         String datasetPvcName = getDatasetPvcName();
+        // 为避免继承旧的 file_count/size_bytes，这里逐个实时统计
+        page.getRecords().forEach(ds -> {
+            Long totalFiles = datasetFileRepository.countByDatasetId(ds.getId());
+            Long totalSize = datasetFileRepository.sumSizeByDatasetId(ds.getId());
+            ds.setFileCount(totalFiles == null ? 0L : totalFiles);
+            ds.setSizeBytes(totalSize == null ? 0L : totalSize);
+        });
+
         List<DatasetResponse> datasetResponses = DatasetConverter.INSTANCE.convertToResponse(page.getRecords());
         datasetResponses.forEach(dataset -> dataset.setPvcName(datasetPvcName));
         return PagedResponse.of(datasetResponses, page.getCurrent(), page.getTotal(), page.getPages());

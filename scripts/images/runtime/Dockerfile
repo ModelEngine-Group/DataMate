@@ -2,7 +2,8 @@ FROM ghcr.io/astral-sh/uv:python3.11-bookworm
 
 RUN --mount=type=cache,target=/var/cache/apt \
     --mount=type=cache,target=/var/lib/apt \
-    apt update \
+    sed -i 's@http://deb.debian.org@https://mirrors.aliyun.com@g' /etc/apt/sources.list.d/debian.sources \
+    && apt update \
     && apt install -y libgl1 libglib2.0-0 vim libmagic1 libreoffice dos2unix swig
 
 RUN mkdir -p /home/models \

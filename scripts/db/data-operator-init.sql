@@ -107,6 +107,7 @@ VALUES ('MineruFormatter', 'MinerU PDF文本抽取', '基于MinerU API，抽取P
        ('ImgSimilarImagesCleaner', '相似图片去除', '去除相似的图片。', '1.0.0', 'image', 'image', null, '{"similarThreshold": {"name": "相似度", "description": "相似度取值越大，图片相似度越高。", "type": "slider", "defaultVal": 0.8, "min": 0, "max": 1, "step": 0.01}}', '', 'false'),
        ('ImgTypeUnify', '图片格式转换', '将图片编码格式统一为jpg、jpeg、png、bmp格式。', '1.0.0', 'image', 'image', null, '{"imgType": {"name": "图片编码格式", "type": "select", "defaultVal": "jpg", "options": [{"label": "jpg", "value": "jpg"}, {"label": "png", "value": "png"}, {"label": "jpeg", "value": "jpeg"}, {"label": "bmp", "value": "bmp"}]}}', '', 'false'),
        ('ImgDirectionCorrect', '图片方向校正', '将含有文字的图片校正到文字水平方向，主要适用于文档场景。', '1.0.0', 'image', 'image', null, null, '', 'false'),
+       ('ImageObjectDetectionBoundingBox', '图像目标检测', '使用深度学习模型对图像进行目标检测，标注检测框和类别信息。', '1.0.0', 'image', 'image', null, '{"modelSize": {"name": "模型规模", "description": "选择模型的大小，n(nano)最快但精度较低，x(xlarge)最慢但精度最高。", "type": "select", "defaultVal": "l", "options": [{"value": "n", "label": "YOLOv8n (最快)"}, {"value": "s", "label": "YOLOv8s"}, {"value": "m", "label": "YOLOv8m"}, {"value": "l", "label": "YOLOv8l (推荐)"}, {"value": "x", "label": "YOLOv8x (最精确)"}]}, "confThreshold": {"name": "置信度阈值", "description": "只保留置信度大于此阈值的检测结果。", "type": "slider", "defaultVal": 0.7, "min": 0, "max": 1, "step": 0.05}, "targetClasses": {"name": "目标类别", "description": "选择要检测的目标类别，留空表示检测所有类别。", "type": "multiselect", "defaultVal": [], "options": [{"value": 0, "label": "person (人)"}, {"value": 1, "label": "bicycle (自行车)"}, {"value": 2, "label": "car (汽车)"}, {"value": 3, "label": "motorcycle (摩托车)"}, {"value": 5, "label": "bus (公交车)"}, {"value": 6, "label": "train (火车)"}, {"value": 7, "label": "truck (卡车)"}, {"value": 14, "label": "bird (鸟)"}, {"value": 15, "label": "cat (猫)"}, {"value": 16, "label": "dog (狗)"}]}}', '', 'false'),
        ('PiiDetector', '高级匿名化', '高级匿名化算子，检测命名实体并匿名化。', '1.0.0', 'text', 'text', null, null, '', 'false');
 
 INSERT IGNORE INTO t_operator_category_relation(category_id, operator_id)
@@ -129,5 +130,6 @@ FROM t_operator_category c
        CROSS JOIN t_operator o
 WHERE c.id IN ('de36b61c-9e8a-4422-8c31-d30585c7100f', '9eda9d5d-072b-499b-916c-797a0a8750e1', '96a3b07a-3439-4557-a835-525faad60ca3')
   AND o.id IN ('ImgBlurredImagesCleaner', 'ImgBrightness', 'ImgContrast', 'ImgDenoise',
-               'ImgDuplicatedImagesCleaner', 'ImgPerspectiveTransformation', 'ImgResize', 'ImgSaturation',
-               'ImgShadowRemove', 'ImgSharpness', 'ImgSimilarImagesCleaner', 'ImgTypeUnify', 'ImgDirectionCorrect');
+                             'ImgDuplicatedImagesCleaner', 'ImgPerspectiveTransformation', 'ImgResize', 'ImgSaturation',
+                             'ImgShadowRemove', 'ImgSharpness', 'ImgSimilarImagesCleaner', 'ImgTypeUnify', 'ImgDirectionCorrect',
+                             'ImageObjectDetectionBoundingBox');

@@ -24,6 +24,7 @@ import com.datamate.datamanagement.infrastructure.persistence.repository.Dataset
 import com.datamate.datamanagement.interfaces.converter.DatasetConverter;
 import com.datamate.datamanagement.interfaces.dto.AddFilesRequest;
 import com.datamate.datamanagement.interfaces.dto.CopyFilesRequest;
+import com.datamate.datamanagement.interfaces.dto.CreateDirectoryRequest;
 import com.datamate.datamanagement.interfaces.dto.UploadFileRequest;
 import com.datamate.datamanagement.interfaces.dto.UploadFilesPreRequest;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -45,6 +46,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -107,8 +109,10 @@ public class DatasetFileApplicationService {
         }
         String datasetPath = dataset.getPath();
         Path queryPath = Path.of(dataset.getPath() + File.separator + prefix);
-        Map<String, DatasetFile> datasetFilesMap = datasetFileRepository.findAllByDatasetId(datasetId)
-            .stream().collect(Collectors.toMap(DatasetFile::getFilePath, Function.identity()));
+        List<DatasetFile> datasetFiles = datasetFileRepository.findAllByDatasetId(datasetId);
+        Map<String, DatasetFile> datasetFilesMap = datasetFiles
+            .stream()
+            .collect(Collectors.toMap(DatasetFile::getFilePath, Function.identity()));
         try (Stream<Path> pathStream = Files.list(queryPath)) {
             List<Path> allFiles = pathStream
                 .filter(path -> path.toString().startsWith(datasetPath))
@@ -130,16 +134,18 @@ public class DatasetFileApplicationService {
             if (fromIndex < total) {
                 pageData = allFiles.subList(fromIndex, toIndex);
             }
-            List<DatasetFile> datasetFiles = pageData.stream().map(path -> getDatasetFile(path, datasetFilesMap)).toList();
+            List<DatasetFile> datasetFilesPage = pageData.stream()
+                .map(path -> getDatasetFile(path, datasetFilesMap, datasetFiles))
+                .toList();
 
-            return new PagedResponse<>(page, size, total, totalPages, datasetFiles);
+            return new PagedResponse<>(page, size, total, totalPages, datasetFilesPage);
         } catch (IOException e) {
             log.error("list dataset path error", e);
             return PagedResponse.of(new Page<>(page, size));
         }
     }
 
-    private DatasetFile getDatasetFile(Path path, Map<String, DatasetFile> datasetFilesMap) {
+    private DatasetFile getDatasetFile(Path path, Map<String, DatasetFile> datasetFilesMap, List<DatasetFile> allDatasetFiles) {
         DatasetFile datasetFile = new DatasetFile();
         LocalDateTime localDateTime = LocalDateTime.now();
         try {
@@ -149,13 +155,40 @@ public class DatasetFileApplicationService {
         }
         datasetFile.setFileName(path.getFileName().toString());
         datasetFile.setUploadTime(localDateTime);
+        datasetFile.setFilePath(path.toString());
         if (Files.isDirectory(path)) {
-            datasetFile.setId("directory-" + datasetFile.getFileName());
+            datasetFile.setId(encodeDirectoryId(path));
+            datasetFile.setDirectory(true);
+            datasetFile.setFileType("DIRECTORY");
+            // Prefer filesystem walk to ensure we show real counts/sizes even if DB is missing entries
+            try (Stream<Path> walk = Files.walk(path)) {
+                long fileCount = walk.filter(Files::isRegularFile).count();
+                datasetFile.setFileCount(fileCount);
+            } catch (IOException e) {
+                log.warn("Failed to count files under directory {}", path, e);
+            }
+            try (Stream<Path> walk = Files.walk(path)) {
+                long fileSize = walk.filter(Files::isRegularFile)
+                    .mapToLong(p -> {
+                        try {
+                            return Files.size(p);
+                        } catch (IOException e) {
+                            log.warn("Failed to read size for {}", p, e);
+                            return 0L;
+                        }
+                    })
+                    .sum();
+                datasetFile.setFileSize(fileSize);
+            } catch (IOException e) {
+                log.warn("Failed to sum sizes under directory {}", path, e);
+            }
         } else if (Objects.isNull(datasetFilesMap.get(path.toString()))) {
             datasetFile.setId("file-" + datasetFile.getFileName());
             datasetFile.setFileSize(path.toFile().length());
+            datasetFile.setDirectory(false);
         } else {
             datasetFile = datasetFilesMap.get(path.toString());
+            datasetFile.setDirectory(false);
         }
         return datasetFile;
     }
@@ -180,6 +213,10 @@ public class DatasetFileApplicationService {
      */
     @Transactional
     public void deleteDatasetFile(String datasetId, String fileId) {
+        if (isDirectoryId(fileId)) {
+            deleteDirectory(datasetId, fileId);
+            return;
+        }
         DatasetFile file = getDatasetFile(datasetId, fileId);
         Dataset dataset = datasetRepository.getById(datasetId);
         dataset.setFiles(new ArrayList<>(Collections.singleton(file)));
@@ -213,6 +250,40 @@ public class DatasetFileApplicationService {
             }
         } catch (MalformedURLException ex) {
             throw new RuntimeException("File not found: " + file.getFileName(), ex);
+        }
+    }
+
+    /**
+     * 下载目录为 zip
+     */
+    @Transactional(readOnly = true)
+    public void downloadDirectoryAsZip(String datasetId, String directoryId, HttpServletResponse response) {
+        Dataset dataset = datasetRepository.getById(datasetId);
+        if (Objects.isNull(dataset)) {
+            throw BusinessException.of(DataManagementErrorCode.DATASET_NOT_FOUND);
+        }
+        Path directoryPath = decodeDirectoryId(directoryId);
+        if (Objects.isNull(directoryPath)) {
+            throw BusinessException.of(SystemErrorCode.RESOURCE_NOT_FOUND);
+        }
+        if (!directoryPath.toString().startsWith(dataset.getPath())) {
+            throw BusinessException.of(SystemErrorCode.RESOURCE_NOT_FOUND);
+        }
+        List<DatasetFile> allByDatasetId = datasetFileRepository.findAllByDatasetId(datasetId);
+        response.setContentType("application/zip");
+        String zipName = String.format("%s_%s.zip", directoryPath.getFileName().toString(),
+                LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
+        response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + zipName);
+        try (ZipArchiveOutputStream zos = new ZipArchiveOutputStream(response.getOutputStream())) {
+            try (Stream<Path> pathStream = Files.walk(directoryPath)) {
+                List<Path> allPaths = pathStream.toList();
+                for (Path path : allPaths) {
+                    addToZipFile(path, directoryPath, zos);
+                }
+            }
+        } catch (IOException e) {
+            log.error("Failed to download directory as zip.", e);
+            throw BusinessException.of(SystemErrorCode.FILE_SYSTEM_ERROR);
         }
     }
 
@@ -279,6 +350,64 @@ public class DatasetFileApplicationService {
         }
     }
 
+    private void deleteDirectory(String datasetId, String directoryId) {
+        Dataset dataset = datasetRepository.getById(datasetId);
+        if (Objects.isNull(dataset)) {
+            throw BusinessException.of(DataManagementErrorCode.DATASET_NOT_FOUND);
+        }
+        Path directoryPath = decodeDirectoryId(directoryId);
+        if (Objects.isNull(directoryPath) || !directoryPath.toString().startsWith(dataset.getPath())) {
+            throw BusinessException.of(SystemErrorCode.RESOURCE_NOT_FOUND);
+        }
+        List<DatasetFile> allByDatasetId = datasetFileRepository.findAllByDatasetId(datasetId);
+        List<DatasetFile> filesToDelete = allByDatasetId.stream()
+            .filter(file -> Objects.nonNull(file.getFilePath()) && file.getFilePath().startsWith(directoryPath.toString()))
+            .toList();
+        dataset.setFiles(new ArrayList<>(filesToDelete));
+        for (DatasetFile file : filesToDelete) {
+            datasetFileRepository.removeById(file.getId());
+            dataset.removeFile(file);
+        }
+        datasetRepository.updateById(dataset);
+
+        // 删除文件系统中的目录及内容（仅删除归属于数据集目录的文件）
+        if (directoryPath.toString().startsWith(dataset.getPath())) {
+            try (Stream<Path> walk = Files.walk(directoryPath)) {
+                walk.sorted(Comparator.reverseOrder()).forEach(path -> {
+                    try {
+                        Files.deleteIfExists(path);
+                    } catch (IOException e) {
+                        log.warn("Failed to delete path {}", path, e);
+                    }
+                });
+            } catch (IOException e) {
+                throw BusinessException.of(SystemErrorCode.FILE_SYSTEM_ERROR);
+            }
+        }
+    }
+
+    public boolean isDirectoryId(String fileId) {
+        return Objects.nonNull(fileId) && fileId.startsWith("directory-");
+    }
+
+    private String encodeDirectoryId(Path path) {
+        return "directory-" + Base64.getUrlEncoder().encodeToString(path.toString().getBytes(StandardCharsets.UTF_8));
+    }
+
+    private Path decodeDirectoryId(String directoryId) {
+        if (!isDirectoryId(directoryId)) {
+            return null;
+        }
+        String encoded = directoryId.substring("directory-".length());
+        try {
+            String decodedPath = new String(Base64.getUrlDecoder().decode(encoded), StandardCharsets.UTF_8);
+            return Paths.get(decodedPath);
+        } catch (IllegalArgumentException e) {
+            log.warn("Failed to decode directory id {}", directoryId, e);
+            return null;
+        }
+    }
+
     /**
      * 预上传
      *
@@ -292,12 +421,26 @@ public class DatasetFileApplicationService {
             throw BusinessException.of(DataManagementErrorCode.DATASET_NOT_FOUND);
         }
         ChunkUploadPreRequest request = ChunkUploadPreRequest.builder().build();
-        request.setUploadPath(datasetBasePath + File.separator + datasetId);
+        String basePath = datasetBasePath + File.separator + datasetId;
+        String prefix = Optional.ofNullable(chunkUploadRequest.getPrefix()).orElse("").trim();
+        if (!prefix.isEmpty()) {
+            // 统一使用正斜杠作为前端传入的分隔符，后端根据系统转换
+            prefix = prefix.replace("\\", "/");
+            // 去掉开头的斜杠，避免越出数据集目录
+            while (prefix.startsWith("/")) {
+                prefix = prefix.substring(1);
+            }
+            if (!prefix.isEmpty()) {
+                basePath = basePath + File.separator + prefix;
+            }
+        }
+        request.setUploadPath(basePath);
         request.setTotalFileNum(chunkUploadRequest.getTotalFileNum());
         request.setServiceId(DatasetConstant.SERVICE_ID);
         DatasetFileUploadCheckInfo checkInfo = new DatasetFileUploadCheckInfo();
         checkInfo.setDatasetId(datasetId);
         checkInfo.setHasArchive(chunkUploadRequest.isHasArchive());
+        checkInfo.setPrefix(prefix);
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             String checkInfoJson = objectMapper.writeValueAsString(checkInfo);
@@ -366,6 +509,48 @@ public class DatasetFileApplicationService {
         }
         dataset.active();
         datasetRepository.updateById(dataset);
+    }
+
+    /**
+     * 在数据集下创建子目录
+     */
+    @Transactional
+    public void createDirectory(String datasetId, CreateDirectoryRequest req) {
+        Dataset dataset = datasetRepository.getById(datasetId);
+        if (dataset == null) {
+            throw BusinessException.of(DataManagementErrorCode.DATASET_NOT_FOUND);
+        }
+        String datasetPath = dataset.getPath();
+        String parentPrefix = Optional.ofNullable(req.getParentPrefix()).orElse("").trim();
+        parentPrefix = parentPrefix.replace("\\", "/");
+        while (parentPrefix.startsWith("/")) {
+            parentPrefix = parentPrefix.substring(1);
+        }
+
+        String directoryName = Optional.ofNullable(req.getDirectoryName()).orElse("").trim();
+        if (directoryName.isEmpty()) {
+            throw BusinessException.of(CommonErrorCode.PARAM_ERROR);
+        }
+        if (directoryName.contains("..") || directoryName.contains("/") || directoryName.contains("\\")) {
+            throw BusinessException.of(CommonErrorCode.PARAM_ERROR);
+        }
+
+        Path basePath = Paths.get(datasetPath);
+        Path targetPath = parentPrefix.isEmpty()
+            ? basePath.resolve(directoryName)
+            : basePath.resolve(parentPrefix).resolve(directoryName);
+
+        Path normalized = targetPath.normalize();
+        if (!normalized.startsWith(basePath)) {
+            throw BusinessException.of(CommonErrorCode.PARAM_ERROR);
+        }
+
+        try {
+            Files.createDirectories(normalized);
+        } catch (IOException e) {
+            log.error("Failed to create directory {} for dataset {}", normalized, datasetId, e);
+            throw BusinessException.of(SystemErrorCode.FILE_SYSTEM_ERROR);
+        }
     }
 
     /**

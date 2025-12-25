@@ -9,6 +9,7 @@ import {
   downloadFileByIdUsingGet,
   exportDatasetUsingPost,
   queryDatasetFilesUsingGet,
+  createDirectoryUsingPost,
 } from "../dataset.api";
 import { useParams } from "react-router";
 
@@ -18,7 +19,7 @@ export function useFilesOperation(dataset: Dataset) {
 
   // 文件相关状态
   const [fileList, setFileList] = useState<DatasetFile[]>([]);
-  const [selectedFiles, setSelectedFiles] = useState<number[]>([]);
+  const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
   const [pagination, setPagination] = useState<{
     current: number;
     pageSize: number;
@@ -31,7 +32,17 @@ export function useFilesOperation(dataset: Dataset) {
   const [previewContent, setPreviewContent] = useState("");
   const [previewFileName, setPreviewFileName] = useState("");
 
-  const fetchFiles = async (prefix: string = '', current, pageSize) => {
+  const fetchFiles = async (
+    prefix?: string,
+    current?: number,
+    pageSize?: number
+  ) => {
+    console.log("📂 fetchFiles called", {
+      argPrefix: prefix,
+      current,
+      pageSize,
+      paginationPrefix: pagination.prefix,
+    });
     const params: any = {
       page: current ? current : pagination.current,
       size: pageSize ? pageSize : pagination.pageSize,
@@ -45,14 +56,37 @@ export function useFilesOperation(dataset: Dataset) {
     }
 
     const { data } = await queryDatasetFilesUsingGet(id!, params);
+    console.log('📁 Fetched file list:', {
+      prefixUsed: params.prefix ?? pagination.prefix,
+      total: data.totalElements,
+      items: data.content,
+    });
     setFileList(data.content || []);
 
-    // Update pagination with current prefix
+    // Update pagination with current prefix, page and size
     setPagination(prev => ({
       ...prev,
+      current: current !== undefined ? current : prev.current,
+      pageSize: pageSize !== undefined ? pageSize : prev.pageSize,
       prefix: prefix !== undefined ? prefix : prev.prefix,
       total: data.totalElements || 0,
     }));
+  };
+
+  const createDirectory = async (directoryName: string) => {
+    try {
+      const parentPrefix = pagination.prefix || "";
+      await createDirectoryUsingPost(dataset.id, {
+        parentPrefix,
+        directoryName,
+      });
+      message.success({ content: "文件夹创建成功" });
+      // 创建成功后，刷新当前目录下的文件列表，并重置到第一页
+      await fetchFiles(parentPrefix, 1, pagination.pageSize);
+    } catch (error) {
+      console.error("Create directory error", error);
+      message.error({ content: "文件夹创建失败" });
+    }
   };
 
   const handleBatchDeleteFiles = () => {
@@ -74,13 +108,9 @@ export function useFilesOperation(dataset: Dataset) {
   };
 
   const handleDownloadFile = async (file: DatasetFile) => {
-    // 实际导出逻辑
     await downloadFileByIdUsingGet(dataset.id, file.id, file.fileName);
-    // 假设导出成功
-    message.success({
-      content: `已导出 1 个文件`,
-    });
-    setSelectedFiles([]); // 清空选中状态
+    message.success({ content: `已导出 1 个文件/文件夹` });
+    setSelectedFiles([]);
   };
 
   const handleShowFile = (file: any) => async () => {
@@ -96,13 +126,13 @@ export function useFilesOperation(dataset: Dataset) {
     }
   };
 
-  const handleDeleteFile = async (file) => {
+  const handleDeleteFile = async (file: DatasetFile) => {
     try {
       await deleteDatasetFileUsingDelete(dataset.id, file.id);
-      fetchFiles(); // 刷新文件列表
-      message.success({ content: `文件 ${file.fileName} 已删除` });
+      fetchFiles();
+      message.success({ content: `已删除 ${file.fileName}` });
     } catch (error) {
-      message.error({ content: `文件 ${file.fileName} 删除失败` });
+      message.error({ content: `${file.fileName} 删除失败` });
     }
   };
 
@@ -145,5 +175,6 @@ export function useFilesOperation(dataset: Dataset) {
     handleShowFile,
     handleDeleteFile,
     handleBatchExport,
+    createDirectory,
   };
 }

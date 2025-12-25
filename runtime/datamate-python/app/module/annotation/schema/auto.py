@@ -32,6 +32,7 @@ class CreateAutoAnnotationTaskRequest(BaseModel):
     name: str = Field(..., min_length=1, max_length=255, description="任务名称")
     dataset_id: str = Field(..., alias="datasetId", description="数据集ID")
     config: AutoAnnotationConfig = Field(..., description="任务配置")
+    file_ids: Optional[List[str]] = Field(None, alias="fileIds", description="要处理的文件ID列表，为空则处理数据集中所有图像")
 
     model_config = ConfigDict(populate_by_name=True)
 
@@ -43,6 +44,11 @@ class AutoAnnotationTaskResponse(BaseModel):
     name: str = Field(..., description="任务名称")
     dataset_id: str = Field(..., alias="datasetId", description="数据集ID")
     dataset_name: Optional[str] = Field(None, alias="datasetName", description="数据集名称")
+    source_datasets: Optional[List[str]] = Field(
+        default=None,
+        alias="sourceDatasets",
+        description="本任务实际处理涉及到的所有数据集名称列表",
+    )
     config: Dict[str, Any] = Field(..., description="任务配置")
     status: str = Field(..., description="任务状态")
     progress: int = Field(..., description="任务进度 0-100")

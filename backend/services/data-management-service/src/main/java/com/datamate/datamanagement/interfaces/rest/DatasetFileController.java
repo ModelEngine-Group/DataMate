@@ -10,6 +10,7 @@ import com.datamate.datamanagement.domain.model.dataset.DatasetFile;
 import com.datamate.datamanagement.interfaces.converter.DatasetConverter;
 import com.datamate.datamanagement.interfaces.dto.AddFilesRequest;
 import com.datamate.datamanagement.interfaces.dto.CopyFilesRequest;
+import com.datamate.datamanagement.interfaces.dto.CreateDirectoryRequest;
 import com.datamate.datamanagement.interfaces.dto.DatasetFileResponse;
 import com.datamate.datamanagement.interfaces.dto.UploadFileRequest;
 import com.datamate.datamanagement.interfaces.dto.UploadFilesPreRequest;
@@ -42,7 +43,7 @@ public class DatasetFileController {
     }
 
     @GetMapping
-    public Response<PagedResponse<DatasetFile>> getDatasetFiles(
+    public Response<PagedResponse<DatasetFileResponse>> getDatasetFiles(
             @PathVariable("datasetId") String datasetId,
             @RequestParam(value = "isWithDirectory", required = false) boolean isWithDirectory,
             @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
@@ -55,7 +56,16 @@ public class DatasetFileController {
         } else {
             filesPage = datasetFileApplicationService.getDatasetFiles(datasetId, null, null, null, pagingQuery);
         }
-        return Response.ok(filesPage);
+        // Convert domain objects to DTOs
+        List<DatasetFileResponse> responseList = DatasetConverter.INSTANCE.convertToResponseList(filesPage.getContent());
+        PagedResponse<DatasetFileResponse> response = new PagedResponse<>(
+            filesPage.getPage(),
+            filesPage.getSize(),
+            filesPage.getTotalElements(),
+            filesPage.getTotalPages(),
+            responseList
+        );
+        return Response.ok(response);
     }
 
     @GetMapping("/{fileId}")
@@ -84,21 +94,26 @@ public class DatasetFileController {
 
     @IgnoreResponseWrap
     @GetMapping(value = "/{fileId}/download", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE + ";charset=UTF-8")
-    public ResponseEntity<Resource> downloadDatasetFileById(@PathVariable("datasetId") String datasetId,
-                                                            @PathVariable("fileId") String fileId) {
+    public void downloadDatasetFileById(@PathVariable("datasetId") String datasetId,
+                                                            @PathVariable("fileId") String fileId,
+                                                            HttpServletResponse response) {
         try {
+            if (datasetFileApplicationService.isDirectoryId(fileId)) {
+                datasetFileApplicationService.downloadDirectoryAsZip(datasetId, fileId, response);
+                return;
+            }
             DatasetFile datasetFile = datasetFileApplicationService.getDatasetFile(datasetId, fileId);
             Resource resource = datasetFileApplicationService.downloadFile(datasetId, fileId);
 
-            return ResponseEntity.ok()
-                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                    .header(HttpHeaders.CONTENT_DISPOSITION,
-                            "attachment; filename=\"" + datasetFile.getFileName() + "\"")
-                    .body(resource);
+            response.setContentType(MediaType.APPLICATION_OCTET_STREAM_VALUE);
+            response.setHeader(HttpHeaders.CONTENT_DISPOSITION,
+                "attachment; filename=\"" + datasetFile.getFileName() + "\"");
+            resource.getInputStream().transferTo(response.getOutputStream());
+            response.flushBuffer();
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            response.setStatus(HttpStatus.NOT_FOUND.value());
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
         }
     }
 
@@ -162,4 +177,15 @@ public class DatasetFileController {
         List<DatasetFile> datasetFiles = datasetFileApplicationService.addFilesToDataset(datasetId, req);
         return DatasetConverter.INSTANCE.convertToResponseList(datasetFiles);
     }
+
+    /**
+     * 在数据集下创建子目录
+     */
+    @PostMapping("/directories")
+    public ResponseEntity<Void> createDirectory(@PathVariable("datasetId") String datasetId,
+                                                @RequestBody @Valid CreateDirectoryRequest req) {
+        datasetFileApplicationService.createDirectory(datasetId, req);
+        return ResponseEntity.ok().build();
+    }
+
 }

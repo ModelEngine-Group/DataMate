@@ -54,6 +54,11 @@ export function uploadDatasetFileUsingPost(id: string | number, data: any) {
   return post(`/api/data-management/datasets/${id}/files`, data);
 }
 
+// 在数据集中创建子目录
+export function createDirectoryUsingPost(id: string | number, data: any) {
+  return post(`/api/data-management/datasets/${id}/files/directories`, data);
+}
+
 export function downloadFileByIdUsingGet(
   id: string | number,
   fileId: string | number,

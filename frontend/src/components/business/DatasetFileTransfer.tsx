@@ -20,6 +20,7 @@ interface DatasetFileTransferProps
   selectedFilesMap: { [key: string]: DatasetFile };
   onSelectedFilesChange: (filesMap: { [key: string]: DatasetFile }) => void;
   onDatasetSelect?: (dataset: Dataset | null) => void;
+  datasetTypeFilter?: DatasetType;
 }
 
 const fileCols = [
@@ -50,6 +51,7 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
   selectedFilesMap,
   onSelectedFilesChange,
   onDatasetSelect,
+  datasetTypeFilter = DatasetType.TEXT,
   ...props
 }) => {
   const [datasets, setDatasets] = React.useState<Dataset[]>([]);
@@ -82,7 +84,7 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
       page: datasetPagination.current,
       size: datasetPagination.pageSize,
       keyword: datasetSearch,
-      type: DatasetType.TEXT,
+      type: datasetTypeFilter,
     });
     setDatasets(data.content.map(mapDataset) || []);
     setDatasetPagination((prev) => ({

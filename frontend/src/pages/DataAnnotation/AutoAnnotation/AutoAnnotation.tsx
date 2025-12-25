@@ -130,7 +130,25 @@ export default function AutoAnnotation() {
       title: "数据集",
       dataIndex: "datasetName",
       key: "datasetName",
-      width: 150,
+      width: 220,
+      render: (_: any, record: AutoAnnotationTask) => {
+        const list = record.sourceDatasets && record.sourceDatasets.length > 0
+          ? record.sourceDatasets
+          : record.datasetName
+            ? [record.datasetName]
+            : [];
+
+        if (list.length === 0) {
+          return "-";
+        }
+
+        const text = list.join("，");
+        return (
+          <Tooltip title={text}>
+            <span>{text}</span>
+          </Tooltip>
+        );
+      },
     },
     {
       title: "模型",

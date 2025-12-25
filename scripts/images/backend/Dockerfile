@@ -1,5 +1,7 @@
 FROM maven:3-eclipse-temurin-8 AS datax-builder
 
+COPY scripts/images/backend/maven-settings.xml /root/.m2/settings.xml
+
 RUN apt-get update && \
     apt-get install -y git && \
     git clone https://github.com/alibaba/DataX.git
@@ -12,6 +14,8 @@ RUN cd DataX && \
     mvn -U clean package assembly:assembly -Dmaven.test.skip=true
 
 FROM maven:3-eclipse-temurin-21 AS builder
+
+COPY scripts/images/backend/maven-settings.xml /root/.m2/settings.xml
 
 COPY backend/ /opt/backend
 

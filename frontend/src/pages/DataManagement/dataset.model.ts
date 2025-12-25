@@ -33,11 +33,13 @@ export enum DataSource {
 }
 
 export interface DatasetFile {
-  id: number;
+  id: string;
   fileName: string;
-  size: string;
-  uploadDate: string;
-  path: string;
+  fileSize?: number;
+  fileCount?: number;
+  uploadTime?: string;
+  filePath?: string;
+  directory?: boolean;
 }
 
 export interface Dataset {
@@ -102,4 +104,6 @@ export interface TaskItem {
   updateEvent?: string;
   size?: number;
   hasArchive?: boolean;
+   /** 当前上传所在的数据集子目录前缀，例如 "images/" */
+   prefix?: string;
 }

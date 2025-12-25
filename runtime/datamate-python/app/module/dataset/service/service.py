@@ -1,8 +1,9 @@
 import math
+import os
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import func
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Tuple
 from datetime import datetime
 
 from app.core.config import settings
@@ -40,6 +41,20 @@ class Service:
                 logger.error(f"Dataset not found: {dataset_id}")
                 return None
 
+            # 如果 file_count/size_bytes 依赖外部导入且可能不准确，尝试按路径递归统计一次
+            # 仅在 path 存在且可读时进行，统计完成后写回数据库
+            if dataset.path:
+                try:
+                    count, total_size = self._recalc_stats_from_path(dataset.path)
+                    # 仅当统计结果与现存值不一致时更新，避免无意义写库
+                    if (dataset.file_count or 0) != count or (dataset.size_bytes or 0) != total_size:
+                        dataset.file_count = count  # type: ignore
+                        dataset.size_bytes = total_size  # type: ignore
+                        await self.db.commit()
+                        await self.db.refresh(dataset)
+                except Exception as e:  # pragma: no cover - 容错
+                    logger.warning("Failed to recalc dataset stats from path %s: %s", dataset.path, e)
+
             # 将数据库模型转换为响应模型
             # type: ignore 用于忽略 SQLAlchemy 的类型检查问题
             return DatasetResponse(
@@ -57,6 +72,28 @@ class Service:
         except Exception as e:
             logger.error(f"Failed to get dataset {dataset_id}: {e}")
             return None
+
+    @staticmethod
+    def _recalc_stats_from_path(path: str) -> Tuple[int, int]:
+        """递归扫描路径，统计文件数量与总大小。
+
+        按文件系统结果覆盖 file_count/size_bytes，适用于多级子目录场景。
+        """
+
+        if not os.path.exists(path):
+            raise FileNotFoundError(f"Dataset path not found: {path}")
+
+        file_count = 0
+        total_size = 0
+        for root, _, files in os.walk(path):
+            for name in files:
+                file_count += 1
+                fp = os.path.join(root, name)
+                try:
+                    total_size += os.path.getsize(fp)
+                except OSError:
+                    continue
+        return file_count, total_size
 
     async def get_dataset_files(
         self,

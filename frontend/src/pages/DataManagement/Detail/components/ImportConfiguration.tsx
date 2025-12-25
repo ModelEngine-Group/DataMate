@@ -13,11 +13,14 @@ export default function ImportConfiguration({
   open,
   onClose,
   updateEvent = "update:dataset",
+  prefix,
 }: {
   data: Dataset | null;
   open: boolean;
   onClose: () => void;
   updateEvent?: string;
+  // 当前所在的数据集子目录前缀，例如 "images/"
+  prefix?: string;
 }) {
   const [form] = Form.useForm();
   const [collectionOptions, setCollectionOptions] = useState([]);
@@ -52,6 +55,7 @@ export default function ImportConfiguration({
           files: fileSliceList,
           updateEvent,
           hasArchive: importConfig.hasArchive,
+          prefix,
         },
       })
     );

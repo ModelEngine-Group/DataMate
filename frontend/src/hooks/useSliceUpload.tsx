@@ -32,6 +32,7 @@ export function useFileSliceUpload(
       size: 0,
       updateEvent: detail.updateEvent,
       hasArchive: detail.hasArchive,
+      prefix: detail.prefix,
     };
     taskListRef.current = [task, ...taskListRef.current];
 
@@ -114,6 +115,7 @@ export function useFileSliceUpload(
       totalSize,
       datasetId: task.key,
       hasArchive: task.hasArchive,
+      prefix: task.prefix,
     });
 
     const newTask: TaskItem = {

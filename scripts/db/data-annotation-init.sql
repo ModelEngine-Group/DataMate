@@ -44,6 +44,7 @@ CREATE TABLE t_dm_auto_annotation_tasks (
     dataset_id VARCHAR(36) NOT NULL COMMENT '数据集ID',
     dataset_name VARCHAR(255) COMMENT '数据集名称（冗余字段，方便查询）',
     config JSON NOT NULL COMMENT '任务配置（模型规模、置信度阈值、目标类别等）',
+    file_ids JSON COMMENT '要处理的文件ID列表，为空则处理数据集所有图像',
     status VARCHAR(20) NOT NULL DEFAULT 'pending' COMMENT '任务状态: pending/running/completed/failed/cancelled',
     progress INT DEFAULT 0 COMMENT '任务进度（0-100）',
     total_images INT DEFAULT 0 COMMENT '总图片数',

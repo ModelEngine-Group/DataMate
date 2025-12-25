@@ -1,4 +1,5 @@
-import { Button, Descriptions, DescriptionsProps, Modal, Table } from "antd";
+import { Button, Descriptions, DescriptionsProps, Modal, Table, Input } from "antd";
+import { useState } from "react";
 import { formatBytes, formatDateTime } from "@/utils/unit";
 import { Download, Trash2, Folder, File } from "lucide-react";
 import { datasetTypeMap } from "../../dataset.const";
@@ -17,12 +18,16 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
     handleDownloadFile,
     handleBatchDeleteFiles,
     handleBatchExport,
+    createDirectory,
   } = filesOperation;
+
+  const [createDirVisible, setCreateDirVisible] = useState(false);
+  const [newDirName, setNewDirName] = useState("");
 
   // 文件列表多选配置
   const rowSelection = {
     onChange: (selectedRowKeys: React.Key[], selectedRows: any[]) => {
-      setSelectedFiles(selectedRowKeys as number[]);
+      setSelectedFiles(selectedRowKeys as string[]);
       console.log(
         `selectedRowKeys: ${selectedRowKeys}`,
         "selectedRows: ",
@@ -103,7 +108,15 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
       key: "fileName",
       fixed: "left",
       render: (text: string, record: any) => {
-        const isDirectory = record.id.startsWith('directory-');
+        console.log('🔍 Rendering file row:', { 
+          fileName: text, 
+          id: record.id, 
+          directory: record.directory,
+          fileSize: record.fileSize,
+          fileCount: record.fileCount,
+          fullRecord: record 
+        });
+        const isDirectory = record.directory || record.id.startsWith('directory-');
         const iconSize = 16;
 
         const content = (
@@ -123,8 +136,13 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
               type="link"
               onClick={(e) => {
                 const currentPath = filesOperation.pagination.prefix || '';
-                const newPath = `${currentPath}${record.fileName}`;
-                filesOperation.fetchFiles(newPath);
+                const newPath = `${currentPath}${record.fileName}/`;
+                // 重置分页到第1页
+                filesOperation.setPagination(prev => ({
+                  ...prev,
+                  current: 1
+                }));
+                filesOperation.fetchFiles(newPath, 1, filesOperation.pagination.pageSize);
               }}
             >
               {content}
@@ -148,12 +166,33 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
       key: "fileSize",
       width: 150,
       render: (text: number, record: any) => {
-        const isDirectory = record.id.startsWith('directory-');
+        const isDirectory = record.directory || record.id?.startsWith('directory-');
+        // 如果fileSize存在且不为0，显示格式化的大小
+        if (text !== null && text !== undefined && text > 0) {
+          return formatBytes(text);
+        }
+        // 文件夹且没有大小数据时显示0
         if (isDirectory) {
+          return formatBytes(0);
+        }
+        // 文件但没有大小数据
+        return formatBytes(text || 0);
+      },
+    },
+    {
+      title: "文件数",
+      dataIndex: "fileCount",
+      key: "fileCount",
+      width: 120,
+      render: (text: number, record: any) => {
+        const isDirectory = record.directory || record.id?.startsWith('directory-');
+        // 只有文件夹才显示文件数
+        if (!isDirectory) {
           return "-";
         }
-        return formatBytes(text)
-      },
+        // 文件夹显示文件数（即使是0也显示）
+        return text ?? 0;
+      }
     },
     {
       title: "上传时间",
@@ -168,10 +207,7 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
       width: 180,
       fixed: "right",
       render: (_, record) => {
-        const isDirectory = record.id.startsWith('directory-');
-        if (isDirectory) {
-          return <div className="flex"/>;
-        }
+        const isDirectory = record.directory || record.id.startsWith('directory-');
         return (
         <div className="flex">
           <Button
@@ -210,7 +246,16 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
         />
 
         {/* 文件列表 */}
-        <h2 className="text-base font-semibold mt-8">文件列表</h2>
+        <div className="flex items-center justify-between mt-8">
+          <h2 className="text-base font-semibold">文件列表</h2>
+          <Button
+            size="small"
+            type="primary"
+            onClick={() => setCreateDirVisible(true)}
+          >
+            新建文件夹
+          </Button>
+        </div>
         {selectedFiles.length > 0 && (
           <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
             <span className="text-sm text-blue-700 font-medium">
@@ -243,7 +288,12 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
                   const pathParts = currentPath.split('/').filter(Boolean);
                   pathParts.pop(); // 移除最后一个目录
                   const parentPath = pathParts.length > 0 ? `${pathParts.join('/')}/` : '';
-                  filesOperation.fetchFiles(parentPath);
+                  // 重置分页到第1页
+                  filesOperation.setPagination(prev => ({
+                    ...prev,
+                    current: 1
+                  }));
+                  filesOperation.fetchFiles(parentPath, 1, filesOperation.pagination.pageSize);
                 }}
                 className="p-0"
               >
@@ -310,6 +360,31 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
         >
           {previewContent}
         </pre>
+      </Modal>
+
+      {/* 新建文件夹弹窗 */}
+      <Modal
+        title="新建文件夹"
+        open={createDirVisible}
+        onOk={async () => {
+          const name = newDirName.trim();
+          if (!name) {
+            return;
+          }
+          await createDirectory(name);
+          setNewDirName("");
+          setCreateDirVisible(false);
+        }}
+        onCancel={() => {
+          setCreateDirVisible(false);
+          setNewDirName("");
+        }}
+      >
+        <Input
+          placeholder="请输入文件夹名称"
+          value={newDirName}
+          onChange={(e) => setNewDirName(e.target.value)}
+        />
       </Modal>
     </>
   );

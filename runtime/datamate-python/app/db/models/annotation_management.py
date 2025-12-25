@@ -70,6 +70,7 @@ class AutoAnnotationTask(Base):
     dataset_id = Column(String(36), nullable=False, comment="数据集ID")
     dataset_name = Column(String(255), nullable=True, comment="数据集名称（冗余字段）")
     config = Column(JSON, nullable=False, comment="任务配置（模型规模、置信度阈值、目标类别等）")
+    file_ids = Column(JSON, nullable=True, comment="要处理的文件ID列表，为空则处理数据集所有图像")
     status = Column(String(20), nullable=False, default="pending", comment="任务状态")
     progress = Column(Integer, default=0, comment="任务进度（0-100）")
     total_images = Column(Integer, default=0, comment="总图片数")

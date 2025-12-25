@@ -76,7 +76,11 @@ export default function DatasetDetail() {
 
   const handleRefresh = async (showMessage = true) => {
     fetchDataset();
-    filesOperation.fetchFiles();
+    filesOperation.fetchFiles(
+      filesOperation.pagination.prefix,
+      filesOperation.pagination.current,
+      filesOperation.pagination.pageSize
+    );
     if (showMessage) message.success({ content: "数据刷新成功" });
   };
 
@@ -93,13 +97,25 @@ export default function DatasetDetail() {
 
   useEffect(() => {
     const refreshData = () => {
-      handleRefresh(false);
+      // 使用当前最新的前缀和分页参数，避免总是回到根目录
+      fetchDataset();
+      filesOperation.fetchFiles(
+        filesOperation.pagination.prefix,
+        filesOperation.pagination.current,
+        filesOperation.pagination.pageSize
+      );
     };
+
     window.addEventListener("update:dataset", refreshData);
     return () => {
       window.removeEventListener("update:dataset", refreshData);
     };
-  }, []);
+  }, [
+    fetchDataset,
+    filesOperation.pagination.prefix,
+    filesOperation.pagination.current,
+    filesOperation.pagination.pageSize,
+  ]);
 
   // 基本信息描述项
   const statistics = [
@@ -233,6 +249,7 @@ export default function DatasetDetail() {
         open={showUploadDialog}
         onClose={() => setShowUploadDialog(false)}
         updateEvent="update:dataset"
+        prefix={filesOperation.pagination.prefix}
       />
       <EditDataset
         data={dataset}

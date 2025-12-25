@@ -33,4 +33,8 @@ public class DatasetFileResponse {
     private LocalDateTime lastAccessTime;
     /** 上传者 */
     private String uploadedBy;
+    /** 是否为目录 */
+    private Boolean directory;
+    /** 目录文件数量 */
+    private Long fileCount;
 }
