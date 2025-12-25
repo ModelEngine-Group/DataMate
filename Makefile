@@ -155,7 +155,7 @@ endef
 # ========== Build Targets ==========
 
 # Valid build targets
-VALID_BUILD_TARGETS := backend database frontend runtime backend-python deer-flow mineru mineru-npu gateway
+VALID_BUILD_TARGETS := backend database frontend runtime backend-python deer-flow mineru mineru-npu gateway label-studio
 
 # Generic docker build target with service name as parameter
 # Automatically prefixes image names with "datamate-" unless it's deer-flow
@@ -231,7 +231,6 @@ else
 	fi
 	@$(MAKE) label-studio-$(INSTALLER)-uninstall DELETE_VOLUMES_CHOICE=$$DELETE_VOLUMES_CHOICE; \
 	$(MAKE) milvus-$(INSTALLER)-uninstall DELETE_VOLUMES_CHOICE=$$DELETE_VOLUMES_CHOICE; \
-	$(MAKE) datamate-$(INSTALLER)-uninstall DELETE_VOLUMES_CHOICE=$$DELETE_VOLUMES_CHOICE; \
 	$(MAKE) deer-flow-$(INSTALLER)-uninstall DELETE_VOLUMES_CHOICE=$$DELETE_VOLUMES_CHOICE; \
 	$(MAKE) datamate-$(INSTALLER)-uninstall DELETE_VOLUMES_CHOICE=$$DELETE_VOLUMES_CHOICE
 endif

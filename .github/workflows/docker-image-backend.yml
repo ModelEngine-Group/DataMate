@@ -5,6 +5,7 @@ on:
     branches: [ "main" ]
     paths:
       - 'backend/**'
+      - '!backend/api-gateway/**'
       - 'scripts/images/backend/**'
       - '.github/workflows/docker-image-backend.yml'
       - '.github/workflows/docker-images-reusable.yml'
@@ -12,6 +13,7 @@ on:
     branches: [ "main" ]
     paths:
       - 'backend/**'
+      - '!backend/api-gateway/**'
       - 'scripts/images/backend/**'
       - '.github/workflows/docker-image-backend.yml'
       - '.github/workflows/docker-images-reusable.yml'

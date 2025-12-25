@@ -1,9 +1,19 @@
-# syntax=docker/dockerfile:1
 ARG NODE_VERSION=22
 ARG PYTHON_VERSION=3.13
 ARG POETRY_VERSION=2.1.4
 ARG VERSION_OVERRIDE
 ARG BRANCH_OVERRIDE
+
+ARG GIT_REPO=https://github.com/ModelEngine-Group/Label-Studio.git
+ARG GIT_BRANCH=ls-release/1.21.0.wsi
+
+################################ Stage: downloader (Source Code)
+FROM alpine/git AS downloader
+ARG GIT_REPO
+ARG GIT_BRANCH
+WORKDIR /label-studio
+
+RUN git clone --branch ${GIT_BRANCH} ${GIT_REPO} .
 
 ################################ Overview
 
@@ -31,24 +41,32 @@ WORKDIR /label-studio/web
 RUN yarn config set registry https://registry.npmjs.org/
 RUN yarn config set network-timeout 1200000 # HTTP timeout used when downloading packages, set to 20 minutes
 
-COPY web/package.json .
-COPY web/yarn.lock .
-COPY web/tools tools
+# [修改] 从 downloader 阶段复制 package.json 和 lock 文件
+COPY --from=downloader /label-studio/web/package.json .
+COPY --from=downloader /label-studio/web/yarn.lock .
+COPY --from=downloader /label-studio/web/tools tools
+
 RUN --mount=type=cache,target=/root/web/.yarn,id=yarn-cache,sharing=locked \
     --mount=type=cache,target=/root/web/.nx,id=nx-cache,sharing=locked \
     yarn install --prefer-offline --no-progress --pure-lockfile --frozen-lockfile --ignore-engines --non-interactive --production=false
 
-COPY web/ .
-COPY pyproject.toml ../pyproject.toml
+# [修改] 从 downloader 阶段复制前端源码
+COPY --from=downloader /label-studio/web/ .
+# [修改] 从 downloader 阶段复制 pyproject.toml
+COPY --from=downloader /label-studio/pyproject.toml ../pyproject.toml
+
 RUN --mount=type=cache,target=/root/web/.yarn,id=yarn-cache,sharing=locked \
     --mount=type=cache,target=/root/web/.nx,id=nx-cache,sharing=locked \
     yarn run build
 
 ################################ Stage: frontend-version-generator
 FROM frontend-builder AS frontend-version-generator
+# [修改] 之前是 bind mount 本地 .git，现在需要将 downloader 的 .git 目录复制进来
+# 注意：WORKDIR 目前是 /label-studio/web，所以我们将 git 放在上级目录以匹配原逻辑
+COPY --from=downloader /label-studio/.git ../.git
+
 RUN --mount=type=cache,target=/root/web/.yarn,id=yarn-cache,sharing=locked \
     --mount=type=cache,target=/root/web/.nx,id=nx-cache,sharing=locked \
-    --mount=type=bind,source=.git,target=../.git \
     yarn version:libs
 
 ################################ Stage: venv-builder (prepare the virtualenv)
@@ -80,14 +98,12 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 
 WORKDIR /label-studio
 
-
 ENV VENV_PATH="/label-studio/.venv"
 ENV PATH="$VENV_PATH/bin:$PATH"
 
 ## Starting from this line all packages will be installed in $VENV_PATH
 
-# Copy dependency files
-COPY pyproject.toml poetry.lock README.md ./
+COPY --from=downloader /label-studio/pyproject.toml /label-studio/poetry.lock /label-studio/README.md ./
 
 # Set a default build argument for including dev dependencies
 ARG INCLUDE_DEV=false
@@ -102,9 +118,8 @@ RUN --mount=type=cache,target=/.poetry-cache,id=poetry-cache,sharing=locked \
     fi
 
 # Install LS
-COPY label_studio label_studio
+COPY --from=downloader /label-studio/label_studio label_studio
 RUN --mount=type=cache,target=/.poetry-cache,id=poetry-cache,sharing=locked \
-    # `--extras uwsgi` is mandatory here due to poetry bug: https://github.com/python-poetry/poetry/issues/7302
     poetry install --only-root --extras uwsgi && \
     python3 label_studio/manage.py collectstatic --no-input
 
@@ -113,9 +128,10 @@ FROM venv-builder AS py-version-generator
 ARG VERSION_OVERRIDE
 ARG BRANCH_OVERRIDE
 
+COPY --from=downloader /label-studio/.git ./.git
+
 # Create version_.py and ls-version_.py
-RUN --mount=type=bind,source=.git,target=./.git \
-    VERSION_OVERRIDE=${VERSION_OVERRIDE} BRANCH_OVERRIDE=${BRANCH_OVERRIDE} poetry run python label_studio/core/version.py
+RUN VERSION_OVERRIDE=${VERSION_OVERRIDE} BRANCH_OVERRIDE=${BRANCH_OVERRIDE} poetry run python label_studio/core/version.py
 
 ################################### Stage: prod
 FROM python:${PYTHON_VERSION}-slim-trixie AS production
@@ -146,15 +162,15 @@ RUN set -eux; \
     mkdir -p $LS_DIR $LABEL_STUDIO_BASE_DATA_DIR $OPT_DIR && \
     chown -R 1001:0 $LS_DIR $LABEL_STUDIO_BASE_DATA_DIR $OPT_DIR /var/log/nginx /etc/nginx
 
-COPY --chown=1001:0 deploy/default.conf /etc/nginx/nginx.conf
+COPY --chown=1001:0 --from=downloader /label-studio/deploy/default.conf /etc/nginx/nginx.conf
 
 # Copy essential files for installing Label Studio and its dependencies
-COPY --chown=1001:0 pyproject.toml .
-COPY --chown=1001:0 poetry.lock .
-COPY --chown=1001:0 README.md .
-COPY --chown=1001:0 LICENSE LICENSE
-COPY --chown=1001:0 licenses licenses
-COPY --chown=1001:0 deploy deploy
+COPY --chown=1001:0 --from=downloader /label-studio/pyproject.toml .
+COPY --chown=1001:0 --from=downloader /label-studio/poetry.lock .
+COPY --chown=1001:0 --from=downloader /label-studio/README.md .
+COPY --chown=1001:0 --from=downloader /label-studio/LICENSE LICENSE
+COPY --chown=1001:0 --from=downloader /label-studio/licenses licenses
+COPY --chown=1001:0 --from=downloader /label-studio/deploy deploy
 
 # Copy files from build stages
 COPY --chown=1001:0 --from=venv-builder               $LS_DIR                                           $LS_DIR
