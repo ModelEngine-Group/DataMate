@@ -320,7 +320,9 @@ VALID_K8S_TARGETS := mineru datamate deer-flow milvus label-studio
 		done; \
 		exit 1; \
 	fi
-	@if [ "$*" = "mineru" ]; then \
+	@if [ "$*" = "label-studio" ]; then \
+     	helm upgrade label-studio deployment/helm/label-studio/ -n $(NAMESPACE) --install; \
+    elif [ "$*" = "mineru" ]; then \
 		kubectl apply -f deployment/kubernetes/mineru/deploy.yaml -n $(NAMESPACE); \
 	elif [ "$*" = "datamate" ]; then \
 		helm upgrade datamate deployment/helm/datamate/ -n $(NAMESPACE) --install --set global.image.repository=$(REGISTRY); \
