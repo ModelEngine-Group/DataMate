@@ -4,6 +4,9 @@ fullnameOverride: label-studio
 
 replicaCount: 1
 
+global:
+  imageRegistry: ""
+
 image:
   repository: heartexlabs/label-studio
   tag: "latest"

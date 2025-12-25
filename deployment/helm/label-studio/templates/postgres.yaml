@@ -31,7 +31,11 @@ spec:
     spec:
       containers:
         - name: postgres
+          {{- if .Values.global.imageRegistry }}
+          image: "{{ .Values.global.imageRegistry | trimSuffix "/" }}/{{ .Values.postgres.image.repository }}:{{ .Values.postgres.image.tag }}"
+          {{- else }}
           image: "{{ .Values.postgres.image.repository }}:{{ .Values.postgres.image.tag }}"
+          {{- end }}
           imagePullPolicy: {{ .Values.postgres.image.pullPolicy }}
           env:
             - name: POSTGRES_HOST_AUTH_METHOD
