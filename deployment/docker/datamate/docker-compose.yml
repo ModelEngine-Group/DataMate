@@ -31,6 +31,13 @@ services:
     depends_on:
       - datamate-database
 
+  datamate-gateway:
+    container_name: datamate-gateway
+    image: ${REGISTRY:-}datamate-gateway
+    restart: on-failure
+    privileged: true
+    networks: [ datamate ]
+
   # 2) frontend（NodePort 30000）
   datamate-frontend:
     container_name: datamate-frontend
@@ -40,7 +47,7 @@ services:
       - "30000:80"            # nodePort → hostPort
     volumes:
       - frontend_log_volume:/var/log/datamate/frontend
-      - ${NGINX_CONF:-./backend.conf}:/etc/nginx/conf.d/backend.conf
+      - ./backend.conf:/etc/nginx/conf.d/backend.conf
     networks: [ datamate ]
     depends_on:
       - datamate-backend
@@ -90,6 +97,7 @@ services:
       - dataset_volume:/dataset
       - flow_volume:/flow
       - operator-runtime-volume:/opt/runtime/datamate/ops/user
+      - operator-packages-volume:/usr/local/lib/ops/site-packages
     networks: [ datamate ]
 
   # 4) mineru
@@ -99,19 +107,28 @@ services:
     restart: on-failure
     environment:
       MINERU_MODEL_SOURCE: local
-      MINERU_DEVICE_MODE: cpu  # cpu|cuda|npu|mps
-      MINERU_BACKEND_MODE: pipeline
+      MINERU_DEVICE_MODE: npu  # cpu|cuda|npu|mps
+      VLLM_WORKER_MULTIPROC_METHOD: spawn
     privileged: true
+    entrypoint: mineru-openai-server
     command:
-      - python
-      - /opt/runtime/datamate/mineru/mineru_api.py
-      - --port
-      - "9001"
+      --engine vllm
+      --host 0.0.0.0
+      --port 8000
     volumes:
       - dataset_volume:/dataset
       - mineru_log_volume:/var/log/datamate/mineru
+      - /var/log/npu/:/usr/slog
+      - /usr/local/dcmi:/usr/local/dcmi
+      - /usr/local/bin/npu-smi:/usr/local/bin/npu-smi
+      - /usr/local/Ascend/driver:/usr/local/Ascend/driver
     networks: [ datamate ]
     profiles: [ mineru ]
+    devices:
+      - /dev/davinci0
+      - /dev/davinci_manager
+      - /dev/devmm_svm
+      - /dev/hisi_hdc
 
   # 5) redis
   datamate-redis:
@@ -141,6 +158,8 @@ volumes:
     name: datamate-operator-upload-volume
   operator-runtime-volume:
     name: datamate-operator-runtime-volume
+  operator-packages-volume:
+    name: datamate-operator-packages-volume
   mineru_log_volume:
     name: datamate-mineru_log_volume
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Card, Button, Table, Modal, message, Tooltip, Form, Input, Select } from "antd";
 import {
   Plus,
@@ -50,11 +50,6 @@ interface SynthesisTask {
   updated_by?: string;
 }
 
-interface SynthesisDataItem {
-  id: string;
-  [key: string]: any;
-}
-
 export default function SynthesisTaskTab() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
@@ -73,11 +68,6 @@ export default function SynthesisTaskTab() {
   const [modelLoading, setModelLoading] = useState(false);
 
   const [evalForm] = Form.useForm();
-
-  // 合成数据相关状态
-  const [activeChunkId, setActiveChunkId] = useState<string | null>(null);
-  const [synthesisData, setSynthesisData] = useState<SynthesisDataItem[]>([]);
-  const [selectedDataIds, setSelectedDataIds] = useState<string[]>([]);
 
   // 获取任务列表
   const loadTasks = async () => {
@@ -118,7 +108,16 @@ export default function SynthesisTaskTab() {
   };
 
   // 表格列
+  const ellipsisStyle = {
+    maxWidth: 100,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+    display: "inline-block",
+    verticalAlign: "middle",
+  };
   const taskColumns = [
+
     {
       title: (
         <Button
@@ -145,6 +144,7 @@ export default function SynthesisTaskTab() {
       dataIndex: "name",
       key: "name",
       fixed: "left" as const,
+      width: 160,
       render: (_: unknown, task: SynthesisTask) => (
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center shadow-sm">
@@ -152,34 +152,63 @@ export default function SynthesisTaskTab() {
               {task.synthesis_type?.toUpperCase()?.slice(0, 1) || "T"}
             </span>
           </div>
-          <div>
-            <Link to={`/data/synthesis/task/${task.id}`}>{task.name}</Link>
-          </div>
+          <Tooltip title={task.name} placement="top">
+            <div style={{ ...ellipsisStyle, maxWidth: 100 }}>
+              <Link to={`/data/synthesis/task/${task.id}`}>{task.name}</Link>
+            </div>
+          </Tooltip>
         </div>
+      ),
+    },
+    {
+      title: "任务ID",
+      dataIndex: "id",
+      key: "id",
+      width: 140,
+      render: (id: string) => (
+        <Tooltip title={id} placement="top">
+          <span style={{ ...ellipsisStyle, maxWidth: 140 }}>{id}</span>
+        </Tooltip>
       ),
     },
     {
       title: "类型",
       dataIndex: "synthesis_type",
       key: "synthesis_type",
-      render: (type: string) => typeMap[type] || type,
+      width: 100,
+      render: (type: string) => (
+        <Tooltip title={typeMap[type] || type} placement="top">
+          <span style={{ ...ellipsisStyle, maxWidth: 100 }}>{typeMap[type] || type}</span>
+        </Tooltip>
+      ),
     },
     {
       title: "文件数",
       dataIndex: "total_files",
       key: "total_files",
-      render: (num: number, task: SynthesisTask) => <span>{num ?? (task.source_file_id?.length ?? 0)}</span>,
+      width: 70,
+      render: (num: number, task: SynthesisTask) => (
+        <Tooltip title={num ?? (task.source_file_id?.length ?? 0)} placement="top">
+          <span style={{ ...ellipsisStyle, maxWidth: 70 }}>{num ?? (task.source_file_id?.length ?? 0)}</span>
+        </Tooltip>
+      ),
     },
     {
       title: "创建时间",
       dataIndex: "created_at",
       key: "created_at",
-      render: (val: string) => formatDateTime(val),
+      width: 200,
+      render: (val: string) => (
+        <Tooltip title={formatDateTime(val)} placement="top">
+          <span style={{ ...ellipsisStyle, maxWidth: 200 }}>{formatDateTime(val)}</span>
+        </Tooltip>
+      ),
     },
     {
       title: "操作",
       key: "actions",
       fixed: "right" as const,
+      width: 120,
       render: (_: unknown, task: SynthesisTask) => (
         <div className="flex items-center justify-start gap-1">
           <Tooltip title="查看详情">

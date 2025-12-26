@@ -4,9 +4,9 @@ language: 'python'
 vendor: 'huawei'
 raw_id: 'TestMapper'
 version: '1.0.0'
-modal: 'text'
-inputs: 'text'
-outputs: 'text'
+modal: 'text'     # text/image/audio/video/multimodal
+inputs: 'text'    # text/image/audio/video/multimodal
+outputs: 'text'   # text/image/audio/video/multimodal
 settings:
   sliderTest:
     name: '滑窗测试'

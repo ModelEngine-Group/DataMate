@@ -38,34 +38,23 @@
         <poi.version>5.4.0</poi.version>
         <log4j2.version>2.21.1</log4j2.version>
         <commons-compress.version>1.26.1</commons-compress.version>
+        <fastjson-version>2.0.52</fastjson-version>
     </properties>
 
     <modules>
-        <!-- 共享库 -->
-        <module>shared/domain-common</module>
-        <module>shared/security-common</module>
-
         <!-- 核心服务 -->
-        <module>services/data-management-service</module>
-        <module>services/data-collection-service</module>
-        <module>services/operator-market-service</module>
-        <module>services/data-cleaning-service</module>
-        <module>services/data-synthesis-service</module>
-        <module>services/data-annotation-service</module>
-        <module>services/data-evaluation-service</module>
-        <module>services/pipeline-orchestration-service</module>
-        <module>services/execution-engine-service</module>
-
-        <!-- RAG服务 -->
-        <module>services/rag-indexer-service</module>
-        <module>services/rag-query-service</module>
-
-        <!-- 主启动模块 -->
-        <module>services/main-application</module>
+        <module>services</module>
 
         <!-- API Gateway微服务 -->
         <module>api-gateway</module>
     </modules>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+        </dependency>
+    </dependencies>
 
     <dependencyManagement>
         <dependencies>
@@ -158,69 +147,14 @@
                 <version>${commons-compress.version}</version>
             </dependency>
 
+            <dependency>
+                <groupId>com.alibaba.fastjson2</groupId>
+                <artifactId>fastjson2</artifactId>
+                <version>${fastjson-version}</version>
+            </dependency>
+
         </dependencies>
     </dependencyManagement>
-
-    <dependencies>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-            <version>${spring-boot.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.springframework.boot</groupId>
-                    <artifactId>spring-boot-starter-logging</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter</artifactId>
-            <version>${spring-boot.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.springframework.boot</groupId>
-                    <artifactId>spring-boot-starter-logging</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
-        <dependency>
-            <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
-            <version>${mybatis-plus.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-jsqlparser</artifactId>
-        </dependency>
-
-        <!-- Log4j2 API -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-log4j2</artifactId>
-            <version>${spring-boot.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>${lombok.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.mapstruct</groupId>
-            <artifactId>mapstruct</artifactId>
-            <version>${mapstruct.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.poi</groupId>
-            <artifactId>poi</artifactId>
-            <version>${poi.version}</version>
-        </dependency>
-    </dependencies>
 
     <build>
         <plugins>

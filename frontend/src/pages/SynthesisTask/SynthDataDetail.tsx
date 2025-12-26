@@ -1,6 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
-import { useLocation, useNavigate, useParams } from "react-router";
-import { Badge, Button, Empty, List, Pagination, Spin, Typography, Popconfirm, message, Dropdown, Input } from "antd";
+import { useLocation, useNavigate, useParams, Link } from "react-router";
+import {
+  Badge,
+  Empty,
+  List,
+  Pagination,
+  Spin,
+  Typography,
+  Popconfirm,
+  message,
+  Dropdown,
+  Input,
+  Breadcrumb,
+  Button,
+  Tag,
+} from "antd";
 import type { PaginationProps } from "antd";
 import { MoreOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import {
@@ -69,6 +83,8 @@ export default function SynthDataDetail() {
   const [chunkLoading, setChunkLoading] = useState(false);
   const [dataLoading, setDataLoading] = useState(false);
   const [synthDataList, setSynthDataList] = useState<SynthesisDataItem[]>([]);
+  const [chunkConfirmVisibleId, setChunkConfirmVisibleId] = useState<string | null>(null);
+  const [dataConfirmVisibleId, setDataConfirmVisibleId] = useState<string | null>(null);
 
   // 加载任务信息（用于顶部展示）
   useEffect(() => {
@@ -237,291 +253,296 @@ export default function SynthDataDetail() {
     }
   };
 
+  const breadItems = [
+    {
+      title: <Link to="/data/synthesis/task">合成任务</Link>,
+    },
+    {
+      title: state.taskId ? (
+        <Link to={`/data/synthesis/task/${state.taskId}`}>{taskInfo?.name || "任务详情"}</Link>
+      ) : (
+        taskInfo?.name || "任务详情"
+      ),
+    },
+    {
+      title: state.fileName || "文件详情",
+    },
+  ];
+
+  const showChunkConfirm = (id: string) => setChunkConfirmVisibleId(id);
+  const hideChunkConfirm = () => setChunkConfirmVisibleId(null);
+
+  const showDataConfirm = (id: string) => setDataConfirmVisibleId(id);
+  const hideDataConfirm = () => setDataConfirmVisibleId(null);
+
   return (
-    <div className="p-4 bg-white rounded-lg h-full flex flex-col overflow-hidden">
-      {/* 顶部信息和返回 */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <Title level={4} style={{ margin: 0 }}>
-              合成数据详情
-            </Title>
-            {state.fileName && (
-              <Text type="secondary" className="!text-xs">
-                文件：{state.fileName}
-              </Text>
-            )}
-          </div>
-          {taskInfo && (
-            <div className="text-xs text-gray-500 flex gap-4">
-              <span>
-                任务：{taskInfo.name}
-              </span>
-              <span>
-                类型：
-                {taskInfo.synthesis_type === "QA"
-                  ? "问答对生成"
-                  : taskInfo.synthesis_type === "COT"
-                  ? "链式推理生成"
-                  : taskInfo.synthesis_type}
-              </span>
-              <span>
-                创建时间：{formatDateTime(taskInfo.created_at)}
-              </span>
-              <span>模型ID：{taskInfo.model_id}</span>
+    <>
+      <Breadcrumb items={breadItems} />
+      {/* 全局删除确认遮罩：Chunk */}
+      {chunkConfirmVisibleId && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/30">
+          <div className="bg-white rounded-lg px-6 py-4 shadow-lg min-w-[320px] max-w-[420px]">
+            <div className="text-sm font-medium mb-2">确认删除该 Chunk 及其合成数据？</div>
+            <div className="text-xs text-gray-500 mb-4 break-all">
+              ID: {chunkConfirmVisibleId}
             </div>
-          )}
-        </div>
-        <Button onClick={() => navigate(-1)}>返回</Button>
-      </div>
-
-      {/* 主体左右布局 */}
-      <div className="flex flex-1 min-h-0 gap-4">
-        {/* 左侧 Chunk 列表：占比 2/5 */}
-        <div className="basis-2/5 max-w-[40%] border rounded-lg flex flex-col overflow-hidden">
-          <div className="px-3 py-2 border-b text-sm font-medium bg-gray-50">
-            Chunk 列表
-          </div>
-          <div className="flex-1 overflow-auto">
-            {chunkLoading ? (
-              <div className="h-full flex items-center justify-center">
-                <Spin />
-              </div>
-            ) : chunks.length === 0 ? (
-              <Empty description="暂无 Chunk" style={{ marginTop: 40 }} />
-            ) : (
-              <List
+            <div className="flex justify-end gap-2 text-sm">
+              <Button size="small" onClick={hideChunkConfirm}>
+                取消
+              </Button>
+              <Button
                 size="small"
-                dataSource={chunks}
-                renderItem={(item) => {
-                  const active = item.id === selectedChunkId;
-                  return (
-                    <List.Item
-                      className={
-                        "px-3 py-2 !border-0 " +
-                        (active ? "bg-blue-50" : "hover:bg-gray-50")
-                      }
-                    >
-                      <div className="flex flex-col gap-1 w-full">
-                        <div
-                          className="flex items-center justify-between text-xs cursor-pointer"
-                          onClick={() => setSelectedChunkId(item.id)}
-                        >
-                          <span className="font-medium">Chunk #{item.chunk_index}</span>
-                          <Badge
-                            color={active ? "blue" : "default"}
-                            text={active ? "当前" : ""}
-                          />
-                        </div>
-                        <div
-                          className="text-xs text-gray-600 whitespace-pre-wrap break-words cursor-pointer"
-                          onClick={() => setSelectedChunkId(item.id)}
-                        >
-                          {item.chunk_content}
-                        </div>
-                        <div className="flex justify-end mt-1">
-                          <Dropdown
-                            menu={{
-                              items: [
-                                {
-                                  key: "delete-chunk",
-                                  danger: true,
-                                  label: (
-                                    <Popconfirm
-                                      title="确认删除该 Chunk 及其合成数据？"
-                                      onConfirm={() => {
-                                        setSelectedChunkId(item.id);
-                                        handleDeleteCurrentChunk();
-                                      }}
-                                      okText="删除"
-                                      cancelText="取消"
-                                    >
-                                      <span className="flex items-center gap-1">
-                                        <DeleteOutlined />
-                                        删除该 Chunk 及合成数据
-                                      </span>
-                                    </Popconfirm>
-                                  ),
-                                },
-                              ],
-                            }}
-                            trigger={["click"]}
-                          >
-                            <Button
-                              size="small"
-                              type="text"
-                              shape="circle"
-                              icon={<MoreOutlined />}
-                            />
-                          </Dropdown>
-                        </div>
-                      </div>
-                    </List.Item>
-                  );
+                type="primary"
+                danger
+                onClick={async () => {
+                  setSelectedChunkId(chunkConfirmVisibleId);
+                  await handleDeleteCurrentChunk();
+                  hideChunkConfirm();
                 }}
-              />
-            )}
-          </div>
-          <div className="border-t px-2 py-1 flex justify-end bg-white">
-            <Pagination
-              size="small"
-              current={chunkPagination.page}
-              pageSize={chunkPagination.size}
-              total={chunkPagination.total}
-              onChange={handleChunkPageChange}
-              showSizeChanger
-              showTotal={(total) => `共 ${total} 条`}
-            />
+              >
+                删除
+              </Button>
+            </div>
           </div>
         </div>
+      )}
 
-        {/* 右侧合成数据展示：占比 3/5 */}
-        <div className="basis-3/5 max-w-[60%] border rounded-lg flex flex-col min-w-0 overflow-hidden">
-          <div className="px-3 py-2 border-b flex items-center justify-between bg-gray-50 text-sm font-medium">
-            <span>合成数据</span>
-            {currentChunk && (
-              <span className="text-xs text-gray-500">
-                当前 Chunk #{currentChunk.chunk_index}
-              </span>
-            )}
+      {/* 全局删除确认遮罩：合成数据 */}
+      {dataConfirmVisibleId && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/30">
+          <div className="bg-white rounded-lg px-6 py-4 shadow-lg min-w-[320px] max-w-[480px]">
+            <div className="text-sm font-medium mb-2">确认删除该条合成数据？</div>
+            <div className="text-xs text-gray-500 mb-4 break-all">
+              ID: {dataConfirmVisibleId}
+            </div>
+            <div className="flex justify-end gap-2 text-sm">
+              <Button size="small" onClick={hideDataConfirm}>
+                取消
+              </Button>
+              <Button
+                size="small"
+                type="primary"
+                danger
+                onClick={async () => {
+                  await handleDeleteSingleSynthesisData(dataConfirmVisibleId);
+                  hideDataConfirm();
+                }}
+              >
+                删除
+              </Button>
+            </div>
           </div>
-          <div className="flex-1 overflow-auto p-3">
-            {dataLoading ? (
-              <div className="h-full flex items-center justify-center">
-                <Spin />
+        </div>
+      )}
+
+      <div className="mt-4 flex flex-1 flex-col overflow-hidden rounded-lg bg-transparent">
+        <div className="flex flex-1 min-h-0 gap-4">
+          {/* 左侧 Chunk 列表 */}
+          <div className="basis-2/5 max-w-[40%] flex flex-col min-w-0">
+            <div className="rounded-lg border border-gray-100 bg-white shadow-sm flex flex-col overflow-hidden h-full">
+              <div className="px-4 py-3 border-b border-gray-100 text-sm font-medium bg-gray-50/80 flex items-center justify-between">
+                <span>Chunk 列表</span>
+                {chunkPagination.total ? (
+                  <span className="text-xs text-gray-400">共 {chunkPagination.total} 条</span>
+                ) : null}
               </div>
-            ) : !selectedChunkId ? (
-              <Empty description="请选择左侧 Chunk" style={{ marginTop: 40 }} />
-            ) : synthDataList.length === 0 ? (
-              <Empty description="该 Chunk 暂无合成数据" style={{ marginTop: 40 }} />
-            ) : (
-              <div className="space-y-4">
-                {synthDataList.map((item, index) => {
-                  const isEditing = editingId === item.id;
-                  return (
-                    <div
-                      key={item.id || index}
-                      className="border border-gray-100 rounded-md p-3 bg-white shadow-sm/50 relative"
-                    >
-                      <div className="mb-2 text-xs text-gray-500 flex justify-between">
-                        <span>记录 {index + 1}</span>
-                        <span>ID：{item.id}</span>
-                      </div>
-
-                      {/* 右下角更多操作按钮：编辑 & 删除 */}
-                      <div className="absolute bottom-2 right-2 flex gap-1">
-                        <Dropdown
-                          menu={{
-                            items: [
-                              {
-                                key: "edit-data",
-                                label: (
-                                  <span className="flex items-center gap-1">
-                                    <EditOutlined />
-                                    编辑
-                                  </span>
-                                ),
-                                onClick: (info) => {
-                                  info.domEvent.stopPropagation();
-                                  startEdit(item);
-                                },
-                              },
-                              {
-                                key: "delete-data",
-                                danger: true,
-                                label: (
-                                  <Popconfirm
-                                    title="确认删除该条合成数据？"
-                                    onConfirm={(e) => {
-                                      e?.stopPropagation();
-                                      handleDeleteSingleSynthesisData(item.id);
-                                    }}
-                                    okText="删除"
-                                    cancelText="取消"
-                                  >
-                                    <span className="flex items-center gap-1">
-                                      <DeleteOutlined />
-                                      删除
-                                    </span>
-                                  </Popconfirm>
-                                ),
-                              },
-                            ],
-                          }}
-                          trigger={["click"]}
+              <div className="flex-1 overflow-auto">
+                {chunkLoading ? (
+                  <div className="h-full flex items-center justify-center">
+                    <Spin size="small" />
+                  </div>
+                ) : chunks.length === 0 ? (
+                  <Empty description="暂无 Chunk" style={{ marginTop: 40 }} />
+                ) : (
+                  <List
+                    size="small"
+                    className="!border-0"
+                    dataSource={chunks}
+                    renderItem={(item) => {
+                      const active = item.id === selectedChunkId;
+                      return (
+                        <List.Item
+                          className={
+                            "!border-0 px-4 py-3 transition-colors rounded-none " +
+                            (active
+                              ? "bg-blue-200 hover:bg-blue-300"
+                              : "hover:bg-blue-50")
+                          }
+                          onClick={() => setSelectedChunkId(item.id)}
                         >
-                          <Button
-                            size="small"
-                            type="text"
-                            shape="circle"
-                            icon={<MoreOutlined />}
-                            onClick={(e) => e.stopPropagation()}
-                          />
-                        </Dropdown>
-                      </div>
-
-                      {/* 表格形式的 key-value 展示 + 可编辑 value */}
-                      <div className="w-full border border-gray-100 rounded-md overflow-hidden mt-2">
-                        {getDataEntries(item.data).map(([key, value], rowIdx) => {
-                          const displayValue =
-                            typeof value === "string" ||
-                            typeof value === "number" ||
-                            typeof value === "boolean"
-                              ? String(value)
-                              : JSON.stringify(value, null, 2);
-
-                          return (
-                            <div
-                              key={key + rowIdx}
-                              className={
-                                "grid grid-cols-[120px,1fr] text-xs " +
-                                (rowIdx % 2 === 0 ? "bg-gray-50/60" : "bg-white")
-                              }
-                            >
-                              <div className="px-3 py-2 border-r border-gray-100 font-medium text-gray-600 break-words">
-                                {key}
+                          <div className="flex flex-col gap-1 w-full">
+                            <div className="flex items-center justify-between text-[12px] text-gray-500">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-medium text-gray-800">
+                                  Chunk #{item.chunk_index}
+                                </span>
                               </div>
-                              <div className="px-3 py-2 text-gray-700 whitespace-pre-wrap break-words">
-                                {isEditing ? (
-                                  <Input.TextArea
-                                    value={editingMap[key] ?? displayValue}
-                                    onChange={(e) => {
-                                      const v = e.target.value;
-                                      setEditingMap((prev) => ({ ...prev, [key]: v }));
-                                    }}
-                                    autoSize={{ minRows: 1, maxRows: 4 }}
-                                  />
-                                ) : (
-                                  displayValue
-                                )}
+                              <div className="flex items-center gap-2">
+                                {/* 右侧显示 Chunk ID，完整展示 */}
+                                <span className="text-[11px] text-gray-400" title={item.id}>
+                                  ID: {item.id}
+                                </span>
+                                <Button
+                                  type="text"
+                                  size="small"
+                                  shape="circle"
+                                  danger
+                                  icon={<DeleteOutlined className="text-[12px]" />}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    showChunkConfirm(item.id);
+                                  }}
+                                />
                               </div>
                             </div>
-                          );
-                        })}
-                      </div>
-
-                      {isEditing && (
-                        <div className="flex justify-end gap-2 mt-2">
-                          <Button size="small" onClick={cancelEdit}>
-                            取消
-                          </Button>
-                          <Button
-                            size="small"
-                            type="primary"
-                            onClick={() => handleSaveEdit(item)}
-                          >
-                            确定
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+                            <div className="text-xs text-gray-600 whitespace-pre-wrap break-words leading-relaxed">
+                              {item.chunk_content}
+                            </div>
+                          </div>
+                        </List.Item>
+                      );
+                    }}
+                  />
+                )}
               </div>
-            )}
+              {chunkPagination.total ? (
+                <div className="border-t border-gray-100 px-3 py-2 flex justify-end bg-white">
+                  <Pagination
+                    size="small"
+                    current={chunkPagination.page}
+                    pageSize={chunkPagination.size}
+                    total={chunkPagination.total}
+                    onChange={handleChunkPageChange}
+                    showSizeChanger
+                    showTotal={(total) => `共 ${total} 条`}
+                  />
+                </div>
+              ) : null}
+            </div>
+          </div>
+
+          {/* 右侧合成数据展示 */}
+          <div className="basis-3/5 max-w-[60%] flex flex-col min-w-0">
+            <div className="rounded-lg border border-gray-100 bg-white shadow-sm flex flex-col overflow-hidden h-full">
+              <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between bg-gray-50/80 text-sm font-medium">
+                <span>合成数据</span>
+                {currentChunk && (
+                  <Tag color="blue" className="text-xs px-2 py-0.5 m-0 rounded-full border-none bg-blue-100 text-blue-200">
+                    当前 Chunk #{currentChunk.chunk_index}
+                  </Tag>
+                )}
+              </div>
+              <div className="flex-1 overflow-auto p-4">
+                {dataLoading ? (
+                  <div className="h-full flex items-center justify-center">
+                    <Spin size="small" />
+                  </div>
+                ) : !selectedChunkId ? (
+                  <Empty description="请选择左侧 Chunk" style={{ marginTop: 40 }} />
+                ) : synthDataList.length === 0 ? (
+                  <Empty description="该 Chunk 暂无合成数据" style={{ marginTop: 40 }} />
+                ) : (
+                  <div className="space-y-4">
+                    {synthDataList.map((item, index) => {
+                      const isEditing = editingId === item.id;
+                      return (
+                        <div
+                          key={item.id || index}
+                          className="border border-gray-100 rounded-md p-3 bg-white hover:bg-blue-50/80 transition-colors"
+                        >
+                          <div className="mb-2 text-[12px] text-gray-500 flex justify-between items-center">
+                            <span>记录 {index + 1}</span>
+                            <div className="flex items-center gap-2">
+                              <span title={item.id}>ID：{item.id}</span>
+                              {!isEditing && (
+                                <>
+                                  <Button
+                                    type="text"
+                                    size="small"
+                                    shape="circle"
+                                    icon={<EditOutlined className="text-[13px]" />}
+                                    onClick={() => startEdit(item)}
+                                  />
+                                  <Button
+                                    type="text"
+                                    size="small"
+                                    shape="circle"
+                                    danger
+                                    icon={<DeleteOutlined className="text-[13px]" />}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      showDataConfirm(item.id);
+                                    }}
+                                  />
+                                </>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* key-value 展示区域：不再截断，完整展示 */}
+                          <div className="border border-gray-100 rounded-md overflow-hidden">
+                            {getDataEntries(item.data).map(([key, value], rowIdx) => {
+                              const displayValue =
+                                typeof value === "string" ||
+                                typeof value === "number" ||
+                                typeof value === "boolean"
+                                  ? String(value)
+                                  : JSON.stringify(value, null, 2);
+
+                              return (
+                                <div
+                                  key={key + rowIdx}
+                                  className={
+                                    "grid grid-cols-[120px,1fr] text-[12px] " +
+                                    (rowIdx % 2 === 0 ? "bg-white" : "bg-gray-50/80")
+                                  }
+                                >
+                                  <div className="px-3 py-2 border-r border-gray-100 font-medium text-gray-600 break-words">
+                                    {key}
+                                  </div>
+                                  <div className="px-3 py-2 text-gray-700 whitespace-pre-wrap break-words">
+                                    {isEditing ? (
+                                      <Input.TextArea
+                                        value={editingMap[key] ?? displayValue}
+                                        onChange={(e) => {
+                                          const v = e.target.value;
+                                          setEditingMap((prev) => ({ ...prev, [key]: v }));
+                                        }}
+                                        autoSize={{ minRows: 1, maxRows: 6 }}
+                                      />
+                                    ) : (
+                                      displayValue
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          {isEditing && (
+                            <div className="flex justify-end gap-2 mt-2">
+                              <Button size="small" onClick={cancelEdit}>
+                                取消
+                              </Button>
+                              <Button
+                                size="small"
+                                type="primary"
+                                onClick={() => handleSaveEdit(item)}
+                              >
+                                确定
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

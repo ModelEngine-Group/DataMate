@@ -1,5 +1,5 @@
 {
-  "query_sql": "SELECT * FROM operators_similar_text_features WHERE task_uuid = :task_uuid ORDER BY timestamp LIMIT :ge OFFSET :le",
+  "query_sql": "SELECT * FROM operators_similar_text_features WHERE task_uuid = :task_uuid AND file_name != :file_name ORDER BY timestamp LIMIT :ge OFFSET :le",
   "create_tables_sql": "CREATE TABLE IF NOT EXISTS operators_similar_text_features (id INT AUTO_INCREMENT PRIMARY KEY, task_uuid VARCHAR(255),file_feature TEXT,file_name TEXT,timestamp DATETIME);",
   "insert_sql": "INSERT INTO operators_similar_text_features (task_uuid, file_feature, file_name, timestamp) VALUES (:task_uuid, :file_feature, :file_name, :timestamp)",
   "query_task_uuid_sql": "SELECT * FROM operators_similar_text_features WHERE task_uuid = :task_uuid"

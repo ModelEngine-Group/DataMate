@@ -192,8 +192,8 @@ INSERT INTO t_dm_annotation_templates (
     configuration, style, category, built_in, version, created_at
 ) VALUES (
     'tpl-text-classification-001',
-    '文本分类',
-    '将文本划分到预定义的类别',
+    '文本情感分类',
+    '将文本中表达的情感划分到预定义的类别',
     '文本',
     '分类',
     JSON_OBJECT(
@@ -329,3 +329,145 @@ ON DUPLICATE KEY UPDATE
     version = VALUES(version),
     updated_at = NOW();
 
+
+-- 7. 文本多标签分类模板
+INSERT INTO t_dm_annotation_templates (
+    id, name, description, data_type, labeling_type,
+    configuration, style, category, built_in, version, created_at
+) VALUES (
+    'tpl-text-multilabel-001',
+    '文本多标签分类',
+    '可为文本选择多个标签，适用于主题、内容类别等多标签任务',
+    '文本',
+    '分类',
+    JSON_OBJECT(
+        'labels', JSON_ARRAY(
+            JSON_OBJECT(
+                'fromName', 'labels',
+                'toName', 'text',
+                'type', 'Choices',
+                'options', JSON_ARRAY('Sports','Politics','Tech','Entertainment'),
+                'required', true,
+                'choice', 'multiple',
+                'description', '可选择多个标签'
+            )
+        ),
+        'objects', JSON_ARRAY(
+            JSON_OBJECT(
+                'name', 'text',
+                'type', 'Text',
+                'value', '$text'
+            )
+        )
+    ),
+    'vertical',
+    '自然语言处理',
+    1,
+    '1.0.0',
+    NOW()
+)
+ON DUPLICATE KEY UPDATE
+    name = VALUES(name),
+    description = VALUES(description),
+    data_type = VALUES(data_type),
+    labeling_type = VALUES(labeling_type),
+    configuration = VALUES(configuration),
+    style = VALUES(style),
+    category = VALUES(category),
+    built_in = VALUES(built_in),
+    version = VALUES(version),
+    updated_at = NOW();
+
+
+-- 8. 文本摘要模板
+INSERT INTO t_dm_annotation_templates (
+    id, name, description, data_type, labeling_type,
+    configuration, style, category, built_in, version, created_at
+) VALUES (
+    'tpl-text-summarization-001',
+    '文本摘要',
+    '根据原文撰写简要摘要',
+    '文本',
+    '摘要',
+    JSON_OBJECT(
+        'labels', JSON_ARRAY(
+            JSON_OBJECT(
+                'fromName', 'summary',
+                'toName', 'text',
+                'type', 'TextArea',
+                'required', true,
+                'description', '在此填写摘要内容'
+            )
+        ),
+        'objects', JSON_ARRAY(
+            JSON_OBJECT(
+                'name', 'text',
+                'type', 'Text',
+                'value', '$text'
+            )
+        )
+    ),
+    'vertical',
+    '自然语言处理',
+    1,
+    '1.0.0',
+    NOW()
+)
+ON DUPLICATE KEY UPDATE
+    name = VALUES(name),
+    description = VALUES(description),
+    data_type = VALUES(data_type),
+    labeling_type = VALUES(labeling_type),
+    configuration = VALUES(configuration),
+    style = VALUES(style),
+    category = VALUES(category),
+    built_in = VALUES(built_in),
+    version = VALUES(version),
+    updated_at = NOW();
+
+-- 9. 关键词抽取模板
+INSERT INTO t_dm_annotation_templates (
+    id, name, description, data_type, labeling_type,
+    configuration, style, category, built_in, version, created_at
+) VALUES (
+    'tpl-keyword-extract-001',
+    '关键词抽取',
+    '从文本中选出关键词或关键短语',
+    '文本',
+    '实体识别',
+    JSON_OBJECT(
+        'labels', JSON_ARRAY(
+            JSON_OBJECT(
+                'fromName', 'kw',
+                'toName', 'text',
+                'type', 'Labels',
+                'labels', JSON_ARRAY('Keyword'),
+                'required', false,
+                'description', '高亮文本并标注关键词'
+            )
+        ),
+        'objects', JSON_ARRAY(
+            JSON_OBJECT(
+                'name', 'text',
+                'type', 'Text',
+                'value', '$text'
+            )
+        )
+    ),
+    'vertical',
+    '自然语言处理',
+    1,
+    '1.0.0',
+    NOW()
+)
+ON DUPLICATE KEY UPDATE
+    name = VALUES(name),
+    description = VALUES(description),
+    data_type = VALUES(data_type),
+    labeling_type = VALUES(labeling_type),
+    configuration = VALUES(configuration),
+    style = VALUES(style),
+    category = VALUES(category),
+    built_in = VALUES(built_in),
+    version = VALUES(version),
+    updated_at = NOW();

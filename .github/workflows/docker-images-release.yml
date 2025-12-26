@@ -14,6 +14,13 @@ jobs:
       service_name: frontend
       build_dir: .
 
+  gateway:
+    name: Gateway Image
+    uses: ./.github/workflows/docker-images-reusable.yml
+    with:
+      service_name: gateway
+      build_dir: .
+
   backend:
     name: Backend Image
     uses: ./.github/workflows/docker-images-reusable.yml

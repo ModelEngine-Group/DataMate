@@ -31,8 +31,7 @@ export default function WelcomePage() {
       });
 
       // 检查 HTTP 状态码在 200-299 范围内
-      const contentType = response.headers.get("content-type");
-      if (contentType && contentType.includes('application/json')) {
+      if (response.ok) {
         return true;
       }
     } catch (error) {

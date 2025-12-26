@@ -279,16 +279,18 @@ export default function ModelAccess() {
         }
         className="mb-4"
       />
-      <Card>
-        <Table
-          rowKey="id"
-          columns={columns}
-          dataSource={tableData}
-          loading={loading}
-          pagination={pagination}
-          scroll={{ x: "max-content", y: "calc(100vh - 26rem)" }}
-        />
-      </Card>
+      <div className="flex flex-col h-[calc(100vh-12rem)]">
+        <Card className="flex-1 overflow-auto">
+          <Table
+            rowKey="id"
+            columns={columns}
+            dataSource={tableData}
+            loading={loading}
+            pagination={pagination}
+            scroll={false}
+          />
+        </Card>
+      </div>
       <Modal
         open={showModelDialog}
         onCancel={() => setShowModelDialog(false)}

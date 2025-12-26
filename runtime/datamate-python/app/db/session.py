@@ -10,7 +10,9 @@ logger = get_logger(__name__)
 engine = create_async_engine(
     settings.database_url,
     echo=False,  # 关闭SQL调试日志以减少输出
-    future=True
+    future=True,
+    pool_pre_ping=True,
+    pool_recycle=3600
 )
 
 # 创建会话工厂

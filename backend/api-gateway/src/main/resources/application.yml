@@ -1,0 +1,22 @@
+spring:
+  main:
+    allow-circular-references: true
+  application:
+    name: datamate-gateway  # 必须设置应用名
+
+  cloud:
+    nacos:
+      discovery:
+        fail-fast: false
+        # 显式设置端口
+        port: ${server.port:30000}  # 与服务端口一致
+        server-addr: ${NACOS_ADDR:https://consulservice:18302}
+        username: consul
+        password:
+        ip: ${spring.application.name}
+        secure: true
+        cluster-name: DEFAULT
+
+  # 服务器端口配置
+server:
+  port: 8080  # 必须有这个配置

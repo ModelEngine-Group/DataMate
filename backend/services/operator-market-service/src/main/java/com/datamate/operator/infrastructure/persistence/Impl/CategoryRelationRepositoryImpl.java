@@ -2,6 +2,7 @@ package com.datamate.operator.infrastructure.persistence.Impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.repository.CrudRepository;
+import com.datamate.operator.domain.contants.OperatorConstant;
 import com.datamate.operator.domain.model.CategoryRelation;
 import com.datamate.operator.domain.repository.CategoryRelationRepository;
 import com.datamate.operator.infrastructure.converter.CategoryRelationConverter;
@@ -47,5 +48,13 @@ public class CategoryRelationRepositoryImpl extends CrudRepository<CategoryRelat
         LambdaQueryWrapper<CategoryRelation> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(CategoryRelation::getOperatorId, operatorId);
         mapper.delete(queryWrapper);
+    }
+
+    @Override
+    public boolean operatorIsPredefined(String operatorId) {
+        LambdaQueryWrapper<CategoryRelation> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(CategoryRelation::getOperatorId, operatorId)
+                .eq(CategoryRelation::getCategoryId, OperatorConstant.CATEGORY_PREDEFINED_ID);
+        return this.exists(queryWrapper);
     }
 }

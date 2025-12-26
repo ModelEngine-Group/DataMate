@@ -50,8 +50,6 @@ jobs:
 
       - name: Build Docker Image
         run: |
-          cp -n runtime/deer-flow/.env.example runtime/deer-flow/.env
-          cp -n runtime/deer-flow/conf.yaml.example runtime/deer-flow/conf.yaml
           docker build -t deer-flow-backend:amd64 . -f scripts/images/deer-flow-backend/Dockerfile
           docker build -t deer-flow-frontend:amd64 . -f scripts/images/deer-flow-frontend/Dockerfile
 
@@ -96,8 +94,6 @@ jobs:
 
       - name: Build Docker Image
         run: |
-          cp -n runtime/deer-flow/.env.example runtime/deer-flow/.env
-          cp -n runtime/deer-flow/conf.yaml.example runtime/deer-flow/conf.yaml
           docker build -t deer-flow-backend:arm64 . -f scripts/images/deer-flow-backend/Dockerfile
           docker build -t deer-flow-frontend:arm64 . -f scripts/images/deer-flow-frontend/Dockerfile
 

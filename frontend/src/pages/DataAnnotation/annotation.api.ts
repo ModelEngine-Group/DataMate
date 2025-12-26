@@ -18,6 +18,10 @@ export function deleteAnnotationTaskByIdUsingDelete(mappingId: string) {
   return del(`/api/annotation/project/${mappingId}`);
 }
 
+export function loginAnnotationUsingGet(mappingId: string) {
+  return get("/api/annotation/project/${mappingId}/login");
+}
+
 // 标签配置管理
 export function getTagConfigUsingGet() {
   return get("/api/annotation/tags/config");

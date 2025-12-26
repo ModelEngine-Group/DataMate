@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import importlib
 import sys
+import uuid
 from abc import ABC, abstractmethod
 
 import pyarrow as pa
@@ -19,17 +20,6 @@ from datamate.core.base_op import OPERATORS, BaseOp
 from core.base_op import Filter as RELATIVE_Filter, Mapper as RELATIVE_Mapper, Slicer as RELATIVE_Slicer
 
 rd.DataContext.get_current().enable_progress_bars = False
-
-
-def is_valid_path(item, dataset_dir):
-    full_path = os.path.abspath(os.path.join(dataset_dir, item))
-    return os.path.exists(full_path)
-
-
-def new_get_num_npus(init_kwargs):
-    if init_kwargs.get("accelerator", "cpu") != "npu":
-        return 0.0
-    return 0.1
 
 
 class Formatters(Enum):
@@ -119,12 +109,14 @@ class RayDataset(BasicDataset):
 
             # 加载Ops module
             temp_ops = self.load_ops_module(op_name)
+            operators_cls_list.append(temp_ops)
+
             if index == 0:
                 init_kwargs["is_first_op"] = True
 
             if index == len(cfg_process) - 1:
                 init_kwargs["is_last_op"] = True
-            operators_cls_list.append(temp_ops)
+            init_kwargs["instance_id"] = kwargs.get("instance_id", str(uuid.uuid4()))
             init_kwargs_list.append(init_kwargs)
 
         for cls_id, operators_cls in enumerate(operators_cls_list):
@@ -160,21 +152,18 @@ class RayDataset(BasicDataset):
         return res
 
     def _run_single_op(self, operators_cls, init_kwargs, **kwargs):
-
-        num_npus = new_get_num_npus(init_kwargs)
         max_actor_nums = os.getenv("MAX_ACTOR_NUMS", "20")
-
-        # 分辨是否是onnx算子，如果是需要限制Actor并发数量
-        if self._use_onnx_model(init_kwargs['op_name']):
-            max_actor_nums = 4
 
         resources = {}
 
-        if num_npus > 0:
-            resources["node_npu"] = 0.1
+        if init_kwargs.get("npu", 0) > 0:
+            resources["npu"] = init_kwargs.get("npu")
 
         if init_kwargs.get("arch", "arm").startswith("x86"):
             resources["arch"] = "x86"
+
+        cpu = init_kwargs.get("cpu", 0.05)
+        memory = init_kwargs.get("memory", None)
 
         kwargs.update({"ext_params": {}, "failed_reason": {}, "target_type": None})
         try:
@@ -183,7 +172,8 @@ class RayDataset(BasicDataset):
                                           fn_constructor_kwargs=init_kwargs,
                                           fn_kwargs=kwargs,
                                           resources=resources,
-                                          num_cpus=0.05,
+                                          num_cpus=cpu,
+                                          memory=memory,
                                           compute=rd.ActorPoolStrategy(min_size=1,
                                                                        max_size=int(max_actor_nums)))
 
@@ -192,7 +182,8 @@ class RayDataset(BasicDataset):
                                                fn_constructor_kwargs=init_kwargs,
                                                fn_kwargs=kwargs,
                                                resources=resources,
-                                               num_cpus=0.05,
+                                               num_cpus=cpu,
+                                               memory=memory,
                                                compute=rd.ActorPoolStrategy(min_size=1,
                                                                             max_size=int(max_actor_nums)))
 
@@ -201,7 +192,8 @@ class RayDataset(BasicDataset):
                                              fn_constructor_kwargs=init_kwargs,
                                              fn_kwargs=kwargs,
                                              resources=resources,
-                                             num_cpus=0.05,
+                                             num_cpus=cpu,
+                                             memory=memory,
                                              compute=rd.ActorPoolStrategy(min_size=1,
                                                                           max_size=int(max_actor_nums)))
             else:
@@ -211,13 +203,3 @@ class RayDataset(BasicDataset):
         except Exception as e:
             logger.error(e)
             raise Exception("Error! Ops Details:") from e
-
-    def _use_onnx_model(self, ops_name):
-        if ops_name in self.onnx_ops_name:
-            return True
-        return False
-
-    def _use_npu_model(self, ops_name):
-        if ops_name in self.npu_ops_name:
-            return True
-        return False

@@ -14,3 +14,15 @@ effect:
   after: ''
 inputs: 'text'
 outputs: 'text'
+settings:
+  exportType:
+    name: '导出类型'
+    description: '指定清洗结果文件类型。若指定为md且后续存在其他清洗算子，可能导致文件格式错乱。'
+    type: 'select'
+    defaultVal: 'markdown'
+    required: false
+    options:
+      - label: 'markdown'
+        value: 'md'
+      - label: 'txt'
+        value: 'txt'

@@ -1,7 +1,11 @@
 # Default values for label-studio Helm chart.
 # This mirrors the configuration from deployment/docker/label-studio/docker-compose.yml
+fullnameOverride: label-studio
 
 replicaCount: 1
+
+global:
+  imageRegistry: ""
 
 image:
   repository: heartexlabs/label-studio
@@ -22,11 +26,12 @@ postgres:
   persistence:
     enabled: true
     size: 10Gi
+    storageClass: ""
 
 service:
-  type: ClusterIP
+  type: NodePort
   port: 8000
-  nodePort: null
+  nodePort: 30001
 
 # Corresponds to docker-compose port mapping 30001:8000
 ingress:
@@ -54,7 +59,7 @@ env:
   POSTGRE_USER: "postgres"
   POSTGRE_PASSWORD: ""
   POSTGRE_PORT: 5432
-  POSTGRE_HOST: "db"
+  POSTGRE_HOST: "label-studio-postgres"
   LABEL_STUDIO_HOST: "" # can be overridden
   LOCAL_FILES_SERVING_ENABLED: "true"
   LOCAL_FILES_DOCUMENT_ROOT: "/label-studio/local"
@@ -69,11 +74,12 @@ persistence:
   enabled: true
   existingClaim: "" # if you already have PVC that maps to external datamate-dataset-volume
   size: 10Gi
-  storageClassName: ""
+  storageClass: ""
 
 # Name of the Kubernetes PVC to simulate external Docker volume `datamate-dataset-volume`
 # If not set and persistence.enabled=true, a PVC will be created automatically.
 datasetVolume:
   enabled: true
-  claimName: "" # if empty, uses same PVC as persistence or creates a dedicated one
+  claimName: datamate-dataset-pvc # if empty, uses same PVC as persistence or creates a dedicated one
+
 

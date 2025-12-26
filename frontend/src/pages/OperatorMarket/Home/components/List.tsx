@@ -1,53 +1,12 @@
-import { Button, List, Tag, Badge } from "antd";
-import { StarFilled } from "@ant-design/icons";
-import { Zap, Settings, X } from "lucide-react";
-import { useState } from "react";
+import { Button, List, Tag } from "antd";
 import { useNavigate } from "react-router";
 import { Operator } from "../../operator.model";
 
 export function ListView({ operators = [], pagination, operations }) {
   const navigate = useNavigate();
-  const [favoriteOperators, setFavoriteOperators] = useState<Set<number>>(
-    new Set([1, 3, 6])
-  );
-  const handleUpdateOperator = (operator: Operator) => {
-    navigate(`/data/operator-market/create/${operator.id}`);
-  };
+
   const handleViewOperator = (operator: Operator) => {
     navigate(`/data/operator-market/plugin-detail/${operator.id}`);
-  };
-  const handleToggleFavorite = (operatorId: number) => {
-    setFavoriteOperators((prev) => {
-      const newFavorites = new Set(prev);
-      if (newFavorites.has(operatorId)) {
-        newFavorites.delete(operatorId);
-      } else {
-        newFavorites.add(operatorId);
-      }
-      return newFavorites;
-    });
-  };
-  const getStatusBadge = (status: string) => {
-    const statusConfig = {
-      active: {
-        label: "活跃",
-        color: "green",
-        icon: <Zap className="w-3 h-3" />,
-      },
-      beta: {
-        label: "测试版",
-        color: "blue",
-        icon: <Settings className="w-3 h-3" />,
-      },
-      deprecated: {
-        label: "已弃用",
-        color: "gray",
-        icon: <X className="w-3 h-3" />,
-      },
-    };
-    return (
-      statusConfig[status as keyof typeof statusConfig] || statusConfig.active
-    );
   };
 
   return (

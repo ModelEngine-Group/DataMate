@@ -5,6 +5,7 @@ import os
 import time
 import traceback
 import uuid
+from pathlib import Path
 from typing import List, Dict, Any, Tuple
 
 import cv2
@@ -72,6 +73,7 @@ class BaseOp:
         self.filesize_key = kwargs.get('fileSize_key', "fileSize")
         self.export_path_key = kwargs.get('export_path_key', "export_path")
         self.ext_params_key = kwargs.get('ext_params_key', "ext_params")
+        self.target_type_key = kwargs.get('target_type_key', "target_type")
 
     @property
     def name(self):
@@ -146,10 +148,10 @@ class BaseOp:
     def read_file(self, sample):
         filepath = sample[self.filepath_key]
         filetype = sample[self.filetype_key]
-        if filetype in ["ppt", "pptx", "docx", "doc", "xlsx"]:
+        if filetype in ["ppt", "pptx", "docx", "doc", "xlsx", "csv", "md", "pdf"]:
             elements = partition(filename=filepath)
             sample[self.text_key] = "\n\n".join([str(el) for el in elements])
-        elif filetype in ["txt", "md", "markdown", "xml", "html", "csv", "json", "jsonl"]:
+        elif filetype in ["txt", "md", "markdown", "xml", "html", "json", "jsonl"]:
             with open(filepath, 'rb') as f:
                 content = f.read()
                 sample[self.text_key] = content.decode("utf-8-sig").replace("\r\n", "\n")
@@ -437,14 +439,14 @@ class FileExporter(BaseOp):
             elif file_type in self.medical_support_ext:
                 sample, save_path = self.get_medicalfile_handler(sample)
             else:
-                raise TypeError(f"{file_type} is unsupported! please check support_ext in FileExporter Ops")
+                return False
 
             if sample[self.text_key] == '' and sample[self.data_key] == b'':
                 sample[self.filesize_key] = "0"
                 return False
 
             if save_path:
-                self.save_file(sample, save_path)
+                save_path = self.save_file(sample, save_path)
                 sample[self.text_key] = ''
                 sample[self.data_key] = b''
                 sample[Fields.result] = True
@@ -452,13 +454,13 @@ class FileExporter(BaseOp):
                 file_type = save_path.split('.')[-1]
                 sample[self.filetype_key] = file_type
 
+                file_name = os.path.basename(save_path)
                 base_name, _ = os.path.splitext(file_name)
                 new_file_name = base_name + '.' + file_type
                 sample[self.filename_key] = new_file_name
 
-                base_name, _ = os.path.splitext(save_path)
-                sample[self.filepath_key] = base_name
-                file_size = os.path.getsize(base_name)
+                sample[self.filepath_key] = save_path
+                file_size = os.path.getsize(save_path)
                 sample[self.filesize_key] = f"{file_size}"
 
             logger.info(f"origin file named {file_name} has been save to {save_path}")
@@ -484,11 +486,11 @@ class FileExporter(BaseOp):
 
         # target_type存在则保存为扫描件, docx格式
         if target_type:
-            sample = self._get_from_data(sample)
+            sample = self._get_from_text_or_data(sample)
             save_path = self.get_save_path(sample, target_type)
         # 不存在则保存为txt文件，正常文本清洗
         else:
-            sample = self._get_from_text(sample)
+            sample = self._get_from_text_or_data(sample)
             save_path = self.get_save_path(sample, 'txt')
         return sample, save_path
 
@@ -497,11 +499,11 @@ class FileExporter(BaseOp):
 
         # target_type存在, 图转文保存为target_type，markdown格式
         if target_type:
-            sample = self._get_from_text(sample)
+            sample = self._get_from_text_or_data(sample)
             save_path = self.get_save_path(sample, target_type)
         # 不存在则保存为原本图片文件格式，正常图片清洗
         else:
-            sample = self._get_from_data(sample)
+            sample = self._get_from_text_or_data(sample)
             save_path = self.get_save_path(sample, sample[self.filetype_key])
         return sample, save_path
 
@@ -514,16 +516,30 @@ class FileExporter(BaseOp):
         return sample, save_path
 
     def save_file(self, sample, save_path):
-        file_name, _ = os.path.splitext(save_path)
         # 以二进制格式保存文件
         file_sample = sample[self.text_key].encode('utf-8') if sample[self.text_key] else sample[self.data_key]
-        with open(file_name, 'wb') as f:
-            f.write(file_sample)
-            # 获取父目录路径
+        path_obj = Path(save_path).resolve()
+        parent_dir = path_obj.parent
+        stem = path_obj.stem   # 文件名不含后缀
+        suffix = path_obj.suffix # 后缀 (.txt)
 
-        parent_dir = os.path.dirname(file_name)
+        counter = 0
+        current_path = path_obj
+        while True:
+            try:
+                # x 模式保证：如果文件存在则报错，如果不存在则创建。
+                # 这个检查+创建的过程是操作系统级的原子操作，没有竞态条件。
+                with open(current_path, 'xb') as f:
+                    f.write(file_sample)
+                break
+            except FileExistsError:
+                # 文件已存在（被其他线程/进程抢占），更新文件名重试
+                counter += 1
+                new_filename = f"{stem}_{counter}{suffix}"
+                current_path = parent_dir / new_filename
         os.chmod(parent_dir, 0o770)
-        os.chmod(file_name, 0o640)
+        os.chmod(current_path, 0o640)
+        return str(current_path)
 
     def _get_from_data(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         sample[self.data_key] = bytes(sample[self.data_key])
@@ -534,6 +550,13 @@ class FileExporter(BaseOp):
         sample[self.data_key] = b''
         sample[self.text_key] = str(sample[self.text_key])
         return sample
+
+    def _get_from_text_or_data(self, sample: Dict[str, Any]) -> Dict[str, Any]:
+        if sample[self.data_key] is not None and sample[self.data_key] != b'':
+            return self._get_from_data(sample)
+        else:
+            return self._get_from_text(sample)
+
 
     @staticmethod
     def _get_uuid():

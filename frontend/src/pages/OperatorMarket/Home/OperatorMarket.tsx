@@ -5,6 +5,7 @@ import {
   EditOutlined,
   FilterOutlined,
   PlusOutlined,
+  DownloadOutlined
 } from "@ant-design/icons";
 import { Boxes } from "lucide-react";
 import { SearchControls } from "@/components/SearchControls";
@@ -20,6 +21,7 @@ import { ListView } from "./components/List";
 import useFetchData from "@/hooks/useFetchData";
 import {
   deleteOperatorByIdUsingDelete,
+  downloadExampleOperatorUsingGet,
   queryCategoryTreeUsingGet,
   queryOperatorsUsingPost,
 } from "../operator.api";
@@ -56,6 +58,11 @@ export default function OperatorMarketPage() {
 
   const handleUploadOperator = () => {
     navigate(`/data/operator-market/create`);
+  };
+
+  const handleDownload = async () => {
+    await downloadExampleOperatorUsingGet("test_operator.tar");
+    message.success("文件下载成功");
   };
 
   const handleUpdateOperator = (operator: OperatorI) => {
@@ -119,7 +126,13 @@ export default function OperatorMarketPage() {
       <div className="flex justify-between">
         <h1 className="text-xl font-bold text-gray-900">算子市场</h1>
         <div className="flex gap-2">
-          <TagManagement />
+          {/*<TagManagement />*/}
+          <Button
+            icon={<DownloadOutlined />}
+            onClick={handleDownload}
+          >
+            下载示例算子
+          </Button>
           <Button
             type="primary"
             icon={<PlusOutlined />}
