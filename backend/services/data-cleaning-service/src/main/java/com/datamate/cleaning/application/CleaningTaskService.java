@@ -4,6 +4,8 @@ package com.datamate.cleaning.application;
 import com.datamate.cleaning.application.scheduler.CleaningTaskScheduler;
 import com.datamate.cleaning.common.enums.CleaningTaskStatusEnum;
 import com.datamate.cleaning.common.enums.ExecutorType;
+import com.datamate.cleaning.domain.model.DataJuicerTaskProcess;
+import com.datamate.cleaning.domain.model.DataMateTaskProcess;
 import com.datamate.cleaning.domain.model.TaskProcess;
 import com.datamate.cleaning.domain.repository.CleaningResultRepository;
 import com.datamate.cleaning.domain.repository.CleaningTaskRepository;
@@ -107,6 +109,8 @@ public class CleaningTaskService {
         cleanTaskValidator.checkNameDuplication(request.getName());
         cleanTaskValidator.checkInputAndOutput(request.getInstance());
 
+        ExecutorType executorType = cleanTaskValidator.checkAndGetExecutorType(request.getInstance());
+
         CreateDatasetRequest createDatasetRequest = new CreateDatasetRequest();
         createDatasetRequest.setName(request.getDestDatasetName());
         createDatasetRequest.setDatasetType(DatasetType.valueOf(request.getDestDatasetType()));
@@ -131,7 +135,7 @@ public class CleaningTaskService {
 
         operatorInstanceRepo.insertInstance(taskId, request.getInstance());
 
-        prepareTask(task, request.getInstance());
+        prepareTask(task, request.getInstance(), executorType);
         scanDataset(taskId, request.getSrcDatasetId());
         taskScheduler.executeTask(taskId);
         return task;
@@ -209,21 +213,22 @@ public class CleaningTaskService {
         taskScheduler.executeTask(taskId);
     }
 
-    private void prepareTask(CleaningTaskDto task, List<OperatorInstanceDto> instances) {
+    private void prepareTask(CleaningTaskDto task, List<OperatorInstanceDto> instances, ExecutorType executorType) {
         List<OperatorDto> allOperators = operatorRepo.findAllOperators();
-        Map<String, OperatorDto> defaultSettings = allOperators.stream()
-                .filter(operatorDto -> StringUtils.isNotBlank(operatorDto.getSettings()))
+        Map<String, OperatorDto> operatorDtoMap = allOperators.stream()
                 .collect(Collectors.toMap(OperatorDto::getId, Function.identity()));
 
-        TaskProcess process = new TaskProcess();
-        process.setInstanceId(task.getId());
-        process.setDatasetId(task.getDestDatasetId());
+        TaskProcess process;
+        if (Objects.equals(executorType, ExecutorType.DATAMATE)) {
+            process = prepareDataMateTask(task);
+        } else {
+            process = prepareDataJuicerTask(task);
+        }
         process.setDatasetPath(FLOW_PATH + "/" + task.getId() + "/dataset.jsonl");
         process.setExportPath(DATASET_PATH + "/" + task.getDestDatasetId());
-        process.setExecutorType(ExecutorType.DATAMATE.getValue());
         process.setProcess(instances.stream()
                 .map(instance -> {
-                    OperatorDto operatorDto = defaultSettings.get(instance.getId());
+                    OperatorDto operatorDto = operatorDtoMap.get(instance.getId());
                     Map<String, Object> stringObjectMap = getDefaultValue(operatorDto);
                     stringObjectMap.putAll(instance.getOverrides());
                     Map<String, Object> runtime = getRuntime(operatorDto);
@@ -241,7 +246,7 @@ public class CleaningTaskService {
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         Yaml yaml = new Yaml(options);
 
-        File file = new File(FLOW_PATH + "/" + process.getInstanceId() + "/process.yaml");
+        File file = new File(FLOW_PATH + "/" + task.getId() + "/process.yaml");
         file.getParentFile().mkdirs();
 
         try (FileWriter writer = new FileWriter(file)) {
@@ -250,6 +255,22 @@ public class CleaningTaskService {
             log.error("Failed to prepare process.yaml.", e);
             throw BusinessException.of(SystemErrorCode.FILE_SYSTEM_ERROR);
         }
+    }
+
+    private DataMateTaskProcess prepareDataMateTask(CleaningTaskDto task) {
+        DataMateTaskProcess process = new DataMateTaskProcess();
+        process.setInstanceId(task.getId());
+        process.setDatasetId(task.getDestDatasetId());
+        process.setExecutorType(ExecutorType.DATAMATE.getValue());
+        return process;
+    }
+
+    private DataJuicerTaskProcess prepareDataJuicerTask(CleaningTaskDto task) {
+        DataJuicerTaskProcess process = new DataJuicerTaskProcess();
+        process.setProjectName(task.getName());
+        process.setRayAddress("auto");
+        process.setExecutorType(ExecutorType.DATA_JUICER_RAY.getValue());
+        return process;
     }
 
     private Map<String, Object> getDefaultValue(OperatorDto operatorDto) {

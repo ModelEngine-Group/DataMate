@@ -1,11 +1,14 @@
 package com.datamate.cleaning.infrastructure.validator;
 
+import com.datamate.cleaning.common.enums.ExecutorType;
 import com.datamate.cleaning.common.exception.CleanErrorCode;
 import com.datamate.cleaning.domain.repository.CleaningTaskRepository;
 import com.datamate.cleaning.interfaces.dto.OperatorInstanceDto;
 import com.datamate.common.infrastructure.exception.BusinessException;
 import com.datamate.common.infrastructure.exception.SystemErrorCode;
+import com.datamate.operator.domain.contants.OperatorConstant;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
@@ -50,5 +53,27 @@ public class CleanTaskValidator {
         if (id == null || !UUID_PATTERN.matcher(id).matches()) {
             throw BusinessException.of(SystemErrorCode.INVALID_PARAMETER);
         }
+    }
+
+    public ExecutorType checkAndGetExecutorType(List<OperatorInstanceDto> operators) {
+        if (operators == null || operators.isEmpty()) {
+            throw BusinessException.of(CleanErrorCode.OPERATOR_LIST_EMPTY);
+        }
+        for (int i = 1; i < operators.size(); i++) {
+            OperatorInstanceDto front = operators.get(i - 1);
+            OperatorInstanceDto back = operators.get(i);
+            boolean frontHas = CollectionUtils.isNotEmpty(front.getCategories())
+                    && front.getCategories().contains(OperatorConstant.CATEGORY_DATA_JUICER_ID);
+            boolean backHas = CollectionUtils.isNotEmpty(back.getCategories())
+                    && back.getCategories().contains(OperatorConstant.CATEGORY_DATA_JUICER_ID);
+            if (frontHas == backHas) {
+                continue;
+            }
+            throw BusinessException.of(CleanErrorCode.EXECUTOR_NOT_MATCH,
+                    String.format(Locale.ROOT, "ops(name: [%s, %s]) executor does not match",
+                            front.getName(), back.getName()));
+        }
+        return operators.getFirst().getCategories().contains(OperatorConstant.CATEGORY_DATA_JUICER_ID) ?
+                ExecutorType.DATA_JUICER_RAY : ExecutorType.DATAMATE;
     }
 }

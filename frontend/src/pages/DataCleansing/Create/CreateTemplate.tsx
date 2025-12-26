@@ -44,6 +44,7 @@ export default function CleansingTemplateCreate() {
           ...item.defaultParams,
           ...item.overrides,
         },
+        categories: item.categories,
         inputs: item.inputs,
         outputs: item.outputs,
       })),

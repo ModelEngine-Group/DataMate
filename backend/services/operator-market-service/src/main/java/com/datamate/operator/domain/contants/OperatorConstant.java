@@ -32,6 +32,8 @@ public class OperatorConstant {
 
     public static String CATEGORY_PREDEFINED_ID = "96a3b07a-3439-4557-a835-525faad60ca3";
 
+    public static String CATEGORY_DATA_JUICER_ID = "79b385b4-fde8-4617-bcba-02a176938996";
+
     public static Map<String, String> CATEGORY_MAP = new HashMap<>();
 
     static {

@@ -63,7 +63,11 @@ VALUES ('64465bec-b46b-11f0-8291-00155d0e4808', '模态', 'modal',  'predefined'
        ('b5bfc548-8ef6-417c-b8a6-a4197c078249', 'Java', 'java', 'predefined', '873000a2-65b3-474b-8ccc-4813c08c76fb'),
        ('16e2d99e-eafb-44fc-acd0-f35a2bad28f8', '来源', 'origin', 'predefined', '0'),
        ('96a3b07a-3439-4557-a835-525faad60ca3', '系统预置', 'predefined', 'predefined', '16e2d99e-eafb-44fc-acd0-f35a2bad28f8'),
-       ('ec2cdd17-8b93-4a81-88c4-ac9e98d10757', '用户上传', 'customized', 'predefined', '16e2d99e-eafb-44fc-acd0-f35a2bad28f8');
+       ('ec2cdd17-8b93-4a81-88c4-ac9e98d10757', '用户上传', 'customized', 'predefined', '16e2d99e-eafb-44fc-acd0-f35a2bad28f8'),
+       ('0ed75eea-e20b-11f0-88e6-00155d5c9528', '归属', 'vendor',  'predefined', '0'),
+       ('431e7798-5426-4e1a-aae6-b9905a836b34', 'DataMate', 'datamate',  'predefined', '0ed75eea-e20b-11f0-88e6-00155d5c9528'),
+       ('79b385b4-fde8-4617-bcba-02a176938996', 'DataJuicer', 'data-juicer',  'predefined', '0ed75eea-e20b-11f0-88e6-00155d5c9528'),
+       ('f00eaa3e-96c1-4de4-96cd-9848ef5429ec', '其他', 'others',  'predefined', '0ed75eea-e20b-11f0-88e6-00155d5c9528');
 
 INSERT IGNORE INTO t_operator
 (id, name, description, version, inputs, outputs, runtime, settings, file_name, is_star)
@@ -113,7 +117,7 @@ INSERT IGNORE INTO t_operator_category_relation(category_id, operator_id)
 SELECT c.id, o.id
 FROM t_operator_category c
 CROSS JOIN t_operator o
-WHERE c.id IN ('d8a5df7a-52a9-42c2-83c4-01062e60f597', '9eda9d5d-072b-499b-916c-797a0a8750e1', '96a3b07a-3439-4557-a835-525faad60ca3')
+WHERE c.id IN ('d8a5df7a-52a9-42c2-83c4-01062e60f597', '9eda9d5d-072b-499b-916c-797a0a8750e1', '96a3b07a-3439-4557-a835-525faad60ca3', '431e7798-5426-4e1a-aae6-b9905a836b34')
 AND o.id IN ('FileWithShortOrLongLengthFilter', 'FileWithHighRepeatPhraseRateFilter',
             'FileWithHighRepeatWordRateFilter', 'FileWithHighSpecialCharRateFilter', 'FileWithManySensitiveWordsFilter',
             'DuplicateFilesFilter', 'DuplicateSentencesFilter', 'AnonymizedCreditCardNumber', 'AnonymizedIdNumber',
@@ -127,7 +131,7 @@ INSERT IGNORE INTO t_operator_category_relation(category_id, operator_id)
 SELECT c.id, o.id
 FROM t_operator_category c
        CROSS JOIN t_operator o
-WHERE c.id IN ('de36b61c-9e8a-4422-8c31-d30585c7100f', '9eda9d5d-072b-499b-916c-797a0a8750e1', '96a3b07a-3439-4557-a835-525faad60ca3')
+WHERE c.id IN ('de36b61c-9e8a-4422-8c31-d30585c7100f', '9eda9d5d-072b-499b-916c-797a0a8750e1', '96a3b07a-3439-4557-a835-525faad60ca3', '431e7798-5426-4e1a-aae6-b9905a836b34')
   AND o.id IN ('ImgBlurredImagesCleaner', 'ImgBrightness', 'ImgContrast', 'ImgDenoise',
                'ImgDuplicatedImagesCleaner', 'ImgPerspectiveTransformation', 'ImgResize', 'ImgSaturation',
                'ImgShadowRemove', 'ImgSharpness', 'ImgSimilarImagesCleaner', 'ImgTypeUnify', 'ImgDirectionCorrect');
@@ -311,7 +315,7 @@ SELECT c.id, o.id
 FROM t_operator_category c
          CROSS JOIN t_operator o
 WHERE c.id IN ('d8a5df7a-52a9-42c2-83c4-01062e60f597', '9eda9d5d-072b-499b-916c-797a0a8750e1',
-               '96a3b07a-3439-4557-a835-525faad60ca3')
+               '96a3b07a-3439-4557-a835-525faad60ca3', '79b385b4-fde8-4617-bcba-02a176938996')
   AND o.id IN
       ('entity_attribute_aggregator', 'meta_tags_aggregator', 'most_relevant_entities_aggregator', 'nested_aggregator',
        'document_deduplicator', 'document_minhash_deduplicator', 'document_simhash_deduplicator',
@@ -347,7 +351,7 @@ SELECT c.id, o.id
 FROM t_operator_category c
          CROSS JOIN t_operator o
 WHERE c.id IN ('de36b61c-9e8a-4422-8c31-d30585c7100f', '9eda9d5d-072b-499b-916c-797a0a8750e1',
-               '96a3b07a-3439-4557-a835-525faad60ca3')
+               '96a3b07a-3439-4557-a835-525faad60ca3', '79b385b4-fde8-4617-bcba-02a176938996')
   AND o.id IN ('image_deduplicator', 'ray_image_deduplicator', 'image_aesthetics_filter', 'image_aspect_ratio_filter',
                'image_face_count_filter', 'image_face_ratio_filter', 'image_nsfw_filter',
                'image_pair_similarity_filter', 'image_shape_filter', 'image_size_filter', 'image_watermark_filter',
@@ -360,7 +364,7 @@ SELECT c.id, o.id
 FROM t_operator_category c
          CROSS JOIN t_operator o
 WHERE c.id IN ('42dd9392-73e4-458c-81ff-41751ada47b5', '9eda9d5d-072b-499b-916c-797a0a8750e1',
-               '96a3b07a-3439-4557-a835-525faad60ca3')
+               '96a3b07a-3439-4557-a835-525faad60ca3', '79b385b4-fde8-4617-bcba-02a176938996')
   AND o.id IN ('audio_duration_filter', 'audio_nmf_snr_filter', 'audio_size_filter', 'audio_add_gaussian_noise_mapper',
                'audio_ffmpeg_wrapped_mapper');
 
@@ -369,7 +373,7 @@ SELECT c.id, o.id
 FROM t_operator_category c
          CROSS JOIN t_operator o
 WHERE c.id IN ('a233d584-73c8-4188-ad5d-8f7c8dda9c27', '9eda9d5d-072b-499b-916c-797a0a8750e1',
-               '96a3b07a-3439-4557-a835-525faad60ca3')
+               '96a3b07a-3439-4557-a835-525faad60ca3', '79b385b4-fde8-4617-bcba-02a176938996')
   AND o.id IN ('ray_video_deduplicator', 'video_deduplicator', 'video_aesthetics_filter', 'video_aspect_ratio_filter',
                'video_duration_filter', 'video_motion_score_filter', 'video_motion_score_raft_filter',
                'video_nsfw_filter', 'video_ocr_area_ratio_filter', 'video_resolution_filter',
@@ -384,7 +388,7 @@ SELECT c.id, o.id
 FROM t_operator_category c
          CROSS JOIN t_operator o
 WHERE c.id IN ('4d7dbd77-0a92-44f3-9056-2cd62d4a71e4', '9eda9d5d-072b-499b-916c-797a0a8750e1',
-               '96a3b07a-3439-4557-a835-525faad60ca3')
+               '96a3b07a-3439-4557-a835-525faad60ca3', '79b385b4-fde8-4617-bcba-02a176938996')
   AND o.id IN ('image_text_matching_filter', 'image_text_similarity_filter', 'phrase_grounding_recall_filter',
                'video_frames_text_similarity_filter', 'detect_character_attributes_mapper',
                'detect_character_locations_mapper', 'detect_main_character_mapper',

@@ -24,7 +24,7 @@ public class OperatorInstanceDto {
 
     private String outputs;
 
-    private List<Integer> categories;
+    private List<String> categories;
 
     private Map<String, Object> overrides = new HashMap<>();
 }

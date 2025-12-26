@@ -10,10 +10,6 @@ import java.util.Map;
 @Getter
 @Setter
 public class TaskProcess {
-    private String instanceId;
-
-    private String datasetId;
-
     private String datasetPath;
 
     private String exportPath;
