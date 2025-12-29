@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 /**
  * 数据归集服务 Feign Client
  */
-@FeignClient(name = "collection-service", url = "${collection.service.url:http://localhost:8080}")
+@FeignClient(name = "collection-service", url = "${collection.service.url:http://datamate-backend-python:18000}")
 public interface CollectionTaskClient {
 
     /**
