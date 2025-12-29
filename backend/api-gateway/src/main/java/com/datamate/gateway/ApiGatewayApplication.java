@@ -4,9 +4,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
-import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
 
 /**
  * API Gateway & Auth Service Application
@@ -14,8 +12,6 @@ import org.springframework.context.annotation.ComponentScan;
  * 提供路由、鉴权、限流等功能
  */
 @SpringBootApplication
-@ComponentScan(basePackages = {"com.datamate.gateway", "com.terrabase"})
-@EnableFeignClients(basePackages = {"com.terrabase"})
 public class ApiGatewayApplication {
 
     public static void main(String[] args) {
