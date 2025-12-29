@@ -51,6 +51,7 @@ export default function OperatorMarketPage() {
     tableData,
     pagination,
     searchParams,
+    setSearchParams,
     fetchData,
     handleFiltersChange,
     handleKeywordChange,
@@ -103,9 +104,6 @@ export default function OperatorMarketPage() {
   ];
 
   useEffect(() => {
-    if (Object.keys(selectedFilters).length === 0) {
-      return;
-    }
     const filteredIds = Object.values(selectedFilters).reduce(
       (acc, filter: string[]) => {
         if (filter.length) {
@@ -116,9 +114,19 @@ export default function OperatorMarketPage() {
       },
       []
     );
-    
-    fetchData({ categories: filteredIds?.length ? filteredIds : undefined });
-  }, [selectedFilters]);
+
+    // 分类筛选变化时：
+    // 1. 将分类 ID 写入通用 searchParams.filter.categories，确保分页时条件不会丢失
+    // 2. 将页码重置为 1，避免从“全选”页的当前页跳入细分列表的同一页
+    setSearchParams((prev) => ({
+      ...prev,
+      current: 1,
+      filter: {
+        ...prev.filter,
+        categories: filteredIds,
+      },
+    }));
+  }, [selectedFilters, setSearchParams]);
 
   return (
     <div className="h-full flex flex-col gap-4">
