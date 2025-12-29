@@ -58,11 +58,6 @@
         </dependency>
         <dependency>
             <groupId>com.datamate</groupId>
-            <artifactId>data-collection-service</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.datamate</groupId>
             <artifactId>operator-market-service</artifactId>
             <version>${project.version}</version>
         </dependency>
