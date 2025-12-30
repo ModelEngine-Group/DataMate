@@ -11,7 +11,8 @@ import yaml
 from jsonargparse import ArgumentParser
 from loguru import logger
 
-from datamate.core.base_op import FileExporter
+from datamate.core.base_op import FileExporter, SUCCESS_STATUS
+from datamate.core.constant import Fields
 from datamate.wrappers.executor import RayExecutor
 
 DJ_OUTPUT = "outputs"
@@ -81,6 +82,13 @@ class DataJuicerExecutor(RayExecutor):
         self.dataset_path = f"/flow/{self.cfg.instance_id}/dataset_on_dj.jsonl"
         self.export_path = f"/flow/{self.cfg.instance_id}/processed_dataset.jsonl"
 
+    def add_column(self, batch):
+        batch_size = len(batch["filePath"])
+        batch["execute_status"] = [SUCCESS_STATUS] * batch_size
+        batch[Fields.instance_id] = [self.cfg.instance_id] * batch_size
+        batch[Fields.export_path] = [self.cfg.export_path] * batch_size
+        return batch
+
     def run(self):
         # 1. 加载数据集
         logger.info('Loading dataset with Ray...')
@@ -104,9 +112,11 @@ class DataJuicerExecutor(RayExecutor):
         try:
             dj_config = self.client.init_config(self.dataset_path, self.export_path, self.cfg.process)
             result_path = self.client.execute_config(dj_config)
-            dataset = self.load_dataset(result_path)
-            dataset.map(FileExporter().save_file_and_db, num_cpus=0.05)
-            for _ in dataset.data.iter_batches():
+
+            processed_dataset = self.load_dataset(result_path)
+            processed_dataset = processed_dataset.map_batches(self.add_column, num_cpus=0.05)
+            processed_dataset = processed_dataset.map(FileExporter().save_file_and_db, num_cpus=0.05)
+            for _ in processed_dataset.iter_batches():
                 pass
         except Exception as e:
             logger.error(f"An unexpected error occurred.", e)

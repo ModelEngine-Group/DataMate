@@ -6,6 +6,7 @@ import com.datamate.cleaning.domain.repository.CleaningTaskRepository;
 import com.datamate.cleaning.interfaces.dto.OperatorInstanceDto;
 import com.datamate.common.infrastructure.exception.BusinessException;
 import com.datamate.common.infrastructure.exception.SystemErrorCode;
+import com.datamate.common.setting.application.SysParamApplicationService;
 import com.datamate.operator.domain.contants.OperatorConstant;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
@@ -21,6 +22,8 @@ import java.util.regex.Pattern;
 @RequiredArgsConstructor
 public class CleanTaskValidator {
     private final CleaningTaskRepository cleaningTaskRepo;
+
+    private final SysParamApplicationService sysParamApplicationService;
 
     private final Pattern UUID_PATTERN = Pattern.compile(
             "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
@@ -73,7 +76,9 @@ public class CleanTaskValidator {
                     String.format(Locale.ROOT, "ops(name: [%s, %s]) executor does not match",
                             front.getName(), back.getName()));
         }
-        return operators.getFirst().getCategories().contains(OperatorConstant.CATEGORY_DATA_JUICER_ID) ?
-                ExecutorType.DATA_JUICER_RAY : ExecutorType.DATAMATE;
+        if (operators.getFirst().getCategories().contains(OperatorConstant.CATEGORY_DATA_JUICER_ID)) {
+            return ExecutorType.fromValue(sysParamApplicationService.getParamByKey("DATA_JUICER_EXECUTOR"));
+        }
+        return ExecutorType.DATAMATE;
     }
 }

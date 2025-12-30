@@ -151,16 +151,19 @@ class BaseOp:
         if filetype in ["ppt", "pptx", "docx", "doc", "xlsx", "csv", "md", "pdf"]:
             elements = partition(filename=filepath)
             sample[self.text_key] = "\n\n".join([str(el) for el in elements])
+            sample[self.data_key] = b""
         elif filetype in ["txt", "md", "markdown", "xml", "html", "json", "jsonl"]:
             with open(filepath, 'rb') as f:
                 content = f.read()
                 sample[self.text_key] = content.decode("utf-8-sig").replace("\r\n", "\n")
+                sample[self.data_key] = b""
         elif filetype in ['jpg', 'jpeg', 'png', 'bmp']:
             image_np = cv2.imdecode(np.fromfile(filepath, dtype=np.uint8), -1)
             if image_np.size:
                 data = cv2.imencode(f".{filetype}", image_np)[1]
                 image_bytes = data.tobytes()
                 sample[self.data_key] = image_bytes
+                sample[self.text_key] = ""
         return sample
 
     def read_file_first(self, sample):
@@ -494,7 +497,7 @@ class FileExporter(BaseOp):
             save_path = self.get_save_path(sample, target_type)
         # 不存在则保存为txt文件，正常文本清洗
         else:
-            sample = self._get_from_text_or_data(sample)
+            sample = self._get_from_text(sample)
             save_path = self.get_save_path(sample, 'txt')
         return sample, save_path
 
@@ -556,7 +559,7 @@ class FileExporter(BaseOp):
         return sample
 
     def _get_from_text_or_data(self, sample: Dict[str, Any]) -> Dict[str, Any]:
-        if sample[self.data_key] is not None and sample[self.data_key] != b'':
+        if sample[self.data_key] is not None and sample[self.data_key] != b'' and sample[self.data_key] != "":
             return self._get_from_data(sample)
         else:
             return self._get_from_text(sample)

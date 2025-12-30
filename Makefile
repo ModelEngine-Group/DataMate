@@ -302,6 +302,8 @@ VALID_SERVICE_TARGETS := datamate backend frontend runtime mineru "deer-flow" mi
 		else \
 			docker compose -f deployment/docker/milvus/docker-compose.yml down; \
 		fi; \
+	elif [ "$*" = "data-juicer" ] || [ "$*" = "dj" ]; then \
+		$(call docker-compose-service,datamate-data-juicer,down,deployment/docker/datamate); \
 	else \
 		$(call docker-compose-service,$*,down,deployment/docker/datamate); \
 	fi
@@ -357,6 +359,8 @@ VALID_K8S_TARGETS := mineru datamate deer-flow milvus label-studio data-juicer d
 		helm uninstall deer-flow -n $(NAMESPACE) --ignore-not-found; \
 	elif [ "$*" = "milvus" ]; then \
 		helm uninstall milvus -n $(NAMESPACE) --ignore-not-found; \
+	elif [ "$*" = "data-juicer" ] || [ "$*" = "dj" ]; then \
+		kubectl delete -f deployment/kubernetes/data-juicer/deploy.yaml -n $(NAMESPACE); \
 	fi
 
 # ========== Upgrade Targets ==========

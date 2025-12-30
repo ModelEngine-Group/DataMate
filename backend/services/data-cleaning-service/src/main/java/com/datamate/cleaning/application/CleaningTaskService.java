@@ -219,11 +219,7 @@ public class CleaningTaskService {
         TaskProcess process = new TaskProcess();
         process.setInstanceId(task.getId());
         process.setDatasetId(task.getDestDatasetId());
-        if (Objects.equals(executorType, ExecutorType.DATAMATE)) {
-            process.setExecutorType(ExecutorType.DATAMATE.getValue());
-        } else {
-            process.setExecutorType(ExecutorType.DATA_JUICER_RAY.getValue());
-        }
+        process.setExecutorType(executorType.getValue());
         process.setDatasetPath(FLOW_PATH + "/" + task.getId() + "/dataset.jsonl");
         process.setExportPath(DATASET_PATH + "/" + task.getDestDatasetId());
         process.setProcess(instances.stream()
