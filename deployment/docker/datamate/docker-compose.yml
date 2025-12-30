@@ -139,6 +139,21 @@ services:
       - "6379:6379"
     networks: [ datamate ]
 
+  datamate-data-juicer:
+    container_name: datamate-data-juicer
+    image: datajuicer/data-juicer:v1.4.4
+    restart: on-failure
+    command:
+      - uvicorn
+      - service:app
+      - --host
+      - "0.0.0.0"
+    volumes:
+      - dataset_volume:/dataset
+      - flow_volume:/flow
+    networks: [ datamate ]
+    profiles: [ data-juicer ]
+
 volumes:
   dataset_volume:
     name: datamate-dataset-volume

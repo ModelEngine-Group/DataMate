@@ -1,5 +1,5 @@
 import base64
-import os
+import time
 from json import dumps as jdumps
 from json import loads as jloads
 from typing import Dict, Optional
@@ -20,7 +20,6 @@ DJ_OUTPUT = "outputs"
 class DataJuicerClient:
     def __init__(self, base_url):
         self.base_url = base_url
-        pass
 
     def call_data_juicer_api(self, path: str, params: Optional[Dict] = None, json: Optional[Dict] = None):
         url = urljoin(self.base_url, path)
@@ -46,8 +45,7 @@ class DataJuicerClient:
             "dataset_path": dataset_path,
             "export_path": export_path,
             "process": process,
-            "executor_type": "ray",
-            "ray_address": "auto"
+            "executor_type": "default",
         }
         url_path = "/data_juicer/config/get_init_configs"
         try:
@@ -65,11 +63,11 @@ class DataJuicerClient:
             dj_config: configs of data-juicer
         """
 
-        url_path = "/data_juicer/core/Executor/run"
+        url_path = "/data_juicer/core/DefaultExecutor/run"
         try:
             res = self.call_data_juicer_api(url_path, params={"skip_return": True}, json={"cfg": jdumps(dj_config)})
-            print(res)
-            assert res["status"] == "success"
+            if res.get("status") != "success":
+                raise RuntimeError(f"An error occurred in calling {url_path}:\n{res}")
             return dj_config["export_path"]
         except Exception as e:
             error_msg = f"An unexpected error occurred in calling {url_path}:\n{e}"
@@ -81,7 +79,7 @@ class DataJuicerExecutor(RayExecutor):
         super().__init__(cfg, meta)
         self.client = DataJuicerClient(base_url="http://datamate-data-juicer:8000")
         self.dataset_path = f"/flow/{self.cfg.instance_id}/dataset_on_dj.jsonl"
-        self.export_path = f"/flow/{self.cfg.instance_id}/process_on_dj.yaml"
+        self.export_path = f"/flow/{self.cfg.instance_id}/processed_dataset.jsonl"
 
     def run(self):
         # 1. 加载数据集
@@ -94,23 +92,27 @@ class DataJuicerExecutor(RayExecutor):
         else:
             dataset = self.load_dataset()
 
-        dataset.map(FileExporter().read_file,
-                    fn_kwargs=getattr(self.cfg, 'kwargs', {}),
-                    num_cpus=0.05,
-                    compute=ray.data.ActorPoolStrategy(min_size=1, max_size=int(os.getenv("MAX_ACTOR_NUMS", "20"))))
-
+        logger.info('Read data...')
+        dataset = dataset.map(FileExporter().read_file, num_cpus=0.05)
 
         with open(self.dataset_path, "w", encoding="utf-8") as f:
-            # iter_batches(batch_format="pandas") 会以 DataFrame 的形式分批返回数据
-            # 这样比一行一行处理（iter_rows）要快得多
             for batch_df in dataset.iter_batches(batch_format="pandas", batch_size=2048):
                 batch_df.to_json(f, orient="records", lines=True, force_ascii=False)
 
+        logger.info('Processing data...')
+        tstart = time.time()
         try:
             dj_config = self.client.init_config(self.dataset_path, self.export_path, self.cfg.process)
             result_path = self.client.execute_config(dj_config)
+            dataset = self.load_dataset(result_path)
+            dataset.map(FileExporter().save_file_and_db, num_cpus=0.05)
+            for _ in dataset.data.iter_batches():
+                pass
         except Exception as e:
+            logger.error(f"An unexpected error occurred.", e)
             raise e
+        tend = time.time()
+        logger.info(f'All Ops are done in {tend - tstart:.3f}s.')
 
 
 if __name__ == '__main__':
@@ -135,3 +137,4 @@ if __name__ == '__main__':
     except Exception as e:
         executor.update_db("FAILED")
         raise e
+    executor.update_db("COMPLETED")

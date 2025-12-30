@@ -167,6 +167,12 @@ class BaseOp:
         if self.is_first_op:
             self.read_file(sample)
 
+    @staticmethod
+    def save_file_and_db(sample):
+        if FileExporter().execute(sample):
+            TaskInfoPersistence().persistence_task_info(sample)
+        return sample
+
 
 class Mapper(BaseOp):
     def __init__(self, *args, **kwargs):
@@ -196,8 +202,7 @@ class Mapper(BaseOp):
         sample["execute_status"] = execute_status
         # 加载文件成功执行信息到数据库
         if self.is_last_op:
-            if FileExporter().execute(sample):
-                TaskInfoPersistence().persistence_task_info(sample)
+            self.save_file_and_db(sample)
         return sample
 
     def execute(self, sample: Dict[str, Any]) -> Dict[str, Any]:
@@ -238,8 +243,7 @@ class Slicer(BaseOp):
 
         # 加载文件成功执行信息到数据库
         if self.is_last_op:
-            if FileExporter().execute(sample):
-                TaskInfoPersistence().persistence_task_info(sample)
+            self.save_file_and_db(sample)
 
         return [sample]
 
@@ -334,8 +338,7 @@ class Filter(BaseOp):
 
         # 加载文件成功执行信息到数据库
         if self.is_last_op:
-            if FileExporter().execute(sample):
-                TaskInfoPersistence().persistence_task_info(sample)
+            self.save_file_and_db(sample)
         return True
 
     def execute(self, sample: Dict[str, Any]) -> Dict[str, Any]:

@@ -54,10 +54,11 @@ class RayExecutor:
     def run(self):
         pass
 
-    def load_dataset(self):
+    def load_dataset(self, jsonl_file_path = None):
         retry = 0
         dataset = None
-        jsonl_file_path = self.cfg.dataset_path
+        if jsonl_file_path is None:
+            jsonl_file_path = self.cfg.dataset_path
         while True:
             if check_valid_path(jsonl_file_path):
                 with open(jsonl_file_path, "r", encoding='utf-8') as meta:

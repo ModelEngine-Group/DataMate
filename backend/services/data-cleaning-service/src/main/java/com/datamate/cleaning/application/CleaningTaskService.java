@@ -4,8 +4,6 @@ package com.datamate.cleaning.application;
 import com.datamate.cleaning.application.scheduler.CleaningTaskScheduler;
 import com.datamate.cleaning.common.enums.CleaningTaskStatusEnum;
 import com.datamate.cleaning.common.enums.ExecutorType;
-import com.datamate.cleaning.domain.model.DataJuicerTaskProcess;
-import com.datamate.cleaning.domain.model.DataMateTaskProcess;
 import com.datamate.cleaning.domain.model.TaskProcess;
 import com.datamate.cleaning.domain.repository.CleaningResultRepository;
 import com.datamate.cleaning.domain.repository.CleaningTaskRepository;
@@ -218,7 +216,7 @@ public class CleaningTaskService {
         Map<String, OperatorDto> operatorDtoMap = allOperators.stream()
                 .collect(Collectors.toMap(OperatorDto::getId, Function.identity()));
 
-        DataMateTaskProcess process = new DataMateTaskProcess();
+        TaskProcess process = new TaskProcess();
         process.setInstanceId(task.getId());
         process.setDatasetId(task.getDestDatasetId());
         if (Objects.equals(executorType, ExecutorType.DATAMATE)) {
@@ -257,22 +255,6 @@ public class CleaningTaskService {
             log.error("Failed to prepare process.yaml.", e);
             throw BusinessException.of(SystemErrorCode.FILE_SYSTEM_ERROR);
         }
-    }
-
-    private DataMateTaskProcess prepareDataMateTask(CleaningTaskDto task) {
-        DataMateTaskProcess process = new DataMateTaskProcess();
-        process.setInstanceId(task.getId());
-        process.setDatasetId(task.getDestDatasetId());
-        process.setExecutorType(ExecutorType.DATAMATE.getValue());
-        return process;
-    }
-
-    private DataJuicerTaskProcess prepareDataJuicerTask(CleaningTaskDto task) {
-        DataJuicerTaskProcess process = new DataJuicerTaskProcess();
-        process.setProjectName(task.getName());
-        process.setRayAddress("auto");
-        process.setExecutorType(ExecutorType.DATA_JUICER_RAY.getValue());
-        return process;
     }
 
     private Map<String, Object> getDefaultValue(OperatorDto operatorDto) {
