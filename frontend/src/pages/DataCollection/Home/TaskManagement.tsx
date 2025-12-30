@@ -1,34 +1,16 @@
-import {
-  Card,
-  Button,
-  Badge,
-  Table,
-  Dropdown,
-  App,
-  Tooltip,
-  Popconfirm,
-} from "antd";
-import {
-  DeleteOutlined,
-  EditOutlined,
-  EllipsisOutlined,
-  PauseCircleOutlined,
-  PauseOutlined,
-  PlayCircleOutlined,
-  StopOutlined,
-} from "@ant-design/icons";
-import { SearchControls } from "@/components/SearchControls";
+import {App, Button, Card, Popconfirm, Table, Tag, Tooltip,} from "antd";
+import {DeleteOutlined, PauseCircleOutlined, PlayCircleOutlined, ProfileOutlined,} from "@ant-design/icons";
+import {SearchControls} from "@/components/SearchControls";
 import {
   deleteTaskByIdUsingDelete,
   executeTaskByIdUsingPost,
   queryTasksUsingGet,
   stopTaskByIdUsingPost,
 } from "../collection.apis";
-import { TaskStatus, type CollectionTask } from "../collection.model";
-import { StatusMap, SyncModeMap } from "../collection.const";
+import {type CollectionTask, TaskStatus} from "../collection.model";
+import {mapCollectionTask, StatusMap} from "../collection.const";
 import useFetchData from "@/hooks/useFetchData";
-import { useNavigate } from "react-router";
-import { mapCollectionTask } from "../collection.const";
+import {useNavigate} from "react-router";
 
 export default function TaskManagement() {
   const { message } = App.useApp();
@@ -51,8 +33,20 @@ export default function TaskManagement() {
     searchParams,
     setSearchParams,
     fetchData,
-    handleFiltersChange,
-  } = useFetchData(queryTasksUsingGet, mapCollectionTask);
+  } = useFetchData(
+    (params) => {
+      const { keyword, ...rest } = params || {};
+      return queryTasksUsingGet({
+        ...rest,
+        name: keyword || undefined,
+      });
+    },
+    mapCollectionTask,
+    30000,
+    false,
+    [],
+    0
+  );
 
   const handleStartTask = async (taskId: string) => {
     await executeTaskByIdUsingPost(taskId);
@@ -86,21 +80,21 @@ export default function TaskManagement() {
       icon: <PauseCircleOutlined />,
       onClick: () => handleStopTask(record.id),
     };
-    const items = [
-      // isStopped ? startButton : stopButton,
-      // {
-      //   key: "edit",
-      //   label: "编辑",
-      //   icon: <EditOutlined />,
-      //   onClick: () => {
-      //     showEditTaskModal(record);
-      //   },
-      // },
+    return [
+      {
+        key: "executions",
+        label: "执行记录",
+        icon: <ProfileOutlined/>,
+        onClick: () =>
+          navigate(
+            `/data/collection?tab=task-execution&taskId=${encodeURIComponent(record.id)}`
+          ),
+      },
       {
         key: "delete",
         label: "删除",
         danger: true,
-        icon: <DeleteOutlined />,
+        icon: <DeleteOutlined/>,
         confirm: {
           title: "确定要删除该任务吗？此操作不可撤销。",
           okText: "删除",
@@ -110,7 +104,6 @@ export default function TaskManagement() {
         onClick: () => handleDeleteTask(record.id),
       },
     ];
-    return items;
   };
 
   const columns = [
@@ -128,9 +121,17 @@ export default function TaskManagement() {
       key: "status",
       width: 150,
       ellipsis: true,
-      render: (status: string) => (
-        <Badge text={status.label} color={status.color} />
+      render: (status: any) => (
+          <Tag color={status.color}>{status.label}</Tag>
       ),
+    },
+    {
+      title: "所用模板",
+      dataIndex: "templateName",
+      key: "templateName",
+      width: 180,
+      ellipsis: true,
+      render: (v?: string) => v || "-",
     },
     {
       title: "同步方式",
@@ -138,7 +139,31 @@ export default function TaskManagement() {
       key: "syncMode",
       width: 150,
       ellipsis: true,
-      render: (text: string) => <span>{SyncModeMap[text]?.label}</span>,
+      render: (text: any) => (
+          <Tag color={text.color}>{text.label}</Tag>
+      ),
+    },
+    {
+      title: "Cron调度表达式",
+      dataIndex: "scheduleExpression",
+      key: "scheduleExpression",
+      width: 200,
+      ellipsis: true,
+    },
+    {
+      title: "超时时间",
+      dataIndex: "timeoutSeconds",
+      key: "timeoutSeconds",
+      width: 140,
+      ellipsis: true,
+      render: (v?: number) => (v === undefined || v === null ? "-" : `${v}s`),
+    },
+    {
+      title: "描述",
+      dataIndex: "description",
+      key: "description",
+      ellipsis: true,
+      width: 200,
     },
     {
       title: "创建时间",
@@ -155,20 +180,6 @@ export default function TaskManagement() {
       ellipsis: true,
     },
     {
-      title: "最近执行ID",
-      dataIndex: "lastExecutionId",
-      key: "lastExecutionId",
-      width: 150,
-      ellipsis: true,
-    },
-    {
-      title: "描述",
-      dataIndex: "description",
-      key: "description",
-      ellipsis: true,
-      width: 200,
-    },
-    {
       title: "操作",
       key: "action",
       fixed: "right" as const,
@@ -180,7 +191,7 @@ export default function TaskManagement() {
                 type="text"
                 icon={op.icon}
                 danger={op?.danger}
-                onClick={() => op.onClick(record)}
+                onClick={() => op.onClick()}
               />
             </Tooltip>
           );
@@ -192,7 +203,7 @@ export default function TaskManagement() {
                 okText={op.confirm.okText}
                 cancelText={op.confirm.cancelText}
                 okType={op.danger ? "danger" : "primary"}
-                onConfirm={() => op.onClick(record)}
+                onConfirm={() => op.onClick()}
               >
                 <Tooltip key={op.key} title={op.label}>
                   <Button type="text" icon={op.icon} danger={op?.danger} />
@@ -218,14 +229,15 @@ export default function TaskManagement() {
             current: 1,
           }))
         }
-        searchPlaceholder="搜索任务名称或描述..."
+        searchPlaceholder="搜索任务名称..."
         filters={filters}
-        onFiltersChange={handleFiltersChange}
+        onFiltersChange={() => {}}
         showViewToggle={false}
         onClearFilters={() =>
           setSearchParams((prev) => ({
             ...prev,
-            filters: {},
+            filter: { ...prev.filter, status: [] },
+            current: 1,
           }))
         }
         onReload={fetchData}

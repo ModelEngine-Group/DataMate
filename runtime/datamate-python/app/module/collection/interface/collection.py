@@ -71,6 +71,8 @@ async def list_tasks(
     """分页查询归集任务"""
     try:
         # 构建查询条件
+        page = page if page > 0 else 1
+        size = size if size > 0 else 20
         query = select(CollectionTask)
 
         if name:

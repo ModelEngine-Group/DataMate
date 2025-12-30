@@ -7,7 +7,7 @@ from typing import Dict, Any
 
 from app.core.logging import get_logger
 from app.db.models.data_collection import CollectionTask, TaskExecution, CollectionTemplate
-from app.module.collection.schema.collection import CollectionConfig
+from app.module.collection.schema.collection import CollectionConfig, SyncMode
 from app.module.shared.schema import TaskStatus
 
 logger = get_logger(__name__)
@@ -139,6 +139,8 @@ class DataxClient:
             self.execution.error_message = f"执行异常: {e}"
             self.execution.status = TaskStatus.FAILED.name
             logger.error(f"执行异常: {e}", exc_info=True)
+        if self.task.sync_mode == SyncMode.ONCE:
+            self.task.status = self.execution.status
 
     def _run_process(self, cmd: list[str], log_f) -> int:
         # 启动进程

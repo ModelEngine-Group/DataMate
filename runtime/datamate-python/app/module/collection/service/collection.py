@@ -9,6 +9,7 @@ from app.db.models.data_collection import CollectionTask, CollectionTemplate
 from app.db.session import AsyncSessionLocal
 from app.module.collection.client.datax_client import DataxClient
 from app.module.collection.schema.collection import SyncMode, create_execute_record
+from app.module.shared.schema import TaskStatus
 
 logger = get_logger(__name__)
 
@@ -22,16 +23,9 @@ class CollectionTaskService:
 
         # If it's a one-time task, execute it immediately
         if task.sync_mode == SyncMode.ONCE:
-            self.execute_task_now(task)
-
-        return task
-
-    def execute_task_now(self, task: CollectionTask):
-        # Run the task in background
-        if self.background_tasks:
-            self.background_tasks.add_task(self.run_async, task.id)
-        else:
+            task.status = TaskStatus.RUNNING.name
             asyncio.create_task(self.run_async(task.id))
+        return task
 
     @staticmethod
     async def run_async(task_id: str):
