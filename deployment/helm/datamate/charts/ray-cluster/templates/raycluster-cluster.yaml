@@ -96,7 +96,7 @@ spec:
           securityContext:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-        {{- $defult := printf "%s:%s" .Values.image.repository .Values.image.tag }}
+        {{- $defult := include "ray-cluster.image" . -}}
         {{- with .Values.head.sidecarContainers }}
         {{- range $index, $container := . }}
         {{- $image := default $defult $container.image -}}
@@ -313,10 +313,14 @@ spec:
         - name: ray-worker
           {{- if $values.image }}
           image: {{ $values.image.repository }}:{{ $values.image.tag }}
+          {{- if $values.image.pullPolicy }}
           imagePullPolicy: {{ $values.image.pullPolicy }}
           {{- else }}
-          image: {{ $.Values.image.repository }}:{{ $.Values.image.tag }}
-          imagePullPolicy: {{ $.Values.image.pullPolicy }}
+          imagePullPolicy: {{ default $.Values.image.pullPolicy $.Values.global.image.pullPolicy }}
+          {{- end }}
+          {{- else }}
+          image: {{ include "ray-cluster.image" $ }}
+          imagePullPolicy: {{ default $.Values.image.pullPolicy $.Values.global.image.pullPolicy }}
           {{- end }}
           {{- with $values.command }}
           command:

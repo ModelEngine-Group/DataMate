@@ -218,11 +218,13 @@ public class CleaningTaskService {
         Map<String, OperatorDto> operatorDtoMap = allOperators.stream()
                 .collect(Collectors.toMap(OperatorDto::getId, Function.identity()));
 
-        TaskProcess process;
+        DataMateTaskProcess process = new DataMateTaskProcess();
+        process.setInstanceId(task.getId());
+        process.setDatasetId(task.getDestDatasetId());
         if (Objects.equals(executorType, ExecutorType.DATAMATE)) {
-            process = prepareDataMateTask(task);
+            process.setExecutorType(ExecutorType.DATAMATE.getValue());
         } else {
-            process = prepareDataJuicerTask(task);
+            process.setExecutorType(ExecutorType.DATA_JUICER_RAY.getValue());
         }
         process.setDatasetPath(FLOW_PATH + "/" + task.getId() + "/dataset.jsonl");
         process.setExportPath(DATASET_PATH + "/" + task.getDestDatasetId());

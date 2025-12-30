@@ -66,15 +66,3 @@ Name of image
 {{- $name }}:{{ $tag }}
 {{- end }}
 {{- end }}
-
-{{/*
-Name of sidecar image
-*/}}
-{{- define "ray-cluster-sidecar.image" -}}
-{{- $name := default (printf "%s:%s" .Values.image.repository .Values.image.tag) .Values.head.sidecarContainers.image }}
-{{- if .Values.global.image.repository }}
-{{- .Values.global.image.repository | trimSuffix "/" }}/{{ $name }}
-{{- else }}
-{{- $name }}
-{{- end }}
-{{- end }}

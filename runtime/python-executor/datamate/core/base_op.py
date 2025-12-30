@@ -161,6 +161,7 @@ class BaseOp:
                 data = cv2.imencode(f".{filetype}", image_np)[1]
                 image_bytes = data.tobytes()
                 sample[self.data_key] = image_bytes
+        return sample
 
     def read_file_first(self, sample):
         if self.is_first_op:

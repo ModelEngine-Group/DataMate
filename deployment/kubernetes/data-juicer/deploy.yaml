@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: datamate-data-juicer
+  labels:
+    app: datamate
+    tier: data-juicer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: datamate
+      tier: data-juicer
+  template:
+    metadata:
+      labels:
+        app: datamate
+        tier: data-juicer
+    spec:
+      containers:
+        - name: data-juicer
+          image: datajuicer/data-juicer:v1.4.4
+          imagePullPolicy: IfNotPresent
+          command:
+            - uvicorn
+          args:
+            - service:app
+            - --host
+            - "0.0.0.0"
+          ports:
+            - containerPort: 8000
+          resources:
+            limits:
+              cpu: 8
+              memory: 32Gi
+            requests:
+              cpu: 100m
+              memory: 100Mi
+          volumeMounts:
+            - name: dataset-volume
+              mountPath: /dataset
+            - name: log-volume
+              mountPath: /var/log/datamate/data-juicer
+              subPath: data-juicer
+            - name: flow-volume
+              mountPath: /flow
+      volumes:
+        - name: dataset-volume
+          persistentVolumeClaim:
+            claimName: datamate-dataset-pvc
+        - name: flow-volume
+          persistentVolumeClaim:
+            claimName: datamate-flow-pvc
+        - name: log-volume
+          persistentVolumeClaim:
+            claimName: datamate-log-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: datamate-data-juicer
+  labels:
+    app: datamate
+    tier: data-juicer
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8000
+      targetPort: 8000
+      protocol: TCP
+  selector:
+    app: datamate
+    tier: data-juicer

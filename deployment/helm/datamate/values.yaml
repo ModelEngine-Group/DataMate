@@ -248,7 +248,6 @@ ray-cluster:
         subPath: site-packages
     sidecarContainers:
       - name: runtime
-        image: datamate-runtime
         imagePullPolicy: IfNotPresent
         args: *runtimeArgs
         env: *runtimeEnv
@@ -338,6 +337,9 @@ ray-cluster:
         - *flowVolume
         - *logVolume
         - *operatorVolume
+        - name: ascend
+          hostPath:
+            path: /usr/local/Ascend
       volumeMounts:
         - mountPath: /tmp/ray
           name: log-volume
@@ -352,3 +354,5 @@ ray-cluster:
         - mountPath: /usr/local/lib/ops/site-packages
           name: operator-volume
           subPath: site-packages
+        - mountPath: /usr/local/Ascend
+          name: ascend
