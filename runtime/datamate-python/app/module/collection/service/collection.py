@@ -1,6 +1,7 @@
 import asyncio
+from dataclasses import dataclass
+from typing import Any, Optional
 
-from fastapi import BackgroundTasks
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -13,10 +14,29 @@ from app.module.shared.schema import TaskStatus
 
 logger = get_logger(__name__)
 
+
+@dataclass
+class _RuntimeTask:
+    id: str
+    config: str
+    timeout_seconds: int
+    sync_mode: str
+    status: Optional[str] = None
+
+
+@dataclass
+class _RuntimeExecution:
+    id: str
+    log_path: str
+    started_at: Optional[Any] = None
+    completed_at: Optional[Any] = None
+    duration_seconds: Optional[float] = None
+    error_message: Optional[str] = None
+    status: Optional[str] = None
+
 class CollectionTaskService:
-    def __init__(self, db: AsyncSession, background_tasks: BackgroundTasks = None):
+    def __init__(self, db: AsyncSession):
         self.db = db
-        self.background_tasks = background_tasks
 
     async def create_task(self, task: CollectionTask) -> CollectionTask:
         self.db.add(task)
@@ -25,7 +45,7 @@ class CollectionTaskService:
         if task.sync_mode == SyncMode.ONCE:
             task.status = TaskStatus.RUNNING.name
             await self.db.commit()
-            asyncio.create_task(self.run_async(task.id))
+            asyncio.create_task(CollectionTaskService.run_async(task.id))
         return task
 
     @staticmethod
@@ -44,5 +64,7 @@ class CollectionTaskService:
             task_execution = create_execute_record(task)
             session.add(task_execution)
             await session.commit()
-            DataxClient(execution=task_execution, task=task).run_datax_job()
+            await asyncio.to_thread(
+                DataxClient(execution=task_execution, task=task).run_datax_job
+            )
             await session.commit()

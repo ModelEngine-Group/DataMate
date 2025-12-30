@@ -155,7 +155,7 @@ class DataxClient:
 
         # 创建读取线程
         stdout_thread = threading.Thread(target=lambda stream=process.stdout: self.read_stream(stream, log_f))
-        stderr_thread = threading.Thread(target=lambda stream=process.stdout: self.read_stream(stream, log_f))
+        stderr_thread = threading.Thread(target=lambda stream=process.stderr: self.read_stream(stream, log_f))
 
         stdout_thread.start()
         stderr_thread.start()

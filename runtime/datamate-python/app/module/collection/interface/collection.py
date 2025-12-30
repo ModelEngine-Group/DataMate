@@ -2,7 +2,7 @@ import math
 import uuid
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -25,7 +25,6 @@ logger = get_logger(__name__)
 @router.post("", response_model=StandardResponse[CollectionTaskBase])
 async def create_task(
     request: CollectionTaskCreate,
-    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db)
 ):
     """创建归集任务"""
@@ -40,7 +39,7 @@ async def create_task(
         task = convert_for_create(request, task_id)
         task.template_name = template.name
 
-        task_service = CollectionTaskService(db, background_tasks)
+        task_service = CollectionTaskService(db)
         task = await task_service.create_task(task)
 
         task = await db.execute(select(CollectionTask).where(CollectionTask.id == task.id))
