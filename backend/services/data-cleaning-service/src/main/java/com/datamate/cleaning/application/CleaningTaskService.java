@@ -212,7 +212,6 @@ public class CleaningTaskService {
     private void prepareTask(CleaningTaskDto task, List<OperatorInstanceDto> instances) {
         List<OperatorDto> allOperators = operatorRepo.findAllOperators();
         Map<String, OperatorDto> defaultSettings = allOperators.stream()
-                .filter(operatorDto -> StringUtils.isNotBlank(operatorDto.getSettings()))
                 .collect(Collectors.toMap(OperatorDto::getId, Function.identity()));
 
         TaskProcess process = new TaskProcess();
