@@ -4,9 +4,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
-import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
 
 /**
  * API Gateway & Auth Service Application
@@ -14,8 +12,6 @@ import org.springframework.context.annotation.ComponentScan;
  * 提供路由、鉴权、限流等功能
  */
 @SpringBootApplication
-@ComponentScan(basePackages = {"com.datamate.gateway", "com.terrabase"})
-@EnableFeignClients(basePackages = {"com.terrabase"})
 public class ApiGatewayApplication {
 
     public static void main(String[] args) {
@@ -36,6 +32,10 @@ public class ApiGatewayApplication {
             // 数据评估服务路由
             .route("data-evaluation", r -> r.path("/api/evaluation/**")
                 .uri("http://datamate-backend-python:18000"))
+
+            // 数据归集服务路由
+            .route("data-collection", r -> r.path("/api/data-collection/**")
+                    .uri("http://datamate-backend-python:18000"))
 
             .route("deer-flow-frontend", r -> r.path("/chat/**")
                 .uri("http://deer-flow-frontend:3000"))

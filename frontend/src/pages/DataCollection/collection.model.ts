@@ -1,8 +1,8 @@
 export enum TaskStatus {
   DRAFT = "DRAFT",
-  READY = "READY",
+  PENDING = "PENDING",
   RUNNING = "RUNNING",
-  SUCCESS = "SUCCESS",
+  COMPLETED = "COMPLETED",
   FAILED = "FAILED",
   STOPPED = "STOPPED",
 }
@@ -19,10 +19,24 @@ export interface CollectionTask {
   config: object; // 具体配置结构根据实际需求定义
   status: TaskStatus;
   syncMode: SyncMode;
+  templateName?: string;
   scheduleExpression?: string; // 仅当 syncMode 为 SCHEDULED 时存在
+  timeoutSeconds?: number;
   lastExecutionId: string;
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string
+}
+
+export interface TaskExecution {
+  id: string;
+  taskId: string;
+  taskName: string;
+  status: string;
+  logPath: string;
+  startedAt: string;
+  completedAt: string;
+  durationSeconds: number;
+  errorMessage: string;
 }
 
 export enum LogStatus {

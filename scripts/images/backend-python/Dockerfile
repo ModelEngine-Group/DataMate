@@ -1,8 +1,25 @@
+FROM maven:3-eclipse-temurin-8 AS datax-builder
+
+RUN apt-get update && \
+    apt-get install -y git && \
+    git clone https://github.com/alibaba/DataX.git
+
+COPY runtime/datax/ DataX/
+
+RUN cd DataX && \
+    sed -i "s/com.mysql.jdbc.Driver/com.mysql.cj.jdbc.Driver/g" \
+    plugin-rdbms-util/src/main/java/com/alibaba/datax/plugin/rdbms/util/DataBaseType.java && \
+    mvn -U clean package assembly:assembly -Dmaven.test.skip=true
+
 FROM python:3.12-slim
 
 # Single-stage image with build cache optimization using BuildKit cache mounts.
 # Note: to use the cache mount syntax you must build with BuildKit enabled:
 # DOCKER_BUILDKIT=1 docker build . -f scripts/images/datamate-python/Dockerfile -t datamate-backend-python
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends openjdk-21-jre-headless \
+    && rm -rf /var/lib/apt/lists/*
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -12,7 +29,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     POETRY_VIRTUALENVS_CREATE=false \
     POETRY_CACHE_DIR=/tmp/poetry_cache
 
-ENV PATH="/root/.local/bin:$PATH"
+ENV JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
+
+ENV PATH="/root/.local/bin:$JAVA_HOME/bin:$PATH"
 
 WORKDIR /app
 
@@ -21,6 +40,8 @@ RUN --mount=type=cache,target=/root/.cache/pip \
     pip install --upgrade --root-user-action=ignore pip \
     && pip install --root-user-action=ignore pipx \
     && pipx install "poetry==$POETRY_VERSION"
+
+COPY --from=datax-builder /DataX/target/datax/datax /opt/datax
 
 # Copy only dependency files first (leverages layer caching when dependencies don't change)
 COPY runtime/datamate-python/pyproject.toml runtime/datamate-python/poetry.lock* /app/

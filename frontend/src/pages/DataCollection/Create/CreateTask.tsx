@@ -1,79 +1,60 @@
-import { useState } from "react";
-import { Input, Button, Radio, Form, App, Select } from "antd";
+import { useEffect, useState } from "react";
+import { Input, Button, Radio, Form, App, Select, InputNumber } from "antd";
 import { Link, useNavigate } from "react-router";
 import { ArrowLeft } from "lucide-react";
-import { createTaskUsingPost } from "../collection.apis";
+import { createTaskUsingPost, queryDataXTemplatesUsingGet } from "../collection.apis";
 import SimpleCronScheduler from "@/pages/DataCollection/Create/SimpleCronScheduler";
-import RadioCard from "@/components/RadioCard";
-import { datasetTypes } from "@/pages/DataManagement/dataset.const";
 import { SyncModeMap } from "../collection.const";
 import { SyncMode } from "../collection.model";
-import { DatasetSubType } from "@/pages/DataManagement/dataset.model";
 
 const { TextArea } = Input;
 
-const defaultTemplates = [
-  {
-    id: "NAS",
-    name: "NAS到本地",
-    description: "从NAS文件系统导入数据到本地文件系统",
-    config: {
-      reader: "nfsreader",
-      writer: "localwriter",
-    },
-  },
-  {
-    id: "OBS",
-    name: "OBS到本地",
-    description: "从OBS文件系统导入数据到本地文件系统",
-    config: {
-      reader: "obsreader",
-      writer: "localwriter",
-    },
-  },
-  {
-    id: "MYSQL",
-    name: "Mysql到本地",
-    description: "从Mysql中导入数据到本地文件系统",
-    config: {
-      reader: "mysqlreader",
-      writer: "localwriter",
-    },
-  },
-];
-
 const syncModeOptions = Object.values(SyncModeMap);
 
-enum TemplateType {
-  NAS = "NAS",
-  OBS = "OBS",
-  MYSQL = "MYSQL",
-}
+type CollectionTemplate = {
+  id: string;
+  name: string;
+  description?: string;
+  sourceType?: string;
+  sourceName?: string;
+  targetType?: string;
+  targetName?: string;
+  templateContent?: {
+    parameter?: any;
+    reader?: any;
+    writer?: any;
+  };
+  builtIn?: boolean;
+};
+
+type TemplateFieldDef = {
+  name?: string;
+  type?: string;
+  description?: string;
+  required?: boolean;
+  options?: Array<{ label: string; value: string | number } | string | number>;
+  defaultValue?: any;
+};
 
 export default function CollectionTaskCreate() {
   const navigate = useNavigate();
   const [form] = Form.useForm();
   const { message } = App.useApp();
 
-  const [templateType, setTemplateType] = useState<"default" | "custom">(
-    "default"
-  );
-  // 默认模板类型设为 NAS
-  const [selectedTemplate, setSelectedTemplate] = useState<TemplateType>(
-    TemplateType.NAS
-  );
-  const [customConfig, setCustomConfig] = useState("");
+  const [templates, setTemplates] = useState<CollectionTemplate[]>([]);
+  const [templatesLoading, setTemplatesLoading] = useState(false);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | undefined>(undefined);
 
-  // 将 newTask 设为 any，并初始化 config.templateType 为 NAS
   const [newTask, setNewTask] = useState<any>({
     name: "",
     description: "",
     syncMode: SyncMode.ONCE,
-    cronExpression: "",
-    maxRetries: 10,
-    dataset: null,
-    config: { templateType: TemplateType.NAS },
-    createDataset: false,
+    scheduleExpression: "",
+    timeoutSeconds: 3600,
+    templateId: "",
+    config: {
+      parameter: {},
+    },
   });
   const [scheduleExpression, setScheduleExpression] = useState({
     type: "once",
@@ -81,32 +62,36 @@ export default function CollectionTaskCreate() {
     cronExpression: "0 0 0 * * ?",
   });
 
-  const [isCreateDataset, setIsCreateDataset] = useState(false);
+  useEffect(() => {
+    const run = async () => {
+      setTemplatesLoading(true);
+      try {
+        const resp: any = await queryDataXTemplatesUsingGet({ page: 1, size: 1000 });
+        const list: CollectionTemplate[] = resp?.data?.content || [];
+        setTemplates(list);
+      } catch (e) {
+        message.error("加载归集模板失败");
+      } finally {
+        setTemplatesLoading(false);
+      }
+    };
+    run()
+  }, []);
 
   const handleSubmit = async () => {
     try {
       await form.validateFields();
-      if (templateType === "default" && !selectedTemplate) {
-        window.alert("请选择默认模板");
-        return;
-      }
-      if (templateType === "custom" && !customConfig.trim()) {
-        window.alert("请填写自定义配置");
-        return;
-      }
 
-      // 构建最终 payload，不依赖异步 setState
+      const values = form.getFieldsValue(true);
       const payload = {
-        ...newTask,
-        taskType:
-          templateType === "default" ? selectedTemplate : "CUSTOM",
-        config: {
-          ...((newTask && newTask.config) || {}),
-          ...(templateType === "custom" ? { dataxJson: customConfig } : {}),
-        },
+        name: values.name,
+        description: values.description,
+        syncMode: values.syncMode,
+        scheduleExpression: values.scheduleExpression,
+        timeoutSeconds: values.timeoutSeconds,
+        templateId: values.templateId,
+        config: values.config,
       };
-
-      console.log("创建任务 payload:", payload);
 
       await createTaskUsingPost(payload);
       message.success("任务创建成功");
@@ -115,6 +100,102 @@ export default function CollectionTaskCreate() {
       message.error(`${error?.data?.message}：${error?.data?.data}`);
     }
   };
+
+  const selectedTemplate = templates.find((t) => t.id === selectedTemplateId);
+
+  const renderTemplateFields = (
+    section: "parameter" | "reader" | "writer",
+    defs: Record<string, TemplateFieldDef> | undefined
+  ) => {
+    if (!defs || typeof defs !== "object") return null;
+
+    const items = Object.entries(defs).map(([key, def]) => {
+      const label = def?.name || key;
+      const description = def?.description;
+      const fieldType = (def?.type || "input").toLowerCase();
+      const required = def?.required !== false;
+
+      const rules = required
+        ? [{ required: true, message: `请输入${label}` }]
+        : undefined;
+
+      if (fieldType === "password") {
+        return (
+          <Form.Item
+            key={`${section}.${key}`}
+            name={["config", section, key]}
+            label={label}
+            tooltip={description}
+            rules={rules}
+          >
+            <Input.Password placeholder={description || `请输入${label}`} />
+          </Form.Item>
+        );
+      }
+
+      if (fieldType === "textarea") {
+        return (
+          <Form.Item
+            key={`${section}.${key}`}
+            name={["config", section, key]}
+            label={label}
+            tooltip={description}
+            rules={rules}
+            className="md:col-span-2"
+          >
+            <TextArea rows={4} placeholder={description || `请输入${label}`} />
+          </Form.Item>
+        );
+      }
+
+      if (fieldType === "select") {
+        const options = (def?.options || []).map((opt: any) => {
+          if (typeof opt === "string" || typeof opt === "number") {
+            return { label: String(opt), value: opt };
+          }
+          return { label: opt?.label ?? String(opt?.value), value: opt?.value };
+        });
+        return (
+          <Form.Item
+            key={`${section}.${key}`}
+            name={["config", section, key]}
+            label={label}
+            tooltip={description}
+            rules={rules}
+          >
+            <Select placeholder={description || `请选择${label}`} options={options} />
+          </Form.Item>
+        );
+      }
+
+      return (
+        <Form.Item
+          key={`${section}.${key}`}
+          name={["config", section, key]}
+          label={label}
+          tooltip={description}
+          rules={rules}
+        >
+          <Input placeholder={description || `请输入${label}`} />
+        </Form.Item>
+      );
+    });
+
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
+        {items}
+      </div>
+    );
+  };
+
+  const getPropertyCountSafe = (obj: any) => {
+    // 类型检查
+    if (obj === null || obj === undefined) {
+      return 0;
+    }
+    // 处理普通对象
+    return Object.keys(obj).length;
+  }
 
   return (
     <div className="h-full flex flex-col">
@@ -130,10 +211,11 @@ export default function CollectionTaskCreate() {
       </div>
 
       <div className="flex-overflow-auto border-card">
-        <div className="flex-1 overflow-auto p-6">
+        <div className="flex-1 overflow-auto p-4">
           <Form
             form={form}
             layout="vertical"
+            className="[&_.ant-form-item]:mb-3 [&_.ant-form-item-label]:pb-1"
             initialValues={newTask}
             onValuesChange={(_, allValues) => {
               setNewTask({ ...newTask, ...allValues });
@@ -142,19 +224,36 @@ export default function CollectionTaskCreate() {
             {/* 基本信息 */}
             <h2 className="font-medium text-gray-900 text-lg mb-2">基本信息</h2>
 
-            <Form.Item
-              label="名称"
-              name="name"
-              rules={[{ required: true, message: "请输入任务名称" }]}
-            >
-              <Input placeholder="请输入任务名称" />
-            </Form.Item>
-            <Form.Item label="描述" name="description">
-              <TextArea placeholder="请输入任务描述" rows={3} />
-            </Form.Item>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
+              <Form.Item
+                label="名称"
+                name="name"
+                rules={[{ required: true, message: "请输入任务名称" }]}
+              >
+                <Input placeholder="请输入任务名称" />
+              </Form.Item>
+
+              <Form.Item
+                label="超时时间（秒）"
+                name="timeoutSeconds"
+                rules={[{ required: true, message: "请输入超时时间" }]}
+                initialValue={3600}
+              >
+                <InputNumber
+                  className="w-full"
+                  min={1}
+                  precision={0}
+                  placeholder="默认 3600"
+                />
+              </Form.Item>
+
+              <Form.Item className="md:col-span-2" label="描述" name="description">
+                <TextArea placeholder="请输入任务描述" rows={2} />
+              </Form.Item>
+            </div>
 
             {/* 同步配置 */}
-            <h2 className="font-medium text-gray-900 pt-6 mb-2 text-lg">
+            <h2 className="font-medium text-gray-900 pt-2 mb-1 text-lg">
               同步配置
             </h2>
             <Form.Item name="syncMode" label="同步方式">
@@ -180,7 +279,7 @@ export default function CollectionTaskCreate() {
                 rules={[{ required: true, message: "请输入Cron表达式" }]}
               >
                 <SimpleCronScheduler
-                  className="px-2 rounded"
+                  className="px-2 py-1 rounded"
                   value={scheduleExpression}
                   onChange={(value) => {
                     setScheduleExpression(value);
@@ -194,271 +293,90 @@ export default function CollectionTaskCreate() {
             )}
 
             {/* 模板配置 */}
-            <h2 className="font-medium text-gray-900 pt-6 mb-2 text-lg">
+            <h2 className="font-medium text-gray-900 pt-4 mb-2 text-lg">
               模板配置
             </h2>
-            {/* <Form.Item label="模板类型">
-              <Radio.Group
-                value={templateType}
-                onChange={(e) => setTemplateType(e.target.value)}
-              >
-                <Radio value="default">使用默认模板</Radio>
-                <Radio value="custom">自定义DataX JSON配置</Radio>
-              </Radio.Group>
-            </Form.Item> */}
-            {templateType === "default" && (
-              <>
-                {
-                  <Form.Item label="选择模板">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                      {defaultTemplates.map((template) => (
-                        <div
-                          key={template.id}
-                          className={`border p-4 rounded-md hover:shadow-lg transition-shadow ${
-                            selectedTemplate === template.id
-                              ? "border-blue-500"
-                              : "border-gray-300"
-                          }`}
-                          onClick={() => {
-                            setSelectedTemplate(template.id as TemplateType);
-                            // 使用函数式更新，合并之前的 config
-                            setNewTask((prev: any) => ({
-                              ...prev,
-                              config: {
-                                templateType: template.id,
-                              },
-                            }));
-                            // 同步表单显示
-                            form.setFieldsValue({
-                              config: { templateType: template.id },
-                            });
-                          }}
-                        >
-                          <div className="font-medium">{template.name}</div>
-                          <div className="text-gray-500">
-                            {template.description}
-                          </div>
-                          <div className="text-gray-400">
-                            {template.config.reader} → {template.config.writer}
-                          </div>
-                        </div>
-                      ))}
+
+            <Form.Item
+              label="选择模板"
+              name="templateId"
+              rules={[{ required: true, message: "请选择归集模板" }]}
+            >
+              <Select
+                placeholder="请选择归集模板"
+                loading={templatesLoading}
+                onChange={(templateId) => {
+                  setSelectedTemplateId(templateId);
+                  form.setFieldsValue({
+                    templateId,
+                    config: {},
+                  });
+                  setNewTask((prev: any) => ({
+                    ...prev,
+                    templateId,
+                    config: {},
+                  }));
+                }}
+                optionRender={(option) => {
+                  const tpl = templates.find((t) => t.id === option.value);
+                  return (
+                    <div>
+                      <div className="font-medium">{tpl?.name || option.label}</div>
+                      <div className="text-xs text-gray-500 line-clamp-2">
+                        {tpl?.description || ""}
+                      </div>
                     </div>
-                  </Form.Item>
-                }
-                {/* nas import */}
-                {selectedTemplate === TemplateType.NAS && (
-                  <div className="grid grid-cols-2 gap-3 px-2 bg-blue-50 rounded">
-                    <Form.Item
-                      name={["config", "ip"]}
-                      rules={[{ required: true, message: "请输入NAS地址" }]}
-                      label="NAS地址"
-                    >
-                      <Input placeholder="192.168.1.100" />
-                    </Form.Item>
-                    <Form.Item
-                      name={["config", "path"]}
-                      rules={[{ required: true, message: "请输入共享路径" }]}
-                      label="共享路径"
-                    >
-                      <Input placeholder="/share/importConfig" />
-                    </Form.Item>
-                    <Form.Item
-                      name={["config", "files"]}
-                      label="文件列表"
-                      className="col-span-2"
-                    >
-                      <Select placeholder="请选择文件列表" mode="tags" />
-                    </Form.Item>
-                  </div>
-                )}
+                  );
+                }}
+                options={templates.map((template) => ({
+                  label: template.name,
+                  value: template.id,
+                }))}
+              />
+            </Form.Item>
 
-                {/* obs import */}
-                {selectedTemplate === TemplateType.OBS && (
-                  <div className="grid grid-cols-2 gap-3 p-4 bg-blue-50 rounded-lg">
-                    <Form.Item
-                      name={["config", "endpoint"]}
-                      rules={[{ required: true }]}
-                      label="Endpoint"
-                    >
-                      <Input
-                        className="h-8 text-xs"
-                        placeholder="obs.cn-north-4.myhuaweicloud.com"
-                      />
-                    </Form.Item>
-                    <Form.Item
-                      name={["config", "bucket"]}
-                      rules={[{ required: true }]}
-                      label="Bucket"
-                    >
-                      <Input className="h-8 text-xs" placeholder="my-bucket" />
-                    </Form.Item>
-                    <Form.Item
-                      name={["config", "accessKey"]}
-                      rules={[{ required: true }]}
-                      label="Access Key"
-                    >
-                      <Input className="h-8 text-xs" placeholder="Access Key" />
-                    </Form.Item>
-                    <Form.Item
-                      name={["config", "secretKey"]}
-                      rules={[{ required: true }]}
-                      label="Secret Key"
-                    >
-                      <Input
-                        type="password"
-                        className="h-8 text-xs"
-                        placeholder="Secret Key"
-                      />
-                    </Form.Item>
-                    <Form.Item
-                      name={["config", "prefix"]}
-                      rules={[{ required: true }]}
-                      label="Prefix"
-                    >
-                      <Input className="h-8 text-xs" placeholder="Prefix" />
-                    </Form.Item>
-                  </div>
-                )}
-
-                {/* mysql import */}
-                {selectedTemplate === TemplateType.MYSQL && (
-                  <div className="grid grid-cols-2 gap-3 px-2 bg-blue-50 rounded">
-                    <Form.Item
-                      name={["config", "jdbcUrl"]}
-                      rules={[{ required: true, message: "请输入数据库链接" }]}
-                      label="数据库链接"
-                      className="col-span-2"
-                    >
-                      <Input placeholder="jdbc:mysql://localhost:3306/mysql?useUnicode=true&characterEncoding=utf8" />
-                    </Form.Item>
-                    <Form.Item
-                      name={["config", "username"]}
-                      rules={[{ required: true, message: "请输入用户名" }]}
-                      label="用户名"
-                    >
-                      <Input placeholder="mysql" />
-                    </Form.Item>
-                    <Form.Item
-                      name={["config", "password"]}
-                      rules={[{ required: true, message: "请输入密码" }]}
-                      label="密码"
-                    >
-                      <Input type="password" className="h-8 text-xs" placeholder="Secret Key" />
-                    </Form.Item>
-                    <Form.Item
-                      name={["config", "querySql"]}
-                      rules={[{ required: true, message: "请输入查询语句" }]}
-                      label="查询语句"
-                    >
-                      <Input placeholder="select * from your_table" />
-                    </Form.Item>
-                    <Form.Item
-                      name={["config", "headers"]}
-                      label="列名"
-                      className="col-span-2"
-                    >
-                      <Select placeholder="请输入列名" mode="tags" />
-                    </Form.Item>
-                  </div>
-                )}
-              </>
-            )}
-
-            {templateType === "custom" && (
-              <Form.Item label="DataX JSON配置">
-                <TextArea
-                  placeholder="请输入DataX JSON配置..."
-                  value={customConfig}
-                  onChange={(e) => setCustomConfig(e.target.value)}
-                  rows={12}
-                  className="w-full"
-                />
-              </Form.Item>
-            )}
-
-            {/* 数据集配置 */}
-            {templateType === "default" && (
+            {selectedTemplate ? (
               <>
-                <h2 className="font-medium text-gray-900 my-4 text-lg">
-                  数据集配置
-                </h2>
-                <Form.Item
-                  label="是否创建数据集"
-                  name="createDataset"
-                  required
-                  rules={[{ required: true, message: "请选择是否创建数据集" }]}
-                  tooltip={"支持后续在【数据管理】中手动创建数据集并关联至此任务。"}
-                >
-                  <Radio.Group
-                    value={isCreateDataset}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      let datasetInit = null;
-                      if (value === true) {
-                        datasetInit = {};
-                      }
-                      form.setFieldsValue({
-                        dataset: datasetInit,
-                      });
-                      setNewTask((prev: any) => ({
-                        ...prev,
-                        dataset: datasetInit,
-                      }));
-                      setIsCreateDataset(e.target.value);
-                    }}
-                  >
-                    <Radio value={true}>是</Radio>
-                    <Radio value={false}>否</Radio>
-                  </Radio.Group>
-                </Form.Item>
-                {isCreateDataset && (
+                {getPropertyCountSafe(selectedTemplate.templateContent?.parameter) > 0 ? (
                   <>
-                    <Form.Item
-                      label="数据集名称"
-                      name={["dataset", "name"]}
-                      required
-                    >
-                      <Input
-                        placeholder="输入数据集名称"
-                        onChange={(e) => {
-                          setNewTask((prev: any) => ({
-                            ...prev,
-                            dataset: {
-                              ...(prev.dataset || {}),
-                              name: e.target.value,
-                            },
-                          }));
-                        }}
-                      />
-                    </Form.Item>
-                    <Form.Item
-                      label="数据集类型"
-                      name={["dataset", "datasetType"]}
-                      rules={[{ required: true, message: "请选择数据集类型" }]}
-                    >
-                      <RadioCard
-                        options={datasetTypes}
-                        value={newTask.dataset?.datasetType}
-                        onChange={(type) => {
-                          form.setFieldValue(["dataset", "datasetType"], type);
-                          setNewTask((prev: any) => ({
-                            ...prev,
-                            dataset: {
-                              ...(prev.dataset || {}),
-                              datasetType: type as DatasetSubType,
-                            },
-                          }));
-                        }}
-                      />
-                    </Form.Item>
+                    <h3 className="font-medium text-gray-900 pt-2 mb-2">
+                      模板参数
+                    </h3>
+                    {renderTemplateFields(
+                      "parameter",
+                      selectedTemplate.templateContent?.parameter as Record<string, TemplateFieldDef>
+                    )}
                   </>
-                )}
+                ): null}
+
+                {getPropertyCountSafe(selectedTemplate.templateContent?.reader) > 0 ? (
+                  <>
+                    <h3 className="font-medium text-gray-900 pt-2 mb-2">
+                      源端参数
+                    </h3>
+                    {renderTemplateFields(
+                      "reader",
+                      selectedTemplate.templateContent?.reader as Record<string, TemplateFieldDef>
+                    )}
+                  </>
+                ) : null}
+
+                {getPropertyCountSafe(selectedTemplate.templateContent?.writer) > 0 ? (
+                  <>
+                    <h3 className="font-medium text-gray-900 pt-2 mb-2">
+                      目标端参数
+                    </h3>
+                    {renderTemplateFields(
+                      "writer",
+                      selectedTemplate.templateContent?.writer as Record<string, TemplateFieldDef>
+                    )}
+                  </>
+                ) : null}
               </>
-            )}
+            ) : null}
           </Form>
         </div>
-        <div className="flex gap-2 justify-end border-top p-6">
+        <div className="flex gap-2 justify-end border-top p-4">
           <Button onClick={() => navigate("/data/collection")}>取消</Button>
           <Button type="primary" onClick={handleSubmit}>
             创建任务
