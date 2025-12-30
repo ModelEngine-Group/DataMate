@@ -30,7 +30,6 @@ class DataxClient:
         """
         try:
             config = json.loads(self.task.config)
-            logger.info(f"config: {config} \n {self.task.config}")
 
             # 基本验证
             if 'job' not in config:

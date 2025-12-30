@@ -24,6 +24,7 @@ class CollectionTaskService:
         # If it's a one-time task, execute it immediately
         if task.sync_mode == SyncMode.ONCE:
             task.status = TaskStatus.RUNNING.name
+            await self.db.commit()
             asyncio.create_task(self.run_async(task.id))
         return task
 
