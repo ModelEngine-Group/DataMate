@@ -47,6 +47,7 @@ services:
       - "30000:80"            # nodePort → hostPort
     volumes:
       - frontend_log_volume:/var/log/datamate/frontend
+      - ./backend.conf:/etc/nginx/conf.d/backend.conf
     networks: [ datamate ]
     depends_on:
       - datamate-backend
@@ -102,7 +103,7 @@ services:
   # 4) mineru
   datamate-mineru:
     container_name: datamate-mineru
-    image: datamate-mineru:latest
+    image: datamate-mineru
     restart: on-failure
     environment:
       MINERU_MODEL_SOURCE: local
