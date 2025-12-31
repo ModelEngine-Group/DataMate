@@ -81,19 +81,7 @@ export default function CollectionTaskCreate() {
   const handleSubmit = async () => {
     try {
       await form.validateFields();
-
-      const values = form.getFieldsValue(true);
-      const payload = {
-        name: values.name,
-        description: values.description,
-        syncMode: values.syncMode,
-        scheduleExpression: values.scheduleExpression,
-        timeoutSeconds: values.timeoutSeconds,
-        templateId: values.templateId,
-        config: values.config,
-      };
-
-      await createTaskUsingPost(payload);
+      await createTaskUsingPost(newTask);
       message.success("任务创建成功");
       navigate("/data/collection");
     } catch (error) {

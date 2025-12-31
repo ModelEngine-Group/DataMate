@@ -9,7 +9,7 @@ RUN cd /opt/backend/services && \
 FROM eclipse-temurin:21-jdk
 
 RUN apt-get update && \
-    apt-get install -y vim wget curl nfs-common rsync python3 python3-pip python-is-python3 dos2unix && \
+    apt-get install -y vim wget curl rsync python3 python3-pip python-is-python3 dos2unix && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
