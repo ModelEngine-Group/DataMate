@@ -32,7 +32,11 @@ public class OperatorConstant {
 
     public static String CATEGORY_PREDEFINED_ID = "96a3b07a-3439-4557-a835-525faad60ca3";
 
+    public static String CATEGORY_DATAMATE_ID = "431e7798-5426-4e1a-aae6-b9905a836b34";
+
     public static String CATEGORY_DATA_JUICER_ID = "79b385b4-fde8-4617-bcba-02a176938996";
+
+    public static String CATEGORY_OTHER_VENDOR_ID = "f00eaa3e-96c1-4de4-96cd-9848ef5429ec";
 
     public static Map<String, String> CATEGORY_MAP = new HashMap<>();
 
@@ -44,5 +48,7 @@ public class OperatorConstant {
         CATEGORY_MAP.put("audio", CATEGORY_AUDIO_ID);
         CATEGORY_MAP.put("video", CATEGORY_VIDEO_ID);
         CATEGORY_MAP.put("all", CATEGORY_ALL_ID);
+        CATEGORY_MAP.put("datamate", CATEGORY_DATAMATE_ID);
+        CATEGORY_MAP.put("data-juicer", CATEGORY_DATA_JUICER_ID);
     }
 }

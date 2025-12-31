@@ -36,10 +36,12 @@ public abstract class AbstractParser {
         List<String> categories = new ArrayList<>();
         categories.add(OperatorConstant.CATEGORY_MAP.get(toLowerCaseIfNotNull(content.get("language"))));
         categories.add(OperatorConstant.CATEGORY_MAP.get(toLowerCaseIfNotNull(content.get("modal"))));
+        categories.add(OperatorConstant.CATEGORY_MAP.getOrDefault(toLowerCaseIfNotNull(content.get("vendor")),
+                OperatorConstant.CATEGORY_OTHER_VENDOR_ID));
         categories.add(OperatorConstant.CATEGORY_CUSTOMIZED_ID);
         operator.setCategories(categories);
         return operator;
-    };
+    }
 
     /**
      * 从压缩包内读取指定路径的 yaml 文件并解析为指定类型

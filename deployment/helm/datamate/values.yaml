@@ -119,9 +119,6 @@ backend-python:
       mountPath: /var/log/datamate
 
 gateway:
-  service:
-    type: NodePort
-    nodePort: 30000
   volumes:
     - *logVolume
   volumeMounts:
