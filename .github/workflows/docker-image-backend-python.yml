@@ -4,14 +4,14 @@ on:
   push:
     branches: [ "main" ]
     paths:
-      - 'scripts/images/datamate-python/**'
+      - 'scripts/images/backend-python/**'
       - 'runtime/datamate-python/**'
       - '.github/workflows/docker-image-backend-python.yml'
       - '.github/workflows/docker-images-reusable.yml'
   pull_request:
     branches: [ "main" ]
     paths:
-      - 'scripts/images/datamate-python/**'
+      - 'scripts/images/backend-python/**'
       - 'runtime/datamate-python/**'
       - '.github/workflows/docker-image-backend-python.yml'
       - '.github/workflows/docker-images-reusable.yml'
