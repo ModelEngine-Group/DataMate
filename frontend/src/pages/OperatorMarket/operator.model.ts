@@ -29,6 +29,7 @@ export interface OperatorI {
   inputs: string;
   outputs: string;
   icon: React.ReactNode;
+  iconColor?: string; // 图标背景色，用于区分不同类型算子
   description: string;
   tags: string[];
   isStar?: boolean;
