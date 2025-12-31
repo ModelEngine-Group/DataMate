@@ -201,7 +201,7 @@ const OperatorLibrary: React.FC<OperatorLibraryProps> = ({
           />
           <Select
             value={selectedCategory}
-            options={[...categoryOptions]}
+            options={[...categoryOptions.filter(item => item.name !== '已收藏')]}
             onChange={setSelectedCategory}
             mode="multiple"
             allowClear
