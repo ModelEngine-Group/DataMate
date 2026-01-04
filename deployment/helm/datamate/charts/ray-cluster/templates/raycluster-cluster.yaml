@@ -96,12 +96,18 @@ spec:
           securityContext:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-        {{- $defult := include "ray-cluster.image" . -}}
+        {{- $default := include "ray-cluster.image" . -}}
         {{- with .Values.head.sidecarContainers }}
         {{- range $index, $container := . }}
-        {{- $image := default $defult $container.image -}}
-        {{- with $.Values.global.image.repository -}}
-        {{- $image = printf "%s/%s" (trimSuffix "/" .) (default $defult $container.image) -}}
+        {{- $image := "" -}}
+        {{- if $container.image -}}
+        {{- if $.Values.global.image.repository -}}
+        {{- $image = printf "%s/%s" (trimSuffix "/" $.Values.global.image.repository) $container.image -}}
+        {{- else -}}
+        {{- $image = $container.image -}}
+        {{- end -}}
+        {{- else -}}
+        {{- $image = $default -}}
         {{- end -}}
         {{- $mergedObj := mergeOverwrite $container (dict "image" $image) }}
         - {{- toYaml $mergedObj | nindent 10 }}
