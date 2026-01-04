@@ -13,9 +13,10 @@ from app.module.shared.schema import TaskStatus
 logger = get_logger(__name__)
 
 class DataxClient:
-    def __init__(self, task: CollectionTask, execution: TaskExecution):
+    def __init__(self, task: CollectionTask, execution: TaskExecution, template: CollectionTemplate):
         self.execution = execution
         self.task = task
+        self.template = template
         self.config_file_path = f"/flow/data-collection/{task.id}/config.json"
         self.python_path = "python"
         self.datax_main = "/opt/datax/bin/datax.py"
@@ -53,10 +54,21 @@ class DataxClient:
             **(task_config.parameter if task_config.parameter else {}),
             **(task_config.reader if task_config.reader else {})
         }
+        dest_parameter = {}
+        if template.target_type == "txtfilewriter":
+            dest_parameter = {
+                "path": target_path,
+                "fileName": "collection_result",
+                "writeMode": "truncate"
+            }
+        elif template.target_type == "nfswriter" or template.target_type == "obswriter":
+            dest_parameter = {
+                "destPath": target_path
+            }
         writer_parameter = {
             **(task_config.parameter if task_config.parameter else {}),
             **(task_config.writer if task_config.writer else {}),
-            "destPath": target_path
+            **dest_parameter
         }
         # 生成任务运行配置
         job_config = {
@@ -128,6 +140,7 @@ class DataxClient:
                 logger.info(f"DataX 任务执行成功: {self.execution.id}")
                 logger.info(f"执行耗时: {self.execution.duration_seconds:.2f} 秒")
                 self.execution.status = TaskStatus.COMPLETED.name
+                self.rename_collection_result()
             else:
                 self.execution.error_message = self.execution.error_message or f"DataX 任务执行失败，退出码: {exit_code}"
                 self.execution.status = TaskStatus.FAILED.name
@@ -140,6 +153,23 @@ class DataxClient:
             logger.error(f"执行异常: {e}", exc_info=True)
         if self.task.sync_mode == SyncMode.ONCE:
             self.task.status = self.execution.status
+
+    def rename_collection_result(self):
+        if self.template.target_type != "txtfilewriter":
+            return
+        target_path = Path(self.task.target_path)
+        if not target_path.exists():
+            logger.warning(f"Target path does not exist: {target_path}")
+            return
+        # If it's a directory, find all files without extensions
+        for file_path in target_path.iterdir():
+            if file_path.is_file() and not file_path.suffix:
+                new_path = file_path.with_suffix('.csv')
+                try:
+                    file_path.rename(new_path)
+                    logger.info(f"Renamed {file_path} to {new_path}")
+                except Exception as e:
+                    logger.error(f"Failed to rename {file_path} to {new_path}: {str(e)}")
 
     def _run_process(self, cmd: list[str], log_f) -> int:
         # 启动进程
