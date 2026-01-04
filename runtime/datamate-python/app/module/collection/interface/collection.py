@@ -1,5 +1,7 @@
 import math
 import uuid
+import shutil
+import os
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -137,6 +139,13 @@ async def delete_collection_tasks(
             TaskExecution.__table__.delete()
             .where(TaskExecution.task_id == task_id)
         )
+
+        target_path = f"/dataset/local/{task_id}"
+        if os.path.exists(target_path):
+            shutil.rmtree(target_path)
+        job_path = f"/flow/data-collection/{task_id}"
+        if os.path.exists(job_path):
+            shutil.rmtree(job_path)
 
         # 删除任务
         await db.delete(task)
