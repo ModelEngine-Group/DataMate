@@ -96,12 +96,18 @@ spec:
           securityContext:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-        {{- $defult := printf "%s:%s" .Values.image.repository .Values.image.tag }}
+        {{- $default := include "ray-cluster.image" . -}}
         {{- with .Values.head.sidecarContainers }}
         {{- range $index, $container := . }}
-        {{- $image := default $defult $container.image -}}
-        {{- with $.Values.global.image.repository -}}
-        {{- $image = printf "%s/%s" (trimSuffix "/" .) (default $defult $container.image) -}}
+        {{- $image := "" -}}
+        {{- if $container.image -}}
+        {{- if $.Values.global.image.repository -}}
+        {{- $image = printf "%s/%s" (trimSuffix "/" $.Values.global.image.repository) $container.image -}}
+        {{- else -}}
+        {{- $image = $container.image -}}
+        {{- end -}}
+        {{- else -}}
+        {{- $image = $default -}}
         {{- end -}}
         {{- $mergedObj := mergeOverwrite $container (dict "image" $image) }}
         - {{- toYaml $mergedObj | nindent 10 }}
@@ -313,10 +319,14 @@ spec:
         - name: ray-worker
           {{- if $values.image }}
           image: {{ $values.image.repository }}:{{ $values.image.tag }}
+          {{- if $values.image.pullPolicy }}
           imagePullPolicy: {{ $values.image.pullPolicy }}
           {{- else }}
-          image: {{ $.Values.image.repository }}:{{ $.Values.image.tag }}
-          imagePullPolicy: {{ $.Values.image.pullPolicy }}
+          imagePullPolicy: {{ default $.Values.image.pullPolicy $.Values.global.image.pullPolicy }}
+          {{- end }}
+          {{- else }}
+          image: {{ include "ray-cluster.image" $ }}
+          imagePullPolicy: {{ default $.Values.image.pullPolicy $.Values.global.image.pullPolicy }}
           {{- end }}
           {{- with $values.command }}
           command:

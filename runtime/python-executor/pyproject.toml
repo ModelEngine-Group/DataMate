@@ -6,7 +6,7 @@ authors = [
     { name = "Huawei datamate team" }
 ]
 license = { text = "Apache-2.0" }
-requires-python = ">=3.10"
+requires-python = ">=3.10, <=3.12"
 urls = { repository = "https://github.com/ModelEngine-Group/datamate" }
 classifiers = [
     "License :: OSI Approved :: Apache Software License",
@@ -20,7 +20,7 @@ dependencies = [
     "jsonargparse>=4.44.0",
     "loguru>=0.7.3",
     "opencv-python-headless>=4.12.0.88",
-    "ray[data,default]==2.52.1",
+    "ray[data,default]>=2.52.1",
     "unstructured[csv,docx,pptx,xlsx,pdf,md]==0.18.15",
     "uvicorn[standard]>=0.38.0",
 ]

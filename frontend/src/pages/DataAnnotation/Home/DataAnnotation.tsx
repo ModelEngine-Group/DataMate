@@ -11,7 +11,7 @@ import CardView from "@/components/CardView";
 import type { AnnotationTask } from "../annotation.model";
 import useFetchData from "@/hooks/useFetchData";
 import {
-  deleteAnnotationTaskByIdUsingDelete,
+  deleteAnnotationTaskByIdUsingDelete, loginAnnotationUsingGet,
   queryAnnotationTasksUsingGet,
   syncAnnotationTaskUsingPost,
 } from "../annotation.api";
@@ -76,6 +76,7 @@ export default function DataAnnotation() {
 
         if (labelingProjId) {
           // only open external Label Studio when we have a configured base url
+          await loginAnnotationUsingGet(labelingProjId)
           if (base) {
             const target = `${base}/projects/${labelingProjId}/data`;
             window.open(target, "_blank");

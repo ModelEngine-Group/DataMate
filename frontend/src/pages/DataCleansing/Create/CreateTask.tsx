@@ -38,6 +38,7 @@ export default function CleansingTaskCreate() {
           ...item.defaultParams,
           ...item.overrides,
         },
+        categories: item.categories,
         inputs: item.inputs,
         outputs: item.outputs,
       })),

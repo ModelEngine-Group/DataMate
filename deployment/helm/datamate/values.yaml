@@ -119,9 +119,6 @@ backend-python:
       mountPath: /var/log/datamate
 
 gateway:
-  service:
-    type: NodePort
-    nodePort: 30000
   volumes:
     - *logVolume
   volumeMounts:
@@ -189,8 +186,20 @@ runtime:
 ray-cluster:
   enabled: true
   head:
+    enableInTreeAutoscaling: true
+    autoscalerOptions:
+      upscalingMode: Default
+      idleTimeoutSeconds: 60
+      imagePullPolicy: IfNotPresent
+      resources:
+        limits:
+          cpu: "500m"
+          memory: "512Mi"
+        requests:
+          cpu: "500m"
+          memory: "512Mi"
     rayStartParams:
-      num-cpus: '0'
+      num-cpus: "0"
     containerEnv:
       - name: RAY_DEDUP_LOGS
         value: "0"
@@ -206,6 +215,8 @@ ray-cluster:
         value: *dbPass
       - name: MYSQL_DATABASE
         value: "datamate"
+      - name: RAY_enable_autoscaler_v2
+        value: "1"
     resources:
       limits:
         cpu: "4"
@@ -234,7 +245,6 @@ ray-cluster:
         subPath: site-packages
     sidecarContainers:
       - name: runtime
-        image: datamate-runtime
         imagePullPolicy: IfNotPresent
         args: *runtimeArgs
         env: *runtimeEnv
@@ -283,3 +293,63 @@ ray-cluster:
       - mountPath: /usr/local/lib/ops/site-packages
         name: operator-volume
         subPath: site-packages
+  additionalWorkerGroups:
+    npuGroup:
+      disabled: false
+      replicas: 0
+      minReplicas: 0
+      maxReplicas: 8
+      rayStartParams:
+        resources: '"{\"npu\": 1}"'
+      containerEnv:
+        - name: RAY_DEDUP_LOGS
+          value: "0"
+        - name: RAY_TQDM_PATCH_PRINT
+          value: "0"
+        - name: MYSQL_HOST
+          value: "datamate-database"
+        - name: MYSQL_PORT
+          value: "3306"
+        - name: MYSQL_USER
+          value: "root"
+        - name: MYSQL_PASSWORD
+          value: *dbPass
+        - name: MYSQL_DATABASE
+          value: "datamate"
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+      resources:
+        limits:
+          cpu: "8"
+          memory: "64G"
+          huawei.com/Ascend910: 1
+        requests:
+          cpu: "1"
+          memory: "2G"
+          huawei.com/Ascend910: 1
+      volumes:
+        - *datasetVolume
+        - *flowVolume
+        - *logVolume
+        - *operatorVolume
+        - name: ascend
+          hostPath:
+            path: /usr/local/Ascend
+      volumeMounts:
+        - mountPath: /tmp/ray
+          name: log-volume
+          subPathExpr: ray/$(POD_NAME)
+        - mountPath: /dataset
+          name: dataset-volume
+        - mountPath: /flow
+          name: flow-volume
+        - mountPath: /opt/runtime/datamate/ops/user
+          name: operator-volume
+          subPath: extract
+        - mountPath: /usr/local/lib/ops/site-packages
+          name: operator-volume
+          subPath: site-packages
+        - mountPath: /usr/local/Ascend
+          name: ascend

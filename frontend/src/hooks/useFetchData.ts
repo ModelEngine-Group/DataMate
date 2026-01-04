@@ -43,6 +43,8 @@ export default function useFetchData<T>(
       type: [] as string[],
       status: [] as string[],
       tags: [] as string[],
+      // 通用分类筛选（如算子市场的分类 ID 列表）
+      categories: [] as string[],
     },
     current: 1,
     pageSize: 12,

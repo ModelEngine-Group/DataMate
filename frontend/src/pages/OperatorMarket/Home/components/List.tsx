@@ -56,8 +56,19 @@ export function ListView({ operators = [], pagination, operations }) {
         >
           <List.Item.Meta
             avatar={
-              <div className="w-12 h-12 bg-gradient-to-br from-sky-300 to-blue-500 rounded-lg flex items-center justify-center">
-                <div className="w-8 h-8 text-white">{operator?.icon}</div>
+              <div
+                className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                  operator?.iconColor
+                    ? ""
+                    : "bg-gradient-to-br from-sky-300 to-blue-500"
+                }`}
+                style={
+                  operator?.iconColor
+                    ? { backgroundColor: operator.iconColor }
+                    : undefined
+                }
+              >
+                <div className="w-[2.8rem] h-[2.8rem] text-white">{operator?.icon}</div>
               </div>
             }
             title={

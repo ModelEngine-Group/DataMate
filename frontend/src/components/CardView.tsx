@@ -181,7 +181,7 @@ function CardView<T extends BaseCardDataType>(props: CardViewProps<T>) {
         {data.map((item) => (
           <div
             key={item.id}
-            className="border-card p-4 bg-white hover:shadow-lg transition-shadow duration-200"
+            className="border-card p-4 bg-white duration-200 transition-shadow transition-transform hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(0,0,0,0.06)]"
           >
             <div className="flex flex-col space-y-4 h-full">
               <div
@@ -194,9 +194,22 @@ function CardView<T extends BaseCardDataType>(props: CardViewProps<T>) {
                   <div className="flex items-center gap-3 min-w-0">
                     {item?.icon && (
                       <div
-                        className={`flex-shrink-0 w-12 h-12 bg-gradient-to-br from-sky-300 to-blue-500 text-white rounded-lg flex items-center justify-center`}
+                        className={`flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center ${
+                          item?.iconColor
+                            ? ""
+                            : "bg-gradient-to-br from-sky-300 to-blue-500 text-white"
+                        }`}
+                        style={{
+                          ...(item?.iconColor
+                            ? { backgroundColor: item.iconColor }
+                            : {}),
+                          backgroundImage:
+                            "linear-gradient(180deg, rgba(255,255,255,0.35), rgba(255,255,255,0.05))",
+                          boxShadow:
+                            "inset 0 0 0 1px rgba(255,255,255,0.25)",
+                        }}
                       >
-                        <div className="w-6 h-6 text-gray-50">{item?.icon}</div>
+                        <div className="w-[2.1rem] h-[2.1rem] text-gray-50">{item?.icon}</div>
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
@@ -236,7 +249,7 @@ function CardView<T extends BaseCardDataType>(props: CardViewProps<T>) {
                   <TagsRenderer tags={item?.tags || []} />
 
                   {/* Description */}
-                  <p className="text-gray-600 text-xs text-ellipsis overflow-hidden whitespace-nowrap text-xs line-clamp-2 mt-2">
+                  <p className="text-gray-400 text-xs text-ellipsis overflow-hidden whitespace-nowrap text-xs line-clamp-2 mt-2">
                     <Tooltip title={item?.description}>
                       {item?.description}
                     </Tooltip>
@@ -258,8 +271,9 @@ function CardView<T extends BaseCardDataType>(props: CardViewProps<T>) {
                 </div>
               </div>
 
-              {/* Actions */}
-              <div className="flex items-center justify-between pt-3 border-t border-t-gray-200">
+              {/* Divider & Actions */}
+              <div className="w-2/3 border-t border-t-gray-200 mt-2" />
+              <div className="flex items-center justify-between pt-3">
                 <div className=" text-gray-500 text-right">
                   <div className="flex items-center gap-1">
                     <ClockCircleOutlined className="w-4 h-4" />{" "}

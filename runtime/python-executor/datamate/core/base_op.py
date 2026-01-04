@@ -151,20 +151,30 @@ class BaseOp:
         if filetype in ["ppt", "pptx", "docx", "doc", "xlsx", "csv", "md", "pdf"]:
             elements = partition(filename=filepath)
             sample[self.text_key] = "\n\n".join([str(el) for el in elements])
+            sample[self.data_key] = b""
         elif filetype in ["txt", "md", "markdown", "xml", "html", "json", "jsonl"]:
             with open(filepath, 'rb') as f:
                 content = f.read()
                 sample[self.text_key] = content.decode("utf-8-sig").replace("\r\n", "\n")
+                sample[self.data_key] = b""
         elif filetype in ['jpg', 'jpeg', 'png', 'bmp']:
             image_np = cv2.imdecode(np.fromfile(filepath, dtype=np.uint8), -1)
             if image_np.size:
                 data = cv2.imencode(f".{filetype}", image_np)[1]
                 image_bytes = data.tobytes()
                 sample[self.data_key] = image_bytes
+                sample[self.text_key] = ""
+        return sample
 
     def read_file_first(self, sample):
         if self.is_first_op:
             self.read_file(sample)
+
+    @staticmethod
+    def save_file_and_db(sample):
+        if FileExporter().execute(sample):
+            TaskInfoPersistence().persistence_task_info(sample)
+        return sample
 
 
 class Mapper(BaseOp):
@@ -195,8 +205,7 @@ class Mapper(BaseOp):
         sample["execute_status"] = execute_status
         # 加载文件成功执行信息到数据库
         if self.is_last_op:
-            if FileExporter().execute(sample):
-                TaskInfoPersistence().persistence_task_info(sample)
+            self.save_file_and_db(sample)
         return sample
 
     def execute(self, sample: Dict[str, Any]) -> Dict[str, Any]:
@@ -237,8 +246,7 @@ class Slicer(BaseOp):
 
         # 加载文件成功执行信息到数据库
         if self.is_last_op:
-            if FileExporter().execute(sample):
-                TaskInfoPersistence().persistence_task_info(sample)
+            self.save_file_and_db(sample)
 
         return [sample]
 
@@ -333,8 +341,7 @@ class Filter(BaseOp):
 
         # 加载文件成功执行信息到数据库
         if self.is_last_op:
-            if FileExporter().execute(sample):
-                TaskInfoPersistence().persistence_task_info(sample)
+            self.save_file_and_db(sample)
         return True
 
     def execute(self, sample: Dict[str, Any]) -> Dict[str, Any]:
@@ -490,7 +497,7 @@ class FileExporter(BaseOp):
             save_path = self.get_save_path(sample, target_type)
         # 不存在则保存为txt文件，正常文本清洗
         else:
-            sample = self._get_from_text_or_data(sample)
+            sample = self._get_from_text(sample)
             save_path = self.get_save_path(sample, 'txt')
         return sample, save_path
 
@@ -552,7 +559,7 @@ class FileExporter(BaseOp):
         return sample
 
     def _get_from_text_or_data(self, sample: Dict[str, Any]) -> Dict[str, Any]:
-        if sample[self.data_key] is not None and sample[self.data_key] != b'':
+        if sample[self.data_key] is not None and sample[self.data_key] != b'' and sample[self.data_key] != "":
             return self._get_from_data(sample)
         else:
             return self._get_from_text(sample)

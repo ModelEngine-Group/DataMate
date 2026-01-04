@@ -4,14 +4,14 @@ on:
   push:
     branches: [ "main" ]
     paths:
-      - 'backend/**'
+      - 'backend/api-gateway/**'
       - 'scripts/images/gateway/**'
       - '.github/workflows/docker-image-gateway.yml'
       - '.github/workflows/docker-images-reusable.yml'
   pull_request:
     branches: [ "main" ]
     paths:
-      - 'backend/**'
+      - 'backend/api-gateway/**'
       - 'scripts/images/gateway/**'
       - '.github/workflows/docker-image-gateway.yml'
       - '.github/workflows/docker-images-reusable.yml'

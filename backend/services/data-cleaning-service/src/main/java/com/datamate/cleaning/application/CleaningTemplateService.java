@@ -77,6 +77,7 @@ public class CleaningTemplateService {
     @Transactional
     public CleaningTemplateDto createTemplate(CreateCleaningTemplateRequest request) {
         cleanTaskValidator.checkInputAndOutput(request.getInstance());
+        cleanTaskValidator.checkAndGetExecutorType(request.getInstance());
         CleaningTemplateDto template = new CleaningTemplateDto();
         String templateId = UUID.randomUUID().toString();
         template.setId(templateId);

@@ -24,7 +24,6 @@
 
         <!-- 核心服务 -->
         <module>data-management-service</module>
-        <module>data-collection-service</module>
         <module>operator-market-service</module>
         <module>data-cleaning-service</module>
         <module>data-synthesis-service</module>

@@ -1,0 +1,28 @@
+name: Label Studio Docker Image CI
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'scripts/images/label-studio/**'
+      - '.github/workflows/docker-image-label-studio.yml'
+      - '.github/workflows/docker-images-reusable.yml'
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'scripts/images/label-studio/**'
+      - '.github/workflows/docker-image-label-studio.yml'
+      - '.github/workflows/docker-images-reusable.yml'
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+  call-docker-build:
+    name: Build and Push Label Studio Docker Image
+    uses: ./.github/workflows/docker-images-reusable.yml
+    permissions:
+      contents: read
+      packages: write
+    with:
+      service_name: label-studio
+      build_dir: .
