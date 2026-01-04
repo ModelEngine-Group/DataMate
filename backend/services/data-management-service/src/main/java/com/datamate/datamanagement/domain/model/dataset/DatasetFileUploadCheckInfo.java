@@ -18,4 +18,7 @@ public class DatasetFileUploadCheckInfo {
 
     /** 是否为压缩包上传 */
     private boolean hasArchive;
+
+    /** 目标子目录前缀，例如 "images/"，为空表示数据集根目录 */
+    private String prefix;
 }

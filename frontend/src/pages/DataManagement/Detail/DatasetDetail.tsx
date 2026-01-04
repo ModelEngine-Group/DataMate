@@ -71,12 +71,21 @@ export default function DatasetDetail() {
 
   useEffect(() => {
     fetchDataset();
-    filesOperation.fetchFiles();
+    filesOperation.fetchFiles('', 1, 10); // 从根目录开始，第一页
   }, []);
 
-  const handleRefresh = async (showMessage = true) => {
+  const handleRefresh = async (showMessage = true, prefixOverride?: string) => {
     fetchDataset();
-    filesOperation.fetchFiles();
+    // 刷新当前目录，保持在当前页
+    const targetPrefix =
+      prefixOverride !== undefined
+        ? prefixOverride
+        : filesOperation.pagination.prefix;
+    filesOperation.fetchFiles(
+      targetPrefix,
+      filesOperation.pagination.current,
+      filesOperation.pagination.pageSize
+    );
     if (showMessage) message.success({ content: "数据刷新成功" });
   };
 
@@ -92,12 +101,17 @@ export default function DatasetDetail() {
   };
 
   useEffect(() => {
-    const refreshData = () => {
-      handleRefresh(false);
+    const refreshData = (e: Event) => {
+      const custom = e as CustomEvent<{ prefix?: string }>;
+      const prefixOverride = custom.detail?.prefix;
+      handleRefresh(false, prefixOverride);
     };
-    window.addEventListener("update:dataset", refreshData);
+    window.addEventListener("update:dataset", refreshData as EventListener);
     return () => {
-      window.removeEventListener("update:dataset", refreshData);
+      window.removeEventListener(
+        "update:dataset",
+        refreshData as EventListener
+      );
     };
   }, []);
 
@@ -232,6 +246,7 @@ export default function DatasetDetail() {
         data={dataset}
         open={showUploadDialog}
         onClose={() => setShowUploadDialog(false)}
+        prefix={filesOperation.pagination.prefix}
         updateEvent="update:dataset"
       />
       <EditDataset

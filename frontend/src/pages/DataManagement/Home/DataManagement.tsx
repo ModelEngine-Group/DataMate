@@ -391,6 +391,7 @@ export default function DatasetManagementPage() {
           setCurrentDataset(null);
           setShowUploadDialog(false);
         }}
+        prefix=""
         updateEvent="update:datasets"
       />
     </div>

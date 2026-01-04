@@ -54,6 +54,35 @@ export function uploadDatasetFileUsingPost(id: string | number, data: any) {
   return post(`/api/data-management/datasets/${id}/files`, data);
 }
 
+// 新建数据集文件夹
+export function createDatasetDirectoryUsingPost(
+  id: string | number,
+  data: { parentPrefix?: string; directoryName: string }
+) {
+  return post(`/api/data-management/datasets/${id}/files/directories`, data);
+}
+
+// 下载文件夹（打包为zip）
+export function downloadDirectoryUsingGet(
+  id: string | number,
+  directoryPath: string
+) {
+  const dirName = directoryPath.split('/').filter(Boolean).pop() || 'folder';
+  return download(
+    `/api/data-management/datasets/${id}/files/directories/download?prefix=${encodeURIComponent(directoryPath)}`,
+    null,
+    `${dirName}.zip`
+  );
+}
+
+// 删除文件夹（递归删除）
+export function deleteDirectoryUsingDelete(
+  id: string | number,
+  directoryPath: string
+) {
+  return del(`/api/data-management/datasets/${id}/files/directories?prefix=${encodeURIComponent(directoryPath)}`);
+}
+
 export function downloadFileByIdUsingGet(
   id: string | number,
   fileId: string | number,

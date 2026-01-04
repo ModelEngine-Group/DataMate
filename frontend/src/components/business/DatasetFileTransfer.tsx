@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect } from "react";
-import { Button, Input, Table } from "antd";
+import { Button, Input, Table, message } from "antd";
 import { RightOutlined } from "@ant-design/icons";
 import { mapDataset } from "@/pages/DataManagement/dataset.const";
 import {
@@ -20,6 +20,7 @@ interface DatasetFileTransferProps
   selectedFilesMap: { [key: string]: DatasetFile };
   onSelectedFilesChange: (filesMap: { [key: string]: DatasetFile }) => void;
   onDatasetSelect?: (dataset: Dataset | null) => void;
+  datasetTypeFilter?: DatasetType;
 }
 
 const fileCols = [
@@ -50,6 +51,7 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
   selectedFilesMap,
   onSelectedFilesChange,
   onDatasetSelect,
+  datasetTypeFilter = DatasetType.TEXT,
   ...props
 }) => {
   const [datasets, setDatasets] = React.useState<Dataset[]>([]);
@@ -75,6 +77,7 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
   const [datasetSelections, setDatasetSelections] = React.useState<Dataset[]>(
     []
   );
+  const [selectingAll, setSelectingAll] = React.useState<boolean>(false);
 
   const fetchDatasets = async () => {
     const { data } = await queryDatasetsUsingGet({
@@ -82,7 +85,7 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
       page: datasetPagination.current,
       size: datasetPagination.pageSize,
       keyword: datasetSearch,
-      type: DatasetType.TEXT,
+      type: datasetTypeFilter,
     });
     setDatasets(data.content.map(mapDataset) || []);
     setDatasetPagination((prev) => ({
@@ -116,7 +119,8 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
       setFiles(
         (data.content || []).map((item: DatasetFile) => ({
           ...item,
-          key: item.id,
+          id: item.id,
+          key: String(item.id), // rowKey 使用字符串，确保与 selectedRowKeys 类型一致
           datasetName: selectedDataset.name,
         }))
       );
@@ -134,7 +138,8 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
     // 当数据集变化时，重置文件分页并拉取第一页文件，避免额外的循环请求
     if (selectedDataset) {
       setFilesPagination({ current: 1, pageSize: 10, total: 0 });
-      fetchFiles({ page: 1, pageSize: 10 }).catch(() => {});
+      // 后端 page 参数为 0-based，这里传 0 获取第一页
+      fetchFiles({ page: 0, pageSize: 10 }).catch(() => {});
     } else {
       setFiles([]);
       setFilesPagination({ current: 1, pageSize: 10, total: 0 });
@@ -146,6 +151,73 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
   useEffect(() => {
     onDatasetSelect?.(selectedDataset);
   }, [selectedDataset, onDatasetSelect]);
+
+  const handleSelectAllInDataset = useCallback(async () => {
+    if (!selectedDataset) {
+      message.warning("请先选择一个数据集");
+      return;
+    }
+
+    try {
+      setSelectingAll(true);
+
+      const pageSize = 1000; // 分批拉取，避免后端单页限制
+      let page = 0; // 后端 page 参数为 0-based，从 0 开始
+      let total = 0;
+      const allFiles: DatasetFile[] = [];
+
+      while (true) {
+        const { data } = await queryDatasetFilesUsingGet(selectedDataset.id, {
+          page,
+          size: pageSize,
+        });
+
+        const content: DatasetFile[] = (data.content || []).map(
+          (item: DatasetFile) => ({
+            ...item,
+            key: item.id,
+            datasetName: selectedDataset.name,
+          }),
+        );
+
+        if (!content.length) {
+          break;
+        }
+
+        allFiles.push(...content);
+        // 优先用后端的 totalElements，否则用当前累积数
+        total = typeof data.totalElements === "number" ? data.totalElements : allFiles.length;
+
+        // 如果这一页数量小于 pageSize，说明已经拿完；否则继续下一页
+        if (content.length < pageSize) {
+          break;
+        }
+
+        page += 1;
+      }
+
+      const newMap: { [key: string]: DatasetFile } = { ...selectedFilesMap };
+      allFiles.forEach((file) => {
+        if (file && file.id != null) {
+          newMap[String(file.id)] = file;
+        }
+      });
+
+      onSelectedFilesChange(newMap);
+
+      const count = total || allFiles.length;
+      if (count > 0) {
+        message.success(`已选中当前数据集的全部 ${count} 个文件`);
+      } else {
+        message.info("当前数据集下没有可选文件");
+      }
+    } catch (error) {
+      console.error("Failed to select all files in dataset", error);
+      message.error("全选整个数据集失败，请稍后重试");
+    } finally {
+      setSelectingAll(false);
+    }
+  }, [selectedDataset, selectedFilesMap, onSelectedFilesChange]);
 
   const toggleSelectFile = (record: DatasetFile) => {
     if (!selectedFilesMap[record.id]) {
@@ -245,7 +317,18 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
         </div>
         <RightOutlined />
         <div className="border-card flex flex-col col-span-12">
-          <div className="border-bottom p-2 font-bold">选择文件</div>
+          <div className="border-bottom p-2 font-bold flex justify-between items-center">
+            <span>选择文件</span>
+            <Button
+              type="link"
+              size="small"
+              onClick={handleSelectAllInDataset}
+              disabled={!selectedDataset}
+              loading={selectingAll}
+            >
+              全选当前数据集
+            </Button>
+          </div>
           <div className="p-2">
             <Input
               placeholder="搜索文件名称..."
@@ -255,7 +338,7 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
           </div>
           <Table
             scroll={{ y: 400 }}
-            rowKey="id"
+            rowKey={(record) => String(record.id)}
             size="small"
             dataSource={files}
             columns={fileCols.slice(1, fileCols.length)}
@@ -268,7 +351,8 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
                   current: page,
                   pageSize: nextPageSize,
                 }));
-                fetchFiles({ page, pageSize: nextPageSize }).catch(() => {});
+                // 前端分页是 1-based，后端是 0-based，所以这里传 page - 1
+                fetchFiles({ page: page - 1, pageSize: nextPageSize }).catch(() => {});
               },
             }}
             onRow={(record: DatasetFile) => ({
@@ -277,31 +361,22 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
             rowSelection={{
               type: "checkbox",
               selectedRowKeys: Object.keys(selectedFilesMap),
+              preserveSelectedRowKeys: true,
 
               // 单选
               onSelect: (record: DatasetFile) => {
                 toggleSelectFile(record);
               },
 
-              // 全选
+              // 全选 - 改为全选整个数据集而不是当前页
               onSelectAll: (selected, selectedRows: DatasetFile[]) => {
                 if (selected) {
-                  // ✔ 全选 -> 将 files 列表全部加入 selectedFilesMap
-                  const newMap: Record<string, DatasetFile> = { ...selectedFilesMap };
-                  selectedRows.forEach((f) => {
-                    newMap[f.id] = f;
-                  });
-                  onSelectedFilesChange(newMap);
+                  // 点击表头“全选”时，改为一键全选当前数据集的全部文件
+                  // 而不是只选中当前页
+                  handleSelectAllInDataset();
                 } else {
-                  // ✘ 取消全选 -> 清空 map
-                  const newMap = { ...selectedFilesMap };
-                  Object.keys(newMap).forEach((id) => {
-                    if (files.some((f) => String(f.id) === id)) {
-                      // 仅移除当前页对应文件
-                      delete newMap[id];
-                    }
-                  });
-                  onSelectedFilesChange(newMap);
+                  // 取消表头“全选”时，清空当前已选文件
+                  onSelectedFilesChange({});
                 }
               },
 

@@ -1,9 +1,10 @@
-import { Button, Descriptions, DescriptionsProps, Modal, Table } from "antd";
+import { App, Button, Descriptions, DescriptionsProps, Modal, Table, Input } from "antd";
 import { formatBytes, formatDateTime } from "@/utils/unit";
 import { Download, Trash2, Folder, File } from "lucide-react";
 import { datasetTypeMap } from "../../dataset.const";
 
 export default function Overview({ dataset, filesOperation, fetchDataset }) {
+  const { modal, message } = App.useApp();
   const {
     fileList,
     pagination,
@@ -17,6 +18,9 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
     handleDownloadFile,
     handleBatchDeleteFiles,
     handleBatchExport,
+    handleCreateDirectory,
+    handleDownloadDirectory,
+    handleDeleteDirectory,
   } = filesOperation;
 
   // 文件列表多选配置
@@ -123,8 +127,9 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
               type="link"
               onClick={(e) => {
                 const currentPath = filesOperation.pagination.prefix || '';
-                const newPath = `${currentPath}${record.fileName}`;
-                filesOperation.fetchFiles(newPath);
+                // 文件夹路径必须以斜杠结尾
+                const newPath = `${currentPath}${record.fileName}/`;
+                filesOperation.fetchFiles(newPath, 1, filesOperation.pagination.pageSize);
               }}
             >
               {content}
@@ -150,9 +155,22 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
       render: (text: number, record: any) => {
         const isDirectory = record.id.startsWith('directory-');
         if (isDirectory) {
-          return "-";
+          return formatBytes(record.fileSize || 0);
         }
         return formatBytes(text)
+      },
+    },
+    {
+      title: "包含文件数",
+      dataIndex: "fileCount",
+      key: "fileCount",
+      width: 120,
+      render: (text: number, record: any) => {
+        const isDirectory = record.id.startsWith('directory-');
+        if (!isDirectory) {
+          return "-";
+        }
+        return record.fileCount ?? 0;
       },
     },
     {
@@ -169,9 +187,43 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
       fixed: "right",
       render: (_, record) => {
         const isDirectory = record.id.startsWith('directory-');
+        
         if (isDirectory) {
-          return <div className="flex"/>;
+          const currentPath = filesOperation.pagination.prefix || '';
+          const fullPath = `${currentPath}${record.fileName}/`;
+          
+          return (
+            <div className="flex">
+              <Button
+                size="small"
+                type="link"
+                onClick={() => handleDownloadDirectory(fullPath, record.fileName)}
+              >
+                下载
+              </Button>
+              <Button
+                size="small"
+                type="link"
+                onClick={() => {
+                  modal.confirm({
+                    title: '确认删除文件夹？',
+                    content: `删除文件夹 "${record.fileName}" 将同时删除其中的所有文件和子文件夹，此操作不可恢复。`,
+                    okText: '删除',
+                    okType: 'danger',
+                    cancelText: '取消',
+                    onOk: async () => {
+                      await handleDeleteDirectory(fullPath, record.fileName);
+                      fetchDataset();
+                    },
+                  });
+                }}
+              >
+                删除
+              </Button>
+            </div>
+          );
         }
+        
         return (
         <div className="flex">
           <Button
@@ -210,7 +262,39 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
         />
 
         {/* 文件列表 */}
-        <h2 className="text-base font-semibold mt-8">文件列表</h2>
+        <div className="flex items-center justify-between mt-8 mb-2">
+          <h2 className="text-base font-semibold">文件列表</h2>
+          <Button
+            type="primary"
+            size="small"
+            onClick={() => {
+              let dirName = "";
+              modal.confirm({
+                title: "新建文件夹",
+                content: (
+                  <Input
+                    autoFocus
+                    placeholder="请输入文件夹名称"
+                    onChange={(e) => {
+                      dirName = e.target.value?.trim();
+                    }}
+                  />
+                ),
+                okText: "确定",
+                cancelText: "取消",
+                onOk: async () => {
+                  if (!dirName) {
+                    message.warning("请输入文件夹名称");
+                    return Promise.reject();
+                  }
+                  await handleCreateDirectory(dirName);
+                },
+              });
+            }}
+          >
+            新建文件夹
+          </Button>
+        </div>
         {selectedFiles.length > 0 && (
           <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
             <span className="text-sm text-blue-700 font-medium">
@@ -240,10 +324,14 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
                 onClick={() => {
                   // 获取上一级目录
                   const currentPath = filesOperation.pagination.prefix || '';
-                  const pathParts = currentPath.split('/').filter(Boolean);
-                  pathParts.pop(); // 移除最后一个目录
+                  // 移除末尾的斜杠，然后按斜杠分割
+                  const trimmedPath = currentPath.replace(/\/$/, '');
+                  const pathParts = trimmedPath.split('/');
+                  // 移除最后一个目录名
+                  pathParts.pop();
+                  // 重新组合路径，如果还有内容则加斜杠，否则为空
                   const parentPath = pathParts.length > 0 ? `${pathParts.join('/')}/` : '';
-                  filesOperation.fetchFiles(parentPath);
+                  filesOperation.fetchFiles(parentPath, 1, filesOperation.pagination.pageSize);
                 }}
                 className="p-0"
               >
@@ -281,12 +369,7 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
               ...pagination,
               showTotal: (total) => `共 ${total} 条`,
               onChange: (page, pageSize) => {
-                filesOperation.setPagination(prev => ({
-                    ...prev,
-                    current: page,
-                    pageSize: pageSize
-                }));
-                filesOperation.fetchFiles(pagination.prefix, page, pageSize);
+                filesOperation.fetchFiles(filesOperation.pagination.prefix, page, pageSize);
               }
             }}
           />
