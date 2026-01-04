@@ -20,7 +20,6 @@ import {
   queryCleaningTasksUsingGet,
   stopCleaningTaskUsingPost,
 } from "../../cleansing.api";
-import { Eye } from "lucide-react";
 
 export default function TaskList() {
   const navigate = useNavigate();
@@ -89,10 +88,7 @@ export default function TaskList() {
       ...(isRunning
         ? [ pauseBtn ]
         : []),
-      ...(isComplete
-        ? [ startBtn ]
-        : []),
-      ...(showStart
+      ...(showStart || isComplete
         ? [ startBtn ]
         : []),
       {
