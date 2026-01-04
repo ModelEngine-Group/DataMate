@@ -5,6 +5,7 @@ import com.datamate.cleaning.interfaces.dto.*;
 import com.datamate.common.interfaces.PagedResponse;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.springaicommunity.mcp.annotation.McpTool;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -28,6 +29,7 @@ public class CleaningTaskController {
     }
 
     @PostMapping
+    @McpTool(description = "创建清洗任务")
     public CleaningTaskDto cleaningTasksPost(@RequestBody CreateCleaningTaskRequest request) {
         if (request.getInstance().isEmpty() && StringUtils.isNotBlank(request.getTemplateId())) {
             request.setInstance(cleaningTaskService.getInstanceByTemplateId(request.getTemplateId()));

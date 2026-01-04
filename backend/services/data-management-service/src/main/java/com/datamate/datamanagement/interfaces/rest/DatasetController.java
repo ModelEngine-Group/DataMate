@@ -11,6 +11,7 @@ import com.datamate.datamanagement.interfaces.dto.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springaicommunity.mcp.annotation.McpTool;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -45,6 +46,7 @@ public class DatasetController {
      * @return 创建的数据集响应
      */
     @PostMapping
+    @McpTool(description = "创建数据集")
     public DatasetResponse createDataset(@RequestBody @Valid CreateDatasetRequest createDatasetRequest) {
         Dataset dataset = datasetApplicationService.createDataset(createDatasetRequest);
         return DatasetConverter.INSTANCE.convertToResponse(dataset);

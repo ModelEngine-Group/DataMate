@@ -6,6 +6,7 @@ import com.datamate.cleaning.interfaces.dto.CreateCleaningTemplateRequest;
 import com.datamate.cleaning.interfaces.dto.UpdateCleaningTemplateRequest;
 import com.datamate.common.interfaces.PagedResponse;
 import lombok.RequiredArgsConstructor;
+import org.springaicommunity.mcp.annotation.McpTool;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -27,6 +28,7 @@ public class CleaningTemplateController {
     private final CleaningTemplateService cleaningTemplateService;
 
     @GetMapping
+    @McpTool(description = "查询模板列表")
     public PagedResponse<CleaningTemplateDto> cleaningTemplatesGet(
             @RequestParam(value = "page", required = false) Integer page,
             @RequestParam(value = "size", required = false) Integer size,
