@@ -14,7 +14,7 @@ import {useState} from "react";
 export default function TemplateList() {
   const navigate = useNavigate();
   const { message } = App.useApp();
-  const [viewMode, setViewMode] = useState<"card" | "list">("list");
+  const [viewMode, setViewMode] = useState<"card" | "list">("card");
 
   const {
     loading,
