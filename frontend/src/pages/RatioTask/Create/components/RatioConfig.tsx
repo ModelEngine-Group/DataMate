@@ -6,6 +6,7 @@ import {
   Select,
   Table,
   InputNumber,
+  DatePicker
 } from "antd";
 import { BarChart3 } from "lucide-react";
 import type { Dataset } from "@/pages/DataManagement/dataset.model.ts";
@@ -31,7 +32,7 @@ interface RatioConfigItem {
   percentage: number;
   source: string; // dataset id
   labelFilter?: LabelFilter;
-  dateRange?: number;
+  dateRange?: [Date | null, Date | null] | null;
 }
 
 interface RatioConfigProps {
@@ -303,20 +304,18 @@ const RatioConfig: FC<RatioConfigProps> = ({
                   title: "标签更新时间",
                   dataIndex: "dateRange",
                   key: "dateRange",
-                  render: (_: any, record: RatioConfigItem) => (
-                    <Select
-                      style={{ width: "140px" }}
-                      placeholder="选择标签更新时间"
-                      value={record.dateRange}
-                      options={TIME_RANGE_OPTIONS}
-                      allowClear
-                      onChange={(value) =>
-                        updateConfig(record.id, {
-                          dateRange: value || undefined,
-                        })
-                      }
-                    />
-                  ),
+                  render: (_: any, record: RatioConfigItem) => {
+                    return (
+                      <DatePicker.RangePicker
+                        value={record.dateRange as any}
+                        onChange={(date) => {
+                          updateConfig(record.id, { dateRange: date });
+                        }}
+                        placeholder={["开始时间", "结束时间"]}
+                        allowClear
+                      />
+                    );
+                  },
                 },
                 {
                   title: "数量",

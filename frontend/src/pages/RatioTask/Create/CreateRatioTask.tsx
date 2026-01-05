@@ -7,6 +7,7 @@ import { useNavigate } from "react-router";
 import SelectDataset from "@/pages/RatioTask/Create/components/SelectDataset.tsx";
 import BasicInformation from "@/pages/RatioTask/Create/components/BasicInformation.tsx";
 import RatioConfig from "@/pages/RatioTask/Create/components/RatioConfig.tsx";
+import {formatDate} from "@/utils/unit.ts";
 
 export default function CreateRatioTask() {
   const navigate = useNavigate();
@@ -37,10 +38,11 @@ export default function CreateRatioTask() {
       }
       const totals = String(values.totalTargetCount);
       const config = ratioTaskForm.ratioConfigs.map((c) => {
+        const dateRange = c.dateRange ? [formatDate(c.dateRange[0]), formatDate(c.dateRange[1])] : []
         return {
           datasetId: c.source,
           counts: String(c.quantity ?? 0),
-          filterConditions: { label: c.labelFilter, dateRange: String(c.dateRange ?? 0)},
+          filterConditions: { label: c.labelFilter, dateRange: dateRange},
         };
       });
 
