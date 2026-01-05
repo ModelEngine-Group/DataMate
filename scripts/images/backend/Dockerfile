@@ -1,6 +1,4 @@
 FROM maven:3-eclipse-temurin-21 AS builder
-
-COPY scripts/images/backend/settings.xml /usr/share/maven/conf/settings.xml
 COPY backend/ /opt/backend
 
 RUN cd /opt/backend/services && \
