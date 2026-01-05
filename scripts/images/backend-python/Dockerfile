@@ -17,19 +17,18 @@ FROM python:3.12-slim
 # Note: to use the cache mount syntax you must build with BuildKit enabled:
 # DOCKER_BUILDKIT=1 docker build . -f scripts/images/datamate-python/Dockerfile -t datamate-backend-python
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends openjdk-21-jre-headless \
-    && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends vim openjdk-21-jre nfs-common rsync && \
+    rm -rf /var/lib/apt/lists/*
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    # Poetry configuration
     POETRY_VERSION=2.2.1 \
     POETRY_NO_INTERACTION=1 \
     POETRY_VIRTUALENVS_CREATE=false \
     POETRY_CACHE_DIR=/tmp/poetry_cache
 
-ENV JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
+ENV JAVA_HOME=/usr/lib/jvm/java-21-openjdk
 
 ENV PATH="/root/.local/bin:$JAVA_HOME/bin:$PATH"
 
@@ -42,6 +41,7 @@ RUN --mount=type=cache,target=/root/.cache/pip \
     && pipx install "poetry==$POETRY_VERSION"
 
 COPY --from=datax-builder /DataX/target/datax/datax /opt/datax
+RUN cp /opt/datax/plugin/reader/mysqlreader/libs/mysql* /opt/datax/plugin/reader/starrocksreader/libs/
 
 # Copy only dependency files first (leverages layer caching when dependencies don't change)
 COPY runtime/datamate-python/pyproject.toml runtime/datamate-python/poetry.lock* /app/

@@ -85,7 +85,7 @@ public class NfsWriter extends Writer {
                     }
 
                     String filePath = this.mountPoint + "/" + fileName;
-                    ShellUtil.runCommand("rsync", Arrays.asList("--no-links", "--chmod=750", "--", filePath,
+                    ShellUtil.runCommand("rsync", Arrays.asList("--no-links", "--chmod=754", "--", filePath,
                             this.destPath + "/" + fileName));
                 }
             } catch (Exception e) {
