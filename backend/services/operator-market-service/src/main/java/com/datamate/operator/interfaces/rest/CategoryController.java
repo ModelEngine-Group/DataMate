@@ -4,6 +4,7 @@ import com.datamate.common.interfaces.PagedResponse;
 import com.datamate.operator.application.CategoryService;
 import com.datamate.operator.interfaces.dto.CategoryTreeResponse;
 import lombok.RequiredArgsConstructor;
+import org.springaicommunity.mcp.annotation.McpTool;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -18,6 +19,7 @@ public class CategoryController {
     private final CategoryService categoryService;
 
     @GetMapping("/tree")
+    @McpTool(description = "算子树状分类")
     public PagedResponse<CategoryTreeResponse> categoryTreeGet() {
         List<CategoryTreeResponse> allCategories = categoryService.getAllCategories();
         return PagedResponse.of(allCategories);
