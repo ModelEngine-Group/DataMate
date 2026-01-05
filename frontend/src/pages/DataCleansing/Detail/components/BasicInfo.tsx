@@ -1,8 +1,9 @@
 import {CleansingTask, TaskStatus} from "@/pages/DataCleansing/cleansing.model";
 import { Button, Card, Descriptions, Progress } from "antd";
-import { Activity, AlertCircle, CheckCircle, Clock } from "lucide-react";
+import { Activity, AlertCircle, BookOpen, CheckCircle, Clock } from "lucide-react";
 import { useNavigate } from "react-router";
 import {formatExecutionDuration} from "@/utils/unit.ts";
+import {CardHeader, CardTitle} from "@/components/Card.tsx";
 
 export default function BasicInfo({ task }: { task: CleansingTask }) {
   const navigate = useNavigate();
@@ -61,6 +62,12 @@ export default function BasicInfo({ task }: { task: CleansingTask }) {
     <>
       {/* 执行摘要 */}
       <Card className="mb-6">
+        <CardHeader className="p-1 pb-4">
+          <CardTitle className="flex items-center gap-2">
+            <BookOpen className="w h text-blue-600" />
+            执行摘要
+          </CardTitle>
+        </CardHeader>
         <div className="grid grid-cols-4 gap-4">
           <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg">
             <Clock className="w-8 h-8 text-blue-500 mb-2 mx-auto" />
