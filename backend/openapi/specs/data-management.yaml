@@ -231,6 +231,29 @@ paths:
               schema:
                 $ref: '#/components/schemas/PagedDatasetFileResponse'
 
+  /data-management/datasets/{datasetId}/files/directories:
+    post:
+      tags: [ DatasetFile ]
+      operationId: createDirectory
+      summary: 在数据集下创建子目录
+      description: 在指定数据集下的某个前缀路径中创建一个新的子目录
+      parameters:
+        - name: datasetId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 数据集ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDirectoryRequest'
+      responses:
+        '200':
+          description: 创建成功
+
   /data-management/datasets/{datasetId}/files/{fileId}:
     get:
       tags: [DatasetFile]
@@ -635,7 +658,22 @@ components:
           type: integer
           format: int64
           description: 总文件大小（字节）
+        prefix:
+          type: string
+          description: 目标子目录前缀，例如 "images/"，为空表示数据集根目录
       required: [ totalFileNum ]
+
+    CreateDirectoryRequest:
+      type: object
+      description: 创建数据集子目录请求
+      properties:
+        parentPrefix:
+          type: string
+          description: 父级前缀路径，例如 "images/"，为空表示数据集根目录
+        directoryName:
+          type: string
+          description: 新建目录名称
+      required: [ directoryName ]
 
     UploadFileRequest:
       type: object

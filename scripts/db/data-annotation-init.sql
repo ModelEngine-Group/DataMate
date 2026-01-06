@@ -37,6 +37,30 @@ CREATE TABLE t_dm_labeling_projects (
     INDEX idx_labeling_project_id (labeling_project_id)
 ) COMMENT='标注项目表';
 
+-- 自动标注任务表
+CREATE TABLE t_dm_auto_annotation_tasks (
+    id VARCHAR(36) PRIMARY KEY COMMENT 'UUID',
+    name VARCHAR(255) NOT NULL COMMENT '任务名称',
+    dataset_id VARCHAR(36) NOT NULL COMMENT '数据集ID',
+    dataset_name VARCHAR(255) COMMENT '数据集名称（冗余字段，方便查询）',
+    config JSON NOT NULL COMMENT '任务配置（模型规模、置信度等）',
+    file_ids JSON COMMENT '要处理的文件ID列表，为空则处理数据集所有图像',
+    status VARCHAR(50) NOT NULL DEFAULT 'pending' COMMENT '任务状态: pending/running/completed/failed',
+    progress INT DEFAULT 0 COMMENT '任务进度 0-100',
+    total_images INT DEFAULT 0 COMMENT '总图片数',
+    processed_images INT DEFAULT 0 COMMENT '已处理图片数',
+    detected_objects INT DEFAULT 0 COMMENT '检测到的对象总数',
+    output_path VARCHAR(500) COMMENT '输出路径',
+    error_message TEXT COMMENT '错误信息',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    completed_at TIMESTAMP NULL COMMENT '完成时间',
+    deleted_at TIMESTAMP NULL COMMENT '删除时间（软删除）',
+    INDEX idx_dataset_id (dataset_id),
+    INDEX idx_status (status),
+    INDEX idx_created_at (created_at)
+) COMMENT='自动标注任务表';
+
 
 -- 内置标注模板初始化数据
 -- 这些模板将在系统首次启动时自动创建

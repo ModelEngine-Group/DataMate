@@ -13,17 +13,20 @@ export default function ImportConfiguration({
   open,
   onClose,
   updateEvent = "update:dataset",
+  prefix,
 }: {
   data: Dataset | null;
   open: boolean;
   onClose: () => void;
   updateEvent?: string;
+  prefix?: string;
 }) {
   const [form] = Form.useForm();
   const [collectionOptions, setCollectionOptions] = useState([]);
   const [importConfig, setImportConfig] = useState<any>({
     source: DataSource.UPLOAD,
   });
+  const [currentPrefix, setCurrentPrefix] = useState<string>("");
 
   const [fileList, setFileList] = useState<UploadFile[]>([]);
   const fileSliceList = useMemo(() => {
@@ -45,6 +48,7 @@ export default function ImportConfiguration({
     fileList.forEach((file) => {
       formData.append("file", file);
     });
+    console.log('[ImportConfiguration] Uploading with currentPrefix:', currentPrefix);
     window.dispatchEvent(
       new CustomEvent("upload:dataset", {
         detail: {
@@ -52,6 +56,7 @@ export default function ImportConfiguration({
           files: fileSliceList,
           updateEvent,
           hasArchive: importConfig.hasArchive,
+          prefix: currentPrefix,
         },
       })
     );
@@ -82,14 +87,17 @@ export default function ImportConfiguration({
   };
 
   const resetState = () => {
+    console.log('[ImportConfiguration] resetState called, preserving currentPrefix:', currentPrefix);
     form.resetFields();
     setFileList([]);
     form.setFieldsValue({ files: null });
     setImportConfig({ source: importConfig.source ? importConfig.source : DataSource.UPLOAD });
+    console.log('[ImportConfiguration] resetState done, currentPrefix still:', currentPrefix);
   };
 
   const handleImportData = async () => {
     if (!data) return;
+    console.log('[ImportConfiguration] handleImportData called, currentPrefix:', currentPrefix);
     if (importConfig.source === DataSource.UPLOAD) {
       await handleUpload(data);
     } else if (importConfig.source === DataSource.COLLECTION) {
@@ -102,10 +110,19 @@ export default function ImportConfiguration({
 
   useEffect(() => {
     if (open) {
+      setCurrentPrefix(prefix || "");
+      console.log('[ImportConfiguration] Modal opened with prefix:', prefix);
       resetState();
       fetchCollectionTasks();
     }
-  }, [open, importConfig.source]);
+  }, [open]);
+
+  // Separate effect for fetching collection tasks when source changes
+  useEffect(() => {
+    if (open && importConfig.source === DataSource.COLLECTION) {
+      fetchCollectionTasks();
+    }
+  }, [importConfig.source]);
 
   return (
     <Modal

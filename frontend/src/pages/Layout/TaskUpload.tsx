@@ -19,8 +19,10 @@ export default function TaskUpload() {
 
   useEffect(() => {
     const uploadHandler = (e: any) => {
+      console.log('[TaskUpload] Received upload event detail:', e.detail);
       const { files } = e.detail;
       const task = createTask(e.detail);
+      console.log('[TaskUpload] Created task with prefix:', task.prefix);
       handleUpload({ task, files });
     };
     window.addEventListener("upload:dataset", uploadHandler);

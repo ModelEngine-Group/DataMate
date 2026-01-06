@@ -199,15 +199,11 @@ function CardView<T extends BaseCardDataType>(props: CardViewProps<T>) {
                             ? ""
                             : "bg-gradient-to-br from-sky-300 to-blue-500 text-white"
                         }`}
-                        style={{
-                          ...(item?.iconColor
+                        style={
+                          item?.iconColor
                             ? { backgroundColor: item.iconColor }
-                            : {}),
-                          backgroundImage:
-                            "linear-gradient(180deg, rgba(255,255,255,0.35), rgba(255,255,255,0.05))",
-                          boxShadow:
-                            "inset 0 0 0 1px rgba(255,255,255,0.25)",
-                        }}
+                            : {}
+                        }
                       >
                         <div className="w-[2.1rem] h-[2.1rem] text-gray-50">{item?.icon}</div>
                       </div>

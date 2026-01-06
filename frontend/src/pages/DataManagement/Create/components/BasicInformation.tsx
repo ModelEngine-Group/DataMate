@@ -3,6 +3,7 @@ import { Input, Select, Form } from "antd";
 import { datasetTypes } from "../../dataset.const";
 import { useEffect, useState } from "react";
 import { queryDatasetTagsUsingGet } from "../../dataset.api";
+import {queryTasksUsingGet} from "@/pages/DataCollection/collection.apis.ts";
 
 export default function BasicInformation({
   data,
@@ -20,6 +21,7 @@ export default function BasicInformation({
       options: { label: JSX.Element; value: string }[];
     }[]
   >([]);
+  const [collectionOptions, setCollectionOptions] = useState([]);
 
   // 获取标签
   const fetchTags = async () => {
@@ -36,8 +38,23 @@ export default function BasicInformation({
     }
   };
 
+  // 获取归集任务
+  const fetchCollectionTasks = async () => {
+    try {
+      const res = await queryTasksUsingGet({ page: 0, size: 100 });
+      const options = res.data.content.map((task: any) => ({
+        label: task.name,
+        value: task.id,
+      }));
+      setCollectionOptions(options);
+    } catch (error) {
+      console.error("Error fetching collection tasks:", error);
+    }
+  };
+
   useEffect(() => {
     fetchTags();
+    fetchCollectionTasks();
   }, []);
   return (
     <>
@@ -76,6 +93,11 @@ export default function BasicInformation({
             options={tagOptions}
             placeholder="请选择标签"
           />
+        </Form.Item>
+      )}
+      {!hidden.includes("dataSource") && (
+        <Form.Item name="dataSource" label="关联归集任务">
+          <Select placeholder="请选择归集任务" options={collectionOptions} />
         </Form.Item>
       )}
     </>

@@ -100,57 +100,58 @@ const OperatorLibrary: React.FC<OperatorLibraryProps> = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [showFavorites, setShowFavorites] = useState(false);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
-    new Set([])
-  );
+  const [selectedCategory, setSelectedCategory] = useState<string[]>([]);
 
-  // 按分类分组
+  const [operatorListFiltered, setOperatorListFiltered] = useState<OperatorI[]>([]);
+// 按分类分组
   const groupedOperators = useMemo(() => {
-    const groups: { [key: string]: OperatorI[] } = {};
+    const groups: { [key: string]: any[] } = {};
+    let operatorFilteredList: OperatorI[];
     categoryOptions.forEach((cat: any) => {
-      groups[cat.name] = {
+      groups[cat.id] = {
         ...cat,
         operators: operatorList.filter((op) => op.categories?.includes(cat.id)),
       };
     });
 
-    if (selectedCategory && selectedCategory !== "all") {
-      Object.keys(groups).forEach((key) => {
-        if (groups[key].id !== selectedCategory) {
-          delete groups[key];
+    if (selectedCategory.length) {
+      const groupedFiltered: { [key: string]: any[] } = {};
+      selectedCategory.forEach((cat: any) => {
+        let parent = groups[cat].type;
+        if (!groupedFiltered[parent]) {
+          groupedFiltered[parent] = groups[cat].operators
+        } else {
+          groupedFiltered[parent] = Array.from(
+            new Map([...groupedFiltered[parent], ...groups[cat].operators].map(item => [item.id, item])).values()
+          );
         }
+      })
+      operatorFilteredList = Object.values(groupedFiltered).reduce((acc, currentList) => {
+        if (acc.length === 0) return [];
+        const currentIds = new Set(currentList.map(item => item.id));
+        return acc.filter(item => currentIds.has(item.id));
       });
+    } else {
+      operatorFilteredList = [...operatorList];
     }
 
     if (searchTerm) {
-      Object.keys(groups).forEach((key) => {
-        groups[key].operators = groups[key].operators.filter((operator) =>
-          operator.name.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-        if (groups[key].operators.length === 0) {
-          delete groups[key];
-        }
-      });
+      operatorFilteredList = operatorFilteredList.filter(operator =>
+        operator.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
     }
 
     if (showFavorites) {
-      Object.keys(groups).forEach((key) => {
-        groups[key].operators = groups[key].operators.filter((operator) =>
-          favorites.has(operator.id)
-        );
-        if (groups[key].operators.length === 0) {
-          delete groups[key];
-        }
-      });
+      operatorFilteredList = operatorFilteredList.filter((operator) =>
+        favorites.has(operator.id)
+      );
     }
-
-    setExpandedCategories(new Set(Object.keys(groups)));
+    setOperatorListFiltered([...operatorFilteredList]);
     return groups;
   }, [categoryOptions, selectedCategory, searchTerm, showFavorites]);
 
   // 过滤算子
-  const filteredOperators = useMemo(() => {
+  useMemo(() => {
     return Object.values(groupedOperators).flatMap(
       (category) => category.operators
     );
@@ -190,17 +191,37 @@ const OperatorLibrary: React.FC<OperatorLibraryProps> = ({
     setSelectedOperators(newSelected);
   };
 
+  const handleSelectCategory = (categoryOptions) => {
+    const groups: Record<string, any> = {};
+    const tree: any[] = [];
+    categoryOptions.forEach(item => {
+      const groupName = item.type;
+      if (!groups[groupName]) {
+        const newGroup = {
+          label: groupName,
+          title: groupName,
+          options: []
+        };
+        groups[groupName] = newGroup;
+        tree.push(newGroup);
+      }
+      const { type, ...childItem } = item;
+      groups[groupName].options.push(childItem);
+    });
+    return tree;
+  }
+
   return (
     <div className="w-1/4 h-full min-w-3xs flex flex-col">
       <div className="pb-4 border-b border-gray-200">
         <span className="flex items-center font-semibold text-base">
           <Layers className="w-4 h-4 mr-2" />
-          算子库
+          算子库({operatorList.length})
         </span>
       </div>
       <div className="flex flex-col h-full pt-4 pr-4 overflow-hidden">
         {/* 过滤器 */}
-        <div className="flex flex-wrap gap-2 border-b border-gray-100 pb-4">
+        <div className="flex flex-wrap gap-2 border-b border-gray-100 pb-2">
           <Input
             prefix={<SearchOutlined />}
             placeholder="搜索算子名称..."
@@ -210,8 +231,10 @@ const OperatorLibrary: React.FC<OperatorLibraryProps> = ({
           />
           <Select
             value={selectedCategory}
-            options={[{ label: "全部分类", value: "all" }, ...categoryOptions]}
+            options={handleSelectCategory(categoryOptions)}
             onChange={setSelectedCategory}
+            mode="multiple"
+            allowClear
             className="flex-1"
             placeholder="选择分类"
           ></Select>
@@ -227,53 +250,32 @@ const OperatorLibrary: React.FC<OperatorLibraryProps> = ({
               )}
             </span>
           </Tooltip>
+          <div className="flex items-center justify-right w-full">
+            <Button
+              type="link"
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleSelectAll(operatorListFiltered);
+              }}
+            >
+              全选
+              <Tag>{operatorListFiltered.length}</Tag>
+            </Button>
+          </div>
         </div>
         {/* 算子列表 */}
         <div className="flex-1 overflow-auto">
-          {/* 分类算子 */}
-          <Collapse
-            ghost
-            activeKey={Array.from(expandedCategories)}
-            onChange={(keys) =>
-              setExpandedCategories(
-                new Set(Array.isArray(keys) ? keys : [keys])
-              )
-            }
-          >
-            {Object.entries(groupedOperators).map(([key, category]) => (
-              <Collapse.Panel
-                key={key}
-                header={
-                  <div className="flex items-center justify-between w-full">
-                    <span className="flex items-center gap-2">
-                      <span>{category.name}</span>
-                      <Tag>{category.operators.length}</Tag>
-                    </span>
-                    <Button
-                      type="link"
-                      size="small"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleSelectAll(category.operators);
-                      }}
-                    >
-                      全选
-                    </Button>
-                  </div>
-                }
-              >
-                <OperatorList
-                  selectedOperators={selectedOperators}
-                  operators={category.operators}
-                  favorites={favorites}
-                  toggleOperator={toggleOperator}
-                  onDragOperator={handleDragStart}
-                  toggleFavorite={toggleFavorite}
-                />
-              </Collapse.Panel>
-            ))}
-          </Collapse>
-          {filteredOperators.length === 0 && (
+          <OperatorList
+            selectedOperators={selectedOperators}
+            operators={operatorListFiltered}
+            favorites={favorites}
+            toggleOperator={toggleOperator}
+            onDragOperator={handleDragStart}
+            toggleFavorite={toggleFavorite}
+          />
+
+          {operatorListFiltered.length === 0 && (
             <div className="text-center py-8 text-gray-400">
               <SearchOutlined className="text-3xl mb-2 opacity-50" />
               <div>未找到匹配的算子</div>

@@ -271,14 +271,13 @@ class RatioTaskService:
         logger.info(f"start filter file: {file}, conditions: {conditions}")
 
         # Check data range condition if provided
-        if conditions.date_range:
+        if conditions.date_range and len(conditions.date_range) == 2:
             try:
                 from datetime import datetime, timedelta
-                data_range_days = int(conditions.date_range)
-                if data_range_days > 0:
-                    cutoff_date = datetime.now() - timedelta(days=data_range_days)
-                    if file.tags_updated_at and file.tags_updated_at < cutoff_date:
-                        return False
+                start_at = datetime.fromisoformat(conditions.date_range[0])
+                end_at = datetime.fromisoformat(conditions.date_range[1])
+                if file.tags_updated_at and (file.tags_updated_at < start_at or file.tags_updated_at > end_at):
+                    return False
             except (ValueError, TypeError) as e:
                 logger.warning(f"Invalid data_range value: {conditions.date_range}", e)
                 return False
@@ -294,7 +293,7 @@ class RatioTaskService:
                 for tag in all_tags:
                     if conditions.label.label and tag.get("label") != conditions.label.label:
                         continue
-                    if conditions.label.value is None:
+                    if conditions.label.value is None or len(conditions.label.value) == 0:
                         return True
                     if tag.get("value") == conditions.label.value:
                         return True
