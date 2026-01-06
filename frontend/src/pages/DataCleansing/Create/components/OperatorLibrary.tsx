@@ -111,16 +111,32 @@ const OperatorLibrary: React.FC<OperatorLibraryProps> = ({
 
   // 按分类分组
   const groupedOperators = useMemo(() => {
-    const groups: { [key: string]: OperatorI[] } = {};
-    let operatorFilteredList = [];
+    const groups: { [key: string]: any[] } = {};
+    let operatorFilteredList: OperatorI[] = [];
     categoryOptions.forEach((cat: any) => {
-      groups[cat.name] = {
+      groups[cat.id] = {
         ...cat,
         operators: operatorList.filter((op) => op.categories?.includes(cat.id)),
       };
     });
+
     if (selectedCategory.length) {
-      operatorFilteredList = operatorList.filter((op) => hasCommon(op.categories || [], selectedCategory));
+      const groupedFiltered: { [key: string]: any[] } = {};
+      selectedCategory.forEach((cat: any) => {
+        let parent = groups[cat].type;
+        if (!groupedFiltered[parent]) {
+          groupedFiltered[parent] = groups[cat].operators
+        } else {
+          groupedFiltered[parent] = Array.from(
+            new Map([...groupedFiltered[parent], ...groups[cat].operators].map(item => [item.id, item])).values()
+          );
+        }
+      })
+      operatorFilteredList = Object.values(groupedFiltered).reduce((acc, currentList) => {
+        if (acc.length === 0) return [];
+        const currentIds = new Set(currentList.map(item => item.id));
+        return acc.filter(item => currentIds.has(item.id));
+      });
     } else {
       operatorFilteredList = [...operatorList];
     }
@@ -141,7 +157,7 @@ const OperatorLibrary: React.FC<OperatorLibraryProps> = ({
   }, [categoryOptions, selectedCategory, searchTerm, showFavorites]);
 
   // 过滤算子
-  const filteredOperators = useMemo(() => {
+  useMemo(() => {
     return Object.values(groupedOperators).flatMap(
       (category) => category.operators
     );
@@ -181,6 +197,26 @@ const OperatorLibrary: React.FC<OperatorLibraryProps> = ({
     setSelectedOperators(newSelected);
   };
 
+  const handleSelectCategory = (categoryOptions) => {
+    const groups: Record<string, any> = {};
+    const tree: any[] = [];
+    categoryOptions.forEach(item => {
+      const groupName = item.type;
+      if (!groups[groupName]) {
+        const newGroup = {
+          label: groupName,
+          title: groupName,
+          options: []
+        };
+        groups[groupName] = newGroup;
+        tree.push(newGroup);
+      }
+      const { type, ...childItem } = item;
+      groups[groupName].options.push(childItem);
+    });
+    return tree;
+  }
+
   return (
     <div className="w-1/4 h-full min-w-3xs flex flex-col">
       <div className="pb-4 border-b border-gray-200">
@@ -201,7 +237,7 @@ const OperatorLibrary: React.FC<OperatorLibraryProps> = ({
           />
           <Select
             value={selectedCategory}
-            options={[...categoryOptions.filter(item => item.name !== '已收藏')]}
+            options={handleSelectCategory(categoryOptions)}
             onChange={setSelectedCategory}
             mode="multiple"
             allowClear
