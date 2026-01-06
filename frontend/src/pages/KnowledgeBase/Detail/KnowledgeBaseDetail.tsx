@@ -170,6 +170,15 @@ const KnowledgeBaseDetailPage: React.FC = () => {
       width: 200,
       ellipsis: true,
       fixed: "left" as const,
+      render: (name: string, file: KBFile) => (
+        <Button
+          type="link"
+          style={{ padding: 0 }}
+          onClick={() => navigate(`/data/knowledge-base/${id}/files/${file.id}`)}
+        >
+          {name}
+        </Button>
+      ),
     },
     {
       title: "状态",

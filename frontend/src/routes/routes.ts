@@ -228,6 +228,10 @@ const router = createBrowserRouter([
             path: "file-detail/:id",
             Component: KnowledgeBaseFileDetailPage,
           },
+          {
+            path: ":knowledgeBaseId/files/:ragFileId",
+            Component: KnowledgeBaseFileDetailPage,
+          },
         ],
       },
       {
