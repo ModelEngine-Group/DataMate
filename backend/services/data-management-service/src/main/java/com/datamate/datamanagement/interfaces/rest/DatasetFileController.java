@@ -10,6 +10,7 @@ import com.datamate.datamanagement.domain.model.dataset.DatasetFile;
 import com.datamate.datamanagement.interfaces.converter.DatasetConverter;
 import com.datamate.datamanagement.interfaces.dto.AddFilesRequest;
 import com.datamate.datamanagement.interfaces.dto.CopyFilesRequest;
+import com.datamate.datamanagement.interfaces.dto.CreateDirectoryRequest;
 import com.datamate.datamanagement.interfaces.dto.DatasetFileResponse;
 import com.datamate.datamanagement.interfaces.dto.UploadFileRequest;
 import com.datamate.datamanagement.interfaces.dto.UploadFilesPreRequest;
@@ -161,5 +162,36 @@ public class DatasetFileController {
                                                         @RequestBody @Valid AddFilesRequest req) {
         List<DatasetFile> datasetFiles = datasetFileApplicationService.addFilesToDataset(datasetId, req);
         return DatasetConverter.INSTANCE.convertToResponseList(datasetFiles);
+    }
+
+    /**
+     * 在数据集下创建子目录
+     */
+    @PostMapping("/directories")
+    public ResponseEntity<Void> createDirectory(@PathVariable("datasetId") String datasetId,
+                                                @RequestBody @Valid CreateDirectoryRequest req) {
+        datasetFileApplicationService.createDirectory(datasetId, req);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * 下载目录（压缩为 ZIP）
+     */
+    @IgnoreResponseWrap
+    @GetMapping(value = "/directories/download", produces = "application/zip")
+    public void downloadDirectory(@PathVariable("datasetId") String datasetId,
+                                   @RequestParam(value = "prefix", required = false, defaultValue = "") String prefix,
+                                   HttpServletResponse response) {
+        datasetFileApplicationService.downloadDirectory(datasetId, prefix, response);
+    }
+
+    /**
+     * 删除目录及其所有内容
+     */
+    @DeleteMapping("/directories")
+    public ResponseEntity<Void> deleteDirectory(@PathVariable("datasetId") String datasetId,
+                                                @RequestParam(value = "prefix", required = false, defaultValue = "") String prefix) {
+        datasetFileApplicationService.deleteDirectory(datasetId, prefix);
+        return ResponseEntity.ok().build();
     }
 }

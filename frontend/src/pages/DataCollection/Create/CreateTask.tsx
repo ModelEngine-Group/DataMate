@@ -81,19 +81,7 @@ export default function CollectionTaskCreate() {
   const handleSubmit = async () => {
     try {
       await form.validateFields();
-
-      const values = form.getFieldsValue(true);
-      const payload = {
-        name: values.name,
-        description: values.description,
-        syncMode: values.syncMode,
-        scheduleExpression: values.scheduleExpression,
-        timeoutSeconds: values.timeoutSeconds,
-        templateId: values.templateId,
-        config: values.config,
-      };
-
-      await createTaskUsingPost(payload);
+      await createTaskUsingPost(newTask);
       message.success("任务创建成功");
       navigate("/data/collection");
     } catch (error) {
@@ -104,88 +92,108 @@ export default function CollectionTaskCreate() {
   const selectedTemplate = templates.find((t) => t.id === selectedTemplateId);
 
   const renderTemplateFields = (
-    section: "parameter" | "reader" | "writer",
+    section: any[],
     defs: Record<string, TemplateFieldDef> | undefined
   ) => {
     if (!defs || typeof defs !== "object") return null;
+    let items_ = []
 
-    const items = Object.entries(defs).map(([key, def]) => {
+    Object.entries(defs).sort(([key1, def1], [key2, def2]) => {
+      const def1Order = def1?.index || 0;
+      const def2Order = def2?.index || 0;
+      return def1Order - def2Order;
+    }).forEach(([key, def]) => {
       const label = def?.name || key;
       const description = def?.description;
       const fieldType = (def?.type || "input").toLowerCase();
       const required = def?.required !== false;
-
       const rules = required
         ? [{ required: true, message: `请输入${label}` }]
         : undefined;
+      const name = section.concat(key)
 
-      if (fieldType === "password") {
-        return (
-          <Form.Item
-            key={`${section}.${key}`}
-            name={["config", section, key]}
-            label={label}
-            tooltip={description}
-            rules={rules}
-          >
-            <Input.Password placeholder={description || `请输入${label}`} />
-          </Form.Item>
-        );
+      switch (fieldType) {
+        case "password":
+          items_.push((
+            <Form.Item
+              key={`${section}.${key}`}
+              name={name}
+              label={label}
+              tooltip={description}
+              rules={rules}
+            >
+              <Input.Password placeholder={description || `请输入${label}`} />
+            </Form.Item>
+          ));
+          break;
+        case "selecttag":
+          items_.push((
+            <Form.Item
+              name={name}
+              label={label}
+              rules={rules}
+            >
+              <Select placeholder={description || `请输入${label}`} mode="tags" />
+            </Form.Item>
+          ));
+          break;
+        case "select":
+          const options = (def?.options || []).map((opt: any) => {
+            if (typeof opt === "string" || typeof opt === "number") {
+              return { label: String(opt), value: opt };
+            }
+            return { label: opt?.label ?? String(opt?.value), value: opt?.value };
+          });
+          items_.push((
+            <Form.Item
+              key={`${section}.${key}`}
+              name={name}
+              label={label}
+              tooltip={description}
+              rules={rules}
+            >
+              <Select placeholder={description || `请选择${label}`} options={options} />
+            </Form.Item>
+          ));
+          break;
+        case "multiple":
+          const itemsMultiple = renderTemplateFields(name, def?.properties)
+          items_.push(itemsMultiple)
+          break;
+        case "multiplelist":
+          const realName = name.concat(0)
+          const itemsMultipleList = renderTemplateFields(realName, def?.properties)
+          items_.push(itemsMultipleList)
+          break;
+        case "inputlist":
+          items_.push((
+            <Form.Item
+              key={`${section}.${key}`}
+              name={name.concat(0)}
+              label={label}
+              tooltip={description}
+              rules={rules}
+            >
+              <Input placeholder={description || `请输入${label}`} />
+            </Form.Item>
+          ));
+          break;
+        default:
+          items_.push((
+            <Form.Item
+              key={`${section}.${key}`}
+              name={name}
+              label={label}
+              tooltip={description}
+              rules={rules}
+            >
+              <Input placeholder={description || `请输入${label}`} />
+            </Form.Item>
+          ));
       }
+    })
 
-      if (fieldType === "textarea") {
-        return (
-          <Form.Item
-            key={`${section}.${key}`}
-            name={["config", section, key]}
-            label={label}
-            tooltip={description}
-            rules={rules}
-            className="md:col-span-2"
-          >
-            <TextArea rows={4} placeholder={description || `请输入${label}`} />
-          </Form.Item>
-        );
-      }
-
-      if (fieldType === "select") {
-        const options = (def?.options || []).map((opt: any) => {
-          if (typeof opt === "string" || typeof opt === "number") {
-            return { label: String(opt), value: opt };
-          }
-          return { label: opt?.label ?? String(opt?.value), value: opt?.value };
-        });
-        return (
-          <Form.Item
-            key={`${section}.${key}`}
-            name={["config", section, key]}
-            label={label}
-            tooltip={description}
-            rules={rules}
-          >
-            <Select placeholder={description || `请选择${label}`} options={options} />
-          </Form.Item>
-        );
-      }
-
-      return (
-        <Form.Item
-          key={`${section}.${key}`}
-          name={["config", section, key]}
-          label={label}
-          tooltip={description}
-          rules={rules}
-        >
-          <Input placeholder={description || `请输入${label}`} />
-        </Form.Item>
-      );
-    });
-
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
-        {items}
-      </div>
-    );
+    return items_
   };
 
   const getPropertyCountSafe = (obj: any) => {
@@ -342,10 +350,12 @@ export default function CollectionTaskCreate() {
                     <h3 className="font-medium text-gray-900 pt-2 mb-2">
                       模板参数
                     </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
                     {renderTemplateFields(
-                      "parameter",
+                      ["config", "parameter"],
                       selectedTemplate.templateContent?.parameter as Record<string, TemplateFieldDef>
                     )}
+                    </div>
                   </>
                 ): null}
 
@@ -354,10 +364,12 @@ export default function CollectionTaskCreate() {
                     <h3 className="font-medium text-gray-900 pt-2 mb-2">
                       源端参数
                     </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
                     {renderTemplateFields(
-                      "reader",
+                      ["config", "reader"],
                       selectedTemplate.templateContent?.reader as Record<string, TemplateFieldDef>
                     )}
+                    </div>
                   </>
                 ) : null}
 
@@ -366,10 +378,12 @@ export default function CollectionTaskCreate() {
                     <h3 className="font-medium text-gray-900 pt-2 mb-2">
                       目标端参数
                     </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
                     {renderTemplateFields(
-                      "writer",
+                      ["config", "writer"],
                       selectedTemplate.templateContent?.writer as Record<string, TemplateFieldDef>
                     )}
+                    </div>
                   </>
                 ) : null}
               </>

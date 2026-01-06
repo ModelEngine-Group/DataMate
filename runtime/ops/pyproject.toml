@@ -31,4 +31,5 @@ dependencies = [
     "sqlalchemy>=2.0.44",
     "xmltodict>=1.0.2",
     "zhconv>=1.4.3",
+    "ultralytics>=8.0.0",
 ]

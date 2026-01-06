@@ -9,6 +9,9 @@ import {
   downloadFileByIdUsingGet,
   exportDatasetUsingPost,
   queryDatasetFilesUsingGet,
+  createDatasetDirectoryUsingPost,
+  downloadDirectoryUsingGet,
+  deleteDirectoryUsingDelete,
 } from "../dataset.api";
 import { useParams } from "react-router";
 
@@ -31,18 +34,16 @@ export function useFilesOperation(dataset: Dataset) {
   const [previewContent, setPreviewContent] = useState("");
   const [previewFileName, setPreviewFileName] = useState("");
 
-  const fetchFiles = async (prefix: string = '', current, pageSize) => {
+  const fetchFiles = async (prefix?: string, current?, pageSize?) => {
+    // 如果明确传了 prefix（包括空字符串），使用传入的值；否则使用当前 pagination.prefix
+    const targetPrefix = prefix !== undefined ? prefix : (pagination.prefix || '');
+    
     const params: any = {
-      page: current ? current : pagination.current,
-      size: pageSize ? pageSize : pagination.pageSize,
+      page: current !== undefined ? current : pagination.current,
+      size: pageSize !== undefined ? pageSize : pagination.pageSize,
       isWithDirectory: true,
+      prefix: targetPrefix,
     };
-
-    if (prefix !== undefined) {
-      params.prefix = prefix;
-    } else if (pagination.prefix) {
-      params.prefix = pagination.prefix;
-    }
 
     const { data } = await queryDatasetFilesUsingGet(id!, params);
     setFileList(data.content || []);
@@ -50,7 +51,9 @@ export function useFilesOperation(dataset: Dataset) {
     // Update pagination with current prefix
     setPagination(prev => ({
       ...prev,
-      prefix: prefix !== undefined ? prefix : prev.prefix,
+      current: params.page,
+      pageSize: params.size,
+      prefix: targetPrefix,
       total: data.totalElements || 0,
     }));
   };
@@ -145,5 +148,39 @@ export function useFilesOperation(dataset: Dataset) {
     handleShowFile,
     handleDeleteFile,
     handleBatchExport,
+    handleCreateDirectory: async (directoryName: string) => {
+      const currentPrefix = pagination.prefix || "";
+      try {
+        await createDatasetDirectoryUsingPost(dataset.id, {
+          parentPrefix: currentPrefix,
+          directoryName,
+        });
+        // 创建成功后刷新当前目录，重置到第一页
+        await fetchFiles(currentPrefix, 1, pagination.pageSize);
+        message.success({ content: `文件夹 ${directoryName} 创建成功` });
+      } catch (error) {
+        message.error({ content: `文件夹 ${directoryName} 创建失败` });
+        throw error;
+      }
+    },
+    handleDownloadDirectory: async (directoryPath: string, directoryName: string) => {
+      try {
+        await downloadDirectoryUsingGet(dataset.id, directoryPath);
+        message.success({ content: `文件夹 ${directoryName} 下载成功` });
+      } catch (error) {
+        message.error({ content: `文件夹 ${directoryName} 下载失败` });
+      }
+    },
+    handleDeleteDirectory: async (directoryPath: string, directoryName: string) => {
+      try {
+        await deleteDirectoryUsingDelete(dataset.id, directoryPath);
+        // 删除成功后刷新当前目录
+        const currentPrefix = pagination.prefix || "";
+        await fetchFiles(currentPrefix, 1, pagination.pageSize);
+        message.success({ content: `文件夹 ${directoryName} 已删除` });
+      } catch (error) {
+        message.error({ content: `文件夹 ${directoryName} 删除失败` });
+      }
+    },
   };
 }

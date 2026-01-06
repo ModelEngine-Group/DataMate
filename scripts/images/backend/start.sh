@@ -2,7 +2,7 @@
 
 set -e
 
-rpcbind
+umask 0022
 
 echo "Starting main application..."
 exec "$@"

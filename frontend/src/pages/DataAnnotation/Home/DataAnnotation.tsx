@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Card, Button, Table, message, Modal, Tabs } from "antd";
+import { Card, Button, Table, message, Modal, Tabs, Tag, Progress, Tooltip } from "antd";
 import {
   PlusOutlined,
   EditOutlined,
@@ -11,9 +11,11 @@ import CardView from "@/components/CardView";
 import type { AnnotationTask } from "../annotation.model";
 import useFetchData from "@/hooks/useFetchData";
 import {
-  deleteAnnotationTaskByIdUsingDelete, loginAnnotationUsingGet,
+  deleteAnnotationTaskByIdUsingDelete,
   queryAnnotationTasksUsingGet,
   syncAnnotationTaskUsingPost,
+  queryAutoAnnotationTasksUsingGet,
+  deleteAutoAnnotationTaskByIdUsingDelete,
 } from "../annotation.api";
 import { mapAnnotationTask } from "../annotation.const";
 import CreateAnnotationTask from "../Create/components/CreateAnnotationTaskDialog";
@@ -21,11 +23,28 @@ import { ColumnType } from "antd/es/table";
 import { TemplateList } from "../Template";
 // Note: DevelopmentInProgress intentionally not used here
 
+const AUTO_STATUS_LABELS: Record<string, string> = {
+  pending: "等待中",
+  running: "处理中",
+  completed: "已完成",
+  failed: "失败",
+  cancelled: "已取消",
+};
+
+const AUTO_MODEL_SIZE_LABELS: Record<string, string> = {
+  n: "YOLOv8n (最快)",
+  s: "YOLOv8s",
+  m: "YOLOv8m",
+  l: "YOLOv8l (推荐)",
+  x: "YOLOv8x (最精确)",
+};
+
 export default function DataAnnotation() {
   // return <DevelopmentInProgress showTime="2025.10.30" />;
   const [activeTab, setActiveTab] = useState("tasks");
   const [viewMode, setViewMode] = useState<"list" | "card">("list");
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [autoTasks, setAutoTasks] = useState<any[]>([]);
 
   const {
     loading,
@@ -41,6 +60,22 @@ export default function DataAnnotation() {
   const [selectedRowKeys, setSelectedRowKeys] = useState<(string | number)[]>([]);
   const [selectedRows, setSelectedRows] = useState<any[]>([]);
 
+  // 拉取自动标注任务（供轮询和创建成功后立即刷新复用）
+  const refreshAutoTasks = async (silent = false) => {
+    try {
+      const response = await queryAutoAnnotationTasksUsingGet();
+      const tasks = (response as any)?.data || response || [];
+      if (Array.isArray(tasks)) {
+        setAutoTasks(tasks);
+      }
+    } catch (error) {
+      console.error("Failed to fetch auto annotation tasks:", error);
+      if (!silent) {
+        message.error("获取自动标注任务失败");
+      }
+    }
+  };
+
   // prefetch config on mount so clicking annotate is fast and we know whether base URL exists
   // useEffect ensures this runs once
   useEffect(() => {
@@ -55,6 +90,16 @@ export default function DataAnnotation() {
     })();
     return () => {
       mounted = false;
+    };
+  }, []);
+
+  // 自动标注任务轮询（用于在同一表格中展示处理进度）
+  useEffect(() => {
+    refreshAutoTasks();
+    const timer = setInterval(() => refreshAutoTasks(true), 3000);
+
+    return () => {
+      clearInterval(timer);
     };
   }, []);
 
@@ -76,7 +121,6 @@ export default function DataAnnotation() {
 
         if (labelingProjId) {
           // only open external Label Studio when we have a configured base url
-          await loginAnnotationUsingGet(labelingProjId)
           if (base) {
             const target = `${base}/projects/${labelingProjId}/data`;
             window.open(target, "_blank");
@@ -126,6 +170,30 @@ export default function DataAnnotation() {
     });
   };
 
+  const handleDeleteAuto = (task: any) => {
+    Modal.confirm({
+      title: `确认删除自动标注任务「${task.name}」吗？`,
+      content: <div>删除任务后，已生成的标注结果不会被删除。</div>,
+      okText: "删除",
+      okType: "danger",
+      cancelText: "取消",
+      onOk: async () => {
+        try {
+          await deleteAutoAnnotationTaskByIdUsingDelete(task.id);
+          message.success("自动标注任务删除成功");
+          // 重新拉取自动标注任务
+          setAutoTasks((prev) => prev.filter((t: any) => t.id !== task.id));
+          // 清理选中
+          setSelectedRowKeys((keys) => keys.filter((k) => k !== task.id));
+          setSelectedRows((rows) => rows.filter((r) => r.id !== task.id));
+        } catch (e) {
+          console.error(e);
+          message.error("删除失败，请稍后重试");
+        }
+      },
+    });
+  };
+
   const handleSync = (task: AnnotationTask, batchSize: number = 50) => {
     Modal.confirm({
       title: `确认同步标注任务「${task.name}」吗？`,
@@ -156,8 +224,13 @@ export default function DataAnnotation() {
 
   const handleBatchSync = (batchSize: number = 50) => {
     if (!selectedRows || selectedRows.length === 0) return;
+    const manualRows = selectedRows.filter((r) => r._kind !== "auto");
+    if (manualRows.length === 0) {
+      message.warning("请选择手动标注任务进行同步");
+      return;
+    }
     Modal.confirm({
-      title: `确认同步所选 ${selectedRows.length} 个标注任务吗？`,
+      title: `确认同步所选 ${manualRows.length} 个标注任务吗？`,
       content: (
         <div>
           <div>标注工程中文件列表将与数据集保持一致，差异项将会被修正。</div>
@@ -169,7 +242,7 @@ export default function DataAnnotation() {
       onOk: async () => {
         try {
           await Promise.all(
-            selectedRows.map((r) => syncAnnotationTaskUsingPost({ id: r.id, batchSize }))
+            manualRows.map((r) => syncAnnotationTaskUsingPost({ id: r.id, batchSize }))
           );
           message.success("批量同步请求已发送");
           fetchData();
@@ -185,6 +258,8 @@ export default function DataAnnotation() {
 
   const handleBatchDelete = () => {
     if (!selectedRows || selectedRows.length === 0) return;
+    const manualRows = selectedRows.filter((r) => r._kind !== "auto");
+    const autoRows = selectedRows.filter((r) => r._kind === "auto");
     Modal.confirm({
       title: `确认删除所选 ${selectedRows.length} 个标注任务吗？`,
       content: (
@@ -199,7 +274,10 @@ export default function DataAnnotation() {
       onOk: async () => {
         try {
           await Promise.all(
-            selectedRows.map((r) => deleteAnnotationTaskByIdUsingDelete(r.id))
+            [
+              ...manualRows.map((r) => deleteAnnotationTaskByIdUsingDelete(r.id)),
+              ...autoRows.map((r) => deleteAutoAnnotationTaskByIdUsingDelete(r.id)),
+            ]
           );
           message.success("批量删除已完成");
           fetchData();
@@ -238,6 +316,38 @@ export default function DataAnnotation() {
       onClick: handleDelete,
     },
   ];
+  // 合并手动标注任务与自动标注任务
+  const mergedTableData = [
+    // 手动标注任务
+    ...tableData.map((task) => ({
+      ...task,
+      _kind: "manual" as const,
+    })),
+    // 自动标注任务
+    ...autoTasks.map((task: any) => {
+      const sourceList = Array.isArray(task.sourceDatasets)
+        ? task.sourceDatasets
+        : task.datasetName
+        ? [task.datasetName]
+        : [];
+      const datasetName = sourceList.length > 0 ? sourceList.join("，") : "-";
+
+      return {
+        id: task.id,
+        name: task.name,
+        datasetName,
+        createdAt: task.createdAt || "-",
+        updatedAt: task.updatedAt || "-",
+        _kind: "auto" as const,
+        autoStatus: task.status,
+        autoProgress: task.progress,
+        autoProcessedImages: task.processedImages,
+        autoTotalImages: task.totalImages,
+        autoDetectedObjects: task.detectedObjects,
+        autoConfig: task.config || {},
+      };
+    }),
+  ];
 
   const columns: ColumnType<any>[] = [
     {
@@ -245,6 +355,13 @@ export default function DataAnnotation() {
       dataIndex: "name",
       key: "name",
       fixed: "left" as const,
+    },
+    {
+      title: "类型",
+      key: "kind",
+      width: 100,
+      render: (_: any, record: any) =>
+        record._kind === "auto" ? "自动标注" : "手动标注",
     },
     {
       title: "任务ID",
@@ -256,6 +373,88 @@ export default function DataAnnotation() {
       dataIndex: "datasetName",
       key: "datasetName",
       width: 180,
+    },
+    {
+      title: "模型",
+      key: "modelSize",
+      width: 160,
+      render: (_: any, record: any) => {
+        if (record._kind !== "auto") return "-";
+        const size = record.autoConfig?.modelSize;
+        return AUTO_MODEL_SIZE_LABELS[size] || size || "-";
+      },
+    },
+    {
+      title: "置信度",
+      key: "confThreshold",
+      width: 120,
+      render: (_: any, record: any) => {
+        if (record._kind !== "auto") return "-";
+        const threshold = record.autoConfig?.confThreshold;
+        if (typeof threshold !== "number") return "-";
+        return `${(threshold * 100).toFixed(0)}%`;
+      },
+    },
+    {
+      title: "目标类别",
+      key: "targetClasses",
+      width: 160,
+      render: (_: any, record: any) => {
+        if (record._kind !== "auto") return "-";
+        const classes: number[] = record.autoConfig?.targetClasses || [];
+        if (!classes.length) return "全部类别";
+        const text = classes.join(", ");
+        return (
+          <Tooltip title={text}>
+            <span>{`${classes.length} 个类别`}</span>
+          </Tooltip>
+        );
+      },
+    },
+    {
+      title: "自动标注状态",
+      key: "autoStatus",
+      width: 130,
+      render: (_: any, record: any) => {
+        if (record._kind !== "auto") return "-";
+        const status = record.autoStatus as string;
+        const label = AUTO_STATUS_LABELS[status] || status || "-";
+        return <Tag>{label}</Tag>;
+      },
+    },
+    {
+      title: "自动标注进度",
+      key: "autoProgress",
+      width: 200,
+      render: (_: any, record: any) => {
+        if (record._kind !== "auto") return "-";
+        const progress = typeof record.autoProgress === "number" ? record.autoProgress : 0;
+        const processed = record.autoProcessedImages ?? 0;
+        const total = record.autoTotalImages ?? 0;
+        return (
+          <div>
+            <Progress percent={progress} size="small" />
+            <div style={{ fontSize: 12, color: "#999" }}>
+              {processed} / {total}
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      title: "检测对象数",
+      key: "detectedObjects",
+      width: 120,
+      render: (_: any, record: any) => {
+        if (record._kind !== "auto") return "-";
+        const count = record.autoDetectedObjects;
+        if (typeof count !== "number") return "-";
+        try {
+          return count.toLocaleString();
+        } catch {
+          return String(count);
+        }
+      },
     },
     {
       title: "创建时间",
@@ -277,15 +476,24 @@ export default function DataAnnotation() {
       dataIndex: "actions",
       render: (_: any, task: any) => (
         <div className="flex items-center justify-center space-x-1">
-          {operations.map((operation) => (
+          {task._kind === "manual" &&
+            operations.map((operation) => (
+              <Button
+                key={operation.key}
+                type="text"
+                icon={operation.icon}
+                onClick={() => (operation?.onClick as any)?.(task)}
+                title={operation.label}
+              />
+            ))}
+          {task._kind === "auto" && (
             <Button
-              key={operation.key}
               type="text"
-              icon={operation.icon}
-              onClick={() => (operation?.onClick as any)?.(task)}
-              title={operation.label}
+              icon={<DeleteOutlined style={{ color: "#f5222d" }} />}
+              onClick={() => handleDeleteAuto(task)}
+              title="删除自动标注任务"
             />
-          ))}
+          )}
         </div>
       ),
     },
@@ -357,7 +565,7 @@ export default function DataAnnotation() {
                       rowKey="id"
                       loading={loading}
                       columns={columns}
-                      dataSource={tableData}
+                      dataSource={mergedTableData}
                       pagination={pagination}
                       rowSelection={{
                         selectedRowKeys,
@@ -381,7 +589,14 @@ export default function DataAnnotation() {
                 <CreateAnnotationTask
                   open={showCreateDialog}
                   onClose={() => setShowCreateDialog(false)}
-                  onRefresh={fetchData}
+                  onRefresh={(mode?: any) => {
+                    // 手动标注创建成功后刷新标注任务列表
+                    fetchData();
+                    // 自动标注创建成功后立即刷新自动标注任务列表
+                    if (mode === "auto") {
+                      refreshAutoTasks(true);
+                    }
+                  }}
                 />
               </div>
             ),

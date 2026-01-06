@@ -12,20 +12,25 @@ class LabelFilter(BaseModel):
     value: Optional[str] = Field(None, description="标签值")
 
 class FilterCondition(BaseModel):
-    date_range: Optional[str] = Field(None, description="数据范围", alias="dateRange")
+    date_range: Optional[List[str]] = Field(None, description="数据范围", alias="dateRange")
     label: Optional[LabelFilter] = Field(None, description="标签")
 
     @field_validator("date_range")
     @classmethod
-    def validate_date_range(cls, v: Optional[str]) -> Optional[str]:
-        # ensure it's a numeric string if provided
-        if not v:
-            return v
+    def validate_date_range(cls, date_range: Optional[List[str]]) -> Optional[List[str]]:
+        # ensure it's a date range if provided
+        if not date_range or len(date_range) == 0:
+            return date_range
+        if len(date_range) != 2:
+            raise ValueError("date_range must be a list of two date strings: [start, end]")
         try:
-            int(v)
-            return v
+            start = datetime.fromisoformat(date_range[0])
+            end = datetime.fromisoformat(date_range[1])
+            if start > end:
+                raise ValueError("date_range start must be earlier than or equal to end")
+            return date_range
         except (ValueError, TypeError) as e:
-            raise ValueError("date_range must be a numeric string")
+            raise ValueError("date_range items must be ISO date strings (e.g. YYYY-MM-DD)")
 
     class Config:
         # allow population by field name when constructing model programmatically

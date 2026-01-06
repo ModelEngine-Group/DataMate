@@ -1,8 +1,8 @@
 #!/bin/bash
 set -e
 
-if [-d $LOCAL_FILES_DOCUMENT_ROOT ] && $LOCAL_FILES_SERVING_ENABLED; then
-  echo "Using local document root: $LOCAL_FILES_DOCUMENT_ROOT"
+if [ -d "${LOCAL_FILES_DOCUMENT_ROOT}" ] && [ "${LOCAL_FILES_SERVING_ENABLED}" = "true" ]; then
+  echo "Using local document root: ${LOCAL_FILES_DOCUMENT_ROOT}"
 fi
 
 # 启动应用

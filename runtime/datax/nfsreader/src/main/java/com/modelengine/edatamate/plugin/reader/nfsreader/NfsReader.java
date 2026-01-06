@@ -69,12 +69,14 @@ public class NfsReader extends Reader {
         private Configuration jobConfig;
         private String mountPoint;
         private Set<String> fileType;
+        private List<String> files;
 
         @Override
         public void init() {
             this.jobConfig = super.getPluginJobConf();
             this.mountPoint = this.jobConfig.getString("mountPoint");
             this.fileType = new HashSet<>(this.jobConfig.getList("fileType", Collections.emptyList(), String.class));
+            this.files = this.jobConfig.getList("files", Collections.emptyList(), String.class);
         }
 
         @Override
@@ -83,6 +85,7 @@ public class NfsReader extends Reader {
                 List<String> files = stream.filter(Files::isRegularFile)
                         .filter(file -> fileType.isEmpty() || fileType.contains(getFileSuffix(file)))
                         .map(path -> path.getFileName().toString())
+                        .filter(fileName -> this.files.isEmpty() || this.files.contains(fileName))
                         .collect(Collectors.toList());
                 files.forEach(filePath -> {
                     Record record = recordSender.createRecord();

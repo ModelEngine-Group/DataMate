@@ -32,6 +32,7 @@ export function useFileSliceUpload(
       size: 0,
       updateEvent: detail.updateEvent,
       hasArchive: detail.hasArchive,
+      prefix: detail.prefix,
     };
     taskListRef.current = [task, ...taskListRef.current];
 
@@ -55,7 +56,14 @@ export function useFileSliceUpload(
     if (task.isCancel && task.cancelFn) {
       task.cancelFn();
     }
-    if (task.updateEvent) window.dispatchEvent(new Event(task.updateEvent));
+    if (task.updateEvent) {
+      // 携带前缀信息，便于刷新后仍停留在当前目录
+      window.dispatchEvent(
+        new CustomEvent(task.updateEvent, {
+          detail: { prefix: (task as any).prefix },
+        })
+      );
+    }
     if (showTaskCenter) {
       window.dispatchEvent(
         new CustomEvent("show:task-popover", { detail: { show: false } })
@@ -109,12 +117,15 @@ export function useFileSliceUpload(
   }
 
   async function uploadFile({ task, files, totalSize }) {
+    console.log('[useSliceUpload] Calling preUpload with prefix:', task.prefix);
     const { data: reqId } = await preUpload(task.key, {
       totalFileNum: files.length,
       totalSize,
       datasetId: task.key,
       hasArchive: task.hasArchive,
+      prefix: task.prefix,
     });
+    console.log('[useSliceUpload] PreUpload response reqId:', reqId);
 
     const newTask: TaskItem = {
       ...task,

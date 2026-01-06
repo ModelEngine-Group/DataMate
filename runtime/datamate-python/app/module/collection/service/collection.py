@@ -58,6 +58,7 @@ class CollectionTaskService:
                 logger.error(f"task {task_id} not exist")
                 return
             template = await session.execute(select(CollectionTemplate).where(CollectionTemplate.id == task.template_id))
+            template = template.scalar_one_or_none()
             if not template:
                 logger.error(f"template {task.template_name} not exist")
                 return
@@ -65,6 +66,6 @@ class CollectionTaskService:
             session.add(task_execution)
             await session.commit()
             await asyncio.to_thread(
-                DataxClient(execution=task_execution, task=task).run_datax_job
+                DataxClient(execution=task_execution, task=task, template=template).run_datax_job
             )
             await session.commit()
