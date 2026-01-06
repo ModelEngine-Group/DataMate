@@ -103,16 +103,10 @@ const OperatorLibrary: React.FC<OperatorLibraryProps> = ({
   const [selectedCategory, setSelectedCategory] = useState<string[]>([]);
 
   const [operatorListFiltered, setOperatorListFiltered] = useState<OperatorI[]>([]);
-
-  const hasCommon = (arr1: string[], arr2: string[]) => {
-    const set1 = new Set(arr1);
-    return arr2.some(item => set1.has(item));
-  }
-
-  // 按分类分组
+// 按分类分组
   const groupedOperators = useMemo(() => {
     const groups: { [key: string]: any[] } = {};
-    let operatorFilteredList: OperatorI[] = [];
+    let operatorFilteredList: OperatorI[];
     categoryOptions.forEach((cat: any) => {
       groups[cat.id] = {
         ...cat,
