@@ -15,7 +15,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class OperatorsListPostRequest extends PagingQuery {
-  private List<String> categories = new ArrayList<>();
+  private List<List<String>> categories = new ArrayList<>();
 
   private String keyword;
 

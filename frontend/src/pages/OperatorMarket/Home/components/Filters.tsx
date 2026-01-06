@@ -104,15 +104,21 @@ const FilterSection: React.FC<FilterSectionProps> = ({
 interface FiltersProps {
   categoriesTree: CategoryTreeI[];
   selectedFilters: { [key: string]: string[] };
+  selectedStar: boolean;
+  starCount: number;
   hideFilter: () => void;
   setSelectedFilters: (filters: { [key: string]: string[] }) => void;
+  setSelectedStar: (item: boolean) => void;
 }
 
 const Filters: React.FC<FiltersProps> = ({
   categoriesTree,
   selectedFilters,
+  selectedStar,
+  starCount,
   hideFilter,
   setSelectedFilters,
+  setSelectedStar,
 }) => {
   const clearAllFilters = () => {
     const newFilters = Object.keys(selectedFilters).reduce((acc, key) => {
@@ -125,6 +131,17 @@ const Filters: React.FC<FiltersProps> = ({
   const hasActiveFilters = Object.values(selectedFilters).some(
     (filters) => Array.isArray(filters) && filters.length > 0
   );
+
+  const starCategory = {
+    id: "starStatus",
+    count: starCount,
+    name: "收藏状态",
+    categories: [{
+      id: "isStar",
+      count: starCount,
+      name: "已收藏"
+    }]
+  };
 
   return (
     <div className="p-6 space-y-4 h-full overflow-y-auto">
@@ -170,6 +187,22 @@ const Filters: React.FC<FiltersProps> = ({
           showIcons={false}
         />
       ))}
+
+      <FilterSection
+        key={starCategory.id}
+        total={starCategory.count}
+        title={starCategory.name}
+        options={starCategory.categories.map(cat => ({
+          key: cat.id.toString(),
+          label: cat.name,
+          count: cat.count,
+        }))}
+        selectedValues={selectedStar ? ["isStar"] : []}
+        onSelectionChange={(values) => {
+          values.length > 0 ? setSelectedStar(true) : setSelectedStar(false);
+        }}
+        showIcons={false}
+      />
     </div>
   );
 };

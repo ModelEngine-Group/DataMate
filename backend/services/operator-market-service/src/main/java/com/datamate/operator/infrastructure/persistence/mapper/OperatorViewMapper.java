@@ -19,7 +19,7 @@ public interface OperatorViewMapper extends BaseMapper<OperatorView> {
     IPage<OperatorView> findOperatorsByCriteria(IPage<OperatorView> page,
                                                @Param(Constants.WRAPPER) Wrapper<OperatorView> queryWrapper);
 
-    @Select("SELECT COUNT(DISTINCT operator_id) AS count FROM v_operator ${ew.customSqlSegment}")
+    @Select("SELECT COUNT(1) FROM (SELECT 1 FROM v_operator ${ew.customSqlSegment}) AS t")
     Integer countOperatorsByCriteria(@Param(Constants.WRAPPER) Wrapper<OperatorView> queryWrapper);
 
     @Select("SELECT operator_id AS id, operator_name AS name, description, version, inputs, outputs, runtime, " +

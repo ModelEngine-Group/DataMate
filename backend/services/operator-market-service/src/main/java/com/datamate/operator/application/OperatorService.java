@@ -52,12 +52,12 @@ public class OperatorService {
     @Value("${operator.base.path:/operators}")
     private String operatorBasePath;
 
-    public List<OperatorDto> getOperators(Integer page, Integer size, List<String> categories,
+    public List<OperatorDto> getOperators(Integer page, Integer size, List<List<String>> categories,
                                           String keyword, Boolean isStar) {
         return operatorViewRepo.findOperatorsByCriteria(page, size, keyword, categories, isStar);
     }
 
-    public int getOperatorsCount(List<String> categories, String keyword, Boolean isStar) {
+    public int getOperatorsCount(List<List<String>> categories, String keyword, Boolean isStar) {
         return operatorViewRepo.countOperatorsByCriteria(keyword, categories, isStar);
     }
 
