@@ -254,6 +254,23 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
       dataIndex: "name",
       key: "name",
       ellipsis: true,
+      render: (text: string, record: Dataset) => {
+        const active = selectedDataset?.id === record.id;
+        return (
+          <div className="flex items-center gap-2">
+            <span
+              className={`inline-flex h-3 w-3 rounded-full border transition-colors duration-150 ${
+                active
+                  ? "border-blue-500 bg-blue-500 shadow-[0_0_0_2px_rgba(59,130,246,0.25)]"
+                  : "border-gray-300 bg-white"
+              }`}
+            />
+            <span className="truncate" title={text}>
+              {text}
+            </span>
+          </div>
+        );
+      },
     },
     {
       title: "文件数",
@@ -288,7 +305,9 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
             rowKey="id"
             size="small"
             rowClassName={(record) =>
-              selectedDataset?.id === record.id ? "bg-blue-100" : ""
+              `cursor-pointer ${
+                selectedDataset?.id === record.id ? "bg-blue-100" : ""
+              }`
             }
             onRow={(record: Dataset) => ({
               onClick: () => {
