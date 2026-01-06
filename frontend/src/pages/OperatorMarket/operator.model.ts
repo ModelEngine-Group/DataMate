@@ -46,11 +46,11 @@ export interface OperatorI {
 }
 
 export interface CategoryI {
-  id: number;
+  id: string;
   name: string;
   count: number; // 该分类下的算子数量
   type: string; // e.g., "数据源", "数据清洗", "数据分析", "数据可视化"
-  parentId?: number; // 父分类ID，若无父分类则为null
+  parentId?: string; // 父分类ID，若无父分类则为null
   value: string;
   createdAt: string;
 }
