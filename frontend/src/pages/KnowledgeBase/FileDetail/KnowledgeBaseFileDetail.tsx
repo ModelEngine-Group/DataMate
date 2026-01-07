@@ -14,12 +14,10 @@ import {
 import { Card, Button, Badge, Input, Tabs, Modal, Breadcrumb, Tag } from "antd";
 import { mockChunks, mockQAPairs, sliceOperators } from "@/mock/knowledgeBase";
 import type {
-  KnowledgeBase,
   KBFile,
 } from "@/pages/KnowledgeBase/knowledge-base.model";
 import { Link, useNavigate } from "react-router";
 import DetailHeader from "@/components/DetailHeader";
-import DevelopmentInProgress from "@/components/DevelopmentInProgress";
 
 // 状态标签
 const getStatusLabel = (status: string) => {
@@ -48,26 +46,47 @@ const getStatusColor = (status: string) => {
   return colors[status] || "default";
 };
 
+const getFileBgColor = (fileName?: string) => {
+  const ext = fileName?.split('.').pop()?.toLowerCase();
+  const map: Record<string, string> = {
+    pdf: '#ef4444', // red-500
+    doc: '#3b82f6', docx: '#3b82f6', // blue-500
+    xls: '#22c55e', xlsx: '#22c55e', csv: '#22c55e', // green-500
+    png: '#f59e0b', jpg: '#f59e0b', jpeg: '#f59e0b', gif: '#f59e0b', webp: '#f59e0b', // amber-500
+    txt: '#6b7280', // gray-500
+    json: '#10b981', // emerald-500
+  };
+  return (ext && map[ext]) || '#3b82f6';
+};
+
 const KnowledgeBaseFileDetail: React.FC = () => {
   const navigate = useNavigate();
   // 假设通过 props 或路由参数获取 selectedFile/selectedKB
   const [selectedFile] = useState<KBFile>(
     mockChunks.length
-      ? {
-          id: 1,
-          name: "API文档.pdf",
-          type: "pdf",
-          size: "2.5 MB",
+      ? ({
+          id: "1",
+          name: "API文档.docx",
+          fileName: "API文档.docx",
+          createdAt: "2024-01-22 10:30",
+          updatedAt: "2024-01-22 10:30",
           status: "completed",
           chunkCount: mockChunks.length,
+          metadata: {},
+          knowledgeBaseId: "kb-1",
+          fileId: "file-1",
+          updatedBy: "user-1",
+          createdBy: "user-1",
+          // extra fields for UI
+          size: "2.5 MB",
           progress: 100,
           uploadedAt: "2024-01-22 10:30",
           source: "upload",
           vectorizationStatus: "completed",
-        }
+        } as unknown as KBFile)
       : ({} as KBFile)
   );
-  const [selectedKB] = useState<KnowledgeBase>({
+  const [selectedKB] = useState<any>({
     id: 1,
     name: "API知识库",
     description: "",
@@ -115,13 +134,13 @@ const KnowledgeBaseFileDetail: React.FC = () => {
     setEditChunkContent(content);
   };
 
-  const handleSaveChunk = (chunkId: number) => {
+  const handleSaveChunk = (_chunkId: number) => {
     // 实际保存逻辑
     setEditingChunk(null);
     setEditChunkContent("");
   };
 
-  const handleDeleteChunk = (chunkId: number) => {
+  const handleDeleteChunk = (_chunkId: number) => {
     // 实际删除逻辑
     setEditingChunk(null);
     setEditChunkContent("");
@@ -275,7 +294,7 @@ const KnowledgeBaseFileDetail: React.FC = () => {
         data={{
           id: selectedFile.id,
           icon: <FileText className="w-8 h-8" />,
-          iconColor: "bg-blue-500 text-blue-600",
+          iconColor: getFileBgColor(selectedFile.name as any),
           status: {
             label: getStatusLabel(selectedFile.status),
             color: getStatusColor(selectedFile.status),
@@ -284,12 +303,12 @@ const KnowledgeBaseFileDetail: React.FC = () => {
           description: `${selectedFile.size} • ${
             selectedFile.chunkCount
           } 个分块${
-            selectedFile.source === "dataset"
-              ? ` • 数据集: ${selectedFile.datasetId}`
+            (selectedFile as any).source === "dataset"
+              ? ` • 数据集: ${(selectedFile as any).datasetId}`
               : ""
           }`,
-          createdAt: selectedFile.uploadedAt,
-          lastUpdated: selectedFile.uploadedAt,
+          createdAt: (selectedFile as any).uploadedAt,
+          lastUpdated: (selectedFile as any).uploadedAt,
         }}
         statistics={[
           {
@@ -307,12 +326,12 @@ const KnowledgeBaseFileDetail: React.FC = () => {
           {
             icon: <Server className="w-4 h-4 text-green-500" />,
             label: "文件大小",
-            value: selectedFile.size,
+            value: (selectedFile as any).size,
           },
           {
             icon: <Clock className="w-4 h-4 text-gray-500" />,
             label: "上传时间",
-            value: selectedFile.uploadedAt,
+            value: (selectedFile as any).uploadedAt,
           },
         ]}
         operations={[
