@@ -25,7 +25,9 @@ class TaskInfoPersistence:
         with open(sql_config_path, 'r', encoding='utf-8') as f:
             return json.load(f)
 
-    def update_task_result(self, sample, file_id = str(uuid.uuid4())):
+    def update_task_result(self, sample, file_id = None):
+        if file_id is None:
+            file_id = str(uuid.uuid4())
         instance_id = str(sample.get("instance_id"))
         src_file_name = str(sample.get("sourceFileName"))
         src_file_type = str(sample.get("sourceFileType"))

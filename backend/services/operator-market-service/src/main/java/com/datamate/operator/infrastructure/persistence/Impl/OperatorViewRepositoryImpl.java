@@ -16,6 +16,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
@@ -24,18 +25,36 @@ public class OperatorViewRepositoryImpl extends CrudRepository<OperatorViewMappe
 
     @Override
     public List<OperatorDto> findOperatorsByCriteria(Integer page, Integer size, String keyword,
-                                                     List<String> categories, Boolean isStar) {
+                                                     List<List<String>> categories, Boolean isStar) {
         QueryWrapper<OperatorView> queryWrapper = Wrappers.query();
-        queryWrapper.in(CollectionUtils.isNotEmpty(categories), "category_id", categories)
-            .eq(isStar != null, "is_star", isStar);
+        queryWrapper.eq(isStar != null, "is_star", isStar);
         if (StringUtils.isNotEmpty(keyword)) {
             queryWrapper.and(w ->
                     w.like("operator_name", keyword)
                     .or()
                     .like("description", keyword));
         }
+        StringBuilder havingSql = new StringBuilder();
+        if (CollectionUtils.isNotEmpty(categories)) {
+            queryWrapper.in("category_id", categories.stream().flatMap(List::stream).toList());
+            int index = 0;
+            for (List<String> category : categories) {
+                if (index > 0) {
+                    havingSql.append(" AND ");
+                }
+                havingSql.append("SUM(CASE WHEN category_id IN (");
+                havingSql.append(category.stream()
+                        .map(id -> "'" + id + "'")
+                        .collect(Collectors.joining(",")));
+                havingSql.append(") THEN 1 ELSE 0 END) > 0");
+                index++;
+            }
+        }
+
         queryWrapper.groupBy("operator_id")
+            .having(!havingSql.isEmpty(), havingSql.toString())
             .orderByDesc("created_at");
+
         Page<OperatorView> queryPage;
         if (size != null && page != null) {
             queryPage = new Page<>(page + 1, size);
@@ -48,17 +67,35 @@ public class OperatorViewRepositoryImpl extends CrudRepository<OperatorViewMappe
     }
 
     @Override
-    public Integer countOperatorsByCriteria(String keyword, List<String> categories, Boolean isStar) {
+    public int countOperatorsByCriteria(String keyword, List<List<String>> categories, Boolean isStar) {
         QueryWrapper<OperatorView> queryWrapper = Wrappers.query();
-        queryWrapper.in(CollectionUtils.isNotEmpty(categories),"category_id", categories)
-            .eq(isStar != null, "is_star", isStar);
+        queryWrapper.eq(isStar != null, "is_star", isStar);
         if (StringUtils.isNotEmpty(keyword)) {
             queryWrapper.and(w ->
                     w.like("operator_name", keyword)
                     .or()
                     .like("description", keyword));
         }
-        return mapper.countOperatorsByCriteria(queryWrapper);
+        StringBuilder havingSql = new StringBuilder();
+        if (CollectionUtils.isNotEmpty(categories)) {
+            queryWrapper.in("category_id", categories.stream().flatMap(List::stream).toList());
+            int index = 0;
+            for (List<String> category : categories) {
+                if (index > 0) {
+                    havingSql.append(" AND ");
+                }
+                havingSql.append("SUM(CASE WHEN category_id IN (");
+                havingSql.append(category.stream()
+                        .map(id -> "'" + id + "'")
+                        .collect(Collectors.joining(",")));
+                havingSql.append(") THEN 1 ELSE 0 END) > 0");
+                index++;
+            }
+        }
+        queryWrapper.groupBy("operator_id")
+                .having(!havingSql.isEmpty(), havingSql.toString());
+        Integer count = mapper.countOperatorsByCriteria(queryWrapper);
+        return count != null ? count : 0;
     }
 
     @Override

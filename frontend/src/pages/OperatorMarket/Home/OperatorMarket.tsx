@@ -23,7 +23,7 @@ import {
   deleteOperatorByIdUsingDelete,
   downloadExampleOperatorUsingGet,
   queryCategoryTreeUsingGet,
-  queryOperatorsUsingPost,
+  queryOperatorsUsingPost, updateOperatorByIdUsingPut,
 } from "../operator.api";
 import { mapOperator } from "../operator.const";
 
@@ -37,10 +37,13 @@ export default function OperatorMarketPage() {
 
   const [showFilters, setShowFilters] = useState(true);
   const [categoriesTree, setCategoriesTree] = useState<CategoryTreeI[]>([]);
+  const [starCount, setStarCount] = useState(0);
+  const [selectedStar, setSelectedStar] = useState<boolean>(false);
 
   const initCategoriesTree = async () => {
     const { data } = await queryCategoryTreeUsingGet({ page: 0, size: 1000 });
     setCategoriesTree(data.content || []);
+    setStarCount(data.starCount || 0);
   };
 
   useEffect(() => {
@@ -80,6 +83,16 @@ export default function OperatorMarketPage() {
     }
   };
 
+  const handleStar = async (operator: OperatorI) => {
+    const data = {
+      id: operator.id,
+      isStar: !operator.isStar
+    };
+    await updateOperatorByIdUsingPut(operator.id, data);
+    fetchData();
+    await initCategoriesTree();
+  }
+
   const operations = [
     {
       key: "edit",
@@ -104,16 +117,7 @@ export default function OperatorMarketPage() {
   ];
 
   useEffect(() => {
-    const filteredIds = Object.values(selectedFilters).reduce(
-      (acc, filter: string[]) => {
-        if (filter.length) {
-          acc.push(...filter);
-        }
-
-        return acc;
-      },
-      []
-    );
+    const filteredIds = Object.values(selectedFilters).filter(item => item.length > 0);
 
     // 分类筛选变化时：
     // 1. 将分类 ID 写入通用 searchParams.filter.categories，确保分页时条件不会丢失
@@ -124,9 +128,10 @@ export default function OperatorMarketPage() {
       filter: {
         ...prev.filter,
         categories: filteredIds,
+        selectedStar: selectedStar,
       },
     }));
-  }, [selectedFilters, setSearchParams]);
+  }, [selectedFilters, setSearchParams, selectedStar]);
 
   return (
     <div className="h-full flex flex-col gap-4">
@@ -162,8 +167,11 @@ export default function OperatorMarketPage() {
           <Filters
             hideFilter={() => setShowFilters(false)}
             categoriesTree={categoriesTree}
+            selectedStar={selectedStar}
+            starCount={starCount}
             selectedFilters={selectedFilters}
             setSelectedFilters={setSelectedFilters}
+            setSelectedStar={setSelectedStar}
           />
         </div>
         <div className="flex-overflow-auto p-6 ">
@@ -205,6 +213,8 @@ export default function OperatorMarketPage() {
                   data={tableData}
                   pagination={pagination}
                   operations={operations}
+                  onFavorite={handleStar}
+                  isFavorite={(operator: OperatorI) => operator.isStar}
                   onView={(item) => navigate(`/data/operator-market/plugin-detail/${item.id}`)}
                 />
               ) : (

@@ -59,7 +59,7 @@ export const TaskStatusMap = {
     icon: <ClockCircleOutlined />,
   },
   [TaskStatus.RUNNING]: {
-    label: "进行中",
+    label: "运行中",
     value: TaskStatus.RUNNING,
     color: "blue",
     icon: <PlayCircleOutlined />,
