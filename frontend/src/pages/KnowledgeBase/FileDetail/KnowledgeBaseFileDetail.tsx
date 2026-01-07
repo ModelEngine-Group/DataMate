@@ -261,9 +261,9 @@ const KnowledgeBaseFileDetail: React.FC = () => {
           },
           {
             title: (
-              <Link to="/data/knowledge-base/detail/1">
-                {selectedKB?.name}
-              </Link>
+              <a onClick={() => navigate(-1)} style={{ cursor: 'pointer' }}>
+                {selectedKB.name}
+              </a>
             ),
           },
           {

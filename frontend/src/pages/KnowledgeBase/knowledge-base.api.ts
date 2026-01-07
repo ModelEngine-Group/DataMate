@@ -40,6 +40,15 @@ export function deleteKnowledgeBaseFileByIdUsingDelete(baseId: string, data: any
   return del(`/api/knowledge-base/${baseId}/files`, data);
 }
 
+// 获取知识库文件分块详情（分页）
+export function queryKnowledgeBaseFileChunksUsingGet(
+  knowledgeBaseId: string,
+  ragFileId: string,
+  params?: { page?: number; size?: number }
+) {
+  return get(`/api/knowledge-base/${knowledgeBaseId}/files/${ragFileId}`, params);
+}
+
 // 检索知识库内容
 export function retrieveKnowledgeBaseContent(data: {
   query: string;
