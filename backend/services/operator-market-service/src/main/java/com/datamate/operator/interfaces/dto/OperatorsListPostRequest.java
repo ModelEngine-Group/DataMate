@@ -16,7 +16,7 @@ import org.springaicommunity.mcp.annotation.McpToolParam;
 @Getter
 @Setter
 public class OperatorsListPostRequest extends PagingQuery {
-  private List<String> categories = new ArrayList<>();
+  private List<List<String>> categories = new ArrayList<>();
 
   @McpToolParam(description = "算子关键词，支持查询算子名称和算子描述关键词查询", required = false)
   private String keyword;

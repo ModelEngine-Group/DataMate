@@ -24,7 +24,6 @@ WORKDIR /opt/runtime
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv pip install -e .[all] --system \
     && uv pip install -r /opt/runtime/datamate/ops/pyproject.toml --system \
-    && uv pip uninstall torch torchvision --system \
     && python -m spacy download zh_core_web_sm \
     && echo "/usr/local/lib/ops/site-packages" > /usr/local/lib/python3.11/site-packages/ops.pth
 

@@ -34,9 +34,13 @@ public enum DataManagementErrorCode implements ErrorCode {
      */
     DATASET_TAG_ALREADY_EXISTS("data_management.0005", "数据集标签已存在"),
     /**
-     * 数据集标签已存在
+     * 数据集文件已存在
      */
-    DATASET_FILE_ALREADY_EXISTS("data_management.0006", "数据集文件已存在");
+    DATASET_FILE_ALREADY_EXISTS("data_management.0006", "数据集文件已存在"),
+    /**
+     * 目录不存在
+     */
+    DIRECTORY_NOT_FOUND("data_management.0007", "目录不存在");
 
     private final String code;
     private final String message;

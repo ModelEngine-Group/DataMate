@@ -13,6 +13,7 @@ from datamate.common.error_code import ErrorCode
 from datamate.scheduler import cmd_scheduler
 from datamate.scheduler import func_scheduler
 from datamate.wrappers import WRAPPERS
+from datamate.auto_annotation_worker import start_auto_annotation_worker
 
 # 日志配置
 LOG_DIR = "/var/log/datamate/runtime"
@@ -47,6 +48,16 @@ class APIException(Exception):
         if self.extra_data:
             result["data"] = self.extra_data
         return result
+
+
+@app.on_event("startup")
+async def startup_event():
+    """FastAPI 启动时初始化后台自动标注 worker。"""
+
+    try:
+        start_auto_annotation_worker()
+    except Exception as e:  # pragma: no cover - 防御性日志
+        logger.error("Failed to start auto-annotation worker: {}", e)
 
 
 @app.exception_handler(APIException)

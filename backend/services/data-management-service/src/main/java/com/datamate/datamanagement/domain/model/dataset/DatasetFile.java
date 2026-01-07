@@ -1,5 +1,6 @@
 package com.datamate.datamanagement.domain.model.dataset;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -37,6 +38,14 @@ public class DatasetFile {
     private LocalDateTime lastAccessTime;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    /** 标记是否为目录（非持久化字段） */
+    @TableField(exist = false)
+    private Boolean directory;
+
+    /** 目录包含的文件数量（非持久化字段） */
+    @TableField(exist = false)
+    private Long fileCount;
 
     /**
      * 解析标签

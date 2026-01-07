@@ -44,7 +44,8 @@ export default function useFetchData<T>(
       status: [] as string[],
       tags: [] as string[],
       // 通用分类筛选（如算子市场的分类 ID 列表）
-      categories: [] as string[],
+      categories: [] as string[][],
+      selectedStar: false,
     },
     current: 1,
     pageSize: 12,
@@ -113,11 +114,10 @@ export default function useFetchData<T>(
         // 同时执行主要数据获取和额外的轮询函数
         const promises = [
           fetchFunc({
-            ...Object.fromEntries(
-              Object.entries(filter).filter(([_, value]) => value != null && value.length > 0)
-            ),
+            categories: filter.categories,
             ...extraParams,
             keyword,
+            isStar: filter.selectedStar ? true : undefined,
             type: getFirstOfArray(filter?.type) || undefined,
             status: getFirstOfArray(filter?.status) || undefined,
             tags: filter?.tags?.length ? filter.tags.join(",") : undefined,

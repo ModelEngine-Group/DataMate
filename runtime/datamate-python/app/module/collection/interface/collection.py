@@ -1,5 +1,7 @@
 import math
 import uuid
+import shutil
+import os
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -138,6 +140,13 @@ async def delete_collection_tasks(
             .where(TaskExecution.task_id == task_id)
         )
 
+        target_path = f"/dataset/local/{task_id}"
+        if os.path.exists(target_path):
+            shutil.rmtree(target_path)
+        job_path = f"/flow/data-collection/{task_id}"
+        if os.path.exists(job_path):
+            shutil.rmtree(job_path)
+
         # 删除任务
         await db.delete(task)
         await db.commit()
@@ -154,4 +163,30 @@ async def delete_collection_tasks(
     except Exception as e:
         await db.rollback()
         logger.error(f"Failed to delete collection task: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@router.get("/{task_id}", response_model=StandardResponse[CollectionTaskBase])
+async def get_task(
+    task_id: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """获取归集任务详情"""
+    try:
+        # Query the task by ID
+        task = await db.get(CollectionTask, task_id)
+        if not task:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Task with ID {task_id} not found"
+            )
+
+        return StandardResponse(
+            code=200,
+            message="Success",
+            data=converter_to_response(task)
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get task {task_id}: {str(e)}", e)
         raise HTTPException(status_code=500, detail="Internal server error")

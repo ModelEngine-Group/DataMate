@@ -1,0 +1,3 @@
+name: image_object_detection_bounding_box
+version: 0.1.0
+description: "YOLOv8-based object detection operator for auto annotation"

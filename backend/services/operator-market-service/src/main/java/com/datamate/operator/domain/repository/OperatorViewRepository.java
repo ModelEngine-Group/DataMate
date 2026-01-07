@@ -8,9 +8,9 @@ import java.util.List;
 
 public interface OperatorViewRepository extends IRepository<OperatorView> {
     List<OperatorDto> findOperatorsByCriteria(Integer page, Integer size, String keyword,
-                                              List<String> categories, Boolean isStar);
+                                              List<List<String>> categories, Boolean isStar);
 
-    Integer countOperatorsByCriteria(String keyword, List<String> categories, Boolean isStar);
+    int countOperatorsByCriteria(String keyword, List<List<String>> categories, Boolean isStar);
 
     OperatorView findOperatorById(String id);
 }
