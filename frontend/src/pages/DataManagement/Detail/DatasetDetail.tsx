@@ -239,7 +239,7 @@ export default function DatasetDetail() {
             <Overview dataset={dataset} filesOperation={filesOperation} fetchDataset={fetchDataset}/>
           )}
           {activeTab === "lineage" && <DataLineageFlow dataset={dataset} />}
-          {activeTab === "quality" && <DataQuality />}
+          {activeTab === "quality" && <DataQuality dataset={dataset} />}
         </div>
       </div>
       <ImportConfiguration
