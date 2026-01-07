@@ -293,7 +293,6 @@ export default function DatasetManagementPage() {
     <CardView
       loading={loading}
       data={tableData}
-      pageSize={9}
       operations={operations}
       pagination={pagination}
       onView={(dataset) => {
