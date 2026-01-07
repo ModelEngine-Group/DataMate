@@ -104,7 +104,7 @@ async def root():
     )
 
 mcp = FastApiMCP(app, name="DataMate MCP", description="DataMate python mcp server", include_tags=["mcp"])
-mcp.mount_sse()
+mcp.mount_http(mount_path="/api/mcp")
 
 if __name__ == "__main__":
     import uvicorn

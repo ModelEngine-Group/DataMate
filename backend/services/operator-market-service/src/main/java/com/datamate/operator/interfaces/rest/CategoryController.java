@@ -23,7 +23,8 @@ public class CategoryController {
     private final OperatorRepository operatorRepo;
 
     @GetMapping("/tree")
-    @McpTool(description = "算子树状分类")
+    @McpTool(name = "query_category_tree",
+            description = "算子树状分类查询，获取包含分组维度（如语言、模态）及资源统计数量的分页层级分类数据。")
     public PagedResponse<CategoryTreeResponse> categoryTreeGet() {
         List<CategoryTreeResponse> allCategories = categoryService.getAllCategories();
         return CategoryTreePagedResponse.of(allCategories, operatorRepo.countOperatorByStar(true));
