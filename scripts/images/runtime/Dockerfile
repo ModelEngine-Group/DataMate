@@ -25,6 +25,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv pip install -e .[all] --system \
     && uv pip install -r /opt/runtime/datamate/ops/pyproject.toml --system \
     && python -m spacy download zh_core_web_sm \
+    && python -c "import nltk; nltk.download('punkt_tab'); nltk.download('averaged_perceptron_tagger_eng')" \
     && echo "/usr/local/lib/ops/site-packages" > /usr/local/lib/python3.11/site-packages/ops.pth
 
 RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \

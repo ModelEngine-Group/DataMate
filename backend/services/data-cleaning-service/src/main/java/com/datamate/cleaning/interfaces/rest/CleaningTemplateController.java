@@ -6,6 +6,8 @@ import com.datamate.cleaning.interfaces.dto.CreateCleaningTemplateRequest;
 import com.datamate.cleaning.interfaces.dto.UpdateCleaningTemplateRequest;
 import com.datamate.common.interfaces.PagedResponse;
 import lombok.RequiredArgsConstructor;
+import org.springaicommunity.mcp.annotation.McpTool;
+import org.springaicommunity.mcp.annotation.McpToolParam;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -27,10 +29,14 @@ public class CleaningTemplateController {
     private final CleaningTemplateService cleaningTemplateService;
 
     @GetMapping
+    @McpTool(name = "query_cleaning_template", description = "查询模板列表")
     public PagedResponse<CleaningTemplateDto> cleaningTemplatesGet(
-            @RequestParam(value = "page", required = false) Integer page,
-            @RequestParam(value = "size", required = false) Integer size,
-            @RequestParam(value = "keyword", required = false) String keyword) {
+            @RequestParam(value = "page", required = false)
+            @McpToolParam(description = "页码，从0开始", required = false) Integer page,
+            @RequestParam(value = "size", required = false)
+            @McpToolParam(description = "每页大小", required = false) Integer size,
+            @RequestParam(value = "keyword", required = false)
+            @McpToolParam(description = "关键词，从名称与描述中查询", required = false) String keyword) {
         List<CleaningTemplateDto> templates = cleaningTemplateService.getTemplates(keyword);
         if (page == null || size == null) {
             return PagedResponse.of(templates.stream()

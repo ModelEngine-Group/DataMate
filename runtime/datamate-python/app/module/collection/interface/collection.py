@@ -24,7 +24,7 @@ router = APIRouter(
 logger = get_logger(__name__)
 
 
-@router.post("", response_model=StandardResponse[CollectionTaskBase])
+@router.post("", response_model=StandardResponse[CollectionTaskBase], operation_id="create_collect_task", tags=["mcp"])
 async def create_task(
     request: CollectionTaskCreate,
     db: AsyncSession = Depends(get_db)

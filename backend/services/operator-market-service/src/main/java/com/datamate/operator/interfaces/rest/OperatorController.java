@@ -7,6 +7,7 @@ import com.datamate.operator.interfaces.dto.OperatorDto;
 import com.datamate.operator.interfaces.dto.OperatorsListPostRequest;
 import com.datamate.operator.interfaces.dto.UploadOperatorRequest;
 import lombok.RequiredArgsConstructor;
+import org.springaicommunity.mcp.annotation.McpTool;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -24,6 +25,7 @@ public class OperatorController {
     private final OperatorService operatorService;
 
     @PostMapping("/list")
+    @McpTool(name = "query_operator_list", description = "根据参数查询算子列表")
     public PagedResponse<OperatorDto> operatorsListPost(@RequestBody OperatorsListPostRequest request) {
         List<List<String>> categories = request.getCategories();
         List<OperatorDto> responses = operatorService.getOperators(request.getPage(), request.getSize(),

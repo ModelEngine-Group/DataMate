@@ -2,6 +2,7 @@ package com.datamate.common.interfaces;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springaicommunity.mcp.annotation.McpToolParam;
 
 @Getter
 @NoArgsConstructor
@@ -9,11 +10,13 @@ public class PagingQuery {
     /**
      * 页码，从0开始
      */
+    @McpToolParam(description = "页码，从0开始")
     private Integer page = 0;
 
     /**
      * 每页大小
      */
+    @McpToolParam(description = "每页大小")
     private Integer size = 20;
 
     public void setPage(Integer page) {

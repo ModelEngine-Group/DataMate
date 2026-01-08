@@ -3,6 +3,7 @@ from typing import Dict, Any
 
 from fastapi import FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
+from fastapi_mcp import FastApiMCP
 from sqlalchemy import text
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
@@ -101,6 +102,9 @@ async def root():
             "label_studio_url": settings.label_studio_base_url
         }
     )
+
+mcp = FastApiMCP(app, name="DataMate MCP", description="DataMate python mcp server", include_tags=["mcp"])
+mcp.mount_http(mount_path="/api/mcp")
 
 if __name__ == "__main__":
     import uvicorn

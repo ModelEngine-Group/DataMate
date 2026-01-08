@@ -67,6 +67,19 @@ spring:
           min-idle: 5
           max-wait: 1000ms
 
+  ai:
+    mcp:
+      server:
+        enabled: true
+        name: datamate-mcp-server
+        protocol: STATELESS
+        capabilities:
+          completion: false
+          resource: false
+          prompt: false
+          tool: true
+        mcp-endpoint: /mcp
+
 
 # MyBatis配置（需在顶层，不在 spring 下）
 mybatis-plus:

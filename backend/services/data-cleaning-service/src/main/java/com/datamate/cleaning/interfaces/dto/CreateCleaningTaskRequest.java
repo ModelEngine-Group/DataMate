@@ -6,6 +6,7 @@ import java.util.List;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.springaicommunity.mcp.annotation.McpToolParam;
 
 /**
  * CreateCleaningTaskRequest
@@ -14,21 +15,29 @@ import lombok.Setter;
 @Getter
 @Setter
 public class CreateCleaningTaskRequest {
+    @McpToolParam(description = "新建清洗任务名称")
+    private String name;
 
-  private String name;
+    @McpToolParam(description = "新建清洗任务描述")
+    private String description;
 
-  private String description;
+    @McpToolParam(description = "清洗任务使用的源数据集ID")
+    private String srcDatasetId;
 
-  private String srcDatasetId;
+    @McpToolParam(description = "清洗任务使用的源数据集名称")
+    private String srcDatasetName;
 
-  private String srcDatasetName;
+    @McpToolParam(description = "清洗任务创建的目标数据集名称")
+    private String destDatasetName;
 
-  private String destDatasetName;
+    @McpToolParam(description = "清洗任务创建的目标数据集类型，取值范围为TEXT/IMAGE/VIDEO/AUDIO/OTHER")
+    private String destDatasetType;
 
-  private String destDatasetType;
+    @McpToolParam(description = "清洗任务使用的模板名称，与instance参数二选一，至少指定一个，优先级更高", required = false)
+    private String templateId;
 
-  private String templateId;
-
-  private List<OperatorInstanceDto> instance = new ArrayList<>();
+    @McpToolParam(description = "清洗任务使用的算子列表，与templateId参数二选一，至少指定一个。" +
+            "注意：单个任务只能使用一种归属的算子，无法混合使用，如全部使用DataMate算子或全部使用DataJuicer算子。", required = false)
+    private List<OperatorInstanceDto> instance = new ArrayList<>();
 }
 

@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springaicommunity.mcp.annotation.McpToolParam;
 
 import java.util.List;
 
@@ -22,19 +23,26 @@ public class CreateDatasetRequest {
     /** 数据集名称 */
     @Size(min = 1, max = 100)
     @NotBlank(message = "数据集名称不能为空")
+    @McpToolParam(description = "数据集名称")
     private String name;
     /** 数据集描述 */
     @Size(max = 500)
+    @McpToolParam(description = "数据集描述", required = false)
     private String description;
     /** 数据集类型 */
     @NotNull(message = "数据集类型不能为空")
+    @McpToolParam(description = "数据集类型，取值范围为TEXT/IMAGE/VIDEO/AUDIO/OTHER")
     private DatasetType datasetType;
     /** 标签列表 */
+    @McpToolParam(description = "标签列表", required = false)
     private List<String> tags;
     /** 数据源 */
+    @McpToolParam(description = "数据源", required = false)
     private String dataSource;
     /** 保留天数 */
+    @McpToolParam(description = "保留天数", required = false)
     private Integer retentionDays;
     /** 数据集状态 */
+    @McpToolParam(description = "数据集状态", required = false)
     private String status;
 }

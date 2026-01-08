@@ -6,6 +6,7 @@ import com.datamate.operator.domain.repository.OperatorRepository;
 import com.datamate.operator.interfaces.dto.CategoryTreePagedResponse;
 import com.datamate.operator.interfaces.dto.CategoryTreeResponse;
 import lombok.RequiredArgsConstructor;
+import org.springaicommunity.mcp.annotation.McpTool;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -22,6 +23,8 @@ public class CategoryController {
     private final OperatorRepository operatorRepo;
 
     @GetMapping("/tree")
+    @McpTool(name = "query_category_tree",
+            description = "算子树状分类查询，获取包含分组维度（如语言、模态）及资源统计数量的分页层级分类数据。")
     public PagedResponse<CategoryTreeResponse> categoryTreeGet() {
         List<CategoryTreeResponse> allCategories = categoryService.getAllCategories();
         return CategoryTreePagedResponse.of(allCategories, operatorRepo.countOperatorByStar(true));
