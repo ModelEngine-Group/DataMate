@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router";
+import { createBrowserRouter, createHashRouter } from "react-router";
 import Home from "../pages/Home/Home";
 import MainLayout from "../pages/Layout/MainLayout";
 
@@ -44,7 +44,7 @@ import SynthFileTask from "@/pages/SynthesisTask/SynthFileTask.tsx";
 import EvaluationDetailPage from "@/pages/DataEvaluation/Detail/TaskDetail.tsx";
 import SynthDataDetail from "@/pages/SynthesisTask/SynthDataDetail.tsx";
 
-const router = createBrowserRouter([
+const router = createHashRouter([
   {
     path: "/",
     Component: withErrorBoundary(Home),

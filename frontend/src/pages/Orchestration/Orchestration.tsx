@@ -263,7 +263,6 @@ const mockExecutions: FlowExecution[] = [
 ];
 
 export default function OrchestrationPage() {
-  return <DevelopmentInProgress />;
   const navigate = useNavigate();
   const [templates, setTemplates] = useState<FlowTemplate[]>(mockTemplates);
   const [executions, setExecutions] = useState<FlowExecution[]>(mockExecutions);
