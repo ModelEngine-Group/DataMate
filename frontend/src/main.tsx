@@ -9,17 +9,23 @@ import { store } from "./store";
 import { Provider } from "react-redux";
 import theme from "./theme";
 
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <Provider store={store}>
-      <ConfigProvider theme={ theme }>
-        <AntdApp>
-          <Suspense fallback={<Spin />}>
-            <TopLoadingBar />
-            <RouterProvider router={router} />
-          </Suspense>
-        </AntdApp>
-      </ConfigProvider>
-    </Provider>
-  </StrictMode>
-);
+export const bootstrap = async () => {};
+
+export const mount = async (id = '#mfe-content-right') => {
+  createRoot(document.getElementById(id)!).render(
+    <StrictMode>
+      <Provider store={store}>
+        <ConfigProvider theme={ theme }>
+          <AntdApp>
+            <Suspense fallback={<Spin />}>
+              <TopLoadingBar />
+              <RouterProvider router={router} />
+            </Suspense>
+          </AntdApp>
+        </ConfigProvider>
+      </Provider>
+    </StrictMode>
+  );
+}
+
+export const unmount = async () => {}
