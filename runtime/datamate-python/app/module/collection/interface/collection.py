@@ -9,6 +9,7 @@ from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import get_logger
+from app.db.models import Dataset
 from app.db.models.data_collection import CollectionTask, TaskExecution, CollectionTemplate
 from app.db.session import get_db
 from app.module.collection.client.datax_client import DataxClient
@@ -40,9 +41,22 @@ async def create_task(
         DataxClient.generate_datx_config(request.config, template, f"/dataset/local/{task_id}")
         task = convert_for_create(request, task_id)
         task.template_name = template.name
+        dataset = None
+
+        if request.dataset_name:
+            target_dataset_id = uuid.uuid4()
+            dataset = Dataset(
+                id=str(target_dataset_id),
+                name=request.dataset_name,
+                description="",
+                dataset_type=request.dataset_type.name,
+                status="DRAFT",
+                path=f"/dataset/{target_dataset_id}",
+            )
+            db.add(dataset)
 
         task_service = CollectionTaskService(db)
-        task = await task_service.create_task(task)
+        task = await task_service.create_task(task, dataset)
 
         task = await db.execute(select(CollectionTask).where(CollectionTask.id == task.id))
         task = task.scalar_one_or_none()

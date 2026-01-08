@@ -1,14 +1,18 @@
 import math
+import os
+import shutil
+import asyncio
+import uuid
+from datetime import datetime
+from pathlib import Path
+from typing import Optional, List, Dict, Any, Coroutine
+
+from sqlalchemy import func, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import func
-from typing import Optional, List, Dict, Any
-from datetime import datetime
 
-from app.core.config import settings
 from app.core.logging import get_logger
 from app.db.models import Dataset, DatasetFiles
-
 from ..schema import DatasetResponse, PagedDatasetFileResponse, DatasetFileResponse
 
 logger = get_logger(__name__)
@@ -263,3 +267,110 @@ class Service:
             logger.error(f"Failed to update tags for file {file_id}: {e}")
             await self.db.rollback()
             return False, str(e), None
+
+    @staticmethod
+    async def _get_or_create_dataset_directory(dataset: Dataset) -> str:
+        """Get or create dataset directory"""
+        dataset_dir = dataset.path
+        os.makedirs(dataset_dir, exist_ok=True)
+        return dataset_dir
+
+    async def add_files_to_dataset(self, dataset_id: str, source_paths: List[str]):
+        """
+        Copy files to dataset directory and create corresponding database records
+
+        Args:
+            dataset_id: ID of the dataset
+            source_paths: List of source file paths to copy
+
+        Returns:
+            List of created dataset file records
+        """
+        logger.info(f"Starting to add files to dataset {dataset_id}")
+
+        try:
+            # Get dataset and existing files
+            dataset = await self.db.get(Dataset, dataset_id)
+            if not dataset:
+                logger.error(f"Dataset not found: {dataset_id}")
+                return
+
+            # Get existing files to check for duplicates
+            result = await self.db.execute(
+                select(DatasetFiles).where(DatasetFiles.dataset_id == dataset_id)
+            )
+            existing_files_map = dict()
+            for dataset_file in result.scalars().all():
+                existing_files_map.__setitem__(dataset_file.file_path, dataset_file)
+
+            # Get or create dataset directory
+            dataset_dir = await self._get_or_create_dataset_directory(dataset)
+
+            # Process each source file
+            for source_path in source_paths:
+                try:
+                    file_record = await self.create_new_dataset_file(dataset_dir, dataset_id, source_path)
+                    if not file_record:
+                        continue
+                    await self.handle_dataset_file(dataset, existing_files_map, file_record, source_path)
+
+                except Exception as e:
+                    logger.error(f"Error processing file {source_path}: {str(e)}", e)
+                    await self.db.rollback()
+        except Exception as e:
+            await self.db.rollback()
+            logger.error(f"Failed to add files to dataset {dataset_id}: {str(e)}", exc_info=True)
+
+    async def handle_dataset_file(self, dataset, existing_files_map: dict[Any, Any], file_record: DatasetFiles, source_path: str):
+        target_path = file_record.file_path
+        file_size = file_record.file_size
+        file_name = file_record.file_name
+
+        # Check for duplicate by filename
+        if target_path in existing_files_map:
+            logger.warning(f"File with name {file_name} already exists in dataset {dataset.id}")
+            dataset_file = existing_files_map.get(target_path)
+            dataset.size_bytes = dataset.size_bytes - dataset_file.file_size + file_size
+            dataset.updated_at = datetime.now()
+            dataset_file.file_size = file_size
+            dataset_file.updated_at = datetime.now()
+        else:
+            # Add to database
+            self.db.add(file_record)
+            dataset.file_count = dataset.file_count + 1
+            dataset.size_bytes = dataset.size_bytes + file_record.file_size
+            dataset.updated_at = datetime.now()
+            dataset.status = 'ACTIVE'
+        # Copy file
+        logger.info(f"copy file {source_path} to {target_path}")
+        dst_dir = os.path.dirname(target_path)
+        await asyncio.to_thread(os.makedirs, dst_dir, exist_ok=True)
+        await asyncio.to_thread(shutil.copy2, source_path, target_path)
+        await self.db.commit()
+
+    @staticmethod
+    async def create_new_dataset_file(dataset_dir: str, dataset_id: str, source_path: str) -> DatasetFiles | None:
+        source_path_obj = Path(source_path)
+
+        # Check if source exists and is a file
+        if not source_path_obj.exists() or not source_path_obj.is_file():
+            logger.warning(f"Source file does not exist or is not a file: {source_path}")
+            return None
+        file_name = source_path_obj.name
+        file_extension = os.path.splitext(file_name)[1].lstrip('.').lower()
+        file_size = source_path_obj.stat().st_size
+        target_path = os.path.join(dataset_dir, file_name)
+        file_record = DatasetFiles(
+            id=str(uuid.uuid4()),
+            dataset_id=dataset_id,
+            file_name=file_name,
+            file_type=file_extension or 'other',
+            file_size=file_size,
+            file_path=target_path,
+            upload_time=datetime.now(),
+            last_access_time=datetime.now(),
+            status='ACTIVE',
+            created_at=datetime.now(),
+            updated_at=datetime.now()
+        )
+        return file_record
