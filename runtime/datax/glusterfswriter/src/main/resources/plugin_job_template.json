@@ -1,0 +1,10 @@
+{
+  "name": "glusterfswriter",
+  "parameter": {
+    "ip": "",
+    "volume": "",
+    "path": "",
+    "destPath": "",
+    "files": []
+  }
+}

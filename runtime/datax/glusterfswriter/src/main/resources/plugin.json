@@ -1,0 +1,6 @@
+{
+  "name": "glusterfswriter",
+  "class": "com.datamate.plugin.writer.glusterfswriter.GlusterfsWriter",
+  "description": "write files to GlusterFS distributed file system",
+  "developer": "datamate"
+}

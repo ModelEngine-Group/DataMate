@@ -1,0 +1,6 @@
+{
+  "name": "glusterfsreader",
+  "class": "com.datamate.plugin.reader.glusterfsreader.GlusterfsReader",
+  "description": "read file list from GlusterFS distributed file system",
+  "developer": "datamate"
+}

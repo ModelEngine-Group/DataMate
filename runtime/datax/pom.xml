@@ -85,6 +85,7 @@
 <!--        <module>sybasereader</module>-->
 <!--        <module>dorisreader</module>-->
         <module>nfsreader</module>
+        <module>glusterfsreader</module>
         <!-- writer -->
         <module>mysqlwriter</module>
         <module>starrockswriter</module>
@@ -133,6 +134,7 @@
 <!--        <module>neo4jwriter</module>-->
 <!--        <module>milvuswriter</module>-->
         <module>nfswriter</module>
+        <module>glusterfswriter</module>
         <!-- common support module -->
         <module>plugin-rdbms-util</module>
         <module>plugin-unstructured-storage-util</module>

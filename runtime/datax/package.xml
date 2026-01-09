@@ -271,6 +271,13 @@
             </includes>
             <outputDirectory>datax</outputDirectory>
         </fileSet>
+        <fileSet>
+            <directory>glusterfsreader/target/datax/</directory>
+            <includes>
+                <include>**/*.*</include>
+            </includes>
+            <outputDirectory>datax</outputDirectory>
+        </fileSet>
 
         <!-- writer -->
         <fileSet>
@@ -576,6 +583,13 @@
 <!--        </fileSet>-->
         <fileSet>
             <directory>nfswriter/target/datax/</directory>
+            <includes>
+                <include>**/*.*</include>
+            </includes>
+            <outputDirectory>datax</outputDirectory>
+        </fileSet>
+        <fileSet>
+            <directory>glusterfswriter/target/datax/</directory>
             <includes>
                 <include>**/*.*</include>
             </includes>

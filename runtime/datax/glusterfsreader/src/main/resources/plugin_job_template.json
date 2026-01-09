@@ -1,0 +1,10 @@
+{
+  "name": "glusterfsreader",
+  "parameter": {
+    "ip": "",
+    "volume": "",
+    "path": "",
+    "fileType": [],
+    "files": []
+  }
+}
