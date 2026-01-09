@@ -158,6 +158,20 @@ export default function CreateAutoAnnotationDialog({
 
 			setLoading(true);
 
+			const selectedFiles = Object.values(selectedFilesMap) as any[];
+			// 自动标注任务现在允许跨多个数据集，后端会按 fileIds 分组并为每个数据集分别创建/复用 LS 项目。
+			// 这里仅用第一个涉及到的 datasetId（或表单中的 datasetId）作为任务的“主数据集”展示字段。
+			const datasetIds = Array.from(
+				new Set(
+					selectedFiles
+						.map((file) => file?.datasetId)
+						.filter((id) => id !== undefined && id !== null && id !== ""),
+					),
+				),
+			);
+
+			const effectiveDatasetId = values.datasetId || datasetIds[0];
+
 			const imageExtensions = [".jpg", ".jpeg", ".png", ".bmp", ".gif", ".tiff", ".webp"];
 			const imageFileIds = Object.values(selectedFilesMap)
 				.filter((file) => {
@@ -168,7 +182,7 @@ export default function CreateAutoAnnotationDialog({
 
 			const payload = {
 				name: values.name,
-				datasetId: values.datasetId,
+				datasetId: effectiveDatasetId,
 				fileIds: imageFileIds,
 				config: {
 					modelSize: values.modelSize,

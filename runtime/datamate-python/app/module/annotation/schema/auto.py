@@ -57,6 +57,11 @@ class AutoAnnotationTaskResponse(BaseModel):
     detected_objects: int = Field(..., alias="detectedObjects", description="检测到的对象总数")
     output_path: Optional[str] = Field(None, alias="outputPath", description="输出路径")
     error_message: Optional[str] = Field(None, alias="errorMessage", description="错误信息")
+    file_ids: Optional[List[str]] = Field(
+        default=None,
+        alias="fileIds",
+        description="本次任务实际处理的文件ID列表，为空表示处理数据集全部文件",
+    )
     created_at: datetime = Field(..., alias="createdAt", description="创建时间")
     updated_at: Optional[datetime] = Field(None, alias="updatedAt", description="更新时间")
     completed_at: Optional[datetime] = Field(None, alias="completedAt", description="完成时间")

@@ -180,13 +180,42 @@ export default function CreateAnnotationTask({
     try {
       const values = await manualForm.validateFields();
       setSubmitting(true);
-      // Send templateId instead of labelingConfig
+      // 手动标注也支持跨数据集、精确到文件的选择
+      const selectedFiles = Object.values(selectedFilesMap) as any[];
+
+      const imageExtensions = [".jpg", ".jpeg", ".png", ".bmp", ".gif", ".tiff", ".webp"];
+      const imageFileIds = selectedFiles
+        .filter((file) => {
+          const ext = file.fileName?.toLowerCase().match(/\.[^.]+$/)?.[0] || "";
+          return imageExtensions.includes(ext);
+        })
+        .map((file) => file.id);
+
+      if (imageFileIds.length === 0) {
+        message?.error?.("请至少选择一个图像文件");
+        setSubmitting(false);
+        return;
+      }
+
+      const datasetIds = Array.from(
+        new Set(
+          selectedFiles
+            .map((file) => file?.datasetId)
+            .filter((id) => id !== undefined && id !== null && id !== ""),
+        ),
+      );
+
+      const effectiveDatasetId = values.datasetId || datasetIds[0];
+
+      // Send templateId and fileIds；后端会按 fileIds 反查真实数据集并同步到同一 LS 工程
       const requestData = {
         name: values.name,
         description: values.description,
-        datasetId: values.datasetId,
+        datasetId: effectiveDatasetId,
         templateId: values.templateId,
+        fileIds: imageFileIds,
       };
+
       await createAnnotationTaskUsingPost(requestData);
       message?.success?.("创建标注任务成功");
       onClose();
@@ -211,6 +240,21 @@ export default function CreateAnnotationTask({
 
       setSubmitting(true);
 
+      const selectedFiles = Object.values(selectedFilesMap) as any[];
+
+      // 对于自动标注，后端会根据 fileIds 自动按数据集分组并为每个数据集创建/复用 LS 项目，
+      // 这里不再强制限制只能选择单一数据集，只需保证至少有一个 datasetId，
+      // 否则退回到表单中的 datasetId。
+      const datasetIds = Array.from(
+        new Set(
+          selectedFiles
+            .map((file) => file?.datasetId)
+            .filter((id) => id !== undefined && id !== null && id !== ""),
+        ),
+      );
+
+      const effectiveDatasetId = values.datasetId || datasetIds[0];
+
       const imageExtensions = [".jpg", ".jpeg", ".png", ".bmp", ".gif", ".tiff", ".webp"];
       const imageFileIds = Object.values(selectedFilesMap)
         .filter((file) => {
@@ -221,7 +265,7 @@ export default function CreateAnnotationTask({
 
       const payload = {
         name: values.name,
-        datasetId: values.datasetId,
+        datasetId: effectiveDatasetId,
         fileIds: imageFileIds,
         config: {
           modelSize: values.modelSize,
@@ -282,71 +326,71 @@ export default function CreateAnnotationTask({
             label: "手动标注",
             children: (
               <Form form={manualForm} layout="vertical">
-                {/* 数据集 与 标注工程名称 并排显示（数据集在左） */}
-                <div className="grid grid-cols-2 gap-4">
-                  <Form.Item
-                    label="数据集"
-                    name="datasetId"
-                    rules={[{ required: true, message: "请选择数据集" }]}
-                  >
-                    <Select
-                      placeholder="请选择数据集"
-                      options={datasets.map((dataset) => {
-                        return {
-                          label: (
-                            <div className="flex items-center justify-between gap-3 py-2">
-                              <div className="flex items-center font-sm text-gray-900">
-                                <span className="mr-2">{(dataset as any).icon}</span>
-                                <span>{dataset.name}</span>
-                              </div>
-                              <div className="text-xs text-gray-500">{dataset.size}</div>
-                            </div>
-                          ),
-                          value: dataset.id,
-                        };
-                      })}
-                      onChange={(value) => {
-                        // 如果用户未手动修改名称，则用数据集名称作为默认任务名
-                        if (!nameManuallyEdited) {
-                          const ds = datasets.find((d) => d.id === value);
-                          if (ds) {
-                            let defaultName = ds.name || "";
-                            if (defaultName.length < 3) {
-                              defaultName = `${defaultName}-标注`;
-                            }
-                            manualForm.setFieldsValue({ name: defaultName });
-                          }
-                        }
-                      }}
-                    />
-                  </Form.Item>
+                {/* 选择数据集和图像文件（支持多数据集、多文件） */}
+                <Form.Item label="选择数据集和图像文件" required>
+                  <DatasetFileTransfer
+                    open
+                    selectedFilesMap={selectedFilesMap}
+                    onSelectedFilesChange={setSelectedFilesMap}
+                    onDatasetSelect={(dataset) => {
+                      setSelectedDataset(dataset as Dataset | null);
+                      // 将当前数据集写入隐藏字段，作为主数据集ID
+                      manualForm.setFieldsValue({ datasetId: dataset?.id ?? "" });
 
-                  <Form.Item
-                    label="标注工程名称"
-                    name="name"
-                    rules={[
-                      {
-                        validator: (_rule, value) => {
-                          const trimmed = (value || "").trim();
-                          if (!trimmed) {
-                            return Promise.reject(new Error("请输入任务名称"));
-                          }
-                          if (trimmed.length < 3) {
-                            return Promise.reject(
-                              new Error("任务名称至少需要 3 个字符（不含首尾空格，Label Studio 限制）"),
-                            );
-                          }
-                          return Promise.resolve();
-                        },
+                      // 如果用户未手动修改名称，则用当前数据集名称作为默认任务名
+                      if (!nameManuallyEdited && dataset) {
+                        let defaultName = dataset.name || "";
+                        if (defaultName.length < 3) {
+                          defaultName = `${defaultName}-标注`;
+                        }
+                        manualForm.setFieldsValue({ name: defaultName });
+                      }
+                    }}
+                    datasetTypeFilter={DatasetType.IMAGE}
+                  />
+                  {selectedDataset && (
+                    <div className="mt-2 p-2 bg-blue-50 rounded border border-blue-200 text-xs">
+                      当前数据集：<span className="font-medium">{selectedDataset.name}</span> - 已选择
+                      <span className="font-medium text-blue-600"> {imageFileCount} </span>个图像文件
+                    </div>
+                  )}
+                </Form.Item>
+
+                {/* 隐藏的主数据集ID，用于后端兼容老字段 */}
+                <Form.Item
+                  hidden
+                  name="datasetId"
+                  rules={[{ required: true, message: "请选择数据集" }]}
+                >
+                  <Input type="hidden" />
+                </Form.Item>
+
+                {/* 标注工程名称 */}
+                <Form.Item
+                  label="标注工程名称"
+                  name="name"
+                  rules={[
+                    {
+                      validator: (_rule, value) => {
+                        const trimmed = (value || "").trim();
+                        if (!trimmed) {
+                          return Promise.reject(new Error("请输入任务名称"));
+                        }
+                        if (trimmed.length < 3) {
+                          return Promise.reject(
+                            new Error("任务名称至少需要 3 个字符（不含首尾空格，Label Studio 限制）"),
+                          );
+                        }
+                        return Promise.resolve();
                       },
-                    ]}
-                  >
-                    <Input
-                      placeholder="输入标注工程名称"
-                      onChange={() => setNameManuallyEdited(true)}
-                    />
-                  </Form.Item>
-                </div>
+                    },
+                  ]}
+                >
+                  <Input
+                    placeholder="输入标注工程名称"
+                    onChange={() => setNameManuallyEdited(true)}
+                  />
+                </Form.Item>
                 {/* 描述变为可选 */}
                 <Form.Item label="描述" name="description">
                   <TextArea placeholder="（可选）详细描述标注任务的要求和目标" rows={3} />

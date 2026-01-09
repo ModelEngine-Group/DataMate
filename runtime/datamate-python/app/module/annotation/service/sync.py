@@ -139,11 +139,12 @@ class SyncService:
             return {}
     
     async def _fetch_dm_files_paginated(
-        self, 
-        dataset_id: str, 
+        self,
+        dataset_id: str,
         batch_size: int,
         existing_file_ids: Set[str],
-        project_id: str
+        project_id: str,
+        allowed_file_ids: Optional[Set[str]] = None,
     ) -> Tuple[Set[str], int]:
         """
         分页获取DM文件并创建新任务
@@ -172,6 +173,10 @@ class SyncService:
             new_tasks = []
             for file_info in files_response.content:
                 file_id = str(file_info.id)
+                # 如果提供了允许的文件ID集合，则只同步这些文件
+                if allowed_file_ids is not None and file_id not in allowed_file_ids:
+                    continue
+
                 current_file_ids.add(file_id)
                 
                 if file_id not in existing_file_ids:
@@ -301,7 +306,7 @@ class SyncService:
             )
         
         try:
-            # 同步文件
+            # 同步文件（不限制文件ID，完整同步映射对应数据集）
             file_result = await self.sync_files(mapping, batch_size)
             
             # TODO: 同步标注
@@ -328,9 +333,12 @@ class SyncService:
             )
         
     async def sync_files(
-        self, 
-        mapping: DatasetMappingResponse, 
-        batch_size: int
+        self,
+        mapping: DatasetMappingResponse,
+        batch_size: int,
+        allowed_file_ids: Optional[Set[str]] = None,
+        override_dataset_id: Optional[str] = None,
+        delete_orphans: bool = True,
     ) -> Dict[str, int]:
         """
         同步DM和Label Studio之间的文件
@@ -342,10 +350,17 @@ class SyncService:
         Returns:
             同步统计信息: {"created": int, "deleted": int, "total": int}
         """
-        logger.debug(f"Syncing files for dataset {mapping.dataset_id} to project {mapping.labeling_project_id}")
+        effective_dataset_id = override_dataset_id or mapping.dataset_id
+
+        logger.debug(
+            "Syncing files for dataset %s to project %s (mapping dataset_id=%s)",
+            effective_dataset_id,
+            mapping.labeling_project_id,
+            mapping.dataset_id,
+        )
         
         # 获取DM数据集信息
-        dataset_info = await self.dm_client.get_dataset(mapping.dataset_id)
+        dataset_info = await self.dm_client.get_dataset(effective_dataset_id)
         if not dataset_info:
             raise NoDatasetInfoFoundError(mapping.dataset_id)
         
@@ -359,17 +374,22 @@ class SyncService:
         
         # 分页获取DM文件并创建新任务
         current_file_ids, created_count = await self._fetch_dm_files_paginated(
-            mapping.dataset_id,
+            effective_dataset_id,
             batch_size,
             existing_file_ids,
-            mapping.labeling_project_id
+            mapping.labeling_project_id,
+            allowed_file_ids=allowed_file_ids,
         )
         
-        # 删除孤立任务
-        deleted_count = await self._delete_orphaned_tasks(
-            existing_dm_file_mapping,
-            current_file_ids
-        )
+        # 删除孤立任务：在多数据集、分批同步场景下可以选择关闭，
+        # 避免后一次同步把前一次其他数据集的任务当成“孤儿”删除。
+        if delete_orphans:
+            deleted_count = await self._delete_orphaned_tasks(
+                existing_dm_file_mapping,
+                current_file_ids,
+            )
+        else:
+            deleted_count = 0
         
         logger.debug(f"File sync completed: total={total_files}, created={created_count}, deleted={deleted_count}")
         

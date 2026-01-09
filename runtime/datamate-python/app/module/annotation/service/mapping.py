@@ -366,13 +366,25 @@ class DatasetMappingService:
             .order_by(LabelingProject.created_at.desc())
         )
         rows = result.all()
-        
-        logger.debug(f"Found {len(rows)} mappings, total: {total}")
+
+        # 过滤掉由自动标注任务自动创建的隐藏工程（configuration.autoTaskId 存在）
+        filtered_rows = []
+        for row in rows:
+            mapping: LabelingProject = row[0]
+            cfg = getattr(mapping, "configuration", None) or {}
+            if isinstance(cfg, dict) and cfg.get("autoTaskId"):
+                continue
+            filtered_rows.append(row)
+
+        logger.debug(
+            f"Found {len(filtered_rows)} visible mappings (filtered from {len(rows)}), total: {total}"
+        )
         # Convert rows to responses (async comprehension)
         responses = []
-        for row in rows:
+        for row in filtered_rows:
             response = await self._to_response_from_row(row, include_template=include_template)
             responses.append(response)
+        # total 仍然返回数据库总数，目前前端只关注当前页内容数量，故不调整 total
         return responses, total
     
     async def get_template_id_by_dataset_id(self, dataset_id: str) -> Optional[str]:
@@ -451,11 +463,22 @@ class DatasetMappingService:
             .order_by(LabelingProject.created_at.desc())
         )
         rows = result.all()
-        
-        logger.debug(f"Found {len(rows)} mappings, total: {total}")
+
+        # 过滤掉由自动标注任务自动创建的隐藏工程（configuration.autoTaskId 存在）
+        filtered_rows = []
+        for row in rows:
+            mapping: LabelingProject = row[0]
+            cfg = getattr(mapping, "configuration", None) or {}
+            if isinstance(cfg, dict) and cfg.get("autoTaskId"):
+                continue
+            filtered_rows.append(row)
+
+        logger.debug(
+            f"Found {len(filtered_rows)} mappings for dataset {dataset_id} (filtered from {len(rows)}), total: {total}"
+        )
         # Convert rows to responses (async comprehension)
         responses = []
-        for row in rows:
+        for row in filtered_rows:
             response = await self._to_response_from_row(row, include_template=include_template)
             responses.append(response)
         return responses, total

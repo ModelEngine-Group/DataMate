@@ -580,6 +580,53 @@ class Client:
             logger.error(f"Error while deleting annotation: {e}")
             return False
 
+    async def create_prediction(
+        self,
+        task_id: int,
+        result: List[Dict[str, Any]],
+        model_version: Optional[str] = None,
+        score: Optional[float] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """为任务创建预测结果（predictions）。
+
+        该接口对应 Label Studio 的 `/api/predictions`，用于将模型自动标注结果
+        以 prediction 的形式写入，从而在前端界面里以“预测框”的方式展示，
+        不会覆盖人工标注（annotations）。
+        """
+
+        try:
+            logger.debug(f"Creating prediction for task: {task_id}")
+
+            payload: Dict[str, Any] = {
+                "task": task_id,
+                "result": result,
+            }
+
+            if model_version is not None:
+                payload["model_version"] = model_version
+            if score is not None:
+                payload["score"] = score
+
+            response = await self.client.post("/api/predictions", json=payload)
+            response.raise_for_status()
+
+            prediction = response.json()
+            logger.debug(
+                "Created prediction %s for task %s", prediction.get("id"), task_id
+            )
+            return prediction
+
+        except httpx.HTTPStatusError as e:
+            logger.error(
+                "Create prediction failed HTTP %s: %s",
+                e.response.status_code,
+                e.response.text,
+            )
+            return None
+        except Exception as e:
+            logger.error("Error while creating prediction: %s", e)
+            return None
+
     async def create_local_storage(
         self,
         project_id: int,

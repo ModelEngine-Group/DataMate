@@ -121,6 +121,11 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
           ...item,
           id: item.id,
           key: String(item.id), // rowKey 使用字符串，确保与 selectedRowKeys 类型一致
+          // 记录所属数据集，方便后续在“全不选”时只清空当前数据集的选择
+          // DatasetFile 接口是后端模型，这里在前端扩展 datasetId 字段
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
+          datasetId: selectedDataset.id,
           datasetName: selectedDataset.name,
         }))
       );
@@ -176,6 +181,10 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
           (item: DatasetFile) => ({
             ...item,
             key: item.id,
+            // 同样为批量全选结果打上 datasetId 标记
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            datasetId: selectedDataset.id,
             datasetName: selectedDataset.name,
           }),
         );
@@ -260,9 +269,7 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
           <div className="flex items-center gap-2">
             <span
               className={`inline-flex h-3 w-3 rounded-full border transition-colors duration-150 ${
-                active
-                  ? "border-blue-500 bg-blue-500 shadow-[0_0_0_2px_rgba(59,130,246,0.25)]"
-                  : "border-gray-300 bg-white"
+                active ? "border-blue-500 bg-blue-500" : "border-gray-300 bg-white"
               }`}
             />
             <span className="truncate" title={text}>
@@ -394,8 +401,20 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
                   // 而不是只选中当前页
                   handleSelectAllInDataset();
                 } else {
-                  // 取消表头“全选”时，清空当前已选文件
-                  onSelectedFilesChange({});
+                  // 取消表头“全选”时，只清空当前数据集的已选文件，保留其它数据集
+                  if (!selectedDataset) return;
+
+                  const nextMap: { [key: string]: DatasetFile } = {};
+                  Object.entries(selectedFilesMap).forEach(([key, file]) => {
+                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                    // @ts-ignore
+                    const fileDatasetId = file.datasetId;
+                    if (fileDatasetId !== selectedDataset.id) {
+                      nextMap[key] = file;
+                    }
+                  });
+
+                  onSelectedFilesChange(nextMap);
                 }
               },
 

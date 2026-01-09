@@ -16,6 +16,8 @@ import {
   syncAnnotationTaskUsingPost,
   queryAutoAnnotationTasksUsingGet,
   deleteAutoAnnotationTaskByIdUsingDelete,
+  syncAutoAnnotationTaskToLabelStudioUsingPost,
+  getAutoAnnotationLabelStudioProjectUsingGet,
 } from "../annotation.api";
 import { mapAnnotationTask } from "../annotation.const";
 import CreateAnnotationTask from "../Create/components/CreateAnnotationTaskDialog";
@@ -59,6 +61,7 @@ export default function DataAnnotation() {
   const [labelStudioBase, setLabelStudioBase] = useState<string | null>(null);
   const [selectedRowKeys, setSelectedRowKeys] = useState<(string | number)[]>([]);
   const [selectedRows, setSelectedRows] = useState<any[]>([]);
+  const [datasetProjectMap, setDatasetProjectMap] = useState<Record<string, string>>({});
 
   // 拉取自动标注任务（供轮询和创建成功后立即刷新复用）
   const refreshAutoTasks = async (silent = false) => {
@@ -92,6 +95,19 @@ export default function DataAnnotation() {
       mounted = false;
     };
   }, []);
+
+  // 基于手动标注任务构建 datasetId -> Label Studio project 映射，供自动标注跳转使用
+  useEffect(() => {
+    const map: Record<string, string> = {};
+    (tableData as any[]).forEach((task: any) => {
+      const datasetId = task.datasetId || task.dataset_id;
+      const projId = task.labelingProjId || task.projId || task.labeling_project_id;
+      if (datasetId && projId) {
+        map[String(datasetId)] = String(projId);
+      }
+    });
+    setDatasetProjectMap(map);
+  }, [tableData]);
 
   // 自动标注任务轮询（用于在同一表格中展示处理进度）
   useEffect(() => {
@@ -192,6 +208,77 @@ export default function DataAnnotation() {
         }
       },
     });
+  };
+
+  const handleSyncAutoToLabelStudio = (task: any) => {
+    if (task.autoStatus !== "completed") {
+      message.warning("仅已完成的自动标注任务可以同步到 Label Studio");
+      return;
+    }
+
+    Modal.confirm({
+      title: `确认同步自动标注任务「${task.name}」到 Label Studio 吗？`,
+      content: (
+        <div>
+          <div>将把该任务的检测结果作为预测框写入 Label Studio。</div>
+          <div>不会覆盖已有人工标注，仅作为可编辑的预测结果。</div>
+        </div>
+      ),
+      okText: "同步",
+      cancelText: "取消",
+      onOk: async () => {
+        try {
+          await syncAutoAnnotationTaskToLabelStudioUsingPost(task.id);
+          message.success("自动标注结果同步请求已发送");
+        } catch (e) {
+          console.error(e);
+          message.error("自动标注结果同步失败，请稍后重试");
+        }
+      },
+    });
+  };
+
+  const handleAnnotateAuto = (task: any) => {
+    (async () => {
+      try {
+        if (!labelStudioBase) {
+          message.error("无法跳转到 Label Studio：未配置 Label Studio 基础 URL");
+          return;
+        }
+
+        let projId: string | undefined;
+
+        try {
+          const resp = await getAutoAnnotationLabelStudioProjectUsingGet(task.id);
+          const data = (resp as any)?.data ?? resp;
+          projId = data?.projectId || data?.labeling_project_id;
+        } catch (e) {
+          console.error("Failed to resolve LS project for auto task", e);
+        }
+
+        // 兼容旧逻辑：若后端未能找到专属项目，则回退到按数据集映射跳转
+        if (!projId) {
+          const datasetId = task.datasetId;
+          if (!datasetId) {
+            message.error("该自动标注任务未绑定数据集，无法跳转 Label Studio");
+            return;
+          }
+
+          projId = datasetProjectMap[String(datasetId)];
+        }
+
+        if (!projId) {
+          message.error("未找到对应的标注工程，请先为该任务或数据集创建标注项目");
+          return;
+        }
+
+        const target = `${labelStudioBase}/projects/${projId}/data`;
+        window.open(target, "_blank");
+      } catch (error) {
+        console.error(error);
+        message.error("无法跳转到 Label Studio：发生错误，请稍后重试");
+      }
+    })();
   };
 
   const handleSync = (task: AnnotationTask, batchSize: number = 50) => {
@@ -317,9 +404,17 @@ export default function DataAnnotation() {
     },
   ];
   // 合并手动标注任务与自动标注任务
+  // 对于由自动标注逻辑内部创建的 Label Studio 映射（名称以 " - 自动标注" 结尾），
+  // 仅用于 datasetId -> projectId 映射，不在列表中单独展示，避免给人“多了一条手动任务”的感觉。
+  const manualVisibleTasks = tableData.filter((task: any) => {
+    const name = (task as any)?.name;
+    if (typeof name !== "string") return true;
+    return !name.endsWith(" - 自动标注");
+  });
+
   const mergedTableData = [
-    // 手动标注任务
-    ...tableData.map((task) => ({
+    // 手动标注任务（过滤掉自动生成的映射任务）
+    ...manualVisibleTasks.map((task) => ({
       ...task,
       _kind: "manual" as const,
     })),
@@ -335,6 +430,7 @@ export default function DataAnnotation() {
       return {
         id: task.id,
         name: task.name,
+        datasetId: task.datasetId || task.dataset_id,
         datasetName,
         createdAt: task.createdAt || "-",
         updatedAt: task.updatedAt || "-",
@@ -472,7 +568,7 @@ export default function DataAnnotation() {
       title: "操作",
       key: "actions",
       fixed: "right" as const,
-      width: 150,
+      width: 220,
       dataIndex: "actions",
       render: (_: any, task: any) => (
         <div className="flex items-center justify-center space-x-1">
@@ -487,12 +583,26 @@ export default function DataAnnotation() {
               />
             ))}
           {task._kind === "auto" && (
-            <Button
-              type="text"
-              icon={<DeleteOutlined style={{ color: "#f5222d" }} />}
-              onClick={() => handleDeleteAuto(task)}
-              title="删除自动标注任务"
-            />
+            <>
+              <Button
+                type="text"
+                icon={<EditOutlined style={{ color: "#52c41a" }} />}
+                onClick={() => handleAnnotateAuto(task)}
+                title="在 Label Studio 中标注"
+              />
+              <Button
+                type="text"
+                icon={<SyncOutlined style={{ color: "#722ed1" }} />}
+                onClick={() => handleSyncAutoToLabelStudio(task)}
+                title="同步自动标注结果到 Label Studio"
+              />
+              <Button
+                type="text"
+                icon={<DeleteOutlined style={{ color: "#f5222d" }} />}
+                onClick={() => handleDeleteAuto(task)}
+                title="删除自动标注任务"
+              />
+            </>
           )}
         </div>
       ),
