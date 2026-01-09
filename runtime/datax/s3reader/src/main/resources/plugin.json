@@ -1,0 +1,6 @@
+{
+  "name": "s3reader",
+  "class": "com.datamate.plugin.reader.s3reader.S3Reader",
+  "description": "read from S3 compatible object storage",
+  "developer": "datamate"
+}

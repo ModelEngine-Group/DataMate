@@ -1,0 +1,11 @@
+{
+  "name": "s3reader",
+  "parameter": {
+    "endpoint": "http://127.0.0.1:9000",
+    "bucket": "test-bucket",
+    "accessKey": "ak-xxx",
+    "secretKey": "sk-xxx",
+    "prefix": "/test",
+    "region": "us-east-1"
+  }
+}
