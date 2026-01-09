@@ -1,0 +1,6 @@
+{
+  "name": "localwriter",
+  "class": "com.datamate.plugin.writer.localwriter.LocalWriter",
+  "description": "write to local file system",
+  "developer": "datamate"
+}

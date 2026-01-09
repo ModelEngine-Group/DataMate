@@ -1,0 +1,6 @@
+{
+  "name": "localreader",
+  "class": "com.datamate.plugin.reader.localreader.LocalReader",
+  "description": "read from local file system",
+  "developer": "datamate"
+}
