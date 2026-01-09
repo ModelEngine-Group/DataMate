@@ -65,6 +65,10 @@ class DataxClient:
             dest_parameter = {
                 "destPath": target_path
             }
+        elif template.target_type == "s3writer" or template.target_type == "glusterfswriter" or template.target_type == "localwriter":
+            dest_parameter = {
+                "destPath": target_path
+            }
         writer_parameter = {
             **(task_config.parameter if task_config.parameter else {}),
             **(task_config.writer if task_config.writer else {}),
