@@ -1,0 +1,6 @@
+{
+  "name": "s3writer",
+  "class": "com.datamate.plugin.writer.s3writer.S3Writer",
+  "description": "write S3 compatible object storage files to local",
+  "developer": "datamate"
+}

@@ -1,0 +1,6 @@
+{
+  "name": "localreader",
+  "parameter": {
+    "path": "/data/source"
+  }
+}
