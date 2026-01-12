@@ -189,4 +189,4 @@ Thumbs.db
 *.sublime-workspace
 
 # Milvus
-deployment/docker/milvus/volumes/
+**/volumes/
