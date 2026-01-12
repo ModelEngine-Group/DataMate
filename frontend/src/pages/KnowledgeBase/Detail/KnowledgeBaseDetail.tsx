@@ -171,7 +171,7 @@ const KnowledgeBaseDetailPage: React.FC = () => {
       ellipsis: true,
       fixed: "left" as const,
       render: (_: unknown, file: KBFile) => (
-        <a onClick={() => navigate(`/data/knowledge-base/file-detail/${file.id}?knowledgeBaseId=${knowledgeBase?.id || ''}`)}>
+        <a onClick={() => navigate(`/data/knowledge-base/file-detail/${file.id}?knowledgeBaseId=${knowledgeBase?.id || ''}&fileName=${encodeURIComponent(file.name || file.fileName || '')}`)}>
           {file.name}
         </a>
       )

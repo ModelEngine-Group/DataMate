@@ -40,9 +40,10 @@ const getStatusColor = (status: string) => {
 
 const KnowledgeBaseFileDetail: React.FC = () => {
   const { id } = useParams();
-  // id 为路由中的 ragFileId，knowledgeBaseId 通过上一级 detail 路由或 query 传入，这里尝试从 URLSearchParams 获取
+  // id 为路由中的 ragFileId，knowledgeBaseId 通过上一级 detail 路由或 query 传入
   const search = new URLSearchParams(window.location.search);
   const knowledgeBaseId = search.get("knowledgeBaseId") || "";
+  const fileName = search.get("fileName") || "";
   const ragFileId = id || "";
   const kbLink = knowledgeBaseId ? `/data/knowledge-base/detail/${knowledgeBaseId}` : "/data/knowledge-base";
 
@@ -257,17 +258,9 @@ const KnowledgeBaseFileDetail: React.FC = () => {
     <div className="flex flex-col gap-4">
       <Breadcrumb
         items={[
-          {
-            title: <Link to="/data/knowledge-base">知识库</Link>,
-          },
-          {
-            title: (
-              <Link to={kbLink}>知识库详情</Link>
-            ),
-          },
-          {
-            title: `文件 ${ragFileId}`,
-          },
+          { title: <Link to="/data/knowledge-base">知识库</Link> },
+          { title: (<Link to={kbLink}>知识库详情</Link>) },
+          { title: fileName || `文件 ${ragFileId}` },
         ]}
       />
       {/* 头部统计使用最简占位，后续可扩展 */}
@@ -276,24 +269,14 @@ const KnowledgeBaseFileDetail: React.FC = () => {
           id: ragFileId,
           icon: <FileText className="w-8 h-8" />,
           iconColor: "bg-blue-500 text-blue-600",
-          status: {
-            label: "",
-            color: "default",
-          },
-          name: `文件 ${ragFileId}`,
+          status: { label: "就绪", color: "default" },
+          name: fileName || `文件 ${ragFileId}`,
           description: `${totalElements} 个分块`,
           createdAt: "",
           lastUpdated: "",
         }}
         statistics={[]}
-        operations={[
-          {
-            key: "download",
-            label: "下载",
-            icon: <Download className="w-4 h-4" />,
-            onClick: () => {},
-          },
-        ]}
+        operations={[{ key: "download", label: "下载", icon: <Download className="w-4 h-4" />, onClick: () => {} }]}
       />
       <Card>
         {loading ? <div className="flex items-center justify-center py-8"><Spin /></div> : renderChunks()}
