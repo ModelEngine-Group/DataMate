@@ -11,7 +11,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@reduxjs/toolkit": "^2.11.0",
+    "@reduxjs/toolkit": "^2.11.2",
     "@xyflow/react": "^12.8.3",
     "antd": "^5.27.0",
     "jssha": "^3.3.1",
