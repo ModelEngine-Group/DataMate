@@ -11,15 +11,13 @@ services:
       - "8000"
     ports:
       - "30001:8000"
-    depends_on:
-      - pg-db
     environment:
       - DJANGO_DB=default
-      - POSTGRE_NAME=postgres
+      - POSTGRE_NAME=labelstudio
       - POSTGRE_USER=postgres
-      - POSTGRE_PASSWORD=
+      - POSTGRE_PASSWORD=password
       - POSTGRE_PORT=5432
-      - POSTGRE_HOST=db
+      - POSTGRE_HOST=datamate-database
       - LABEL_STUDIO_HOST=${LABEL_STUDIO_HOST:-}
       - LOCAL_FILES_SERVING_ENABLED=true
       - LOCAL_FILES_DOCUMENT_ROOT=/label-studio/local
@@ -36,21 +34,8 @@ services:
       - datamate
     command: label-studio-uwsgi
 
-  pg-db:
-    image: pgautoupgrade/pgautoupgrade:13-alpine
-    hostname: db
-    restart: unless-stopped
-    environment:
-      - POSTGRES_HOST_AUTH_METHOD=trust
-      - POSTGRES_USER=postgres
-    volumes:
-      - label-studio-db:/var/lib/postgresql/data
-    networks:
-      - datamate
-
 volumes:
   label-studio-data:
-  label-studio-db:
   dataset_volume:
     name: datamate-dataset-volume
     external: true
