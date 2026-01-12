@@ -202,14 +202,14 @@ services:
     ports:
       - "30001:8000"
     depends_on:
-      - pg-db
+      - datamate-database
     environment:
       - DJANGO_DB=default
-      - POSTGRE_NAME=postgres
+      - POSTGRE_NAME=labelstudio
       - POSTGRE_USER=postgres
-      - POSTGRE_PASSWORD=
+      - POSTGRE_PASSWORD=password
       - POSTGRE_PORT=5432
-      - POSTGRE_HOST=db
+      - POSTGRE_HOST=datamate-database
       - LABEL_STUDIO_HOST=${LABEL_STUDIO_HOST:-}
       - LOCAL_FILES_SERVING_ENABLED=true
       - LOCAL_FILES_DOCUMENT_ROOT=/label-studio/local
@@ -225,20 +225,6 @@ services:
     networks:
       - datamate
     command: label-studio-uwsgi
-    profiles: [ label-studio ]
-
-  pg-db:
-    container_name: pg-db
-    image: pgautoupgrade/pgautoupgrade:13-alpine
-    hostname: db
-    restart: unless-stopped
-    environment:
-      - POSTGRES_HOST_AUTH_METHOD=trust
-      - POSTGRES_USER=postgres
-    volumes:
-      - label-studio-db:/var/lib/postgresql/data
-    networks:
-      - datamate
     profiles: [ label-studio ]
 
   # ==============================
@@ -276,8 +262,8 @@ services:
       - "9001:9001"
       - "9000:9000"
     volumes:
-      - minio-volume:/minio_data
-    command: minio server /minio_data --console-address ":9001"
+      - minio-volume:/data
+    command: minio server /data --console-address ":9001"
     networks:
       - datamate
     healthcheck:
