@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Eye, Edit, Trash2, FileText, Download } from "lucide-react";
+import {Eye, Edit, Trash2, FileText, Download, FileType2, FileBox} from "lucide-react";
 import { Card, Button, Badge, Input, Tabs, Modal, Breadcrumb, Tag, Spin, Empty, Alert } from "antd";
 import { queryKnowledgeBaseFileDetailUsingGet } from "@/pages/KnowledgeBase/knowledge-base.api";
 import { Link, useParams } from "react-router";
@@ -267,8 +267,8 @@ const KnowledgeBaseFileDetail: React.FC = () => {
       <DetailHeader
         data={{
           id: ragFileId,
-          icon: <FileText className="w-8 h-8" />,
-          iconColor: "bg-blue-500 text-blue-600",
+          icon: <FileBox className="w-full h-full" />,
+          iconColor: "#a27e7e",
           status: { label: "就绪", color: "default" },
           name: fileName || `文件 ${ragFileId}`,
           description: `${totalElements} 个分块`,
