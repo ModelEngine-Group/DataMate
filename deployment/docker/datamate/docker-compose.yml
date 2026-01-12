@@ -1,5 +1,8 @@
 services:
-  # 1) backend
+  # ==============================
+  # Core Datamate Services (always enabled)
+  # ==============================
+
   datamate-backend:
     container_name: datamate-backend
     image: ${REGISTRY:-}datamate-backend
@@ -15,7 +18,6 @@ services:
     depends_on:
       - datamate-database
 
-  # 1) backend (Python)
   datamate-backend-python:
     container_name: datamate-backend-python
     image: ${REGISTRY:-}datamate-backend-python
@@ -38,13 +40,12 @@ services:
     privileged: true
     networks: [ datamate ]
 
-  # 2) frontend（NodePort 30000）
   datamate-frontend:
     container_name: datamate-frontend
     image: ${REGISTRY:-}datamate-frontend
     restart: on-failure
     ports:
-      - "30000:80"            # nodePort → hostPort
+      - "30000:80"
     volumes:
       - frontend_log_volume:/var/log/datamate/frontend
     networks: [ datamate ]
@@ -52,7 +53,6 @@ services:
       - datamate-backend
       - datamate-backend-python
 
-  # 3) database
   datamate-database:
     container_name: datamate-database
     image: ${REGISTRY:-}datamate-database
@@ -72,7 +72,6 @@ services:
       - "3306:3306"
     networks: [ datamate ]
 
-  # 3) runtime
   datamate-runtime:
     container_name: datamate-runtime
     image: ${REGISTRY:-}datamate-runtime
@@ -99,14 +98,16 @@ services:
       - operator-packages-volume:/usr/local/lib/ops/site-packages
     networks: [ datamate ]
 
-  # 4) mineru
+  # =============================
+  # Optional: Mineru NPU Engine (profile: mineru)
+  # ==============================
   datamate-mineru:
     container_name: datamate-mineru
     image: datamate-mineru
     restart: on-failure
     environment:
       MINERU_MODEL_SOURCE: local
-      MINERU_DEVICE_MODE: npu  # cpu|cuda|npu|mps
+      MINERU_DEVICE_MODE: npu
       VLLM_WORKER_MULTIPROC_METHOD: spawn
     privileged: true
     entrypoint: mineru-openai-server
@@ -129,7 +130,9 @@ services:
       - /dev/devmm_svm
       - /dev/hisi_hdc
 
-  # 5) redis
+  # ==============================
+  # Optional: Redis (profile: redis)
+  # ==============================
   datamate-redis:
     container_name: datamate-redis
     image: redis:8.2.3
@@ -137,7 +140,11 @@ services:
     ports:
       - "6379:6379"
     networks: [ datamate ]
+    profiles: [ redis ]
 
+  # ==============================
+  # Optional: Data Juicer (profile: data-juicer)
+  # ==============================
   datamate-data-juicer:
     container_name: datamate-data-juicer
     image: datajuicer/data-juicer:v1.4.4
@@ -153,6 +160,171 @@ services:
     networks: [ datamate ]
     profiles: [ data-juicer ]
 
+
+  # ==============================
+  # Optional: Deer Flow (profile: deer-flow)
+  # ==============================
+  deer-flow-backend:
+    image: ${REGISTRY:-}deer-flow-backend
+    container_name: deer-flow-backend
+    env_file:
+      - .env
+    volumes:
+      - ./conf.yaml:/app/conf.yaml:ro
+      - deer-flow-log-volume:/var/log/deer-flow
+    restart: unless-stopped
+    networks:
+      - datamate
+    profiles:
+      - deer-flow
+
+  deer-flow-frontend:
+    image: ${REGISTRY:-}deer-flow-frontend
+    container_name: deer-flow-frontend
+    env_file:
+      - .env
+    depends_on:
+      - deer-flow-backend
+    restart: unless-stopped
+    networks:
+      - datamate
+    profiles:
+      - deer-flow
+
+  # ==============================
+  # Optional: Label Studio (profile: label-studio)
+  # ==============================
+  label-studio:
+    container_name: label-studio
+    stdin_open: true
+    tty: true
+    image: heartexlabs/label-studio:latest
+    privileged: true
+    restart: unless-stopped
+    user: root
+    expose:
+      - "8000"
+    ports:
+      - "30001:8000"
+    depends_on:
+      - pg-db
+    environment:
+      - DJANGO_DB=default
+      - POSTGRE_NAME=postgres
+      - POSTGRE_USER=postgres
+      - POSTGRE_PASSWORD=
+      - POSTGRE_PORT=5432
+      - POSTGRE_HOST=db
+      - LABEL_STUDIO_HOST=${LABEL_STUDIO_HOST:-}
+      - LOCAL_FILES_SERVING_ENABLED=true
+      - LOCAL_FILES_DOCUMENT_ROOT=/label-studio/local
+      - USE_USERNAME_FOR_LOGIN=true
+      - LABEL_STUDIO_USERNAME=admin@demo.com
+      - LABEL_STUDIO_PASSWORD=demoadmin
+      - LABEL_STUDIO_ENABLE_LEGACY_API_TOKEN=true
+      - LABEL_STUDIO_USER_TOKEN=abc123abc123
+      - LOG_LEVEL=DEBUG
+    volumes:
+      - label-studio-data:/label-studio/data:rw
+      - dataset_volume:/label-studio/local:rw
+    networks:
+      - datamate
+    command: label-studio-uwsgi
+    profiles: [ label-studio ]
+
+  pg-db:
+    container_name: pg-db
+    image: pgautoupgrade/pgautoupgrade:13-alpine
+    hostname: db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_HOST_AUTH_METHOD=trust
+      - POSTGRES_USER=postgres
+    volumes:
+      - label-studio-db:/var/lib/postgresql/data
+    networks:
+      - datamate
+    profiles: [ label-studio ]
+
+  # ==============================
+  # Optional: Milvus (profile: milvus)
+  # ==============================
+  etcd:
+    container_name: milvus-etcd
+    image: quay.io/coreos/etcd:v3.5.18
+    environment:
+      - ETCD_AUTO_COMPACTION_MODE=revision
+      - ETCD_AUTO_COMPACTION_RETENTION=1000
+      - ETCD_QUOTA_BACKEND_BYTES=4294967296
+      - ETCD_SNAPSHOT_COUNT=50000
+    volumes:
+      - etcd-volume:/etcd
+    command: etcd -advertise-client-urls=http://etcd:2379 -listen-client-urls http://0.0.0.0:2379 --data-dir /etcd
+    restart: always
+    networks:
+      - datamate
+    healthcheck:
+      test: ["CMD", "etcdctl", "endpoint", "health"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    profiles:
+      - milvus
+
+  minio:
+    container_name: milvus-minio
+    image: minio/minio:RELEASE.2024-12-18T13-15-44Z
+    environment:
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+    ports:
+      - "9001:9001"
+      - "9000:9000"
+    volumes:
+      - minio-volume:/minio_data
+    command: minio server /minio_data --console-address ":9001"
+    networks:
+      - datamate
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    profiles:
+      - milvus
+
+  milvus:
+    container_name: milvus-standalone
+    image: milvusdb/milvus:v2.6.5
+    command: ["milvus", "run", "standalone"]
+    security_opt:
+    - seccomp:unconfined
+    environment:
+      ETCD_ENDPOINTS: etcd:2379
+      MINIO_ADDRESS: minio:9000
+      MQ_TYPE: woodpecker
+    volumes:
+      - milvus-volume:/var/lib/milvus
+    networks:
+      - datamate
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
+      interval: 30s
+      start_period: 90s
+      timeout: 20s
+      retries: 3
+    ports:
+      - "19530:19530"
+      - "9091:9091"
+    depends_on:
+      - "etcd"
+      - "minio"
+    profiles:
+      - milvus
+
+# ==============================
+# Volumes
+# ==============================
 volumes:
   dataset_volume:
     name: datamate-dataset-volume
@@ -177,6 +349,28 @@ volumes:
   mineru_log_volume:
     name: datamate-mineru_log_volume
 
+  # Deer Flow
+  deer-flow-log-volume:
+    name: deer-flow-log-volume
+
+  # Label Studio
+  label-studio-data:
+    name: label-studio-data-volume
+  label-studio-db:
+    name: label-studio-db-volume
+
+  # Milvus
+  etcd-volume:
+    name: milvus-etcd-volume
+  minio-volume:
+    name: milvus-minio-volume
+  milvus-volume:
+    name: milvus-milvus-volume
+
+
+# ==============================
+# Networks
+# ==============================
 networks:
   datamate:
     driver: bridge

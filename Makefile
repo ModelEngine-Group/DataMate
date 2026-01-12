@@ -238,7 +238,7 @@ endif
 # ========== Docker Install/Uninstall Targets ==========
 
 # Valid service targets for docker install/uninstall
-VALID_SERVICE_TARGETS := datamate backend frontend runtime mineru "deer-flow" milvus "label-studio" "data-juicer" dj
+VALID_SERVICE_TARGETS := datamate backend frontend runtime backend-python database gateway redis mineru deer-flow milvus label-studio data-juicer dj
 
 # Generic docker service install target
 .PHONY: %-docker-install
@@ -252,21 +252,23 @@ VALID_SERVICE_TARGETS := datamate backend frontend runtime mineru "deer-flow" mi
 		exit 1; \
 	fi
 	@if [ "$*" = "label-studio" ]; then \
-		$(call docker-compose-service,label-studio,up -d,deployment/docker/label-studio); \
-	elif [ "$*" = "mineru" ]; then \
-		REGISTRY=$(REGISTRY) && docker compose -f deployment/docker/datamate/docker-compose.yml up -d datamate-mineru; \
+		REGISTRY=$(REGISTRY) docker compose -f deployment/docker/datamate/docker-compose.yml --profile label-studio up -d; \
 	elif [ "$*" = "datamate" ]; then \
 		REGISTRY=$(REGISTRY) docker compose -f deployment/docker/datamate/docker-compose.yml up -d; \
-	elif [ "$*" = "deer-flow" ]; then \
-		cp runtime/deer-flow/.env deployment/docker/deer-flow/.env; \
-		cp runtime/deer-flow/conf.yaml deployment/docker/deer-flow/conf.yaml; \
-		REGISTRY=$(REGISTRY) docker compose -f deployment/docker/deer-flow/docker-compose.yml up -d; \
-	elif [ "$*" = "milvus" ]; then \
-		docker compose -f deployment/docker/milvus/docker-compose.yml up -d; \
+	elif [ "$*" = "mineru" ]; then \
+		REGISTRY=$(REGISTRY) docker compose -f deployment/docker/datamate/docker-compose.yml --profile mineru up -d datamate-mineru; \
 	elif [ "$*" = "data-juicer" ] || [ "$*" = "dj" ]; then \
-		REGISTRY=$(REGISTRY) && docker compose -f deployment/docker/datamate/docker-compose.yml up -d datamate-data-juicer; \
+		REGISTRY=$(REGISTRY) docker compose -f deployment/docker/datamate/docker-compose.yml --profile data-juicer up -d datamate-data-juicer; \
+	elif [ "$*" = "redis" ]; then \
+		REGISTRY=$(REGISTRY) docker compose -f deployment/docker/datamate/docker-compose.yml --profile redis up -d datamate-redis; \
+	elif [ "$*" = "milvus" ]; then \
+		REGISTRY=$(REGISTRY) docker compose -f deployment/docker/datamate/docker-compose.yml --profile milvus up -d; \
+	elif [ "$*" = "deer-flow" ]; then \
+		cp runtime/deer-flow/.env deployment/docker/datamate/.env; \
+		cp runtime/deer-flow/conf.yaml deployment/docker/datamate/conf.yaml; \
+		REGISTRY=$(REGISTRY) docker compose -f deployment/docker/datamate/docker-compose.yml --profile deer-flow up -d; \
 	else \
-		$(call docker-compose-service,$*,up -d,deployment/docker/datamate); \
+		REGISTRY=$(REGISTRY) docker compose -f deployment/docker/datamate/docker-compose.yml up -d datamate-$*; \
 	fi
 
 # Generic docker service uninstall target
@@ -281,29 +283,23 @@ VALID_SERVICE_TARGETS := datamate backend frontend runtime mineru "deer-flow" mi
 		exit 1; \
 	fi
 	@if [ "$*" = "label-studio" ]; then \
-		if [ "$(DELETE_VOLUMES_CHOICE)" = "1" ]; then \
-			cd deployment/docker/label-studio && docker compose down -v && cd - >/dev/null; \
-		else \
-			cd deployment/docker/label-studio && docker compose down && cd - >/dev/null; \
-		fi; \
+		docker compose -f deployment/docker/datamate/docker-compose.yml rm -f -s label-studio pg-db; \
 	elif [ "$*" = "mineru" ]; then \
-		$(call docker-compose-service,datamate-mineru,down,deployment/docker/datamate); \
+		docker compose -f deployment/docker/datamate/docker-compose.yml rm -f -s datamate-mineru; \
+	elif [ "$*" = "data-juicer" ] || [ "$*" = "dj" ]; then \
+		docker compose -f deployment/docker/datamate/docker-compose.yml rm -f -s datamate-data-juicer; \
+	elif [ "$*" = "redis" ]; then \
+		docker compose -f deployment/docker/datamate/docker-compose.yml rm -f -s datamate-redis; \
 	elif [ "$*" = "datamate" ]; then \
 		if [ "$(DELETE_VOLUMES_CHOICE)" = "1" ]; then \
-			docker compose -f deployment/docker/datamate/docker-compose.yml --profile mineru down -v; \
+			docker compose -f deployment/docker/datamate/docker-compose.yml --profile mineru --profile redis --profile data-juicer --profile deer-flow --profile label-studio --profile milvus down -v; \
 		else \
-			docker compose -f deployment/docker/datamate/docker-compose.yml --profile mineru down; \
+			docker compose -f deployment/docker/datamate/docker-compose.yml --profile mineru --profile redis --profile data-juicer --profile deer-flow --profile label-studio --profile milvus down; \
 		fi; \
 	elif [ "$*" = "deer-flow" ]; then \
-	  	docker compose -f deployment/docker/deer-flow/docker-compose.yml down; \
+		docker compose -f deployment/docker/datamate/docker-compose.yml rm -f -s deer-flow-backend deer-flow-frontend; \
 	elif [ "$*" = "milvus" ]; then \
-		if [ "$(DELETE_VOLUMES_CHOICE)" = "1" ]; then \
-			docker compose -f deployment/docker/milvus/docker-compose.yml down -v; \
-		else \
-			docker compose -f deployment/docker/milvus/docker-compose.yml down; \
-		fi; \
-	elif [ "$*" = "data-juicer" ] || [ "$*" = "dj" ]; then \
-		$(call docker-compose-service,datamate-data-juicer,down,deployment/docker/datamate); \
+		docker compose -f deployment/docker/datamate/docker-compose.yml rm -f -s milvus etcd minio; \
 	else \
 		$(call docker-compose-service,$*,down,deployment/docker/datamate); \
 	fi
