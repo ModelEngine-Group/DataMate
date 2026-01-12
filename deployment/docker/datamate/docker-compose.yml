@@ -58,18 +58,13 @@ services:
     image: ${REGISTRY:-}datamate-database
     restart: on-failure
     environment:
-      MYSQL_ROOT_PASSWORD: password
-    command: |
-      sh -c "
-        chown mysql:mysql /var/log/datamate/database &&
-        chmod 755 /var/log/datamate/database &&
-        exec docker-entrypoint.sh mysqld
-      "
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
     volumes:
-      - mysql_volume:/var/lib/mysql
+      - postgresql_volume:/var/lib/postgresql/data
       - database_log_volume:/var/log/datamate/database
     ports:
-      - "3306:3306"
+      - "5432:5432"
     networks: [ datamate ]
 
   # 3) runtime
@@ -160,8 +155,8 @@ volumes:
     name: datamate-flow-volume
   log_volume:
     name: datamate-log-volume
-  mysql_volume:
-    name: datamate-mysql-volume
+  postgresql_volume:
+    name: datamate-postgresql-volume
   ray_log_volume:
     name: datamate-ray-log-volume
   frontend_log_volume:

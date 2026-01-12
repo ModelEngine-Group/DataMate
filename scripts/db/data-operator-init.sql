@@ -1,57 +1,119 @@
-USE datamate;
+-- 使用现有的datamate数据库
+\c datamate;
 
+-- 算子表
 CREATE TABLE IF NOT EXISTS t_operator
 (
-    id          varchar(64) primary key,
-    name        varchar(64) unique,
-    description varchar(256),
-    version     varchar(256),
-    inputs      varchar(256),
-    outputs     varchar(256),
-    runtime     text,
-    settings    text,
-    file_name   text,
-    is_star     boolean,
-    created_at  timestamp default current_timestamp,
-    updated_at  timestamp default current_timestamp
+    id          VARCHAR(64) PRIMARY KEY,
+    name        VARCHAR(64) UNIQUE,
+    description VARCHAR(256),
+    version     VARCHAR(256),
+    inputs      VARCHAR(256),
+    outputs     VARCHAR(256),
+    runtime     TEXT,
+    settings    TEXT,
+    file_name   TEXT,
+    is_star     BOOLEAN,
+    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+COMMENT ON TABLE t_operator IS '算子表';
+COMMENT ON COLUMN t_operator.id IS '主键ID';
+COMMENT ON COLUMN t_operator.name IS '算子名称';
+COMMENT ON COLUMN t_operator.description IS '描述';
+COMMENT ON COLUMN t_operator.version IS '版本';
+COMMENT ON COLUMN t_operator.inputs IS '输入类型';
+COMMENT ON COLUMN t_operator.outputs IS '输出类型';
+COMMENT ON COLUMN t_operator.runtime IS '运行时信息';
+COMMENT ON COLUMN t_operator.settings IS '设置信息';
+COMMENT ON COLUMN t_operator.file_name IS '文件名';
+COMMENT ON COLUMN t_operator.is_star IS '是否收藏';
+COMMENT ON COLUMN t_operator.created_at IS '创建时间';
+COMMENT ON COLUMN t_operator.updated_at IS '更新时间';
+
+-- 算子分类表
 CREATE TABLE IF NOT EXISTS t_operator_category
 (
-    id        varchar(64) primary key,
-    name      varchar(64) unique ,
-    value     varchar(64) unique ,
-    type      varchar(64),
-    parent_id varchar(64),
-    created_at timestamp default current_timestamp
+    id        VARCHAR(64) PRIMARY KEY,
+    name      VARCHAR(64) UNIQUE,
+    value     VARCHAR(64) UNIQUE,
+    type      VARCHAR(64),
+    parent_id VARCHAR(64),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+COMMENT ON TABLE t_operator_category IS '算子分类表';
+COMMENT ON COLUMN t_operator_category.id IS '主键ID';
+COMMENT ON COLUMN t_operator_category.name IS '分类名称';
+COMMENT ON COLUMN t_operator_category.value IS '分类值';
+COMMENT ON COLUMN t_operator_category.type IS '分类类型';
+COMMENT ON COLUMN t_operator_category.parent_id IS '父分类ID';
+COMMENT ON COLUMN t_operator_category.created_at IS '创建时间';
+
+-- 算子分类关联表
 CREATE TABLE IF NOT EXISTS t_operator_category_relation
 (
-    category_id varchar(64),
-    operator_id varchar(64),
-    primary key (category_id, operator_id)
+    category_id VARCHAR(64),
+    operator_id VARCHAR(64),
+    PRIMARY KEY (category_id, operator_id)
 );
 
-CREATE OR REPLACE VIEW v_operator AS
-SELECT o.id     AS operator_id,
-       o.name   AS operator_name,
-       description,
-       version,
-       inputs,
-       outputs,
-       runtime,
-       settings,
-       is_star,
-       o.created_at AS created_at,
-       updated_at,
-       toc.id   AS category_id,
-       toc.name AS category_name
-FROM t_operator_category_relation tocr
-         LEFT JOIN t_operator o ON tocr.operator_id = o.id
-         LEFT JOIN t_operator_category toc ON tocr.category_id = toc.id;
+COMMENT ON TABLE t_operator_category_relation IS '算子分类关联表';
+COMMENT ON COLUMN t_operator_category_relation.category_id IS '分类ID';
+COMMENT ON COLUMN t_operator_category_relation.operator_id IS '算子ID';
 
-INSERT IGNORE INTO t_operator_category(id, name, value, type, parent_id)
+-- 外键约束
+ALTER TABLE t_operator_category_relation
+    ADD CONSTRAINT fk_operator_category_relation_category
+    FOREIGN KEY (category_id)
+    REFERENCES t_operator_category(id)
+    ON DELETE CASCADE;
+
+ALTER TABLE t_operator_category_relation
+    ADD CONSTRAINT fk_operator_category_relation_operator
+    FOREIGN KEY (operator_id)
+    REFERENCES t_operator(id)
+    ON DELETE CASCADE;
+
+-- 创建触发器用于自动更新 updated_at
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+DROP TRIGGER IF EXISTS update_t_operator_updated_at ON t_operator;
+CREATE TRIGGER update_t_operator_updated_at
+    BEFORE UPDATE ON t_operator
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+-- 算子视图
+CREATE OR REPLACE VIEW v_operator AS
+SELECT
+    o.id AS operator_id,
+    o.name AS operator_name,
+    o.description,
+    o.version,
+    o.inputs,
+    o.outputs,
+    o.runtime,
+    o.settings,
+    o.is_star,
+    o.created_at,
+    o.updated_at,
+    toc.id AS category_id,
+    toc.name AS category_name
+FROM t_operator_category_relation tocr
+LEFT JOIN t_operator o ON tocr.operator_id = o.id
+LEFT JOIN t_operator_category toc ON tocr.category_id = toc.id;
+
+COMMENT ON VIEW v_operator IS '算子视图';
+
+INSERT INTO t_operator_category(id, name, value, type, parent_id)
 VALUES ('64465bec-b46b-11f0-8291-00155d0e4808', '模态', 'modal',  'predefined', '0'),
        ('873000a2-65b3-474b-8ccc-4813c08c76fb', '语言', 'language', 'predefined', '0'),
        ('d8a5df7a-52a9-42c2-83c4-01062e60f597', '文本', 'text', 'predefined', '64465bec-b46b-11f0-8291-00155d0e4808'),
@@ -67,9 +129,10 @@ VALUES ('64465bec-b46b-11f0-8291-00155d0e4808', '模态', 'modal',  'predefined'
        ('0ed75eea-e20b-11f0-88e6-00155d5c9528', '归属', 'vendor',  'predefined', '0'),
        ('431e7798-5426-4e1a-aae6-b9905a836b34', 'DataMate', 'datamate',  'predefined', '0ed75eea-e20b-11f0-88e6-00155d5c9528'),
        ('79b385b4-fde8-4617-bcba-02a176938996', 'DataJuicer', 'data-juicer',  'predefined', '0ed75eea-e20b-11f0-88e6-00155d5c9528'),
-       ('f00eaa3e-96c1-4de4-96cd-9848ef5429ec', '其他', 'others',  'predefined', '0ed75eea-e20b-11f0-88e6-00155d5c9528');
+       ('f00eaa3e-96c1-4de4-96cd-9848ef5429ec', '其他', 'others',  'predefined', '0ed75eea-e20b-11f0-88e6-00155d5c9528')
+ON CONFLICT DO NOTHING;
 
-INSERT IGNORE INTO t_operator
+INSERT INTO t_operator
 (id, name, description, version, inputs, outputs, runtime, settings, file_name, is_star)
 VALUES ('MineruFormatter', 'MinerU PDF文本抽取', '基于MinerU API，抽取PDF中的文本。', '1.0.0', 'text', 'text', null, null, '', false),
        ('FileWithHighRepeatPhraseRateFilter', '文档词重复率检查', '去除重复词过多的文档。', '1.0.0', 'text', 'text', null, '{"repeatPhraseRatio": {"name": "文档词重复率", "description": "某个词的统计数/文档总词数 > 设定值，该文档被去除。", "type": "slider", "defaultVal": 0.5, "min": 0, "max": 1, "step": 0.1}, "hitStopwords": {"name": "去除停用词", "description": "统计重复词时，选择是否要去除停用词。", "type": "switch", "defaultVal": false, "required": true, "checkedLabel": "去除", "unCheckedLabel": "不去除"}}', '', 'false'),
@@ -111,9 +174,10 @@ VALUES ('MineruFormatter', 'MinerU PDF文本抽取', '基于MinerU API，抽取P
        ('ImgSimilarImagesCleaner', '相似图片去除', '去除相似的图片。', '1.0.0', 'image', 'image', null, '{"similarThreshold": {"name": "相似度", "description": "相似度取值越大，图片相似度越高。", "type": "slider", "defaultVal": 0.8, "min": 0, "max": 1, "step": 0.01}}', '', 'false'),
        ('ImgTypeUnify', '图片格式转换', '将图片编码格式统一为jpg、jpeg、png、bmp格式。', '1.0.0', 'image', 'image', null, '{"imgType": {"name": "图片编码格式", "type": "select", "defaultVal": "jpg", "options": [{"label": "jpg", "value": "jpg"}, {"label": "png", "value": "png"}, {"label": "jpeg", "value": "jpeg"}, {"label": "bmp", "value": "bmp"}]}}', '', 'false'),
        ('ImgDirectionCorrect', '图片方向校正', '将含有文字的图片校正到文字水平方向，主要适用于文档场景。', '1.0.0', 'image', 'image', null, null, '', 'false'),
-       ('PiiDetector', '高级匿名化', '高级匿名化算子，检测命名实体并匿名化。', '1.0.0', 'text', 'text', null, null, '', 'false');
+       ('PiiDetector', '高级匿名化', '高级匿名化算子，检测命名实体并匿名化。', '1.0.0', 'text', 'text', null, null, '', 'false')
+ON CONFLICT DO NOTHING;
 
-INSERT IGNORE INTO t_operator_category_relation(category_id, operator_id)
+INSERT INTO t_operator_category_relation(category_id, operator_id)
 SELECT c.id, o.id
 FROM t_operator_category c
 CROSS JOIN t_operator o
@@ -125,19 +189,21 @@ AND o.id IN ('FileWithShortOrLongLengthFilter', 'FileWithHighRepeatPhraseRateFil
             'ContentCleaner', 'EmailNumberCleaner', 'EmojiCleaner', 'ExtraSpaceCleaner', 'FullWidthCharacterCleaner',
             'GrableCharactersCleaner', 'InvisibleCharactersCleaner', 'LegendCleaner', 'PoliticalWordCleaner',
             'SexualAndViolentWordCleaner', 'TraditionalChineseCleaner', 'UnicodeSpaceCleaner', 'MineruFormatter',
-            'PiiDetector');
+            'PiiDetector')
+ON CONFLICT DO NOTHING;
 
-INSERT IGNORE INTO t_operator_category_relation(category_id, operator_id)
+INSERT INTO t_operator_category_relation(category_id, operator_id)
 SELECT c.id, o.id
 FROM t_operator_category c
        CROSS JOIN t_operator o
 WHERE c.id IN ('de36b61c-9e8a-4422-8c31-d30585c7100f', '9eda9d5d-072b-499b-916c-797a0a8750e1', '96a3b07a-3439-4557-a835-525faad60ca3', '431e7798-5426-4e1a-aae6-b9905a836b34')
   AND o.id IN ('ImgBlurredImagesCleaner', 'ImgBrightness', 'ImgContrast', 'ImgDenoise',
                'ImgDuplicatedImagesCleaner', 'ImgPerspectiveTransformation', 'ImgResize', 'ImgSaturation',
-               'ImgShadowRemove', 'ImgSharpness', 'ImgSimilarImagesCleaner', 'ImgTypeUnify', 'ImgDirectionCorrect');
+               'ImgShadowRemove', 'ImgSharpness', 'ImgSimilarImagesCleaner', 'ImgTypeUnify', 'ImgDirectionCorrect')
+ON CONFLICT DO NOTHING;
 
 
-INSERT IGNORE INTO t_operator
+INSERT INTO t_operator
 (id, name, description, version, inputs, outputs, runtime, settings, file_name, is_star)
 VALUES
     ('entity_attribute_aggregator', '实体属性聚合器', 'Summarizes a given attribute of an entity from a set of documents. 汇总一组文档中实体的给定属性。', '1.4.4', 'text', 'text', NULL, NULL, '', false),
@@ -197,13 +263,13 @@ VALUES
     ('token_num_filter', 'Token数量过滤器', 'Filter to keep samples with a total token number within a specified range. 筛选器将总令牌数的样本保留在指定范围内。', '1.4.4', 'text', 'text', NULL, NULL, '', false),
     ('video_aesthetics_filter', '视频美学过滤器', 'Filter to keep data samples with aesthetics scores for specified frames in the videos within a specific range. 过滤器将视频中指定帧的美学得分数据样本保留在特定范围内。', '1.4.4', 'video', 'video', NULL, NULL, '', false),
     ('video_aspect_ratio_filter', '视频长宽比过滤器', 'Filter to keep samples with video aspect ratio within a specific range. 过滤器将视频纵横比的样本保持在特定范围内。', '1.4.4', 'video', 'video', NULL, NULL, '', false),
-    ('video_duration_filter', '视频时长过滤器', 'Keep data samples whose videos\' durations are within a specified range. 保留视频持续时间在指定范围内的数据样本。', '1.4.4', 'video', 'video', NULL, NULL, '', false),
+    ('video_duration_filter', '视频时长过滤器', 'Keep data samples whose videos'' durations are within a specified range. 保留视频持续时间在指定范围内的数据样本。', '1.4.4', 'video', 'video', NULL, NULL, '', false),
     ('video_frames_text_similarity_filter', '视频帧文本相似度过滤器', 'Filter to keep samples based on the similarity between video frame images and text within a specific range. 根据视频帧图像和文本之间的相似性进行过滤，以保持样本在特定范围内。', '1.4.4', 'multimodal', 'multimodal', NULL, NULL, '', false),
     ('video_motion_score_filter', '视频运动得分过滤器', 'Filter to keep samples with video motion scores within a specific range. 过滤器将视频运动分数的样本保持在特定范围内。', '1.4.4', 'video', 'video', NULL, NULL, '', false),
     ('video_motion_score_raft_filter', '视频RAFT运动得分过滤器', 'Filter to keep samples with video motion scores within a specified range. 过滤器将视频运动分数的样本保持在指定范围内。', '1.4.4', 'video', 'video', NULL, NULL, '', false),
     ('video_nsfw_filter', '视频NSFW过滤器', 'Filter to keep samples whose videos have nsfw scores in a specified range. 过滤器以保留其视频的nsfw分数在指定范围内的样本。', '1.4.4', 'video', 'video', NULL, NULL, '', false),
     ('video_ocr_area_ratio_filter', '视频OCR面积占比过滤器', 'Keep data samples whose detected text area ratios for specified frames in the video are within a specified range. 保留检测到的视频中指定帧的文本面积比率在指定范围内的数据样本。', '1.4.4', 'video', 'video', NULL, NULL, '', false),
-    ('video_resolution_filter', '视频分辨率过滤器', 'Keep data samples whose videos\' resolutions are within a specified range. 保留视频分辨率在指定范围内的数据样本。', '1.4.4', 'video', 'video', NULL, NULL, '', false),
+    ('video_resolution_filter', '视频分辨率过滤器', 'Keep data samples whose videos'' resolutions are within a specified range. 保留视频分辨率在指定范围内的数据样本。', '1.4.4', 'video', 'video', NULL, NULL, '', false),
     ('video_tagging_from_frames_filter', '视频帧标签过滤器', 'Filter to keep samples whose videos contain specified tags. 过滤器以保留其视频包含指定标签的样本。', '1.4.4', 'video', 'video', NULL, NULL, '', false),
     ('video_watermark_filter', '视频水印过滤器', 'Filter to keep samples whose videos have no watermark with high probability. 过滤器以保持其视频具有高概率没有水印的样本。', '1.4.4', 'video', 'video', NULL, NULL, '', false),
     ('word_repetition_filter', '单词重复过滤器', 'Filter to keep samples with word-level n-gram repetition ratio within a specific range. 过滤器将单词级n-gram重复比率的样本保持在特定范围内。', '1.4.4', 'text', 'text', NULL, NULL, '', false),
@@ -222,16 +288,16 @@ VALUES
     ('clean_html_mapper', 'HTML清洗映射器', 'Cleans HTML code from text samples, converting HTML to plain text. 从文本示例中清除HTML代码，将HTML转换为纯文本。', '1.4.4', 'text', 'text', NULL, NULL, '', false),
     ('clean_ip_mapper', 'IP清洗映射器', 'Cleans IPv4 and IPv6 addresses from text samples. 从文本示例中清除IPv4和IPv6地址。', '1.4.4', 'text', 'text', NULL, NULL, '', false),
     ('clean_links_mapper', '链接清洗映射器', 'Mapper to clean links like http/https/ftp in text samples. 映射器来清理链接，如文本示例中的http/https/ftp。', '1.4.4', 'text', 'text', NULL, NULL, '', false),
-    ('detect_character_attributes_mapper', '角色属性检测映射器', 'Takes an image, a caption, and main character names as input to extract the characters\' attributes. 根据给定的图像、图像描述信息和（多个）角色名称，提取图像中主要角色的属性。', '1.4.4', 'multimodal', 'multimodal', NULL, NULL, '', false),
+    ('detect_character_attributes_mapper', '角色属性检测映射器', 'Takes an image, a caption, and main character names as input to extract the characters'' attributes. 根据给定的图像、图像描述信息和（多个）角色名称，提取图像中主要角色的属性。', '1.4.4', 'multimodal', 'multimodal', NULL, NULL, '', false),
     ('detect_character_locations_mapper', '角色位置检测映射器', 'Given an image and a list of main character names, extract the bounding boxes for each present character. 给定一张图像和主要角色的名称列表，提取每个在场角色的边界框。(YOLOE + MLLM)', '1.4.4', 'multimodal', 'multimodal', NULL, NULL, '', false),
     ('detect_main_character_mapper', '主要角色检测映射器', 'Extract all main character names based on the given image and its caption. 根据给定的图像及其图像描述，提取所有主要角色的名字。', '1.4.4', 'multimodal', 'multimodal', NULL, NULL, '', false),
-    ('dialog_intent_detection_mapper', '对话意图检测映射器', 'Generates user\'s intent labels in a dialog by analyzing the history, query, and response. 通过分析历史记录、查询和响应，在对话框中生成用户的意图标签。', '1.4.4', 'text', 'text', NULL, NULL, '', false),
+    ('dialog_intent_detection_mapper', '对话意图检测映射器', 'Generates user''s intent labels in a dialog by analyzing the history, query, and response. 通过分析历史记录、查询和响应，在对话框中生成用户的意图标签。', '1.4.4', 'text', 'text', NULL, NULL, '', false),
     ('dialog_sentiment_detection_mapper', '对话情感检测映射器', 'Generates sentiment labels and analysis for user queries in a dialog. 在对话框中为用户查询生成情绪标签和分析。', '1.4.4', 'text', 'text', NULL, NULL, '', false),
-    ('dialog_sentiment_intensity_mapper', '对话情感强度映射器', 'Mapper to predict user\'s sentiment intensity in a dialog, ranging from -5 to 5. Mapper预测用户在对话框中的情绪强度，范围从-5到5。', '1.4.4', 'text', 'text', NULL, NULL, '', false),
-    ('dialog_topic_detection_mapper', '对话主题检测映射器', 'Generates user\'s topic labels and analysis in a dialog. 在对话框中生成用户的主题标签和分析。', '1.4.4', 'text', 'text', NULL, NULL, '', false),
+    ('dialog_sentiment_intensity_mapper', '对话情感强度映射器', 'Mapper to predict user''s sentiment intensity in a dialog, ranging from -5 to 5. Mapper预测用户在对话框中的情绪强度，范围从-5到5。', '1.4.4', 'text', 'text', NULL, NULL, '', false),
+    ('dialog_topic_detection_mapper', '对话主题检测映射器', 'Generates user''s topic labels and analysis in a dialog. 在对话框中生成用户的主题标签和分析。', '1.4.4', 'text', 'text', NULL, NULL, '', false),
     ('download_file_mapper', '文件下载映射器', 'Mapper to download URL files to local files or load them into memory. 映射器将URL文件下载到本地文件或将其加载到内存中。', '1.4.4', 'text', 'text', NULL, NULL, '', false),
     ('expand_macro_mapper', '宏展开映射器', 'Expands macro definitions in the document body of LaTeX samples. 展开LaTeX示例文档主体中的宏定义。', '1.4.4', 'text', 'text', NULL, NULL, '', false),
-    ('extract_entity_attribute_mapper', '实体属性提取映射器', 'Extracts attributes for given entities from the text and stores them in the sample\'s metadata. 从文本中提取给定实体的属性，并将其存储在示例的元数据中。', '1.4.4', 'text', 'text', NULL, NULL, '', false),
+    ('extract_entity_attribute_mapper', '实体属性提取映射器', 'Extracts attributes for given entities from the text and stores them in the sample''s metadata. 从文本中提取给定实体的属性，并将其存储在示例的元数据中。', '1.4.4', 'text', 'text', NULL, NULL, '', false),
     ('extract_entity_relation_mapper', '实体关系提取映射器', 'Extracts entities and relations from text to build a knowledge graph. 从文本中提取实体和关系以构建知识图谱。', '1.4.4', 'text', 'text', NULL, NULL, '', false),
     ('extract_event_mapper', '事件提取映射器', 'Extracts events and relevant characters from the text. 从文本中提取事件和相关字符。', '1.4.4', 'text', 'text', NULL, NULL, '', false),
     ('extract_keyword_mapper', '关键词提取映射器', 'Generate keywords for the text. 为文本生成关键字。', '1.4.4', 'text', 'text', NULL, NULL, '', false),
@@ -263,12 +329,12 @@ VALUES
     ('punctuation_normalization_mapper', '标点归一化映射器', 'Normalizes unicode punctuations to their English equivalents in text samples. 将unicode标点规范化为文本示例中的英语等效项。', '1.4.4', 'text', 'text', NULL, NULL, '', false),
     ('python_file_mapper', 'Python文件映射器', 'Executes a Python function defined in a file on input data. 对输入数据执行文件中定义的Python函数。', '1.4.4', 'text', 'text', NULL, NULL, '', false),
     ('python_lambda_mapper', 'Python Lambda映射器', 'Mapper for applying a Python lambda function to data samples. Mapper，用于将Python lambda函数应用于数据样本。', '1.4.4', 'text', 'text', NULL, NULL, '', false),
-    ('query_intent_detection_mapper', '查询意图检测映射器', 'Predicts the user\'s intent label and corresponding score for a given query. 为给定查询预测用户的意图标签和相应的分数。', '1.4.4', 'text', 'text', NULL, NULL, '', false),
-    ('query_sentiment_detection_mapper', '查询情感检测映射器', 'Predicts user\'s sentiment label (\'negative\', \'neutral\', \'positive\') in a query. 在查询中预测用户的情绪标签 (“负面” 、 “中性” 、 “正面”)。', '1.4.4', 'text', 'text', NULL, NULL, '', false),
+    ('query_intent_detection_mapper', '查询意图检测映射器', 'Predicts the user''s intent label and corresponding score for a given query. 为给定查询预测用户的意图标签和相应的分数。', '1.4.4', 'text', 'text', NULL, NULL, '', false),
+    ('query_sentiment_detection_mapper', '查询情感检测映射器', 'Predicts user''s sentiment label (''negative'', ''neutral'', ''positive'') in a query. 在查询中预测用户的情绪标签 (“负面” 、 “中性” 、 “正面”)。', '1.4.4', 'text', 'text', NULL, NULL, '', false),
     ('query_topic_detection_mapper', '查询主题检测映射器', 'Predicts the topic label and its corresponding score for a given query. 预测给定查询的主题标签及其相应的分数。', '1.4.4', 'text', 'text', NULL, NULL, '', false),
     ('relation_identity_mapper', '关系识别映射器', 'Identify the relation between two entities in a given text. 确定给定文本中两个实体之间的关系。', '1.4.4', 'text', 'text', NULL, NULL, '', false),
     ('remove_bibliography_mapper', '参考书目移除映射器', 'Removes bibliography sections at the end of LaTeX documents. 删除LaTeX文档末尾的参考书目部分。', '1.4.4', 'text', 'text', NULL, NULL, '', false),
-    ('remove_comments_mapper', '注释移除映射器', 'Removes comments from documents, currently supporting only \'tex\' format. 从文档中删除注释，当前仅支持 “文本” 格式。', '1.4.4', 'text', 'text', NULL, NULL, '', false),
+    ('remove_comments_mapper', '注释移除映射器', 'Removes comments from documents, currently supporting only ''tex'' format. 从文档中删除注释，当前仅支持 “文本” 格式。', '1.4.4', 'text', 'text', NULL, NULL, '', false),
     ('remove_header_mapper', '页眉移除映射器', 'Removes headers at the beginning of documents in LaTeX samples. 删除LaTeX示例中文档开头的标题。', '1.4.4', 'text', 'text', NULL, NULL, '', false),
     ('remove_long_words_mapper', '长词移除映射器', 'Mapper to remove long words within a specific range. 映射器删除特定范围内的长词。', '1.4.4', 'text', 'text', NULL, NULL, '', false),
     ('remove_non_chinese_character_mapper', '非中文字符移除映射器', 'Removes non-Chinese characters from text samples. 从文本样本中删除非中文字符。', '1.4.4', 'text', 'text', NULL, NULL, '', false),
@@ -308,9 +374,10 @@ VALUES
     ('random_selector', '随机选择器', 'Randomly selects a subset of samples from the dataset. 从数据集中随机选择样本子集。', '1.4.4', 'text', 'text', NULL, NULL, '', false),
     ('range_specified_field_selector', '范围指定字段选择器', 'Selects a range of samples based on the sorted values of a specified field. 根据指定字段的排序值选择采样范围。', '1.4.4', 'text', 'text', NULL, NULL, '', false),
     ('tags_specified_field_selector', '标签指定字段选择器', 'Selector to filter samples based on the tags of a specified field. 选择器根据指定字段的标签过滤样本。', '1.4.4', 'text', 'text', NULL, NULL, '', false),
-    ('topk_specified_field_selector', 'TopK指定字段选择器', 'Selects top samples based on the sorted values of a specified field. 根据指定字段的排序值选择顶部样本。', '1.4.4', 'text', 'text', NULL, NULL, '', false);
+    ('topk_specified_field_selector', 'TopK指定字段选择器', 'Selects top samples based on the sorted values of a specified field. 根据指定字段的排序值选择顶部样本。', '1.4.4', 'text', 'text', NULL, NULL, '', false)
+ON CONFLICT DO NOTHING;
 
-INSERT IGNORE INTO t_operator_category_relation(category_id, operator_id)
+INSERT INTO t_operator_category_relation(category_id, operator_id)
 SELECT c.id, o.id
 FROM t_operator_category c
          CROSS JOIN t_operator o
@@ -344,9 +411,10 @@ WHERE c.id IN ('d8a5df7a-52a9-42c2-83c4-01062e60f597', '9eda9d5d-072b-499b-916c-
        'replace_content_mapper', 'sdxl_prompt2prompt_mapper', 'sentence_augmentation_mapper', 'sentence_split_mapper',
        'text_chunk_mapper', 'text_tagging_by_prompt_mapper', 'whitespace_normalization_mapper',
        'frequency_specified_field_selector', 'random_selector', 'range_specified_field_selector',
-       'tags_specified_field_selector', 'topk_specified_field_selector');
+       'tags_specified_field_selector', 'topk_specified_field_selector')
+ON CONFLICT DO NOTHING;
 
-INSERT IGNORE INTO t_operator_category_relation(category_id, operator_id)
+INSERT INTO t_operator_category_relation(category_id, operator_id)
 SELECT c.id, o.id
 FROM t_operator_category c
          CROSS JOIN t_operator o
@@ -357,18 +425,20 @@ WHERE c.id IN ('de36b61c-9e8a-4422-8c31-d30585c7100f', '9eda9d5d-072b-499b-916c-
                'image_pair_similarity_filter', 'image_shape_filter', 'image_size_filter', 'image_watermark_filter',
                'image_blur_mapper', 'image_detection_yolo_mapper', 'image_face_blur_mapper',
                'image_remove_background_mapper', 'image_segment_mapper', 'image_tagging_mapper',
-               'imgdiff_difference_area_generator_mapper');
+               'imgdiff_difference_area_generator_mapper')
+ON CONFLICT DO NOTHING;
 
-INSERT IGNORE INTO t_operator_category_relation(category_id, operator_id)
+INSERT INTO t_operator_category_relation(category_id, operator_id)
 SELECT c.id, o.id
 FROM t_operator_category c
          CROSS JOIN t_operator o
 WHERE c.id IN ('42dd9392-73e4-458c-81ff-41751ada47b5', '9eda9d5d-072b-499b-916c-797a0a8750e1',
                '96a3b07a-3439-4557-a835-525faad60ca3', '79b385b4-fde8-4617-bcba-02a176938996')
   AND o.id IN ('audio_duration_filter', 'audio_nmf_snr_filter', 'audio_size_filter', 'audio_add_gaussian_noise_mapper',
-               'audio_ffmpeg_wrapped_mapper');
+               'audio_ffmpeg_wrapped_mapper')
+ON CONFLICT DO NOTHING;
 
-INSERT IGNORE INTO t_operator_category_relation(category_id, operator_id)
+INSERT INTO t_operator_category_relation(category_id, operator_id)
 SELECT c.id, o.id
 FROM t_operator_category c
          CROSS JOIN t_operator o
@@ -381,9 +451,10 @@ WHERE c.id IN ('a233d584-73c8-4188-ad5d-8f7c8dda9c27', '9eda9d5d-072b-499b-916c-
                'video_depth_estimation_mapper', 'video_face_blur_mapper', 'video_ffmpeg_wrapped_mapper',
                'video_hand_reconstruction_mapper', 'video_object_segmenting_mapper', 'video_remove_watermark_mapper',
                'video_resize_aspect_ratio_mapper', 'video_resize_resolution_mapper', 'video_tagging_from_audio_mapper',
-               'video_tagging_from_frames_mapper', 'video_whole_body_pose_estimation_mapper');
+               'video_tagging_from_frames_mapper', 'video_whole_body_pose_estimation_mapper')
+ON CONFLICT DO NOTHING;
 
-INSERT IGNORE INTO t_operator_category_relation(category_id, operator_id)
+INSERT INTO t_operator_category_relation(category_id, operator_id)
 SELECT c.id, o.id
 FROM t_operator_category c
          CROSS JOIN t_operator o
@@ -396,4 +467,5 @@ WHERE c.id IN ('4d7dbd77-0a92-44f3-9056-2cd62d4a71e4', '9eda9d5d-072b-499b-916c-
                'imgdiff_difference_caption_generator_mapper', 'mllm_mapper', 'video_captioning_from_audio_mapper',
                'video_captioning_from_frames_mapper', 'video_captioning_from_summarizer_mapper',
                'video_captioning_from_video_mapper', 'video_captioning_from_vlm_mapper', 'video_extract_frames_mapper',
-               'video_split_by_duration_mapper', 'video_split_by_key_frame_mapper', 'video_split_by_scene_mapper');
+               'video_split_by_duration_mapper', 'video_split_by_key_frame_mapper', 'video_split_by_scene_mapper')
+ON CONFLICT DO NOTHING;
