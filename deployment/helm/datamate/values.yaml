@@ -65,14 +65,16 @@ operatorVolume: &operatorVolume
 
 database:
   env:
-    - name: MYSQL_ROOT_PASSWORD
+    - name: POSTGRES_USER
+      value: postgres
+    - name: POSTGRES_PASSWORD
       value: &dbPass "password"
   volumes:
     - *dataVolume
     - *logVolume
   volumeMounts:
     - name: data-volume
-      mountPath: /var/lib/mysql
+      mountPath: /var/lib/postgresql/data
     - name: log-volume
       mountPath: /var/log/datamate/database
       subPath: database

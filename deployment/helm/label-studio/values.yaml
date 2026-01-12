@@ -13,7 +13,7 @@ image:
   pullPolicy: IfNotPresent
 
 postgres:
-  enabled: true
+  enabled: false
   image:
     repository: pgautoupgrade/pgautoupgrade
     tag: "13-alpine"
@@ -55,11 +55,11 @@ affinity: {}
 
 env:
   DJANGO_DB: "default"
-  POSTGRE_NAME: "postgres"
+  POSTGRE_NAME: "labelstudio"
   POSTGRE_USER: "postgres"
-  POSTGRE_PASSWORD: ""
+  POSTGRE_PASSWORD: "password"
   POSTGRE_PORT: 5432
-  POSTGRE_HOST: "label-studio-postgres"
+  POSTGRE_HOST: "datamate-database"
   LABEL_STUDIO_HOST: "" # can be overridden
   LOCAL_FILES_SERVING_ENABLED: "true"
   LOCAL_FILES_DOCUMENT_ROOT: "/label-studio/local"
