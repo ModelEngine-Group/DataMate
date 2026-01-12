@@ -54,9 +54,9 @@ export function retrieveKnowledgeBaseContent(data: {
 export function queryKnowledgeBaseFileDetailUsingGet(
   knowledgeBaseId: string,
   ragFileId: string,
-  params: { page?: number; size?: number } = { page: 0, size: 20 }
+  params: { page?: number; size?: number } = { page: 1, size: 20 }
 ) {
-  const page = params.page ?? 0;
+  const page = params.page ?? 1;
   const size = params.size ?? 20;
   return get(`/api/knowledge-base/${knowledgeBaseId}/files/${ragFileId}?page=${page}&size=${size}`);
 }

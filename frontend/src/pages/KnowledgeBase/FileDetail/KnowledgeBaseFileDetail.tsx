@@ -65,7 +65,7 @@ const KnowledgeBaseFileDetail: React.FC = () => {
   const [showSliceTraceDialog, setShowSliceTraceDialog] = useState<string | null>(null);
 
   const pageSize = 20;
-  const [currentPageZeroBased, setCurrentPageZeroBased] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const safeParse = (meta: unknown): unknown => {
     if (typeof meta === "string") {
@@ -109,9 +109,9 @@ const KnowledgeBaseFileDetail: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchChunks(currentPageZeroBased);
+    fetchChunks(currentPage);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [knowledgeBaseId, ragFileId, currentPageZeroBased]);
+  }, [knowledgeBaseId, ragFileId, currentPage]);
 
   const totalElements = paged?.totalElements ?? 0;
   const totalPages = paged?.totalPages ?? 0;
@@ -143,24 +143,24 @@ const KnowledgeBaseFileDetail: React.FC = () => {
       {error && <Alert type="error" message={error} showIcon />}
       <div className="flex items-center justify-between">
         <div className="text-sm text-gray-600">
-          共 {totalElements} 个分块，第 {totalElements === 0 ? 0 : currentPageZeroBased * pageSize + 1}-
-          {Math.min((currentPageZeroBased + 1) * pageSize, totalElements)} 个
+          共 {totalElements} 个分块，第 {totalElements === 0 ? 0 : (currentPage - 1) * pageSize + 1}-
+          {Math.min(currentPage * pageSize, totalElements)} 个
         </div>
         <div className="flex items-center gap-2">
           <Button
             size="small"
-            onClick={() => setCurrentPageZeroBased(Math.max(0, currentPageZeroBased - 1))}
-            disabled={currentPageZeroBased === 0}
+            onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+            disabled={currentPage <= 1}
           >
             上一页
           </Button>
           <span className="text-sm text-gray-600">
-            {totalPages === 0 ? 0 : currentPageZeroBased + 1} / {totalPages}
+            {totalPages === 0 ? 0 : currentPage} / {totalPages}
           </span>
           <Button
             size="small"
-            onClick={() => setCurrentPageZeroBased(Math.min(Math.max(totalPages - 1, 0), currentPageZeroBased + 1))}
-            disabled={currentPageZeroBased >= Math.max(totalPages - 1, 0)}
+            onClick={() => setCurrentPage(Math.min(totalPages || 1, currentPage + 1))}
+            disabled={currentPage >= (totalPages || 1)}
           >
             下一页
           </Button>
