@@ -281,8 +281,8 @@ services:
       - "9001:9001"
       - "9000:9000"
     volumes:
-      - minio-volume:/minio_data
-    command: minio server /minio_data --console-address ":9001"
+      - minio-volume:/data
+    command: minio server /data --console-address ":9001"
     networks:
       - datamate
     healthcheck:
