@@ -1,7 +1,0 @@
-{
-  "name": "localwriter",
-  "parameter": {
-    "path": "/data/source",
-    "destPath": "/data/dest"
-  }
-}

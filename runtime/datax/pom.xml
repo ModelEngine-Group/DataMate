@@ -86,7 +86,6 @@
 <!--        <module>dorisreader</module>-->
         <module>nfsreader</module>
         <module>glusterfsreader</module>
-        <module>localreader</module>
         <module>s3reader</module>
         <!-- writer -->
         <module>mysqlwriter</module>
@@ -137,7 +136,6 @@
 <!--        <module>milvuswriter</module>-->
         <module>nfswriter</module>
         <module>glusterfswriter</module>
-        <module>localwriter</module>
         <module>s3writer</module>
         <!-- common support module -->
         <module>plugin-rdbms-util</module>
