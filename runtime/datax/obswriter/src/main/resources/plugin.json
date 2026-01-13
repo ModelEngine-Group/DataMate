@@ -1,6 +1,0 @@
-{
-  "name": "obswriter",
-  "class": "com.datamate.plugin.writer.obswriter.ObsWriter",
-  "description": "writer obs file to local",
-  "developer": "datamate"
-}

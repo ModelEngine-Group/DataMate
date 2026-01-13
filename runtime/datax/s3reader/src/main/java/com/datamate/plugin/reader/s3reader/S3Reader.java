@@ -103,6 +103,7 @@ public class S3Reader extends Reader {
             this.secretKey = this.jobConfig.getString("secretKey");
             this.bucket = this.jobConfig.getString("bucket");
             this.prefix = this.jobConfig.getString("prefix");
+            // OBS也是默认us-east-1，这里保留默认值
             this.region = this.jobConfig.getString("region", "us-east-1");
             this.s3 = getS3Client();
             this.effectivePrefix = getEffectivePrefix();
