@@ -1,4 +1,6 @@
 from typing import Optional, List, Dict, Any, Tuple, Set
+import os
+
 from app.module.dataset import DatasetManagementService
 from sqlalchemy import update, select
 from app.db.models import DatasetFiles
@@ -52,14 +54,38 @@ class SyncService:
     def _build_task_data(self, file_info: Any, dataset_id: str) -> dict:
         """构建Label Studio任务数据"""
         data_type = self._determine_data_type(file_info.fileType)
-        
-        # 替换文件路径前缀
-        file_path = file_info.filePath.removeprefix(settings.dm_file_path_prefix)
-        file_path = settings.label_studio_file_path_prefix + file_path
-        
+
+        # 默认仍然走 Label Studio 本地文件 URL
+        # 先替换文件路径前缀，构造 /data/local-files/?d=/... 形式
+        relative_path = file_info.filePath.removeprefix(settings.dm_file_path_prefix)
+        ls_file_url = settings.label_studio_file_path_prefix + relative_path
+
+        data_value: Any = ls_file_url
+
+        # 对于纯文本文件（例如 .txt），支持直接把文件内容写入到 data.text，
+        # 这样在 Label Studio 里会直接显示文本内容，而不是 URL。
+        if data_type == "text":
+            try:
+                _, ext = os.path.splitext(file_info.filePath)
+                ext = ext.lower()
+
+                # 目前只对 .txt 做内联，其他如 pdf/doc 仍然使用 URL
+                if ext == ".txt":
+                    with open(file_info.filePath, "r", encoding="utf-8", errors="ignore") as f:
+                        content = f.read()
+                    if content:
+                        data_value = content
+            except Exception as e:
+                # 读取失败时退回到原来的 URL 形式，避免中断同步流程
+                logger.warning(
+                    "Failed to inline text content for file %s: %s",
+                    getattr(file_info, "filePath", "<unknown>"),
+                    str(e),
+                )
+
         return {
             "data": {
-                f"{data_type}": file_path,
+                f"{data_type}": data_value,
                 "file_path": file_info.filePath,
                 "file_id": file_info.id,
                 "original_name": file_info.originalName,

@@ -51,7 +51,7 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
   selectedFilesMap,
   onSelectedFilesChange,
   onDatasetSelect,
-  datasetTypeFilter = DatasetType.TEXT,
+  datasetTypeFilter,
   ...props
 }) => {
   const [datasets, setDatasets] = React.useState<Dataset[]>([]);
@@ -85,6 +85,7 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
       page: datasetPagination.current,
       size: datasetPagination.pageSize,
       keyword: datasetSearch,
+      // 仅在显式传入过滤类型时才按类型过滤；否则后端返回所有类型
       type: datasetTypeFilter,
     });
     setDatasets(data.content.map(mapDataset) || []);

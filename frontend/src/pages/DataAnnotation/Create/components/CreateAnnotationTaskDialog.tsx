@@ -183,16 +183,8 @@ export default function CreateAnnotationTask({
       // 手动标注也支持跨数据集、精确到文件的选择
       const selectedFiles = Object.values(selectedFilesMap) as any[];
 
-      const imageExtensions = [".jpg", ".jpeg", ".png", ".bmp", ".gif", ".tiff", ".webp"];
-      const imageFileIds = selectedFiles
-        .filter((file) => {
-          const ext = file.fileName?.toLowerCase().match(/\.[^.]+$/)?.[0] || "";
-          return imageExtensions.includes(ext);
-        })
-        .map((file) => file.id);
-
-      if (imageFileIds.length === 0) {
-        message?.error?.("请至少选择一个图像文件");
+      if (selectedFiles.length === 0) {
+        message?.error?.("请至少选择一个文件");
         setSubmitting(false);
         return;
       }
@@ -213,7 +205,7 @@ export default function CreateAnnotationTask({
         description: values.description,
         datasetId: effectiveDatasetId,
         templateId: values.templateId,
-        fileIds: imageFileIds,
+        fileIds: selectedFiles.map((file) => file.id),
       };
 
       await createAnnotationTaskUsingPost(requestData);
@@ -326,8 +318,8 @@ export default function CreateAnnotationTask({
             label: "手动标注",
             children: (
               <Form form={manualForm} layout="vertical">
-                {/* 选择数据集和图像文件（支持多数据集、多文件） */}
-                <Form.Item label="选择数据集和图像文件" required>
+                {/* 选择数据集和文件（支持多数据集、多文件） */}
+                <Form.Item label="选择数据集和文件" required>
                   <DatasetFileTransfer
                     open
                     selectedFilesMap={selectedFilesMap}
@@ -346,12 +338,11 @@ export default function CreateAnnotationTask({
                         manualForm.setFieldsValue({ name: defaultName });
                       }
                     }}
-                    datasetTypeFilter={DatasetType.IMAGE}
                   />
                   {selectedDataset && (
                     <div className="mt-2 p-2 bg-blue-50 rounded border border-blue-200 text-xs">
                       当前数据集：<span className="font-medium">{selectedDataset.name}</span> - 已选择
-                      <span className="font-medium text-blue-600"> {imageFileCount} </span>个图像文件
+                      <span className="font-medium text-blue-600"> {Object.keys(selectedFilesMap).length} </span>个文件
                     </div>
                   )}
                 </Form.Item>
