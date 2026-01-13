@@ -18,7 +18,7 @@ FROM python:3.12-slim
 # DOCKER_BUILDKIT=1 docker build . -f scripts/images/datamate-python/Dockerfile -t datamate-backend-python
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends vim openjdk-21-jre nfs-common rsync && \
+    apt-get install -y --no-install-recommends vim openjdk-21-jre nfs-common glusterfs-client rsync && \
     rm -rf /var/lib/apt/lists/*
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
