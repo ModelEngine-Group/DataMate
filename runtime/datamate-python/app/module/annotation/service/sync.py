@@ -681,7 +681,7 @@ class SyncService:
                             .where(DatasetFiles.id == file_id)
                             .values(
                                 tags=simplified_annotations,
-                                tags_updated_at=tags_updated_datetime
+                                tags_updated_at=tags_updated_datetime.replace(tzinfo=None)
                             )
                         )
                         await self.dm_client.db.commit()

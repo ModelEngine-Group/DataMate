@@ -2,7 +2,6 @@ package com.datamate.datamanagement.domain.model.dataset;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.datamate.common.domain.model.base.BaseEntity;
 import com.datamate.datamanagement.common.enums.DatasetStatusType;
 import com.datamate.datamanagement.common.enums.DatasetType;
@@ -67,8 +66,7 @@ public class Dataset extends BaseEntity<String> {
     /**
      * 标签列表, JSON格式
      */
-    @TableField(typeHandler = JacksonTypeHandler.class)
-    private Collection<Tag> tags = new HashSet<>();
+    private String tags;
     /**
      * 额外元数据，JSON格式
      */
