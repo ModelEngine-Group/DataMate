@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { Dataset, DatasetFile } from "@/pages/DataManagement/dataset.model";
+import { DatasetType } from "@/pages/DataManagement/dataset.model";
 import { Steps, Card, Select, Input, Button, Form, message, Tag, Tooltip, InputNumber } from "antd";
 import { Eye, ArrowLeft, ArrowRight, Play, Search, Sparkles, Brain, Layers } from "lucide-react";
 import { Link, useNavigate } from "react-router";
@@ -304,7 +305,7 @@ export default function SynthesisTaskCreate() {
             <DatasetFileTransfer open selectedFilesMap={selectedMap} onSelectedFilesChange={setSelectedMap} onDatasetSelect={(dataset) => {
               setSelectedDataset(dataset);
               form.setFieldsValue({ sourceDataset: dataset?.id ?? "" });
-            }} />
+            }} datasetTypeFilter={DatasetType.TEXT} />
             {selectedDataset && (
               <div className="mt-4 p-3 bg-gray-50 rounded border text-xs text-gray-600">
                 当前数据集：<span className="font-medium text-gray-900">{selectedDataset.name}</span>

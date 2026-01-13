@@ -273,6 +273,7 @@ export default function AddDataDialog({ knowledgeBase, onDataAdded }) {
               open={open}
               selectedFilesMap={selectedFilesMap}
               onSelectedFilesChange={setSelectedFilesMap}
+              datasetTypeFilter={DatasetType.TEXT}
             />
           )}
 
