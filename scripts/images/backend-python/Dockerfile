@@ -18,7 +18,7 @@ FROM python:3.12-slim
 # DOCKER_BUILDKIT=1 docker build . -f scripts/images/datamate-python/Dockerfile -t datamate-backend-python
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends vim openjdk-21-jre nfs-common rsync && \
+    apt-get install -y --no-install-recommends vim openjdk-21-jre nfs-common rsync dos2unix && \
     rm -rf /var/lib/apt/lists/*
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -40,9 +40,6 @@ RUN --mount=type=cache,target=/root/.cache/pip \
     && pip install --root-user-action=ignore pipx \
     && pipx install "poetry==$POETRY_VERSION"
 
-COPY --from=datax-builder /DataX/target/datax/datax /opt/datax
-RUN cp /opt/datax/plugin/reader/mysqlreader/libs/mysql* /opt/datax/plugin/reader/starrocksreader/libs/
-
 # Copy only dependency files first (leverages layer caching when dependencies don't change)
 COPY runtime/datamate-python/pyproject.toml runtime/datamate-python/poetry.lock* /app/
 
@@ -59,8 +56,12 @@ ENV NLTK_DATA=/usr/local/nltk_data
 # Copy the rest of the application
 COPY runtime/datamate-python /app
 
+COPY --from=datax-builder /DataX/target/datax/datax /opt/datax
+RUN cp /opt/datax/plugin/reader/mysqlreader/libs/mysql* /opt/datax/plugin/reader/starrocksreader/libs/
+
 COPY runtime/datamate-python/deploy/docker-entrypoint.sh /docker-entrypoint.sh
-RUN chmod +x /docker-entrypoint.sh || true
+RUN chmod +x /docker-entrypoint.sh \
+    && dos2unix /docker-entrypoint.sh || true
 
 # Expose the application port
 EXPOSE 18000

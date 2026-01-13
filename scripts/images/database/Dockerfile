@@ -1,4 +1,4 @@
-FROM pgautoupgrade/pgautoupgrade:13-alpine
+FROM postgres:15-trixie
 
 # 创建日志目录并设置权限
 USER root

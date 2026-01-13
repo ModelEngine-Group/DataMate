@@ -74,11 +74,11 @@ services:
     environment:
       RAY_DEDUP_LOGS: "0"
       RAY_TQDM_PATCH_PRINT: "0"
-      MYSQL_HOST: "datamate-database"
-      MYSQL_PORT: "3306"
-      MYSQL_USER: "root"
-      MYSQL_PASSWORD: "password"
-      MYSQL_DATABASE: "datamate"
+      PG_HOST: "datamate-database"
+      PG_PORT: "5432"
+      PG_USER: "postgres"
+      PG_PASSWORD: "password"
+      PG_DATABASE: "datamate"
     command:
       - python
       - /opt/runtime/datamate/operator_runtime.py

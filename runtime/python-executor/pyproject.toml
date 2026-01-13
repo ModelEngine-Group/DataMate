@@ -23,6 +23,8 @@ dependencies = [
     "ray[data,default]>=2.52.1",
     "unstructured[csv,docx,pptx,xlsx,pdf,md]==0.18.15",
     "uvicorn[standard]>=0.38.0",
+    "sqlalchemy>=2.0.44",
+    "psycopg2-binary>=2.9.11",
 ]
 
 [build-system]

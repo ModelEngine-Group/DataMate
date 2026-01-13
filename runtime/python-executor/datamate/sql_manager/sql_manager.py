@@ -20,13 +20,12 @@ class SQLManager:
         """
 
         connection_url = URL.create(
-            drivername="mysql+pymysql",
-            username=os.getenv("MYSQL_USER", "root"),
-            password=os.getenv("MYSQL_PASSWORD", "password"),
-            host=os.getenv("MYSQL_HOST", "mysql"),
-            port=os.getenv("MYSQL_PORT", 3306),
-            database=os.getenv("MYSQL_DATABASE", "datamate"),
-            query={"charset": "utf8mb4"},
+            drivername="postgresql+psycopg2",  # 核心修改：使用 pg 驱动
+            username=os.getenv("PG_USER", "postgres"), # 建议修改环境变量名
+            password=os.getenv("PG_PASSWORD", "password"),
+            host=os.getenv("PG_HOST", "postgres"),
+            port=int(os.getenv("PG_PORT", 5432)), # 修改默认端口为 5432
+            database=os.getenv("PG_DATABASE", "datamate"),
         )
 
         attempt = 0
