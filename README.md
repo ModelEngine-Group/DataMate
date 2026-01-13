@@ -37,14 +37,6 @@ If you like this project, please give it a Star⭐️!
 - Kubernetes (for service deployment - k8s method)
 - Helm (for service deployment - k8s method)
 
-This project supports deployment via two methods: docker-compose and helm. After executing the command, please enter the corresponding number for the deployment method. The command echo is as follows:
-```shell
-Choose a deployment method:
-1. Docker/Docker-Compose
-2. Kubernetes/Helm
-Enter choice:
-```
-
 ### Clone the Code
 
 ```bash
@@ -58,17 +50,17 @@ cd DataMate
 make install
 ```
 
+This project supports deployment via two methods: docker-compose and helm. After executing the command, please enter the corresponding number for the deployment method. The command echo is as follows:
+```shell
+Choose a deployment method:
+1. Docker/Docker-Compose
+2. Kubernetes/Helm
+Enter choice:
+```
+
 If the machine you are using does not have make installed, please run the following command to deploy it:
 ```bash
-# Windows
-set REGISTRY=ghcr.io/modelengine-group/
-docker compose -f ./deployment/docker/datamate/docker-compose.yml up -d
-docker compose -f ./deployment/docker/milvus/docker-compose.yml up -d
-
-# Linux/Mac
-export REGISTRY=ghcr.io/modelengine-group/
-docker compose -f ./deployment/docker/datamate/docker-compose.yml up -d
-docker compose -f ./deployment/docker/milvus/docker-compose.yml up -d
+REGISTRY=ghcr.io/modelengine-group/ docker compose -f deployment/docker/datamate/docker-compose.yml --profile milvus up -d
 ```
 
 Once the container is running, access http://localhost:30000 in a browser to view the front-end interface.
@@ -77,6 +69,11 @@ To list all available Make targets, flags and help text, run:
 
 ```bash
 make help
+```
+
+If you are in an offline environment, you can run the following command to download all dependent images:
+```bash
+make download
 ```
 
 ### Build and deploy Mineru Enhanced PDF Processing
