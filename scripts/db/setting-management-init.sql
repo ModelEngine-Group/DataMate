@@ -99,11 +99,11 @@ CREATE TRIGGER update_t_sys_param_updated_at
 INSERT INTO t_sys_param (id, param_value, param_type, option_list, description, is_built_in,
                          can_modify, is_enabled, created_by, updated_by)
 VALUES
-    ('sys.knowledge.base.count', '200', 'number', '10,200,500', '知识库最大数量', 1, 1, 1, 'system', 'system'),
-    ('SEARCH_API', 'tavily', 'string', 'tavily,infoquest,duckduckgo,brave_search,arxiv', 'deer-flow使用的搜索引擎', 1, 1, 1, 'system', 'system'),
-    ('TAVILY_API_KEY', 'tvly-dev-xxx', 'string', '', 'deer-flow使用的搜索引擎所需的apiKey', 1, 1, 1, 'system', 'system'),
-    ('BRAVE_SEARCH_API_KEY', 'api-xxx', 'string', '', 'deer-flow使用的搜索引擎所需的apiKey', 1, 1, 1, 'system', 'system'),
-    ('JINA_API_KEY', '', 'string', '', 'deer-flow使用的JINA搜索引擎所需的apiKey', 1, 1, 1, 'system', 'system'),
-    ('sys.management.dataset.pvc.name', 'datamate-dataset-pvc', 'string', '', '数据集所在pvc名称', 1, 0, 1, 'system', 'system'),
-    ('DATA_JUICER_EXECUTOR', 'default', 'string', 'default,ray', 'data-juicer使用的执行器', 1, 1, 1, 'system', 'system')
+    ('sys.knowledge.base.count', '200', 'number', '10,200,500', '知识库最大数量', true, true, true, 'system', 'system'),
+    ('SEARCH_API', 'tavily', 'string', 'tavily,infoquest,duckduckgo,brave_search,arxiv', 'deer-flow使用的搜索引擎', true, true, true, 'system', 'system'),
+    ('TAVILY_API_KEY', 'tvly-dev-xxx', 'string', '', 'deer-flow使用的搜索引擎所需的apiKey', true, true, true, 'system', 'system'),
+    ('BRAVE_SEARCH_API_KEY', 'api-xxx', 'string', '', 'deer-flow使用的搜索引擎所需的apiKey', true, true, true, 'system', 'system'),
+    ('JINA_API_KEY', '', 'string', '', 'deer-flow使用的JINA搜索引擎所需的apiKey', true, true, true, 'system', 'system'),
+    ('sys.management.dataset.pvc.name', 'datamate-dataset-pvc', 'string', '', '数据集所在pvc名称', true, false,true, 'system', 'system'),
+    ('DATA_JUICER_EXECUTOR', 'default', 'string', 'default,ray', 'data-juicer使用的执行器', true, true, true, 'system', 'system')
 ON CONFLICT (id) DO NOTHING;
