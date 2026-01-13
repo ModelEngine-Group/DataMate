@@ -2,5 +2,5 @@
   "query_sql": "SELECT * FROM operator_similar_img_features WHERE task_uuid = :task_uuid ORDER BY timestamp LIMIT :ge OFFSET :le",
   "insert_sql": "INSERT INTO operator_similar_img_features (task_uuid,p_hash,des_matrix,matrix_shape,file_name,timestamp) VALUES (:task_uuid,:p_hash,:des_matrix,:matrix_shape,:file_name,:timestamp)",
   "query_task_uuid_sql": "SELECT * FROM operator_similar_img_features WHERE task_uuid = :task_uuid",
-  "create_tables_sql": "CREATE TABLE IF NOT EXISTS operator_similar_img_features (id INT AUTO_INCREMENT PRIMARY KEY,task_uuid VARCHAR(255),p_hash TEXT,des_matrix BLOB,matrix_shape TEXT,file_name TEXT,timestamp DATETIME);"
+  "create_tables_sql": "CREATE TABLE IF NOT EXISTS operator_similar_img_features (id SERIAL PRIMARY KEY,task_uuid VARCHAR(255),p_hash TEXT,des_matrix BLOB,matrix_shape TEXT,file_name TEXT,timestamp TIMESTAMP);"
 }

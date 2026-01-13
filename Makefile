@@ -283,7 +283,7 @@ VALID_SERVICE_TARGETS := datamate backend frontend runtime backend-python databa
 		exit 1; \
 	fi
 	@if [ "$*" = "label-studio" ]; then \
-		docker compose -f deployment/docker/datamate/docker-compose.yml rm -f -s label-studio pg-db; \
+		docker compose -f deployment/docker/datamate/docker-compose.yml rm -f -s label-studio; \
 	elif [ "$*" = "mineru" ]; then \
 		docker compose -f deployment/docker/datamate/docker-compose.yml rm -f -s datamate-mineru; \
 	elif [ "$*" = "data-juicer" ] || [ "$*" = "dj" ]; then \

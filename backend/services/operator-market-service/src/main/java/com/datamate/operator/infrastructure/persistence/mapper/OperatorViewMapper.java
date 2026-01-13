@@ -14,7 +14,7 @@ import org.apache.ibatis.annotations.Select;
 public interface OperatorViewMapper extends BaseMapper<OperatorView> {
     @Select("SELECT operator_id AS id, operator_name AS name, description, version, inputs, outputs, runtime, " +
         "settings, is_star, created_at, updated_at, " +
-        "GROUP_CONCAT(category_id ORDER BY created_at DESC SEPARATOR ',') AS categories " +
+        "STRING_AGG(CAST(category_id AS TEXT), ',' ORDER BY created_at DESC) AS categories " +
         "FROM v_operator ${ew.customSqlSegment}")
     IPage<OperatorView> findOperatorsByCriteria(IPage<OperatorView> page,
                                                @Param(Constants.WRAPPER) Wrapper<OperatorView> queryWrapper);
@@ -24,7 +24,8 @@ public interface OperatorViewMapper extends BaseMapper<OperatorView> {
 
     @Select("SELECT operator_id AS id, operator_name AS name, description, version, inputs, outputs, runtime, " +
         "settings, is_star, created_at, updated_at, " +
-        "GROUP_CONCAT(category_name ORDER BY created_at DESC SEPARATOR ',') AS categories " +
-        "FROM v_operator WHERE operator_id = #{id}")
+        "STRING_AGG(category_name, ',' ORDER BY created_at DESC) AS categories " +
+        "FROM v_operator WHERE operator_id = #{id} " +
+        "GROUP BY operator_id, operator_name, description, version, inputs, outputs, runtime, settings, is_star, created_at, updated_at")
     OperatorView findOperatorById(@Param("id") String id);
 }

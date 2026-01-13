@@ -8,10 +8,10 @@
   "update_task_sql": "UPDATE t_clean_task SET status = :status, after_size = :total_size, finished_at = :finished_time WHERE id = :task_id",
   "create_tables_sql": "CREATE TABLE IF NOT EXISTS t_task_instance_info (instance_id VARCHAR(255), meta_file_name TEXT, meta_file_type VARCHAR(100), meta_file_id BIGINT, meta_file_size VARCHAR(100), file_id BIGINT, file_size VARCHAR(100), file_type VARCHAR(100), file_name TEXT, file_path TEXT, status INT, operator_id VARCHAR(255), error_code VARCHAR(100), incremental VARCHAR(50), child_id BIGINT, slice_num INT DEFAULT 0);",
   "delete_task_instance_sql": "DELETE FROM t_task_instance_info WHERE instance_id = :instance_id",
-  "create_duplicate_img_tables_sql": "CREATE TABLE IF NOT EXISTS operator_duplicate_img_features (id INT AUTO_INCREMENT PRIMARY KEY,task_uuid VARCHAR(255),file_feature TEXT,file_name TEXT,timestamp DATETIME);",
+  "create_duplicate_img_tables_sql": "CREATE TABLE IF NOT EXISTS operator_duplicate_img_features (id SERIAL PRIMARY KEY, task_uuid VARCHAR(255), file_feature TEXT, file_name TEXT, timestamp TIMESTAMP);",
   "delete_duplicate_img_tables_sql": "DELETE FROM operator_duplicate_img_features WHERE flow_id = :flow_id",
-  "create_similar_img_tables_sql": "CREATE TABLE IF NOT EXISTS operator_similar_img_features (id INT AUTO_INCREMENT PRIMARY KEY,task_uuid VARCHAR(255),p_hash TEXT,des_matrix BLOB,matrix_shape TEXT,file_name TEXT,timestamp DATETIME);",
+  "create_similar_img_tables_sql": "CREATE TABLE IF NOT EXISTS operator_similar_img_features (id SERIAL PRIMARY KEY, task_uuid VARCHAR(255), p_hash TEXT, des_matrix BYTEA, matrix_shape TEXT, file_name TEXT, timestamp TIMESTAMP);",
   "delete_similar_img_tables_sql": "DELETE FROM operator_similar_img_features WHERE flow_id = :flow_id",
-  "create_similar_text_tables_sql": "CREATE TABLE IF NOT EXISTS operators_similar_text_features (id INT AUTO_INCREMENT PRIMARY KEY, task_uuid VARCHAR(255),file_feature TEXT,file_name TEXT,timestamp DATETIME);",
+  "create_similar_text_tables_sql": "CREATE TABLE IF NOT EXISTS operators_similar_text_features (id SERIAL PRIMARY KEY, task_uuid VARCHAR(255), file_feature TEXT, file_name TEXT, timestamp TIMESTAMP);",
   "delete_similar_text_tables_sql": "DELETE FROM operators_similar_text_features WHERE flow_id = :flow_id"
 }
