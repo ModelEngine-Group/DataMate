@@ -50,6 +50,7 @@ class DataxClient:
     @staticmethod
     def generate_datx_config(task_config: CollectionConfig, template: CollectionTemplate, target_path: str):
         # 校验参数
+        dest_path_target = {"nfswriter", "s3writer", "glusterfswriter"}
         reader_parameter = {
             **(task_config.parameter if task_config.parameter else {}),
             **(task_config.reader if task_config.reader else {})
@@ -61,11 +62,7 @@ class DataxClient:
                 "fileName": "collection_result",
                 "writeMode": "truncate"
             }
-        elif template.target_type == "nfswriter":
-            dest_parameter = {
-                "destPath": target_path
-            }
-        elif template.target_type == "s3writer" or template.target_type == "glusterfswriter" or template.target_type == "localwriter":
+        elif dest_path_target.__contains__(template.target_type):
             dest_parameter = {
                 "destPath": target_path
             }
