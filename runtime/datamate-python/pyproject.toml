@@ -33,6 +33,7 @@ dependencies = [
     "sqlalchemy (>=2.0.45,<3.0.0)",
     "fastapi (>=0.124.0,<0.125.0)",
     "fastapi-mcp (>=0.4.0,<0.5.0)",
+    "asyncpg (>=0.31.0,<0.32.0)",
 ]
 
 

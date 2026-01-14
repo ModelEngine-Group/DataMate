@@ -34,14 +34,6 @@
 - kubernetes (用于部署服务-k8s方式)
 - Helm (用于部署服务-k8s方式)
 
-本项目支持docker-compose和helm两种方式部署，请在执行命令后输入部署方式的对应编号，命令回显如下所示：
-```shell
-Choose a deployment method:
-1. Docker/Docker-Compose
-2. Kubernetes/Helm
-Enter choice:
-```
-
 ### 拉取代码
 
 ```bash
@@ -55,17 +47,17 @@ cd DataMate
 make install
 ```
 
-若您使用的机器没有make，请执行如下命令部署:
-```bash
-# Windows
-set REGISTRY=ghcr.io/modelengine-group/
-docker compose -f ./deployment/docker/datamate/docker-compose.yml up -d
-docker compose -f ./deployment/docker/milvus/docker-compose.yml up -d
+本项目支持docker-compose和helm两种方式部署，请在执行命令后输入部署方式的对应编号，命令回显如下所示：
+```shell
+Choose a deployment method:
+1. Docker/Docker-Compose
+2. Kubernetes/Helm
+Enter choice:
+```
 
-# Linux/Mac
-export REGISTRY=ghcr.io/modelengine-group/
-docker compose -f ./deployment/docker/datamate/docker-compose.yml up -d
-docker compose -f ./deployment/docker/milvus/docker-compose.yml up -d
+若您使用的机器没有make，您也可以执行如下命令部署:
+```bash
+REGISTRY=ghcr.io/modelengine-group/ docker compose -f deployment/docker/datamate/docker-compose.yml --profile milvus up -d
 ```
 
 当容器运行后，请在浏览器打开 http://localhost:30000 查看前端界面。
@@ -74,6 +66,11 @@ docker compose -f ./deployment/docker/milvus/docker-compose.yml up -d
 
 ```bash
 make help
+```
+
+如果您是离线环境，您可以执行如下命令下载所有依赖的镜像:
+```bash
+make download
 ```
 
 ### 构建并部署Mineru增强pdf处理

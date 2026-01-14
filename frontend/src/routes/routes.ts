@@ -34,7 +34,7 @@ import OperatorPluginCreate from "@/pages/OperatorMarket/Create/OperatorPluginCr
 import OperatorPluginDetail from "@/pages/OperatorMarket/Detail/OperatorPluginDetail";
 import RatioTasksPage from "@/pages/RatioTask/Home/RatioTask.tsx";
 import CreateRatioTask from "@/pages/RatioTask/Create/CreateRatioTask.tsx";
-import OrchestrationPage from "@/pages/Orchestration/Orchestration";
+import SmartOrchestrationPage from "@/pages/Orchestration/SmartOrchestration";
 import WorkflowEditor from "@/pages/Orchestration/WorkflowEditor";
 import { withErrorBoundary } from "@/components/ErrorBoundary";
 import AgentPage from "@/pages/Agent/Agent.tsx";
@@ -59,7 +59,7 @@ const router = createBrowserRouter([
       {
         path: "",
         index: true,
-        Component: withErrorBoundary(OrchestrationPage),
+        Component: withErrorBoundary(SmartOrchestrationPage),
       },
       {
         path: "create-workflow",

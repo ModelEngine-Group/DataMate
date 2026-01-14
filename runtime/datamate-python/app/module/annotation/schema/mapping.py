@@ -1,5 +1,5 @@
 from pydantic import Field, BaseModel
-from typing import Optional, TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING, List
 from datetime import datetime
 
 from app.module.shared.schema import BaseResponseModel
@@ -14,14 +14,15 @@ class DatasetMappingCreateRequest(BaseModel):
 
     Accept both snake_case and camelCase field names from frontend JSON by
     declaring explicit aliases. Frontend sends `datasetId`, `name`,
-    `description`, `templateId` (camelCase), so provide aliases so pydantic will map them
-    to the internal attributes used in the service code (dataset_id, name,
-    description, template_id).
+    `description`, `templateId`, `fileIds` (camelCase), so provide aliases so
+    pydantic will map them to the internal attributes used in the service code
+    (dataset_id, name, description, template_id, file_ids).
     """
     dataset_id: str = Field(..., alias="datasetId", description="源数据集ID")
     name: Optional[str] = Field(None, alias="name", description="标注项目名称")
     description: Optional[str] = Field(None, alias="description", description="标注项目描述")
     template_id: Optional[str] = Field(None, alias="templateId", description="标注模板ID")
+    file_ids: Optional[List[str]] = Field(None, alias="fileIds", description="限制同步的文件ID列表，可跨多个数据集")
 
     class Config:
         # allow population by field name when constructing model programmatically

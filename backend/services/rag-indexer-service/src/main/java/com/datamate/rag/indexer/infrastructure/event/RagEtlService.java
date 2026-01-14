@@ -78,7 +78,7 @@ public class RagEtlService {
                                 // 更新文件状态为已处理
                                 ragFile.setStatus(FileStatus.PROCESSED);
                                 ragFileRepository.updateById(ragFile);
-                            } catch (Exception e) {
+                            } catch (Throwable e) {
                                 // 处理异常
                                 log.error("Error processing RAG file: {}", ragFile.getFileId(), e);
                                 ragFile.setStatus(FileStatus.PROCESS_FAILED);

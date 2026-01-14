@@ -1,6 +1,14 @@
+from enum import Enum
+
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 from datetime import datetime
+
+class DatasetType(Enum):
+    TEXT = "TEXT"
+    IMAGE = "IMAGE"
+    AUDIO = "AUDIO"
+    VIDEO = "VIDEO"
 
 class DatasetTypeResponse(BaseModel):
     """数据集类型响应模型"""
@@ -22,7 +30,7 @@ class DatasetResponse(BaseModel):
     createdAt: Optional[datetime] = Field(None, description="创建时间")
     updatedAt: Optional[datetime] = Field(None, description="更新时间")
     createdBy: Optional[str] = Field(None, description="创建者")
-    
+
     # 为了向后兼容，添加一个属性方法返回类型对象
     @property
     def type(self) -> DatasetTypeResponse:

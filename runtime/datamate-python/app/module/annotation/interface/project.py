@@ -4,6 +4,7 @@ import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Path, Response
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
 from app.db.session import get_db
 from app.db.models import LabelingProject
@@ -80,12 +81,12 @@ async def create_mapping(
     try:
         dm_client = DatasetManagementService(db)
         ls_client = LabelStudioClient(base_url=settings.label_studio_base_url,
-                                      token=settings.label_studio_user_token)
+                          token=settings.label_studio_user_token)
         mapping_service = DatasetMappingService(db)
         sync_service = SyncService(dm_client, ls_client, mapping_service)
         template_service = AnnotationTemplateService()
 
-        logger.info(f"Create dataset mapping request: {request.dataset_id}")
+        logger.info(f"Create dataset mapping request: dataset_id={request.dataset_id}, file_ids={request.file_ids}")
 
         # 从DM服务获取数据集信息
         dataset_info = await dm_client.get_dataset(request.dataset_id)
@@ -131,7 +132,7 @@ async def create_mapping(
 
         project_id = project_data["id"]
 
-        # 配置本地存储：dataset/<id>
+        # 配置主数据集的本地存储：dataset/<id>
         local_storage_path = f"{settings.label_studio_local_document_root}/{request.dataset_id}"
         storage_result = await ls_client.create_local_storage(
             project_id=project_id,
@@ -148,18 +149,114 @@ async def create_mapping(
             logger.info(f"Local storage configured for project {project_id}: {local_storage_path}")
 
         labeling_project = LabelingProject(
-                id=str(uuid.uuid4()),  # Generate UUID here
-                dataset_id=request.dataset_id,
-                labeling_project_id=str(project_id),
-                name=project_name,
-                template_id=request.template_id,  # Save template_id to database
-            )
+            id=str(uuid.uuid4()),  # Generate UUID here
+            dataset_id=request.dataset_id,
+            labeling_project_id=str(project_id),
+            name=project_name,
+            template_id=request.template_id,  # Save template_id to database
+        )
 
         # 创建映射关系，包含项目名称（先持久化映射以获得 mapping.id）
         mapping = await mapping_service.create_mapping(labeling_project)
 
-        # 进行一次同步，使用创建后的 mapping.id
-        await sync_service.sync_dataset_files(mapping.id, 100)
+        # 如果未指定 file_ids，保持原有行为：按映射数据集完整同步
+        if not request.file_ids:
+            await sync_service.sync_dataset_files(mapping.id, 100)
+        else:
+            # 仿照自动标注逻辑：根据 file_ids 反查所属数据集，可跨多个数据集，
+            # 最终把这些文件同步到同一个 Label Studio 项目中。
+            try:
+                from typing import Set as _Set, Dict as _Dict
+                from app.db.models.dataset_management import DatasetFiles
+
+                file_ids = request.file_ids
+
+                stmt = (
+                    select(DatasetFiles.dataset_id, DatasetFiles.id)
+                    .where(DatasetFiles.id.in_(file_ids))
+                )
+                result = await db.execute(stmt)
+                rows = result.fetchall()
+
+                grouped: _Dict[str, _Set[str]] = {}
+                resolved_ids: _Set[str] = set()
+
+                for ds_id, fid in rows:
+                    if not ds_id or not fid:
+                        continue
+                    fid_str = str(fid)
+                    grouped.setdefault(str(ds_id), set()).add(fid_str)
+                    resolved_ids.add(fid_str)
+
+                # 未能解析到数据集的文件，全部归入主数据集，避免丢失
+                unresolved_ids = {str(fid) for fid in file_ids} - resolved_ids
+                if unresolved_ids:
+                    logger.warning(
+                        "Some file_ids could not be resolved to dataset_id when syncing manual project files: %s",
+                        ",".join(sorted(unresolved_ids)),
+                    )
+                    grouped.setdefault(str(request.dataset_id), set()).update(unresolved_ids)
+
+                # 为所有涉及到的额外数据集提前配置本地存储，避免首次引用该数据集时
+                # /data/local-files/?d=/<dataset_id>/... 返回 404 的情况。
+                try:
+                    for extra_ds_id in grouped.keys():
+                        # 主数据集已在上方配置过，这里只为额外数据集创建存储记录
+                        if str(extra_ds_id) == str(request.dataset_id):
+                            continue
+
+                        extra_local_storage_path = f"{settings.label_studio_local_document_root}/{extra_ds_id}"
+                        extra_storage_result = await ls_client.create_local_storage(
+                            project_id=project_id,
+                            path=extra_local_storage_path,
+                            title=f"Dataset_BLOB_{extra_ds_id}",
+                            use_blob_urls=True,
+                            description=f"Local storage for dataset {extra_ds_id} (multi-dataset manual project)",
+                        )
+                        if not extra_storage_result:
+                            logger.warning(
+                                "Failed to configure extra local storage for project %s (dataset %s)",
+                                project_id,
+                                extra_ds_id,
+                            )
+                        else:
+                            logger.info(
+                                "Extra local storage configured for project %s: %s",
+                                project_id,
+                                extra_local_storage_path,
+                            )
+                except Exception as e:
+                    logger.warning(
+                        "Error while configuring extra local storage for project %s: %s",
+                        project_id,
+                        e,
+                    )
+
+                if not grouped:
+                    # 极端情况：完全无法解析，退回到仅按主数据集＋给定 file_ids 同步
+                    await sync_service.sync_files(
+                        mapping,
+                        100,
+                        allowed_file_ids={str(fid) for fid in file_ids},
+                        delete_orphans=False,
+                    )
+                else:
+                    # 对每个涉及到的数据集，使用 override_dataset_id 将其文件同步到同一个项目
+                    for ds_id, ds_file_ids in grouped.items():
+                        await sync_service.sync_files(
+                            mapping,
+                            100,
+                            allowed_file_ids=ds_file_ids,
+                            override_dataset_id=ds_id,
+                            delete_orphans=False,
+                        )
+            except Exception as e:
+                # 同步失败不影响项目和映射本身的创建，前端可通过“同步”按钮重试
+                logger.warning(
+                    "Failed to sync dataset files for manual LS project %s with file_ids filter: %s",
+                    project_id,
+                    e,
+                )
 
         response_data = DatasetMappingCreateResponse(
             id=mapping.id,

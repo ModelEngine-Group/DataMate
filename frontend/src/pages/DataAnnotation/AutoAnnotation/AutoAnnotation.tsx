@@ -6,6 +6,8 @@ import {
 	DownloadOutlined,
 	ReloadOutlined,
 	EyeOutlined,
+	SyncOutlined,
+	EditOutlined,
 } from "@ant-design/icons";
 import type { ColumnType } from "antd/es/table";
 import type { AutoAnnotationTask, AutoAnnotationStatus } from "../annotation.model";
@@ -13,6 +15,8 @@ import {
 	queryAutoAnnotationTasksUsingGet,
 	deleteAutoAnnotationTaskByIdUsingDelete,
 	downloadAutoAnnotationResultUsingGet,
+  queryAnnotationTasksUsingGet,
+  syncAutoAnnotationTaskToLabelStudioUsingPost,
 } from "../annotation.api";
 import CreateAutoAnnotationDialog from "./components/CreateAutoAnnotationDialog";
 
@@ -45,6 +49,8 @@ export default function AutoAnnotation() {
 	const [tasks, setTasks] = useState<AutoAnnotationTask[]>([]);
 	const [showCreateDialog, setShowCreateDialog] = useState(false);
 	const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
+	const [labelStudioBase, setLabelStudioBase] = useState<string | null>(null);
+	const [datasetProjectMap, setDatasetProjectMap] = useState<Record<string, string>>({});
 
 	useEffect(() => {
 		fetchTasks();
@@ -52,6 +58,39 @@ export default function AutoAnnotation() {
 			fetchTasks(true);
 		}, 3000);
 		return () => clearInterval(interval);
+	}, []);
+
+	// 预取 Label Studio 基础 URL 和数据集到项目的映射
+	useEffect(() => {
+		let mounted = true;
+		(async () => {
+			try {
+				const baseUrl = `http://${window.location.hostname}:${parseInt(window.location.port) + 1}`;
+				if (mounted) setLabelStudioBase(baseUrl);
+			} catch (e) {
+				if (mounted) setLabelStudioBase(null);
+			}
+
+			// 拉取所有标注任务，构建 datasetId -> labelingProjId 映射
+			try {
+				const resp = await queryAnnotationTasksUsingGet({ page: 1, size: 1000 } as any);
+				const content: any[] = (resp as any)?.data?.content || (resp as any)?.data || resp || [];
+				const map: Record<string, string> = {};
+				content.forEach((task: any) => {
+					const datasetId = task.datasetId || task.dataset_id;
+					const projId = task.labelingProjId || task.projId || task.labeling_project_id;
+					if (datasetId && projId) {
+						map[String(datasetId)] = String(projId);
+					}
+				});
+				if (mounted) setDatasetProjectMap(map);
+			} catch (e) {
+				console.error("Failed to build dataset->LabelStudio project map:", e);
+			}
+		})();
+		return () => {
+			mounted = false;
+		};
 	}, []);
 
 	const fetchTasks = async (silent = false) => {
@@ -99,6 +138,56 @@ export default function AutoAnnotation() {
 			message.destroy();
 			message.error("下载失败");
 		}
+	};
+
+	const handleSyncToLabelStudio = (task: AutoAnnotationTask) => {
+		if (task.status !== "completed") {
+			message.warning("仅已完成的任务可以同步到 Label Studio");
+			return;
+		}
+
+		Modal.confirm({
+			title: `确认同步自动标注任务「${task.name}」到 Label Studio 吗？`,
+			content: (
+				<div>
+					<div>将把该任务的检测结果作为预测框写入 Label Studio。</div>
+					<div>不会覆盖已有人工标注，仅作为可编辑的预测结果。</div>
+				</div>
+			),
+			okText: "同步",
+			cancelText: "取消",
+			onOk: async () => {
+				try {
+					await syncAutoAnnotationTaskToLabelStudioUsingPost(task.id);
+					message.success("同步请求已发送");
+				} catch (error) {
+					console.error(error);
+					message.error("同步失败，请稍后重试");
+				}
+			},
+		});
+	};
+
+	const handleAnnotate = (task: AutoAnnotationTask) => {
+		const datasetId = task.datasetId;
+		if (!datasetId) {
+			message.error("该任务未绑定数据集，无法跳转 Label Studio");
+			return;
+		}
+
+		const projId = datasetProjectMap[String(datasetId)];
+		if (!projId) {
+			message.error("未找到对应的标注工程，请先为该数据集创建手动标注任务");
+			return;
+		}
+
+		if (!labelStudioBase) {
+			message.error("无法跳转到 Label Studio：未配置 Label Studio 基础 URL");
+			return;
+		}
+
+		const target = `${labelStudioBase}/projects/${projId}/data`;
+		window.open(target, "_blank");
 	};
 
 	const handleViewResult = (task: AutoAnnotationTask) => {
@@ -214,7 +303,7 @@ export default function AutoAnnotation() {
 		{
 			title: "操作",
 			key: "actions",
-			width: 180,
+			width: 260,
 			fixed: "right",
 			render: (_: any, record: AutoAnnotationTask) => (
 				<Space size="small">
@@ -236,9 +325,25 @@ export default function AutoAnnotation() {
 									onClick={() => handleDownload(record)}
 								/>
 							</Tooltip>
+							<Tooltip title="同步到 Label Studio">
+								<Button
+									type="link"
+									size="small"
+									icon={<SyncOutlined />}
+									onClick={() => handleSyncToLabelStudio(record)}
+								/>
+							</Tooltip>
+							<Tooltip title="在 Label Studio 中标注">
+								<Button
+									type="link"
+									size="small"
+									icon={<EditOutlined />}
+									onClick={() => handleAnnotate(record)}
+								/>
+							</Tooltip>
 						</>
 					)}
-					<Tooltip title="删除">
+					<Tooltip title="删除任务记录">
 						<Button
 							type="link"
 							size="small"

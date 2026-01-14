@@ -11,9 +11,9 @@ spring:
 
   # 数据源配置
   datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://datamate-database:3306/datamate?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
-    username: ${DB_USERNAME:root}
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://datamate-database:5432/datamate?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:password}
     hikari:
       maximum-pool-size: 20

@@ -1,0 +1,25 @@
+# 1. 字符集设置
+client_encoding = 'UTF8'
+# server_encoding = 'UTF8' # 只能启动时设置，无法通过修改配置文件设置
+# 2. 排序规则
+# lc_collate = 'en_US.UTF-8' # 只能启动时设置，无法通过修改配置文件设置
+# lc_ctype = 'en_US.UTF-8' # 只能启动时设置，无法通过修改配置文件设置
+# 3. 时区设置
+timezone = 'Asia/Shanghai'
+log_timezone = 'Asia/Shanghai'
+# 4. 日志设置
+log_destination = 'stderr'
+logging_collector = on
+log_directory = '/var/log/datamate/database'
+log_filename = 'postgresql-%Y-%m-%d_%H%M%S.log'
+log_file_mode = 0644
+log_rotation_age = 1d
+log_rotation_size = 100MB
+log_truncate_on_rotation = off
+log_error_verbosity = default
+log_statement = 'ddl'
+log_duration = off
+log_lock_waits = on
+log_min_duration_statement = 1000
+# 5. 监听配置
+listen_addresses = '*'

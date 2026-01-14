@@ -24,25 +24,25 @@ from datamate.core.base_op import Mapper
 
 # COCO 80 类别映射
 COCO_CLASS_MAP = {
-    0: "person", 1: "bicycle", 2: "car", 3: "motorcycle", 4: "airplane",
-    5: "bus", 6: "train", 7: "truck", 8: "boat", 9: "traffic light",
-    10: "fire hydrant", 11: "stop sign", 12: "parking meter", 13: "bench",
-    14: "bird", 15: "cat", 16: "dog", 17: "horse", 18: "sheep", 19: "cow",
-    20: "elephant", 21: "bear", 22: "zebra", 23: "giraffe", 24: "backpack",
-    25: "umbrella", 26: "handbag", 27: "tie", 28: "suitcase", 29: "frisbee",
-    30: "skis", 31: "snowboard", 32: "sports ball", 33: "kite",
-    34: "baseball bat", 35: "baseball glove", 36: "skateboard",
-    37: "surfboard", 38: "tennis racket", 39: "bottle",
-    40: "wine glass", 41: "cup", 42: "fork", 43: "knife", 44: "spoon",
-    45: "bowl", 46: "banana", 47: "apple", 48: "sandwich", 49: "orange",
-    50: "broccoli", 51: "carrot", 52: "hot dog", 53: "pizza",
-    54: "donut", 55: "cake", 56: "chair", 57: "couch",
-    58: "potted plant", 59: "bed", 60: "dining table", 61: "toilet",
-    62: "tv", 63: "laptop", 64: "mouse", 65: "remote",
-    66: "keyboard", 67: "cell phone", 68: "microwave", 69: "oven",
-    70: "toaster", 71: "sink", 72: "refrigerator", 73: "book",
-    74: "clock", 75: "vase", 76: "scissors", 77: "teddy bear",
-    78: "hair drier", 79: "toothbrush"
+    0: "Person", 1: "Bicycle", 2: "Car", 3: "Motorcycle", 4: "Airplane",
+    5: "Bus", 6: "Train", 7: "Truck", 8: "Boat", 9: "Traffic Light",
+    10: "Fire Hydrant", 11: "Stop Sign", 12: "Parking Meter", 13: "Bench",
+    14: "Bird", 15: "Cat", 16: "Dog", 17: "Horse", 18: "Sheep", 19: "Cow",
+    20: "Elephant", 21: "Bear", 22: "Zebra", 23: "Giraffe", 24: "Backpack",
+    25: "Umbrella", 26: "Handbag", 27: "Tie", 28: "Suitcase", 29: "Frisbee",
+    30: "Skis", 31: "Snowboard", 32: "Sports Ball", 33: "Kite",
+    34: "Baseball Bat", 35: "Baseball Glove", 36: "Skateboard",
+    37: "Surfboard", 38: "Tennis Racket", 39: "Bottle",
+    40: "Wine Glass", 41: "Cup", 42: "Fork", 43: "Knife", 44: "Spoon",
+    45: "Bowl", 46: "Banana", 47: "Apple", 48: "Sandwich", 49: "Orange",
+    50: "Broccoli", 51: "Carrot", 52: "Hot Dog", 53: "Pizza",
+    54: "Donut", 55: "Cake", 56: "Chair", 57: "Couch",
+    58: "Potted Plant", 59: "Bed", 60: "Dining Table", 61: "Toilet",
+    62: "TV", 63: "Laptop", 64: "Mouse", 65: "Remote",
+    66: "Keyboard", 67: "Cell Phone", 68: "Microwave", 69: "Oven",
+    70: "Toaster", 71: "Sink", 72: "Refrigerator", 73: "Book",
+    74: "Clock", 75: "Vase", 76: "Scissors", 77: "Teddy Bear",
+    78: "Hair Drier", 79: "Toothbrush"
 }
 
 

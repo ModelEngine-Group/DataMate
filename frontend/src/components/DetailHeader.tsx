@@ -49,32 +49,34 @@ function DetailHeader<T>({
       <div className="flex items-start justify-between">
         <div className="flex items-start gap-4 flex-1">
           <div
-            className={`w-16 h-16 text-white rounded-lg flex-center shadow-lg ${
+            className={`w-16 h-16 text-white rounded-lg flex items-center justify-center shadow-lg ${
               (data as any)?.iconColor
                 ? ""
                 : "bg-gradient-to-br from-sky-300 to-blue-500 text-white"
             }`}
             style={(data as any)?.iconColor ? { backgroundColor: (data as any).iconColor } : undefined}
           >
-            {<div className="w-[2.8rem] h-[2.8rem] text-gray-50">{(data as any)?.icon}</div> || (
+            {(data as any)?.icon ? (
+              <div className="w-[2.8rem] h-[2.8rem] text-gray-50 flex items-center justify-center">{(data as any).icon}</div>
+            ) : (
               <Database className="w-8 h-8 text-white" />
             )}
           </div>
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-lg font-bold text-gray-900">{data?.name}</h1>
-              {data?.status && (
-                <Tag color={data.status?.color}>
+              <h1 className="text-lg font-bold text-gray-900">{(data as any)?.name}</h1>
+              {(data as any)?.status && (
+                <Tag color={(data as any).status?.color}>
                   <div className="flex items-center gap-2 text-xs">
-                   {data.status?.icon && <span>{data.status?.icon}</span>}
-                    <span>{data.status?.label}</span>
+                   {(data as any).status?.icon && <span>{(data as any).status?.icon}</span>}
+                    <span>{(data as any).status?.label}</span>
                   </div>
                 </Tag>
               )}
             </div>
-            {data?.tags && (
+            {(data as any)?.tags && (
               <div className="flex flex-wrap mb-2">
-                {data?.tags?.map((tag) => (
+                {(data as any)?.tags?.map((tag: any) => (
                   <Tag key={tag.id} className="mr-1">
                     {tag.name}
                   </Tag>
@@ -89,9 +91,9 @@ function DetailHeader<T>({
                 )}
               </div>
             )}
-            <p className="text-gray-700 mb-4">{data?.description}</p>
+            <p className="text-gray-700 mb-4">{(data as any)?.description}</p>
             <div className="flex items-center gap-6 text-sm">
-              {statistics.map((stat) => (
+              {statistics.map((stat: any) => (
                 <div key={stat.key} className="flex items-center gap-1">
                   {stat.icon}
                   <span>{stat.value}</span>
@@ -101,7 +103,7 @@ function DetailHeader<T>({
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {operations.map((op) => {
+          {operations.map((op: any) => {
             if (op.isDropdown) {
               return (
                 <ActionDropdown

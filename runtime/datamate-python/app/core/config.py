@@ -29,6 +29,13 @@ class Settings(BaseSettings):
     log_file_dir: str = "/var/log/datamate/backend-python"
 
     # Database
+    pgsql_host: str = "datamate-database"
+    pgsql_port: int = 5432
+    pgsql_user: str = "postgres"
+    pgsql_password: str = "password"
+    pgsql_database: str = "datamate"
+
+    # Database
     mysql_host: str = "datamate-database"
     mysql_port: int = 3306
     mysql_user: str = "root"
@@ -41,7 +48,12 @@ class Settings(BaseSettings):
     def build_database_url(self):
         """如果没有提供 database_url，则根据 MySQL 配置构建"""
         if not self.database_url:
-            if self.mysql_password and self.mysql_user:
+            if self.pgsql_host:
+                if self.pgsql_password and self.pgsql_user:
+                    self.database_url = f"postgresql+asyncpg://{self.pgsql_user}:{self.pgsql_password}@{self.pgsql_host}:{self.pgsql_port}/{self.pgsql_database}"
+                else:
+                    self.database_url = f"postgresql+asyncpg://{self.pgsql_host}:{self.pgsql_port}/{self.pgsql_database}"
+            elif self.mysql_password and self.mysql_user:
                 self.database_url = f"mysql+aiomysql://{self.mysql_user}:{self.mysql_password}@{self.mysql_host}:{self.mysql_port}/{self.mysql_database}"
             else:
                 self.database_url = f"mysql+aiomysql://{self.mysql_host}:{self.mysql_port}/{self.mysql_database}"

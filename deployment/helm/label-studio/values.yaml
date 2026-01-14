@@ -12,22 +12,6 @@ image:
   tag: "latest"
   pullPolicy: IfNotPresent
 
-postgres:
-  enabled: true
-  image:
-    repository: pgautoupgrade/pgautoupgrade
-    tag: "13-alpine"
-    pullPolicy: IfNotPresent
-  username: postgres
-  # In docker-compose, POSTGRES_HOST_AUTH_METHOD=trust is used (no password).
-  # For production, you should set a password and disable trust auth.
-  password: ""
-  authMethod: trust
-  persistence:
-    enabled: true
-    size: 10Gi
-    storageClass: ""
-
 service:
   type: NodePort
   port: 8000
@@ -55,11 +39,11 @@ affinity: {}
 
 env:
   DJANGO_DB: "default"
-  POSTGRE_NAME: "postgres"
+  POSTGRE_NAME: "labelstudio"
   POSTGRE_USER: "postgres"
-  POSTGRE_PASSWORD: ""
+  POSTGRE_PASSWORD: "password"
   POSTGRE_PORT: 5432
-  POSTGRE_HOST: "label-studio-postgres"
+  POSTGRE_HOST: "datamate-database"
   LABEL_STUDIO_HOST: "" # can be overridden
   LOCAL_FILES_SERVING_ENABLED: "true"
   LOCAL_FILES_DOCUMENT_ROOT: "/label-studio/local"

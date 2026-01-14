@@ -1,15 +1,18 @@
 import asyncio
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Optional
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import get_logger
+from app.db.models import Dataset
 from app.db.models.data_collection import CollectionTask, CollectionTemplate
 from app.db.session import AsyncSessionLocal
 from app.module.collection.client.datax_client import DataxClient
 from app.module.collection.schema.collection import SyncMode, create_execute_record
+from app.module.dataset.service.service import Service
 from app.module.shared.schema import TaskStatus
 
 logger = get_logger(__name__)
@@ -38,18 +41,18 @@ class CollectionTaskService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def create_task(self, task: CollectionTask) -> CollectionTask:
+    async def create_task(self, task: CollectionTask, dataset: Dataset) -> CollectionTask:
         self.db.add(task)
 
         # If it's a one-time task, execute it immediately
         if task.sync_mode == SyncMode.ONCE:
             task.status = TaskStatus.RUNNING.name
             await self.db.commit()
-            asyncio.create_task(CollectionTaskService.run_async(task.id))
+            asyncio.create_task(CollectionTaskService.run_async(task.id, dataset.id if dataset else None))
         return task
 
     @staticmethod
-    async def run_async(task_id: str):
+    async def run_async(task_id: str, dataset_id: str = None):
         logger.info(f"start to execute task {task_id}")
         async with AsyncSessionLocal() as session:
             task = await session.execute(select(CollectionTask).where(CollectionTask.id == task_id))
@@ -69,3 +72,12 @@ class CollectionTaskService:
                 DataxClient(execution=task_execution, task=task, template=template).run_datax_job
             )
             await session.commit()
+            if dataset_id:
+                dataset_service = Service(db=session)
+                source_paths = []
+                target_path = Path(task.target_path)
+                if target_path.exists() and target_path.is_dir():
+                    for file_path in target_path.rglob('*'):
+                        if file_path.is_file():
+                            source_paths.append(str(file_path.absolute()))
+                await dataset_service.add_files_to_dataset(dataset_id=dataset_id, source_paths=source_paths)

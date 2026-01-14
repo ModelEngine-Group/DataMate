@@ -18,6 +18,10 @@ import com.datamate.datamanagement.infrastructure.persistence.repository.Dataset
 import com.datamate.datamanagement.infrastructure.persistence.repository.DatasetRepository;
 import com.datamate.datamanagement.interfaces.converter.DatasetConverter;
 import com.datamate.datamanagement.interfaces.dto.*;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -64,11 +68,7 @@ public class DatasetApplicationService {
         Dataset dataset = DatasetConverter.INSTANCE.convertToDataset(createDatasetRequest);
         dataset.initCreateParam(datasetBasePath);
         // 处理标签
-        Set<Tag> processedTags = Optional.ofNullable(createDatasetRequest.getTags())
-            .filter(CollectionUtils::isNotEmpty)
-            .map(this::processTagNames)
-            .orElseGet(HashSet::new);
-        dataset.setTags(processedTags);
+        dataset.setTags(processTagNames(createDatasetRequest.getTags()));
         datasetRepository.save(dataset);
 
         //todo 需要解耦这块逻辑
@@ -146,7 +146,7 @@ public class DatasetApplicationService {
     /**
      * 处理标签名称，创建或获取标签
      */
-    private Set<Tag> processTagNames(List<String> tagNames) {
+    private String processTagNames(List<String> tagNames) {
         Set<Tag> tags = new HashSet<>();
         for (String tagName : tagNames) {
             Tag tag = tagMapper.findByName(tagName);
@@ -161,7 +161,16 @@ public class DatasetApplicationService {
             tagMapper.updateUsageCount(tag.getId(), tag.getUsageCount());
             tags.add(tag);
         }
-        return tags;
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            mapper.registerModule(new JavaTimeModule());
+            // 可选：配置日期时间格式
+            mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+            return mapper.writeValueAsString(tags);
+        } catch (JsonProcessingException e) {
+            log.warn("Parse tags to json error.");
+            return null;
+        }
     }
 
     /**

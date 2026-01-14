@@ -1,25 +1,15 @@
-import React, { useState } from "react";
-import {
-  Plus,
-  Eye,
-  Edit,
-  Clock,
-  Trash2,
-  Scissors,
-  VideoIcon as Vector,
-  Server,
-  FileText,
-  Download,
-} from "lucide-react";
-import { Card, Button, Badge, Input, Tabs, Modal, Breadcrumb, Tag } from "antd";
-import { mockChunks, mockQAPairs, sliceOperators } from "@/mock/knowledgeBase";
-import type {
-  KnowledgeBase,
-  KBFile,
-} from "@/pages/KnowledgeBase/knowledge-base.model";
-import { Link, useNavigate } from "react-router";
+import React, { useEffect, useState } from "react";
+import {Eye, Edit, Trash2, FileText, Download, FileType2, FileBox} from "lucide-react";
+import { Card, Button, Badge, Input, Tabs, Modal, Breadcrumb, Tag, Spin, Empty, Alert } from "antd";
+import { queryKnowledgeBaseFileDetailUsingGet } from "@/pages/KnowledgeBase/knowledge-base.api";
+import { Link, useParams } from "react-router";
 import DetailHeader from "@/components/DetailHeader";
-import DevelopmentInProgress from "@/components/DevelopmentInProgress";
+
+interface RagChunk {
+  id: string;
+  text: string;
+  metadata: unknown; // may be string or object
+}
 
 // 状态标签
 const getStatusLabel = (status: string) => {
@@ -49,114 +39,128 @@ const getStatusColor = (status: string) => {
 };
 
 const KnowledgeBaseFileDetail: React.FC = () => {
-  const navigate = useNavigate();
-  // 假设通过 props 或路由参数获取 selectedFile/selectedKB
-  const [selectedFile] = useState<KBFile>(
-    mockChunks.length
-      ? {
-          id: 1,
-          name: "API文档.pdf",
-          type: "pdf",
-          size: "2.5 MB",
-          status: "completed",
-          chunkCount: mockChunks.length,
-          progress: 100,
-          uploadedAt: "2024-01-22 10:30",
-          source: "upload",
-          vectorizationStatus: "completed",
-        }
-      : ({} as KBFile)
-  );
-  const [selectedKB] = useState<KnowledgeBase>({
-    id: 1,
-    name: "API知识库",
-    description: "",
-    type: "unstructured",
-    status: "ready",
-    fileCount: 1,
-    chunkCount: mockChunks.length,
-    vectorCount: mockChunks.length,
-    size: "2.5 MB",
-    progress: 100,
-    createdAt: "2024-01-22",
-    lastUpdated: "2024-01-22",
-    vectorDatabase: "pinecone",
-    config: {
-      embeddingModel: "text-embedding-3-large",
-      chunkSize: 512,
-      overlap: 50,
-      sliceMethod: "semantic",
-      enableQA: true,
-      vectorDimension: 1536,
-      sliceOperators: ["semantic-split", "paragraph-split"],
-    },
-    files: [],
-    vectorizationHistory: [],
-  });
+  const { id } = useParams();
+  // id 为路由中的 ragFileId，knowledgeBaseId 通过上一级 detail 路由或 query 传入
+  const search = new URLSearchParams(window.location.search);
+  const knowledgeBaseId = search.get("knowledgeBaseId") || "";
+  const fileName = search.get("fileName") || "";
+  const ragFileId = id || "";
+  const kbLink = knowledgeBaseId ? `/data/knowledge-base/detail/${knowledgeBaseId}` : "/data/knowledge-base";
 
-  const [currentChunkPage, setCurrentChunkPage] = useState(1);
-  const chunksPerPage = 5;
-  const totalPages = Math.ceil(mockChunks.length / chunksPerPage);
-  const startIndex = (currentChunkPage - 1) * chunksPerPage;
-  const currentChunks = mockChunks.slice(
-    startIndex,
-    startIndex + chunksPerPage
-  );
+  // 远程数据状态
+  const [paged, setPaged] = useState<{
+    page: number;
+    size: number;
+    totalElements: number;
+    totalPages: number;
+    content: RagChunk[];
+  } | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const [editingChunk, setEditingChunk] = useState<number | null>(null);
+  // 本地 UI 状态
+  const [editingChunk, setEditingChunk] = useState<string | null>(null);
   const [editChunkContent, setEditChunkContent] = useState("");
-  const [chunkDetailModal, setChunkDetailModal] = useState<number | null>(null);
-  const [showSliceTraceDialog, setShowSliceTraceDialog] = useState<
-    number | null
-  >(null);
+  const [chunkDetailModal, setChunkDetailModal] = useState<string | null>(null);
+  const [showSliceTraceDialog, setShowSliceTraceDialog] = useState<string | null>(null);
 
-  const handleEditChunk = (chunkId: number, content: string) => {
+  const pageSize = 20;
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const safeParse = (meta: unknown): unknown => {
+    if (typeof meta === "string") {
+      try {
+        return JSON.parse(meta);
+      } catch {
+        return meta; // 保持原样
+      }
+    }
+    return meta;
+  };
+
+  const fetchChunks = async (page: number) => {
+    if (!knowledgeBaseId || !ragFileId) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await queryKnowledgeBaseFileDetailUsingGet(knowledgeBaseId, ragFileId, { page, size: pageSize });
+      // 兼容返回结构 ResponsePagedResponseRagChunk -> { code, message, data }
+      const raw = (res?.data ?? res) as {
+        page: number;
+        size: number;
+        totalElements: number;
+        totalPages: number;
+        content: RagChunk[];
+      };
+      const normalized = {
+        ...raw,
+        content: (raw?.content ?? []).map((c) => ({
+          ...c,
+          metadata: safeParse((c as RagChunk)?.metadata),
+        })),
+      };
+      setPaged(normalized);
+    } catch (err: unknown) {
+      const msg = typeof err === "object" && err !== null && "message" in err ? String((err as { message?: string }).message) : "加载失败";
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchChunks(currentPage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [knowledgeBaseId, ragFileId, currentPage]);
+
+  const totalElements = paged?.totalElements ?? 0;
+  const totalPages = paged?.totalPages ?? 0;
+  const currentChunks = paged?.content ?? [];
+
+  const handleEditChunk = (chunkId: string, content: string) => {
     setEditingChunk(chunkId);
     setEditChunkContent(content);
   };
 
-  const handleSaveChunk = (chunkId: number) => {
-    // 实际保存逻辑
+  const handleSaveChunk = (chunkId: string) => {
+    // TODO: 保存到后端（暂不实现）
     setEditingChunk(null);
     setEditChunkContent("");
   };
 
-  const handleDeleteChunk = (chunkId: number) => {
-    // 实际删除逻辑
+  const handleDeleteChunk = (chunkId: string) => {
+    // TODO: 删除后端分块（暂不实现）
     setEditingChunk(null);
     setEditChunkContent("");
   };
 
-  const handleViewChunkDetail = (chunkId: number) => {
+  const handleViewChunkDetail = (chunkId: string) => {
     setChunkDetailModal(chunkId);
   };
 
   const renderChunks = () => (
     <div className="space-y-4">
+      {error && <Alert type="error" message={error} showIcon />}
       <div className="flex items-center justify-between">
         <div className="text-sm text-gray-600">
-          共 {mockChunks.length} 个分块，第 {startIndex + 1}-
-          {Math.min(startIndex + chunksPerPage, mockChunks.length)} 个
+          共 {totalElements} 个分块，第 {totalElements === 0 ? 0 : (currentPage - 1) * pageSize + 1}-
+          {Math.min(currentPage * pageSize, totalElements)} 个
         </div>
         <div className="flex items-center gap-2">
           <Button
             size="small"
-            onClick={() =>
-              setCurrentChunkPage(Math.max(1, currentChunkPage - 1))
-            }
-            disabled={currentChunkPage === 1}
+            onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+            disabled={currentPage <= 1}
           >
             上一页
           </Button>
           <span className="text-sm text-gray-600">
-            {currentChunkPage} / {totalPages}
+            {totalPages === 0 ? 0 : currentPage} / {totalPages}
           </span>
           <Button
             size="small"
-            onClick={() =>
-              setCurrentChunkPage(Math.min(totalPages, currentChunkPage + 1))
-            }
-            disabled={currentChunkPage === totalPages}
+            onClick={() => setCurrentPage(Math.min(totalPages || 1, currentPage + 1))}
+            disabled={currentPage >= (totalPages || 1)}
           >
             下一页
           </Button>
@@ -170,11 +174,12 @@ const KnowledgeBaseFileDetail: React.FC = () => {
                 <div className="flex items-center gap-2 mb-2">
                   <div className="flex-1 flex items-center gap-2">
                     <h4 className="text-sm font-semibold">分块 {chunk.id}</h4>
-                    <Tag className="text-xs">
-                      {sliceOperators.find(
-                        (op) => op.id === chunk.sliceOperator
-                      )?.name || chunk.sliceOperator}
-                    </Tag>
+                    {/* 算子名：从 metadata.sliceOperator 显示 */}
+                    {chunk.metadata?.sliceOperator && (
+                      <Tag className="text-xs">
+                        {chunk.metadata.sliceOperator}
+                      </Tag>
+                    )}
                   </div>
                   <div className="flex items-center gap-2 ml-4">
                     {editingChunk === chunk.id ? (
@@ -198,25 +203,13 @@ const KnowledgeBaseFileDetail: React.FC = () => {
                       </>
                     ) : (
                       <>
-                        <Button
-                          size="small"
-                          onClick={() => handleViewChunkDetail(chunk.id)}
-                        >
+                        <Button size="small" onClick={() => handleViewChunkDetail(chunk.id)}>
                           <Eye className="w-4 h-4" />
                         </Button>
-                        <Button
-                          size="small"
-                          onClick={() =>
-                            handleEditChunk(chunk.id, chunk.content)
-                          }
-                        >
+                        <Button size="small" onClick={() => handleEditChunk(chunk.id, chunk.text)}>
                           <Edit className="w-4 h-4" />
                         </Button>
-                        <Button
-                          size="small"
-                          danger
-                          onClick={() => handleDeleteChunk(chunk.id)}
-                        >
+                        <Button size="small" danger onClick={() => handleDeleteChunk(chunk.id)}>
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </>
@@ -231,23 +224,32 @@ const KnowledgeBaseFileDetail: React.FC = () => {
                       rows={3}
                     />
                   ) : (
-                    chunk.content
+                    chunk.text
                   )}
                 </div>
+                {/* 元数据展示，保持和召回结果风格一致 */}
+                <div className="mt-2 text-xs text-gray-600">
+                  <div className="font-medium">metadata:</div>
+                  <pre className="whitespace-pre-wrap break-all m-0">
+                    {typeof chunk.metadata === "string"
+                      ? chunk.metadata
+                      : JSON.stringify(chunk.metadata ?? {}, null, 2)}
+                  </pre>
+                </div>
+                {/* 结构化元数据的快捷标签（若可用） */}
                 <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
-                  <span>位置: {chunk.position}</span>
-                  <span>Token: {chunk.tokens}</span>
-                  {chunk.metadata?.page && (
-                    <span>页码: {chunk.metadata.page}</span>
-                  )}
-                  {chunk.metadata?.section && (
-                    <span>章节: {chunk.metadata.section}</span>
-                  )}
+                  {chunk?.metadata?.position && <span>位置: {chunk.metadata.position}</span>}
+                  {chunk?.metadata?.tokens && <span>Token: {chunk.metadata.tokens}</span>}
+                  {chunk?.metadata?.page && <span>页码: {chunk.metadata.page}</span>}
+                  {chunk?.metadata?.section && <span>章节: {chunk.metadata.section}</span>}
                 </div>
               </div>
             </div>
           </Card>
         ))}
+        {!loading && currentChunks.length === 0 && (
+          <Empty description="暂无分块数据" />
+        )}
       </div>
     </div>
   );
@@ -256,86 +258,29 @@ const KnowledgeBaseFileDetail: React.FC = () => {
     <div className="flex flex-col gap-4">
       <Breadcrumb
         items={[
-          {
-            title: <Link to="/data/knowledge-base">知识库</Link>,
-          },
-          {
-            title: (
-              <Link to="/data/knowledge-base/detail/1">
-                {selectedKB?.name}
-              </Link>
-            ),
-          },
-          {
-            title: selectedFile.name,
-          },
+          { title: <Link to="/data/knowledge-base">知识库</Link> },
+          { title: (<Link to={kbLink}>知识库详情</Link>) },
+          { title: fileName || `文件 ${ragFileId}` },
         ]}
       />
+      {/* 头部统计使用最简占位，后续可扩展 */}
       <DetailHeader
         data={{
-          id: selectedFile.id,
-          icon: <FileText className="w-8 h-8" />,
-          iconColor: "bg-blue-500 text-blue-600",
-          status: {
-            label: getStatusLabel(selectedFile.status),
-            color: getStatusColor(selectedFile.status),
-          },
-          name: selectedFile.name,
-          description: `${selectedFile.size} • ${
-            selectedFile.chunkCount
-          } 个分块${
-            selectedFile.source === "dataset"
-              ? ` • 数据集: ${selectedFile.datasetId}`
-              : ""
-          }`,
-          createdAt: selectedFile.uploadedAt,
-          lastUpdated: selectedFile.uploadedAt,
+          id: ragFileId,
+          icon: <FileBox className="w-full h-full" />,
+          iconColor: "#a27e7e",
+          status: { label: "就绪", color: "default" },
+          name: fileName || `文件 ${ragFileId}`,
+          description: `${totalElements} 个分块`,
+          createdAt: "",
+          lastUpdated: "",
         }}
-        statistics={[
-          {
-            icon: <Scissors className="w-4 h-4 text-blue-500" />,
-            label: "分块",
-            value: selectedFile.chunkCount,
-          },
-          {
-            icon: <Vector className="w-4 h-4 text-purple-500" />,
-            label: "向量化状态",
-            value: getStatusLabel(
-              selectedFile.vectorizationStatus || "pending"
-            ),
-          },
-          {
-            icon: <Server className="w-4 h-4 text-green-500" />,
-            label: "文件大小",
-            value: selectedFile.size,
-          },
-          {
-            icon: <Clock className="w-4 h-4 text-gray-500" />,
-            label: "上传时间",
-            value: selectedFile.uploadedAt,
-          },
-        ]}
-        operations={[
-          {
-            key: "download",
-            label: "下载",
-            icon: <Download className="w-4 h-4" />,
-            onClick: () => {
-              // 下载逻辑
-            },
-          },
-          {
-            key: "delete",
-            label: "删除",
-            icon: <Trash2 className="w-4 h-4" />,
-            danger: true,
-            onClick: () => {
-              // 删除逻辑
-            },
-          },
-        ]}
+        statistics={[]}
+        operations={[{ key: "download", label: "下载", icon: <Download className="w-4 h-4" />, onClick: () => {} }]}
       />
-      <Card>{renderChunks()}</Card>
+      <Card>
+        {loading ? <div className="flex items-center justify-center py-8"><Spin /></div> : renderChunks()}
+      </Card>
 
       {/* Slice Trace Modal */}
       <Modal
@@ -346,6 +291,7 @@ const KnowledgeBaseFileDetail: React.FC = () => {
         width={800}
         destroyOnClose
       >
+        {/* 简化为内容占位，真实数据待后端提供更多字段 */}
         <div className="space-y-4">
           <div className="bg-gray-50 rounded-lg p-4">
             <h4 className="font-medium mb-3">切片处理流程</h4>
@@ -356,116 +302,11 @@ const KnowledgeBaseFileDetail: React.FC = () => {
                 </div>
                 <div className="flex-1">
                   <p className="font-medium">原始文档导入</p>
-                  <p className="text-sm text-gray-600">
-                    文档: {selectedFile.name}
-                  </p>
+                  <p className="text-sm text-gray-600">文件: {ragFileId}</p>
                 </div>
                 <Badge>完成</Badge>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center text-sm font-medium">
-                  2
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium">语义分割算子</p>
-                  <p className="text-sm text-gray-600">
-                    基于语义相似度智能分割，阈值: 0.7
-                  </p>
-                </div>
-                <Badge>完成</Badge>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center text-sm font-medium">
-                  3
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium">段落分割算子</p>
-                  <p className="text-sm text-gray-600">按段落边界进一步细分</p>
-                </div>
-                <Badge>完成</Badge>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-purple-500 text-white rounded-full flex items-center justify-center text-sm font-medium">
-                  4
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium">向量化处理</p>
-                  <p className="text-sm text-gray-600">
-                    使用 {selectedKB?.config.embeddingModel} 生成向量
-                  </p>
-                </div>
-                <Badge>
-                  {selectedFile.vectorizationStatus === "completed"
-                    ? "完成"
-                    : "处理中"}
-                </Badge>
               </div>
             </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <Card className="p-4">
-              <h4 className="font-medium mb-2">分块信息</h4>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">分块ID:</span>
-                  <span>{showSliceTraceDialog}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">父分块:</span>
-                  <span>
-                    {mockChunks.find((c) => c.id === showSliceTraceDialog)
-                      ?.parentChunkId || "无"}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Token数:</span>
-                  <span>
-                    {
-                      mockChunks.find((c) => c.id === showSliceTraceDialog)
-                        ?.tokens
-                    }
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">创建时间:</span>
-                  <span>
-                    {
-                      mockChunks.find((c) => c.id === showSliceTraceDialog)
-                        ?.createdAt
-                    }
-                  </span>
-                </div>
-              </div>
-            </Card>
-
-            <Card className="p-4">
-              <h4 className="font-medium mb-2">向量信息</h4>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">向量ID:</span>
-                  <span className="font-mono text-xs">
-                    {
-                      mockChunks.find((c) => c.id === showSliceTraceDialog)
-                        ?.vectorId
-                    }
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">向量维度:</span>
-                  <span>{selectedKB?.config.vectorDimension}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">相似度:</span>
-                  <span>
-                    {
-                      mockChunks.find((c) => c.id === showSliceTraceDialog)
-                        ?.similarity
-                    }
-                  </span>
-                </div>
-              </div>
-            </Card>
           </div>
         </div>
       </Modal>
@@ -475,7 +316,7 @@ const KnowledgeBaseFileDetail: React.FC = () => {
         open={!!chunkDetailModal}
         onCancel={() => setChunkDetailModal(null)}
         footer={null}
-        title={`分块详细信息 - 分块 ${chunkDetailModal}`}
+        title={`分块详细信息 - 分块 ${chunkDetailModal ?? ""}`}
         width={900}
         destroyOnClose
       >
@@ -489,10 +330,7 @@ const KnowledgeBaseFileDetail: React.FC = () => {
                 <div>
                   <div className="font-medium mb-1">分块内容</div>
                   <Input.TextArea
-                    value={
-                      mockChunks.find((c) => c.id === chunkDetailModal)
-                        ?.content || ""
-                    }
+                    value={currentChunks.find((c) => c.id === chunkDetailModal)?.text || ""}
                     rows={8}
                     readOnly
                     className="mt-2"
@@ -507,169 +345,19 @@ const KnowledgeBaseFileDetail: React.FC = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <div className="font-medium mb-1">位置</div>
-                    <Input
-                      value={
-                        mockChunks.find((c) => c.id === chunkDetailModal)
-                          ?.position || ""
-                      }
-                      readOnly
-                    />
+                    <Input value={currentChunks.find((c) => c.id === chunkDetailModal)?.metadata?.position || ""} readOnly />
                   </div>
                   <div>
                     <div className="font-medium mb-1">Token数量</div>
-                    <Input
-                      value={
-                        mockChunks.find((c) => c.id === chunkDetailModal)
-                          ?.tokens || ""
-                      }
-                      readOnly
-                    />
+                    <Input value={currentChunks.find((c) => c.id === chunkDetailModal)?.metadata?.tokens || ""} readOnly />
                   </div>
                   <div>
-                    <div className="font-medium mb-1">相似度</div>
-                    <Input
-                      value={
-                        mockChunks.find((c) => c.id === chunkDetailModal)
-                          ?.similarity || ""
-                      }
-                      readOnly
-                    />
+                    <div className="font-medium mb-1">页码</div>
+                    <Input value={currentChunks.find((c) => c.id === chunkDetailModal)?.metadata?.page || ""} readOnly />
                   </div>
                   <div>
-                    <div className="font-medium mb-1">向量维度</div>
-                    <Input
-                      value={
-                        mockChunks.find((c) => c.id === chunkDetailModal)
-                          ?.embedding?.length || ""
-                      }
-                      readOnly
-                    />
-                  </div>
-                  <div>
-                    <div className="font-medium mb-1">创建时间</div>
-                    <Input
-                      value={
-                        mockChunks.find((c) => c.id === chunkDetailModal)
-                          ?.createdAt || ""
-                      }
-                      readOnly
-                    />
-                  </div>
-                  <div>
-                    <div className="font-medium mb-1">更新时间</div>
-                    <Input
-                      value={
-                        mockChunks.find((c) => c.id === chunkDetailModal)
-                          ?.updatedAt || ""
-                      }
-                      readOnly
-                    />
-                  </div>
-                  <div>
-                    <div className="font-medium mb-1">向量ID</div>
-                    <Input
-                      value={
-                        mockChunks.find((c) => c.id === chunkDetailModal)
-                          ?.vectorId || ""
-                      }
-                      readOnly
-                    />
-                  </div>
-                  <div>
-                    <div className="font-medium mb-1">切片算子</div>
-                    <Input
-                      value={
-                        mockChunks.find((c) => c.id === chunkDetailModal)
-                          ?.sliceOperator || ""
-                      }
-                      readOnly
-                    />
-                  </div>
-                </div>
-              ),
-            },
-            {
-              key: "qa",
-              label: "Q&A对",
-              children: (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">关联的问答对</span>
-                    <Button size="small">
-                      <Plus className="w-4 h-4 mr-1" />
-                      添加Q&A
-                    </Button>
-                  </div>
-                  {mockQAPairs.map((qa) => (
-                    <Card key={qa.id} className="p-4">
-                      <div className="space-y-2">
-                        <div>
-                          <span className="text-sm font-medium text-blue-600">
-                            问题 {qa.id}
-                          </span>
-                          <p className="text-sm mt-1">{qa.question}</p>
-                        </div>
-                        <div>
-                          <span className="text-sm font-medium text-green-600">
-                            答案
-                          </span>
-                          <p className="text-sm mt-1">{qa.answer}</p>
-                        </div>
-                        <div className="flex justify-end gap-2">
-                          <Button type="text" size="small">
-                            <Edit className="w-3 h-3 mr-1" />
-                            编辑
-                          </Button>
-                          <Button type="text" size="small" danger>
-                            <Trash2 className="w-3 h-3 mr-1" />
-                            删除
-                          </Button>
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-              ),
-            },
-            {
-              key: "trace",
-              label: "切片回溯",
-              children: (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
-                    <FileText className="w-5 h-5 text-blue-600" />
-                    <div className="flex-1">
-                      <p className="font-medium">原始文档</p>
-                      <p className="text-sm text-gray-600">
-                        {selectedFile.name}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
-                    <Scissors className="w-5 h-5 text-green-600" />
-                    <div className="flex-1">
-                      <p className="font-medium">切片算子处理</p>
-                      <p className="text-sm text-gray-600">
-                        应用算子:{" "}
-                        {
-                          sliceOperators.find(
-                            (op) =>
-                              op.id ===
-                              mockChunks.find((c) => c.id === chunkDetailModal)
-                                ?.sliceOperator
-                          )?.name
-                        }
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 p-3 bg-purple-50 rounded-lg">
-                    <Vector className="w-5 h-5 text-purple-600" />
-                    <div className="flex-1">
-                      <p className="font-medium">向量化处理</p>
-                      <p className="text-sm text-gray-600">
-                        生成 {selectedKB?.config.vectorDimension} 维向量
-                      </p>
-                    </div>
+                    <div className="font-medium mb-1">章节</div>
+                    <Input value={currentChunks.find((c) => c.id === chunkDetailModal)?.metadata?.section || ""} readOnly />
                   </div>
                 </div>
               ),

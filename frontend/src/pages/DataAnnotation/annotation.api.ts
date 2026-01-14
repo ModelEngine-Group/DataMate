@@ -58,10 +58,20 @@ export function deleteAutoAnnotationTaskByIdUsingDelete(taskId: string) {
   return del(`/api/annotation/auto/${taskId}`);
 }
 
-export function getAutoAnnotationTaskStatusUsingGet(taskId: string) {
-  return get(`/api/annotation/auto/${taskId}/status`);
+export function loginAnnotationUsingGet(mappingId: string) {
+  return get(`/api/annotation/project/${mappingId}/login`);
 }
 
 export function downloadAutoAnnotationResultUsingGet(taskId: string) {
   return download(`/api/annotation/auto/${taskId}/download`);
+}
+
+// 自动标注结果同步到 Label Studio（写入 predictions）
+export function syncAutoAnnotationTaskToLabelStudioUsingPost(taskId: string) {
+  return post(`/api/annotation/auto/${taskId}/sync-label-studio`);
+}
+
+// 查询自动标注任务关联的 Label Studio 项目
+export function getAutoAnnotationLabelStudioProjectUsingGet(taskId: string) {
+  return get(`/api/annotation/auto/${taskId}/label-studio-project`);
 }

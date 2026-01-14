@@ -1,4 +1,6 @@
 from typing import Optional, List, Dict, Any, Tuple, Set
+import os
+
 from app.module.dataset import DatasetManagementService
 from sqlalchemy import update, select
 from app.db.models import DatasetFiles
@@ -52,14 +54,38 @@ class SyncService:
     def _build_task_data(self, file_info: Any, dataset_id: str) -> dict:
         """构建Label Studio任务数据"""
         data_type = self._determine_data_type(file_info.fileType)
-        
-        # 替换文件路径前缀
-        file_path = file_info.filePath.removeprefix(settings.dm_file_path_prefix)
-        file_path = settings.label_studio_file_path_prefix + file_path
-        
+
+        # 默认仍然走 Label Studio 本地文件 URL
+        # 先替换文件路径前缀，构造 /data/local-files/?d=/... 形式
+        relative_path = file_info.filePath.removeprefix(settings.dm_file_path_prefix)
+        ls_file_url = settings.label_studio_file_path_prefix + relative_path
+
+        data_value: Any = ls_file_url
+
+        # 对于纯文本文件（例如 .txt），支持直接把文件内容写入到 data.text，
+        # 这样在 Label Studio 里会直接显示文本内容，而不是 URL。
+        if data_type == "text":
+            try:
+                _, ext = os.path.splitext(file_info.filePath)
+                ext = ext.lower()
+
+                # 目前只对 .txt 做内联，其他如 pdf/doc 仍然使用 URL
+                if ext == ".txt":
+                    with open(file_info.filePath, "r", encoding="utf-8", errors="ignore") as f:
+                        content = f.read()
+                    if content:
+                        data_value = content
+            except Exception as e:
+                # 读取失败时退回到原来的 URL 形式，避免中断同步流程
+                logger.warning(
+                    "Failed to inline text content for file %s: %s",
+                    getattr(file_info, "filePath", "<unknown>"),
+                    str(e),
+                )
+
         return {
             "data": {
-                f"{data_type}": file_path,
+                f"{data_type}": data_value,
                 "file_path": file_info.filePath,
                 "file_id": file_info.id,
                 "original_name": file_info.originalName,
@@ -139,11 +165,12 @@ class SyncService:
             return {}
     
     async def _fetch_dm_files_paginated(
-        self, 
-        dataset_id: str, 
+        self,
+        dataset_id: str,
         batch_size: int,
         existing_file_ids: Set[str],
-        project_id: str
+        project_id: str,
+        allowed_file_ids: Optional[Set[str]] = None,
     ) -> Tuple[Set[str], int]:
         """
         分页获取DM文件并创建新任务
@@ -172,6 +199,10 @@ class SyncService:
             new_tasks = []
             for file_info in files_response.content:
                 file_id = str(file_info.id)
+                # 如果提供了允许的文件ID集合，则只同步这些文件
+                if allowed_file_ids is not None and file_id not in allowed_file_ids:
+                    continue
+
                 current_file_ids.add(file_id)
                 
                 if file_id not in existing_file_ids:
@@ -301,7 +332,7 @@ class SyncService:
             )
         
         try:
-            # 同步文件
+            # 同步文件（不限制文件ID，完整同步映射对应数据集）
             file_result = await self.sync_files(mapping, batch_size)
             
             # TODO: 同步标注
@@ -328,9 +359,12 @@ class SyncService:
             )
         
     async def sync_files(
-        self, 
-        mapping: DatasetMappingResponse, 
-        batch_size: int
+        self,
+        mapping: DatasetMappingResponse,
+        batch_size: int,
+        allowed_file_ids: Optional[Set[str]] = None,
+        override_dataset_id: Optional[str] = None,
+        delete_orphans: bool = True,
     ) -> Dict[str, int]:
         """
         同步DM和Label Studio之间的文件
@@ -342,10 +376,17 @@ class SyncService:
         Returns:
             同步统计信息: {"created": int, "deleted": int, "total": int}
         """
-        logger.debug(f"Syncing files for dataset {mapping.dataset_id} to project {mapping.labeling_project_id}")
+        effective_dataset_id = override_dataset_id or mapping.dataset_id
+
+        logger.debug(
+            "Syncing files for dataset %s to project %s (mapping dataset_id=%s)",
+            effective_dataset_id,
+            mapping.labeling_project_id,
+            mapping.dataset_id,
+        )
         
         # 获取DM数据集信息
-        dataset_info = await self.dm_client.get_dataset(mapping.dataset_id)
+        dataset_info = await self.dm_client.get_dataset(effective_dataset_id)
         if not dataset_info:
             raise NoDatasetInfoFoundError(mapping.dataset_id)
         
@@ -359,17 +400,22 @@ class SyncService:
         
         # 分页获取DM文件并创建新任务
         current_file_ids, created_count = await self._fetch_dm_files_paginated(
-            mapping.dataset_id,
+            effective_dataset_id,
             batch_size,
             existing_file_ids,
-            mapping.labeling_project_id
+            mapping.labeling_project_id,
+            allowed_file_ids=allowed_file_ids,
         )
         
-        # 删除孤立任务
-        deleted_count = await self._delete_orphaned_tasks(
-            existing_dm_file_mapping,
-            current_file_ids
-        )
+        # 删除孤立任务：在多数据集、分批同步场景下可以选择关闭，
+        # 避免后一次同步把前一次其他数据集的任务当成“孤儿”删除。
+        if delete_orphans:
+            deleted_count = await self._delete_orphaned_tasks(
+                existing_dm_file_mapping,
+                current_file_ids,
+            )
+        else:
+            deleted_count = 0
         
         logger.debug(f"File sync completed: total={total_files}, created={created_count}, deleted={deleted_count}")
         
@@ -661,7 +707,7 @@ class SyncService:
                             .where(DatasetFiles.id == file_id)
                             .values(
                                 tags=simplified_annotations,
-                                tags_updated_at=tags_updated_datetime
+                                tags_updated_at=tags_updated_datetime.replace(tzinfo=None)
                             )
                         )
                         await self.dm_client.db.commit()

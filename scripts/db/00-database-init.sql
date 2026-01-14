@@ -1,1 +1,4 @@
-create database if not exists datamate;
+\set ON_ERROR_STOP 0
+CREATE DATABASE datamate;
+CREATE DATABASE labelstudio;
+\set ON_ERROR_STOP 1

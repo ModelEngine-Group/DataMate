@@ -8,6 +8,8 @@ from pydantic import BaseModel, Field, validator, ConfigDict
 from pydantic.alias_generators import to_camel
 
 from app.db.models.data_collection import CollectionTask, TaskExecution, CollectionTemplate
+from app.module.dataset.schema import DatasetTypeResponse
+from app.module.dataset.schema.dataset import DatasetType
 from app.module.shared.schema import TaskStatus
 
 
@@ -52,6 +54,8 @@ class CollectionTaskCreate(BaseModel):
     schedule_expression: Optional[str] = Field(None, description="调度表达式（cron）")
     config: CollectionConfig = Field(..., description="任务配置")
     template_id: str = Field(..., description="模板ID")
+    dataset_name: Optional[str] = Field(None, description="数据集名称")
+    dataset_type: Optional[DatasetType] = Field(DatasetType.TEXT, description="数据集类型")
 
     model_config = ConfigDict(
         alias_generator=to_camel,
