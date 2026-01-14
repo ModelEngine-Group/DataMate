@@ -12,6 +12,8 @@ import {
   createDatasetDirectoryUsingPost,
   downloadDirectoryUsingGet,
   deleteDirectoryUsingDelete,
+  renameDatasetFileUsingPut,
+  renameDirectoryUsingPut,
 } from "../dataset.api";
 import { useParams } from "react-router";
 
@@ -180,6 +182,38 @@ export function useFilesOperation(dataset: Dataset) {
         message.success({ content: `文件夹 ${directoryName} 已删除` });
       } catch (error) {
         message.error({ content: `文件夹 ${directoryName} 删除失败` });
+      }
+    },
+    handleRenameFile: async (file, newBaseName: string) => {
+      try {
+        const trimmed = (newBaseName || "").trim();
+        if (!trimmed) {
+          message.warning({ content: "请输入文件名称" });
+          return;
+        }
+        await renameDatasetFileUsingPut(dataset.id, file.id, { newName: trimmed });
+        const currentPrefix = pagination.prefix || "";
+        await fetchFiles(currentPrefix, 1, pagination.pageSize);
+        message.success({ content: `文件 ${file.fileName} 重命名成功` });
+      } catch (error) {
+        message.error({ content: `文件 ${file.fileName} 重命名失败` });
+        throw error;
+      }
+    },
+    handleRenameDirectory: async (directoryPath: string, oldName: string, newName: string) => {
+      try {
+        const trimmed = (newName || "").trim();
+        if (!trimmed) {
+          message.warning({ content: "请输入文件夹名称" });
+          return;
+        }
+        await renameDirectoryUsingPut(dataset.id, { prefix: directoryPath, newName: trimmed });
+        const currentPrefix = pagination.prefix || "";
+        await fetchFiles(currentPrefix, 1, pagination.pageSize);
+        message.success({ content: `文件夹 ${oldName} 重命名为 ${trimmed} 成功` });
+      } catch (error) {
+        message.error({ content: `文件夹 ${oldName} 重命名失败` });
+        throw error;
       }
     },
   };

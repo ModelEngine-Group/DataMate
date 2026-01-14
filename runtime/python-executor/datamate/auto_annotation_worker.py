@@ -122,11 +122,19 @@ def _fetch_pending_task() -> Optional[Dict[str, Any]]:
             return None
         row = dict(result._mapping)  # type: ignore[attr-defined]
 
-    try:
-        row["config"] = json.loads(row["config"]) if row.get("config") else {}
-    except Exception:
+    # 兼容 config 字段为 JSONB（dict）或 text（str）的两种情况
+    raw_cfg = row.get("config")
+    if isinstance(raw_cfg, (dict, list)):
+        row["config"] = raw_cfg
+    elif isinstance(raw_cfg, str) and raw_cfg.strip():
+        try:
+            row["config"] = json.loads(raw_cfg)
+        except Exception:
+            row["config"] = {}
+    else:
         row["config"] = {}
 
+    # file_ids 同样可能是 JSONB 或 text
     try:
         raw_ids = row.get("file_ids")
         if not raw_ids:
@@ -137,6 +145,7 @@ def _fetch_pending_task() -> Optional[Dict[str, Any]]:
             row["file_ids"] = raw_ids
     except Exception:
         row["file_ids"] = None
+
     return row
 
 
@@ -434,11 +443,22 @@ def _process_single_task(task: Dict[str, Any]) -> None:
     model_size = cfg.get("modelSize", "l")
     conf_threshold = float(cfg.get("confThreshold", 0.7))
     target_classes = cfg.get("targetClasses", []) or []
-    output_dataset_name = cfg.get("outputDatasetName")
+
+    # 优先使用前端传入的输出数据集名称；若未提供，则使用“源数据集名称+自动标注任务”
+    # 兼容历史/不同风格的字段名（如 output_dataset_name）
+    output_dataset_name = (
+        cfg.get("outputDatasetName")
+        or cfg.get("output_dataset_name")
+        or task.get("outputDatasetName")
+        or task.get("output_dataset_name")
+    )
+    if isinstance(output_dataset_name, str):
+        output_dataset_name = output_dataset_name.strip()
 
     if not output_dataset_name:
         base_name = source_dataset_name or task_name or f"dataset-{dataset_id[:8]}"
-        output_dataset_name = f"{base_name}_auto_{task_id[:8]}"
+        # 默认规则：源数据集名称 + "自动标注任务"
+        output_dataset_name = f"{base_name}自动标注任务"
 
     logger.info(
         "Start processing auto-annotation task: id={}, dataset_id={}, model_size={}, conf_threshold={}, target_classes={}, output_dataset_name={}",

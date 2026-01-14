@@ -27,6 +27,8 @@ import com.datamate.datamanagement.interfaces.dto.CopyFilesRequest;
 import com.datamate.datamanagement.interfaces.dto.CreateDirectoryRequest;
 import com.datamate.datamanagement.interfaces.dto.UploadFileRequest;
 import com.datamate.datamanagement.interfaces.dto.UploadFilesPreRequest;
+import com.datamate.datamanagement.interfaces.dto.RenameFileRequest;
+import com.datamate.datamanagement.interfaces.dto.RenameDirectoryRequest;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletResponse;
@@ -605,6 +607,148 @@ public class DatasetFileApplicationService {
             dataset.removeFile(file);
         }
         datasetRepository.updateById(dataset);
+    }
+
+    /**
+     * 重命名数据集文件（仅允许修改主名称，文件后缀保持不变）
+     */
+    @Transactional
+    public void renameFile(String datasetId, String fileId, RenameFileRequest request) {
+        DatasetFile file = getDatasetFile(datasetId, fileId);
+        Dataset dataset = datasetRepository.getById(datasetId);
+        if (dataset == null) {
+            throw BusinessException.of(DataManagementErrorCode.DATASET_NOT_FOUND);
+        }
+
+        String newName = Optional.ofNullable(request.getNewName()).orElse("").trim();
+        if (newName.isEmpty()) {
+            throw BusinessException.of(CommonErrorCode.PARAM_ERROR);
+        }
+
+        String originalFileName = file.getFileName();
+        String baseName = originalFileName;
+        String extension = "";
+        int dotIndex = originalFileName.lastIndexOf('.');
+        if (dotIndex > 0 && dotIndex < originalFileName.length() - 1) {
+            baseName = originalFileName.substring(0, dotIndex);
+            extension = originalFileName.substring(dotIndex); // 包含点号，如 .jpg
+        }
+
+        // 只接收主名称，后缀始终使用原始后缀
+        String finalFileName = newName + extension;
+
+        Path oldPath = Paths.get(file.getFilePath()).normalize();
+        Path basePath = Paths.get(dataset.getPath()).normalize();
+
+        // 仅允许重命名数据集自身目录下的文件
+        if (!oldPath.startsWith(basePath)) {
+            throw BusinessException.of(CommonErrorCode.PARAM_ERROR);
+        }
+
+        Path parentDir = oldPath.getParent();
+        if (parentDir == null) {
+            throw BusinessException.of(SystemErrorCode.FILE_SYSTEM_ERROR);
+        }
+        Path newPath = parentDir.resolve(finalFileName).normalize();
+
+        if (!newPath.startsWith(basePath)) {
+            throw BusinessException.of(CommonErrorCode.PARAM_ERROR);
+        }
+
+        if (Files.exists(newPath)) {
+            throw BusinessException.of(DataManagementErrorCode.DATASET_FILE_ALREADY_EXISTS);
+        }
+
+        try {
+            Files.move(oldPath, newPath);
+        } catch (IOException e) {
+            log.error("Failed to rename file from {} to {}", oldPath, newPath, e);
+            throw BusinessException.of(SystemErrorCode.FILE_SYSTEM_ERROR);
+        }
+
+        file.setFileName(finalFileName);
+        file.setFilePath(newPath.toString());
+        file.setFileType(AnalyzerUtils.getExtension(finalFileName));
+        file.setLastAccessTime(LocalDateTime.now());
+        datasetFileRepository.updateById(file);
+    }
+
+    /**
+     * 重命名目录
+     */
+    @Transactional
+    public void renameDirectory(String datasetId, RenameDirectoryRequest request) {
+        Dataset dataset = datasetRepository.getById(datasetId);
+        if (dataset == null) {
+            throw BusinessException.of(DataManagementErrorCode.DATASET_NOT_FOUND);
+        }
+
+        String prefix = Optional.ofNullable(request.getPrefix()).orElse("").trim();
+        prefix = prefix.replace("\\", "/");
+        while (prefix.startsWith("/")) {
+            prefix = prefix.substring(1);
+        }
+        while (prefix.endsWith("/")) {
+            prefix = prefix.substring(0, prefix.length() - 1);
+        }
+
+        if (prefix.isEmpty()) {
+            throw BusinessException.of(CommonErrorCode.PARAM_ERROR);
+        }
+
+        String newName = Optional.ofNullable(request.getNewName()).orElse("").trim();
+        if (newName.isEmpty() || newName.contains("..") || newName.contains("/") || newName.contains("\\")) {
+            throw BusinessException.of(CommonErrorCode.PARAM_ERROR);
+        }
+
+        String datasetPath = dataset.getPath();
+        Path basePath = Paths.get(datasetPath).normalize();
+        Path oldDir = basePath.resolve(prefix).normalize();
+
+        if (!oldDir.startsWith(basePath)) {
+            throw BusinessException.of(CommonErrorCode.PARAM_ERROR);
+        }
+
+        if (!Files.exists(oldDir) || !Files.isDirectory(oldDir)) {
+            throw BusinessException.of(DataManagementErrorCode.DIRECTORY_NOT_FOUND);
+        }
+
+        Path parentDir = oldDir.getParent();
+        if (parentDir == null) {
+            throw BusinessException.of(SystemErrorCode.FILE_SYSTEM_ERROR);
+        }
+        Path newDir = parentDir.resolve(newName).normalize();
+
+        if (!newDir.startsWith(basePath)) {
+            throw BusinessException.of(CommonErrorCode.PARAM_ERROR);
+        }
+
+        if (Files.exists(newDir)) {
+            throw BusinessException.of(DataManagementErrorCode.DIRECTORY_NOT_FOUND);
+        }
+
+        try {
+            Files.move(oldDir, newDir);
+        } catch (IOException e) {
+            log.error("Failed to rename directory from {} to {}", oldDir, newDir, e);
+            throw BusinessException.of(SystemErrorCode.FILE_SYSTEM_ERROR);
+        }
+
+        // 同步更新数据库中该目录下所有文件的 filePath
+        String oldDirPath = oldDir.toString().replace("\\", "/");
+        String newDirPath = newDir.toString().replace("\\", "/");
+
+        List<DatasetFile> allFiles = datasetFileRepository.findAllByDatasetId(datasetId);
+        for (DatasetFile file : allFiles) {
+            String filePath = Optional.ofNullable(file.getFilePath()).orElse("").replace("\\", "/");
+            if (filePath.startsWith(oldDirPath + "/")) {
+                String relative = filePath.substring(oldDirPath.length() + 1);
+                Path updatedPath = Paths.get(newDirPath).resolve(relative);
+                file.setFilePath(updatedPath.toString());
+                file.setLastAccessTime(LocalDateTime.now());
+                datasetFileRepository.updateById(file);
+            }
+        }
     }
 
     /**

@@ -83,6 +83,14 @@ export function deleteDirectoryUsingDelete(
   return del(`/api/data-management/datasets/${id}/files/directories?prefix=${encodeURIComponent(directoryPath)}`);
 }
 
+// 重命名文件夹
+export function renameDirectoryUsingPut(
+  id: string | number,
+  data: { prefix: string; newName: string }
+) {
+  return put(`/api/data-management/datasets/${id}/files/directories/rename`, data);
+}
+
 export function downloadFileByIdUsingGet(
   id: string | number,
   fileId: string | number,
@@ -101,6 +109,18 @@ export function deleteDatasetFileUsingDelete(
   fileId: string | number
 ) {
   return del(`/api/data-management/datasets/${datasetId}/files/${fileId}`);
+}
+
+// 重命名数据集文件（仅修改主名称，后缀保持不变）
+export function renameDatasetFileUsingPut(
+  datasetId: string | number,
+  fileId: string | number,
+  data: { newName: string }
+) {
+  return put(
+    `/api/data-management/datasets/${datasetId}/files/${fileId}/rename`,
+    data
+  );
 }
 
 // 文件预览

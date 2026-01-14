@@ -21,6 +21,8 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
     handleCreateDirectory,
     handleDownloadDirectory,
     handleDeleteDirectory,
+    handleRenameFile,
+    handleRenameDirectory,
   } = filesOperation;
 
   // 文件列表多选配置
@@ -205,6 +207,37 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
                 size="small"
                 type="link"
                 onClick={() => {
+                  let newDirName = record.fileName;
+                  modal.confirm({
+                    title: '重命名文件夹',
+                    content: (
+                      <Input
+                        autoFocus
+                        defaultValue={record.fileName}
+                        onChange={(e) => {
+                          newDirName = e.target.value?.trim();
+                        }}
+                      />
+                    ),
+                    okText: '确定',
+                    cancelText: '取消',
+                    onOk: async () => {
+                      if (!newDirName) {
+                        message.warning('请输入文件夹名称');
+                        return Promise.reject();
+                      }
+                      await handleRenameDirectory(fullPath, record.fileName, newDirName);
+                      fetchDataset();
+                    },
+                  });
+                }}
+              >
+                重命名
+              </Button>
+              <Button
+                size="small"
+                type="link"
+                onClick={() => {
                   modal.confirm({
                     title: '确认删除文件夹？',
                     content: `删除文件夹 "${record.fileName}" 将同时删除其中的所有文件和子文件夹，此操作不可恢复。`,
@@ -232,6 +265,45 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
             onClick={() => handleDownloadFile(record)}
           >
             下载
+          </Button>
+          <Button
+            size="small"
+            type="link"
+            onClick={() => {
+              const originalName = record.fileName || '';
+              const dotIndex = originalName.lastIndexOf('.');
+              const baseName = dotIndex > 0 ? originalName.slice(0, dotIndex) : originalName;
+              const ext = dotIndex > 0 ? originalName.slice(dotIndex) : '';
+              let newBaseName = baseName;
+
+              modal.confirm({
+                title: '重命名文件',
+                content: (
+                  <div className="space-y-2">
+                    <Input
+                      autoFocus
+                      defaultValue={baseName}
+                      addonAfter={ext}
+                      onChange={(e) => {
+                        newBaseName = e.target.value?.trim();
+                      }}
+                    />
+                  </div>
+                ),
+                okText: '确定',
+                cancelText: '取消',
+                onOk: async () => {
+                  if (!newBaseName) {
+                    message.warning('请输入文件名称');
+                    return Promise.reject();
+                  }
+                  await handleRenameFile(record, newBaseName);
+                  fetchDataset();
+                },
+              });
+            }}
+          >
+            重命名
           </Button>
           <Button
             size="small"

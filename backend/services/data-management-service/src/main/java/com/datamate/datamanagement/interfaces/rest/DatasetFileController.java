@@ -14,6 +14,8 @@ import com.datamate.datamanagement.interfaces.dto.CreateDirectoryRequest;
 import com.datamate.datamanagement.interfaces.dto.DatasetFileResponse;
 import com.datamate.datamanagement.interfaces.dto.UploadFileRequest;
 import com.datamate.datamanagement.interfaces.dto.UploadFilesPreRequest;
+import com.datamate.datamanagement.interfaces.dto.RenameFileRequest;
+import com.datamate.datamanagement.interfaces.dto.RenameDirectoryRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
@@ -192,6 +194,27 @@ public class DatasetFileController {
     public ResponseEntity<Void> deleteDirectory(@PathVariable("datasetId") String datasetId,
                                                 @RequestParam(value = "prefix", required = false, defaultValue = "") String prefix) {
         datasetFileApplicationService.deleteDirectory(datasetId, prefix);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * 重命名文件
+     */
+    @PutMapping("/{fileId}/rename")
+    public ResponseEntity<Void> renameFile(@PathVariable("datasetId") String datasetId,
+                                           @PathVariable("fileId") String fileId,
+                                           @RequestBody @Valid RenameFileRequest request) {
+        datasetFileApplicationService.renameFile(datasetId, fileId, request);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * 重命名目录
+     */
+    @PutMapping("/directories/rename")
+    public ResponseEntity<Void> renameDirectory(@PathVariable("datasetId") String datasetId,
+                                                @RequestBody @Valid RenameDirectoryRequest request) {
+        datasetFileApplicationService.renameDirectory(datasetId, request);
         return ResponseEntity.ok().build();
     }
 }
