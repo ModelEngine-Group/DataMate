@@ -174,7 +174,8 @@ VALUES ('MineruFormatter', 'MinerU PDF文本抽取', '基于MinerU API，抽取P
        ('ImgSimilarImagesCleaner', '相似图片去除', '去除相似的图片。', '1.0.0', 'image', 'image', null, '{"similarThreshold": {"name": "相似度", "description": "相似度取值越大，图片相似度越高。", "type": "slider", "defaultVal": 0.8, "min": 0, "max": 1, "step": 0.01}}', '', 'false'),
        ('ImgTypeUnify', '图片格式转换', '将图片编码格式统一为jpg、jpeg、png、bmp格式。', '1.0.0', 'image', 'image', null, '{"imgType": {"name": "图片编码格式", "type": "select", "defaultVal": "jpg", "options": [{"label": "jpg", "value": "jpg"}, {"label": "png", "value": "png"}, {"label": "jpeg", "value": "jpeg"}, {"label": "bmp", "value": "bmp"}]}}', '', 'false'),
        ('ImgDirectionCorrect', '图片方向校正', '将含有文字的图片校正到文字水平方向，主要适用于文档场景。', '1.0.0', 'image', 'image', null, null, '', 'false'),
-       ('PiiDetector', '高级匿名化', '高级匿名化算子，检测命名实体并匿名化。', '1.0.0', 'text', 'text', null, null, '', 'false')
+        ('PiiDetector', '高级匿名化', '高级匿名化算子，检测命名实体并匿名化。', '1.0.0', 'text', 'text', null, null, '', 'false'),
+        ('ObjectDetectionRectangle', '图像目标检测与预标注', '基于 YOLOv8 的图像目标检测算子。对输入图像进行目标检测，输出带矩形框与类别标签的标注图像，并生成结构化标注 JSON（包含类别、置信度与边界框坐标）。支持将检测结果导出为 Label Studio 兼容的 predictions 预标注格式（rectanglelabels），可在标注任务中直接加载并进行人工校正，从而显著降低人工标注成本并提升标注效率。', '1.0.0', 'image', 'image,json', null, null, '', 'false')
 ON CONFLICT DO NOTHING;
 
 INSERT INTO t_operator_category_relation(category_id, operator_id)
@@ -197,9 +198,10 @@ SELECT c.id, o.id
 FROM t_operator_category c
        CROSS JOIN t_operator o
 WHERE c.id IN ('de36b61c-9e8a-4422-8c31-d30585c7100f', '9eda9d5d-072b-499b-916c-797a0a8750e1', '96a3b07a-3439-4557-a835-525faad60ca3', '431e7798-5426-4e1a-aae6-b9905a836b34')
-  AND o.id IN ('ImgBlurredImagesCleaner', 'ImgBrightness', 'ImgContrast', 'ImgDenoise',
-               'ImgDuplicatedImagesCleaner', 'ImgPerspectiveTransformation', 'ImgResize', 'ImgSaturation',
-               'ImgShadowRemove', 'ImgSharpness', 'ImgSimilarImagesCleaner', 'ImgTypeUnify', 'ImgDirectionCorrect')
+    AND o.id IN ('ImgBlurredImagesCleaner', 'ImgBrightness', 'ImgContrast', 'ImgDenoise',
+                 'ImgDuplicatedImagesCleaner', 'ImgPerspectiveTransformation', 'ImgResize', 'ImgSaturation',
+                 'ImgShadowRemove', 'ImgSharpness', 'ImgSimilarImagesCleaner', 'ImgTypeUnify', 'ImgDirectionCorrect',
+                 'ObjectDetectionRectangle')
 ON CONFLICT DO NOTHING;
 
 
