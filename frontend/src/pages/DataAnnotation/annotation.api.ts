@@ -58,8 +58,8 @@ export function deleteAutoAnnotationTaskByIdUsingDelete(taskId: string) {
   return del(`/api/annotation/auto/${taskId}`);
 }
 
-export function getAutoAnnotationTaskStatusUsingGet(taskId: string) {
-  return get(`/api/annotation/auto/${taskId}/status`);
+export function loginAnnotationUsingGet(mappingId: string) {
+  return get(`/api/annotation/project/${mappingId}/login`);
 }
 
 export function downloadAutoAnnotationResultUsingGet(taskId: string) {
