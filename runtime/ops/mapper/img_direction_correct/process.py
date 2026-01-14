@@ -68,7 +68,9 @@ class ImgDirectionCorrect(Mapper):
         if rotate_angle == 90 and pro > 0.89:
             return cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
         if rotate_angle == 180 and pro > 0.89:
-            return cv2.rotate(image, 1)
+            return cv2.rotate(image, cv2.ROTATE_180)
+        if rotate_angle == 270 and pro > 0.89:
+            return cv2.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE)
         return image
 
     @staticmethod
