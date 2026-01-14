@@ -124,12 +124,19 @@ export function useOperatorOperations() {
       prev.map((op) =>
         op.id === operatorId
           ? {
-              ...op,
-              overrides: {
-                ...(op?.overrides || op?.defaultParams),
-                [paramKey]: value,
-              },
+            ...op,
+            overrides: {
+              ...(op?.overrides || op?.defaultParams),
+              [paramKey]: value,
+            },
+            configs: {
+              ...(op?.configs),
+              [paramKey]: {
+                ...(op?.configs[paramKey]),
+                value: value,
+              }
             }
+          }
           : op
       )
     );
