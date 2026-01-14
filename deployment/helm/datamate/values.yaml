@@ -134,16 +134,10 @@ frontend:
     nodePort: 30000
   volumes:
     - *logVolume
-    - name: datamate-nginx-conf
-      configMap:
-        name: datamate-nginx-conf
   volumeMounts:
     - name: log-volume
       mountPath: /var/log/datamate/frontend
       subPath: frontend
-    - mountPath: /etc/nginx/conf.d/backend.conf
-      name: datamate-nginx-conf
-      subPath: backend.conf
 
 runtime:
   enabled: false

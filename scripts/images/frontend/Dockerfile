@@ -9,12 +9,23 @@ RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi && \
 
 FROM nginx:1.29 AS runner
 
-COPY --from=builder /app/dist /opt/frontend
-COPY scripts/images/frontend/backend.conf /etc/nginx/conf.d/backend.conf
+RUN --mount=type=cache,target=/var/cache/apt \
+    --mount=type=cache,target=/var/lib/apt \
+    apt update \
+    && apt install -y dos2unix
 
-RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
+COPY --from=builder /app/dist /opt/frontend/statics
+COPY scripts/images/frontend/routes.inc /opt/frontend/routes.inc
+COPY scripts/images/frontend/http_backend.conf /opt/frontend/http_backend.conf
+COPY scripts/images/frontend/https_backend.conf /opt/frontend/https_backend.conf
+
+COPY scripts/images/frontend/start.sh /opt/frontend/start.sh
+
+RUN dos2unix /opt/frontend/start.sh \
+    && chmod +x /opt/frontend/start.sh \
+    && ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
     && rm -f /etc/nginx/conf.d/default.conf
 
-EXPOSE 80
+EXPOSE 3000
 
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["/opt/frontend/start.sh"]
