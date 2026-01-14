@@ -121,6 +121,9 @@ backend-python:
       mountPath: /var/log/datamate
 
 gateway:
+  env:
+    - name: JWT_SECRET
+      value: &JWT_SECRET "default-insecure-key-change-in-production"
   volumes:
     - *logVolume
   volumeMounts:

@@ -1,10 +1,12 @@
 package com.datamate.gateway;
 
+import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 
 /**
  * API Gateway & Auth Service Application
@@ -12,6 +14,8 @@ import org.springframework.context.annotation.Bean;
  * 提供路由、鉴权、限流等功能
  */
 @SpringBootApplication
+@ComponentScan(basePackages = {"com.datamate"})
+@MapperScan(basePackages = {"com.datamate.**.mapper"})
 public class ApiGatewayApplication {
 
     public static void main(String[] args) {
@@ -46,6 +50,10 @@ public class ApiGatewayApplication {
             .route("deer-flow-backend", r -> r.path("/deer-flow-backend/**")
                 .filters(f -> f.stripPrefix(1).prefixPath("/api"))
                 .uri("http://deer-flow-backend:8000"))
+
+            // 网关服务（用户）
+            .route("gateway", r -> r.path("/api/user/**")
+                    .uri("http://localhost:8080"))
 
             // 其他后端服务
             .route("default", r -> r.path("/api/**")

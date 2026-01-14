@@ -17,6 +17,22 @@ spring:
         secure: true
         cluster-name: DEFAULT
 
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://datamate-database:5432/datamate?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:password}
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+datamate:
+  jwt:
+    secret: ${JWT_SECRET}
+    expiration-seconds: 3600
   # 服务器端口配置
 server:
   port: 8080  # 必须有这个配置

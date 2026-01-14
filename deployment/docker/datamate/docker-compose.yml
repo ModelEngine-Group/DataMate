@@ -38,6 +38,8 @@ services:
     image: ${REGISTRY:-}datamate-gateway
     restart: on-failure
     privileged: true
+    environment:
+      - JWT_SECRET=default-insecure-key-change-in-production
     networks: [ datamate ]
 
   datamate-frontend:

@@ -1,7 +1,7 @@
 FROM maven:3-eclipse-temurin-21 AS builder
 COPY backend/ /opt/backend
 
-RUN cd /opt/backend/services && \
+RUN cd /opt/backend/ && \
     mvn -U clean package -Dmaven.test.skip=true
 
 

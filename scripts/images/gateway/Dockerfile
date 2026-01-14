@@ -2,7 +2,7 @@ FROM maven:3-eclipse-temurin-21 AS builder
 
 COPY backend/ /opt/gateway
 
-RUN cd /opt/gateway/api-gateway && \
+RUN cd /opt/gateway/ && \
     mvn -U clean package -Dmaven.test.skip=true
 
 

@@ -42,6 +42,10 @@
     </properties>
 
     <modules>
+        <!-- 共享库 -->
+        <module>./shared/domain-common</module>
+        <module>./shared/security-common</module>
+
         <!-- 核心服务 -->
         <module>services</module>
 

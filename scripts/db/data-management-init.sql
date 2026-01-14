@@ -290,8 +290,7 @@ CREATE TRIGGER update_users_updated_at
 -- 插入初始数据
 INSERT INTO users (username, email, password_hash, full_name, role, organization)
 VALUES
-('admin', 'admin@datamate.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7q7U3.XUO', '系统管理员', 'ADMIN', 'DataMate'),
-('knowledge_user', 'knowledge@datamate.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7q7U3.XUO', '知识库用户', 'USER', '三甲医院')
+    ('admin', 'admin@datamate.com', '$2a$10$/esawo436yxg2eodpl/JJ.3Xu6y9m91/ihXRHie9al.LUoNQR5fF.', '系统管理员', 'ADMIN', 'DataMate')
 ON CONFLICT (username) DO NOTHING;
 
 -- 创建视图：数据集统计摘要

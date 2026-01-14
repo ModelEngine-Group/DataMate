@@ -18,23 +18,13 @@
     <description>Services</description>
 
     <modules>
-        <!-- 共享库 -->
-        <module>../shared/domain-common</module>
-        <module>../shared/security-common</module>
-
         <!-- 核心服务 -->
         <module>data-management-service</module>
         <module>operator-market-service</module>
         <module>data-cleaning-service</module>
-        <module>data-synthesis-service</module>
-        <module>data-annotation-service</module>
-        <module>data-evaluation-service</module>
-        <module>pipeline-orchestration-service</module>
-        <module>execution-engine-service</module>
 
         <!-- RAG服务 -->
         <module>rag-indexer-service</module>
-        <module>rag-query-service</module>
 
         <!-- 主启动模块 -->
         <module>main-application</module>

@@ -66,41 +66,11 @@
             <artifactId>data-cleaning-service</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <dependency>
-            <groupId>com.datamate</groupId>
-            <artifactId>data-synthesis-service</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.datamate</groupId>
-            <artifactId>data-annotation-service</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.datamate</groupId>
-            <artifactId>data-evaluation-service</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.datamate</groupId>
-            <artifactId>pipeline-orchestration-service</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.datamate</groupId>
-            <artifactId>execution-engine-service</artifactId>
-            <version>${project.version}</version>
-        </dependency>
 
         <!-- RAG服务依赖 -->
         <dependency>
             <groupId>com.datamate</groupId>
             <artifactId>rag-indexer-service</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.datamate</groupId>
-            <artifactId>rag-query-service</artifactId>
             <version>${project.version}</version>
         </dependency>
 
