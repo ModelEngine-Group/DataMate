@@ -6,9 +6,9 @@ RUN --mount=type=cache,target=/var/cache/apt \
     && apt install -y libgl1 libglib2.0-0 vim libmagic1 libreoffice dos2unix swig poppler-utils tesseract-ocr
 
 RUN mkdir -p /home/models \
-    && wget https://paddleocr.bj.bcebos.com/dygraph_v2.0/ch/ch_ppocr_mobile_v2.0_cls_infer.tar \
-    && tar -xf ch_ppocr_mobile_v2.0_cls_infer.tar -C /home/models \
-    && rm -f ch_*.tar
+    && wget https://paddle-model-ecology.bj.bcebos.com/paddlex/official_inference_model/paddle3.0.0/PP-LCNet_x1_0_doc_ori_infer.tar \
+    && tar -xf PP-LCNet_x1_0_doc_ori_infer.tar -C /home/models \
+    && rm -f PP_*.tar
 
 COPY runtime/python-executor /opt/runtime
 COPY runtime/ops /opt/runtime/datamate/ops
@@ -22,7 +22,7 @@ ENV UV_INDEX_STRATEGY=unsafe-best-match
 WORKDIR /opt/runtime
 
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv pip install -e .[all] --system \
+    uv pip install -e . --system \
     && uv pip install -r /opt/runtime/datamate/ops/pyproject.toml --system \
     && python -m spacy download zh_core_web_sm \
     && python -c "import nltk; nltk.download('punkt_tab'); nltk.download('averaged_perceptron_tagger_eng')" \
