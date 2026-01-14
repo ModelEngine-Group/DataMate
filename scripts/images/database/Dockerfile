@@ -14,5 +14,4 @@ COPY scripts/images/database/postgresql.cnf /etc/postgresql/postgresql.conf
 
 COPY scripts/db/ /docker-entrypoint-initdb.d/
 
-USER postgres
 CMD ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]

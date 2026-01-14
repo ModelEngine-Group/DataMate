@@ -8,6 +8,8 @@ services:
     image: ${REGISTRY:-}datamate-backend
     restart: on-failure
     privileged: true
+    environment:
+      DB_PASSWORD: ${DB_PASSWORD:-password}
     volumes:
       - dataset_volume:/dataset
       - flow_volume:/flow
@@ -25,6 +27,7 @@ services:
     privileged: true
     environment:
       - log_level=DEBUG
+      - pgsql_password=${DB_PASSWORD:-password}
     volumes:
       - dataset_volume:/dataset
       - flow_volume:/flow
@@ -45,7 +48,7 @@ services:
     image: ${REGISTRY:-}datamate-frontend
     restart: on-failure
     ports:
-      - "30000:80"
+      - "30000:3000"
     volumes:
       - frontend_log_volume:/var/log/datamate/frontend
     networks: [ datamate ]
@@ -59,7 +62,7 @@ services:
     restart: on-failure
     environment:
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=password
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-password}
     volumes:
       - postgresql_volume:/var/lib/postgresql/data
       - database_log_volume:/var/log/datamate/database
@@ -77,7 +80,7 @@ services:
       PG_HOST: "datamate-database"
       PG_PORT: "5432"
       PG_USER: "postgres"
-      PG_PASSWORD: "password"
+      PG_PASSWORD: ${DB_PASSWORD:-password}
       PG_DATABASE: "datamate"
     command:
       - python
@@ -167,7 +170,7 @@ services:
     volumes:
       - ./conf.yaml:/app/conf.yaml:ro
       - deer-flow-log-volume:/var/log/deer-flow
-    restart: unless-stopped
+    restart: on-failure
     networks:
       - datamate
     profiles:
@@ -180,7 +183,7 @@ services:
       - .env
     depends_on:
       - deer-flow-backend
-    restart: unless-stopped
+    restart: on-failure
     networks:
       - datamate
     profiles:
@@ -195,7 +198,7 @@ services:
     tty: true
     image: heartexlabs/label-studio:latest
     privileged: true
-    restart: unless-stopped
+    restart: on-failure
     user: root
     expose:
       - "8000"
@@ -207,7 +210,7 @@ services:
       - DJANGO_DB=default
       - POSTGRE_NAME=labelstudio
       - POSTGRE_USER=postgres
-      - POSTGRE_PASSWORD=password
+      - POSTGRE_PASSWORD=${DB_PASSWORD:-password}
       - POSTGRE_PORT=5432
       - POSTGRE_HOST=datamate-database
       - LABEL_STUDIO_HOST=${LABEL_STUDIO_HOST:-}
@@ -276,6 +279,7 @@ services:
 
   milvus:
     container_name: milvus-standalone
+    restart: on-failure
     image: milvusdb/milvus:v2.6.5
     command: ["milvus", "run", "standalone"]
     security_opt:
