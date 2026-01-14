@@ -24,7 +24,7 @@ class ImgDirectionCorrect(Mapper):
         self.img_resize = 1000
         self.limit_size = 30000
         self.use_model = True
-        self.vertical_model, self.standard_model = self.get_model(*args, **kwargs)
+        self.model = self.get_model(*args, **kwargs)
 
     @staticmethod
     def _detect_angle(img):
@@ -60,9 +60,9 @@ class ImgDirectionCorrect(Mapper):
         Returns: 旋转后的图片
         """
         # cls_res为模型预测结果，格式应当类似于: [('90', 0.9815167)]
-        _, cls_res, _ = model.infer([image])
-        rotate_angle = int(cls_res[0][0])
-        pro = float(cls_res[0][1])
+        cls_res = model.infer.predict([image])[0]
+        rotate_angle = int(cls_res.get("class_ids", np.array([0], dtype='int32')).item())
+        pro = float(cls_res.get("scores", np.array([0], dtype='int32')).item())
         logger.info(
             f"fileName: ｛file_name｝, model ｛model.model_name｝ detect result is {rotate_angle} with confidence ｛pro｝")
         if rotate_angle == 90 and pro > 0.89:
@@ -93,7 +93,7 @@ class ImgDirectionCorrect(Mapper):
         return dst_img
 
     def init_model(self, *args, **kwargs):
-        return BaseModel(model_type='vertical'), BaseModel(model_type='standard')
+        return BaseModel(*args, **kwargs)
 
     def execute(self, sample: Dict[str, Any]):
         start = time.time()
@@ -103,12 +103,12 @@ class ImgDirectionCorrect(Mapper):
         img_bytes = sample[self.data_key]
         if img_bytes:
             data = bytes_transform.bytes_to_numpy(img_bytes)
-            correct_data = self._img_direction_correct(data, file_name, self.vertical_model, self.standard_model)
+            correct_data = self._img_direction_correct(data, file_name, self.model)
             sample[self.data_key] = bytes_transform.numpy_to_bytes(correct_data, file_type)
             logger.info(f"fileName: ｛file_name｝, method: ImgDirectionCorrect costs {time.time() - start:6f} s")
         return sample
 
-    def _img_direction_correct(self, img, file_name, vertical_model, standard_model):
+    def _img_direction_correct(self, img, file_name, standard_model):
         height, width = img.shape[:2]
         if max(height, width) > self.limit_size:
             logger.info(
@@ -119,8 +119,6 @@ class ImgDirectionCorrect(Mapper):
         angle = self._detect_angle(detect_angle_img)
         # 将图片处理为 0, 90, 180, 270旋转角度的图片
         rotated_img = self._rotate_bound(img, angle)
-        # 水平垂直方向识别：二分类模型，检测图片方向角为 0, 90, 将其处理为 0和180二分类图片
-        rotated_img = self._detect_direction(rotated_img, file_name, vertical_model)
         # 0-180方向识别：二分类模型，检测图片方向角为 0, 180, 将其处理为 0和180二分类图片
         rotated_img = self._detect_direction(rotated_img, file_name, standard_model)
         return rotated_img

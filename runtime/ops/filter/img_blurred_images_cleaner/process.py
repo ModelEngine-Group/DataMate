@@ -35,7 +35,7 @@ class ImgBlurredImagesCleaner(Filter):
             data = bytes_transform.bytes_to_numpy(img_bytes)
             blurred_images = self._blurred_images_filter(data, file_name)
             sample[self.data_key] = bytes_transform.numpy_to_bytes(blurred_images, file_type)
-        logger.info(f"fileName: ｛file_name｝, method: ImagesBlurredCleaner costs {(time.time() - start):6f} s")
+        logger.info(f"fileName: {file_name}, method: ImagesBlurredCleaner costs {(time.time() - start):6f} s")
         return sample
 
     def _blurred_images_filter(self, image, file_name):
@@ -46,6 +46,6 @@ class ImgBlurredImagesCleaner(Filter):
         score = cv2.Laplacian(gray, cv2.CV_64F).var()
         if score <= self._blurred_threshold:
             logger.info(f"The image blur is {self._blurred_threshold}, "
-                        f"which exceeds the threshold of ｛score｝. ｛file_name｝ is filtered out.")
+                        f"which exceeds the threshold of {score}. {file_name} is filtered out.")
             return np.array([])
         return image

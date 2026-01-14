@@ -4,34 +4,15 @@ import gc
 import os
 from pathlib import Path
 
-from argparse import Namespace
-
 
 class BaseModel:
 
-    def __init__(self, model_type='vertical'):
+    def __init__(self, *args, **kwargs):
         models_path = os.getenv("MODELS_PATH", "/home/models")
-        args = Namespace()
-        args.cls_image_shape = '3, 224, 224'
-        args.cls_batch_num = 6
-        args.cls_thresh = 0.9
-        args.use_onnx = False
-        args.use_gpu = False
-        args.use_npu = False
-        args.use_xpu = False
-        args.use_mlu = False
-        args.enable_mkldnn = False
-        if model_type == 'vertical':
-            args.cls_model_dir = str(Path(models_path, 'ch_ppocr_mobile_v2.0_cls_infer'))
-            self.model_name = 'standard model to detect image 0 or 90 rotated'
-            args.label_list = ['0', '90']
-        else:
-            args.cls_model_dir = str(Path(models_path, 'ch_ppocr_mobile_v2.0_cls_infer'))
-            self.model_name = 'standard model to detect image 0 or 180 rotated'
-            args.label_list = ['0', '180']
+        model_dir = str(Path(models_path, 'PP-LCNet_x1_0_doc_ori_infer'))
 
-        from paddleocr.tools.infer.predict_cls import TextClassifier
-        self.infer = TextClassifier(args)
+        from paddleocr import DocImgOrientationClassification
+        self.infer = DocImgOrientationClassification(model_dir=model_dir)
 
     def __del__(self):
         del self.infer
