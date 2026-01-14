@@ -18,6 +18,7 @@ import {
   deleteAutoAnnotationTaskByIdUsingDelete,
   syncAutoAnnotationTaskToLabelStudioUsingPost,
   getAutoAnnotationLabelStudioProjectUsingGet,
+  loginAnnotationUsingGet,
 } from "../annotation.api";
 import { mapAnnotationTask } from "../annotation.const";
 import CreateAnnotationTask from "../Create/components/CreateAnnotationTaskDialog";
@@ -134,7 +135,7 @@ export default function DataAnnotation() {
         const base = labelStudioBase;
 
         // no debug logging in production
-
+        await loginAnnotationUsingGet(labelingProjId)
         if (labelingProjId) {
           // only open external Label Studio when we have a configured base url
           if (base) {

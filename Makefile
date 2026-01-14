@@ -3,8 +3,6 @@ MAKEFLAGS += --no-print-directory
 WITH_MINERU ?= false  # 默认不构建mineru
 VERSION ?= latest
 NAMESPACE ?= datamate
-PLATFORM ?= linux/amd64  # Default platform for image downloads
-SAVE ?= false  # Default: only pull images, don't save to dist/
 
 # Registry configuration: use --dev for local images, otherwise use GitHub registry
 ifdef dev
@@ -68,9 +66,8 @@ help:
 	@echo ""
 	@echo "Download Commands:"
 	@echo "  make download                       Pull all images (no save by default)"
-	@echo "  make download SAVE=true             Download and save images to dist/"
-	@echo "  make download PLATFORM=linux/arm64  Download ARM64 images"
-	@echo "  make download SAVE=true PLATFORM=linux/arm64  Save ARM64 images"
+	@echo "  make download VERSION=<version>     Pull all images with specific version"
+	@echo "  make download REGISTRY=<registry>   Pull images from specific registry"
 	@echo "  make load-images                    Load all downloaded images from dist/"
 	@echo ""
 	@echo "Utility Commands:"
@@ -388,74 +385,89 @@ VALID_UPGRADE_TARGETS := datamate
 # List of all images to download
 DOWNLOAD_IMAGES := \
 	datamate-backend \
-	datamate-database \
 	datamate-frontend \
-	datamate-runtime \
-	datamate-backend-python
 
-# Download all images for offline installation
+# Detect architecture for smart default
+CURRENT_ARCH := $(shell uname -m 2>/dev/null)
+ifeq ($(CURRENT_ARCH),aarch64)
+	DEFAULT_OPTION := 2
+else ifeq ($(CURRENT_ARCH),arm64)
+	DEFAULT_OPTION := 2
+else
+	DEFAULT_OPTION := 1
+endif
+
+
+#Usage: make download VERSION=1.0.0 REGISTRY=ghcr.io/modelengine-group/ SAVE=true
 .PHONY: download
 download:
-	@echo "Downloading images for platform: $(PLATFORM)"
-	@echo "Registry: $(REGISTRY)"
-	@echo "Version: $(VERSION)"
-	@echo "Save to dist/: $(SAVE)"
-	@echo ""
-	@if [ "$(SAVE)" = "true" ]; then \
-		mkdir -p dist; \
-	fi
-	@if [ -z "$(REGISTRY)" ] && [ "$(SAVE)" != "true" ]; then \
-		echo "Error: REGISTRY is empty and SAVE=false"; \
-		echo "Either set REGISTRY to pull images, or use SAVE=true to save local images"; \
-		exit 1; \
-	fi
-	@failed=0; \
-	for image in $(DOWNLOAD_IMAGES); do \
-		if [ -z "$(REGISTRY)" ]; then \
-			full_image="$$image:$(VERSION)"; \
-			if [ "$(SAVE)" = "true" ]; then \
-				echo "Saving local image $$full_image to dist/$$image-$(VERSION).tar..."; \
-				if docker save -o dist/$$image-$(VERSION).tar $$full_image; then \
-					echo "Compressing to dist/$$image-$(VERSION).tar.gz..."; \
-					gzip -f dist/$$image-$(VERSION).tar; \
-					echo "✓ Saved $$image to dist/$$image-$(VERSION).tar.gz"; \
-				else \
-					echo "✗ Failed to save $$full_image (image may not exist locally)"; \
-					failed=$$((failed + 1)); \
+	@echo "Select target platform for images:"
+	@echo "  1) x86_64 (Intel/AMD, linux/amd64)"
+	@echo "  2) ARM64  (Apple Silicon, Raspberry Pi 4+, linux/arm64)"
+	@{ \
+		read -p "Enter choice [1/2] (default: $(DEFAULT_OPTION)): " plat_choice; \
+		case "$${plat_choice:-$(DEFAULT_OPTION)}" in \
+			1) PLATFORM="linux/amd64" ;; \
+			2) PLATFORM="linux/arm64" ;; \
+			*) echo "Invalid choice. Using default option $(DEFAULT_OPTION)."; \
+			   PLATFORM=$$([ "$(DEFAULT_OPTION)" = "1" ] && echo "linux/amd64" || echo "linux/arm64");; \
+		esac; \
+		\
+		read -p "Save images to dist/ for offline use? (y/n): " save_resp; \
+		case "$$save_resp" in \
+			[yY]|[yY][eE][sS]) SAVE="true" ;; \
+			*) SAVE="false" ;; \
+		esac; \
+		\
+		if [ -z "$(REGISTRY)" ] && [ "$$SAVE" != "true" ]; then \
+			echo "Error: REGISTRY unset and SAVE=false. Nothing to do."; \
+			exit 1; \
+		fi; \
+		\
+		if [ "$$SAVE" = "true" ]; then mkdir -p dist; fi; \
+		failed=0; \
+		\
+		for image in $(DOWNLOAD_IMAGES); do \
+			if [ -z "$(REGISTRY)" ]; then \
+				src_image="$$image:$(VERSION)"; \
+				echo "Using local image: $$src_image"; \
+			else \
+				src_image="$(REGISTRY)$$image:$(VERSION)"; \
+				echo "Pulling $$src_image ($$PLATFORM)..."; \
+				if ! docker pull --platform "$$PLATFORM" "$$src_image"; then \
+					echo "✗ Failed to pull $$src_image"; \
+					failed=$$(($$failed + 1)); \
+					continue; \
 				fi; \
 			fi; \
-		else \
-			full_image="$(REGISTRY)$$image:$(VERSION)"; \
-			echo "Pulling $$full_image for $(PLATFORM)..."; \
-			if docker pull --platform $(PLATFORM) $$full_image; then \
-				echo "✓ Pulled $$image"; \
-				if [ "$(SAVE)" = "true" ]; then \
-					echo "Saving $$full_image to dist/$$image-$(VERSION).tar..."; \
-					docker save -o dist/$$image-$(VERSION).tar $$full_image; \
-					echo "Compressing to dist/$$image-$(VERSION).tar.gz..."; \
-					gzip -f dist/$$image-$(VERSION).tar; \
-					echo "✓ Saved $$image to dist/$$image-$(VERSION).tar.gz"; \
+			\
+			if [ "$$SAVE" = "true" ]; then \
+				output="dist/$$image-$(VERSION).tar"; \
+				echo "Saving to $$output..."; \
+				if docker save -o "$$output" "$$src_image"; then \
+					echo "✓ Saved $$image"; \
+				else \
+					echo "✗ Failed to save $$src_image"; \
+					failed=$$(($$failed + 1)); \
 				fi; \
 			else \
-				echo "✗ Failed to pull $$full_image"; \
-				failed=$$((failed + 1)); \
+				echo "✓ Ready: $$src_image"; \
 			fi; \
-		fi; \
-		echo ""; \
-	done; \
-	if [ $$failed -eq 0 ]; then \
-		if [ "$(SAVE)" = "true" ]; then \
-			echo "All images downloaded successfully to dist/"; \
-			echo "To load images on target machine: docker load -i <image-file>.tar.gz"; \
+			echo ""; \
+		done; \
+		\
+		if [ $$failed -eq 0 ]; then \
+			if [ "$$SAVE" = "true" ]; then \
+				echo "✅ All images saved to dist/"; \
+				echo "Load on target: docker load -i <image>.tar"; \
+			else \
+				echo "✅ All images ready in local Docker daemon"; \
+			fi; \
 		else \
-			echo "All images pulled successfully"; \
-			echo "Use SAVE=true to save images to dist/ for offline installation"; \
+			echo "❌ $$failed image(s) failed"; \
+			exit 1; \
 		fi; \
-	else \
-		echo "Failed to download $$failed image(s)"; \
-		echo "Please check your registry credentials and image availability"; \
-		exit 1; \
-	fi
+	}
 
 DEER_FLOW_IMAGES := \
 	deer-flow-backend \
