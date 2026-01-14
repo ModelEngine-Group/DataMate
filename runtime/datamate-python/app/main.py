@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
-from typing import Dict, Any
+from typing import Dict, Any, Literal
+from urllib.parse import urlparse, urlunparse
 
 from fastapi import FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
@@ -32,7 +33,19 @@ async def lifespan(app: FastAPI):
     try:
         async with AsyncSessionLocal() as session:
             await session.execute(text("SELECT 1"))
-        logger.info(f"Database: mysql+aiomysql://{'*' * len(settings.mysql_user)}:{'*' * len(settings.mysql_password)}@{settings.mysql_host}:{settings.mysql_port}/{settings.mysql_database}")
+
+        def mask_db_url(url: str) -> Literal[b""] | str:
+            parsed = urlparse(url)
+            if parsed.password is not None:
+                # 重建 netloc，将密码替换为 ****
+                netloc = f"{parsed.username}:*****@{parsed.hostname}"
+                if parsed.port:
+                    netloc += f":{parsed.port}"
+                return urlunparse(parsed._replace(netloc=netloc))
+            return url
+
+        # 使用示例
+        logger.info(f"Database: {mask_db_url(settings.database_url)}")
     except Exception as e:
         logger.error(f"Database connection validation failed: {e}")
         logger.debug(f"Connection details: {settings.database_url}")

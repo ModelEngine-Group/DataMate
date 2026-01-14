@@ -2,7 +2,7 @@ from datetime import datetime
 from enum import Enum
 from typing import List, Optional, Dict, Any
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 
 class TextSplitConfig(BaseModel):
@@ -68,8 +68,7 @@ class DataSynthesisTaskItem(BaseModel):
     created_by: Optional[str] = None
     updated_by: Optional[str] = None
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class PagedDataSynthesisTaskResponse(BaseModel):
@@ -95,8 +94,7 @@ class DataSynthesisFileTaskItem(BaseModel):
     created_by: Optional[str] = None
     updated_by: Optional[str] = None
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class PagedDataSynthesisFileTaskResponse(BaseModel):
@@ -116,8 +114,7 @@ class DataSynthesisChunkItem(BaseModel):
     chunk_content: Optional[str] = None
     chunk_metadata: Optional[Dict[str, Any]] = None
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class PagedDataSynthesisChunkResponse(BaseModel):
@@ -136,8 +133,7 @@ class SynthesisDataItem(BaseModel):
     synthesis_file_instance_id: str
     chunk_instance_id: str
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ChatRequest(BaseModel):
@@ -178,5 +174,4 @@ class SynthesisDataPatchItem(BaseModel):
     chunk_instance_id: str
     synthesis_file_instance_id: str
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)

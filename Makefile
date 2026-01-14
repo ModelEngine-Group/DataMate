@@ -386,6 +386,10 @@ VALID_UPGRADE_TARGETS := datamate
 DOWNLOAD_IMAGES := \
 	datamate-backend \
 	datamate-frontend \
+	datamate-database \
+	datamate-runtime \
+	datamate-backend-python \
+	datamate-gateway \
 
 # Detect architecture for smart default
 CURRENT_ARCH := $(shell uname -m 2>/dev/null)
