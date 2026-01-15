@@ -9,7 +9,7 @@ import {
   MessageSquare,
   GitBranch,
 } from "lucide-react";
-import { features, menuItems } from "../Layout/menu";
+import { features, menuItems } from "../Layout/Menu.tsx";
 import { useState } from 'react';
 import { useNavigate } from "react-router";
 import { Card } from "antd";

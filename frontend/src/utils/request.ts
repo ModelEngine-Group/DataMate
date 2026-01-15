@@ -501,13 +501,19 @@ const request = new Request();
 
 // 添加默认请求拦截器 - Token处理
 request.addRequestInterceptor((config) => {
-  const token =
-    localStorage.getItem("token") || sessionStorage.getItem("token");
-  if (token) {
-    config.headers = {
-      ...config.headers,
-      Authorization: `Bearer ${token}`,
-    };
+  const session = localStorage.getItem("session");
+  if (session) {
+    try {
+      const sessionData = JSON.parse(session);
+      if (sessionData.token) {
+        config.headers = {
+          ...config.headers,
+          Authorization: `Bearer ${sessionData.token}`,
+        };
+      }
+    } catch (e) {
+      console.error('Failed to parse session data', e);
+    }
   }
   return config;
 });
@@ -516,6 +522,17 @@ request.addRequestInterceptor((config) => {
 request.addResponseInterceptor((response, config) => {
   // 可以在这里添加全局错误处理逻辑
   // 比如token过期自动跳转登录页等
+  if (response && response.status === 401) {
+    // 清除无效的session
+    localStorage.removeItem('session');
+
+    // 显示登录弹窗
+    const loginEvent = new CustomEvent('show-login');
+    window.dispatchEvent(loginEvent);
+
+    // 返回一个拒绝的Promise，防止继续处理这个错误
+    return Promise.reject(response);
+  }
   return response;
 });
 
