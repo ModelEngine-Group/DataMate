@@ -59,10 +59,17 @@ public class SysParamApplicationService {
     }
 
     public String getParamByKey(String paramId) {
-        String value = redisClient.getParam(paramId);
+        boolean redisEnable = false;
+        String value = null;
+        try {
+            value = redisClient.getParamWithThrow(paramId);
+            redisEnable = true;
+        } catch (Exception e) {
+            log.warn(e.getMessage());
+        }
         if (value == null) {
             SysParam sysParam = sysParamRepository.getById(paramId);
-            if (sysParam != null) {
+            if (sysParam != null && redisEnable) {
                 value = sysParam.getParamValue();
             }
         }
