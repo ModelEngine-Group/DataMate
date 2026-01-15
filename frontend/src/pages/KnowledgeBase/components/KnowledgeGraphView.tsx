@@ -1,4 +1,4 @@
-import { useMemo, useRef, useEffect } from "react";
+import { useMemo, useRef, useEffect, useCallback } from "react";
 import ForceGraph3D, { ForceGraphMethods } from "react-force-graph-3d";
 import type { KnowledgeGraphEdge, KnowledgeGraphNode } from "../knowledge-base.model";
 import { Empty } from "antd";
@@ -35,14 +35,25 @@ const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
   const graphData = useMemo(
     () => ({
       nodes: nodes.map((node) => ({ ...node })),
-      links: edges.map((edge) => ({
-        ...edge,
-        source: edge.source,
-        target: edge.target,
-        keywords: edge.properties?.keywords || edge.type,
-      })),
+      links: edges.map((edge) => {
+        const enrichedEdge = {
+          ...edge,
+          source: edge.source,
+          target: edge.target,
+          keywords: edge.properties?.keywords || edge.type,
+        } as any;
+        enrichedEdge.__originalEdge = edge;
+        return enrichedEdge;
+      }),
     }),
     [nodes, edges]
+  );
+
+  const handleLinkSelect = useCallback(
+    (link: any) => {
+      onSelectEntity?.({ type: "edge", data: normalizeLinkData(link) });
+    },
+    [onSelectEntity]
   );
 
   useEffect(() => {
@@ -63,13 +74,19 @@ const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
         ref={graphRef}
         graphData={graphData}
         backgroundColor="#01030f"
-        linkOpacity={0.35}
-        linkColor={() => "rgba(148,163,184,0.45)"}
-        linkDirectionalParticles={1}
-        linkDirectionalParticleSpeed={0.004}
-        linkDirectionalParticleColor={() => "rgba(248,250,252,0.7)"}
+        linkOpacity={0.85}
+        linkColor={() => "rgba(14,165,233,0.9)"}
+        linkWidth={(link: any) => {
+          const weight = Number(link.properties?.weight ?? link.properties?.score ?? 1);
+          return Math.min(1.2 + weight * 0.4, 4);
+        }}
+        linkDirectionalParticles={2}
+        linkDirectionalParticleWidth={3.5}
+        linkDirectionalParticleSpeed={0.0035}
+        linkDirectionalParticleColor={() => "rgba(248,250,252,0.85)"}
         linkCurvature={0.25}
         d3VelocityDecay={0.18}
+        linkDistance={(link: any) => computeLinkDistance(link, degreeMap)}
         nodeAutoColorBy={(node: any) => node.properties?.entity_type || "default"}
         nodeOpacity={1}
         nodeLabel={(node: any) => node.id}
@@ -81,7 +98,7 @@ const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
 
           const coreSprite = new THREE.Sprite(
             new THREE.SpriteMaterial({
-              map: getCircleTexture(color, 0.95),
+              map: getCircleTexture(color, 1),
               depthWrite: false,
               transparent: true,
             })
@@ -89,17 +106,7 @@ const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
           coreSprite.scale.set(radius, radius, 1);
           group.add(coreSprite);
 
-          const haloSprite = new THREE.Sprite(
-            new THREE.SpriteMaterial({
-              map: getCircleTexture(color, 0.25, true),
-              depthWrite: false,
-              transparent: true,
-            })
-          );
-          haloSprite.scale.set(radius * 1.8, radius * 1.8, 1);
-          group.add(haloSprite);
-
-          const texture = createTextTexture(node.id);
+          const texture = createNodeLabelTexture(node.id, radius);
           if (texture) {
             const sprite = new THREE.Sprite(
               new THREE.SpriteMaterial({
@@ -108,8 +115,11 @@ const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
                 transparent: true,
               })
             );
-            sprite.position.set(0, radius * 0.04 + radius / 2, 0);
-            sprite.scale.set(40, 20, 1);
+            const canvas = texture.image as HTMLCanvasElement | undefined;
+            const aspect = canvas ? canvas.width / canvas.height : 2;
+            const textHeight = radius * 0.78;
+            sprite.scale.set(textHeight * aspect, textHeight, 1);
+            sprite.position.set(0, 0, 0.01);
             group.add(sprite);
           }
 
@@ -117,7 +127,7 @@ const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
         }}
         linkThreeObjectExtend={true}
         linkThreeObject={(link: any) => {
-          const texture = createTextTexture(link.keywords || "");
+          const texture = createEdgeLabelTexture(link.keywords || "");
           if (!texture) {
             return new THREE.Object3D();
           }
@@ -128,7 +138,14 @@ const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
               transparent: true,
             })
           );
-          sprite.scale.set(70, 26, 1);
+          const canvas = texture.image as HTMLCanvasElement | undefined;
+          const aspect = canvas ? canvas.width / canvas.height : 3;
+          const textHeight = 11;
+          sprite.scale.set(textHeight * aspect, textHeight, 1);
+          sprite.renderOrder = 2;
+          (sprite as any).__graphObjType = "link";
+          (sprite as any).__data = link;
+          sprite.userData.normalizedEdge = normalizeLinkData(link);
           return sprite;
         }}
         linkPositionUpdate={(sprite, { start, end }) => {
@@ -138,9 +155,16 @@ const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
             z: start.z + (end.z - start.z) / 2,
           };
           Object.assign(sprite.position, middlePos);
+          const dx = end.x - start.x;
+          const dy = end.y - start.y;
+          const angle = Math.atan2(dy, dx);
+          const material = (sprite as THREE.Sprite).material as THREE.SpriteMaterial | undefined;
+          if (material) {
+            material.rotation = angle;
+          }
         }}
         onNodeClick={(node: any) => onSelectEntity?.({ type: "node", data: node })}
-        onLinkClick={(link: any) => onSelectEntity?.({ type: "edge", data: link })}
+        onLinkClick={handleLinkSelect}
         onBackgroundClick={() => onSelectEntity?.(null)}
       />
     </div>
@@ -163,11 +187,20 @@ function getCircleTexture(color: string, opacity = 1, soft = false) {
   const ctx = canvas.getContext("2d");
   if (!ctx) return null;
 
-  const gradient = ctx.createRadialGradient(size / 2, size / 2, soft ? size / 3 : 0, size / 2, size / 2, size / 2);
-  gradient.addColorStop(0, hexToRgba(color, opacity));
-  gradient.addColorStop(1, hexToRgba(color, opacity * (soft ? 0 : 0.15)));
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, size, size);
+  ctx.clearRect(0, 0, size, size);
+  if (soft) {
+    const gradient = ctx.createRadialGradient(size / 2, size / 2, size / 3, size / 2, size / 2, size / 2);
+    gradient.addColorStop(0, hexToRgba(color, opacity * 0.15));
+    gradient.addColorStop(1, hexToRgba(color, 0));
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, size, size);
+  } else {
+    ctx.fillStyle = hexToRgba(color, opacity);
+    ctx.beginPath();
+    ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
+    ctx.closePath();
+    ctx.fill();
+  }
 
   const texture = new THREE.CanvasTexture(canvas);
   texture.needsUpdate = true;
@@ -184,27 +217,144 @@ function hexToRgba(hex: string, alpha: number) {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-function createTextTexture(text: string) {
+function createNodeLabelTexture(text: string, radius: number) {
+  const maxWidth = radius * 1.35;
+  const fontSize = Math.max(Math.min(radius * 0.8, 26), 12);
+  return createTextTexture(text, {
+    fontSize,
+    padding: 6,
+    paddingX: 8,
+    paddingY: 4,
+    backgroundFill: null,
+    textFill: "rgba(248,250,252,0.95)",
+    maxWidth,
+  });
+}
+
+function createEdgeLabelTexture(text: string) {
+  return createTextTexture(text, {
+    fontSize: 14,
+    paddingX: 6,
+    paddingY: 4,
+    backgroundFill: null,
+    textFill: "rgba(241,245,249,0.9)",
+    maxWidth: 150,
+  });
+}
+
+interface TextTextureOptions {
+  fontSize?: number;
+  padding?: number;
+  paddingX?: number;
+  paddingY?: number;
+  backgroundFill?: string | null;
+  textFill?: string;
+  maxWidth?: number;
+  fontFamily?: string;
+}
+
+function createTextTexture(text: string, options: TextTextureOptions = {}) {
   const canvas = document.createElement("canvas");
   const context = canvas.getContext("2d");
   if (!context) return null;
 
-  const fontSize = 36;
-  context.font = `${fontSize}px "Inter", "PingFang SC", "Microsoft YaHei", sans-serif`;
-  const padding = 48;
-  const textWidth = context.measureText(text).width;
-  canvas.width = textWidth + padding;
-  canvas.height = fontSize + padding;
-  context.font = `${fontSize}px "Inter", "PingFang SC", "Microsoft YaHei", sans-serif`;
+  const fontFamily = options.fontFamily ?? '"Inter", "PingFang SC", "Microsoft YaHei", sans-serif';
+  let fontSize = options.fontSize ?? 36;
+  context.font = `${fontSize}px ${fontFamily}`;
+
+  const maxWidth = options.maxWidth;
+  if (maxWidth) {
+    while (fontSize > 12 && context.measureText(text).width > maxWidth) {
+      fontSize -= 2;
+      context.font = `${fontSize}px ${fontFamily}`;
+    }
+    text = truncateTextToWidth(context, text, maxWidth);
+  }
+
+  const paddingX = options.paddingX ?? options.padding ?? 32;
+  const paddingY = options.paddingY ?? options.padding ?? 16;
+  const textWidth = maxWidth ? Math.min(context.measureText(text).width, maxWidth) : context.measureText(text).width;
+
+  canvas.width = Math.ceil(textWidth + paddingX * 2);
+  canvas.height = Math.ceil(fontSize + paddingY * 2);
+
+  context.font = `${fontSize}px ${fontFamily}`;
   context.textAlign = "center";
   context.textBaseline = "middle";
-  context.fillStyle = "rgba(2,6,23,0.25)";
-  context.fillRect(0, 0, canvas.width, canvas.height);
-  context.fillStyle = "rgba(226,232,240,0.72)";
+
+  if (options.backgroundFill !== null) {
+    context.fillStyle = options.backgroundFill ?? "rgba(2,6,23,0.25)";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+  } else {
+    context.clearRect(0, 0, canvas.width, canvas.height);
+  }
+
+  context.fillStyle = options.textFill ?? "rgba(226,232,240,0.72)";
   context.fillText(text, canvas.width / 2, canvas.height / 2);
 
   const texture = new THREE.CanvasTexture(canvas);
   texture.minFilter = THREE.LinearFilter;
   texture.generateMipmaps = false;
   return texture;
+}
+
+function truncateTextToWidth(context: CanvasRenderingContext2D, value: string, maxWidth: number) {
+  if (!maxWidth || context.measureText(value).width <= maxWidth) {
+    return value;
+  }
+  let truncated = value;
+  const ellipsis = "...";
+  while (truncated.length > 1 && context.measureText(`${truncated}${ellipsis}`).width > maxWidth) {
+    truncated = truncated.slice(0, -1);
+  }
+  return `${truncated}${ellipsis}`;
+}
+
+function normalizeLinkData(link: any): KnowledgeGraphEdge {
+  if (!link) {
+    return {
+      id: "",
+      type: "",
+      source: "",
+      target: "",
+      properties: {},
+    };
+  }
+
+  if ((link as any).__normalizedEdge) {
+    return (link as any).__normalizedEdge as KnowledgeGraphEdge;
+  }
+
+  const normalized: KnowledgeGraphEdge = {
+    id: String(link.id ?? link.__id ?? ""),
+    type: String(link.type ?? ""),
+    source: extractNodeId(link.source),
+    target: extractNodeId(link.target),
+    properties: { ...(link.properties ?? {}) },
+  };
+
+  if (link.keywords && !normalized.properties.keywords) {
+    (normalized.properties as Record<string, unknown>).keywords = link.keywords;
+  }
+
+  (link as any).__normalizedEdge = normalized;
+  return normalized;
+}
+
+function extractNodeId(nodeRef: any) {
+  if (nodeRef == null) return "";
+  if (typeof nodeRef === "string" || typeof nodeRef === "number") {
+    return String(nodeRef);
+  }
+  return String(nodeRef.id ?? nodeRef.__id ?? nodeRef.name ?? "");
+}
+
+function computeLinkDistance(link: any, degreeMap: Map<string, number>) {
+  const sourceId = extractNodeId(link.source);
+  const targetId = extractNodeId(link.target);
+  const degreeBoost = ((degreeMap.get(sourceId) || 1) + (degreeMap.get(targetId) || 1)) / 2;
+  const weight = Number(link.properties?.weight ?? link.properties?.score ?? 1);
+  const base = 260;
+  const distance = base + degreeBoost * 55 + weight * 40;
+  return Math.min(distance, 1200);
 }
