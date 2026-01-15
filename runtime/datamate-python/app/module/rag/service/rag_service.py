@@ -10,7 +10,7 @@ from app.core.logging import get_logger
 from app.db.models.dataset_management import DatasetFiles
 from app.db.models.knowledge_gen import RagFile, RagKnowledgeBase
 from app.db.models.model_config import ModelConfig
-from app.db.session import get_db
+from app.db.session import get_db, AsyncSessionLocal
 from app.module.shared.common.document_loaders import load_documents
 from .graph_rag import (
     DEFAULT_WORKING_DIR,
@@ -59,12 +59,22 @@ class RAGService:
         kb_working_dir = os.path.join(DEFAULT_WORKING_DIR, kb.name)
         self.rag = await initialize_rag(llm_callable, embedding_callable, kb_working_dir)
 
-        if self.background_tasks is not None:
-            self.background_tasks.add_task(self._process_pending_files, knowledge_base_id)
-        else:
-            asyncio.create_task(self._process_pending_files(knowledge_base_id))
+        await self._schedule_file_processing(knowledge_base_id)
 
         return {"status": "initialized", "knowledge_base_id": knowledge_base_id}
+
+    async def _schedule_file_processing(self, knowledge_base_id: str):
+        if self.background_tasks is not None:
+            self.background_tasks.add_task(self._process_with_fresh_session, knowledge_base_id, self.rag)
+        else:
+            asyncio.create_task(self._process_with_fresh_session(knowledge_base_id, self.rag))
+
+    @staticmethod
+    async def _process_with_fresh_session(knowledge_base_id: str, rag_instance):
+        async with AsyncSessionLocal() as session:
+            service = RAGService(session)
+            service.rag = rag_instance
+            await service._process_pending_files(knowledge_base_id)
 
     async def _process_pending_files(self, knowledge_base_id: str):
         rag_files = await self.get_unprocessed_files(knowledge_base_id)
@@ -77,6 +87,7 @@ class RAGService:
 
     async def _process_single_file(self, rag_file: RagFile):
         try:
+            await self._mark_file_status(rag_file, "PROCESSING")
             dataset_file = await self._get_dataset_file(rag_file.file_id)
             documents = load_documents(dataset_file.file_path)
             for doc in documents:
@@ -84,9 +95,9 @@ class RAGService:
                 await self.rag.ainsert(input=doc.page_content, file_paths=[dataset_file.file_path])
         except Exception:  # noqa: BLE001
             logger.exception("Failed to process rag file %s", rag_file.id)
-            await self._mark_file_failed(rag_file)
+            await self._mark_file_status(rag_file, "PROCESS_FAILED")
             return
-        await self._mark_file_processed(rag_file)
+        await self._mark_file_status(rag_file, "PROCESSED")
 
     async def _get_dataset_file(self, file_id: str) -> DatasetFiles:
         result = await self.db.execute(
@@ -97,14 +108,8 @@ class RAGService:
             raise ValueError(f"Dataset file with ID {file_id} not found.")
         return dataset_file
 
-    async def _mark_file_processed(self, rag_file: RagFile):
-        rag_file.status = "PROCESSED"
-        self.db.add(rag_file)
-        await self.db.commit()
-        await self.db.refresh(rag_file)
-
-    async def _mark_file_failed(self, rag_file: RagFile):
-        rag_file.status = "PROCESS_FAILED"
+    async def _mark_file_status(self, rag_file: RagFile, status: str):
+        rag_file.status = status
         self.db.add(rag_file)
         await self.db.commit()
         await self.db.refresh(rag_file)
@@ -126,7 +131,6 @@ class RAGService:
         if not model:
             raise ValueError(f"Model config with ID {model_id} not found.")
         return model
-
 
     async def query_rag(self, query: str, knowledge_base_id: str) -> str:
         if not self.rag:

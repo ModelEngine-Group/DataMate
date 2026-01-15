@@ -8,7 +8,7 @@ from lightrag.kg.shared_storage import initialize_pipeline_status
 from lightrag.llm.openai import openai_embed, openai_complete_if_cache
 from lightrag.utils import setup_logger, EmbeddingFunc, get_env_value
 
-setup_logger("lightrag", level="DEBUG")
+setup_logger("lightrag", level="INFO")
 DEFAULT_WORKING_DIR = os.path.join(os.getcwd(), "rag_storage")
 
 
