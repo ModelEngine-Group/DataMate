@@ -23,7 +23,7 @@ class SQLManager:
             drivername="postgresql+psycopg2",  # 核心修改：使用 pg 驱动
             username=os.getenv("PG_USER", "postgres"), # 建议修改环境变量名
             password=os.getenv("PG_PASSWORD", "password"),
-            host=os.getenv("PG_HOST", "postgres"),
+            host=os.getenv("PG_HOST", "datamate-database"),
             port=int(os.getenv("PG_PORT", 5432)), # 修改默认端口为 5432
             database=os.getenv("PG_DATABASE", "datamate"),
         )

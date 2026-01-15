@@ -150,10 +150,16 @@ frontend:
     nodePort: 30000
   volumes:
     - *logVolume
+    - name: cert-volume
+      configMap:
+        name: cube-security-cert-cert
+        optional: true
   volumeMounts:
     - name: log-volume
       mountPath: /var/log/datamate/frontend
       subPath: frontend
+    - name: cert-volume
+      mountPath: /etc/
 
 runtime:
   enabled: false
@@ -163,18 +169,18 @@ runtime:
     - --port
     - "8081"
   env: &runtimeEnv
-    - name: MYSQL_HOST
+    - name: PG_HOST
       value: "datamate-database"
-    - name: MYSQL_PORT
-      value: "3306"
-    - name: MYSQL_USER
-      value: "root"
-    - name: MYSQL_PASSWORD
+    - name: PG_PORT
+      value: "5432"
+    - name: PG_USER
+      value: "postgres"
+    - name: PG_PASSWORD
       valueFrom:
         secretKeyRef:
           name: datamate-conf
           key: DB_PASSWORD
-    - name: MYSQL_DATABASE
+    - name: PG_DATABASE
       value: "datamate"
   volumes:
     - *datasetVolume
