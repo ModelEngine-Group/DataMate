@@ -8,7 +8,7 @@ from lightrag.llm.openai import openai_embed, openai_complete_if_cache
 from lightrag.utils import setup_logger, EmbeddingFunc
 
 setup_logger("lightrag", level="DEBUG")
-DEFAULT_WORKING_DIR = "/rag_storage"
+DEFAULT_WORKING_DIR = os.path.join(os.getcwd(), "rag_storage")
 
 
 async def build_llm_model_func(model_name: str, base_url: str, api_key: str) -> Callable[..., Awaitable[str]]:
@@ -33,7 +33,7 @@ async def build_embedding_func(
     model_name: str, base_url: str, api_key: str, embedding_dim: int
 ) -> EmbeddingFunc:
     async def _embedding_func(texts: list[str]) -> np.ndarray:
-        return await openai_embed.func(
+        return await openai_embed(
             texts,
             model=model_name,
             api_key=api_key,
