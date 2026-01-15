@@ -112,6 +112,7 @@ const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
               new THREE.SpriteMaterial({
                 map: texture,
                 depthWrite: false,
+                depthTest: false,
                 transparent: true,
               })
             );
@@ -120,6 +121,7 @@ const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
             const textHeight = radius * 0.78;
             sprite.scale.set(textHeight * aspect, textHeight, 1);
             sprite.position.set(0, 0, 0.01);
+            sprite.renderOrder = 20;
             group.add(sprite);
           }
 
@@ -140,9 +142,9 @@ const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
           );
           const canvas = texture.image as HTMLCanvasElement | undefined;
           const aspect = canvas ? canvas.width / canvas.height : 3;
-          const textHeight = 11;
+          const textHeight = 7;
           sprite.scale.set(textHeight * aspect, textHeight, 1);
-          sprite.renderOrder = 2;
+          sprite.renderOrder = 5;
           (sprite as any).__graphObjType = "link";
           (sprite as any).__data = link;
           sprite.userData.normalizedEdge = normalizeLinkData(link);
@@ -218,27 +220,90 @@ function hexToRgba(hex: string, alpha: number) {
 }
 
 function createNodeLabelTexture(text: string, radius: number) {
-  const maxWidth = radius * 1.35;
-  const fontSize = Math.max(Math.min(radius * 0.8, 26), 12);
-  return createTextTexture(text, {
-    fontSize,
-    padding: 6,
-    paddingX: 8,
-    paddingY: 4,
-    backgroundFill: null,
-    textFill: "rgba(248,250,252,0.95)",
-    maxWidth,
+  const fontFamily = '"Inter", "PingFang SC", "Microsoft YaHei", sans-serif';
+  const maxWidth = Math.max(radius * 0.85, 16);
+  const maxHeight = Math.max(radius * 0.7, 16);
+  let fontSize = Math.min(radius * 0.5, 18);
+  const minFontSize = 4;
+
+  const measureCanvas = document.createElement("canvas");
+  const measureCtx = measureCanvas.getContext("2d");
+  if (!measureCtx) return null;
+
+  const wrapLines = (value: string) => {
+    if (!value) return [""];
+    const characters = Array.from(value);
+    const lines: string[] = [];
+    let current = "";
+    characters.forEach((char) => {
+      const candidate = current + char;
+      if (current && measureCtx.measureText(candidate).width > maxWidth) {
+        lines.push(current);
+        current = char;
+      } else {
+        current = candidate;
+      }
+    });
+    if (current) {
+      lines.push(current);
+    }
+    return lines.length ? lines : [""];
+  };
+
+  let lines: string[] = [];
+  while (fontSize >= minFontSize) {
+    measureCtx.font = `${fontSize}px ${fontFamily}`;
+    lines = wrapLines(text);
+    const widest = Math.max(...lines.map((line) => measureCtx.measureText(line).width), 0);
+    const totalHeight = lines.length * fontSize * 1.1;
+    if (widest <= maxWidth && totalHeight <= maxHeight) {
+      break;
+    }
+    fontSize -= 1;
+  }
+
+  measureCtx.font = `${fontSize}px ${fontFamily}`;
+  lines = wrapLines(text);
+  const lineHeight = fontSize * 1.1;
+  const textWidth = Math.max(...lines.map((line) => measureCtx.measureText(line).width), 1);
+  const textHeight = Math.max(lineHeight * lines.length, lineHeight);
+  const paddingX = 4;
+  const paddingY = 4;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.ceil(textWidth + paddingX * 2);
+  canvas.height = Math.ceil(textHeight + paddingY * 2);
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+
+  ctx.font = `${fontSize}px ${fontFamily}`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "rgba(248,250,252,0.95)";
+
+  lines.forEach((line, index) => {
+    const y = paddingY + lineHeight / 2 + index * lineHeight;
+    ctx.fillText(line, canvas.width / 2, y);
   });
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.minFilter = THREE.LinearMipMapLinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.anisotropy = 8;
+  texture.generateMipmaps = true;
+  texture.needsUpdate = true;
+  return texture;
 }
 
 function createEdgeLabelTexture(text: string) {
   return createTextTexture(text, {
-    fontSize: 14,
-    paddingX: 6,
-    paddingY: 4,
+    fontSize: 10,
+    paddingX: 4,
+    paddingY: 2,
     backgroundFill: null,
     textFill: "rgba(241,245,249,0.9)",
-    maxWidth: 150,
+    maxWidth: 60,
   });
 }
 
@@ -376,7 +441,7 @@ function computeLinkDistance(link: any, degreeMap: Map<string, number>) {
   const degreeBoost = ((degreeMap.get(sourceId) || 1) + (degreeMap.get(targetId) || 1)) / 2;
   const weight = Number(link.properties?.weight ?? link.properties?.score ?? 1);
   const base = 260;
-  const dynamicDistance = base + degreeBoost * 55 + weight * 40;
+  const dynamicDistance = base + degreeBoost * 155 + weight * 140;
 
-  return Math.min(Math.max(dynamicDistance, minimumGap), 1200);
+  return Math.min(Math.max(dynamicDistance, minimumGap) * 100, 5000);
 }
