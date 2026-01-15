@@ -150,16 +150,10 @@ frontend:
     nodePort: 30000
   volumes:
     - *logVolume
-    - name: cert-volume
-      configMap:
-        name: cube-security-cert-cert
-        optional: true
   volumeMounts:
     - name: log-volume
       mountPath: /var/log/datamate/frontend
       subPath: frontend
-    - name: cert-volume
-      mountPath: /etc/
 
 runtime:
   enabled: false
