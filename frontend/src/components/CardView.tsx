@@ -6,6 +6,12 @@ import { formatDateTime } from "@/utils/unit";
 import ActionDropdown from "./ActionDropdown";
 import { Database } from "lucide-react";
 
+interface BadgeItem {
+  label: string;
+  color?: string;
+  background?: string;
+}
+
 interface BaseCardDataType {
   id: string | number;
   name: string;
@@ -18,7 +24,7 @@ interface BaseCardDataType {
     color?: string;
   } | null;
   description: string;
-  tags?: string[];
+  tags?: Array<string | BadgeItem>;
   statistics?: { label: string; value: string | number }[];
   updatedAt?: string;
 }
@@ -47,7 +53,7 @@ interface CardViewProps<T> {
 }
 
 // 标签渲染组件
-const TagsRenderer = ({ tags }: { tags?: any[] }) => {
+const TagsRenderer = ({ tags }: { tags?: Array<string | BadgeItem> }) => {
   const [visibleTags, setVisibleTags] = useState<any[]>([]);
   const [hiddenTags, setHiddenTags] = useState<any[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -75,7 +81,11 @@ const TagsRenderer = ({ tags }: { tags?: any[] }) => {
         const tagElement = document.createElement("span");
         tagElement.className = "ant-tag ant-tag-default";
         tagElement.style.margin = "2px";
-        tagElement.textContent = typeof tag === "string" ? tag : tag.name;
+        if (typeof tag === "string") {
+          tagElement.textContent = tag;
+        } else {
+          tagElement.textContent = tag.label;
+        }
         tempDiv.appendChild(tagElement);
         tagElements.push(tagElement);
 
@@ -126,7 +136,17 @@ const TagsRenderer = ({ tags }: { tags?: any[] }) => {
     <div className="max-w-xs">
       <div className="flex flex-wrap gap-1">
         {hiddenTags.map((tag, index) => (
-          <Tag key={index}>{typeof tag === "string" ? tag : tag.name}</Tag>
+          <Tag
+            key={index}
+            color={typeof tag === "string" ? undefined : tag.color}
+            style={
+              typeof tag === "string"
+                ? undefined
+                : { background: tag.background, color: tag.color }
+            }
+          >
+            {typeof tag === "string" ? tag : tag.label}
+          </Tag>
         ))}
       </div>
     </div>
@@ -135,7 +155,17 @@ const TagsRenderer = ({ tags }: { tags?: any[] }) => {
   return (
     <div ref={containerRef} className="flex flex-wrap gap-1 w-full">
       {visibleTags.map((tag, index) => (
-        <Tag key={index}>{typeof tag === "string" ? tag : tag.name}</Tag>
+        <Tag
+          key={index}
+          color={typeof tag === "string" ? undefined : tag.color}
+          style={
+            typeof tag === "string"
+              ? undefined
+              : { background: tag.background, color: tag.color }
+          }
+        >
+          {typeof tag === "string" ? tag : tag.label}
+        </Tag>
       ))}
       {hiddenTags.length > 0 && (
         <Popover
@@ -215,6 +245,19 @@ function CardView<T extends BaseCardDataType>(props: CardViewProps<T>) {
                         >
                           {item?.name}
                         </h3>
+                        {(item?.tags?.length ?? 0) > 0 &&
+                          item.tags[0] &&
+                          typeof item.tags[0] !== "string" && (
+                            <Tag
+                              color={item.tags[0].color}
+                              style={{
+                                background: item.tags[0].background,
+                                color: item.tags[0].color,
+                              }}
+                            >
+                              {item.tags[0].label}
+                            </Tag>
+                          )}
                         {item?.status && (
                           <Tag color={item?.status?.color}>
                             <div className="flex items-center gap-2 text-xs py-0.5">
@@ -242,7 +285,15 @@ function CardView<T extends BaseCardDataType>(props: CardViewProps<T>) {
 
                 <div className="flex-1 flex flex-col justify-end">
                   {/* Tags */}
-                  <TagsRenderer tags={item?.tags || []} />
+                  <TagsRenderer
+                    tags={
+                      Array.isArray(item?.tags)
+                        ? item.tags.filter((tag, index) =>
+                            typeof tag === "string" || index !== 0
+                          )
+                        : []
+                    }
+                  />
 
                   {/* Description */}
                   <p className="text-gray-400 text-xs text-ellipsis overflow-hidden whitespace-nowrap text-xs line-clamp-2 mt-2">

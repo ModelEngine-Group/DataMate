@@ -1,5 +1,7 @@
-import { Button, Form, Input, message, Modal, Select } from "antd";
-import { PlusOutlined } from "@ant-design/icons";
+import { Button, Form, Input, message, Modal, Select, Tooltip } from "antd";
+import RadioCard from "@/components/RadioCard";
+import { InfoCircleOutlined, PlusOutlined } from "@ant-design/icons";
+import { Share2, BookOpen } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { queryModelListUsingGet } from "@/pages/SettingsPage/settings.apis";
@@ -8,7 +10,7 @@ import {
   createKnowledgeBaseUsingPost,
   updateKnowledgeBaseByIdUsingPut,
 } from "../knowledge-base.api";
-import { KnowledgeBaseItem } from "../knowledge-base.model";
+import { KnowledgeBaseItem, KBType } from "../knowledge-base.model";
 import { showSettings } from "@/store/slices/settingsSlice";
 
 export default function CreateKnowledgeBase({
@@ -60,18 +62,29 @@ export default function CreateKnowledgeBase({
         description: data.description,
         embeddingModel: data.embeddingModel,
         chatModel: data.chatModel,
+        type: data.type ?? KBType.DOCUMENT,
+        customEntities: data.customEntities ?? [],
       });
+    } else {
+      form.setFieldsValue({ type: KBType.DOCUMENT, customEntities: [] });
     }
   }, [isEdit, data, form]);
+
+  const typeValue = Form.useWatch("type", form);
+  const isGraphKB = typeValue === KBType.GRAPH;
 
   const handleCreateKnowledgeBase = async () => {
     try {
       const values = await form.validateFields();
+      const payload = {
+        ...values,
+        customEntities: values.type === KBType.GRAPH ? values.customEntities : undefined,
+      };
       if (isEdit && data) {
-        await updateKnowledgeBaseByIdUsingPut(data.id!, values);
+        await updateKnowledgeBaseByIdUsingPut(data.id!, payload);
         message.success("知识库更新成功");
       } else {
-        await createKnowledgeBaseUsingPost(values);
+        await createKnowledgeBaseUsingPost(payload);
         message.success("知识库创建成功");
       }
       setOpen(false);
@@ -110,6 +123,50 @@ export default function CreateKnowledgeBase({
         onOk={handleCreateKnowledgeBase}
       >
         <Form form={form} layout="vertical">
+          <Form.Item
+            label="知识库类型"
+            name="type"
+            rules={[{ required: true, message: "请选择知识库类型" }]}
+          >
+            <RadioCard
+              value={typeValue}
+              onChange={(val) => form.setFieldValue("type", val)}
+              options={[
+                {
+                  value: KBType.DOCUMENT,
+                  label: "向量知识库",
+                  description: "适用于文档类知识，支持召回+生成",
+                  icon: BookOpen,
+                },
+                {
+                  value: KBType.GRAPH,
+                  label: "知识图谱",
+                  description: "自定义实体/关系，强化结构化推理",
+                  icon: Share2,
+                },
+              ]}
+            />
+          </Form.Item>
+          {isGraphKB && (
+            <Form.Item
+              label={
+                <div className="flex items-center gap-2">
+                  <span>识别实体（可多选）</span>
+                  <Tooltip title="实体信息将作为图谱节点，支持多维关系追踪">
+                    <InfoCircleOutlined className="text-gray-400" />
+                  </Tooltip>
+                </div>
+              }
+              name="customEntities"
+              rules={[{ type: "array" }]}
+            >
+              <Select
+                mode="tags"
+                placeholder="输入实体名称并按回车添加，如 人物、组织、事件"
+                tokenSeparators={[",", " "]}
+              />
+            </Form.Item>
+          )}
           <Form.Item
             label="知识库名称"
             name="name"

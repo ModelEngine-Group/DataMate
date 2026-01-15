@@ -10,6 +10,8 @@ import {
   File,
   VectorSquare,
   XCircle,
+  Share2,
+  Network,
 } from "lucide-react";
 import {
   KBFile,
@@ -47,19 +49,29 @@ export const KBFileStatusMap = {
 };
 
 export const KBTypeMap = {
-  [KBType.STRUCTURED]: {
-    value: KBType.STRUCTURED,
-    label: "结构化",
-    icon: Database,
-    iconColor: "blue",
-    description: "用于处理和分析文本数据的数据集",
-  },
-  [KBType.UNSTRUCTURED]: {
-    value: KBType.UNSTRUCTURED,
-    label: "非结构化",
+  [KBType.DOCUMENT]: {
+    value: KBType.DOCUMENT,
+    label: "向量知识库",
     icon: BookOpen,
-    iconColor: "green",
-    description: "适用于存储和管理各种格式的文件",
+    iconColor: "#1d4ed8",
+    description: "面向非结构化文档的检索问答",
+    tag: {
+      label: "向量知识库",
+      color: "#1d4ed8",
+      background: "#e0edff",
+    },
+  },
+  [KBType.GRAPH]: {
+    value: KBType.GRAPH,
+    label: "知识图谱",
+    icon: Share2,
+    iconColor: "#9333ea",
+    description: "管理实体与关系的图谱知识",
+    tag: {
+      label: "知识图谱",
+      color: "#9333ea",
+      background: "#f3e8ff",
+    },
   },
 };
 
@@ -67,10 +79,13 @@ export function mapKnowledgeBase(
   kb: KnowledgeBaseItem,
   showModelFields: boolean = true
 ): KnowledgeBaseItem {
+  const typeMeta = KBTypeMap[kb.type as keyof typeof KBTypeMap];
+
   return {
     ...kb,
     icon: <BookOpenText className="w-full h-full" />,
     description: kb.description,
+    tags: typeMeta?.tag ? [typeMeta.tag] : undefined,
     statistics: [
       ...(showModelFields
         ? [

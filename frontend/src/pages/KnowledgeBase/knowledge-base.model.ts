@@ -6,8 +6,8 @@ export enum KBFileStatus {
 }
 
 export enum KBType {
-  UNSTRUCTURED = "unstructured",
-  STRUCTURED = "structured",
+  DOCUMENT = "DOCUMENT",
+  GRAPH = "GRAPH",
 }
 
 export interface KnowledgeBaseItem {
@@ -23,6 +23,7 @@ export interface KnowledgeBaseItem {
   chunkCount: number;
   embedding: never;
   chat: never;
+  customEntities?: string[];
 }
 
 export interface KBFile {
