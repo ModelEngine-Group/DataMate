@@ -92,7 +92,7 @@ const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
         nodeLabel={(node: any) => node.id}
         linkLabel={(link: any) => link.keywords}
         nodeThreeObject={(node: any) => {
-          const radius = Math.min(12 + (degreeMap.get(node.id) || 1) * 4, 64);
+          const radius = getNodeRadius(node.id, degreeMap);
           const color = node.color || "#60a5fa";
           const group = new THREE.Group();
 
@@ -242,6 +242,11 @@ function createEdgeLabelTexture(text: string) {
   });
 }
 
+function getNodeRadius(nodeId: string, degreeMap: Map<string, number>) {
+  const degree = degreeMap.get(nodeId) || 1;
+  return Math.min(12 + degree * 4, 64);
+}
+
 interface TextTextureOptions {
   fontSize?: number;
   padding?: number;
@@ -254,29 +259,38 @@ interface TextTextureOptions {
 }
 
 function createTextTexture(text: string, options: TextTextureOptions = {}) {
-  const canvas = document.createElement("canvas");
-  const context = canvas.getContext("2d");
-  if (!context) return null;
-
   const fontFamily = options.fontFamily ?? '"Inter", "PingFang SC", "Microsoft YaHei", sans-serif';
   let fontSize = options.fontSize ?? 36;
-  context.font = `${fontSize}px ${fontFamily}`;
+
+  const measurementCanvas = document.createElement("canvas");
+  const measurementContext = measurementCanvas.getContext("2d");
+  if (!measurementContext) return null;
+  measurementContext.font = `${fontSize}px ${fontFamily}`;
 
   const maxWidth = options.maxWidth;
   if (maxWidth) {
-    while (fontSize > 12 && context.measureText(text).width > maxWidth) {
+    while (fontSize > 12 && measurementContext.measureText(text).width > maxWidth) {
       fontSize -= 2;
-      context.font = `${fontSize}px ${fontFamily}`;
+      measurementContext.font = `${fontSize}px ${fontFamily}`;
     }
-    text = truncateTextToWidth(context, text, maxWidth);
+    text = truncateTextToWidth(measurementContext, text, maxWidth);
   }
 
   const paddingX = options.paddingX ?? options.padding ?? 32;
   const paddingY = options.paddingY ?? options.padding ?? 16;
-  const textWidth = maxWidth ? Math.min(context.measureText(text).width, maxWidth) : context.measureText(text).width;
+  const textWidth = maxWidth ? Math.min(measurementContext.measureText(text).width, maxWidth) : measurementContext.measureText(text).width;
+  const baseWidth = Math.ceil(textWidth + paddingX * 2);
+  const baseHeight = Math.ceil(fontSize + paddingY * 2);
 
-  canvas.width = Math.ceil(textWidth + paddingX * 2);
-  canvas.height = Math.ceil(fontSize + paddingY * 2);
+  const pixelRatio = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
+  const scale = Math.max(2, Math.min(pixelRatio, 4));
+
+  const canvas = document.createElement("canvas");
+  canvas.width = baseWidth * scale;
+  canvas.height = baseHeight * scale;
+  const context = canvas.getContext("2d");
+  if (!context) return null;
+  context.scale(scale, scale);
 
   context.font = `${fontSize}px ${fontFamily}`;
   context.textAlign = "center";
@@ -284,17 +298,20 @@ function createTextTexture(text: string, options: TextTextureOptions = {}) {
 
   if (options.backgroundFill !== null) {
     context.fillStyle = options.backgroundFill ?? "rgba(2,6,23,0.25)";
-    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.fillRect(0, 0, baseWidth, baseHeight);
   } else {
-    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.clearRect(0, 0, baseWidth, baseHeight);
   }
 
   context.fillStyle = options.textFill ?? "rgba(226,232,240,0.72)";
-  context.fillText(text, canvas.width / 2, canvas.height / 2);
+  context.fillText(text, baseWidth / 2, baseHeight / 2);
 
   const texture = new THREE.CanvasTexture(canvas);
-  texture.minFilter = THREE.LinearFilter;
-  texture.generateMipmaps = false;
+  texture.minFilter = THREE.LinearMipMapLinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.anisotropy = 8;
+  texture.generateMipmaps = true;
+  texture.needsUpdate = true;
   return texture;
 }
 
@@ -352,9 +369,14 @@ function extractNodeId(nodeRef: any) {
 function computeLinkDistance(link: any, degreeMap: Map<string, number>) {
   const sourceId = extractNodeId(link.source);
   const targetId = extractNodeId(link.target);
+  const sourceRadius = getNodeRadius(sourceId, degreeMap);
+  const targetRadius = getNodeRadius(targetId, degreeMap);
+  const minimumGap = (sourceRadius + targetRadius) * 5;
+
   const degreeBoost = ((degreeMap.get(sourceId) || 1) + (degreeMap.get(targetId) || 1)) / 2;
   const weight = Number(link.properties?.weight ?? link.properties?.score ?? 1);
   const base = 260;
-  const distance = base + degreeBoost * 55 + weight * 40;
-  return Math.min(distance, 1200);
+  const dynamicDistance = base + degreeBoost * 55 + weight * 40;
+
+  return Math.min(Math.max(dynamicDistance, minimumGap), 1200);
 }

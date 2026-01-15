@@ -72,4 +72,26 @@
   .border-left {
     @apply border-l border-[#f0f0f0];
   }
+  .cosmic-modal-bg {
+    @apply bg-gradient-to-br from-slate-950 via-slate-900 to-black;
+  }
+  .cosmic-modal-panel {
+    background: radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.15), transparent 60%),
+      radial-gradient(circle at 80% 0%, rgba(236, 72, 153, 0.15), transparent 55%),
+      #020617;
+    color: #f8fafc;
+  }
+  .cosmic-btn {
+    @apply border-white/30 text-white/80 hover:text-white active:text-white;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(147, 51, 234, 0.3));
+    border-color: rgba(255, 255, 255, 0.25) !important;
+  }
+  .cosmic-btn.danger {
+    background: linear-gradient(135deg, rgba(244, 63, 94, 0.35), rgba(59, 130, 246, 0.2));
+  }
+  .cosmic-graph-panel {
+    background: radial-gradient(circle at 50% 20%, rgba(37, 99, 235, 0.25), transparent 55%),
+      radial-gradient(circle at 80% 60%, rgba(236, 72, 153, 0.2), transparent 55%),
+      #01030f;
+  }
 }
