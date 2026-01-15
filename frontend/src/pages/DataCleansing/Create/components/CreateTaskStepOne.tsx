@@ -6,7 +6,7 @@ import {
   DatasetSubType,
   DatasetType,
 } from "@/pages/DataManagement/dataset.model";
-import { Input, Select, Form } from "antd";
+import { Input, Select, Form, AutoComplete } from "antd";
 import TextArea from "antd/es/input/TextArea";
 import { useEffect, useState } from "react";
 
@@ -46,6 +46,13 @@ export default function CreateTaskStepOne({
         ...taskConfig,
         ...allValues,
         srcDatasetName: dataset?.name || "",
+      });
+    } else if (key === "destDatasetName") {
+      dataset = datasets.find((d) => d.name === value);
+      setTaskConfig({
+        ...taskConfig,
+        ...allValues,
+        destDatasetId: dataset?.id || "",
       });
     } else {
       setTaskConfig({ ...taskConfig, ...allValues });
@@ -89,7 +96,26 @@ export default function CreateTaskStepOne({
         />
       </Form.Item>
       <Form.Item label="目标数据集名称" name="destDatasetName" required>
-        <Input placeholder="输入目标数据集名称" />
+        <AutoComplete
+          options={datasets.map((dataset) => {
+            return {
+              label: (
+                <div className="flex items-center justify-between gap-3 py-2">
+                  <div className="flex items-center font-sm text-gray-900">
+                    <span className="mr-2">{dataset.icon}</span>
+                    <span>{dataset.name}</span>
+                  </div>
+                  <div className="text-xs text-gray-500">{dataset.size}</div>
+                </div>
+              ),
+              value: dataset.name,
+            };
+          })}
+          filterOption={(inputValue, option) => {
+            return option.value.toLowerCase().startsWith(inputValue.toLowerCase());
+          }}
+          placeholder="输入或选择目标数据集名称"
+        />
       </Form.Item>
       <Form.Item
         label="目标数据集类型"

@@ -27,7 +27,10 @@ public class CreateCleaningTaskRequest {
     @McpToolParam(description = "清洗任务使用的源数据集名称")
     private String srcDatasetName;
 
-    @McpToolParam(description = "清洗任务创建的目标数据集名称")
+    @McpToolParam(description = "清洗任务写入的目标数据集ID", required = false)
+    private String destDatasetId;
+
+    @McpToolParam(description = "清洗任务写入的目标数据集名称，若destDatasetId为空，则创建新数据集。")
     private String destDatasetName;
 
     @McpToolParam(description = "清洗任务创建的目标数据集类型，取值范围为TEXT/IMAGE/VIDEO/AUDIO/OTHER")

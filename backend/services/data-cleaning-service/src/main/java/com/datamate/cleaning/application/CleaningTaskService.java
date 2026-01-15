@@ -109,12 +109,16 @@ public class CleaningTaskService {
 
         ExecutorType executorType = cleanTaskValidator.checkAndGetExecutorType(request.getInstance());
 
-        CreateDatasetRequest createDatasetRequest = new CreateDatasetRequest();
-        createDatasetRequest.setName(request.getDestDatasetName());
-        createDatasetRequest.setDatasetType(DatasetType.valueOf(request.getDestDatasetType()));
-        createDatasetRequest.setStatus("ACTIVE");
-        Dataset destDataset = datasetService.createDataset(createDatasetRequest);
-
+        Dataset destDataset;
+        if (StringUtils.isNotBlank(request.getDestDatasetId())) {
+            destDataset = datasetService.getDataset(request.getDestDatasetId());
+        } else {
+            CreateDatasetRequest createDatasetRequest = new CreateDatasetRequest();
+            createDatasetRequest.setName(request.getDestDatasetName());
+            createDatasetRequest.setDatasetType(DatasetType.valueOf(request.getDestDatasetType()));
+            createDatasetRequest.setStatus("ACTIVE");
+            destDataset = datasetService.createDataset(createDatasetRequest);
+        }
         Dataset srcDataset = datasetService.getDataset(request.getSrcDatasetId());
 
         CleaningTaskDto task = new CleaningTaskDto();
