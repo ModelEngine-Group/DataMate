@@ -3,6 +3,7 @@ import ForceGraph3D, { ForceGraphMethods } from "react-force-graph-3d";
 import type { KnowledgeGraphEdge, KnowledgeGraphNode } from "../knowledge-base.model";
 import { Empty } from "antd";
 import * as THREE from "three";
+import SpriteText from "three-spritetext";
 
 export type GraphEntitySelection =
   | { type: "node"; data: KnowledgeGraphNode }
@@ -106,49 +107,35 @@ const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
           coreSprite.scale.set(radius, radius, 1);
           group.add(coreSprite);
 
-          const texture = createNodeLabelTexture(node.id, radius);
-          if (texture) {
-            const sprite = new THREE.Sprite(
-              new THREE.SpriteMaterial({
-                map: texture,
-                depthWrite: false,
-                depthTest: false,
-                transparent: true,
-              })
-            );
-            const canvas = texture.image as HTMLCanvasElement | undefined;
-            const aspect = canvas ? canvas.width / canvas.height : 2;
-            const textHeight = radius * 0.78;
-            sprite.scale.set(textHeight * aspect, textHeight, 1);
-            sprite.position.set(0, 0, 0.01);
-            sprite.renderOrder = 20;
-            group.add(sprite);
-          }
+          const label = new SpriteText(node.id || "", 1, "#f8fafc");
+          label.center.set(0.5, 0.5);
+          label.material.depthWrite = false;
+          label.material.depthTest = false;
+          label.renderOrder = 50;
+          const maxDiameter = radius * 0.95;
+          const fontRatio = Math.max(Math.min((radius / 18) * 5, 5), 1.5);
+          label.textHeight = Math.min(maxDiameter, radius * 0.85) / fontRatio;
+          label.position.set(0, 0, 0.02);
+          group.add(label);
 
           return group;
         }}
         linkThreeObjectExtend={true}
         linkThreeObject={(link: any) => {
-          const texture = createEdgeLabelTexture(link.keywords || "");
-          if (!texture) {
+          const text = String(link.keywords || "").trim();
+          if (!text) {
             return new THREE.Object3D();
           }
-          const sprite = new THREE.Sprite(
-            new THREE.SpriteMaterial({
-              map: texture,
-              depthWrite: false,
-              transparent: true,
-            })
-          );
-          const canvas = texture.image as HTMLCanvasElement | undefined;
-          const aspect = canvas ? canvas.width / canvas.height : 3;
-          const textHeight = 7;
-          sprite.scale.set(textHeight * aspect, textHeight, 1);
-          sprite.renderOrder = 5;
-          (sprite as any).__graphObjType = "link";
-          (sprite as any).__data = link;
-          sprite.userData.normalizedEdge = normalizeLinkData(link);
-          return sprite;
+          const label = new SpriteText(text, 1, "#e2e8f0");
+          label.center.set(0.5, 0.5);
+          label.material.depthWrite = false;
+          label.material.depthTest = false;
+          label.renderOrder = 15;
+          label.textHeight = 4;
+          (label as any).__graphObjType = "link";
+          (label as any).__data = link;
+          label.userData.normalizedEdge = normalizeLinkData(link);
+          return label;
         }}
         linkPositionUpdate={(sprite, { start, end }) => {
           const middlePos = {
@@ -160,7 +147,7 @@ const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
           const dx = end.x - start.x;
           const dy = end.y - start.y;
           const angle = Math.atan2(dy, dx);
-          const material = (sprite as THREE.Sprite).material as THREE.SpriteMaterial | undefined;
+          const material = (sprite as SpriteText).material as THREE.SpriteMaterial | undefined;
           if (material) {
             material.rotation = angle;
           }
@@ -220,80 +207,7 @@ function hexToRgba(hex: string, alpha: number) {
 }
 
 function createNodeLabelTexture(text: string, radius: number) {
-  const fontFamily = '"Inter", "PingFang SC", "Microsoft YaHei", sans-serif';
-  const maxWidth = Math.max(radius * 0.85, 16);
-  const maxHeight = Math.max(radius * 0.7, 16);
-  let fontSize = Math.min(radius * 0.5, 18);
-  const minFontSize = 4;
-
-  const measureCanvas = document.createElement("canvas");
-  const measureCtx = measureCanvas.getContext("2d");
-  if (!measureCtx) return null;
-
-  const wrapLines = (value: string) => {
-    if (!value) return [""];
-    const characters = Array.from(value);
-    const lines: string[] = [];
-    let current = "";
-    characters.forEach((char) => {
-      const candidate = current + char;
-      if (current && measureCtx.measureText(candidate).width > maxWidth) {
-        lines.push(current);
-        current = char;
-      } else {
-        current = candidate;
-      }
-    });
-    if (current) {
-      lines.push(current);
-    }
-    return lines.length ? lines : [""];
-  };
-
-  let lines: string[] = [];
-  while (fontSize >= minFontSize) {
-    measureCtx.font = `${fontSize}px ${fontFamily}`;
-    lines = wrapLines(text);
-    const widest = Math.max(...lines.map((line) => measureCtx.measureText(line).width), 0);
-    const totalHeight = lines.length * fontSize * 1.1;
-    if (widest <= maxWidth && totalHeight <= maxHeight) {
-      break;
-    }
-    fontSize -= 1;
-  }
-
-  measureCtx.font = `${fontSize}px ${fontFamily}`;
-  lines = wrapLines(text);
-  const lineHeight = fontSize * 1.1;
-  const textWidth = Math.max(...lines.map((line) => measureCtx.measureText(line).width), 1);
-  const textHeight = Math.max(lineHeight * lines.length, lineHeight);
-  const paddingX = 4;
-  const paddingY = 4;
-
-  const canvas = document.createElement("canvas");
-  canvas.width = Math.ceil(textWidth + paddingX * 2);
-  canvas.height = Math.ceil(textHeight + paddingY * 2);
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return null;
-
-  ctx.font = `${fontSize}px ${fontFamily}`;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = "rgba(248,250,252,0.95)";
-
-  lines.forEach((line, index) => {
-    const y = paddingY + lineHeight / 2 + index * lineHeight;
-    ctx.fillText(line, canvas.width / 2, y);
-  });
-
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.minFilter = THREE.LinearMipMapLinearFilter;
-  texture.magFilter = THREE.LinearFilter;
-  texture.anisotropy = 8;
-  texture.generateMipmaps = true;
-  texture.needsUpdate = true;
-  return texture;
+  return null;
 }
 
 function createEdgeLabelTexture(text: string) {
