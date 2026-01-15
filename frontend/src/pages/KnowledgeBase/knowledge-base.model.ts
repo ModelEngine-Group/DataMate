@@ -41,6 +41,48 @@ export interface KBFile {
   createdBy: string;
 }
 
+export interface KnowledgeGraphNodeProperties {
+  entity_id: string;
+  entity_type: string;
+  description: string;
+  source_id: string;
+  file_path: string;
+  created_at: number;
+  truncate: string;
+  [key: string]: unknown;
+}
+
+export interface KnowledgeGraphNode {
+  id: string;
+  labels: string[];
+  properties: KnowledgeGraphNodeProperties;
+}
+
+export interface KnowledgeGraphEdgeProperties {
+  weight: number;
+  description: string;
+  keywords: string;
+  source_id: string;
+  file_path: string;
+  created_at: number;
+  truncate: string;
+  [key: string]: unknown;
+}
+
+export interface KnowledgeGraphEdge {
+  id: string;
+  type: string;
+  source: string;
+  target: string;
+  properties: KnowledgeGraphEdgeProperties;
+}
+
+export interface KnowledgeGraphResponse {
+  nodes: KnowledgeGraphNode[];
+  edges: KnowledgeGraphEdge[];
+  is_truncated: boolean;
+}
+
 interface Chunk {
   id: number;
   content: string;

@@ -40,6 +40,10 @@ export function deleteKnowledgeBaseFileByIdUsingDelete(baseId: string, data: obj
   return (del as unknown as (url: string, data?: object | null) => Promise<unknown>)(`/api/knowledge-base/${baseId}/files`, data ?? null);
 }
 
+export function fetchKnowledgeGraph(data: { knowledge_base_id: string; query: string }) {
+  return post("/api/rag/query", data);
+}
+
 // 检索知识库内容
 export function retrieveKnowledgeBaseContent(data: {
   query: string;
