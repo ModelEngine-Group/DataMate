@@ -8,8 +8,10 @@ import com.datamate.datamanagement.infrastructure.persistence.repository.Dataset
 import com.datamate.rag.indexer.domain.model.FileStatus;
 import com.datamate.rag.indexer.domain.model.RagFile;
 import com.datamate.rag.indexer.domain.repository.RagFileRepository;
+import com.datamate.rag.indexer.infrastructure.client.GraphRagClient;
 import com.datamate.rag.indexer.infrastructure.milvus.MilvusService;
 import com.datamate.rag.indexer.interfaces.dto.AddFilesReq;
+import com.datamate.rag.indexer.interfaces.dto.RagType;
 import com.google.common.collect.Lists;
 import dev.langchain4j.data.document.Document;
 import dev.langchain4j.data.document.DocumentParser;
@@ -58,6 +60,8 @@ public class RagEtlService {
 
     private final ModelConfigRepository modelConfigRepository;
 
+    private final GraphRagClient graphRagClient;
+
     private final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
 
     @Async
@@ -65,6 +69,11 @@ public class RagEtlService {
     public void processAfterCommit(DataInsertedEvent event) {
         // 执行 RAG 处理流水线
         List<RagFile> ragFiles = ragFileRepository.findNotSuccessByKnowledgeBaseId(event.knowledgeBase().getId());
+        if (RagType.GRAPH.equals(event.knowledgeBase().getType())){
+            log.info("Knowledge base {} is of type GRAPH. Skipping RAG ETL processing.", event.knowledgeBase().getName());
+            graphRagClient.startGraphRagTask(event.knowledgeBase().getId());
+            return;
+        }
 
         ragFiles.forEach(ragFile -> {
                     try {

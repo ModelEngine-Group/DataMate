@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS t_rag_knowledge_base
 (
     id              VARCHAR(36) PRIMARY KEY,
     name            VARCHAR(255) NOT NULL,
+    type            VARCHAR(50) NOT NULL,
     description     VARCHAR(512),
     embedding_model VARCHAR(255) NOT NULL,
     chat_model      VARCHAR(255),
@@ -19,6 +20,7 @@ CREATE TABLE IF NOT EXISTS t_rag_knowledge_base
 COMMENT ON TABLE t_rag_knowledge_base IS '知识库表';
 COMMENT ON COLUMN t_rag_knowledge_base.id IS 'UUID';
 COMMENT ON COLUMN t_rag_knowledge_base.name IS '知识库名称';
+COMMENT ON COLUMN t_rag_knowledge_base.type IS '知识库类型';
 COMMENT ON COLUMN t_rag_knowledge_base.description IS '知识库描述';
 COMMENT ON COLUMN t_rag_knowledge_base.embedding_model IS '嵌入模型';
 COMMENT ON COLUMN t_rag_knowledge_base.chat_model IS '聊天模型';

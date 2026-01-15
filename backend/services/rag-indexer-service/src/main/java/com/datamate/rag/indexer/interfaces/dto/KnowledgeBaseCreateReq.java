@@ -28,6 +28,8 @@ public class KnowledgeBaseCreateReq {
     @Size(max = 512, message = "知识库描述长度必须在 0 到 512 之间")
     private String description;
 
+    private RagType type = RagType.DOCUMENT;
+
     /**
      * 嵌入模型
      */

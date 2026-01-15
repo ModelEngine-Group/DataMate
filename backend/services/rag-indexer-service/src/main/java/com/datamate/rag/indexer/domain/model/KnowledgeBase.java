@@ -2,6 +2,7 @@ package com.datamate.rag.indexer.domain.model;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.datamate.common.domain.model.base.BaseEntity;
+import com.datamate.rag.indexer.interfaces.dto.RagType;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -24,6 +25,11 @@ public class KnowledgeBase extends BaseEntity<String> {
      * 知识库描述
      */
     private String description;
+
+    /**
+     * RAG 类型
+     */
+    private RagType type;
 
     /**
      * 嵌入模型
