@@ -18,6 +18,6 @@ public interface GraphRagClient {
      * @param knowledgeBaseId 知识库ID
      * @return 任务详情
      */
-    @PostMapping("/api/rag/{id}")
+    @PostMapping("/api/rag/process/{id}")
     Response<?> startGraphRagTask(@PathVariable("id") String knowledgeBaseId);
 }

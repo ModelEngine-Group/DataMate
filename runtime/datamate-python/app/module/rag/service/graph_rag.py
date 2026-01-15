@@ -1,11 +1,12 @@
-import asyncio
 import os
 from typing import Awaitable, Callable, Optional
 
 import numpy as np
-from lightrag import LightRAG, QueryParam
+from lightrag import LightRAG
+from lightrag.constants import DEFAULT_ENTITY_TYPES
+from lightrag.kg.shared_storage import initialize_pipeline_status
 from lightrag.llm.openai import openai_embed, openai_complete_if_cache
-from lightrag.utils import setup_logger, EmbeddingFunc
+from lightrag.utils import setup_logger, EmbeddingFunc, get_env_value
 
 setup_logger("lightrag", level="DEBUG")
 DEFAULT_WORKING_DIR = os.path.join(os.getcwd(), "rag_storage")
@@ -33,15 +34,14 @@ async def build_embedding_func(
     model_name: str, base_url: str, api_key: str, embedding_dim: int
 ) -> EmbeddingFunc:
     async def _embedding_func(texts: list[str]) -> np.ndarray:
-        return await openai_embed(
+        return await openai_embed.func(
             texts,
             model=model_name,
             api_key=api_key,
             base_url=base_url,
-            embedding_dim=embedding_dim,
         )
 
-    return EmbeddingFunc(embedding_dim=embedding_dim, func=_embedding_func)
+    return EmbeddingFunc(embedding_dim=embedding_dim, func=_embedding_func, max_token_size=8192)
 
 
 async def initialize_rag(
@@ -55,6 +55,11 @@ async def initialize_rag(
         working_dir=target_dir,
         llm_model_func=llm_callable,
         embedding_func=embedding_callable,
+        addon_params={
+            "language": "Chinese",
+            "entity_types": get_env_value("ENTITY_TYPES", DEFAULT_ENTITY_TYPES, list),
+        }
     )
     await rag.initialize_storages()
+    await initialize_pipeline_status()
     return rag

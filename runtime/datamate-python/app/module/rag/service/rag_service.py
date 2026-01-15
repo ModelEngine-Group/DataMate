@@ -75,10 +75,16 @@ class RAGService:
             await self._process_single_file(rag_file)
 
     async def _process_single_file(self, rag_file: RagFile):
-        dataset_file = await self._get_dataset_file(rag_file.file_id)
-        documents = load_documents(dataset_file.file_path)
-        for doc in documents:
-            await self.rag.ainsert(text=doc.page_content)
+        try:
+            dataset_file = await self._get_dataset_file(rag_file.file_id)
+            documents = load_documents(dataset_file.file_path)
+            for doc in documents:
+                logger.info(f"Processing document {doc.page_content}")
+                await self.rag.ainsert(input=doc.page_content, file_paths=[dataset_file.file_path])
+        except Exception:  # noqa: BLE001
+            logger.exception("Failed to process rag file %s", rag_file.id)
+            await self._mark_file_failed(rag_file)
+            return
         await self._mark_file_processed(rag_file)
 
     async def _get_dataset_file(self, file_id: str) -> DatasetFiles:
@@ -92,6 +98,12 @@ class RAGService:
 
     async def _mark_file_processed(self, rag_file: RagFile):
         rag_file.status = "PROCESSED"
+        self.db.add(rag_file)
+        await self.db.commit()
+        await self.db.refresh(rag_file)
+
+    async def _mark_file_failed(self, rag_file: RagFile):
+        rag_file.status = "PROCESS_FAILED"
         self.db.add(rag_file)
         await self.db.commit()
         await self.db.refresh(rag_file)
@@ -113,4 +125,3 @@ class RAGService:
         if not model:
             raise ValueError(f"Model config with ID {model_id} not found.")
         return model
-
