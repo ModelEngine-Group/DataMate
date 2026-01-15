@@ -23,6 +23,7 @@ const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
   onSelectEntity,
 }) => {
   const graphRef = useRef<ForceGraphMethods>();
+  const lightingInitializedRef = useRef(false);
 
   const degreeMap = useMemo(() => {
     const map = new Map<string, number>();
@@ -61,6 +62,37 @@ const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
     graphRef.current?.zoomToFit(800);
   }, [graphData]);
 
+  useEffect(() => {
+    if (lightingInitializedRef.current) return;
+    const graph = graphRef.current;
+    const scene = graph?.scene?.();
+    if (!scene) return;
+
+    const ambient = new THREE.AmbientLight(0xffffff, 0.35);
+    const key = new THREE.DirectionalLight(0xffffff, 0.8);
+    key.position.set(120, 160, 220);
+    const rim = new THREE.DirectionalLight(0x3b82f6, 0.5);
+    rim.position.set(-140, -120, -180);
+    const fill = new THREE.DirectionalLight(0xffffff, 0.45);
+    fill.position.set(-60, 40, 140);
+
+    ambient.name = "kg-ambient-light";
+    key.name = "kg-key-light";
+    rim.name = "kg-rim-light";
+    fill.name = "kg-fill-light";
+
+    scene.add(ambient, key, rim, fill);
+    lightingInitializedRef.current = true;
+
+    return () => {
+      scene.remove(ambient);
+      scene.remove(key);
+      scene.remove(rim);
+      scene.remove(fill);
+      lightingInitializedRef.current = false;
+    };
+  }, [graphData]);
+
   if (!nodes.length) {
     return (
       <div style={{ width: "100%", height }} className="flex items-center justify-center bg-slate-950/80">
@@ -96,16 +128,28 @@ const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
           const radius = getNodeRadius(node.id, degreeMap);
           const color = node.color || "#60a5fa";
           const group = new THREE.Group();
+          const sphereRadius = getSphereDisplayRadius(radius);
+          const baseColor = new THREE.Color(color);
 
-          const coreSprite = new THREE.Sprite(
-            new THREE.SpriteMaterial({
-              map: getCircleTexture(color, 1),
-              depthWrite: false,
+          const litSphere = new THREE.Mesh(getSphereGeometry(sphereRadius), getSphereMaterial(baseColor));
+          group.add(litSphere);
+
+          const innerSphere = new THREE.Mesh(
+            getSphereGeometry(Math.max(sphereRadius * 0.65, 0.6)),
+            new THREE.MeshLambertMaterial({
+              color: baseColor.clone().offsetHSL(0, 0, 0.15),
+              emissive: baseColor.clone().multiplyScalar(0.2),
               transparent: true,
+              opacity: 0.75,
             })
           );
-          coreSprite.scale.set(radius, radius, 1);
-          group.add(coreSprite);
+          innerSphere.renderOrder = 2;
+          group.add(innerSphere);
+
+          const highlightOrb = createHighlightOrb(sphereRadius, baseColor);
+          if (highlightOrb) {
+            group.add(highlightOrb);
+          }
 
           const label = new SpriteText(node.id || "", 1, "#f8fafc");
           label.center.set(0.5, 0.5);
@@ -113,9 +157,9 @@ const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
           label.material.depthTest = false;
           label.renderOrder = 50;
           const maxDiameter = radius * 0.95;
-          const fontRatio = Math.max(Math.min((radius / 18) * 5, 5), 1.5);
-          label.textHeight = Math.min(maxDiameter, radius * 0.85) / fontRatio;
-          label.position.set(0, 0, 0.02);
+          const fontRatio = Math.max(Math.min((radius / 18) * 5, 5), 1.5) * 1.15;
+          label.textHeight = Math.min(maxDiameter, radius * 0.7) / fontRatio;
+          label.position.set(0, 0, sphereRadius + label.textHeight * 0.95);
           group.add(label);
 
           return group;
@@ -163,6 +207,8 @@ const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
 export default KnowledgeGraphView;
 
 const circleTextureCache = new Map<string, THREE.Texture>();
+const sphereMaterialCache = new Map<string, THREE.MeshPhongMaterial>();
+const sphereGeometryCache = new Map<number, THREE.SphereGeometry>();
 
 function getCircleTexture(color: string, opacity = 1, soft = false) {
   const key = `${color}-${opacity}-${soft}`;
@@ -226,84 +272,48 @@ function getNodeRadius(nodeId: string, degreeMap: Map<string, number>) {
   return Math.min(12 + degree * 4, 64);
 }
 
-interface TextTextureOptions {
-  fontSize?: number;
-  padding?: number;
-  paddingX?: number;
-  paddingY?: number;
-  backgroundFill?: string | null;
-  textFill?: string;
-  maxWidth?: number;
-  fontFamily?: string;
+function getSphereDisplayRadius(nodeRadius: number) {
+  return Math.max(nodeRadius * 0.16, 2.2);
 }
 
-function createTextTexture(text: string, options: TextTextureOptions = {}) {
-  const fontFamily = options.fontFamily ?? '"Inter", "PingFang SC", "Microsoft YaHei", sans-serif';
-  let fontSize = options.fontSize ?? 36;
-
-  const measurementCanvas = document.createElement("canvas");
-  const measurementContext = measurementCanvas.getContext("2d");
-  if (!measurementContext) return null;
-  measurementContext.font = `${fontSize}px ${fontFamily}`;
-
-  const maxWidth = options.maxWidth;
-  if (maxWidth) {
-    while (fontSize > 12 && measurementContext.measureText(text).width > maxWidth) {
-      fontSize -= 2;
-      measurementContext.font = `${fontSize}px ${fontFamily}`;
-    }
-    text = truncateTextToWidth(measurementContext, text, maxWidth);
+function getSphereGeometry(radius: number) {
+  const key = Number(radius.toFixed(2));
+  if (!sphereGeometryCache.has(key)) {
+    sphereGeometryCache.set(key, new THREE.SphereGeometry(radius, 48, 48));
   }
-
-  const paddingX = options.paddingX ?? options.padding ?? 32;
-  const paddingY = options.paddingY ?? options.padding ?? 16;
-  const textWidth = maxWidth ? Math.min(measurementContext.measureText(text).width, maxWidth) : measurementContext.measureText(text).width;
-  const baseWidth = Math.ceil(textWidth + paddingX * 2);
-  const baseHeight = Math.ceil(fontSize + paddingY * 2);
-
-  const pixelRatio = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
-  const scale = Math.max(2, Math.min(pixelRatio, 4));
-
-  const canvas = document.createElement("canvas");
-  canvas.width = baseWidth * scale;
-  canvas.height = baseHeight * scale;
-  const context = canvas.getContext("2d");
-  if (!context) return null;
-  context.scale(scale, scale);
-
-  context.font = `${fontSize}px ${fontFamily}`;
-  context.textAlign = "center";
-  context.textBaseline = "middle";
-
-  if (options.backgroundFill !== null) {
-    context.fillStyle = options.backgroundFill ?? "rgba(2,6,23,0.25)";
-    context.fillRect(0, 0, baseWidth, baseHeight);
-  } else {
-    context.clearRect(0, 0, baseWidth, baseHeight);
-  }
-
-  context.fillStyle = options.textFill ?? "rgba(226,232,240,0.72)";
-  context.fillText(text, baseWidth / 2, baseHeight / 2);
-
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.minFilter = THREE.LinearMipMapLinearFilter;
-  texture.magFilter = THREE.LinearFilter;
-  texture.anisotropy = 8;
-  texture.generateMipmaps = true;
-  texture.needsUpdate = true;
-  return texture;
+  return sphereGeometryCache.get(key)!;
 }
 
-function truncateTextToWidth(context: CanvasRenderingContext2D, value: string, maxWidth: number) {
-  if (!maxWidth || context.measureText(value).width <= maxWidth) {
-    return value;
+function getSphereMaterial(color: THREE.Color) {
+  const key = color.getHexString();
+  if (!sphereMaterialCache.has(key)) {
+    const specular = new THREE.Color(1, 1, 1).lerp(color.clone(), 0.35);
+    sphereMaterialCache.set(
+      key,
+      new THREE.MeshPhongMaterial({
+        color: color.clone(),
+        emissive: color.clone().multiplyScalar(0.12),
+        specular,
+        shininess: 85,
+        reflectivity: 0.4,
+      })
+    );
   }
-  let truncated = value;
-  const ellipsis = "...";
-  while (truncated.length > 1 && context.measureText(`${truncated}${ellipsis}`).width > maxWidth) {
-    truncated = truncated.slice(0, -1);
-  }
-  return `${truncated}${ellipsis}`;
+  return sphereMaterialCache.get(key)!;
+}
+
+function createHighlightOrb(sphereRadius: number, baseColor: THREE.Color) {
+  const orbRadius = Math.max(sphereRadius * 0.28, 0.4);
+  const geometry = getSphereGeometry(orbRadius);
+  const material = new THREE.MeshBasicMaterial({
+    color: baseColor.clone().offsetHSL(0, 0, 0.35),
+    transparent: true,
+    opacity: 0.85,
+  });
+  const orb = new THREE.Mesh(geometry, material);
+  orb.position.set(sphereRadius * 0.45, sphereRadius * 0.5, sphereRadius * 0.65);
+  orb.renderOrder = 6;
+  return orb;
 }
 
 function normalizeLinkData(link: any): KnowledgeGraphEdge {
@@ -355,7 +365,7 @@ function computeLinkDistance(link: any, degreeMap: Map<string, number>) {
   const degreeBoost = ((degreeMap.get(sourceId) || 1) + (degreeMap.get(targetId) || 1)) / 2;
   const weight = Number(link.properties?.weight ?? link.properties?.score ?? 1);
   const base = 260;
-  const dynamicDistance = base + degreeBoost * 155 + weight * 140;
+  const dynamicDistance = base + degreeBoost * 55 + weight * 40;
 
-  return Math.min(Math.max(dynamicDistance, minimumGap) * 100, 5000);
+  return Math.min(Math.max(dynamicDistance, minimumGap) * 100, 500);
 }
