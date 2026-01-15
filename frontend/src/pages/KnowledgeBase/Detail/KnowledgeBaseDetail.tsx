@@ -360,48 +360,50 @@ const KnowledgeBaseDetailPage: React.FC = () => {
                 />
               )}
               {graphSelection && (
-                <div className="absolute bottom-4 right-4 w-80 max-h-[65vh] overflow-auto rounded-lg bg-slate-900/85 text-slate-100 shadow-[0_10px_50px_rgba(15,23,42,0.7)] border border-white/10 p-4">
-                  <div className="text-sm font-semibold mb-1 text-white/85">
+                <div className="absolute bottom-4 right-4 w-80 max-h-[65vh] overflow-auto rounded-lg bg-slate-900/95 text-white shadow-[0_10px_50px_rgba(15,23,42,0.7)] border border-white/15 p-4">
+                  <div className="text-sm font-semibold mb-1 text-white">
                     {graphSelection.type === "node" ? "节点详情" : "边详情"}
                   </div>
-                  <div className="text-xs text-white/50 mb-3">ID: {graphSelection.data.id}</div>
+                  <div className="text-xs text-white/70 mb-3">ID: {graphSelection.data.id}</div>
                   {graphSelection.type === "edge" && (
                     <div className="space-y-1 text-xs mb-3">
                       <div className="flex justify-between gap-2">
-                        <span className="text-gray-500">类型</span>
-                        <span className="text-right break-all">{graphSelection.data.type}</span>
+                        <span className="text-white/60">类型</span>
+                        <span className="text-right break-all text-white">{graphSelection.data.type}</span>
                       </div>
                       <div className="flex justify-between gap-2">
-                        <span className="text-gray-500">源节点</span>
-                        <span className="text-right break-all">{graphSelection.data.source}</span>
+                        <span className="text-white/60">源节点</span>
+                        <span className="text-right break-all text-white">{graphSelection.data.source}</span>
                       </div>
                       <div className="flex justify-between gap-2">
-                        <span className="text-gray-500">目标节点</span>
-                        <span className="text-right break-all">{graphSelection.data.target}</span>
+                        <span className="text-white/60">目标节点</span>
+                        <span className="text-right break-all text-white">{graphSelection.data.target}</span>
                       </div>
-                      <div className="border-t border-gray-200 my-2" />
+                      <div className="border-t border-white/15 my-2" />
                     </div>
                   )}
                   {graphSelection.type === "node" && (
                     <div className="space-y-1 text-xs mb-3">
                       <div className="flex justify-between gap-2">
-                        <span className="text-gray-500">标签</span>
-                        <span className="text-right break-all">{graphSelection.data.labels?.join(", ") || "-"}</span>
+                        <span className="text-white/60">标签</span>
+                        <span className="text-right break-all text-white">
+                          {graphSelection.data.labels?.join(", ") || "-"}
+                        </span>
                       </div>
-                      <div className="border-t border-gray-200 my-2" />
+                      <div className="border-t border-white/15 my-2" />
                     </div>
                   )}
                   <div className="space-y-1 text-xs">
                     {Object.entries(graphSelection.data.properties ?? {}).map(([key, value]) => (
                       <div key={key} className="flex justify-between gap-2">
-                        <span className="text-gray-500">{key}</span>
-                        <span className="text-right break-all text-gray-900">
+                        <span className="text-white/60">{key}</span>
+                        <span className="text-right break-all text-white">
                           {typeof value === "object" ? JSON.stringify(value) : String(value ?? "-")}
                         </span>
                       </div>
                     ))}
                     {!Object.keys(graphSelection.data.properties ?? {}).length && (
-                      <div className="text-gray-500">暂无属性</div>
+                      <div className="text-white/60">暂无属性</div>
                     )}
                   </div>
                 </div>
