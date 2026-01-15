@@ -1,10 +1,12 @@
-import React, { memo } from "react";
+import { memo } from "react";
 import { Outlet } from "react-router";
 import Sidebar from "./Sidebar";
+import Header from "./Header.tsx";
 
 const MainLayout = () => {
   return (
     <div className="w-full h-screen flex flex-col bg-gray-50 min-w-6xl">
+      <Header />
       <div className="w-full h-full flex">
         {/* Sidebar */}
         <Sidebar />

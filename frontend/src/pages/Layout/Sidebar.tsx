@@ -1,13 +1,11 @@
 import { memo, useEffect, useState } from "react";
 import { Button, Drawer, Menu, Popover } from "antd";
 import {
-  CloseOutlined,
-  MenuOutlined,
   SettingOutlined,
 } from "@ant-design/icons";
-import { ClipboardList, Sparkles, X } from "lucide-react";
-import { menuItems } from "@/pages/Layout/menu";
-import { NavLink, useLocation, useNavigate } from "react-router";
+import { ClipboardList, X, ChevronRight, ChevronLeft } from "lucide-react";
+import { menuItems } from "@/pages/Layout/Menu.tsx";
+import { useLocation, useNavigate } from "react-router";
 import TaskUpload from "./TaskUpload";
 import SettingsPage from "../SettingsPage/SettingsPage";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
@@ -70,23 +68,6 @@ const AsiderAndHeaderLayout = () => {
         sidebarOpen ? "w-64" : "w-20"
       } bg-white border-r border-gray-200 transition-all duration-300 flex flex-col relative`}
     >
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200">
-        {sidebarOpen && (
-          <NavLink to="/" className="flex items-center gap-2 cursor-pointer">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-lg font-bold text-gray-900">DataMate</span>
-          </NavLink>
-        )}
-        <span
-          className="cursor-pointer hover:text-blue-500"
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-        >
-          {sidebarOpen ? <CloseOutlined /> : <MenuOutlined className="ml-4" />}
-        </span>
-      </div>
 
       {/* Navigation */}
       <div className="flex-1">
@@ -199,6 +180,13 @@ const AsiderAndHeaderLayout = () => {
           }}
         />
       )}
+      <button
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        className="absolute top-1/2 -right-3 -translate-y-1/2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-white shadow-md hover:bg-blue-700 transition-colors"
+        title={sidebarOpen ? "展开侧边栏" : "收起侧边栏"}
+      >
+        {sidebarOpen ? <ChevronLeft className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+      </button>
     </div>
   );
 };

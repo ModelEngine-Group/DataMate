@@ -23,4 +23,8 @@ public class RedisClient {
     public void delParam(String key) {
         FunctionUtil.doWithoutThrow(redisTemplate::delete, key);
     }
+
+    public String getParamWithThrow(String key) {
+        return redisTemplate.opsForValue().get(key);
+    }
 }

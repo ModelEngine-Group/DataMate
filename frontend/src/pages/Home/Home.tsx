@@ -9,7 +9,7 @@ import {
   MessageSquare,
   GitBranch,
 } from "lucide-react";
-import { features, menuItems } from "../Layout/menu";
+import { features, menuItems } from "../Layout/Menu.tsx";
 import { useState } from 'react';
 import { useNavigate } from "react-router";
 import { Card } from "antd";
@@ -74,8 +74,8 @@ export default function WelcomePage() {
             AI数据集准备工具
           </div>
           <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-            构建高质量
-            <span className="text-blue-600"> AI数据集</span>
+            DataMate
+            <span className="text-blue-600"> 构建高质量 AI数据集</span>
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
             从数据管理到知识生成，一站式解决企业AI数据处理的场景问题。

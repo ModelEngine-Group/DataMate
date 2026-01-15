@@ -154,8 +154,11 @@ export default function useFetchData<T>(
           poll();
         }
       } catch (error) {
-        console.error(error);
-        message.error("数据获取失败，请稍后重试");
+        if (error.status === 401) {
+          message.warn("请登录");
+        } else {
+          message.error("数据获取失败，请稍后重试");
+        }
       } finally {
         Loading.hide();
         setLoading(false);
