@@ -1,4 +1,5 @@
 import os
+import asyncio
 from typing import Optional, Sequence
 
 from fastapi import BackgroundTasks, Depends
@@ -61,7 +62,7 @@ class RAGService:
         if self.background_tasks is not None:
             self.background_tasks.add_task(self._process_pending_files, knowledge_base_id)
         else:
-            await self._process_pending_files(knowledge_base_id)
+            asyncio.create_task(self._process_pending_files(knowledge_base_id))
 
         return {"status": "initialized", "knowledge_base_id": knowledge_base_id}
 
@@ -125,3 +126,9 @@ class RAGService:
         if not model:
             raise ValueError(f"Model config with ID {model_id} not found.")
         return model
+
+
+    async def query_rag(self, query: str, knowledge_base_id: str) -> str:
+        if not self.rag:
+            await self.init_graph_rag(knowledge_base_id)
+        return await self.rag.get_knowledge_graph(query)
