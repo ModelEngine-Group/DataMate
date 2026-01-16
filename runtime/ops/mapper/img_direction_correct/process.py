@@ -64,7 +64,7 @@ class ImgDirectionCorrect(Mapper):
         rotate_angle = int(cls_res.get("class_ids", np.array([0], dtype='int32')).item())
         pro = float(cls_res.get("scores", np.array([0], dtype='int32')).item())
         logger.info(
-            f"fileName: {file_name}, model {model.model_name} detect result is {rotate_angle} with confidence {pro}")
+            f"fileName: {file_name}, model detect result is {rotate_angle} with confidence {pro}")
         if rotate_angle == 90 and pro > 0.89:
             return cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
         if rotate_angle == 180 and pro > 0.89:
