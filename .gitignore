@@ -190,3 +190,5 @@ Thumbs.db
 
 # Milvus
 **/volumes/
+
+**/rag_storage/

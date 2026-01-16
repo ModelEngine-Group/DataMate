@@ -1,5 +1,7 @@
 import os
+from pathlib import Path
 from typing import Awaitable, Callable, Optional
+from app.core.config import settings
 
 import numpy as np
 from lightrag import LightRAG
@@ -9,7 +11,7 @@ from lightrag.llm.openai import openai_embed, openai_complete_if_cache
 from lightrag.utils import setup_logger, EmbeddingFunc, get_env_value
 
 setup_logger("lightrag", level="INFO")
-DEFAULT_WORKING_DIR = os.path.join(os.getcwd(), "rag_storage")
+DEFAULT_WORKING_DIR = Path(settings.rag_storage_dir)
 
 
 async def build_llm_model_func(model_name: str, base_url: str, api_key: str) -> Callable[..., Awaitable[str]]:

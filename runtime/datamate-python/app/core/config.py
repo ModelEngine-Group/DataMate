@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     debug: bool = True
     log_file_dir: str = "/var/log/datamate/backend-python"
+    rag_storage_dir: str = "/data/rag_storage"
 
     # Database
     pgsql_host: str = "datamate-database"

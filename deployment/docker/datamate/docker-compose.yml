@@ -32,6 +32,7 @@ services:
       - dataset_volume:/dataset
       - flow_volume:/flow
       - log_volume:/var/log/datamate
+      - graph_data_volume:/data/rag_storage
     networks: [ datamate ]
     depends_on:
       - datamate-database
@@ -335,6 +336,8 @@ volumes:
     name: datamate-operator-packages-volume
   mineru_log_volume:
     name: datamate-mineru_log_volume
+  graph_data_volume:
+    name: datamate-graph-data-volume
 
   # Deer Flow
   deer-flow-log-volume:

@@ -39,7 +39,11 @@ public class ApiGatewayApplication {
 
             // 数据归集服务路由
             .route("data-collection", r -> r.path("/api/data-collection/**")
-                    .uri("http://datamate-backend-python:18000"))
+                 .uri("http://datamate-backend-python:18000"))
+
+            // 知识图谱RAG服务路由
+            .route("graph-rag", r -> r.path("/api/rag/**")
+                 .uri("http://datamate-backend-python:18000"))
 
             .route("deer-flow-frontend", r -> r.path("/chat/**")
                 .uri("http://deer-flow-frontend:3000"))
