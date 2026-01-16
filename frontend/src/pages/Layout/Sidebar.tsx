@@ -182,7 +182,7 @@ const AsiderAndHeaderLayout = () => {
       )}
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="absolute top-1/2 -right-3 -translate-y-1/2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-white shadow-md hover:bg-blue-700 transition-colors"
+        className="absolute top-1/2 -right-3 -translate-y-1/2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-gray-600 text-white shadow-md hover:bg-gray-700 transition-colors"
         title={sidebarOpen ? "展开侧边栏" : "收起侧边栏"}
       >
         {sidebarOpen ? <ChevronLeft className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
