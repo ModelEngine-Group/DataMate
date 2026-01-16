@@ -23,6 +23,7 @@ COPY scripts/images/frontend/start.sh /opt/frontend/start.sh
 
 RUN dos2unix /opt/frontend/start.sh \
     && chmod +x /opt/frontend/start.sh \
+    && mkdir -p /etc/nginx/cert \
     && ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
     && rm -f /etc/nginx/conf.d/default.conf
 

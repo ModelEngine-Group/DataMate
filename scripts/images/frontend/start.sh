@@ -6,12 +6,12 @@ if [ -f "/cert/server.pem" ]; then
 fi
 
 if [ -f "/cert/server.key" ]; then
-  if openssl rsa -in /cert/server.key -passin pass:test_check -noout 2>/dev/null; then
-    cp /cert/server.key /etc/nginx/cert/server.key
-  else
-    echo "$CERT_PASS" | openssl rsa -in /cert/server.key -out /etc/nginx/cert/server.key -passin stdin
-  fi
-  chown nginx:nginx /etc/nginx/cert/server.key
+    if openssl rsa -in /cert/server.key -passin pass:test_check -noout 2>/dev/null; then
+        cp /cert/server.key /etc/nginx/cert/server.key
+    else
+        echo "$CERT_PASS" | openssl rsa -in /cert/server.key -out /etc/nginx/cert/server.key -passin stdin
+    fi
+    chown nginx:nginx /etc/nginx/cert/server.key
 fi
 
 if [ -f "/etc/nginx/cert/server.pem" ]; then

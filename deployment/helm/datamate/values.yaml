@@ -159,7 +159,7 @@ frontend:
     - *logVolume
     - name: cert-volume
       configMap:
-        name: cube-security-cert-cert
+        name: cube-security-nginx-cert
         optional: true
   volumeMounts:
     - name: log-volume
