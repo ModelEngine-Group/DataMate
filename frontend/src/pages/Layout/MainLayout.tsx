@@ -7,7 +7,7 @@ const MainLayout = () => {
   return (
     <div className="w-full h-screen flex flex-col bg-gray-50 min-w-6xl">
       <Header />
-      <div className="w-full h-full flex">
+      <div className="w-full h-[calc(100%-57px)] flex">
         {/* Sidebar */}
         <Sidebar />
         {/* Main Content */}
