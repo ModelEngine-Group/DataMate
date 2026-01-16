@@ -34,6 +34,7 @@ dependencies = [
     "fastapi (>=0.124.0,<0.125.0)",
     "fastapi-mcp (>=0.4.0,<0.5.0)",
     "asyncpg (>=0.31.0,<0.32.0)",
+    "lightrag-hku (==1.4.9.8)",
 ]
 
 
