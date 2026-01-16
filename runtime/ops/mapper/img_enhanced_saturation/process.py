@@ -52,7 +52,7 @@ class ImgSaturation(Mapper):
 
         # 图片饱和度较高，不需要增强饱和度
         if saturation_factor <= 1:
-            logger.info(f"fileName: ｛file_name｝, method: ImgSaturation not need enhancement")
+            logger.info(f"fileName: {file_name}, method: ImgSaturation not need enhancement")
             return image_data
 
         # 计算图片红色通道均值， 如果过大，需要限制saturation factor大小，否则图片会泛红, 产生色彩畸变。
@@ -78,5 +78,5 @@ class ImgSaturation(Mapper):
             img_data = bytes_transform.bytes_to_numpy(img_bytes)
             img_data = self.enhance_saturation(img_data, file_name)
             sample[self.data_key] = bytes_transform.numpy_to_bytes(img_data, file_type)
-        logger.info(f"fileName: ｛file_name｝, method: ImgSaturation costs {time.time() - start:6f} s")
+        logger.info(f"fileName: {file_name}, method: ImgSaturation costs {time.time() - start:6f} s")
         return sample

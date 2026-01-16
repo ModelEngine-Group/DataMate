@@ -34,7 +34,13 @@ class HtmlTagCleaner(Mapper):
         '<sup>', '<template>', '<textarea>', '<tfoot>', '<thead>', '<time>', '<title>', '<track>', '<tt>', '<u>',
         '<ul>', '<var>', '<video>', '<wbr>', '<xmp>'
     ]
+    # 需要添加的表格标签
+    table_tags = ['<table>', '<tbody>', '<td>', '<th>', '<tr>']
     preserved_attr_list = ['colspan', 'rowspan']  # 需要保留的标签属性列表
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.remove_table_tags = bool(kwargs.get('removeTableTags', False))
 
     @staticmethod
     def _remove_specified_tags(input_data: str, specified_tags: List):
@@ -68,13 +74,15 @@ class HtmlTagCleaner(Mapper):
         if sample[self.filetype_key] != "xml":
             sample[self.text_key] = self._remove_html_tags(sample[self.text_key])
             logger.info(
-                f"fileName: ｛sample[self.filename_key]｝, method: HtmlTagCleaner costs {time.time() - start:6f} s")
+                f"fileName: {sample[self.filename_key]}, method: HtmlTagCleaner costs {time.time() - start:6f} s")
         else:
             logger.info(f"fileName: {sample[self.filename_key]}, method: HtmlTagCleaner, The file is xml!")
         return sample
 
     def _remove_html_tags(self, input_data: str):
-        # 去除常见的html标签及其属性值（不包括<table>、<tbody>、<tr>、<td>、<th>）
+        # 去除常见的html标签及其属性值
+        if self.remove_table_tags:
+            self.tag_list.extend(self.table_tags)
         cleaned_text = self._remove_specified_tags(input_data, self.tag_list)
         # 去除表格标签内的属性值（不包括colspan、rowspan属性），eg:<td class="td8" rowspan="3"> —> <td rowspan="3">
         cleaned_text = self._remove_tag_attributes(cleaned_text, self.preserved_attr_list)

@@ -8,6 +8,7 @@ import {
   InputNumber,
   Slider,
   Space,
+  Switch,
 } from "antd";
 import { ConfigI, OperatorI } from "@/pages/OperatorMarket/operator.model";
 
@@ -215,12 +216,12 @@ const ParamConfig: React.FC<ParamConfigProps> = ({
           tooltip={param.description}
           key={paramKey}
         >
-          <Checkbox
-            checked={value as boolean}
-            onChange={(e) => updateValue(e.target.checked)}
-          >
-            {param.name}
-          </Checkbox>
+          <Switch
+            checkedChildren={param.checkedLabel}
+            unCheckedChildren={param.unCheckedLabel}
+            defaultChecked={param.defaultVal === 'true'}
+            onChange={(checked) => updateValue(checked)}
+          />
         </Form.Item>
       );
     case "multiple":

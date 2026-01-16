@@ -57,9 +57,9 @@ class XMLTagCleaner(Mapper):
         if sample[self.filetype_key] == "xml":
             try:
                 sample[self.text_key] = self._tag_clean_xml(sample[self.text_key])
-                logger.info(f"fileName: ｛file_name｝, method: XMLTagCleaner costs {time.time() - start:6f} s")
+                logger.info(f"fileName: {file_name}, method: XMLTagCleaner costs {time.time() - start:6f} s")
             except ExpatError as err:
-                logger.error(f"fileName: {file_name} is abnormal xml form: ｛err｝")
+                logger.error(f"fileName: {file_name} is abnormal xml form: {err}")
                 raise RuntimeError(81001, str(err)) from None
             except Exception as err:
                 logger.error(f"fileName {file_name}, method: XMLTagCleaner causes other error: {err}")

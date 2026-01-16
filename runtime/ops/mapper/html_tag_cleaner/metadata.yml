@@ -14,3 +14,12 @@ effect:
   after: '机器学习是人工智能的一个分支。'
 inputs: 'text'
 outputs: 'text'
+settings:
+  removeTableTags:
+    name: '是否去除表格标签'
+    description: '若为是，则会去除表格标签<tr><td>等。'
+    type: 'switch'
+    defaultVal: 'false'
+    required: false
+    checkedLabel: '是'
+    unCheckedLabel: '否'

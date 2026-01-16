@@ -139,8 +139,8 @@ class ImgSimilarImagesCleaner(Filter):
             orb_similarity = count / len(matches)
             return orb_similarity
         except Exception as e:
-            logger.exception(f"taskId: ｛self.task_uuid｝, failed to compare the similarity between "
-                             f"｛file_name｝ and ｛file_name_history｝: {e}")
+            logger.exception(f"taskId: {self.task_uuid}, failed to compare the similarity between "
+                             f"{file_name} and {file_name_history}: {e}")
             return 0.0
 
     def execute_sql(self, p_hash: str, des_matrix: np.ndarray, file_name: str,

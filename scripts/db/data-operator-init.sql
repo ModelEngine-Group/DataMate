@@ -134,7 +134,7 @@ ON CONFLICT DO NOTHING;
 
 INSERT INTO t_operator
 (id, name, description, version, inputs, outputs, runtime, settings, file_name, is_star)
-VALUES ('MineruFormatter', 'MinerU PDF文本抽取', '基于MinerU API，抽取PDF中的文本。', '1.0.0', 'text', 'text', null, null, '', false),
+VALUES ('MineruFormatter', 'MinerU PDF文本抽取', '基于MinerU API，抽取PDF中的文本。', '1.0.0', 'text', 'text', null, '{"exportType":{"name":"导出类型","description":"指定清洗结果文件类型。若指定为md且后续存在其他清洗算子，可能导致文件格式错乱。","type":"select","defaultVal":"markdown","required":false,"options":[{"label":"markdown","value":"md"},{"label":"txt","value":"txt"}]}}', '', false),
        ('FileWithHighRepeatPhraseRateFilter', '文档词重复率检查', '去除重复词过多的文档。', '1.0.0', 'text', 'text', null, '{"repeatPhraseRatio": {"name": "文档词重复率", "description": "某个词的统计数/文档总词数 > 设定值，该文档被去除。", "type": "slider", "defaultVal": 0.5, "min": 0, "max": 1, "step": 0.1}, "hitStopwords": {"name": "去除停用词", "description": "统计重复词时，选择是否要去除停用词。", "type": "switch", "defaultVal": false, "required": true, "checkedLabel": "去除", "unCheckedLabel": "不去除"}}', '', 'false'),
        ('FileWithHighRepeatWordRateFilter', '文档字重复率检查', '去除重复字过多的文档。', '1.0.0', 'text', 'text', null, '{"repeatWordRatio": {"name": "文档字重复率", "description": "某个字的统计数/文档总字数 > 设定值，该文档被去除。", "type": "slider", "defaultVal": 0.5, "min": 0, "max": 1, "step": 0.1}}', '', 'false'),
        ('FileWithHighSpecialCharRateFilter', '文档特殊字符率检查', '去除特殊字符过多的文档。', '1.0.0', 'text', 'text', null, '{"specialCharRatio": {"name": "文档特殊字符率", "description": "特殊字符的统计数/文档总字数 > 设定值，该文档被去除。", "type": "slider", "defaultVal": 0.3, "min": 0, "max": 1, "step": 0.1}}', '', 'false'),
@@ -148,7 +148,7 @@ VALUES ('MineruFormatter', 'MinerU PDF文本抽取', '基于MinerU API，抽取P
        ('ExtraSpaceCleaner', '多余空格去除', '移除文档首尾、句中或标点符号附近多余空格和 tab 等。', '1.0.0', 'text', 'text', null, null, '', 'false'),
        ('FullWidthCharacterCleaner', '全角转半角', '将文档中的所有全角字符转换成半角字符。', '1.0.0', 'text', 'text', null, null, '', 'false'),
        ('GrableCharactersCleaner', '文档乱码去除', '去除文档中的乱码和无意义的unicode。', '1.0.0', 'text', 'text', null, null, '', 'false'),
-       ('HtmlTagCleaner', 'HTML标签去除', '移除文档中HTML标签，如 <html>、<dev>、<p> 等。', '1.0.0', 'text', 'text', null, null, '', 'false'),
+       ('HtmlTagCleaner', 'HTML标签去除', '移除文档中HTML标签，如 <html>、<dev>、<p> 等。', '1.0.0', 'text', 'text', null, '{"removeTableTags":{"name":"是否去除表格标签","description":"若为是，则会去除表格标签<tr><td>等。","type":"switch","defaultVal":"false","required":false,"checkedLabel":"是","unCheckedLabel":"否"}}', '', 'false'),
        ('AnonymizedIdNumber', '身份证号匿名化', '身份证号匿名化。', '1.0.0', 'text', 'text', null, null, '', 'false'),
        ('InvisibleCharactersCleaner', '不可见字符去除', '去除文档中的不可见字符，例如 0-31 号字符中的部分字符。', '1.0.0', 'text', 'text', null, null, '', 'false'),
        ('AnonymizedIpAddress', 'IP地址匿名化', 'IP地址匿名化', '1.0.0', 'text', 'text', null, null, '', 'false'),

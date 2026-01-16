@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 系统参数应用服务
@@ -25,6 +26,7 @@ import java.util.List;
 public class SysParamApplicationService {
     private final SysParamRepository sysParamRepository;
     private final RedisClient redisClient;
+    private final AtomicBoolean redisEnable = new AtomicBoolean(true);
 
     /**
      * 列表查询系统参数
@@ -59,17 +61,18 @@ public class SysParamApplicationService {
     }
 
     public String getParamByKey(String paramId) {
-        boolean redisEnable = false;
         String value = null;
-        try {
-            value = redisClient.getParamWithThrow(paramId);
-            redisEnable = true;
-        } catch (Exception e) {
-            log.warn(e.getMessage());
+        if (redisEnable.get()) {
+            try {
+                value = redisClient.getParamWithThrow(paramId);
+            } catch (Exception e) {
+                redisEnable.set(false);
+                log.warn(e.getMessage());
+            }
         }
         if (value == null) {
             SysParam sysParam = sysParamRepository.getById(paramId);
-            if (sysParam != null && redisEnable) {
+            if (sysParam != null) {
                 value = sysParam.getParamValue();
             }
         }
