@@ -9,7 +9,7 @@ These routes back the frontend AutoAnnotation module:
 """
 from __future__ import annotations
 
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Path
 from fastapi.responses import StreamingResponse

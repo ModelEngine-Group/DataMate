@@ -49,6 +49,16 @@ export function queryDatasetFilesUsingGet(id: string | number, params?: any) {
   return get(`/api/data-management/datasets/${id}/files`, params);
 }
 
+// 根据ID获取单个数据集文件详情
+export function getDatasetFileByIdUsingGet(
+  datasetId: string | number,
+  fileId: string | number
+) {
+  return get(
+    `/api/data-management/datasets/${datasetId}/files/${fileId}`
+  );
+}
+
 // 上传数据集文件
 export function uploadDatasetFileUsingPost(id: string | number, data: any) {
   return post(`/api/data-management/datasets/${id}/files`, data);

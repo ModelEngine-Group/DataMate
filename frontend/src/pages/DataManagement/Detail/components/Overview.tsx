@@ -1,4 +1,4 @@
-import { App, Button, Descriptions, DescriptionsProps, Modal, Table, Input } from "antd";
+import { App, Button, Descriptions, DescriptionsProps, Modal, Table, Input, Spin } from "antd";
 import { formatBytes, formatDateTime } from "@/utils/unit";
 import { Download, Trash2, Folder, File } from "lucide-react";
 import { datasetTypeMap } from "../../dataset.const";
@@ -13,6 +13,9 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
     previewVisible,
     previewFileName,
     previewContent,
+    previewUrl,
+    previewFileDetail,
+    previewLoading,
     setPreviewVisible,
     handleDeleteFile,
     handleDownloadFile,
@@ -23,6 +26,7 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
     handleDeleteDirectory,
     handleRenameFile,
     handleRenameDirectory,
+    handlePreviewFile,
   } = filesOperation;
 
   // 文件列表多选配置
@@ -142,7 +146,7 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
         return (
             <Button
               type="link"
-              onClick={(e) => {}}
+              onClick={() => handlePreviewFile(record)}
             >
               {content}
             </Button>
@@ -453,18 +457,101 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
         open={previewVisible}
         onCancel={() => setPreviewVisible(false)}
         footer={null}
-        width={700}
+        width={1000}
       >
-        <pre
-          style={{
-            whiteSpace: "pre-wrap",
-            wordBreak: "break-all",
-            fontSize: 14,
-            color: "#222",
-          }}
-        >
-          {previewContent}
-        </pre>
+        <div className="flex gap-4" style={{ minHeight: 400 }}>
+          {/* 左侧预览区域 */}
+          <div className="flex-1 border border-gray-200 rounded-md p-3 flex items-center justify-center overflow-auto bg-gray-50">
+            {previewLoading ? (
+              <Spin />
+            ) : previewUrl ? (
+              <img
+                src={previewUrl}
+                alt={previewFileName}
+                style={{
+                  maxWidth: "100%",
+                  maxHeight: 500,
+                  objectFit: "contain",
+                }}
+              />
+            ) : previewContent ? (
+              <pre
+                style={{
+                  whiteSpace: "pre-wrap",
+                  wordBreak: "break-all",
+                  fontSize: 14,
+                  color: "#222",
+                  maxHeight: 500,
+                }}
+              >
+                {previewContent}
+              </pre>
+            ) : (
+              <span className="text-gray-500 text-sm">
+                暂无预览内容，或当前文件类型暂不支持预览。
+              </span>
+            )}
+          </div>
+
+          {/* 右侧文件信息（来自 t_dm_dataset_files） */}
+          <div className="w-72 border border-gray-200 rounded-md p-3 bg-white overflow-auto">
+            <h3 className="text-sm font-semibold mb-3">文件信息</h3>
+            <div className="space-y-2 text-xs text-gray-700">
+              <div>
+                <span className="text-gray-500">文件名：</span>
+                <span>{previewFileDetail?.fileName || previewFileName}</span>
+              </div>
+              {previewFileDetail?.originalName && (
+                <div>
+                  <span className="text-gray-500">原始文件名：</span>
+                  <span>{previewFileDetail.originalName}</span>
+                </div>
+              )}
+              {previewFileDetail?.fileType && (
+                <div>
+                  <span className="text-gray-500">文件类型：</span>
+                  <span>{previewFileDetail.fileType}</span>
+                </div>
+              )}
+              {typeof previewFileDetail?.fileSize === "number" && (
+                <div>
+                  <span className="text-gray-500">文件大小：</span>
+                  <span>{formatBytes(previewFileDetail.fileSize || 0)}</span>
+                </div>
+              )}
+              {previewFileDetail?.status && (
+                <div>
+                  <span className="text-gray-500">状态：</span>
+                  <span>{previewFileDetail.status}</span>
+                </div>
+              )}
+              {previewFileDetail?.uploadTime && (
+                <div>
+                  <span className="text-gray-500">上传时间：</span>
+                  <span>{formatDateTime(previewFileDetail.uploadTime)}</span>
+                </div>
+              )}
+              {previewFileDetail?.uploadedBy && (
+                <div>
+                  <span className="text-gray-500">上传者：</span>
+                  <span>{previewFileDetail.uploadedBy}</span>
+                </div>
+              )}
+              {previewFileDetail?.filePath && (
+                <div>
+                  <span className="text-gray-500">文件路径：</span>
+                  <span>{previewFileDetail.filePath}</span>
+                </div>
+              )}
+              {previewFileDetail?.description && (
+                <div>
+                  <span className="text-gray-500">描述：</span>
+                  <span>{previewFileDetail.description}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       </Modal>
     </>
   );

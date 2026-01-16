@@ -35,6 +35,9 @@ export function useFilesOperation(dataset: Dataset) {
   const [previewVisible, setPreviewVisible] = useState(false);
   const [previewContent, setPreviewContent] = useState("");
   const [previewFileName, setPreviewFileName] = useState("");
+  const [previewUrl, setPreviewUrl] = useState<string | undefined>();
+  const [previewFileDetail, setPreviewFileDetail] = useState<any | undefined>();
+  const [previewLoading, setPreviewLoading] = useState(false);
 
   const fetchFiles = async (prefix?: string, current?, pageSize?) => {
     // 如果明确传了 prefix（包括空字符串），使用传入的值；否则使用当前 pagination.prefix
@@ -88,16 +91,47 @@ export function useFilesOperation(dataset: Dataset) {
     setSelectedFiles([]); // 清空选中状态
   };
 
-  const handleShowFile = (file: any) => async () => {
-    // 请求文件内容并弹窗预览
+  const isImageFile = (fileName?: string, fileType?: string) => {
+    const lowerType = (fileType || "").toLowerCase();
+    if (lowerType.includes("image")) return true;
+    const name = (fileName || "").toLowerCase();
+    return [".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp"].some((ext) =>
+      name.endsWith(ext)
+    );
+  };
+
+  const handlePreviewFile = async (file: any) => {
+    if (!file || !file.id) return;
+    const datasetId = dataset.id;
+    setPreviewVisible(true);
+    setPreviewLoading(true);
+    setPreviewFileName(file.fileName || "");
+    setPreviewContent("");
+    setPreviewUrl(undefined);
+    setPreviewFileDetail(undefined);
     try {
-      const res = await fetch(`/api/datasets/${dataset.id}/file/${file.id}`);
-      const data = await res.text();
-      setPreviewFileName(file.fileName);
-      setPreviewContent(data);
-      setPreviewVisible(true);
-    } catch (err) {
+      // 获取文件元信息（来自 t_dm_dataset_files）
+      const detailRes: any = await (await import("../dataset.api")).getDatasetFileByIdUsingGet(
+        datasetId,
+        file.id
+      );
+      const detail = detailRes?.data || detailRes;
+      setPreviewFileDetail(detail);
+
+      const downloadUrl = `/api/data-management/datasets/${datasetId}/files/${file.id}/download`;
+      const image = isImageFile(detail?.fileName || file.fileName, detail?.fileType);
+
+      if (image) {
+        setPreviewUrl(downloadUrl);
+      } else {
+        const res = await fetch(downloadUrl);
+        const text = await res.text();
+        setPreviewContent(text);
+      }
+    } catch (error) {
       message.error({ content: "文件预览失败" });
+    } finally {
+      setPreviewLoading(false);
     }
   };
 
@@ -141,13 +175,16 @@ export function useFilesOperation(dataset: Dataset) {
     setPreviewVisible,
     previewContent,
     previewFileName,
+      previewUrl,
+      previewFileDetail,
+      previewLoading,
     setPreviewContent,
     setPreviewFileName,
     fetchFiles,
     setFileList,
     handleBatchDeleteFiles,
     handleDownloadFile,
-    handleShowFile,
+    handlePreviewFile,
     handleDeleteFile,
     handleBatchExport,
     handleCreateDirectory: async (directoryName: string) => {
