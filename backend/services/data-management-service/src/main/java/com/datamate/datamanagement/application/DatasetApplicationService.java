@@ -68,7 +68,9 @@ public class DatasetApplicationService {
         Dataset dataset = DatasetConverter.INSTANCE.convertToDataset(createDatasetRequest);
         dataset.initCreateParam(datasetBasePath);
         // 处理标签
-        dataset.setTags(processTagNames(createDatasetRequest.getTags()));
+        if (CollectionUtils.isNotEmpty(createDatasetRequest.getTags())) {
+            dataset.setTags(processTagNames(createDatasetRequest.getTags()));
+        }
         datasetRepository.save(dataset);
 
         //todo 需要解耦这块逻辑
