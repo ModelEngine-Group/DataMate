@@ -35,7 +35,7 @@ public class UserContextFilter implements GlobalFilter {
 
     private final UserService userService;
 
-    @Value("${datamate.jwt.enable:true}")
+    @Value("${datamate.jwt.enable:false}")
     private Boolean jwtEnable;
 
     @Override
