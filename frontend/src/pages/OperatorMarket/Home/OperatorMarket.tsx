@@ -23,7 +23,7 @@ import {
   deleteOperatorByIdUsingDelete,
   downloadExampleOperatorUsingGet,
   queryCategoryTreeUsingGet,
-  queryOperatorsUsingPost,
+  queryOperatorsUsingPost, updateOperatorByIdUsingPut,
 } from "../operator.api";
 import { mapOperator } from "../operator.const";
 
@@ -82,6 +82,16 @@ export default function OperatorMarketPage() {
       message.error("算子删除失败");
     }
   };
+
+  const handleStar = async (operator: OperatorI) => {
+    const data = {
+      id: operator.id,
+      isStar: !operator.isStar
+    };
+    await updateOperatorByIdUsingPut(operator.id, data);
+    fetchData();
+    await initCategoriesTree();
+  }
 
   const operations = [
     {
@@ -203,6 +213,8 @@ export default function OperatorMarketPage() {
                   data={tableData}
                   pagination={pagination}
                   operations={operations}
+                  onFavorite={handleStar}
+                  isFavorite={(operator: OperatorI) => operator.isStar}
                   onView={(item) => navigate(`/data/operator-market/plugin-detail/${item.id}`)}
                 />
               ) : (

@@ -40,10 +40,10 @@ export default function FileTable({result, fetchTaskResult}) {
   };
 
   function formatFileSize(bytes: number, decimals: number = 2): string {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) return '0 B';
 
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
 
     const i = Math.floor(Math.log(bytes) / Math.log(k));
 
@@ -217,7 +217,7 @@ export default function FileTable({result, fetchTaskResult}) {
       onFilter: (value: string, record: any) =>
         record.destType.toLowerCase().includes(value.toLowerCase()),
       render: (text: string) => (
-        <span className="font-mono text-sm">{text}</span>
+        <span className="font-mono text-sm">{text || "-"}</span>
       ),
     },
     {
