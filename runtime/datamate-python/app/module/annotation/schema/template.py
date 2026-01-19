@@ -85,7 +85,7 @@ class AnnotationTemplateResponse(BaseModel):
 class AnnotationTemplateListResponse(BaseModel):
     """模板列表响应"""
     content: List[AnnotationTemplateResponse] = Field(..., description="模板列表")
-    total: int = Field(..., description="总数")
+    totalElements: int = Field(..., description="总数")
     page: int = Field(..., description="当前页")
     size: int = Field(..., description="每页大小")
     total_pages: int = Field(alias="totalPages", description="总页数")
