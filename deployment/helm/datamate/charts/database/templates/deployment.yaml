@@ -32,6 +32,15 @@ spec:
       securityContext:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      {{- with .Values.initContainers }}
+      initContainers:
+        {{- $root := $ }}
+        {{- range . }}
+        {{- $defaultImage := dict "image" (include "database.image" $root) }}
+        {{- $containerConfig := merge (deepCopy .) $defaultImage }}
+        - {{ toYaml $containerConfig | nindent 10 | trim }}
+        {{- end }}
+      {{- end }}
       containers:
         - name: {{ .Chart.Name }}
           {{- with .Values.securityContext }}
