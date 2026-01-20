@@ -1,9 +1,6 @@
-import { useMemo, useRef, useEffect, useCallback } from "react";
-import ForceGraph3D, { ForceGraphMethods } from "react-force-graph-3d";
-import type { KnowledgeGraphEdge, KnowledgeGraphNode } from "../knowledge-base.model";
-import { Empty } from "antd";
-import * as THREE from "three";
-import SpriteText from "three-spritetext";
+import React, {useMemo, useRef, useEffect} from "react";
+import ForceGraph2D from "react-force-graph-2d";
+import type {KnowledgeGraphEdge, KnowledgeGraphNode} from "../knowledge-base.model";
 
 export type GraphEntitySelection =
   | { type: "node"; data: KnowledgeGraphNode }
@@ -16,356 +13,167 @@ interface KnowledgeGraphViewProps {
   onSelectEntity?: (selection: GraphEntitySelection | null) => void;
 }
 
+const COLOR_PALETTE = ["#60a5fa", "#f87171", "#fbbf24", "#34d399", "#a78bfa", "#fb7185", "#22d3ee", "#818cf8", "#fb923c", "#4ade80"];
+
 const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
-  nodes,
-  edges,
-  height = 520,
-  onSelectEntity,
-}) => {
-  const graphRef = useRef<ForceGraphMethods>();
-  const lightingInitializedRef = useRef(false);
+                                                                 nodes,
+                                                                 edges,
+                                                                 height = 520,
+                                                                 onSelectEntity,
+                                                               }) => {
+  const graphRef = useRef<any>();
 
-  const degreeMap = useMemo(() => {
-    const map = new Map<string, number>();
-    edges.forEach((edge) => {
-      map.set(String(edge.source), (map.get(String(edge.source)) || 0) + 1);
-      map.set(String(edge.target), (map.get(String(edge.target)) || 0) + 1);
-    });
+  useEffect(() => {
+    if (graphRef.current) {
+      // 1. 调整力导向平衡：减小斥力让独立图块靠近，增加向心力防止飘散
+      graphRef.current.d3Force("charge").strength(-250); // 斥力适中
+      graphRef.current.d3Force("link").distance(120);    // 边长适中
+      graphRef.current.d3Force("center").strength(0.8);  // 增强向心力，让孤立集群往中间靠
+    }
+  }, [nodes]);
+
+  const typeColorMap = useMemo(() => {
+    const map = new Map<string, string>();
+    const types = Array.from(new Set(nodes.map(n => n.properties?.entity_type || (n.labels && n.labels[0]) || 'default')));
+    types.forEach((type, i) => map.set(type, COLOR_PALETTE[i % COLOR_PALETTE.length]));
     return map;
-  }, [edges]);
+  }, [nodes]);
 
-  const graphData = useMemo(
-    () => ({
-      nodes: nodes.map((node) => ({ ...node })),
-      links: edges.map((edge) => {
-        const enrichedEdge = {
-          ...edge,
-          source: edge.source,
-          target: edge.target,
-          keywords: edge.properties?.keywords || edge.type,
-        } as any;
-        enrichedEdge.__originalEdge = edge;
-        return enrichedEdge;
-      }),
-    }),
-    [nodes, edges]
-  );
-
-  const handleLinkSelect = useCallback(
-    (link: any) => {
-      onSelectEntity?.({ type: "edge", data: normalizeLinkData(link) });
-    },
-    [onSelectEntity]
-  );
-
-  useEffect(() => {
-    graphRef.current?.zoomToFit(800);
-  }, [graphData]);
-
-  useEffect(() => {
-    if (lightingInitializedRef.current) return;
-    const graph = graphRef.current;
-    const scene = graph?.scene?.();
-    if (!scene) return;
-
-    const ambient = new THREE.AmbientLight(0xffffff, 0.35);
-    const key = new THREE.DirectionalLight(0xffffff, 0.8);
-    key.position.set(120, 160, 220);
-    const rim = new THREE.DirectionalLight(0x3b82f6, 0.5);
-    rim.position.set(-140, -120, -180);
-    const fill = new THREE.DirectionalLight(0xffffff, 0.45);
-    fill.position.set(-60, 40, 140);
-
-    ambient.name = "kg-ambient-light";
-    key.name = "kg-key-light";
-    rim.name = "kg-rim-light";
-    fill.name = "kg-fill-light";
-
-    scene.add(ambient, key, rim, fill);
-    lightingInitializedRef.current = true;
-
-    return () => {
-      scene.remove(ambient);
-      scene.remove(key);
-      scene.remove(rim);
-      scene.remove(fill);
-      lightingInitializedRef.current = false;
-    };
-  }, [graphData]);
-
-  if (!nodes.length) {
-    return (
-      <div style={{ width: "100%", height }} className="flex items-center justify-center bg-slate-950/80">
-        <Empty description="暂无图谱数据" />
-      </div>
-    );
-  }
+  const graphData = useMemo(() => ({
+    nodes: nodes.map((node) => ({
+      ...node,
+      color: typeColorMap.get(node.properties?.entity_type || (node.labels && node.labels[0]) || 'default'),
+      val: 8 // 统一基础大小，使视觉更整洁
+    })),
+    links: edges.map((edge) => ({
+      ...edge,
+      __originalEdge: edge,
+      keywords: edge.properties?.keywords || edge.type || ""
+    })),
+  }), [nodes, edges, typeColorMap]);
 
   return (
-    <div style={{ width: "100%", height }} className="cosmic-graph-panel">
-      <ForceGraph3D
+    <div style={{width: "100%", height, background: "#01030f"}}>
+      <ForceGraph2D
         ref={graphRef}
         graphData={graphData}
         backgroundColor="#01030f"
-        linkOpacity={0.85}
-        linkColor={() => "rgba(14,165,233,0.9)"}
-        linkWidth={(link: any) => {
-          const weight = Number(link.properties?.weight ?? link.properties?.score ?? 1);
-          return Math.min(1.2 + weight * 0.4, 4);
-        }}
-        linkDirectionalParticles={2}
-        linkDirectionalParticleWidth={3.5}
-        linkDirectionalParticleSpeed={0.0035}
-        linkDirectionalParticleColor={() => "rgba(248,250,252,0.85)"}
-        linkCurvature={0.25}
-        d3VelocityDecay={0.18}
-        linkDistance={(link: any) => computeLinkDistance(link, degreeMap)}
-        nodeAutoColorBy={(node: any) => node.properties?.entity_type || "default"}
-        nodeOpacity={1}
-        nodeLabel={(node: any) => node.id}
-        linkLabel={(link: any) => link.keywords}
-        nodeThreeObject={(node: any) => {
-          const radius = getNodeRadius(node.id, degreeMap);
-          const color = node.color || "#60a5fa";
-          const group = new THREE.Group();
-          const sphereRadius = getSphereDisplayRadius(radius);
-          const baseColor = new THREE.Color(color);
 
-          const litSphere = new THREE.Mesh(getSphereGeometry(sphereRadius), getSphereMaterial(baseColor));
-          group.add(litSphere);
+        // --- 边视觉 ---
+        linkColor={() => "rgba(255, 255, 255, 0.2)"}
+        linkWidth={1.2}
+        linkDirectionalArrowLength={3}
+        linkDirectionalArrowRelPos={1}
+        linkCurvature={0.1}
 
-          const innerSphere = new THREE.Mesh(
-            getSphereGeometry(Math.max(sphereRadius * 0.65, 0.6)),
-            new THREE.MeshLambertMaterial({
-              color: baseColor.clone().offsetHSL(0, 0, 0.15),
-              emissive: baseColor.clone().multiplyScalar(0.2),
-              transparent: true,
-              opacity: 0.75,
-            })
-          );
-          innerSphere.renderOrder = 2;
-          group.add(innerSphere);
+        // --- 节点绘制 ---
+        nodeCanvasObject={(node: any, ctx, globalScale) => {
+          const {x, y, val: radius, color, id} = node;
+          if (!Number.isFinite(x) || !Number.isFinite(y)) return;
 
-          const highlightOrb = createHighlightOrb(sphereRadius, baseColor);
-          if (highlightOrb) {
-            group.add(highlightOrb);
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(x, y, radius, 0, 2 * Math.PI);
+          ctx.fillStyle = color;
+          ctx.shadowBlur = 10 / globalScale;
+          ctx.shadowColor = color;
+          ctx.fill();
+
+          // 节点名称
+          if (globalScale > 0.4) {
+            const fontSize = 12 / globalScale;
+            ctx.font = `${fontSize}px Sans-Serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            ctx.fillStyle = '#ffffff';
+            ctx.shadowBlur = 0;
+            ctx.fillText(id, x, y + radius + 2);
           }
-
-          const label = new SpriteText(node.id || "", 1, "#f8fafc");
-          label.center.set(0.5, 0.5);
-          label.material.depthWrite = false;
-          label.material.depthTest = false;
-          label.renderOrder = 50;
-          const maxDiameter = radius * 0.95;
-          const fontRatio = Math.max(Math.min((radius / 18) * 5, 5), 1.5) * 1.15;
-          label.textHeight = Math.min(maxDiameter, radius * 0.7) / fontRatio;
-          label.position.set(0, 0, sphereRadius + label.textHeight * 0.95);
-          group.add(label);
-
-          return group;
+          ctx.restore();
         }}
-        linkThreeObjectExtend={true}
-        linkThreeObject={(link: any) => {
-          const text = String(link.keywords || "").trim();
-          if (!text) {
-            return new THREE.Object3D();
-          }
-          const label = new SpriteText(text, 1, "#e2e8f0");
-          label.center.set(0.5, 0.5);
-          label.material.depthWrite = false;
-          label.material.depthTest = false;
-          label.renderOrder = 15;
-          label.textHeight = 4;
-          (label as any).__graphObjType = "link";
-          (label as any).__data = link;
-          label.userData.normalizedEdge = normalizeLinkData(link);
-          return label;
+
+        linkPointerAreaPaint={(link: any, color, ctx, globalScale) => {
+          const label = link.keywords;
+          if (!label || globalScale < 1.1) return;
+
+          const start = link.source;
+          const end = link.target;
+          if (typeof start !== 'object' || typeof end !== 'object') return;
+
+          const fontSize = 9 / globalScale;
+          const textPos = {x: start.x + (end.x - start.x) * 0.5, y: start.y + (end.y - start.y) * 0.5};
+          const angle = Math.atan2(end.y - start.y, end.x - start.x);
+          const bRotate = angle > Math.PI / 2 || angle < -Math.PI / 2;
+
+          ctx.save();
+          ctx.translate(textPos.x, textPos.y);
+          ctx.rotate(bRotate ? angle + Math.PI : angle);
+
+          ctx.font = `${fontSize}px Sans-Serif`;
+          const textWidth = ctx.measureText(label).width;
+
+          // 绘制一个与文字大小相同的透明矩形，颜色必须使用参数中的 'color'
+          // 这是 react-force-graph 识别点击对象的关键（Color-picking 技术）
+          ctx.fillStyle = color;
+          ctx.fillRect(-textWidth / 2 - 2, -fontSize / 2 - 2, textWidth + 4, fontSize + 4);
+          ctx.restore();
         }}
-        linkPositionUpdate={(sprite, { start, end }) => {
-          const middlePos = {
-            x: start.x + (end.x - start.x) / 2,
-            y: start.y + (end.y - start.y) / 2,
-            z: start.z + (end.z - start.z) / 2,
+
+        // --- 边文字绘制：优化大小、位置和翻转逻辑 ---
+        linkCanvasObjectMode={() => 'after'}
+        linkCanvasObject={(link: any, ctx, globalScale) => {
+          const MAX_DISPLAY_SCALE = 1.1;
+          if (globalScale < MAX_DISPLAY_SCALE) return;
+
+          const label = link.keywords;
+          const start = link.source;
+          const end = link.target;
+          if (typeof start !== 'object' || typeof end !== 'object') return;
+
+          // 边文字比节点文字小一点点（节点12，边11）
+          const fontSize = 11 / globalScale;
+
+          const textPos = {
+            x: start.x + (end.x - start.x) * 0.5,
+            y: start.y + (end.y - start.y) * 0.5
           };
-          Object.assign(sprite.position, middlePos);
-          const dx = end.x - start.x;
-          const dy = end.y - start.y;
-          const angle = Math.atan2(dy, dx);
-          const material = (sprite as SpriteText).material as THREE.SpriteMaterial | undefined;
-          if (material) {
-            material.rotation = angle;
-          }
+
+          let angle = Math.atan2(end.y - start.y, end.x - start.x);
+
+          // --- 核心修复：防止文字倒挂 ---
+          // 如果角度在 90度 到 270度 之间，旋转180度让文字保持正向
+          const bRotate = angle > Math.PI / 2 || angle < -Math.PI / 2;
+
+          ctx.save();
+          ctx.translate(textPos.x, textPos.y);
+          ctx.rotate(bRotate ? angle + Math.PI : angle);
+
+          ctx.font = `${fontSize}px Sans-Serif`;
+          const textWidth = ctx.measureText(label).width;
+
+          // 绘制极小的背景遮罩，紧贴文字
+          ctx.fillStyle = 'rgba(1, 3, 15, 0.7)';
+          ctx.fillRect(-textWidth / 2 - 1, -fontSize / 2, textWidth + 2, fontSize);
+
+          ctx.fillStyle = '#94e2d5';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          // y轴偏移设为0，使其紧贴线条中心
+          ctx.fillText(label, 0, 0);
+          ctx.restore();
         }}
-        onNodeClick={(node: any) => onSelectEntity?.({ type: "node", data: node })}
-        onLinkClick={handleLinkSelect}
+
+        onNodeClick={(node: any) => onSelectEntity?.({type: "node", data: node})}
+        onLinkClick={(link: any) => {
+          const originalData = link.__originalEdge || link;
+          onSelectEntity?.({type: "edge", data: originalData});
+        }}
         onBackgroundClick={() => onSelectEntity?.(null)}
+        cooldownTicks={120}
+        d3VelocityDecay={0.4} // 增加阻力，使布局更快稳定
       />
     </div>
   );
 };
 
 export default KnowledgeGraphView;
-
-const circleTextureCache = new Map<string, THREE.Texture>();
-const sphereMaterialCache = new Map<string, THREE.MeshPhongMaterial>();
-const sphereGeometryCache = new Map<number, THREE.SphereGeometry>();
-
-function getCircleTexture(color: string, opacity = 1, soft = false) {
-  const key = `${color}-${opacity}-${soft}`;
-  if (circleTextureCache.has(key)) {
-    return circleTextureCache.get(key)!;
-  }
-  const size = 512;
-  const canvas = document.createElement("canvas");
-  canvas.width = size;
-  canvas.height = size;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return null;
-
-  ctx.clearRect(0, 0, size, size);
-  if (soft) {
-    const gradient = ctx.createRadialGradient(size / 2, size / 2, size / 3, size / 2, size / 2, size / 2);
-    gradient.addColorStop(0, hexToRgba(color, opacity * 0.15));
-    gradient.addColorStop(1, hexToRgba(color, 0));
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, size, size);
-  } else {
-    ctx.fillStyle = hexToRgba(color, opacity);
-    ctx.beginPath();
-    ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
-    ctx.closePath();
-    ctx.fill();
-  }
-
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.needsUpdate = true;
-  circleTextureCache.set(key, texture);
-  return texture;
-}
-
-function hexToRgba(hex: string, alpha: number) {
-  const parsedHex = hex.replace("#", "");
-  const bigint = Number.parseInt(parsedHex.length === 3 ? parsedHex.repeat(2) : parsedHex, 16);
-  const r = (bigint >> 16) & 255;
-  const g = (bigint >> 8) & 255;
-  const b = bigint & 255;
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-}
-
-function createNodeLabelTexture(text: string, radius: number) {
-  return null;
-}
-
-function createEdgeLabelTexture(text: string) {
-  return createTextTexture(text, {
-    fontSize: 10,
-    paddingX: 4,
-    paddingY: 2,
-    backgroundFill: null,
-    textFill: "rgba(241,245,249,0.9)",
-    maxWidth: 60,
-  });
-}
-
-function getNodeRadius(nodeId: string, degreeMap: Map<string, number>) {
-  const degree = degreeMap.get(nodeId) || 1;
-  return Math.min(12 + degree * 4, 64);
-}
-
-function getSphereDisplayRadius(nodeRadius: number) {
-  return Math.max(nodeRadius * 0.16, 2.2);
-}
-
-function getSphereGeometry(radius: number) {
-  const key = Number(radius.toFixed(2));
-  if (!sphereGeometryCache.has(key)) {
-    sphereGeometryCache.set(key, new THREE.SphereGeometry(radius, 48, 48));
-  }
-  return sphereGeometryCache.get(key)!;
-}
-
-function getSphereMaterial(color: THREE.Color) {
-  const key = color.getHexString();
-  if (!sphereMaterialCache.has(key)) {
-    const specular = new THREE.Color(1, 1, 1).lerp(color.clone(), 0.35);
-    sphereMaterialCache.set(
-      key,
-      new THREE.MeshPhongMaterial({
-        color: color.clone(),
-        emissive: color.clone().multiplyScalar(0.12),
-        specular,
-        shininess: 85,
-        reflectivity: 0.4,
-      })
-    );
-  }
-  return sphereMaterialCache.get(key)!;
-}
-
-function createHighlightOrb(sphereRadius: number, baseColor: THREE.Color) {
-  const orbRadius = Math.max(sphereRadius * 0.28, 0.4);
-  const geometry = getSphereGeometry(orbRadius);
-  const material = new THREE.MeshBasicMaterial({
-    color: baseColor.clone().offsetHSL(0, 0, 0.35),
-    transparent: true,
-    opacity: 0.85,
-  });
-  const orb = new THREE.Mesh(geometry, material);
-  orb.position.set(sphereRadius * 0.45, sphereRadius * 0.5, sphereRadius * 0.65);
-  orb.renderOrder = 6;
-  return orb;
-}
-
-function normalizeLinkData(link: any): KnowledgeGraphEdge {
-  if (!link) {
-    return {
-      id: "",
-      type: "",
-      source: "",
-      target: "",
-      properties: {},
-    };
-  }
-
-  if ((link as any).__normalizedEdge) {
-    return (link as any).__normalizedEdge as KnowledgeGraphEdge;
-  }
-
-  const normalized: KnowledgeGraphEdge = {
-    id: String(link.id ?? link.__id ?? ""),
-    type: String(link.type ?? ""),
-    source: extractNodeId(link.source),
-    target: extractNodeId(link.target),
-    properties: { ...(link.properties ?? {}) },
-  };
-
-  if (link.keywords && !normalized.properties.keywords) {
-    (normalized.properties as Record<string, unknown>).keywords = link.keywords;
-  }
-
-  (link as any).__normalizedEdge = normalized;
-  return normalized;
-}
-
-function extractNodeId(nodeRef: any) {
-  if (nodeRef == null) return "";
-  if (typeof nodeRef === "string" || typeof nodeRef === "number") {
-    return String(nodeRef);
-  }
-  return String(nodeRef.id ?? nodeRef.__id ?? nodeRef.name ?? "");
-}
-
-function computeLinkDistance(link: any, degreeMap: Map<string, number>) {
-  const sourceId = extractNodeId(link.source);
-  const targetId = extractNodeId(link.target);
-  const sourceRadius = getNodeRadius(sourceId, degreeMap);
-  const targetRadius = getNodeRadius(targetId, degreeMap);
-  const minimumGap = (sourceRadius + targetRadius) * 5;
-
-  const degreeBoost = ((degreeMap.get(sourceId) || 1) + (degreeMap.get(targetId) || 1)) / 2;
-  const weight = Number(link.properties?.weight ?? link.properties?.score ?? 1);
-  const base = 260;
-  const dynamicDistance = base + degreeBoost * 55 + weight * 40;
-
-  return Math.min(Math.max(dynamicDistance, minimumGap) * 100, 500);
-}
