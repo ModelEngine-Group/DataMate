@@ -68,6 +68,19 @@ operatorVolume: &operatorVolume
     claimName: datamate-operator-pvc
 
 database:
+  initContainers:
+    - name: init-chown
+      imagePullPolicy: IfNotPresent
+      command:
+        - sh
+        - -c
+        - "chown -R 999:999 /var/log/datamate/database && chmod 750 /var/log/datamate/database"
+      securityContext:
+        runAsUser: 0
+      volumeMounts:
+        - name: log-volume
+          mountPath: /var/log/datamate/database
+          subPath: database
   env:
     - name: POSTGRES_USER
       value: postgres
