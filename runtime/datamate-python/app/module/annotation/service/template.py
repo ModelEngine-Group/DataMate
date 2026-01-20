@@ -212,7 +212,7 @@ class AnnotationTemplateService:
         
         return AnnotationTemplateListResponse(
             content=[self._to_response(t) for t in templates],
-            total=total,
+            totalElements=total,
             page=page,
             size=size,
             totalPages=(total + size - 1) // size
