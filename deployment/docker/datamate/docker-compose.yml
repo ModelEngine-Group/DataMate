@@ -113,13 +113,12 @@ services:
       MINERU_DEVICE_MODE: npu
       VLLM_WORKER_MULTIPROC_METHOD: spawn
     privileged: true
-    entrypoint: /bin/sh -c
-    command: >
-      "exec mineru-openai-server
+    entrypoint: mineru-openai-server
+    command:
       --engine vllm
       --host 0.0.0.0
       --port 8000
-      ${EXTRA_ARGS:-}"
+      ${EXTRA_ARGS:-}
     volumes:
       - /var/log/npu/:/usr/slog
       - /usr/local/dcmi:/usr/local/dcmi
