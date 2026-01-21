@@ -116,6 +116,9 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
         const isDirectory = record.id.startsWith('directory-');
         const iconSize = 16;
 
+        // 如果是通过文件夹上传生成的路径（包含目录），仅展示文件名部分
+        const displayName = text?.split('/')?.filter(Boolean).pop() || text;
+
         const content = (
           <div className="flex items-center">
             {isDirectory ? (
@@ -123,7 +126,7 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
             ) : (
               <File className="mr-2 text-black" size={iconSize} />
             )}
-            <span className="truncate text-black">{text}</span>
+            <span className="truncate text-black">{displayName}</span>
           </div>
         );
 
