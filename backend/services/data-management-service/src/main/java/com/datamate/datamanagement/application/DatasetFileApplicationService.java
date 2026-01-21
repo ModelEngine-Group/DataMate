@@ -137,7 +137,7 @@ public class DatasetFileApplicationService {
 
             return new PagedResponse<>(page, size, total, totalPages, datasetFiles);
         } catch (IOException e) {
-            log.error("list dataset path error", e);
+            log.warn("list dataset path error");
             return PagedResponse.of(new Page<>(page, size));
         }
     }
