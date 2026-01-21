@@ -24,6 +24,8 @@ import com.datamate.gateway.interfaces.dto.RegisterRequest;
 @Service
 @RequiredArgsConstructor
 public class UserService {
+    private static final String SYSTEM_USER = "system";
+
     private final UserRepository userRepository;
 
     @Value("${datamate.jwt.expiration-seconds:3600}")
@@ -87,7 +89,7 @@ public class UserService {
         // Check if username already exists
         LambdaQueryWrapper<User> usernameQuery = new LambdaQueryWrapper<>();
         usernameQuery.eq(User::getUsername, registerRequest.getUsername());
-        if (userRepository.getOne(usernameQuery) != null) {
+        if (userRepository.getOne(usernameQuery) != null || SYSTEM_USER.equals(registerRequest.getUsername())) {
             return Optional.empty();
         }
 
