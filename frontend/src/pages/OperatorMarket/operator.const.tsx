@@ -120,7 +120,7 @@ export const mapOperator = (op: OperatorI) => {
     statistics: [
       {
         label: "使用次数",
-        value: Math.floor(Math.random() * 1000) + 1
+        value: op?.usageCount || 0
       },
       {
         label: "类型",
@@ -128,7 +128,7 @@ export const mapOperator = (op: OperatorI) => {
       },
       {
         label: "大小",
-        value: `${(Math.floor(Math.random() * 91) + 10) / 10} MB`,
+        value: formatBytes(op?.fileSize),
       },
       {
         label: "语言",
@@ -159,4 +159,25 @@ export const FileExtensionMap: Record<MediaType, string[]> = {
     ...VIDEO_EXTENSIONS,
     ...AUDIO_EXTENSIONS,
   ],
+};
+
+export const formatBytes = (bytes: number | null | undefined, decimals: number = 2): string => {
+  // 1. 处理特殊情况：0、null 或 undefined
+  if (bytes === null || bytes === undefined || bytes === 0) {
+    return '0 B';
+  }
+
+  // 2. 定义单位阶梯
+  const k = 1024;
+  const dm = decimals < 0 ? 0 : decimals; // 确保小数位数非负
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+
+  // 3. 计算指数 (i)
+  // Math.log(bytes) / Math.log(k) 等同于以 1024 为底求 bytes 的对数
+  // floor 向下取整，得出它属于哪个单位级别 (0是B, 1是KB, 2是MB...)
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+  // 4. 格式化数值并拼接单位
+  // parseFloat 用于去掉末尾多余的 0 (例如 "1.20 MB" -> "1.2 MB")
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
 };

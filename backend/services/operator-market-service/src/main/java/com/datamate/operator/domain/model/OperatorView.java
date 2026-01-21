@@ -31,6 +31,8 @@ public class OperatorView {
 
     private String settings;
 
+    private String fileName;
+
     private Long fileSize;
 
     private String metrics;

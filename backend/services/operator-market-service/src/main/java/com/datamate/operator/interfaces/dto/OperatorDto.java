@@ -45,6 +45,10 @@ public class OperatorDto {
 
     private Boolean isStar;
 
+    private List<String> requirements;
+
+    private String readme;
+
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     private LocalDateTime createdAt;
 

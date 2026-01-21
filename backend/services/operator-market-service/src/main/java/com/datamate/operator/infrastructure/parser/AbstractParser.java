@@ -33,6 +33,7 @@ public abstract class AbstractParser {
         operator.setOutputs(toStringIfNotNull(content.get("outputs")));
         operator.setRuntime(toJsonIfNotNull(content.get("runtime")));
         operator.setSettings(toJsonIfNotNull(content.get("settings")));
+        operator.setMetrics(toJsonIfNotNull(content.get("metrics")));
         List<String> categories = new ArrayList<>();
         categories.add(OperatorConstant.CATEGORY_MAP.get(toLowerCaseIfNotNull(content.get("language"))));
         categories.add(OperatorConstant.CATEGORY_MAP.get(toLowerCaseIfNotNull(content.get("modal"))));

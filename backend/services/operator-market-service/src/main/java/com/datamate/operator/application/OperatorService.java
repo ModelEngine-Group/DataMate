@@ -28,10 +28,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.MalformedURLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @Slf4j
@@ -63,7 +68,14 @@ public class OperatorService {
 
     public OperatorDto getOperatorById(String id) {
         OperatorView operator = operatorViewRepo.findOperatorById(id);
-        return OperatorConverter.INSTANCE.fromEntityToDto(operator);
+        OperatorDto operatorDto = OperatorConverter.INSTANCE.fromEntityToDto(operator);
+        if (StringUtils.isNotBlank(operatorDto.getFileName())) {
+            String filePath = getExtractPath(getFileNameWithoutExtension(operatorDto.getFileName()));
+            String requirements = filePath + "/requirements.txt";
+            operatorDto.setRequirements(readRequirements(requirements));
+            operatorDto.setReadme(getReadmeContent(filePath));
+        }
+        return operatorDto;
     }
 
     @Transactional
@@ -219,5 +231,45 @@ public class OperatorService {
             }
             setting.put("properties", result);
         }
+    }
+
+    private List<String> readRequirements(String filePath) {
+        Path path = Paths.get(filePath);
+        if (!Files.exists(path) || !Files.isRegularFile(path)) {
+            log.warn("requirements文件不存在或路径错误: {}", filePath);
+            return Collections.emptyList();
+        }
+
+        List<String> requirements = new ArrayList<>();
+        try (Stream<String> lines = Files.lines(path)) {
+            requirements = lines.map(String::trim)
+                    .filter(line -> !line.isEmpty())
+                    .filter(line -> !line.startsWith("#"))
+                    .collect(Collectors.toList());
+        } catch (IOException e) {
+            log.warn("读取requirements文件异常: {}", e.getMessage());
+        }
+        return requirements;
+    }
+
+    private String getReadmeContent(String directoryPath) {
+        Path dir = Paths.get(directoryPath);
+        if (!Files.exists(dir) || !Files.isDirectory(dir)) {
+            System.err.println("目录不存在: " + directoryPath);
+            return null;
+        }
+        List<String> candidateNames = Arrays.asList("README.md", "readme.md", "Readme.md");
+        for (String fileName : candidateNames) {
+            Path filePath = dir.resolve(fileName);
+            if (Files.exists(filePath) && Files.isRegularFile(filePath)) {
+                try {
+                    byte[] bytes = Files.readAllBytes(filePath);
+                    return new String(bytes, StandardCharsets.UTF_8);
+                } catch (IOException e) {
+                    log.warn("找到文件但读取失败: {}, 错误: {}", filePath, e.getMessage());
+                }
+            }
+        }
+        return "";
     }
 }

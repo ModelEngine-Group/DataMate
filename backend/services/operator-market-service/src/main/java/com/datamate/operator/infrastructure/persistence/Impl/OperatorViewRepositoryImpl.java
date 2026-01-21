@@ -56,9 +56,9 @@ public class OperatorViewRepositoryImpl extends CrudRepository<OperatorViewMappe
         queryWrapper.eq(isStar != null, "is_star", isStar);
         if (StringUtils.isNotEmpty(keyword)) {
             queryWrapper.and(w ->
-                    w.like("operator_name", keyword)
+                    w.apply("operator_name ILIKE {0}", "%" + keyword + "%")
                             .or()
-                            .like("description", keyword));
+                            .apply("description ILIKE {0}", "%" + keyword + "%"));
         }
         StringBuilder havingSql = new StringBuilder();
         if (CollectionUtils.isNotEmpty(categories)) {
