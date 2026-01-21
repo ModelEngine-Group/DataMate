@@ -104,6 +104,7 @@ export default function Overview({ operator }) {
       </Card>
 
       {/* 输入输出格式 */}
+      {operator.categories?.includes('系统预置') && (
       <Card>
         <h3 className="text-lg font-semibold text-gray-900 mb-4">支持格式</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -132,6 +133,7 @@ export default function Overview({ operator }) {
           </div>
         </div>
       </Card>
+      )}
     </div>
   );
 }

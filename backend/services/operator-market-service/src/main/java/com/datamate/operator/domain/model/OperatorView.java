@@ -31,6 +31,12 @@ public class OperatorView {
 
     private String settings;
 
+    private Long fileSize;
+
+    private String metrics;
+
+    private Integer usageCount;
+
     private Boolean isStar;
 
     private LocalDateTime createdAt;

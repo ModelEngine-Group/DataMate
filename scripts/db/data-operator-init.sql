@@ -6,14 +6,19 @@ CREATE TABLE IF NOT EXISTS t_operator
 (
     id          VARCHAR(64) PRIMARY KEY,
     name        VARCHAR(64) UNIQUE,
-    description VARCHAR(256),
-    version     VARCHAR(256),
-    inputs      VARCHAR(256),
-    outputs     VARCHAR(256),
+    description VARCHAR(255),
+    version     VARCHAR(255),
+    inputs      VARCHAR(255),
+    outputs     VARCHAR(255),
     runtime     TEXT,
     settings    TEXT,
     file_name   TEXT,
+    file_size   BIGINT,
+    metrics     TEXT,
     is_star     BOOLEAN,
+    usage_count INT,
+    created_by  VARCHAR(255),
+    updated_by  VARCHAR(255),
     created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -28,9 +33,22 @@ COMMENT ON COLUMN t_operator.outputs IS '输出类型';
 COMMENT ON COLUMN t_operator.runtime IS '运行时信息';
 COMMENT ON COLUMN t_operator.settings IS '设置信息';
 COMMENT ON COLUMN t_operator.file_name IS '文件名';
+COMMENT ON COLUMN t_operator.file_size IS '文件大小';
+COMMENT ON COLUMN t_operator.metrics IS '性能指标';
+COMMENT ON COLUMN t_operator.usage_count IS '使用次数';
 COMMENT ON COLUMN t_operator.is_star IS '是否收藏';
 COMMENT ON COLUMN t_operator.created_at IS '创建时间';
 COMMENT ON COLUMN t_operator.updated_at IS '更新时间';
+
+-- 算子版本表
+CREATE TABLE IF NOT EXISTS t_operator_release
+(
+    id           VARCHAR(64),
+    version      VARCHAR(255),
+    release_date TIMESTAMP,
+    changelog    JSON,
+    PRIMARY KEY (id, version)
+);
 
 -- 算子分类表
 CREATE TABLE IF NOT EXISTS t_operator_category
@@ -103,6 +121,8 @@ SELECT
     o.runtime,
     o.settings,
     o.is_star,
+    o.file_size,
+    o.usage_count,
     o.created_at,
     o.updated_at,
     toc.id AS category_id,
@@ -177,6 +197,9 @@ VALUES ('MineruFormatter', 'MinerU PDF文本抽取', '基于MinerU API，抽取P
         ('PiiDetector', '高级匿名化', '高级匿名化算子，检测命名实体并匿名化。', '1.0.0', 'text', 'text', null, null, '', 'false'),
         ('ObjectDetectionRectangle', '图像目标检测与预标注', '基于 YOLOv8 的图像目标检测算子。对输入图像进行目标检测，输出带矩形框与类别标签的标注图像，并生成结构化标注 JSON（包含类别、置信度与边界框坐标）。支持将检测结果导出为 Label Studio 兼容的 predictions 预标注格式（rectanglelabels），可在标注任务中直接加载并进行人工校正，从而显著降低人工标注成本并提升标注效率。', '1.0.0', 'image', 'image,json', null, null, '', 'false')
 ON CONFLICT DO NOTHING;
+
+INSERT INTO t_operator_release(id, version, release_date, changelog)
+VALUES ('MineruFormatter', '1.0.0', '2026-03-30', '["aaa","bbb"]');
 
 INSERT INTO t_operator_category_relation(category_id, operator_id)
 SELECT c.id, o.id

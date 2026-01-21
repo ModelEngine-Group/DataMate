@@ -37,6 +37,12 @@ public class OperatorDto {
 
     private String fileName;
 
+    private Long fileSize;
+
+    private String metrics;
+
+    private Integer usageCount;
+
     private Boolean isStar;
 
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)

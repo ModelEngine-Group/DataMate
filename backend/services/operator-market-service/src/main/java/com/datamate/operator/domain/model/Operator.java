@@ -28,6 +28,12 @@ public class Operator {
 
     private String fileName;
 
+    private Long fileSize;
+
+    private String metrics;
+
+    private Integer usageCount;
+
     private Boolean isStar;
 
     private LocalDateTime createdAt;
