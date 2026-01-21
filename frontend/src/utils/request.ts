@@ -82,13 +82,6 @@ class Request {
    */
   createXHRWithProgress(url, config, onProgress, onDownloadProgress) {
     return new Promise((resolve, reject) => {
-      // 设置请求头
-      if (config.headers) {
-        Object.keys(config.headers).forEach((key) => {
-          xhr.setRequestHeader(key, config.headers[key]);
-        });
-      }
-
       const xhr = new XMLHttpRequest();
 
       // 监听上传进度
@@ -102,14 +95,6 @@ class Request {
           }
         }
       });
-
-      // 请求完成
-      // xhr.addEventListener("load", function () {
-      //   if (xhr.status >= 200 && xhr.status < 300) {
-      // const response = JSON.parse(xhr.responseText);
-      //     resolve(xhr);
-      //   }
-      // });
 
       // 请求完成处理
       xhr.addEventListener("load", () => {
@@ -152,6 +137,12 @@ class Request {
       });
 
       xhr.open("POST", url);
+      // 设置请求头
+      if (config.headers) {
+        Object.keys(config.headers).forEach((key) => {
+          xhr.setRequestHeader(key, config.headers[key]);
+        });
+      }
       xhr.send(config.body);
 
       return xhr; // 返回 xhr 对象以便后续控制
