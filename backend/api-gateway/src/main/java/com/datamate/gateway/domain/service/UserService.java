@@ -3,9 +3,7 @@ package com.datamate.gateway.domain.service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.datamate.gateway.domain.entity.User;
 import com.datamate.gateway.domain.repository.UserRepository;
-import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -70,12 +68,12 @@ public class UserService {
                 .compact();
     }
 
-    public boolean validateToken(String token) {
+    public String validateToken(String token) {
         try {
-            Jwts.parser().setSigningKey(secret.getBytes()).parseClaimsJws(token);
-            return true;
+            Jws<Claims> claimsJws = Jwts.parserBuilder().setSigningKey(Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8))).build().parseClaimsJws(token);
+            return claimsJws.getBody().getSubject();
         } catch (JwtException | IllegalArgumentException ex) {
-            return false;
+            return null;
         }
     }
 

@@ -7,6 +7,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
@@ -22,16 +23,18 @@ import reactor.core.publisher.Mono;
 import java.nio.charset.StandardCharsets;
 
 /**
- * 用户信息过滤器
+ * 鉴权过滤器
  *
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class UserContextFilter implements GlobalFilter {
+public class AuthFilter implements GlobalFilter {
     private static final String AUTH_HEADER = "Authorization";
 
     private static final String TOKEN_PREFIX = "Bearer ";
+
+    private static final String USER_HEADER = "User";
 
     private final UserService userService;
 
@@ -55,10 +58,22 @@ public class UserContextFilter implements GlobalFilter {
                 return sendUnauthorizedResponse(exchange);
             }
             String token = authHeader.substring(TOKEN_PREFIX.length());
-            if (!userService.validateToken(token)) {
+            String user = userService.validateToken(token);
+            if (StringUtils.isBlank(user)) {
                 return sendUnauthorizedResponse(exchange);
             }
-            return chain.filter(exchange);
+            // 4. 创建新的请求
+            ServerHttpRequest mutatedRequest = request.mutate()
+                    .headers(httpHeaders -> {
+                        // 或者直接操作headers
+                        httpHeaders.add(USER_HEADER, user);
+                    })
+                    .build();
+            // 5. 使用新的请求创建新的exchange
+            ServerWebExchange mutatedExchange = exchange.mutate()
+                    .request(mutatedRequest)
+                    .build();
+            return chain.filter(mutatedExchange);
         } catch (Exception e) {
             log.error("get current user info error", e);
             return sendUnauthorizedResponse(exchange);
