@@ -41,6 +41,7 @@ class ModelConfig(Base):
     # 使用 Integer 存储 TINYINT，后续可在业务层将 0/1 转为 bool
     is_enabled = Column(Integer, nullable=False, default=1, comment="是否启用：1-启用，0-禁用")
     is_default = Column(Integer, nullable=False, default=0, comment="是否默认：1-默认，0-非默认")
+    is_deleted = Column(Integer, nullable=False, default=0, comment="是否删除：1-已删除，0-未删除")
 
     created_at = Column(TIMESTAMP, nullable=True, comment="创建时间")
     updated_at = Column(TIMESTAMP, nullable=True, comment="更新时间")

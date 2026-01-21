@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS t_model_config
     type       VARCHAR(50)  NOT NULL,
     is_enabled BOOLEAN     DEFAULT TRUE,
     is_default BOOLEAN     DEFAULT FALSE,
+    is_deleted BOOLEAN     DEFAULT FALSE,
     created_at TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     created_by VARCHAR(255),
@@ -28,6 +29,7 @@ COMMENT ON COLUMN t_model_config.api_key IS 'API 密钥（无密钥则为空）'
 COMMENT ON COLUMN t_model_config.type IS '模型类型（如 chat、embedding）';
 COMMENT ON COLUMN t_model_config.is_enabled IS '是否启用：1-启用，0-禁用';
 COMMENT ON COLUMN t_model_config.is_default IS '是否默认：1-默认，0-非默认';
+COMMENT ON COLUMN t_model_config.is_deleted IS '是否删除：1-已删除，0-未删除';
 COMMENT ON COLUMN t_model_config.created_at IS '创建时间';
 COMMENT ON COLUMN t_model_config.updated_at IS '更新时间';
 COMMENT ON COLUMN t_model_config.created_by IS '创建者';
@@ -36,7 +38,7 @@ COMMENT ON COLUMN t_model_config.updated_by IS '更新者';
 -- 添加唯一约束
 ALTER TABLE t_model_config
     ADD CONSTRAINT uk_model_provider
-    UNIQUE (model_name, provider);
+        UNIQUE (model_name, provider, created_by);
 
 COMMENT ON CONSTRAINT uk_model_provider ON t_model_config
     IS '避免同一提供商下模型名称重复';
