@@ -152,7 +152,7 @@ endef
 # ========== Build Targets ==========
 
 # Valid build targets
-VALID_BUILD_TARGETS := backend database frontend runtime backend-python deer-flow mineru mineru-npu gateway label-studio
+VALID_BUILD_TARGETS := frontend backend gateway database runtime backend-python deer-flow label-studio mineru mineru-910B mineru-910C mineru-310P
 
 # Generic docker build target with service name as parameter
 # Automatically prefixes image names with "datamate-" unless it's deer-flow
@@ -169,6 +169,12 @@ VALID_BUILD_TARGETS := backend database frontend runtime backend-python deer-flo
 	@if [ "$*" = "deer-flow" ]; then \
 		$(call docker-build,deer-flow-backend,deer-flow-backend); \
 		$(call docker-build,deer-flow-frontend,deer-flow-frontend); \
+	elif [ "$*" = "mineru" ] || [ "$*" = "mineru-910B" ]; then \
+		wget -qO - https://gcore.jsdelivr.net/gh/opendatalab/MinerU@master/docker/china/npu.Dockerfile | docker build --network=host -t datamate-mineru -f - .; \
+	elif [ "$*" = "mineru-910C" ]; then \
+		wget -qO - https://gcore.jsdelivr.net/gh/opendatalab/MinerU@master/docker/china/npu.Dockerfile | sed 's/v0.11.0/v0.11.0-a3/g' | docker build --network=host -t datamate-mineru -f - .; \
+	elif [ "$*" = "mineru-310P" ]; then \
+		wget -qO - https://gcore.jsdelivr.net/gh/opendatalab/MinerU@master/docker/china/npu.Dockerfile | sed 's/v0.11.0/v0.10.0rc1-310p/g' | docker build --network=host -t datamate-mineru -f - .; \
 	else \
 		$(call docker-build,$*,datamate-$*); \
 	fi
@@ -235,7 +241,7 @@ endif
 # ========== Docker Install/Uninstall Targets ==========
 
 # Valid service targets for docker install/uninstall
-VALID_SERVICE_TARGETS := datamate backend frontend runtime backend-python database gateway redis mineru deer-flow milvus label-studio data-juicer dj
+VALID_SERVICE_TARGETS := datamate backend frontend runtime backend-python database gateway redis deer-flow milvus label-studio data-juicer mineru mineru-910B mineru-910C mineru-310P
 
 # Generic docker service install target
 .PHONY: %-docker-install
@@ -252,9 +258,11 @@ VALID_SERVICE_TARGETS := datamate backend frontend runtime backend-python databa
 		REGISTRY=$(REGISTRY) docker compose -f deployment/docker/datamate/docker-compose.yml --profile label-studio up -d; \
 	elif [ "$*" = "datamate" ]; then \
 		REGISTRY=$(REGISTRY) docker compose -f deployment/docker/datamate/docker-compose.yml up -d; \
-	elif [ "$*" = "mineru" ]; then \
+	elif [ "$*" = "mineru" ] || [ "$*" = "mineru-910B" ] || [ "$*" = "mineru-910C" ]; then \
 		REGISTRY=$(REGISTRY) docker compose -f deployment/docker/datamate/docker-compose.yml --profile mineru up -d datamate-mineru; \
-	elif [ "$*" = "data-juicer" ] || [ "$*" = "dj" ]; then \
+	elif [ "$*" = "mineru-310P" ]; then \
+		REGISTRY=$(REGISTRY) EXTRA_ARGS="--enforce-eager --dtype float16" docker compose -f deployment/docker/datamate/docker-compose.yml --profile mineru up -d datamate-mineru; \
+	elif [ "$*" = "data-juicer" ]; then \
 		REGISTRY=$(REGISTRY) docker compose -f deployment/docker/datamate/docker-compose.yml --profile data-juicer up -d datamate-data-juicer; \
 	elif [ "$*" = "redis" ]; then \
 		REGISTRY=$(REGISTRY) docker compose -f deployment/docker/datamate/docker-compose.yml --profile redis up -d datamate-redis; \
@@ -281,7 +289,7 @@ VALID_SERVICE_TARGETS := datamate backend frontend runtime backend-python databa
 	fi
 	@if [ "$*" = "label-studio" ]; then \
 		docker compose -f deployment/docker/datamate/docker-compose.yml rm -f -s label-studio; \
-	elif [ "$*" = "mineru" ]; then \
+	elif [ "$*" = "mineru" ] || [ "$*" = "mineru-910B" ] || [ "$*" = "mineru-910C" ] || [ "$*" = "mineru-310P" ]; then \
 		docker compose -f deployment/docker/datamate/docker-compose.yml rm -f -s datamate-mineru; \
 	elif [ "$*" = "data-juicer" ] || [ "$*" = "dj" ]; then \
 		docker compose -f deployment/docker/datamate/docker-compose.yml rm -f -s datamate-data-juicer; \
@@ -304,7 +312,7 @@ VALID_SERVICE_TARGETS := datamate backend frontend runtime backend-python databa
 # ========== Kubernetes Install/Uninstall Targets ==========
 
 # Valid k8s targets
-VALID_K8S_TARGETS := mineru datamate deer-flow milvus label-studio data-juicer dj
+VALID_K8S_TARGETS := datamate deer-flow milvus label-studio data-juicer mineru mineru-910B mineru-910C mineru-310P
 
 # Generic k8s install target
 .PHONY: %-k8s-install
@@ -319,8 +327,10 @@ VALID_K8S_TARGETS := mineru datamate deer-flow milvus label-studio data-juicer d
 	fi
 	@if [ "$*" = "label-studio" ]; then \
      	helm upgrade label-studio deployment/helm/label-studio/ -n $(NAMESPACE) --install; \
-    elif [ "$*" = "mineru" ]; then \
-		kubectl apply -f deployment/kubernetes/mineru/deploy.yaml -n $(NAMESPACE); \
+    elif [ "$*" = "mineru" ] || [ "$*" = "mineru-910B" ] || [ "$*" = "mineru-910C" ]; then \
+		kubectl apply -f deployment/kubernetes/mineru/deploy-910.yaml -n $(NAMESPACE); \
+	elif [ "$*" = "mineru-310P" ]; then \
+		kubectl apply -f deployment/kubernetes/mineru/deploy-310.yaml -n $(NAMESPACE); \
 	elif [ "$*" = "datamate" ]; then \
 		helm upgrade datamate deployment/helm/datamate/ -n $(NAMESPACE) --install --set global.image.repository=$(REGISTRY); \
 	elif [ "$*" = "deer-flow" ]; then \
@@ -346,8 +356,10 @@ VALID_K8S_TARGETS := mineru datamate deer-flow milvus label-studio data-juicer d
 		done; \
 		exit 1; \
 	fi
-	@if [ "$*" = "mineru" ]; then \
-		kubectl delete -f deployment/kubernetes/mineru/deploy.yaml -n $(NAMESPACE); \
+	@if [ "$*" = "mineru" ] || [ "$*" = "mineru-910B" ] || [ "$*" = "mineru-910C" ]; then \
+		kubectl delete -f deployment/kubernetes/mineru/deploy-910.yaml -n $(NAMESPACE); \
+	elif [ "$*" = "mineru-310P" ]; then \
+		kubectl delete -f deployment/kubernetes/mineru/deploy-310.yaml -n $(NAMESPACE); \
 	elif [ "$*" = "datamate" ]; then \
 		helm uninstall datamate -n $(NAMESPACE) --ignore-not-found; \
 	elif [ "$*" = "deer-flow" ]; then \
@@ -358,26 +370,6 @@ VALID_K8S_TARGETS := mineru datamate deer-flow milvus label-studio data-juicer d
 		helm uninstall label-studio -n $(NAMESPACE) --ignore-not-found; \
 	elif [ "$*" = "data-juicer" ] || [ "$*" = "dj" ]; then \
 		kubectl delete -f deployment/kubernetes/data-juicer/deploy.yaml -n $(NAMESPACE); \
-	fi
-
-# ========== Upgrade Targets ==========
-
-# Valid upgrade targets
-VALID_UPGRADE_TARGETS := datamate
-
-# Generic docker upgrade target
-.PHONY: %-docker-upgrade
-%-docker-upgrade:
-	@if ! echo " $(VALID_UPGRADE_TARGETS) " | grep -q " $* "; then \
-		echo "Error: Unknown upgrade target '$*'"; \
-		echo "Valid upgrade targets are:"; \
-		for target in $(VALID_UPGRADE_TARGETS); do \
-			echo "  - $$target"; \
-		done; \
-		exit 1; \
-	fi
-	@if [ "$*" = "datamate" ]; then \
-		docker compose -f deployment/docker/datamate/docker-compose.yml --profile mineru up -d --force-recreate --remove-orphans; \
 	fi
 
 # ========== Download Targets ==========

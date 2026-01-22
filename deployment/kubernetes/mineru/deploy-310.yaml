@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: datamate-mineru
+  labels:
+    app: datamate
+    tier: mineru
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: datamate
+      tier: mineru
+  template:
+    metadata:
+      labels:
+        app: datamate
+        tier: mineru
+    spec:
+      containers:
+        - name: mineru
+          image: datamate-mineru
+          imagePullPolicy: IfNotPresent
+          command:
+            - mineru-openai-server
+          args:
+            - --engine
+            - vllm
+            - --host
+            - 0.0.0.0
+            - --port
+            - "8000"
+            - --enforce-eager
+            - --dtype
+            - float16
+          env:
+            - name: MINERU_MODEL_SOURCE
+              value: local
+            - name: MINERU_DEVICE_MODE
+              value: npu
+            - name: VLLM_WORKER_MULTIPROC_METHOD
+              value: spawn
+          ports:
+            - containerPort: 8000
+          resources:
+            limits:
+              cpu: 8
+              memory: 32Gi
+              huawei.com/Ascend310P: 1
+            requests:
+              cpu: 100m
+              memory: 100Mi
+              huawei.com/Ascend310P: 1
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: datamate-mineru
+  labels:
+    app: datamate
+    tier: mineru
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8000
+      targetPort: 8000
+      protocol: TCP
+  selector:
+    app: datamate
+    tier: mineru

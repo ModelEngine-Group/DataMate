@@ -42,6 +42,8 @@ services:
     image: ${REGISTRY:-}datamate-gateway
     restart: on-failure
     privileged: true
+    ports:
+      - '8080:8080'
     environment:
       - JWT_SECRET=default-insecure-key-change-in-production
     networks: [ datamate ]
@@ -116,9 +118,8 @@ services:
       --engine vllm
       --host 0.0.0.0
       --port 8000
+      ${EXTRA_ARGS:-}
     volumes:
-      - dataset_volume:/dataset
-      - mineru_log_volume:/var/log/datamate/mineru
       - /var/log/npu/:/usr/slog
       - /usr/local/dcmi:/usr/local/dcmi
       - /usr/local/bin/npu-smi:/usr/local/bin/npu-smi
@@ -334,8 +335,6 @@ volumes:
     name: datamate-operator-runtime-volume
   operator-packages-volume:
     name: datamate-operator-packages-volume
-  mineru_log_volume:
-    name: datamate-mineru_log_volume
   graph_data_volume:
     name: datamate-graph-data-volume
 
