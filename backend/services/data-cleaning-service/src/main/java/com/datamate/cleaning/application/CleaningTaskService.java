@@ -136,6 +136,9 @@ public class CleaningTaskService {
         cleaningTaskRepo.insertTask(task);
 
         operatorInstanceRepo.insertInstance(taskId, request.getInstance());
+        operatorRepo.incrementUsageCount(request.getInstance().stream()
+                .map(OperatorInstanceDto::getId)
+                .collect(Collectors.toList()));
 
         prepareTask(task, request.getInstance(), executorType);
         scanDataset(taskId, request.getSrcDatasetId());

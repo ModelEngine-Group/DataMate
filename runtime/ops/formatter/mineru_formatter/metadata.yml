@@ -15,6 +15,12 @@ effect:
 inputs: 'text'
 outputs: 'text'
 settings:
+  mineruApi:
+    name: 'Mineru Api地址'
+    description: '指定mineru服务的api地址，默认为本地同一集群内地址。'
+    type: 'input'
+    defaultVal: 'http://datamate-mineru:8000'
+    required: false
   exportType:
     name: '导出类型'
     description: '指定清洗结果文件类型。若指定为md且后续存在其他清洗算子，可能导致文件格式错乱。'

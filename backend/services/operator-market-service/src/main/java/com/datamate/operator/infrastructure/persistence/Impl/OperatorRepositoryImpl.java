@@ -1,6 +1,7 @@
 package com.datamate.operator.infrastructure.persistence.Impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.repository.CrudRepository;
 import com.datamate.operator.infrastructure.converter.OperatorConverter;
 import com.datamate.operator.domain.model.Operator;
@@ -10,6 +11,7 @@ import com.datamate.operator.interfaces.dto.OperatorDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collections;
 import java.util.List;
 
 @Repository
@@ -47,5 +49,17 @@ public class OperatorRepositoryImpl extends CrudRepository<OperatorMapper, Opera
     @Override
     public boolean operatorInTemplateOrRunning(String operatorId) {
         return mapper.operatorInTemplate(operatorId) > 0 && mapper.operatorInUnstopTask(operatorId) > 0;
+    }
+
+    @Override
+    public void incrementUsageCount(List<String> operatorIds) {
+        if (operatorIds == null || operatorIds.isEmpty()) {
+            return;
+        }
+        Collections.sort(operatorIds);
+        LambdaUpdateWrapper<Operator> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.in(Operator::getId, operatorIds)
+                .setSql("usage_count = usage_count + 1");
+        this.update(updateWrapper);
     }
 }

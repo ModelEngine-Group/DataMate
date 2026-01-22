@@ -83,6 +83,14 @@ class Request {
   createXHRWithProgress(url, config, onProgress, onDownloadProgress) {
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
+      xhr.open("POST", url);
+
+      // 设置请求头
+      if (config.headers) {
+        Object.keys(config.headers).forEach((key) => {
+          xhr.setRequestHeader(key, config.headers[key]);
+        });
+      }
 
       // 监听上传进度
       xhr.upload.addEventListener("progress", function (event) {
@@ -136,13 +144,6 @@ class Request {
         if (onError) onError(new Error("上传已取消"));
       });
 
-      xhr.open("POST", url);
-      // 设置请求头
-      if (config.headers) {
-        Object.keys(config.headers).forEach((key) => {
-          xhr.setRequestHeader(key, config.headers[key]);
-        });
-      }
       xhr.send(config.body);
 
       return xhr; // 返回 xhr 对象以便后续控制

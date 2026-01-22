@@ -10,7 +10,10 @@ import {Clock, GitBranch} from "lucide-react";
 import DetailHeader from "@/components/DetailHeader";
 import {Link, useNavigate, useParams} from "react-router";
 import Overview from "./components/Overview";
-import Install from "./components/Install";
+import Requirement from "./components/Requirement";
+import Documentation from "./components/Documentation";
+import ChangeLog from "./components/ChangeLog";
+import OperatorServiceMonitor from "./components/OperatorServiceMonitor";
 
 import {deleteOperatorByIdUsingDelete, queryOperatorByIdUsingGet, updateOperatorByIdUsingPut} from "../operator.api";
 import { OperatorI } from "../operator.model";
@@ -137,12 +140,31 @@ export default function OperatorPluginDetail() {
             key: "overview",
             label: "概览",
           },
+          {
+            key: "requirement",
+            label: "环境依赖",
+          },
+          {
+            key: "documentation",
+            label: "文档",
+          },
+          {
+            key: "changeLog",
+            label: "更新日志",
+          },
+          // {
+          //   key: "service",
+          //   label: "服务监控",
+          // },
         ]}
         activeTabKey={activeTab}
         onTabChange={setActiveTab}
       >
         {activeTab === "overview" && <Overview operator={operator} />}
-        {activeTab === "service" && <Install operator={operator} />}
+        {activeTab === "requirement" && <Requirement operator={operator} />}
+        {activeTab === "documentation" && <Documentation operator={operator} />}
+        {activeTab === "changeLog" && <ChangeLog operator={operator} />}
+        {activeTab === "service" && <OperatorServiceMonitor operatorName={operator.name} supportsService={true} />}
       </Card>
     </div>
   );

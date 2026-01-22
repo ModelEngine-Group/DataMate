@@ -55,7 +55,7 @@ export function formatExecutionDuration(
   startTime: string,
   endTime: string
 ): string {
-  if (!startTime || !endTime) return "--";
+  if (!startTime || !endTime) return "-";
 
   const start = new Date(startTime).getTime();
   const end = new Date(endTime).getTime();

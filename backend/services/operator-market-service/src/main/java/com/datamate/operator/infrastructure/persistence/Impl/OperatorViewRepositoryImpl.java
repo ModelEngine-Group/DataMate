@@ -56,9 +56,9 @@ public class OperatorViewRepositoryImpl extends CrudRepository<OperatorViewMappe
         queryWrapper.eq(isStar != null, "is_star", isStar);
         if (StringUtils.isNotEmpty(keyword)) {
             queryWrapper.and(w ->
-                    w.like("operator_name", keyword)
+                    w.apply("operator_name ILIKE {0}", "%" + keyword + "%")
                             .or()
-                            .like("description", keyword));
+                            .apply("description ILIKE {0}", "%" + keyword + "%"));
         }
         StringBuilder havingSql = new StringBuilder();
         if (CollectionUtils.isNotEmpty(categories)) {
@@ -78,7 +78,7 @@ public class OperatorViewRepositoryImpl extends CrudRepository<OperatorViewMappe
         }
 
         queryWrapper.groupBy("operator_id", "operator_name", "description", "version", "inputs", "outputs",
-                        "runtime", "settings", "is_star", "created_at", "updated_at", "created_by", "updated_by")
+                        "runtime", "settings", "is_star", "file_size", "usage_count", "created_at", "updated_at", "created_by", "updated_by")
                 .having(!havingSql.isEmpty(), havingSql.toString())
                 .orderByDesc("created_at");
         return queryWrapper;

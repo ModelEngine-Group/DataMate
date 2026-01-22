@@ -11,7 +11,7 @@ import {
   queryCleaningTemplateByIdUsingGet,
 } from "../cleansing.api";
 import {mapTemplate} from "../cleansing.const";
-import OperatorTable from "./components/OperatorTable";
+import TemplateOperatorTable from "./components/TemplateOperatorTable";
 import {EditOutlined, ReloadOutlined, NumberOutlined} from "@ant-design/icons";
 
 // 任务详情页面组件
@@ -114,7 +114,7 @@ export default function CleansingTemplateDetail() {
       <div className="flex-overflow-auto p-6 pt-2 bg-white rounded-md shadow">
         <Tabs activeKey={activeTab} items={tabList} onChange={setActiveTab} />
         <div className="h-full flex-1 overflow-auto">
-          <OperatorTable task={template} />
+          <TemplateOperatorTable template={template} />
         </div>
       </div>
     </>

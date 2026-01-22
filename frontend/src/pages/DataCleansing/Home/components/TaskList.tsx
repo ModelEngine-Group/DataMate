@@ -24,7 +24,7 @@ import {
 export default function TaskList() {
   const navigate = useNavigate();
   const { message } = App.useApp();
-  const [viewMode, setViewMode] = useState<"card" | "list">("list");
+  const [viewMode, setViewMode] = useState<"card" | "list">("card");
   const filterOptions = [
     {
       key: "status",
@@ -69,6 +69,7 @@ export default function TaskList() {
       TaskStatus.FAILED,
       TaskStatus.STOPPED,
     ].includes(record.status?.value);
+    const isComplete = record.status?.value === TaskStatus.COMPLETED;
     const pauseBtn = {
       key: "pause",
       label: "暂停",
@@ -80,13 +81,14 @@ export default function TaskList() {
       key: "start",
       label: "启动",
       icon: isRunning ? <PauseCircleOutlined /> : <PlayCircleOutlined />,
+      disabled: isComplete,
       onClick: startTask, // implement pause/play logic
     };
     return [
       ...(isRunning
         ? [ pauseBtn ]
         : []),
-      ...(showStart
+      ...(showStart || isComplete
         ? [ startBtn ]
         : []),
       {

@@ -27,6 +27,12 @@ public class Operator extends BaseEntity<String> {
 
     private String fileName;
 
+    private Long fileSize;
+
+    private String metrics;
+
+    private Integer usageCount;
+
     private Boolean isStar;
 }
 

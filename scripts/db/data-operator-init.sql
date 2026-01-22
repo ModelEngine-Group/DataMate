@@ -6,18 +6,21 @@ CREATE TABLE IF NOT EXISTS t_operator
 (
     id          VARCHAR(64) PRIMARY KEY,
     name        VARCHAR(64) UNIQUE,
-    description VARCHAR(256),
-    version     VARCHAR(256),
-    inputs      VARCHAR(256),
-    outputs     VARCHAR(256),
+    description VARCHAR(255),
+    version     VARCHAR(255),
+    inputs      VARCHAR(255),
+    outputs     VARCHAR(255),
     runtime     TEXT,
     settings    TEXT,
     file_name   TEXT,
+    file_size   BIGINT,
+    metrics     TEXT,
     is_star     BOOLEAN,
+    usage_count INT DEFAULT 0,
+    created_by  VARCHAR(255),
+    updated_by  VARCHAR(255),
     created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    created_by VARCHAR(255),
-    updated_by VARCHAR(255)
+    updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 COMMENT ON TABLE t_operator IS '算子表';
@@ -30,11 +33,24 @@ COMMENT ON COLUMN t_operator.outputs IS '输出类型';
 COMMENT ON COLUMN t_operator.runtime IS '运行时信息';
 COMMENT ON COLUMN t_operator.settings IS '设置信息';
 COMMENT ON COLUMN t_operator.file_name IS '文件名';
+COMMENT ON COLUMN t_operator.file_size IS '文件大小';
+COMMENT ON COLUMN t_operator.metrics IS '性能指标';
+COMMENT ON COLUMN t_operator.usage_count IS '使用次数';
 COMMENT ON COLUMN t_operator.is_star IS '是否收藏';
-COMMENT ON COLUMN t_operator.created_at IS '创建时间';
-COMMENT ON COLUMN t_operator.updated_at IS '更新时间';
 COMMENT ON COLUMN t_operator.created_by IS '创建者';
 COMMENT ON COLUMN t_operator.updated_by IS '更新者';
+COMMENT ON COLUMN t_operator.created_at IS '创建时间';
+COMMENT ON COLUMN t_operator.updated_at IS '更新时间';
+
+-- 算子版本表
+CREATE TABLE IF NOT EXISTS t_operator_release
+(
+    id           VARCHAR(64),
+    version      VARCHAR(255),
+    release_date TIMESTAMP,
+    changelog    JSON,
+    PRIMARY KEY (id, version)
+);
 
 -- 算子分类表
 CREATE TABLE IF NOT EXISTS t_operator_category
@@ -107,6 +123,10 @@ SELECT
     o.runtime,
     o.settings,
     o.is_star,
+    o.file_name,
+    o.file_size,
+    o.usage_count,
+    o.metrics,
     o.created_at,
     o.updated_at,
     o.created_by,
@@ -128,7 +148,6 @@ VALUES ('64465bec-b46b-11f0-8291-00155d0e4808', '模态', 'modal',  'predefined'
        ('a233d584-73c8-4188-ad5d-8f7c8dda9c27', '视频', 'video', 'predefined', '64465bec-b46b-11f0-8291-00155d0e4808'),
        ('4d7dbd77-0a92-44f3-9056-2cd62d4a71e4', '多模态', 'multimodal', 'predefined', '64465bec-b46b-11f0-8291-00155d0e4808'),
        ('9eda9d5d-072b-499b-916c-797a0a8750e1', 'Python', 'python', 'predefined', '873000a2-65b3-474b-8ccc-4813c08c76fb'),
-       ('b5bfc548-8ef6-417c-b8a6-a4197c078249', 'Java', 'java', 'predefined', '873000a2-65b3-474b-8ccc-4813c08c76fb'),
        ('16e2d99e-eafb-44fc-acd0-f35a2bad28f8', '来源', 'origin', 'predefined', '0'),
        ('96a3b07a-3439-4557-a835-525faad60ca3', '系统预置', 'predefined', 'predefined', '16e2d99e-eafb-44fc-acd0-f35a2bad28f8'),
        ('ec2cdd17-8b93-4a81-88c4-ac9e98d10757', '用户上传', 'customized', 'predefined', '16e2d99e-eafb-44fc-acd0-f35a2bad28f8'),
@@ -139,50 +158,54 @@ VALUES ('64465bec-b46b-11f0-8291-00155d0e4808', '模态', 'modal',  'predefined'
 ON CONFLICT DO NOTHING;
 
 INSERT INTO t_operator
-(id, name, description, version, inputs, outputs, runtime, settings, file_name, is_star, created_by, updated_by)
-VALUES ('MineruFormatter', 'MinerU PDF文本抽取', '基于MinerU API，抽取PDF中的文本。', '1.0.0', 'text', 'text', null, '{"exportType":{"name":"导出类型","description":"指定清洗结果文件类型。若指定为md且后续存在其他清洗算子，可能导致文件格式错乱。","type":"select","defaultVal":"markdown","required":false,"options":[{"label":"markdown","value":"md"},{"label":"txt","value":"txt"}]}}', '', false, 'system', 'system'),
-       ('FileWithHighRepeatPhraseRateFilter', '文档词重复率检查', '去除重复词过多的文档。', '1.0.0', 'text', 'text', null, '{"repeatPhraseRatio": {"name": "文档词重复率", "description": "某个词的统计数/文档总词数 > 设定值，该文档被去除。", "type": "slider", "defaultVal": 0.5, "min": 0, "max": 1, "step": 0.1}, "hitStopwords": {"name": "去除停用词", "description": "统计重复词时，选择是否要去除停用词。", "type": "switch", "defaultVal": false, "required": true, "checkedLabel": "去除", "unCheckedLabel": "不去除"}}', '', false, 'system', 'system'),
-       ('FileWithHighRepeatWordRateFilter', '文档字重复率检查', '去除重复字过多的文档。', '1.0.0', 'text', 'text', null, '{"repeatWordRatio": {"name": "文档字重复率", "description": "某个字的统计数/文档总字数 > 设定值，该文档被去除。", "type": "slider", "defaultVal": 0.5, "min": 0, "max": 1, "step": 0.1}}', '', false, 'system', 'system'),
-       ('FileWithHighSpecialCharRateFilter', '文档特殊字符率检查', '去除特殊字符过多的文档。', '1.0.0', 'text', 'text', null, '{"specialCharRatio": {"name": "文档特殊字符率", "description": "特殊字符的统计数/文档总字数 > 设定值，该文档被去除。", "type": "slider", "defaultVal": 0.3, "min": 0, "max": 1, "step": 0.1}}', '', false, 'system', 'system'),
-       ('DuplicateFilesFilter', '相似文档去除', '相似文档去除。', '1.0.0', 'text', 'text', null, '{"fileDuplicateThreshold": {"name": "文档相似度", "description": "基于MinHash算法和Jaccard相似度，计算当前文档与数据集中其它文档相似性，超过设定值，该文档被去除。", "type": "slider", "defaultVal": 0.5, "min": 0, "max": 1, "step": 0.1}}', '', false, 'system', 'system'),
-       ('FileWithManySensitiveWordsFilter', '文档敏感词率检查', '去除敏感词过多的文档。', '1.0.0', 'text', 'text', null, '{"sensitiveWordsRate": {"name": "文档敏感词率", "description": "敏感词的字数/文档总字数 > 设定值，该文档被去除。", "type": "slider", "defaultVal": 0.01, "min": 0, "max": 1, "step": 0.01}}', '', false, 'system', 'system'),
-       ('FileWithShortOrLongLengthFilter', '文档字数检查', '字数不在指定范围会被过滤掉。', '1.0.0', 'text', 'text', null, '{"fileLength": {"name": "文档字数", "description": "过滤字数不在指定范围内的文档，如[10,10000000]。若输入为空，则不对字数上/下限做限制。", "type": "range", "defaultVal": [10, 10000000], "min": 0, "max": 10000000000000000, "step": 1}}', '', false, 'system', 'system'),
-       ('ContentCleaner', '文档目录去除', '去除文档中的目录。', '1.0.0', 'text', 'text', null, null, '', false, 'system', 'system'),
-       ('AnonymizedCreditCardNumber', '信用卡号匿名化', '信用卡号匿名化', '1.0.0', 'text', 'text', null, null, '', false, 'system', 'system'),
-       ('EmailNumberCleaner', '邮件地址匿名化', '邮件地址匿名化', '1.0.0', 'text', 'text', null, null, '', false, 'system', 'system'),
-       ('EmojiCleaner', '文档表情去除', '去除文档中表情字符或者emoji符号。', '1.0.0', 'text', 'text', null, null, '', false, 'system', 'system'),
-       ('ExtraSpaceCleaner', '多余空格去除', '移除文档首尾、句中或标点符号附近多余空格和 tab 等。', '1.0.0', 'text', 'text', null, null, '', false, 'system', 'system'),
-       ('FullWidthCharacterCleaner', '全角转半角', '将文档中的所有全角字符转换成半角字符。', '1.0.0', 'text', 'text', null, null, '', false, 'system', 'system'),
-       ('GrableCharactersCleaner', '文档乱码去除', '去除文档中的乱码和无意义的unicode。', '1.0.0', 'text', 'text', null, null, '', false, 'system', 'system'),
-       ('HtmlTagCleaner', 'HTML标签去除', '移除文档中HTML标签，如 <html>、<dev>、<p> 等。', '1.0.0', 'text', 'text', null, '{"removeTableTags":{"name":"是否去除表格标签","description":"若为是，则会去除表格标签<tr><td>等。","type":"switch","defaultVal":"false","required":false,"checkedLabel":"是","unCheckedLabel":"否"}}', '', false, 'system', 'system'),
-       ('AnonymizedIdNumber', '身份证号匿名化', '身份证号匿名化。', '1.0.0', 'text', 'text', null, null, '', false, 'system', 'system'),
-       ('InvisibleCharactersCleaner', '不可见字符去除', '去除文档中的不可见字符，例如 0-31 号字符中的部分字符。', '1.0.0', 'text', 'text', null, null, '', false, 'system', 'system'),
-       ('AnonymizedIpAddress', 'IP地址匿名化', 'IP地址匿名化', '1.0.0', 'text', 'text', null, null, '', false, 'system', 'system'),
-       ('LegendCleaner', '图注表注去除', '去除文档中的图注、表注等内容。', '1.0.0', 'text', 'text', null, null, '', false, 'system', 'system'),
-       ('AnonymizedPhoneNumber', '电话号码匿名化', '电话号码匿名化', '1.0.0', 'text', 'text', null, null, '', false, 'system', 'system'),
-       ('PoliticalWordCleaner', '政治文本匿名化', '将政治文本进行匿名化。', '1.0.0', 'text', 'text', null, null, '', false, 'system', 'system'),
-       ('DuplicateSentencesFilter', '文档局部内容去重', '文档局部内容去重。', '1.0.0', 'text', 'text', null, null, '', false, 'system', 'system'),
-       ('SexualAndViolentWordCleaner', '暴力色情文本匿名化', '将暴力、色情文本进行匿名化。', '1.0.0', 'text', 'text', null, null, '', false, 'system', 'system'),
-       ('TraditionalChineseCleaner', '繁体转简体', '将繁体转换为简体。', '1.0.0', 'text', 'text', null, null, '', false, 'system', 'system'),
-       ('UnicodeSpaceCleaner', '空格标准化', '将文档中不同的 unicode 空格，如 u2008，转换为正常空格\\u0020。', '1.0.0', 'text', 'text', null, null, '', false, 'system', 'system'),
-       ('AnonymizedUrlCleaner', 'URL网址匿名化', '将文档中的url网址匿名化。', '1.0.0', 'text', 'text', null, null, '', false, 'system', 'system'),
-       ('XMLTagCleaner', 'XML标签去除', '去除XML中的标签。', '1.0.0', 'text', 'text', null, null, '', false, 'system', 'system'),
-       ('ImgBlurredImagesCleaner', '模糊图片过滤', '去除模糊的图片。', '1.0.0', 'image', 'image', null, '{"blurredThreshold": {"name": "梯度函数值", "description": "梯度函数值取值越小，图片模糊度越高。", "type": "slider", "defaultVal": 1000, "min": 1, "max": 10000, "step": 1}}', '', false, 'system', 'system'),
-       ('ImgBrightness', '图片亮度增强', '自适应调节图片的亮度。', '1.0.0', 'image', 'image', null, null, '', false, 'system', 'system'),
-       ('ImgContrast', '图片对比度增强', '自适应调节图片的对比度。', '1.0.0', 'image', 'image', null, null, '', false, 'system', 'system'),
-       ('ImgDenoise', '图片噪点去除', '去除图片中的噪点，主要适用于自然场景。', '1.0.0', 'image', 'image', null, null, '', false, 'system', 'system'),
-       ('ImgDuplicatedImagesCleaner', '重复图片去除', '去除重复的图片。', '1.0.0', 'image', 'image', null, null, '', false, 'system', 'system'),
-       ('ImgPerspectiveTransformation', '图片透视变换', '自适应校正图片的视角，主要适用于文档校正场景。', '1.0.0', 'image', 'image', null, null, '', false, 'system', 'system'),
-       ('ImgResize', '图片重采样', '将图片放大或缩小到指定像素。', '1.0.0', 'image', 'image', null, '{"targetSize": {"name": "重采样尺寸", "name_en": "Resample Size", "type": "multiple", "properties": [{"type": "inputNumber", "name": "宽度", "description": "像素", "defaultVal": 256, "min": 1, "max": 4096, "step": 1}, {"type": "inputNumber", "name": "高度", "description": "像素", "defaultVal": 256, "min": 1, "max": 4096, "step": 1}]}}', '', false, 'system', 'system'),
-       ('ImgSaturation', '图片饱和度增强', '自适应调节图片的饱和度，主要适用于自然场景图片。', '1.0.0', 'image', 'image', null, null, '', false, 'system', 'system'),
-       ('ImgShadowRemove', '图片阴影去除', '去除图片中的阴影，主要适用于文档场景。', '1.0.0', 'image', 'image', null, null, '', false, 'system', 'system'),
-       ('ImgSharpness', '图片锐度增强', '自适应调节图片的锐度，主要适用于自然场景图片。', '1.0.0', 'image', 'image', null, null, '', false, 'system', 'system'),
-       ('ImgSimilarImagesCleaner', '相似图片去除', '去除相似的图片。', '1.0.0', 'image', 'image', null, '{"similarThreshold": {"name": "相似度", "description": "相似度取值越大，图片相似度越高。", "type": "slider", "defaultVal": 0.8, "min": 0, "max": 1, "step": 0.01}}', '', false, 'system', 'system'),
-       ('ImgTypeUnify', '图片格式转换', '将图片编码格式统一为jpg、jpeg、png、bmp格式。', '1.0.0', 'image', 'image', null, '{"imgType": {"name": "图片编码格式", "type": "select", "defaultVal": "jpg", "options": [{"label": "jpg", "value": "jpg"}, {"label": "png", "value": "png"}, {"label": "jpeg", "value": "jpeg"}, {"label": "bmp", "value": "bmp"}]}}', '', false, 'system', 'system'),
-       ('ImgDirectionCorrect', '图片方向校正', '将含有文字的图片校正到文字水平方向，主要适用于文档场景。', '1.0.0', 'image', 'image', null, null, '', false, 'system', 'system'),
-       ('PiiDetector', '高级匿名化', '高级匿名化算子，检测命名实体并匿名化。', '1.0.0', 'text', 'text', null, null, '', false, 'system', 'system'),
-       ('ObjectDetectionRectangle', '图像目标检测与预标注', '基于 YOLOv8 的图像目标检测算子。对输入图像进行目标检测，输出带矩形框与类别标签的标注图像，并生成结构化标注 JSON（包含类别、置信度与边界框坐标）。支持将检测结果导出为 Label Studio 兼容的 predictions 预标注格式（rectanglelabels），可在标注任务中直接加载并进行人工校正，从而显著降低人工标注成本并提升标注效率。', '1.0.0', 'image', 'image,json', null, null, '', false, 'system', 'system')
+(id, name, description, version, inputs, outputs, runtime, settings, file_name, file_size, is_star, created_by, updated_by)
+VALUES
+('MineruFormatter', 'MinerU PDF文本抽取', '基于MinerU API，抽取PDF中的文本。', '1.0.0', 'text', 'text', null, '{"mineruApi":{"name":"Mineru Api地址","description":"指定mineru服务的api地址，默认为本地同一集群内地址。","type":"input","defaultVal":"http://datamate-mineru:8000","required":false},"exportType":{"name":"导出类型","description":"指定清洗结果文件类型。若指定为md且后续存在其他清洗算子，可能导致文件格式错乱。","type":"select","defaultVal":"markdown","required":false,"options":[{"label":"markdown","value":"md"},{"label":"txt","value":"txt"}]}}', '', 12288, false, 'system', 'system'),
+('FileWithHighRepeatPhraseRateFilter', '文档词重复率检查', '去除重复词过多的文档。', '1.0.0', 'text', 'text', null, '{"repeatPhraseRatio": {"name": "文档词重复率", "description": "某个词的统计数/文档总词数 > 设定值，该文档被去除。", "type": "slider", "defaultVal": 0.5, "min": 0, "max": 1, "step": 0.1}, "hitStopwords": {"name": "去除停用词", "description": "统计重复词时，选择是否要去除停用词。", "type": "switch", "defaultVal": false, "required": true, "checkedLabel": "去除", "unCheckedLabel": "不去除"}}', '', 16384, false, 'system', 'system'),
+('FileWithHighRepeatWordRateFilter', '文档字重复率检查', '去除重复字过多的文档。', '1.0.0', 'text', 'text', null, '{"repeatWordRatio": {"name": "文档字重复率", "description": "某个字的统计数/文档总字数 > 设定值，该文档被去除。", "type": "slider", "defaultVal": 0.5, "min": 0, "max": 1, "step": 0.1}}', '', 8192, false, 'system', 'system'),
+('FileWithHighSpecialCharRateFilter', '文档特殊字符率检查', '去除特殊字符过多的文档。', '1.0.0', 'text', 'text', null, '{"specialCharRatio": {"name": "文档特殊字符率", "description": "特殊字符的统计数/文档总字数 > 设定值，该文档被去除。", "type": "slider", "defaultVal": 0.3, "min": 0, "max": 1, "step": 0.1}}', '', 5120, false, 'system', 'system'),
+('DuplicateFilesFilter', '相似文档去除', '相似文档去除。', '1.0.0', 'text', 'text', null, '{"fileDuplicateThreshold": {"name": "文档相似度", "description": "基于MinHash算法和Jaccard相似度，计算当前文档与数据集中其它文档相似性，超过设定值，该文档被去除。", "type": "slider", "defaultVal": 0.5, "min": 0, "max": 1, "step": 0.1}}', '', 13312, false, 'system', 'system'),
+('FileWithManySensitiveWordsFilter', '文档敏感词率检查', '去除敏感词过多的文档。', '1.0.0', 'text', 'text', null, '{"sensitiveWordsRate": {"name": "文档敏感词率", "description": "敏感词的字数/文档总字数 > 设定值，该文档被去除。", "type": "slider", "defaultVal": 0.01, "min": 0, "max": 1, "step": 0.01}}', '', 29696, false, 'system', 'system'),
+('FileWithShortOrLongLengthFilter', '文档字数检查', '字数不在指定范围会被过滤掉。', '1.0.0', 'text', 'text', null, '{"fileLength": {"name": "文档字数", "description": "过滤字数不在指定范围内的文档，如[10,10000000]。若输入为空，则不对字数上/下限做限制。", "type": "range", "defaultVal": [10, 10000000], "min": 0, "max": 10000000000000000, "step": 1}}', '', 8192, false, 'system', 'system'),
+('ContentCleaner', '文档目录去除', '去除文档中的目录。', '1.0.0', 'text', 'text', null, null, '', 4096, false, 'system', 'system'),
+('AnonymizedCreditCardNumber', '信用卡号匿名化', '信用卡号匿名化', '1.0.0', 'text', 'text', null, null, '', 8192, false, 'system', 'system'),
+('EmailNumberCleaner', '邮件地址匿名化', '邮件地址匿名化', '1.0.0', 'text', 'text', null, null, '', 4096, false, 'system', 'system'),
+('EmojiCleaner', '文档表情去除', '去除文档中表情字符或者emoji符号。', '1.0.0', 'text', 'text', null, null, '', 5120, false, 'system', 'system'),
+('ExtraSpaceCleaner', '多余空格去除', '移除文档首尾、句中或标点符号附近多余空格和 tab 等。', '1.0.0', 'text', 'text', null, null, '', 8192, false, 'system', 'system'),
+('FullWidthCharacterCleaner', '全角转半角', '将文档中的所有全角字符转换成半角字符。', '1.0.0', 'text', 'text', null, null, '', 8192, false, 'system', 'system'),
+('GrableCharactersCleaner', '文档乱码去除', '去除文档中的乱码和无意义的unicode。', '1.0.0', 'text', 'text', null, null, '', 4096, false, 'system', 'system'),
+('HtmlTagCleaner', 'HTML标签去除', '移除文档中HTML标签，如 <html>、<dev>、<p> 等。', '1.0.0', 'text', 'text', null, '{"removeTableTags":{"name":"是否去除表格标签","description":"若为是，则会去除表格标签<tr><td>等。","type":"switch","defaultVal":"false","required":false,"checkedLabel":"是","unCheckedLabel":"否"}}', '', 12288, false, 'system', 'system'),
+('AnonymizedIdNumber', '身份证号匿名化', '身份证号匿名化。', '1.0.0', 'text', 'text', null, null, '', 36864, false, 'system', 'system'),
+('InvisibleCharactersCleaner', '不可见字符去除', '去除文档中的不可见字符，例如 0-31 号字符中的部分字符。', '1.0.0', 'text', 'text', null, null, '', 5120, false, 'system', 'system'),
+('AnonymizedIpAddress', 'IP地址匿名化', 'IP地址匿名化', '1.0.0', 'text', 'text', null, null, '', 4096, false, 'system', 'system'),
+('LegendCleaner', '图注表注去除', '去除文档中的图注、表注等内容。', '1.0.0', 'text', 'text', null, null, '', 4096, false, 'system', 'system'),
+('AnonymizedPhoneNumber', '电话号码匿名化', '电话号码匿名化', '1.0.0', 'text', 'text', null, null, '', 4096, false, 'system', 'system'),
+('PoliticalWordCleaner', '政治文本匿名化', '将政治文本进行匿名化。', '1.0.0', 'text', 'text', null, null, '', 8192, false, 'system', 'system'),
+('DuplicateSentencesFilter', '文档局部内容去重', '文档局部内容去重。', '1.0.0', 'text', 'text', null, null, '', 5120, false, 'system', 'system'),
+('SexualAndViolentWordCleaner', '暴力色情文本匿名化', '将暴力、色情文本进行匿名化。', '1.0.0', 'text', 'text', null, null, '', 20480, false, 'system', 'system'),
+('TraditionalChineseCleaner', '繁体转简体', '将繁体转换为简体。', '1.0.0', 'text', 'text', null, null, '', 5120, false, 'system', 'system'),
+('UnicodeSpaceCleaner', '空格标准化', '将文档中不同的 unicode 空格，如 u2008，转换为正常空格\\u0020。', '1.0.0', 'text', 'text', null, null, '', 8192, false, 'system', 'system'),
+('AnonymizedUrlCleaner', 'URL网址匿名化', '将文档中的url网址匿名化。', '1.0.0', 'text', 'text', null, null, '', 4096, false, 'system', 'system'),
+('XMLTagCleaner', 'XML标签去除', '去除XML中的标签。', '1.0.0', 'text', 'text', null, null, '', 4096, false, 'system', 'system'),
+('ImgBlurredImagesCleaner', '模糊图片过滤', '去除模糊的图片。', '1.0.0', 'image', 'image', null, '{"blurredThreshold": {"name": "梯度函数值", "description": "梯度函数值取值越小，图片模糊度越高。", "type": "slider", "defaultVal": 1000, "min": 1, "max": 10000, "step": 1}}', '', 5120, false, 'system', 'system'),
+('ImgBrightness', '图片亮度增强', '自适应调节图片的亮度。', '1.0.0', 'image', 'image', null, null, '', 4096, false, 'system', 'system'),
+('ImgContrast', '图片对比度增强', '自适应调节图片的对比度。', '1.0.0', 'image', 'image', null, null, '', 4096, false, 'system', 'system'),
+('ImgDenoise', '图片噪点去除', '去除图片中的噪点，主要适用于自然场景。', '1.0.0', 'image', 'image', null, null, '', 4096, false, 'system', 'system'),
+('ImgDuplicatedImagesCleaner', '重复图片去除', '去除重复的图片。', '1.0.0', 'image', 'image', null, null, '', 8192, false, 'system', 'system'),
+('ImgPerspectiveTransformation', '图片透视变换', '自适应校正图片的视角，主要适用于文档校正场景。', '1.0.0', 'image', 'image', null, null, '', 8192, false, 'system', 'system'),
+('ImgResize', '图片重采样', '将图片放大或缩小到指定像素。', '1.0.0', 'image', 'image', null, '{"targetSize": {"name": "重采样尺寸", "name_en": "Resample Size", "type": "multiple", "properties": [{"type": "inputNumber", "name": "宽度", "description": "像素", "defaultVal": 256, "min": 1, "max": 4096, "step": 1}, {"type": "inputNumber", "name": "高度", "description": "像素", "defaultVal": 256, "min": 1, "max": 4096, "step": 1}]}}', '', 8192, false, 'system', 'system'),
+('ImgSaturation', '图片饱和度增强', '自适应调节图片的饱和度，主要适用于自然场景图片。', '1.0.0', 'image', 'image', null, null, '', 4096, false, 'system', 'system'),
+('ImgShadowRemove', '图片阴影去除', '去除图片中的阴影，主要适用于文档场景。', '1.0.0', 'image', 'image', null, null, '', 4096, false, 'system', 'system'),
+('ImgSharpness', '图片锐度增强', '自适应调节图片的锐度，主要适用于自然场景图片。', '1.0.0', 'image', 'image', null, null, '', 4096, false, 'system', 'system'),
+('ImgSimilarImagesCleaner', '相似图片去除', '去除相似的图片。', '1.0.0', 'image', 'image', null, '{"similarThreshold": {"name": "相似度", "description": "相似度取值越大，图片相似度越高。", "type": "slider", "defaultVal": 0.8, "min": 0, "max": 1, "step": 0.01}}', '', 14336, false, 'system', 'system'),
+('ImgTypeUnify', '图片格式转换', '将图片编码格式统一为jpg、jpeg、png、bmp格式。', '1.0.0', 'image', 'image', null, '{"imgType": {"name": "图片编码格式", "type": "select", "defaultVal": "jpg", "options": [{"label": "jpg", "value": "jpg"}, {"label": "png", "value": "png"}, {"label": "jpeg", "value": "jpeg"}, {"label": "bmp", "value": "bmp"}]}}', '', 5120, false, 'system', 'system'),
+('ImgDirectionCorrect', '图片方向校正', '将含有文字的图片校正到文字水平方向，主要适用于文档场景。', '1.0.0', 'image', 'image', null, null, '', 8192, false, 'system', 'system'),
+('PiiDetector', '高级匿名化', '高级匿名化算子，检测命名实体并匿名化。', '1.0.0', 'text', 'text', null, null, '', 8192, false, 'system', 'system'),
+('ObjectDetectionRectangle', '图像目标检测与预标注', '基于 YOLOv8 的图像目标检测算子。对输入图像进行目标检测，输出带矩形框与类别标签的标注图像，并生成结构化标注 JSON（包含类别、置信度与边界框坐标）。支持将检测结果导出为 Label Studio 兼容的 predictions 预标注格式（rectanglelabels），可在标注任务中直接加载并进行人工校正，从而显著降低人工标注成本并提升标注效率。', '1.0.0', 'image', 'image,json', null, null, '', 12288, false, 'system', 'system')
 ON CONFLICT DO NOTHING;
+
+INSERT INTO t_operator_release(id, version, release_date, changelog)
+VALUES ('MineruFormatter', '1.0.0', '2026-03-30', '["aaa","bbb"]');
 
 INSERT INTO t_operator_category_relation(category_id, operator_id)
 SELECT c.id, o.id

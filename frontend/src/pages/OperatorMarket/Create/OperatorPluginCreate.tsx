@@ -49,6 +49,7 @@ export default function OperatorPluginCreate() {
     setParseError(null);
     try {
       const fileName = files[0].name;
+      const fileSize = files[0].size;
       await handleUpload({
         task: createTask({
           dataset: { id: "operator-upload", name: "上传算子" },
@@ -58,7 +59,7 @@ export default function OperatorPluginCreate() {
             originFile: files[0],
             slices: sliceFile(files[0]),
             name: fileName,
-            size: files[0].size,
+            size: fileSize,
           },
         ], // 假设只上传一个文件
       });
@@ -73,7 +74,7 @@ export default function OperatorPluginCreate() {
         const { value } = configs[key];
         defaultParams[key] = value;
       });
-      setParsedInfo({ ...res.data, fileName, configs, defaultParams});
+      setParsedInfo({ ...res.data, fileName, fileSize, configs, defaultParams});
       setUploadStep("parsing");
     } catch (err) {
       setParseError("文件解析失败，" + err.data.message);

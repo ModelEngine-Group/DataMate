@@ -7,6 +7,23 @@ version: '1.0.0'
 modal: 'text'     # text/image/audio/video/multimodal
 inputs: 'text'    # text/image/audio/video/multimodal
 outputs: 'text'   # text/image/audio/video/multimodal
+release:
+  - '首次发布'
+  - '支持基本处理操作'
+metrics:
+  - name: '准确率'
+    metric: '99.5%'
+  - name: '处理速度'
+    metric: '50 ms/image'
+  - name: '内存使用'
+    metric: '128MB'
+  - name: '吞吐量'
+    metric: '20 images/sec'
+runtime:
+  memory: 10MB
+  cpu: 1000m
+  gpu: 0.1
+  npu: 0.1
 settings:
   sliderTest:
     name: '滑窗测试'
