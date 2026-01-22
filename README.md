@@ -8,6 +8,7 @@
 ![GitHub Forks](https://img.shields.io/github/forks/ModelEngine-Group/DataMate)
 ![GitHub Issues](https://img.shields.io/github/issues/ModelEngine-Group/DataMate)
 ![GitHub License](https://img.shields.io/github/license/ModelEngine-Group/datamate-docs)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/ModelEngine-Group/DataMate)
 
 **DataMate is an enterprise-level data processing platform for model fine-tuning and RAG retrieval, supporting core
 functions such as data collection, data management, operator marketplace, data cleaning, data synthesis, data
