@@ -6,13 +6,14 @@ import uuid
 from sqlalchemy import Column, String, BigInteger, Boolean, TIMESTAMP, Text, Integer, JSON, Date
 from sqlalchemy.sql import func
 
-from app.db.session import Base
+from app.db.models.base_entity import Base, BaseEntity
 
-class Dataset(Base):
+
+class Dataset(BaseEntity):
     """数据集模型（支持医学影像、文本、问答等多种类型）"""
-    
+
     __tablename__ = "t_dm_datasets"
-    
+
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()), comment="UUID")
     name = Column(String(255), nullable=False, comment="数据集名称")
     description = Column(Text, nullable=True, comment="数据集描述")
@@ -31,31 +32,26 @@ class Dataset(Base):
     is_public = Column(Boolean, default=False, comment="是否公开")
     is_featured = Column(Boolean, default=False, comment="是否推荐")
     version = Column(BigInteger, nullable=False, default=0, comment="版本号")
-    created_at = Column(TIMESTAMP, server_default=func.current_timestamp(), comment="创建时间")
-    updated_at = Column(TIMESTAMP, server_default=func.current_timestamp(), onupdate=func.current_timestamp(), comment="更新时间")
-    created_by = Column(String(255), nullable=True, comment="创建者")
-    updated_by = Column(String(255), nullable=True, comment="更新者")
-    
+
     def __repr__(self):
         return f"<Dataset(id={self.id}, name={self.name}, type={self.dataset_type})>"
 
-class DatasetTag(Base):
+class DatasetTag(BaseEntity):
     """数据集标签关联模型"""
-    
+
     __tablename__ = "t_dm_dataset_tags"
-    
+
     dataset_id = Column(String(36), primary_key=True, comment="数据集ID（UUID）")
     tag_id = Column(String(36), primary_key=True, comment="标签ID（UUID）")
-    created_at = Column(TIMESTAMP, server_default=func.current_timestamp(), comment="创建时间")
-    
+
     def __repr__(self):
         return f"<DatasetTag(dataset_id={self.dataset_id}, tag_id={self.tag_id})>"
 
 class DatasetFiles(Base):
     """DM数据集文件模型"""
-    
+
     __tablename__ = "t_dm_dataset_files"
-    
+
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()), comment="UUID")
     dataset_id = Column(String(36), nullable=False, comment="所属数据集ID（UUID）")
     file_name = Column(String(255), nullable=False, comment="文件名")
@@ -71,15 +67,15 @@ class DatasetFiles(Base):
     last_access_time = Column(TIMESTAMP, nullable=True, comment="最后访问时间")
     created_at = Column(TIMESTAMP, server_default=func.current_timestamp(), comment="创建时间")
     updated_at = Column(TIMESTAMP, server_default=func.current_timestamp(), onupdate=func.current_timestamp(), comment="更新时间")
-    
+
     def __repr__(self):
         return f"<DatasetFiles(id={self.id}, dataset_id={self.dataset_id}, file_name={self.file_name})>"
-    
+
 class DatasetStatistics(Base):
     """数据集统计信息模型"""
-    
+
     __tablename__ = "t_dm_dataset_statistics"
-    
+
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()), comment="UUID")
     dataset_id = Column(String(36), nullable=False, comment="数据集ID（UUID）")
     stat_date = Column(Date, nullable=False, comment="统计日期")
@@ -92,15 +88,15 @@ class DatasetStatistics(Base):
     quality_metrics = Column(JSON, nullable=True, comment="质量指标")
     created_at = Column(TIMESTAMP, server_default=func.current_timestamp(), comment="创建时间")
     updated_at = Column(TIMESTAMP, server_default=func.current_timestamp(), onupdate=func.current_timestamp(), comment="更新时间")
-    
+
     def __repr__(self):
         return f"<DatasetStatistics(id={self.id}, dataset_id={self.dataset_id}, date={self.stat_date})>"
 
 class Tag(Base):
     """标签集合模型"""
-    
+
     __tablename__ = "t_dm_tags"
-    
+
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()), comment="UUID")
     name = Column(String(100), nullable=False, unique=True, comment="标签名称")
     description = Column(Text, nullable=True, comment="标签描述")
@@ -109,6 +105,6 @@ class Tag(Base):
     usage_count = Column(BigInteger, default=0, comment="使用次数")
     created_at = Column(TIMESTAMP, server_default=func.current_timestamp(), comment="创建时间")
     updated_at = Column(TIMESTAMP, server_default=func.current_timestamp(), onupdate=func.current_timestamp(), comment="更新时间")
-    
+
     def __repr__(self):
         return f"<Tag(id={self.id}, name={self.name}, category={self.category})>"

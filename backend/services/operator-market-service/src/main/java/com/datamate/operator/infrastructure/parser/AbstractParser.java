@@ -5,6 +5,7 @@ import com.datamate.common.infrastructure.exception.SystemErrorCode;
 import com.datamate.operator.domain.contants.OperatorConstant;
 import com.datamate.operator.infrastructure.exception.OperatorErrorCode;
 import com.datamate.operator.interfaces.dto.OperatorDto;
+import com.datamate.operator.interfaces.dto.OperatorReleaseDto;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.yaml.snakeyaml.LoaderOptions;
@@ -13,10 +14,7 @@ import org.yaml.snakeyaml.constructor.SafeConstructor;
 
 import java.io.File;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
 public abstract class AbstractParser {
     protected ObjectMapper objectMapper = new ObjectMapper();
@@ -33,6 +31,15 @@ public abstract class AbstractParser {
         operator.setOutputs(toStringIfNotNull(content.get("outputs")));
         operator.setRuntime(toJsonIfNotNull(content.get("runtime")));
         operator.setSettings(toJsonIfNotNull(content.get("settings")));
+        operator.setMetrics(toJsonIfNotNull(content.get("metrics")));
+        Object changelog = content.get("release");
+        OperatorReleaseDto operatorReleaseDto = new OperatorReleaseDto();
+        if (changelog instanceof List) {
+            operatorReleaseDto.setChangelog((List<String>) changelog);
+        } else {
+            operatorReleaseDto.setChangelog(Collections.emptyList());
+        }
+        operator.setReleases(List.of(operatorReleaseDto));
         List<String> categories = new ArrayList<>();
         categories.add(OperatorConstant.CATEGORY_MAP.get(toLowerCaseIfNotNull(content.get("language"))));
         categories.add(OperatorConstant.CATEGORY_MAP.get(toLowerCaseIfNotNull(content.get("modal"))));

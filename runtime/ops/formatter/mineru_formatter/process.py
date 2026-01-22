@@ -27,7 +27,7 @@ class MineruFormatter(Mapper):
 
     def __init__(self, *args, **kwargs):
         super(MineruFormatter, self).__init__(*args, **kwargs)
-        self.server_url = "http://datamate-mineru:8000"
+        self.server_url = kwargs.get("mineruApi", "http://datamate-mineru:8000")
         self.backend = "vlm-http-client"
         self.output_dir = "/dataset/outputs"
         self.max_retries = 3

@@ -1,6 +1,7 @@
 package com.datamate.common.infrastructure.mapper;
 
 import com.datamate.common.domain.model.ChunkUploadPreRequest;
+import com.datamate.common.infrastructure.config.IgnoreDataScopeAnnotation;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -10,6 +11,7 @@ import java.util.List;
  * 文件切片上传请求Mapper
  */
 @Mapper
+@IgnoreDataScopeAnnotation
 public interface ChunkUploadRequestMapper {
 
     /**

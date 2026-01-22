@@ -13,6 +13,8 @@ CREATE TABLE IF NOT EXISTS t_dm_annotation_templates (
     category VARCHAR(50) DEFAULT 'custom',
     built_in BOOLEAN DEFAULT FALSE,
     version VARCHAR(20) DEFAULT '1.0',
+    created_by VARCHAR(256),
+    updated_by VARCHAR(256),
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP
@@ -30,6 +32,8 @@ COMMENT ON COLUMN t_dm_annotation_templates.style IS '样式配置: horizontal/v
 COMMENT ON COLUMN t_dm_annotation_templates.category IS '模板分类: medical/general/custom/system';
 COMMENT ON COLUMN t_dm_annotation_templates.built_in IS '是否系统内置模板';
 COMMENT ON COLUMN t_dm_annotation_templates.version IS '模板版本';
+COMMENT ON COLUMN t_dm_annotation_templates.created_by IS '创建者';
+COMMENT ON COLUMN t_dm_annotation_templates.updated_by IS '更新者';
 COMMENT ON COLUMN t_dm_annotation_templates.created_at IS '创建时间';
 COMMENT ON COLUMN t_dm_annotation_templates.updated_at IS '更新时间';
 COMMENT ON COLUMN t_dm_annotation_templates.deleted_at IS '删除时间（软删除）';
@@ -50,6 +54,8 @@ CREATE TABLE IF NOT EXISTS t_dm_labeling_projects (
     template_id VARCHAR(36),
     configuration JSONB,
     progress JSONB,
+    created_by VARCHAR(256),
+    updated_by VARCHAR(256),
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP
@@ -64,6 +70,8 @@ COMMENT ON COLUMN t_dm_labeling_projects.labeling_project_id IS 'Label Studio项
 COMMENT ON COLUMN t_dm_labeling_projects.template_id IS '使用的模板ID';
 COMMENT ON COLUMN t_dm_labeling_projects.configuration IS '项目配置（可能包含对模板的自定义修改）';
 COMMENT ON COLUMN t_dm_labeling_projects.progress IS '项目进度信息';
+COMMENT ON COLUMN t_dm_labeling_projects.created_by IS '创建者';
+COMMENT ON COLUMN t_dm_labeling_projects.updated_by IS '更新者';
 COMMENT ON COLUMN t_dm_labeling_projects.created_at IS '创建时间';
 COMMENT ON COLUMN t_dm_labeling_projects.updated_at IS '更新时间';
 COMMENT ON COLUMN t_dm_labeling_projects.deleted_at IS '删除时间（软删除）';
@@ -93,6 +101,8 @@ CREATE TABLE IF NOT EXISTS t_dm_auto_annotation_tasks (
     detected_objects INTEGER DEFAULT 0,
     output_path VARCHAR(500),
     error_message TEXT,
+    created_by VARCHAR(256),
+    updated_by VARCHAR(256),
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     completed_at TIMESTAMP,
@@ -114,6 +124,8 @@ COMMENT ON COLUMN t_dm_auto_annotation_tasks.processed_images IS '已处理图�
 COMMENT ON COLUMN t_dm_auto_annotation_tasks.detected_objects IS '检测到的对象总数';
 COMMENT ON COLUMN t_dm_auto_annotation_tasks.output_path IS '输出路径';
 COMMENT ON COLUMN t_dm_auto_annotation_tasks.error_message IS '错误信息';
+COMMENT ON COLUMN t_dm_auto_annotation_tasks.created_by IS '创建者';
+COMMENT ON COLUMN t_dm_auto_annotation_tasks.updated_by IS '更新者';
 COMMENT ON COLUMN t_dm_auto_annotation_tasks.created_at IS '创建时间';
 COMMENT ON COLUMN t_dm_auto_annotation_tasks.updated_at IS '更新时间';
 COMMENT ON COLUMN t_dm_auto_annotation_tasks.completed_at IS '完成时间';

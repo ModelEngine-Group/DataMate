@@ -82,14 +82,15 @@ class Request {
    */
   createXHRWithProgress(url, config, onProgress, onDownloadProgress) {
     return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", url);
+
       // 设置请求头
       if (config.headers) {
         Object.keys(config.headers).forEach((key) => {
           xhr.setRequestHeader(key, config.headers[key]);
         });
       }
-
-      const xhr = new XMLHttpRequest();
 
       // 监听上传进度
       xhr.upload.addEventListener("progress", function (event) {
@@ -102,14 +103,6 @@ class Request {
           }
         }
       });
-
-      // 请求完成
-      // xhr.addEventListener("load", function () {
-      //   if (xhr.status >= 200 && xhr.status < 300) {
-      // const response = JSON.parse(xhr.responseText);
-      //     resolve(xhr);
-      //   }
-      // });
 
       // 请求完成处理
       xhr.addEventListener("load", () => {
@@ -151,7 +144,6 @@ class Request {
         if (onError) onError(new Error("上传已取消"));
       });
 
-      xhr.open("POST", url);
       xhr.send(config.body);
 
       return xhr; // 返回 xhr 对象以便后续控制
@@ -400,9 +392,10 @@ class Request {
    * @param {string} url - 请求URL
    * @param {object} params - 查询参数
    * @param {string} filename - 下载文件名
+   * @param {string} action - 行为，包括下载文件和预览文件
    * @param {object} options - 额外的fetch选项，包括showLoading, onDownloadProgress
    */
-  async download(url, params = null, filename = "", options = {}) {
+  async download(url, params = null, filename = "", action = "download", options = {}) {
     const fullURL = this.buildURL(url, params);
 
     const config = {
@@ -456,19 +449,34 @@ class Request {
         `download_${Date.now()}`;
     }
 
-    // 创建下载链接
-    const downloadUrl = window.URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = downloadUrl;
-    link.download = filename ?? name;
+    if (action === "download") {
+      // 创建下载链接
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.download = filename ?? name;
 
-    // 添加到DOM并触发下载
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+      // 添加到DOM并触发下载
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
 
-    // 清理URL对象
-    window.URL.revokeObjectURL(downloadUrl);
+      // 清理URL对象
+      window.URL.revokeObjectURL(downloadUrl);
+    } else if (action === "preview") {
+      // 预览逻辑 - 返回Blob URL和相关信息
+      const blobUrl = window.URL.createObjectURL(blob);
+
+      // 可以返回更多信息用于预览
+      return {
+        blob,
+        blobUrl,
+        filename: name,
+        size: blob.size,
+        // 自动清理的钩子
+        revoke: () => window.URL.revokeObjectURL(blobUrl)
+      };
+    }
 
     return blob;
   }

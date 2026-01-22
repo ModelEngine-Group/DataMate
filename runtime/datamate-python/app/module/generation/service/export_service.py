@@ -87,7 +87,7 @@ class SynthesisDatasetExporter:
                 file_path=file_path,
                 file_type="jsonl",
                 file_size=file_size,
-                last_access_time=datetime.datetime.now(datetime.UTC),
+                last_access_time=datetime.datetime.now(),
             )
             self._db.add(df)
             created_files.append(df)

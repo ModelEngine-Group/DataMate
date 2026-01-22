@@ -34,11 +34,13 @@ CREATE TABLE IF NOT EXISTS t_clean_task
     before_size       BIGINT,
     after_size        BIGINT,
     file_count        INTEGER,
-    created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     started_at        TIMESTAMP,
     finished_at       TIMESTAMP,
-    created_by        VARCHAR(256)
-    );
+    created_by        VARCHAR(256),
+    updated_by        VARCHAR(256),
+    created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
 COMMENT ON TABLE t_clean_task IS '清洗任务表';
 COMMENT ON COLUMN t_clean_task.id IS '主键ID';
@@ -52,10 +54,12 @@ COMMENT ON COLUMN t_clean_task.dest_dataset_name IS '目标数据集名称';
 COMMENT ON COLUMN t_clean_task.before_size IS '清洗前大小';
 COMMENT ON COLUMN t_clean_task.after_size IS '清洗后大小';
 COMMENT ON COLUMN t_clean_task.file_count IS '文件数量';
-COMMENT ON COLUMN t_clean_task.created_at IS '创建时间';
 COMMENT ON COLUMN t_clean_task.started_at IS '开始时间';
 COMMENT ON COLUMN t_clean_task.finished_at IS '完成时间';
+COMMENT ON COLUMN t_clean_task.created_at IS '创建时间';
+COMMENT ON COLUMN t_clean_task.updated_at IS '更新时间';
 COMMENT ON COLUMN t_clean_task.created_by IS '创建者';
+COMMENT ON COLUMN t_clean_task.updated_by IS '更新者';
 
 -- 操作员实例表
 CREATE TABLE IF NOT EXISTS t_operator_instance

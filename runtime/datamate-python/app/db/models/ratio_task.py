@@ -11,10 +11,10 @@ from sqlalchemy import Column, String, Text, BigInteger, TIMESTAMP, JSON, Foreig
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
-from app.db.session import Base
+from app.db.models.base_entity import BaseEntity
 
 
-class RatioInstance(Base):
+class RatioInstance(BaseEntity):
     """配比实例表（UUID 主键） -> t_st_ratio_instances
 
     Columns per data-ratio-init.sql:
@@ -32,16 +32,12 @@ class RatioInstance(Base):
     merge_method = Column(String(50), nullable=True, comment="合并方式")
     status = Column(String(20), nullable=True, comment="状态")
     totals = Column(BigInteger, nullable=True, comment="总数")
-    created_at = Column(TIMESTAMP, server_default=func.current_timestamp(), comment="创建时间")
-    updated_at = Column( TIMESTAMP, server_default=func.current_timestamp(), onupdate=func.current_timestamp(), comment="更新时间")
-    created_by = Column(String(255), nullable=True, comment="创建者")
-    updated_by = Column(String(255), nullable=True, comment="更新者")
 
     def __repr__(self) -> str:
         return f"<RatioInstance(id={self.id}, name={self.name}, status={self.status})>"
 
 
-class RatioRelation(Base):
+class RatioRelation(BaseEntity):
     """配比关系表（UUID 主键） -> t_st_ratio_relations
 
     Columns per data-ratio-init.sql:
@@ -57,10 +53,6 @@ class RatioRelation(Base):
     ratio_value = Column(String(256), nullable=True)
     counts = Column(BigInteger, nullable=True, comment="条数")
     filter_conditions = Column(Text, nullable=True, comment="过滤条件")
-    created_at = Column(TIMESTAMP, server_default=func.current_timestamp(), comment="创建时间")
-    updated_at = Column(TIMESTAMP, server_default=func.current_timestamp(), onupdate=func.current_timestamp(), comment="更新时间")
-    created_by = Column(String(255), nullable=True, comment="创建者")
-    updated_by = Column(String(255), nullable=True, comment="更新者")
 
     def __repr__(self) -> str:
         return (

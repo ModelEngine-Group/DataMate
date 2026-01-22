@@ -37,7 +37,19 @@ public class OperatorDto {
 
     private String fileName;
 
+    private Long fileSize;
+
+    private String metrics;
+
+    private Integer usageCount;
+
     private Boolean isStar;
+
+    private List<String> requirements;
+
+    private String readme;
+
+    private List<OperatorReleaseDto> releases;
 
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     private LocalDateTime createdAt;

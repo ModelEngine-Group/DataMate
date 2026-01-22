@@ -33,16 +33,32 @@ export interface OperatorI {
   description: string;
   tags: string[];
   isStar?: boolean;
+  metrics: string;
+  fileSize?: number;
+  usageCount?: number;
   originalId?: string; // 用于标识原始算子ID，便于去重
   categories: string[]; // 分类列表
   settings: string;
+  runtime: string;
+  requirements: string[];
+  readme: string;
+  releases: ReleaseI[];
   overrides?: { [key: string]: any }; // 用户配置的参数
   defaultParams?: { [key: string]: any }; // 默认参数
   configs: {
     [key: string]: ConfigI;
   };
+  createdBy?: string;
+  updatedBy?: string;
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface ReleaseI {
+  id: string;
+  version: string;
+  releaseDate: string;
+  changelog: string[];
 }
 
 export interface CategoryI {

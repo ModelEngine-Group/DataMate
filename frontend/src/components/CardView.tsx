@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Tag, Pagination, Tooltip, Empty, Popover, Spin } from "antd";
-import { ClockCircleOutlined, StarFilled } from "@ant-design/icons";
+import { ClockCircleOutlined, StarFilled, StarOutlined } from "@ant-design/icons";
 import type { ItemType } from "antd/es/menu/interface";
 import { formatDateTime } from "@/utils/unit";
 import ActionDropdown from "./ActionDropdown";
@@ -271,16 +271,24 @@ function CardView<T extends BaseCardDataType>(props: CardViewProps<T>) {
                       </div>
                     </div>
                   </div>
-                  {onFavorite && (
-                    <StarFilled
-                      style={{
-                        fontSize: "16px",
-                        color: isFavorite?.(item) ? "#ffcc00ff" : "#d1d5db",
-                        cursor: "pointer",
-                      }}
-                      onClick={() => onFavorite?.(item)}
-                    />
-                  )}
+                  {onFavorite &&
+                    (isFavorite?.(item) ? (
+                      <StarFilled
+                        style={{ fontSize: "16px", color: "#ffcc00ff" }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onFavorite?.(item);
+                        }}
+                      />
+                    ) : (
+                      <StarOutlined
+                        style={{ fontSize: "16px", color: "#d1d5db" }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onFavorite?.(item);
+                        }}
+                      />
+                    ))}
                 </div>
 
                 <div className="flex-1 flex flex-col justify-end">
@@ -296,7 +304,7 @@ function CardView<T extends BaseCardDataType>(props: CardViewProps<T>) {
                   />
 
                   {/* Description */}
-                  <p className="text-gray-400 text-xs text-ellipsis overflow-hidden whitespace-nowrap text-xs line-clamp-2 mt-2">
+                  <p className="text-gray-400 text-xs text-ellipsis overflow-hidden whitespace-nowrap line-clamp-2 mt-1 mb-1">
                     <Tooltip title={item?.description}>
                       {item?.description}
                     </Tooltip>
@@ -319,7 +327,7 @@ function CardView<T extends BaseCardDataType>(props: CardViewProps<T>) {
               </div>
 
               {/* Divider & Actions */}
-              <div className="w-2/3 border-t border-t-gray-200 mt-2" />
+              <div className="flex border-t border-t-gray-200 mt-2" />
               <div className="flex items-center justify-between pt-3">
                 <div className=" text-gray-500 text-right">
                   <div className="flex items-center gap-1">

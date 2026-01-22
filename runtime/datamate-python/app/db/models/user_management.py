@@ -5,13 +5,13 @@ Tables of User Management Module
 from sqlalchemy import Column, String, BigInteger, Boolean, TIMESTAMP
 from sqlalchemy.sql import func
 
-from app.db.session import Base
+from app.db.models.base_entity import Base
 
 class User(Base):
     """用户模型"""
-    
+
     __tablename__ = "users"
-    
+
     id = Column(BigInteger, primary_key=True, autoincrement=True, comment="用户ID")
     username = Column(String(255), nullable=False, unique=True, comment="用户名")
     email = Column(String(255), nullable=False, unique=True, comment="邮箱")
@@ -24,6 +24,6 @@ class User(Base):
     last_login_at = Column(TIMESTAMP, nullable=True, comment="最后登录时间")
     created_at = Column(TIMESTAMP, server_default=func.current_timestamp(), comment="创建时间")
     updated_at = Column(TIMESTAMP, server_default=func.current_timestamp(), onupdate=func.current_timestamp(), comment="更新时间")
-    
+
     def __repr__(self):
         return f"<User(id={self.id}, username={self.username}, role={self.role})>"

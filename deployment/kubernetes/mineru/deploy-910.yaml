@@ -48,19 +48,6 @@ spec:
               cpu: 100m
               memory: 100Mi
               huawei.com/Ascend910: 1
-          volumeMounts:
-            - name: dataset-volume
-              mountPath: /dataset
-            - name: log-volume
-              mountPath: /var/log/datamate/mineru
-              subPath: mineru
-      volumes:
-        - name: dataset-volume
-          persistentVolumeClaim:
-            claimName: datamate-dataset-pvc
-        - name: log-volume
-          persistentVolumeClaim:
-            claimName: datamate-log-pvc
 
 ---
 apiVersion: v1

@@ -1,6 +1,7 @@
 package com.datamate.datamanagement.infrastructure.persistence.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.datamate.common.infrastructure.config.IgnoreDataScopeAnnotation;
 import com.datamate.datamanagement.domain.model.dataset.DatasetFile;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -9,6 +10,7 @@ import org.apache.ibatis.session.RowBounds;
 import java.util.List;
 
 @Mapper
+@IgnoreDataScopeAnnotation
 public interface DatasetFileMapper extends BaseMapper<DatasetFile> {
     DatasetFile findById(@Param("id") String id);
     List<DatasetFile> findByDatasetId(@Param("datasetId") String datasetId, RowBounds rowBounds);

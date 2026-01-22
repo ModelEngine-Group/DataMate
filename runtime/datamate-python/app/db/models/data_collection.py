@@ -2,12 +2,14 @@ import uuid
 from sqlalchemy import Column, String, Text, TIMESTAMP, Integer, BigInteger, Numeric, JSON, Boolean
 from sqlalchemy.sql import func
 
-from app.db.session import Base
+from app.db.models.base_entity import BaseEntity
 
-class CollectionTemplate(Base):
+
+class CollectionTemplate(BaseEntity):
     """归集模板表（UUID 主键） -> t_dc_collection_templates"""
 
     __tablename__ = "t_dc_collection_templates"
+    __ignore_data_scope__ = True
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()), comment="模板ID（UUID）")
     name = Column(String(255), nullable=False, comment="模板名称")
@@ -18,12 +20,8 @@ class CollectionTemplate(Base):
     target_name = Column(String(64), nullable=False, comment="目标数据源名称")
     template_content = Column(JSON, nullable=False, comment="模板内容")
     built_in = Column(Boolean, default=False, comment="是否系统内置模板")
-    created_at = Column(TIMESTAMP, server_default=func.current_timestamp(), comment="创建时间")
-    updated_at = Column(TIMESTAMP, server_default=func.current_timestamp(), onupdate=func.current_timestamp(), comment="更新时间")
-    created_by = Column(String(255), nullable=True, comment="创建者")
-    updated_by = Column(String(255), nullable=True, comment="更新者")
 
-class CollectionTask(Base):
+class CollectionTask(BaseEntity):
     """归集任务表（UUID 主键） -> t_dc_collection_tasks"""
 
     __tablename__ = "t_dc_collection_tasks"
@@ -41,12 +39,8 @@ class CollectionTask(Base):
     retry_count = Column(Integer, nullable=True, server_default="3", comment="重试次数")
     timeout_seconds = Column(Integer, nullable=True, server_default="3600", comment="超时时间（秒）")
     last_execution_id = Column(String(36), nullable=True, comment="最后执行ID（UUID）")
-    created_at = Column(TIMESTAMP, server_default=func.current_timestamp(), comment="创建时间")
-    updated_at = Column(TIMESTAMP, server_default=func.current_timestamp(), onupdate=func.current_timestamp(), comment="更新时间")
-    created_by = Column(String(255), nullable=True, comment="创建者")
-    updated_by = Column(String(255), nullable=True, comment="更新者")
 
-class TaskExecution(Base):
+class TaskExecution(BaseEntity):
     """任务执行记录表（UUID 主键） -> t_dc_task_executions"""
 
     __tablename__ = "t_dc_task_executions"
@@ -60,7 +54,3 @@ class TaskExecution(Base):
     completed_at = Column(TIMESTAMP, nullable=True, comment="完成时间")
     duration_seconds = Column(Integer, nullable=True, server_default="0", comment="执行时长（秒）")
     error_message = Column(Text, nullable=True, comment="错误信息")
-    created_at = Column(TIMESTAMP, server_default=func.current_timestamp(), comment="创建时间")
-    updated_at = Column(TIMESTAMP, server_default=func.current_timestamp(), onupdate=func.current_timestamp(), comment="更新时间")
-    created_by = Column(String(255), nullable=True, comment="创建者")
-    updated_by = Column(String(255), nullable=True, comment="更新者")

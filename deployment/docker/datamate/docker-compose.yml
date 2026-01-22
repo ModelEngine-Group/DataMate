@@ -9,7 +9,8 @@ services:
     restart: on-failure
     privileged: true
     environment:
-      DB_PASSWORD: ${DB_PASSWORD:-password}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+      - datamate.jwt.enable=${DATAMATE_JWT_ENABLE:-false}
     volumes:
       - dataset_volume:/dataset
       - flow_volume:/flow
@@ -28,6 +29,7 @@ services:
     environment:
       - log_level=DEBUG
       - pgsql_password=${DB_PASSWORD:-password}
+      - datamate_jwt_enable=${DATAMATE_JWT_ENABLE:-false}
     volumes:
       - dataset_volume:/dataset
       - flow_volume:/flow
@@ -42,8 +44,11 @@ services:
     image: ${REGISTRY:-}datamate-gateway
     restart: on-failure
     privileged: true
+    ports:
+      - '8080:8080'
     environment:
       - JWT_SECRET=default-insecure-key-change-in-production
+      - datamate.jwt.enable=${DATAMATE_JWT_ENABLE:-false}
     networks: [ datamate ]
 
   datamate-frontend:
@@ -116,9 +121,8 @@ services:
       --engine vllm
       --host 0.0.0.0
       --port 8000
+      ${EXTRA_ARGS:-}
     volumes:
-      - dataset_volume:/dataset
-      - mineru_log_volume:/var/log/datamate/mineru
       - /var/log/npu/:/usr/slog
       - /usr/local/dcmi:/usr/local/dcmi
       - /usr/local/bin/npu-smi:/usr/local/bin/npu-smi
@@ -334,8 +338,6 @@ volumes:
     name: datamate-operator-runtime-volume
   operator-packages-volume:
     name: datamate-operator-packages-volume
-  mineru_log_volume:
-    name: datamate-mineru_log_volume
   graph_data_volume:
     name: datamate-graph-data-volume
 

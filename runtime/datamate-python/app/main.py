@@ -8,6 +8,7 @@ from fastapi_mcp import FastApiMCP
 from sqlalchemy import text
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from app.middleware import UserContextMiddleware
 from .core.config import settings
 from .core.logging import setup_logging, get_logger
 from .db.session import AsyncSessionLocal
@@ -69,6 +70,7 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+app.add_middleware(UserContextMiddleware)
 # CORS Middleware
 # app.add_middleware(
 #     CORSMiddleware,
