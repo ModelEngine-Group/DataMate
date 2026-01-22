@@ -5,6 +5,7 @@ import com.datamate.common.infrastructure.exception.SystemErrorCode;
 import com.datamate.operator.infrastructure.exception.OperatorErrorCode;
 import com.datamate.operator.interfaces.dto.OperatorDto;
 import jakarta.annotation.PostConstruct;
+import org.apache.commons.io.FileUtils;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
@@ -47,6 +48,7 @@ public class ParserHolder {
                 "No parser registered for type: " + type);
         }
         parser.extractTo(archive, targetDir);
+        FileUtils.deleteQuietly(archive);
     }
 
     public void extractTo(String type, String sourceDir, String targetDir) {

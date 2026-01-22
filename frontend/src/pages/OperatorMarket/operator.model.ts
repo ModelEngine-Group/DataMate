@@ -42,6 +42,7 @@ export interface OperatorI {
   runtime: string;
   requirements: string[];
   readme: string;
+  releases: ReleaseI[];
   overrides?: { [key: string]: any }; // 用户配置的参数
   defaultParams?: { [key: string]: any }; // 默认参数
   configs: {
@@ -51,6 +52,13 @@ export interface OperatorI {
   updatedBy?: string;
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface ReleaseI {
+  id: string;
+  version: string;
+  releaseDate: string;
+  changelog: string[];
 }
 
 export interface CategoryI {

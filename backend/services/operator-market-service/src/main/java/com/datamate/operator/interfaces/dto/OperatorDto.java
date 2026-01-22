@@ -49,6 +49,8 @@ public class OperatorDto {
 
     private String readme;
 
+    private List<OperatorReleaseDto> releases;
+
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     private LocalDateTime createdAt;
 

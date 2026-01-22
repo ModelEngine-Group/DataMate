@@ -5,6 +5,7 @@ import com.datamate.common.domain.service.FileService;
 import com.datamate.common.infrastructure.exception.BusinessException;
 import com.datamate.common.infrastructure.exception.SystemErrorCode;
 import com.datamate.operator.domain.contants.OperatorConstant;
+import com.datamate.operator.domain.repository.OperatorReleaseRepository;
 import com.datamate.operator.infrastructure.converter.OperatorConverter;
 import com.datamate.operator.domain.model.OperatorView;
 import com.datamate.operator.domain.repository.CategoryRelationRepository;
@@ -13,6 +14,7 @@ import com.datamate.operator.domain.repository.OperatorViewRepository;
 import com.datamate.operator.infrastructure.exception.OperatorErrorCode;
 import com.datamate.operator.infrastructure.parser.ParserHolder;
 import com.datamate.operator.interfaces.dto.OperatorDto;
+import com.datamate.operator.interfaces.dto.OperatorReleaseDto;
 import com.datamate.operator.interfaces.dto.UploadOperatorRequest;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -34,6 +37,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -47,6 +51,8 @@ public class OperatorService {
     private final OperatorViewRepository operatorViewRepo;
 
     private final CategoryRelationRepository relationRepo;
+
+    private final OperatorReleaseRepository operatorReleaseRepo;
 
     private final ParserHolder parserHolder;
 
@@ -70,11 +76,13 @@ public class OperatorService {
         OperatorView operator = operatorViewRepo.findOperatorById(id);
         OperatorDto operatorDto = OperatorConverter.INSTANCE.fromEntityToDto(operator);
         if (StringUtils.isNotBlank(operatorDto.getFileName())) {
-            String filePath = getExtractPath(getFileNameWithoutExtension(operatorDto.getFileName()));
+            String filePath = getExtractPath(getStem(operatorDto.getFileName()));
             String requirements = filePath + "/requirements.txt";
             operatorDto.setRequirements(readRequirements(requirements));
             operatorDto.setReadme(getReadmeContent(filePath));
         }
+        operatorDto.setFileName(null);
+        operatorDto.setReleases(operatorReleaseRepo.findAllByOperatorId(id));
         return operatorDto;
     }
 
@@ -83,21 +91,40 @@ public class OperatorService {
         overrideSettings(req);
         operatorRepo.insertOperator(req);
         relationRepo.batchInsert(req.getId(), req.getCategories());
+        if (CollectionUtils.isNotEmpty(req.getReleases())) {
+            OperatorReleaseDto release = req.getReleases().getFirst();
+            release.setId(req.getId());
+            release.setVersion(req.getVersion());
+            release.setReleaseDate(LocalDateTime.now());
+            operatorReleaseRepo.insertOperatorRelease(release);
+        }
         parserHolder.extractTo(getFileType(req.getFileName()), getUploadPath(req.getFileName()),
-                getExtractPath(getFileNameWithoutExtension(req.getFileName())));
+                getExtractPath(getStem(req.getFileName())));
         return getOperatorById(req.getId());
     }
 
     @Transactional
     public OperatorDto updateOperator(String id, OperatorDto req) {
+        OperatorDto operator = getOperatorById(id);
         overrideSettings(req);
         operatorRepo.updateOperator(req);
-        if (CollectionUtils.isNotEmpty(req.getCategories())) {
+        if (StringUtils.isNotBlank(req.getFileName()) && CollectionUtils.isNotEmpty(req.getCategories())) {
             relationRepo.batchUpdate(id, req.getCategories());
+        }
+        if (CollectionUtils.isNotEmpty(req.getReleases())) {
+            OperatorReleaseDto release = req.getReleases().getFirst();
+            release.setId(req.getId());
+            release.setVersion(req.getVersion());
+            release.setReleaseDate(LocalDateTime.now());
+            if (StringUtils.equals(operator.getVersion(), req.getVersion())) {
+                operatorReleaseRepo.updateOperatorRelease(release);
+            } else {
+                operatorReleaseRepo.insertOperatorRelease(release);
+            }
         }
         if (StringUtils.isNotBlank(req.getFileName())) {
             parserHolder.extractTo(getFileType(req.getFileName()), getUploadPath(req.getFileName()),
-                    getExtractPath(getFileNameWithoutExtension(req.getFileName())));
+                    getExtractPath(getStem(req.getFileName())));
         }
         return getOperatorById(id);
     }
@@ -110,8 +137,11 @@ public class OperatorService {
         if (relationRepo.operatorIsPredefined(id)) {
             throw BusinessException.of(OperatorErrorCode.CANT_DELETE_PREDEFINED_OPERATOR);
         }
+        OperatorView operator = operatorViewRepo.findOperatorById(id);
         operatorRepo.deleteOperator(id);
         relationRepo.deleteByOperatorId(id);
+        operatorReleaseRepo.deleteOperatorRelease(id);
+        FileUtils.deleteQuietly(new File(getExtractPath(getStem(operator.getFileName()))));
     }
 
     public OperatorDto uploadOperator(String fileName) {
@@ -135,7 +165,7 @@ public class OperatorService {
         return fileName.substring(fileName.lastIndexOf('.') + 1);
     }
 
-    private String getFileNameWithoutExtension(String fileName) {
+    private String getStem(String fileName) {
         return fileName.substring(0, fileName.lastIndexOf('.'));
     }
 

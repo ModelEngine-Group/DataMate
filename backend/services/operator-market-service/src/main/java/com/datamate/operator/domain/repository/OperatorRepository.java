@@ -18,4 +18,6 @@ public interface OperatorRepository extends IRepository<Operator> {
     int countOperatorByStar(boolean isStar);
 
     boolean operatorInTemplateOrRunning(String operatorId);
+
+    void incrementUsageCount(List<String> operatorIds);
 }
