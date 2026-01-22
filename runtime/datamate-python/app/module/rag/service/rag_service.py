@@ -18,6 +18,7 @@ from .graph_rag import (
     build_llm_model_func,
     initialize_rag,
 )
+from ...system.service.common_service import get_embedding_dimension, get_openai_client
 
 logger = get_logger(__name__)
 
@@ -53,7 +54,7 @@ class RAGService:
             embedding_model.model_name,
             embedding_model.base_url,
             embedding_model.api_key,
-            embedding_dim=embedding_model.embedding_dim if hasattr(embedding_model, "embedding_dim") else 1024,
+            embedding_dim=get_embedding_dimension(get_openai_client(embedding_model)),
         )
 
         kb_working_dir = os.path.join(DEFAULT_WORKING_DIR, kb.name)

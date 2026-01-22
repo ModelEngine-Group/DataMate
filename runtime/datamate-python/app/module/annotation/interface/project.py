@@ -279,7 +279,7 @@ async def create_mapping(
 @router.get("", response_model=StandardResponse[PaginatedData[DatasetMappingResponse]])
 async def list_mappings(
     page: int = Query(1, ge=1, description="页码（从1开始）"),
-    page_size: int = Query(20, ge=1, le=100, description="每页记录数", alias="pageSize"),
+    size: int = Query(20, ge=1, le=100, description="每页记录数"),
     include_template: bool = Query(False, description="是否包含模板详情", alias="includeTemplate"),
     db: AsyncSession = Depends(get_db)
 ):
@@ -298,25 +298,25 @@ async def list_mappings(
         service = DatasetMappingService(db)
 
         # 计算 skip
-        skip = (page - 1) * page_size
+        skip = (page - 1) * size
 
-        logger.info(f"List mappings: page={page}, page_size={page_size}, include_template={include_template}")
+        logger.info(f"List mappings: page={page}, size={size}, include_template={include_template}")
 
         # 获取数据和总数
         mappings, total = await service.get_all_mappings_with_count(
             skip=skip,
-            limit=page_size,
+            limit=size,
             include_deleted=False,
             include_template=include_template
         )
 
         # 计算总页数
-        total_pages = math.ceil(total / page_size) if total > 0 else 0
+        total_pages = math.ceil(total / size) if total > 0 else 0
 
         # 构造分页响应
         paginated_data = PaginatedData(
             page=page,
-            size=page_size,
+            size=size,
             total_elements=total,
             total_pages=total_pages,
             content=mappings
@@ -380,7 +380,7 @@ async def get_mapping(
 async def get_mappings_by_source(
     dataset_id: str,
     page: int = Query(1, ge=1, description="页码（从1开始）"),
-    page_size: int = Query(20, ge=1, le=100, description="每页记录数", alias="pageSize"),
+    size: int = Query(20, ge=1, le=100, description="每页记录数"),
     include_template: bool = Query(True, description="是否包含模板详情", alias="includeTemplate"),
     db: AsyncSession = Depends(get_db)
 ):
@@ -400,25 +400,25 @@ async def get_mappings_by_source(
         service = DatasetMappingService(db)
 
         # 计算 skip
-        skip = (page - 1) * page_size
+        skip = (page - 1) * size
 
-        logger.info(f"Get mappings by source dataset id: {dataset_id}, page={page}, page_size={page_size}, include_template={include_template}")
+        logger.info(f"Get mappings by source dataset id: {dataset_id}, page={page}, size={size}, include_template={include_template}")
 
         # 获取数据和总数（包含模板信息）
         mappings, total = await service.get_mappings_by_source_with_count(
             dataset_id=dataset_id,
             skip=skip,
-            limit=page_size,
+            limit=size,
             include_template=include_template
         )
 
         # 计算总页数
-        total_pages = math.ceil(total / page_size) if total > 0 else 0
+        total_pages = math.ceil(total / size) if total > 0 else 0
 
         # 构造分页响应
         paginated_data = PaginatedData(
             page=page,
-            size=page_size,
+            size=size,
             total_elements=total,
             total_pages=total_pages,
             content=mappings
@@ -514,3 +514,4 @@ async def delete_mapping(
     except Exception as e:
         logger.error(f"Error deleting mapping: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
+

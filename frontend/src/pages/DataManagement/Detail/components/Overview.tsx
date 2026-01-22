@@ -116,6 +116,9 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
         const isDirectory = record.id.startsWith('directory-');
         const iconSize = 16;
 
+        // 如果是通过文件夹上传生成的路径（包含目录），仅展示文件名部分
+        const displayName = text?.split('/')?.filter(Boolean).pop() || text;
+
         const content = (
           <div className="flex items-center">
             {isDirectory ? (
@@ -123,7 +126,7 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
             ) : (
               <File className="mr-2 text-black" size={iconSize} />
             )}
-            <span className="truncate text-black">{text}</span>
+            <span className="truncate text-black">{displayName}</span>
           </div>
         );
 
@@ -185,6 +188,64 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
       key: "uploadTime",
       width: 200,
       render: (text) => formatDateTime(text),
+    },
+    {
+      title: "标签",
+      dataIndex: "tags",
+      key: "tags",
+      width: 220,
+      render: (value: any, record: any) => {
+        const isDirectory = typeof record.id === "string" && record.id.startsWith("directory-");
+        if (isDirectory) return "-";
+
+        let raw = value;
+        if (!raw) return "-";
+
+        // 后端目前将 tags 作为 JSON 字符串存储在 t_dm_dataset_files.tags 中
+        // 这里尝试解析为 FileTag 数组结构 [{ type, from_name, values: { [type]: [...] } }]
+        if (typeof raw === "string") {
+          try {
+            raw = JSON.parse(raw);
+          } catch {
+            // 解析失败则直接展示原始字符串
+            return raw;
+          }
+        }
+
+        if (!Array.isArray(raw) || raw.length === 0) return "-";
+
+        const labels: string[] = [];
+        raw.forEach((tag: any) => {
+          const type = tag?.type;
+          const valuesObj = tag?.values || {};
+          const tagValues = (type && valuesObj[type]) || [];
+
+          if (Array.isArray(tagValues)) {
+            tagValues.forEach((item) => {
+              if (typeof item === "string" && !labels.includes(item)) {
+                labels.push(item);
+              }
+            });
+          } else if (typeof tagValues === "string" && !labels.includes(tagValues)) {
+            labels.push(tagValues);
+          }
+        });
+
+        if (!labels.length) return "-";
+        return labels.join(", ");
+      },
+    },
+    {
+      title: "标签更新时间",
+      dataIndex: "tagsUpdatedAt",
+      key: "tagsUpdatedAt",
+      width: 200,
+      render: (text: any, record: any) => {
+        const isDirectory = typeof record.id === "string" && record.id.startsWith("directory-");
+        if (isDirectory) return "-";
+        if (!text) return "-";
+        return formatDateTime(text);
+      },
     },
     {
       title: "操作",
@@ -523,6 +584,53 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
                 <div>
                   <span className="text-gray-500">状态：</span>
                   <span>{previewFileDetail.status}</span>
+                </div>
+              )}
+              {previewFileDetail?.tags && (
+                <div>
+                  <span className="text-gray-500">标签：</span>
+                  <span>
+                    {(() => {
+                      let raw = previewFileDetail.tags as any;
+                      if (!raw) return "-";
+
+                      if (typeof raw === "string") {
+                        try {
+                          raw = JSON.parse(raw);
+                        } catch {
+                          return raw;
+                        }
+                      }
+
+                      if (!Array.isArray(raw) || raw.length === 0) return "-";
+
+                      const labels: string[] = [];
+                      raw.forEach((tag: any) => {
+                        const type = tag?.type;
+                        const valuesObj = tag?.values || {};
+                        const tagValues = (type && valuesObj[type]) || [];
+
+                        if (Array.isArray(tagValues)) {
+                          tagValues.forEach((item) => {
+                            if (typeof item === "string" && !labels.includes(item)) {
+                              labels.push(item);
+                            }
+                          });
+                        } else if (typeof tagValues === "string" && !labels.includes(tagValues)) {
+                          labels.push(tagValues);
+                        }
+                      });
+
+                      if (!labels.length) return "-";
+                      return labels.join(", ");
+                    })()}
+                  </span>
+                </div>
+              )}
+              {previewFileDetail?.tagsUpdatedAt && (
+                <div>
+                  <span className="text-gray-500">标签更新时间：</span>
+                  <span>{formatDateTime(previewFileDetail.tagsUpdatedAt)}</span>
                 </div>
               )}
               {previewFileDetail?.uploadTime && (
