@@ -1,6 +1,6 @@
 from sqlalchemy import Column, String, Integer, TIMESTAMP, select
 
-from app.db.session import Base
+from app.db.models.base_entity import BaseEntity
 
 
 async def get_model_by_id(db_session, model_id: str):
@@ -9,7 +9,7 @@ async def get_model_by_id(db_session, model_id: str):
     model_config = result.scalar_one_or_none()
     return model_config
 
-class ModelConfig(Base):
+class ModelConfig(BaseEntity):
     """模型配置表，对应表 t_model_config
 
     CREATE TABLE IF NOT EXISTS t_model_config (
@@ -41,11 +41,6 @@ class ModelConfig(Base):
     # 使用 Integer 存储 TINYINT，后续可在业务层将 0/1 转为 bool
     is_enabled = Column(Integer, nullable=False, default=1, comment="是否启用：1-启用，0-禁用")
     is_default = Column(Integer, nullable=False, default=0, comment="是否默认：1-默认，0-非默认")
-
-    created_at = Column(TIMESTAMP, nullable=True, comment="创建时间")
-    updated_at = Column(TIMESTAMP, nullable=True, comment="更新时间")
-    created_by = Column(String(255), nullable=True, comment="创建者")
-    updated_by = Column(String(255), nullable=True, comment="更新者")
 
     __table_args__ = (
         # 与 DDL 中的 uk_model_provider 保持一致

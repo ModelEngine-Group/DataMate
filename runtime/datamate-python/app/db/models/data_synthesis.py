@@ -2,7 +2,7 @@ import uuid
 
 from sqlalchemy import Column, String, Text, Integer, JSON, TIMESTAMP, func
 
-from app.db.session import Base
+from app.db.models.base_entity import Base, BaseEntity
 from app.module.generation.schema.generation import CreateSynthesisTaskRequest
 
 
@@ -43,7 +43,7 @@ async def save_synthesis_task(db_session, synthesis_task: CreateSynthesisTaskReq
     return synth_task_instance
 
 
-class DataSynthInstance(Base):
+class DataSynthInstance(BaseEntity):
     """数据合成任务表，对应表 t_data_synth_instances
 
     create table if not exists t_data_synth_instances
@@ -82,19 +82,9 @@ class DataSynthInstance(Base):
     total_chunks = Column(Integer, nullable=False, default=0, comment="总文本块数")
     processed_chunks = Column(Integer, nullable=False, default=0, comment="已处理文本块数")
     total_synth_data = Column(Integer, nullable=False, default=0, comment="总合成数据量")
-    created_at = Column(TIMESTAMP, nullable=False, default=func.now(), comment="创建时间")
-    updated_at = Column(
-        TIMESTAMP,
-        nullable=False,
-        default=func.now(),
-        onupdate=func.now(),
-        comment="更新时间",
-    )
-    created_by = Column(String(255), nullable=True, comment="创建者")
-    updated_by = Column(String(255), nullable=True, comment="更新者")
 
 
-class DataSynthesisFileInstance(Base):
+class DataSynthesisFileInstance(BaseEntity):
     """数据合成文件任务表，对应表 t_data_synthesis_file_instances
 
     create table if not exists t_data_synthesis_file_instances (
@@ -128,17 +118,6 @@ class DataSynthesisFileInstance(Base):
     status = Column(String(20), nullable=True, comment="任务状态")
     total_chunks = Column(Integer, nullable=False, default=0, comment="总文本块数")
     processed_chunks = Column(Integer, nullable=False, default=0, comment="已处理文本块数")
-
-    created_at = Column(TIMESTAMP, server_default=func.current_timestamp(), nullable=True, comment="创建时间")
-    updated_at = Column(
-        TIMESTAMP,
-        server_default=func.current_timestamp(),
-        onupdate=func.current_timestamp(),
-        nullable=True,
-        comment="更新时间",
-    )
-    created_by = Column(String(255), nullable=True, comment="创建者")
-    updated_by = Column(String(255), nullable=True, comment="更新者")
 
 
 class DataSynthesisChunkInstance(Base):
