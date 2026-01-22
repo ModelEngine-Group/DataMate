@@ -1,6 +1,7 @@
 package com.datamate.operator.domain.model;
 
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.datamate.common.domain.model.base.BaseEntity;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -9,9 +10,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @TableName(value = "t_operator")
-public class Operator {
-    private String id;
-
+public class Operator extends BaseEntity<String> {
     private String name;
 
     private String description;
@@ -35,9 +34,5 @@ public class Operator {
     private Integer usageCount;
 
     private Boolean isStar;
-
-    private LocalDateTime createdAt;
-
-    private LocalDateTime updatedAt;
 }
 

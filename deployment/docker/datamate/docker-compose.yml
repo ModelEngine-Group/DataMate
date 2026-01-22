@@ -9,7 +9,8 @@ services:
     restart: on-failure
     privileged: true
     environment:
-      DB_PASSWORD: ${DB_PASSWORD:-password}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+      - datamate.jwt.enable=${DATAMATE_JWT_ENABLE:-false}
     volumes:
       - dataset_volume:/dataset
       - flow_volume:/flow
@@ -28,6 +29,7 @@ services:
     environment:
       - log_level=DEBUG
       - pgsql_password=${DB_PASSWORD:-password}
+      - datamate_jwt_enable=${DATAMATE_JWT_ENABLE:-false}
     volumes:
       - dataset_volume:/dataset
       - flow_volume:/flow
@@ -46,6 +48,7 @@ services:
       - '8080:8080'
     environment:
       - JWT_SECRET=default-insecure-key-change-in-production
+      - datamate.jwt.enable=${DATAMATE_JWT_ENABLE:-false}
     networks: [ datamate ]
 
   datamate-frontend:

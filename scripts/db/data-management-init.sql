@@ -190,7 +190,9 @@ CREATE TABLE IF NOT EXISTS t_dm_tags (
     color VARCHAR(7),
     usage_count BIGINT DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_by VARCHAR(255),
+    updated_by VARCHAR(255)
 );
 
 COMMENT ON TABLE t_dm_tags IS '标签表（UUID 主键）';
@@ -202,6 +204,8 @@ COMMENT ON COLUMN t_dm_tags.color IS '标签颜色(十六进制)';
 COMMENT ON COLUMN t_dm_tags.usage_count IS '使用次数';
 COMMENT ON COLUMN t_dm_tags.created_at IS '创建时间';
 COMMENT ON COLUMN t_dm_tags.updated_at IS '更新时间';
+COMMENT ON COLUMN t_dm_tags.created_by IS '创建者';
+COMMENT ON COLUMN t_dm_tags.updated_by IS '更新者';
 
 -- 创建索引
 CREATE INDEX IF NOT EXISTS idx_dm_tag_category ON t_dm_tags(category);

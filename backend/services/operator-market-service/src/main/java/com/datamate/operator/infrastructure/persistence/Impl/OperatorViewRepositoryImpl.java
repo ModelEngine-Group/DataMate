@@ -78,7 +78,7 @@ public class OperatorViewRepositoryImpl extends CrudRepository<OperatorViewMappe
         }
 
         queryWrapper.groupBy("operator_id", "operator_name", "description", "version", "inputs", "outputs",
-                        "runtime", "settings", "is_star", "file_size", "usage_count", "created_at", "updated_at")
+                        "runtime", "settings", "is_star", "file_size", "usage_count", "created_at", "updated_at", "created_by", "updated_by")
                 .having(!havingSql.isEmpty(), havingSql.toString())
                 .orderByDesc("created_at");
         return queryWrapper;

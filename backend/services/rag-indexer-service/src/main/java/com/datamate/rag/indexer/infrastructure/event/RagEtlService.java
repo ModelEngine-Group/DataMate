@@ -71,7 +71,7 @@ public class RagEtlService {
         List<RagFile> ragFiles = ragFileRepository.findNotSuccessByKnowledgeBaseId(event.knowledgeBase().getId());
         if (RagType.GRAPH.equals(event.knowledgeBase().getType())){
             log.info("Knowledge base {} is of type GRAPH. Skipping RAG ETL processing.", event.knowledgeBase().getName());
-            graphRagClient.startGraphRagTask(event.knowledgeBase().getId());
+            graphRagClient.startGraphRagTask(event.knowledgeBase().getId(), event.knowledgeBase().getCreatedBy());
             return;
         }
 

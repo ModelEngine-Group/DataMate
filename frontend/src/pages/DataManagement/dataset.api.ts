@@ -104,12 +104,14 @@ export function renameDirectoryUsingPut(
 export function downloadFileByIdUsingGet(
   id: string | number,
   fileId: string | number,
-  fileName: string
+  fileName: string,
+  action: string = "download"
 ) {
   return download(
     `/api/data-management/datasets/${id}/files/${fileId}/download`,
     null,
-    fileName
+    fileName,
+    action
   );
 }
 

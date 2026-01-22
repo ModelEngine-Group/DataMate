@@ -4,6 +4,7 @@ import com.datamate.common.infrastructure.common.Response;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 
 /**
  * 知识图谱RAG客户端
@@ -19,5 +20,5 @@ public interface GraphRagClient {
      * @return 任务详情
      */
     @PostMapping("/api/rag/process/{id}")
-    Response<?> startGraphRagTask(@PathVariable("id") String knowledgeBaseId);
+    Response<?> startGraphRagTask(@PathVariable("id") String knowledgeBaseId, @RequestHeader("User") String authorization);
 }

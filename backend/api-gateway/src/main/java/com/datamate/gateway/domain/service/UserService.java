@@ -3,9 +3,7 @@ package com.datamate.gateway.domain.service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.datamate.gateway.domain.entity.User;
 import com.datamate.gateway.domain.repository.UserRepository;
-import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,6 +24,8 @@ import com.datamate.gateway.interfaces.dto.RegisterRequest;
 @Service
 @RequiredArgsConstructor
 public class UserService {
+    private static final String SYSTEM_USER = "system";
+
     private final UserRepository userRepository;
 
     @Value("${datamate.jwt.expiration-seconds:3600}")
@@ -70,12 +70,12 @@ public class UserService {
                 .compact();
     }
 
-    public boolean validateToken(String token) {
+    public String validateToken(String token) {
         try {
-            Jwts.parser().setSigningKey(secret.getBytes()).parseClaimsJws(token);
-            return true;
+            Jws<Claims> claimsJws = Jwts.parserBuilder().setSigningKey(Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8))).build().parseClaimsJws(token);
+            return claimsJws.getBody().getSubject();
         } catch (JwtException | IllegalArgumentException ex) {
-            return false;
+            return null;
         }
     }
 
@@ -89,7 +89,7 @@ public class UserService {
         // Check if username already exists
         LambdaQueryWrapper<User> usernameQuery = new LambdaQueryWrapper<>();
         usernameQuery.eq(User::getUsername, registerRequest.getUsername());
-        if (userRepository.getOne(usernameQuery) != null) {
+        if (userRepository.getOne(usernameQuery) != null || SYSTEM_USER.equals(registerRequest.getUsername())) {
             return Optional.empty();
         }
 

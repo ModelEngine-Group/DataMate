@@ -14,6 +14,7 @@ import {
   deleteDirectoryUsingDelete,
   renameDatasetFileUsingPut,
   renameDirectoryUsingPut,
+  getDatasetFileByIdUsingGet,
 } from "../dataset.api";
 import { useParams } from "react-router";
 
@@ -111,21 +112,17 @@ export function useFilesOperation(dataset: Dataset) {
     setPreviewFileDetail(undefined);
     try {
       // 获取文件元信息（来自 t_dm_dataset_files）
-      const detailRes: any = await (await import("../dataset.api")).getDatasetFileByIdUsingGet(
-        datasetId,
-        file.id
-      );
+      const detailRes: any = await getDatasetFileByIdUsingGet(datasetId, file.id);
       const detail = detailRes?.data || detailRes;
       setPreviewFileDetail(detail);
 
-      const downloadUrl = `/api/data-management/datasets/${datasetId}/files/${file.id}/download`;
       const image = isImageFile(detail?.fileName || file.fileName, detail?.fileType);
+      const { blob, blobUrl } = await downloadFileByIdUsingGet(datasetId, file.id, file.fileName, "preview");
 
       if (image) {
-        setPreviewUrl(downloadUrl);
+        setPreviewUrl(blobUrl);
       } else {
-        const res = await fetch(downloadUrl);
-        const text = await res.text();
+        const text = await blob.text();
         setPreviewContent(text);
       }
     } catch (error) {

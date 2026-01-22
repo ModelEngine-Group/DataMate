@@ -75,5 +75,7 @@ class Settings(BaseSettings):
     # DataMate
     dm_file_path_prefix: str = "/dataset"  # DM存储文件夹前缀
 
+    datamate_jwt_enable: bool = False
+
 # 全局设置实例
 settings = Settings()

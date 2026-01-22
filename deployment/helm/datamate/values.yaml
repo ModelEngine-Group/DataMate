@@ -113,6 +113,8 @@ backend:
           key: DB_PASSWORD
     - name: datamate.rag.milvus-uri
       value: "http://milvus:19530"
+    - name: datamate.jwt.enable
+      value: &DATAMATE_JWT_ENABLE 'false'
   volumes:
     - *datasetVolume
     - *flowVolume
@@ -135,6 +137,8 @@ backend-python:
         secretKeyRef:
           name: datamate-conf
           key: DB_PASSWORD
+    - name: datamate_jwt_enable
+      value: *DATAMATE_JWT_ENABLE
   volumes:
     - *datasetVolume
     - *flowVolume
@@ -151,6 +155,8 @@ gateway:
   env:
     - name: JWT_SECRET
       value: "default-insecure-key-change-in-production"
+    - name: datamate.jwt.enable
+      value: *DATAMATE_JWT_ENABLE
   volumes:
     - *logVolume
   volumeMounts:

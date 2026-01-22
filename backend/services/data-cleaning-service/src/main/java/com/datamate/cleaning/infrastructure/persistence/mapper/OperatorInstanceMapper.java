@@ -2,6 +2,7 @@ package com.datamate.cleaning.infrastructure.persistence.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.datamate.cleaning.domain.model.entity.OperatorInstance;
+import com.datamate.common.infrastructure.config.IgnoreDataScopeAnnotation;
 import com.datamate.operator.domain.model.OperatorView;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
@@ -10,6 +11,7 @@ import java.util.List;
 
 
 @Mapper
+@IgnoreDataScopeAnnotation
 public interface OperatorInstanceMapper extends BaseMapper<OperatorInstance> {
     @Select("SELECT o.operator_id as id, o.operator_name as name, o.description, o.version, o.inputs, o.outputs, " +
             "o.runtime, o.settings, o.created_at, o.updated_at, " +
