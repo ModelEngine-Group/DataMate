@@ -38,6 +38,8 @@ public class CleaningTaskDto {
 
     private Integer fileCount;
 
+    private Integer retryCount;
+
     private CleaningTaskStatusEnum status;
 
     private String templateId;

@@ -76,10 +76,10 @@ export default function CleansingTaskDetail() {
 
   const [taskLog, setTaskLog] = useState();
 
-  const fetchTaskLog = async () => {
+  const fetchTaskLog = async (retryCount: number) => {
     if (!id) return;
     try {
-      const { data } = await queryCleaningTaskLogByIdUsingGet(id);
+      const { data } = await queryCleaningTaskLogByIdUsingGet(id, retryCount);
       setTaskLog(data);
     } catch (error) {
       message.error("获取清洗日志失败");
@@ -90,7 +90,7 @@ export default function CleansingTaskDetail() {
   const handleRefresh = async () => {
     fetchTaskDetail();
     {activeTab === "files" && await fetchTaskResult()}
-    {activeTab === "logs" && await fetchTaskLog()}
+    {activeTab === "logs" && await fetchTaskLog(task.retryCount)}
   };
 
   useEffect(() => {
@@ -215,7 +215,7 @@ export default function CleansingTaskDetail() {
           )}
           {activeTab === "operators" && <OperatorTable task={task} />}
           {activeTab === "files" && <FileTable result={result} fetchTaskResult={fetchTaskResult} />}
-          {activeTab === "logs" && <LogsTable taskLog={taskLog} fetchTaskLog={fetchTaskLog} />}
+          {activeTab === "logs" && <LogsTable taskLog={taskLog} fetchTaskLog={fetchTaskLog} retryCount={task.retryCount} />}
         </div>
       </div>
     </>

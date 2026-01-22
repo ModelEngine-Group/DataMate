@@ -17,8 +17,8 @@ export function queryCleaningTaskResultByIdUsingGet(taskId: string | number) {
   return get(`/api/cleaning/tasks/${taskId}/result`);
 }
 
-export function queryCleaningTaskLogByIdUsingGet(taskId: string | number) {
-  return get(`/api/cleaning/tasks/${taskId}/log`);
+export function queryCleaningTaskLogByIdUsingGet(taskId: string | number, retryCount: number) {
+  return get(`/api/cleaning/tasks/${taskId}/log/${retryCount}`);
 }
 
 export function updateCleaningTaskByIdUsingPut(taskId: string | number, data: any) {

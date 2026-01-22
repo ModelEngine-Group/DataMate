@@ -37,6 +37,8 @@ public class CleaningTask {
 
     private Integer fileCount;
 
+    private Integer retryCount;
+
     private LocalDateTime createdAt;
 
     private LocalDateTime startedAt;

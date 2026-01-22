@@ -1,6 +1,7 @@
 package com.datamate.cleaning.interfaces.rest;
 
 import com.datamate.cleaning.application.CleaningTaskService;
+import com.datamate.cleaning.application.scheduler.CleaningTaskScheduler;
 import com.datamate.cleaning.interfaces.dto.*;
 import com.datamate.common.interfaces.PagedResponse;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CleaningTaskController {
     private final CleaningTaskService cleaningTaskService;
+
+    private final CleaningTaskScheduler taskScheduler;
 
     @GetMapping
     public PagedResponse<CleaningTaskDto> cleaningTasksGet(
@@ -36,7 +39,9 @@ public class CleaningTaskController {
         if (request.getInstance().isEmpty() && StringUtils.isNotBlank(request.getTemplateId())) {
             request.setInstance(cleaningTaskService.getInstanceByTemplateId(request.getTemplateId()));
         }
-        return cleaningTaskService.createTask(request);
+        CleaningTaskDto task = cleaningTaskService.createTask(request);
+        taskScheduler.executeTask(task.getId(), 0);
+        return task;
     }
 
     @PostMapping("/{taskId}/stop")
@@ -74,8 +79,9 @@ public class CleaningTaskController {
         return cleaningTaskService.getTaskResults(taskId);
     }
 
-    @GetMapping("/{taskId}/log")
-    public List<CleaningTaskLog> cleaningTasksTaskIdGetLog(@PathVariable("taskId") String taskId) {
-        return cleaningTaskService.getTaskLog(taskId);
+    @GetMapping("/{taskId}/log/{retryCount}")
+    public List<CleaningTaskLog> cleaningTasksTaskIdGetLog(@PathVariable("taskId") String taskId,
+                                                           @PathVariable("retryCount") int retryCount) {
+        return cleaningTaskService.getTaskLog(taskId, retryCount);
     }
 }
