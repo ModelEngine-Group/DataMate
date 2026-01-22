@@ -94,4 +94,25 @@
       radial-gradient(circle at 80% 60%, rgba(236, 72, 153, 0.2), transparent 55%),
       #01030f;
   }
+  /* 数据集导入弹窗上传区域样式优化 */
+  .dataset-import-dragger {
+    width: 260px;
+    max-width: 260px;
+  }
+  .dataset-import-dragger .ant-upload {
+    width: 100%;
+  }
+  .dataset-import-dragger .ant-upload-drag {
+    width: 100%;
+  }
+  .dataset-import-dragger .ant-upload-list {
+    max-height: 120px;
+    overflow-y: auto;
+  }
+  .dataset-import-dragger .ant-upload-list-item-name {
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }

@@ -3,7 +3,7 @@
     "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.datamate.datamanagement.infrastructure.persistence.mapper.DatasetFileMapper">
     <sql id="Base_Column_List">
-      id, dataset_id, file_name, file_path, file_type, file_size, check_sum, tags, metadata, status,
+      id, dataset_id, file_name, file_path, file_type, file_size, check_sum, tags, tags_updated_at, metadata, status,
           upload_time, last_access_time, created_at, updated_at
     </sql>
 

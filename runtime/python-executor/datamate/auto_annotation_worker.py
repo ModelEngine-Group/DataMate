@@ -27,7 +27,7 @@ import time
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Set
 
 from loguru import logger
 from sqlalchemy import text
@@ -245,6 +245,77 @@ def _load_files_by_ids(file_ids: List[str]) -> List[Tuple[str, str, str]]:
         return [(str(r[0]), str(r[1]), str(r[2])) for r in rows]
 
 
+def _build_file_tags_from_detections(detections: List[Dict[str, Any]]) -> Optional[List[Dict[str, Any]]]:
+    """根据检测结果构建 FileTag JSON 结构。
+
+    tags 字段在 DM 服务中被当作 List[FileTag] 解析，结构需与
+    backend `FileTag`/runtime `DatasetFileTag` 保持兼容：
+
+    [{
+        "id": "...",               # 可选
+        "type": "labels",         # 类型键
+        "from_name": "auto_annotation",  # 来源
+        "values": {"labels": ["Person", "Car"]}
+    }]
+
+    重复类别只保留一个。
+    """
+
+    if not detections:
+        return None
+
+    label_set: Set[str] = set()
+    for det in detections:
+        label = det.get("label")
+        if isinstance(label, str) and label:
+            label_set.add(label)
+
+    if not label_set:
+        return None
+
+    # 排序以保证结果稳定
+    labels = sorted(label_set)
+    return [
+        {
+            "id": None,
+            "type": "labels",
+            "from_name": "auto_annotation",
+            "values": {"labels": labels},
+        }
+    ]
+
+
+def _update_dataset_file_tags(file_id: str, tags: List[Dict[str, Any]]) -> None:
+    """将标签写入 t_dm_dataset_files.tags 并更新 tags_updated_at。"""
+
+    if not file_id:
+        return
+
+    try:
+        now = datetime.utcnow()
+        sql = text(
+            """
+            UPDATE t_dm_dataset_files
+            SET tags = :tags,
+                tags_updated_at = :tags_updated_at
+            WHERE id = :file_id
+            """
+        )
+        params = {
+            "file_id": file_id,
+            "tags": json.dumps(tags, ensure_ascii=False),
+            "tags_updated_at": now,
+        }
+        with SQLManager.create_connect() as conn:
+            conn.execute(sql, params)
+    except Exception as e:  # pragma: no cover - 防御性日志
+        logger.error(
+            "Failed to update tags for dataset file {}: {}",
+            file_id,
+            e,
+        )
+
+
 def _ensure_output_dir(output_dir: str) -> str:
     """确保输出目录及其 images/、annotations/ 子目录存在。"""
 
@@ -296,6 +367,8 @@ def _register_output_dataset(
     output_dir: str,
     output_dataset_name: str,
     total_images: int,
+    *,
+    tags_by_filename: Optional[Dict[str, List[Dict[str, Any]]]] = None,
 ) -> None:
     """将自动标注结果注册到新建的数据集。"""
 
@@ -347,9 +420,9 @@ def _register_output_dataset(
     insert_file_sql = text(
         """
         INSERT INTO t_dm_dataset_files (
-            id, dataset_id, file_name, file_path, file_type, file_size, status
+            id, dataset_id, file_name, file_path, file_type, file_size, status, tags, tags_updated_at
         ) VALUES (
-            :id, :dataset_id, :file_name, :file_path, :file_type, :file_size, :status
+            :id, :dataset_id, :file_name, :file_path, :file_type, :file_size, :status, :tags, :tags_updated_at
         )
         """
     )
@@ -367,6 +440,9 @@ def _register_output_dataset(
 
         for file_name, file_path, file_size in image_files:
             ext = os.path.splitext(file_name)[1].lstrip(".").upper() or None
+            file_tags = None
+            if tags_by_filename:
+                file_tags = tags_by_filename.get(file_name)
             conn.execute(
                 insert_file_sql,
                 {
@@ -377,6 +453,8 @@ def _register_output_dataset(
                     "file_type": ext,
                     "file_size": int(file_size),
                     "status": "ACTIVE",
+                    "tags": json.dumps(file_tags, ensure_ascii=False) if file_tags else None,
+                    "tags_updated_at": datetime.utcnow() if file_tags else None,
                 },
             )
             added_count += 1
@@ -393,6 +471,8 @@ def _register_output_dataset(
                     "file_type": ext,
                     "file_size": int(file_size),
                     "status": "ACTIVE",
+                    "tags": None,
+                    "tags_updated_at": None,
                 },
             )
             added_count += 1
@@ -477,7 +557,8 @@ def _process_single_task(task: Dict[str, Any]) -> None:
     else:
         all_files = _load_dataset_files(dataset_id)
 
-    files = [(path, name) for _, path, name in all_files]
+    # all_files: List[(file_id, file_path, file_name)]
+    files = all_files
 
     total_images = len(files)
     if total_images == 0:
@@ -523,7 +604,10 @@ def _process_single_task(task: Dict[str, Any]) -> None:
     processed = 0
     detected_total = 0
 
-    for file_path, file_name in files:
+    # 记录：文件名 -> FileTag JSON，用于给新输出数据集的文件打标签
+    tags_by_filename: Dict[str, List[Dict[str, Any]]] = {}
+
+    for file_id, file_path, file_name in files:
         try:
             sample = {
                 "image": file_path,
@@ -535,6 +619,22 @@ def _process_single_task(task: Dict[str, Any]) -> None:
             detections = annotations.get("detections", [])
             detected_total += len(detections)
             processed += 1
+
+            # 基于检测结果生成标签（按类别去重），并写回源数据集文件
+            file_tags = _build_file_tags_from_detections(detections)
+            if file_tags:
+                try:
+                    _update_dataset_file_tags(file_id, file_tags)
+                    # 使用源文件名作为 key，供输出数据集复用
+                    base_name = os.path.basename(file_path)
+                    tags_by_filename[base_name] = file_tags
+                except Exception as e:
+                    logger.error(
+                        "Failed to persist tags for file {} in dataset {}: {}",
+                        file_id,
+                        dataset_id,
+                        e,
+                    )
 
             progress = int(processed * 100 / total_images) if total_images > 0 else 100
 
@@ -584,6 +684,7 @@ def _process_single_task(task: Dict[str, Any]) -> None:
                 output_dir=output_dir,
                 output_dataset_name=output_dataset_name,
                 total_images=total_images,
+                tags_by_filename=tags_by_filename,
             )
         except Exception as e:  # pragma: no cover - 防御性日志
             logger.error(

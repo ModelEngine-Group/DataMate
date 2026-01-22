@@ -32,6 +32,7 @@ public class DatasetFile {
     private Long fileSize; // bytes
     private String checkSum;
     private String tags;
+    private LocalDateTime tagsUpdatedAt;
     private String metadata;
     private String status; // UPLOADED, PROCESSING, COMPLETED, ERROR
     private LocalDateTime uploadTime;
