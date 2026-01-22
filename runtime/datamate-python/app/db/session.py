@@ -41,16 +41,12 @@ def _apply_data_scope(orm_execute_state):
     # predicate builder: return None to skip for classes that opt-out
     def criteria_fn(cls):
         # skip if the mapped class explicitly disables data-scope
-        from app.core.logging import get_logger
-        logger_ = get_logger("criteria_fn")
         if getattr(cls, "__ignore_data_scope__", False):
             return true()
         # some classes may not have created_by column; guard dynamically
         col = getattr(cls, "created_by", None)
         if col is None:
             return true()
-        logger_.info(
-            f">>>>> {getattr(cls, "__ignore_data_scope__", False)}, {getattr(cls, "created_by", None)}")
         return col.in_(allowed)
 
     # apply loader-level criteria to all subclasses of BaseEntity

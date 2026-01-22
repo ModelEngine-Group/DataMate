@@ -20,6 +20,7 @@ import org.apache.ibatis.plugin.Invocation;
 import org.apache.ibatis.plugin.Signature;
 import org.springframework.stereotype.Component;
 
+import java.lang.reflect.Method;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Objects;
@@ -63,6 +64,16 @@ public class DataScopeHandle implements DataPermissionHandler, Interceptor {
             IgnoreDataScopeAnnotation annotation = clazz.getAnnotation(IgnoreDataScopeAnnotation.class);
             if (annotation != null) {
                 return where;
+            }
+            String methodName = mappedStatementId.substring(mappedStatementId.lastIndexOf(C_DOTS) + 1);
+            for (Method method : clazz.getMethods()) {
+                if (method.getName().equals(methodName)) {
+                    annotation = method.getAnnotation(IgnoreDataScopeAnnotation.class);
+                    if (annotation != null) {
+                        return where;
+                    }
+                    break;
+                }
             }
             ParenthesedExpressionList<StringValue> valueList =
                     new ParenthesedExpressionList<>(Arrays.asList(new StringValue(userInfoHolder.get()), SYSTEM_USER));

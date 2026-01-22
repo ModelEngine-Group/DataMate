@@ -5,6 +5,7 @@ import com.datamate.datamanagement.infrastructure.client.dto.CollectionTaskDetai
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestHeader;
 
 /**
  * 数据归集服务 Feign Client
@@ -18,5 +19,5 @@ public interface CollectionTaskClient {
      * @return 任务详情
      */
     @GetMapping("/api/data-collection/tasks/{id}")
-    Response<CollectionTaskDetailResponse> getTaskDetail(@PathVariable("id") String taskId);
+    Response<CollectionTaskDetailResponse> getTaskDetail(@PathVariable("id") String taskId, @RequestHeader("User") String authorization);
 }

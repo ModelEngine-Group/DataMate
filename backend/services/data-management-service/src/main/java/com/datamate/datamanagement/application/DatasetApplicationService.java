@@ -244,7 +244,7 @@ public class DatasetApplicationService {
     public void processDataSourceAsync(String datasetId, String dataSourceId) {
         try {
             log.info("Initiating data source file scanning, dataset ID: {}, collection task ID: {}", datasetId, dataSourceId);
-            List<String> filePaths = getFilePaths(dataSourceId);
+            List<String> filePaths = getFilePaths(dataSourceId, datasetRepository.getById(datasetId));
             if (CollectionUtils.isEmpty(filePaths)) {
                 return;
             }
@@ -255,8 +255,8 @@ public class DatasetApplicationService {
         }
     }
 
-    private List<String> getFilePaths(String dataSourceId) {
-        CollectionTaskDetailResponse taskDetail = collectionTaskClient.getTaskDetail(dataSourceId).getData();
+    private List<String> getFilePaths(String dataSourceId, Dataset dataset) {
+        CollectionTaskDetailResponse taskDetail = collectionTaskClient.getTaskDetail(dataSourceId, dataset.getCreatedBy()).getData();
         if (taskDetail == null) {
             log.warn("Fail to get collection task detail, task ID: {}", dataSourceId);
             return Collections.emptyList();
