@@ -128,56 +128,66 @@ CREATE TRIGGER update_clean_template_updated_at
 -- 插入初始数据 - 清洗模板
 INSERT INTO t_clean_template (id, name, description)
 VALUES
-    ('26ae585c-8310-4679-adc0-e53215e6e69b', '文本清洗模板', '文本清洗模板'),
-    ('4421504e-c6c9-4760-b55a-509d17429597', '图片清洗模板', '图片清洗模板')
-    ON CONFLICT (id) DO NOTHING;
+    ('550e8400-e29b-41d4-a716-446655440001', '安全与隐私合规处理模板', '针对敏感数据进行严格清洗，移除PII（个人身份信息）、政治敏感、暴力色情内容，适用于模型对外发布前的安全合规检查。'),
+    ('661f9500-f3ac-52e5-b827-557766550002', 'LLM SFT高质量文本清洗模板', '旨在生成高质量、低噪声的训练数据。包含去除乱码、重复内容、繁简转换、全角转半角以及格式标准化处理。'),
+    ('772a0611-a4bd-63f6-c938-668877660003', 'RAG知识库构建预处理模板', '专为RAG场景设计。重点去除目录、图注、XML/HTML标签等对向量检索无意义的噪声，并进行段落级去重以优化切片质量。'),
+    ('883b1722-b5ce-7407-d049-779988770004', '原始Web爬虫数据清洗模板', '针对互联网爬取的脏数据进行清洗。重点去除Emoji表情、URL链接、HTML标签以及不可见字符。'),
+    ('994c2833-c6df-8518-e150-880099880005', '多模态/CV模型训练预处理模板', '针对图像数据集处理。包含去除模糊/重复/相似图片，图片方向校正，目标检测预标注，以及尺寸和格式的统一化。')
+ON CONFLICT (id) DO NOTHING;
 
--- 插入初始数据 - 操作员实例（文本清洗模板）
 INSERT INTO t_operator_instance (instance_id, operator_id, op_index, settings_override)
 VALUES
-    ('26ae585c-8310-4679-adc0-e53215e6e69b', 'FileWithShortOrLongLengthFilter', 1, NULL),
-    ('26ae585c-8310-4679-adc0-e53215e6e69b', 'FileWithHighRepeatWordRateFilter', 2, NULL),
-    ('26ae585c-8310-4679-adc0-e53215e6e69b', 'FileWithHighRepeatPhraseRateFilter', 3, NULL),
-    ('26ae585c-8310-4679-adc0-e53215e6e69b', 'FileWithHighSpecialCharRateFilter', 4, NULL),
-    ('26ae585c-8310-4679-adc0-e53215e6e69b', 'FileWithManySensitiveWordsFilter', 5, NULL),
-    ('26ae585c-8310-4679-adc0-e53215e6e69b', 'UnicodeSpaceCleaner', 6, NULL),
-    ('26ae585c-8310-4679-adc0-e53215e6e69b', 'ExtraSpaceCleaner', 7, NULL),
-    ('26ae585c-8310-4679-adc0-e53215e6e69b', 'FullWidthCharacterCleaner', 8, NULL),
-    ('26ae585c-8310-4679-adc0-e53215e6e69b', 'InvisibleCharactersCleaner', 9, NULL),
-    ('26ae585c-8310-4679-adc0-e53215e6e69b', 'ContentCleaner', 10, NULL),
-    ('26ae585c-8310-4679-adc0-e53215e6e69b', 'LegendCleaner', 11, NULL),
-    ('26ae585c-8310-4679-adc0-e53215e6e69b', 'EmojiCleaner', 12, NULL),
-    ('26ae585c-8310-4679-adc0-e53215e6e69b', 'HtmlTagCleaner', 13, NULL),
-    ('26ae585c-8310-4679-adc0-e53215e6e69b', 'TraditionalChineseCleaner', 14, NULL),
-    ('26ae585c-8310-4679-adc0-e53215e6e69b', 'GrableCharactersCleaner', 15, NULL),
-    ('26ae585c-8310-4679-adc0-e53215e6e69b', 'XMLTagCleaner', 16, NULL),
-    ('26ae585c-8310-4679-adc0-e53215e6e69b', 'DuplicateSentencesFilter', 17, NULL),
-    ('26ae585c-8310-4679-adc0-e53215e6e69b', 'DuplicateFilesFilter', 18, NULL),
-    ('26ae585c-8310-4679-adc0-e53215e6e69b', 'SexualAndViolentWordCleaner', 19, NULL),
-    ('26ae585c-8310-4679-adc0-e53215e6e69b', 'PoliticalWordCleaner', 20, NULL),
-    ('26ae585c-8310-4679-adc0-e53215e6e69b', 'AnonymizedPhoneNumber', 21, NULL),
-    ('26ae585c-8310-4679-adc0-e53215e6e69b', 'AnonymizedCreditCardNumber', 22, NULL),
-    ('26ae585c-8310-4679-adc0-e53215e6e69b', 'EmailNumberCleaner', 23, NULL),
-    ('26ae585c-8310-4679-adc0-e53215e6e69b', 'AnonymizedIpAddress', 24, NULL),
-    ('26ae585c-8310-4679-adc0-e53215e6e69b', 'AnonymizedIdNumber', 25, NULL),
-    ('26ae585c-8310-4679-adc0-e53215e6e69b', 'AnonymizedUrlCleaner', 26, NULL),
-    ('26ae585c-8310-4679-adc0-e53215e6e69b', 'PiiDetector', 27, NULL)
-    ON CONFLICT (instance_id, operator_id, op_index) DO NOTHING;
+    ('550e8400-e29b-41d4-a716-446655440001', 'PoliticalWordCleaner', 1, NULL),
+    ('550e8400-e29b-41d4-a716-446655440001', 'SexualAndViolentWordCleaner', 2, NULL),
+    ('550e8400-e29b-41d4-a716-446655440001', 'PiiDetector', 3, NULL),
+    ('550e8400-e29b-41d4-a716-446655440001', 'AnonymizedIdNumber', 4, NULL),
+    ('550e8400-e29b-41d4-a716-446655440001', 'AnonymizedCreditCardNumber', 5, NULL),
+    ('550e8400-e29b-41d4-a716-446655440001', 'AnonymizedPhoneNumber', 6, NULL),
+    ('550e8400-e29b-41d4-a716-446655440001', 'EmailNumberCleaner', 7, NULL),
+    ('550e8400-e29b-41d4-a716-446655440001', 'AnonymizedIpAddress', 8, NULL)
+ON CONFLICT (instance_id, operator_id, op_index) DO NOTHING;
 
--- 插入初始数据 - 操作员实例（图片清洗模板）
 INSERT INTO t_operator_instance (instance_id, operator_id, op_index, settings_override)
 VALUES
-    ('4421504e-c6c9-4760-b55a-509d17429597', 'ImgBlurredImagesCleaner', 1, NULL),
-    ('4421504e-c6c9-4760-b55a-509d17429597', 'ImgDuplicatedImagesCleaner', 2, NULL),
-    ('4421504e-c6c9-4760-b55a-509d17429597', 'ImgSimilarImagesCleaner', 3, NULL),
-    ('4421504e-c6c9-4760-b55a-509d17429597', 'ImgBrightness', 4, NULL),
-    ('4421504e-c6c9-4760-b55a-509d17429597', 'ImgContrast', 5, NULL),
-    ('4421504e-c6c9-4760-b55a-509d17429597', 'ImgSaturation', 6, NULL),
-    ('4421504e-c6c9-4760-b55a-509d17429597', 'ImgSharpness', 7, NULL),
-    ('4421504e-c6c9-4760-b55a-509d17429597', 'ImgDenoise', 8, NULL),
-    ('4421504e-c6c9-4760-b55a-509d17429597', 'ImgShadowRemove', 9, NULL),
-    ('4421504e-c6c9-4760-b55a-509d17429597', 'ImgPerspectiveTransformation', 10, NULL),
-    ('4421504e-c6c9-4760-b55a-509d17429597', 'ImgDirectionCorrect', 11, NULL),
-    ('4421504e-c6c9-4760-b55a-509d17429597', 'ImgResize', 12, NULL),
-    ('4421504e-c6c9-4760-b55a-509d17429597', 'ImgTypeUnify', 13, NULL)
-    ON CONFLICT (instance_id, operator_id, op_index) DO NOTHING;
+    ('661f9500-f3ac-52e5-b827-557766550002', 'GrableCharactersCleaner', 1, NULL),
+    ('661f9500-f3ac-52e5-b827-557766550002', 'InvisibleCharactersCleaner', 2, NULL),
+    ('661f9500-f3ac-52e5-b827-557766550002', 'FullWidthCharacterCleaner', 3, NULL),
+    ('661f9500-f3ac-52e5-b827-557766550002', 'TraditionalChineseCleaner', 4, NULL),
+    ('661f9500-f3ac-52e5-b827-557766550002', 'FileWithShortOrLongLengthFilter', 5, '{"fileLength": {"defaultVal": [50, 8192]}}'),
+    ('661f9500-f3ac-52e5-b827-557766550002', 'FileWithHighRepeatPhraseRateFilter', 6, NULL),
+    ('661f9500-f3ac-52e5-b827-557766550002', 'FileWithHighSpecialCharRateFilter', 7, NULL),
+    ('661f9500-f3ac-52e5-b827-557766550002', 'DuplicateFilesFilter', 8, NULL)
+ON CONFLICT (instance_id, operator_id, op_index) DO NOTHING;
+
+
+INSERT INTO t_operator_instance (instance_id, operator_id, op_index, settings_override)
+VALUES
+    ('772a0611-a4bd-63f6-c938-668877660003', 'HtmlTagCleaner', 1, '{"removeTableTags": {"defaultVal": "false"}}'), -- 表格对RAG可能有价值，暂不去除表格
+    ('772a0611-a4bd-63f6-c938-668877660003', 'ContentCleaner', 2, NULL),
+    ('772a0611-a4bd-63f6-c938-668877660003', 'LegendCleaner', 3, NULL),
+    ('772a0611-a4bd-63f6-c938-668877660003', 'XMLTagCleaner', 4, NULL),
+    ('772a0611-a4bd-63f6-c938-668877660003', 'UnicodeSpaceCleaner', 5, NULL),
+    ('772a0611-a4bd-63f6-c938-668877660003', 'ExtraSpaceCleaner', 6, NULL),
+    ('772a0611-a4bd-63f6-c938-668877660003', 'DuplicateSentencesFilter', 7, NULL),
+    ('772a0611-a4bd-63f6-c938-668877660003', 'FileWithShortOrLongLengthFilter', 8, '{"fileLength": {"defaultVal": [20, 100000]}}')
+ON CONFLICT (instance_id, operator_id, op_index) DO NOTHING;
+
+INSERT INTO t_operator_instance (instance_id, operator_id, op_index, settings_override)
+VALUES
+    ('883b1722-b5ce-7407-d049-779988770004', 'HtmlTagCleaner', 1, '{"removeTableTags": {"defaultVal": "true"}}'),
+    ('883b1722-b5ce-7407-d049-779988770004', 'AnonymizedUrlCleaner', 2, NULL),
+    ('883b1722-b5ce-7407-d049-779988770004', 'EmojiCleaner', 3, NULL),
+    ('883b1722-b5ce-7407-d049-779988770004', 'InvisibleCharactersCleaner', 4, NULL),
+    ('883b1722-b5ce-7407-d049-779988770004', 'ExtraSpaceCleaner', 5, NULL),
+    ('883b1722-b5ce-7407-d049-779988770004', 'DuplicateFilesFilter', 6, '{"fileDuplicateThreshold": {"defaultVal": 0.6}}')
+ON CONFLICT (instance_id, operator_id, op_index) DO NOTHING;
+
+INSERT INTO t_operator_instance (instance_id, operator_id, op_index, settings_override)
+VALUES
+    ('994c2833-c6df-8518-e150-880099880005', 'ImgBlurredImagesCleaner', 1, NULL),
+    ('994c2833-c6df-8518-e150-880099880005', 'ImgDuplicatedImagesCleaner', 2, NULL),
+    ('994c2833-c6df-8518-e150-880099880005', 'ImgSimilarImagesCleaner', 3, NULL),
+    ('994c2833-c6df-8518-e150-880099880005', 'ImgDirectionCorrect', 4, NULL),
+    ('994c2833-c6df-8518-e150-880099880005', 'ImgResize', 5, '{"targetSize": {"properties": [{"name": "宽度", "defaultVal": 512}, {"name": "高度", "defaultVal": 512}]}}'),
+    ('994c2833-c6df-8518-e150-880099880005', 'ImgTypeUnify', 6, '{"imgType": {"defaultVal": "jpg"}}')
+ON CONFLICT (instance_id, operator_id, op_index) DO NOTHING;
