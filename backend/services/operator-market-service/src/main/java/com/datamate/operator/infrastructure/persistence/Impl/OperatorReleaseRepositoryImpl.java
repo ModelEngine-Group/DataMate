@@ -1,5 +1,6 @@
 package com.datamate.operator.infrastructure.persistence.Impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.repository.CrudRepository;
 import com.datamate.operator.domain.model.OperatorRelease;
@@ -32,10 +33,17 @@ public class OperatorReleaseRepositoryImpl extends CrudRepository<OperatorReleas
 
     @Override
     public void updateOperatorRelease(OperatorReleaseDto operatorReleaseDto) {
-        QueryWrapper<OperatorRelease> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("id", operatorReleaseDto.getId())
-                .eq("version", operatorReleaseDto.getVersion());
-        mapper.update(OperatorReleaseConverter.INSTANCE.fromDtoToEntity(operatorReleaseDto), queryWrapper);
+        OperatorRelease entity = OperatorReleaseConverter.INSTANCE.fromDtoToEntity(operatorReleaseDto);
+        LambdaQueryWrapper<OperatorRelease> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(OperatorRelease::getId, entity.getId())
+                .eq(OperatorRelease::getVersion, entity.getVersion());
+        Long count = mapper.selectCount(wrapper);
+
+        if (count > 0) {
+            mapper.update(entity, wrapper);
+        } else {
+            mapper.insert(entity);
+        }
     }
 
     @Override

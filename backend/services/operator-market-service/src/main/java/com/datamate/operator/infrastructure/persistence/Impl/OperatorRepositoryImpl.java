@@ -62,4 +62,14 @@ public class OperatorRepositoryImpl extends CrudRepository<OperatorMapper, Opera
                 .setSql("usage_count = usage_count + 1");
         this.update(updateWrapper);
     }
+
+    @Override
+    public boolean existsByOperatorId(String operatorId) {
+        return mapper.exists(new LambdaQueryWrapper<Operator>().eq(Operator::getId, operatorId));
+    }
+
+    @Override
+    public boolean existsByOperatorName(String operatorName) {
+        return mapper.exists(new LambdaQueryWrapper<Operator>().eq(Operator::getName, operatorName));
+    }
 }

@@ -20,4 +20,8 @@ public interface OperatorRepository extends IRepository<Operator> {
     boolean operatorInTemplateOrRunning(String operatorId);
 
     void incrementUsageCount(List<String> operatorIds);
+
+    boolean existsByOperatorId(String operatorId);
+
+    boolean existsByOperatorName(String operatorName);
 }

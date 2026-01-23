@@ -1,5 +1,6 @@
 package com.datamate.operator.application;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.datamate.common.domain.model.ChunkUploadPreRequest;
 import com.datamate.common.domain.service.FileService;
 import com.datamate.common.infrastructure.exception.BusinessException;
@@ -88,6 +89,8 @@ public class OperatorService {
 
     @Transactional
     public OperatorDto createOperator(OperatorDto req) {
+        isOperatorIdExists(req.getId());
+        isOperatorNameExists(req.getName());
         overrideSettings(req);
         operatorRepo.insertOperator(req);
         relationRepo.batchInsert(req.getId(), req.getCategories());
@@ -106,6 +109,9 @@ public class OperatorService {
     @Transactional
     public OperatorDto updateOperator(String id, OperatorDto req) {
         OperatorDto operator = getOperatorById(id);
+        if (!StringUtils.equals(req.getName(), operator.getName())) {
+            isOperatorNameExists(req.getName());
+        }
         overrideSettings(req);
         operatorRepo.updateOperator(req);
         if (StringUtils.isNotBlank(req.getFileName()) && CollectionUtils.isNotEmpty(req.getCategories())) {
@@ -301,5 +307,17 @@ public class OperatorService {
             }
         }
         return "";
+    }
+
+    private void isOperatorIdExists(String operatorId) {
+        if (operatorRepo.existsByOperatorId(operatorId)) {
+            throw BusinessException.of(OperatorErrorCode.OPERATOR_ID_EXISTS);
+        }
+    }
+
+    private void isOperatorNameExists(String operatorName) {
+        if (operatorRepo.existsByOperatorName(operatorName)) {
+            throw BusinessException.of(OperatorErrorCode.OPERATOR_NAME_EXISTS);
+        }
     }
 }
