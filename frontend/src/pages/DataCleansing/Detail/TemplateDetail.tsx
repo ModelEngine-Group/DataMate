@@ -94,7 +94,7 @@ export default function CleansingTemplateDetail() {
 
   const breadItems = [
     {
-      title: <Link to="/data/cleansing">数据清洗</Link>,
+      title: <Link to="/data/cleansing">数据处理</Link>,
     },
     {
       title: "模板详情",

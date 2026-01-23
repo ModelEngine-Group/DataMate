@@ -170,7 +170,7 @@ export default function WelcomePage() {
                   数据智能编排 - 可视化流程设计
                 </h3>
                 <p className="text-orange-700">
-                  拖拽式设计复杂数据清洗管道，让数据流转更加直观高效
+                  拖拽式设计复杂数据处理管道，让数据流转更加直观高效
                 </p>
               </div>
 

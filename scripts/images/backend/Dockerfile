@@ -7,8 +7,7 @@ RUN cd /opt/backend/ && \
 
 FROM eclipse-temurin:21-jdk
 
-RUN sed -i "s@http://.*.ubuntu.com@http://mirrors.huaweicloud.com@g" /etc/apt/sources.list.d/ubuntu.sources &&  \
-    apt-get update && \
+RUN apt-get update && \
     apt-get install -y vim wget curl rsync python3 python3-pip python-is-python3 dos2unix && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
