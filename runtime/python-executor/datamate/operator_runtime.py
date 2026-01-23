@@ -3,6 +3,7 @@ from typing import Optional, Dict, Any, List
 
 import uvicorn
 import yaml
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from jsonargparse import ArgumentParser
@@ -25,7 +26,20 @@ logger.add(
     enqueue=True
 )
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    try:
+        logger.info("Initializing background worker...")
+        start_auto_annotation_worker()
+        logger.info("Auto-annotation worker started successfully.")
+    except Exception as e:
+        logger.error("Failed to start auto-annotation worker: {}", e)
+
+    yield
+
+    logger.info("Shutting down background worker...")
+
+app = FastAPI(lifespan=lifespan)
 
 
 class APIException(Exception):
@@ -48,16 +62,6 @@ class APIException(Exception):
         if self.extra_data:
             result["data"] = self.extra_data
         return result
-
-
-@app.on_event("startup")
-async def startup_event():
-    """FastAPI 启动时初始化后台自动标注 worker。"""
-
-    try:
-        start_auto_annotation_worker()
-    except Exception as e:  # pragma: no cover - 防御性日志
-        logger.error("Failed to start auto-annotation worker: {}", e)
 
 
 @app.exception_handler(APIException)
