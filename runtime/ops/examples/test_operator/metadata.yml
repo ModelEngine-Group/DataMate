@@ -25,7 +25,7 @@ runtime:
   gpu: 0.1
   npu: 0.1
 settings:
-  sliderTest:
+  sliderParam:
     name: '滑窗测试'
     description: '这是一个测试滑窗。'
     type: 'slider'
@@ -33,7 +33,7 @@ settings:
     min: 0
     max: 1
     step: 0.1
-  switchTest:
+  switchParam:
     name: '开关测试'
     description: '这是一个开关测试。'
     type: 'switch'
@@ -41,7 +41,7 @@ settings:
     required: false
     checkedLabel: '选中'
     unCheckedLabel: '未选中'
-  radioTest:
+  radioParam:
     name: '单选测试'
     description: '这是一个单选测试。'
     type: 'radio'
@@ -52,7 +52,7 @@ settings:
         value: 'option1'
       - label: '选项2'
         value: 'option2'
-  selectTest:
+  selectParam:
     name: '下拉框测试'
     description: '这是一个下拉框测试。'
     type: 'select'
@@ -63,7 +63,7 @@ settings:
         value: 'option1'
       - label: '选项2'
         value: 'option2'
-  rangeTest:
+  rangeParam:
     name: '范围测试'
     description: '这是一个范围框测试。'
     type: 'range'
@@ -80,7 +80,7 @@ settings:
         min: 0
         max: 10000
         step: 1
-  checkboxTest:
+  checkboxParam:
     name: '多选框测试'
     description: '这是一个多选框测试。'
     type: 'checkbox'
@@ -91,7 +91,7 @@ settings:
         value: 'option1'
       - label: '选项2'
         value: 'option2'
-  inputTest:
+  inputParam:
     name: '输入框测试'
     description: '这是一个输入框测试。'
     type: 'input'
