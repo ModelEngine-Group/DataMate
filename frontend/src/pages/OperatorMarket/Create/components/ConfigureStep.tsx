@@ -139,7 +139,7 @@ export default function ConfigureStep({
             <h3 className="text-lg font-semibold text-gray-900 mt-10 mb-2">
               更新日志
             </h3>
-            {parsedInfo?.releases?.[0].changelog?.length == 0 ? (
+            {parsedInfo?.releases?.[0]?.changelog?.length == 0 ? (
               <div className="text-gray-500 text-sm py-4 text-center bg-gray-50 rounded-lg border border-dashed border-gray-300">
                 暂无版本发布信息
                 <button onClick={handleAddChange} className="ml-2 text-blue-600 hover:underline">
@@ -149,7 +149,7 @@ export default function ConfigureStep({
             ) : (
               <ul className="space-y-2">
                 {/* 增加空数组保护：(currentRelease.changelog || []) */}
-                {(parsedInfo?.releases?.[0].changelog || []).map((change, changeIndex) => (
+                {(parsedInfo?.releases?.[0]?.changelog || []).map((change, changeIndex) => (
                   <li key={changeIndex} className="group flex items-start gap-2 hover:bg-gray-50 p-1 rounded transition-colors">
                     <ChevronRight className="w-4 h-4 text-gray-400 mt-2.5 flex-shrink-0" />
 

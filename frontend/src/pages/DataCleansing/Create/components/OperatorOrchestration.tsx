@@ -181,7 +181,7 @@ const OperatorFlow: React.FC<OperatorFlowProps> = ({
                 </span>
               </div>
               {operator?.categories?.map((categoryId) => {
-                return <Tag color="default">{categoryMap[categoryId].name}</Tag>
+                return <Tag color="default" key={categoryId}>{categoryMap[categoryId]?.name}</Tag>
               })}
               {/* 操作按钮 */}
               <span
