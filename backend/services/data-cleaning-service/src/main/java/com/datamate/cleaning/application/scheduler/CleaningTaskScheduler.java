@@ -20,15 +20,16 @@ public class CleaningTaskScheduler {
 
     private final ExecutorService taskExecutor = Executors.newFixedThreadPool(5);
 
-    public void executeTask(String taskId) {
-        taskExecutor.submit(() -> submitTask(taskId));
+    public void executeTask(String taskId, int retryCount) {
+        taskExecutor.submit(() -> submitTask(taskId, retryCount));
     }
 
-    private void submitTask(String taskId) {
+    private void submitTask(String taskId, int retryCount) {
         CleaningTaskDto task = new CleaningTaskDto();
         task.setId(taskId);
         task.setStatus(CleaningTaskStatusEnum.RUNNING);
         task.setStartedAt(LocalDateTime.now());
+        task.setRetryCount(retryCount);
         cleaningTaskRepo.updateTask(task);
         runtimeClient.submitTask(taskId);
     }

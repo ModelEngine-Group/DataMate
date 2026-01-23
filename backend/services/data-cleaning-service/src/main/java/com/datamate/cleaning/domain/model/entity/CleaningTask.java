@@ -36,6 +36,8 @@ public class CleaningTask extends BaseEntity<String> {
 
     private Integer fileCount;
 
+    private Integer retryCount;
+
     private LocalDateTime startedAt;
 
     private LocalDateTime finishedAt;

@@ -22,7 +22,7 @@ export default function DataProcessingPage() {
     <div className="h-full flex flex-col gap-4">
       {/* Header */}
       <div className="flex justify-between items-center">
-        <h1 className="text-xl font-bold">数据清洗</h1>
+        <h1 className="text-xl font-bold">数据处理</h1>
         <div className="flex gap-2">
           <Button
             icon={<PlusOutlined />}

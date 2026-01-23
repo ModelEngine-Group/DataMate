@@ -34,6 +34,7 @@ CREATE TABLE IF NOT EXISTS t_clean_task
     before_size       BIGINT,
     after_size        BIGINT,
     file_count        INTEGER,
+    retry_count       INTEGER,
     started_at        TIMESTAMP,
     finished_at       TIMESTAMP,
     created_by        VARCHAR(256),
@@ -54,6 +55,7 @@ COMMENT ON COLUMN t_clean_task.dest_dataset_name IS '目标数据集名称';
 COMMENT ON COLUMN t_clean_task.before_size IS '清洗前大小';
 COMMENT ON COLUMN t_clean_task.after_size IS '清洗后大小';
 COMMENT ON COLUMN t_clean_task.file_count IS '文件数量';
+COMMENT ON COLUMN t_clean_task.retry_count IS '重试次数';
 COMMENT ON COLUMN t_clean_task.started_at IS '开始时间';
 COMMENT ON COLUMN t_clean_task.finished_at IS '完成时间';
 COMMENT ON COLUMN t_clean_task.created_at IS '创建时间';

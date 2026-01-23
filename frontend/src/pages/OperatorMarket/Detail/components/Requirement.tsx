@@ -21,13 +21,13 @@ export default function Requirement({ operator }) {
         <h3 className="text-lg font-semibold text-gray-900 mb-4">系统要求</h3>
         <div className="space-y-3">
           <div className="flex items-center justify-between py-2 border-b border-gray-100">
-            <span className="font-medium text-gray-700">CPU要求</span>
+            <span className="font-medium text-gray-700">CPU规格</span>
             <span className="text-gray-900">
               {requirement?.cpu || '无限制'}
             </span>
           </div>
           <div className="flex items-center justify-between py-2 border-b border-gray-100">
-            <span className="font-medium text-gray-700">内存要求</span>
+            <span className="font-medium text-gray-700">内存规格</span>
             <span className="text-gray-900">
               {requirement?.memory || "无限制"}
             </span>

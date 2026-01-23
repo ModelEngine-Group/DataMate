@@ -30,6 +30,7 @@ export interface CleansingTask {
   finishedAt: string;
   beforeSize?: number;
   afterSize?: number;
+  retryCount: number;
 }
 
 export interface CleansingTemplate {

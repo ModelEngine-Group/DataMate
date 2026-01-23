@@ -142,7 +142,7 @@ export default function OperatorPluginDetail() {
           },
           {
             key: "requirement",
-            label: "环境依赖",
+            label: "系统规格",
           },
           {
             key: "documentation",

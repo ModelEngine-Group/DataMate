@@ -142,7 +142,7 @@ public class CleaningTaskService {
 
         prepareTask(task, request.getInstance(), executorType);
         scanDataset(taskId, request.getSrcDatasetId());
-        taskScheduler.executeTask(taskId);
+
         return task;
     }
 
@@ -157,9 +157,12 @@ public class CleaningTaskService {
         return cleaningResultRepo.findByInstanceId(taskId);
     }
 
-    public List<CleaningTaskLog> getTaskLog(String taskId) {
+    public List<CleaningTaskLog> getTaskLog(String taskId, int retryCount) {
         cleanTaskValidator.checkTaskId(taskId);
         String logPath = FLOW_PATH + "/" + taskId + "/output.log";
+        if (retryCount > 0) {
+            logPath += "." + retryCount;
+        }
         try (Stream<String> lines = Files.lines(Paths.get(logPath))) {
             List<CleaningTaskLog> logs = new ArrayList<>();
             AtomicReference<String> lastLevel = new AtomicReference<>("INFO");
@@ -215,7 +218,7 @@ public class CleaningTaskService {
         CleaningTaskDto task = cleaningTaskRepo.findTaskById(taskId);
         scanDataset(taskId, task.getSrcDatasetId(), succeedSet);
         cleaningResultRepo.deleteByInstanceId(taskId, "FAILED");
-        taskScheduler.executeTask(taskId);
+        taskScheduler.executeTask(taskId, task.getRetryCount() + 1);
     }
 
     private void prepareTask(CleaningTaskDto task, List<OperatorInstanceDto> instances, ExecutorType executorType) {

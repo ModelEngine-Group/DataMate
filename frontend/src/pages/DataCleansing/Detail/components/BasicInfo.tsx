@@ -56,6 +56,8 @@ export default function BasicInfo({ task }: { task: CleansingTask }) {
       ),
       span: 2,
     },
+    { key: "finishedTime", label: "结束时间", children: task?.finishedAt },
+    { key: "name", label: "重试次数", children: task?.retryCount },
   ];
 
   return (

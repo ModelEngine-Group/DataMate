@@ -31,7 +31,7 @@ export const menuItems = [
   },
   {
     id: "cleansing",
-    title: "数据清洗",
+    title: "数据处理",
     icon: GitBranch,
     description: "数据清洗和预处理",
     color: "bg-purple-500",

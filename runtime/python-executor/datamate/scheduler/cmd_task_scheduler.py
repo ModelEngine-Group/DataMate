@@ -1,4 +1,5 @@
 import asyncio
+import os
 from datetime import datetime
 from typing import Optional, List
 
@@ -13,6 +14,7 @@ class CommandTask(Task):
     def __init__(self, task_id: str, command: str, log_path = None, shell: bool = True,
                  timeout: Optional[int] = None, *args, **kwargs):
         super().__init__(task_id, *args, **kwargs)
+        self.max_backups = 9
         self.log_path = log_path
         self.command = command
         self.shell = shell
@@ -34,7 +36,14 @@ class CommandTask(Task):
             self.status = TaskStatus.RUNNING
             self.started_at = datetime.now()
 
-            with open(self.log_path, 'a') as f:
+            current_log_path = self.log_path
+            if os.path.exists(current_log_path):
+                counter = 1
+                while os.path.exists(f"{self.log_path}.{counter}"):
+                    counter += 1
+                current_log_path = f"{self.log_path}.{counter}"
+
+            with open(current_log_path, 'a') as f:
                 # 使用 asyncio.create_subprocess_shell 或 create_subprocess_exec
                 if self.shell:
                     process = await asyncio.create_subprocess_shell(
