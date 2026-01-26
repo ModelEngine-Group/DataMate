@@ -1,10 +1,14 @@
 import { useState, useEffect } from "react";
-import { Card, Button, Table, message, Modal, Tabs, Tag, Progress, Tooltip } from "antd";
+import { Card, Button, Table, message, Modal, Tabs, Tag, Progress, Tooltip, Dropdown } from "antd";
 import {
   PlusOutlined,
   EditOutlined,
   DeleteOutlined,
   SyncOutlined,
+  MoreOutlined,
+  SettingOutlined,
+  ExportOutlined,
+  ImportOutlined,
 } from "@ant-design/icons";
 import { SearchControls } from "@/components/SearchControls";
 import CardView from "@/components/CardView";
@@ -24,6 +28,10 @@ import { mapAnnotationTask } from "../annotation.const";
 import CreateAnnotationTask from "../Create/components/CreateAnnotationTaskDialog";
 import { ColumnType } from "antd/es/table";
 import { TemplateList } from "../Template";
+import EditAutoAnnotationDatasetDialog from "../AutoAnnotation/components/EditAutoAnnotationDatasetDialog";
+import ImportFromLabelStudioDialog from "../AutoAnnotation/components/ImportFromLabelStudioDialog";
+import ManualImportFromLabelStudioDialog from "../ManualImportFromLabelStudioDialog";
+import EditManualAnnotationDatasetDialog from "../EditManualAnnotationDatasetDialog";
 // Note: DevelopmentInProgress intentionally not used here
 
 const AUTO_STATUS_LABELS: Record<string, string> = {
@@ -63,6 +71,14 @@ export default function DataAnnotation() {
   const [selectedRowKeys, setSelectedRowKeys] = useState<(string | number)[]>([]);
   const [selectedRows, setSelectedRows] = useState<any[]>([]);
   const [datasetProjectMap, setDatasetProjectMap] = useState<Record<string, string>>({});
+  const [editingAutoTask, setEditingAutoTask] = useState<any | null>(null);
+  const [showEditAutoDatasetDialog, setShowEditAutoDatasetDialog] = useState(false);
+  const [editingManualTask, setEditingManualTask] = useState<AnnotationTask | null>(null);
+  const [showEditManualDatasetDialog, setShowEditManualDatasetDialog] = useState(false);
+  const [importingAutoTask, setImportingAutoTask] = useState<any | null>(null);
+  const [showImportAutoDialog, setShowImportAutoDialog] = useState(false);
+  const [importingManualTask, setImportingManualTask] = useState<AnnotationTask | null>(null);
+  const [showImportManualDialog, setShowImportManualDialog] = useState(false);
 
   // 拉取自动标注任务（供轮询和创建成功后立即刷新复用）
   const refreshAutoTasks = async (silent = false) => {
@@ -209,6 +225,57 @@ export default function DataAnnotation() {
         }
       },
     });
+  };
+
+  const handleEditAutoTaskDataset = (row: any) => {
+    if (!row?.id) {
+      message.error("未找到对应的自动标注任务");
+      return;
+    }
+
+    const full = autoTasks.find((t: any) => t.id === row.id);
+    if (!full) {
+      message.error("未找到对应的自动标注任务详情，请稍后重试");
+      return;
+    }
+
+    setEditingAutoTask(full);
+    setShowEditAutoDatasetDialog(true);
+  };
+
+  const handleEditManualTaskDataset = (task: AnnotationTask) => {
+    if (!task?.id) {
+      message.error("未找到对应的标注任务");
+      return;
+    }
+    setEditingManualTask(task);
+    setShowEditManualDatasetDialog(true);
+  };
+
+  const handleImportManualFromLabelStudio = (task: AnnotationTask) => {
+    if (!task?.id) {
+      message.error("未找到标注任务");
+      return;
+    }
+
+    setImportingManualTask(task);
+    setShowImportManualDialog(true);
+  };
+
+  const handleImportAutoFromLabelStudio = (row: any) => {
+    if (!row?.id) {
+      message.error("未找到对应的自动标注任务");
+      return;
+    }
+
+    const full = autoTasks.find((t: any) => t.id === row.id);
+    if (!full) {
+      message.error("未找到对应的自动标注任务详情，请稍后重试");
+      return;
+    }
+
+    setImportingAutoTask(full);
+    setShowImportAutoDialog(true);
   };
 
   const handleSyncAutoToLabelStudio = (task: any) => {
@@ -392,10 +459,10 @@ export default function DataAnnotation() {
       onClick: handleAnnotate,
     },
     {
-      key: "sync",
-      label: "同步",
-      icon: <SyncOutlined className="w-4 h-4" style={{ color: "#722ed1" }} />,
-      onClick: handleSync,
+      key: "back-sync",
+      label: "后向同步",
+      icon: <ImportOutlined className="w-4 h-4" style={{ color: "#1890ff" }} />,
+      onClick: handleImportManualFromLabelStudio,
     },
     {
       key: "delete",
@@ -569,40 +636,109 @@ export default function DataAnnotation() {
       title: "操作",
       key: "actions",
       fixed: "right" as const,
-      width: 220,
+      width: 260,
       dataIndex: "actions",
       render: (_: any, task: any) => (
         <div className="flex items-center justify-center space-x-1">
-          {task._kind === "manual" &&
-            operations.map((operation) => (
-              <Button
-                key={operation.key}
-                type="text"
-                icon={operation.icon}
-                onClick={() => (operation?.onClick as any)?.(task)}
-                title={operation.label}
-              />
-            ))}
-          {task._kind === "auto" && (
+          {task._kind === "manual" && (
             <>
               <Button
                 type="text"
                 icon={<EditOutlined style={{ color: "#52c41a" }} />}
-                onClick={() => handleAnnotateAuto(task)}
-                title="在 Label Studio 中标注"
-              />
+                onClick={() => handleAnnotate(task)}
+                title="在 Label Studio 中手动标注"
+              >
+                编辑
+              </Button>
               <Button
                 type="text"
-                icon={<SyncOutlined style={{ color: "#722ed1" }} />}
+                icon={<ImportOutlined style={{ color: "#1890ff" }} />}
+                onClick={() => handleImportManualFromLabelStudio(task)}
+                title="从 Label Studio 导回标注结果到数据集"
+              >
+                后向同步
+              </Button>
+
+              <Dropdown
+                menu={{
+                  items: [
+                    {
+                      key: "edit-dataset",
+                      label: "编辑任务数据集",
+                      icon: <SettingOutlined />,
+                      onClick: () => handleEditManualTaskDataset(task),
+                    },
+                    {
+                      key: "delete",
+                      label: "删除任务",
+                      icon: <DeleteOutlined />,
+                      danger: true,
+                      onClick: () => handleDelete(task),
+                    },
+                  ],
+                }}
+                trigger={["click"]}
+              >
+                <Button type="text" icon={<MoreOutlined />} title="更多操作" />
+              </Dropdown>
+            </>
+          )}
+          {task._kind === "auto" && (
+            <>
+              {/* 一级功能：前向同步 + 编辑（跳转 Label Studio） */}
+              <Button
+                type="text"
+                icon={<ExportOutlined style={{ color: "#722ed1" }} />}
                 onClick={() => handleSyncAutoToLabelStudio(task)}
-                title="同步自动标注结果到 Label Studio"
-              />
+                title="将 YOLO 预测结果前向同步到 Label Studio"
+              >
+                前向同步
+              </Button>
               <Button
                 type="text"
-                icon={<DeleteOutlined style={{ color: "#f5222d" }} />}
-                onClick={() => handleDeleteAuto(task)}
-                title="删除自动标注任务"
-              />
+                icon={<EditOutlined style={{ color: "#52c41a" }} />}
+                onClick={() => handleAnnotateAuto(task)}
+                title="在 Label Studio 中手动标注"
+              >
+                编辑
+              </Button>
+
+              <Button
+                type="text"
+                icon={<ImportOutlined style={{ color: "#1890ff" }} />}
+                onClick={() => handleImportAutoFromLabelStudio(task)}
+                title="从 Label Studio 导回标注结果到数据集"
+              >
+                后向同步
+              </Button>
+
+              {/* 二级功能：编辑任务数据集 + 删除任务（折叠菜单） */}
+              <Dropdown
+                menu={{
+                  items: [
+                    {
+                      key: "edit-dataset",
+                      label: "编辑任务数据集",
+                      icon: <SettingOutlined />, 
+                      onClick: () => handleEditAutoTaskDataset(task),
+                    },
+                    {
+                      key: "delete",
+                      label: "删除任务",
+                      icon: <DeleteOutlined />, 
+                      danger: true,
+                      onClick: () => handleDeleteAuto(task),
+                    },
+                  ],
+                }}
+                trigger={["click"]}
+              >
+                <Button
+                  type="text"
+                  icon={<MoreOutlined />}
+                  title="更多操作"
+                />
+              </Dropdown>
             </>
           )}
         </div>
@@ -719,6 +855,68 @@ export default function DataAnnotation() {
           },
         ]}
       />
+
+      {editingAutoTask && (
+        <EditAutoAnnotationDatasetDialog
+          visible={showEditAutoDatasetDialog}
+          task={editingAutoTask}
+          onCancel={() => {
+            setShowEditAutoDatasetDialog(false);
+            setEditingAutoTask(null);
+          }}
+          onSuccess={() => {
+            setShowEditAutoDatasetDialog(false);
+            setEditingAutoTask(null);
+            refreshAutoTasks();
+          }}
+        />
+      )}
+
+      {editingManualTask && (
+        <EditManualAnnotationDatasetDialog
+          visible={showEditManualDatasetDialog}
+          task={editingManualTask}
+          onCancel={() => {
+            setShowEditManualDatasetDialog(false);
+            setEditingManualTask(null);
+          }}
+          onSuccess={() => {
+            setShowEditManualDatasetDialog(false);
+            setEditingManualTask(null);
+          }}
+        />
+      )}
+
+      {importingManualTask && (
+        <ManualImportFromLabelStudioDialog
+          visible={showImportManualDialog}
+          task={importingManualTask}
+          onCancel={() => {
+            setShowImportManualDialog(false);
+            setImportingManualTask(null);
+          }}
+          onSuccess={() => {
+            setShowImportManualDialog(false);
+            setImportingManualTask(null);
+          }}
+        />
+      )}
+
+      {importingAutoTask && (
+        <ImportFromLabelStudioDialog
+          visible={showImportAutoDialog}
+          // 这里直接透传自动标注任务结构（与 AutoAnnotation 页面保持一致字段）
+          task={importingAutoTask as any}
+          onCancel={() => {
+            setShowImportAutoDialog(false);
+            setImportingAutoTask(null);
+          }}
+          onSuccess={() => {
+            setShowImportAutoDialog(false);
+            setImportingAutoTask(null);
+          }}
+        />
+      )}
     </div>
   );
 }

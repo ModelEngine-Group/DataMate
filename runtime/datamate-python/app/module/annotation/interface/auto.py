@@ -26,6 +26,8 @@ from ..schema.auto import (
     CreateAutoAnnotationTaskRequest,
     AutoAnnotationTaskResponse,
     AutoAnnotationConfig,
+    UpdateAutoAnnotationTaskFilesRequest,
+    ImportFromLabelStudioRequest,
 )
 from ..service.auto import AutoAnnotationTaskService
 from ..service.mapping import DatasetMappingService
@@ -173,6 +175,7 @@ async def _ensure_ls_mapping_for_auto_task(
     task_name: str,
     file_ids: Optional[List[str]] = None,
     auto_task_id: Optional[str] = None,
+    delete_orphans: bool = False,
 ) -> Optional[str]:
     """确保给定数据集存在一个 Label Studio 项目映射，并按需同步子集文件。
 
@@ -305,7 +308,11 @@ async def _ensure_ls_mapping_for_auto_task(
 
         if not file_ids:
             # 兼容老逻辑：未指定 file_ids 时，同步整个主数据集
-            await sync_service.sync_files(mapping, 100)
+            await sync_service.sync_files(
+                mapping,
+                100,
+                delete_orphans=delete_orphans,
+            )
         else:
             # 按 file_ids 反查所属数据集：dataset_id -> set(file_ids)
             stmt = (
@@ -375,7 +382,7 @@ async def _ensure_ls_mapping_for_auto_task(
                     mapping,
                     100,
                     allowed_file_ids={str(fid) for fid in file_ids},
-                    delete_orphans=False,
+                    delete_orphans=delete_orphans,
                 )
             else:
                 # 对每个涉及到的数据集，使用 override_dataset_id 将其文件同步到同一个项目
@@ -385,7 +392,7 @@ async def _ensure_ls_mapping_for_auto_task(
                         100,
                         allowed_file_ids=ds_file_ids,
                         override_dataset_id=ds_id,
-                        delete_orphans=False,
+                        delete_orphans=delete_orphans,
                     )
     except Exception as e:  # pragma: no cover - 同步失败不影响项目创建
         logger.warning(
@@ -395,6 +402,8 @@ async def _ensure_ls_mapping_for_auto_task(
         )
 
     return str(project_id)
+
+
 
 
 @router.get("", response_model=StandardResponse[List[AutoAnnotationTaskResponse]])
@@ -482,6 +491,91 @@ async def create_auto_annotation_task(
     )
 
 
+@router.put("/{task_id}/files", response_model=StandardResponse[AutoAnnotationTaskResponse])
+async def update_auto_annotation_task_files(
+    task_id: str = Path(..., description="任务ID"),
+    request: UpdateAutoAnnotationTaskFilesRequest = ...,  # 通过 body 传入 datasetId 与 fileIds
+    db: AsyncSession = Depends(get_db),
+):
+    """更新自动标注任务所关联的数据集文件，并同步到 Label Studio。
+
+    最新约定：
+    1. 创建任务时选择的文件集合视为“基础集合”，后续编辑时不允许将其移除，只能追加新文件；
+    2. runtime worker 仅对新增文件执行自动标注，历史文件结果和输出数据集保持不变；
+    3. 编辑任务数据集时，仅将新增文件同步到 Label Studio，不再删除已有任务。
+    """
+
+    # 1. 获取现有任务（响应模型）以便读取当前配置
+    existing = await service.get_task(db, task_id)
+    if not existing:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    # 1.1 计算旧文件集合与本次提交集合：
+    #     - 旧集合视为“锁定”，不允许通过编辑接口移除；
+    #     - 新集合与旧集合求并集后才会写回任务记录；
+    #     - 仅对 (新集合 - 旧集合) 这一部分视为“新增文件”，用于后续 LS 同步。
+    old_ids = {str(fid) for fid in (existing.file_ids or [])}
+    requested_ids = {str(fid) for fid in (request.file_ids or [])}
+    added_ids = sorted(requested_ids - old_ids)
+    final_ids = sorted(old_ids | requested_ids)
+
+    # datasetId 若未显式传入，则沿用原任务值
+    dataset_id = request.dataset_id or existing.dataset_id
+
+	# 2. 更新底层任务记录（ORM），重置状态与文件列表（文件集合为旧集合 ∪ 本次提交集合）
+    updated = await service.update_task_files(
+        db,
+        task_id=task_id,
+        dataset_id=str(dataset_id),
+		file_ids=final_ids,
+    )
+    if not updated:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    # 3. 使用当前配置 + 新 file_ids 同步 LS 项目映射。
+    #    解析失败时退回到一个默认配置（与其它接口保持一致）。
+    try:
+        auto_config = AutoAnnotationConfig.model_validate(existing.config)  # type: ignore[arg-type]
+    except Exception as e:  # pragma: no cover - 降级使用默认配置
+        logger.warning(
+            "Failed to parse auto task config when updating LS mapping for task %s: %s",
+            task_id,
+            e,
+        )
+        auto_config = AutoAnnotationConfig(
+            model_size="l",
+            conf_threshold=0.5,
+            target_classes=[],
+        )
+
+    # 仅在存在“新增文件”时，才将这部分文件同步到 Label Studio；
+    # 不再删除 LS 中已有任务（delete_orphans=False）。
+    if added_ids:
+        try:
+            await _ensure_ls_mapping_for_auto_task(
+                db,
+                dataset_id=str(dataset_id),
+                dataset_name=updated.dataset_name,
+                config=auto_config,
+                task_name=updated.name,
+                file_ids=added_ids,
+                auto_task_id=updated.id,
+                delete_orphans=False,
+            )
+        except Exception as e:  # pragma: no cover - 映射同步失败不阻塞前端
+            logger.warning(
+                "Failed to sync Label Studio mapping when updating auto task %s: %s",
+                task_id,
+                e,
+            )
+
+    return StandardResponse(
+        code=200,
+        message="success",
+        data=updated,
+    )
+
+
 @router.get("/{task_id}/status", response_model=StandardResponse[AutoAnnotationTaskResponse])
 async def get_auto_annotation_task_status(
     task_id: str = Path(..., description="任务ID"),
@@ -501,6 +595,82 @@ async def get_auto_annotation_task_status(
         message="success",
         data=task,
     )
+
+
+@router.get("/{task_id}/files", response_model=StandardResponse[List[Dict[str, Any]]])
+async def get_auto_annotation_task_files(
+    task_id: str = Path(..., description="任务ID"),
+    db: AsyncSession = Depends(get_db),
+):
+    """查询自动标注任务当前关联的 DM 文件列表。
+
+    该接口主要用于前端“编辑任务数据集”弹窗的初始选中状态：
+    - 若任务记录中存在 file_ids，则按这些 ID 精确查询；
+    - 若 file_ids 为空，则回退为查询主数据集下的全部 ACTIVE 文件。
+
+    返回的每一项仅包含前端需要的基础字段，避免一次性返回过多无关信息。
+    """
+
+    from sqlalchemy import select  # 本地导入避免循环依赖
+    from app.db.models.dataset_management import DatasetFiles, Dataset
+
+    # 先获取任务，确保存在
+    result = await db.execute(
+        select(AutoAnnotationTask).where(
+            AutoAnnotationTask.id == task_id,
+            AutoAnnotationTask.deleted_at.is_(None),
+        )
+    )
+    task_row = result.scalar_one_or_none()
+    if not task_row:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    file_ids = getattr(task_row, "file_ids", None) or []
+    dataset_id = getattr(task_row, "dataset_id", None)
+
+    files_query = None
+    params: Dict[str, Any] = {}
+
+    if file_ids:
+        # 按任务记录中的 file_ids 精确查询
+        files_query = select(DatasetFiles).where(DatasetFiles.id.in_(file_ids))
+    else:
+        # 未显式记录 file_ids 时，回退为主数据集下所有 ACTIVE 文件
+        if not dataset_id:
+            return StandardResponse(code=200, message="success", data=[])
+        files_query = select(DatasetFiles).where(
+            DatasetFiles.dataset_id == dataset_id,
+            DatasetFiles.status == "ACTIVE",
+        )
+
+    files_result = await db.execute(files_query)
+    files = list(files_result.scalars().all())
+
+    # 为涉及到的 dataset_id 一次性查询名称映射，方便前端展示
+    dataset_ids = {str(f.dataset_id) for f in files if getattr(f, "dataset_id", None)}
+    dataset_name_map: Dict[str, str] = {}
+    if dataset_ids:
+        ds_result = await db.execute(
+            select(Dataset.id, Dataset.name).where(Dataset.id.in_(dataset_ids))
+        )
+        for ds_id, ds_name in ds_result.fetchall():
+            dataset_name_map[str(ds_id)] = ds_name or ""
+
+    data: List[Dict[str, Any]] = []
+    for f in files:
+        fid = str(getattr(f, "id"))
+        ds_id = str(getattr(f, "dataset_id")) if getattr(f, "dataset_id", None) else None
+        item: Dict[str, Any] = {
+            "id": fid,
+            "datasetId": ds_id,
+            "datasetName": dataset_name_map.get(ds_id or "", ""),
+            "fileName": getattr(f, "file_name", ""),
+            "fileSize": int(getattr(f, "file_size", 0) or 0),
+            "filePath": getattr(f, "file_path", ""),
+        }
+        data.append(item)
+
+    return StandardResponse(code=200, message="success", data=data)
 
 
 @router.get("/{task_id}/label-studio-project", response_model=StandardResponse[Dict[str, str]])
@@ -856,3 +1026,160 @@ async def sync_auto_annotation_to_label_studio(
         message="success",
         data=created_count,
     )
+
+
+@router.post("/{task_id}/sync-label-studio-back", response_model=StandardResponse[bool])
+async def import_from_label_studio_to_dataset(
+    task_id: str = Path(..., description="任务ID"),
+    body: ImportFromLabelStudioRequest | None = None,
+    db: AsyncSession = Depends(get_db),
+):
+    """将指定自动标注任务在 Label Studio 中的标注结果导回到某个数据集。
+
+    行为说明：
+    - 基于自动标注任务找到/创建对应的 Label Studio 项目；
+    - 调用 Label Studio 项目导出接口，按 exportFormat 下载完整导出文件；
+    - 将该导出文件作为一个普通数据集文件写入 targetDatasetId 对应的数据集目录；
+    - 不解析每条标注、不修改现有 tags，仅作为“标注导出工件”落盘，方便后续人工使用。
+    """
+
+    import os
+    import tempfile
+    from datetime import datetime
+
+    if body is None:
+        raise HTTPException(status_code=400, detail="Request body is required")
+
+    # 1. 获取并校验自动标注任务
+    task = await service.get_task(db, task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    # 2. 校验目标数据集是否存在
+    dm_service = DatasetManagementService(db)
+    target_dataset_id = body.target_dataset_id
+    dataset = await dm_service.get_dataset(target_dataset_id)
+    if not dataset:
+        raise HTTPException(status_code=404, detail="Target dataset not found")
+
+    # 3. 查找或创建与该自动标注任务关联的 Label Studio 项目
+    mapping_service = DatasetMappingService(db)
+    mappings = await mapping_service.get_mappings_by_dataset_id(task.dataset_id)
+
+    project_id: Optional[str] = None
+    for m in mappings:
+        cfg = getattr(m, "configuration", None) or {}
+        if isinstance(cfg, dict) and cfg.get("autoTaskId") == task.id:
+            project_id = str(m.labeling_project_id)
+            break
+
+    if project_id is None:
+        for m in mappings:
+            if m.name == task.name:
+                project_id = str(m.labeling_project_id)
+                break
+
+    if project_id is None:
+        # 与前向同步逻辑保持一致：如无现成项目则按自动标注配置自动创建。
+        try:
+            auto_config = AutoAnnotationConfig.model_validate(task.config)
+        except Exception as e:  # pragma: no cover
+            logger.warning("Failed to parse auto task config when creating LS project for back sync: %s", e)
+            auto_config = AutoAnnotationConfig(
+                model_size="l",
+                conf_threshold=0.5,
+                target_classes=[],
+            )
+
+        project_id = await _ensure_ls_mapping_for_auto_task(
+            db,
+            dataset_id=task.dataset_id,
+            dataset_name=task.dataset_name,
+            config=auto_config,
+            task_name=task.name,
+            file_ids=[str(fid) for fid in (task.file_ids or [])],
+            auto_task_id=task.id,
+        )
+
+        if not project_id:
+            raise HTTPException(
+                status_code=500,
+                detail=(
+                    "Failed to create or resolve Label Studio project for this auto task "
+                    "when importing annotations back."
+                ),
+            )
+
+    # 4. 调用 Label Studio 导出接口
+    ls_client = LabelStudioClient(
+        base_url=settings.label_studio_base_url,
+        token=settings.label_studio_user_token,
+    )
+
+    export_format = (body.export_format or "JSON").upper()
+
+    # 简单根据导出格式推断文件扩展名，仅用于提高可读性
+    ext_map = {
+        "JSON": ".json",
+        "JSON_MIN": ".json",
+        "CSV": ".csv",
+        "TSV": ".tsv",
+        "COCO": ".json",
+        "YOLO": ".json",
+        "YOLOV8": ".json",
+    }
+    file_ext = ext_map.get(export_format, ".json")
+
+    content = await ls_client.export_project(int(project_id), export_type=export_format)
+    if content is None or len(content) == 0:
+        raise HTTPException(status_code=500, detail="Failed to export project from Label Studio")
+
+    # 5. 将导出结果写入临时文件，再通过 DatasetManagementService 复制到数据集目录并注册记录
+    tmp_fd, tmp_path = tempfile.mkstemp(suffix=file_ext)
+    os.close(tmp_fd)
+
+    try:
+        with open(tmp_path, "wb") as f:
+            f.write(content)
+
+        # 生成一个具备时间戳的文件名，避免与现有文件冲突；
+        # 若前端提供了自定义文件名，则优先使用其主体部分，再附加正确的扩展名。
+        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+
+        def _sanitize_base_name(raw: str) -> str:
+            # 去掉路径分隔符，仅保留最后一段
+            name = (raw or "").strip().replace("\\", "/").split("/")[-1]
+            # 去掉用户自带的扩展名，避免与服务器推断的后缀冲突
+            if "." in name:
+                name = name.rsplit(".", 1)[0]
+            # 退回到默认前缀
+            return name or f"ls_export_{project_id}_{timestamp}"
+
+        if getattr(body, "file_name", None):
+            base_stem = _sanitize_base_name(body.file_name)  # type: ignore[arg-type]
+            base_name = f"{base_stem}{file_ext}"
+        else:
+            base_name = f"ls_export_{project_id}_{timestamp}{file_ext}"
+
+        # DatasetManagementService.add_files_to_dataset 会使用源文件名决定目标文件名，
+        # 因此这里将临时文件重命名为期望的可读名称后再导入。
+        tmp_dir = os.path.dirname(tmp_path)
+        target_tmp_path = os.path.join(tmp_dir, base_name)
+        os.replace(tmp_path, target_tmp_path)
+
+        await dm_service.add_files_to_dataset(target_dataset_id, [target_tmp_path])
+    finally:
+        # 清理临时文件（若仍存在）
+        if os.path.exists(tmp_path):
+            try:
+                os.remove(tmp_path)
+            except Exception:
+                pass
+        # 也尝试清理重命名后的临时文件
+        if "target_tmp_path" in locals() and os.path.exists(target_tmp_path):
+            try:
+                os.remove(target_tmp_path)
+            except Exception:
+                pass
+
+    return StandardResponse(code=200, message="success", data=True)

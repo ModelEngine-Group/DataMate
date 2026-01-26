@@ -205,7 +205,10 @@ def _update_task_status(
 
 
 def _load_dataset_files(dataset_id: str) -> List[Tuple[str, str, str]]:
-    """加载指定数据集下的所有已完成文件。"""
+    """加载指定数据集下的所有已激活文件。
+
+    不再根据 tags 是否为空进行过滤，避免影响后续新任务或重复任务的执行。
+    """
 
     sql = text(
         """
@@ -370,7 +373,11 @@ def _register_output_dataset(
     *,
     tags_by_filename: Optional[Dict[str, List[Dict[str, Any]]]] = None,
 ) -> None:
-    """将自动标注结果注册到新建的数据集。"""
+    """将自动标注结果注册到数据集。
+
+    如果多次为同一自动标注任务重复运行，将复用同一个输出数据集，并避免对
+    同一 dataset_id + file_name 插入重复记录，只为新文件追加记录。
+    """
 
     images_dir = os.path.join(output_dir, "images")
     if not os.path.isdir(images_dir):
@@ -438,7 +445,18 @@ def _register_output_dataset(
     with SQLManager.create_connect() as conn:
         added_count = 0
 
+        # 预先查询已存在的文件名，避免重复插入
+        existing_names_sql = text(
+            """
+            SELECT file_name FROM t_dm_dataset_files WHERE dataset_id = :dataset_id
+            """
+        )
+        rows = conn.execute(existing_names_sql, {"dataset_id": output_dataset_id}).fetchall()
+        existing_names = {str(r[0]) for r in rows}
+
         for file_name, file_path, file_size in image_files:
+            if file_name in existing_names:
+                continue
             ext = os.path.splitext(file_name)[1].lstrip(".").upper() or None
             file_tags = None
             if tags_by_filename:
@@ -458,8 +476,11 @@ def _register_output_dataset(
                 },
             )
             added_count += 1
+            existing_names.add(file_name)
 
         for file_name, file_path, file_size in annotation_files:
+            if file_name in existing_names:
+                continue
             ext = os.path.splitext(file_name)[1].lstrip(".").upper() or None
             conn.execute(
                 insert_file_sql,
@@ -476,6 +497,7 @@ def _register_output_dataset(
                 },
             )
             added_count += 1
+            existing_names.add(file_name)
 
         if added_count > 0:
             conn.execute(
@@ -557,12 +579,82 @@ def _process_single_task(task: Dict[str, Any]) -> None:
     else:
         all_files = _load_dataset_files(dataset_id)
 
+    # 优先复用任务已有的输出目录和对应数据集，避免重复创建结果数据集
+    existing_output_path = (task.get("output_path") or "").strip() or None
+    output_dataset_id: Optional[str] = None
+    output_dir: Optional[str] = None
+
+    if existing_output_path:
+        try:
+            # 确保目录存在
+            output_dir = _ensure_output_dir(existing_output_path)
+
+            # 根据路径查找已存在的数据集记录
+            find_dataset_sql = text(
+                """
+                SELECT id FROM t_dm_datasets
+                WHERE path = :path
+                ORDER BY created_at DESC
+                LIMIT 1
+                """
+            )
+            with SQLManager.create_connect() as conn:
+                row = conn.execute(find_dataset_sql, {"path": output_dir}).fetchone()
+            if row:
+                output_dataset_id = str(row[0])
+                logger.info(
+                    "Reuse existing output dataset for auto-annotation task: task_id={}, dataset_id={}, path={}",
+                    task_id,
+                    output_dataset_id,
+                    output_dir,
+                )
+        except Exception as e:
+            logger.error(
+                "Failed to reuse existing output dataset for task {}: {}",
+                task_id,
+                e,
+            )
+
+    # 如果没有可复用的数据集，则创建新的结果数据集
+    if not output_dataset_id or not output_dir:
+        output_dataset_id, new_output_dir = _create_output_dataset(
+            source_dataset_id=dataset_id,
+            source_dataset_name=source_dataset_name,
+            output_dataset_name=output_dataset_name,
+        )
+        output_dir = _ensure_output_dir(new_output_dir)
+
+    # 仅对“新选的数据”执行自动标注：
+    # 已经在输出目录 images/ 中存在对应文件名的，认为该任务已跑过，不再重复标注
+    existing_image_names: Set[str] = set()
+    images_dir = os.path.join(output_dir, "images")
+    if os.path.isdir(images_dir):
+        try:
+            for name in os.listdir(images_dir):
+                if not os.path.isfile(os.path.join(images_dir, name)):
+                    continue
+                existing_image_names.add(name)
+        except Exception as e:
+            logger.error(
+                "Failed to list existing images for auto-annotation task {}: {}",
+                task_id,
+                e,
+            )
+
     # all_files: List[(file_id, file_path, file_name)]
-    files = all_files
+    files = [
+        (file_id, file_path, file_name)
+        for file_id, file_path, file_name in all_files
+        if os.path.basename(file_path) not in existing_image_names
+    ]
 
     total_images = len(files)
     if total_images == 0:
-        logger.warning("No files found for dataset {} when running auto-annotation task {}", dataset_id, task_id)
+        logger.info(
+            "No new files to process for auto-annotation task {}, reuse existing output at {}",
+            task_id,
+            output_dir,
+        )
         _update_task_status(
             task_id,
             status="completed",
@@ -571,16 +663,9 @@ def _process_single_task(task: Dict[str, Any]) -> None:
             processed_images=0,
             detected_objects=0,
             completed=True,
-            output_path=None,
+            output_path=output_dir,
         )
         return
-
-    output_dataset_id, output_dir = _create_output_dataset(
-        source_dataset_id=dataset_id,
-        source_dataset_name=source_dataset_name,
-        output_dataset_name=output_dataset_name,
-    )
-    output_dir = _ensure_output_dir(output_dir)
 
     try:
         detector = ImageObjectDetectionBoundingBox(

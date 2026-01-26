@@ -21,6 +21,13 @@ interface DatasetFileTransferProps
   onSelectedFilesChange: (filesMap: { [key: string]: DatasetFile }) => void;
   onDatasetSelect?: (dataset: Dataset | null) => void;
   datasetTypeFilter?: DatasetType;
+  /**
+   * 锁定的文件ID集合：
+   * - 在左侧文件列表中，这些文件的勾选框会变成灰色且不可交互；
+   * - 点击整行也不会改变其选中状态；
+   * - 主要用于“编辑任务数据集”场景下锁死任务初始文件。
+   */
+  lockedFileIds?: string[];
 }
 
 const fileCols = [
@@ -52,6 +59,7 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
   onSelectedFilesChange,
   onDatasetSelect,
   datasetTypeFilter,
+  lockedFileIds,
   ...props
 }) => {
   const [datasets, setDatasets] = React.useState<Dataset[]>([]);
@@ -78,6 +86,10 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
     []
   );
   const [selectingAll, setSelectingAll] = React.useState<boolean>(false);
+
+  const lockedIdSet = React.useMemo(() => {
+    return new Set((lockedFileIds || []).map((id) => String(id)));
+  }, [lockedFileIds]);
 
   const fetchDatasets = async () => {
     const { data } = await queryDatasetsUsingGet({
@@ -230,6 +242,10 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
   }, [selectedDataset, selectedFilesMap, onSelectedFilesChange]);
 
   const toggleSelectFile = (record: DatasetFile) => {
+    // 被锁定的文件不允许在此组件中被增删
+    if (lockedIdSet.has(String(record.id))) {
+      return;
+    }
     if (!selectedFilesMap[record.id]) {
       onSelectedFilesChange({
         ...selectedFilesMap,
@@ -421,6 +437,7 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
 
               getCheckboxProps: (record: DatasetFile) => ({
                 name: record.fileName,
+                disabled: lockedIdSet.has(String(record.id)),
               }),
             }}
           />

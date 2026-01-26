@@ -402,13 +402,23 @@ public class DatasetFileApplicationService {
         for (FileUploadResult file : unpacked) {
             File savedFile = file.getSavedFile();
             LocalDateTime currentTime = LocalDateTime.now();
+            // 统一 fileName：无论是否通过文件夹/压缩包上传，都只保留纯文件名
+            String originalFileName = file.getFileName();
+            String baseFileName = originalFileName;
+            if (originalFileName != null) {
+                String normalized = originalFileName.replace("\\", "/");
+                int lastSlash = normalized.lastIndexOf('/');
+                if (lastSlash >= 0 && lastSlash + 1 < normalized.length()) {
+                    baseFileName = normalized.substring(lastSlash + 1);
+                }
+            }
             DatasetFile datasetFile = DatasetFile.builder()
                 .id(UUID.randomUUID().toString())
                 .datasetId(datasetId)
                 .fileSize(savedFile.length())
                 .uploadTime(currentTime)
                 .lastAccessTime(currentTime)
-                .fileName(file.getFileName())
+                .fileName(baseFileName)
                 .filePath(savedFile.getPath())
                 .fileType(AnalyzerUtils.getExtension(file.getFileName()))
                 .build();

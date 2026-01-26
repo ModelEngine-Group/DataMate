@@ -23,6 +23,7 @@ from ..schema import (
     DeleteDatasetResponse,
     DatasetMappingResponse,
 )
+from ..schema.auto import ImportFromLabelStudioRequest, UpdateAutoAnnotationTaskFilesRequest
 
 router = APIRouter(
     prefix="/project",
@@ -80,80 +81,101 @@ async def create_mapping(
     """
     try:
         dm_client = DatasetManagementService(db)
-        ls_client = LabelStudioClient(base_url=settings.label_studio_base_url,
-                          token=settings.label_studio_user_token)
+        ls_client = LabelStudioClient(
+            base_url=settings.label_studio_base_url,
+            token=settings.label_studio_user_token,
+        )
         mapping_service = DatasetMappingService(db)
         sync_service = SyncService(dm_client, ls_client, mapping_service)
         template_service = AnnotationTemplateService()
 
-        logger.info(f"Create dataset mapping request: dataset_id={request.dataset_id}, file_ids={request.file_ids}")
+        logger.info(
+            "Create dataset mapping request: dataset_id=%s, file_ids=%s",
+            request.dataset_id,
+            request.file_ids,
+        )
 
         # 从DM服务获取数据集信息
         dataset_info = await dm_client.get_dataset(request.dataset_id)
         if not dataset_info:
             raise HTTPException(
                 status_code=404,
-                detail=f"Dataset not found in DM service: {request.dataset_id}"
+                detail=f"Dataset not found in DM service: {request.dataset_id}",
             )
 
-        project_name = request.name or \
-                       dataset_info.name or \
-                       "A new project from DataMate"
+        project_name = (
+            request.name
+            or dataset_info.name
+            or "A new project from DataMate"
+        )
 
-        project_description = request.description or \
-                              dataset_info.description or \
-                              f"Imported from DM dataset {dataset_info.name} ({dataset_info.id})"
+        project_description = (
+            request.description
+            or dataset_info.description
+            or f"Imported from DM dataset {dataset_info.name} ({dataset_info.id})"
+        )
 
         # 如果提供了模板ID，获取模板配置
         label_config = None
         if request.template_id:
-            logger.info(f"Using template: {request.template_id}")
+            logger.info("Using template: %s", request.template_id)
             template = await template_service.get_template(db, request.template_id)
             if not template:
                 raise HTTPException(
                     status_code=404,
-                    detail=f"Template not found: {request.template_id}"
+                    detail=f"Template not found: {request.template_id}",
                 )
             label_config = template.label_config
-            logger.debug(f"Template label config loaded for template: {template.name}")
+            logger.debug(
+                "Template label config loaded for template: %s",
+                template.name,
+            )
 
         # 在Label Studio中创建项目
         project_data = await ls_client.create_project(
             title=project_name,
             description=project_description,
-            label_config=label_config  # 传递模板配置
+            label_config=label_config,
         )
-
         if not project_data:
             raise HTTPException(
                 status_code=500,
-                detail="Fail to create Label Studio project."
+                detail="Fail to create Label Studio project.",
             )
 
         project_id = project_data["id"]
 
         # 配置主数据集的本地存储：dataset/<id>
-        local_storage_path = f"{settings.label_studio_local_document_root}/{request.dataset_id}"
+        local_storage_path = (
+            f"{settings.label_studio_local_document_root}/{request.dataset_id}"
+        )
         storage_result = await ls_client.create_local_storage(
             project_id=project_id,
             path=local_storage_path,
             title="Dataset_BLOB",
             use_blob_urls=True,
-            description=f"Local storage for dataset {dataset_info.name}"
+            description=f"Local storage for dataset {dataset_info.name}",
         )
 
         if not storage_result:
             # 本地存储配置失败，记录警告但不中断流程
-            logger.warning(f"Failed to configure local storage for project {project_id}")
+            logger.warning(
+                "Failed to configure local storage for project %s",
+                project_id,
+            )
         else:
-            logger.info(f"Local storage configured for project {project_id}: {local_storage_path}")
+            logger.info(
+                "Local storage configured for project %s: %s",
+                project_id,
+                local_storage_path,
+            )
 
         labeling_project = LabelingProject(
-            id=str(uuid.uuid4()),  # Generate UUID here
+            id=str(uuid.uuid4()),
             dataset_id=request.dataset_id,
             labeling_project_id=str(project_id),
             name=project_name,
-            template_id=request.template_id,  # Save template_id to database
+            template_id=request.template_id,
         )
 
         # 创建映射关系，包含项目名称（先持久化映射以获得 mapping.id）
@@ -195,23 +217,29 @@ async def create_mapping(
                         "Some file_ids could not be resolved to dataset_id when syncing manual project files: %s",
                         ",".join(sorted(unresolved_ids)),
                     )
-                    grouped.setdefault(str(request.dataset_id), set()).update(unresolved_ids)
+                    grouped.setdefault(str(request.dataset_id), set()).update(
+                        unresolved_ids
+                    )
 
-                # 为所有涉及到的额外数据集提前配置本地存储，避免首次引用该数据集时
-                # /data/local-files/?d=/<dataset_id>/... 返回 404 的情况。
+                # 为所有涉及到的额外数据集提前配置本地存储
                 try:
                     for extra_ds_id in grouped.keys():
-                        # 主数据集已在上方配置过，这里只为额外数据集创建存储记录
+                        # 主数据集已在上方配置过
                         if str(extra_ds_id) == str(request.dataset_id):
                             continue
 
-                        extra_local_storage_path = f"{settings.label_studio_local_document_root}/{extra_ds_id}"
+                        extra_local_storage_path = (
+                            f"{settings.label_studio_local_document_root}/{extra_ds_id}"
+                        )
                         extra_storage_result = await ls_client.create_local_storage(
                             project_id=project_id,
                             path=extra_local_storage_path,
                             title=f"Dataset_BLOB_{extra_ds_id}",
                             use_blob_urls=True,
-                            description=f"Local storage for dataset {extra_ds_id} (multi-dataset manual project)",
+                            description=(
+                                f"Local storage for dataset {extra_ds_id} "
+                                "(multi-dataset manual project)"
+                            ),
                         )
                         if not extra_storage_result:
                             logger.warning(
@@ -225,7 +253,7 @@ async def create_mapping(
                                 project_id,
                                 extra_local_storage_path,
                             )
-                except Exception as e:
+                except Exception as e:  # pragma: no cover - 容错
                     logger.warning(
                         "Error while configuring extra local storage for project %s: %s",
                         project_id,
@@ -250,7 +278,7 @@ async def create_mapping(
                             override_dataset_id=ds_id,
                             delete_orphans=False,
                         )
-            except Exception as e:
+            except Exception as e:  # pragma: no cover - 映射创建成功但首次文件同步失败
                 # 同步失败不影响项目和映射本身的创建，前端可通过“同步”按钮重试
                 logger.warning(
                     "Failed to sync dataset files for manual LS project %s with file_ids filter: %s",
@@ -261,20 +289,318 @@ async def create_mapping(
         response_data = DatasetMappingCreateResponse(
             id=mapping.id,
             labeling_project_id=str(mapping.labeling_project_id),
-            labeling_project_name=mapping.name or project_name
+            labeling_project_name=mapping.name or project_name,
         )
 
         return StandardResponse(
             code=201,
             message="success",
-            data=response_data
+            data=response_data,
         )
 
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as e:  # pragma: no cover - 兜底错误
         logger.error(f"Error while creating dataset mapping: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@router.get("/{mapping_id}/files", response_model=StandardResponse[list[dict]])
+async def get_manual_mapping_files(
+    mapping_id: str = Path(..., description="映射ID (mapping UUID)"),
+    db: AsyncSession = Depends(get_db),
+):
+    """查询手动标注映射当前在 Label Studio 中已存在的 DM 文件列表。
+
+    该接口主要用于前端“编辑任务数据集”弹窗的初始选中状态：
+    - 通过 Label Studio 任务反查当前已有关联的 DM 文件ID；
+    - 再到 DM 数据库中查询这些文件的基础信息与所属数据集。
+    """
+
+    from sqlalchemy import select as _select  # 本地导入避免循环依赖
+    from app.db.models.dataset_management import DatasetFiles, Dataset
+
+    mapping_service = DatasetMappingService(db)
+    mapping = await mapping_service.get_mapping_by_uuid(mapping_id)
+    if not mapping:
+        raise HTTPException(status_code=404, detail="Mapping not found")
+
+    dm_client = DatasetManagementService(db)
+    ls_client = LabelStudioClient(
+        base_url=settings.label_studio_base_url,
+        token=settings.label_studio_user_token,
+    )
+    sync_service = SyncService(dm_client, ls_client, mapping_service)
+
+    existing_mapping = await sync_service.get_existing_dm_file_mapping(
+        mapping.labeling_project_id
+    )
+    file_ids = list(existing_mapping.keys())
+    if not file_ids:
+        return StandardResponse(code=200, message="success", data=[])
+
+    files_result = await db.execute(
+        _select(DatasetFiles).where(DatasetFiles.id.in_(file_ids))
+    )
+    files = list(files_result.scalars().all())
+
+    dataset_ids = {
+        str(getattr(f, "dataset_id"))
+        for f in files
+        if getattr(f, "dataset_id", None)
+    }
+    dataset_name_map: dict[str, str] = {}
+    if dataset_ids:
+        ds_result = await db.execute(
+            _select(Dataset.id, Dataset.name).where(Dataset.id.in_(dataset_ids))
+        )
+        for ds_id, ds_name in ds_result.fetchall():
+            dataset_name_map[str(ds_id)] = ds_name or ""
+
+    data: list[dict] = []
+    for f in files:
+        fid = str(getattr(f, "id"))
+        ds_id = (
+            str(getattr(f, "dataset_id"))
+            if getattr(f, "dataset_id", None)
+            else None
+        )
+        item: dict = {
+            "id": fid,
+            "datasetId": ds_id,
+            "datasetName": dataset_name_map.get(ds_id or "", ""),
+            "fileName": getattr(f, "file_name", ""),
+            "fileSize": int(getattr(f, "file_size", 0) or 0),
+            "filePath": getattr(f, "file_path", ""),
+            "fileType": getattr(f, "file_type", None),
+        }
+        data.append(item)
+
+    return StandardResponse(code=200, message="success", data=data)
+
+
+@router.put("/{mapping_id}/files", response_model=StandardResponse[bool])
+async def update_manual_mapping_files(
+    mapping_id: str = Path(..., description="映射ID (mapping UUID)"),
+    body: UpdateAutoAnnotationTaskFilesRequest = ...,  # 复用通用结构：datasetId + fileIds
+    db: AsyncSession = Depends(get_db),
+):
+    """更新手动标注映射所关联的 DM 文件集合（仅追加，不删除已有任务）。
+
+    语义约定：
+    - 映射创建时所同步的文件集合视为“基础集合”，后续编辑不支持移除；
+    - 本接口只会为新增的 fileIds 在 Label Studio 中创建任务；
+    - 不会删除任何现有任务（delete_orphans=False）。
+    """
+
+    from sqlalchemy import select as _select  # 本地导入
+    from typing import Set as _Set, Dict as _Dict
+    from app.db.models.dataset_management import DatasetFiles
+
+    mapping_service = DatasetMappingService(db)
+    mapping = await mapping_service.get_mapping_by_uuid(mapping_id)
+    if not mapping:
+        raise HTTPException(status_code=404, detail="Mapping not found")
+
+    dm_client = DatasetManagementService(db)
+    ls_client = LabelStudioClient(
+        base_url=settings.label_studio_base_url,
+        token=settings.label_studio_user_token,
+    )
+    sync_service = SyncService(dm_client, ls_client, mapping_service)
+
+    requested_ids = {str(fid) for fid in (body.file_ids or [])}
+    if not requested_ids:
+        # 不做任何变更，但认为成功
+        return StandardResponse(code=200, message="success", data=True)
+
+    existing_mapping = await sync_service.get_existing_dm_file_mapping(
+        mapping.labeling_project_id
+    )
+    existing_ids = set(existing_mapping.keys())
+
+    # 仅对新增文件创建任务
+    new_ids = sorted(requested_ids - existing_ids)
+    if not new_ids:
+        return StandardResponse(code=200, message="success", data=True)
+
+    stmt = (
+        _select(DatasetFiles.dataset_id, DatasetFiles.id)
+        .where(DatasetFiles.id.in_(new_ids))
+    )
+    result = await db.execute(stmt)
+    rows = result.fetchall()
+
+    grouped: _Dict[str, _Set[str]] = {}
+    resolved_ids: _Set[str] = set()
+
+    for ds_id, fid in rows:
+        if not ds_id or not fid:
+            continue
+        fid_str = str(fid)
+        grouped.setdefault(str(ds_id), set()).add(fid_str)
+        resolved_ids.add(fid_str)
+
+    unresolved_ids = {str(fid) for fid in new_ids} - resolved_ids
+    if unresolved_ids:
+        logger.warning(
+            "Some file_ids could not be resolved to dataset_id when updating manual mapping files: %s",
+            ",".join(sorted(unresolved_ids)),
+        )
+        grouped.setdefault(str(mapping.dataset_id), set()).update(unresolved_ids)
+
+    # 为所有涉及到的额外数据集提前配置本地存储（与创建逻辑保持一致）
+    try:
+        for extra_ds_id in grouped.keys():
+            if str(extra_ds_id) == str(mapping.dataset_id):
+                continue
+
+            extra_local_storage_path = (
+                f"{settings.label_studio_local_document_root}/{extra_ds_id}"
+            )
+            extra_storage_result = await ls_client.create_local_storage(
+                project_id=int(mapping.labeling_project_id),
+                path=extra_local_storage_path,
+                title=f"Dataset_BLOB_{extra_ds_id}",
+                use_blob_urls=True,
+                description=(
+                    f"Local storage for dataset {extra_ds_id} "
+                    "(multi-dataset manual project, edit)"
+                ),
+            )
+            if not extra_storage_result:
+                logger.warning(
+                    "Failed to configure extra local storage for project %s (dataset %s) when updating manual mapping files",
+                    mapping.labeling_project_id,
+                    extra_ds_id,
+                )
+            else:
+                logger.info(
+                    "Extra local storage configured for project %s: %s (edit)",
+                    mapping.labeling_project_id,
+                    extra_local_storage_path,
+                )
+    except Exception as e:  # pragma: no cover
+        logger.warning(
+            "Error while configuring extra local storage for project %s during update: %s",
+            mapping.labeling_project_id,
+            e,
+        )
+
+    # 将新增文件按数据集分组，同步到 Label Studio；不删除已有任务
+    for ds_id, ds_file_ids in grouped.items():
+        await sync_service.sync_files(
+            mapping,
+            batch_size=100,
+            allowed_file_ids=ds_file_ids,
+            override_dataset_id=ds_id,
+            delete_orphans=False,
+        )
+
+    return StandardResponse(code=200, message="success", data=True)
+
+
+@router.post("/{mapping_id}/sync-label-studio-back", response_model=StandardResponse[bool])
+async def import_manual_from_label_studio_to_dataset(
+    mapping_id: str = Path(..., description="映射ID (mapping UUID)"),
+    body: ImportFromLabelStudioRequest | None = None,
+    db: AsyncSession = Depends(get_db),
+):
+    """将手动标注工程在 Label Studio 中的标注结果导回到某个数据集。
+
+    行为与自动标注的后向同步保持一致：
+    - 按 mapping_id 定位 Label Studio 项目；
+    - 通过 exportType 导出项目完整结果（JSON/COCO/YOLO 等）；
+    - 将导出文件作为一个普通文件保存到指定数据集目录，并注册到 t_dm_dataset_files；
+    - 不解析每条标注、不修改 tags，仅追加一个“导出工件”文件。
+    """
+
+    import os
+    import tempfile
+    from datetime import datetime
+
+    if body is None:
+        raise HTTPException(status_code=400, detail="Request body is required")
+
+    # 1. 获取并校验映射（手动标注任务）
+    mapping_service = DatasetMappingService(db)
+    mapping = await mapping_service.get_mapping_by_uuid(mapping_id)
+    if not mapping:
+        raise HTTPException(status_code=404, detail="Mapping not found")
+
+    # 2. 校验目标数据集是否存在
+    dm_service = DatasetManagementService(db)
+    target_dataset_id = body.target_dataset_id
+    dataset = await dm_service.get_dataset(target_dataset_id)
+    if not dataset:
+        raise HTTPException(status_code=404, detail="Target dataset not found")
+
+    # 3. 调用 Label Studio 导出接口
+    ls_client = LabelStudioClient(
+        base_url=settings.label_studio_base_url,
+        token=settings.label_studio_user_token,
+    )
+
+    export_format = (body.export_format or "JSON").upper()
+
+    ext_map = {
+        "JSON": ".json",
+        "JSON_MIN": ".json",
+        "CSV": ".csv",
+        "TSV": ".tsv",
+        "COCO": ".json",
+        "YOLO": ".json",
+        "YOLOV8": ".json",
+    }
+    file_ext = ext_map.get(export_format, ".json")
+
+    project_id = mapping.labeling_project_id
+    content = await ls_client.export_project(int(project_id), export_type=export_format)
+    if content is None or len(content) == 0:
+        raise HTTPException(status_code=500, detail="Failed to export project from Label Studio")
+
+    # 4. 将导出结果写入临时文件，再通过 DatasetManagementService 导入到数据集
+    tmp_fd, tmp_path = tempfile.mkstemp(suffix=file_ext)
+    os.close(tmp_fd)
+
+    try:
+        with open(tmp_path, "wb") as f:
+            f.write(content)
+
+        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+
+        def _sanitize_base_name(raw: str) -> str:
+            # 去掉路径分隔符，仅保留最后一段
+            name = (raw or "").strip().replace("\\", "/").split("/")[-1]
+            # 去掉用户自带的扩展名，避免与服务器推断的后缀冲突
+            if "." in name:
+                name = name.rsplit(".", 1)[0]
+            return name or f"ls_export_{project_id}_{timestamp}"
+
+        if getattr(body, "file_name", None):
+            base_stem = _sanitize_base_name(body.file_name)  # type: ignore[arg-type]
+            base_name = f"{base_stem}{file_ext}"
+        else:
+            base_name = f"ls_export_{project_id}_{timestamp}{file_ext}"
+
+        tmp_dir = os.path.dirname(tmp_path)
+        target_tmp_path = os.path.join(tmp_dir, base_name)
+        os.replace(tmp_path, target_tmp_path)
+
+        await dm_service.add_files_to_dataset(target_dataset_id, [target_tmp_path])
+    finally:
+        if os.path.exists(tmp_path):
+            try:
+                os.remove(tmp_path)
+            except Exception:
+                pass
+        if "target_tmp_path" in locals() and os.path.exists(target_tmp_path):
+            try:
+                os.remove(target_tmp_path)
+            except Exception:
+                pass
+
+    return StandardResponse(code=200, message="success", data=True)
 
 @router.get("", response_model=StandardResponse[PaginatedData[DatasetMappingResponse]])
 async def list_mappings(

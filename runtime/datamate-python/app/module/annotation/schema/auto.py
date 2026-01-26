@@ -76,3 +76,54 @@ class AutoAnnotationTaskListResponse(BaseModel):
     total: int = Field(..., description="总数")
 
     model_config = ConfigDict(populate_by_name=True)
+
+
+class UpdateAutoAnnotationTaskFilesRequest(BaseModel):
+    """更新自动标注任务所关联的数据集文件。
+
+    - dataset_id: 主数据集 ID；若前端未显式传入，则在接口层回退为现有任务的 dataset_id。
+    - file_ids: 选中的文件 ID 列表，允许跨多个数据集；
+      实际执行自动标注时仅会对 tags 为空的文件重新推理。
+    """
+
+    dataset_id: Optional[str] = Field(
+        default=None,
+        alias="datasetId",
+        description="主数据集ID（可选，不传则沿用原任务的datasetId）",
+    )
+    file_ids: List[str] = Field(
+        default_factory=list,
+        alias="fileIds",
+        description="要参与本自动标注任务的数据集文件ID列表，允许跨多个数据集",
+    )
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class ImportFromLabelStudioRequest(BaseModel):
+    """从 Label Studio 导入标注结果到 DM 数据集的请求体。
+
+    - target_dataset_id: 要将导出结果写入的目标数据集ID；
+    - export_format: Label Studio 导出格式（如 JSON/JSON_MIN/CSV/TSV/COCO/YOLO 等）。
+        - file_name: 可选，自定义保存到数据集中的文件名称（不含路径）；
+            若包含扩展名或路径分隔符，服务端会自动裁剪，仅保留文件名主体并附加正确后缀。
+    """
+
+    target_dataset_id: str = Field(
+        ...,
+        alias="targetDatasetId",
+        description="导入目标数据集ID",
+    )
+    export_format: str = Field(
+        default="JSON",
+        alias="exportFormat",
+        description="Label Studio 导出格式 (JSON/COCO/YOLO 等)",
+    )
+
+    file_name: Optional[str] = Field(
+        default=None,
+        alias="fileName",
+        description="自定义导出文件名（可选，不含路径，扩展名将按导出格式自动附加）",
+    )
+
+    model_config = ConfigDict(populate_by_name=True)
