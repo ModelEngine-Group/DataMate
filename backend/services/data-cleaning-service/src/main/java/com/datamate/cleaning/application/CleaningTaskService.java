@@ -10,6 +10,11 @@ import com.datamate.cleaning.domain.repository.CleaningTaskRepository;
 import com.datamate.cleaning.domain.repository.OperatorInstanceRepository;
 import com.datamate.cleaning.infrastructure.validator.CleanTaskValidator;
 import com.datamate.cleaning.interfaces.dto.*;
+import com.datamate.common.domain.enums.EdgeType;
+import com.datamate.common.domain.enums.NodeType;
+import com.datamate.common.domain.model.LineageEdge;
+import com.datamate.common.domain.model.LineageNode;
+import com.datamate.common.domain.service.LineageService;
 import com.datamate.common.infrastructure.exception.BusinessException;
 import com.datamate.common.infrastructure.exception.SystemErrorCode;
 import com.datamate.common.interfaces.PagedResponse;
@@ -73,6 +78,8 @@ public class CleaningTaskService {
 
     private final CleanTaskValidator cleanTaskValidator;
 
+    private final LineageService lineageService;
+
     private final String DATASET_PATH = "/dataset";
 
     private final String FLOW_PATH = "/flow";
@@ -134,6 +141,8 @@ public class CleaningTaskService {
         task.setBeforeSize(srcDataset.getSizeBytes());
         task.setFileCount(srcDataset.getFileCount().intValue());
         cleaningTaskRepo.insertTask(task);
+        // 记录血缘关系
+        addCleaningToGraph(srcDataset, task, destDataset);
 
         operatorInstanceRepo.insertInstance(taskId, request.getInstance());
         operatorRepo.incrementUsageCount(request.getInstance().stream()
@@ -144,6 +153,30 @@ public class CleaningTaskService {
         scanDataset(taskId, request.getSrcDatasetId());
 
         return task;
+    }
+
+    private void addCleaningToGraph(Dataset srcDataset, CleaningTaskDto task, Dataset destDataset) {
+        LineageNode fromNode = new LineageNode();
+        fromNode.setId(srcDataset.getId());
+        fromNode.setName(srcDataset.getName());
+        fromNode.setDescription(srcDataset.getDescription());
+        fromNode.setNodeType(NodeType.DATASET);
+
+        LineageNode toNode = new LineageNode();
+        toNode.setId(destDataset.getId());
+        toNode.setName(destDataset.getName());
+        toNode.setDescription(destDataset.getDescription());
+        toNode.setNodeType(NodeType.DATASET);
+
+        LineageEdge edge = new LineageEdge();
+        edge.setProcessId(task.getId());
+        edge.setName(task.getName());
+        edge.setDescription(task.getDescription());
+        edge.setEdgeType(EdgeType.DATA_CLEANING);
+        edge.setFromNodeId(fromNode.getId());
+        edge.setToNodeId(toNode.getId());
+
+        lineageService.generateGraph(fromNode, edge, toNode);
     }
 
     public CleaningTaskDto getTask(String taskId) {

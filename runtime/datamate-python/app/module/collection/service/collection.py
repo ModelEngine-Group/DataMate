@@ -13,7 +13,9 @@ from app.db.session import AsyncSessionLocal
 from app.module.collection.client.datax_client import DataxClient
 from app.module.collection.schema.collection import SyncMode, create_execute_record
 from app.module.dataset.service.service import Service
-from app.module.shared.schema import TaskStatus
+from app.module.shared.schema import TaskStatus, NodeType, EdgeType
+from app.module.shared.common.lineage import LineageService
+from app.db.models.base_entity import LineageNode, LineageEdge
 
 logger = get_logger(__name__)
 
@@ -81,3 +83,55 @@ class CollectionTaskService:
                         if file_path.is_file():
                             source_paths.append(str(file_path.absolute()))
                 await dataset_service.add_files_to_dataset(dataset_id=dataset_id, source_paths=source_paths)
+                await CollectionTaskService._add_dataset_to_graph(
+                    session=session,
+                    dataset_id=dataset_id,
+                    task=task
+                )
+
+    @staticmethod
+    async def _add_dataset_to_graph(
+        session: AsyncSession,
+        dataset_id: str,
+        task: CollectionTask
+    ) -> None:
+        """
+        在归集完成后，将数据集加入血缘图。
+        参考 Java 侧 addDatasetToGraph 逻辑：
+        collection(DATASOURCE) -> dataset(DATASET) via DATA_COLLECTION edge
+        """
+        try:
+            dataset = await session.get(Dataset, dataset_id)
+            if not dataset:
+                logger.warning(f"dataset {dataset_id} not found when building lineage graph")
+                return
+
+            dataset_node = LineageNode(
+                id=dataset.id,
+                node_type=NodeType.DATASET.value,
+                name=dataset.name,
+                description=dataset.description
+            )
+
+            collection_node = LineageNode(
+                id=task.id,
+                node_type=NodeType.DATASOURCE.value,
+                name=task.name,
+                description=task.description
+            )
+
+            collection_edge = LineageEdge(
+                process_id=task.id,
+                name=task.name,
+                edge_type=EdgeType.DATA_COLLECTION.value,
+                description=dataset.description,
+                from_node_id=task.id,
+                to_node_id=dataset.id
+            )
+
+            lineage_service = LineageService(db=session)
+            await lineage_service.generate_graph(collection_node, collection_edge, dataset_node)
+            await session.commit()
+        except Exception as exc:
+            logger.error(f"Failed to add dataset lineage graph: {exc}")
+            await session.rollback()
