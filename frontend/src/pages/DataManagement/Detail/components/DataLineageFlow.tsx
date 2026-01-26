@@ -1,8 +1,9 @@
 import type React from "react"
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useMemo } from "react"
 import { Card, Badge } from "antd"
 import { Database, Table, Brain, BookOpen, X } from "lucide-react"
-import type { Dataset } from "@/pages/DataManagement/dataset.model.ts"
+import {Dataset} from "@/pages/DataManagement/dataset.model.ts";
+import { queryDatasetLineageByIdUsingGet } from "@/pages/DataManagement/dataset.api.ts";
 
 interface Node {
   id: string
@@ -18,118 +19,37 @@ interface Node {
 }
 
 interface Edge {
+  id: string
   from: string
   to: string
   label: string
+  edgeType?: string
+  processId?: string
+  description?: string
+}
+interface LineageNodeDTO {
+  id: string
+  name: string
+  nodeType?: string
+  type?: string
+  graphId?: string
+  description?: string
+  nodeMetadata?: string
+  metadata?: string
 }
 
-const nodes: Node[] = [
-  {
-    id: "source1",
-    type: "datasource",
-    label: "MySQL 数据库",
-    x: 80,
-    y: 100,
-    description: "业务数据库",
-    status: "运转",
-    updateTime: "2026-01-06 15:22:08",
-  },
-  {
-    id: "source2",
-    type: "datasource",
-    label: "API 接口",
-    x: 80,
-    y: 250,
-    description: "外部数据源",
-    status: "运转",
-    updateTime: "2026-01-06 14:30:15",
-  },
-  {
-    id: "source3",
-    type: "datasource",
-    label: "日志文件",
-    x: 80,
-    y: 400,
-    description: "系统日志",
-    status: "运转",
-    updateTime: "2026-01-06 16:05:42",
-  },
-  {
-    id: "dataset1",
-    type: "dataset",
-    label: "原始数据集",
-    x: 380,
-    y: 100,
-    description: "未处理的原始数据",
-    fileCount: 14,
-    size: "3.449 MB",
-    updateTime: "2026-01-06 15:22:08",
-  },
-  {
-    id: "dataset2",
-    type: "dataset",
-    label: "清洗数据集",
-    x: 680,
-    y: 175,
-    description: "清洗后的干净数据",
-    fileCount: 8,
-    size: "2.156 MB",
-    updateTime: "2026-01-06 15:45:20",
-  },
-  {
-    id: "dataset3",
-    type: "dataset",
-    label: "合成数据集",
-    x: 980,
-    y: 250,
-    description: "特征工程后的数据",
-    fileCount: 5,
-    size: "1.823 MB",
-    updateTime: "2026-01-06 16:10:35",
-  },
-  {
-    id: "model1",
-    type: "model",
-    label: "预测模型",
-    x: 1280,
-    y: 150,
-    description: "ML 预测模型",
-    status: "训练中",
-    updateTime: "2026-01-06 16:30:12",
-  },
-  {
-    id: "model2",
-    type: "model",
-    label: "分类模型",
-    x: 1280,
-    y: 350,
-    description: "分类算法模型",
-    status: "已完成",
-    updateTime: "2026-01-06 16:25:48",
-  },
-  {
-    id: "kb1",
-    type: "knowledge",
-    label: "业务知识库",
-    x: 1600,
-    y: 250,
-    description: "结构化知识存储",
-    fileCount: 32,
-    size: "8.742 MB",
-    updateTime: "2026-01-06 16:45:05",
-  },
-]
-
-const edges: Edge[] = [
-  { from: "source1", to: "dataset1", label: "数据归集" },
-  { from: "source2", to: "dataset1", label: "数据归集" },
-  { from: "source3", to: "dataset1", label: "数据归集" },
-  { from: "dataset1", to: "dataset2", label: "数据清洗" },
-  { from: "dataset2", to: "dataset3", label: "数据合成" },
-  { from: "dataset2", to: "kb1", label: "知识生成" },
-  { from: "dataset3", to: "model1", label: "模型训练" },
-  { from: "dataset3", to: "model2", label: "模型训练" },
-]
+interface LineageEdgeDTO {
+  id: string
+  graphId?: string
+  processId?: string
+  edgeType?: string
+  name?: string
+  description?: string
+  edgeMetadata?: string
+  metadata?: string
+  fromNodeId: string
+  toNodeId: string
+}
 
 const nodeConfig = {
   datasource: {
@@ -158,14 +78,132 @@ const nodeConfig = {
   },
 }
 
-export default function DataLineageFlow(dataset: Dataset) {
+const edgeTypeLabels: Record<string, string> = {
+  DATA_COLLECTION: "数据归集",
+  DATA_CLEANING: "数据清洗",
+  DATA_LABELING: "数据标注",
+  DATA_SYNTHESIS: "数据合成",
+  DATA_RATIO: "数据配比",
+}
+
+const nodeTypeToUi: Record<string, Node["type"]> = {
+  DATASOURCE: "datasource",
+  DATASET: "dataset",
+  MODEL: "model",
+  KNOWLEDGE_BASE: "knowledge",
+  KNOWLEDGE: "knowledge",
+}
+
+const layoutColumns: Record<Node["type"], number> = {
+  datasource: 0,
+  dataset: 1,
+  model: 2,
+  knowledge: 3,
+}
+
+const layoutConfig = {
+  startX: 80,
+  startY: 90,
+  columnGap: 300,
+  rowGap: 150,
+  nodeWidth: 180,
+  nodeHeight: 74,
+  canvasWidth: 2000,
+  canvasHeight: 720,
+}
+
+export default function DataLineageFlow({ dataset }: { dataset: Dataset }) {
+  const [graphNodes, setGraphNodes] = useState<Node[]>([])
+  const [graphEdges, setGraphEdges] = useState<Edge[]>([])
   const [selectedNode, setSelectedNode] = useState<Node | null>(null)
+  const [selectedEdge, setSelectedEdge] = useState<Edge | null>(null)
   const [hoveredNode, setHoveredNode] = useState<string | null>(null)
+  const [hoveredEdge, setHoveredEdge] = useState<string | null>(null)
   const [draggedNode, setDraggedNode] = useState<string | null>(null)
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
   const [renderTrigger, setRenderTrigger] = useState(0)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const edgeHitAreasRef = useRef<Array<{ id: string; x: number; y: number; width: number; height: number }>>([])
+  const datasetId = dataset?.id
+
+  const layoutGraph = useMemo(() => {
+    return (nodes: LineageNodeDTO[], edges: LineageEdgeDTO[]): { nodes: Node[]; edges: Edge[] } => {
+      const columns: Record<Node["type"], Node[]> = {
+        datasource: [],
+        dataset: [],
+        model: [],
+        knowledge: [],
+      }
+
+      const mappedNodes: Node[] = nodes.map((node) => {
+        const rawType = node.nodeType ?? node.type ?? "DATASET"
+        const uiType = nodeTypeToUi[rawType] ?? "dataset"
+        const columnIndex = layoutColumns[uiType]
+        const baseX = layoutConfig.startX + columnIndex * layoutConfig.columnGap
+        const currentY = layoutConfig.startY + columns[uiType].length * layoutConfig.rowGap
+        const mapped: Node = {
+          id: node.id,
+          type: uiType,
+          label: node.name,
+          description: node.description,
+          x: baseX,
+          y: currentY,
+        }
+        columns[uiType].push(mapped)
+        return mapped
+      })
+
+      const mappedEdges: Edge[] = edges.map((edge, index) => ({
+        id: edge.id || `${edge.fromNodeId}-${edge.toNodeId}-${index}`,
+        from: edge.fromNodeId,
+        to: edge.toNodeId,
+        label: edge.name || (edge.edgeType ? edgeTypeLabels[edge.edgeType] || edge.edgeType : "处理流程"),
+        edgeType: edge.edgeType,
+        processId: edge.processId,
+        description: edge.description,
+      }))
+
+      return { nodes: mappedNodes, edges: mappedEdges }
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!datasetId) {
+      setGraphNodes([])
+      setGraphEdges([])
+      return
+    }
+
+    const fetchLineage = async () => {
+      try {
+        const res = await queryDatasetLineageByIdUsingGet(datasetId)
+        const payload = res?.data?.data ?? res?.data
+        const lineageNodes: LineageNodeDTO[] = payload?.lineageNodes ?? []
+        const lineageEdges: LineageEdgeDTO[] = payload?.lineageEdges ?? []
+        const { nodes, edges } = layoutGraph(lineageNodes, lineageEdges)
+        setGraphNodes(nodes)
+        setGraphEdges(edges)
+      } catch (error) {
+        setGraphNodes([])
+        setGraphEdges([])
+      }
+    }
+
+    fetchLineage()
+  }, [datasetId, layoutGraph])
+
+  useEffect(() => {
+    if (selectedNode && !graphNodes.some((node) => node.id === selectedNode.id)) {
+      setSelectedNode(null)
+    }
+  }, [graphNodes, selectedNode])
+
+  useEffect(() => {
+    if (selectedEdge && !graphEdges.some((edge) => edge.id === selectedEdge.id)) {
+      setSelectedEdge(null)
+    }
+  }, [graphEdges, selectedEdge])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -180,22 +218,25 @@ export default function DataLineageFlow(dataset: Dataset) {
     ctx.scale(window.devicePixelRatio, window.devicePixelRatio)
 
     ctx.clearRect(0, 0, rect.width, rect.height)
+    edgeHitAreasRef.current = []
 
-    edges.forEach((edge) => {
-      const fromNode = nodes.find((n) => n.id === edge.from)
-      const toNode = nodes.find((n) => n.id === edge.to)
+    graphEdges.forEach((edge) => {
+      const fromNode = graphNodes.find((n) => n.id === edge.from)
+      const toNode = graphNodes.find((n) => n.id === edge.to)
       if (!fromNode || !toNode) return
 
+      const isEdgeActive = hoveredEdge === edge.id || selectedEdge?.id === edge.id
       const isHighlighted =
+        isEdgeActive ||
         hoveredNode === edge.from ||
         hoveredNode === edge.to ||
         selectedNode?.id === edge.from ||
         selectedNode?.id === edge.to
 
-      const startX = fromNode.x + 140
-      const startY = fromNode.y + 35
+      const startX = fromNode.x + layoutConfig.nodeWidth
+      const startY = fromNode.y + layoutConfig.nodeHeight / 2
       const endX = toNode.x
-      const endY = toNode.y + 35
+      const endY = toNode.y + layoutConfig.nodeHeight / 2
 
       const controlPointOffset = Math.abs(endX - startX) * 0.4
       const cp1x = startX + controlPointOffset
@@ -270,8 +311,16 @@ export default function DataLineageFlow(dataset: Dataset) {
       ctx.textAlign = "center"
       ctx.textBaseline = "middle"
       ctx.fillText(edge.label, midX, midY)
+
+      edgeHitAreasRef.current.push({
+        id: edge.id,
+        x: midX - textWidth / 2 - padding,
+        y: midY - 8,
+        width: textWidth + padding * 2,
+        height: 16,
+      })
     })
-  }, [hoveredNode, renderTrigger, selectedNode])
+  }, [graphEdges, graphNodes, hoveredEdge, hoveredNode, renderTrigger, selectedEdge, selectedNode])
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -282,12 +331,18 @@ export default function DataLineageFlow(dataset: Dataset) {
       const x = e.clientX - rect.left - dragOffset.x
       const y = e.clientY - rect.top - dragOffset.y
 
-      const nodeIndex = nodes.findIndex((n) => n.id === draggedNode)
-      if (nodeIndex !== -1) {
-        nodes[nodeIndex].x = Math.max(0, Math.min(x, rect.width - 120))
-        nodes[nodeIndex].y = Math.max(0, Math.min(y, rect.height - 70))
-        setRenderTrigger((prev) => prev + 1)
-      }
+      setGraphNodes((prevNodes) => {
+        const nodeIndex = prevNodes.findIndex((node) => node.id === draggedNode)
+        if (nodeIndex === -1) return prevNodes
+        const updated = [...prevNodes]
+        updated[nodeIndex] = {
+          ...updated[nodeIndex],
+          x: Math.max(12, Math.min(x, rect.width - layoutConfig.nodeWidth - 12)),
+          y: Math.max(12, Math.min(y, rect.height - layoutConfig.nodeHeight - 12)),
+        }
+        return updated
+      })
+      setRenderTrigger((prev) => prev + 1)
     }
 
     const handleMouseUp = () => {
@@ -307,6 +362,36 @@ export default function DataLineageFlow(dataset: Dataset) {
 
   const handleNodeClick = (node: Node) => {
     setSelectedNode(node)
+    setSelectedEdge(null)
+  }
+
+  const findEdgeAt = (x: number, y: number): Edge | null => {
+    const hit = edgeHitAreasRef.current.find(
+      (area) => x >= area.x && x <= area.x + area.width && y >= area.y && y <= area.y + area.height
+    )
+    if (!hit) return null
+    return graphEdges.find((edge) => edge.id === hit.id) || null
+  }
+
+  const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!containerRef.current) return
+    const rect = containerRef.current.getBoundingClientRect()
+    const x = e.clientX - rect.left
+    const y = e.clientY - rect.top
+    const hitEdge = findEdgeAt(x, y)
+    if (hitEdge) {
+      setSelectedEdge(hitEdge)
+      setSelectedNode(null)
+    }
+  }
+
+  const handleCanvasMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!containerRef.current) return
+    const rect = containerRef.current.getBoundingClientRect()
+    const x = e.clientX - rect.left
+    const y = e.clientY - rect.top
+    const hitEdge = findEdgeAt(x, y)
+    setHoveredEdge(hitEdge?.id ?? null)
   }
 
   const handleNodeMouseDown = (e: React.MouseEvent, node: Node) => {
@@ -324,24 +409,89 @@ export default function DataLineageFlow(dataset: Dataset) {
 
   const getRelatedNodes = (nodeId: string): string[] => {
     const related = new Set<string>()
-    edges.forEach((edge) => {
+    graphEdges.forEach((edge) => {
       if (edge.from === nodeId) related.add(edge.to)
       if (edge.to === nodeId) related.add(edge.from)
     })
     return Array.from(related)
   }
 
+  const stats = useMemo(
+    () => ({
+      nodes: graphNodes.length,
+      edges: graphEdges.length,
+    }),
+    [graphNodes.length, graphEdges.length]
+  )
+
   return (
     <div className="flex gap-4">
       <Card className="flex-1 overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-3 border-b bg-white/80 backdrop-blur">
+          <div className="flex items-center gap-3">
+            <div className="text-sm font-semibold text-foreground">数据血缘图</div>
+            <div className="text-xs text-muted-foreground">
+              {stats.nodes} 个节点 · {stats.edges} 条边
+            </div>
+          </div>
+          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <span className="h-2 w-2 rounded-full" style={{ backgroundColor: nodeConfig.datasource.color }} />
+              数据源
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="h-2 w-2 rounded-full" style={{ backgroundColor: nodeConfig.dataset.color }} />
+              数据集
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="h-2 w-2 rounded-full" style={{ backgroundColor: nodeConfig.model.color }} />
+              模型
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="h-2 w-2 rounded-full" style={{ backgroundColor: nodeConfig.knowledge.color }} />
+              知识库
+            </span>
+          </div>
+        </div>
         <div
           ref={containerRef}
-          className="relative bg-gradient-to-br from-background via-background to-muted/20 overflow-auto"
-          style={{ height: "calc(100vh - 200px)" }}
+          className="relative overflow-auto"
+          style={{
+            height: "calc(100vh - 244px)",
+            backgroundImage:
+              "radial-gradient(circle at 1px 1px, oklch(0.88 0.01 250) 1px, transparent 0)",
+            backgroundSize: "18px 18px",
+          }}
+          onClick={() => {
+            setSelectedNode(null)
+            setSelectedEdge(null)
+          }}
         >
-          <canvas ref={canvasRef} className="absolute inset-0" style={{ width: "1900px", height: "600px" }} />
+          <div className="absolute inset-0 bg-gradient-to-br from-background/80 via-transparent to-muted/30 pointer-events-none" />
+          <canvas
+            ref={canvasRef}
+            className="absolute inset-0"
+            style={{
+              width: `${layoutConfig.canvasWidth}px`,
+              height: `${layoutConfig.canvasHeight}px`,
+              cursor: hoveredEdge ? "pointer" : "default",
+            }}
+            onClick={(e) => {
+              e.stopPropagation()
+              handleCanvasClick(e)
+            }}
+            onMouseMove={handleCanvasMouseMove}
+            onMouseLeave={() => setHoveredEdge(null)}
+          />
 
-          {nodes.map((node) => {
+          {graphNodes.length === 0 && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground">
+              <div className="text-sm">暂无血缘数据</div>
+              <div className="text-xs mt-2">完成归集或关联流程后将自动生成血缘图</div>
+            </div>
+          )}
+
+          {graphNodes.map((node) => {
             const config = nodeConfig[node.type]
             const Icon = config.icon
             const isSelected = selectedNode?.id === node.id
@@ -361,14 +511,18 @@ export default function DataLineageFlow(dataset: Dataset) {
                   transform: isHovered || isSelected ? "scale(1.05)" : "scale(1)",
                   filter: isHovered || isSelected ? "drop-shadow(0 4px 12px rgba(0,0,0,0.15))" : "none",
                 }}
-                onClick={() => handleNodeClick(node)}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleNodeClick(node)
+                }}
                 onMouseDown={(e) => handleNodeMouseDown(e, node)}
                 onMouseEnter={() => setHoveredNode(node.id)}
                 onMouseLeave={() => setHoveredNode(null)}
               >
                 <div
-                  className="relative flex items-center gap-3 px-4 py-3 rounded-xl border-2 bg-background transition-all duration-300 overflow-hidden"
+                  className="relative flex items-center gap-3 px-4 py-3 rounded-2xl border-2 bg-white/90 backdrop-blur transition-all duration-300 overflow-hidden"
                   style={{
+                    width: `${layoutConfig.nodeWidth}px`,
                     borderColor: isSelected || isRelated ? config.color : "oklch(0.9 0 0)",
                     boxShadow: isSelected
                       ? `0 8px 24px ${config.color}30, 0 0 0 4px ${config.color}15`
@@ -522,10 +676,10 @@ export default function DataLineageFlow(dataset: Dataset) {
               <div>
                 <h4 className="text-xs font-medium text-muted-foreground mb-2">上游依赖</h4>
                 <div className="space-y-1.5">
-                  {edges
+                  {graphEdges
                     .filter((e) => e.to === selectedNode.id)
                     .map((e) => {
-                      const fromNode = nodes.find((n) => n.id === e.from)
+                      const fromNode = graphNodes.find((n) => n.id === e.from)
                       return fromNode ? (
                         <div
                           key={e.from}
@@ -539,7 +693,7 @@ export default function DataLineageFlow(dataset: Dataset) {
                         </div>
                       ) : null
                     })}
-                  {edges.filter((e) => e.to === selectedNode.id).length === 0 && (
+                  {graphEdges.filter((e) => e.to === selectedNode.id).length === 0 && (
                     <p className="text-sm text-muted-foreground">无上游依赖</p>
                   )}
                 </div>
@@ -548,10 +702,10 @@ export default function DataLineageFlow(dataset: Dataset) {
               <div>
                 <h4 className="text-xs font-medium text-muted-foreground mb-2">下游影响</h4>
                 <div className="space-y-1.5">
-                  {edges
+                  {graphEdges
                     .filter((e) => e.from === selectedNode.id)
                     .map((e) => {
-                      const toNode = nodes.find((n) => n.id === e.to)
+                      const toNode = graphNodes.find((n) => n.id === e.to)
                       return toNode ? (
                         <div
                           key={e.to}
@@ -565,11 +719,80 @@ export default function DataLineageFlow(dataset: Dataset) {
                         </div>
                       ) : null
                     })}
-                  {edges.filter((e) => e.from === selectedNode.id).length === 0 && (
+                  {graphEdges.filter((e) => e.from === selectedNode.id).length === 0 && (
                     <p className="text-sm text-muted-foreground">无下游影响</p>
                   )}
                 </div>
               </div>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {!selectedNode && selectedEdge && (
+        <Card
+          className="w-80 border-2 shadow-lg animate-in slide-in-from-right duration-300"
+          style={{
+            borderColor: "oklch(0.6 0.05 250)",
+            height: "calc(100vh - 200px)",
+          }}
+        >
+          <div className="h-full flex flex-col">
+            <div className="flex items-start justify-between p-4 border-b bg-muted/40">
+              <div className="space-y-1 flex-1 min-w-0">
+                <h3 className="text-base font-semibold text-balance">流程详情</h3>
+                <Badge variant="outline" className="text-xs text-muted-foreground">
+                  {selectedEdge.edgeType
+                    ? edgeTypeLabels[selectedEdge.edgeType] || selectedEdge.edgeType
+                    : "处理流程"}
+                </Badge>
+              </div>
+              <button
+                className="h-8 w-8 -mt-1 -mr-1 flex-shrink-0 flex items-center justify-center rounded-md bg-white hover:bg-gray-100 border border-gray-200 shadow-sm transition-colors"
+                onClick={() => setSelectedEdge(null)}
+              >
+                <X className="w-4 h-4 text-gray-700" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-auto p-4 space-y-4">
+              <div>
+                <h4 className="text-xs font-medium text-muted-foreground mb-2">基本信息</h4>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between py-1.5 border-b">
+                    <span className="text-muted-foreground">ID:</span>
+                    <span className="font-mono text-xs">{selectedEdge.id}</span>
+                  </div>
+                  <div className="flex justify-between py-1.5 border-b">
+                    <span className="text-muted-foreground">名称:</span>
+                    <span>{selectedEdge.label}</span>
+                  </div>
+                  {selectedEdge.processId && (
+                    <div className="flex justify-between py-1.5 border-b">
+                      <span className="text-muted-foreground">流程ID:</span>
+                      <span className="font-mono text-xs">{selectedEdge.processId}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div>
+                <h4 className="text-xs font-medium text-muted-foreground mb-2">上下游关系</h4>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between py-1.5 border-b">
+                    <span className="text-muted-foreground">上游:</span>
+                    <span>{graphNodes.find((n) => n.id === selectedEdge.from)?.label || selectedEdge.from}</span>
+                  </div>
+                  <div className="flex justify-between py-1.5 border-b">
+                    <span className="text-muted-foreground">下游:</span>
+                    <span>{graphNodes.find((n) => n.id === selectedEdge.to)?.label || selectedEdge.to}</span>
+                  </div>
+                </div>
+              </div>
+              {selectedEdge.description && (
+                <div>
+                  <h4 className="text-xs font-medium text-muted-foreground mb-2">描述</h4>
+                  <p className="text-sm text-muted-foreground">{selectedEdge.description}</p>
+                </div>
+              )}
             </div>
           </div>
         </Card>

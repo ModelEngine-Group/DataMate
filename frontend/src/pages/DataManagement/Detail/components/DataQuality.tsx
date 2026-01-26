@@ -74,6 +74,7 @@ function getMockMetrics(datasetType: DatasetType, stats: FileStats) {
 }
 
 export default function DataQuality(props: Props = {}) {
+  return <DevelopmentInProgress showHome={false} />
   const { dataset, datasetType: propDatasetType, fileStats: propFileStats } = props;
 
   // Prefer dataset fields when available, then explicit props, then sensible defaults

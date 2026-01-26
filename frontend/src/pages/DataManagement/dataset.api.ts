@@ -24,6 +24,11 @@ export function queryDatasetByIdUsingGet(id: string | number) {
   return get(`/api/data-management/datasets/${id}`);
 }
 
+// 根据ID获取数据集详情
+export function queryDatasetLineageByIdUsingGet(id: string | number) {
+  return get(`/api/data-management/datasets/${id}/lineage`);
+}
+
 // 更新数据集
 export function updateDatasetByIdUsingPut(id: string | number, data: any) {
   return put(`/api/data-management/datasets/${id}`, data);
