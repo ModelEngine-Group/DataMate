@@ -217,9 +217,10 @@ class ImgSimilarImagesCleaner(Filter):
             similarity = round(result, 2)
             if similarity >= self.similar_threshold:
                 logger.info(
-                    "fileName: %s, method: ImgSimilarCleaner, dataset: %s. This picture is similar to %s, "
-                    "and the similarity is %.4f. The picture is filtered.", file_name, self.task_uuid,
-                    file_name_decoded, similarity)
+                    f"fileName: {file_name}, method: ImgSimilarCleaner, dataset: {self.task_uuid}. "
+                    f"This picture is similar to {file_name_decoded}, "
+                    f"and the similarity is {similarity:.4f}. The picture is filtered."
+                )
                 return True
         return False
 
