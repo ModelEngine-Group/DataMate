@@ -255,7 +255,7 @@ public class DatasetFileApplicationService {
     }
 
     /**
-     * 下载文件
+     * 下载数据集所有文件为 ZIP
      */
     @Transactional(readOnly = true)
     public void downloadDatasetFileAsZip(String datasetId, HttpServletResponse response) {
@@ -263,25 +263,39 @@ public class DatasetFileApplicationService {
         if (Objects.isNull(dataset)) {
             throw BusinessException.of(DataManagementErrorCode.DATASET_NOT_FOUND);
         }
-        List<DatasetFile> allByDatasetId = datasetFileRepository.findAllByDatasetId(datasetId);
-        Set<String> filePaths = allByDatasetId.stream().map(DatasetFile::getFilePath).collect(Collectors.toSet());
         String datasetPath = dataset.getPath();
-        Path downloadPath = Path.of(datasetPath);
+        Path downloadPath = Paths.get(datasetPath).normalize();
+        
+        // 检查路径是否存在
+        if (!Files.exists(downloadPath) || !Files.isDirectory(downloadPath)) {
+            throw BusinessException.of(DataManagementErrorCode.DATASET_NOT_FOUND);
+        }
+        
         response.setContentType("application/zip");
-        String zipName = String.format("dataset_%s.zip",
+        String zipName = String.format("dataset_%s_%s.zip",
+                dataset.getName() != null ? dataset.getName().replaceAll("[^a-zA-Z0-9_-]", "_") : "dataset",
                 LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
-        response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + zipName);
+        response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + zipName + "\"");
+        
         try (ZipArchiveOutputStream zos = new ZipArchiveOutputStream(response.getOutputStream())) {
             try (Stream<Path> pathStream = Files.walk(downloadPath)) {
-                List<Path> allPaths = pathStream.filter(path -> path.toString().startsWith(datasetPath))
-                    .filter(path -> filePaths.stream().anyMatch(filePath -> filePath.startsWith(path.toString())))
-                    .toList();
-                for (Path path : allPaths) {
-                    addToZipFile(path, downloadPath, zos);
-                }
+                pathStream
+                    .filter(path -> {
+                        // 确保路径在数据集目录内，防止路径遍历攻击
+                        Path normalized = path.normalize();
+                        return normalized.startsWith(downloadPath);
+                    })
+                    .forEach(path -> {
+                        try {
+                            addToZipFile(path, downloadPath, zos);
+                        } catch (IOException e) {
+                            log.error("Failed to add file to zip: {}", path, e);
+                        }
+                    });
             }
+            zos.finish();
         } catch (IOException e) {
-            log.error("Failed to download files in batches.", e);
+            log.error("Failed to download dataset files as zip for dataset {}", datasetId, e);
             throw BusinessException.of(SystemErrorCode.FILE_SYSTEM_ERROR);
         }
     }
