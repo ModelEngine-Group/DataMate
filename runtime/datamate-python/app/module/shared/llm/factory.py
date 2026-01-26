@@ -45,7 +45,7 @@ class LLMFactory:
         model_name: str,
         base_url: str,
         api_key: str | None,
-        model_type: Literal["CHAT", "EMBEDDING"],
+        model_type: Literal["CHAT", "EMBEDDING"] | str,
     ) -> None:
         """对配置做一次最小化调用进行健康检查，失败则抛出。"""
         if model_type == "CHAT":

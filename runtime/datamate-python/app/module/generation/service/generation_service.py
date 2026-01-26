@@ -24,7 +24,7 @@ from app.module.generation.service.prompt import (
 from app.module.shared.common.document_loaders import load_documents
 from app.module.shared.common.text_split import DocumentSplitter
 from app.module.shared.util.model_chat import extract_json_substring
-from app.core.llm import LLMFactory
+from app.module.shared.llm import LLMFactory
 from app.module.system.service.common_service import get_model_by_id
 
 

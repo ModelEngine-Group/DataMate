@@ -4,13 +4,13 @@ from typing import Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models.model_config import ModelConfig
+from app.db.models.models import Models
 
 
-async def get_model_by_id(db: AsyncSession, model_id: str) -> Optional[ModelConfig]:
-    """根据模型ID获取未删除的 ModelConfig 记录。"""
-    q = select(ModelConfig).where(ModelConfig.id == model_id).where(
-        (ModelConfig.is_deleted == 0) | (ModelConfig.is_deleted.is_(None))
+async def get_model_by_id(db: AsyncSession, model_id: str) -> Optional[Models]:
+    """根据模型ID获取未删除的 Models 记录。"""
+    q = select(Models).where(Models.id == model_id).where(
+        (Models.is_deleted == False) | (Models.is_deleted.is_(None))
     )
     result = await db.execute(q)
     return result.scalar_one_or_none()

@@ -2,7 +2,7 @@ import os
 import asyncio
 from typing import Optional, Sequence
 
-from fastapi import BackgroundTasks, Depends
+from fastapi import Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -17,7 +17,7 @@ from .graph_rag import (
     build_llm_model_func,
     initialize_rag,
 )
-from app.core.llm import LLMFactory
+from app.module.shared.llm import LLMFactory
 from ...system.service.common_service import get_model_by_id
 
 logger = get_logger(__name__)
@@ -44,8 +44,8 @@ class RAGService:
 
     async def init_graph_rag(self, knowledge_base_id: str):
         kb = await self._get_knowledge_base(knowledge_base_id)
-        embedding_model = await self._get_model_config(kb.embedding_model)
-        chat_model = await self._get_model_config(kb.chat_model)
+        embedding_model = await self._get_models(kb.embedding_model)
+        chat_model = await self._get_models(kb.chat_model)
 
         llm_callable = await build_llm_model_func(
             chat_model.model_name, chat_model.base_url, chat_model.api_key
@@ -126,13 +126,13 @@ class RAGService:
             raise ValueError(f"Knowledge base with ID {knowledge_base_id} not found.")
         return knowledge_base
 
-    async def _get_model_config(self, model_id: Optional[str]):
+    async def _get_models(self, model_id: Optional[str]):
         if not model_id:
             raise ValueError("Model ID is required for initializing RAG.")
-        model = await get_model_by_id(self.db, model_id)
-        if not model:
-            raise ValueError(f"Model config with ID {model_id} not found.")
-        return model
+        models = await get_model_by_id(self.db, model_id)
+        if not models:
+            raise ValueError(f"Models with ID {model_id} not found.")
+        return models
 
     async def query_rag(self, query: str, knowledge_base_id: str) -> str:
         if not self.rag:

@@ -80,8 +80,8 @@ async def create_evaluation_task(
         if existing_task.scalar_one_or_none():
             raise HTTPException(status_code=400, detail=f"Evaluation task with name '{request.name}' already exists")
 
-        model_config = await get_model_by_id(db, request.eval_config.model_id)
-        if not model_config:
+        models = await get_model_by_id(db, request.eval_config.model_id)
+        if not models:
             raise HTTPException(status_code=400, detail=f"Model with id '{request.eval_config.model_id}' not found")
 
         # 创建评估任务
@@ -96,7 +96,7 @@ async def create_evaluation_task(
             eval_prompt=request.eval_prompt,
             eval_config=json.dumps({
                 "modelId": request.eval_config.model_id,
-                "modelName": model_config.model_name,
+                "modelName": models.model_name,
                 "dimensions": request.eval_config.dimensions,
             }),
             status=TaskStatus.PENDING.value,

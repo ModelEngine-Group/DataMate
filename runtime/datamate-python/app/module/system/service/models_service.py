@@ -1,33 +1,26 @@
-"""
-模型配置应用服务：与 Java ModelConfigApplicationService 行为一致。
-包含分页、详情、增改删、isDefault 互斥逻辑及健康检查。
-通过 Depends(get_db) 注入 db，不在接口层传递；健康检查使用 core.llm.LLMFactory。
-"""
 import math
 import uuid
 from datetime import datetime, timezone
-from typing import Optional
 
 from fastapi import Depends, HTTPException
 from sqlalchemy import select, func, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.module.shared.llm import LLMFactory
 from app.core.logging import get_logger
-from app.core.llm import LLMFactory
-from app.db.models.model_config import ModelConfig
+from app.db.models.models import Models
 from app.db.session import get_db
 from app.module.shared.schema import PaginatedData
-from app.module.system.schema.model_config import (
-    ModelType,
+from app.module.system.schema.models import (
     CreateModelRequest,
     QueryModelRequest,
-    ModelConfigResponse,
+    ModelsResponse,
     ProviderItem,
 )
 
 logger = get_logger(__name__)
 
-# 固定厂商列表，与 Java getProviders() 一致
+# 固定厂商列表
 PROVIDERS = [
     ProviderItem(provider="ModelEngine", baseUrl="http://localhost:9981"),
     ProviderItem(provider="Ollama", baseUrl="http://localhost:11434"),
@@ -41,8 +34,8 @@ PROVIDERS = [
 ]
 
 
-def _orm_to_response(row: ModelConfig) -> ModelConfigResponse:
-    return ModelConfigResponse(
+def _orm_to_response(row: Models) -> ModelsResponse:
+    return ModelsResponse(
         id=row.id,
         modelName=row.model_name,
         provider=row.provider,
@@ -58,7 +51,7 @@ def _orm_to_response(row: ModelConfig) -> ModelConfigResponse:
     )
 
 
-class ModelConfigService:
+class ModelsService:
     """模型配置服务：db 通过 FastAPI Depends(get_db) 注入，不在路由中传递。"""
 
     def __init__(self, db: AsyncSession = Depends(get_db)):
@@ -68,26 +61,26 @@ class ModelConfigService:
         """返回固定厂商列表，与 Java getProviders() 一致。"""
         return list(PROVIDERS)
 
-    async def get_models(self, q: QueryModelRequest) -> PaginatedData[ModelConfigResponse]:
+    async def get_models(self, q: QueryModelRequest) -> PaginatedData[ModelsResponse]:
         """分页查询，支持 provider/type/isEnabled/isDefault；排除已删除；page 从 0 开始。"""
-        query = select(ModelConfig).where(
-            (ModelConfig.is_deleted == 0) | (ModelConfig.is_deleted.is_(None))
+        query = select(Models).where(
+            (Models.is_deleted == False) | (Models.is_deleted.is_(None))
         )
         if q.provider is not None and q.provider != "":
-            query = query.where(ModelConfig.provider == q.provider)
+            query = query.where(Models.provider == q.provider)
         if q.type is not None:
-            query = query.where(ModelConfig.type == q.type.value)
+            query = query.where(Models.type == q.type.value)
         if q.isEnabled is not None:
-            query = query.where(ModelConfig.is_enabled == (1 if q.isEnabled else 0))
+            query = query.where(Models.is_enabled == q.isEnabled)
         if q.isDefault is not None:
-            query = query.where(ModelConfig.is_default == (1 if q.isDefault else 0))
+            query = query.where(Models.is_default == q.isDefault)
 
         total = (await self.db.execute(select(func.count()).select_from(query.subquery()))).scalar_one()
         size = max(1, min(500, q.size))
         offset = max(0, q.page) * size
         rows = (
             await self.db.execute(
-                query.order_by(ModelConfig.created_at.desc()).offset(offset).limit(size)
+                query.order_by(Models.created_at.desc()).offset(offset).limit(size)
             )
         ).scalars().all()
         total_pages = math.ceil(total / size) if total else 0
@@ -100,17 +93,17 @@ class ModelConfigService:
             content=[_orm_to_response(r) for r in rows],
         )
 
-    async def get_model_detail(self, model_id: str) -> ModelConfigResponse:
+    async def get_model_detail(self, model_id: str) -> ModelsResponse:
         """获取模型详情，已删除或不存在则 404。"""
-        query = select(ModelConfig).where(ModelConfig.id == model_id).where(
-            (ModelConfig.is_deleted == 0) | (ModelConfig.is_deleted.is_(None))
+        query = select(Models).where(Models.id == model_id).where(
+            (Models.is_deleted == False) | (Models.is_deleted.is_(None))
         )
         r = (await self.db.execute(query)).scalar_one_or_none()
         if not r:
             raise HTTPException(status_code=404, detail="模型配置不存在")
         return _orm_to_response(r)
 
-    async def create_model(self, req: CreateModelRequest) -> ModelConfigResponse:
+    async def create_model(self, req: CreateModelRequest) -> ModelsResponse:
         """创建模型：健康检查后 saveAndSetDefault；isEnabled 恒为 True。"""
         try:
             LLMFactory.check_health(req.modelName, req.baseUrl, req.apiKey, req.type.value)
@@ -120,10 +113,10 @@ class ModelConfigService:
 
         existing = (
             await self.db.execute(
-                select(ModelConfig).where(
-                    (ModelConfig.is_deleted == 0) | (ModelConfig.is_deleted.is_(None)),
-                    ModelConfig.type == req.type.value,
-                    ModelConfig.is_default == 1,
+                select(Models).where(
+                    (Models.is_deleted == False) | (Models.is_deleted.is_(None)),
+                    Models.type == req.type.value,
+                    Models.is_default == True,
                 )
             )
         ).scalar_one_or_none()
@@ -133,38 +126,36 @@ class ModelConfigService:
             is_default = True
         else:
             await self.db.execute(
-                update(ModelConfig)
-                .where(ModelConfig.type == req.type.value, ModelConfig.is_default == 1)
-                .values(is_default=0)
+                update(Models)
+                .where(Models.type == req.type.value, Models.is_default == True)
+                .values(is_default=False)
             )
             is_default = req.isDefault if req.isDefault is not None else False
 
-        now = datetime.now(timezone.utc)
-        entity = ModelConfig(
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        entity = Models(
             id=str(uuid.uuid4()),
             model_name=req.modelName,
             provider=req.provider,
             base_url=req.baseUrl,
             api_key=req.apiKey or "",
             type=req.type.value,
-            is_enabled=1,
-            is_default=1 if is_default else 0,
-            is_deleted=0,
+            is_enabled=True,
+            is_default=is_default,
+            is_deleted=False,
             created_at=now,
             updated_at=now,
-            created_by=None,
-            updated_by=None,
         )
         self.db.add(entity)
         await self.db.commit()
         await self.db.refresh(entity)
         return _orm_to_response(entity)
 
-    async def update_model(self, model_id: str, req: CreateModelRequest) -> ModelConfigResponse:
+    async def update_model(self, model_id: str, req: CreateModelRequest) -> ModelsResponse:
         """更新模型：存在性校验、健康检查后 updateAndSetDefault；isEnabled 恒为 True。"""
         res = await self.db.execute(
-            select(ModelConfig).where(ModelConfig.id == model_id).where(
-                (ModelConfig.is_deleted == 0) | (ModelConfig.is_deleted.is_(None))
+            select(Models).where(Models.id == model_id).where(
+                (Models.is_deleted == False) | (Models.is_deleted.is_(None))
             )
         )
         entity = res.scalar_one_or_none()
@@ -182,17 +173,17 @@ class ModelConfigService:
         entity.base_url = req.baseUrl
         entity.api_key = req.apiKey or ""
         entity.type = req.type.value
-        entity.is_enabled = 1
+        entity.is_enabled = True
 
         want_default = req.isDefault if req.isDefault is not None else False
-        if (entity.is_default != 1) and want_default:
+        if (entity.is_default is not True) and want_default:
             await self.db.execute(
-                update(ModelConfig)
-                .where(ModelConfig.type == req.type.value, ModelConfig.is_default == 1)
-                .values(is_default=0)
+                update(Models)
+                .where(Models.type == req.type.value, Models.is_default == True)
+                .values(is_default=False)
             )
-        entity.is_default = 1 if want_default else 0
-        entity.updated_at = datetime.now(timezone.utc)
+        entity.is_default = want_default
+        entity.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
 
         await self.db.commit()
         await self.db.refresh(entity)
@@ -202,14 +193,14 @@ class ModelConfigService:
         """软删除模型配置。"""
         entity = (
             await self.db.execute(
-                select(ModelConfig).where(ModelConfig.id == model_id).where(
-                    (ModelConfig.is_deleted == 0) | (ModelConfig.is_deleted.is_(None))
+                select(Models).where(Models.id == model_id).where(
+                    (Models.is_deleted == False) | (Models.is_deleted.is_(None))
                 )
             )
         ).scalar_one_or_none()
         if not entity:
             raise HTTPException(status_code=404, detail="模型配置不存在")
-        entity.is_deleted = 1
-        entity.updated_at = datetime.now(timezone.utc)
+        entity.is_deleted = True
+        entity.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
         await self.db.commit()
         await self.db.refresh(entity)

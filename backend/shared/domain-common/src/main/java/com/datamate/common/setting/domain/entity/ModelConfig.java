@@ -12,7 +12,7 @@ import lombok.*;
  */
 @Getter
 @Setter
-@TableName("t_model_config")
+@TableName("t_models")
 @Builder
 @ToString
 @NoArgsConstructor

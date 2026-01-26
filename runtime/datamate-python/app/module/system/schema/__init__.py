@@ -1,9 +1,9 @@
 from .health import HealthResponse
-from .model_config import (
+from .models import (
     ModelType,
     CreateModelRequest,
     QueryModelRequest,
-    ModelConfigResponse,
+    ModelsResponse,
     ProviderItem,
 )
 
@@ -12,6 +12,6 @@ __all__ = [
     "ModelType",
     "CreateModelRequest",
     "QueryModelRequest",
-    "ModelConfigResponse",
+    "ModelsResponse",
     "ProviderItem",
 ]
