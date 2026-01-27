@@ -3,7 +3,7 @@ FROM ghcr.io/astral-sh/uv:python3.11-bookworm
 RUN --mount=type=cache,target=/var/cache/apt \
     --mount=type=cache,target=/var/lib/apt \
     apt update \
-    && apt install -y libgl1 libglib2.0-0 vim libmagic1 libreoffice dos2unix swig poppler-utils tesseract-ocr
+    && apt install -y libgl1 libglib2.0-0 vim libmagic1 libreoffice dos2unix swig poppler-utils tesseract-ocr fonts-wqy-microhei fonts-wqy-zenhei xfonts-intl-chinese
 
 RUN mkdir -p /home/models \
     && wget https://paddle-model-ecology.bj.bcebos.com/paddlex/official_inference_model/paddle3.0.0/PP-LCNet_x1_0_doc_ori_infer.tar \
