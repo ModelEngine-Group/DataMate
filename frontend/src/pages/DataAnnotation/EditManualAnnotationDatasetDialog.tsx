@@ -164,7 +164,9 @@ export default function EditManualAnnotationDatasetDialog({
             onDatasetSelect={(dataset) => {
               setSelectedDataset(dataset as Dataset | null);
             }}
-            // 手动标注支持所有数据集/文件类型，这里不设置 datasetTypeFilter
+            // 手动标注支持所有数据集/文件类型，但编辑时仅允许在创建任务的数据集中追加
+            singleDatasetOnly
+            fixedDatasetId={task.datasetId}
             lockedFileIds={Array.from(initialFileIds)}
           />
           <div className="mt-2 p-2 bg-blue-50 rounded border border-blue-200 text-xs">

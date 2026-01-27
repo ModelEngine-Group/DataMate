@@ -186,6 +186,8 @@ export default function EditAutoAnnotationDatasetDialog({
               setSelectedDataset(dataset);
             }}
             datasetTypeFilter={DatasetType.IMAGE}
+            singleDatasetOnly
+            fixedDatasetId={task.datasetId}
             lockedFileIds={Array.from(initialFileIds)}
           />
           {selectedDataset && (

@@ -321,6 +321,84 @@ class Service:
             await self.db.rollback()
             logger.error(f"Failed to add files to dataset {dataset_id}: {str(e)}", exc_info=True)
 
+    async def add_files_to_dataset_subdir(self, dataset_id: str, source_paths: List[str], subdir: str):
+        """将文件添加到数据集下的指定子目录中，并创建对应的数据库记录。
+
+        与 add_files_to_dataset 行为类似，但允许将文件放入形如
+        ``<dataset.path>/<subdir>/<filename>`` 的结构中，适用于诸如
+        "标注数据" 这类逻辑分组目录。
+        """
+
+        logger.info(f"Starting to add files to dataset {dataset_id} under subdir '{subdir}'")
+
+        try:
+            # Get dataset and existing files
+            dataset = await self.db.get(Dataset, dataset_id)
+            if not dataset:
+                logger.error(f"Dataset not found: {dataset_id}")
+                return
+
+            # Get existing files to check for duplicates (按 file_path 去重)
+            result = await self.db.execute(
+                select(DatasetFiles).where(DatasetFiles.dataset_id == dataset_id)
+            )
+            existing_files_map: Dict[str, DatasetFiles] = {}
+            for dataset_file in result.scalars().all():
+                existing_files_map[dataset_file.file_path] = dataset_file  # type: ignore[attr-defined]
+
+            # Get or create dataset root directory, then拼接子目录
+            dataset_root = await self._get_or_create_dataset_directory(dataset)
+            dataset_dir = os.path.join(dataset_root, subdir)
+            os.makedirs(dataset_dir, exist_ok=True)
+
+            # Process each source file
+            for source_path in source_paths:
+                try:
+                    file_record = await self.create_new_dataset_file(dataset_dir, dataset_id, source_path)
+                    if not file_record:
+                        continue
+
+                    target_path = file_record.file_path  # type: ignore[attr-defined]
+                    file_size = file_record.file_size  # type: ignore[attr-defined]
+
+                    # 如果同一 dataset_id + file_path 已存在，则更新大小，否则追加
+                    if target_path in existing_files_map:
+                        logger.warning(
+                            f"File {target_path} already exists in dataset {dataset.id}, updating size only",
+                        )
+                        dataset_file = existing_files_map.get(target_path)
+                        if dataset_file is not None:
+                            dataset.size_bytes = (dataset.size_bytes or 0) - (dataset_file.file_size or 0) + file_size  # type: ignore[attr-defined]
+                            dataset.updated_at = datetime.now()
+                            dataset_file.file_size = file_size  # type: ignore[attr-defined]
+                            dataset_file.updated_at = datetime.now()  # type: ignore[attr-defined]
+                    else:
+                        # 新文件：插入记录并更新统计
+                        self.db.add(file_record)
+                        dataset.file_count = (dataset.file_count or 0) + 1  # type: ignore[attr-defined]
+                        dataset.size_bytes = (dataset.size_bytes or 0) + file_record.file_size  # type: ignore[attr-defined]
+                        dataset.updated_at = datetime.now()
+                        dataset.status = 'ACTIVE'
+
+                    # 复制物理文件到目标路径
+                    logger.info(f"copy file {source_path} to {target_path}")
+                    dst_dir = os.path.dirname(target_path)
+                    await asyncio.to_thread(os.makedirs, dst_dir, exist_ok=True)
+                    await asyncio.to_thread(shutil.copy2, source_path, target_path)
+
+                    await self.db.commit()
+
+                except Exception as e:
+                    logger.error(f"Error processing file {source_path} into subdir {subdir}: {str(e)}", e)
+                    await self.db.rollback()
+
+        except Exception as e:
+            await self.db.rollback()
+            logger.error(
+                f"Failed to add files to dataset {dataset_id} under subdir '{subdir}': {str(e)}",
+                exc_info=True,
+            )
+
     async def handle_dataset_file(self, dataset, existing_files_map: dict[Any, Any], file_record: DatasetFiles, source_path: str):
         target_path = file_record.file_path
         file_size = file_record.file_size

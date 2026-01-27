@@ -20,7 +20,6 @@ import {
   syncAnnotationTaskUsingPost,
   queryAutoAnnotationTasksUsingGet,
   deleteAutoAnnotationTaskByIdUsingDelete,
-  syncAutoAnnotationTaskToLabelStudioUsingPost,
   getAutoAnnotationLabelStudioProjectUsingGet,
   loginAnnotationUsingGet,
 } from "../annotation.api";
@@ -278,34 +277,6 @@ export default function DataAnnotation() {
     setShowImportAutoDialog(true);
   };
 
-  const handleSyncAutoToLabelStudio = (task: any) => {
-    if (task.autoStatus !== "completed") {
-      message.warning("仅已完成的自动标注任务可以同步到 Label Studio");
-      return;
-    }
-
-    Modal.confirm({
-      title: `确认同步自动标注任务「${task.name}」到 Label Studio 吗？`,
-      content: (
-        <div>
-          <div>将把该任务的检测结果作为预测框写入 Label Studio。</div>
-          <div>不会覆盖已有人工标注，仅作为可编辑的预测结果。</div>
-        </div>
-      ),
-      okText: "同步",
-      cancelText: "取消",
-      onOk: async () => {
-        try {
-          await syncAutoAnnotationTaskToLabelStudioUsingPost(task.id);
-          message.success("自动标注结果同步请求已发送");
-        } catch (e) {
-          console.error(e);
-          message.error("自动标注结果同步失败，请稍后重试");
-        }
-      },
-    });
-  };
-
   const handleAnnotateAuto = (task: any) => {
     (async () => {
       try {
@@ -460,8 +431,8 @@ export default function DataAnnotation() {
     },
     {
       key: "back-sync",
-      label: "后向同步",
-      icon: <ImportOutlined className="w-4 h-4" style={{ color: "#1890ff" }} />,
+      label: "同步",
+      icon: <SyncOutlined className="w-4 h-4" style={{ color: "#1890ff" }} />,
       onClick: handleImportManualFromLabelStudio,
     },
     {
@@ -652,11 +623,11 @@ export default function DataAnnotation() {
               </Button>
               <Button
                 type="text"
-                icon={<ImportOutlined style={{ color: "#1890ff" }} />}
+                icon={<SyncOutlined style={{ color: "#1890ff" }} />}
                 onClick={() => handleImportManualFromLabelStudio(task)}
-                title="从 Label Studio 导回标注结果到数据集"
+                title="从 Label Studio 同步标注结果到数据集"
               >
-                后向同步
+                同步
               </Button>
 
               <Dropdown
@@ -685,15 +656,6 @@ export default function DataAnnotation() {
           )}
           {task._kind === "auto" && (
             <>
-              {/* 一级功能：前向同步 + 编辑（跳转 Label Studio） */}
-              <Button
-                type="text"
-                icon={<ExportOutlined style={{ color: "#722ed1" }} />}
-                onClick={() => handleSyncAutoToLabelStudio(task)}
-                title="将 YOLO 预测结果前向同步到 Label Studio"
-              >
-                前向同步
-              </Button>
               <Button
                 type="text"
                 icon={<EditOutlined style={{ color: "#52c41a" }} />}
@@ -705,11 +667,11 @@ export default function DataAnnotation() {
 
               <Button
                 type="text"
-                icon={<ImportOutlined style={{ color: "#1890ff" }} />}
+                icon={<SyncOutlined style={{ color: "#1890ff" }} />}
                 onClick={() => handleImportAutoFromLabelStudio(task)}
-                title="从 Label Studio 导回标注结果到数据集"
+                title="从 Label Studio 同步标注结果到数据集"
               >
-                后向同步
+                同步
               </Button>
 
               {/* 二级功能：编辑任务数据集 + 删除任务（折叠菜单） */}

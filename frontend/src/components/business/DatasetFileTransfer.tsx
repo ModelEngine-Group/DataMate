@@ -22,12 +22,30 @@ interface DatasetFileTransferProps
   onDatasetSelect?: (dataset: Dataset | null) => void;
   datasetTypeFilter?: DatasetType;
   /**
+   * 是否强制“单数据集模式”：
+   * - 为 true 时，仅允许从同一个数据集选择文件；
+   * - 当已选文件来自某个数据集时，尝试从其他数据集勾选文件会被阻止并提示。
+   */
+  singleDatasetOnly?: boolean;
+  /**
+   * 固定可选数据集 ID：
+   * - 设置后，左侧数据集列表只展示该数据集；
+   * - 主要用于“编辑任务数据集”场景，锁定为任务创建时的数据集。
+   */
+  fixedDatasetId?: string | number;
+  /**
    * 锁定的文件ID集合：
    * - 在左侧文件列表中，这些文件的勾选框会变成灰色且不可交互；
    * - 点击整行也不会改变其选中状态；
    * - 主要用于“编辑任务数据集”场景下锁死任务初始文件。
    */
   lockedFileIds?: string[];
+  /**
+   * 整体禁用开关：
+   * - 为 true 时，禁止切换数据集和选择文件，仅用于展示当前配置；
+   * - 可配合上层逻辑（如“需先选模板再选数据集”）使用。
+   */
+  disabled?: boolean;
 }
 
 const fileCols = [
@@ -59,7 +77,10 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
   onSelectedFilesChange,
   onDatasetSelect,
   datasetTypeFilter,
+  singleDatasetOnly,
+  fixedDatasetId,
   lockedFileIds,
+  disabled,
   ...props
 }) => {
   const [datasets, setDatasets] = React.useState<Dataset[]>([]);
@@ -91,19 +112,49 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
     return new Set((lockedFileIds || []).map((id) => String(id)));
   }, [lockedFileIds]);
 
+  // 在单数据集模式下，根据已选文件反推“当前锁定的数据集ID”
+  const lockedDatasetId = React.useMemo(() => {
+    if (!singleDatasetOnly) return undefined;
+    const ids = new Set(
+      Object.values(selectedFilesMap)
+        .map((file: any) => file?.datasetId)
+        .filter((id) => id !== undefined && id !== null && id !== "")
+        .map((id) => String(id))
+    );
+    if (ids.size === 1) {
+      return Array.from(ids)[0];
+    }
+    return undefined;
+  }, [singleDatasetOnly, selectedFilesMap]);
+
   const fetchDatasets = async () => {
     const { data } = await queryDatasetsUsingGet({
       // Ant Design Table pagination.current is 1-based; ensure backend also receives 1-based value
       page: datasetPagination.current,
       size: datasetPagination.pageSize,
       keyword: datasetSearch,
-      // 仅在显式传入过滤类型时才按类型过滤；否则后端返回所有类型
+      // 后端在大多数环境下支持按 type 过滤；若未生效，前端仍会基于 datasetTypeFilter 再做一次兜底筛选
       type: datasetTypeFilter,
     });
-    setDatasets(data.content.map(mapDataset) || []);
+
+    let mapped: any[] = (data.content || []).map(mapDataset);
+
+    // 兜底：在前端再按 datasetTypeFilter 过滤一次，确保只展示指定类型的数据集
+    if (datasetTypeFilter) {
+      mapped = mapped.filter(
+        (ds: any) => ds.datasetType === datasetTypeFilter
+      );
+    }
+
+    const filtered =
+      fixedDatasetId !== undefined && fixedDatasetId !== null
+        ? mapped.filter((ds: Dataset) => String(ds.id) === String(fixedDatasetId))
+        : mapped;
+
+    setDatasets(filtered);
     setDatasetPagination((prev) => ({
       ...prev,
-      total: data.totalElements,
+      total: filtered.length,
     }));
   };
 
@@ -111,7 +162,7 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
     () => {
       fetchDatasets();
     },
-    [datasetSearch, datasetPagination.pageSize, datasetPagination.current],
+    [datasetSearch, datasetPagination.pageSize, datasetPagination.current, datasetTypeFilter],
     300
   );
 
@@ -170,10 +221,38 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
     onDatasetSelect?.(selectedDataset);
   }, [selectedDataset, onDatasetSelect]);
 
+  // 在 fixedDatasetId 场景下，数据集列表加载完成后自动选中该数据集
+  useEffect(() => {
+    if (!open) return;
+    if (fixedDatasetId === undefined || fixedDatasetId === null) return;
+    if (selectedDataset) return;
+    if (!datasets.length) return;
+
+    const target = datasets.find((ds) => String(ds.id) === String(fixedDatasetId));
+    if (target) {
+      setSelectedDataset(target);
+    }
+  }, [open, fixedDatasetId, datasets, selectedDataset]);
+
   const handleSelectAllInDataset = useCallback(async () => {
     if (!selectedDataset) {
       message.warning("请先选择一个数据集");
       return;
+    }
+
+    // 单数据集模式下，如果当前已选文件来自其他数据集，则阻止一键全选
+    if (singleDatasetOnly) {
+      const existingIds = new Set(
+        Object.values(selectedFilesMap)
+          .map((file: any) => file?.datasetId)
+          .filter((id) => id !== undefined && id !== null && id !== "")
+          .map((id) => String(id)),
+      );
+      const currentId = String(selectedDataset.id);
+      if (existingIds.size > 0 && (!existingIds.has(currentId) || existingIds.size > 1)) {
+        message.warning("当前仅支持从一个数据集选择文件，请先清空已选文件后再切换数据集");
+        return;
+      }
     }
 
     try {
@@ -246,6 +325,23 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
     if (lockedIdSet.has(String(record.id))) {
       return;
     }
+
+    // 单数据集模式：禁止从多个数据集混选文件
+    if (singleDatasetOnly && !selectedFilesMap[record.id]) {
+      const recordDatasetId = (record as any).datasetId;
+      const existingIds = new Set(
+        Object.values(selectedFilesMap)
+          .map((file: any) => file?.datasetId)
+          .filter((id) => id !== undefined && id !== null && id !== "")
+          .map((id) => String(id)),
+      );
+      const recId = recordDatasetId !== undefined && recordDatasetId !== null ? String(recordDatasetId) : undefined;
+      if (existingIds.size > 0 && recId && !existingIds.has(recId)) {
+        message.warning("当前仅支持从一个数据集选择文件，请先清空已选文件后再切换数据集");
+        return;
+      }
+    }
+
     if (!selectedFilesMap[record.id]) {
       onSelectedFilesChange({
         ...selectedFilesMap,
@@ -321,28 +417,52 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
               placeholder="搜索数据集名称..."
               value={datasetSearch}
               allowClear
-              onChange={(e) => setDatasetSearch(e.target.value)}
+              onChange={(e) => !disabled && setDatasetSearch(e.target.value)}
+              disabled={disabled}
             />
           </div>
           <Table
             scroll={{ y: 400 }}
             rowKey="id"
             size="small"
-            rowClassName={(record) =>
-              `cursor-pointer ${
-                selectedDataset?.id === record.id ? "bg-blue-100" : ""
-              }`
-            }
+            rowClassName={(record) => {
+              const isActive = selectedDataset?.id === record.id;
+              const hasSelection = Object.keys(selectedFilesMap).length > 0;
+              const isLockedOtherDataset =
+                !!singleDatasetOnly &&
+                !!lockedDatasetId &&
+                hasSelection &&
+                String(record.id) !== lockedDatasetId;
+              return `cursor-pointer ${
+                isActive ? "bg-blue-100" : ""
+              } ${isLockedOtherDataset ? "text-gray-400 cursor-not-allowed" : ""}`;
+            }}
             onRow={(record: Dataset) => ({
               onClick: () => {
-                setSelectedDataset(record);
-                if (!datasetSelections.find((d) => d.id === record.id)) {
-                  setDatasetSelections([...datasetSelections, record]);
-                } else {
-                  setDatasetSelections(
-                    datasetSelections.filter((d) => d.id !== record.id)
-                  );
-                }
+                  if (disabled) return;
+
+                  // 单数据集模式：当已有选中文件且尝试切换到其他数据集时，直接提示并阻止切换
+                  const hasSelection =
+                    singleDatasetOnly &&
+                    Object.keys(selectedFilesMap).length > 0 &&
+                    !!lockedDatasetId;
+                  if (
+                    hasSelection &&
+                    String(record.id) !== String(lockedDatasetId)
+                  ) {
+                    message.warning(
+                      "当前仅支持从一个数据集选择文件，请先清空已选文件后再切换数据集"
+                    );
+                    return;
+                  }
+                  setSelectedDataset(record);
+                  if (!datasetSelections.find((d) => d.id === record.id)) {
+                    setDatasetSelections([...datasetSelections, record]);
+                  } else {
+                    setDatasetSelections(
+                      datasetSelections.filter((d) => d.id !== record.id)
+                    );
+                  }
               },
             })}
             dataSource={datasets}
@@ -350,6 +470,7 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
             pagination={{
                 ...datasetPagination,
                 onChange: (page, pageSize) =>
+                    !disabled &&
                     setDatasetPagination({
                         current: page,
                         pageSize: pageSize || datasetPagination.pageSize,
@@ -365,8 +486,8 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
             <Button
               type="link"
               size="small"
-              onClick={handleSelectAllInDataset}
-              disabled={!selectedDataset}
+              onClick={() => !disabled && handleSelectAllInDataset()}
+              disabled={!selectedDataset || !!disabled}
               loading={selectingAll}
             >
               全选当前数据集
@@ -388,6 +509,7 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
             pagination={{
               ...filesPagination,
               onChange: (page, pageSize) => {
+                  if (disabled) return;
                 const nextPageSize = pageSize || filesPagination.pageSize;
                 setFilesPagination((prev) => ({
                   ...prev,
@@ -399,7 +521,10 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
               },
             }}
             onRow={(record: DatasetFile) => ({
-              onClick: () => toggleSelectFile(record),
+              onClick: () => {
+                if (disabled) return;
+                toggleSelectFile(record);
+              },
             })}
             rowSelection={{
               type: "checkbox",
@@ -408,11 +533,13 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
 
               // 单选
               onSelect: (record: DatasetFile) => {
+                if (disabled) return;
                 toggleSelectFile(record);
               },
 
               // 全选 - 改为全选整个数据集而不是当前页
               onSelectAll: (selected, selectedRows: DatasetFile[]) => {
+                if (disabled) return;
                 if (selected) {
                   // 点击表头“全选”时，改为一键全选当前数据集的全部文件
                   // 而不是只选中当前页
@@ -437,7 +564,7 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
 
               getCheckboxProps: (record: DatasetFile) => ({
                 name: record.fileName,
-                disabled: lockedIdSet.has(String(record.id)),
+                disabled: !!disabled || lockedIdSet.has(String(record.id)),
               }),
             }}
           />

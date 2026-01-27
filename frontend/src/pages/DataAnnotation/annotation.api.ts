@@ -74,7 +74,7 @@ export function loginAnnotationUsingGet(mappingId: string) {
 // 手动标注：从 Label Studio 导回标注结果到某个数据集（导出为文件写入数据集）
 export function importManualAnnotationFromLabelStudioUsingPost(
   mappingId: string,
-  data: { targetDatasetId: string; exportFormat?: string }
+  data: { exportFormat?: string; fileName?: string }
 ) {
   return post(`/api/annotation/project/${mappingId}/sync-label-studio-back`, data);
 }
@@ -91,7 +91,7 @@ export function syncAutoAnnotationTaskToLabelStudioUsingPost(taskId: string) {
 // 从 Label Studio 导回自动标注任务的标注结果（导出为文件写入指定数据集）
 export function importAutoAnnotationFromLabelStudioUsingPost(
   taskId: string,
-  data: { targetDatasetId: string; exportFormat?: string }
+  data: { exportFormat?: string; fileName?: string }
 ) {
   return post(`/api/annotation/auto/${taskId}/sync-label-studio-back`, data);
 }

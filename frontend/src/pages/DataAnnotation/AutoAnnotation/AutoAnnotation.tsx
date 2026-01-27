@@ -9,8 +9,7 @@ import {
 	EditOutlined,
 	MoreOutlined,
 	SettingOutlined,
-	ExportOutlined,
-	ImportOutlined,
+	SyncOutlined,
 } from "@ant-design/icons";
 import type { ColumnType } from "antd/es/table";
 import type { AutoAnnotationTask, AutoAnnotationStatus } from "../annotation.model";
@@ -18,8 +17,7 @@ import {
 	queryAutoAnnotationTasksUsingGet,
 	deleteAutoAnnotationTaskByIdUsingDelete,
 	downloadAutoAnnotationResultUsingGet,
-  queryAnnotationTasksUsingGet,
-  syncAutoAnnotationTaskToLabelStudioUsingPost,
+	queryAnnotationTasksUsingGet,
 } from "../annotation.api";
 import CreateAutoAnnotationDialog from "./components/CreateAutoAnnotationDialog";
 import EditAutoAnnotationDatasetDialog from "./components/EditAutoAnnotationDatasetDialog";
@@ -159,34 +157,6 @@ export default function AutoAnnotation() {
 		}
 	};
 
-	const handleSyncToLabelStudio = (task: AutoAnnotationTask) => {
-		if (task.status !== "completed") {
-			message.warning("仅已完成的任务可以同步到 Label Studio");
-			return;
-		}
-
-		Modal.confirm({
-			title: `确认同步自动标注任务「${task.name}」到 Label Studio 吗？`,
-			content: (
-				<div>
-					<div>将把该任务的检测结果作为预测框写入 Label Studio。</div>
-					<div>不会覆盖已有人工标注，仅作为可编辑的预测结果。</div>
-				</div>
-			),
-			okText: "同步",
-			cancelText: "取消",
-			onOk: async () => {
-				try {
-					await syncAutoAnnotationTaskToLabelStudioUsingPost(task.id);
-					message.success("同步请求已发送");
-				} catch (error) {
-					console.error(error);
-					message.error("同步失败，请稍后重试");
-				}
-			},
-		});
-	};
-
 	const handleAnnotate = (task: AutoAnnotationTask) => {
 		const datasetId = task.datasetId;
 		if (!datasetId) {
@@ -322,21 +292,11 @@ export default function AutoAnnotation() {
 		{
 			title: "操作",
 			key: "actions",
-			width: 320,
+			width: 300,
 			fixed: "right",
 			render: (_: any, record: AutoAnnotationTask) => (
 				<Space size="small">
-					{/* 一级功能菜单：前向同步 + 编辑（跳转 Label Studio） */}
-					<Tooltip title="将 YOLO 预测结果前向同步到 Label Studio">
-						<Button
-							type="link"
-							size="small"
-							icon={<ExportOutlined />}
-							onClick={() => handleSyncToLabelStudio(record)}
-						>
-							前向同步
-						</Button>
-					</Tooltip>
+					{/* 一级功能：编辑（跳转 Label Studio） + 同步（导回结果） */}
 					<Tooltip title="在 Label Studio 中手动标注">
 						<Button
 							type="link"
@@ -347,14 +307,14 @@ export default function AutoAnnotation() {
 							编辑
 						</Button>
 					</Tooltip>
-					<Tooltip title="从 Label Studio 导回标注结果到数据集">
+					<Tooltip title="从 Label Studio 同步标注结果到数据集">
 						<Button
 							type="link"
 							size="small"
-							icon={<ImportOutlined />}
+							icon={<SyncOutlined />}
 							onClick={() => handleImportFromLabelStudio(record)}
 						>
-							后向同步
+							同步
 						</Button>
 					</Tooltip>
 

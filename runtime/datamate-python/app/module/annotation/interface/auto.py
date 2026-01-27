@@ -1055,9 +1055,9 @@ async def import_from_label_studio_to_dataset(
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
 
-    # 2. 校验目标数据集是否存在
+    # 2. 确定目标数据集：若请求体未显式指定，则使用自动标注任务绑定的数据集
     dm_service = DatasetManagementService(db)
-    target_dataset_id = body.target_dataset_id
+    target_dataset_id = body.target_dataset_id or task.dataset_id
     dataset = await dm_service.get_dataset(target_dataset_id)
     if not dataset:
         raise HTTPException(status_code=404, detail="Target dataset not found")
@@ -1167,7 +1167,8 @@ async def import_from_label_studio_to_dataset(
         target_tmp_path = os.path.join(tmp_dir, base_name)
         os.replace(tmp_path, target_tmp_path)
 
-        await dm_service.add_files_to_dataset(target_dataset_id, [target_tmp_path])
+        # 统一写入源数据集下的 "标注数据" 目录，便于管理导出工件
+        await dm_service.add_files_to_dataset_subdir(target_dataset_id, [target_tmp_path], "标注数据")
     finally:
         # 清理临时文件（若仍存在）
         if os.path.exists(tmp_path):
