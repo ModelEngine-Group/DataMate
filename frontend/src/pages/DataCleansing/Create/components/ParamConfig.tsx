@@ -28,7 +28,7 @@ const ParamConfig: React.FC<ParamConfigProps> = ({
   if (!param) return null;
   let defaultVal: any = param.defaultVal;
   if (param.type === "range") {
-    
+
     defaultVal = Array.isArray(param.defaultVal)
       ? param.defaultVal
       : [
@@ -219,7 +219,7 @@ const ParamConfig: React.FC<ParamConfigProps> = ({
           <Switch
             checkedChildren={param.checkedLabel}
             unCheckedChildren={param.unCheckedLabel}
-            defaultChecked={param.defaultVal === 'true'}
+            defaultChecked={String(param.defaultVal).toLowerCase() === 'true'}
             onChange={(checked) => updateValue(checked)}
           />
         </Form.Item>
