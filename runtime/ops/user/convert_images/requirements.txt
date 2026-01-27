@@ -1,0 +1,13 @@
+# 步骤三：图片转换 - 依赖包
+
+# Word 文档转 PDF/图片
+docx2pdf>=0.1.8
+
+# 图像处理
+pillow>=10.0.0
+
+# PDF 转图片
+pdf2image>=1.16.0
+
+# Windows COM 接口（Word 自动化）
+pywin32>=306
