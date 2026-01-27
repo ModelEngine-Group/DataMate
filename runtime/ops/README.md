@@ -31,7 +31,10 @@ operator_package/
 | `language` | 算子使用的语言，当前仅支持python                | python |
 | `raw_id` | **关键字段**，必须与 `process.py` 中的类名完全一致 | TestMapper |
 | `version` | 语义化版本号                             | 1.0.0 |
-| `modal` / `inputs` / `outputs` | 支持的数据模态 (text/image/audio/video)   | text |
+| `vendor` | 厂商                             | datamate |
+| `modal` | 支持的数据模态 (text/image/audio/video)   | text |
+| `inputs` | 输入的数据模态 (text/image/audio/video)   | text |
+| `outputs` | 输出的数据模态 (text/image/audio/video)   | text |
 
 ### 2.2 算子版本更新日志 (release)
 
@@ -49,8 +52,8 @@ release:
 
 ```yaml
 runtime:
-  memory: 10MB  # 内存限制
-  cpu: 1000m    # CPU 核心数 (m代表毫核)
+  memory: 10485760  # 内存 单位bytes
+  cpu: 0.05    # CPU 核心数
   gpu: 0.1      # GPU 卡数
   npu: 0.1      # NPU 卡数
   storage: 10MB # 存储空间
@@ -199,6 +202,23 @@ class YourOperatorName(Mapper):
         
         return sample
 
+```
+
+其中，sample字段包含如下参数：
+
+```json
+{
+  "text": "文本内容",
+  "data": "二进制数据",
+  "fileName": "文件名",
+  "fileType": "文件类型（扩展名）",
+  "fileId": "文件ID",
+  "filePath": "文件路径",
+  "fileSize": "文件大小",
+  "export_path": "导出路径信息",
+  "ext_params": "额外扩展参数",
+  "target_type": "目标文件类型"
+}
 ```
 
 ---
