@@ -69,7 +69,7 @@ export default function CleansingTaskDetail() {
       const { data } = await queryCleaningTaskResultByIdUsingGet(id);
       setResult(data);
     } catch (error) {
-      message.error("获取清洗结果失败");
+      message.error("获取数据处理结果失败");
       navigate("/data/cleansing/task-detail/" + id);
     }
   };
@@ -82,7 +82,7 @@ export default function CleansingTaskDetail() {
       const { data } = await queryCleaningTaskLogByIdUsingGet(id, retryCount);
       setTaskLog(data);
     } catch (error) {
-      message.error("获取清洗日志失败");
+      message.error("获取数据处理日志失败");
       navigate("/data/cleansing/task-detail/" + id);
     }
   };
@@ -193,7 +193,7 @@ export default function CleansingTaskDetail() {
       title: <Link to="/data/cleansing">数据处理</Link>,
     },
     {
-      title: "清洗任务详情",
+      title: "任务详情",
     },
   ];
 

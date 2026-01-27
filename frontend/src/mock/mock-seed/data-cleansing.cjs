@@ -320,7 +320,7 @@ module.exports = function (router) {
     });
   });
 
-  // 创建清洗模板
+  // 创建模板
   router.post(API.createCleaningTemplateUsingPost, (req, res) => {
     const newTemplate = {
       ...cleaningTemplateItem(),
@@ -337,7 +337,7 @@ module.exports = function (router) {
     });
   });
 
-  // 获取清洗模板详情
+  // 获取处理模板详情
   router.get(API.queryCleaningTemplateByIdUsingGet, (req, res) => {
     const { templateId } = req.params;
     const template = cleaningTemplateList.find((t) => t.id === templateId);
@@ -357,7 +357,7 @@ module.exports = function (router) {
     }
   });
 
-  // 删除清洗模板
+  // 删除处理模板
   router.delete(API.deleteCleaningTemplateByIdUsingDelete, (req, res) => {
     const { templateId } = req.params;
     const index = cleaningTemplateList.findIndex((t) => t.id === templateId);

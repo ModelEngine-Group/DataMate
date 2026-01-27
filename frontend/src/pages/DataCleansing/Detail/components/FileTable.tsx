@@ -112,7 +112,7 @@ export default function FileTable({result, fetchTaskResult}) {
       ),
     },
     {
-      title: "清洗后文件名",
+      title: "处理后文件名",
       dataIndex: "destName",
       key: "destName",
       width: 200,
@@ -185,7 +185,7 @@ export default function FileTable({result, fetchTaskResult}) {
       ),
     },
     {
-      title: "清洗后文件类型",
+      title: "处理后文件类型",
       dataIndex: "destType",
       key: "destType",
       filterDropdown: ({
@@ -221,7 +221,7 @@ export default function FileTable({result, fetchTaskResult}) {
       ),
     },
     {
-      title: "清洗前大小",
+      title: "处理前大小",
       dataIndex: "srcSize",
       key: "srcSize",
       sorter: (a: any, b: any) => {
@@ -240,7 +240,7 @@ export default function FileTable({result, fetchTaskResult}) {
       ),
     },
     {
-      title: "清洗后大小",
+      title: "处理后大小",
       dataIndex: "destSize",
       key: "destSize",
       sorter: (a: any, b: any) => {
@@ -348,7 +348,7 @@ export default function FileTable({result, fetchTaskResult}) {
       >
         <div className="grid grid-cols-2 gap-6 py-6">
           <div>
-            <h4 className="font-medium text-gray-900">清洗前</h4>
+            <h4 className="font-medium text-gray-900">处理前</h4>
             <div className="border border-gray-200 rounded-lg p-6 bg-gray-50 min-h-48 flex items-center justify-center">
               <div className="text-center text-gray-500">
                 <div className="w-16 h-16 bg-gray-300 rounded-lg mx-auto mb-2" />
@@ -365,7 +365,7 @@ export default function FileTable({result, fetchTaskResult}) {
             </div>
           </div>
           <div>
-            <h4 className="font-medium text-gray-900">清洗后</h4>
+            <h4 className="font-medium text-gray-900">处理后</h4>
             <div className="border border-gray-200 rounded-lg p-6 bg-gray-50 min-h-48 flex items-center justify-center">
               <div className="text-center text-gray-500">
                 <div className="w-16 h-16 bg-blue-300 rounded-lg mx-auto mb-2" />

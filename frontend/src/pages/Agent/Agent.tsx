@@ -70,10 +70,10 @@ const quickActions: QuickAction[] = [
   },
   {
     id: "process_data",
-    label: "数据清洗",
+    label: "数据处理",
     icon: Settings,
     prompt: "对数据集进行预处理",
-    category: "数据清洗",
+    category: "数据处理",
   },
   {
     id: "export_report",
