@@ -22,8 +22,8 @@ ENV UV_INDEX_STRATEGY=unsafe-best-match
 WORKDIR /opt/runtime
 
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv pip install -e . --system \
-    && uv pip install -r /opt/runtime/datamate/ops/pyproject.toml --system \
+    uv pip install -e ".[extra]" --system \
+    && uv pip install -r /opt/runtime/datamate/ops/pyproject.toml --extra extra --system \
     && python -m spacy download zh_core_web_sm \
     && python -c "import nltk; nltk.download('punkt_tab'); nltk.download('averaged_perceptron_tagger_eng')" \
     && echo "/usr/local/lib/ops/site-packages" > /usr/local/lib/python3.11/site-packages/ops.pth
