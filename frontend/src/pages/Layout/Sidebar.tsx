@@ -89,7 +89,6 @@ const AsiderAndHeaderLayout = () => {
               : undefined,
           }))}
           selectedKeys={[activeItem]}
-          defaultOpenKeys={["synthesis"]}
           onClick={({ key }) => {
             setActiveItem(key);
             navigate(`/data/${key}`);
