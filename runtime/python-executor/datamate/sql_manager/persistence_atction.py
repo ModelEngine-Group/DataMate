@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import json
-import time
 import os
+import time
 import uuid
 from datetime import datetime
 from pathlib import Path
@@ -78,6 +78,18 @@ class TaskInfoPersistence:
         }
         self.insert_result(file_data, str(self.sql_dict.get("insert_dataset_file_sql")))
 
+    def query_existing_files(self, dataset_id: str):
+        result = None
+        query_sql = str(self.sql_dict.get("query_dataset_files_sql"))
+        with SQLManager.create_connect() as conn:
+            execute_result = conn.execute(text(query_sql), {"dataset_id": dataset_id})
+            result = execute_result.fetchall()
+        return result
+
+    def batch_insert_files(self, samples):
+        insert_sql = str(self.sql_dict.get("insert_dataset_file_sql"))
+        self.batch_execute(insert_sql, samples)
+
     def persistence_task_info(self, sample: Dict[str, Any]):
         file_id = str(uuid.uuid4())
         self.update_task_result(sample, file_id)
@@ -101,6 +113,22 @@ class TaskInfoPersistence:
                     logger.error("database execute failed: {}", str(e))
                     raise RuntimeError(82000, str(e)) from None
         raise Exception("Max retries exceeded")
+
+    @staticmethod
+    def batch_execute(sql, args_list):
+        """
+        批量执行 SQL
+        :param sql: SQL 语句 (例如: "INSERT INTO table (a, b) VALUES (%s, %s)")
+        :param args_list: 参数列表 (例如: [(1, 2), (3, 4), ...])
+        """
+        # 获取连接
+        with SQLManager.create_connect() as conn:
+            try:
+                conn.execute(text(sql), args_list)
+            except Exception as e:
+                conn.rollback()
+                logger.error(f"批量插入失败: {e}")
+                raise e
 
     def update_result(self, dataset_id, instance_id, status):
         dataset_data = {
