@@ -3,7 +3,6 @@ import {
   MessageSquare,
   GitBranch,
   Zap,
-  Shield,
   Store,
 } from "lucide-react";
 
@@ -17,7 +16,7 @@ export const menuItems = [
   },
   {
     id: "cleansing",
-    title: "数据处理",
+    title: "数据产线",
     icon: GitBranch,
     description: "数据清洗、处理和转换",
     color: "bg-purple-500",

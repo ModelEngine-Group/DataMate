@@ -190,7 +190,7 @@ export default function CleansingTaskDetail() {
 
   const breadItems = [
     {
-      title: <Link to="/data/cleansing">数据处理</Link>,
+      title: <Link to="/data/cleansing">数据产线</Link>,
     },
     {
       title: "任务详情",

@@ -106,11 +106,11 @@ export default function WelcomePage() {
         </div>
 
         {/* Features Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-6 mb-16">
+        <div className="flex flex-wrap justify-center gap-6 mb-16">
           {features.map((feature, index) => (
             <Card
               key={index}
-              className="border-0 shadow-lg hover:shadow-xl transition-shadow"
+              className="border-0 shadow-lg hover:shadow-xl transition-shadow w-64"
             >
               <div className="text-center pb-4">
                 <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
@@ -130,12 +130,12 @@ export default function WelcomePage() {
           <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
             功能模块
           </h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="flex flex-wrap justify-center gap-6">
             {menuItems.map((item) => (
               <Card
                 key={item.id}
                 onClick={() => navigate(item.children ? `/data/${item.children[0].id}`: `/data/${item.id}`)}
-                className="cursor-pointer hover:shadow-lg transition-all duration-200 border-0 shadow-md relative overflow-hidden group"
+                className="cursor-pointer hover:shadow-lg transition-all duration-200 border-0 shadow-md relative overflow-hidden group w-64"
               >
                 <div className="text-center relative">
                   <div
