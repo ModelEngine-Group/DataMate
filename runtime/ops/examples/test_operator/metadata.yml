@@ -20,8 +20,8 @@ metrics:
   - name: '吞吐量'
     metric: '20 images/sec'
 runtime:
-  memory: 10MB
-  cpu: 1000m
+  memory: 10485760
+  cpu: 0.05
   gpu: 0.1
   npu: 0.1
 settings:
