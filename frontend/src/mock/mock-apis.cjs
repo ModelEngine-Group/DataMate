@@ -36,18 +36,18 @@ const MockAPI = {
   cancelUploadUsingPut: "/data-management/datasets/upload/cancel-upload/:id", // 取消上传
   uploadFileChunkUsingPost: "/data-management/datasets/:id/upload/chunk", // 上传切片
 
-  // 数据清洗接口
-  queryCleaningTasksUsingGet: "/cleaning/tasks", // 获取清洗任务列表
-  createCleaningTaskUsingPost: "/cleaning/tasks", // 创建清洗任务
-  queryCleaningTaskByIdUsingGet: "/cleaning/tasks/:taskId", // 根据ID获取清洗任务详情
-  deleteCleaningTaskByIdUsingDelete: "/cleaning/tasks/:taskId", // 删除清洗任务
-  executeCleaningTaskUsingPost: "/cleaning/tasks/:taskId/execute", // 执行清洗任务
-  stopCleaningTaskUsingPost: "/cleaning/tasks/:taskId/stop", // 停止清洗任务
-  queryCleaningTemplatesUsingGet: "/cleaning/templates", // 获取清洗模板列表
-  createCleaningTemplateUsingPost: "/cleaning/templates", // 创建清洗模板
-  queryCleaningTemplateByIdUsingGet: "/cleaning/templates/:templateId", // 根据ID获取清洗模板详情
-  updateCleaningTemplateByIdUsingPut: "/cleaning/templates/:templateId", // 根据ID更新清洗模板详情
-  deleteCleaningTemplateByIdUsingDelete: "/cleaning/templates/:templateId", // 删除清洗模板
+  // 数据处理接口
+  queryCleaningTasksUsingGet: "/cleaning/tasks", // 获取处理任务列表
+  createCleaningTaskUsingPost: "/cleaning/tasks", // 创建任务
+  queryCleaningTaskByIdUsingGet: "/cleaning/tasks/:taskId", // 根据ID获取处理任务详情
+  deleteCleaningTaskByIdUsingDelete: "/cleaning/tasks/:taskId", // 删除处理任务
+  executeCleaningTaskUsingPost: "/cleaning/tasks/:taskId/execute", // 执行处理任务
+  stopCleaningTaskUsingPost: "/cleaning/tasks/:taskId/stop", // 停止处理任务
+  queryCleaningTemplatesUsingGet: "/cleaning/templates", // 获取处理模板列表
+  createCleaningTemplateUsingPost: "/cleaning/templates", // 创建模板
+  queryCleaningTemplateByIdUsingGet: "/cleaning/templates/:templateId", // 根据ID获取处理模板详情
+  updateCleaningTemplateByIdUsingPut: "/cleaning/templates/:templateId", // 根据ID更新处理模板详情
+  deleteCleaningTemplateByIdUsingDelete: "/cleaning/templates/:templateId", // 删除处理模板
 
   // 数据标注接口
   queryAnnotationTasksUsingGet: "/project/mappings/list", // 获取标注任务列表

@@ -28,14 +28,14 @@ export default function DataProcessingPage() {
             icon={<PlusOutlined />}
             onClick={() => navigate("/data/cleansing/create-template")}
           >
-            创建清洗模板
+            创建模板
           </Button>
           <Button
             type="primary"
             icon={<PlusOutlined />}
             onClick={() => navigate("/data/cleansing/create-task")}
           >
-            创建清洗任务
+            创建任务
           </Button>
         </div>
       </div>

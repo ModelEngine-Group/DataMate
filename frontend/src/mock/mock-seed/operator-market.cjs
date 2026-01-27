@@ -6,7 +6,7 @@ function labelItem() {
   return {
     id: Mock.Random.guid().replace(/[^a-zA-Z0-9]/g, ""),
     name: Mock.Random.pick([
-      "数据清洗",
+      "数据处理",
       "特征选择",
       "分类算法",
       "聚类算法",

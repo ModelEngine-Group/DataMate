@@ -93,7 +93,7 @@ export default function CleansingTaskCreate() {
               <ArrowLeft className="w-4 h-4 mr-1" />
             </Button>
           </Link>
-          <h1 className="text-xl font-bold">创建清洗任务</h1>
+          <h1 className="text-xl font-bold">创建任务</h1>
         </div>
         <div className="w-1/2">
           <Steps

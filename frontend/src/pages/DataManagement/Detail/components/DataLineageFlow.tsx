@@ -80,7 +80,7 @@ const nodeConfig = {
 
 const edgeTypeLabels: Record<string, string> = {
   DATA_COLLECTION: "数据归集",
-  DATA_CLEANING: "数据清洗",
+  DATA_CLEANING: "数据处理",
   DATA_LABELING: "数据标注",
   DATA_SYNTHESIS: "数据合成",
   DATA_RATIO: "数据配比",

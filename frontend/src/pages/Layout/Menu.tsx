@@ -19,7 +19,7 @@ export const menuItems = [
     id: "cleansing",
     title: "数据处理",
     icon: GitBranch,
-    description: "数据清洗和预处理",
+    description: "数据清洗、处理和转换",
     color: "bg-purple-500",
   },
   {
@@ -35,7 +35,7 @@ export const features = [
   {
     icon: GitBranch,
     title: "智能编排",
-    description: "可视化数据清洗流程编排，拖拽式设计复杂的数据清洗管道",
+    description: "可视化数据处理流程编排，拖拽式设计复杂的数据处理管道",
   },
   {
     icon: MessageSquare,
@@ -45,6 +45,6 @@ export const features = [
   {
     icon: Zap,
     title: "高效处理",
-    description: "完整的数据清洗流水线，从原始数据到可用数据集",
+    description: "完整的数据处理流水线，从原始数据到可用数据集",
   },
 ];

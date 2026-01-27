@@ -64,7 +64,7 @@ const nodeTypeTemplates = [
   {
     type: "data-processing",
     name: "数据处理",
-    description: "对数据进行清洗、转换和处理",
+    description: "对数据进行清洗、处理和转换",
     icon: Cpu,
     category: "数据处理",
     inputs: 1,

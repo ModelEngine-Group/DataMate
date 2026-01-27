@@ -103,7 +103,7 @@ export default function CleansingTemplateCreate() {
               <ArrowLeft className="w-4 h-4 mr-1" />
             </Button>
           </Link>
-          <h1 className="text-xl font-bold">{id ? '更新清洗模板' : '创建清洗模板'}</h1>
+          <h1 className="text-xl font-bold">{id ? '更新模板' : '创建模板'}</h1>
         </div>
         <div className="w-1/2">
           <Steps
