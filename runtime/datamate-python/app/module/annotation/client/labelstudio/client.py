@@ -438,6 +438,52 @@ class Client:
             logger.error(f"Error while deleting project {project_id}: {e}")
             return False
 
+    async def export_project(
+        self,
+        project_id: int,
+        export_type: str = "JSON",
+    ) -> Optional[bytes]:
+        """导出 Label Studio 项目数据。
+
+        对应 Label Studio 的项目导出接口，支持多种 exportType，
+        例如 JSON/JSON_MIN/CSV/TSV/COCO/YOLO/YOLOv8 等。
+
+        返回导出文件的原始二进制内容，调用方负责将其写入本地文件。
+        """
+
+        try:
+            logger.debug(
+                "Exporting Label Studio project %s with exportType=%s",
+                project_id,
+                export_type,
+            )
+
+            response = await self.client.get(
+                f"/api/projects/{project_id}/export",
+                params={"exportType": export_type},
+            )
+            response.raise_for_status()
+
+            content = response.content or b""
+            logger.debug(
+                "Exported project %s with %d bytes",
+                project_id,
+                len(content),
+            )
+            return content
+
+        except httpx.HTTPStatusError as e:
+            logger.error(
+                "Export project %s failed HTTP %s: %s",
+                project_id,
+                e.response.status_code,
+                e.response.text,
+            )
+            return None
+        except Exception as e:
+            logger.error("Error while exporting project %s: %s", project_id, e)
+            return None
+
     async def get_task_annotations(
         self,
         task_id: int

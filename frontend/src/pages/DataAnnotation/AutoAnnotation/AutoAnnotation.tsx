@@ -1,13 +1,15 @@
 import { useState, useEffect } from "react";
-import { Card, Button, Table, message, Modal, Tag, Progress, Space, Tooltip } from "antd";
+import { Card, Button, Table, message, Modal, Tag, Progress, Space, Tooltip, Dropdown } from "antd";
 import {
 	PlusOutlined,
 	DeleteOutlined,
 	DownloadOutlined,
 	ReloadOutlined,
 	EyeOutlined,
-	SyncOutlined,
 	EditOutlined,
+	MoreOutlined,
+	SettingOutlined,
+	SyncOutlined,
 } from "@ant-design/icons";
 import type { ColumnType } from "antd/es/table";
 import type { AutoAnnotationTask, AutoAnnotationStatus } from "../annotation.model";
@@ -15,10 +17,11 @@ import {
 	queryAutoAnnotationTasksUsingGet,
 	deleteAutoAnnotationTaskByIdUsingDelete,
 	downloadAutoAnnotationResultUsingGet,
-  queryAnnotationTasksUsingGet,
-  syncAutoAnnotationTaskToLabelStudioUsingPost,
+	queryAnnotationTasksUsingGet,
 } from "../annotation.api";
 import CreateAutoAnnotationDialog from "./components/CreateAutoAnnotationDialog";
+import EditAutoAnnotationDatasetDialog from "./components/EditAutoAnnotationDatasetDialog";
+import ImportFromLabelStudioDialog from "./components/ImportFromLabelStudioDialog";
 
 const STATUS_COLORS: Record<AutoAnnotationStatus, string> = {
 	pending: "default",
@@ -51,6 +54,10 @@ export default function AutoAnnotation() {
 	const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
 	const [labelStudioBase, setLabelStudioBase] = useState<string | null>(null);
 	const [datasetProjectMap, setDatasetProjectMap] = useState<Record<string, string>>({});
+	const [editingTask, setEditingTask] = useState<AutoAnnotationTask | null>(null);
+	const [showEditDatasetDialog, setShowEditDatasetDialog] = useState(false);
+	const [importingTask, setImportingTask] = useState<AutoAnnotationTask | null>(null);
+	const [showImportDialog, setShowImportDialog] = useState(false);
 
 	useEffect(() => {
 		fetchTasks();
@@ -106,6 +113,16 @@ export default function AutoAnnotation() {
 		}
 	};
 
+	const handleEditTaskDataset = (task: AutoAnnotationTask) => {
+		setEditingTask(task);
+		setShowEditDatasetDialog(true);
+	};
+
+	const handleImportFromLabelStudio = (task: AutoAnnotationTask) => {
+		setImportingTask(task);
+		setShowImportDialog(true);
+	};
+
 	const handleDelete = (task: AutoAnnotationTask) => {
 		Modal.confirm({
 			title: `确认删除自动标注任务「${task.name}」吗？`,
@@ -138,34 +155,6 @@ export default function AutoAnnotation() {
 			message.destroy();
 			message.error("下载失败");
 		}
-	};
-
-	const handleSyncToLabelStudio = (task: AutoAnnotationTask) => {
-		if (task.status !== "completed") {
-			message.warning("仅已完成的任务可以同步到 Label Studio");
-			return;
-		}
-
-		Modal.confirm({
-			title: `确认同步自动标注任务「${task.name}」到 Label Studio 吗？`,
-			content: (
-				<div>
-					<div>将把该任务的检测结果作为预测框写入 Label Studio。</div>
-					<div>不会覆盖已有人工标注，仅作为可编辑的预测结果。</div>
-				</div>
-			),
-			okText: "同步",
-			cancelText: "取消",
-			onOk: async () => {
-				try {
-					await syncAutoAnnotationTaskToLabelStudioUsingPost(task.id);
-					message.success("同步请求已发送");
-				} catch (error) {
-					console.error(error);
-					message.error("同步失败，请稍后重试");
-				}
-			},
-		});
 	};
 
 	const handleAnnotate = (task: AutoAnnotationTask) => {
@@ -303,13 +292,36 @@ export default function AutoAnnotation() {
 		{
 			title: "操作",
 			key: "actions",
-			width: 260,
+			width: 300,
 			fixed: "right",
 			render: (_: any, record: AutoAnnotationTask) => (
 				<Space size="small">
+					{/* 一级功能：编辑（跳转 Label Studio） + 同步（导回结果） */}
+					<Tooltip title="在 Label Studio 中手动标注">
+						<Button
+							type="link"
+							size="small"
+							icon={<EditOutlined />}
+							onClick={() => handleAnnotate(record)}
+						>
+							编辑
+						</Button>
+					</Tooltip>
+					<Tooltip title="从 Label Studio 同步标注结果到数据集">
+						<Button
+							type="link"
+							size="small"
+							icon={<SyncOutlined />}
+							onClick={() => handleImportFromLabelStudio(record)}
+						>
+							同步
+						</Button>
+					</Tooltip>
+
+					{/* 已完成任务的查看/下载结果仍保留 */}
 					{record.status === "completed" && (
 						<>
-							<Tooltip title="查看结果">
+							<Tooltip title="查看结果信息">
 								<Button
 									type="link"
 									size="small"
@@ -317,7 +329,7 @@ export default function AutoAnnotation() {
 									onClick={() => handleViewResult(record)}
 								/>
 							</Tooltip>
-							<Tooltip title="下载结果">
+							<Tooltip title="下载标注结果 ZIP">
 								<Button
 									type="link"
 									size="small"
@@ -325,33 +337,35 @@ export default function AutoAnnotation() {
 									onClick={() => handleDownload(record)}
 								/>
 							</Tooltip>
-							<Tooltip title="同步到 Label Studio">
-								<Button
-									type="link"
-									size="small"
-									icon={<SyncOutlined />}
-									onClick={() => handleSyncToLabelStudio(record)}
-								/>
-							</Tooltip>
-							<Tooltip title="在 Label Studio 中标注">
-								<Button
-									type="link"
-									size="small"
-									icon={<EditOutlined />}
-									onClick={() => handleAnnotate(record)}
-								/>
-							</Tooltip>
 						</>
 					)}
-					<Tooltip title="删除任务记录">
-						<Button
-							type="link"
-							size="small"
-							danger
-							icon={<DeleteOutlined />}
-							onClick={() => handleDelete(record)}
-						/>
-					</Tooltip>
+
+					{/* 二级功能菜单：折叠的删除任务 + 编辑任务数据集 */}
+					<Dropdown
+						menu={{
+							items: [
+								{
+									key: "edit-dataset",
+									label: "编辑任务数据集",
+									icon: <SettingOutlined />,
+									onClick: () => handleEditTaskDataset(record),
+								},
+								{
+									key: "delete",
+									label: "删除任务",
+									icon: <DeleteOutlined />,
+									danger: true,
+									onClick: () => handleDelete(record),
+								},
+							],
+						}}
+						trigger={["click"]}
+					>
+						<Button type="link" size="small" icon={<MoreOutlined />}
+						>
+							更多
+						</Button>
+					</Dropdown>
 				</Space>
 			),
 		},
@@ -402,6 +416,37 @@ export default function AutoAnnotation() {
 					fetchTasks();
 				}}
 			/>
+
+			{editingTask && (
+				<EditAutoAnnotationDatasetDialog
+					visible={showEditDatasetDialog}
+					task={editingTask}
+					onCancel={() => {
+						setShowEditDatasetDialog(false);
+						setEditingTask(null);
+					}}
+					onSuccess={() => {
+						setShowEditDatasetDialog(false);
+						setEditingTask(null);
+						fetchTasks();
+					}}
+				/>
+			)}
+
+			{importingTask && (
+				<ImportFromLabelStudioDialog
+					visible={showImportDialog}
+					task={importingTask}
+					onCancel={() => {
+						setShowImportDialog(false);
+						setImportingTask(null);
+					}}
+					onSuccess={() => {
+						setShowImportDialog(false);
+						setImportingTask(null);
+					}}
+				/>
+			)}
 		</div>
 	);
 }

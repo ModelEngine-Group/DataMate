@@ -184,7 +184,7 @@ export default function WelcomePage() {
                       可视化流程设计器
                     </div>
                     <div className="bg-white/60 rounded-lg p-3 text-sm text-orange-800">
-                      丰富的数据清洗组件库
+                      丰富的数据处理组件库
                     </div>
                     <div className="bg-white/60 rounded-lg p-3 text-sm text-orange-800">
                       实时流程执行监控
@@ -298,7 +298,7 @@ export default function WelcomePage() {
             <div className="p-8">
               <div className="text-center mb-8">
                 <h3 className="text-2xl font-bold text-blue-900 mb-2">
-                  完整的数据清洗工作流
+                  完整的数据处理工作流
                 </h3>
                 <p className="text-blue-700">
                   从原始数据到高质量数据集的全流程解决方案
@@ -321,7 +321,7 @@ export default function WelcomePage() {
                   </div>
                   <h4 className="font-semibold text-blue-900 mb-2">智能编排</h4>
                   <p className="text-sm text-blue-700">
-                    可视化设计数据清洗流程，自动化执行复杂任务
+                    可视化设计数据处理流程，自动化执行复杂任务
                   </p>
                 </div>
                 <div className="text-center">
@@ -330,7 +330,7 @@ export default function WelcomePage() {
                   </div>
                   <h4 className="font-semibold text-blue-900 mb-2">智能处理</h4>
                   <p className="text-sm text-blue-700">
-                    自动化的数据清洗、标注和质量评估流程
+                    自动化的数据处理、标注和质量评估流程
                   </p>
                 </div>
                 <div className="text-center">

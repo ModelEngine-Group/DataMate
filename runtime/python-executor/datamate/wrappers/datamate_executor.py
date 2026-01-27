@@ -47,6 +47,7 @@ class DataMateExecutor(RayExecutor):
         for _ in dataset.data.iter_batches():
             pass
 
+        self.scan_files()
 
 if __name__ == '__main__':
 

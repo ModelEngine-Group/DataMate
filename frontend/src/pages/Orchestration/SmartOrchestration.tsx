@@ -294,7 +294,7 @@ const mockExecutions = [
     startTime: "2025-11-26 12:00:00",
     endTime: "2025-11-26 12:15:32",
     duration: "15m 32s",
-    error: "数据清洗节点执行失败: 字段格式错误",
+    error: "数据处理节点执行失败: 字段格式错误",
   },
 ]
 
@@ -1390,7 +1390,7 @@ const defaultConfigs: Record<string, NodeConfig> = {
     pythonCode: "",
   },
   "data-cleaning": {
-    name: "数据清洗",
+    name: "数据处理",
     description: "清洗和预处理数据",
     pythonCode: "",
   },
@@ -1446,7 +1446,7 @@ function ExecutionDetailView({ executionId, onBack }: { executionId: number; onB
       data: {
         id: "data-cleaning-1",
         type: "data-cleaning",
-        name: "数据清洗",
+        name: "数据处理",
         description: "清洗和预处理数据",
         status: execution.status === "running" && execution.currentNode === "data-cleaning" ? "running" : "success",
         startTime: "14:30:45",
@@ -1654,7 +1654,7 @@ function ExecutionDetailView({ executionId, onBack }: { executionId: number; onB
               )}
               {data.recordsBefore !== undefined && (
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-600">清洗前/后</span>
+                  <span className="text-gray-600">处理前/后</span>
                   <span className="font-semibold">
                     {data.recordsBefore.toLocaleString()} → {data.recordsAfter.toLocaleString()}
                   </span>
@@ -1754,7 +1754,7 @@ function ExecutionDetailView({ executionId, onBack }: { executionId: number; onB
             <div className="flex gap-2">
               <span className="text-gray-500">14:30:45</span>
               <span className="text-blue-600">[INFO]</span>
-              <span>启动数据清洗节点</span>
+              <span>启动数据处理节点</span>
             </div>
             <div className="flex gap-2">
               <span className="text-gray-500">14:31:05</span>
@@ -1771,7 +1771,7 @@ function ExecutionDetailView({ executionId, onBack }: { executionId: number; onB
                 <div className="flex gap-2">
                   <span className="text-gray-500">14:31:20</span>
                   <span className="text-green-600">[SUCCESS]</span>
-                  <span>数据清洗完成，剩余 14,850 条记录</span>
+                  <span>数据处理完成，剩余 14,850 条记录</span>
                 </div>
                 <div className="flex gap-2">
                   <span className="text-gray-500">14:31:25</span>

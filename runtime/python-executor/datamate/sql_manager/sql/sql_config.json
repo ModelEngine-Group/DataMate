@@ -13,5 +13,6 @@
   "create_similar_img_tables_sql": "CREATE TABLE IF NOT EXISTS operator_similar_img_features (id SERIAL PRIMARY KEY, task_uuid VARCHAR(255), p_hash TEXT, des_matrix BYTEA, matrix_shape TEXT, file_name TEXT, timestamp TIMESTAMP);",
   "delete_similar_img_tables_sql": "DELETE FROM operator_similar_img_features WHERE flow_id = :flow_id",
   "create_similar_text_tables_sql": "CREATE TABLE IF NOT EXISTS operators_similar_text_features (id SERIAL PRIMARY KEY, task_uuid VARCHAR(255), file_feature TEXT, file_name TEXT, timestamp TIMESTAMP);",
-  "delete_similar_text_tables_sql": "DELETE FROM operators_similar_text_features WHERE flow_id = :flow_id"
+  "delete_similar_text_tables_sql": "DELETE FROM operators_similar_text_features WHERE flow_id = :flow_id",
+  "query_dataset_files_sql": "SELECT file_path FROM t_dm_dataset_files WHERE dataset_id = :dataset_id"
 }

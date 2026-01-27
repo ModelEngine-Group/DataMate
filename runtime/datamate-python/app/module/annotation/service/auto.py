@@ -152,3 +152,52 @@ class AutoAnnotationTaskService:
         task.deleted_at = datetime.now()
         await db.commit()
         return True
+
+    async def update_task_files(
+        self,
+        db: AsyncSession,
+        task_id: str,
+        *,
+        dataset_id: str,
+        file_ids: List[str],
+    ) -> Optional[AutoAnnotationTaskResponse]:
+        """更新自动标注任务关联的数据集与文件列表。
+
+        - 覆盖任务的 dataset_id 与 file_ids；
+        - 将任务重置为 pending，供 worker 重新调度；
+        - 保留已有的 output_path 与统计信息，确保同一任务始终复用同一个输出数据集，
+          worker 内部会根据 output_path 中已有的 images 仅对新增文件执行自动标注。
+        """
+
+        result = await db.execute(
+            select(AutoAnnotationTask).where(
+                AutoAnnotationTask.id == task_id,
+                AutoAnnotationTask.deleted_at.is_(None),
+            )
+        )
+        task = result.scalar_one_or_none()
+        if not task:
+            return None
+
+        now = datetime.now()
+
+        task.dataset_id = dataset_id
+        task.file_ids = file_ids or []
+
+        # 将任务标记为待处理，让 worker 在同一个输出目录下仅对新增文件执行自动标注
+        task.status = "pending"
+        task.progress = 0
+        task.updated_at = now
+
+        db.add(task)
+        await db.commit()
+        await db.refresh(task)
+
+        resp = AutoAnnotationTaskResponse.model_validate(task)
+        try:
+            resp.source_datasets = await self._compute_source_datasets(db, task)
+        except Exception:
+            fallback_name = getattr(task, "dataset_name", None)
+            fallback_id = getattr(task, "dataset_id", "")
+            resp.source_datasets = [fallback_name] if fallback_name else [fallback_id]
+        return resp

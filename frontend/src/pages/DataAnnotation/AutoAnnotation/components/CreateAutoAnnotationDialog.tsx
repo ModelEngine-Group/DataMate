@@ -188,7 +188,6 @@ export default function CreateAutoAnnotationDialog({
 					modelSize: values.modelSize,
 					confThreshold: values.confThreshold,
 					targetClasses: selectAllClasses ? [] : values.targetClasses || [],
-					outputDatasetName: values.outputDatasetName || undefined,
 				},
 			};
 
@@ -243,6 +242,7 @@ export default function CreateAutoAnnotationDialog({
 							form.setFieldsValue({ datasetId: dataset?.id ?? "" });
 						}}
 						datasetTypeFilter={DatasetType.IMAGE}
+						singleDatasetOnly
 					/>
 					{selectedDataset && (
 						<div className="mt-2 p-2 bg-blue-50 rounded border border-blue-200 text-xs">
@@ -291,9 +291,6 @@ export default function CreateAutoAnnotationDialog({
 					)}
 				</Form.Item>
 
-				<Form.Item name="outputDatasetName" label="输出数据集名称 (可选)">
-					<Input placeholder="留空则将结果写入原数据集的标签中" />
-				</Form.Item>
 			</Form>
 		</Modal>
 	);
