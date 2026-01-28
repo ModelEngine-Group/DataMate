@@ -142,6 +142,7 @@
         <module>plugin-unstructured-storage-util</module>
         <module>gaussdbreader</module>
         <module>gaussdbwriter</module>
+        <module>apireader</module>
         <!--        <module>datax-example</module>-->
 
     </modules>

@@ -1,0 +1,7 @@
+{
+  "name": "apireader",
+  "parameter": {
+    "api": "http://127.0.0.1:9000",
+    "schema": "test-bucket"
+  }
+}
