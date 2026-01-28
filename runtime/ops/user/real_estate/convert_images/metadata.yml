@@ -1,0 +1,41 @@
+name: '不动产权证图像转换算子'
+description: '将JSON数据渲染到模板图像上，生成不动产权证图像'
+language: 'python'
+raw_id: 'DocToImgOperator'
+version: '1.0.0'
+vendor: 'datamate'
+modal: 'image'
+inputs: 'text'
+outputs: 'image'
+
+release:
+  - '首次发布：支持JSON到图像的批量转换'
+
+runtime:
+  gpu: 0
+  npu: 0
+  storage: 500MB
+
+metrics:
+  - name: '转换速度'
+    metric: '10 images/sec'
+
+settings:
+  # DPI参数
+  dpiParam:
+    name: '图像DPI'
+    description: '输出图像的清晰度'
+    type: 'slider'
+    defaultVal: 200
+    min: 100
+    max: 400
+    step: 50
+    required: true
+
+  # 文件匹配模式
+  patternParam:
+    name: '文件匹配模式'
+    description: 'JSON文件的匹配模式'
+    type: 'input'
+    defaultVal: '*.json'
+    required: false

@@ -1,0 +1,54 @@
+name: '不动产权证标注生成算子'
+description: '生成模型训练所需的图文对数据'
+language: 'python'
+raw_id: 'AnnotationGenOperator'
+version: '1.0.0'
+vendor: 'datamate'
+modal: 'text'
+inputs: 'image'
+outputs: 'text'
+
+release:
+  - '首次发布：支持不动产权证QA对批量生成'
+
+runtime:
+  gpu: 0
+  npu: 0
+  storage: 100MB
+
+metrics:
+  - name: '生成速度'
+    metric: '100 records/sec'
+
+settings:
+  # 输出格式
+  formatParam:
+    name: '输出格式'
+    description: '标注数据的输出格式'
+    type: 'select'
+    defaultVal: 'multimodal'
+    options:
+      - label: '多模态格式'
+        value: 'multimodal'
+      - label: '简单JSON格式'
+        value: 'simple_json'
+    required: true
+
+  # 数据集划分比例
+  splitParam:
+    name: '训练集比例'
+    description: '训练集比例（验证集和测试集各占剩余的一半）'
+    type: 'slider'
+    defaultVal: 0.8
+    min: 0.5
+    max: 0.95
+    step: 0.05
+    required: true
+
+  # 随机种子
+  seedParam:
+    name: '随机种子'
+    description: '用于数据集划分的随机种子'
+    type: 'input'
+    defaultVal: '42'
+    required: false

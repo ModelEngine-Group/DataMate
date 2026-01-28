@@ -1,0 +1,60 @@
+name: '不动产权证图像增强算子'
+description: '将电子凭证图像合成到真实拍摄场景中，生成具有真实感的实景照片'
+language: 'python'
+raw_id: 'ImgAugOperator'
+version: '1.0.0'
+vendor: 'datamate'
+modal: 'image'
+inputs: 'image'
+outputs: 'image'
+
+release:
+  - '首次发布：支持多种场景的图像增强'
+
+runtime:
+  gpu: 0
+  npu: 0
+  storage: 1GB
+
+metrics:
+  - name: '处理速度'
+    metric: '1 image/sec'
+
+settings:
+  # 场景数量
+  scenes:
+    name: '场景数量'
+    description: '每个源图生成的场景数量'
+    type: 'slider'
+    defaultVal: 2
+    min: 1
+    max: 5
+    step: 1
+    required: true
+
+  # 场景列表
+  sceneListParam:
+    name: '场景类型'
+    description: '选择需要生成的场景类型'
+    type: 'checkbox'
+    defaultVal: ['normal']
+    options:
+      - label: '正常拍摄'
+        value: 'normal'
+      - label: '斜拍场景'
+        value: 'tilted'
+      - label: '阴影场景'
+        value: 'shadow'
+      - label: '水印场景'
+        value: 'watermark'
+      - label: '不完整拍摄'
+        value: 'incomplete'
+    required: false
+
+  # 跳过检测
+  skipDetectParam:
+    name: '跳过检测'
+    description: '跳过自动检测，仅使用缓存坐标'
+    type: 'checkbox'
+    defaultVal: true
+    required: false
