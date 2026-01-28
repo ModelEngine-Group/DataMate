@@ -28,6 +28,8 @@ import uuid
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Set
+import urllib.error
+import urllib.request
 
 from loguru import logger
 from sqlalchemy import text
@@ -100,6 +102,13 @@ POLL_INTERVAL_SECONDS = float(os.getenv("AUTO_ANNOTATION_POLL_INTERVAL", "5"))
 DEFAULT_OUTPUT_ROOT = os.getenv(
     "AUTO_ANNOTATION_OUTPUT_ROOT", "/dataset"
 )
+
+BACKEND_BASE_URL = os.getenv(
+    "AUTO_ANNOTATION_BACKEND_URL", "http://datamate-backend-python:18000"
+)
+
+AUTO_SYNC_ENABLED = os.getenv("AUTO_ANNOTATION_SYNC_ENABLED", "true").lower() == "true"
+AUTO_SYNC_TIMEOUT_SECONDS = float(os.getenv("AUTO_ANNOTATION_SYNC_TIMEOUT", "10"))
 
 
 def _fetch_pending_task() -> Optional[Dict[str, Any]]:
@@ -202,6 +211,29 @@ def _update_task_status(
 
     with SQLManager.create_connect() as conn:
         conn.execute(sql, params)
+
+
+def _get_dataset_root(dataset_id: str) -> Optional[str]:
+    """根据数据集ID获取其根路径。
+
+    自动标注结果将写入该路径下的 annotations/<task_id>/annotations 目录中，
+    既复用原有卷，又避免为每次自动标注创建新的数据集。
+    """
+
+    sql = text(
+        """
+        SELECT path
+        FROM t_dm_datasets
+        WHERE id = :dataset_id
+          AND status = 'ACTIVE'
+        """
+    )
+
+    with SQLManager.create_connect() as conn:
+        row = conn.execute(sql, {"dataset_id": dataset_id}).fetchone()
+        if not row:
+            return None
+        return str(row[0]) if row[0] is not None else None
 
 
 def _load_dataset_files(dataset_id: str) -> List[Tuple[str, str, str]]:
@@ -319,205 +351,183 @@ def _update_dataset_file_tags(file_id: str, tags: List[Dict[str, Any]]) -> None:
         )
 
 
+def _register_annotation_output_file(dataset_id: str, annotations_path: str) -> None:
+    """确保自动标注生成的 JSON 结果文件在 t_dm_dataset_files 中有一条记录。
+
+    - 若同一 dataset_id + file_path 已存在，则仅更新文件大小和时间戳；
+    - 若不存在，则插入一条新的 ACTIVE 记录。
+    """
+
+    if not annotations_path:
+        return
+
+    try:
+        if not os.path.isfile(annotations_path):
+            logger.warning(
+                "Annotation JSON file not found when registering dataset file: {}",
+                annotations_path,
+            )
+            return
+
+        file_name = os.path.basename(annotations_path)
+        ext = os.path.splitext(file_name)[1].lstrip(".").lower() or "other"
+
+        try:
+            file_size = os.path.getsize(annotations_path)
+        except OSError:
+            file_size = 0
+
+        now = datetime.utcnow()
+
+        with SQLManager.create_connect() as conn:
+            # 先检查是否已经存在同一路径的文件记录
+            existing = conn.execute(
+                text(
+                    """
+                    SELECT id, file_size
+                    FROM t_dm_dataset_files
+                    WHERE dataset_id = :dataset_id
+                      AND file_path = :file_path
+                      AND status = 'ACTIVE'
+                    LIMIT 1
+                    """,
+                ),
+                {"dataset_id": dataset_id, "file_path": annotations_path},
+            ).fetchone()
+
+            if existing:
+                # 已存在：仅更新文件大小及时间戳，避免重复插入
+                conn.execute(
+                    text(
+                        """
+                        UPDATE t_dm_dataset_files
+                        SET file_size = :file_size,
+                            updated_at = :updated_at,
+                            last_access_time = :last_access_time
+                        WHERE id = :id
+                        """,
+                    ),
+                    {
+                        "id": existing[0],
+                        "file_size": int(file_size),
+                        "updated_at": now,
+                        "last_access_time": now,
+                    },
+                )
+            else:
+                # 新文件：插入记录，并尽量更新 t_dm_datasets 的统计字段
+                new_id = str(uuid.uuid4())
+                conn.execute(
+                    text(
+                        """
+                        INSERT INTO t_dm_dataset_files
+                            (id, dataset_id, file_name, file_path, file_type, file_size, status, upload_time, created_at, updated_at)
+                        VALUES
+                            (:id, :dataset_id, :file_name, :file_path, :file_type, :file_size, 'ACTIVE', :now, :now, :now)
+                        """,
+                    ),
+                    {
+                        "id": new_id,
+                        "dataset_id": dataset_id,
+                        "file_name": file_name,
+                        "file_path": annotations_path,
+                        "file_type": ext,
+                        "file_size": int(file_size),
+                        "now": now,
+                    },
+                )
+
+                # 轻量更新数据集的文件数量和总大小统计
+                try:
+                    conn.execute(
+                        text(
+                            """
+                            UPDATE t_dm_datasets
+                            SET file_count = COALESCE(file_count, 0) + 1,
+                                size_bytes = COALESCE(size_bytes, 0) + :delta,
+                                updated_at = :now,
+                                status = 'ACTIVE'
+                            WHERE id = :dataset_id
+                            """,
+                        ),
+                        {
+                            "dataset_id": dataset_id,
+                            "delta": int(file_size),
+                            "now": now,
+                        },
+                    )
+                except Exception as e_ds:  # pragma: no cover - 统计更新失败不影响主流程
+                    logger.warning(
+                        "Failed to update dataset stats for {} when registering annotation file {}: {}",
+                        dataset_id,
+                        annotations_path,
+                        e_ds,
+                    )
+    except Exception as e:  # pragma: no cover - 防御性日志
+        logger.error(
+            "Failed to register annotation output file for dataset {} at {}: {}",
+            dataset_id,
+            annotations_path,
+            e,
+        )
+
+
 def _ensure_output_dir(output_dir: str) -> str:
-    """确保输出目录及其 images/、annotations/ 子目录存在。"""
+    """确保输出目录存在。
+
+    annotations 子目录由算子本身负责创建；这里不再为 images 创建额外目录，
+    以符合“自动标注不再单独保存 images” 的新设计。
+    """
 
     os.makedirs(output_dir, exist_ok=True)
-    os.makedirs(os.path.join(output_dir, "images"), exist_ok=True)
-    os.makedirs(os.path.join(output_dir, "annotations"), exist_ok=True)
     return output_dir
 
 
-def _create_output_dataset(
-    source_dataset_id: str,
-    source_dataset_name: str,
-    output_dataset_name: str,
-) -> Tuple[str, str]:
-    """为自动标注结果创建一个新的数据集并返回 (dataset_id, path)。"""
+def _trigger_forward_sync_to_label_studio(task_id: str) -> None:
+    """在任务完成后，自动调用后端接口，将检测结果推送到 Label Studio。
 
-    new_dataset_id = str(uuid.uuid4())
-    dataset_base_path = DEFAULT_OUTPUT_ROOT.rstrip("/") or "/dataset"
-    output_dir = os.path.join(dataset_base_path, new_dataset_id)
-
-    description = (
-        f"Auto annotations for dataset {source_dataset_name or source_dataset_id}"[:255]
-    )
-
-    sql = text(
-        """
-        INSERT INTO t_dm_datasets (id, name, description, dataset_type, path, status)
-        VALUES (:id, :name, :description, :dataset_type, :path, :status)
-        """
-    )
-    params = {
-        "id": new_dataset_id,
-        "name": output_dataset_name,
-        "description": description,
-        "dataset_type": "IMAGE",
-        "path": output_dir,
-        "status": "ACTIVE",
-    }
-
-    with SQLManager.create_connect() as conn:
-        conn.execute(sql, params)
-
-    return new_dataset_id, output_dir
-
-
-def _register_output_dataset(
-    task_id: str,
-    output_dataset_id: str,
-    output_dir: str,
-    output_dataset_name: str,
-    total_images: int,
-    *,
-    tags_by_filename: Optional[Dict[str, List[Dict[str, Any]]]] = None,
-) -> None:
-    """将自动标注结果注册到数据集。
-
-    如果多次为同一自动标注任务重复运行，将复用同一个输出数据集，并避免对
-    同一 dataset_id + file_name 插入重复记录，只为新文件追加记录。
+    该调用是“尽力而为”的：失败只记录日志，不影响任务本身的完成状态。
     """
 
-    images_dir = os.path.join(output_dir, "images")
-    if not os.path.isdir(images_dir):
-        logger.warning(
-            "Auto-annotation images directory not found for task {}: {}",
-            task_id,
-            images_dir,
+    if not AUTO_SYNC_ENABLED:
+        logger.info(
+            "Auto sync to Label Studio is disabled by env AUTO_ANNOTATION_SYNC_ENABLED",
         )
         return
 
-    image_files: List[Tuple[str, str, int]] = []
-    annotation_files: List[Tuple[str, str, int]] = []
-    total_size = 0
+    base_url = BACKEND_BASE_URL.rstrip("/")
+    url = f"{base_url}/api/annotation/auto/{task_id}/sync-label-studio"
 
-    for file_name in sorted(os.listdir(images_dir)):
-        file_path = os.path.join(images_dir, file_name)
-        if not os.path.isfile(file_path):
-            continue
-        try:
-            file_size = os.path.getsize(file_path)
-        except OSError:
-            file_size = 0
-        image_files.append((file_name, file_path, int(file_size)))
-        total_size += int(file_size)
-
-    annotations_dir = os.path.join(output_dir, "annotations")
-    if os.path.isdir(annotations_dir):
-        for file_name in sorted(os.listdir(annotations_dir)):
-            file_path = os.path.join(annotations_dir, file_name)
-            if not os.path.isfile(file_path):
-                continue
-            try:
-                file_size = os.path.getsize(file_path)
-            except OSError:
-                file_size = 0
-            annotation_files.append((file_name, file_path, int(file_size)))
-            total_size += int(file_size)
-
-    if not image_files:
-        logger.warning(
-            "No image files found in auto-annotation output for task {}: {}",
+    try:
+        payload = json.dumps({}).encode("utf-8")
+        req = urllib.request.Request(
+            url,
+            data=payload,
+            method="POST",
+            headers={"Content-Type": "application/json"},
+        )
+        with urllib.request.urlopen(req, timeout=AUTO_SYNC_TIMEOUT_SECONDS) as resp:
+            status_code = resp.getcode()
+            body = resp.read().decode("utf-8", errors="ignore")
+        logger.info(
+            "Auto-annotation forward sync triggered for task {}: status={}, response={}",
             task_id,
-            images_dir,
+            status_code,
+            body,
         )
-        return
-
-    insert_file_sql = text(
-        """
-        INSERT INTO t_dm_dataset_files (
-            id, dataset_id, file_name, file_path, file_type, file_size, status, tags, tags_updated_at
-        ) VALUES (
-            :id, :dataset_id, :file_name, :file_path, :file_type, :file_size, :status, :tags, :tags_updated_at
+    except urllib.error.HTTPError as e:
+        logger.error(
+            "HTTP error when syncing auto-annotation task {} to Label Studio: status={}, reason={}",
+            task_id,
+            e.code,
+            e.reason,
         )
-        """
-    )
-    update_dataset_stat_sql = text(
-        """
-        UPDATE t_dm_datasets
-        SET file_count = COALESCE(file_count, 0) + :add_count,
-            size_bytes = COALESCE(size_bytes, 0) + :add_size
-        WHERE id = :dataset_id
-        """
-    )
-
-    with SQLManager.create_connect() as conn:
-        added_count = 0
-
-        # 预先查询已存在的文件名，避免重复插入
-        existing_names_sql = text(
-            """
-            SELECT file_name FROM t_dm_dataset_files WHERE dataset_id = :dataset_id
-            """
+    except Exception as e:  # pragma: no cover - 防御性日志
+        logger.error(
+            "Failed to sync auto-annotation task {} to Label Studio: {}",
+            task_id,
+            e,
         )
-        rows = conn.execute(existing_names_sql, {"dataset_id": output_dataset_id}).fetchall()
-        existing_names = {str(r[0]) for r in rows}
-
-        for file_name, file_path, file_size in image_files:
-            if file_name in existing_names:
-                continue
-            ext = os.path.splitext(file_name)[1].lstrip(".").upper() or None
-            file_tags = None
-            if tags_by_filename:
-                file_tags = tags_by_filename.get(file_name)
-            conn.execute(
-                insert_file_sql,
-                {
-                    "id": str(uuid.uuid4()),
-                    "dataset_id": output_dataset_id,
-                    "file_name": file_name,
-                    "file_path": file_path,
-                    "file_type": ext,
-                    "file_size": int(file_size),
-                    "status": "ACTIVE",
-                    "tags": json.dumps(file_tags, ensure_ascii=False) if file_tags else None,
-                    "tags_updated_at": datetime.utcnow() if file_tags else None,
-                },
-            )
-            added_count += 1
-            existing_names.add(file_name)
-
-        for file_name, file_path, file_size in annotation_files:
-            if file_name in existing_names:
-                continue
-            ext = os.path.splitext(file_name)[1].lstrip(".").upper() or None
-            conn.execute(
-                insert_file_sql,
-                {
-                    "id": str(uuid.uuid4()),
-                    "dataset_id": output_dataset_id,
-                    "file_name": file_name,
-                    "file_path": file_path,
-                    "file_type": ext,
-                    "file_size": int(file_size),
-                    "status": "ACTIVE",
-                    "tags": None,
-                    "tags_updated_at": None,
-                },
-            )
-            added_count += 1
-            existing_names.add(file_name)
-
-        if added_count > 0:
-            conn.execute(
-                update_dataset_stat_sql,
-                {
-                    "dataset_id": output_dataset_id,
-                    "add_count": added_count,
-                    "add_size": int(total_size),
-                },
-            )
-
-    logger.info(
-        "Registered auto-annotation output into dataset: dataset_id={}, name={}, added_files={}, added_size_bytes={}, task_id={}, output_dir={}",
-        output_dataset_id,
-        output_dataset_name,
-        len(image_files) + len(annotation_files),
-        total_size,
-        task_id,
-        output_dir,
-    )
 
 
 def _process_single_task(task: Dict[str, Any]) -> None:
@@ -579,64 +589,57 @@ def _process_single_task(task: Dict[str, Any]) -> None:
     else:
         all_files = _load_dataset_files(dataset_id)
 
-    # 优先复用任务已有的输出目录和对应数据集，避免重复创建结果数据集
+    # 优先复用任务已有的输出目录，避免重复创建或切换路径
     existing_output_path = (task.get("output_path") or "").strip() or None
-    output_dataset_id: Optional[str] = None
     output_dir: Optional[str] = None
 
     if existing_output_path:
         try:
             # 确保目录存在
             output_dir = _ensure_output_dir(existing_output_path)
-
-            # 根据路径查找已存在的数据集记录
-            find_dataset_sql = text(
-                """
-                SELECT id FROM t_dm_datasets
-                WHERE path = :path
-                ORDER BY created_at DESC
-                LIMIT 1
-                """
-            )
-            with SQLManager.create_connect() as conn:
-                row = conn.execute(find_dataset_sql, {"path": output_dir}).fetchone()
-            if row:
-                output_dataset_id = str(row[0])
-                logger.info(
-                    "Reuse existing output dataset for auto-annotation task: task_id={}, dataset_id={}, path={}",
-                    task_id,
-                    output_dataset_id,
-                    output_dir,
-                )
         except Exception as e:
             logger.error(
-                "Failed to reuse existing output dataset for task {}: {}",
+                "Failed to reuse existing output directory for task {}: {}",
                 task_id,
                 e,
             )
 
-    # 如果没有可复用的数据集，则创建新的结果数据集
-    if not output_dataset_id or not output_dir:
-        output_dataset_id, new_output_dir = _create_output_dataset(
-            source_dataset_id=dataset_id,
-            source_dataset_name=source_dataset_name,
-            output_dataset_name=output_dataset_name,
-        )
-        output_dir = _ensure_output_dir(new_output_dir)
+    # 如果没有可复用的输出目录，则基于“源数据集路径/annotations” 作为输出根目录
+    if not output_dir:
+        dataset_root = _get_dataset_root(dataset_id)
+        if not dataset_root:
+            logger.error(
+                "Failed to resolve dataset root for auto-annotation task {}: dataset_id={} not found or inactive",
+                task_id,
+                dataset_id,
+            )
+            _update_task_status(
+                task_id,
+                status="failed",
+                error_message="Dataset path not found for auto-annotation task",
+            )
+            return
+
+        # 直接使用源数据集下的 annotations 目录作为输出目录，
+        # YOLO 算子会在其中创建 JSON 文件。
+        base_annotations_dir = os.path.join(dataset_root, "annotations")
+        output_dir = _ensure_output_dir(base_annotations_dir)
 
     # 仅对“新选的数据”执行自动标注：
-    # 已经在输出目录 images/ 中存在对应文件名的，认为该任务已跑过，不再重复标注
-    existing_image_names: Set[str] = set()
-    images_dir = os.path.join(output_dir, "images")
-    if os.path.isdir(images_dir):
+    # 已经在输出目录中存在对应 JSON 文件的，认为该任务已跑过，不再重复标注
+    existing_stems: Set[str] = set()
+    annotations_dir = output_dir
+    if os.path.isdir(annotations_dir):
         try:
-            for name in os.listdir(images_dir):
-                if not os.path.isfile(os.path.join(images_dir, name)):
+            for name in os.listdir(annotations_dir):
+                file_path = os.path.join(annotations_dir, name)
+                if not os.path.isfile(file_path):
                     continue
-                existing_image_names.add(name)
+                stem, _ = os.path.splitext(name)
+                existing_stems.add(stem)
         except Exception as e:
             logger.error(
-                "Failed to list existing images for auto-annotation task {}: {}",
+                "Failed to list existing annotations for auto-annotation task {}: {}",
                 task_id,
                 e,
             )
@@ -645,7 +648,7 @@ def _process_single_task(task: Dict[str, Any]) -> None:
     files = [
         (file_id, file_path, file_name)
         for file_id, file_path, file_name in all_files
-        if os.path.basename(file_path) not in existing_image_names
+        if os.path.splitext(os.path.basename(file_path))[0] not in existing_stems
     ]
 
     total_images = len(files)
@@ -705,6 +708,27 @@ def _process_single_task(task: Dict[str, Any]) -> None:
             detected_total += len(detections)
             processed += 1
 
+            # 根据算子返回的 annotations_file 或约定路径，注册 JSON 文件到 t_dm_dataset_files
+            annotations_file = None
+            try:
+                annotations_file = (result or {}).get("annotations_file")
+            except Exception:
+                annotations_file = None
+
+            if not annotations_file:
+                base_name = os.path.basename(file_path)
+                stem, _ = os.path.splitext(base_name)
+                # 兼容两种目录结构：<output_dir>/annotations/<name>.json 或 <output_dir>/<name>.json
+                candidate1 = os.path.join(output_dir, "annotations", f"{stem}.json")
+                candidate2 = os.path.join(output_dir, f"{stem}.json")
+                if os.path.isfile(candidate1):
+                    annotations_file = candidate1
+                elif os.path.isfile(candidate2):
+                    annotations_file = candidate2
+
+            if annotations_file:
+                _register_annotation_output_file(dataset_id, annotations_file)
+
             # 基于检测结果生成标签（按类别去重），并写回源数据集文件
             file_tags = _build_file_tags_from_detections(detections)
             if file_tags:
@@ -761,22 +785,8 @@ def _process_single_task(task: Dict[str, Any]) -> None:
         output_dir,
     )
 
-    if output_dataset_name and output_dataset_id:
-        try:
-            _register_output_dataset(
-                task_id=task_id,
-                output_dataset_id=output_dataset_id,
-                output_dir=output_dir,
-                output_dataset_name=output_dataset_name,
-                total_images=total_images,
-                tags_by_filename=tags_by_filename,
-            )
-        except Exception as e:  # pragma: no cover - 防御性日志
-            logger.error(
-                "Failed to register auto-annotation output as dataset for task {}: {}",
-                task_id,
-                e,
-            )
+    # 任务完成后，自动触发一次前向同步，将检测结果推送到 Label Studio
+    _trigger_forward_sync_to_label_studio(task_id)
 
 
 def _worker_loop() -> None:

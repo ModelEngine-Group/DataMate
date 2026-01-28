@@ -528,9 +528,9 @@ async def import_manual_from_label_studio_to_dataset(
     if not mapping:
         raise HTTPException(status_code=404, detail="Mapping not found")
 
-    # 2. 校验目标数据集是否存在
+    # 2. 确定目标数据集：若未显式指定，则使用映射绑定的数据集
     dm_service = DatasetManagementService(db)
-    target_dataset_id = body.target_dataset_id
+    target_dataset_id = body.target_dataset_id or mapping.dataset_id
     dataset = await dm_service.get_dataset(target_dataset_id)
     if not dataset:
         raise HTTPException(status_code=404, detail="Target dataset not found")
@@ -587,7 +587,8 @@ async def import_manual_from_label_studio_to_dataset(
         target_tmp_path = os.path.join(tmp_dir, base_name)
         os.replace(tmp_path, target_tmp_path)
 
-        await dm_service.add_files_to_dataset(target_dataset_id, [target_tmp_path])
+        # 写入目标（通常为源）数据集下的 "标注数据" 目录
+        await dm_service.add_files_to_dataset_subdir(target_dataset_id, [target_tmp_path], "标注数据")
     finally:
         if os.path.exists(tmp_path):
             try:

@@ -180,20 +180,14 @@ class ImageObjectDetectionBoundingBox(Mapper):
         else:
             output_dir = os.path.dirname(image_path)
         
-        # 创建输出子目录（可选，用于组织文件）
-        images_dir = os.path.join(output_dir, "images")
+        # 创建输出子目录：仅保留 annotations 目录，不再额外保存标注图像，
+        # 以减少冗余占用；检测结果将直接写入 JSON 文件。
         annotations_dir = os.path.join(output_dir, "annotations")
-        os.makedirs(images_dir, exist_ok=True)
         os.makedirs(annotations_dir, exist_ok=True)
         
         # 保持原始文件名（不添加后缀），确保一一对应
         base_name = os.path.basename(image_path)
         name_without_ext = os.path.splitext(base_name)[0]
-        
-        # 保存标注图像（保持原始扩展名或使用jpg）
-        output_filename = base_name
-        output_path = os.path.join(images_dir, output_filename)
-        cv2.imwrite(output_path, img)
         
         # 保存标注 JSON（文件名与图像对应）
         json_filename = f"{name_without_ext}.json"
@@ -203,7 +197,8 @@ class ImageObjectDetectionBoundingBox(Mapper):
         
         # 更新样本数据
         sample["detection_count"] = len(annotations["detections"])
-        sample["output_image"] = output_path
+        # 不再额外保存 output_image 副本，仅返回原始路径和注释信息
+        sample["output_image"] = image_path
         sample["annotations_file"] = json_path
         sample["annotations"] = annotations
         

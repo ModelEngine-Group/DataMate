@@ -103,16 +103,16 @@ class UpdateAutoAnnotationTaskFilesRequest(BaseModel):
 class ImportFromLabelStudioRequest(BaseModel):
     """从 Label Studio 导入标注结果到 DM 数据集的请求体。
 
-    - target_dataset_id: 要将导出结果写入的目标数据集ID；
-    - export_format: Label Studio 导出格式（如 JSON/JSON_MIN/CSV/TSV/COCO/YOLO 等）。
-        - file_name: 可选，自定义保存到数据集中的文件名称（不含路径）；
-            若包含扩展名或路径分隔符，服务端会自动裁剪，仅保留文件名主体并附加正确后缀。
+    - target_dataset_id: 目标数据集ID（可选）；若未提供，则自动使用源任务/映射所关联的数据集；
+    - export_format: Label Studio 导出格式（如 JSON/JSON_MIN/CSV/TSV/COCO/YOLO 等）；
+    - file_name: 可选，自定义保存到数据集中的文件名称（不含路径）；
+      若包含扩展名或路径分隔符，服务端会自动裁剪，仅保留文件名主体并附加正确后缀。
     """
 
-    target_dataset_id: str = Field(
-        ...,
+    target_dataset_id: Optional[str] = Field(
+        default=None,
         alias="targetDatasetId",
-        description="导入目标数据集ID",
+        description="导入目标数据集ID（可选，不传则使用源数据集）",
     )
     export_format: str = Field(
         default="JSON",

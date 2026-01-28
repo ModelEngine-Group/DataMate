@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 import { Modal, Form, Select, Input, message } from "antd";
 import type { AnnotationTask } from "./annotation.model";
-import { queryDatasetsUsingGet } from "@/pages/DataManagement/dataset.api";
-import type { Dataset } from "@/pages/DataManagement/dataset.model";
 import { importManualAnnotationFromLabelStudioUsingPost } from "./annotation.api";
 
 interface ManualImportFromLabelStudioDialogProps {
@@ -29,38 +27,11 @@ export default function ManualImportFromLabelStudioDialog({
   onSuccess,
 }: ManualImportFromLabelStudioDialogProps) {
   const [form] = Form.useForm();
-  const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (!visible) return;
-
-    let cancelled = false;
-
-    (async () => {
-      try {
-        const resp: any = await queryDatasetsUsingGet({ page: 0, size: 1000 });
-        const list: Dataset[] = resp?.content || resp?.data?.content || resp?.data || resp || [];
-        if (!cancelled && Array.isArray(list)) {
-          setDatasets(list);
-        }
-      } catch (e) {
-        console.error("Failed to fetch datasets for manual LS import:", e);
-        if (!cancelled) {
-          message.error("获取数据集列表失败");
-        }
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [visible]);
 
   useEffect(() => {
     if (visible && task) {
       form.setFieldsValue({
-        targetDatasetId: task.datasetId,
         exportFormat: "JSON",
       });
     }
@@ -69,7 +40,6 @@ export default function ManualImportFromLabelStudioDialog({
   const handleOk = async () => {
     try {
       const values = await form.validateFields();
-      const targetDatasetId: string = values.targetDatasetId;
       const exportFormat: string = values.exportFormat;
       const fileName: string | undefined = values.fileName;
 
@@ -80,7 +50,6 @@ export default function ManualImportFromLabelStudioDialog({
 
       setLoading(true);
       await importManualAnnotationFromLabelStudioUsingPost(task.id, {
-        targetDatasetId,
         exportFormat,
         fileName: fileName?.trim() || undefined,
       });
@@ -113,22 +82,6 @@ export default function ManualImportFromLabelStudioDialog({
         </Form.Item>
 
         <Form.Item
-          label="导入目标数据集"
-          name="targetDatasetId"
-          rules={[{ required: true, message: "请选择目标数据集" }]}
-        >
-          <Select
-            placeholder="请选择要导入到的数据集"
-            optionFilterProp="label"
-            showSearch
-            options={datasets.map((ds) => ({
-              label: ds.name,
-              value: ds.id,
-            }))}
-          />
-        </Form.Item>
-
-        <Form.Item
           label="导出/导入格式"
           name="exportFormat"
           rules={[{ required: true, message: "请选择导出格式" }]}
@@ -152,7 +105,8 @@ export default function ManualImportFromLabelStudioDialog({
 
         <div className="text-xs text-gray-500 mt-2">
           将从与该标注任务关联的 Label Studio 项目中，
-          按所选格式导出完整标注结果，并作为一个文件保存到所选数据集中。
+          按所选格式导出完整标注结果，并作为一个文件保存到源数据集下的
+          <span className="font-semibold">「标注数据」</span> 文件夹中。
           不会修改已有标签，仅追加一个导出工件文件。
         </div>
       </Form>
