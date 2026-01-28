@@ -12,7 +12,7 @@ import lombok.*;
  */
 @Getter
 @Setter
-@TableName("t_model_config")
+@TableName("t_models")
 @Builder
 @ToString
 @NoArgsConstructor
@@ -47,4 +47,9 @@ public class ModelConfig extends BaseEntity<String> {
      * 是否默认：1-默认，0-非默认
      */
     private Boolean isDefault;
+
+    /**
+     * 是否删除：1-已删除，0-未删除
+     */
+    private Boolean isDeleted;
 }

@@ -24,7 +24,8 @@ from app.module.generation.service.prompt import (
 from app.module.shared.common.document_loaders import load_documents
 from app.module.shared.common.text_split import DocumentSplitter
 from app.module.shared.util.model_chat import extract_json_substring
-from app.module.system.service.common_service import chat, get_model_by_id, get_chat_client
+from app.module.shared.llm import LLMFactory
+from app.module.system.service.common_service import get_model_by_id
 
 
 def _filter_docs(split_docs, chunk_size):
@@ -171,8 +172,12 @@ class GenerationService:
         # 为本文件构建模型 client
         question_model = await get_model_by_id(self.db, question_cfg.model_id)
         answer_model = await get_model_by_id(self.db, answer_cfg.model_id)
-        question_chat = get_chat_client(question_model)
-        answer_chat = get_chat_client(answer_model)
+        question_chat = LLMFactory.create_chat(
+            question_model.model_name, question_model.base_url, question_model.api_key
+        )
+        answer_chat = LLMFactory.create_chat(
+            answer_model.model_name, answer_model.base_url, answer_model.api_key
+        )
 
         # 分批次从 DB 读取并处理 chunk
         batch_size = 100
@@ -356,7 +361,7 @@ class GenerationService:
             loop = asyncio.get_running_loop()
             raw_answer = await loop.run_in_executor(
                 None,
-                chat,
+                LLMFactory.invoke_sync,
                 question_chat,
                 prompt,
             )
@@ -400,7 +405,7 @@ class GenerationService:
                 loop = asyncio.get_running_loop()
                 answer = await loop.run_in_executor(
                     None,
-                    chat,
+                    LLMFactory.invoke_sync,
                     answer_chat,
                     prompt_local,
                 )

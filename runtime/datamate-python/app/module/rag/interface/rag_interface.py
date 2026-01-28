@@ -9,12 +9,12 @@ from ..schema.rag_schema import QueryRequest
 router = APIRouter(prefix="/rag", tags=["rag"])
 
 @router.post("/process/{knowledge_base_id}")
-async def process_knowledge_base(knowledge_base_id: str, db: AsyncSession = Depends(get_db)):
+async def process_knowledge_base(knowledge_base_id: str, rag_service: RAGService = Depends()):
     """
     Process all unprocessed files in a knowledge base.
     """
     try:
-        await RAGService(db).init_graph_rag(knowledge_base_id)
+        await rag_service.init_graph_rag(knowledge_base_id)
         return StandardResponse(
             code=200,
             message="Processing started for knowledge base.",
@@ -24,12 +24,11 @@ async def process_knowledge_base(knowledge_base_id: str, db: AsyncSession = Depe
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/query")
-async def query_knowledge_graph(payload: QueryRequest, db: AsyncSession = Depends(get_db)):
+async def query_knowledge_graph(payload: QueryRequest, rag_service: RAGService = Depends()):
     """
     Query the knowledge graph with the given query text and knowledge base ID.
     """
     try:
-        rag_service = RAGService(db)
         result = await rag_service.query_rag(payload.query, payload.knowledge_base_id)
         return StandardResponse(code=200, message="success", data=result)
     except HTTPException:
