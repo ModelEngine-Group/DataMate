@@ -18,7 +18,7 @@ TEMPLATE_NAMES = ['template.jpg', 'template.jpeg', 'template.png', 'blank.jpg', 
 class ImageConverter:
     """图像转换器 - 不动产权证"""
 
-    def __init__(self, output_dir: str = ".", dpi: int = 200, instance_id: str = "001"):
+    def __init__(self, output_dir: str = ".", input_dir: str = ".", dpi: int = 200, instance_id: str = "001"):
         """
         初始化图像转换器
 
@@ -31,6 +31,7 @@ class ImageConverter:
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.dpi = dpi
         self.instance_id = instance_id
+        self.input_dir = input_dir
 
     def is_output_image(self, filename: str) -> bool:
         """判断是否为输出文件"""
@@ -81,6 +82,7 @@ class ImageConverter:
         # 优先检查预设模板名
         for name in TEMPLATE_NAMES:
             path = os.path.join(directory, name)
+            logger.info(f"检查预设模板图: {path}")
             if os.path.exists(path):
                 logger.info(f"找到预设模板图: {name}")
                 return path
@@ -98,7 +100,7 @@ class ImageConverter:
 
         return None
 
-    def draw_text_in_bbox(self, image: np.ndarray, bbox: List[int], text: str, 
+    def draw_text_in_bbox(self, image: np.ndarray, bbox: List[int], text: str,
                         is_first_four: bool = False) -> np.ndarray:
         """
         在指定bbox中绘制文本
@@ -311,7 +313,7 @@ class ImageConverter:
         all_output_files = []
 
         # 查找模板图像
-        template_path = self.find_clean_template_image(str(self.output_dir))
+        template_path = self.find_clean_template_image(str(self.input_dir))
         if not template_path:
             logger.error("未找到可用的原始模板图！")
             return all_output_files

@@ -75,7 +75,7 @@ class ImageAugmenter:
                     data = json.load(f)
             except:
                 pass
-        key = str(image_path).replace("\", "/")
+        key = str(image_path).replace("\\", "/")
         data[key] = coords.tolist()
         try:
             with open(self.coord_cache_file, "w", encoding="utf-8") as f:
@@ -338,7 +338,7 @@ class ImageAugmenter:
         output_path.mkdir(parents=True, exist_ok=True)
 
         # 获取背景图列表
-        all_bg_files = [f for f in self.bg_dir.glob("*") 
+        all_bg_files = [f for f in self.bg_dir.glob("*")
                        if f.suffix.lower() in ['.jpg', '.jpeg', '.png']]
 
         # 过滤背景图
@@ -393,5 +393,5 @@ class ImageAugmenter:
                     output_files.append(str(output_file_path))
                 else:
                     logger.error(f"失败: {output_filename}")
-        
+
         return output_files

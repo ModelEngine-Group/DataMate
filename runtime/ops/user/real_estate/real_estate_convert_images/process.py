@@ -45,9 +45,12 @@ class RealEstateDocToImgOperator(Mapper):
                 logger.warning(f"未找到匹配的JSON文件: {self.pattern}")
                 return sample
 
+            full_path = sample.get('filePath')
+            folder_path = os.path.dirname(full_path)
             # 创建转换器
             converter = ImageConverter(
                 output_dir=str(input_path),
+                input_dir=folder_path,
                 dpi=self.dpi,
                 instance_id=str(sample.get("instance_id", "001"))
             )
@@ -61,5 +64,5 @@ class RealEstateDocToImgOperator(Mapper):
 
         except Exception as e:
             logger.error(f"Error converting data to image: {e}")
-            
+
         return sample
