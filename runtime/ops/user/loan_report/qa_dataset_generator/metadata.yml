@@ -1,0 +1,54 @@
+name: 'QA数据集生成器'
+description: '从贷款报告数据和图片生成多模态QA对话数据集'
+language: 'python'
+vendor: 'datamate'
+raw_id: 'QADatasetGenerator'
+version: '1.0.0'
+modal: 'text'
+inputs: 'text'
+outputs: 'text'
+
+runtime:
+  memory: 209715200  # 200MB
+  cpu: 1.0
+  gpu: 0
+  storage: 200MB
+metrics:
+  - name: '生成速度'
+    metric: '100 samples/sec'
+settings:
+  train_ratio:
+    name: '训练集比例'
+    description: '训练集数据比例（0-100）'
+    type: 'slider'
+    defaultVal: 80
+    min: 0
+    max: 100
+    step: 1
+    required: false
+  val_ratio:
+    name: '验证集比例'
+    description: '验证集数据比例（0-100）'
+    type: 'slider'
+    defaultVal: 10
+    min: 0
+    max: 100
+    step: 1
+    required: false
+  test_ratio:
+    name: '测试集比例'
+    description: '测试集数据比例（0-100）'
+    type: 'slider'
+    defaultVal: 10
+    min: 0
+    max: 100
+    step: 1
+    required: false
+  doc_type:
+    name: '文档类型'
+    description: '数据集文档类型描述'
+    type: 'input'
+    defaultVal: '个人贷款调查报告'
+    required: false
+release:
+  - '首次发布'

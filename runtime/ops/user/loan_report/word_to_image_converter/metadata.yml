@@ -1,0 +1,40 @@
+name: '文档图像转换器'
+description: '将Word文档转换为JPG图片，支持批量处理'
+language: 'python'
+vendor: 'datamate'
+raw_id: 'WordToImageConverter'
+version: '1.0.0'
+
+modal: 'image'
+inputs: 'text'
+outputs: 'image'
+
+runtime:
+  memory: 524288000  # 500MB
+  cpu: 1.0
+  gpu: 0
+  storage: 500MB
+metrics:
+  - name: '处理速度'
+    metric: '10 docs/min'
+settings:
+  dpi:
+    name: '图片分辨率'
+    description: '输出图片的DPI值'
+    type: 'slider'
+    defaultVal: 300
+    min: 72
+    max: 600
+    step: 1
+    required: false
+  keep_pdf:
+    name: '保留PDF'
+    description: '是否保留中间PDF文件'
+    type: 'switch'
+    defaultVal: 'false'
+    required: false
+    checkedLabel: '是'
+    unCheckedLabel: '否'
+
+release:
+  - '首次发布'

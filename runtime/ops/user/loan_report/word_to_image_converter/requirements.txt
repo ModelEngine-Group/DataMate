@@ -1,0 +1,7 @@
+# 文档图像转换器依赖
+opencv-python>=4.5.0
+Pillow>=9.0.0
+pymupdf>=1.19.0
+loguru>=0.6.0
+# Windows平台可选依赖
+# comtypes>=1.1.0
