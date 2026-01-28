@@ -22,6 +22,8 @@ import {
   deleteAutoAnnotationTaskByIdUsingDelete,
   getAutoAnnotationLabelStudioProjectUsingGet,
   loginAnnotationUsingGet,
+  syncManualAnnotationToDatabaseUsingPost,
+  syncAutoAnnotationToDatabaseUsingPost,
 } from "../annotation.api";
 import { mapAnnotationTask } from "../annotation.const";
 import CreateAnnotationTask from "../Create/components/CreateAnnotationTaskDialog";
@@ -261,6 +263,37 @@ export default function DataAnnotation() {
     setShowImportManualDialog(true);
   };
 
+  const handleSyncManualToDatabase = async (task: AnnotationTask) => {
+    if (!task?.id) {
+      message.error("未找到标注任务");
+      return;
+    }
+
+    Modal.confirm({
+      title: `确认将「${task.name}」在 Label Studio 中的标注结果同步到数据库吗？`,
+      content: (
+        <div>
+          <div>此操作会根据 Label Studio 中的任务数据覆盖当前文件标签与标注信息。</div>
+          <div>同步完成后，可在数据管理的文件详情中查看最新标签与标注。</div>
+        </div>
+      ),
+      okText: "同步到数据库",
+      cancelText: "取消",
+      onOk: async () => {
+        const hide = message.loading("正在从 Label Studio 同步标注到数据库...", 0);
+        try {
+          await syncManualAnnotationToDatabaseUsingPost(task.id as any);
+          hide();
+          message.success("同步完成");
+        } catch (e) {
+          console.error(e);
+          hide();
+          message.error("同步失败，请稍后重试");
+        }
+      },
+    });
+  };
+
   const handleImportAutoFromLabelStudio = (row: any) => {
     if (!row?.id) {
       message.error("未找到对应的自动标注任务");
@@ -275,6 +308,37 @@ export default function DataAnnotation() {
 
     setImportingAutoTask(full);
     setShowImportAutoDialog(true);
+  };
+
+  const handleSyncAutoToDatabase = (row: any) => {
+    if (!row?.id) {
+      message.error("未找到对应的自动标注任务");
+      return;
+    }
+
+    Modal.confirm({
+      title: `确认将自动标注任务「${row.name}」在 Label Studio 中的标注结果同步到数据库吗？`,
+      content: (
+        <div>
+          <div>此操作会根据 Label Studio 中的任务数据覆盖当前文件标签与标注信息。</div>
+          <div>同步完成后，可在数据管理的文件详情中查看最新标签与标注。</div>
+        </div>
+      ),
+      okText: "同步到数据库",
+      cancelText: "取消",
+      onOk: async () => {
+        const hide = message.loading("正在从 Label Studio 同步标注到数据库...", 0);
+        try {
+          await syncAutoAnnotationToDatabaseUsingPost(row.id);
+          hide();
+          message.success("同步完成");
+        } catch (e) {
+          console.error(e);
+          hide();
+          message.error("同步失败，请稍后重试");
+        }
+      },
+    });
   };
 
   const handleAnnotateAuto = (task: any) => {
@@ -430,9 +494,15 @@ export default function DataAnnotation() {
       onClick: handleAnnotate,
     },
     {
-      key: "back-sync",
-      label: "同步",
+      key: "sync-db",
+      label: "同步到数据库",
       icon: <SyncOutlined className="w-4 h-4" style={{ color: "#1890ff" }} />,
+      onClick: handleSyncManualToDatabase,
+    },
+    {
+      key: "export-result",
+      label: "导出标注结果",
+      icon: <ExportOutlined className="w-4 h-4" />, // 导出/下载类图标
       onClick: handleImportManualFromLabelStudio,
     },
     {
@@ -624,15 +694,21 @@ export default function DataAnnotation() {
               <Button
                 type="text"
                 icon={<SyncOutlined style={{ color: "#1890ff" }} />}
-                onClick={() => handleImportManualFromLabelStudio(task)}
-                title="从 Label Studio 同步标注结果到数据集"
+                onClick={() => handleSyncManualToDatabase(task)}
+                title="从 Label Studio 同步标注结果到数据库"
               >
-                同步
+                同步到数据库
               </Button>
 
               <Dropdown
                 menu={{
                   items: [
+                    {
+                      key: "export-result",
+                      label: "导出标注结果",
+                      icon: <ExportOutlined />,
+                      onClick: () => handleImportManualFromLabelStudio(task),
+                    },
                     {
                       key: "edit-dataset",
                       label: "编辑任务数据集",
@@ -668,16 +744,22 @@ export default function DataAnnotation() {
               <Button
                 type="text"
                 icon={<SyncOutlined style={{ color: "#1890ff" }} />}
-                onClick={() => handleImportAutoFromLabelStudio(task)}
-                title="从 Label Studio 同步标注结果到数据集"
+                onClick={() => handleSyncAutoToDatabase(task)}
+                title="从 Label Studio 同步标注结果到数据库"
               >
-                同步
+                同步到数据库
               </Button>
 
               {/* 二级功能：编辑任务数据集 + 删除任务（折叠菜单） */}
               <Dropdown
                 menu={{
                   items: [
+                    {
+                      key: "export-result",
+                      label: "导出标注结果",
+                      icon: <ExportOutlined />,
+                      onClick: () => handleImportAutoFromLabelStudio(task),
+                    },
                     {
                       key: "edit-dataset",
                       label: "编辑任务数据集",

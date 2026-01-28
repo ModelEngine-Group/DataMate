@@ -120,6 +120,7 @@ export default function CreateAnnotationTask({
   const [selectedDataset, setSelectedDataset] = useState<Dataset | null>(null);
   const [imageFileCount, setImageFileCount] = useState(0);
   const [manualDatasetTypeFilter, setManualDatasetTypeFilter] = useState<DatasetType | undefined>(undefined);
+  const [manualAllowedExtensions, setManualAllowedExtensions] = useState<string[] | undefined>(undefined);
 
   useEffect(() => {
     if (!open) return;
@@ -178,6 +179,11 @@ export default function CreateAnnotationTask({
     setImageFileCount(count);
   }, [selectedFilesMap]);
 
+  const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".bmp", ".gif", ".tiff", ".webp"];
+  const TEXT_EXTENSIONS = [".txt", ".md", ".csv", ".tsv", ".jsonl", ".log"];
+  const AUDIO_EXTENSIONS = [".wav", ".mp3", ".flac", ".aac", ".ogg", ".m4a", ".wma"];
+  const VIDEO_EXTENSIONS = [".mp4", ".avi", ".mov", ".mkv", ".flv", ".wmv", ".webm"];
+
   const mapTemplateDataTypeToDatasetType = (raw?: string): DatasetType | undefined => {
     if (!raw) return undefined;
     const v = String(raw).trim().toLowerCase();
@@ -214,6 +220,40 @@ export default function CreateAnnotationTask({
     if (imageTokens.has(v)) return DatasetType.IMAGE;
     if (audioTokens.has(v)) return DatasetType.AUDIO;
     if (videoTokens.has(v)) return DatasetType.VIDEO;
+
+    return undefined;
+  };
+
+  const getAllowedExtensionsForTemplateDataType = (raw?: string): string[] | undefined => {
+    if (!raw) return undefined;
+    const v = String(raw).trim().toLowerCase();
+
+    const textTokens = new Set<string>([
+      "text",
+      DataType.TEXT.toLowerCase(),
+      "文本",
+    ]);
+    const imageTokens = new Set<string>([
+      "image",
+      DataType.IMAGE.toLowerCase(),
+      "图像",
+      "图片",
+    ]);
+    const audioTokens = new Set<string>([
+      "audio",
+      DataType.AUDIO.toLowerCase(),
+      "音频",
+    ]);
+    const videoTokens = new Set<string>([
+      "video",
+      DataType.VIDEO.toLowerCase(),
+      "视频",
+    ]);
+
+    if (textTokens.has(v)) return TEXT_EXTENSIONS;
+    if (imageTokens.has(v)) return IMAGE_EXTENSIONS;
+    if (audioTokens.has(v)) return AUDIO_EXTENSIONS;
+    if (videoTokens.has(v)) return VIDEO_EXTENSIONS;
 
     return undefined;
   };
@@ -417,6 +457,9 @@ export default function CreateAnnotationTask({
                       const nextType = mapTemplateDataTypeToDatasetType(tpl?.dataType);
                       setManualDatasetTypeFilter(nextType);
 
+                      const nextExtensions = getAllowedExtensionsForTemplateDataType(tpl?.dataType);
+                      setManualAllowedExtensions(nextExtensions);
+
                       // 若当前已选数据集类型与模板不匹配，则清空当前选择
                       if (selectedDataset && nextType && selectedDataset.datasetType !== nextType) {
                         setSelectedDataset(null);
@@ -459,6 +502,7 @@ export default function CreateAnnotationTask({
                       }
                     }}
                     datasetTypeFilter={manualDatasetTypeFilter}
+                    allowedFileExtensions={manualAllowedExtensions}
                     singleDatasetOnly
                     disabled={!manualForm.getFieldValue("templateId")}
                   />
@@ -512,6 +556,7 @@ export default function CreateAnnotationTask({
                       autoForm.setFieldsValue({ datasetId: dataset?.id ?? "" });
                     }}
                     datasetTypeFilter={DatasetType.IMAGE}
+                    allowedFileExtensions={IMAGE_EXTENSIONS}
                     singleDatasetOnly
                   />
                   {selectedDataset && (

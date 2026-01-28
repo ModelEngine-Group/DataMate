@@ -16,6 +16,7 @@ from app.core.config import settings
 from ..client import LabelStudioClient
 from ..service.mapping import DatasetMappingService
 from ..service.sync import SyncService
+from ..service.ls_annotation_sync import LSAnnotationSyncService
 from ..service.template import AnnotationTemplateService
 from ..schema import (
     DatasetMappingCreateRequest,
@@ -602,6 +603,41 @@ async def import_manual_from_label_studio_to_dataset(
                 pass
 
     return StandardResponse(code=200, message="success", data=True)
+
+
+@router.post("/{mapping_id}/sync-db", response_model=StandardResponse[int])
+async def sync_manual_annotations_to_database(
+    mapping_id: str = Path(..., description="映射ID (mapping UUID)"),
+    db: AsyncSession = Depends(get_db),
+):
+    """从 Label Studio 项目同步当前手动标注结果到 DM 数据库。
+
+    行为：
+    - 基于 mapping_id 定位 Label Studio 项目；
+    - 遍历项目下所有 task，按 task.data.file_id 找到对应 t_dm_dataset_files 记录；
+    - 读取每个 task 的 annotations + predictions，写入：
+      * tags: 从 result 中提取的标签概要，供 DM 列表/预览展示；
+      * annotation: 完整原始 JSON 结果；
+      * tags_updated_at: 当前时间戳。
+    返回值为成功更新的文件数量。
+    """
+
+    mapping_service = DatasetMappingService(db)
+    mapping = await mapping_service.get_mapping_by_uuid(mapping_id)
+    if not mapping:
+        raise HTTPException(status_code=404, detail="Mapping not found")
+
+    ls_client = LabelStudioClient(
+        base_url=settings.label_studio_base_url,
+        token=settings.label_studio_user_token,
+    )
+    sync_service = LSAnnotationSyncService(db, ls_client)
+
+    updated = await sync_service.sync_project_annotations_to_dm(
+        project_id=str(mapping.labeling_project_id),
+    )
+
+    return StandardResponse(code=200, message="success", data=updated)
 
 @router.get("", response_model=StandardResponse[PaginatedData[DatasetMappingResponse]])
 async def list_mappings(

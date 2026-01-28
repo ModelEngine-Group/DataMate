@@ -116,7 +116,8 @@ class Service:
                     uploadedBy=None,
                     lastAccessTime=f.last_access_time,  # type: ignore
                     tags=f.tags,  # type: ignore
-                    tags_updated_at=f.tags_updated_at  # type: ignore
+                    tags_updated_at=f.tags_updated_at,  # type: ignore
+                    annotation=getattr(f, "annotation", None),  # type: ignore
                 )
                 for f in files
             ]

@@ -180,18 +180,17 @@ class ImageObjectDetectionBoundingBox(Mapper):
         else:
             output_dir = os.path.dirname(image_path)
         
-        # 创建输出子目录：仅保留 annotations 目录，不再额外保存标注图像，
-        # 以减少冗余占用；检测结果将直接写入 JSON 文件。
-        annotations_dir = os.path.join(output_dir, "annotations")
-        os.makedirs(annotations_dir, exist_ok=True)
-        
+        # 创建 / 使用输出目录：直接在 output_dir 下保存 JSON，
+        # 约定最终路径为 <output_dir>/<image_stem>.json，避免 "annotations/annotations" 嵌套。
+        os.makedirs(output_dir, exist_ok=True)
+
         # 保持原始文件名（不添加后缀），确保一一对应
         base_name = os.path.basename(image_path)
         name_without_ext = os.path.splitext(base_name)[0]
-        
+
         # 保存标注 JSON（文件名与图像对应）
         json_filename = f"{name_without_ext}.json"
-        json_path = os.path.join(annotations_dir, json_filename)
+        json_path = os.path.join(output_dir, json_filename)
         with open(json_path, "w", encoding="utf-8") as f:
             json.dump(annotations, f, indent=2, ensure_ascii=False)
         
