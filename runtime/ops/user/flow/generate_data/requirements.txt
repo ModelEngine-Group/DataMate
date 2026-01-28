@@ -1,0 +1,3 @@
+python-docx>=0.8.11
+faker>=20.0.0
+loguru>=0.7.0
