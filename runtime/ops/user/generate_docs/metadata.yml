@@ -1,0 +1,30 @@
+name: '文档生成算子'
+description: '基于Word模板和输入数据生成.docx文档'
+language: 'python'
+raw_id: 'DocGenOperator'  # 与 process.py 类名一致
+version: '1.0.0'
+vendor: 'huawei'
+modal: 'text'  # 假设处理的是文本数据\
+inputs: 'text'
+outputs: 'text'
+
+release:
+  - '首次发布：支持基于 docx 模板生成文档'
+
+runtime:
+  gpu: 0
+  npu: 0
+  storage: 100MB
+
+metrics:
+  - name: '生成速度'
+    metric: '5 docs/sec'
+
+settings:
+  # 对应原脚本的 --prefix 参数
+  filePrefixParam:
+    name: '文件名前缀'
+    description: '生成文件的前缀'
+    type: 'input'
+    defaultVal: 'loan_clearance'
+    required: false
