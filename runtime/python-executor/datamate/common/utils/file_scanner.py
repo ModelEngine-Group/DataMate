@@ -1,5 +1,7 @@
 import os
 import uuid
+from pathlib import Path
+
 from loguru import logger
 import mimetypes
 from datetime import datetime
@@ -71,8 +73,7 @@ class FileScanner:
                 # 预先收集元数据
                 try:
                     stats = os.stat(full_path)
-                    f_type, _ = mimetypes.guess_type(full_path)
-                    if not f_type: f_type = os.path.splitext(file)[1]
+                    f_type = os.path.splitext(file)[1].lower()
 
                     # 构造 sample 格式
                     scanned_files_map[full_path] = {

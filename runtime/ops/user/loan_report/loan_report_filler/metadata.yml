@@ -1,0 +1,21 @@
+name: '贷款报告模板填充器'
+description: '将JSON数据填充到Word模板生成个人贷款调查报告'
+language: 'python'
+vendor: 'datamate'
+raw_id: 'LoanReportFiller'
+version: '1.0.0'
+modal: 'text'
+inputs: 'text'
+outputs: 'text'
+
+runtime:
+  memory: 209715200  # 200MB
+  cpu: 0.5
+  gpu: 0
+  storage: 200MB
+metrics:
+  - name: '处理速度'
+    metric: '50 reports/min'
+
+release:
+  - '首次发布'

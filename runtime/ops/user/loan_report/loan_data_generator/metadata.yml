@@ -1,0 +1,41 @@
+name: '贷款数据生成器'
+description: '生成虚拟贷款调查报告的随机数据，用于数据合成和处理流水线'
+language: 'python'
+vendor: 'datamate'
+raw_id: 'LoanDataGenerator'
+version: '1.0.0'
+modal: 'text'
+inputs: 'text'
+outputs: 'text'
+
+runtime:
+  memory: 104857600  # 100MB
+  cpu: 0.5
+  gpu: 0
+  storage: 100MB
+
+release:
+  - '首次发布'
+
+metrics:
+  - name: '生成速度'
+    metric: '100 records/sec'
+
+settings:
+  batchCount:
+    name: '生成数量'
+    description: '单次生成的报告数量'
+    type: 'slider'
+    defaultVal: 10
+    min: 1
+    max: 1000
+    step: 1
+    required: false
+  startSequence:
+    name: '起始序号'
+    description: '生成数据的起始序号（7位数字），默认为自动递增'
+    type: 'inputNumber'
+    defaultVal: 0
+    min: 0
+    required: false
+
