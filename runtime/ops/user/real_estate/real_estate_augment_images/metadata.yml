@@ -1,7 +1,7 @@
 name: '不动产权证图像增强算子'
 description: '将电子凭证图像合成到真实拍摄场景中，生成具有真实感的实景照片'
 language: 'python'
-raw_id: 'ImgAugOperator'
+raw_id: 'RealEstateImgAugOperator'
 version: '1.0.0'
 vendor: 'datamate'
 modal: 'image'
@@ -55,6 +55,8 @@ settings:
   skipDetectParam:
     name: '跳过检测'
     description: '跳过自动检测，仅使用缓存坐标'
-    type: 'checkbox'
-    defaultVal: true
+    type: 'switch'
+    defaultVal: 'true'
+    checkedLabel: '跳过'
+    unCheckedLabel: '不跳过'
     required: false

@@ -9,9 +9,9 @@ from loguru import logger
 from datamate.core.base_op import Mapper
 from .src import DataGenerator
 
-class DataGenOperator(Mapper):
+class RealEstateDataGenOperator(Mapper):
     """
-    数据生成算子：DataGenOperator
+    数据生成算子：RealEstateDataGenOperator
     用于生成不动产权证模拟数据
     """
 
@@ -60,7 +60,6 @@ class DataGenOperator(Mapper):
                 sample['generated_records_path'] = str(output_file)
 
         except Exception as e:
-            logger.error(f"Error in DataGenOperator: {e}")
-            raise
-
+            logger.error(f"Error in RealEstateDataGenOperator: {e}")
+            
         return sample

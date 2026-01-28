@@ -9,9 +9,9 @@ from datamate.core.base_op import Mapper
 from .src import AnnotationBuilder
 
 
-class AnnotationGenOperator(Mapper):
+class RealEstateAnnotationGenOperator(Mapper):
     """
-    标注生成算子：AnnotationGenOperator
+    标注生成算子：RealEstateAnnotationGenOperator
     生成模型训练所需的图文对数据
     """
 
@@ -20,7 +20,9 @@ class AnnotationGenOperator(Mapper):
         # 获取 metadata.yml 中的参数
         self.format = kwargs.get('formatParam', 'multimodal')
         self.split = float(kwargs.get('splitParam', 0.8))
-        self.seed = kwargs.get('seedParam', 42)
+        # 处理 seed，前端 input 传过来可能是字符串
+        seed_val = kwargs.get('seedParam', 42)
+        self.seed = int(seed_val) if seed_val else None
 
     def execute(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -69,7 +71,6 @@ class AnnotationGenOperator(Mapper):
             logger.info(f"成功生成 {count} 条QA对")
 
         except Exception as e:
-            logger.error(f"Error in AnnotationGenOperator: {e}")
-            raise
-
+            logger.error(f"Error in RealEstateAnnotationGenOperator: {e}")
+            
         return sample

@@ -1,7 +1,7 @@
 name: '不动产权证图像转换算子'
 description: '将JSON数据渲染到模板图像上，生成不动产权证图像'
 language: 'python'
-raw_id: 'DocToImgOperator'
+raw_id: 'RealEstateDocToImgOperator'
 version: '1.0.0'
 vendor: 'datamate'
 modal: 'image'

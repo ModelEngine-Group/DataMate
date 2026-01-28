@@ -1,7 +1,7 @@
 name: '不动产权证数据生成算子'
 description: '生成不动产权证模拟数据，包含13个字段信息'
 language: 'python'
-raw_id: 'DataGenOperator'
+raw_id: 'RealEstateDataGenOperator'
 version: '1.0.0'
 vendor: 'datamate'
 modal: 'text'

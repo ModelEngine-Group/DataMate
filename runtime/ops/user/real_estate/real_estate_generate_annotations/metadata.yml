@@ -1,7 +1,7 @@
 name: '不动产权证标注生成算子'
 description: '生成模型训练所需的图文对数据'
 language: 'python'
-raw_id: 'AnnotationGenOperator'
+raw_id: 'RealEstateAnnotationGenOperator'
 version: '1.0.0'
 vendor: 'datamate'
 modal: 'text'

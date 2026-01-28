@@ -10,9 +10,9 @@ from datamate.core.base_op import Mapper
 from .src import ImageAugmenter
 
 
-class ImgAugOperator(Mapper):
+class RealEstateImgAugOperator(Mapper):
     """
-    图像增强合成算子：ImgAugOperator
+    图像增强合成算子：RealEstateImgAugOperator
     将电子凭证图像合成到真实拍摄场景中
     """
 
@@ -26,7 +26,12 @@ class ImgAugOperator(Mapper):
         else:
             self.allowed_scenes = scenes_val if scenes_val else ['normal']
 
-        self.skip_detect = kwargs.get('skipDetectParam', True)
+        # 处理switch类型参数，可能是字符串'true'/'false'或布尔值
+        skip_detect_val = kwargs.get('skipDetectParam', True)
+        if isinstance(skip_detect_val, str):
+            self.skip_detect = skip_detect_val.lower() in ('true', '1', 'yes')
+        else:
+            self.skip_detect = bool(skip_detect_val)
 
         # 预加载背景图列表
         self.bg_dir = os.path.join(os.path.dirname(__file__), "backgrounds")
@@ -80,6 +85,5 @@ class ImgAugOperator(Mapper):
 
         except Exception as e:
             logger.error(f"Error in ImgAugOperator: {e}")
-            raise
-
+            
         return sample

@@ -8,9 +8,9 @@ from loguru import logger
 from datamate.core.base_op import Mapper
 from .src import ImageConverter
 
-class DocToImgOperator(Mapper):
+class RealEstateDocToImgOperator(Mapper):
     """
-    文档转图片算子：DocToImgOperator
+    文档转图片算子：RealEstateDocToImgOperator
     将JSON数据渲染到模板图像上
     """
 
@@ -61,6 +61,5 @@ class DocToImgOperator(Mapper):
 
         except Exception as e:
             logger.error(f"Error converting data to image: {e}")
-            raise
-
+            
         return sample
