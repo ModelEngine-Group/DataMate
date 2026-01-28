@@ -7,6 +7,7 @@ import com.datamate.common.domain.model.FileUploadResult;
 import com.datamate.common.domain.service.FileService;
 import com.datamate.common.domain.utils.AnalyzerUtils;
 import com.datamate.common.domain.utils.ArchiveAnalyzer;
+import com.datamate.common.domain.utils.CommonUtils;
 import com.datamate.common.infrastructure.exception.BusinessAssert;
 import com.datamate.common.infrastructure.exception.BusinessException;
 import com.datamate.common.infrastructure.exception.CommonErrorCode;
@@ -189,7 +190,7 @@ public class DatasetFileApplicationService {
         } else {
             DatasetFile exist = datasetFilesMap.get(path.toString());
             if (exist == null) {
-                datasetFile.setId("file-" + datasetFile.getFileName());
+                datasetFile.setId(datasetFile.getFileName());
                 datasetFile.setFileSize(path.toFile().length());
             } else {
                 datasetFile = exist;
@@ -202,12 +203,21 @@ public class DatasetFileApplicationService {
      * 获取文件详情
      */
     @Transactional(readOnly = true)
-    public DatasetFile getDatasetFile(String datasetId, String fileId) {
+    public DatasetFile getDatasetFile(Dataset dataset, String fileId) {
+        if (dataset != null && !CommonUtils.isUUID(fileId) && !fileId.startsWith(".")) {
+            DatasetFile file = new DatasetFile();
+            file.setId(fileId);
+            file.setFileName(fileId);
+            file.setDatasetId(dataset.getId());
+            file.setFileSize(0L);
+            file.setFilePath(dataset.getPath() + File.separator + fileId);
+            return file;
+        }
         DatasetFile file = datasetFileRepository.getById(fileId);
-        if (file == null) {
+        if (file == null || dataset == null) {
             throw new IllegalArgumentException("File not found: " + fileId);
         }
-        if (!file.getDatasetId().equals(datasetId)) {
+        if (!file.getDatasetId().equals(dataset.getId())) {
             throw new IllegalArgumentException("File does not belong to the specified dataset");
         }
         return file;
@@ -218,11 +228,13 @@ public class DatasetFileApplicationService {
      */
     @Transactional
     public void deleteDatasetFile(String datasetId, String fileId) {
-        DatasetFile file = getDatasetFile(datasetId, fileId);
         Dataset dataset = datasetRepository.getById(datasetId);
+        DatasetFile file = getDatasetFile(dataset, fileId);
         dataset.setFiles(new ArrayList<>(Collections.singleton(file)));
         datasetFileRepository.removeById(fileId);
-        dataset.removeFile(file);
+        if (CommonUtils.isUUID(fileId)) {
+            dataset.removeFile(file);
+        }
         datasetRepository.updateById(dataset);
         // 删除文件时，上传到数据集中的文件会同时删除数据库中的记录和文件系统中的文件，归集过来的文件仅删除数据库中的记录
         if (file.getFilePath().startsWith(dataset.getPath())) {
@@ -239,10 +251,10 @@ public class DatasetFileApplicationService {
      * 下载文件
      */
     @Transactional(readOnly = true)
-    public Resource downloadFile(String datasetId, String fileId) {
-        DatasetFile file = getDatasetFile(datasetId, fileId);
+    public Resource downloadFile(DatasetFile file) {
         try {
             Path filePath = Paths.get(file.getFilePath()).normalize();
+            log.info("start download file {}", file.getFilePath());
             Resource resource = new UrlResource(filePath.toUri());
             if (resource.exists()) {
                 return resource;
@@ -638,12 +650,12 @@ public class DatasetFileApplicationService {
      */
     @Transactional
     public void renameFile(String datasetId, String fileId, RenameFileRequest request) {
-        DatasetFile file = getDatasetFile(datasetId, fileId);
         Dataset dataset = datasetRepository.getById(datasetId);
         if (dataset == null) {
             throw BusinessException.of(DataManagementErrorCode.DATASET_NOT_FOUND);
         }
 
+        DatasetFile file = getDatasetFile(dataset, fileId);
         String newName = Optional.ofNullable(request.getNewName()).orElse("").trim();
         if (newName.isEmpty()) {
             throw BusinessException.of(CommonErrorCode.PARAM_ERROR);
