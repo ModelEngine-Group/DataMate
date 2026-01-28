@@ -458,7 +458,7 @@ class FileExporter(BaseOp):
 
             if sample[self.text_key] == '' and sample[self.data_key] == b'':
                 sample[self.filesize_key] = "0"
-                return True
+                return False
 
             if save_path:
                 save_path = self.save_file(sample, save_path)
