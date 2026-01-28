@@ -104,7 +104,7 @@ async def get_execution_log(
 
         filename = path.name
         headers = {
-            "Content-Disposition": f'inline; filename="{filename}"'
+            "Content-Disposition": f'inline; filename={filename}'
         }
         return FileResponse(
             path=str(path),
