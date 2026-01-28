@@ -73,9 +73,9 @@ CREATE TABLE IF NOT EXISTS t_operator_instance
     PRIMARY KEY (instance_id, operator_id, op_index)
     );
 
-COMMENT ON TABLE t_operator_instance IS '操作员实例表';
+COMMENT ON TABLE t_operator_instance IS '算子实例表';
 COMMENT ON COLUMN t_operator_instance.instance_id IS '实例ID';
-COMMENT ON COLUMN t_operator_instance.operator_id IS '操作员ID';
+COMMENT ON COLUMN t_operator_instance.operator_id IS '算子ID';
 COMMENT ON COLUMN t_operator_instance.op_index IS '操作序号';
 COMMENT ON COLUMN t_operator_instance.settings_override IS '设置覆盖';
 
@@ -108,6 +108,33 @@ COMMENT ON COLUMN t_clean_result.src_size IS '源文件大小';
 COMMENT ON COLUMN t_clean_result.dest_size IS '目标文件大小';
 COMMENT ON COLUMN t_clean_result.status IS '状态';
 COMMENT ON COLUMN t_clean_result.result IS '结果';
+
+
+create table if not exists t_data_process_log
+(
+    id                 VARCHAR(64) PRIMARY KEY,
+    instance_id        VARCHAR(256),
+    operator_id        VARCHAR(256),
+    start_time         TIMESTAMP,
+    end_time           TIMESTAMP,
+    succeed_file_count INTEGER   DEFAULT 0,
+    failed_file_count  INTEGER   DEFAULT 0,
+    error_message      TEXT      DEFAULT '',
+    created_at         TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at         TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+COMMENT ON TABLE t_data_process_log IS '数据处理日志表';
+COMMENT ON COLUMN t_data_process_log.id IS '主键ID';
+COMMENT ON COLUMN t_data_process_log.instance_id IS '实例ID';
+COMMENT ON COLUMN t_data_process_log.operator_id IS '算子ID';
+COMMENT ON COLUMN t_data_process_log.start_time IS '开始时间';
+COMMENT ON COLUMN t_data_process_log.end_time IS '结束时间';
+COMMENT ON COLUMN t_data_process_log.succeed_file_count IS '成功文件数量';
+COMMENT ON COLUMN t_data_process_log.failed_file_count IS '失败文件数量';
+COMMENT ON COLUMN t_data_process_log.error_message IS '错误信息';
+COMMENT ON COLUMN t_data_process_log.created_at IS '创建时间';
+COMMENT ON COLUMN t_data_process_log.updated_at IS '更新时间';
 
 -- 创建触发器用于自动更新 updated_at
 CREATE OR REPLACE FUNCTION update_updated_at_column()

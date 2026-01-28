@@ -18,6 +18,7 @@ from datamate.common.utils.llm_request import LlmReq
 from datamate.common.utils.registry import Registry
 from datamate.common.utils import check_valid_path
 from datamate.core.constant import Fields
+from datamate.core.process_log_decorator import update_process_log
 from datamate.sql_manager.persistence_atction import TaskInfoPersistence
 
 OPERATORS = Registry('Operators')
@@ -181,6 +182,7 @@ class Mapper(BaseOp):
     def __init__(self, *args, **kwargs):
         super(Mapper, self).__init__(*args, **kwargs)
 
+    @update_process_log
     def __call__(self, sample: Dict[str, Any], **kwargs):
         # 该算子前已有算子执行该文件失败
         if sample.get(Fields.result) is False:
@@ -317,6 +319,7 @@ class Filter(BaseOp):
     def __init__(self, *args, **kwargs):
         super(Filter, self).__init__(*args, **kwargs)
 
+    @update_process_log
     def __call__(self, sample: Dict[str, Any], **kwargs):
         # 该算子前已有算子执行该文件失败
         if sample.get(Fields.result) is False:
