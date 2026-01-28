@@ -17,7 +17,7 @@ class ImgAugOperator(Mapper):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # 处理场景参数 (checkbox 返回的是 list 或 逗号分隔字符串，需兼容)
-        self.scenes = int(kwargs.get('scenes', 2))
+        self.scenes = int(kwargs.get('scenesParam', 2))
         scenes_val = kwargs.get('sceneListParam', [])
         if isinstance(scenes_val, str):
             self.allowed_scenes = scenes_val.split(',')

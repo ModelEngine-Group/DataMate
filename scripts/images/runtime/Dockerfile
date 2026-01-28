@@ -3,7 +3,7 @@ FROM ghcr.io/astral-sh/uv:python3.11-bookworm
 RUN --mount=type=cache,target=/var/cache/apt \
     --mount=type=cache,target=/var/lib/apt \
     apt update \
-    && apt install -y libgl1 libglib2.0-0 vim libmagic1 libreoffice dos2unix swig poppler-utils tesseract-ocr fonts-wqy-microhei fonts-wqy-zenhei xfonts-intl-chinese
+    && apt install -y libgl1 libglib2.0-0 vim libmagic1 libreoffice dos2unix swig poppler-utils tesseract-ocr
 
 RUN mkdir -p /home/models \
     && wget https://paddle-model-ecology.bj.bcebos.com/paddlex/official_inference_model/paddle3.0.0/PP-LCNet_x1_0_doc_ori_infer.tar \
@@ -27,6 +27,9 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     && python -m spacy download zh_core_web_sm \
     && python -c "import nltk; nltk.download('punkt_tab'); nltk.download('averaged_perceptron_tagger_eng')" \
     && echo "/usr/local/lib/ops/site-packages" > /usr/local/lib/python3.11/site-packages/ops.pth
+
+RUN mkdir -p /usr/share/fonts/truetype/custom && \
+    wget -O /usr/share/fonts/truetype/custom/FangSong_GB2312.ttf https://github.com/XiangyunHuang/fonts/raw/master/FangSong_GB2312.ttf
 
 RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
     && chmod +x /opt/runtime/start.sh \
