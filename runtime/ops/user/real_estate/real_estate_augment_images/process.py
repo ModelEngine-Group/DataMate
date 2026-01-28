@@ -51,7 +51,7 @@ class RealEstateImgAugOperator(Mapper):
         """
         try:
             # 获取输入路径
-            input_path = str(sample.get('export_path'))
+            input_path = str(sample.get('export_path')) + "/images"
             if not input_path or not os.path.exists(input_path):
                 logger.error(f"Warning: Input path not found: {input_path}")
                 return sample
@@ -85,5 +85,5 @@ class RealEstateImgAugOperator(Mapper):
 
         except Exception as e:
             logger.error(f"Error in ImgAugOperator: {e}")
-            
+
         return sample

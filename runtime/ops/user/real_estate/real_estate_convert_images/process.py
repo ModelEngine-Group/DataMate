@@ -49,7 +49,7 @@ class RealEstateDocToImgOperator(Mapper):
             folder_path = os.path.dirname(full_path)
             # 创建转换器
             converter = ImageConverter(
-                output_dir=str(input_path),
+                output_dir=str(input_path) + "/images",
                 input_dir=folder_path,
                 dpi=self.dpi,
                 instance_id=str(sample.get("instance_id", "001"))
