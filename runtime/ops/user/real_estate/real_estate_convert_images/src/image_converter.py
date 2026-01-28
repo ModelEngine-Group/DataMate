@@ -37,37 +37,33 @@ class ImageConverter:
         """判断是否为输出文件"""
         return '_filled_' in filename
 
-    def get_simsun_font(self, size: int = 32) -> ImageFont.FreeTypeFont:
-        """获取宋体字体"""
+    # 与 scripts/images/runtime/Dockerfile 中安装的字体一致，参考 loan/convert_images 的字体逻辑
+    _CUSTOM_ZH_FONT = "/usr/share/fonts/truetype/custom/FangSong_GB2312.ttf"
+
+    def _get_font_for_fallback(self, size: int) -> ImageFont.FreeTypeFont:
+        """获取可用于中文的字体（优先 Dockerfile 安装的 FangSong_GB2312，与 loan 一致）"""
         paths = [
-            "C:/Windows/Fonts/simsun.ttc",
-            "C:/Windows/Fonts/simsun.ttf",
-            "/System/Library/Fonts/SimSun.ttf",
-            "/usr/share/fonts/truetype/custom/simsun.ttc",
+            self._CUSTOM_ZH_FONT,
+            "/usr/share/fonts/truetype/liberation/LiberationSerif-Regular.ttf",
+            "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
+            "/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf",
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
         ]
         for p in paths:
             if os.path.exists(p):
                 try:
                     return ImageFont.truetype(p, size)
-                except:
+                except Exception:
                     continue
         return ImageFont.load_default()
 
+    def get_simsun_font(self, size: int = 32) -> ImageFont.FreeTypeFont:
+        """获取正文字体（宋体风格），与 loan 一致优先使用环境中文字体"""
+        return self._get_font_for_fallback(size)
+
     def get_fangsong_font(self, size: int = 32) -> ImageFont.FreeTypeFont:
-        """获取仿宋字体"""
-        paths = [
-            "C:/Windows/Fonts/simfang.ttf",
-            "C:/Windows/Fonts/fangsong.ttf",
-            "/System/Library/Fonts/FangSong.ttf",
-            "/usr/share/fonts/truetype/custom/simfang.ttf",
-        ]
-        for p in paths:
-            if os.path.exists(p):
-                try:
-                    return ImageFont.truetype(p, size)
-                except:
-                    continue
-        return self.get_simsun_font(size)
+        """获取仿宋字体，与 loan 一致优先使用环境中文字体"""
+        return self._get_font_for_fallback(size)
 
     def find_clean_template_image(self, directory: str) -> Optional[str]:
         """
