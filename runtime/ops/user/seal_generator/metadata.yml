@@ -1,0 +1,21 @@
+name: '公章自动加盖生成器'
+description: '自动定位文档落款位置，生成并加盖具有真实感（墨迹、纹理、边缘淡出）的电子公章。'
+language: 'python'
+raw_id: 'SealGeneratorMapper'
+version: '1.0.0'
+vendor: 'datamate'
+modal: 'image'
+inputs: 'image'
+outputs: 'image'
+
+release:
+  - '集成自动定位算法（Gap Detection & Projection）'
+  - '支持真实感物理效果（墨迹扩散、磨损纹理）'
+
+runtime:
+  gpu: 0
+  storage: 100MB
+
+metrics:
+  - name: '处理速度'
+    metric: '0.5s/img'
