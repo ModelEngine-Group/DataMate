@@ -91,7 +91,7 @@ class ImageAugmentor:
             with open(self.coord_cache_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
 
-            key = str(image_path).replace("\\", "/")
+            key = os.path.basename(image_path)
             if key in data: 
                 return np.array(data[key], dtype="float32")
         except: 
@@ -109,7 +109,7 @@ class ImageAugmentor:
             except: 
                 pass
 
-        key = str(image_path).replace("\\", "/")
+        key = os.path.basename(image_path)
         data[key] = coords.tolist()
 
         try:

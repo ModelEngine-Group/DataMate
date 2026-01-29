@@ -151,6 +151,10 @@ class FlowSealAddOperator(Mapper):
         Returns:
             处理后的样本
         """
+        file_path = sample.get('filePath')
+        if not file_path.endswith('.docx') or os.path.normpath(file_path).count(os.sep) > 3:
+            return sample
+
         try:
             # 获取输入文件路径
             input_path = sample.get('export_path')

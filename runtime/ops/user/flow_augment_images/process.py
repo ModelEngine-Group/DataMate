@@ -31,10 +31,10 @@ class FlowImgAugOperator(Mapper):
         self.skip_detect = kwargs.get('skipDetectParam', True)
 
         # 背景图目录
-        self.bg_dir = os.path.join(os.path.dirname(__file__), "backgrounds")
+        self.bg_dir = None
 
         # 坐标缓存文件路径 (存放在算子目录下)
-        self.coord_cache_file = os.path.join(os.path.dirname(__file__), "coordinates_cache.json")
+        self.coord_cache_file = None
 
     def _determine_scene_mode(self, bg_filename: str) -> str:
         """根据背景图文件名确定场景模式"""
@@ -59,7 +59,15 @@ class FlowImgAugOperator(Mapper):
         Returns:
             处理后的样本
         """
+        file_path = sample.get('filePath')
+        if not file_path.endswith('.docx') or os.path.normpath(file_path).count(os.sep) > 3:
+            return sample
+
         try:
+            parent_path = Path(file_path).parent
+            self.bg_dir = parent_path / "backgrounds"
+            self.coord_cache_file = parent_path / "coordinates_cache.json"
+
             # 获取输入路径
             input_path = sample.get('export_path')
             if not input_path or not os.path.exists(input_path):

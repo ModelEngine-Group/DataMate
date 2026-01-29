@@ -8,6 +8,7 @@ Create: 2025/01/28
 
 import json
 import os
+from pathlib import Path
 from typing import Dict, Any
 
 import cv2
@@ -22,14 +23,14 @@ class LoanReportDocumentSynthesizer(Mapper):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._background_dir = os.path.join(os.path.dirname(__file__), "backgrounds")
+        self._background_dir = None
         self._output_dir = None
         self._enable_watermark = bool(kwargs.get("enable_watermark", False))
         self._enable_shadow = bool(kwargs.get("enable_shadow", False))
         self._scene_mode = kwargs.get("scene_mode", "auto")
 
         # 坐标缓存文件
-        self._coord_file = os.path.join(os.path.dirname(__file__), "coordinates.json")
+        self._coord_file = None
 
     def _cv_imread(self, file_path: str):
         """读取含中文路径的图片"""
@@ -48,7 +49,7 @@ class LoanReportDocumentSynthesizer(Mapper):
             with open(self._coord_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
 
-            key = image_path.replace("\\", "/")
+            key = os.path.basename(image_path)
             if key in data:
                 logger.info(f"从缓存加载坐标: {os.path.basename(image_path)}")
                 return np.array(data[key], dtype="float32")
@@ -291,6 +292,14 @@ class LoanReportDocumentSynthesizer(Mapper):
 
     def execute(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         """执行文档合成"""
+        file_path = sample.get('filePath')
+        if not file_path.endswith('.docx') or os.path.normpath(file_path).count(os.sep) > 3:
+            return sample
+
+        parent_path = Path(file_path).parent
+        self._background_dir = parent_path / "backgrounds"
+        self._coord_file = parent_path / "coordinates_cache.json"
+
         self._output_dir = sample['export_path'] + "/images"
 
         # 获取源图目录

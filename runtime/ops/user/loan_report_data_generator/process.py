@@ -298,6 +298,10 @@ class LoanReportDataGenerator(Mapper):
 
     def execute(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         """执行数据生成"""
+        file_path = sample.get('filePath')
+        if not file_path.endswith('.docx') or os.path.normpath(file_path).count(os.sep) > 3:
+            return sample
+
         logger.info(f"开始生成 {self._batch_count} 条贷款数据...")
 
         # 初始化序号计数器

@@ -130,6 +130,10 @@ class LoanReportWordToImageConverter(Mapper):
 
     def execute(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         """执行文档转换"""
+        file_path = sample.get('filePath')
+        if not file_path.endswith('.docx') or os.path.normpath(file_path).count(os.sep) > 3:
+            return sample
+
         self._output_dir = sample['export_path']
         self.instance_id = sample['instance_id']
 
