@@ -336,12 +336,6 @@ class JsonlGeneratorOps(Mapper):
         self.include_table_data = kwargs.get("includeTableData", True)
         self.output_format = kwargs.get("outputFormat", "path")
 
-        # 创建输出目录
-        self.temp_output_dir = self.output_dir
-
-        # 创建生成器实例
-
-
     def execute(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         """
         核心处理逻辑

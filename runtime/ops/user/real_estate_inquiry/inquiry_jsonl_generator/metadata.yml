@@ -4,7 +4,7 @@ description: "将不动产数据和图片信息组合生成符合JSONL格式的J
 description_en: "Combines property data and image information to generate JSON files in JSONL format"
 language: "python"
 vendor: "datamate"
-raw_id: "JsonlGenerator"
+raw_id: "JsonlGeneratorOps"
 version: "1.0.0"
 types:
     - "generate"
