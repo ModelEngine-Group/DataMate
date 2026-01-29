@@ -1,0 +1,3 @@
+# 场景模拟算子依赖
+opencv-python-headless>=4.12.0.88
+numpy>=2.2.3

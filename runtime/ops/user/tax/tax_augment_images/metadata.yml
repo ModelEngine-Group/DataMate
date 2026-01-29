@@ -1,0 +1,79 @@
+name: '个人所得税图片增强算子'
+description: '真实世界模拟，将图片与背景图合成（支持阴影、斜拍、水印等场景）'
+language: 'python'
+raw_id: 'TaxImgAugOperator'
+version: '1.0.0'
+vendor: 'datamate'
+modal: 'image'
+inputs: 'image'
+outputs: 'image'
+
+release:
+  - '首次发布：支持真实世界模拟与多场景处理'
+
+runtime:
+  gpu: 0
+  npu: 0
+  storage: 1024MB
+
+metrics:
+  - name: '处理速度'
+    metric: '1 img/sec'
+
+settings:
+  scenesParam:
+    name: '选择场景数量'
+    description: '每张图随机选择几个场景（默认: 使用所有可用场景）'
+    type: 'select'
+    defaultVal: '2'
+    required: false
+    options:
+      - label: '1'
+        value: '1'
+      - label: '2'
+        value: '2'
+      - label: '3'
+        value: '3'
+      - label: '4'
+        value: '4'
+      - label: '5'
+        value: '5'
+
+  sceneListParam:
+    name: '启用场景模式'
+    description: '选择允许生成的场景类型'
+    type: 'checkbox'
+    defaultVal: 'normal,tilted,shadow,watermark,incomplete'
+    options:
+      - label: '标准 (Normal)'
+        value: 'normal'
+      - label: '斜拍 (Tilted)'
+        value: 'tilted'
+      - label: '阴影 (Shadow)'
+        value: 'shadow'
+      - label: '水印 (Watermark)'
+        value: 'watermark'
+      - label: '不完整 (Incomplete)'
+        value: 'incomplete'
+
+  skipDetectParam:
+    name: '跳过坐标检测'
+    description: '若开启，仅使用缓存坐标；若无缓存则跳过。关闭则实时计算。'
+    type: 'switch'
+    defaultVal: True
+    checkedLabel: '是'
+    unCheckedLabel: '否'
+
+  backgroundsDirParam:
+    name: '背景图目录'
+    description: '真实世界背景图库目录'
+    type: 'input'
+    defaultVal: 'backgrounds'
+    required: false
+
+  coordFileParam:
+    name: '坐标缓存文件'
+    description: '坐标缓存文件路径'
+    type: 'input'
+    defaultVal: 'coordinates_cache.json'
+    required: false

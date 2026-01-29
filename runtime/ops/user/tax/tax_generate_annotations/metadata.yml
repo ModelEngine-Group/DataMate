@@ -1,0 +1,39 @@
+name: '个人所得税标注生成算子'
+description: '生成QA对和JSONL格式数据集'
+language: 'python'
+raw_id: 'TaxQAGenOperator'
+version: '1.0.0'
+vendor: 'datamate'
+modal: 'image'
+inputs: 'image'
+outputs: 'text'
+
+release:
+  - '首次发布：支持QA对生成和JSONL数据集输出'
+
+runtime:
+  gpu: 0
+  npu: 0
+  storage: 200MB
+
+metrics:
+  - name: '生成速度'
+    metric: '100 records/sec'
+
+settings:
+  qaCountParam:
+    name: 'QA对数量'
+    description: '每个样本生成的QA对数量'
+    type: 'slider'
+    defaultVal: 8
+    min: 1
+    max: 50
+    step: 1
+    required: true
+
+  outputFileParam:
+    name: '输出文件名'
+    description: 'JSONL数据集文件名'
+    type: 'input'
+    defaultVal: '个人所得税完税证明_dataset.jsonl'
+    required: true

@@ -1,0 +1,23 @@
+name: '个人所得税文档生成算子'
+description: '将数据填充到Word模板生成文档'
+language: 'python'
+raw_id: 'TaxDocGenOperator'
+version: '1.0.0'
+vendor: 'datamate'
+modal: 'text'
+inputs: 'text'
+outputs: 'text'
+
+release:
+  - '首次发布：支持个人所得税完税证明文档生成'
+
+runtime:
+  gpu: 0
+  npu: 0
+  storage: 200MB
+
+metrics:
+  - name: '生成速度'
+    metric: '50 docs/sec'
+
+

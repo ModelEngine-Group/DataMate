@@ -1,0 +1,40 @@
+name: '个人所得税完数据生成算子'
+description: '生成个人所得税完税证明的模拟数据'
+language: 'python'
+vendor: 'datamate'
+raw_id: 'TaxDataGeneratorOperator'
+version: '1.0.0'
+modal: 'text'
+inputs: 'text'
+outputs: 'text'
+
+release:
+  - '首次发布：支持个人所得税完税证明数据生成'
+
+runtime:
+  memory: 10485760
+  cpu: 0.1
+  gpu: 0
+  npu: 0
+  storage: 10MB
+
+metrics:
+  - name: '生成速度'
+    metric: '100 records/sec'
+
+settings:
+  numParam:
+    name: '生成数量'
+    description: '生成的数据记录数量'
+    type: 'slider'
+    defaultVal: 5
+    min: 1
+    max: 1000
+    step: 1
+    required: false
+  seedParam:
+    name: '随机种子'
+    description: '随机种子（用于复现结果）'
+    type: 'input'
+    defaultVal: '42'
+    required: false

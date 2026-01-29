@@ -1,0 +1,41 @@
+name: '资产流水文档转图片算子'
+description: '将输入流中的.docx文档转换为图片格式'
+language: 'python'
+raw_id: 'FlowDocToImgOperator'
+version: '1.0.0'
+vendor: 'huawei'
+modal: 'image'
+inputs: 'text'
+outputs: 'image'
+
+release:
+  - '首次发布：支持 .docx 转 .png'
+
+runtime:
+  gpu: 0
+  npu: 0
+  storage: 500MB
+
+metrics:
+  - name: '转换速度'
+    metric: '2 docs/sec'
+
+settings:
+  # 对应原脚本的 --dpi 参数
+  dpiParam:
+    name: '图片清晰度 (DPI)'
+    description: '设置输出图片的每英寸点数，数值越高越清晰但文件越大'
+    type: 'slider'
+    defaultVal: 200
+    min: 72
+    max: 600
+    step: 1
+    required: true
+
+  # 对应原脚本的 --output 参数
+  patternParam:
+    name: '输入文件格式'
+    description: '输入文件格式'
+    type: 'input'
+    defaultVal: '*.docx'
+    required: true
