@@ -169,19 +169,14 @@ class LicenseSceneSimulatorOperator(Mapper):
     
     def _load_cached_coordinates(self, bg_filename: str):
         """从缓存文件加载坐标"""
+        logger.info(f"############### {self.coord_cache_file} ###############")
         if not os.path.exists(self.coord_cache_file):
             logger.warning(f"未找到缓存文件: {self.coord_cache_file}")
             return None
         try:
             with open(self.coord_cache_file, "r", encoding="utf-8") as f:
-                data = f.read()
-                # 简单解析：查找文件名
-                for line in data.split('\n'):
-                    if bg_filename in line:
-                        # 提取坐标数据（简化处理）
-                        import json
-                        coords_data = json.loads(line.split(':', 1)[1].strip())
-                        return coords_data
+                data = json.load(f)
+            return data.get(bg_filename, None)
         except Exception as e:
             logger.warning(f"读取缓存失败: {e}")
             return None
