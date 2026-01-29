@@ -339,26 +339,65 @@ class JsonlGeneratorOps(Mapper):
     def execute(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         """
         核心处理逻辑
-        :param sample: 输入的数据样本，通常包含 text_key 等字段
+        :param sample: 输入的数据样本，包含 text_key(不动产数据JSON)、generated_images(图片路径列表)
         :return: 处理后的数据样本
         """
-
         try:
             export_path = sample["export_path"]
-            template_path = os.path.join(os.path.dirname(__file__), "templates/output_json_template.json")
+            template_path = os.path.join(
+                os.path.dirname(__file__), "templates/output_json_template.json"
+            )
             self.generator = JsonlGenerator(
                 export_path,
                 template_path,
             )
 
-            # 加载数据
-            with open(template_path, "r", encoding="utf-8") as f:
-                data_list = json.load(f)
+            # 1. 从 sample 获取不动产数据（上游 PropertyDataGenerator 输出）
+            input_text = sample.get(self.text_key, "")
+            try:
+                data_list = json.loads(input_text) if input_text else []
+                if not isinstance(data_list, list):
+                    data_list = [data_list] if data_list else []
+            except json.JSONDecodeError:
+                logger.warning("无法解析 text_key 为 JSON，尝试使用空数据列表")
+                data_list = []
 
+            # 2. 从 sample 获取图片路径列表（上游 RealWorldSimulator 输出）
+            image_paths = sample.get("generated_images", [])
+            if not isinstance(image_paths, list):
+                image_paths = [image_paths] if image_paths else []
 
-            # 生成JSON文件
+            # 3. 若图片来自目录，则扫描目录获取图片列表
+            if not image_paths and export_path:
+                images_dir = os.path.join(export_path, "images")
+                if os.path.isdir(images_dir):
+                    image_paths = [
+                        os.path.join(images_dir, f)
+                        for f in os.listdir(images_dir)
+                        if f.lower().endswith((".jpg", ".jpeg", ".png"))
+                    ]
+                    image_paths.sort()
+
+            if not image_paths:
+                logger.warning("未找到图片，跳过 JSON 生成")
+                return sample
+
+            # 4. 扩展 data_list 以匹配图片数量（多张图片可对应同一份数据）
+            # 图片顺序：按文档分组 (doc0_bg0, doc0_bg1, ..., doc1_bg0, ...)
+            if not data_list:
+                logger.warning("无不动产数据，使用占位数据")
+                data_list = [{}] * len(image_paths)
+            elif len(data_list) < len(image_paths):
+                # 按轮询方式分配数据，确保数量一致
+                data_list = [
+                    data_list[i % len(data_list)] for i in range(len(image_paths))
+                ]
+            elif len(data_list) > len(image_paths):
+                data_list = data_list[: len(image_paths)]
+
+            # 5. 生成 JSON 文件
             output_path = self.generator.generate_json_file(
-                data_list, export_path+"/images", "qa_pairs.json"
+                data_list, image_paths, "qa_pairs.json"
             )
 
             return sample

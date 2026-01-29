@@ -262,7 +262,7 @@ INSERT INTO t_clean_template (id, name, description)
 VALUES (
     'd06eaa82-19c8-4783-bf55-eaed889ad533',
     '营业执照全流程生成模板',
-    '包含：数据随机生成 -> 模板图像合成 -> 真实场景模拟 -> 多模态标注生成 的全自动流水线',
+    '包含：数据随机生成 -> 模板图像合成 -> 真实场景模拟 -> 多模态标注生成 的全自动流水线'
 )
 ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
