@@ -500,3 +500,894 @@ WHERE c.id IN ('4d7dbd77-0a92-44f3-9056-2cd62d4a71e4', '9eda9d5d-072b-499b-916c-
                'video_captioning_from_video_mapper', 'video_captioning_from_vlm_mapper', 'video_extract_frames_mapper',
                'video_split_by_duration_mapper', 'video_split_by_key_frame_mapper', 'video_split_by_scene_mapper')
 ON CONFLICT DO NOTHING;
+
+-- 插入用户算子
+INSERT INTO t_operator (id, name, description, version, inputs, outputs, runtime, settings, file_name, file_size, metrics, is_star, created_by, updated_by)
+VALUES
+  ('FlowSealAddOperator', '资产流水印章添加算子', '在文档或图片上添加银行印章', '1.0.0', 'image', 'image', '{"gpu":0,"npu":0,"storage":"500MB"}', '{"sealSizeParam":{"name":"印章大小","description":"印章直径（像素）","type":"slider","defaultVal":200,"min":100,"max":300,"step":10,"required":true},"bankNameParam":{"name":"银行名称","description":"银行名称，用于生成印章文字","type":"input","defaultVal":"北京兴业银行","required":false},"autoDetectParam":{"name":"自动检测位置","description":"是否自动检测印章位置","type":"switch","defaultVal":true,"checkedLabel":"是","unCheckedLabel":"否"}}', '', 0, '[{"name":"处理速度","metric":"5 docs/sec"}]', false, 'system', 'system'),
+  ('FlowImgAugOperator', '资产流水图像增强合成算子', '将文档图像合成到真实背景中（支持阴影、斜拍、水印等场景）', '1.0.0', 'image', 'image', '{"gpu":0,"npu":0,"storage":"1024MB"}', '{"scenesParam":{"name":"选择场景数量","description":"每张图随机选择几个场景（默认: 使用所有可用场景）","type":"select","defaultVal":"2","required":false,"options":[{"label":"1","value":"1"},{"label":"2","value":"2"},{"label":"3","value":"3"},{"label":"4","value":"4"},{"label":"5","value":"5"}]},"sceneListParam":{"name":"启用场景模式","description":"选择允许生成的场景类型","type":"checkbox","defaultVal":"normal,tilted,shadow,watermark,incomplete","options":[{"label":"标准 (Normal)","value":"normal"},{"label":"斜拍 (Tilted)","value":"tilted"},{"label":"阴影 (Shadow)","value":"shadow"},{"label":"水印 (Watermark)","value":"watermark"},{"label":"不完整 (Incomplete)","value":"incomplete"}]},"skipDetectParam":{"name":"跳过坐标检测","description":"若开启，仅使用缓存坐标；若无缓存则跳过。关闭则实时计算。","type":"switch","defaultVal":true,"checkedLabel":"是","unCheckedLabel":"否"}}', '', 0, '[{"name":"处理速度","metric":"1 img/sec"}]', false, 'system', 'system'),
+  ('FlowDocToImgOperator', '资产流水文档转图片算子', '将输入流中的.docx文档转换为图片格式', '1.0.0', 'text', 'image', '{"gpu":0,"npu":0,"storage":"500MB"}', '{"dpiParam":{"name":"图片清晰度 (DPI)","description":"设置输出图片的每英寸点数，数值越高越清晰但文件越大","type":"slider","defaultVal":200,"min":72,"max":600,"step":1,"required":true},"patternParam":{"name":"输入文件格式","description":"输入文件格式","type":"input","defaultVal":"*.docx","required":true}}', '', 0, '[{"name":"转换速度","metric":"2 docs/sec"}]', false, 'system', 'system'),
+  ('FlowQAGenOperator', '资产流水QA生成算子', '为流水资产分析表生成多模态训练用的问答对', '1.0.0', 'image', 'text', '{"gpu":0,"npu":0,"storage":"100MB"}', '{"qaCountParam":{"name":"QA对数量","description":"每个样本生成的QA对数量","type":"slider","defaultVal":10,"min":1,"max":50,"step":1,"required":true},"qaTypeParam":{"name":"QA类型","description":"选择生成的QA类型","type":"checkbox","defaultVal":"basic,detailed,complex","options":[{"label":"基础信息","value":"basic"},{"label":"详细信息","value":"detailed"},{"label":"复杂推理","value":"complex"}]}}', '', 0, '[{"name":"生成速度","metric":"50 qas/sec"}]', false, 'system', 'system'),
+  ('FlowDataGenOperator', '资产流水流水数据生成算子', '基于流水资产分析表Word模板生成随机数据并填充', '1.0.0', 'text', 'text', '{"gpu":0,"npu":0,"storage":"100MB"}', '{"countParam":{"name":"生成数量","description":"需要生成的数据记录条数","type":"slider","defaultVal":5,"min":1,"max":1000,"step":1,"required":true},"seedParam":{"name":"随机种子","description":"用于控制随机生成的一致性","type":"input","defaultVal":"42","required":false}}', '', 0, '[{"name":"生成速度","metric":"100 records/sec"}]', false, 'system', 'system')
+ON CONFLICT DO NOTHING;
+
+-- 插入版本发布信息
+INSERT INTO t_operator_release(id, version, release_date, changelog)
+VALUES
+  ('FlowSealAddOperator', '1.0.0', '2026-01-30', '["首次发布：支持图片和Word文档添加印章"]'),
+  ('FlowImgAugOperator', '1.0.0', '2026-01-30', '["首次发布：支持基于CV2的透视变换与光照融合"]'),
+  ('FlowDocToImgOperator', '1.0.0', '2026-01-30', '["首次发布：支持 .docx 转 .png"]'),
+  ('FlowQAGenOperator', '1.0.0', '2026-01-30', '["首次发布：支持多类型QA对生成"]'),
+  ('FlowDataGenOperator', '1.0.0', '2026-01-30', '["首次发布：支持Word模板解析与数据批量生成"]')
+ON CONFLICT DO NOTHING;
+INSERT INTO t_operator_category_relation(category_id, operator_id)
+VALUES
+  ('d8a5df7a-52a9-42c2-83c4-01062e60f597', 'FlowDataGenOperator'),
+  ('9eda9d5d-072b-499b-916c-797a0a8750e1', 'FlowDataGenOperator'),
+  ('431e7798-5426-4e1a-aae6-b9905a836b34', 'FlowDataGenOperator'),
+  ('96a3b07a-3439-4557-a835-525faad60ca3', 'FlowDataGenOperator'),
+  -- FlowQAGenOperator -> 图片, Python, DataMate
+  ('de36b61c-9e8a-4422-8c31-d30585c7100f', 'FlowQAGenOperator'),
+  ('9eda9d5d-072b-499b-916c-797a0a8750e1', 'FlowQAGenOperator'),
+  ('431e7798-5426-4e1a-aae6-b9905a836b34', 'FlowQAGenOperator'),
+  ('96a3b07a-3439-4557-a835-525faad60ca3', 'FlowQAGenOperator'),
+  -- FlowDocToImgOperator -> 文本, 图片, Huawei
+  ('d8a5df7a-52a9-42c2-83c4-01062e60f597', 'FlowDocToImgOperator'),
+  ('de36b61c-9e8a-4422-8c31-d30585c7100f', 'FlowDocToImgOperator'),
+  ('431e7798-5426-4e1a-aae6-b9905a836b34', 'FlowDocToImgOperator'),
+  ('96a3b07a-3439-4557-a835-525faad60ca3', 'FlowDocToImgOperator'),
+  -- FlowImgAugOperator -> 图片, Python, DataMate
+  ('de36b61c-9e8a-4422-8c31-d30585c7100f', 'FlowImgAugOperator'),
+  ('9eda9d5d-072b-499b-916c-797a0a8750e1', 'FlowImgAugOperator'),
+  ('431e7798-5426-4e1a-aae6-b9905a836b34', 'FlowImgAugOperator'),
+  ('96a3b07a-3439-4557-a835-525faad60ca3', 'FlowImgAugOperator'),
+  -- FlowSealAddOperator -> 图片, Python, DataMate
+  ('de36b61c-9e8a-4422-8c31-d30585c7100f', 'FlowSealAddOperator'),
+  ('9eda9d5d-072b-499b-916c-797a0a8750e1', 'FlowSealAddOperator'),
+  ('431e7798-5426-4e1a-aae6-b9905a836b34', 'FlowSealAddOperator'),
+  ('96a3b07a-3439-4557-a835-525faad60ca3', 'FlowSealAddOperator'),
+
+
+-- 插入用户算子（保险业务 - 来自 runtime/ops/user/insurance/*/metadata.yml）
+INSERT INTO t_operator (id, name, description, version, inputs, outputs, runtime, settings, file_name, file_size, metrics, is_star, created_by, updated_by)
+VALUES
+  ('InsuranceImgAugOperator', '社会保险参保图片增强合成算子', '将凭证图片与背景图进行合成，模拟真实拍摄场景', '1.0.0', 'image', 'image', '{"gpu":0,"npu":0,"storage":"1GB"}', '{"modeParam":{"name":"处理模式","description":"选择处理模式","type":"select","defaultVal":"all","options":["normal","tilted","shadow","watermark","incomplete","all"],"required":false}}', '', 0, '[{"name":"处理速度","metric":"10 images/sec"}]', false, 'system', 'system'),
+  ('InsuranceDocToImgOperator', '社会保险参保Word转图片算子', '将Word文档批量转换为JPG图片', '1.0.0', 'text', 'image', '{"gpu":0,"npu":0,"storage":"500MB"}', '{"dpiParam":{"name":"图片清晰度 (DPI)","description":"设置输出图片的每英寸点数，数值越高越清晰但文件越大","type":"slider","defaultVal":200,"min":72,"max":600,"step":1,"required":true},"patternParam":{"name":"输入文件格式","description":"输入文件格式匹配模式","type":"input","defaultVal":"*.docx","required":true}}', '', 0, '[{"name":"转换速度","metric":"5 images/sec"}]', false, 'system', 'system'),
+  ('InsuranceAnnotationGenOperator', '社会保险参保QA对生成算子', '为社保凭证图片生成分类和信息提取QA对', '1.0.0', 'image', 'text', '{"gpu":0,"npu":0,"storage":"500MB"}', '{"typeParam":{"name":"QA类型","description":"选择生成的QA类型","type":"select","defaultVal":"all","options":["classification","extraction","all"],"required":false}}', '', 0, '[{"name":"生成速度","metric":"50 qas/sec"}]', false, 'system', 'system'),
+  ('InsuranceDataGenOperator', '社会保险参保社保数据生成算子', '生成社会保险参保证明模拟数据CSV文件', '1.0.0', 'text', 'text', '{"gpu":0,"npu":0,"storage":"100MB"}', '{"countParam":{"name":"生成数量","description":"需要生成的数据记录条数","type":"slider","defaultVal":5,"min":1,"max":1000,"step":1,"required":true}}', '', 0, '[{"name":"生成速度","metric":"100 records/sec"}]', false, 'system', 'system'),
+  ('InsuranceDocGenOperator', '社会保险参保文档生成算子', '基于Word模板和数据CSV生成社会保险参保证明文档', '1.0.0', 'text', 'text', '{"gpu":0,"npu":0,"storage":"500MB"}', NULL, '', 0, '[{"name":"生成速度","metric":"5 docs/sec"}]', false, 'system', 'system')
+ON CONFLICT DO NOTHING;
+
+-- 插入版本发布信息（保险算子）
+INSERT INTO t_operator_release(id, version, release_date, changelog)
+VALUES
+  ('InsuranceImgAugOperator', '1.0.0', '2026-01-29', '["首次发布：支持多种拍摄场景合成"]'),
+  ('InsuranceDocToImgOperator', '1.0.0', '2026-01-29', '["首次发布：支持Word文档批量转JPG"]'),
+  ('InsuranceAnnotationGenOperator', '1.0.0', '2026-01-29', '["首次发布：支持分类和信息提取QA对生成"]'),
+  ('InsuranceDataGenOperator', '1.0.0', '2026-01-29', '["首次发布：支持社保参保证明数据批量生成"]'),
+  ('InsuranceDocGenOperator', '1.0.0', '2026-01-29', '["首次发布：支持基于docx模板生成社保证明文档"]')
+ON CONFLICT DO NOTHING;
+
+-- 将保险算子关联到分类（模态、语言、归属）
+INSERT INTO t_operator_category_relation(category_id, operator_id)
+VALUES
+  -- InsuranceDataGenOperator -> 文本, Python, DataMate
+  ('d8a5df7a-52a9-42c2-83c4-01062e60f597', 'InsuranceDataGenOperator'),
+  ('9eda9d5d-072b-499b-916c-797a0a8750e1', 'InsuranceDataGenOperator'),
+  ('431e7798-5426-4e1a-aae6-b9905a836b34', 'InsuranceDataGenOperator'),
+  ('96a3b07a-3439-4557-a835-525faad60ca3', 'InsuranceDataGenOperator'),
+  -- InsuranceDocGenOperator -> 文本, Python, DataMate
+  ('d8a5df7a-52a9-42c2-83c4-01062e60f597', 'InsuranceDocGenOperator'),
+  ('9eda9d5d-072b-499b-916c-797a0a8750e1', 'InsuranceDocGenOperator'),
+  ('431e7798-5426-4e1a-aae6-b9905a836b34', 'InsuranceDocGenOperator'),
+  ('96a3b07a-3439-4557-a835-525faad60ca3', 'InsuranceDocGenOperator'),
+  -- InsuranceDocToImgOperator -> 文本, 图片, DataMate
+  ('d8a5df7a-52a9-42c2-83c4-01062e60f597', 'InsuranceDocToImgOperator'),
+  ('de36b61c-9e8a-4422-8c31-d30585c7100f', 'InsuranceDocToImgOperator'),
+  ('431e7798-5426-4e1a-aae6-b9905a836b34', 'InsuranceDocToImgOperator'),
+  ('96a3b07a-3439-4557-a835-525faad60ca3', 'InsuranceDocToImgOperator'),
+  -- InsuranceImgAugOperator -> 图片, Python, DataMate
+  ('de36b61c-9e8a-4422-8c31-d30585c7100f', 'InsuranceImgAugOperator'),
+  ('9eda9d5d-072b-499b-916c-797a0a8750e1', 'InsuranceImgAugOperator'),
+  ('431e7798-5426-4e1a-aae6-b9905a836b34', 'InsuranceImgAugOperator'),
+  ('96a3b07a-3439-4557-a835-525faad60ca3', 'InsuranceImgAugOperator'),
+  -- InsuranceAnnotationGenOperator -> 图片, Python, DataMate
+  ('de36b61c-9e8a-4422-8c31-d30585c7100f', 'InsuranceAnnotationGenOperator'),
+  ('9eda9d5d-072b-499b-916c-797a0a8750e1', 'InsuranceAnnotationGenOperator'),
+  ('431e7798-5426-4e1a-aae6-b9905a836b34', 'InsuranceAnnotationGenOperator'),
+  ('96a3b07a-3439-4557-a835-525faad60ca3', 'InsuranceAnnotationGenOperator'),
+ON CONFLICT DO NOTHING;
+
+-- 插入用户算子：收入证明生成器（IncomeCertificateGenerator）
+INSERT INTO t_operator (id, name, description, version, inputs, outputs, runtime, settings, file_name, file_size, metrics, is_star, created_by, updated_by)
+VALUES
+  ('IncomeCertificateGenerator', '收入证明生成器', '基于Word模板批量生成收入证明的多模态训练数据集，支持模板填充、图片转换、印章添加、真实背景合成和训练格式转换', '1.0.0', 'text', 'image', '{"memory":524288000,"cpu":1.0,"gpu":0,"npu":0,"storage":"500MB"}', '{"count":{"name":"生成数量","description":"指定生成的收入证明数量（1-1000张）","type":"inputNumber","defaultVal":5,"min":1,"max":1000,"step":1,"required":true},"outputFormat":{"name":"输出格式","description":"训练数据格式类型","type":"select","defaultVal":"llava","required":false,"options":[{"label":"LLaVA格式","value":"llava"},{"label":"MLLM格式","value":"mllm"}]},"addSeal":{"name":"添加印章","description":"是否在生成的图片上添加公司印章","type":"switch","defaultVal":true,"required":false,"checkedLabel":"添加","unCheckedLabel":"不添加"},"simulateRealWorld":{"name":"真实场景模拟","description":"是否将文档合成到真实背景中（模拟拍摄效果）","type":"switch","defaultVal":true,"required":false,"checkedLabel":"启用","unCheckedLabel":"禁用"}}', '', 0, '[{"name":"生成速度","metric":"2-3 秒/张"},{"name":"内存使用","metric":"500MB"},{"name":"支持格式","metric":"LLaVA, MLLM"}]', false, 'system', 'system')
+ON CONFLICT DO NOTHING;
+
+-- 插入发布信息
+INSERT INTO t_operator_release(id, version, release_date, changelog)
+VALUES ('IncomeCertificateGenerator', '1.0.0', '2026-01-29', '["首次发布","支持收入证明批量生成","支持LLaVA和MLLM格式输出","跨平台兼容（Linux/Windows/macOS）"]')
+ON CONFLICT DO NOTHING;
+
+-- 关联分类（模态/语言/归属/输出类型）
+INSERT INTO t_operator_category_relation(category_id, operator_id)
+VALUES
+  ('d8a5df7a-52a9-42c2-83c4-01062e60f597', 'IncomeCertificateGenerator'), -- text
+  ('9eda9d5d-072b-499b-916c-797a0a8750e1', 'IncomeCertificateGenerator'), -- python
+  ('431e7798-5426-4e1a-aae6-b9905a836b34', 'IncomeCertificateGenerator'), -- datamate
+  ('96a3b07a-3439-4557-a835-525faad60ca3', 'IncomeCertificateGenerator')
+ON CONFLICT DO NOTHING;
+
+-- =============================================================
+-- 贷款调查报告系列算子批量初始化脚本 (完整版)
+-- 包含：数据生成、模板填充、文档转图片、文档合成、QA数据集生成
+-- =============================================================
+
+-- 1. 插入算子基础信息 (t_operator)
+INSERT INTO t_operator (
+    id, name, description, version, inputs, outputs, runtime, settings,
+    file_name, file_size, metrics, is_star, created_by, updated_by
+)
+VALUES
+-- 1.1 贷款调查报告数据生成器 (LoanReportDataGenerator)
+(
+    'LoanReportDataGenerator',
+    '贷款调查报告数据生成器',
+    '生成虚拟贷款调查报告的随机数据，用于数据合成和处理流水线',
+    '1.0.0', 'text', 'text',
+    '{"memory":104857600,"cpu":0.5,"gpu":0,"storage":"100MB"}',
+    '{"batchCount":{"name":"生成数量","description":"单次生成的报告数量","type":"slider","defaultVal":10,"min":1,"max":1000,"step":1,"required":false},"startSequence":{"name":"起始序号","description":"生成数据的起始序号（7位数字），默认为自动递增","type":"inputNumber","defaultVal":0,"min":0,"required":false}}',
+    '', 0, '[{"name":"生成速度","metric":"100 records/sec"}]', false, 'system', 'system'
+),
+-- 1.2 贷款调查报告模板填充器 (LoanReportFiller)
+(
+    'LoanReportFiller',
+    '贷款调查报告模板填充器',
+    '将JSON数据填充到Word模板生成个人贷款调查报告',
+    '1.0.0', 'text', 'text',
+    '{"memory":209715200,"cpu":0.5,"gpu":0,"storage":"200MB"}',
+    NULL,
+    '', 0, '[{"name":"处理速度","metric":"50 reports/min"}]', false, 'system', 'system'
+),
+-- 1.3 贷款调查报告文档图像转换器 (LoanReportWordToImageConverter)
+(
+    'LoanReportWordToImageConverter',
+    '贷款调查报告文档图像转换器',
+    '将Word文档转换为JPG图片，支持批量处理',
+    '1.0.0', 'text', 'image',
+    '{"memory":524288000,"cpu":1.0,"gpu":0,"storage":"500MB"}',
+    '{"dpi":{"name":"图片分辨率","description":"输出图片的DPI值","type":"slider","defaultVal":300,"min":72,"max":600,"step":1,"required":false},"keep_pdf":{"name":"保留PDF","description":"是否保留中间PDF文件","type":"switch","defaultVal":false,"required":false,"checkedLabel":"是","unCheckedLabel":"否"}}',
+    '', 0, '[{"name":"处理速度","metric":"10 docs/min"}]', false, 'system', 'system'
+),
+-- 1.4 贷款调查报告文档合成器 (LoanReportDocumentSynthesizer)
+(
+    'LoanReportDocumentSynthesizer',
+    '贷款调查报告文档合成器',
+    '将电子文档与实拍背景合成，生成仿真图片，支持多种场景',
+    '1.0.0', 'image', 'text',
+    '{"memory":524288000,"cpu":1.0,"gpu":0,"storage":"500MB"}',
+    '{"enable_watermark":{"name":"添加水印","description":"是否在合成图片上添加水印效果","type":"switch","defaultVal":false,"required":false,"checkedLabel":"是","unCheckedLabel":"否"},"enable_shadow":{"name":"阴影效果","description":"是否添加阴影效果","type":"switch","defaultVal":false,"required":false,"checkedLabel":"是","unCheckedLabel":"否"},"scene_mode":{"name":"场景模式","description":"指定处理场景，auto为自动检测","type":"select","defaultVal":"auto","required":false,"options":[{"label":"自动检测","value":"auto"},{"label":"正常场景","value":"normal"},{"label":"斜拍场景","value":"tilted"},{"label":"阴影场景","value":"shadow"},{"label":"水印场景","value":"watermark"},{"label":"不完整拍摄","value":"incomplete"}]}}',
+    '', 0, '[{"name":"处理速度","metric":"5合成/秒"}]', false, 'system', 'system'
+),
+-- 1.5 贷款调查报告QA数据集生成器 (LoanReportQADatasetGenerator)
+(
+    'LoanReportQADatasetGenerator',
+    '贷款调查报告QA数据集生成器',
+    '从贷款报告数据和图片生成多模态QA对话数据集',
+    '1.0.0', 'text', 'text',
+    '{"memory":209715200,"cpu":1.0,"gpu":0,"storage":"200MB"}',
+    '{"train_ratio":{"name":"训练集比例","description":"训练集数据比例（0-100）","type":"slider","defaultVal":80,"min":0,"max":100,"step":1,"required":false},"val_ratio":{"name":"验证集比例","description":"验证集数据比例（0-100）","type":"slider","defaultVal":10,"min":0,"max":100,"step":1,"required":false},"test_ratio":{"name":"测试集比例","description":"测试集数据比例（0-100）","type":"slider","defaultVal":10,"min":0,"max":100,"step":1,"required":false},"doc_type":{"name":"文档类型","description":"数据集文档类型描述","type":"input","defaultVal":"个人贷款调查报告","required":false}}',
+    '', 0, '[{"name":"生成速度","metric":"100 samples/sec"}]', false, 'system', 'system'
+)
+ON CONFLICT (id) DO UPDATE SET
+    name = EXCLUDED.name,
+    description = EXCLUDED.description,
+    settings = EXCLUDED.settings,
+    runtime = EXCLUDED.runtime,
+    updated_at = CURRENT_TIMESTAMP;
+
+-- 2. 插入版本发布信息 (t_operator_release)
+INSERT INTO t_operator_release (id, version, release_date, changelog)
+VALUES
+('LoanReportDataGenerator', '1.0.0', '2026-01-29', '["首次发布"]'),
+('LoanReportFiller', '1.0.0', '2026-01-29', '["首次发布"]'),
+('LoanReportWordToImageConverter', '1.0.0', '2026-01-29', '["首次发布"]'),
+('LoanReportDocumentSynthesizer', '1.0.0', '2026-01-29', '["首次发布"]'),
+('LoanReportQADatasetGenerator', '1.0.0', '2026-01-29', '["首次发布"]')
+ON CONFLICT (id, version) DO NOTHING;
+
+-- 3. 批量关联分类 (t_operator_category_relation)
+
+-- 3.1 通用基础分类关联 (Python, DataMate, 系统预置)
+-- Python: 9eda9d5d-072b-499b-916c-797a0a8750e1
+-- DataMate: 431e7798-5426-4e1a-aae6-b9905a836b34
+-- Predefined (System): 96a3b07a-3439-4557-a835-525faad60ca3
+INSERT INTO t_operator_category_relation (category_id, operator_id)
+SELECT c.id, o.id
+FROM t_operator_category c, t_operator o
+WHERE c.id IN (
+    '9eda9d5d-072b-499b-916c-797a0a8750e1', -- Python
+    '431e7798-5426-4e1a-aae6-b9905a836b34', -- DataMate
+    '96a3b07a-3439-4557-a835-525faad60ca3'  -- Predefined
+)
+AND o.id IN (
+    'LoanReportDataGenerator',
+    'LoanReportFiller',
+    'LoanReportWordToImageConverter',
+    'LoanReportDocumentSynthesizer',
+    'LoanReportQADatasetGenerator'
+)
+ON CONFLICT DO NOTHING;
+
+-- 3.2 文本模态关联 (Text)
+-- Text: d8a5df7a-52a9-42c2-83c4-01062e60f597
+-- 所有算子都涉及文本（输入或输出）
+INSERT INTO t_operator_category_relation (category_id, operator_id)
+SELECT 'd8a5df7a-52a9-42c2-83c4-01062e60f597', id
+FROM t_operator
+WHERE id IN (
+    'LoanReportDataGenerator',
+    'LoanReportFiller',
+    'LoanReportWordToImageConverter',
+    'LoanReportDocumentSynthesizer',
+    'LoanReportQADatasetGenerator'
+)
+ON CONFLICT DO NOTHING;
+
+-- 3.3 图片模态关联 (Image)
+-- Image: de36b61c-9e8a-4422-8c31-d30585c7100f
+-- 仅涉及图像处理的算子：WordToImageConverter, DocumentSynthesizer
+INSERT INTO t_operator_category_relation (category_id, operator_id)
+SELECT 'de36b61c-9e8a-4422-8c31-d30585c7100f', id
+FROM t_operator
+WHERE id IN (
+    'LoanReportWordToImageConverter',
+    'LoanReportDocumentSynthesizer'
+)
+ON CONFLICT DO NOTHING;
+
+-- =============================================================
+-- 营业执照系列算子批量初始化脚本
+-- 包含：标注生成、数据生成、图像合成、场景模拟
+-- =============================================================
+
+-- 1. 插入算子基础信息 (t_operator)
+INSERT INTO t_operator (
+    id, name, description, version, inputs, outputs, runtime, settings,
+    file_name, file_size, metrics, is_star, created_by, updated_by
+)
+VALUES
+-- 1.1 营业执照标注生成算子
+(
+    'LicenseAnnotationGeneratorOperator',
+    '营业执照标注生成算子',
+    '为图片生成问答对标注数据',
+    '1.0.0', 'image', 'text',
+    '{"memory": 10485760, "cpu": 0.1, "gpu": 0, "npu": 0, "storage": "10MB"}',
+    '{"qaCountParam": {"name": "问答对数量", "description": "每个图片生成的问答对数量", "type": "slider", "defaultVal": 3, "min": 1, "max": 10, "step": 1}, "trainRatioParam": {"name": "训练集比例", "description": "训练集占比（0-1之间）", "type": "slider", "defaultVal": 0.8, "min": 0, "max": 1, "step": 0.1}}',
+    '', 0, '[{"name": "处理速度", "metric": "100 images/sec"}]', false, 'system', 'system'
+),
+-- 1.2 营业执照数据生成算子
+(
+    'LicenseDataGeneratorOperator',
+    '营业执照数据生成算子',
+    '基于坐标文件生成随机的营业执照数据',
+    '1.0.0', 'text', 'text',
+    '{"memory": 10485760, "cpu": 0.1, "gpu": 0, "npu": 0, "storage": "10MB"}',
+    '{"numParam": {"name": "生成数量", "description": "生成的数据记录数量", "type": "slider", "defaultVal": 5, "min": 1, "max": 1000, "step": 1}, "seedParam": {"name": "随机种子", "description": "随机种子（用于复现结果）", "type": "input", "defaultVal": "42"}}',
+    '', 0, '[{"name": "生成速度", "metric": "100 records/sec"}]', false, 'system', 'system'
+),
+-- 1.3 营业执照图像合成算子
+(
+    'LicenseImageComposerOperator',
+    '营业执照图像合成算子',
+    '将数据渲染到营业执照模板上',
+    '1.0.0', 'text', 'image',
+    '{"memory": 20971520, "cpu": 0.2, "gpu": 0, "npu": 0, "storage": "100MB"}',
+    '{"fontParam": {"name": "字体文件", "description": "字体文件路径（可选）", "type": "input", "defaultVal": ""}}',
+    '', 0, '[{"name": "处理速度", "metric": "10 images/sec"}]', false, 'system', 'system'
+),
+-- 1.4 营业职照场景模拟算子
+(
+    'LicenseSceneSimulatorOperator',
+    '营业职照场景模拟算子',
+    '将合成图片与真实世界背景图片进行融合',
+    '1.0.0', 'image', 'image',
+    '{"memory": 41943040, "cpu": 0.5, "gpu": 0, "npu": 0, "storage": "100MB"}',
+    '{"scenesParam": {"name": "场景数量", "type": "select", "defaultVal": "2", "options": [{"label": "1", "value": "1"}, {"label": "2", "value": "2"}, {"label": "3", "value": "3"}, {"label": "4", "value": "4"}, {"label": "5", "value": "5"}]}, "sceneListParam": {"name": "启用场景模式", "type": "checkbox", "defaultVal": "normal,tilted,shadow,watermark,incomplete", "options": [{"label": "标准", "value": "normal"}, {"label": "斜拍", "value": "tilted"}, {"label": "阴影", "value": "shadow"}, {"label": "水印", "value": "watermark"}, {"label": "不完整", "value": "incomplete"}]}, "skipDetectParam": {"name": "跳过坐标检测", "type": "switch", "defaultVal": "true", "checkedLabel": "是", "unCheckedLabel": "否"}}',
+    '', 0, '[{"name": "处理速度", "metric": "1 img/sec"}]', false, 'system', 'system'
+)
+ON CONFLICT (id) DO UPDATE SET
+    name = EXCLUDED.name,
+    description = EXCLUDED.description,
+    settings = EXCLUDED.settings,
+    runtime = EXCLUDED.runtime,
+    updated_at = CURRENT_TIMESTAMP;
+
+-- 2. 插入版本发布信息 (t_operator_release)
+INSERT INTO t_operator_release (id, version, release_date, changelog)
+VALUES
+('LicenseAnnotationGeneratorOperator', '1.0.0', '2026-01-29', '["首次发布：支持多模态对话格式标注生成"]'),
+('LicenseDataGeneratorOperator', '1.0.0', '2026-01-29', '["首次发布：支持基于坐标文件生成随机数据"]'),
+('LicenseImageComposerOperator', '1.0.0', '2026-01-29', '["首次发布：支持基于坐标文件生成营业执照图片"]'),
+('LicenseSceneSimulatorOperator', '1.0.0', '2026-01-29', '["首次发布：支持场景模拟和透视变换"]')
+ON CONFLICT (id, version) DO NOTHING;
+
+-- 3. 批量关联分类 (t_operator_category_relation)
+
+-- 3.1 通用基础分类关联 (Python, DataMate, 系统预置)
+-- Python: 9eda9d5d-072b-499b-916c-797a0a8750e1
+-- DataMate: 431e7798-5426-4e1a-aae6-b9905a836b34
+-- Predefined (System): 96a3b07a-3439-4557-a835-525faad60ca3
+INSERT INTO t_operator_category_relation (category_id, operator_id)
+SELECT c.id, o.id
+FROM t_operator_category c, t_operator o
+WHERE c.id IN (
+    '9eda9d5d-072b-499b-916c-797a0a8750e1', -- Python
+    '431e7798-5426-4e1a-aae6-b9905a836b34', -- DataMate
+    '96a3b07a-3439-4557-a835-525faad60ca3'  -- Predefined
+)
+AND o.id IN (
+    'LicenseAnnotationGeneratorOperator',
+    'LicenseDataGeneratorOperator',
+    'LicenseImageComposerOperator',
+    'LicenseSceneSimulatorOperator'
+)
+ON CONFLICT DO NOTHING;
+
+-- 3.2 文本模态关联 (Text)
+-- Text: d8a5df7a-52a9-42c2-83c4-01062e60f597
+-- 关联算子：LicenseAnnotationGeneratorOperator (Output Text), LicenseDataGeneratorOperator, LicenseImageComposerOperator (Input Text)
+INSERT INTO t_operator_category_relation (category_id, operator_id)
+VALUES
+    ('d8a5df7a-52a9-42c2-83c4-01062e60f597', 'LicenseAnnotationGeneratorOperator'),
+    ('d8a5df7a-52a9-42c2-83c4-01062e60f597', 'LicenseDataGeneratorOperator'),
+    ('d8a5df7a-52a9-42c2-83c4-01062e60f597', 'LicenseImageComposerOperator')
+ON CONFLICT DO NOTHING;
+
+-- 3.3 图片模态关联 (Image)
+-- Image: de36b61c-9e8a-4422-8c31-d30585c7100f
+-- 关联算子：LicenseAnnotationGeneratorOperator (Input Image), LicenseImageComposerOperator (Output Image), LicenseSceneSimulatorOperator
+INSERT INTO t_operator_category_relation (category_id, operator_id)
+VALUES
+    ('de36b61c-9e8a-4422-8c31-d30585c7100f', 'LicenseAnnotationGeneratorOperator'),
+    ('de36b61c-9e8a-4422-8c31-d30585c7100f', 'LicenseImageComposerOperator'),
+    ('de36b61c-9e8a-4422-8c31-d30585c7100f', 'LicenseSceneSimulatorOperator')
+ON CONFLICT DO NOTHING;
+
+
+-- ============================================================
+-- 个人所得税（Tax）业务算子汇总
+-- 包含：数据生成、文档生成、文档转图片、图片增强、QA对生成
+-- ============================================================
+
+-- 1. 插入算子基础信息
+INSERT INTO t_operator (id, name, description, version, inputs, outputs, runtime, settings, file_name, file_size, metrics, is_star, created_by, updated_by)
+VALUES
+  -- 数据生成
+  ('TaxDataGeneratorOperator', '个人所得税数据生成算子', '生成个人所得税完税证明的模拟数据', '1.0.0', 'text', 'text', '{"memory":10485760,"cpu":0.1,"gpu":0,"npu":0,"storage":"10MB"}', '{"numParam":{"name":"生成数量","description":"生成的数据记录数量","type":"slider","defaultVal":5,"min":1,"max":1000,"step":1,"required":false},"seedParam":{"name":"随机种子","description":"随机种子（用于复现结果）","type":"input","defaultVal":"42","required":false}}', '', 0, '[{"name":"生成速度","metric":"100 records/sec"}]', false, 'system', 'system'),
+  -- 文档生成
+  ('TaxDocGenOperator', '个人所得税文档生成算子', '将数据填充到Word模板生成文档', '1.0.0', 'text', 'text', '{"gpu":0,"npu":0,"storage":"200MB"}', NULL, '', 0, '[{"name":"生成速度","metric":"50 docs/sec"}]', false, 'system', 'system'),
+  -- 文档转图片
+  ('TaxDocToImgOperator', '个人所得税图片转换算子', '将Word文档转换为JPG图片', '1.0.0', 'text', 'image', '{"gpu":0,"npu":0,"storage":"500MB"}', '{"dpiParam":{"name":"图片清晰度 (DPI)","description":"设置输出图片的每英寸点数，数值越高越清晰但文件越大","type":"slider","defaultVal":200,"min":72,"max":600,"step":1,"required":true},"patternParam":{"name":"输入文件格式","description":"输入文件格式匹配模式","type":"input","defaultVal":"*.docx","required":true}}', '', 0, '[{"name":"转换速度","metric":"5 images/sec"}]', false, 'system', 'system'),
+  -- 图片增强
+  ('TaxImgAugOperator', '个人所得税图片增强算子', '真实世界模拟，将图片与背景图合成（支持阴影、斜拍、水印等场景）', '1.0.0', 'image', 'image', '{"gpu":0,"npu":0,"storage":"1024MB"}', '{"scenesParam":{"name":"选择场景数量","description":"每张图随机选择几个场景（默认: 使用所有可用场景）","type":"select","defaultVal":"2","required":false,"options":[{"label":"1","value":"1"},{"label":"2","value":"2"},{"label":"3","value":"3"},{"label":"4","value":"4"},{"label":"5","value":"5"}]},"sceneListParam":{"name":"启用场景模式","description":"选择允许生成的场景类型","type":"checkbox","defaultVal":"normal,tilted,shadow,watermark,incomplete","options":[{"label":"标准 (Normal)","value":"normal"},{"label":"斜拍 (Tilted)","value":"tilted"},{"label":"阴影 (Shadow)","value":"shadow"},{"label":"水印 (Watermark)","value":"watermark"},{"label":"不完整 (Incomplete)","value":"incomplete"}]},"skipDetectParam":{"name":"跳过坐标检测","description":"若开启，仅使用缓存坐标；若无缓存则跳过。关闭则实时计算。","type":"switch","defaultVal":true,"checkedLabel":"是","unCheckedLabel":"否"},"backgroundsDirParam":{"name":"背景图目录","description":"真实世界背景图库目录","type":"input","defaultVal":"backgrounds","required":false},"coordFileParam":{"name":"坐标缓存文件","description":"坐标缓存文件路径","type":"input","defaultVal":"coordinates_cache.json","required":false}}', '', 0, '[{"name":"处理速度","metric":"1 img/sec"}]', false, 'system', 'system'),
+  -- QA生成
+  ('TaxQAGenOperator', '个人所得税标注生成算子', '生成QA对和JSONL格式数据集', '1.0.0', 'image', 'text', '{"gpu":0,"npu":0,"storage":"200MB"}', '{"qaCountParam":{"name":"QA对数量","description":"每个样本生成的QA对数量","type":"slider","defaultVal":8,"min":1,"max":50,"step":1,"required":true},"outputFileParam":{"name":"输出文件名","description":"JSONL数据集文件名","type":"input","defaultVal":"个人所得税完税证明_dataset.jsonl","required":true}}', '', 0, '[{"name":"生成速度","metric":"100 records/sec"}]', false, 'system', 'system')
+ON CONFLICT DO NOTHING;
+
+-- 2. 插入算子版本发布信息
+INSERT INTO t_operator_release(id, version, release_date, changelog)
+VALUES
+  ('TaxDataGeneratorOperator', '1.0.0', '2026-01-30', '["首次发布：支持个人所得税完税证明数据生成"]'),
+  ('TaxDocGenOperator', '1.0.0', '2026-01-30', '["首次发布：支持个人所得税完税证明文档生成"]'),
+  ('TaxDocToImgOperator', '1.0.0', '2026-01-30', '["首次发布：支持Word文档转换为JPG图片"]'),
+  ('TaxImgAugOperator', '1.0.0', '2026-01-30', '["首次发布：支持真实世界模拟与多场景处理"]'),
+  ('TaxQAGenOperator', '1.0.0', '2026-01-30', '["首次发布：支持QA对生成和JSONL数据集输出"]')
+ON CONFLICT DO NOTHING;
+
+-- 3. 插入算子分类关联
+
+-- 3.1 通用分类关联：Python (9eda...), DataMate (431e...), 系统预置 (96a3...)
+INSERT INTO t_operator_category_relation(category_id, operator_id)
+SELECT c.id, o.id
+FROM t_operator_category c, t_operator o
+WHERE c.id IN ('9eda9d5d-072b-499b-916c-797a0a8750e1', '431e7798-5426-4e1a-aae6-b9905a836b34', '96a3b07a-3439-4557-a835-525faad60ca3')
+  AND o.id IN ('TaxDataGeneratorOperator', 'TaxDocGenOperator', 'TaxDocToImgOperator', 'TaxImgAugOperator', 'TaxQAGenOperator')
+ON CONFLICT DO NOTHING;
+
+-- 3.2 文本模态 (d8a5...)：数据生成、文档生成、文档转图片
+INSERT INTO t_operator_category_relation(category_id, operator_id)
+VALUES
+  ('d8a5df7a-52a9-42c2-83c4-01062e60f597', 'TaxDataGeneratorOperator'),
+  ('d8a5df7a-52a9-42c2-83c4-01062e60f597', 'TaxDocGenOperator'),
+  ('d8a5df7a-52a9-42c2-83c4-01062e60f597', 'TaxDocToImgOperator')
+ON CONFLICT DO NOTHING;
+
+-- 3.3 图片模态 (de36...)：文档转图片(输出图片)、图片增强、QA生成(输入图片)
+INSERT INTO t_operator_category_relation(category_id, operator_id)
+VALUES
+  ('de36b61c-9e8a-4422-8c31-d30585c7100f', 'TaxDocToImgOperator'),
+  ('de36b61c-9e8a-4422-8c31-d30585c7100f', 'TaxImgAugOperator'),
+  ('de36b61c-9e8a-4422-8c31-d30585c7100f', 'TaxQAGenOperator')
+ON CONFLICT DO NOTHING;
+
+-- =============================================================
+-- 贷款结清证明业务算子全量初始化脚本
+-- 包含：数据生成 -> 文档生成 -> 转图片 -> 加盖公章 -> 场景增强 -> 标注生成
+-- =============================================================
+
+-- 1. 插入算子基础信息 (t_operator)
+INSERT INTO t_operator (
+    id, name, description, version, inputs, outputs,
+    runtime, settings, file_name, file_size, metrics,
+    is_star, created_by, updated_by
+)
+VALUES
+-- 1.1 数据生成
+(
+    'LoanSettlementDataGenOperator',
+    '贷款结清证明数据生成算子',
+    '基于Word模板解析字段并生成模拟数据',
+    '1.0.0', 'text', 'text',
+    '{"gpu": 0, "npu": 0, "storage": "100MB"}',
+    '{"countParam": {"name": "生成数量", "description": "需要生成的数据记录条数", "type": "slider", "defaultVal": 5, "min": 1, "max": 1000, "step": 1, "required": true}, "seedParam": {"name": "随机种子", "description": "用于控制随机生成的一致性", "type": "input", "defaultVal": "42", "required": false}}',
+    '', 0, '[{"name": "生成速度", "metric": "100 records/sec"}]', false, 'system', 'system'
+),
+-- 1.2 文档生成
+(
+    'LoanSettlementDocGenOperator',
+    '贷款结清证明文档生成算子',
+    '基于Word模板和输入数据生成.docx文档',
+    '1.0.0', 'text', 'text',
+    '{"gpu": 0, "npu": 0, "storage": "100MB"}',
+    '{"filePrefixParam": {"name": "文件名前缀", "description": "生成文件的前缀", "type": "input", "defaultVal": "loan_clearance", "required": false}}',
+    '', 0, '[{"name": "生成速度", "metric": "5 docs/sec"}]', false, 'system', 'system'
+),
+-- 1.3 文档转图片
+(
+    'LoanSettlementDocToImgOperator',
+    '贷款结清证明文档转图片算子',
+    '将输入流中的.docx文档转换为图片格式',
+    '1.0.0', 'text', 'image',
+    '{"gpu": 0, "npu": 0, "storage": "500MB"}',
+    '{"dpiParam": {"name": "图片清晰度 (DPI)", "description": "设置输出图片的每英寸点数，数值越高越清晰但文件越大", "type": "slider", "defaultVal": 200, "min": 72, "max": 600, "step": 1, "required": true}, "patternParam": {"name": "输入文件格式", "description": "输入文件格式", "type": "input", "defaultVal": "*.docx", "required": true}}',
+    '', 0, '[{"name": "转换速度", "metric": "2 docs/sec"}]', false, 'system', 'system'
+),
+-- 1.4 公章加盖
+(
+    'LoanSettlementSealGeneratorMapper',
+    '贷款结清证明公章自动加盖生成器',
+    '自动定位文档落款位置，生成并加盖具有真实感（墨迹、纹理、边缘淡出）的电子公章。',
+    '1.0.0', 'image', 'image',
+    '{"gpu": 0, "npu": 0, "storage": "100MB"}',
+    '{"sealTextParam": {"name": "印章文字", "description": "印章主文字（通常为银行名称）", "type": "input", "defaultVal": "中国建设银行股份有限公司", "required": true}, "autoLocateParam": {"name": "自动定位", "description": "是否自动检测文档落款位置进行盖章", "type": "switch", "defaultVal": true, "checkedLabel": "自动", "unCheckedLabel": "手动"}, "realismLevelParam": {"name": "真实感程度", "description": "控制墨迹扩散和磨损纹理的强度", "type": "slider", "defaultVal": 0.8, "min": 0.1, "max": 1.0, "step": 0.1}, "noiseTypeParam": {"name": "印章做旧风格", "description": "选择印章的物理纹理效果", "type": "select", "defaultVal": "standard", "options": [{"label": "标准 (Standard)", "value": "standard"}, {"label": "磨损 (Worn)", "value": "worn"}, {"label": "缺墨 (Dry Ink)", "value": "dry"}, {"label": "模糊 (Blurred)", "value": "blurred"}]}}',
+    '', 0, '[{"name": "处理速度", "metric": "0.5s/img"}]', false, 'system', 'system'
+),
+-- 1.5 图像增强（背景合成）
+(
+    'LoanSettlementImgAugOperator',
+    '贷款结清证明图像增强合成算子',
+    '将文档图像合成到真实背景中（支持阴影、斜拍、水印等场景）',
+    '1.0.0', 'image', 'image',
+    '{"gpu": 0, "npu": 0, "storage": "1024MB"}',
+    '{"scenesParam": {"name": "选择场景数量", "description": "每张图随机选择几个场景（默认: 使用所有可用场景）", "type": "select", "defaultVal": "2", "required": false, "options": [{"label": "1", "value": "1"}, {"label": "2", "value": "2"}, {"label": "3", "value": "3"}, {"label": "4", "value": "4"}, {"label": "5", "value": "5"}]}, "sceneListParam": {"name": "启用场景模式", "description": "选择允许生成的场景类型", "type": "checkbox", "defaultVal": "normal,tilted,shadow,watermark,incomplete", "options": [{"label": "标准 (Normal)", "value": "normal"}, {"label": "斜拍 (Tilted)", "value": "tilted"}, {"label": "阴影 (Shadow)", "value": "shadow"}, {"label": "水印 (Watermark)", "value": "watermark"}, {"label": "不完整 (Incomplete)", "value": "incomplete"}]}, "skipDetectParam": {"name": "跳过坐标检测", "description": "若开启，仅使用缓存坐标；若无缓存则跳过。关闭则实时计算。", "type": "switch", "defaultVal": true, "checkedLabel": "是", "unCheckedLabel": "否"}}',
+    '', 0, '[{"name": "处理速度", "metric": "1 img/sec"}]', false, 'system', 'system'
+),
+-- 1.6 标注生成
+(
+    'LoanSettlementAnnotationGenOperator',
+    '贷款结清证明图文对标注生成算子',
+    '将增强后的图片与原始数据记录匹配，生成多模态训练用的图文对标注',
+    '1.0.0', 'image', 'text',
+    '{"gpu": 0, "npu": 0, "storage": "500MB"}',
+    '{"formatType": {"name": "标注格式", "description": "生成的标注数据格式", "type": "select", "defaultVal": "multimodal", "options": [{"label": "多模态 (Multimodal)", "value": "multimodal"}, {"label": "简单JSON (Simple JSON)", "value": "simple_json"}]}, "qaCount": {"name": "问答对数量", "description": "每张图片生成的QA对数量", "type": "slider", "defaultVal": 3, "min": 1, "max": 10, "step": 1}, "split": {"name": "训练集比例", "description": "训练集比例（默认: 0.8，验证集和测试集各占剩余的一半）", "type": "slider", "defaultVal": 0.8, "min": 0, "max": 1, "step": 0.1}, "seed": {"name": "随机种子", "description": "随机种子（用于数据集划分）", "type": "slider", "defaultVal": 42, "min": 1, "max": 100, "step": 1}}',
+    '', 0, '[{"name": "处理速度", "metric": "10 samples/sec"}]', false, 'system', 'system'
+)
+ON CONFLICT (id) DO UPDATE SET
+    name = EXCLUDED.name,
+    description = EXCLUDED.description,
+    settings = EXCLUDED.settings,
+    runtime = EXCLUDED.runtime,
+    inputs = EXCLUDED.inputs,
+    outputs = EXCLUDED.outputs,
+    updated_at = CURRENT_TIMESTAMP;
+
+-- 2. 插入版本发布信息 (t_operator_release)
+INSERT INTO t_operator_release (id, version, release_date, changelog)
+VALUES
+    ('LoanSettlementDataGenOperator', '1.0.0', CURRENT_TIMESTAMP, '["首次发布：支持Word模板解析与数据批量生成"]'),
+    ('LoanSettlementDocGenOperator', '1.0.0', CURRENT_TIMESTAMP, '["首次发布：支持基于 docx 模板生成文档"]'),
+    ('LoanSettlementDocToImgOperator', '1.0.0', CURRENT_TIMESTAMP, '["首次发布：支持 .docx 转 .png"]'),
+    ('LoanSettlementSealGeneratorMapper', '1.0.0', CURRENT_TIMESTAMP, '["首次发布：集成自动定位算法与真实感印章渲染"]'),
+    ('LoanSettlementImgAugOperator', '1.0.0', CURRENT_TIMESTAMP, '["首次发布：支持基于CV2的透视变换与光照融合"]'),
+    ('LoanSettlementAnnotationGenOperator', '1.0.0', CURRENT_TIMESTAMP, '["首次发布：支持VQA图文对标注生成"]')
+ON CONFLICT (id, version) DO NOTHING;
+
+-- 3. 关联算子分类 (t_operator_category_relation)
+
+-- 3.1 基础分类关联 (Python + DataMate + System Predefined)
+-- 这些分类适用于所有上述算子
+INSERT INTO t_operator_category_relation (category_id, operator_id)
+SELECT c.id, o.id
+FROM t_operator_category c, t_operator o
+WHERE c.id IN (
+    '9eda9d5d-072b-499b-916c-797a0a8750e1', -- Python
+    '431e7798-5426-4e1a-aae6-b9905a836b34', -- DataMate
+    '96a3b07a-3439-4557-a835-525faad60ca3'  -- System Predefined
+)
+AND o.id IN (
+    'LoanSettlementDataGenOperator',
+    'LoanSettlementDocGenOperator',
+    'LoanSettlementDocToImgOperator',
+    'LoanSettlementSealGeneratorMapper',
+    'LoanSettlementImgAugOperator',
+    'LoanSettlementAnnotationGenOperator'
+)
+ON CONFLICT DO NOTHING;
+
+-- 3.2 文本模态关联 (Text: d8a5df7a-52a9-42c2-83c4-01062e60f597)
+-- 适用于：输入或输出包含文本的算子
+INSERT INTO t_operator_category_relation (category_id, operator_id)
+SELECT 'd8a5df7a-52a9-42c2-83c4-01062e60f597', o.id
+FROM t_operator o
+WHERE o.id IN (
+    'LoanSettlementDataGenOperator',      -- In/Out: Text
+    'LoanSettlementDocGenOperator',       -- In/Out: Text
+    'LoanSettlementDocToImgOperator',     -- In: Text
+    'LoanSettlementAnnotationGenOperator' -- Out: Text
+)
+ON CONFLICT DO NOTHING;
+
+-- 3.3 图片模态关联 (Image: de36b61c-9e8a-4422-8c31-d30585c7100f)
+-- 适用于：输入或输出包含图片的算子
+INSERT INTO t_operator_category_relation (category_id, operator_id)
+SELECT 'de36b61c-9e8a-4422-8c31-d30585c7100f', o.id
+FROM t_operator o
+WHERE o.id IN (
+    'LoanSettlementDocToImgOperator',     -- Out: Image
+    'LoanSettlementSealGeneratorMapper',  -- In/Out: Image
+    'LoanSettlementImgAugOperator',       -- In/Out: Image
+    'LoanSettlementAnnotationGenOperator' -- In: Image
+)
+ON CONFLICT DO NOTHING;
+
+-- =============================================================
+-- 结婚证业务算子全量初始化脚本
+-- 包含：数据生成 -> 模板合成 -> 图像增强 -> 盖章 -> QA标注生成
+-- =============================================================
+
+-- 1. 批量插入算子基础信息 (t_operator)
+INSERT INTO t_operator (
+    id, name, description, version, inputs, outputs,
+    runtime, settings,
+    file_name, file_size, metrics,
+    is_star, created_by, updated_by
+)
+VALUES
+-- 1.1 结婚证随机文本生成算子 (MarriageRandomText)
+(
+    'MarriageRandomText',
+    '结婚证随机文本',
+    '从坐标JSON生成多组结婚证随机文本，输出 random_content.json',
+    '1.0.0', 'text', 'text',
+    '{"memory": 10485760, "cpu": 0.1, "gpu": 0, "npu": 0, "storage": "10MB"}',
+    '{
+        "numParam": {
+            "name": "生成组数",
+            "description": "生成的结婚证文本组数量",
+            "type": "slider",
+            "defaultVal": 5,
+            "required": true,
+            "min": 1,
+            "max": 100,
+            "step": 1
+        }
+    }',
+    '', 0, '[{"name": "吞吐", "metric": "1 file/sec"}]', false, 'system', 'system'
+),
+-- 1.2 结婚证模板贴图算子 (MarriageImageCompositing)
+(
+    'MarriageImageCompositing',
+    '结婚证模板贴图',
+    '将 random_content.json 文本渲染到结婚证模板上，按 group_id 输出多张图片',
+    '1.0.0', 'text', 'image',
+    '{"memory": 10485760, "cpu": 0.2, "gpu": 0, "npu": 0, "storage": "50MB"}',
+    '{
+        "templatePath": {
+            "name": "模板图路径",
+            "description": "结婚证模板图 template.jpg 的路径（可选，未填则从任务目录查找）",
+            "type": "input",
+            "defaultVal": "",
+            "required": false
+        },
+        "coordsPath": {
+            "name": "坐标JSON路径",
+            "description": "coordinate_info.json 的路径（可选，未填则从任务目录查找）",
+            "type": "input",
+            "defaultVal": "",
+            "required": false
+        }
+    }',
+    '', 0, '[{"name": "吞吐", "metric": "5 images/sec"}]', false, 'system', 'system'
+),
+-- 1.3 结婚证图像合成到实拍背景算子 (MarriageAugmentImages)
+(
+    'MarriageAugmentImages',
+    '结婚证图像合成到实拍背景',
+    '将结婚证图片合成到多种实拍背景（斜拍、阴影、水印等）',
+    '1.0.0', 'image', 'image',
+    '{"memory": 10485760, "cpu": 0.2, "gpu": 0, "npu": 0, "storage": "1024MB"}',
+    '{
+        "scenesParam": {
+            "name": "场景数量",
+            "description": "每张源图随机选择的背景数量（不填则使用全部）",
+            "type": "select",
+            "defaultVal": "all",
+            "required": false,
+            "options": [
+                {"label": "全部", "value": "all"},
+                {"label": "1", "value": "1"},
+                {"label": "2", "value": "2"},
+                {"label": "3", "value": "3"}
+            ]
+        },
+        "sceneListParam": {
+            "name": "启用场景",
+            "description": "允许的背景场景类型",
+            "type": "checkbox",
+            "defaultVal": "normal,tilted,shadow,watermark,incomplete",
+            "required": false,
+            "options": [
+                {"label": "标准", "value": "normal"},
+                {"label": "斜拍/反光", "value": "tilted"},
+                {"label": "阴影", "value": "shadow"},
+                {"label": "水印", "value": "watermark"},
+                {"label": "不完整", "value": "incomplete"}
+            ]
+        },
+        "skipDetectParam": {
+            "name": "仅用缓存坐标",
+            "description": "开启时仅使用已缓存坐标，无缓存则跳过该背景",
+            "type": "switch",
+            "defaultVal": true,
+            "checkedLabel": "是",
+            "unCheckedLabel": "否"
+        },
+        "bgPathParam": {
+            "name": "背景图目录",
+            "description": "背景图所在目录（可选，未填则使用算子内置 backgrounds/）",
+            "type": "input",
+            "defaultVal": "",
+            "required": false
+        }
+    }',
+    '', 0, '[{"name": "吞吐", "metric": "1 img/sec"}]', false, 'system', 'system'
+),
+-- 1.4 结婚证盖章算子 (MarriageAddSeal)
+(
+    'MarriageAddSeal',
+    '结婚证盖章',
+    '在结婚证图片上添加结婚登记专用章，登记机关从 random_content.json 按 group_id 读取',
+    '1.0.0', 'image', 'image',
+    '{"memory": 10485760, "cpu": 0.1, "gpu": 0, "npu": 0, "storage": "50MB"}',
+    '{
+        "sealSizeParam": {
+            "name": "印章大小",
+            "description": "印章直径（像素）",
+            "type": "slider",
+            "defaultVal": 280,
+            "min": 180,
+            "max": 400,
+            "step": 10,
+            "required": false
+        },
+        "agencyNameParam": {
+            "name": "默认登记机关",
+            "description": "当 random_content 中无登记机关时使用的名称",
+            "type": "input",
+            "defaultVal": "深圳市民政局南山区",
+            "required": false
+        }
+    }',
+    '', 0, '[{"name": "吞吐", "metric": "5 images/sec"}]', false, 'system', 'system'
+),
+-- 1.5 结婚证 QA 对生成算子 (MarriageFormQA)
+(
+    'MarriageFormQA',
+    '结婚证 QA 对生成',
+    '从图片与 random_content.json 生成 llama 格式 QA 对（output_qa_pairs.jsonl）',
+    '1.0.0', 'image', 'text',
+    '{"memory": 10485760, "cpu": 0.1, "gpu": 0, "npu": 0, "storage": "10MB"}',
+    '{
+        "previewCountParam": {
+            "name": "预览条数",
+            "description": "output_qa_pairs_preview.json 中保留的条数",
+            "type": "slider",
+            "defaultVal": 5,
+            "required": false,
+            "min": 1,
+            "max": 20,
+            "step": 1
+        }
+    }',
+    '', 0, '[{"name": "吞吐", "metric": "100 pairs/sec"}]', false, 'system', 'system'
+)
+ON CONFLICT (id) DO UPDATE SET
+    name = EXCLUDED.name,
+    description = EXCLUDED.description,
+    settings = EXCLUDED.settings,
+    runtime = EXCLUDED.runtime,
+    metrics = EXCLUDED.metrics,
+    inputs = EXCLUDED.inputs,
+    outputs = EXCLUDED.outputs,
+    updated_at = CURRENT_TIMESTAMP;
+
+-- 2. 批量插入版本发布信息 (t_operator_release)
+INSERT INTO t_operator_release (id, version, release_date, changelog)
+VALUES
+    ('MarriageRandomText', '1.0.0', CURRENT_TIMESTAMP, '["首次发布：支持 Label Studio 坐标与 parsed_json 格式"]'),
+    ('MarriageImageCompositing', '1.0.0', CURRENT_TIMESTAMP, '["首次发布：支持 Label Studio 坐标与多组文本渲染"]'),
+    ('MarriageAugmentImages', '1.0.0', CURRENT_TIMESTAMP, '["首次发布：支持透视变换与光照融合，坐标缓存"]'),
+    ('MarriageAddSeal', '1.0.0', CURRENT_TIMESTAMP, '["首次发布：支持结婚登记专用章、登记机关动态读取"]'),
+    ('MarriageFormQA', '1.0.0', CURRENT_TIMESTAMP, '["首次发布：支持按 group_id/文件名/父目录匹配生成 QA"]')
+ON CONFLICT (id, version) DO NOTHING;
+
+-- 3. 批量关联算子分类 (t_operator_category_relation)
+
+-- 3.1 基础公共分类关联 (Python, DataMate, 系统预置)
+-- 这些分类适用于所有5个算子
+INSERT INTO t_operator_category_relation (category_id, operator_id)
+SELECT c.id, o.id
+FROM t_operator_category c
+CROSS JOIN (
+    VALUES
+        ('MarriageRandomText'),
+        ('MarriageImageCompositing'),
+        ('MarriageAugmentImages'),
+        ('MarriageAddSeal'),
+        ('MarriageFormQA')
+) AS o(id)
+WHERE c.id IN (
+    '9eda9d5d-072b-499b-916c-797a0a8750e1', -- Python
+    '431e7798-5426-4e1a-aae6-b9905a836b34', -- DataMate
+    '96a3b07a-3439-4557-a835-525faad60ca3'  -- 系统预置
+)
+ON CONFLICT DO NOTHING;
+
+-- 3.2 文本模态关联 (Text)
+-- 包含输入或输出为文本的算子: RandomText(In/Out), Compositing(In), FormQA(Out)
+INSERT INTO t_operator_category_relation (category_id, operator_id)
+SELECT 'd8a5df7a-52a9-42c2-83c4-01062e60f597', o.id
+FROM (VALUES
+    ('MarriageRandomText'),
+    ('MarriageImageCompositing'),
+    ('MarriageFormQA')
+) AS o(id)
+ON CONFLICT DO NOTHING;
+
+-- 3.3 图片模态关联 (Image)
+-- 包含输入或输出为图片的算子: Compositing(Out), AugmentImages(In/Out), AddSeal(In/Out), FormQA(In)
+INSERT INTO t_operator_category_relation (category_id, operator_id)
+SELECT 'de36b61c-9e8a-4422-8c31-d30585c7100f', o.id
+FROM (VALUES
+    ('MarriageImageCompositing'),
+    ('MarriageAugmentImages'),
+    ('MarriageAddSeal'),
+    ('MarriageFormQA')
+) AS o(id)
+ON CONFLICT DO NOTHING;
+
+-- =============================================================
+-- 不动产权证（Real Estate）业务算子全量初始化脚本
+-- 包含：数据生成 -> 文档转图片 -> 图像增强 -> 标注生成
+-- =============================================================
+
+-- 1. 批量插入算子基础信息 (t_operator)
+INSERT INTO t_operator (
+    id, name, description, version, inputs, outputs,
+    runtime, settings, file_name, file_size, metrics,
+    is_star, created_by, updated_by
+)
+VALUES
+-- 1.1 不动产权证数据生成算子
+(
+    'RealEstateDataGenOperator',
+    '不动产权证数据生成算子',
+    '生成不动产权证模拟数据，包含13个字段信息',
+    '1.0.0', 'text', 'text',
+    '{"gpu":0,"npu":0,"storage":"100MB"}',
+    '{"countParam": {"name": "生成数量", "description": "需要生成的数据记录条数", "type": "slider", "defaultVal": 5, "min": 1, "max": 1000, "step": 1, "required": true}, "seedParam": {"name": "随机种子", "description": "用于控制随机生成的一致性", "type": "input", "defaultVal": "42", "required": false}}',
+    '', 0, '[{"name":"生成速度","metric":"100 records/sec"}]', false, 'system', 'system'
+),
+-- 1.2 不动产权证图像转换算子
+(
+    'RealEstateDocToImgOperator',
+    '不动产权证图像转换算子',
+    '将JSON数据渲染到模板图像上，生成不动产权证图像',
+    '1.0.0', 'text', 'image',
+    '{"gpu":0,"npu":0,"storage":"500MB"}',
+    '{"dpiParam": {"name": "图像DPI", "description": "输出图像的清晰度", "type": "slider", "defaultVal": 200, "min": 100, "max": 400, "step": 50, "required": true}, "patternParam": {"name": "文件匹配模式", "description": "JSON文件的匹配模式", "type": "input", "defaultVal": "*.json", "required": false}}',
+    '', 0, '[{"name":"转换速度","metric":"10 images/sec"}]', false, 'system', 'system'
+),
+-- 1.3 不动产权证图像增强算子
+(
+    'RealEstateImgAugOperator',
+    '不动产权证图像增强算子',
+    '将电子凭证图像合成到真实拍摄场景中，生成具有真实感的实景照片',
+    '1.0.0', 'image', 'image',
+    '{"gpu":0,"npu":0,"storage":"1GB"}',
+    '{"scenes": {"name": "场景数量", "description": "每个源图生成的场景数量", "type": "slider", "defaultVal": 2, "min": 1, "max": 5, "step": 1, "required": true}, "sceneListParam": {"name": "场景类型", "description": "选择需要生成的场景类型", "type": "checkbox", "defaultVal": "normal", "options": [{"label": "正常拍摄", "value": "normal"}, {"label": "斜拍场景", "value": "tilted"}, {"label": "阴影场景", "value": "shadow"}, {"label": "水印场景", "value": "watermark"}, {"label": "不完整拍摄", "value": "incomplete"}], "required": false}, "skipDetectParam": {"name": "跳过检测", "description": "跳过自动检测，仅使用缓存坐标", "type": "switch", "defaultVal": true, "checkedLabel": "跳过", "unCheckedLabel": "不跳过", "required": false}}',
+    '', 0, '[{"name":"处理速度","metric":"1 image/sec"}]', false, 'system', 'system'
+),
+-- 1.4 不动产权证标注生成算子
+(
+    'RealEstateAnnotationGenOperator',
+    '不动产权证标注生成算子',
+    '生成模型训练所需的图文对数据',
+    '1.0.0', 'image', 'text',
+    '{"gpu":0,"npu":0,"storage":"100MB"}',
+    '{"formatParam": {"name": "输出格式", "description": "标注数据的输出格式", "type": "select", "defaultVal": "multimodal", "options": [{"label": "多模态格式", "value": "multimodal"}, {"label": "简单JSON格式", "value": "simple_json"}], "required": true}, "splitParam": {"name": "训练集比例", "description": "训练集比例（验证集和测试集各占剩余的一半）", "type": "slider", "defaultVal": 0.8, "min": 0.5, "max": 0.95, "step": 0.05, "required": true}, "seedParam": {"name": "随机种子", "description": "用于数据集划分的随机种子", "type": "input", "defaultVal": "42", "required": false}}',
+    '', 0, '[{"name":"生成速度","metric":"100 records/sec"}]', false, 'system', 'system'
+)
+ON CONFLICT (id) DO UPDATE SET
+    name = EXCLUDED.name,
+    description = EXCLUDED.description,
+    settings = EXCLUDED.settings,
+    runtime = EXCLUDED.runtime,
+    metrics = EXCLUDED.metrics,
+    inputs = EXCLUDED.inputs,
+    outputs = EXCLUDED.outputs,
+    updated_at = CURRENT_TIMESTAMP;
+
+-- 2. 批量插入版本发布信息 (t_operator_release)
+INSERT INTO t_operator_release (id, version, release_date, changelog)
+VALUES
+    ('RealEstateDataGenOperator', '1.0.0', CURRENT_TIMESTAMP, '["首次发布：支持不动产权证数据批量生成"]'),
+    ('RealEstateDocToImgOperator', '1.0.0', CURRENT_TIMESTAMP, '["首次发布：支持JSON到图像的批量转换"]'),
+    ('RealEstateImgAugOperator', '1.0.0', CURRENT_TIMESTAMP, '["首次发布：支持多种场景的图像增强"]'),
+    ('RealEstateAnnotationGenOperator', '1.0.0', CURRENT_TIMESTAMP, '["首次发布：支持不动产权证QA对批量生成"]')
+ON CONFLICT (id, version) DO NOTHING;
+
+-- 3. 批量关联算子分类 (t_operator_category_relation)
+
+-- 3.1 基础公共分类关联 (Python, DataMate, 系统预置)
+-- 适用于所有不动产算子
+INSERT INTO t_operator_category_relation (category_id, operator_id)
+SELECT c.id, o.id
+FROM t_operator_category c
+CROSS JOIN (
+    VALUES
+        ('RealEstateDataGenOperator'),
+        ('RealEstateDocToImgOperator'),
+        ('RealEstateImgAugOperator'),
+        ('RealEstateAnnotationGenOperator')
+) AS o(id)
+WHERE c.id IN (
+    '9eda9d5d-072b-499b-916c-797a0a8750e1', -- Python
+    '431e7798-5426-4e1a-aae6-b9905a836b34', -- DataMate
+    '96a3b07a-3439-4557-a835-525faad60ca3'  -- Predefined
+)
+ON CONFLICT DO NOTHING;
+
+-- 3.2 文本模态关联 (Text)
+-- 涉及算子: DataGen (Text->Text), DocToImg (Text->Image), AnnotationGen (Image->Text)
+INSERT INTO t_operator_category_relation (category_id, operator_id)
+SELECT 'd8a5df7a-52a9-42c2-83c4-01062e60f597', o.id
+FROM (VALUES
+    ('RealEstateDataGenOperator'),
+    ('RealEstateDocToImgOperator'),
+    ('RealEstateAnnotationGenOperator')
+) AS o(id)
+ON CONFLICT DO NOTHING;
+
+-- 3.3 图片模态关联 (Image)
+-- 涉及算子: DocToImg (Text->Image), ImgAug (Image->Image), AnnotationGen (Image->Text)
+INSERT INTO t_operator_category_relation (category_id, operator_id)
+SELECT 'de36b61c-9e8a-4422-8c31-d30585c7100f', o.id
+FROM (VALUES
+    ('RealEstateDocToImgOperator'),
+    ('RealEstateImgAugOperator'),
+    ('RealEstateAnnotationGenOperator')
+) AS o(id)
+ON CONFLICT DO NOTHING;

@@ -79,6 +79,11 @@ export function importManualAnnotationFromLabelStudioUsingPost(
   return post(`/api/annotation/project/${mappingId}/sync-label-studio-back`, data);
 }
 
+// 手动标注：将 Label Studio 中的标注结果同步回数据库（更新 t_dm_dataset_files.tags/annotation）
+export function syncManualAnnotationToDatabaseUsingPost(mappingId: string) {
+  return post(`/api/annotation/project/${mappingId}/sync-db`);
+}
+
 export function downloadAutoAnnotationResultUsingGet(taskId: string) {
   return download(`/api/annotation/auto/${taskId}/download`);
 }
@@ -94,6 +99,11 @@ export function importAutoAnnotationFromLabelStudioUsingPost(
   data: { exportFormat?: string; fileName?: string }
 ) {
   return post(`/api/annotation/auto/${taskId}/sync-label-studio-back`, data);
+}
+
+// 自动标注：将 Label Studio 中的标注结果同步回数据库（更新 t_dm_dataset_files.tags/annotation）
+export function syncAutoAnnotationToDatabaseUsingPost(taskId: string) {
+  return post(`/api/annotation/auto/${taskId}/sync-db`);
 }
 
 // 查询自动标注任务关联的 Label Studio 项目

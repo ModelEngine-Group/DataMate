@@ -1,0 +1,6 @@
+{
+  "name": "apireader",
+  "class": "com.datamate.plugin.reader.apireader.APIReader",
+  "description": "Read the structured data returned by the api",
+  "developer": "datamate"
+}

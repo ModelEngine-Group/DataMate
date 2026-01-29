@@ -181,3 +181,330 @@ VALUES
     ('4421504e-c6c9-4760-b55a-509d17429597', 'ImgResize', 12, NULL),
     ('4421504e-c6c9-4760-b55a-509d17429597', 'ImgTypeUnify', 13, NULL)
     ON CONFLICT (instance_id, operator_id, op_index) DO NOTHING;
+
+-- 插入初始数据 - 资产流水处理模板（将五个算子串成流水）
+INSERT INTO t_clean_template (id, name, description)
+VALUES
+    ('5d7a8f20-0a1b-4c2d-8f3e-123456789abc', '资产流水处理模板', '基于 FlowDataGen -> FlowDocToImg -> FlowImgAug -> FlowSealAdd -> FlowQAGen 的处理流水')
+ON CONFLICT (id) DO NOTHING;
+
+-- 插入初始数据 - 操作员实例（资产流水处理模板）
+INSERT INTO t_operator_instance (instance_id, operator_id, op_index, settings_override)
+VALUES
+    -- 1) 先生成带内容的 Word 文档（FlowDataGenOperator）
+    ('5d7a8f20-0a1b-4c2d-8f3e-123456789abc', 'FlowDataGenOperator', 1, NULL),
+    -- 2) 将生成的 Word 文档转为图片（FlowDocToImgOperator）
+    ('5d7a8f20-0a1b-4c2d-8f3e-123456789abc', 'FlowDocToImgOperator', 2, NULL),
+    -- 3) 对图片进行增强合成（FlowImgAugOperator）
+    ('5d7a8f20-0a1b-4c2d-8f3e-123456789abc', 'FlowImgAugOperator', 3, NULL),
+    -- 4) 在图片上添加印章（FlowSealAddOperator）
+    ('5d7a8f20-0a1b-4c2d-8f3e-123456789abc', 'FlowSealAddOperator', 4, NULL),
+    -- 5) 基于处理后的图片生成多模态 QA（FlowQAGenOperator）
+    ('5d7a8f20-0a1b-4c2d-8f3e-123456789abc', 'FlowQAGenOperator', 5, NULL)
+ON CONFLICT (instance_id, operator_id, op_index) DO NOTHING;
+
+-- 插入初始数据 - 保险业务处理模板（Insurance flow）
+INSERT INTO t_clean_template (id, name, description)
+VALUES
+    ('9b130084-538d-40f3-92f2-a9fab6af65ba', '社保参保处理模板', '社保参保文档生成 -> 转图片 -> 图片增强 -> QA生成 的流水模板')
+ON CONFLICT (id) DO NOTHING;
+
+-- 插入初始数据 - 操作员实例（保险业务模板）
+INSERT INTO t_operator_instance (instance_id, operator_id, op_index, settings_override)
+VALUES
+    -- 1) 生成社保参保证明数据 CSV （InsuranceDataGenOperator）
+    ('9b130084-538d-40f3-92f2-a9fab6af65ba', 'InsuranceDataGenOperator', 1, NULL),
+    -- 2) 根据模板生成社保证明文档（InsuranceDocGenOperator）
+    ('9b130084-538d-40f3-92f2-a9fab6af65ba', 'InsuranceDocGenOperator', 2, NULL),
+    -- 3) 文档转图片（InsuranceDocToImgOperator）
+    ('9b130084-538d-40f3-92f2-a9fab6af65ba', 'InsuranceDocToImgOperator', 3, NULL),
+    -- 4) 图片增强合成（InsuranceImgAugOperator）
+    ('9b130084-538d-40f3-92f2-a9fab6af65ba', 'InsuranceImgAugOperator', 4, NULL),
+    -- 5) 生成 QA 对（InsuranceAnnotationGenOperator）
+    ('9b130084-538d-40f3-92f2-a9fab6af65ba', 'InsuranceAnnotationGenOperator', 5, NULL)
+ON CONFLICT (instance_id, operator_id, op_index) DO NOTHING;
+
+-- 插入初始数据 - 收入处理模板（income flow）
+INSERT INTO t_clean_template (id, name, description)
+VALUES
+    ('cd1eb467-08c2-4fa0-82b5-947124b5f965', '收入证明生成模板', '收入证明生成的流水模板')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO t_operator_instance (instance_id, operator_id, op_index, settings_override)
+VALUES
+    -- 1) 生成社保参保证明数据 CSV （IncomeCertificateGenerator）
+    ('cd1eb467-08c2-4fa0-82b5-947124b5f965', 'IncomeCertificateGenerator', 1, NULL)
+ON CONFLICT (instance_id, operator_id, op_index) DO NOTHING;
+
+-- 插入初始数据 - 贷款调查报告合成模板（Loan Report flow）
+INSERT INTO t_clean_template (id, name, description)
+VALUES
+    ('f25d4993-aa7b-4fd9-ad74-cbd7b0d8c468', '贷款调查报告合成模板', '贷款报告数据生成 -> 模板填充 -> 文档转图片 -> 场景合成 -> QA生成 的流水模板')
+ON CONFLICT (id) DO NOTHING;
+
+-- 插入初始数据 - 操作员实例（贷款调查报告模板）
+INSERT INTO t_operator_instance (instance_id, operator_id, op_index, settings_override)
+VALUES
+    -- 1) 生成贷款报告数据
+    ('f25d4993-aa7b-4fd9-ad74-cbd7b0d8c468', 'LoanReportDataGenerator', 1, '{"batchCount":10, "startSequence":0}'),
+    -- 2) 将数据填充到Word模板
+    ('f25d4993-aa7b-4fd9-ad74-cbd7b0d8c468', 'LoanReportFiller', 2, NULL),
+    -- 3) 将生成的 Word 转为图片（DPI/保留PDF 设置）
+    ('f25d4993-aa7b-4fd9-ad74-cbd7b0d8c468', 'LoanReportWordToImageConverter', 3, '{"dpi":300, "keep_pdf": false}'),
+    -- 4) 将文档与实景背景合成（场景模式）
+    ('f25d4993-aa7b-4fd9-ad74-cbd7b0d8c468', 'LoanReportDocumentSynthesizer', 4, '{"enable_watermark": false, "enable_shadow": false, "scene_mode": "auto"}'),
+    -- 5) 基于图片/文本生成 QA 数据集
+    ('f25d4993-aa7b-4fd9-ad74-cbd7b0d8c468', 'LoanReportQADatasetGenerator', 5, '{"train_ratio":80, "val_ratio":10, "test_ratio":10, "doc_type":"个人贷款调查报告"}')
+ON CONFLICT (instance_id, operator_id, op_index) DO NOTHING;
+
+-- 1. 插入营业执照全流程处理模板 (t_clean_template)
+INSERT INTO t_clean_template (id, name, description)
+VALUES (
+    'd06eaa82-19c8-4783-bf55-eaed889ad533',
+    '营业执照全流程生成模板',
+    '包含：数据随机生成 -> 模板图像合成 -> 真实场景模拟 -> 多模态标注生成 的全自动流水线',
+)
+ON CONFLICT (id) DO UPDATE SET
+    name = EXCLUDED.name,
+    description = EXCLUDED.description,
+    updated_at = CURRENT_TIMESTAMP;
+
+-- 2. 插入操作员实例，串联算子流水 (t_operator_instance)
+-- 逻辑顺序：
+INSERT INTO t_operator_instance (instance_id, operator_id, op_index, settings_override)
+VALUES
+    -- 步骤1: 随机数据生成
+    ('d06eaa82-19c8-4783-bf55-eaed889ad533', 'LicenseDataGeneratorOperator', 1, NULL),
+    -- 步骤2: 图像合成渲染
+    ('d06eaa82-19c8-4783-bf55-eaed889ad533', 'LicenseImageComposerOperator', 2, NULL),
+    -- 步骤3: 真实场景模拟（阴影、斜拍、背景融合）
+    ('d06eaa82-19c8-4783-bf55-eaed889ad533', 'LicenseSceneSimulatorOperator', 3, NULL),
+    -- 步骤4: 自动化标注生成（生成训练用的对话数据）
+    ('d06eaa82-19c8-4783-bf55-eaed889ad533', 'LicenseAnnotationGeneratorOperator', 4, NULL)
+ON CONFLICT (instance_id, operator_id, op_index) DO NOTHING;
+
+-- ============================================================
+-- 个人所得税（Tax）业务模板定义
+-- 包含：DataGen -> DocGen -> DocToImg -> ImgAug -> QAGen 全流程
+-- ============================================================
+
+-- 1. 插入清洗模板定义
+INSERT INTO t_clean_template (id, name, description)
+VALUES
+    ('a8b9c0d1-e2f3-4455-6677-8899aabbccdd', '个人所得税数据生成模板', '个人所得税完税证明全流程：数据生成 -> 文档生成 -> 图片转换 -> 图片增强 -> QA生成')
+ON CONFLICT (id) DO NOTHING;
+
+-- 2. 插入操作员实例（定义流水线步骤）
+INSERT INTO t_operator_instance (instance_id, operator_id, op_index, settings_override)
+VALUES
+    -- 1) 生成模拟数据 (CSV/JSON)
+    ('a8b9c0d1-e2f3-4455-6677-8899aabbccdd', 'TaxDataGeneratorOperator', 1, NULL),
+
+    -- 2) 基于数据填充 Word 模板
+    ('a8b9c0d1-e2f3-4455-6677-8899aabbccdd', 'TaxDocGenOperator', 2, NULL),
+
+    -- 3) 将 Word 文档转换为图片
+    ('a8b9c0d1-e2f3-4455-6677-8899aabbccdd', 'TaxDocToImgOperator', 3, NULL),
+
+    -- 4) 图片增强（背景合成、阴影、扭曲等）
+    ('a8b9c0d1-e2f3-4455-6677-8899aabbccdd', 'TaxImgAugOperator', 4, NULL),
+
+    -- 5) 生成 QA 问答对和训练集
+    ('a8b9c0d1-e2f3-4455-6677-8899aabbccdd', 'TaxQAGenOperator', 5, NULL)
+ON CONFLICT (instance_id, operator_id, op_index) DO NOTHING;
+
+-- =============================================================
+-- 贷款结清证明全流程合成模板 (Loan Settlement Workflow)
+-- =============================================================
+
+-- 1. 插入清洗模板定义 (t_clean_template)
+-- 生成一个新的 UUID 作为模板 ID
+INSERT INTO t_clean_template (id, name, description, created_by)
+VALUES (
+    '73a8f5b2-99c1-4d3e-82a5-f12345678901',
+    '贷款结清证明合成模板',
+    '贷款结清证明全流程：数据生成 -> 文档生成 -> 转图片 -> 加盖公章 -> 场景合成 -> 标注生成',
+    'system'
+)
+ON CONFLICT (id) DO UPDATE SET
+    name = EXCLUDED.name,
+    description = EXCLUDED.description,
+    updated_at = CURRENT_TIMESTAMP;
+
+-- 2. 插入操作员实例，定义流水线步骤 (t_operator_instance)
+-- 依次串联 6 个算子
+INSERT INTO t_operator_instance (instance_id, operator_id, op_index, settings_override)
+VALUES
+    -- 步骤 1: 生成模拟数据 (CSV/JSON)
+    -- settings_override: 默认生成 10 条数据
+    (
+        '73a8f5b2-99c1-4d3e-82a5-f12345678901',
+        'LoanSettlementDataGenOperator',
+        1,
+        '{"countParam": 10, "seedParam": "42"}'
+    ),
+    -- 步骤 2: 基于数据填充 Word 模板生成 .docx
+    (
+        '73a8f5b2-99c1-4d3e-82a5-f12345678901',
+        'LoanSettlementDocGenOperator',
+        2,
+        NULL
+    ),
+    -- 步骤 3: 将 Word 文档转换为图片
+    -- settings_override: 设置 DPI 为 200 以平衡清晰度与速度
+    (
+        '73a8f5b2-99c1-4d3e-82a5-f12345678901',
+        'LoanSettlementDocToImgOperator',
+        3,
+        '{"dpiParam": 200}'
+    ),
+    -- 步骤 4: 自动定位落款并加盖电子公章 (核心步骤)
+    -- settings_override: 开启自动定位，设置中等真实感 (0.8)
+    (
+        '73a8f5b2-99c1-4d3e-82a5-f12345678901',
+        'LoanSettlementSealGeneratorMapper',
+        4,
+        '{"autoLocateParam": true, "realismLevelParam": 0.8, "sealTextParam": "中国建设银行股份有限公司"}'
+    ),
+    -- 步骤 5: 真实环境模拟（背景合成、透视变换）
+    -- settings_override: 随机应用标准、斜拍、阴影等场景
+    (
+        '73a8f5b2-99c1-4d3e-82a5-f12345678901',
+        'LoanSettlementImgAugOperator',
+        5,
+        '{"skipDetectParam": true}'
+    ),
+    -- 步骤 6: 生成多模态训练用的 QA 标注
+    -- settings_override: 每张图生成 5 个问答对
+    (
+        '73a8f5b2-99c1-4d3e-82a5-f12345678901',
+        'LoanSettlementAnnotationGenOperator',
+        6,
+        '{"qaCount": 5, "formatType": "multimodal"}'
+    )
+ON CONFLICT (instance_id, operator_id, op_index) DO UPDATE SET
+    settings_override = EXCLUDED.settings_override;
+
+-- =============================================================
+-- 结婚证全流程生成模板 (Marriage Certificate Workflow)
+-- =============================================================
+
+-- 1. 插入清洗模板定义 (t_clean_template)
+-- 生成一个新的 UUID 作为模板 ID
+INSERT INTO t_clean_template (id, name, description, created_by)
+VALUES (
+    'e1b2c3d4-5555-6666-7777-88889999aaaa',
+    '结婚证全流程生成模板',
+    '结婚证数据合成全流程：随机文本生成 -> 模板图像合成 -> 自动盖章 -> 真实场景模拟(透视/光照) -> QA标注生成',
+    'system'
+)
+ON CONFLICT (id) DO UPDATE SET
+    name = EXCLUDED.name,
+    description = EXCLUDED.description,
+    updated_at = CURRENT_TIMESTAMP;
+
+-- 2. 插入操作员实例，定义流水线步骤 (t_operator_instance)
+INSERT INTO t_operator_instance (instance_id, operator_id, op_index, settings_override)
+VALUES
+    -- 步骤 1: 随机文本生成
+    -- 生成 random_content.json，默认生成 5 组数据
+    (
+        'e1b2c3d4-5555-6666-7777-88889999aaaa',
+        'MarriageRandomText',
+        1,
+        '{"numParam": 5}'
+    ),
+    -- 步骤 2: 模板图像合成
+    -- 读取 json 将文字渲染到结婚证底板，生成“平整”的证件图
+    (
+        'e1b2c3d4-5555-6666-7777-88889999aaaa',
+        'MarriageImageCompositing',
+        2,
+        NULL
+    ),
+    -- 步骤 3: 结婚证盖章
+    -- 在平整的证件图上加盖“结婚登记专用章”（注：先盖章后增强，确保印章随纸张透视变形）
+    (
+        'e1b2c3d4-5555-6666-7777-88889999aaaa',
+        'MarriageAddSeal',
+        3,
+        '{"sealSizeParam": 280}'
+    ),
+    -- 步骤 4: 真实场景模拟/图像增强
+    -- 将盖好章的证件图融合到真实背景中（处理透视、阴影、水印）
+    (
+        'e1b2c3d4-5555-6666-7777-88889999aaaa',
+        'MarriageAugmentImages',
+        4,
+        '{"skipDetectParam": true, "scenesParam": "2"}'
+    ),
+    -- 步骤 5: QA 对生成
+    -- 基于最终图像生成多模态训练数据 (output_qa_pairs.jsonl)
+    (
+        'e1b2c3d4-5555-6666-7777-88889999aaaa',
+        'MarriageFormQA',
+        5,
+        '{"previewCountParam": 5}'
+    )
+ON CONFLICT (instance_id, operator_id, op_index) DO UPDATE SET
+    settings_override = EXCLUDED.settings_override;
+
+-- =============================================================
+-- 不动产权证全流程生成模板 (Real Estate Full Process Template)
+-- =============================================================
+
+-- 1. 插入清洗模板定义 (t_clean_template)
+-- 使用一个新的 UUID 作为模板 ID
+INSERT INTO t_clean_template (id, name, description, created_by)
+VALUES (
+    'a1b2c3d4-e5f6-7890-1234-567890abcdef',
+    '不动产权证全流程生成模板',
+    '不动产权证合成流水线：随机数据生成 -> 模板渲染 -> 真实场景合成 -> 多模态标注生成',
+    'system'
+)
+ON CONFLICT (id) DO UPDATE SET
+    name = EXCLUDED.name,
+    description = EXCLUDED.description,
+    updated_at = CURRENT_TIMESTAMP;
+
+-- 2. 插入操作员实例，定义流水线步骤 (t_operator_instance)
+-- 依次串联 4 个算子
+INSERT INTO t_operator_instance (instance_id, operator_id, op_index, settings_override)
+VALUES
+    -- 步骤 1: 随机数据生成 (RealEstateDataGenOperator)
+    -- 作用: 生成包含13个字段的模拟数据JSON
+    (
+        'a1b2c3d4-e5f6-7890-1234-567890abcdef', -- 模板ID
+        'RealEstateDataGenOperator',           -- 算子ID
+        1,                                     -- 步骤序号
+        '{"countParam": 10, "seedParam": "42"}' -- 默认设置：生成10条数据
+    ),
+
+    -- 步骤 2: 模板图像渲染 (RealEstateDocToImgOperator)
+    -- 作用: 将生成的JSON数据渲染到不动产证模板图片上
+    (
+        'a1b2c3d4-e5f6-7890-1234-567890abcdef',
+        'RealEstateDocToImgOperator',
+        2,
+        '{"dpiParam": 300, "patternParam": "*.json"}' -- 默认设置：300DPI
+    ),
+
+    -- 步骤 3: 真实场景模拟/图像增强 (RealEstateImgAugOperator)
+    -- 作用: 将渲染好的平整图片合成到真实背景中（阴影、透视等）
+    (
+        'a1b2c3d4-e5f6-7890-1234-567890abcdef',
+        'RealEstateImgAugOperator',
+        3,
+        '{"scenes": 2, "skipDetectParam": true, "sceneListParam": "normal,tilted,shadow"}' -- 默认设置：每张图生成2个场景
+    ),
+
+    -- 步骤 4: 多模态标注生成 (RealEstateAnnotationGenOperator)
+    -- 作用: 基于最终图像生成训练用的 QA 对和 JSONL 文件
+    (
+        'a1b2c3d4-e5f6-7890-1234-567890abcdef',
+        'RealEstateAnnotationGenOperator',
+        4,
+        '{"formatParam": "multimodal", "splitParam": 0.8}' -- 默认设置：多模态格式，80%训练集
+    )
+ON CONFLICT (instance_id, operator_id, op_index) DO UPDATE SET
+    settings_override = EXCLUDED.settings_override;

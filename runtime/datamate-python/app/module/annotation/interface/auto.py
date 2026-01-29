@@ -33,6 +33,7 @@ from ..service.auto import AutoAnnotationTaskService
 from ..service.mapping import DatasetMappingService
 from ..service.prediction import PredictionSyncService
 from ..service.sync import SyncService
+from ..service.ls_annotation_sync import LSAnnotationSyncService
 from ..client import LabelStudioClient
 
 
@@ -954,7 +955,13 @@ async def sync_auto_annotation_to_label_studio(
     if not os.path.isdir(output_dir):
         raise HTTPException(status_code=404, detail="Output directory not found")
 
+    # 兼容两种目录结构：
+    # 1) 旧版本：output_dir 为数据集根或中间目录，JSON 位于 output_dir/annotations/
+    # 2) 新版本：JSON 直接位于 output_dir/ 下
     annotations_dir = os.path.join(output_dir, "annotations")
+    if not os.path.isdir(annotations_dir):
+        annotations_dir = output_dir
+
     if not os.path.isdir(annotations_dir):
         raise HTTPException(status_code=404, detail="Annotations directory not found")
 
@@ -1184,3 +1191,85 @@ async def import_from_label_studio_to_dataset(
                 pass
 
     return StandardResponse(code=200, message="success", data=True)
+
+
+@router.post("/{task_id}/sync-db", response_model=StandardResponse[int])
+async def sync_auto_task_annotations_to_database(
+    task_id: str = Path(..., description="任务ID"),
+    db: AsyncSession = Depends(get_db),
+):
+    """将指定自动标注任务在 Label Studio 中的标注结果同步回 DM 数据库。
+
+    行为：
+    - 根据自动标注任务找到或创建对应的 Label Studio 项目（与 /sync-label-studio-back 相同的解析逻辑）；
+    - 遍历项目下所有 task，按 task.data.file_id 定位 t_dm_dataset_files 记录；
+    - 把 annotations + predictions 写入 annotation 字段，并抽取标签写入 tags，更新 tags_updated_at。
+    返回成功更新的文件数量。
+    """
+
+    # 1. 获取并校验自动标注任务
+    task = await service.get_task(db, task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    # 2. 查找或创建与该自动标注任务关联的 Label Studio 项目
+    mapping_service = DatasetMappingService(db)
+    mappings = await mapping_service.get_mappings_by_dataset_id(task.dataset_id)
+
+    project_id: Optional[str] = None
+    for m in mappings:
+        cfg = getattr(m, "configuration", None) or {}
+        if isinstance(cfg, dict) and cfg.get("autoTaskId") == task.id:
+            project_id = str(m.labeling_project_id)
+            break
+
+    if project_id is None:
+        for m in mappings:
+            if m.name == task.name:
+                project_id = str(m.labeling_project_id)
+                break
+
+    if project_id is None:
+        # 与前向/后向同步逻辑保持一致：如无现成项目则按自动标注配置自动创建。
+        try:
+            auto_config = AutoAnnotationConfig.model_validate(task.config)
+        except Exception as e:  # pragma: no cover
+            logger.warning(
+                "Failed to parse auto task config when creating LS project for db sync: %s",
+                e,
+            )
+            auto_config = AutoAnnotationConfig(
+                model_size="l",
+                conf_threshold=0.5,
+                target_classes=[],
+            )
+
+        project_id = await _ensure_ls_mapping_for_auto_task(
+            db,
+            dataset_id=task.dataset_id,
+            dataset_name=task.dataset_name,
+            config=auto_config,
+            task_name=task.name,
+            file_ids=[str(fid) for fid in (task.file_ids or [])],
+            auto_task_id=task.id,
+        )
+
+        if not project_id:
+            raise HTTPException(
+                status_code=500,
+                detail=(
+                    "Failed to create or resolve Label Studio project for this auto task "
+                    "when syncing annotations to database."
+                ),
+            )
+
+    # 3. 调用通用的 LS -> DM 同步服务
+    ls_client = LabelStudioClient(
+        base_url=settings.label_studio_base_url,
+        token=settings.label_studio_user_token,
+    )
+    sync_service = LSAnnotationSyncService(db, ls_client)
+
+    updated = await sync_service.sync_project_annotations_to_dm(project_id=str(project_id))
+
+    return StandardResponse(code=200, message="success", data=updated)

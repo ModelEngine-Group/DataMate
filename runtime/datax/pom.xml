@@ -137,11 +137,12 @@
         <module>nfswriter</module>
         <module>glusterfswriter</module>
         <module>s3writer</module>
+        <module>gaussdbreader</module>
+        <module>gaussdbwriter</module>
+        <module>apireader</module>
         <!-- common support module -->
         <module>plugin-rdbms-util</module>
         <module>plugin-unstructured-storage-util</module>
-        <module>gaussdbreader</module>
-        <module>gaussdbwriter</module>
         <!--        <module>datax-example</module>-->
 
     </modules>

@@ -85,6 +85,7 @@ CREATE TABLE IF NOT EXISTS t_dm_dataset_files (
     check_sum VARCHAR(64),
     tags JSONB,
     tags_updated_at TIMESTAMP,
+    annotation JSONB,
     metadata JSONB,
     status VARCHAR(50) DEFAULT 'ACTIVE',
     upload_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -101,8 +102,9 @@ COMMENT ON COLUMN t_dm_dataset_files.file_path IS '文件路径';
 COMMENT ON COLUMN t_dm_dataset_files.file_type IS '文件格式：JPG/PNG/DCM/TXT等';
 COMMENT ON COLUMN t_dm_dataset_files.file_size IS '文件大小(字节)';
 COMMENT ON COLUMN t_dm_dataset_files.check_sum IS '文件校验和';
-COMMENT ON COLUMN t_dm_dataset_files.tags IS '文件标签信息';
+COMMENT ON COLUMN t_dm_dataset_files.tags IS '文件标签信息（结构化标签/标注概要）';
 COMMENT ON COLUMN t_dm_dataset_files.tags_updated_at IS '标签最后更新时间';
+COMMENT ON COLUMN t_dm_dataset_files.annotation IS '完整标注结果（原始JSON）';
 COMMENT ON COLUMN t_dm_dataset_files.metadata IS '文件元数据';
 COMMENT ON COLUMN t_dm_dataset_files.status IS '文件状态：ACTIVE/DELETED/PROCESSING';
 COMMENT ON COLUMN t_dm_dataset_files.upload_time IS '上传时间';
