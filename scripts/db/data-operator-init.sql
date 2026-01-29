@@ -548,3 +548,52 @@ VALUES
   ('96a3b07a-3439-4557-a835-525faad60ca3', 'FlowSealAddOperator'),
 
 
+-- 插入用户算子（保险业务 - 来自 runtime/ops/user/insurance/*/metadata.yml）
+INSERT INTO t_operator (id, name, description, version, inputs, outputs, runtime, settings, file_name, file_size, metrics, is_star, created_by, updated_by)
+VALUES
+  ('InsuranceImgAugOperator', '社会保险参保图片增强合成算子', '将凭证图片与背景图进行合成，模拟真实拍摄场景', '1.0.0', 'image', 'image', '{"gpu":0,"npu":0,"storage":"1GB"}', '{"modeParam":{"name":"处理模式","description":"选择处理模式","type":"select","defaultVal":"all","options":["normal","tilted","shadow","watermark","incomplete","all"],"required":false}}', '', 0, '[{"name":"处理速度","metric":"10 images/sec"}]', false, 'system', 'system'),
+  ('InsuranceDocToImgOperator', '社会保险参保Word转图片算子', '将Word文档批量转换为JPG图片', '1.0.0', 'text', 'image', '{"gpu":0,"npu":0,"storage":"500MB"}', '{"dpiParam":{"name":"图片清晰度 (DPI)","description":"设置输出图片的每英寸点数，数值越高越清晰但文件越大","type":"slider","defaultVal":200,"min":72,"max":600,"step":1,"required":true},"patternParam":{"name":"输入文件格式","description":"输入文件格式匹配模式","type":"input","defaultVal":"*.docx","required":true}}', '', 0, '[{"name":"转换速度","metric":"5 images/sec"}]', false, 'system', 'system'),
+  ('InsuranceAnnotationGenOperator', '社会保险参保QA对生成算子', '为社保凭证图片生成分类和信息提取QA对', '1.0.0', 'image', 'text', '{"gpu":0,"npu":0,"storage":"500MB"}', '{"typeParam":{"name":"QA类型","description":"选择生成的QA类型","type":"select","defaultVal":"all","options":["classification","extraction","all"],"required":false}}', '', 0, '[{"name":"生成速度","metric":"50 qas/sec"}]', false, 'system', 'system'),
+  ('InsuranceDataGenOperator', '社会保险参保社保数据生成算子', '生成社会保险参保证明模拟数据CSV文件', '1.0.0', 'text', 'text', '{"gpu":0,"npu":0,"storage":"100MB"}', '{"countParam":{"name":"生成数量","description":"需要生成的数据记录条数","type":"slider","defaultVal":5,"min":1,"max":1000,"step":1,"required":true}}', '', 0, '[{"name":"生成速度","metric":"100 records/sec"}]', false, 'system', 'system'),
+  ('InsuranceDocGenOperator', '社会保险参保文档生成算子', '基于Word模板和数据CSV生成社会保险参保证明文档', '1.0.0', 'text', 'text', '{"gpu":0,"npu":0,"storage":"500MB"}', NULL, '', 0, '[{"name":"生成速度","metric":"5 docs/sec"}]', false, 'system', 'system')
+ON CONFLICT DO NOTHING;
+
+-- 插入版本发布信息（保险算子）
+INSERT INTO t_operator_release(id, version, release_date, changelog)
+VALUES
+  ('InsuranceImgAugOperator', '1.0.0', '2026-01-29', '["首次发布：支持多种拍摄场景合成"]'),
+  ('InsuranceDocToImgOperator', '1.0.0', '2026-01-29', '["首次发布：支持Word文档批量转JPG"]'),
+  ('InsuranceAnnotationGenOperator', '1.0.0', '2026-01-29', '["首次发布：支持分类和信息提取QA对生成"]'),
+  ('InsuranceDataGenOperator', '1.0.0', '2026-01-29', '["首次发布：支持社保参保证明数据批量生成"]'),
+  ('InsuranceDocGenOperator', '1.0.0', '2026-01-29', '["首次发布：支持基于docx模板生成社保证明文档"]')
+ON CONFLICT DO NOTHING;
+
+-- 将保险算子关联到分类（模态、语言、归属）
+INSERT INTO t_operator_category_relation(category_id, operator_id)
+VALUES
+  -- InsuranceDataGenOperator -> 文本, Python, DataMate
+  ('d8a5df7a-52a9-42c2-83c4-01062e60f597', 'InsuranceDataGenOperator'),
+  ('9eda9d5d-072b-499b-916c-797a0a8750e1', 'InsuranceDataGenOperator'),
+  ('431e7798-5426-4e1a-aae6-b9905a836b34', 'InsuranceDataGenOperator'),
+  ('96a3b07a-3439-4557-a835-525faad60ca3', 'InsuranceDataGenOperator'),
+  -- InsuranceDocGenOperator -> 文本, Python, DataMate
+  ('d8a5df7a-52a9-42c2-83c4-01062e60f597', 'InsuranceDocGenOperator'),
+  ('9eda9d5d-072b-499b-916c-797a0a8750e1', 'InsuranceDocGenOperator'),
+  ('431e7798-5426-4e1a-aae6-b9905a836b34', 'InsuranceDocGenOperator'),
+  ('96a3b07a-3439-4557-a835-525faad60ca3', 'InsuranceDocGenOperator'),
+  -- InsuranceDocToImgOperator -> 文本, 图片, DataMate
+  ('d8a5df7a-52a9-42c2-83c4-01062e60f597', 'InsuranceDocToImgOperator'),
+  ('de36b61c-9e8a-4422-8c31-d30585c7100f', 'InsuranceDocToImgOperator'),
+  ('431e7798-5426-4e1a-aae6-b9905a836b34', 'InsuranceDocToImgOperator'),
+  ('96a3b07a-3439-4557-a835-525faad60ca3', 'InsuranceDocToImgOperator'),
+  -- InsuranceImgAugOperator -> 图片, Python, DataMate
+  ('de36b61c-9e8a-4422-8c31-d30585c7100f', 'InsuranceImgAugOperator'),
+  ('9eda9d5d-072b-499b-916c-797a0a8750e1', 'InsuranceImgAugOperator'),
+  ('431e7798-5426-4e1a-aae6-b9905a836b34', 'InsuranceImgAugOperator'),
+  ('96a3b07a-3439-4557-a835-525faad60ca3', 'InsuranceImgAugOperator'),
+  -- InsuranceAnnotationGenOperator -> 图片, Python, DataMate
+  ('de36b61c-9e8a-4422-8c31-d30585c7100f', 'InsuranceAnnotationGenOperator'),
+  ('9eda9d5d-072b-499b-916c-797a0a8750e1', 'InsuranceAnnotationGenOperator'),
+  ('431e7798-5426-4e1a-aae6-b9905a836b34', 'InsuranceAnnotationGenOperator'),
+  ('96a3b07a-3439-4557-a835-525faad60ca3', 'InsuranceAnnotationGenOperator'),
+ON CONFLICT DO NOTHING;
