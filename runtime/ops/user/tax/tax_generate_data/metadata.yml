@@ -1,0 +1,39 @@
+name: '数据生成算子'
+description: '基于Word模板解析字段并生成模拟数据'
+language: 'python'
+raw_id: 'TaxDataGenOperator'
+version: '1.0.0'
+vendor: 'datamate'
+modal: 'text'
+inputs: 'text'
+outputs: 'text'
+
+release:
+  - '首次发布：支持个人所得税完税证明数据生成'
+
+runtime:
+  gpu: 0
+  npu: 0
+  storage: 100MB
+
+metrics:
+  - name: '生成速度'
+    metric: '100 records/sec'
+
+settings:
+  countParam:
+    name: '生成数量'
+    description: '需要生成的数据记录条数'
+    type: 'slider'
+    defaultVal: 10
+    min: 1
+    max: 1000
+    step: 1
+    required: true
+
+  seedParam:
+    name: '随机种子'
+    description: '用于控制随机生成的一致性'
+    type: 'input'
+    defaultVal: '42'
+    required: false
