@@ -1,0 +1,69 @@
+name: "JSON文件生成"
+name_en: "JSON File Generator"
+description: "将不动产数据和图片信息组合生成符合JSONL格式的JSON文件"
+description_en: "Combines property data and image information to generate JSON files in JSONL format"
+language: "python"
+vendor: "datamate"
+raw_id: "JsonlGenerator"
+version: "1.0.0"
+types:
+    - "generate"
+modal: "text"
+effect:
+    before: "不动产数据和图片"
+    after: "JSON文件路径或内容"
+inputs: "text"
+outputs: "text"
+
+release:
+    - "首次发布"
+    - "支持JSON文件生成功能"
+    - "支持JSONL格式输出（每行一个JSON对象）"
+    - "支持单页JSON和多页JSONL两种模式"
+    - "支持从输入文本解析JSON数据"
+    - "支持从sample中获取图片路径"
+
+runtime:
+    memory: 104857600 # 100MB
+    cpu: 0.1
+    gpu: 0
+    npu: 0
+    storage: 50MB
+
+metrics:
+    - name: "生成速度"
+      metric: "10 records/sec"
+
+settings:
+    generationMode:
+        name: "生成模式"
+        description: "选择生成模式：单页JSON或多页JSONL"
+        type: "select"
+        defaultVal: "jsonl"
+        required: true
+        options:
+            - label: "JSONL格式（多页）"
+              value: "jsonl"
+            - label: "JSON格式（单页）"
+              value: "json"
+
+    includeTableData:
+        name: "包含表格数据"
+        description: "是否在JSON中包含表格数据"
+        type: "switch"
+        defaultVal: "true"
+        checkedLabel: "包含"
+        unCheckedLabel: "不包含"
+        required: false
+
+    outputFormat:
+        name: "输出格式"
+        description: "选择输出格式：文件路径或JSON内容"
+        type: "select"
+        defaultVal: "path"
+        required: true
+        options:
+            - label: "文件路径"
+              value: "path"
+            - label: "JSON内容"
+              value: "content"

@@ -1,0 +1,77 @@
+name: "Word转图片"
+name_en: "Word to Image Converter"
+description: "将Word文档转换为高质量JPG图片，支持多页文档"
+description_en: "Converts Word documents to high-quality JPG images, supports multi-page documents"
+language: "python"
+vendor: "datamate"
+raw_id: "WordToImageConverter"
+version: "1.0.0"
+types:
+    - "transform"
+modal: "text"
+effect:
+    before: "Word文档路径"
+    after: "JPG图片或Base64编码"
+inputs: "text"
+outputs: "text"
+
+release:
+    - "首次发布"
+    - "支持Word转JPG图片功能"
+    - "支持多页文档处理"
+    - "支持自动跳过空白页"
+    - "支持图片DPI配置"
+    - "支持图片路径和Base64编码两种输出格式"
+
+runtime:
+    memory: 209715200 # 200MB
+    cpu: 0.3
+    gpu: 0
+    npu: 0
+    storage: 100MB
+
+metrics:
+    - name: "处理速度"
+      metric: "5 docs/sec"
+
+settings:
+    imageDPI:
+        name: "图片DPI"
+        description: "图片分辨率DPI，数值越高图片越清晰"
+        type: "slider"
+        defaultVal: 300
+        min: 150
+        max: 600
+        step: 50
+        required: true
+
+    skipBlankPages:
+        name: "跳过空白页"
+        description: "是否自动跳过空白页（大部分区域是白色的页面）"
+        type: "switch"
+        defaultVal: "true"
+        checkedLabel: "跳过"
+        unCheckedLabel: "不跳过"
+        required: false
+
+    outputFormat:
+        name: "输出格式"
+        description: "选择输出格式：图片路径或Base64编码"
+        type: "select"
+        defaultVal: "path"
+        required: true
+        options:
+            - label: "图片路径"
+              value: "path"
+            - label: "Base64编码"
+              value: "base64"
+
+    maxRetries:
+        name: "最大重试次数"
+        description: "Word转PDF失败时的最大重试次数"
+        type: "inputNumber"
+        defaultVal: 3
+        min: 1
+        max: 5
+        step: 1
+        required: false

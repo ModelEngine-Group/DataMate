@@ -1,0 +1,87 @@
+name: "真实世界模拟"
+name_en: "Real World Simulator"
+description: "将电子凭证图片合成到真实场景背景中，支持多种拍摄场景"
+description_en: "Synthesizes electronic credential images into real-world scene backgrounds, supports multiple shooting scenarios"
+language: "python"
+vendor: "datamate"
+raw_id: "RealWorldSimulator"
+version: "1.0.0"
+types:
+    - "transform"
+modal: "image"
+effect:
+    before: "电子凭证图片"
+    after: "模拟后的真实场景图片"
+inputs: "text"
+outputs: "text"
+
+release:
+    - "首次发布"
+    - "支持真实世界模拟功能"
+    - "支持多种拍摄场景（正常、斜拍、阴影、水印、不完整）"
+    - "支持自动检测文档角落"
+    - "支持透视变换和色彩匹配"
+    - "支持比例校正和自动旋转"
+    - "支持图片路径和Base64编码两种输出格式"
+
+runtime:
+    memory: 524288000 # 500MB
+    cpu: 0.5
+    gpu: 0
+    npu: 0
+    storage: 200MB
+
+metrics:
+    - name: "处理速度"
+      metric: "2 docs/sec"
+
+settings:
+    sceneMode:
+        name: "场景模式"
+        description: "选择处理场景：自动检测或指定场景"
+        type: "select"
+        defaultVal: "auto"
+        required: true
+        options:
+            - label: "自动检测"
+              value: "auto"
+            - label: "正常场景"
+              value: "normal"
+            - label: "斜拍场景"
+              value: "tilted"
+            - label: "阴影场景"
+              value: "shadow"
+            - label: "水印场景"
+              value: "watermark"
+            - label: "不完整场景"
+              value: "incomplete"
+
+    enableRatioFix:
+        name: "启用比例校正"
+        description: "是否启用比例校正以防止图像变形"
+        type: "switch"
+        defaultVal: "true"
+        checkedLabel: "启用"
+        unCheckedLabel: "禁用"
+        required: false
+
+    enableAutoRotate:
+        name: "启用自动旋转"
+        description: "是否自动旋转源图以匹配目标方向"
+        type: "switch"
+        defaultVal: "true"
+        checkedLabel: "启用"
+        unCheckedLabel: "禁用"
+        required: false
+
+    outputFormat:
+        name: "输出格式"
+        description: "选择输出格式：图片路径或Base64编码"
+        type: "select"
+        defaultVal: "path"
+        required: true
+        options:
+            - label: "图片路径"
+              value: "path"
+            - label: "Base64编码"
+              value: "base64"
