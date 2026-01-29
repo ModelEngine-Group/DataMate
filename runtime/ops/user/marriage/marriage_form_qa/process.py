@@ -15,7 +15,7 @@ from .src.qa_builder import build_qa_pairs_from_directory
 
 
 class MarriageFormQA(Mapper):
-    """结婚证 QA 对生成：读取 export_path 下图片与 random_content.json，输出 output_qa_pairs.jsonl。"""
+    """结婚证 QA 对生成：仅从 sample['export_path'] 读图片与 random_content.json，并只写 jsonl/preview 到 export_path；不依赖 filePath。"""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

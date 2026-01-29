@@ -23,7 +23,7 @@ from .src.seal_marriage import (
 
 
 class MarriageAddSeal(Mapper):
-    """结婚证盖章：读取 export_path 下图片与 random_content.json，按 group_id 取登记机关，添加印章。"""
+    """结婚证盖章：仅从 sample['export_path'] 读图片与 random_content.json，并只写回 export_path；不依赖 filePath。"""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

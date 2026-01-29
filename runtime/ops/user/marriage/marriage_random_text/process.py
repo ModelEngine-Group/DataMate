@@ -23,26 +23,20 @@ class MarriageRandomText(Mapper):
         self.num_generate = int(num_val) if num_val is not None else 5
 
     def _resolve_input_file(self, sample: Dict[str, Any]) -> str:
-        """解析输入：优先 filePath 指向的文件；若为目录则取 coordinate_info.json 或第一个 json。"""
-        file_path = sample.get('filePath') or sample.get('export_path') or ''
+        """输入仅使用 sample['filePath']，且必须为 .json 文件（源数据集当前被处理文件）。"""
+        file_path = sample.get('filePath') or ''
         if not file_path:
             return ''
-        if os.path.isfile(file_path) and file_path.lower().endswith('.json'):
-            return file_path
-        if os.path.isdir(file_path):
-            prefer = os.path.join(file_path, 'coordinate_info.json')
-            if os.path.exists(prefer):
-                return prefer
-            for name in os.listdir(file_path):
-                if name.lower().endswith('.json'):
-                    return os.path.join(file_path, name)
-        return ''
+        file_path = os.path.abspath(file_path)
+        if not os.path.isfile(file_path) or not file_path.lower().endswith('.json'):
+            return ''
+        return file_path
 
     def execute(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         try:
             input_file = self._resolve_input_file(sample)
             if not input_file:
-                logger.warning("MarriageRandomText: 未找到输入 JSON 或 coordinate_info.json")
+                logger.warning("MarriageRandomText: filePath 为空或非 .json 文件，跳过")
                 return sample
 
             export_path = sample.get('export_path')

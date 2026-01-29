@@ -23,36 +23,42 @@ class MarriageImageCompositing(Mapper):
         self.coords_path = (kwargs.get('coordsPath') or '').strip()
 
     def _resolve_paths(self, sample: Dict[str, Any]) -> tuple:
-        """解析模板、坐标、文本路径。export_path 为当前任务输出目录（内含 random_content.json）。"""
-        export_path = sample.get('export_path') or sample.get('filePath') or ''
-        export_path = str(Path(export_path).resolve())
-        texts_path = os.path.join(export_path, 'random_content.json')
+        """辅助文件（模板、坐标）从源数据集 source_dir 解析；random_content 仅从 export_path 读；输出仅写 export_path。"""
+        export_path = sample.get('export_path') or ''
+        export_path = str(Path(export_path).resolve()) if export_path else ''
+        texts_path = os.path.join(export_path, 'random_content.json') if export_path else ''
 
-        template_path = self.template_path
-        if not template_path or not os.path.exists(template_path):
-            # 尝试 export_path 同级或上级的 template.jpg
-            for base in [export_path, str(Path(export_path).parent)]:
-                candidate = os.path.join(base, 'template.jpg')
-                if os.path.exists(candidate):
-                    template_path = candidate
-                    break
-            if not template_path or not os.path.exists(template_path):
-                return '', '', '', export_path
+        file_path = sample.get('filePath') or ''
+        source_dir = os.path.dirname(os.path.abspath(file_path)) if file_path else ''
 
-        coords_path = self.coords_path
-        if not coords_path or not os.path.exists(coords_path):
-            for base in [export_path, str(Path(export_path).parent)]:
-                candidate = os.path.join(base, 'coordinate_info.json')
+        # 辅助文件（源数据集）：模板、坐标
+        template_path = self.template_path if (self.template_path and os.path.exists(self.template_path)) else ''
+        if not template_path and source_dir:
+            candidate = os.path.join(source_dir, 'template.jpg')
+            if os.path.exists(candidate):
+                template_path = candidate
+        if not template_path:
+            return '', '', texts_path, export_path
+
+        coords_path = self.coords_path if (self.coords_path and os.path.exists(self.coords_path)) else ''
+        if not coords_path:
+            if file_path and os.path.isfile(file_path) and file_path.lower().endswith('.json'):
+                coords_path = file_path
+            elif source_dir:
+                candidate = os.path.join(source_dir, 'coordinate_info.json')
                 if os.path.exists(candidate):
                     coords_path = candidate
-                    break
-            if not coords_path or not os.path.exists(coords_path):
-                return template_path, '', texts_path, export_path
+        if not coords_path:
+            return template_path, '', texts_path, export_path
 
         return template_path, coords_path, texts_path, export_path
 
     def execute(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         try:
+            export_path = sample.get('export_path')
+            if not export_path:
+                logger.warning("MarriageImageCompositing: 缺少 export_path")
+                return sample
             template_path, coords_path, texts_path, out_dir = self._resolve_paths(sample)
             if not template_path or not os.path.exists(template_path):
                 logger.warning("MarriageImageCompositing: 未找到模板图 template.jpg")

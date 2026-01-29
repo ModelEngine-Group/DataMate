@@ -23,7 +23,7 @@ from .src.image_augmentor import (
 
 
 class MarriageAugmentImages(Mapper):
-    """结婚证图像合成到实拍背景：源图来自 export_path，背景来自 backgrounds/ 或 bgPathParam。"""
+    """结婚证图像合成到实拍背景：源图仅从 export_path 读，背景为辅助文件，基于 filePath 得 source_dir/effect_image 或 bgPathParam 或内置 backgrounds。"""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -61,7 +61,17 @@ class MarriageAugmentImages(Mapper):
                 return sample
 
             export_path = str(Path(export_path).resolve())
-            bg_dir = self.bg_path_param if (self.bg_path_param and os.path.isdir(self.bg_path_param)) else self.bg_dir
+
+            # 背景图目录（辅助文件）：优先 bgPathParam，否则 source_dir/effect_image，再回退到算子内置 backgrounds
+            file_path = sample.get('filePath') or ''
+            source_dir = os.path.dirname(os.path.abspath(file_path)) if file_path else ''
+            effect_image_dir = os.path.join(source_dir, 'effect_image') if source_dir else ''
+            if self.bg_path_param and os.path.isdir(self.bg_path_param):
+                bg_dir = self.bg_path_param
+            elif effect_image_dir and os.path.isdir(effect_image_dir):
+                bg_dir = effect_image_dir
+            else:
+                bg_dir = self.bg_dir
             if not os.path.isdir(bg_dir):
                 logger.warning(f"MarriageAugmentImages: 背景目录不存在: {bg_dir}")
                 return sample
