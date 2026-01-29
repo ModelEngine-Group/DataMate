@@ -1,0 +1,20 @@
+{
+  "name": "apireader",
+  "parameter": {
+    "api": "http://127.0.0.1:9000",
+    "method": "GET",
+    "body": "{\"name\": \"value\"}",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "schema": {
+      "dataPath": "$.data",
+      "fields": [
+        {
+          "name": "name",
+          "path": "alias"
+        }
+      ]
+    }
+  }
+}

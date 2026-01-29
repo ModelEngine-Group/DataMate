@@ -5,7 +5,9 @@ import com.datamate.common.infrastructure.common.Response;
 import com.datamate.common.infrastructure.exception.SystemErrorCode;
 import com.datamate.common.interfaces.PagedResponse;
 import com.datamate.common.interfaces.PagingQuery;
+import com.datamate.datamanagement.application.DatasetApplicationService;
 import com.datamate.datamanagement.application.DatasetFileApplicationService;
+import com.datamate.datamanagement.domain.model.dataset.Dataset;
 import com.datamate.datamanagement.domain.model.dataset.DatasetFile;
 import com.datamate.datamanagement.interfaces.converter.DatasetConverter;
 import com.datamate.datamanagement.interfaces.dto.AddFilesRequest;
@@ -18,6 +20,7 @@ import com.datamate.datamanagement.interfaces.dto.RenameFileRequest;
 import com.datamate.datamanagement.interfaces.dto.RenameDirectoryRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -34,15 +37,13 @@ import java.util.List;
  */
 @Slf4j
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/data-management/datasets/{datasetId}/files")
 public class DatasetFileController {
 
     private final DatasetFileApplicationService datasetFileApplicationService;
 
-    @Autowired
-    public DatasetFileController(DatasetFileApplicationService datasetFileApplicationService) {
-        this.datasetFileApplicationService = datasetFileApplicationService;
-    }
+    private final DatasetApplicationService datasetApplicationService;
 
     @GetMapping
     public Response<PagedResponse<DatasetFile>> getDatasetFiles(
@@ -66,7 +67,8 @@ public class DatasetFileController {
             @PathVariable("datasetId") String datasetId,
             @PathVariable("fileId") String fileId) {
         try {
-            DatasetFile datasetFile = datasetFileApplicationService.getDatasetFile(datasetId, fileId);
+            Dataset dataset = datasetApplicationService.getDataset(datasetId);
+            DatasetFile datasetFile = datasetFileApplicationService.getDatasetFile(dataset, fileId);
             return ResponseEntity.ok(Response.ok(DatasetConverter.INSTANCE.convertToResponse(datasetFile)));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Response.error(SystemErrorCode.UNKNOWN_ERROR, null));
@@ -90,8 +92,9 @@ public class DatasetFileController {
     public ResponseEntity<Resource> downloadDatasetFileById(@PathVariable("datasetId") String datasetId,
                                                             @PathVariable("fileId") String fileId) {
         try {
-            DatasetFile datasetFile = datasetFileApplicationService.getDatasetFile(datasetId, fileId);
-            Resource resource = datasetFileApplicationService.downloadFile(datasetId, fileId);
+            Dataset dataset = datasetApplicationService.getDataset(datasetId);
+            DatasetFile datasetFile = datasetFileApplicationService.getDatasetFile(dataset, fileId);
+            Resource resource = datasetFileApplicationService.downloadFile(datasetFile);
 
             return ResponseEntity.ok()
                     .contentType(MediaType.APPLICATION_OCTET_STREAM)
@@ -99,8 +102,10 @@ public class DatasetFileController {
                             "attachment; filename=\"" + datasetFile.getFileName() + "\"")
                     .body(resource);
         } catch (IllegalArgumentException e) {
+            log.error("downloadDatasetFileById error: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         } catch (Exception e) {
+            log.error("downloadDatasetFileById error: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }

@@ -221,6 +221,18 @@ INSERT INTO t_dc_collection_templates (
           '{"parameter": {"ip": {"name": "服务器地址","description": "GlusterFS服务器的IP地址或域名。","type": "input", "required": true, "index": 1}, "volume": {"name": "卷名称","description": "GlusterFS卷名称。","type": "input", "required": true, "index": 2}, "path": {"name": "子路径","description": "卷内的子目录路径（可选）。","type": "input", "required": false, "index": 3}, "files": {"name": "文件列表","description": "指定文件列表进行归集。","type": "selectTag", "required": false, "index": 4}}, "reader": {}, "writer": {}}',
           TRUE,
           'system',
+          'system'),
+      (
+          '6',
+          'API归集模板',
+          '将指定API返回的数据以csv文件的形式归集到DataMate平台上。',
+          'apireader',
+          'apireader',
+          'txtfilewriter',
+          'txtfilewriter',
+          '{"parameter": {}, "reader": {"api": {"name": "接口地址","description": "API的访问地址。","type": "input", "required": true, "index": 1}, "method": {"name": "请求方式","description": "API的请求方式（默认为GET）。","type": "option", "options": ["GET", "POST"], "required": false, "index": 2}, "body": {"name": "请求体参数","description": "请求体参数，主要针对POST请求。示例：\n {\"query\": \"value\"}","type": "jsonobject", "required": false, "index": 3}, "headers": {"name": "请求头参数","description": "需要设置的请求头参数。示例：\n {\"Authorization\": \"***\"}","type": "jsonobject", "required": false, "index": 4}, "schema": {"name": "数据解析schema","description": "会依据schema解析API返回结果。示例：\n {\"dataPath\": \"返回体内定位到具体数据的路径，形如$.data\", \"fields\": [{\"name\": \"属性名\", \"alias\": \"别名\", \"path\": \"属性的路径\"}]}","type": "jsonobject", "required": true, "index": 5}}, "writer": {}}',
+          TRUE,
+          'system',
           'system')
 ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
