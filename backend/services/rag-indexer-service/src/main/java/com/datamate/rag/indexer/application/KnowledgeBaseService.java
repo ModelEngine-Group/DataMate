@@ -2,6 +2,9 @@ package com.datamate.rag.indexer.application;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.datamate.common.domain.enums.NodeType;
+import com.datamate.common.domain.model.LineageNode;
+import com.datamate.common.domain.service.LineageService;
 import com.datamate.common.infrastructure.exception.BusinessException;
 import com.datamate.common.infrastructure.exception.KnowledgeBaseErrorCode;
 import com.datamate.common.interfaces.PagedResponse;
@@ -52,6 +55,7 @@ public class KnowledgeBaseService {
     private final ApplicationEventPublisher eventPublisher;
     private final ModelConfigRepository modelConfigRepository;
     private final MilvusService milvusService;
+    private final LineageService lineageService;
 
     /**
      * 创建知识库
@@ -63,6 +67,7 @@ public class KnowledgeBaseService {
         KnowledgeBase knowledgeBase = new KnowledgeBase();
         BeanUtils.copyProperties(request, knowledgeBase);
         knowledgeBaseRepository.save(knowledgeBase);
+        addKnowledgeBaseToGraph(knowledgeBase);
         return knowledgeBase.getId();
     }
 
@@ -221,5 +226,14 @@ public class KnowledgeBaseService {
             item.getEntity().put("metadata", metadata);
         });
         return searchResults;
+    }
+
+    private void addKnowledgeBaseToGraph(KnowledgeBase knowledgeBase) {
+        LineageNode fromNode = new LineageNode();
+        fromNode.setId(knowledgeBase.getId());
+        fromNode.setName(knowledgeBase.getName());
+        fromNode.setDescription(knowledgeBase.getDescription());
+        fromNode.setNodeType(NodeType.KNOWLEDGE_BASE);
+        lineageService.generateGraph(fromNode, null, null);
     }
 }
