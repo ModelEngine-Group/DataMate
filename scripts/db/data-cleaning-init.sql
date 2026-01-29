@@ -181,3 +181,24 @@ VALUES
     ('4421504e-c6c9-4760-b55a-509d17429597', 'ImgResize', 12, NULL),
     ('4421504e-c6c9-4760-b55a-509d17429597', 'ImgTypeUnify', 13, NULL)
     ON CONFLICT (instance_id, operator_id, op_index) DO NOTHING;
+
+-- 插入初始数据 - 资产流水处理模板（将五个算子串成流水）
+INSERT INTO t_clean_template (id, name, description)
+VALUES
+    ('5d7a8f20-0a1b-4c2d-8f3e-123456789abc', '资产流水处理模板', '基于 FlowDataGen -> FlowDocToImg -> FlowImgAug -> FlowSealAdd -> FlowQAGen 的处理流水')
+ON CONFLICT (id) DO NOTHING;
+
+-- 插入初始数据 - 操作员实例（资产流水处理模板）
+INSERT INTO t_operator_instance (instance_id, operator_id, op_index, settings_override)
+VALUES
+    -- 1) 先生成带内容的 Word 文档（FlowDataGenOperator）
+    ('5d7a8f20-0a1b-4c2d-8f3e-123456789abc', 'FlowDataGenOperator', 1, NULL),
+    -- 2) 将生成的 Word 文档转为图片（FlowDocToImgOperator）
+    ('5d7a8f20-0a1b-4c2d-8f3e-123456789abc', 'FlowDocToImgOperator', 2, NULL),
+    -- 3) 对图片进行增强合成（FlowImgAugOperator）
+    ('5d7a8f20-0a1b-4c2d-8f3e-123456789abc', 'FlowImgAugOperator', 3, NULL),
+    -- 4) 在图片上添加印章（FlowSealAddOperator）
+    ('5d7a8f20-0a1b-4c2d-8f3e-123456789abc', 'FlowSealAddOperator', 4, NULL),
+    -- 5) 基于处理后的图片生成多模态 QA（FlowQAGenOperator）
+    ('5d7a8f20-0a1b-4c2d-8f3e-123456789abc', 'FlowQAGenOperator', 5, NULL)
+ON CONFLICT (instance_id, operator_id, op_index) DO NOTHING;

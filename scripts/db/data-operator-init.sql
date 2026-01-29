@@ -500,3 +500,51 @@ WHERE c.id IN ('4d7dbd77-0a92-44f3-9056-2cd62d4a71e4', '9eda9d5d-072b-499b-916c-
                'video_captioning_from_video_mapper', 'video_captioning_from_vlm_mapper', 'video_extract_frames_mapper',
                'video_split_by_duration_mapper', 'video_split_by_key_frame_mapper', 'video_split_by_scene_mapper')
 ON CONFLICT DO NOTHING;
+
+-- 插入用户算子
+INSERT INTO t_operator (id, name, description, version, inputs, outputs, runtime, settings, file_name, file_size, metrics, is_star, created_by, updated_by)
+VALUES
+  ('FlowSealAddOperator', '资产流水印章添加算子', '在文档或图片上添加银行印章', '1.0.0', 'image', 'image', '{"gpu":0,"npu":0,"storage":"500MB"}', '{"sealSizeParam":{"name":"印章大小","description":"印章直径（像素）","type":"slider","defaultVal":200,"min":100,"max":300,"step":10,"required":true},"bankNameParam":{"name":"银行名称","description":"银行名称，用于生成印章文字","type":"input","defaultVal":"北京兴业银行","required":false},"autoDetectParam":{"name":"自动检测位置","description":"是否自动检测印章位置","type":"switch","defaultVal":true,"checkedLabel":"是","unCheckedLabel":"否"}}', '', 0, '[{"name":"处理速度","metric":"5 docs/sec"}]', false, 'system', 'system'),
+  ('FlowImgAugOperator', '资产流水图像增强合成算子', '将文档图像合成到真实背景中（支持阴影、斜拍、水印等场景）', '1.0.0', 'image', 'image', '{"gpu":0,"npu":0,"storage":"1024MB"}', '{"scenesParam":{"name":"选择场景数量","description":"每张图随机选择几个场景（默认: 使用所有可用场景）","type":"select","defaultVal":"2","required":false,"options":[{"label":"1","value":"1"},{"label":"2","value":"2"},{"label":"3","value":"3"},{"label":"4","value":"4"},{"label":"5","value":"5"}]},"sceneListParam":{"name":"启用场景模式","description":"选择允许生成的场景类型","type":"checkbox","defaultVal":"normal,tilted,shadow,watermark,incomplete","options":[{"label":"标准 (Normal)","value":"normal"},{"label":"斜拍 (Tilted)","value":"tilted"},{"label":"阴影 (Shadow)","value":"shadow"},{"label":"水印 (Watermark)","value":"watermark"},{"label":"不完整 (Incomplete)","value":"incomplete"}]},"skipDetectParam":{"name":"跳过坐标检测","description":"若开启，仅使用缓存坐标；若无缓存则跳过。关闭则实时计算。","type":"switch","defaultVal":true,"checkedLabel":"是","unCheckedLabel":"否"}}', '', 0, '[{"name":"处理速度","metric":"1 img/sec"}]', false, 'system', 'system'),
+  ('FlowDocToImgOperator', '资产流水文档转图片算子', '将输入流中的.docx文档转换为图片格式', '1.0.0', 'text', 'image', '{"gpu":0,"npu":0,"storage":"500MB"}', '{"dpiParam":{"name":"图片清晰度 (DPI)","description":"设置输出图片的每英寸点数，数值越高越清晰但文件越大","type":"slider","defaultVal":200,"min":72,"max":600,"step":1,"required":true},"patternParam":{"name":"输入文件格式","description":"输入文件格式","type":"input","defaultVal":"*.docx","required":true}}', '', 0, '[{"name":"转换速度","metric":"2 docs/sec"}]', false, 'system', 'system'),
+  ('FlowQAGenOperator', '资产流水QA生成算子', '为流水资产分析表生成多模态训练用的问答对', '1.0.0', 'image', 'text', '{"gpu":0,"npu":0,"storage":"100MB"}', '{"qaCountParam":{"name":"QA对数量","description":"每个样本生成的QA对数量","type":"slider","defaultVal":10,"min":1,"max":50,"step":1,"required":true},"qaTypeParam":{"name":"QA类型","description":"选择生成的QA类型","type":"checkbox","defaultVal":"basic,detailed,complex","options":[{"label":"基础信息","value":"basic"},{"label":"详细信息","value":"detailed"},{"label":"复杂推理","value":"complex"}]}}', '', 0, '[{"name":"生成速度","metric":"50 qas/sec"}]', false, 'system', 'system'),
+  ('FlowDataGenOperator', '资产流水流水数据生成算子', '基于流水资产分析表Word模板生成随机数据并填充', '1.0.0', 'text', 'text', '{"gpu":0,"npu":0,"storage":"100MB"}', '{"countParam":{"name":"生成数量","description":"需要生成的数据记录条数","type":"slider","defaultVal":5,"min":1,"max":1000,"step":1,"required":true},"seedParam":{"name":"随机种子","description":"用于控制随机生成的一致性","type":"input","defaultVal":"42","required":false}}', '', 0, '[{"name":"生成速度","metric":"100 records/sec"}]', false, 'system', 'system')
+ON CONFLICT DO NOTHING;
+
+-- 插入版本发布信息
+INSERT INTO t_operator_release(id, version, release_date, changelog)
+VALUES
+  ('FlowSealAddOperator', '1.0.0', '2026-01-30', '["首次发布：支持图片和Word文档添加印章"]'),
+  ('FlowImgAugOperator', '1.0.0', '2026-01-30', '["首次发布：支持基于CV2的透视变换与光照融合"]'),
+  ('FlowDocToImgOperator', '1.0.0', '2026-01-30', '["首次发布：支持 .docx 转 .png"]'),
+  ('FlowQAGenOperator', '1.0.0', '2026-01-30', '["首次发布：支持多类型QA对生成"]'),
+  ('FlowDataGenOperator', '1.0.0', '2026-01-30', '["首次发布：支持Word模板解析与数据批量生成"]')
+ON CONFLICT DO NOTHING;
+INSERT INTO t_operator_category_relation(category_id, operator_id)
+VALUES
+  ('d8a5df7a-52a9-42c2-83c4-01062e60f597', 'FlowDataGenOperator'),
+  ('9eda9d5d-072b-499b-916c-797a0a8750e1', 'FlowDataGenOperator'),
+  ('431e7798-5426-4e1a-aae6-b9905a836b34', 'FlowDataGenOperator'),
+  ('96a3b07a-3439-4557-a835-525faad60ca3', 'FlowDataGenOperator'),
+  -- FlowQAGenOperator -> 图片, Python, DataMate
+  ('de36b61c-9e8a-4422-8c31-d30585c7100f', 'FlowQAGenOperator'),
+  ('9eda9d5d-072b-499b-916c-797a0a8750e1', 'FlowQAGenOperator'),
+  ('431e7798-5426-4e1a-aae6-b9905a836b34', 'FlowQAGenOperator'),
+  ('96a3b07a-3439-4557-a835-525faad60ca3', 'FlowQAGenOperator'),
+  -- FlowDocToImgOperator -> 文本, 图片, Huawei
+  ('d8a5df7a-52a9-42c2-83c4-01062e60f597', 'FlowDocToImgOperator'),
+  ('de36b61c-9e8a-4422-8c31-d30585c7100f', 'FlowDocToImgOperator'),
+  ('431e7798-5426-4e1a-aae6-b9905a836b34', 'FlowDocToImgOperator'),
+  ('96a3b07a-3439-4557-a835-525faad60ca3', 'FlowDocToImgOperator'),
+  -- FlowImgAugOperator -> 图片, Python, DataMate
+  ('de36b61c-9e8a-4422-8c31-d30585c7100f', 'FlowImgAugOperator'),
+  ('9eda9d5d-072b-499b-916c-797a0a8750e1', 'FlowImgAugOperator'),
+  ('431e7798-5426-4e1a-aae6-b9905a836b34', 'FlowImgAugOperator'),
+  ('96a3b07a-3439-4557-a835-525faad60ca3', 'FlowImgAugOperator'),
+  -- FlowSealAddOperator -> 图片, Python, DataMate
+  ('de36b61c-9e8a-4422-8c31-d30585c7100f', 'FlowSealAddOperator'),
+  ('9eda9d5d-072b-499b-916c-797a0a8750e1', 'FlowSealAddOperator'),
+  ('431e7798-5426-4e1a-aae6-b9905a836b34', 'FlowSealAddOperator'),
+  ('96a3b07a-3439-4557-a835-525faad60ca3', 'FlowSealAddOperator'),
+
+
