@@ -1,0 +1,63 @@
+name: '收入证明生成器'
+description: '基于Word模板批量生成收入证明的多模态训练数据集，支持模板填充、图片转换、印章添加、真实背景合成和训练格式转换'
+language: 'python'
+vendor: 'datamate'
+raw_id: 'IncomeCertificateGenerator'
+version: '1.0.0'
+modal: 'text'
+inputs: 'text'
+outputs: 'image'
+release:
+  - '首次发布'
+  - '支持收入证明批量生成'
+  - '支持LLaVA和MLLM格式输出'
+  - '跨平台兼容（Linux/Windows/macOS）'
+metrics:
+  - name: '生成速度'
+    metric: '2-3 秒/张'
+  - name: '内存使用'
+    metric: '500MB'
+  - name: '支持格式'
+    metric: 'LLaVA, MLLM'
+runtime:
+  memory: 524288000  # 500MB
+  cpu: 1.0
+  gpu: 0
+  npu: 0
+settings:
+  count:
+    name: '生成数量'
+    description: '指定生成的收入证明数量（1-1000张）'
+    type: 'inputNumber'
+    defaultVal: 5
+    min: 1
+    max: 1000
+    step: 1
+    required: true
+  outputFormat:
+    name: '输出格式'
+    description: '训练数据格式类型'
+    type: 'select'
+    defaultVal: 'llava'
+    required: false
+    options:
+      - label: 'LLaVA格式'
+        value: 'llava'
+      - label: 'MLLM格式'
+        value: 'mllm'
+  addSeal:
+    name: '添加印章'
+    description: '是否在生成的图片上添加公司印章'
+    type: 'switch'
+    defaultVal: 'true'
+    required: false
+    checkedLabel: '添加'
+    unCheckedLabel: '不添加'
+  simulateRealWorld:
+    name: '真实场景模拟'
+    description: '是否将文档合成到真实背景中（模拟拍摄效果）'
+    type: 'switch'
+    defaultVal: 'true'
+    required: false
+    checkedLabel: '启用'
+    unCheckedLabel: '禁用'

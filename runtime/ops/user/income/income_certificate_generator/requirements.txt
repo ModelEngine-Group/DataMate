@@ -1,0 +1,43 @@
+# 收入证明生成算子 - 跨平台兼容依赖
+# 支持 Linux, Windows, macOS
+
+# ============ 文档处理 ============
+# Word文档处理和模板填充
+python-docx==1.1.2
+# 生成随机数据
+faker==30.8.0
+
+# ============ 图像处理 ============
+# 图像处理基础库
+Pillow>=10.0.0
+# OpenCV图像处理
+opencv-python>=0.0.1
+# PDF转图片（需要安装poppler-utils）
+pdf2image>=1.16.0
+
+# ============ 数据处理 ============
+# 数值计算
+numpy>=1.24.0
+
+# ============ 跨平台Word转图片 ============
+# Playwright浏览器渲染（跨平台方案，支持Linux/Windows/macOS）
+# 注意：需要运行 playwright install chromium 安装浏览器
+playwright>=1.40.0
+
+# ============ 可选依赖（用于加速） ============
+# Jinja2模板引擎（docxtpl依赖）
+Jinja2>=3.0.0
+# 文档模板库
+docxtpl>=0.16.0
+
+# ============ 注意事项 ============
+# 1. Linux环境需要安装：
+#    - sudo apt-get install poppler-utils  # pdf2image依赖
+#    - playwright install chromium          # 安装浏览器
+#
+# 2. Windows环境需要：
+#    - playwright install chromium
+#
+# 3. macOS环境需要：
+#    - brew install poppler
+#    - playwright install chromium
