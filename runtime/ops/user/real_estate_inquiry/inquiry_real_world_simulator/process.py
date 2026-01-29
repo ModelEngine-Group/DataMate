@@ -7,10 +7,13 @@ import os
 import json
 import base64
 import tempfile
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from loguru import logger
 
 from datamate.core.base_op import Mapper
+
+import cv2
+import numpy as np
 
 
 class RealWorldSimulatorHelper:
@@ -39,29 +42,84 @@ class RealWorldSimulatorHelper:
 
         logger.info(f"真实世界模拟器初始化完成，源目录: {source_dir}, 输出目录: {output_dir}")
 
-    def _order_points(self, pts):
+    def _order_points(self, pts: np.ndarray) -> np.ndarray:
         """
         重排坐标点顺序：左上, 右上, 右下, 左下
 
         Args:
-            pts: 坐标点数组
+            pts: 坐标点数组，shape (4, 2) 或 (N, 2)
 
         Returns:
-            重排后的坐标点
+            重排后的坐标点，shape (4, 2)，dtype float32
         """
-        rect = [[0, 0], [0, 0], [0, 0], [0, 0]]
-
-        # 坐标点求和
+        pts = np.array(pts, dtype=np.float32)
+        if pts.ndim == 1:
+            pts = pts.reshape(-1, 2)
+        rect = np.zeros((4, 2), dtype=np.float32)
         s = pts.sum(axis=1)
         rect[0] = pts[np.argmin(s)]
         rect[2] = pts[np.argmax(s)]
-
-        # 坐标点差值 (y - x)
         diff = np.diff(pts, axis=1)
         rect[1] = pts[np.argmin(diff)]
         rect[3] = pts[np.argmax(diff)]
-
         return rect
+
+    def _detect_document_corners(self, image_path: str) -> Optional[np.ndarray]:
+        """
+        检测背景图中的文档/凭证区域四个顶点
+
+        Args:
+            image_path: 背景图路径
+
+        Returns:
+            四个顶点坐标 [[x1,y1], [x2,y2], [x3,y3], [x4,y4]]，左上/右上/右下/左下
+        """
+        coord_cache = os.path.join(os.path.dirname(__file__), "coordinates_cache.json")
+        if os.path.exists(coord_cache):
+            try:
+                with open(coord_cache, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                key = os.path.normpath(image_path).replace("\\", "/")
+                if key in data:
+                    return self._order_points(np.array(data[key], dtype=np.float32))
+                # 兼容按文件名查找
+                basename = os.path.basename(image_path)
+                if basename in data:
+                    return self._order_points(np.array(data[basename], dtype=np.float32))
+            except Exception:
+                pass
+
+        image = cv2.imdecode(np.fromfile(image_path, dtype=np.uint8), cv2.IMREAD_COLOR)
+        if image is None:
+            return None
+
+        ratio = image.shape[0] / 800.0
+        processed = cv2.resize(image, (int(image.shape[1] / ratio), 800))
+        gray = cv2.cvtColor(processed, cv2.COLOR_BGR2GRAY)
+        gray = cv2.bilateralFilter(gray, 11, 75, 75)
+        clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
+        gray = clahe.apply(gray)
+
+        v = np.median(gray)
+        lower = int(max(0, 0.67 * v))
+        upper = int(min(255, 1.33 * v))
+        edged = cv2.Canny(gray, lower, upper)
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+        edged = cv2.dilate(edged, kernel, iterations=1)
+
+        cnts, _ = cv2.findContours(edged, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cnts = sorted(cnts, key=cv2.contourArea, reverse=True)[:5]
+
+        for c in cnts:
+            peri = cv2.arcLength(c, True)
+            approx = cv2.approxPolyDP(c, 0.02 * peri, True)
+            if 4 <= len(approx) <= 6 and cv2.contourArea(c) > 20000:
+                rect = cv2.minAreaRect(c)
+                box = cv2.boxPoints(rect)
+                detected = (box * ratio).astype(np.float32)
+                return self._order_points(detected)
+
+        return None
 
     def _auto_rotate_to_match_orientation(self, src, dst_corners):
         """
@@ -69,13 +127,11 @@ class RealWorldSimulatorHelper:
 
         Args:
             src: 源图
-            dst_corners: 目标区域的四个顶点
+            dst_corners: 目标区域的四个顶点 (4,2) 或可解包为 (tl,tr,br,bl)
 
         Returns:
             旋转后的源图
         """
-        import numpy as np
-
         # 计算目标区域的大致宽高
         (tl, tr, br, bl) = dst_corners
         widthA = np.sqrt(((br[0] - bl[0]) ** 2) + ((br[1] - bl[1]) ** 2))
@@ -94,7 +150,6 @@ class RealWorldSimulatorHelper:
 
         if src_is_landscape != dst_is_landscape:
             logger.info(f"方向不匹配 (Src横版={src_is_landscape}, Dst横版={dst_is_landscape})，执行旋转...")
-            import cv2
             src = cv2.rotate(src, cv2.ROTATE_90_CLOCKWISE)
 
         return src
@@ -106,13 +161,11 @@ class RealWorldSimulatorHelper:
 
         Args:
             src: 源图
-            dst_corners: 目标区域的四个顶点
+            dst_corners: 目标区域的四个顶点 (4,2)
 
         Returns:
             补白边后的源图
         """
-        import numpy as np
-
         # 计算目标区域目前的"物理"宽高近似值
         (tl, tr, br, bl) = dst_corners
         widthA = np.sqrt(((br[0] - bl[0]) ** 2) + ((br[1] - bl[1]) ** 2))
@@ -142,7 +195,6 @@ class RealWorldSimulatorHelper:
             pad_top = total_pad // 2
             pad_bot = total_pad - pad_top
 
-            import cv2
             src_padded = cv2.copyMakeBorder(
                 src, pad_top, pad_bot, 0, 0, cv2.BORDER_CONSTANT, value=(255, 255, 255)
             )
@@ -156,7 +208,6 @@ class RealWorldSimulatorHelper:
             pad_left = total_pad // 2
             pad_right = total_pad - pad_left
 
-            import cv2
             src_padded = cv2.copyMakeBorder(
                 src, 0, 0, pad_left, pad_right, cv2.BORDER_CONSTANT, value=(255, 255, 255)
             )
@@ -185,35 +236,40 @@ class RealWorldSimulatorHelper:
             enable_ratio_fix: 是否启用比例校正
             enable_auto_rotate: 是否启用自动旋转
         """
-        import cv2
-        import numpy as np
+        # 1. dst_corners 为 None 时自动检测
+        if dst_corners is None:
+            dst_corners = self._detect_document_corners(dst_path)
+            if dst_corners is None:
+                logger.warning(f"无法检测背景图中的文档区域，跳过: {dst_path}")
+                return
 
-        # 1. 读取图像
-        src = cv2.imdecode(np.fromfile(src_path), cv2.IMREAD_COLOR)
-        dst = cv2.imdecode(np.fromfile(dst_path), cv2.IMREAD_COLOR)
+        # 2. 确保 dst_pts 格式正确：(4, 2) float32，OpenCV getPerspectiveTransform 要求
+        dst_pts = np.array(dst_corners, dtype=np.float32).reshape(4, 2)
+
+        # 3. 读取图像
+        src = cv2.imdecode(np.fromfile(src_path, dtype=np.uint8), cv2.IMREAD_COLOR)
+        dst = cv2.imdecode(np.fromfile(dst_path, dtype=np.uint8), cv2.IMREAD_COLOR)
 
         if src is None or dst is None:
             logger.error(f"无法读取图片 - Src: {src_path}, Dst: {dst_path}")
             return
 
-        # 2. 准备透视变换
+        # 4. 自动旋转校正方向（在计算 src_pts 之前，因为会改变 src 尺寸）
+        if enable_auto_rotate:
+            src = self._auto_rotate_to_match_orientation(src, dst_pts)
+
+        # 5. 比例自适应校正（会改变 src 尺寸）
+        if enable_ratio_fix:
+            src = self._pad_src_to_match_ratio(src, dst_pts)
+
+        # 6. 透视变换：src_pts 必须与当前 src 尺寸一致
         h_src, w_src = src.shape[:2]
         src_pts = np.array(
             [[0, 0], [w_src - 1, 0], [w_src - 1, h_src - 1], [0, h_src - 1]],
-            dtype="float32",
+            dtype=np.float32,
         )
 
-        dst_pts = np.array(dst_corners, dtype="float32")
-
-        # 3. 自动旋转校正方向
-        if enable_auto_rotate:
-            src = self._auto_rotate_to_match_orientation(src, dst_corners)
-
-        # 4. 比例自适应校正
-        if enable_ratio_fix:
-            src = self._pad_src_to_match_ratio(src, dst_corners)
-
-        # 5. 透视变换
+        # 7. 透视变换（确保输入为 (4,2) float32）
         M = cv2.getPerspectiveTransform(src_pts, dst_pts)
         warped_src = cv2.warpPerspective(src, M, (dst.shape[1], dst.shape[0]))
 
