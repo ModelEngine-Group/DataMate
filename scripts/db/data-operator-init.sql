@@ -911,3 +911,143 @@ VALUES
   ('de36b61c-9e8a-4422-8c31-d30585c7100f', 'TaxImgAugOperator'),
   ('de36b61c-9e8a-4422-8c31-d30585c7100f', 'TaxQAGenOperator')
 ON CONFLICT DO NOTHING;
+
+-- =============================================================
+-- 贷款结清证明业务算子全量初始化脚本
+-- 包含：数据生成 -> 文档生成 -> 转图片 -> 加盖公章 -> 场景增强 -> 标注生成
+-- =============================================================
+
+-- 1. 插入算子基础信息 (t_operator)
+INSERT INTO t_operator (
+    id, name, description, version, inputs, outputs,
+    runtime, settings, file_name, file_size, metrics,
+    is_star, created_by, updated_by
+)
+VALUES
+-- 1.1 数据生成
+(
+    'LoanSettlementDataGenOperator',
+    '贷款结清证明数据生成算子',
+    '基于Word模板解析字段并生成模拟数据',
+    '1.0.0', 'text', 'text',
+    '{"gpu": 0, "npu": 0, "storage": "100MB"}',
+    '{"countParam": {"name": "生成数量", "description": "需要生成的数据记录条数", "type": "slider", "defaultVal": 5, "min": 1, "max": 1000, "step": 1, "required": true}, "seedParam": {"name": "随机种子", "description": "用于控制随机生成的一致性", "type": "input", "defaultVal": "42", "required": false}}',
+    '', 0, '[{"name": "生成速度", "metric": "100 records/sec"}]', false, 'system', 'system'
+),
+-- 1.2 文档生成
+(
+    'LoanSettlementDocGenOperator',
+    '贷款结清证明文档生成算子',
+    '基于Word模板和输入数据生成.docx文档',
+    '1.0.0', 'text', 'text',
+    '{"gpu": 0, "npu": 0, "storage": "100MB"}',
+    '{"filePrefixParam": {"name": "文件名前缀", "description": "生成文件的前缀", "type": "input", "defaultVal": "loan_clearance", "required": false}}',
+    '', 0, '[{"name": "生成速度", "metric": "5 docs/sec"}]', false, 'system', 'system'
+),
+-- 1.3 文档转图片
+(
+    'LoanSettlementDocToImgOperator',
+    '贷款结清证明文档转图片算子',
+    '将输入流中的.docx文档转换为图片格式',
+    '1.0.0', 'text', 'image',
+    '{"gpu": 0, "npu": 0, "storage": "500MB"}',
+    '{"dpiParam": {"name": "图片清晰度 (DPI)", "description": "设置输出图片的每英寸点数，数值越高越清晰但文件越大", "type": "slider", "defaultVal": 200, "min": 72, "max": 600, "step": 1, "required": true}, "patternParam": {"name": "输入文件格式", "description": "输入文件格式", "type": "input", "defaultVal": "*.docx", "required": true}}',
+    '', 0, '[{"name": "转换速度", "metric": "2 docs/sec"}]', false, 'system', 'system'
+),
+-- 1.4 公章加盖
+(
+    'LoanSettlementSealGeneratorMapper',
+    '贷款结清证明公章自动加盖生成器',
+    '自动定位文档落款位置，生成并加盖具有真实感（墨迹、纹理、边缘淡出）的电子公章。',
+    '1.0.0', 'image', 'image',
+    '{"gpu": 0, "npu": 0, "storage": "100MB"}',
+    '{"sealTextParam": {"name": "印章文字", "description": "印章主文字（通常为银行名称）", "type": "input", "defaultVal": "中国建设银行股份有限公司", "required": true}, "autoLocateParam": {"name": "自动定位", "description": "是否自动检测文档落款位置进行盖章", "type": "switch", "defaultVal": true, "checkedLabel": "自动", "unCheckedLabel": "手动"}, "realismLevelParam": {"name": "真实感程度", "description": "控制墨迹扩散和磨损纹理的强度", "type": "slider", "defaultVal": 0.8, "min": 0.1, "max": 1.0, "step": 0.1}, "noiseTypeParam": {"name": "印章做旧风格", "description": "选择印章的物理纹理效果", "type": "select", "defaultVal": "standard", "options": [{"label": "标准 (Standard)", "value": "standard"}, {"label": "磨损 (Worn)", "value": "worn"}, {"label": "缺墨 (Dry Ink)", "value": "dry"}, {"label": "模糊 (Blurred)", "value": "blurred"}]}}',
+    '', 0, '[{"name": "处理速度", "metric": "0.5s/img"}]', false, 'system', 'system'
+),
+-- 1.5 图像增强（背景合成）
+(
+    'LoanSettlementImgAugOperator',
+    '贷款结清证明图像增强合成算子',
+    '将文档图像合成到真实背景中（支持阴影、斜拍、水印等场景）',
+    '1.0.0', 'image', 'image',
+    '{"gpu": 0, "npu": 0, "storage": "1024MB"}',
+    '{"scenesParam": {"name": "选择场景数量", "description": "每张图随机选择几个场景（默认: 使用所有可用场景）", "type": "select", "defaultVal": "2", "required": false, "options": [{"label": "1", "value": "1"}, {"label": "2", "value": "2"}, {"label": "3", "value": "3"}, {"label": "4", "value": "4"}, {"label": "5", "value": "5"}]}, "sceneListParam": {"name": "启用场景模式", "description": "选择允许生成的场景类型", "type": "checkbox", "defaultVal": "normal,tilted,shadow,watermark,incomplete", "options": [{"label": "标准 (Normal)", "value": "normal"}, {"label": "斜拍 (Tilted)", "value": "tilted"}, {"label": "阴影 (Shadow)", "value": "shadow"}, {"label": "水印 (Watermark)", "value": "watermark"}, {"label": "不完整 (Incomplete)", "value": "incomplete"}]}, "skipDetectParam": {"name": "跳过坐标检测", "description": "若开启，仅使用缓存坐标；若无缓存则跳过。关闭则实时计算。", "type": "switch", "defaultVal": true, "checkedLabel": "是", "unCheckedLabel": "否"}}',
+    '', 0, '[{"name": "处理速度", "metric": "1 img/sec"}]', false, 'system', 'system'
+),
+-- 1.6 标注生成
+(
+    'LoanSettlementAnnotationGenOperator',
+    '贷款结清证明图文对标注生成算子',
+    '将增强后的图片与原始数据记录匹配，生成多模态训练用的图文对标注',
+    '1.0.0', 'image', 'text',
+    '{"gpu": 0, "npu": 0, "storage": "500MB"}',
+    '{"formatType": {"name": "标注格式", "description": "生成的标注数据格式", "type": "select", "defaultVal": "multimodal", "options": [{"label": "多模态 (Multimodal)", "value": "multimodal"}, {"label": "简单JSON (Simple JSON)", "value": "simple_json"}]}, "qaCount": {"name": "问答对数量", "description": "每张图片生成的QA对数量", "type": "slider", "defaultVal": 3, "min": 1, "max": 10, "step": 1}, "split": {"name": "训练集比例", "description": "训练集比例（默认: 0.8，验证集和测试集各占剩余的一半）", "type": "slider", "defaultVal": 0.8, "min": 0, "max": 1, "step": 0.1}, "seed": {"name": "随机种子", "description": "随机种子（用于数据集划分）", "type": "slider", "defaultVal": 42, "min": 1, "max": 100, "step": 1}}',
+    '', 0, '[{"name": "处理速度", "metric": "10 samples/sec"}]', false, 'system', 'system'
+)
+ON CONFLICT (id) DO UPDATE SET
+    name = EXCLUDED.name,
+    description = EXCLUDED.description,
+    settings = EXCLUDED.settings,
+    runtime = EXCLUDED.runtime,
+    inputs = EXCLUDED.inputs,
+    outputs = EXCLUDED.outputs,
+    updated_at = CURRENT_TIMESTAMP;
+
+-- 2. 插入版本发布信息 (t_operator_release)
+INSERT INTO t_operator_release (id, version, release_date, changelog)
+VALUES
+    ('LoanSettlementDataGenOperator', '1.0.0', CURRENT_TIMESTAMP, '["首次发布：支持Word模板解析与数据批量生成"]'),
+    ('LoanSettlementDocGenOperator', '1.0.0', CURRENT_TIMESTAMP, '["首次发布：支持基于 docx 模板生成文档"]'),
+    ('LoanSettlementDocToImgOperator', '1.0.0', CURRENT_TIMESTAMP, '["首次发布：支持 .docx 转 .png"]'),
+    ('LoanSettlementSealGeneratorMapper', '1.0.0', CURRENT_TIMESTAMP, '["首次发布：集成自动定位算法与真实感印章渲染"]'),
+    ('LoanSettlementImgAugOperator', '1.0.0', CURRENT_TIMESTAMP, '["首次发布：支持基于CV2的透视变换与光照融合"]'),
+    ('LoanSettlementAnnotationGenOperator', '1.0.0', CURRENT_TIMESTAMP, '["首次发布：支持VQA图文对标注生成"]')
+ON CONFLICT (id, version) DO NOTHING;
+
+-- 3. 关联算子分类 (t_operator_category_relation)
+
+-- 3.1 基础分类关联 (Python + DataMate + System Predefined)
+-- 这些分类适用于所有上述算子
+INSERT INTO t_operator_category_relation (category_id, operator_id)
+SELECT c.id, o.id
+FROM t_operator_category c, t_operator o
+WHERE c.id IN (
+    '9eda9d5d-072b-499b-916c-797a0a8750e1', -- Python
+    '431e7798-5426-4e1a-aae6-b9905a836b34', -- DataMate
+    '96a3b07a-3439-4557-a835-525faad60ca3'  -- System Predefined
+)
+AND o.id IN (
+    'LoanSettlementDataGenOperator',
+    'LoanSettlementDocGenOperator',
+    'LoanSettlementDocToImgOperator',
+    'LoanSettlementSealGeneratorMapper',
+    'LoanSettlementImgAugOperator',
+    'LoanSettlementAnnotationGenOperator'
+)
+ON CONFLICT DO NOTHING;
+
+-- 3.2 文本模态关联 (Text: d8a5df7a-52a9-42c2-83c4-01062e60f597)
+-- 适用于：输入或输出包含文本的算子
+INSERT INTO t_operator_category_relation (category_id, operator_id)
+SELECT 'd8a5df7a-52a9-42c2-83c4-01062e60f597', o.id
+FROM t_operator o
+WHERE o.id IN (
+    'LoanSettlementDataGenOperator',      -- In/Out: Text
+    'LoanSettlementDocGenOperator',       -- In/Out: Text
+    'LoanSettlementDocToImgOperator',     -- In: Text
+    'LoanSettlementAnnotationGenOperator' -- Out: Text
+)
+ON CONFLICT DO NOTHING;
+
+-- 3.3 图片模态关联 (Image: de36b61c-9e8a-4422-8c31-d30585c7100f)
+-- 适用于：输入或输出包含图片的算子
+INSERT INTO t_operator_category_relation (category_id, operator_id)
+SELECT 'de36b61c-9e8a-4422-8c31-d30585c7100f', o.id
+FROM t_operator o
+WHERE o.id IN (
+    'LoanSettlementDocToImgOperator',     -- Out: Image
+    'LoanSettlementSealGeneratorMapper',  -- In/Out: Image
+    'LoanSettlementImgAugOperator',       -- In/Out: Image
+    'LoanSettlementAnnotationGenOperator' -- In: Image
+)
+ON CONFLICT DO NOTHING;

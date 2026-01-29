@@ -313,3 +313,74 @@ VALUES
     ('a8b9c0d1-e2f3-4455-6677-8899aabbccdd', 'TaxQAGenOperator', 5, NULL)
 ON CONFLICT (instance_id, operator_id, op_index) DO NOTHING;
 
+-- =============================================================
+-- 贷款结清证明全流程合成模板 (Loan Settlement Workflow)
+-- =============================================================
+
+-- 1. 插入清洗模板定义 (t_clean_template)
+-- 生成一个新的 UUID 作为模板 ID
+INSERT INTO t_clean_template (id, name, description, created_by)
+VALUES (
+    '73a8f5b2-99c1-4d3e-82a5-f12345678901',
+    '贷款结清证明合成模板',
+    '贷款结清证明全流程：数据生成 -> 文档生成 -> 转图片 -> 加盖公章 -> 场景合成 -> 标注生成',
+    'system'
+)
+ON CONFLICT (id) DO UPDATE SET
+    name = EXCLUDED.name,
+    description = EXCLUDED.description,
+    updated_at = CURRENT_TIMESTAMP;
+
+-- 2. 插入操作员实例，定义流水线步骤 (t_operator_instance)
+-- 依次串联 6 个算子
+INSERT INTO t_operator_instance (instance_id, operator_id, op_index, settings_override)
+VALUES
+    -- 步骤 1: 生成模拟数据 (CSV/JSON)
+    -- settings_override: 默认生成 10 条数据
+    (
+        '73a8f5b2-99c1-4d3e-82a5-f12345678901',
+        'LoanSettlementDataGenOperator',
+        1,
+        '{"countParam": 10, "seedParam": "42"}'
+    ),
+    -- 步骤 2: 基于数据填充 Word 模板生成 .docx
+    (
+        '73a8f5b2-99c1-4d3e-82a5-f12345678901',
+        'LoanSettlementDocGenOperator',
+        2,
+        NULL
+    ),
+    -- 步骤 3: 将 Word 文档转换为图片
+    -- settings_override: 设置 DPI 为 200 以平衡清晰度与速度
+    (
+        '73a8f5b2-99c1-4d3e-82a5-f12345678901',
+        'LoanSettlementDocToImgOperator',
+        3,
+        '{"dpiParam": 200}'
+    ),
+    -- 步骤 4: 自动定位落款并加盖电子公章 (核心步骤)
+    -- settings_override: 开启自动定位，设置中等真实感 (0.8)
+    (
+        '73a8f5b2-99c1-4d3e-82a5-f12345678901',
+        'LoanSettlementSealGeneratorMapper',
+        4,
+        '{"autoLocateParam": true, "realismLevelParam": 0.8, "sealTextParam": "中国建设银行股份有限公司"}'
+    ),
+    -- 步骤 5: 真实环境模拟（背景合成、透视变换）
+    -- settings_override: 随机应用标准、斜拍、阴影等场景
+    (
+        '73a8f5b2-99c1-4d3e-82a5-f12345678901',
+        'LoanSettlementImgAugOperator',
+        5,
+        '{"skipDetectParam": true}'
+    ),
+    -- 步骤 6: 生成多模态训练用的 QA 标注
+    -- settings_override: 每张图生成 5 个问答对
+    (
+        '73a8f5b2-99c1-4d3e-82a5-f12345678901',
+        'LoanSettlementAnnotationGenOperator',
+        6,
+        '{"qaCount": 5, "formatType": "multimodal"}'
+    )
+ON CONFLICT (instance_id, operator_id, op_index) DO UPDATE SET
+    settings_override = EXCLUDED.settings_override;
