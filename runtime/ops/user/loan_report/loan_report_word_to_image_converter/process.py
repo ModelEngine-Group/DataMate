@@ -20,11 +20,11 @@ from loguru import logger
 from datamate.core.base_op import Mapper
 
 
-class WordToImageConverter(Mapper):
+class LoanReportWordToImageConverter(Mapper):
     """Word转图片转换器"""
 
     def __init__(self, *args, **kwargs):
-        super(WordToImageConverter, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.instance_id = None
         self._output_dir = None
         self._dpi = int(kwargs.get("dpi", 300))

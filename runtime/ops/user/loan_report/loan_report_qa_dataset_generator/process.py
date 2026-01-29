@@ -19,7 +19,7 @@ from loguru import logger
 from datamate.core.base_op import Mapper
 
 
-class QADatasetGenerator(Mapper):
+class LoanReportQADatasetGenerator(Mapper):
     """QA数据集生成器"""
 
     def __init__(self, *args, **kwargs):

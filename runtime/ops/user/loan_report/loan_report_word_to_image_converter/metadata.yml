@@ -1,8 +1,8 @@
-name: '文档图像转换器'
+name: '贷款调查报告文档图像转换器'
 description: '将Word文档转换为JPG图片，支持批量处理'
 language: 'python'
 vendor: 'datamate'
-raw_id: 'WordToImageConverter'
+raw_id: 'LoanReportWordToImageConverter'
 version: '1.0.0'
 
 modal: 'image'

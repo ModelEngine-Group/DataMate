@@ -18,11 +18,11 @@ from loguru import logger
 from datamate.core.base_op import Mapper
 
 
-class LoanDataGenerator(Mapper):
+class LoanReportDataGenerator(Mapper):
     """贷款数据生成器"""
 
     def __init__(self, *args, **kwargs):
-        super(LoanDataGenerator, self).__init__(*args, **kwargs)
+        super(LoanReportDataGenerator, self).__init__(*args, **kwargs)
         self._data_dir = None
         self._sequence_file = None
         self._output_dir = None

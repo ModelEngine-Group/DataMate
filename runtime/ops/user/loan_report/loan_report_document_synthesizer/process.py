@@ -17,11 +17,11 @@ from loguru import logger
 from datamate.core.base_op import Mapper
 
 
-class DocumentSynthesizer(Mapper):
+class LoanReportDocumentSynthesizer(Mapper):
     """文档合成器"""
 
     def __init__(self, *args, **kwargs):
-        super(DocumentSynthesizer, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._background_dir = os.path.join(os.path.dirname(__file__), "backgrounds")
         self._output_dir = None
         self._enable_watermark = bool(kwargs.get("enable_watermark", False))
