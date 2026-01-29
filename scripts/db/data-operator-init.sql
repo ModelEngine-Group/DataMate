@@ -1278,4 +1278,116 @@ FROM (VALUES
 ) AS o(id)
 ON CONFLICT DO NOTHING;
 
+-- =============================================================
+-- 不动产权证（Real Estate）业务算子全量初始化脚本
+-- 包含：数据生成 -> 文档转图片 -> 图像增强 -> 标注生成
+-- =============================================================
 
+-- 1. 批量插入算子基础信息 (t_operator)
+INSERT INTO t_operator (
+    id, name, description, version, inputs, outputs,
+    runtime, settings, file_name, file_size, metrics,
+    is_star, created_by, updated_by
+)
+VALUES
+-- 1.1 不动产权证数据生成算子
+(
+    'RealEstateDataGenOperator',
+    '不动产权证数据生成算子',
+    '生成不动产权证模拟数据，包含13个字段信息',
+    '1.0.0', 'text', 'text',
+    '{"gpu":0,"npu":0,"storage":"100MB"}',
+    '{"countParam": {"name": "生成数量", "description": "需要生成的数据记录条数", "type": "slider", "defaultVal": 5, "min": 1, "max": 1000, "step": 1, "required": true}, "seedParam": {"name": "随机种子", "description": "用于控制随机生成的一致性", "type": "input", "defaultVal": "42", "required": false}}',
+    '', 0, '[{"name":"生成速度","metric":"100 records/sec"}]', false, 'system', 'system'
+),
+-- 1.2 不动产权证图像转换算子
+(
+    'RealEstateDocToImgOperator',
+    '不动产权证图像转换算子',
+    '将JSON数据渲染到模板图像上，生成不动产权证图像',
+    '1.0.0', 'text', 'image',
+    '{"gpu":0,"npu":0,"storage":"500MB"}',
+    '{"dpiParam": {"name": "图像DPI", "description": "输出图像的清晰度", "type": "slider", "defaultVal": 200, "min": 100, "max": 400, "step": 50, "required": true}, "patternParam": {"name": "文件匹配模式", "description": "JSON文件的匹配模式", "type": "input", "defaultVal": "*.json", "required": false}}',
+    '', 0, '[{"name":"转换速度","metric":"10 images/sec"}]', false, 'system', 'system'
+),
+-- 1.3 不动产权证图像增强算子
+(
+    'RealEstateImgAugOperator',
+    '不动产权证图像增强算子',
+    '将电子凭证图像合成到真实拍摄场景中，生成具有真实感的实景照片',
+    '1.0.0', 'image', 'image',
+    '{"gpu":0,"npu":0,"storage":"1GB"}',
+    '{"scenes": {"name": "场景数量", "description": "每个源图生成的场景数量", "type": "slider", "defaultVal": 2, "min": 1, "max": 5, "step": 1, "required": true}, "sceneListParam": {"name": "场景类型", "description": "选择需要生成的场景类型", "type": "checkbox", "defaultVal": "normal", "options": [{"label": "正常拍摄", "value": "normal"}, {"label": "斜拍场景", "value": "tilted"}, {"label": "阴影场景", "value": "shadow"}, {"label": "水印场景", "value": "watermark"}, {"label": "不完整拍摄", "value": "incomplete"}], "required": false}, "skipDetectParam": {"name": "跳过检测", "description": "跳过自动检测，仅使用缓存坐标", "type": "switch", "defaultVal": true, "checkedLabel": "跳过", "unCheckedLabel": "不跳过", "required": false}}',
+    '', 0, '[{"name":"处理速度","metric":"1 image/sec"}]', false, 'system', 'system'
+),
+-- 1.4 不动产权证标注生成算子
+(
+    'RealEstateAnnotationGenOperator',
+    '不动产权证标注生成算子',
+    '生成模型训练所需的图文对数据',
+    '1.0.0', 'image', 'text',
+    '{"gpu":0,"npu":0,"storage":"100MB"}',
+    '{"formatParam": {"name": "输出格式", "description": "标注数据的输出格式", "type": "select", "defaultVal": "multimodal", "options": [{"label": "多模态格式", "value": "multimodal"}, {"label": "简单JSON格式", "value": "simple_json"}], "required": true}, "splitParam": {"name": "训练集比例", "description": "训练集比例（验证集和测试集各占剩余的一半）", "type": "slider", "defaultVal": 0.8, "min": 0.5, "max": 0.95, "step": 0.05, "required": true}, "seedParam": {"name": "随机种子", "description": "用于数据集划分的随机种子", "type": "input", "defaultVal": "42", "required": false}}',
+    '', 0, '[{"name":"生成速度","metric":"100 records/sec"}]', false, 'system', 'system'
+)
+ON CONFLICT (id) DO UPDATE SET
+    name = EXCLUDED.name,
+    description = EXCLUDED.description,
+    settings = EXCLUDED.settings,
+    runtime = EXCLUDED.runtime,
+    metrics = EXCLUDED.metrics,
+    inputs = EXCLUDED.inputs,
+    outputs = EXCLUDED.outputs,
+    updated_at = CURRENT_TIMESTAMP;
+
+-- 2. 批量插入版本发布信息 (t_operator_release)
+INSERT INTO t_operator_release (id, version, release_date, changelog)
+VALUES
+    ('RealEstateDataGenOperator', '1.0.0', CURRENT_TIMESTAMP, '["首次发布：支持不动产权证数据批量生成"]'),
+    ('RealEstateDocToImgOperator', '1.0.0', CURRENT_TIMESTAMP, '["首次发布：支持JSON到图像的批量转换"]'),
+    ('RealEstateImgAugOperator', '1.0.0', CURRENT_TIMESTAMP, '["首次发布：支持多种场景的图像增强"]'),
+    ('RealEstateAnnotationGenOperator', '1.0.0', CURRENT_TIMESTAMP, '["首次发布：支持不动产权证QA对批量生成"]')
+ON CONFLICT (id, version) DO NOTHING;
+
+-- 3. 批量关联算子分类 (t_operator_category_relation)
+
+-- 3.1 基础公共分类关联 (Python, DataMate, 系统预置)
+-- 适用于所有不动产算子
+INSERT INTO t_operator_category_relation (category_id, operator_id)
+SELECT c.id, o.id
+FROM t_operator_category c
+CROSS JOIN (
+    VALUES
+        ('RealEstateDataGenOperator'),
+        ('RealEstateDocToImgOperator'),
+        ('RealEstateImgAugOperator'),
+        ('RealEstateAnnotationGenOperator')
+) AS o(id)
+WHERE c.id IN (
+    '9eda9d5d-072b-499b-916c-797a0a8750e1', -- Python
+    '431e7798-5426-4e1a-aae6-b9905a836b34', -- DataMate
+    '96a3b07a-3439-4557-a835-525faad60ca3'  -- Predefined
+)
+ON CONFLICT DO NOTHING;
+
+-- 3.2 文本模态关联 (Text)
+-- 涉及算子: DataGen (Text->Text), DocToImg (Text->Image), AnnotationGen (Image->Text)
+INSERT INTO t_operator_category_relation (category_id, operator_id)
+SELECT 'd8a5df7a-52a9-42c2-83c4-01062e60f597', o.id
+FROM (VALUES
+    ('RealEstateDataGenOperator'),
+    ('RealEstateDocToImgOperator'),
+    ('RealEstateAnnotationGenOperator')
+) AS o(id)
+ON CONFLICT DO NOTHING;
+
+-- 3.3 图片模态关联 (Image)
+-- 涉及算子: DocToImg (Text->Image), ImgAug (Image->Image), AnnotationGen (Image->Text)
+INSERT INTO t_operator_category_relation (category_id, operator_id)
+SELECT 'de36b61c-9e8a-4422-8c31-d30585c7100f', o.id
+FROM (VALUES
+    ('RealEstateDocToImgOperator'),
+    ('RealEstateImgAugOperator'),
+    ('RealEstateAnnotationGenOperator')
+) AS o(id)
+ON CONFLICT DO NOTHING;

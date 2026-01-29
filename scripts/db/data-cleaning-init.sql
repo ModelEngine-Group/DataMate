@@ -449,4 +449,62 @@ VALUES
 ON CONFLICT (instance_id, operator_id, op_index) DO UPDATE SET
     settings_override = EXCLUDED.settings_override;
 
+-- =============================================================
+-- 不动产权证全流程生成模板 (Real Estate Full Process Template)
+-- =============================================================
 
+-- 1. 插入清洗模板定义 (t_clean_template)
+-- 使用一个新的 UUID 作为模板 ID
+INSERT INTO t_clean_template (id, name, description, created_by)
+VALUES (
+    'a1b2c3d4-e5f6-7890-1234-567890abcdef',
+    '不动产权证全流程生成模板',
+    '不动产权证合成流水线：随机数据生成 -> 模板渲染 -> 真实场景合成 -> 多模态标注生成',
+    'system'
+)
+ON CONFLICT (id) DO UPDATE SET
+    name = EXCLUDED.name,
+    description = EXCLUDED.description,
+    updated_at = CURRENT_TIMESTAMP;
+
+-- 2. 插入操作员实例，定义流水线步骤 (t_operator_instance)
+-- 依次串联 4 个算子
+INSERT INTO t_operator_instance (instance_id, operator_id, op_index, settings_override)
+VALUES
+    -- 步骤 1: 随机数据生成 (RealEstateDataGenOperator)
+    -- 作用: 生成包含13个字段的模拟数据JSON
+    (
+        'a1b2c3d4-e5f6-7890-1234-567890abcdef', -- 模板ID
+        'RealEstateDataGenOperator',           -- 算子ID
+        1,                                     -- 步骤序号
+        '{"countParam": 10, "seedParam": "42"}' -- 默认设置：生成10条数据
+    ),
+
+    -- 步骤 2: 模板图像渲染 (RealEstateDocToImgOperator)
+    -- 作用: 将生成的JSON数据渲染到不动产证模板图片上
+    (
+        'a1b2c3d4-e5f6-7890-1234-567890abcdef',
+        'RealEstateDocToImgOperator',
+        2,
+        '{"dpiParam": 300, "patternParam": "*.json"}' -- 默认设置：300DPI
+    ),
+
+    -- 步骤 3: 真实场景模拟/图像增强 (RealEstateImgAugOperator)
+    -- 作用: 将渲染好的平整图片合成到真实背景中（阴影、透视等）
+    (
+        'a1b2c3d4-e5f6-7890-1234-567890abcdef',
+        'RealEstateImgAugOperator',
+        3,
+        '{"scenes": 2, "skipDetectParam": true, "sceneListParam": "normal,tilted,shadow"}' -- 默认设置：每张图生成2个场景
+    ),
+
+    -- 步骤 4: 多模态标注生成 (RealEstateAnnotationGenOperator)
+    -- 作用: 基于最终图像生成训练用的 QA 对和 JSONL 文件
+    (
+        'a1b2c3d4-e5f6-7890-1234-567890abcdef',
+        'RealEstateAnnotationGenOperator',
+        4,
+        '{"formatParam": "multimodal", "splitParam": 0.8}' -- 默认设置：多模态格式，80%训练集
+    )
+ON CONFLICT (instance_id, operator_id, op_index) DO UPDATE SET
+    settings_override = EXCLUDED.settings_override;
