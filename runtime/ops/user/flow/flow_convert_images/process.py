@@ -7,7 +7,7 @@ from datamate.core.base_op import Mapper
 from .src import ImageConverter
 
 
-class DocToImgOperator(Mapper):
+class FlowDocToImgOperator(Mapper):
     """
     文档转图片算子：DocToImgOperator
     对应 metadata.yml 中的 raw_id

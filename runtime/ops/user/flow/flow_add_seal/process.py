@@ -12,7 +12,7 @@ from datamate.core.base_op import Mapper
 from .src import SealGenerator
 
 
-class SealAddOperator(Mapper):
+class FlowSealAddOperator(Mapper):
     """
     印章添加算子：SealAddOperator
     对应 metadata.yml 中的 raw_id

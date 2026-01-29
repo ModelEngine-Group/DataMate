@@ -1,4 +1,4 @@
-name: '流水数据生成算子'
+name: '资产流水流水数据生成算子'
 description: '基于流水资产分析表Word模板生成随机数据并填充'
 language: 'python'
 raw_id: 'FlowDataGenOperator'

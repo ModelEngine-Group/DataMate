@@ -1,4 +1,4 @@
-name: 'QA生成算子'
+name: '资产流水QA生成算子'
 description: '为流水资产分析表生成多模态训练用的问答对'
 language: 'python'
 raw_id: 'FlowQAGenOperator'
