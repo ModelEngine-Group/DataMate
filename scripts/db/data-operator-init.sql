@@ -545,7 +545,8 @@ VALUES
   ('de36b61c-9e8a-4422-8c31-d30585c7100f', 'FlowSealAddOperator'),
   ('9eda9d5d-072b-499b-916c-797a0a8750e1', 'FlowSealAddOperator'),
   ('431e7798-5426-4e1a-aae6-b9905a836b34', 'FlowSealAddOperator'),
-  ('96a3b07a-3439-4557-a835-525faad60ca3', 'FlowSealAddOperator'),
+  ('96a3b07a-3439-4557-a835-525faad60ca3', 'FlowSealAddOperator')
+  ON  CONFLICT DO NOTHING;
 
 
 -- 插入用户算子（保险业务 - 来自 runtime/ops/user/insurance/*/metadata.yml）
@@ -595,7 +596,7 @@ VALUES
   ('de36b61c-9e8a-4422-8c31-d30585c7100f', 'InsuranceAnnotationGenOperator'),
   ('9eda9d5d-072b-499b-916c-797a0a8750e1', 'InsuranceAnnotationGenOperator'),
   ('431e7798-5426-4e1a-aae6-b9905a836b34', 'InsuranceAnnotationGenOperator'),
-  ('96a3b07a-3439-4557-a835-525faad60ca3', 'InsuranceAnnotationGenOperator'),
+  ('96a3b07a-3439-4557-a835-525faad60ca3', 'InsuranceAnnotationGenOperator')
 ON CONFLICT DO NOTHING;
 
 -- 插入用户算子：收入证明生成器（IncomeCertificateGenerator）
