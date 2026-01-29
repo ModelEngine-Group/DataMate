@@ -17,7 +17,7 @@ from loguru import logger
 # 为防止报错，此处仅做占位，请根据实际打包结构调整 import
 # ---------------------------------------------------------------------
 
-class DataGenOperator(Mapper):
+class LoanSettlementDataGenOperator(Mapper):
     """
     数据生成算子：DataGenOperator
     """

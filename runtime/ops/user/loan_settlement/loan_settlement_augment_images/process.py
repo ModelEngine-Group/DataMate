@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Dict, Any, List, Optional
 from datamate.core.base_op import Mapper
 
-class ImgAugOperator(Mapper):
+class LoanSettlementImgAugOperator(Mapper):
     """
     图像增强合成算子：ImgAugOperator
     """

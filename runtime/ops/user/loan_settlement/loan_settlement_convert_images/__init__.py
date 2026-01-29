@@ -5,6 +5,6 @@ from datamate.core.base_op import OPERATORS
 # 注意：module_name 必须与 metadata.yml 中的 raw_id 一致
 # module_path 中的 'convert_images' 必须与打包文件夹名称一致
 OPERATORS.register_module(
-    module_name='DocToImgOperator', 
-    module_path="ops.user.convert_images.process"
+    module_name='LoanSettlementDocToImgOperator',
+    module_path="ops.user.loan_settlement_convert_images.process"
 )

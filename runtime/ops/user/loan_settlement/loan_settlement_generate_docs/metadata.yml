@@ -1,7 +1,7 @@
-name: '文档生成算子'
+name: '贷款结清证明文档生成算子'
 description: '基于Word模板和输入数据生成.docx文档'
 language: 'python'
-raw_id: 'DocGenOperator'  # 与 process.py 类名一致
+raw_id: 'LoanSettlementDocGenOperator'  # 与 process.py 类名一致
 version: '1.0.0'
 vendor: 'huawei'
 modal: 'text'  # 假设处理的是文本数据\

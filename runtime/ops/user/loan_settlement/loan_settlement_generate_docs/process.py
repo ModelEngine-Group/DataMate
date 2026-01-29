@@ -14,7 +14,7 @@ from .src import DocGenerator
 # from .doc_generator import DocGenerator 
 # -----------------------------------------------------------
 
-class DocGenOperator(Mapper):
+class LoanSettlementDocGenOperator(Mapper):
     """
     文档生成算子：DocGenOperator
     对应 metadata.yml 中的 raw_id

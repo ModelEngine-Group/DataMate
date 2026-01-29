@@ -128,7 +128,7 @@ def build_conversations_summary(annotations: List[Dict], output_dir: str):
 
 
 
-class AnnotationGenOperator(Mapper):
+class LoanSettlementAnnotationGenOperator(Mapper):
     """
     图文对标注生成算子：AnnotationGenOperator
     """
