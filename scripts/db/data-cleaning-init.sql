@@ -384,3 +384,69 @@ VALUES
     )
 ON CONFLICT (instance_id, operator_id, op_index) DO UPDATE SET
     settings_override = EXCLUDED.settings_override;
+
+-- =============================================================
+-- 结婚证全流程生成模板 (Marriage Certificate Workflow)
+-- =============================================================
+
+-- 1. 插入清洗模板定义 (t_clean_template)
+-- 生成一个新的 UUID 作为模板 ID
+INSERT INTO t_clean_template (id, name, description, created_by)
+VALUES (
+    'e1b2c3d4-5555-6666-7777-88889999aaaa',
+    '结婚证全流程生成模板',
+    '结婚证数据合成全流程：随机文本生成 -> 模板图像合成 -> 自动盖章 -> 真实场景模拟(透视/光照) -> QA标注生成',
+    'system'
+)
+ON CONFLICT (id) DO UPDATE SET
+    name = EXCLUDED.name,
+    description = EXCLUDED.description,
+    updated_at = CURRENT_TIMESTAMP;
+
+-- 2. 插入操作员实例，定义流水线步骤 (t_operator_instance)
+INSERT INTO t_operator_instance (instance_id, operator_id, op_index, settings_override)
+VALUES
+    -- 步骤 1: 随机文本生成
+    -- 生成 random_content.json，默认生成 5 组数据
+    (
+        'e1b2c3d4-5555-6666-7777-88889999aaaa',
+        'MarriageRandomText',
+        1,
+        '{"numParam": 5}'
+    ),
+    -- 步骤 2: 模板图像合成
+    -- 读取 json 将文字渲染到结婚证底板，生成“平整”的证件图
+    (
+        'e1b2c3d4-5555-6666-7777-88889999aaaa',
+        'MarriageImageCompositing',
+        2,
+        NULL
+    ),
+    -- 步骤 3: 结婚证盖章
+    -- 在平整的证件图上加盖“结婚登记专用章”（注：先盖章后增强，确保印章随纸张透视变形）
+    (
+        'e1b2c3d4-5555-6666-7777-88889999aaaa',
+        'MarriageAddSeal',
+        3,
+        '{"sealSizeParam": 280}'
+    ),
+    -- 步骤 4: 真实场景模拟/图像增强
+    -- 将盖好章的证件图融合到真实背景中（处理透视、阴影、水印）
+    (
+        'e1b2c3d4-5555-6666-7777-88889999aaaa',
+        'MarriageAugmentImages',
+        4,
+        '{"skipDetectParam": true, "scenesParam": "2"}'
+    ),
+    -- 步骤 5: QA 对生成
+    -- 基于最终图像生成多模态训练数据 (output_qa_pairs.jsonl)
+    (
+        'e1b2c3d4-5555-6666-7777-88889999aaaa',
+        'MarriageFormQA',
+        5,
+        '{"previewCountParam": 5}'
+    )
+ON CONFLICT (instance_id, operator_id, op_index) DO UPDATE SET
+    settings_override = EXCLUDED.settings_override;
+
+

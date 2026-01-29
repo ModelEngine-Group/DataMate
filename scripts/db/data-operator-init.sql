@@ -1051,3 +1051,231 @@ WHERE o.id IN (
     'LoanSettlementAnnotationGenOperator' -- In: Image
 )
 ON CONFLICT DO NOTHING;
+
+-- =============================================================
+-- 结婚证业务算子全量初始化脚本
+-- 包含：数据生成 -> 模板合成 -> 图像增强 -> 盖章 -> QA标注生成
+-- =============================================================
+
+-- 1. 批量插入算子基础信息 (t_operator)
+INSERT INTO t_operator (
+    id, name, description, version, inputs, outputs,
+    runtime, settings,
+    file_name, file_size, metrics,
+    is_star, created_by, updated_by
+)
+VALUES
+-- 1.1 结婚证随机文本生成算子 (MarriageRandomText)
+(
+    'MarriageRandomText',
+    '结婚证随机文本',
+    '从坐标JSON生成多组结婚证随机文本，输出 random_content.json',
+    '1.0.0', 'text', 'text',
+    '{"memory": 10485760, "cpu": 0.1, "gpu": 0, "npu": 0, "storage": "10MB"}',
+    '{
+        "numParam": {
+            "name": "生成组数",
+            "description": "生成的结婚证文本组数量",
+            "type": "slider",
+            "defaultVal": 5,
+            "required": true,
+            "min": 1,
+            "max": 100,
+            "step": 1
+        }
+    }',
+    '', 0, '[{"name": "吞吐", "metric": "1 file/sec"}]', false, 'system', 'system'
+),
+-- 1.2 结婚证模板贴图算子 (MarriageImageCompositing)
+(
+    'MarriageImageCompositing',
+    '结婚证模板贴图',
+    '将 random_content.json 文本渲染到结婚证模板上，按 group_id 输出多张图片',
+    '1.0.0', 'text', 'image',
+    '{"memory": 10485760, "cpu": 0.2, "gpu": 0, "npu": 0, "storage": "50MB"}',
+    '{
+        "templatePath": {
+            "name": "模板图路径",
+            "description": "结婚证模板图 template.jpg 的路径（可选，未填则从任务目录查找）",
+            "type": "input",
+            "defaultVal": "",
+            "required": false
+        },
+        "coordsPath": {
+            "name": "坐标JSON路径",
+            "description": "coordinate_info.json 的路径（可选，未填则从任务目录查找）",
+            "type": "input",
+            "defaultVal": "",
+            "required": false
+        }
+    }',
+    '', 0, '[{"name": "吞吐", "metric": "5 images/sec"}]', false, 'system', 'system'
+),
+-- 1.3 结婚证图像合成到实拍背景算子 (MarriageAugmentImages)
+(
+    'MarriageAugmentImages',
+    '结婚证图像合成到实拍背景',
+    '将结婚证图片合成到多种实拍背景（斜拍、阴影、水印等）',
+    '1.0.0', 'image', 'image',
+    '{"memory": 10485760, "cpu": 0.2, "gpu": 0, "npu": 0, "storage": "1024MB"}',
+    '{
+        "scenesParam": {
+            "name": "场景数量",
+            "description": "每张源图随机选择的背景数量（不填则使用全部）",
+            "type": "select",
+            "defaultVal": "all",
+            "required": false,
+            "options": [
+                {"label": "全部", "value": "all"},
+                {"label": "1", "value": "1"},
+                {"label": "2", "value": "2"},
+                {"label": "3", "value": "3"}
+            ]
+        },
+        "sceneListParam": {
+            "name": "启用场景",
+            "description": "允许的背景场景类型",
+            "type": "checkbox",
+            "defaultVal": "normal,tilted,shadow,watermark,incomplete",
+            "required": false,
+            "options": [
+                {"label": "标准", "value": "normal"},
+                {"label": "斜拍/反光", "value": "tilted"},
+                {"label": "阴影", "value": "shadow"},
+                {"label": "水印", "value": "watermark"},
+                {"label": "不完整", "value": "incomplete"}
+            ]
+        },
+        "skipDetectParam": {
+            "name": "仅用缓存坐标",
+            "description": "开启时仅使用已缓存坐标，无缓存则跳过该背景",
+            "type": "switch",
+            "defaultVal": true,
+            "checkedLabel": "是",
+            "unCheckedLabel": "否"
+        },
+        "bgPathParam": {
+            "name": "背景图目录",
+            "description": "背景图所在目录（可选，未填则使用算子内置 backgrounds/）",
+            "type": "input",
+            "defaultVal": "",
+            "required": false
+        }
+    }',
+    '', 0, '[{"name": "吞吐", "metric": "1 img/sec"}]', false, 'system', 'system'
+),
+-- 1.4 结婚证盖章算子 (MarriageAddSeal)
+(
+    'MarriageAddSeal',
+    '结婚证盖章',
+    '在结婚证图片上添加结婚登记专用章，登记机关从 random_content.json 按 group_id 读取',
+    '1.0.0', 'image', 'image',
+    '{"memory": 10485760, "cpu": 0.1, "gpu": 0, "npu": 0, "storage": "50MB"}',
+    '{
+        "sealSizeParam": {
+            "name": "印章大小",
+            "description": "印章直径（像素）",
+            "type": "slider",
+            "defaultVal": 280,
+            "min": 180,
+            "max": 400,
+            "step": 10,
+            "required": false
+        },
+        "agencyNameParam": {
+            "name": "默认登记机关",
+            "description": "当 random_content 中无登记机关时使用的名称",
+            "type": "input",
+            "defaultVal": "深圳市民政局南山区",
+            "required": false
+        }
+    }',
+    '', 0, '[{"name": "吞吐", "metric": "5 images/sec"}]', false, 'system', 'system'
+),
+-- 1.5 结婚证 QA 对生成算子 (MarriageFormQA)
+(
+    'MarriageFormQA',
+    '结婚证 QA 对生成',
+    '从图片与 random_content.json 生成 llama 格式 QA 对（output_qa_pairs.jsonl）',
+    '1.0.0', 'image', 'text',
+    '{"memory": 10485760, "cpu": 0.1, "gpu": 0, "npu": 0, "storage": "10MB"}',
+    '{
+        "previewCountParam": {
+            "name": "预览条数",
+            "description": "output_qa_pairs_preview.json 中保留的条数",
+            "type": "slider",
+            "defaultVal": 5,
+            "required": false,
+            "min": 1,
+            "max": 20,
+            "step": 1
+        }
+    }',
+    '', 0, '[{"name": "吞吐", "metric": "100 pairs/sec"}]', false, 'system', 'system'
+)
+ON CONFLICT (id) DO UPDATE SET
+    name = EXCLUDED.name,
+    description = EXCLUDED.description,
+    settings = EXCLUDED.settings,
+    runtime = EXCLUDED.runtime,
+    metrics = EXCLUDED.metrics,
+    inputs = EXCLUDED.inputs,
+    outputs = EXCLUDED.outputs,
+    updated_at = CURRENT_TIMESTAMP;
+
+-- 2. 批量插入版本发布信息 (t_operator_release)
+INSERT INTO t_operator_release (id, version, release_date, changelog)
+VALUES
+    ('MarriageRandomText', '1.0.0', CURRENT_TIMESTAMP, '["首次发布：支持 Label Studio 坐标与 parsed_json 格式"]'),
+    ('MarriageImageCompositing', '1.0.0', CURRENT_TIMESTAMP, '["首次发布：支持 Label Studio 坐标与多组文本渲染"]'),
+    ('MarriageAugmentImages', '1.0.0', CURRENT_TIMESTAMP, '["首次发布：支持透视变换与光照融合，坐标缓存"]'),
+    ('MarriageAddSeal', '1.0.0', CURRENT_TIMESTAMP, '["首次发布：支持结婚登记专用章、登记机关动态读取"]'),
+    ('MarriageFormQA', '1.0.0', CURRENT_TIMESTAMP, '["首次发布：支持按 group_id/文件名/父目录匹配生成 QA"]')
+ON CONFLICT (id, version) DO NOTHING;
+
+-- 3. 批量关联算子分类 (t_operator_category_relation)
+
+-- 3.1 基础公共分类关联 (Python, DataMate, 系统预置)
+-- 这些分类适用于所有5个算子
+INSERT INTO t_operator_category_relation (category_id, operator_id)
+SELECT c.id, o.id
+FROM t_operator_category c
+CROSS JOIN (
+    VALUES
+        ('MarriageRandomText'),
+        ('MarriageImageCompositing'),
+        ('MarriageAugmentImages'),
+        ('MarriageAddSeal'),
+        ('MarriageFormQA')
+) AS o(id)
+WHERE c.id IN (
+    '9eda9d5d-072b-499b-916c-797a0a8750e1', -- Python
+    '431e7798-5426-4e1a-aae6-b9905a836b34', -- DataMate
+    '96a3b07a-3439-4557-a835-525faad60ca3'  -- 系统预置
+)
+ON CONFLICT DO NOTHING;
+
+-- 3.2 文本模态关联 (Text)
+-- 包含输入或输出为文本的算子: RandomText(In/Out), Compositing(In), FormQA(Out)
+INSERT INTO t_operator_category_relation (category_id, operator_id)
+SELECT 'd8a5df7a-52a9-42c2-83c4-01062e60f597', o.id
+FROM (VALUES
+    ('MarriageRandomText'),
+    ('MarriageImageCompositing'),
+    ('MarriageFormQA')
+) AS o(id)
+ON CONFLICT DO NOTHING;
+
+-- 3.3 图片模态关联 (Image)
+-- 包含输入或输出为图片的算子: Compositing(Out), AugmentImages(In/Out), AddSeal(In/Out), FormQA(In)
+INSERT INTO t_operator_category_relation (category_id, operator_id)
+SELECT 'de36b61c-9e8a-4422-8c31-d30585c7100f', o.id
+FROM (VALUES
+    ('MarriageImageCompositing'),
+    ('MarriageAugmentImages'),
+    ('MarriageAddSeal'),
+    ('MarriageFormQA')
+) AS o(id)
+ON CONFLICT DO NOTHING;
+
+
