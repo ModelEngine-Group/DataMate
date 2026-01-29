@@ -1,0 +1,38 @@
+name: '结婚证模板贴图'
+description: '将 random_content.json 文本渲染到结婚证模板上，按 group_id 输出多张图片'
+language: 'python'
+raw_id: 'MarriageImageCompositing'
+version: '1.0.0'
+vendor: 'datamate'
+modal: 'image'
+inputs: 'text'
+outputs: 'image'
+
+release:
+  - '首次发布：支持 Label Studio 坐标与多组文本渲染'
+
+runtime:
+  memory: 10485760
+  cpu: 0.2
+  gpu: 0
+  npu: 0
+  storage: 50MB
+
+metrics:
+  - name: '吞吐'
+    metric: '5 images/sec'
+
+settings:
+  templatePath:
+    name: '模板图路径'
+    description: '结婚证模板图 template.jpg 的路径（可选，未填则从任务目录查找）'
+    type: 'input'
+    defaultVal: ''
+    required: false
+
+  coordsPath:
+    name: '坐标JSON路径'
+    description: 'coordinate_info.json 的路径（可选，未填则从任务目录查找）'
+    type: 'input'
+    defaultVal: ''
+    required: false

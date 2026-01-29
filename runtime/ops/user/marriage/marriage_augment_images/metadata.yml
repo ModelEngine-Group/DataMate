@@ -1,0 +1,73 @@
+name: '结婚证图像合成到实拍背景'
+description: '将结婚证图片合成到多种实拍背景（斜拍、阴影、水印等）'
+language: 'python'
+raw_id: 'MarriageAugmentImages'
+version: '1.0.0'
+vendor: 'datamate'
+modal: 'image'
+inputs: 'image'
+outputs: 'image'
+
+release:
+  - '首次发布：支持透视变换与光照融合，坐标缓存'
+
+runtime:
+  memory: 10485760
+  cpu: 0.2
+  gpu: 0
+  npu: 0
+  storage: 1024MB
+
+metrics:
+  - name: '吞吐'
+    metric: '1 img/sec'
+
+settings:
+  scenesParam:
+    name: '场景数量'
+    description: '每张源图随机选择的背景数量（不填则使用全部）'
+    type: 'select'
+    defaultVal: 'all'
+    required: false
+    options:
+      - label: '全部'
+        value: 'all'
+      - label: '1'
+        value: '1'
+      - label: '2'
+        value: '2'
+      - label: '3'
+        value: '3'
+
+  sceneListParam:
+    name: '启用场景'
+    description: '允许的背景场景类型'
+    type: 'checkbox'
+    defaultVal: 'normal,tilted,shadow,watermark,incomplete'
+    required: false
+    options:
+      - label: '标准'
+        value: 'normal'
+      - label: '斜拍/反光'
+        value: 'tilted'
+      - label: '阴影'
+        value: 'shadow'
+      - label: '水印'
+        value: 'watermark'
+      - label: '不完整'
+        value: 'incomplete'
+
+  skipDetectParam:
+    name: '仅用缓存坐标'
+    description: '开启时仅使用已缓存坐标，无缓存则跳过该背景'
+    type: 'switch'
+    defaultVal: true
+    checkedLabel: '是'
+    unCheckedLabel: '否'
+
+  bgPathParam:
+    name: '背景图目录'
+    description: '背景图所在目录（可选，未填则使用算子内置 backgrounds/）'
+    type: 'input'
+    defaultVal: ''
+    required: false

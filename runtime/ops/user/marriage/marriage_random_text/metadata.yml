@@ -1,0 +1,34 @@
+name: '结婚证随机文本'
+description: '从坐标JSON生成多组结婚证随机文本，输出 random_content.json'
+language: 'python'
+raw_id: 'MarriageRandomText'
+version: '1.0.0'
+vendor: 'datamate'
+modal: 'text'
+inputs: 'text'
+outputs: 'text'
+
+release:
+  - '首次发布：支持 Label Studio 坐标与 parsed_json 格式'
+
+runtime:
+  memory: 10485760
+  cpu: 0.1
+  gpu: 0
+  npu: 0
+  storage: 10MB
+
+metrics:
+  - name: '吞吐'
+    metric: '1 file/sec'
+
+settings:
+  numParam:
+    name: '生成组数'
+    description: '生成的结婚证文本组数量'
+    type: 'slider'
+    defaultVal: 5
+    required: true
+    min: 1
+    max: 100
+    step: 1
