@@ -236,3 +236,24 @@ VALUES
     ('cd1eb467-08c2-4fa0-82b5-947124b5f965', 'IncomeCertificateGenerator', 1, NULL)
 ON CONFLICT (instance_id, operator_id, op_index) DO NOTHING;
 
+-- 插入初始数据 - 贷款调查报告合成模板（Loan Report flow）
+INSERT INTO t_clean_template (id, name, description)
+VALUES
+    ('f25d4993-aa7b-4fd9-ad74-cbd7b0d8c468', '贷款调查报告合成模板', '贷款报告数据生成 -> 模板填充 -> 文档转图片 -> 场景合成 -> QA生成 的流水模板')
+ON CONFLICT (id) DO NOTHING;
+
+-- 插入初始数据 - 操作员实例（贷款调查报告模板）
+INSERT INTO t_operator_instance (instance_id, operator_id, op_index, settings_override)
+VALUES
+    -- 1) 生成贷款报告数据
+    ('f25d4993-aa7b-4fd9-ad74-cbd7b0d8c468', 'LoanReportDataGenerator', 1, '{"batchCount":10, "startSequence":0}'),
+    -- 2) 将数据填充到Word模板
+    ('f25d4993-aa7b-4fd9-ad74-cbd7b0d8c468', 'LoanReportFiller', 2, NULL),
+    -- 3) 将生成的 Word 转为图片（DPI/保留PDF 设置）
+    ('f25d4993-aa7b-4fd9-ad74-cbd7b0d8c468', 'LoanReportWordToImageConverter', 3, '{"dpi":300, "keep_pdf": false}'),
+    -- 4) 将文档与实景背景合成（场景模式）
+    ('f25d4993-aa7b-4fd9-ad74-cbd7b0d8c468', 'LoanReportDocumentSynthesizer', 4, '{"enable_watermark": false, "enable_shadow": false, "scene_mode": "auto"}'),
+    -- 5) 基于图片/文本生成 QA 数据集
+    ('f25d4993-aa7b-4fd9-ad74-cbd7b0d8c468', 'LoanReportQADatasetGenerator', 5, '{"train_ratio":80, "val_ratio":10, "test_ratio":10, "doc_type":"个人贷款调查报告"}')
+ON CONFLICT (instance_id, operator_id, op_index) DO NOTHING;
+

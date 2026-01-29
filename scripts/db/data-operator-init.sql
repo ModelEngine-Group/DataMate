@@ -616,4 +616,30 @@ VALUES
   ('9eda9d5d-072b-499b-916c-797a0a8750e1', 'IncomeCertificateGenerator'), -- python
   ('431e7798-5426-4e1a-aae6-b9905a836b34', 'IncomeCertificateGenerator'), -- datamate
   ('96a3b07a-3439-4557-a835-525faad60ca3', 'IncomeCertificateGenerator')
+ON CONFLICT DO NOTHING;
 
+-- 插入用户算子：LoanReportDataGenerator（贷款调查报告数据生成器）
+INSERT INTO t_operator (id, name, description, version, inputs, outputs, runtime, settings, file_name, file_size, metrics, is_star, created_by, updated_by)
+VALUES
+  ('LoanReportDataGenerator', '贷款调查报告数据生成器', '生成虚拟贷款调查报告的随机数据，用于数据合成和处理流水线', '1.0.0', 'text', 'text', '{"memory":104857600,"cpu":0.5,"gpu":0,"storage":"100MB"}', '{"batchCount":{"name":"生成数量","description":"单次生成的报告数量","type":"slider","defaultVal":10,"min":1,"max":1000,"step":1,"required":false},"startSequence":{"name":"起始序号","description":"生成数据的起始序号（7位数字），默认为自动递增","type":"inputNumber","defaultVal":0,"min":0,"required":false}}', '', 0, '[{"name":"生成速度","metric":"100 records/sec"}]', false, 'system', 'system'),
+  ('LoanReportFiller', '贷款调查报告模板填充器', '将JSON数据填充到Word模板生成个人贷款调查报告', '1.0.0', 'text', 'text', '{"memory":209715200,"cpu":0.5,"gpu":0,"storage":"200MB"}', NULL, '', 0, '[{"name":"处理速度","metric":"50 reports/min"}]', false, 'system', 'system')
+ON CONFLICT DO NOTHING;
+
+-- 插入版本发布信息
+INSERT INTO t_operator_release(id, version, release_date, changelog)
+VALUES
+  ('LoanReportDataGenerator', '1.0.0', '2026-01-29', '["首次发布"]'),
+  ('LoanReportFiller', '1.0.0', '2026-01-29', '["首次发布"]')
+ON CONFLICT DO NOTHING;
+
+-- 关联分类（模态/语言/归属）
+INSERT INTO t_operator_category_relation(category_id, operator_id)
+VALUES
+  ('d8a5df7a-52a9-42c2-83c4-01062e60f597', 'LoanReportDataGenerator'),
+  ('9eda9d5d-072b-499b-916c-797a0a8750e1', 'LoanReportDataGenerator'),
+  ('431e7798-5426-4e1a-aae6-b9905a836b34', 'LoanReportDataGenerator'),
+
+  ('d8a5df7a-52a9-42c2-83c4-01062e60f597', 'LoanReportFiller'),
+  ('9eda9d5d-072b-499b-916c-797a0a8750e1', 'LoanReportFiller'),
+  ('431e7798-5426-4e1a-aae6-b9905a836b34', 'LoanReportFiller')
+ON CONFLICT DO NOTHING;
