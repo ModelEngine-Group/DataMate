@@ -359,6 +359,8 @@ class RealWorldSimulatorHelper:
             # 遍历每张背景图片
             for bg_file in bg_files:
                 dst_img_path = os.path.join(self.background_dir, bg_file)
+                logger.info(f"使用背景图片: {bg_file}")
+                logger.info(f"源图路径: {src_img_path}, 背景图路径: {self.background_dir}")
                 bg_base_name = os.path.splitext(bg_file)[0]
 
                 # 输出文件名格式: 源图名_背景图名.jpg
@@ -444,14 +446,14 @@ class RealWorldSimulator(Mapper):
             # 创建模拟器实例
             self.simulator = RealWorldSimulatorHelper(
                 source_dir=sample["export_path"] + "/images",
-                background_dir="./backgrounds",
+                background_dir=os.path.join(os.path.dirname(__file__), "backgrounds"),
                 output_dir=sample["export_path"] + "/images",
             )
             # 获取源图片目录
             source_dir = sample["export_path"] + "/images"
 
             # 获取背景图片目录
-            background_dir = "./backgrounds"
+            background_dir = os.path.join(os.path.dirname(__file__), "backgrounds")
 
             # 检查源目录是否存在
             if not os.path.exists(source_dir):

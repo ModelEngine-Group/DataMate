@@ -1,3 +1,5 @@
-docx2pdf>=0.5.7
-pdf2image>=1.16.0
-Pillow>=9.0.0
+# 使用 runtime Docker 镜像已有依赖，无需额外安装：
+# - docx->pdf: LibreOffice (apt)
+# - pdf->jpg: PyMuPDF + Pillow (ops extra)
+PyMuPDF>=1.23.8
+Pillow>=11.0.0

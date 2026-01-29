@@ -1,12 +1,16 @@
 """
 Word转图片算子
 功能：将Word文档转换为高质量JPG图片，支持多页文档
+
+使用 runtime Docker 镜像已有依赖：
+- docx->pdf: LibreOffice (apt install libreoffice)
+- pdf->jpg: PyMuPDF + Pillow (ops extra 依赖)
 """
 
 import os
-import time
-import base64
+import subprocess
 import tempfile
+import time
 from typing import Dict, Any, List
 from loguru import logger
 
@@ -44,7 +48,7 @@ class WordToImageConverterHelper:
 
     def _convert_docx_to_pdf(self, docx_path: str) -> str:
         """
-        将Word文档转换为PDF（带重试机制）
+        将Word文档转换为PDF（使用 LibreOffice，runtime Docker 镜像已安装）
 
         Args:
             docx_path: Word文档路径
@@ -52,15 +56,37 @@ class WordToImageConverterHelper:
         Returns:
             PDF文件路径
         """
-        # 生成PDF文件路径
-        pdf_path = docx_path.replace(".docx", ".pdf")
+        # 生成PDF文件路径（LibreOffice 输出到指定目录，保持原文件名）
+        output_dir = os.path.dirname(docx_path)
+        pdf_filename = os.path.basename(docx_path).replace(".docx", ".pdf")
+        pdf_path = os.path.join(output_dir, pdf_filename)
 
         for attempt in range(self.max_retries):
             try:
-                # 转换Word到PDF
-                from docx2pdf import convert
+                # 使用 LibreOffice 命令行转换（runtime 镜像 apt 已安装 libreoffice）
+                result = subprocess.run(
+                    [
+                        "libreoffice",
+                        "--headless",
+                        "--invisible",
+                        "--convert-to",
+                        "pdf",
+                        "--outdir",
+                        output_dir,
+                        docx_path,
+                    ],
+                    capture_output=True,
+                    text=True,
+                    timeout=120,
+                )
 
-                convert(docx_path, pdf_path)
+                if result.returncode != 0:
+                    raise RuntimeError(
+                        f"LibreOffice 转换失败: {result.stderr or result.stdout}"
+                    )
+
+                if not os.path.exists(pdf_path):
+                    raise FileNotFoundError(f"PDF 文件未生成: {pdf_path}")
 
                 logger.info(f"Word转PDF完成: {docx_path} -> {pdf_path}")
                 return pdf_path
@@ -71,13 +97,11 @@ class WordToImageConverterHelper:
                     f"Word转PDF失败 (尝试 {attempt + 1}/{self.max_retries}): {error_msg}"
                 )
 
-                # 如果是最后一次尝试，抛出异常
                 if attempt == self.max_retries - 1:
                     logger.error(f"Word转PDF最终失败: {error_msg}")
                     raise
 
-                # 等待一段时间后重试（避免Word进程过载）
-                wait_time = (attempt + 1) * 2  # 递增等待时间：2秒、4秒
+                wait_time = (attempt + 1) * 2
                 logger.info(f"等待 {wait_time} 秒后重试...")
                 time.sleep(wait_time)
 
@@ -124,7 +148,7 @@ class WordToImageConverterHelper:
 
     def _convert_pdf_to_jpg(self, pdf_path: str, output_filename: str) -> List[str]:
         """
-        将PDF转换为JPG图片（支持多页，自动跳过空白页）
+        将PDF转换为JPG图片（使用 PyMuPDF，runtime Docker 镜像 ops extra 已安装）
 
         Args:
             pdf_path: PDF文件路径
@@ -134,14 +158,19 @@ class WordToImageConverterHelper:
             JPG图片路径列表
         """
         try:
-            from pdf2image import convert_from_path
+            import fitz
             from PIL import Image
 
-            # 转换PDF到图片（使用指定DPI）
-            images = convert_from_path(pdf_path, dpi=self.dpi)
-
-            # 检查实际页数
-            actual_page_count = len(images)
+            # 使用 PyMuPDF 转换 PDF 到图片（runtime 镜像 ops extra 已安装 PyMuPDF）
+            doc = fitz.open(pdf_path)
+            images = []
+            for page in doc:
+                pix = page.get_pixmap(dpi=self.dpi, alpha=False)
+                img = Image.frombytes(
+                    "RGB", [pix.width, pix.height], pix.samples
+                )
+                images.append(img)
+            doc.close()
 
             output_paths = []
 

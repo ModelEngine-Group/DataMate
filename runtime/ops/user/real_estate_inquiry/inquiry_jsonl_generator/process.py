@@ -345,7 +345,7 @@ class JsonlGeneratorOps(Mapper):
 
         try:
             export_path = sample["export_path"]
-            template_path = "./templates/output_json_template.json"
+            template_path = os.path.join(os.path.dirname(__file__), "templates/output_json_template.json")
             self.generator = JsonlGenerator(
                 export_path,
                 template_path,
