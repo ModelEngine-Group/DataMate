@@ -230,7 +230,7 @@ INSERT INTO t_dc_collection_templates (
           'apireader',
           'txtfilewriter',
           'txtfilewriter',
-          '{"parameter": {}, "reader": {"api": {"name": "接口地址","description": "API的访问地址。","type": "input", "required": true, "index": 1}, "method": {"name": "请求方式","description": "API的请求方式（默认为GET）。","type": "option", "options": ["GET", "POST"], "required": false, "index": 2}, "body": {"name": "请求体参数","description": "请求体参数，主要针对POST请求。","type": "jsonobject", "required": false, "index": 3}, "headers": {"name": "请求头参数","description": "需要设置的请求头参数。","type": "jsonobject", "required": false, "index": 4}, "schema": {"name": "数据解析schema","description": "会依据schema解析API返回结果。","type": "jsonobject", "required": true, "index": 5}}, "writer": {}}',
+          '{"parameter": {}, "reader": {"api": {"name": "接口地址","description": "API的访问地址。","type": "input", "required": true, "index": 1}, "method": {"name": "请求方式","description": "API的请求方式（默认为GET）。","type": "option", "options": ["GET", "POST"], "required": false, "index": 2}, "body": {"name": "请求体参数","description": "请求体参数，主要针对POST请求。示例：\n {\"query\": \"value\"}","type": "jsonobject", "required": false, "index": 3}, "headers": {"name": "请求头参数","description": "需要设置的请求头参数。示例：\n {\"Authorization\": \"***\"}","type": "jsonobject", "required": false, "index": 4}, "schema": {"name": "数据解析schema","description": "会依据schema解析API返回结果。示例：\n {\"dataPath\": \"返回体内定位到具体数据的路径，形如$.data\", \"fields\": [{\"name\": \"属性名\", \"alias\": \"别名\", \"path\": \"属性的路径\"}]}","type": "jsonobject", "required": true, "index": 5}}, "writer": {}}',
           TRUE,
           'system',
           'system')
