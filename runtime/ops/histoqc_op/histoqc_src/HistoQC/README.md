@@ -1,6 +1,6 @@
 # HistoQC Mapper for DataMate
 
-[![Original Project](https://github.com/choosehappy/HistoQC)]
+[Original Project](https://github.com/choosehappy/HistoQC)
 
  **说明**: 本算子是 [HistoQC]在 DataMate 算子管线中的标准集成实现。包含了针对 WSI 质量控制产物的结构化提取逻辑。
 
