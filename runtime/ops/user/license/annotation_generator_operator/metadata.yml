@@ -1,0 +1,43 @@
+name: '标注生成算子'
+description: '为图片生成问答对标注数据'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'AnnotationGeneratorOperator'
+version: '1.0.0'
+modal: 'text'
+inputs: 'image'
+outputs: 'text'
+
+release:
+  - '首次发布：支持多模态对话格式标注生成'
+
+runtime:
+  memory: 10485760
+  cpu: 0.1
+  gpu: 0
+  npu: 0
+  storage: 10MB
+
+metrics:
+  - name: '处理速度'
+    metric: '100 images/sec'
+
+settings:
+  qaCountParam:
+    name: '问答对数量'
+    description: '每个图片生成的问答对数量（不含完整JSON提取）'
+    type: 'slider'
+    defaultVal: 3
+    min: 1
+    max: 10
+    step: 1
+    required: false
+  trainRatioParam:
+    name: '训练集比例'
+    description: '训练集占比（0-1之间）'
+    type: 'slider'
+    defaultVal: 0.8
+    min: 0
+    max: 1
+    step: 0.1
+    required: false

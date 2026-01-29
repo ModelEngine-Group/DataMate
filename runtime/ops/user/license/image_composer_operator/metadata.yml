@@ -1,0 +1,31 @@
+name: '图像合成算子'
+description: '将数据渲染到营业执照模板上'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'ImageComposerOperator'
+version: '1.0.0'
+modal: 'image'
+inputs: 'text'
+outputs: 'image'
+
+release:
+  - '首次发布：支持基于坐标文件生成营业执照图片'
+
+runtime:
+  memory: 20971520
+  cpu: 0.2
+  gpu: 0
+  npu: 0
+  storage: 100MB
+
+metrics:
+  - name: '处理速度'
+    metric: '10 images/sec'
+
+settings:
+  fontParam:
+    name: '字体文件'
+    description: '字体文件路径（可选，留空使用系统字体）'
+    type: 'input'
+    defaultVal: ''
+    required: false
