@@ -1,4 +1,4 @@
-name: '图像合成算子'
+name: '营业职照图像合成算子'
 description: '将数据渲染到营业执照模板上'
 language: 'python'
 vendor: 'huawei'

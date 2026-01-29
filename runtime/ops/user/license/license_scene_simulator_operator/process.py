@@ -6,6 +6,7 @@
 """
 import json
 import os
+from pathlib import Path
 from typing import Dict, Any
 
 from loguru import logger
@@ -33,10 +34,10 @@ class LicenseSceneSimulatorOperator(Mapper):
         self.skip_detect = kwargs.get('skipDetectParam', True)
         
         # 背景图目录（算子目录下）
-        self.bg_dir = os.path.join(os.path.dirname(__file__), "backgrounds")
+        self.bg_dir = None
         
         # 坐标缓存文件路径（算子目录下）
-        self.coord_cache_file = os.path.join(os.path.dirname(__file__), "coordinates_cache.json")
+        self.coord_cache_file = None
     
     def execute(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -50,11 +51,20 @@ class LicenseSceneSimulatorOperator(Mapper):
         """
         try:
             file_path = sample.get('filePath')
-            if not file_path.endswith('.jpg'):
-                sample['text'] = ""
+            if not file_path.endswith('.jpg') or os.path.normpath(file_path).count(os.sep) > 3:
                 return sample
 
             # 获取输入路径
+            parent_path = Path(file_path).parent
+            coords_files = list(Path(parent_path).glob("*.json"))
+
+            if len(coords_files) == 0:
+                sample['text'] = ""
+                logger.error(f"坐标文件不存在: {coords_files}")
+                return sample
+
+            self.coord_cache_file = coords_files[0]
+            self.bg_dir = parent_path / "backgrounds"
             input_dir = sample.get('export_path') + "/images"
             output_dir = input_dir
             
@@ -160,6 +170,7 @@ class LicenseSceneSimulatorOperator(Mapper):
     def _load_cached_coordinates(self, bg_filename: str):
         """从缓存文件加载坐标"""
         if not os.path.exists(self.coord_cache_file):
+            logger.warning(f"未找到缓存文件: {self.coord_cache_file}")
             return None
         try:
             with open(self.coord_cache_file, "r", encoding="utf-8") as f:

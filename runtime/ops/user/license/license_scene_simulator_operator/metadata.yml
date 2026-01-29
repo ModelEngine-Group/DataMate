@@ -1,4 +1,4 @@
-name: '场景模拟算子'
+name: '营业职照场景模拟算子'
 description: '将合成图片与真实世界背景图片进行融合'
 language: 'python'
 vendor: 'huawei'

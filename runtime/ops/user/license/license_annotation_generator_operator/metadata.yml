@@ -1,4 +1,4 @@
-name: '标注生成算子'
+name: '营业职照标注生成算子'
 description: '为图片生成问答对标注数据'
 language: 'python'
 vendor: 'huawei'

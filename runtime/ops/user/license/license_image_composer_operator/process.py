@@ -39,8 +39,7 @@ class LicenseImageComposerOperator(Mapper):
         try:
             # 获取输入路径
             file_path = sample.get('filePath')
-            if not file_path.endswith('.jpg'):
-                sample['text'] = ""
+            if not file_path.endswith('.jpg') or os.path.normpath(file_path).count(os.sep) > 3:
                 return sample
 
             parent_path = Path(file_path).parent

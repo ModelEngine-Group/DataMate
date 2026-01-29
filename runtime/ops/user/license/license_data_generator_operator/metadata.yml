@@ -1,4 +1,4 @@
-name: '数据生成算子'
+name: '营业职照数据生成算子'
 description: '基于坐标文件生成随机的营业执照数据'
 language: 'python'
 vendor: 'huawei'
