@@ -1,4 +1,4 @@
-package com.datamate.plugin.reader.apireader.APIReader;
+package com.datamate.plugin.reader.apireader;
 
 import com.alibaba.datax.common.element.*;
 import com.alibaba.datax.common.plugin.RecordSender;
@@ -97,26 +97,16 @@ public class APIReader extends Reader {
                 return;
             }
 
-            String schemaStr = this.jobConfig.getString("schema");
-            if (StringUtils.isBlank(schemaStr)) {
-                throw new RuntimeException("schema configuration is required for APIReader");
-            }
-
-            Object schemaObj = JSON.parse(schemaStr);
-            if (schemaObj instanceof JSONObject) {
-                Configuration schemaConfiguration = Configuration.from((JSONObject) schemaObj);
-                this.dataPath = schemaConfiguration.getString("dataPath", "");
-                this.schemaFields = schemaConfiguration.getListConfiguration("fields");
-            } else if (schemaObj instanceof JSONArray) {
-                JSONObject wrapper = new JSONObject();
-                wrapper.put("fields", schemaObj);
-                Configuration schemaConfiguration = Configuration.from(wrapper);
-                this.dataPath = "";
-                this.schemaFields = schemaConfiguration.getListConfiguration("fields");
-            }
-
             if (this.schemaFields == null || this.schemaFields.isEmpty()) {
                 throw new RuntimeException("schema.fields is required and cannot be empty");
+            }
+
+            for (Configuration fieldConfig : this.schemaFields) {
+                String name = fieldConfig.getString("name"); // JSON中的字段名
+                String path = fieldConfig.getString("path"); // 可选：支持深层提取
+                if (StringUtils.isBlank(name) && StringUtils.isBlank(path)) {
+                    throw new RuntimeException("schema.fields must contain name or path");
+                }
             }
         }
 
@@ -129,66 +119,92 @@ public class APIReader extends Reader {
                 String responseBody = doHttpRequest(this.api, this.method, this.requestBody, this.requestHeaders);
 
                 // 2. 解析响应
-                Object responseJson = JSON.parse(responseBody);
-                JSONArray dataArray;
-
-                // 3. 定位数据节点
-                if (StringUtils.isNotBlank(this.dataPath)) {
-                    // 使用 JSONPath 提取
-                    Object extracted = JSONPath.eval(responseJson, this.dataPath);
-                    if (extracted instanceof JSONArray) {
-                        dataArray = (JSONArray) extracted;
-                    } else {
-                        throw new RuntimeException("The dataPath configured [" + this.dataPath + "] does not point to a JSON Array.");
-                    }
-                } else {
-                    if (responseJson instanceof JSONArray) {
-                        dataArray = (JSONArray) responseJson;
-                    } else if (responseJson instanceof JSONObject) {
-                        throw new RuntimeException("Response is an Object, please configure schema.dataPath to point to the list.");
-                    } else {
-                        throw new RuntimeException("Unknown response format.");
-                    }
-                }
+                JSONArray dataArray = parseResponse(responseBody);
 
                 if (dataArray.isEmpty()) {
                     LOG.warn("API returned empty data.");
                     return;
                 }
 
+                // 3. 添加文件表头
+                addDataHeader(recordSender);
+
                 // 4. 遍历数据并转换为DataX Record
-                for (Object itemObj : dataArray) {
-                    JSONObject item = (JSONObject) itemObj;
-                    Record record = recordSender.createRecord();
-
-                    for (Configuration fieldConfig : this.schemaFields) {
-                        String name = fieldConfig.getString("name"); // JSON中的字段名
-                        String path = fieldConfig.getString("path"); // 可选：支持深层提取
-                        if (StringUtils.isBlank(name) && StringUtils.isBlank(path)) {
-                            throw new RuntimeException("schema.fields must contain name or path");
-                        }
-
-                        Object val;
-                        if (StringUtils.isNotBlank(path)) {
-                            val = JSONPath.eval(item, path);
-                        } else {
-                            val = item.get(name);
-                        }
-
-                        if (val == null) {
-                            record.addColumn(new StringColumn(null));
-                            continue;
-                        }
-
-                        record.addColumn(new StringColumn(val.toString()));
-                    }
-                    recordSender.sendToWriter(record);
-                }
+                addData(recordSender, dataArray);
 
             } catch (Exception e) {
                 LOG.error("Error occurred while reading from API", e);
                 throw new RuntimeException(e);
             }
+        }
+
+        private void addData(RecordSender recordSender, JSONArray dataArray) {
+            for (Object itemObj : dataArray) {
+                JSONObject item = (JSONObject) itemObj;
+                Record record = recordSender.createRecord();
+
+                for (Configuration fieldConfig : this.schemaFields) {
+                    String name = fieldConfig.getString("name"); // JSON中的字段名
+                    String path = fieldConfig.getString("path"); // 可选：支持深层提取
+                    if (StringUtils.isBlank(name) && StringUtils.isBlank(path)) {
+                        throw new RuntimeException("schema.fields must contain name or path");
+                    }
+
+                    Object val;
+                    if (StringUtils.isNotBlank(path)) {
+                        val = JSONPath.eval(item, path);
+                    } else {
+                        val = item.get(name);
+                    }
+
+                    if (val == null) {
+                        record.addColumn(new StringColumn(""));
+                        continue;
+                    }
+
+                    record.addColumn(new StringColumn(val.toString()));
+                }
+                recordSender.sendToWriter(record);
+            }
+        }
+
+        private void addDataHeader(RecordSender recordSender) {
+            Record recordHeader = recordSender.createRecord();
+            for (Configuration fieldConfig : this.schemaFields) {
+                String name = fieldConfig.getString("name"); // JSON中的字段名
+                String alias = fieldConfig.getString("alias"); // 自定义的字段别名
+                if (StringUtils.isNotBlank(alias)) {
+                    recordHeader.addColumn(new StringColumn(alias));
+                } else {
+                    recordHeader.addColumn(new StringColumn(name));
+                }
+            }
+            recordSender.sendToWriter(recordHeader);
+        }
+
+        private JSONArray parseResponse(String responseBody) {
+            Object responseJson = JSON.parse(responseBody);
+            JSONArray dataArray;
+
+            // 定位数据节点
+            if (StringUtils.isNotBlank(this.dataPath)) {
+                // 使用 JSONPath 提取
+                Object extracted = JSONPath.eval(responseJson, this.dataPath);
+                if (extracted instanceof JSONArray) {
+                    dataArray = (JSONArray) extracted;
+                } else {
+                    throw new RuntimeException("The dataPath configured [" + this.dataPath + "] does not point to a JSON Array.");
+                }
+            } else {
+                if (responseJson instanceof JSONArray) {
+                    dataArray = (JSONArray) responseJson;
+                } else if (responseJson instanceof JSONObject) {
+                    throw new RuntimeException("Response is an Object, please configure schema.dataPath to point to the list.");
+                } else {
+                    throw new RuntimeException("Unknown response format.");
+                }
+            }
+            return dataArray;
         }
 
         /**
