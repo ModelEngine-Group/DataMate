@@ -15,7 +15,7 @@ from datamate.core.base_op import Mapper
 from .src.image_composer import compose_all
 
 
-class ImageComposerOperator(Mapper):
+class LicenseImageComposerOperator(Mapper):
     """
     图像合成算子
     将数据渲染到营业执照模板上

@@ -14,7 +14,7 @@ from loguru import logger
 from datamate.core.base_op import Mapper
 
 
-class AnnotationGeneratorOperator(Mapper):
+class LicenseAnnotationGeneratorOperator(Mapper):
     """
     标注生成算子
     为图片生成问答对标注数据

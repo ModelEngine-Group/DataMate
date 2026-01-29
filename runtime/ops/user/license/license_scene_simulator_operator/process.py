@@ -12,7 +12,7 @@ from loguru import logger
 from datamate.core.base_op import Mapper
 
 
-class SceneSimulatorOperator(Mapper):
+class LicenseSceneSimulatorOperator(Mapper):
     """
     场景模拟算子
     将合成图片与真实世界背景图片进行融合

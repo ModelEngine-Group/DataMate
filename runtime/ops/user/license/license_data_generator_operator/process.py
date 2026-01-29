@@ -14,7 +14,7 @@ from loguru import logger
 from datamate.core.base_op import Mapper
 
 
-class DataGeneratorOperator(Mapper):
+class LicenseDataGeneratorOperator(Mapper):
     """
     数据生成算子
     基于坐标文件生成随机的营业执照数据
