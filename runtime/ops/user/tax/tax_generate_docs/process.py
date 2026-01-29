@@ -13,14 +13,6 @@ from datamate.core.base_op import Mapper
 from .src import DocGenerator
 
 
-# -----------------------------------------------------------
-# 注意：您需要将原项目中 src.doc_generator 的逻辑引入进来。
-# 如果它是一个独立的库，请在 requirements.txt 中声明。
-# 这里假设您会将 DocGenerator 类代码直接集成，或放在同级目录引用。
-# 下面是一个为了让代码跑通的引用示例，实际请调整为相对引用：
-# from .doc_generator import DocGenerator
-# -----------------------------------------------------------
-
 class TaxDocGenOperator(Mapper):
     """
     文档生成算子：DocGenOperator
@@ -31,14 +23,17 @@ class TaxDocGenOperator(Mapper):
         super().__init__(*args, **kwargs)
         # 获取 metadata.yml 中定义的参数
         self.output_dir = None
-        self.prefix = kwargs.get('filePrefixParam', 'loan_clearance').strip()
 
     def execute(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         """
         核心处理逻辑：处理单条 sample 数据并生成文档
         """
         try:
-            template_abs_path = sample["filePath"]
+            file_path = sample.get('filePath')
+            if not file_path.endswith('.docx') or os.path.normpath(file_path).count(os.sep) > 3:
+                return sample
+
+            template_abs_path = file_path
             data_abs_dir = sample["export_path"]
             output_abs_dir = data_abs_dir
             os.makedirs(output_abs_dir, exist_ok=True)
@@ -86,13 +81,3 @@ class TaxDocGenOperator(Mapper):
 
         return sample
 
-def main():
-    """
-    主函数：批量生成Word文档
-    """
-    # 配置路径
-
-
-
-if __name__ == "__main__":
-    main()
