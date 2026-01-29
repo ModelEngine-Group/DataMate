@@ -1,0 +1,22 @@
+name: '社会保险参保文档生成算子'
+description: '基于Word模板和数据CSV生成社会保险参保证明文档'
+language: 'python'
+raw_id: 'InsuranceDocGenOperator'
+version: '1.0.0'
+vendor: 'datamate'
+modal: 'text'
+inputs: 'text'
+outputs: 'text'
+
+release:
+  - '首次发布：支持基于docx模板生成社保证明文档'
+
+runtime:
+  gpu: 0
+  npu: 0
+  storage: 500MB
+
+metrics:
+  - name: '生成速度'
+    metric: '5 docs/sec'
+

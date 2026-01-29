@@ -1,0 +1,4 @@
+pillow>=10.0.0
+pywin32>=306; sys_platform == 'win32'
+docx2pdf>=0.1.8; sys_platform != 'win32'
+pdf2image>=1.16.0; sys_platform != 'win32'

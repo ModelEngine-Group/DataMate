@@ -1,0 +1,33 @@
+name: '社会保险参保QA对生成算子'
+description: '为社保凭证图片生成分类和信息提取QA对'
+language: 'python'
+raw_id: 'InsuranceAnnotationGenOperator'
+version: '1.0.0'
+vendor: 'datamate'
+modal: 'text'
+inputs: 'image'
+outputs: 'text'
+
+release:
+  - '首次发布：支持分类和信息提取QA对生成'
+
+runtime:
+  gpu: 0
+  npu: 0
+  storage: 500MB
+
+metrics:
+  - name: '生成速度'
+    metric: '50 qas/sec'
+
+settings:
+  typeParam:
+    name: 'QA类型'
+    description: '选择生成的QA类型'
+    type: 'select'
+    defaultVal: 'all'
+    options:
+      - 'classification'
+      - 'extraction'
+      - 'all'
+    required: false
