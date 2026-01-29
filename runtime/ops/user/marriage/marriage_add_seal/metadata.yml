@@ -1,0 +1,41 @@
+name: '结婚证盖章'
+description: '在结婚证图片上添加结婚登记专用章，登记机关从 random_content.json 按 group_id 读取'
+language: 'python'
+raw_id: 'MarriageAddSeal'
+version: '1.0.0'
+vendor: 'datamate'
+modal: 'image'
+inputs: 'image'
+outputs: 'image'
+
+release:
+  - '首次发布：支持结婚登记专用章、登记机关动态读取'
+
+runtime:
+  memory: 10485760
+  cpu: 0.1
+  gpu: 0
+  npu: 0
+  storage: 50MB
+
+metrics:
+  - name: '吞吐'
+    metric: '5 images/sec'
+
+settings:
+  sealSizeParam:
+    name: '印章大小'
+    description: '印章直径（像素）'
+    type: 'slider'
+    defaultVal: 280
+    min: 180
+    max: 400
+    step: 10
+    required: false
+
+  agencyNameParam:
+    name: '默认登记机关'
+    description: '当 random_content 中无登记机关时使用的名称'
+    type: 'input'
+    defaultVal: '深圳市民政局南山区'
+    required: false
