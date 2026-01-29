@@ -1,3 +1,4 @@
+import os
 import json
 import math
 import random
@@ -15,7 +16,7 @@ from datamate.core.base_op import Mapper
 # ============================================================================
 # 原始逻辑移植：公章生成器类
 # ============================================================================
-class LoanSettlementSealGenerator:
+class SealGenerator:
     """标准圆章生成器 (保留原始逻辑)"""
 
     def __init__(self, size=500, color='#DD3333'):
@@ -312,7 +313,7 @@ def find_footer_position(image_path: str) -> Tuple[int, int]:
 # 算子主体 Mapper
 # ============================================================================
 
-class SealGeneratorMapper(Mapper):
+class LoanSettlementSealGeneratorMapper(Mapper):
     """
     公章生成算子
     """
