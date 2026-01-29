@@ -257,3 +257,59 @@ VALUES
     ('f25d4993-aa7b-4fd9-ad74-cbd7b0d8c468', 'LoanReportQADatasetGenerator', 5, '{"train_ratio":80, "val_ratio":10, "test_ratio":10, "doc_type":"个人贷款调查报告"}')
 ON CONFLICT (instance_id, operator_id, op_index) DO NOTHING;
 
+-- 1. 插入营业执照全流程处理模板 (t_clean_template)
+INSERT INTO t_clean_template (id, name, description)
+VALUES (
+    'd06eaa82-19c8-4783-bf55-eaed889ad533',
+    '营业执照全流程生成模板',
+    '包含：数据随机生成 -> 模板图像合成 -> 真实场景模拟 -> 多模态标注生成 的全自动流水线',
+)
+ON CONFLICT (id) DO UPDATE SET
+    name = EXCLUDED.name,
+    description = EXCLUDED.description,
+    updated_at = CURRENT_TIMESTAMP;
+
+-- 2. 插入操作员实例，串联算子流水 (t_operator_instance)
+-- 逻辑顺序：
+INSERT INTO t_operator_instance (instance_id, operator_id, op_index, settings_override)
+VALUES
+    -- 步骤1: 随机数据生成
+    ('d06eaa82-19c8-4783-bf55-eaed889ad533', 'LicenseDataGeneratorOperator', 1, NULL),
+    -- 步骤2: 图像合成渲染
+    ('d06eaa82-19c8-4783-bf55-eaed889ad533', 'LicenseImageComposerOperator', 2, NULL),
+    -- 步骤3: 真实场景模拟（阴影、斜拍、背景融合）
+    ('d06eaa82-19c8-4783-bf55-eaed889ad533', 'LicenseSceneSimulatorOperator', 3, NULL),
+    -- 步骤4: 自动化标注生成（生成训练用的对话数据）
+    ('d06eaa82-19c8-4783-bf55-eaed889ad533', 'LicenseAnnotationGeneratorOperator', 4, NULL)
+ON CONFLICT (instance_id, operator_id, op_index) DO NOTHING;
+
+-- ============================================================
+-- 个人所得税（Tax）业务模板定义
+-- 包含：DataGen -> DocGen -> DocToImg -> ImgAug -> QAGen 全流程
+-- ============================================================
+
+-- 1. 插入清洗模板定义
+INSERT INTO t_clean_template (id, name, description)
+VALUES
+    ('a8b9c0d1-e2f3-4455-6677-8899aabbccdd', '个人所得税数据生成模板', '个人所得税完税证明全流程：数据生成 -> 文档生成 -> 图片转换 -> 图片增强 -> QA生成')
+ON CONFLICT (id) DO NOTHING;
+
+-- 2. 插入操作员实例（定义流水线步骤）
+INSERT INTO t_operator_instance (instance_id, operator_id, op_index, settings_override)
+VALUES
+    -- 1) 生成模拟数据 (CSV/JSON)
+    ('a8b9c0d1-e2f3-4455-6677-8899aabbccdd', 'TaxDataGeneratorOperator', 1, NULL),
+
+    -- 2) 基于数据填充 Word 模板
+    ('a8b9c0d1-e2f3-4455-6677-8899aabbccdd', 'TaxDocGenOperator', 2, NULL),
+
+    -- 3) 将 Word 文档转换为图片
+    ('a8b9c0d1-e2f3-4455-6677-8899aabbccdd', 'TaxDocToImgOperator', 3, NULL),
+
+    -- 4) 图片增强（背景合成、阴影、扭曲等）
+    ('a8b9c0d1-e2f3-4455-6677-8899aabbccdd', 'TaxImgAugOperator', 4, NULL),
+
+    -- 5) 生成 QA 问答对和训练集
+    ('a8b9c0d1-e2f3-4455-6677-8899aabbccdd', 'TaxQAGenOperator', 5, NULL)
+ON CONFLICT (instance_id, operator_id, op_index) DO NOTHING;
+
