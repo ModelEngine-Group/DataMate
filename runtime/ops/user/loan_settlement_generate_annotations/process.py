@@ -183,6 +183,10 @@ class LoanSettlementAnnotationGenOperator(Mapper):
         """
         核心处理逻辑：处理单张图片，生成对应的标注数据
         """
+        file_path = sample.get('filePath')
+        if not file_path.endswith('.docx') or os.path.normpath(file_path).count(os.sep) > 3:
+            return sample
+
         # 3. 预加载原始数据记录 (records.json)
         records = json.loads(sample['text'])
         sample['text'] = ''

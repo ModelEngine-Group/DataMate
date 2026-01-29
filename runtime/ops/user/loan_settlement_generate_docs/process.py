@@ -38,6 +38,10 @@ class LoanSettlementDocGenOperator(Mapper):
         """
         核心处理逻辑：处理单条 sample 数据并生成文档
         """
+        file_path = sample.get('filePath')
+        if not file_path.endswith('.docx') or os.path.normpath(file_path).count(os.sep) > 3:
+            return sample
+
         try:
             # 1. 准备数据
             self.output_dir = str(sample.get('export_path'))

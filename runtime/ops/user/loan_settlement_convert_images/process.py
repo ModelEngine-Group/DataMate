@@ -23,6 +23,10 @@ class LoanSettlementDocToImgOperator(Mapper):
         """
         核心处理逻辑
         """
+        file_path = sample.get('filePath')
+        if not file_path.endswith('.docx') or os.path.normpath(file_path).count(os.sep) > 3:
+            return sample
+
         try:
             # 1. 获取输入文件路径
             # 假设上游算子（Step 2）将生成的 docx 路径放在了 'generated_doc_path' 或 'file_path'

@@ -57,7 +57,7 @@ class LoanSettlementImgAugOperator(Mapper):
         try:
             with open(self.coord_cache_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
-            key = str(image_path).replace("\\", "/")
+            key = os.path.basename(image_path)
             if key in data: return np.array(data[key], dtype="float32")
         except: pass
         return None
@@ -69,7 +69,7 @@ class LoanSettlementImgAugOperator(Mapper):
                 with open(self.coord_cache_file, "r", encoding="utf-8") as f:
                     data = json.load(f)
             except: pass
-        key = str(image_path).replace("\\", "/")
+        key = os.path.basename(image_path)
         data[key] = coords.tolist()
         try:
             with open(self.coord_cache_file, "w", encoding="utf-8") as f:
@@ -176,6 +176,14 @@ class LoanSettlementImgAugOperator(Mapper):
     # --- 执行逻辑 ---
 
     def execute(self, sample: Dict[str, Any]) -> Dict[str, Any]:
+        file_path = sample.get('filePath')
+        if not file_path.endswith('.docx') or os.path.normpath(file_path).count(os.sep) > 3:
+            return sample
+
+        parent_path = Path(file_path).parent
+        self.bg_dir = parent_path / "backgrounds"
+        self.coord_cache_file = parent_path / "coordinates_cache.json"
+
         try:
             # 1. 获取输入
             input_path = str(sample.get('export_path')) + "/images"

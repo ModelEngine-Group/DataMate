@@ -407,6 +407,9 @@ class SealGeneratorMapper(Mapper):
         """
         核心处理逻辑：读取图片 -> 确定公司名 -> 定位 -> 生成印章 -> 盖章 -> 保存
         """
+        file_path = sample.get('filePath')
+        if not file_path.endswith('.docx') or os.path.normpath(file_path).count(os.sep) > 3:
+            return sample
 
         try:
             output_dir = Path(sample.get('export_path') + "/images")

@@ -92,6 +92,10 @@ class LoanSettlementDataGenOperator(Mapper):
         核心执行逻辑
         :param sample: 输入样本（生成算子通常忽略输入，或将其作为触发上下文）
         """
+        file_path = sample.get('filePath')
+        if not file_path.endswith('.docx') or os.path.normpath(file_path).count(os.sep) > 3:
+            return sample
+
         try:
             # 这里的 import 放在 execute 内部或文件头均可，取决于您的打包方式
             # from .data_generator import DataGenerator 
