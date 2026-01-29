@@ -56,11 +56,11 @@ class LicenseSceneSimulatorOperator(Mapper):
 
             # 获取输入路径
             parent_path = Path(file_path).parent
-            coords_files = list(Path(parent_path).glob("*.json"))
+            coords_files = list(Path(parent_path).glob("*打点*.json"))
 
             if len(coords_files) == 0:
                 sample['text'] = ""
-                logger.error(f"坐标文件不存在: {coords_files}")
+                logger.error(f"打点文件不存在: {coords_files}")
                 return sample
 
             self.coord_cache_file = coords_files[0]

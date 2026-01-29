@@ -52,7 +52,7 @@ class LicenseDataGeneratorOperator(Mapper):
                 return sample
 
             parent_path = Path(file_path).parent
-            coords_files = list(Path(parent_path).glob("*.json"))
+            coords_files = list(Path(parent_path).glob("*坐标*.json"))
 
             if len(coords_files) == 0:
                 sample['text'] = ""
