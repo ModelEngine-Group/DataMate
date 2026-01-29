@@ -206,21 +206,33 @@ ON CONFLICT (instance_id, operator_id, op_index) DO NOTHING;
 -- 插入初始数据 - 保险业务处理模板（Insurance flow）
 INSERT INTO t_clean_template (id, name, description)
 VALUES
-    ('ins-001-0001', '社保参保处理模板', '社保参保文档生成 -> 转图片 -> 图片增强 -> QA生成 的流水模板')
+    ('9b130084-538d-40f3-92f2-a9fab6af65ba', '社保参保处理模板', '社保参保文档生成 -> 转图片 -> 图片增强 -> QA生成 的流水模板')
 ON CONFLICT (id) DO NOTHING;
 
 -- 插入初始数据 - 操作员实例（保险业务模板）
 INSERT INTO t_operator_instance (instance_id, operator_id, op_index, settings_override)
 VALUES
     -- 1) 生成社保参保证明数据 CSV （InsuranceDataGenOperator）
-    ('ins-001-0001', 'InsuranceDataGenOperator', 1, NULL),
+    ('9b130084-538d-40f3-92f2-a9fab6af65ba', 'InsuranceDataGenOperator', 1, NULL),
     -- 2) 根据模板生成社保证明文档（InsuranceDocGenOperator）
-    ('ins-001-0001', 'InsuranceDocGenOperator', 2, NULL),
+    ('9b130084-538d-40f3-92f2-a9fab6af65ba', 'InsuranceDocGenOperator', 2, NULL),
     -- 3) 文档转图片（InsuranceDocToImgOperator）
-    ('ins-001-0001', 'InsuranceDocToImgOperator', 3, NULL),
+    ('9b130084-538d-40f3-92f2-a9fab6af65ba', 'InsuranceDocToImgOperator', 3, NULL),
     -- 4) 图片增强合成（InsuranceImgAugOperator）
-    ('ins-001-0001', 'InsuranceImgAugOperator', 4, NULL),
+    ('9b130084-538d-40f3-92f2-a9fab6af65ba', 'InsuranceImgAugOperator', 4, NULL),
     -- 5) 生成 QA 对（InsuranceAnnotationGenOperator）
-    ('ins-001-0001', 'InsuranceAnnotationGenOperator', 5, NULL)
+    ('9b130084-538d-40f3-92f2-a9fab6af65ba', 'InsuranceAnnotationGenOperator', 5, NULL)
+ON CONFLICT (instance_id, operator_id, op_index) DO NOTHING;
+
+-- 插入初始数据 - 收入处理模板（income flow）
+INSERT INTO t_clean_template (id, name, description)
+VALUES
+    ('cd1eb467-08c2-4fa0-82b5-947124b5f965', '收入证明生成模板', '收入证明生成的流水模板')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO t_operator_instance (instance_id, operator_id, op_index, settings_override)
+VALUES
+    -- 1) 生成社保参保证明数据 CSV （IncomeCertificateGenerator）
+    ('cd1eb467-08c2-4fa0-82b5-947124b5f965', 'IncomeCertificateGenerator', 1, NULL)
 ON CONFLICT (instance_id, operator_id, op_index) DO NOTHING;
 

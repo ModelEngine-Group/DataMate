@@ -597,3 +597,23 @@ VALUES
   ('431e7798-5426-4e1a-aae6-b9905a836b34', 'InsuranceAnnotationGenOperator'),
   ('96a3b07a-3439-4557-a835-525faad60ca3', 'InsuranceAnnotationGenOperator'),
 ON CONFLICT DO NOTHING;
+
+-- 插入用户算子：收入证明生成器（IncomeCertificateGenerator）
+INSERT INTO t_operator (id, name, description, version, inputs, outputs, runtime, settings, file_name, file_size, metrics, is_star, created_by, updated_by)
+VALUES
+  ('IncomeCertificateGenerator', '收入证明生成器', '基于Word模板批量生成收入证明的多模态训练数据集，支持模板填充、图片转换、印章添加、真实背景合成和训练格式转换', '1.0.0', 'text', 'image', '{"memory":524288000,"cpu":1.0,"gpu":0,"npu":0,"storage":"500MB"}', '{"count":{"name":"生成数量","description":"指定生成的收入证明数量（1-1000张）","type":"inputNumber","defaultVal":5,"min":1,"max":1000,"step":1,"required":true},"outputFormat":{"name":"输出格式","description":"训练数据格式类型","type":"select","defaultVal":"llava","required":false,"options":[{"label":"LLaVA格式","value":"llava"},{"label":"MLLM格式","value":"mllm"}]},"addSeal":{"name":"添加印章","description":"是否在生成的图片上添加公司印章","type":"switch","defaultVal":true,"required":false,"checkedLabel":"添加","unCheckedLabel":"不添加"},"simulateRealWorld":{"name":"真实场景模拟","description":"是否将文档合成到真实背景中（模拟拍摄效果）","type":"switch","defaultVal":true,"required":false,"checkedLabel":"启用","unCheckedLabel":"禁用"}}', '', 0, '[{"name":"生成速度","metric":"2-3 秒/张"},{"name":"内存使用","metric":"500MB"},{"name":"支持格式","metric":"LLaVA, MLLM"}]', false, 'system', 'system')
+ON CONFLICT DO NOTHING;
+
+-- 插入发布信息
+INSERT INTO t_operator_release(id, version, release_date, changelog)
+VALUES ('IncomeCertificateGenerator', '1.0.0', '2026-01-29', '["首次发布","支持收入证明批量生成","支持LLaVA和MLLM格式输出","跨平台兼容（Linux/Windows/macOS）"]')
+ON CONFLICT DO NOTHING;
+
+-- 关联分类（模态/语言/归属/输出类型）
+INSERT INTO t_operator_category_relation(category_id, operator_id)
+VALUES
+  ('d8a5df7a-52a9-42c2-83c4-01062e60f597', 'IncomeCertificateGenerator'), -- text
+  ('9eda9d5d-072b-499b-916c-797a0a8750e1', 'IncomeCertificateGenerator'), -- python
+  ('431e7798-5426-4e1a-aae6-b9905a836b34', 'IncomeCertificateGenerator'), -- datamate
+  ('96a3b07a-3439-4557-a835-525faad60ca3', 'IncomeCertificateGenerator')
+
