@@ -84,7 +84,8 @@ export function useFilesOperation(dataset: Dataset) {
 
   const handleDownloadFile = async (file: DatasetFile) => {
     // 实际导出逻辑
-    await downloadFileByIdUsingGet(dataset.id, file.id, file.fileName);
+    const prefix = pagination.prefix || "";
+    await downloadFileByIdUsingGet(dataset.id, prefix, file.id, file.fileName);
     // 假设导出成功
     message.success({
       content: `已导出 1 个文件`,
@@ -117,7 +118,8 @@ export function useFilesOperation(dataset: Dataset) {
       setPreviewFileDetail(detail);
 
       const image = isImageFile(detail?.fileName || file.fileName, detail?.fileType);
-      const { blob, blobUrl } = await downloadFileByIdUsingGet(datasetId, file.id, file.fileName, "preview");
+      const prefix = pagination.prefix || "";
+      const { blob, blobUrl } = await downloadFileByIdUsingGet(datasetId, prefix, file.id, file.fileName, "preview");
 
       if (image) {
         setPreviewUrl(blobUrl);
