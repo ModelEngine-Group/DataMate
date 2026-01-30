@@ -5,7 +5,7 @@ services:
 
   datamate-backend:
     container_name: datamate-backend
-    image: ${REGISTRY:-}datamate-backend
+    image: ${REGISTRY:-}datamate-backend:${VERSION:-latest}
     restart: on-failure
     privileged: true
     environment:
@@ -23,7 +23,7 @@ services:
 
   datamate-backend-python:
     container_name: datamate-backend-python
-    image: ${REGISTRY:-}datamate-backend-python
+    image: ${REGISTRY:-}datamate-backend-python:${VERSION:-latest}
     restart: on-failure
     privileged: true
     environment:
@@ -41,7 +41,7 @@ services:
 
   datamate-gateway:
     container_name: datamate-gateway
-    image: ${REGISTRY:-}datamate-gateway
+    image: ${REGISTRY:-}datamate-gateway:${VERSION:-latest}
     restart: on-failure
     privileged: true
     ports:
@@ -53,7 +53,7 @@ services:
 
   datamate-frontend:
     container_name: datamate-frontend
-    image: ${REGISTRY:-}datamate-frontend
+    image: ${REGISTRY:-}datamate-frontend:${VERSION:-latest}
     restart: on-failure
     ports:
       - "30000:3000"
@@ -66,7 +66,7 @@ services:
 
   datamate-database:
     container_name: datamate-database
-    image: ${REGISTRY:-}datamate-database
+    image: ${REGISTRY:-}datamate-database:${VERSION:-latest}
     restart: on-failure
     environment:
       - POSTGRES_USER=postgres
@@ -80,7 +80,7 @@ services:
 
   datamate-runtime:
     container_name: datamate-runtime
-    image: ${REGISTRY:-}datamate-runtime
+    image: ${REGISTRY:-}datamate-runtime:${VERSION:-latest}
     restart: on-failure
     environment:
       RAY_DEDUP_LOGS: "0"

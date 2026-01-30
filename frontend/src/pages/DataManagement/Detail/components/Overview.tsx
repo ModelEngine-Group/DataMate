@@ -657,6 +657,27 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
                   <span>{previewFileDetail.description}</span>
                 </div>
               )}
+              <div>
+                <span className="text-gray-500">标注信息：</span>
+                <span>
+                  {(() => {
+                    const raw = (previewFileDetail?.annotation 
+                      ?? previewFileDetail?.metadata 
+                      ?? previewFileDetail?.tags) as any;
+                    if (!raw) return "-";
+
+                    if (typeof raw === "string") {
+                      return raw;
+                    }
+
+                    try {
+                      return JSON.stringify(raw);
+                    } catch {
+                      return "-";
+                    }
+                  })()}
+                </span>
+              </div>
             </div>
           </div>
         </div>

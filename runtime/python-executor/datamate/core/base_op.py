@@ -205,7 +205,15 @@ class Mapper(BaseOp):
         sample["execute_status"] = execute_status
         # 加载文件成功执行信息到数据库
         if self.is_last_op:
-            self.save_file_and_db(sample)
+            # 文件无内容会被过滤
+            if sample[self.text_key] == "" and sample[self.data_key] == b"":
+                task_info = TaskInfoPersistence()
+                sample[self.filesize_key] = "0"
+                sample[self.filetype_key] = ""
+                task_info.update_task_result(sample)
+                return sample
+            else:
+                self.save_file_and_db(sample)
         return sample
 
     def execute(self, sample: Dict[str, Any]) -> Dict[str, Any]:

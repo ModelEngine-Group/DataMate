@@ -34,6 +34,8 @@ type TemplateFieldDef = {
   required?: boolean;
   options?: Array<{ label: string; value: string | number } | string | number>;
   defaultValue?: any;
+  index?: number;
+  properties?: Record<string, TemplateFieldDef>;
 };
 
 export default function CollectionTaskCreate() {
@@ -78,10 +80,110 @@ export default function CollectionTaskCreate() {
     run()
   }, []);
 
+  const parseJsonObjectInput = (value: any) => {
+    if (value === undefined || value === null) return value;
+    if (typeof value === "string") {
+      const trimmed = value.trim();
+      if (!trimmed) return undefined;
+      const parsed = JSON.parse(trimmed);
+      if (parsed === null || Array.isArray(parsed) || typeof parsed !== "object") {
+        throw new Error("必须是JSON对象");
+      }
+      return parsed;
+    }
+    if (typeof value === "object") {
+      if (Array.isArray(value) || value === null) {
+        throw new Error("必须是JSON对象");
+      }
+      return value;
+    }
+    throw new Error("必须是JSON对象");
+  };
+
+  const tryFormatJsonValue = (value: any) => {
+    const parsed = parseJsonObjectInput(value);
+    if (parsed === undefined) return undefined;
+    return JSON.stringify(parsed, null, 2);
+  };
+
+  const handleFormatJsonField = (name: (string | number)[]) => {
+    const currentValue = form.getFieldValue(name);
+    try {
+      const formatted = tryFormatJsonValue(currentValue);
+      if (formatted !== undefined) {
+        form.setFieldValue(name, formatted);
+      }
+    } catch (error: any) {
+      message.error(error?.message || "JSON格式错误");
+    }
+  };
+
+  const normalizeConfigSection = (
+    sectionValue: any,
+    defs?: Record<string, TemplateFieldDef>
+  ) => {
+    if (!defs || typeof defs !== "object") return sectionValue;
+    const normalized =
+      Array.isArray(sectionValue) ? [...sectionValue] : { ...(sectionValue || {}) };
+
+    Object.entries(defs).forEach(([key, def]) => {
+      const fieldType = (def?.type || "input").toLowerCase();
+      const required = def?.required !== false;
+      const value = sectionValue?.[key];
+
+      if (fieldType === "jsonobject") {
+        const parsed = parseJsonObjectInput(value);
+        if (parsed === undefined && !required) {
+          if (normalized && !Array.isArray(normalized)) {
+            delete normalized[key];
+          }
+        } else if (normalized && !Array.isArray(normalized)) {
+          normalized[key] = parsed;
+        }
+        return;
+      }
+
+      if (fieldType === "multiple") {
+        if (value && typeof value === "object") {
+          normalized[key] = normalizeConfigSection(value, def?.properties);
+        }
+        return;
+      }
+
+      if (fieldType === "multiplelist") {
+        if (Array.isArray(value)) {
+          normalized[key] = value.map((item) =>
+            normalizeConfigSection(item, def?.properties)
+          );
+        }
+      }
+    });
+
+    return normalized;
+  };
+
   const handleSubmit = async () => {
     try {
-      await form.validateFields();
-      await createTaskUsingPost(newTask);
+      const values = await form.validateFields();
+      const payload = { ...newTask, ...values };
+      if (selectedTemplate?.templateContent) {
+        payload.config = {
+          ...(payload.config || {}),
+          parameter: normalizeConfigSection(
+            payload.config?.parameter,
+            selectedTemplate.templateContent.parameter
+          ),
+          reader: normalizeConfigSection(
+            payload.config?.reader,
+            selectedTemplate.templateContent.reader
+          ),
+          writer: normalizeConfigSection(
+            payload.config?.writer,
+            selectedTemplate.templateContent.writer
+          ),
+        };
+      }
+      await createTaskUsingPost(payload);
       message.success("任务创建成功");
       navigate("/data/collection");
     } catch (error) {
@@ -107,9 +209,33 @@ export default function CollectionTaskCreate() {
       const description = def?.description;
       const fieldType = (def?.type || "input").toLowerCase();
       const required = def?.required !== false;
-      const rules = required
-        ? [{ required: true, message: `请输入${label}` }]
-        : undefined;
+      const rules: any[] = [];
+      if (required) {
+        rules.push({ required: true, message: `请输入${label}` });
+      }
+      if (fieldType === "jsonobject") {
+        rules.push({
+          validator: (_: any, value: any) => {
+            if (
+              value === undefined ||
+              value === null ||
+              (typeof value === "string" && value.trim() === "")
+            ) {
+              return Promise.resolve();
+            }
+            try {
+              parseJsonObjectInput(value);
+              return Promise.resolve();
+            } catch (e) {
+              return Promise.reject(
+                new Error(
+                  `JSON格式错误：${(e as Error)?.message || "请输入合法的JSON对象"}`
+                )
+              );
+            }
+          },
+        });
+      }
       const name = section.concat(key)
 
       switch (fieldType) {
@@ -126,18 +252,43 @@ export default function CollectionTaskCreate() {
             </Form.Item>
           ));
           break;
+        case "jsonobject":
+          items_.push((
+            <Form.Item
+              key={`${section}.${key}`}
+              name={name}
+              label={label}
+              tooltip={description}
+              rules={rules.length ? rules : undefined}
+              extra={(
+                <div className="flex justify-end">
+                  <Button size="small" onClick={() => handleFormatJsonField(name)}>
+                    格式化JSON
+                  </Button>
+                </div>
+              )}
+            >
+              <TextArea
+                placeholder={description || `请输入${label}`}
+                autoSize={{ minRows: 4, maxRows: 12 }}
+                className="font-mono"
+              />
+            </Form.Item>
+          ));
+          break;
         case "selecttag":
           items_.push((
             <Form.Item
               name={name}
               label={label}
-              rules={rules}
+              rules={rules.length ? rules : undefined}
             >
               <Select placeholder={description || `请输入${label}`} mode="tags" />
             </Form.Item>
           ));
           break;
         case "select":
+        case "option":
           const options = (def?.options || []).map((opt: any) => {
             if (typeof opt === "string" || typeof opt === "number") {
               return { label: String(opt), value: opt };
@@ -150,7 +301,7 @@ export default function CollectionTaskCreate() {
               name={name}
               label={label}
               tooltip={description}
-              rules={rules}
+              rules={rules.length ? rules : undefined}
             >
               <Select placeholder={description || `请选择${label}`} options={options} />
             </Form.Item>
@@ -172,7 +323,7 @@ export default function CollectionTaskCreate() {
               name={name.concat(0)}
               label={label}
               tooltip={description}
-              rules={rules}
+              rules={rules.length ? rules : undefined}
             >
               <Input placeholder={description || `请输入${label}`} />
             </Form.Item>
@@ -185,7 +336,7 @@ export default function CollectionTaskCreate() {
               name={name}
               label={label}
               tooltip={description}
-              rules={rules}
+              rules={rules.length ? rules : undefined}
             >
               <Input placeholder={description || `请输入${label}`} />
             </Form.Item>

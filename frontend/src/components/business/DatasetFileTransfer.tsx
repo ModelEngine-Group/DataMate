@@ -22,6 +22,12 @@ interface DatasetFileTransferProps
   onDatasetSelect?: (dataset: Dataset | null) => void;
   datasetTypeFilter?: DatasetType;
   /**
+   * 允许选择的文件扩展名白名单（小写，包含点号，例如 ".jpg"）。
+   * - 若不设置，则不过滤扩展名；
+   * - 若设置，则仅展示和选择这些扩展名的文件（包括“全选当前数据集”）。
+   */
+  allowedFileExtensions?: string[];
+  /**
    * 是否强制“单数据集模式”：
    * - 为 true 时，仅允许从同一个数据集选择文件；
    * - 当已选文件来自某个数据集时，尝试从其他数据集勾选文件会被阻止并提示。
@@ -77,6 +83,7 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
   onSelectedFilesChange,
   onDatasetSelect,
   datasetTypeFilter,
+  allowedFileExtensions,
   singleDatasetOnly,
   fixedDatasetId,
   lockedFileIds,
@@ -180,19 +187,28 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
         size: pageSize,
         keyword,
       });
-      setFiles(
-        (data.content || []).map((item: DatasetFile) => ({
-          ...item,
-          id: item.id,
-          key: String(item.id), // rowKey 使用字符串，确保与 selectedRowKeys 类型一致
-          // 记录所属数据集，方便后续在“全不选”时只清空当前数据集的选择
-          // DatasetFile 接口是后端模型，这里在前端扩展 datasetId 字段
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          // @ts-ignore
-          datasetId: selectedDataset.id,
-          datasetName: selectedDataset.name,
-        }))
-      );
+      const mapped = (data.content || []).map((item: DatasetFile) => ({
+        ...item,
+        id: item.id,
+        key: String(item.id), // rowKey 使用字符串，确保与 selectedRowKeys 类型一致
+        // 记录所属数据集，方便后续在“全不选”时只清空当前数据集的选择
+        // DatasetFile 接口是后端模型，这里在前端扩展 datasetId 字段
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        datasetId: selectedDataset.id,
+        datasetName: selectedDataset.name,
+      }));
+
+      const filtered =
+        allowedFileExtensions && allowedFileExtensions.length > 0
+          ? mapped.filter((file) => {
+              const ext =
+                file.fileName?.toLowerCase().match(/\.[^.]+$/)?.[0] || "";
+              return allowedFileExtensions.includes(ext);
+            })
+          : mapped;
+
+      setFiles(filtered);
       setFilesPagination((prev) => ({
         ...prev,
         current: page,
@@ -200,7 +216,7 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
         total: data.totalElements,
       }));
     },
-    [selectedDataset, filesPagination.current, filesPagination.pageSize, filesSearch]
+    [selectedDataset, filesPagination.current, filesPagination.pageSize, filesSearch, allowedFileExtensions]
   );
 
   useEffect(() => {
@@ -269,7 +285,7 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
           size: pageSize,
         });
 
-        const content: DatasetFile[] = (data.content || []).map(
+        const mapped: DatasetFile[] = (data.content || []).map(
           (item: DatasetFile) => ({
             ...item,
             key: item.id,
@@ -280,6 +296,15 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
             datasetName: selectedDataset.name,
           }),
         );
+
+        const content: DatasetFile[] =
+          allowedFileExtensions && allowedFileExtensions.length > 0
+            ? mapped.filter((file) => {
+                const ext =
+                  file.fileName?.toLowerCase().match(/\.[^.]+$/)?.[0] || "";
+                return allowedFileExtensions.includes(ext);
+              })
+            : mapped;
 
         if (!content.length) {
           break;
@@ -306,7 +331,7 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
 
       onSelectedFilesChange(newMap);
 
-      const count = total || allFiles.length;
+      const count = allFiles.length;
       if (count > 0) {
         message.success(`已选中当前数据集的全部 ${count} 个文件`);
       } else {

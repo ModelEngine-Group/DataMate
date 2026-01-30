@@ -18,6 +18,7 @@ import {
 	deleteAutoAnnotationTaskByIdUsingDelete,
 	downloadAutoAnnotationResultUsingGet,
 	queryAnnotationTasksUsingGet,
+	syncAutoAnnotationToDatabaseUsingPost,
 } from "../annotation.api";
 import CreateAutoAnnotationDialog from "./components/CreateAutoAnnotationDialog";
 import EditAutoAnnotationDatasetDialog from "./components/EditAutoAnnotationDatasetDialog";
@@ -121,6 +122,32 @@ export default function AutoAnnotation() {
 	const handleImportFromLabelStudio = (task: AutoAnnotationTask) => {
 		setImportingTask(task);
 		setShowImportDialog(true);
+	};
+
+	const handleSyncToDatabase = (task: AutoAnnotationTask) => {
+		Modal.confirm({
+			title: `确认将自动标注任务「${task.name}」在 Label Studio 中的标注结果同步到数据库吗？`,
+			content: (
+				<div>
+					<div>此操作会根据 Label Studio 中的任务数据覆盖当前文件标签与标注信息。</div>
+					<div>同步完成后，可在数据管理的文件详情中查看最新标签与标注。</div>
+				</div>
+			),
+			okText: "同步到数据库",
+			cancelText: "取消",
+			onOk: async () => {
+				const hide = message.loading("正在从 Label Studio 同步标注到数据库...", 0);
+				try {
+					await syncAutoAnnotationToDatabaseUsingPost(task.id);
+					hide();
+					message.success("同步完成");
+				} catch (e) {
+					console.error(e);
+					hide();
+					message.error("同步失败，请稍后重试");
+				}
+			},
+		});
 	};
 
 	const handleDelete = (task: AutoAnnotationTask) => {
@@ -307,14 +334,14 @@ export default function AutoAnnotation() {
 							编辑
 						</Button>
 					</Tooltip>
-					<Tooltip title="从 Label Studio 同步标注结果到数据集">
+					<Tooltip title="从 Label Studio 同步标注结果到数据库">
 						<Button
 							type="link"
 							size="small"
 							icon={<SyncOutlined />}
-							onClick={() => handleImportFromLabelStudio(record)}
+							onClick={() => handleSyncToDatabase(record)}
 						>
-							同步
+							同步到数据库
 						</Button>
 					</Tooltip>
 
@@ -344,6 +371,12 @@ export default function AutoAnnotation() {
 					<Dropdown
 						menu={{
 							items: [
+								{
+									key: "export-result",
+									label: "导出标注结果",
+									icon: <DownloadOutlined />,
+									onClick: () => handleImportFromLabelStudio(record),
+								},
 								{
 									key: "edit-dataset",
 									label: "编辑任务数据集",

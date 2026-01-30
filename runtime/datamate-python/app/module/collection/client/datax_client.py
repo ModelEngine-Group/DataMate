@@ -60,7 +60,8 @@ class DataxClient:
             dest_parameter = {
                 "path": target_path,
                 "fileName": "collection_result",
-                "writeMode": "truncate"
+                "writeMode": "truncate",
+                "fileFormat": "csv"
             }
         elif dest_path_target.__contains__(template.target_type):
             dest_parameter = {
