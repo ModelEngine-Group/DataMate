@@ -85,11 +85,11 @@ class PropertySealMapper(Mapper):
         self.output_dir = None
         self.size = 420
         self.color = "190,0,0"
-        self.text_margin = 30
-        self.circle_width = 4
-        self.star_radius_ratio = 12
-        self.font_size_ratio = 5
-        self.char_spacing = 1.0
+        self.text_margin = 45
+        self.circle_width = 8
+        self.star_radius_ratio = 9
+        self.font_size_ratio = 9
+        self.char_spacing = 1.2
         self.font_name = None
         self.font_bold = True
 
@@ -98,8 +98,8 @@ class PropertySealMapper(Mapper):
         self.rotation_max = 5
 
         # 效果参数
-        self.opacity = 0.85
-        self.wear_intensity = 0.15
+        self.opacity = 1.0
+        self.wear_intensity = 0.05
         self.add_blur = False
         self.gradient_direction = None
 
