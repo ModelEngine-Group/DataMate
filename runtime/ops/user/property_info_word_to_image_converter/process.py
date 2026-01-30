@@ -307,6 +307,10 @@ class PropertyWordToImageConverter(Mapper):
         :param sample: 输入的数据样本，通常包含 text_key 等字段
         :return: 处理后的数据样本
         """
+        file_path = sample.get("filePath")
+        if not file_path.endswith(".docx") or os.path.normpath(file_path).count(os.sep) > 3:
+            return sample
+
         try:
             # 获取Word文档路径
             self.converter = WordToImageConverterHelper(
