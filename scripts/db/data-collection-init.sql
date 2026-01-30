@@ -233,7 +233,20 @@ INSERT INTO t_dc_collection_templates (
           '{"parameter": {}, "reader": {"api": {"name": "接口地址","description": "API的访问地址。","type": "input", "required": true, "index": 1}, "method": {"name": "请求方式","description": "API的请求方式（默认为GET）。","type": "option", "options": ["GET", "POST"], "required": false, "index": 2}, "body": {"name": "请求体参数","description": "请求体参数，主要针对POST请求。示例：\n {\"query\": \"value\"}","type": "jsonobject", "required": false, "index": 3}, "headers": {"name": "请求头参数","description": "需要设置的请求头参数。示例：\n {\"Authorization\": \"***\"}","type": "jsonobject", "required": false, "index": 4}, "schema": {"name": "数据解析schema","description": "会依据schema解析API返回结果。示例：\n {\"dataPath\": \"返回体内定位到具体数据的路径，形如$.data\", \"fields\": [{\"name\": \"属性名\", \"alias\": \"别名\", \"path\": \"属性的路径\"}]}","type": "jsonobject", "required": true, "index": 5}}, "writer": {}}',
           TRUE,
           'system',
-          'system')
+          'system'),
+      (
+          '7',
+          '通用关系型数据库归集模板',
+          '将关系型数据库中的数据以csv文件的形式归集到DataMate平台上。当前支持postgres、opengauss、sqlserver、mysql、达梦、db2格式、PPAS格式等关系型数据库。',
+          'rdbmsreader',
+          'rdbmsreader',
+          'txtfilewriter',
+          'txtfilewriter',
+          '{"parameter": {}, "reader": {"username": {"name": "用户名","description": "数据库的用户名。","type": "input", "required": true, "index": 2}, "password": {"name": "密码","description": "数据库的密码。","type": "password", "required": true, "index": 3}, "connection": {"name": "数据库连接信息", "description": "数据库连接信息。", "type": "multipleList", "size": 1, "index": 1, "properties": {"jdbcUrl": {"type": "inputList", "name": "数据库连接", "description": "数据库连接url。", "required": true, "index": 1}, "querySql": {"type": "inputList", "name": "查询sql", "description": "输入符合语法的sql查询语句。", "required": true, "index": 2}}}}, "writer": {"header": {"name": "列名","description": "查询结果的列名，最终会体现为csv文件的表头。","type": "selectTag", "required": false}}}',
+          TRUE,
+          'system',
+          'system'
+      )
 ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
     description = EXCLUDED.description,
