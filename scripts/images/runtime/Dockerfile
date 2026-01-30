@@ -14,7 +14,6 @@ RUN mkdir -p /opt/opencv && \
     cmake -D CMAKE_BUILD_TYPE=RELEASE \
       -D CMAKE_INSTALL_PREFIX=/usr/local/opencv \
       -D OPENCV_EXTRA_MODULES_PATH=../../opencv_contrib/modules \
-      -D CMAKE_CXX_FLAGS="-march=armv8-a" \
       -D WITH_OPENMP=ON \
       -D ENABLE_NEON=ON \
       -D WITH_TBB=OFF \
