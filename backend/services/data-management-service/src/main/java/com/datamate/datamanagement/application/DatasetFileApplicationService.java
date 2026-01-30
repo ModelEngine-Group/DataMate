@@ -229,9 +229,9 @@ public class DatasetFileApplicationService {
      * 删除文件
      */
     @Transactional
-    public void deleteDatasetFile(String datasetId, String fileId) {
+    public void deleteDatasetFile(String datasetId, String fileId, String prefix) {
         Dataset dataset = datasetRepository.getById(datasetId);
-        DatasetFile file = getDatasetFile(dataset, fileId, null);
+        DatasetFile file = getDatasetFile(dataset, fileId, prefix);
         dataset.setFiles(new ArrayList<>(Collections.singleton(file)));
         datasetFileRepository.removeById(fileId);
         if (CommonUtils.isUUID(fileId)) {

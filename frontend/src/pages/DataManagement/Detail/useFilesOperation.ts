@@ -113,12 +113,12 @@ export function useFilesOperation(dataset: Dataset) {
     setPreviewFileDetail(undefined);
     try {
       // 获取文件元信息（来自 t_dm_dataset_files）
-      const detailRes: any = await getDatasetFileByIdUsingGet(datasetId, file.id);
+      const prefix = pagination.prefix || "";
+      const detailRes: any = await getDatasetFileByIdUsingGet(datasetId, file.id, prefix);
       const detail = detailRes?.data || detailRes;
       setPreviewFileDetail(detail);
 
       const image = isImageFile(detail?.fileName || file.fileName, detail?.fileType);
-      const prefix = pagination.prefix || "";
       const { blob, blobUrl } = await downloadFileByIdUsingGet(datasetId, prefix, file.id, file.fileName, "preview");
 
       if (image) {
@@ -136,7 +136,8 @@ export function useFilesOperation(dataset: Dataset) {
 
   const handleDeleteFile = async (file) => {
     try {
-      await deleteDatasetFileUsingDelete(dataset.id, file.id);
+      const prefix = pagination.prefix || "";
+      await deleteDatasetFileUsingDelete(dataset.id, file.id, prefix);
       fetchFiles(); // 刷新文件列表
       message.success({ content: `文件 ${file.fileName} 已删除` });
     } catch (error) {
@@ -191,7 +192,7 @@ export function useFilesOperation(dataset: Dataset) {
       // 先删除文件
       for (const file of files) {
         try {
-          await deleteDatasetFileUsingDelete(dataset.id, file.id);
+          await deleteDatasetFileUsingDelete(dataset.id, file.id, directoryPath);
         } catch (e) {
           console.error("删除文件失败", file, e);
         }
