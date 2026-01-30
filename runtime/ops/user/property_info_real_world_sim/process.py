@@ -446,9 +446,14 @@ class PropertyRealWorldSimulatorMapper(Mapper):
                 for bg_file in bg_files:
                     bg_name = bg_file.stem
                     scene_mode = self._determine_scene_mode(bg_name)
+                    page_number = 1
+                    if "-2" in src_name:
+                        page_number = 2
+                    elif "-3" in src_name:
+                        page_number = 3
 
                     # 输出文件名：源图名_背景图名.jpg
-                    output_filename = f"{src_name}_{bg_name}.jpg"
+                    output_filename = f"{src_name}-{page_number}_{bg_name}.jpg"
                     output_path = output_dir / output_filename
 
                     logger.info(f"  -> 背景图: {bg_file.name} ({scene_mode})")
