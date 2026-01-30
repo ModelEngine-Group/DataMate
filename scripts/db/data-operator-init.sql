@@ -141,13 +141,14 @@ COMMENT ON VIEW v_operator IS '算子视图';
 
 INSERT INTO t_operator_category(id, name, value, type, parent_id)
 VALUES ('64465bec-b46b-11f0-8291-00155d0e4808', '模态', 'modal',  'predefined', '0'),
-       ('873000a2-65b3-474b-8ccc-4813c08c76fb', '语言', 'language', 'predefined', '0'),
+       ('873000a2-65b3-474b-8ccc-4813c08c76fb', '功能', 'function', 'predefined', '0'),
        ('d8a5df7a-52a9-42c2-83c4-01062e60f597', '文本', 'text', 'predefined', '64465bec-b46b-11f0-8291-00155d0e4808'),
        ('de36b61c-9e8a-4422-8c31-d30585c7100f', '图片', 'image', 'predefined', '64465bec-b46b-11f0-8291-00155d0e4808'),
        ('42dd9392-73e4-458c-81ff-41751ada47b5', '音频', 'audio', 'predefined', '64465bec-b46b-11f0-8291-00155d0e4808'),
        ('a233d584-73c8-4188-ad5d-8f7c8dda9c27', '视频', 'video', 'predefined', '64465bec-b46b-11f0-8291-00155d0e4808'),
-       ('4d7dbd77-0a92-44f3-9056-2cd62d4a71e4', '多模态', 'multimodal', 'predefined', '64465bec-b46b-11f0-8291-00155d0e4808'),
-       ('9eda9d5d-072b-499b-916c-797a0a8750e1', 'Python', 'python', 'predefined', '873000a2-65b3-474b-8ccc-4813c08c76fb'),
+    ('4d7dbd77-0a92-44f3-9056-2cd62d4a71e4', '多模态', 'multimodal', 'predefined', '64465bec-b46b-11f0-8291-00155d0e4808'),
+    ('9eda9d5d-072b-499b-916c-797a0a8750e1', '清洗', 'cleaning', 'predefined', '873000a2-65b3-474b-8ccc-4813c08c76fb'),
+    ('cfa9d8e2-5b5f-4f1e-9f12-1234567890ab', '标注', 'annotation', 'predefined', '873000a2-65b3-474b-8ccc-4813c08c76fb'),
        ('16e2d99e-eafb-44fc-acd0-f35a2bad28f8', '来源', 'origin', 'predefined', '0'),
        ('96a3b07a-3439-4557-a835-525faad60ca3', '系统预置', 'predefined', 'predefined', '16e2d99e-eafb-44fc-acd0-f35a2bad28f8'),
        ('ec2cdd17-8b93-4a81-88c4-ac9e98d10757', '用户上传', 'customized', 'predefined', '16e2d99e-eafb-44fc-acd0-f35a2bad28f8'),
@@ -225,12 +226,20 @@ ON CONFLICT DO NOTHING;
 INSERT INTO t_operator_category_relation(category_id, operator_id)
 SELECT c.id, o.id
 FROM t_operator_category c
-       CROSS JOIN t_operator o
+    CROSS JOIN t_operator o
 WHERE c.id IN ('de36b61c-9e8a-4422-8c31-d30585c7100f', '9eda9d5d-072b-499b-916c-797a0a8750e1', '96a3b07a-3439-4557-a835-525faad60ca3', '431e7798-5426-4e1a-aae6-b9905a836b34')
     AND o.id IN ('ImgBlurredImagesCleaner', 'ImgBrightness', 'ImgContrast', 'ImgDenoise',
-                 'ImgDuplicatedImagesCleaner', 'ImgPerspectiveTransformation', 'ImgResize', 'ImgSaturation',
-                 'ImgShadowRemove', 'ImgSharpness', 'ImgSimilarImagesCleaner', 'ImgTypeUnify', 'ImgDirectionCorrect',
-                 'ObjectDetectionRectangle')
+           'ImgDuplicatedImagesCleaner', 'ImgPerspectiveTransformation', 'ImgResize', 'ImgSaturation',
+           'ImgShadowRemove', 'ImgSharpness', 'ImgSimilarImagesCleaner', 'ImgTypeUnify', 'ImgDirectionCorrect')
+ON CONFLICT DO NOTHING;
+
+-- 图像目标检测与预标注算子：功能归类为「标注」而非「清洗」
+INSERT INTO t_operator_category_relation(category_id, operator_id)
+SELECT c.id, o.id
+FROM t_operator_category c
+    CROSS JOIN t_operator o
+WHERE c.id IN ('de36b61c-9e8a-4422-8c31-d30585c7100f', 'cfa9d8e2-5b5f-4f1e-9f12-1234567890ab', '96a3b07a-3439-4557-a835-525faad60ca3', '431e7798-5426-4e1a-aae6-b9905a836b34')
+    AND o.id IN ('ObjectDetectionRectangle')
 ON CONFLICT DO NOTHING;
 
 

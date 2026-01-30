@@ -108,6 +108,18 @@ const getOperatorVisual = (
 export const mapOperator = (op: OperatorI) => {
   const visual = getOperatorVisual(op);
 
+  const FUNCTION_CATEGORY_IDS = {
+    cleaning: "9eda9d5d-072b-499b-916c-797a0a8750e1",
+    annotation: "cfa9d8e2-5b5f-4f1e-9f12-1234567890ab",
+  } as const;
+
+  const categories = op?.categories || [];
+  const functionLabel = categories.includes(FUNCTION_CATEGORY_IDS.annotation)
+    ? "标注"
+    : categories.includes(FUNCTION_CATEGORY_IDS.cleaning)
+    ? "清洗"
+    : "-";
+
   return {
     ...op,
     icon: visual.icon,
@@ -131,8 +143,8 @@ export const mapOperator = (op: OperatorI) => {
         value: formatBytes(op?.fileSize),
       },
       {
-        label: "语言",
-        value: "Python",
+        label: "功能",
+        value: functionLabel,
       },
     ],
   };
