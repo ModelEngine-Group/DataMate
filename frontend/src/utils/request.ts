@@ -368,7 +368,8 @@ class Request {
       const isQueryParams =
         Object.keys(params).length === 1 &&
         (Object.prototype.hasOwnProperty.call(params, "id") ||
-          Object.prototype.hasOwnProperty.call(params, "ids"));
+          Object.prototype.hasOwnProperty.call(params, "ids") ||
+          Object.prototype.hasOwnProperty.call(params, "prefix"));
 
       if (isQueryParams) {
         fullURL = this.buildURL(url, params);

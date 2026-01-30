@@ -65,10 +65,11 @@ public class DatasetFileController {
     @GetMapping("/{fileId}")
     public ResponseEntity<Response<DatasetFileResponse>> getDatasetFileById(
             @PathVariable("datasetId") String datasetId,
-            @PathVariable("fileId") String fileId) {
+            @PathVariable("fileId") String fileId,
+            @RequestParam(value = "prefix", required = false, defaultValue = "") String prefix) {
         try {
             Dataset dataset = datasetApplicationService.getDataset(datasetId);
-            DatasetFile datasetFile = datasetFileApplicationService.getDatasetFile(dataset, fileId);
+            DatasetFile datasetFile = datasetFileApplicationService.getDatasetFile(dataset, fileId, prefix);
             return ResponseEntity.ok(Response.ok(DatasetConverter.INSTANCE.convertToResponse(datasetFile)));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Response.error(SystemErrorCode.UNKNOWN_ERROR, null));
@@ -78,9 +79,10 @@ public class DatasetFileController {
     @DeleteMapping("/{fileId}")
     public ResponseEntity<Response<Void>> deleteDatasetFile(
             @PathVariable("datasetId") String datasetId,
-            @PathVariable("fileId") String fileId) {
+            @PathVariable("fileId") String fileId,
+            @RequestParam(value = "prefix", required = false, defaultValue = "") String prefix) {
         try {
-            datasetFileApplicationService.deleteDatasetFile(datasetId, fileId);
+            datasetFileApplicationService.deleteDatasetFile(datasetId, fileId, prefix);
             return ResponseEntity.ok().build();
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Response.error(SystemErrorCode.UNKNOWN_ERROR, null));
@@ -90,10 +92,12 @@ public class DatasetFileController {
     @IgnoreResponseWrap
     @GetMapping(value = "/{fileId}/download", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE + ";charset=UTF-8")
     public ResponseEntity<Resource> downloadDatasetFileById(@PathVariable("datasetId") String datasetId,
-                                                            @PathVariable("fileId") String fileId) {
+                                                            @PathVariable("fileId") String fileId,
+                                                            @RequestParam(value = "prefix", required = false, defaultValue = "") String prefix) {
         try {
+            log.info("downloadDatasetFileById datasetId:{}, fileId:{}, prefix:{}", datasetId, fileId, prefix);
             Dataset dataset = datasetApplicationService.getDataset(datasetId);
-            DatasetFile datasetFile = datasetFileApplicationService.getDatasetFile(dataset, fileId);
+            DatasetFile datasetFile = datasetFileApplicationService.getDatasetFile(dataset, fileId, prefix);
             Resource resource = datasetFileApplicationService.downloadFile(datasetFile);
 
             return ResponseEntity.ok()

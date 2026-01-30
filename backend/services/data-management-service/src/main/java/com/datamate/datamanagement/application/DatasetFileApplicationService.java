@@ -37,6 +37,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -203,14 +204,15 @@ public class DatasetFileApplicationService {
      * 获取文件详情
      */
     @Transactional(readOnly = true)
-    public DatasetFile getDatasetFile(Dataset dataset, String fileId) {
-        if (dataset != null && !CommonUtils.isUUID(fileId) && !fileId.startsWith(".")) {
+    public DatasetFile getDatasetFile(Dataset dataset, String fileId, String prefix) {
+        prefix = StringUtils.isBlank(prefix) ? "" : prefix;
+        if (dataset != null && !CommonUtils.isUUID(fileId) && !fileId.startsWith(".") && !prefix.startsWith(".")) {
             DatasetFile file = new DatasetFile();
             file.setId(fileId);
             file.setFileName(fileId);
             file.setDatasetId(dataset.getId());
             file.setFileSize(0L);
-            file.setFilePath(dataset.getPath() + File.separator + fileId);
+            file.setFilePath(dataset.getPath() + File.separator + prefix + fileId);
             return file;
         }
         DatasetFile file = datasetFileRepository.getById(fileId);
@@ -227,9 +229,9 @@ public class DatasetFileApplicationService {
      * 删除文件
      */
     @Transactional
-    public void deleteDatasetFile(String datasetId, String fileId) {
+    public void deleteDatasetFile(String datasetId, String fileId, String prefix) {
         Dataset dataset = datasetRepository.getById(datasetId);
-        DatasetFile file = getDatasetFile(dataset, fileId);
+        DatasetFile file = getDatasetFile(dataset, fileId, prefix);
         dataset.setFiles(new ArrayList<>(Collections.singleton(file)));
         datasetFileRepository.removeById(fileId);
         if (CommonUtils.isUUID(fileId)) {
@@ -655,7 +657,7 @@ public class DatasetFileApplicationService {
             throw BusinessException.of(DataManagementErrorCode.DATASET_NOT_FOUND);
         }
 
-        DatasetFile file = getDatasetFile(dataset, fileId);
+        DatasetFile file = getDatasetFile(dataset, fileId, null);
         String newName = Optional.ofNullable(request.getNewName()).orElse("").trim();
         if (newName.isEmpty()) {
             throw BusinessException.of(CommonErrorCode.PARAM_ERROR);
