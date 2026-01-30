@@ -1,0 +1,22 @@
+name: "不动产文档生成算子"
+description: "将不动产数据填充到Word模板中，生成查询结果文档"
+language: "python"
+vendor: "datamate"
+raw_id: "PropertyDocFillerMapper"
+version: "1.0.0"
+modal: "text"
+inputs: "text"
+outputs: "text"
+release:
+    - "首次发布"
+    - "支持生成不动产查询结果Word文档"
+metrics:
+    - name: "生成速度"
+      metric: "10 docs/sec"
+    - name: "内存使用"
+      metric: "128MB"
+runtime:
+    memory: 134217728
+    cpu: 0.2
+    gpu: 0
+    npu: 0

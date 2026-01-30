@@ -1,0 +1,45 @@
+name: 生成QA对
+description: 根据模拟图片和不动产数据，生成问答对格式的JSON文件，支持大模型字段识别
+language: python
+raw_id: PropertyQAJsonGeneratorMapper
+version: 1.0.0
+vendor: datamate
+modal: text
+inputs: text
+outputs: text
+
+release:
+    - "首次发布"
+    - "支持从模拟图片生成问答对"
+    - "支持大模型API识别图片中的字段"
+    - "支持分页文档处理"
+    - "支持字段缓存，减少大模型API调用"
+
+settings:
+    outputFilenameParam:
+        name: 输出文件名
+        description: 生成的JSON文件名
+        type: input
+        defaultVal: "output.json"
+        required: false
+
+    useLLMParam:
+        name: 使用大模型
+        description: 是否使用大模型API识别图片中的字段（分页文档需要）
+        type: switch
+        defaultVal: "False"
+        required: false
+        checkedLabel: 使用
+        unCheckedLabel: 不使用
+
+runtime:
+    memory: 104857600
+    cpu: 0.1
+    gpu: 0.0
+    storage: 100MB
+
+metrics:
+    - name: 处理速度
+      metric: "10 records/sec"
+    - name: 准确率
+      metric: "98%"

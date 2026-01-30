@@ -1,0 +1,46 @@
+name: 真实世界模拟
+description: 将电子凭证图片合成到真实场景中，模拟各种拍摄效果（正常、斜拍、阴影、水印、不完整等场景）
+language: python
+raw_id: PropertyRealWorldSimulatorMapper
+version: 1.0.0
+vendor: datamate
+modal: image
+inputs: image
+outputs: image
+
+release:
+    - "首次发布"
+    - "支持正常、斜拍、阴影、水印、不完整等多种场景模拟"
+    - "支持坐标缓存，提高处理效率"
+    - "支持自动旋转和比例校正"
+
+settings:
+    skipSimulationParam:
+        name: 跳过模拟
+        description: 是否跳过真实世界模拟步骤，直接使用已生成的模拟图片
+        type: switch
+        defaultVal: "false"
+        required: false
+        checkedLabel: 跳过
+        unCheckedLabel: 执行
+
+    skipDetectParam:
+        name: 跳过检测
+        description: 是否跳过坐标检测，直接使用缓存的坐标信息
+        type: switch
+        defaultVal: "true"
+        required: false
+        checkedLabel: 使用缓存
+        unCheckedLabel: 重新检测
+
+runtime:
+    memory: 104857600
+    cpu: 5
+    gpu: 0.1
+    storage: 100MB
+
+metrics:
+    - name: 处理速度
+      metric: "5 images/sec"
+    - name: 准确率
+      metric: "95%"

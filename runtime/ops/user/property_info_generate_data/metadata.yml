@@ -1,0 +1,32 @@
+name: "不动产数据生成算子"
+description: "生成不动产信息查询结果数据，包含姓名、身份证、地址、产权信息等"
+language: "python"
+vendor: "datamate"
+raw_id: "PropertyDataGeneratorMapper"
+version: "1.0.0"
+modal: "text"
+inputs: "text"
+outputs: "text"
+release:
+    - "首次发布"
+    - "支持生成不动产查询结果数据"
+metrics:
+    - name: "生成速度"
+      metric: "100 records/sec"
+    - name: "内存使用"
+      metric: "64MB"
+runtime:
+    memory: 67108864
+    cpu: 0.1
+    gpu: 0
+    npu: 0
+settings:
+    count:
+        name: "生成数量"
+        description: "生成不动产数据组数"
+        type: "slider"
+        defaultVal: 1
+        required: true
+        min: 1
+        max: 100
+        step: 1
