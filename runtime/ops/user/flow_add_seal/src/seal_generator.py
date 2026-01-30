@@ -1,6 +1,7 @@
 """
 印章生成模块 - 用于生成银行印章并添加到文档或图片
 """
+from pathlib import Path
 
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
@@ -102,13 +103,27 @@ class SealGenerator:
             return
 
         # 尝试使用系统字体
-        try:
-            font = ImageFont.truetype("simhei.ttf", self.font_size)
-        except:
+        # 标准公章字体优先：仿宋 > 宋体 > 黑体 > 其他
+        font_paths = [
+            "C:/Windows/Fonts/simfang.ttf",  # 仿宋
+            "C:/Windows/Fonts/simfs.ttf",  # 仿宋（备用名）
+            "C:/Windows/Fonts/simsun.ttc",  # 宋体
+            "C:/Windows/Fonts/simhei.ttf",  # 黑体
+            "C:/Windows/Fonts/msyh.ttc",  # 微软雅黑
+            "/System/Library/Fonts/PingFang.ttc",  # macOS 苹方
+            "/usr/share/fonts/truetype/custom/FangSong_GB2312.ttf"  # Linux 常见备用
+        ]
+
+        font = None
+        for font_path in font_paths:
             try:
-                font = ImageFont.truetype("arial.ttf", self.font_size)
+                if Path(font_path).exists():
+                    font = ImageFont.truetype(font_path, self.font_size)
             except:
-                font = ImageFont.load_default()
+                continue
+        # 如果系统没有上述字体，可能会导致中文显示框框，需确保运行环境有中文字体
+        if not font:
+            font = ImageFont.load_default()
 
         # 计算每个字符的角度
         char_count = len(text)
@@ -158,9 +173,26 @@ class SealGenerator:
         if not text:
             return
 
-        try:
-            font = ImageFont.truetype("simhei.ttf", int(self.font_size * 0.8))
-        except:
+        # 标准公章字体优先：仿宋 > 宋体 > 黑体 > 其他
+        font_paths = [
+            "C:/Windows/Fonts/simfang.ttf",  # 仿宋
+            "C:/Windows/Fonts/simfs.ttf",  # 仿宋（备用名）
+            "C:/Windows/Fonts/simsun.ttc",  # 宋体
+            "C:/Windows/Fonts/simhei.ttf",  # 黑体
+            "C:/Windows/Fonts/msyh.ttc",  # 微软雅黑
+            "/System/Library/Fonts/PingFang.ttc",  # macOS 苹方
+            "/usr/share/fonts/truetype/custom/FangSong_GB2312.ttf"  # Linux 常见备用
+        ]
+
+        font = None
+        for font_path in font_paths:
+            try:
+                if Path(font_path).exists():
+                    font = ImageFont.truetype(font_path, self.font_size)
+            except:
+                continue
+        # 如果系统没有上述字体，可能会导致中文显示框框，需确保运行环境有中文字体
+        if not font:
             font = ImageFont.load_default()
 
         # 计算文本宽度

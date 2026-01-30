@@ -36,7 +36,7 @@ class SealGenerator:
             "C:/Windows/Fonts/simhei.ttf",  # 黑体
             "C:/Windows/Fonts/msyh.ttc",  # 微软雅黑
             "/System/Library/Fonts/PingFang.ttc",  # macOS 苹方
-            "/usr/share/fonts/truetype/droid/DroidSansFallbackFull.ttf"  # Linux 常见备用
+            "/usr/share/fonts/truetype/custom/FangSong_GB2312.ttf"  # Linux 常见备用
         ]
 
         for font_path in font_paths:
@@ -424,7 +424,9 @@ class LoanSettlementSealGeneratorMapper(Mapper):
             logger.info("=" * 60)
 
             # 加载数据记录
+            logger.info(f"records: {json.loads(sample['text'])}")
             records_map = self.load_records_map(json.loads(sample['text']))
+            logger.info(f"records: {records_map}")
             if records_map:
                 logger.info(f"  已加载 {len(records_map)} 条数据记录")
             else:
