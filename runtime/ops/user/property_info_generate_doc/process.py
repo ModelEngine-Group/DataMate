@@ -302,6 +302,7 @@ class PropertyDocFillerMapper(Mapper):
 
         self.template_path = file_path
         self.output_dir = sample.get('export_path')
+        os.makedirs(self.output_dir, exist_ok=True)
 
         try:
             # 从 sample['text'] 读取 JSON 数据

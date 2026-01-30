@@ -366,6 +366,7 @@ class PropertySealMapper(Mapper):
             images_dir = os.path.join(sample['export_path'], "images")
             image_paths = glob.glob(os.path.join(glob.escape(images_dir), "*.jpg"))
             self.output_dir = os.path.join(sample['export_path'], "stamped_images")
+            os.makedirs(self.output_dir, exist_ok=True)
 
             if not image_paths:
                 logger.warning("输入图片路径为空，跳过处理")

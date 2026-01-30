@@ -5,7 +5,7 @@ raw_id: PropertyQAJsonGeneratorMapper
 version: 1.0.0
 vendor: datamate
 modal: text
-inputs: text
+inputs: image
 outputs: text
 
 release:
@@ -22,15 +22,6 @@ settings:
         type: input
         defaultVal: "output.json"
         required: false
-
-    useLLMParam:
-        name: 使用大模型
-        description: 是否使用大模型API识别图片中的字段（分页文档需要）
-        type: switch
-        defaultVal: "False"
-        required: false
-        checkedLabel: 使用
-        unCheckedLabel: 不使用
 
 runtime:
     memory: 104857600

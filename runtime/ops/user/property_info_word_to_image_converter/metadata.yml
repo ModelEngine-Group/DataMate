@@ -13,7 +13,7 @@ effect:
     before: "Word文档路径"
     after: "JPG图片或Base64编码"
 inputs: "text"
-outputs: "text"
+outputs: "image"
 
 release:
     - "首次发布"
