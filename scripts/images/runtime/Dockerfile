@@ -57,6 +57,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 RUN pip uninstall opencv-python opencv-contrib-python opencv-python-headless opencv-contrib-python-headless -y
 
 COPY --from=opencv-builder /usr/local/opencv /usr/local/
+COPY --from=opencv-builder /usr/local/lib/python3.11/site-packages/cv2/* /usr/local/lib/python3.11/site-packages/cv2
 
 RUN mkdir -p /usr/share/fonts/truetype/custom && \
     wget -O /usr/share/fonts/truetype/custom/FangSong_GB2312.ttf https://github.com/XiangyunHuang/fonts/raw/master/FangSong_GB2312.ttf
