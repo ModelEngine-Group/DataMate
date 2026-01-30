@@ -23,7 +23,7 @@ async def get_providers(svc: ModelsService = Depends()):
 @router.get("/list", response_model=StandardResponse[PaginatedData[ModelsResponse]])
 async def get_models(
     page: int = Query(0, ge=0, description="页码，从 0 开始"),
-    size: int = Query(20, gt=0, le=500, description="每页大小"),
+    size: int = Query(20, gt=0, le=2000, description="每页大小"),
     provider: str | None = Query(None, description="模型提供商"),
     type: ModelType | None = Query(None, description="模型类型"),
     isEnabled: bool | None = Query(None, description="是否启用"),

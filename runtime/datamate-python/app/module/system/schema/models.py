@@ -35,7 +35,7 @@ class QueryModelRequest(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True, extra="forbid")
 
     page: int = Field(0, ge=0, description="页码，从 0 开始")
-    size: int = Field(20, gt=0, le=500, description="每页大小")
+    size: int = Field(20, gt=0, le=2000, description="每页大小")
     provider: Optional[str] = Field(None, description="模型提供商")
     type: Optional[ModelType] = Field(None, description="模型类型")
     isEnabled: Optional[bool] = Field(None, description="是否启用")

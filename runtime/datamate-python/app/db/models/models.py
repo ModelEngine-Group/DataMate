@@ -4,7 +4,7 @@ from app.db.models.base_entity import BaseEntity
 
 
 class Models(BaseEntity):
-    """模型配置表，对应表 t_models
+    """模型配置表，对应表 t_models。模型为系统级配置，RAG/生成等按 ID 引用时不受数据权限过滤。
 
     CREATE TABLE IF NOT EXISTS t_models (
         id         VARCHAR(36) PRIMARY KEY COMMENT '主键ID',

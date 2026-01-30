@@ -52,8 +52,7 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
-DROP TRIGGER IF EXISTS update_t_model_config_updated_at ON t_models;
-CREATE TRIGGER update_t_model_config_updated_at
+CREATE TRIGGER update_t_models_updated_at
     BEFORE UPDATE ON t_models
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();

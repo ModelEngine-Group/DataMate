@@ -1,4 +1,4 @@
-import { defineConfig } from "vite";
+import {defineConfig} from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path"; // 需要安装 Node.js 的类型声明（@types/node）
@@ -12,30 +12,55 @@ export default defineConfig({
     },
   },
   server: {
-    // headers: {
-    //   "Access-Control-Allow-Origin": "*",
-    //   "access-control-allow-headers":
-    //     "Origin, X-Requested-With, Content-Type, Accept",
-    // },
-    proxy: {
-      "^/api": {
-        target: "http://localhost:8080", // 本地后端服务地址
+    host: "0.0.0.0",
+    proxy: (() => {
+      const pythonProxyConfig = {
+        target: "http://localhost:18000",
         changeOrigin: true,
         secure: false,
-        rewrite: (path) => path.replace(/^\/api/, "/api"),
-        configure: (proxy, options) => {
-          // proxy 是 'http-proxy' 的实例
-          proxy.on("proxyReq", (proxyReq, req, res) => {
-            // 可以在这里修改请求头
-            proxyReq.removeHeader("referer");
-            proxyReq.removeHeader("origin");
+        configure: (proxy: { on: (event: string, handler: (arg: unknown) => void) => void }) => {
+          proxy.on("proxyReq", (proxyReq: unknown) => {
+            (proxyReq as { removeHeader: (name: string) => void }).removeHeader("referer");
+            (proxyReq as { removeHeader: (name: string) => void }).removeHeader("origin");
           });
-          proxy.on("proxyRes", (proxyRes, req, res) => {
-            delete proxyRes.headers["set-cookie"];
-            proxyRes.headers["cookies"] = ""; // 清除 cookies 头
+          proxy.on("proxyRes", (proxyRes: unknown) => {
+            const res = proxyRes as { headers: Record<string, unknown> };
+            delete res.headers["set-cookie"];
+            res.headers["cookies"] = "";
           });
         },
-      },
-    },
+      };
+
+      const javaProxyConfig = {
+        target: "http://localhost:8080",
+        changeOrigin: true,
+        secure: false,
+        configure: (proxy: { on: (event: string, handler: (arg: unknown) => void) => void }) => {
+          proxy.on("proxyReq", (proxyReq: unknown) => {
+            (proxyReq as { removeHeader: (name: string) => void }).removeHeader("referer");
+            (proxyReq as { removeHeader: (name: string) => void }).removeHeader("origin");
+          });
+          proxy.on("proxyRes", (proxyRes: unknown) => {
+            const res = proxyRes as { headers: Record<string, unknown> };
+            delete res.headers["set-cookie"];
+            res.headers["cookies"] = "";
+          });
+        },
+      };
+
+      // Python 服务: rag, synthesis, annotation, evaluation, models
+      const pythonPaths = ["rag", "synthesis", "annotation", "data-collection", "evaluation", "models"];
+      // Java 服务: data-management, knowledge-base
+      const javaPaths = ["data-management", "knowledge-base", "operators"];
+
+      const proxy: Record<string, object> = {};
+      for (const p of pythonPaths) {
+        proxy[`/api/${p}`] = pythonProxyConfig;
+      }
+      for (const p of javaPaths) {
+        proxy[`/api/${p}`] = javaProxyConfig;
+      }
+      return proxy;
+    })(),
   },
 });
