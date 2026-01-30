@@ -35,37 +35,6 @@ metrics:
       metric: "5 docs/sec"
 
 settings:
-    imageDPI:
-        name: "图片DPI"
-        description: "图片分辨率DPI，数值越高图片越清晰"
-        type: "slider"
-        defaultVal: 300
-        min: 150
-        max: 600
-        step: 50
-        required: true
-
-    skipBlankPages:
-        name: "跳过空白页"
-        description: "是否自动跳过空白页（大部分区域是白色的页面）"
-        type: "switch"
-        defaultVal: "true"
-        checkedLabel: "跳过"
-        unCheckedLabel: "不跳过"
-        required: false
-
-    outputFormat:
-        name: "输出格式"
-        description: "选择输出格式：图片路径或Base64编码"
-        type: "select"
-        defaultVal: "path"
-        required: true
-        options:
-            - label: "图片路径"
-              value: "path"
-            - label: "Base64编码"
-              value: "base64"
-
     maxRetries:
         name: "最大重试次数"
         description: "Word转PDF失败时的最大重试次数"

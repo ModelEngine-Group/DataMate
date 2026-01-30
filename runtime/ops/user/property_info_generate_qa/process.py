@@ -599,7 +599,7 @@ class PropertyQAJsonGeneratorMapper(Mapper):
             # 构建图片目录
             parent_path = Path(file_path).parent
             self.dataset_dir = parent_path
-            image_dir = parent_path / "simulated_images"
+            image_dir = Path(str(sample['export_path'])) / "simulated_images"
 
             if not image_dir.exists():
                 logger.warning(f"图片目录不存在: {image_dir}")

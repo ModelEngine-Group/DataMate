@@ -339,7 +339,6 @@ class PropertyWordToImageConverter(Mapper):
                     jpg_paths = self.converter.convert_single_document(docx_path)
                     all_jpg_paths.extend(jpg_paths)
 
-                sample["generated_images"] = all_jpg_paths
                 logger.info(f"成功转换Word文档为JPG图片，共{len(all_jpg_paths)}张图片")
             return sample
 
