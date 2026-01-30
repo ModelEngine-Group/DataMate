@@ -84,7 +84,7 @@ class PropertySealMapper(Mapper):
         # 获取印章效果参数
         self.output_dir = None
         self.size = 420
-        self.color = "190,0,0"
+        self.color = (190, 0, 0)
         self.text_margin = 45
         self.circle_width = 8
         self.star_radius_ratio = 9
