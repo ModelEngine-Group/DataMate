@@ -83,25 +83,25 @@ class PropertySealMapper(Mapper):
 
         # 获取印章效果参数
         self.output_dir = None
-        self.size = int(kwargs.get("size", 420))
-        self.color = tuple(map(int, kwargs.get("color", "190,0,0").split(",")))
-        self.text_margin = int(kwargs.get("textMargin", 30))
-        self.circle_width = int(kwargs.get("circleWidth", 4))
-        self.star_radius_ratio = int(kwargs.get("starRadiusRatio", 12))
-        self.font_size_ratio = int(kwargs.get("fontSizeRatio", 5))
-        self.char_spacing = float(kwargs.get("charSpacing", 1.0))
-        self.font_name = kwargs.get("fontName", None)
-        self.font_bold = kwargs.get("fontBold", False) == "true"
+        self.size = 420
+        self.color = "190,0,0"
+        self.text_margin = 30
+        self.circle_width = 4
+        self.star_radius_ratio = 12
+        self.font_size_ratio = 5
+        self.char_spacing = 1.0
+        self.font_name = None
+        self.font_bold = True
 
         # 旋转范围
-        self.rotation_min = int(kwargs.get("rotationMin", -5))
-        self.rotation_max = int(kwargs.get("rotationMax", 5))
+        self.rotation_min = -5
+        self.rotation_max = 5
 
         # 效果参数
-        self.opacity = float(kwargs.get("opacity", 0.85))
-        self.wear_intensity = float(kwargs.get("wearIntensity", 0.15))
-        self.add_blur = kwargs.get("addBlur", False) == "true"
-        self.gradient_direction = kwargs.get("gradientDirection", None)
+        self.opacity = 0.85
+        self.wear_intensity = 0.15
+        self.add_blur = False
+        self.gradient_direction = None
 
     def _create_property_seal(self, province: str) -> Image.Image:
         """
