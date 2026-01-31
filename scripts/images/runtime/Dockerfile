@@ -1,24 +1,31 @@
 FROM ghcr.io/astral-sh/uv:python3.11-bookworm AS opencv-builder
 
 RUN apt-get update \
-    && apt-get install build-essential cmake git pkg-config python3-dev python3-numpy libjpeg-dev libpng-dev \
+    && apt-get install build-essential cmake git pkg-config python3-dev libjpeg-dev libpng-dev \
     libtiff-dev libopenblas-dev liblapack-dev -y
+
+RUN uv pip install --system numpy
 
 RUN mkdir -p /opt/opencv && \
     cd /opt/opencv && \
     git clone https://github.com/opencv/opencv.git && \
     git clone https://github.com/opencv/opencv_contrib.git && \
-    cd opencv && \
-    mkdir build && \
-    cd build && \
-    cmake -D CMAKE_BUILD_TYPE=RELEASE \
-      -D CMAKE_INSTALL_PREFIX=/usr/local/opencv \
-      -D OPENCV_EXTRA_MODULES_PATH=../../opencv_contrib/modules \
-      -D WITH_OPENMP=ON \
-      -D ENABLE_NEON=ON \
-      -D WITH_TBB=OFF \
-      -D BUILD_opencv_python3=ON \
-      .. \
+    cd opencv && mkdir build && cd build && \
+    export CMAKE_ARGS="-D CMAKE_BUILD_TYPE=RELEASE \
+                       -D CMAKE_INSTALL_PREFIX=/usr/local/opencv \
+                       -D OPENCV_EXTRA_MODULES_PATH=../../opencv_contrib/modules \
+                       -D WITH_OPENMP=ON \
+                       -D BUILD_opencv_python3=ON" && \
+    \
+    ARCH=$(uname -m) && \
+    if [ "$ARCH" = "aarch64" ]; then \
+        echo "Detected ARM (Kungpeng/M1). Enabling NEON..." && \
+        export CMAKE_ARGS="$CMAKE_ARGS -D ENABLE_NEON=ON"; \
+    elif [ "$ARCH" = "x86_64" ]; then \
+        echo "Detected x86. Enabling AVX2..." && \
+        export CMAKE_ARGS="$CMAKE_ARGS -D ENABLE_AVX=ON -D ENABLE_AVX2=ON"; \
+    fi && \
+    cmake $CMAKE_ARGS .. && \
     && make -j$(nproc) \
     && make install \
     && ldconfig
@@ -27,7 +34,6 @@ FROM ghcr.io/astral-sh/uv:python3.11-bookworm
 
 RUN --mount=type=cache,target=/var/cache/apt \
     --mount=type=cache,target=/var/lib/apt \
-    sed -i 's/deb.debian.org/mirrors.huaweicloud.com/g' /etc/apt/sources.list.d/debian.sources && \
     apt update \
     && apt install -y libgl1 libglib2.0-0 vim libmagic1 libreoffice dos2unix swig poppler-utils tesseract-ocr libgomp1 \
     libopenblas0 libjpeg62-turbo libpng16-16 libtiff6 libwebp7 libopenjp2-7
