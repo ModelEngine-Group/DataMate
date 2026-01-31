@@ -109,7 +109,7 @@ export const mapOperator = (op: OperatorI) => {
   const visual = getOperatorVisual(op);
 
   const FUNCTION_CATEGORY_IDS = {
-    cleaning: "9eda9d5d-072b-499b-916c-797a0a8750e1",
+    cleaning: "8c09476a-a922-418f-a908-733f8a0de521",
     annotation: "cfa9d8e2-5b5f-4f1e-9f12-1234567890ab",
   } as const;
 
@@ -141,6 +141,10 @@ export const mapOperator = (op: OperatorI) => {
       {
         label: "大小",
         value: formatBytes(op?.fileSize),
+      },
+      {
+        label: "语言",
+        value: "Python",
       },
       {
         label: "功能",
