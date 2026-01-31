@@ -12,6 +12,7 @@ release:
   - '首次发布：支持多种拍摄场景合成'
 
 runtime:
+  cpu: 5
   gpu: 0
   npu: 0
   storage: 1GB

@@ -12,6 +12,7 @@ release:
   - '首次发布：支持真实世界模拟与多场景处理'
 
 runtime:
+  cpu: 5
   gpu: 0
   npu: 0
   storage: 1024MB

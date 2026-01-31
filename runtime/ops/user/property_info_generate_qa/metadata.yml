@@ -1,4 +1,4 @@
-name: 生成QA对
+name: 不动产查询结果生成QA对
 description: 根据模拟图片和不动产数据，生成问答对格式的JSON文件，支持大模型字段识别
 language: python
 raw_id: PropertyQAJsonGeneratorMapper

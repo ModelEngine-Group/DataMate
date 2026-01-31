@@ -10,7 +10,7 @@ outputs: 'text'
 
 runtime:
   memory: 209715200  # 200MB
-  cpu: 1.0
+  cpu: 5
   gpu: 0
   storage: 200MB
 metrics:

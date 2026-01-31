@@ -508,3 +508,12 @@ VALUES
     )
 ON CONFLICT (instance_id, operator_id, op_index) DO UPDATE SET
     settings_override = EXCLUDED.settings_override;
+
+INSERT INTO t_clean_template (id, "name", description) VALUES('1ad212cb-c71f-4f68-862d-5b8a7f62277f', '不动产查询结果生成模版', '不动产查询结果生成模版');
+
+INSERT INTO t_operator_instance (instance_id, operator_id, op_index, settings_override) VALUES('1ad212cb-c71f-4f68-862d-5b8a7f62277f', 'PropertyDataGeneratorMapper', 1, '{}');
+INSERT INTO t_operator_instance (instance_id, operator_id, op_index, settings_override) VALUES('1ad212cb-c71f-4f68-862d-5b8a7f62277f', 'PropertyDocFillerMapper', 2, '{}');
+INSERT INTO t_operator_instance (instance_id, operator_id, op_index, settings_override) VALUES('1ad212cb-c71f-4f68-862d-5b8a7f62277f', 'PropertyWordToImageConverter', 3, '{}');
+INSERT INTO t_operator_instance (instance_id, operator_id, op_index, settings_override) VALUES('1ad212cb-c71f-4f68-862d-5b8a7f62277f', 'PropertySealMapper', 4, '{}');
+INSERT INTO t_operator_instance (instance_id, operator_id, op_index, settings_override) VALUES('1ad212cb-c71f-4f68-862d-5b8a7f62277f', 'PropertyRealWorldSimulatorMapper', 5, '{}');
+INSERT INTO t_operator_instance (instance_id, operator_id, op_index, settings_override) VALUES('1ad212cb-c71f-4f68-862d-5b8a7f62277f', 'PropertyQAJsonGeneratorMapper', 6, '{}');

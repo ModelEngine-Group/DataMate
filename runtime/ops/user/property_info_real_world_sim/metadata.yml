@@ -1,4 +1,4 @@
-name: 真实世界模拟
+name: 不动产查询结果真实世界模拟
 description: 将电子凭证图片合成到真实场景中，模拟各种拍摄效果（正常、斜拍、阴影、水印、不完整等场景）
 language: python
 raw_id: PropertyRealWorldSimulatorMapper

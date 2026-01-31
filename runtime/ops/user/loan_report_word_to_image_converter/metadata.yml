@@ -11,7 +11,7 @@ outputs: 'image'
 
 runtime:
   memory: 524288000  # 500MB
-  cpu: 1.0
+  cpu: 5
   gpu: 0
   storage: 500MB
 metrics:

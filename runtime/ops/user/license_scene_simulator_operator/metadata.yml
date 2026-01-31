@@ -13,7 +13,7 @@ release:
 
 runtime:
   memory: 41943040
-  cpu: 0.5
+  cpu: 5
   gpu: 0
   npu: 0
   storage: 100MB

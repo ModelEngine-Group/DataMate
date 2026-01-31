@@ -21,7 +21,7 @@ metrics:
     metric: 'LLaVA, MLLM'
 runtime:
   memory: 524288000  # 500MB
-  cpu: 1.0
+  cpu: 5
   gpu: 0
   npu: 0
 settings:
