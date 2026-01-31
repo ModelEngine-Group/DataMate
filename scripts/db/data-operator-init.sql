@@ -49,6 +49,10 @@ CREATE TABLE IF NOT EXISTS t_operator_release
     version      VARCHAR(255),
     release_date TIMESTAMP,
     changelog    JSON,
+    created_by  VARCHAR(255),
+    updated_by  VARCHAR(255),
+    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id, version)
 );
 
@@ -60,7 +64,10 @@ CREATE TABLE IF NOT EXISTS t_operator_category
     value     VARCHAR(64) UNIQUE,
     type      VARCHAR(64),
     parent_id VARCHAR(64),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_by  VARCHAR(255),
+    updated_by  VARCHAR(255),
+    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 COMMENT ON TABLE t_operator_category IS '算子分类表';
@@ -76,6 +83,10 @@ CREATE TABLE IF NOT EXISTS t_operator_category_relation
 (
     category_id VARCHAR(64),
     operator_id VARCHAR(64),
+    created_by  VARCHAR(255),
+    updated_by  VARCHAR(255),
+    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (category_id, operator_id)
 );
 

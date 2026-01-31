@@ -55,6 +55,7 @@ ENV NLTK_DATA=/usr/local/nltk_data
 
 # Copy the rest of the application
 COPY runtime/datamate-python /app
+COPY runtime/ops/examples/test_operator/test_operator.tar /app/test_operator.tar
 
 COPY --from=datax-builder /DataX/target/datax/datax /opt/datax
 RUN cp /opt/datax/plugin/reader/mysqlreader/libs/mysql* /opt/datax/plugin/reader/starrocksreader/libs/
