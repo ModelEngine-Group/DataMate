@@ -16,26 +16,25 @@ RUN mkdir -p /opt/opencv && \
                        -D OPENCV_EXTRA_MODULES_PATH=../../opencv_contrib/modules \
                        -D WITH_OPENMP=ON \
                        -D BUILD_opencv_python3=ON" && \
-    \
     ARCH=$(uname -m) && \
     if [ "$ARCH" = "aarch64" ]; then \
-        echo "Detected ARM (Kungpeng/M1). Enabling NEON..." && \
+        echo "Detected ARM (Kungpeng/M1). Enabling NEON..."; \
         export CMAKE_ARGS="$CMAKE_ARGS -D ENABLE_NEON=ON"; \
     elif [ "$ARCH" = "x86_64" ]; then \
-        echo "Detected x86. Enabling AVX2..." && \
+        echo "Detected x86. Enabling AVX2..."; \
         export CMAKE_ARGS="$CMAKE_ARGS -D ENABLE_AVX=ON -D ENABLE_AVX2=ON"; \
     fi && \
     cmake $CMAKE_ARGS .. && \
-    && make -j$(nproc) \
-    && make install \
-    && ldconfig
+    make -j$(nproc) && \
+    make install && \
+    ldconfig
 
 FROM ghcr.io/astral-sh/uv:python3.11-bookworm
 
 RUN --mount=type=cache,target=/var/cache/apt \
     --mount=type=cache,target=/var/lib/apt \
-    apt update \
-    && apt install -y libgl1 libglib2.0-0 vim libmagic1 libreoffice dos2unix swig poppler-utils tesseract-ocr libgomp1 \
+    apt-get update \
+    && apt-get install -y libgl1 libglib2.0-0 vim libmagic1 libreoffice dos2unix swig poppler-utils tesseract-ocr libgomp1 \
     libopenblas0 libjpeg62-turbo libpng16-16 libtiff6 libwebp7 libopenjp2-7
 
 RUN mkdir -p /home/models \
