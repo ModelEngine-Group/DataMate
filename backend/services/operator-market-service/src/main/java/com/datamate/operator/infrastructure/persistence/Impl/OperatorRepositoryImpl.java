@@ -48,7 +48,7 @@ public class OperatorRepositoryImpl extends CrudRepository<OperatorMapper, Opera
 
     @Override
     public boolean operatorInTemplateOrRunning(String operatorId) {
-        return mapper.operatorInTemplate(operatorId) > 0 && mapper.operatorInUnstopTask(operatorId) > 0;
+        return mapper.operatorInTemplate(operatorId) > 0 || mapper.operatorInUnstopTask(operatorId) > 0;
     }
 
     @Override
