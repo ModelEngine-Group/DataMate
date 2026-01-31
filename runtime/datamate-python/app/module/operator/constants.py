@@ -1,0 +1,50 @@
+"""
+Operator Market Constants
+算子市场常量定义
+"""
+
+# Service ID
+SERVICE_ID = "operator"
+
+# YAML metadata path
+YAML_PATH = "metadata.yml"
+
+# Example operator file path
+EXAMPLE_OPERATOR_PATH = "/app/test_operator.tar"
+
+# Category IDs
+CATEGORY_PYTHON = "python"
+CATEGORY_PYTHON_ID = "9eda9d5d-072b-499b-916c-797a0a8750e1"
+
+CATEGORY_JAVA = "java"
+CATEGORY_JAVA_ID = "b5bfc548-8ef6-417c-b8a6-a4197c078249"
+
+CATEGORY_CUSTOMIZED_ID = "ec2cdd17-8b93-4a81-88c4-ac9e98d10757"
+CATEGORY_TEXT_ID = "d8a5df7a-52a9-42c2-83c4-01062e60f597"
+CATEGORY_IMAGE_ID = "de36b61c-9e8a-4422-8c31-d30585c7100f"
+CATEGORY_AUDIO_ID = "42dd9392-73e4-458c-81ff-41751ada47b5"
+CATEGORY_VIDEO_ID = "a233d584-73c8-4188-ad5d-8f7c8dda9c27"
+CATEGORY_ALL_ID = "4d7dbd77-0a92-44f3-9056-2cd62d4a71e4"
+CATEGORY_STAR_ID = "51847c24-bba9-11f0-888b-5b143cb738aa"
+CATEGORY_PREDEFINED_ID = "96a3b07a-3439-4557-a835-525faad60ca3"
+CATEGORY_DATAMATE_ID = "431e7798-5426-4e1a-aae6-b9905a836b34"
+CATEGORY_DATA_JUICER_ID = "79b385b4-fde8-4617-bcba-02a176938996"
+CATEGORY_OTHER_VENDOR_ID = "f00eaa3e-96c1-4de4-96cd-9848ef5429ec"
+
+# Category mapping
+CATEGORY_MAP = {
+    CATEGORY_PYTHON: CATEGORY_PYTHON_ID,
+    CATEGORY_JAVA: CATEGORY_JAVA_ID,
+    "text": CATEGORY_TEXT_ID,
+    "image": CATEGORY_IMAGE_ID,
+    "audio": CATEGORY_AUDIO_ID,
+    "video": CATEGORY_VIDEO_ID,
+    "all": CATEGORY_ALL_ID,
+    "datamate": CATEGORY_DATAMATE_ID,
+    "data-juicer": CATEGORY_DATA_JUICER_ID,
+}
+
+# File paths
+OPERATOR_BASE_PATH = "/operators"
+UPLOAD_DIR = "upload"
+EXTRACT_DIR = "extract"

@@ -7,6 +7,8 @@ from .generation.interface import router as generation_router
 from .evaluation.interface import router as evaluation_router
 from .collection.interface import router as collection_route
 from .rag.interface.rag_interface import router as rag_router
+from .operator.interface import operator_router
+from .operator.interface import category_router
 
 router = APIRouter(
     prefix="/api"
@@ -19,5 +21,7 @@ router.include_router(generation_router)
 router.include_router(evaluation_router)
 router.include_router(collection_route)
 router.include_router(rag_router)
+router.include_router(operator_router)
+router.include_router(category_router)
 
 __all__ = ["router"]
