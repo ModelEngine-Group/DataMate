@@ -2,7 +2,7 @@
 \c datamate;
 
 -- 模型配置表
-CREATE TABLE IF NOT EXISTS t_model_config
+CREATE TABLE IF NOT EXISTS t_models
 (
     id         VARCHAR(36) PRIMARY KEY,
     model_name VARCHAR(100) NOT NULL,
@@ -10,8 +10,9 @@ CREATE TABLE IF NOT EXISTS t_model_config
     base_url   VARCHAR(255) NOT NULL,
     api_key    VARCHAR(512) DEFAULT '',
     type       VARCHAR(50)  NOT NULL,
-    is_enabled BOOLEAN     DEFAULT TRUE,
-    is_default BOOLEAN     DEFAULT FALSE,
+    is_enabled BOOLEAN      DEFAULT TRUE,
+    is_default BOOLEAN      DEFAULT FALSE,
+    is_deleted BOOLEAN      DEFAULT FALSE,
     created_at TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     created_by VARCHAR(255),
@@ -19,26 +20,27 @@ CREATE TABLE IF NOT EXISTS t_model_config
 );
 
 -- 添加注释
-COMMENT ON TABLE t_model_config IS '模型配置表';
-COMMENT ON COLUMN t_model_config.id IS '主键ID';
-COMMENT ON COLUMN t_model_config.model_name IS '模型名称（如 qwen2）';
-COMMENT ON COLUMN t_model_config.provider IS '模型提供商（如 Ollama、OpenAI、DeepSeek）';
-COMMENT ON COLUMN t_model_config.base_url IS 'API 基础地址';
-COMMENT ON COLUMN t_model_config.api_key IS 'API 密钥（无密钥则为空）';
-COMMENT ON COLUMN t_model_config.type IS '模型类型（如 chat、embedding）';
-COMMENT ON COLUMN t_model_config.is_enabled IS '是否启用：1-启用，0-禁用';
-COMMENT ON COLUMN t_model_config.is_default IS '是否默认：1-默认，0-非默认';
-COMMENT ON COLUMN t_model_config.created_at IS '创建时间';
-COMMENT ON COLUMN t_model_config.updated_at IS '更新时间';
-COMMENT ON COLUMN t_model_config.created_by IS '创建者';
-COMMENT ON COLUMN t_model_config.updated_by IS '更新者';
+COMMENT ON TABLE t_models IS '模型配置表';
+COMMENT ON COLUMN t_models.id IS '主键ID';
+COMMENT ON COLUMN t_models.model_name IS '模型名称（如 qwen2）';
+COMMENT ON COLUMN t_models.provider IS '模型提供商（如 Ollama、OpenAI、DeepSeek）';
+COMMENT ON COLUMN t_models.base_url IS 'API 基础地址';
+COMMENT ON COLUMN t_models.api_key IS 'API 密钥（无密钥则为空）';
+COMMENT ON COLUMN t_models.type IS '模型类型（如 chat、embedding）';
+COMMENT ON COLUMN t_models.is_enabled IS '是否启用：1-启用，0-禁用';
+COMMENT ON COLUMN t_models.is_default IS '是否默认：1-默认，0-非默认';
+COMMENT ON COLUMN t_models.is_deleted IS '是否删除：1-已删除，0-未删除';
+COMMENT ON COLUMN t_models.created_at IS '创建时间';
+COMMENT ON COLUMN t_models.updated_at IS '更新时间';
+COMMENT ON COLUMN t_models.created_by IS '创建者';
+COMMENT ON COLUMN t_models.updated_by IS '更新者';
 
 -- 添加唯一约束
-ALTER TABLE t_model_config
+ALTER TABLE t_models
     ADD CONSTRAINT uk_model_provider
-    UNIQUE (model_name, provider);
+        UNIQUE (model_name, provider, created_by);
 
-COMMENT ON CONSTRAINT uk_model_provider ON t_model_config
+COMMENT ON CONSTRAINT uk_model_provider ON t_models
     IS '避免同一提供商下模型名称重复';
 
 -- 创建触发器用于自动更新 updated_at
@@ -50,9 +52,8 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
-DROP TRIGGER IF EXISTS update_t_model_config_updated_at ON t_model_config;
-CREATE TRIGGER update_t_model_config_updated_at
-    BEFORE UPDATE ON t_model_config
+CREATE TRIGGER update_t_models_updated_at
+    BEFORE UPDATE ON t_models
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 

@@ -43,7 +43,7 @@ class EvaluationExecutor:
 
     async def execute(self):
         eval_config = json.loads(self.task.eval_config)
-        model_config = await get_model_by_id(self.db, eval_config.get("modelId"))
+        models = await get_model_by_id(self.db, eval_config.get("modelId"))
         semaphore = asyncio.Semaphore(10)
         files = (await self.db.execute(
             select(EvaluationFile).where(EvaluationFile.task_id == self.task.id)
@@ -55,7 +55,7 @@ class EvaluationExecutor:
         for file in files:
             items = (await self.db.execute(query.where(EvaluationItem.file_id == file.file_id))).scalars().all()
             tasks = [
-                self.evaluate_item(model_config, item, semaphore)
+                self.evaluate_item(models, item, semaphore)
                 for item in items
             ]
             await asyncio.gather(*tasks, return_exceptions=True)
@@ -64,13 +64,13 @@ class EvaluationExecutor:
             self.task.eval_process = evaluated_count / total
             await self.db.commit()
 
-    async def evaluate_item(self, model_config, item: EvaluationItem, semaphore: asyncio.Semaphore):
+    async def evaluate_item(self, models, item: EvaluationItem, semaphore: asyncio.Semaphore):
         async with semaphore:
             max_try = 3
             while max_try > 0:
                 prompt_text = self.get_eval_prompt(item)
                 resp_text = await asyncio.to_thread(
-                    call_openai_style_model, model_config.base_url, model_config.api_key, model_config.model_name,
+                    call_openai_style_model, models.base_url, models.api_key, models.model_name,
                     prompt_text,
                 )
                 resp_text = extract_json_substring(resp_text)

@@ -1,18 +1,12 @@
-from sqlalchemy import Column, String, Integer, TIMESTAMP, select
+from sqlalchemy import Boolean, Column, String, TIMESTAMP
 
 from app.db.models.base_entity import BaseEntity
 
 
-async def get_model_by_id(db_session, model_id: str):
-    """根据 ID 获取单个模型配置。"""
-    result =await db_session.execute(select(ModelConfig).where(ModelConfig.id == model_id))
-    model_config = result.scalar_one_or_none()
-    return model_config
+class Models(BaseEntity):
+    """模型配置表，对应表 t_models。模型为系统级配置，RAG/生成等按 ID 引用时不受数据权限过滤。
 
-class ModelConfig(BaseEntity):
-    """模型配置表，对应表 t_model_config
-
-    CREATE TABLE IF NOT EXISTS t_model_config (
+    CREATE TABLE IF NOT EXISTS t_models (
         id         VARCHAR(36) PRIMARY KEY COMMENT '主键ID',
         model_name VARCHAR(100) NOT NULL COMMENT '模型名称（如 qwen2）',
         provider   VARCHAR(50)  NOT NULL COMMENT '模型提供商（如 Ollama、OpenAI、DeepSeek）',
@@ -29,7 +23,7 @@ class ModelConfig(BaseEntity):
     ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT ='模型配置表';
     """
 
-    __tablename__ = "t_model_config"
+    __tablename__ = "t_models"
 
     id = Column(String(36), primary_key=True, index=True, comment="主键ID")
     model_name = Column(String(100), nullable=False, comment="模型名称（如 qwen2）")
@@ -38,9 +32,9 @@ class ModelConfig(BaseEntity):
     api_key = Column(String(512), nullable=False, default="", comment="API 密钥（无密钥则为空）")
     type = Column(String(50), nullable=False, comment="模型类型（如 chat、embedding）")
 
-    # 使用 Integer 存储 TINYINT，后续可在业务层将 0/1 转为 bool
-    is_enabled = Column(Integer, nullable=False, default=1, comment="是否启用：1-启用，0-禁用")
-    is_default = Column(Integer, nullable=False, default=0, comment="是否默认：1-默认，0-非默认")
+    is_enabled = Column(Boolean, nullable=False, default=True, comment="是否启用")
+    is_default = Column(Boolean, nullable=False, default=False, comment="是否默认")
+    is_deleted = Column(Boolean, nullable=False, default=False, comment="是否删除")
 
     __table_args__ = (
         # 与 DDL 中的 uk_model_provider 保持一致

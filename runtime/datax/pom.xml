@@ -51,13 +51,13 @@
         <module>mysqlreader</module>
 <!--        <module>drdsreader</module>-->
 <!--        <module>sqlserverreader</module>-->
-        <module>postgresqlreader</module>
+<!--        <module>postgresqlreader</module>-->
 <!--        <module>kingbaseesreader</module>-->
 <!--        <module>oraclereader</module>-->
 <!--        <module>cassandrareader</module>-->
 <!--        <module>oceanbasev10reader</module>-->
 <!--        <module>obhbasereader</module>-->
-<!--        <module>rdbmsreader</module>-->
+        <module>rdbmsreader</module>
 
 <!--        <module>odpsreader</module>-->
 <!--        <module>otsreader</module>-->
@@ -88,13 +88,13 @@
         <module>glusterfsreader</module>
         <module>s3reader</module>
         <!-- writer -->
-        <module>mysqlwriter</module>
+<!--        <module>mysqlwriter</module>-->
         <module>starrockswriter</module>
 <!--        <module>drdswriter</module>-->
 <!--        <module>databendwriter</module>-->
 <!--        <module>oraclewriter</module>-->
 <!--        <module>sqlserverwriter</module>-->
-        <module>postgresqlwriter</module>
+<!--        <module>postgresqlwriter</module>-->
 <!--        <module>kingbaseeswriter</module>-->
 <!--        <module>adswriter</module>-->
 <!--        <module>oceanbasev10writer</module>-->
@@ -137,8 +137,8 @@
         <module>nfswriter</module>
         <module>glusterfswriter</module>
         <module>s3writer</module>
-        <module>gaussdbreader</module>
-        <module>gaussdbwriter</module>
+<!--        <module>gaussdbreader</module>-->
+<!--        <module>gaussdbwriter</module>-->
         <module>apireader</module>
         <!-- common support module -->
         <module>plugin-rdbms-util</module>

@@ -2,14 +2,13 @@ import os
 import asyncio
 from typing import Optional, Sequence
 
-from fastapi import BackgroundTasks, Depends
+from fastapi import Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import get_logger
 from app.db.models.dataset_management import DatasetFiles
 from app.db.models.knowledge_gen import RagFile, RagKnowledgeBase
-from app.db.models.model_config import ModelConfig
 from app.db.session import get_db, AsyncSessionLocal
 from app.module.shared.common.document_loaders import load_documents
 from .graph_rag import (
@@ -18,7 +17,8 @@ from .graph_rag import (
     build_llm_model_func,
     initialize_rag,
 )
-from ...system.service.common_service import get_embedding_dimension, get_openai_client
+from app.module.shared.llm import LLMFactory
+from ...system.service.common_service import get_model_by_id
 
 logger = get_logger(__name__)
 
@@ -27,10 +27,10 @@ class RAGService:
     def __init__(
         self,
         db: AsyncSession = Depends(get_db),
-        background_tasks: BackgroundTasks | None = None,
+
     ):
         self.db = db
-        self.background_tasks = background_tasks
+        self.background_tasks = None
         self.rag = None
 
     async def get_unprocessed_files(self, knowledge_base_id: str) -> Sequence[RagFile]:
@@ -44,8 +44,8 @@ class RAGService:
 
     async def init_graph_rag(self, knowledge_base_id: str):
         kb = await self._get_knowledge_base(knowledge_base_id)
-        embedding_model = await self._get_model_config(kb.embedding_model)
-        chat_model = await self._get_model_config(kb.chat_model)
+        embedding_model = await self._get_models(kb.embedding_model)
+        chat_model = await self._get_models(kb.chat_model)
 
         llm_callable = await build_llm_model_func(
             chat_model.model_name, chat_model.base_url, chat_model.api_key
@@ -54,7 +54,9 @@ class RAGService:
             embedding_model.model_name,
             embedding_model.base_url,
             embedding_model.api_key,
-            embedding_dim=get_embedding_dimension(get_openai_client(embedding_model)),
+            embedding_dim=LLMFactory.get_embedding_dimension(
+                embedding_model.model_name, embedding_model.base_url, embedding_model.api_key
+            ),
         )
 
         kb_working_dir = os.path.join(DEFAULT_WORKING_DIR, kb.name)
@@ -124,14 +126,13 @@ class RAGService:
             raise ValueError(f"Knowledge base with ID {knowledge_base_id} not found.")
         return knowledge_base
 
-    async def _get_model_config(self, model_id: Optional[str]):
+    async def _get_models(self, model_id: Optional[str]):
         if not model_id:
             raise ValueError("Model ID is required for initializing RAG.")
-        result = await self.db.execute(select(ModelConfig).where(ModelConfig.id == model_id))
-        model = result.scalars().first()
-        if not model:
-            raise ValueError(f"Model config with ID {model_id} not found.")
-        return model
+        models = await get_model_by_id(self.db, model_id)
+        if not models:
+            raise ValueError(f"Models with ID {model_id} not found.")
+        return models
 
     async def query_rag(self, query: str, knowledge_base_id: str) -> str:
         if not self.rag:

@@ -7,7 +7,7 @@ from app.core.config import settings
 from app.core.logging import get_logger
 from typing import AsyncGenerator
 
-from app.db.datascope import DataScopeHandle
+from app.db.datascope import DataScopeHandle, SYSTEM_USER
 from app.db.models.base_entity import BaseEntity
 
 logger = get_logger(__name__)
@@ -57,6 +57,7 @@ def _apply_data_scope(orm_execute_state):
 @event.listens_for(Session, "before_flush")
 def _audit_before_flush(session, flush_context, instances):
     user = DataScopeHandle.get_user_info()
+    effective_user = (user or "").strip() or SYSTEM_USER
     now = datetime.now()
 
     # new -> set created_* and updated_*
@@ -65,9 +66,9 @@ def _audit_before_flush(session, flush_context, instances):
             if getattr(obj, "created_at", None) is None:
                 obj.created_at = now
             if getattr(obj, "created_by", None) is None:
-                obj.created_by = user
+                obj.created_by = effective_user
             obj.updated_at = now
-            obj.updated_by = user
+            obj.updated_by = effective_user
             # ensure SQLAlchemy sees changes
             try:
                 flag_modified(obj, "created_by")
@@ -78,7 +79,7 @@ def _audit_before_flush(session, flush_context, instances):
     for obj in list(session.dirty):
         if isinstance(obj, BaseEntity):
             obj.updated_at = now
-            obj.updated_by = user
+            obj.updated_by = effective_user
             try:
                 flag_modified(obj, "updated_by")
             except Exception:
