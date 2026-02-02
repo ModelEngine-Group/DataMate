@@ -211,9 +211,7 @@ export function mapDataset(dataset: AnyObject): Dataset {
     status: datasetStatusMap[dataset.status],
     statistics: [
       { label: "文件数", value: dataset.fileCount || 0 },
-      { label: "已标注", value: Math.floor(dataset.fileCount / 10) * 10},
       { label: "大小", value: formatBytes(dataset.totalSize || 0) },
-      { label: "关联归集任务", value: Math.floor(dataset.fileCount / 10)},
     ],
     lastModified: dataset.updatedAt,
   };

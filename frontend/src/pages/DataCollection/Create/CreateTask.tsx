@@ -59,9 +59,9 @@ export default function CollectionTaskCreate() {
     },
   });
   const [scheduleExpression, setScheduleExpression] = useState({
-    type: "once",
+    type: "daily",
     time: "00:00",
-    cronExpression: "0 0 0 * * ?",
+    cronExpression: "0 0 * * *",
   });
 
   useEffect(() => {
@@ -166,6 +166,17 @@ export default function CollectionTaskCreate() {
     try {
       const values = await form.validateFields();
       const payload = { ...newTask, ...values };
+      if (payload.syncMode === SyncMode.SCHEDULED) {
+        if (!payload.scheduleExpression) {
+          payload.scheduleExpression = scheduleExpression.cronExpression;
+        }
+        if (!payload.scheduleExpression) {
+          message.error("请输入Cron表达式");
+          return;
+        }
+      } else {
+        delete payload.scheduleExpression;
+      }
       if (selectedTemplate?.templateContent) {
         payload.config = {
           ...(payload.config || {}),

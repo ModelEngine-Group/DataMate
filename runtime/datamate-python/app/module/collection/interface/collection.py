@@ -14,7 +14,8 @@ from app.db.models.data_collection import CollectionTask, TaskExecution, Collect
 from app.db.session import get_db
 from app.module.collection.client.datax_client import DataxClient
 from app.module.collection.schema.collection import CollectionTaskBase, CollectionTaskCreate, converter_to_response, \
-    convert_for_create
+    convert_for_create, SyncMode
+from app.module.collection.scheduler import schedule_collection_task, remove_collection_task
 from app.module.collection.service.collection import CollectionTaskService
 from app.module.shared.schema import StandardResponse, PaginatedData
 
@@ -61,6 +62,8 @@ async def create_task(
         task = await db.execute(select(CollectionTask).where(CollectionTask.id == task.id))
         task = task.scalar_one_or_none()
         await db.commit()
+        if task and task.sync_mode == SyncMode.SCHEDULED.value and task.schedule_expression:
+            schedule_collection_task(task.id, task.schedule_expression)
 
         return StandardResponse(
             code=200,
@@ -70,6 +73,9 @@ async def create_task(
     except HTTPException:
         await db.rollback()
         raise
+    except ValueError as e:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         await db.rollback()
         logger.error(f"Failed to create collection task: {str(e)}", e)
@@ -153,6 +159,7 @@ async def delete_collection_tasks(
             TaskExecution.__table__.delete()
             .where(TaskExecution.task_id == task_id)
         )
+        remove_collection_task(task_id)
 
         target_path = f"/dataset/local/{task_id}"
         if os.path.exists(target_path):

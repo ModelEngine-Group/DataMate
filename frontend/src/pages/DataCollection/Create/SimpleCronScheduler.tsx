@@ -1,24 +1,16 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
-  Card,
-  Radio,
   Select,
   Space,
-  Typography,
   TimePicker,
   Button,
-  Input,
   Form,
 } from "antd";
-import type { RadioChangeEvent } from "antd";
 import type { Dayjs } from "dayjs";
 import dayjs from "dayjs";
 
-const { Text } = Typography;
-const { Option } = Select;
-
 export interface SimpleCronConfig {
-  type: "once" | "daily" | "weekly" | "monthly";
+  type: "daily" | "weekly" | "monthly";
   time?: string; // HH:mm 格式
   weekDay?: number; // 0-6, 0 表示周日
   monthDay?: number; // 1-31
@@ -32,9 +24,9 @@ interface SimpleCronSchedulerProps {
 }
 
 const defaultConfig: SimpleCronConfig = {
-  type: "once",
+  type: "daily",
   time: "00:00",
-  cronExpression: "0 0 0 * * ?",
+  cronExpression: "0 0 * * *",
 };
 
 // 生成周几选项
@@ -71,26 +63,33 @@ const SimpleCronScheduler: React.FC<SimpleCronSchedulerProps> = ({
 }) => {
   const [config, setConfig] = useState<SimpleCronConfig>(value);
 
+  useEffect(() => {
+    setConfig(value || defaultConfig);
+  }, [value]);
+
   // 更新配置并生成 cron 表达式
   const updateConfig = useCallback(
     (updates: Partial<SimpleCronConfig>) => {
       const newConfig = { ...config, ...updates };
       const [hour, minute] = (newConfig.time || "00:00").split(":");
+      if (newConfig.type === "weekly" && (newConfig.weekDay === undefined || newConfig.weekDay === null)) {
+        newConfig.weekDay = 1;
+      }
+      if (newConfig.type === "monthly" && (newConfig.monthDay === undefined || newConfig.monthDay === null)) {
+        newConfig.monthDay = 1;
+      }
 
       // 根据不同类型生成 cron 表达式
       let cronExpression = "";
       switch (newConfig.type) {
-        case "once":
-          cronExpression = `0 ${minute} ${hour} * * ?`;
-          break;
         case "daily":
-          cronExpression = `0 ${minute} ${hour} * * ?`;
+          cronExpression = `${minute} ${hour} * * *`;
           break;
         case "weekly":
-          cronExpression = `0 ${minute} ${hour} ? * ${newConfig.weekDay}`;
+          cronExpression = `${minute} ${hour} * * ${newConfig.weekDay}`;
           break;
         case "monthly":
-          cronExpression = `0 ${minute} ${hour} ${newConfig.monthDay} * ?`;
+          cronExpression = `${minute} ${hour} ${newConfig.monthDay} * *`;
           break;
       }
 
@@ -106,9 +105,9 @@ const SimpleCronScheduler: React.FC<SimpleCronSchedulerProps> = ({
     const updates: Partial<SimpleCronConfig> = { type };
 
     // 设置默认值
-    if (type === "weekly" && !config.weekDay) {
+    if (type === "weekly" && (config.weekDay === undefined || config.weekDay === null)) {
       updates.weekDay = 1; // 默认周一
-    } else if (type === "monthly" && !config.monthDay) {
+    } else if (type === "monthly" && (config.monthDay === undefined || config.monthDay === null)) {
       updates.monthDay = 1; // 默认每月1号
     }
 
@@ -133,7 +132,6 @@ const SimpleCronScheduler: React.FC<SimpleCronSchedulerProps> = ({
       <div className="grid grid-cols-2 gap-4">
         <Form.Item label="执行周期" required>
           <Select value={config.type} onChange={handleTypeChange}>
-            <Select.Option value="once">仅执行一次</Select.Option>
             <Select.Option value="daily">每天执行</Select.Option>
             <Select.Option value="weekly">每周执行</Select.Option>
             <Select.Option value="monthly">每月执行</Select.Option>

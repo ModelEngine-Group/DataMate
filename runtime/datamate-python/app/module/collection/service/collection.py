@@ -12,6 +12,7 @@ from app.db.models.data_collection import CollectionTask, CollectionTemplate
 from app.db.session import AsyncSessionLocal
 from app.module.collection.client.datax_client import DataxClient
 from app.module.collection.schema.collection import SyncMode, create_execute_record
+from app.module.collection.scheduler import validate_schedule_expression
 from app.module.dataset.service.service import Service
 from app.module.shared.schema import TaskStatus, NodeType, EdgeType
 from app.module.shared.common.lineage import LineageService
@@ -51,6 +52,10 @@ class CollectionTaskService:
             task.status = TaskStatus.RUNNING.name
             await self.db.commit()
             asyncio.create_task(CollectionTaskService.run_async(task.id, dataset.id if dataset else None))
+        elif task.sync_mode == SyncMode.SCHEDULED:
+            if not task.schedule_expression:
+                raise ValueError("schedule_expression is required for scheduled tasks")
+            validate_schedule_expression(task.schedule_expression)
         return task
 
     @staticmethod

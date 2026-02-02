@@ -36,6 +36,7 @@ dependencies = [
     "asyncpg (>=0.31.0,<0.32.0)",
     "lightrag-hku (==1.4.9.8)",
     "pytest (>=9.0.2,<10.0.0)",
+    "apscheduler (>=3.11.2,<4.0.0)",
 ]
 
 
