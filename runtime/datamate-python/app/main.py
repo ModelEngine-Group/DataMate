@@ -18,11 +18,8 @@ from app.core.logging import setup_logging, get_logger
 from app.db.session import AsyncSessionLocal
 from app.middleware import UserContextMiddleware
 from app.module import router
-from app.module.collection.scheduler import (
-    start_collection_scheduler,
-    shutdown_collection_scheduler,
-    load_scheduled_collection_tasks,
-)
+from app.module.collection.schedule import load_scheduled_collection_tasks, set_collection_scheduler
+from .module.shared.schedule import Scheduler
 
 setup_logging()
 logger = get_logger(__name__)
@@ -60,13 +57,15 @@ async def lifespan(app: FastAPI):
     logger.info(f"Label Studio: {settings.label_studio_base_url}")
 
     # Collection scheduler
-    start_collection_scheduler()
+    collection_scheduler = Scheduler(name="collection scheduler")
+    collection_scheduler.start()
+    set_collection_scheduler(collection_scheduler)
     await load_scheduled_collection_tasks()
 
     yield
 
     # @shutdown
-    shutdown_collection_scheduler()
+    collection_scheduler.shutdown()
     logger.info("DataMate Python Backend shutting down ...\n\n")
 
 # 创建FastAPI应用

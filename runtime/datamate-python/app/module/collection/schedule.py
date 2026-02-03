@@ -2,38 +2,25 @@ from __future__ import annotations
 
 from typing import Optional
 
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler.triggers.cron import CronTrigger
 from sqlalchemy import select
 
 from app.core.logging import get_logger
 from app.db.models.data_collection import CollectionTask
 from app.db.session import AsyncSessionLocal
 from app.module.collection.schema.collection import SyncMode
+from app.module.shared.schedule import Scheduler
 
 logger = get_logger(__name__)
 
-_scheduler: Optional[AsyncIOScheduler] = None
+_scheduler: Optional[Scheduler] = None
 
 
-def start_collection_scheduler() -> AsyncIOScheduler:
+def set_collection_scheduler(scheduler: Scheduler) -> None:
     global _scheduler
-    if _scheduler is None:
-        _scheduler = AsyncIOScheduler()
-        _scheduler.start()
-        logger.info("Collection scheduler started")
-    return _scheduler
+    _scheduler = scheduler
 
 
-def shutdown_collection_scheduler() -> None:
-    global _scheduler
-    if _scheduler is not None:
-        _scheduler.shutdown(wait=False)
-        _scheduler = None
-        logger.info("Collection scheduler stopped")
-
-
-def _get_scheduler() -> AsyncIOScheduler:
+def _get_scheduler() -> Scheduler:
     if _scheduler is None:
         raise RuntimeError("Collection scheduler not initialized")
     return _scheduler
@@ -41,14 +28,13 @@ def _get_scheduler() -> AsyncIOScheduler:
 
 def schedule_collection_task(task_id: str, schedule_expression: str, dataset_id: Optional[str] = None) -> None:
     scheduler = _get_scheduler()
-    trigger = CronTrigger.from_crontab(schedule_expression)
     from app.module.collection.service.collection import CollectionTaskService
 
-    scheduler.add_job(
-        CollectionTaskService.run_async,
-        trigger=trigger,
+    scheduler.add_cron_job(
+        job_id=f"collection:{task_id}",
+        cron_expression=schedule_expression,
+        func=CollectionTaskService.run_async,
         args=[task_id, dataset_id],
-        id=f"collection:{task_id}",
         replace_existing=True,
         max_instances=1,
         coalesce=True,
@@ -58,11 +44,10 @@ def schedule_collection_task(task_id: str, schedule_expression: str, dataset_id:
 
 
 def remove_collection_task(task_id: str) -> None:
-    if _scheduler is None:
-        return
+    scheduler = _get_scheduler()
     job_id = f"collection:{task_id}"
-    if _scheduler.get_job(job_id):
-        _scheduler.remove_job(job_id)
+    if scheduler.has_job(job_id):
+        scheduler.remove_job(job_id)
         logger.info(f"Removed scheduled collection task {task_id}")
 
 
@@ -72,7 +57,7 @@ def reschedule_collection_task(task_id: str, schedule_expression: str, dataset_i
 
 
 def validate_schedule_expression(schedule_expression: str) -> None:
-    CronTrigger.from_crontab(schedule_expression)
+    Scheduler.validate_cron_expression(schedule_expression)
 
 
 async def load_scheduled_collection_tasks() -> None:
