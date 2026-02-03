@@ -6,7 +6,6 @@ from pydantic import BaseModel, Field, ConfigDict
 
 from app.core.exception import ErrorCodes, BusinessError, SuccessResponse
 from app.db.session import get_db
-from app.exception import NoDatasetInfoFoundError, DatasetMappingNotFoundError
 from app.module.shared.schema import StandardResponse
 from app.module.dataset import DatasetManagementService
 from app.core.logging import get_logger
@@ -99,15 +98,12 @@ async def sync_dataset_content(
 
     except HTTPException:
         raise
-    except NoDatasetInfoFoundError as e:
-        logger.error(f"Failed to get dataset info: {e}")
-        raise HTTPException(status_code=404, detail=str(e))
-    except DatasetMappingNotFoundError as e:
-        logger.error(f"Mapping not found: {e}")
-        raise HTTPException(status_code=404, detail=str(e))
+    except BusinessError as e:
+        # 业务异常已经由全局异常处理器处理
+        raise
     except Exception as e:
         logger.error(f"Error syncing dataset content: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise
 
 
 @router.post("/annotation/sync", response_model=StandardResponse[SyncAnnotationsResponse])

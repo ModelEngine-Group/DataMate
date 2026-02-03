@@ -1,18 +1,17 @@
 """
-Result type for elegant error handling.
+Result 类型用于优雅的错误处理
 
-Provides a Rust-inspired Result<T, E> type for handling operations
-that can fail without exceptions.
+提供受 Rust 启发的 Result<T, E> 类型，用于处理可能失败的操作而无需使用异常。
 
-Usage:
-    # Success case
+使用示例:
+    # 成功情况
     def get_user(user_id: str) -> Result[User]:
         user = db.find_user(user_id)
         if user:
             return Ok(user)
         return Err(ErrorCodes.USER_NOT_FOUND)
 
-    # Using the result
+    # 使用结果
     result = get_user("123")
     if result.is_ok():
         user = result.unwrap()
@@ -26,15 +25,15 @@ from typing import Generic, TypeVar, Optional, Any
 from .base import ErrorCode
 from .codes import ErrorCodes
 
-T = TypeVar('T')  # Success type
-E = TypeVar('E', bound=ErrorCode)  # Error type
+T = TypeVar('T')  # 成功类型
+E = TypeVar('E', bound=ErrorCode)  # 错误类型
 
 
 class Result(Generic[T, E]):
     """
-    Result type representing either success (Ok) or failure (Err).
+    表示成功（Ok）或失败（Err）的 Result 类型
 
-    This type allows explicit error handling without exceptions.
+    此类型允许在不需要异常的情况下进行显式错误处理
     """
 
     def __init__(self, value: Optional[T], error: Optional[E], is_ok: bool):
@@ -44,33 +43,33 @@ class Result(Generic[T, E]):
 
     @staticmethod
     def ok(value: T) -> 'Result[T, E]':
-        """Create a successful result containing a value."""
+        """创建一个包含值的成功结果"""
         return Result(value, None, True)
 
     @staticmethod
     def err(error: E) -> 'Result[T, E]':
-        """Create a failed result containing an error code."""
+        """创建一个包含错误码的失败结果"""
         return Result(None, error, False)
 
     @property
     def is_ok(self) -> bool:
-        """Check if result is successful."""
+        """检查结果是否成功"""
         return self._is_ok
 
     @property
     def is_err(self) -> bool:
-        """Check if result is failed."""
+        """检查结果是否失败"""
         return not self._is_ok
 
     def unwrap(self) -> T:
         """
-        Get the success value.
+        获取成功值
 
         Returns:
-            The success value
+            成功值
 
         Raises:
-            ValueError: If result is an error
+            ValueError: 如果结果是错误
         """
         if self._is_ok:
             return self._value
@@ -80,13 +79,13 @@ class Result(Generic[T, E]):
 
     def unwrap_err(self) -> E:
         """
-        Get the error code.
+        获取错误码
 
         Returns:
-            The error code
+            错误码
 
         Raises:
-            ValueError: If result is successful
+            ValueError: 如果结果是成功的
         """
         if not self._is_ok:
             return self._error
@@ -94,43 +93,43 @@ class Result(Generic[T, E]):
 
     def unwrap_or(self, default: T) -> T:
         """
-        Get success value or default if error.
+        获取成功值，如果出错则返回默认值
 
         Args:
-            default: Default value to return on error
+            default: 出错时返回的默认值
 
         Returns:
-            Success value or default
+            成功值或默认值
         """
         return self._value if self._is_ok else default
 
     def map(self, func) -> 'Result[Any, E]':
         """
-        Apply function to success value if present.
+        如果存在成功值，则应用函数
 
         Args:
-            func: Function to apply
+            func: 要应用的函数
 
         Returns:
-            New result with mapped value or same error
+            包含映射值的新结果或相同的错误
         """
         if self._is_ok:
             try:
                 return Result.ok(func(self._value))
-            except Exception as exc:
-                # If mapping fails, convert to error
+            except Exception:
+                # 如果映射失败，转换为错误
                 return Result.err(ErrorCodes.INTERNAL_ERROR)
         return self
 
     def and_then(self, func) -> 'Result[Any, E]':
         """
-        Chain operations that return Results.
+        链式调用返回 Result 的操作
 
         Args:
-            func: Function that takes success value and returns new Result
+            func: 接收成功值并返回新 Result 的函数
 
         Returns:
-            New result from function or same error
+            来自函数的新结果或相同的错误
         """
         if self._is_ok:
             return func(self._value)
@@ -138,13 +137,13 @@ class Result(Generic[T, E]):
 
     def or_else(self, func) -> 'Result[T, Any]':
         """
-        Provide fallback result on error.
+        在出错时提供备用结果
 
         Args:
-            func: Function that takes error and returns new Result
+            func: 接收错误并返回新 Result 的函数
 
         Returns:
-            Same result or new result from function
+            相同的结果或来自函数的新结果
         """
         if not self._is_ok:
             return func(self._error)
@@ -153,9 +152,9 @@ class Result(Generic[T, E]):
 
 def Ok(value: T) -> Result[T, ErrorCode]:
     """
-    Create a successful result.
+    创建一个成功的结果
 
-    Usage:
+    使用示例:
         return Ok(user_data)
     """
     return Result.ok(value)
@@ -163,9 +162,9 @@ def Ok(value: T) -> Result[T, ErrorCode]:
 
 def Err(error_code: ErrorCode) -> Result[Any, ErrorCode]:
     """
-    Create a failed result.
+    创建一个失败的结果
 
-    Usage:
+    使用示例:
         return Err(ErrorCodes.USER_NOT_FOUND)
     """
     return Result.err(error_code)

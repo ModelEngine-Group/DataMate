@@ -78,8 +78,8 @@ class ExceptionHandlingMiddleware(BaseHTTPMiddleware):
                 http_status=500
             )
 
+    @staticmethod
     def _error_response(
-        self,
         code: str,
         message: str,
         http_status: int

@@ -72,10 +72,10 @@ async def business_error_handler(request: Request, exc: BusinessError) -> JSONRe
     处理业务逻辑异常
 
     业务异常是预期的错误，不需要记录堆栈跟踪。
-    返回 HTTP 200，错误信息在响应体的 code 字段中。
+    返回对应的 HTTP 状态码（400、404 等），错误信息在响应体的 code 字段中。
     """
     return JSONResponse(
-        status_code=200,
+        status_code=exc.http_status,
         content=exc.to_dict()
     )
 

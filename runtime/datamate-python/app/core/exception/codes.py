@@ -11,7 +11,7 @@
 - evaluation: 评估模块
 - generation: 生成模块
 - rag: RAG模块
-- ratio: 比率模块
+- ratio: 配比模块
 """
 from typing import Final
 
@@ -81,7 +81,7 @@ class ErrorCodes:
     RAG_QUERY_FAILED: Final = ErrorCode("rag.0004", "RAG查询失败", 500)
 
     # ========== 比率模块 ==========
-    RATIO_TASK_NOT_FOUND: Final = ErrorCode("ratio.0001", "比率任务不存在", 404)
+    RATIO_TASK_NOT_FOUND: Final = ErrorCode("ratio.0001", "配比任务不存在", 404)
     RATIO_NAME_REQUIRED: Final = ErrorCode("ratio.0002", "任务名称必填", 400)
     RATIO_ALREADY_EXISTS: Final = ErrorCode("ratio.0003", "任务已存在", 400)
     RATIO_DELETE_FAILED: Final = ErrorCode("ratio.0004", "删除任务失败", 500)

@@ -13,11 +13,11 @@ class ErrorCode:
     属性:
         code: 错误码字符串（如 "annotation.0001"）
         message: 人类可读的错误消息
-        http_status: HTTP状态码（业务错误默认为200）
+        http_status: HTTP状态码（业务错误默认为400）
     """
     code: str
     message: str
-    http_status: int = 200
+    http_status: int = 400
 
     def __post_init__(self):
         """验证错误码格式"""
