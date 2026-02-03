@@ -15,7 +15,7 @@ from app.db.session import get_db
 from app.module.collection.client.datax_client import DataxClient
 from app.module.collection.schema.collection import CollectionTaskBase, CollectionTaskCreate, converter_to_response, \
     convert_for_create, SyncMode
-from app.module.collection.scheduler import schedule_collection_task, remove_collection_task
+from app.module.collection.schedule import schedule_collection_task, remove_collection_task
 from app.module.collection.service.collection import CollectionTaskService
 from app.module.shared.schema import StandardResponse, PaginatedData
 

@@ -20,11 +20,8 @@ from .exception import (
 )
 from .module import router
 from .module.shared.schema import StandardResponse
-from .module.collection.scheduler import (
-    start_collection_scheduler,
-    shutdown_collection_scheduler,
-    load_scheduled_collection_tasks,
-)
+from .module.collection.schedule import load_scheduled_collection_tasks, set_collection_scheduler
+from .module.shared.schedule import Scheduler
 
 setup_logging()
 logger = get_logger(__name__)
@@ -62,13 +59,15 @@ async def lifespan(app: FastAPI):
     logger.info(f"Label Studio: {settings.label_studio_base_url}")
 
     # Collection scheduler
-    start_collection_scheduler()
+    collection_scheduler = Scheduler(name="collection scheduler")
+    collection_scheduler.start()
+    set_collection_scheduler(collection_scheduler)
     await load_scheduled_collection_tasks()
 
     yield
 
     # @shutdown
-    shutdown_collection_scheduler()
+    collection_scheduler.shutdown()
     logger.info("DataMate Python Backend shutting down ...\n\n")
 
 # 创建FastAPI应用
