@@ -1,0 +1,56 @@
+{
+  "user": {
+    "actions": {
+      "login": "Login",
+      "register": "Register",
+      "logout": "Logout"
+    },
+    "messages": {
+      "loginSuccess": "Login successful",
+      "loginFailed": "Login failed, please try again later",
+      "signupSuccess": "Registration successful, auto-login",
+      "signupFailed": "Registration failed, please try again later",
+      "logoutSuccess": "Logged out successfully",
+      "passwordMismatch": "Passwords do not match"
+    },
+    "loginDialog": {
+      "title": "Login",
+      "description": "Enter your username and password to log in to the system",
+      "submitButton": "Login",
+      "noAccount": "Don't have an account?",
+      "registerNow": "Register now"
+    },
+    "signupDialog": {
+      "title": "Register",
+      "description": "Create your account to use DataMate system",
+      "submitButton": "Register",
+      "hasAccount": "Already have an account?",
+      "loginNow": "Login now"
+    }
+  },
+  "fields": {
+    "username": "Username",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password"
+  },
+  "placeholders": {
+    "username": "Enter username",
+    "email": "Enter email",
+    "password": "Enter password",
+    "confirmPassword": "Enter password again"
+  },
+  "validations": {
+    "usernameRequired": "Please enter username",
+    "emailRequired": "Please enter email",
+    "emailInvalid": "Please enter a valid email address",
+    "passwordRequired": "Please enter password",
+    "passwordTooShort": "Password must be at least 6 characters",
+    "confirmPasswordRequired": "Please confirm password",
+    "passwordMismatch": "Passwords do not match"
+  },
+  "header": {
+    "simplifiedChinese": "简体中文",
+    "english": "English"
+  }
+}
