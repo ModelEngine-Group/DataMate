@@ -2,6 +2,7 @@ from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.status import HTTP_401_UNAUTHORIZED
 import json
+import traceback
 from typing import Optional
 
 from app.core.config import settings
@@ -33,3 +34,40 @@ class UserContextMiddleware(BaseHTTPMiddleware):
             return response
         finally:
             DataScopeHandle.remove_user_info()
+
+
+class ExceptionHandlerMiddleware(BaseHTTPMiddleware):
+    """
+    全局异常捕获中间件
+
+    确保所有异常都被捕获并转换为 StandardResponse 格式，
+    即使在 debug 模式下也不会泄露堆栈信息给客户端。
+    堆栈信息只记录到日志文件中。
+    """
+
+    async def dispatch(self, request: Request, call_next):
+        try:
+            response = await call_next(request)
+            return response
+        except Exception as exc:
+            # 记录完整的堆栈信息到日志（包含文件名、行号、完整错误）
+            logger.error(
+                f"Unhandled exception in {request.method} {request.url.path}: {str(exc)}",
+                exc_info=True  # 这会将完整堆栈记录到日志文件
+            )
+
+            # 构造安全的错误响应（不包含任何堆栈信息）
+            error_response = {
+                "code": "common.500",
+                "message": "Internal server error",
+                "data": {
+                    "detail": "Internal server error"
+                }
+            }
+
+            # 返回 500 状态码和统一格式的错误响应
+            return Response(
+                content=json.dumps(error_response),
+                status_code=500,
+                media_type="application/json"
+            )

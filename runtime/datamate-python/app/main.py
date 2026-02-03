@@ -8,7 +8,7 @@ from fastapi_mcp import FastApiMCP
 from sqlalchemy import text
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app.middleware import UserContextMiddleware
+from app.middleware import UserContextMiddleware, ExceptionHandlerMiddleware
 from .core.config import settings
 from .core.logging import setup_logging, get_logger
 from .db.session import AsyncSessionLocal
@@ -79,6 +79,10 @@ app = FastAPI(
     debug=settings.debug,
     lifespan=lifespan
 )
+
+# 注册全局异常捕获中间件（必须最先注册，确保在最外层捕获所有异常）
+# 这样即使 debug=True，也不会泄露堆栈信息给客户端
+app.add_middleware(ExceptionHandlerMiddleware)
 
 app.add_middleware(UserContextMiddleware)
 # CORS Middleware
