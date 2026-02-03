@@ -45,7 +45,7 @@ async def get_prompt_templates():
     try:
         templates = PromptTemplateService.get_prompt_templates()
         return StandardResponse(
-            code=200,
+            code="0",
             message="Success",
             data=templates
         )
@@ -115,7 +115,7 @@ async def create_evaluation_task(
         # 转换响应模型
         response = _map_to_task_detail_response(task)
         return StandardResponse(
-            code=200,
+            code="0",
             message="Evaluation task created successfully",
             data=response
         )
@@ -181,7 +181,7 @@ async def list_evaluation_tasks(
         total_pages = math.ceil(total / size) if total > 0 else 0
 
         return StandardResponse(
-            code=200,
+            code="0",
             message="Success",
             data=PagedEvaluationTaskResponse(
                 content=items,
@@ -237,7 +237,7 @@ async def list_evaluation_items(
             for file in files
         ]
         return StandardResponse(
-            code=200,
+            code="0",
             message="Success",
             data=PagedEvaluationFilesResponse(
                 content=file_responses,
@@ -316,7 +316,7 @@ async def list_evaluation_items(
         total_pages = math.ceil(total / size) if total > 0 else 0
 
         return StandardResponse(
-            code=200,
+            code="0",
             message="Success",
             data=PagedEvaluationItemsResponse(
                 content=item_responses,
@@ -354,7 +354,7 @@ async def get_evaluation_task(
         # 转换为响应模型
         response = _map_to_task_detail_response(task)
         return StandardResponse(
-            code=200,
+            code="0",
             message="Success",
             data=response
         )
@@ -405,7 +405,7 @@ async def delete_eval_tasks(
         await db.commit()
 
         return StandardResponse(
-            code=200,
+            code="0",
             message="Evaluation task deleted successfully",
             data="success"
         )

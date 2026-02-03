@@ -418,7 +418,7 @@ async def list_auto_annotation_tasks(
 
     tasks = await service.list_tasks(db)
     return StandardResponse(
-        code=200,
+        code="0",
         message="success",
         data=tasks,
     )
@@ -486,7 +486,7 @@ async def create_auto_annotation_task(
         )
 
     return StandardResponse(
-        code=200,
+        code="0",
         message="success",
         data=task,
     )
@@ -571,7 +571,7 @@ async def update_auto_annotation_task_files(
             )
 
     return StandardResponse(
-        code=200,
+        code="0",
         message="success",
         data=updated,
     )
@@ -592,7 +592,7 @@ async def get_auto_annotation_task_status(
         raise HTTPException(status_code=404, detail="Task not found")
 
     return StandardResponse(
-        code=200,
+        code="0",
         message="success",
         data=task,
     )
@@ -638,7 +638,7 @@ async def get_auto_annotation_task_files(
     else:
         # 未显式记录 file_ids 时，回退为主数据集下所有 ACTIVE 文件
         if not dataset_id:
-            return StandardResponse(code=200, message="success", data=[])
+            return StandardResponse(code="0", message="success", data=[])
         files_query = select(DatasetFiles).where(
             DatasetFiles.dataset_id == dataset_id,
             DatasetFiles.status == "ACTIVE",
@@ -671,7 +671,7 @@ async def get_auto_annotation_task_files(
         }
         data.append(item)
 
-    return StandardResponse(code=200, message="success", data=data)
+    return StandardResponse(code="0", message="success", data=data)
 
 
 @router.get("/{task_id}/label-studio-project", response_model=StandardResponse[Dict[str, str]])
@@ -773,7 +773,7 @@ async def get_auto_annotation_label_studio_project(
         "datasetId": str(target.dataset_id),
     }
 
-    return StandardResponse(code=200, message="success", data=data)
+    return StandardResponse(code="0", message="success", data=data)
 
 
 @router.delete("/{task_id}", response_model=StandardResponse[bool])
@@ -861,7 +861,7 @@ async def delete_auto_annotation_task(
         )
 
     return StandardResponse(
-        code=200,
+        code="0",
         message="success",
         data=True,
     )
@@ -1029,7 +1029,7 @@ async def sync_auto_annotation_to_label_studio(
     )
 
     return StandardResponse(
-        code=200,
+        code="0",
         message="success",
         data=created_count,
     )
@@ -1190,7 +1190,7 @@ async def import_from_label_studio_to_dataset(
             except Exception:
                 pass
 
-    return StandardResponse(code=200, message="success", data=True)
+    return StandardResponse(code="0", message="success", data=True)
 
 
 @router.post("/{task_id}/sync-db", response_model=StandardResponse[int])
@@ -1272,4 +1272,4 @@ async def sync_auto_task_annotations_to_database(
 
     updated = await sync_service.sync_project_annotations_to_dm(project_id=str(project_id))
 
-    return StandardResponse(code=200, message="success", data=updated)
+    return StandardResponse(code="0", message="success", data=updated)

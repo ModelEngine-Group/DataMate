@@ -66,7 +66,7 @@ async def create_task(
             schedule_collection_task(task.id, task.schedule_expression)
 
         return StandardResponse(
-            code=200,
+            code="0",
             message="Success",
             data=converter_to_response(task)
         )
@@ -86,7 +86,7 @@ async def create_task(
 async def list_tasks(
     page: int = 1,
     size: int = 20,
-    name: Optional[str] = Query(None, description="任务名称模糊查询"),
+    name: Optional[str] = Query(None, description="Fuzzy search by task name"),
     db: AsyncSession = Depends(get_db)
 ):
     """分页查询归集任务"""
@@ -116,7 +116,7 @@ async def list_tasks(
         total_pages = math.ceil(total / size) if total > 0 else 0
 
         return StandardResponse(
-            code=200,
+            code="0",
             message="Success",
             data=PaginatedData(
                 content=items,
@@ -134,7 +134,7 @@ async def list_tasks(
 
 @router.delete("", response_model=StandardResponse[str], status_code=200)
 async def delete_collection_tasks(
-    ids: list[str] = Query(..., description="要删除的任务ID列表"),
+    ids: list[str] = Query(..., description="List of task IDs to delete"),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -173,7 +173,7 @@ async def delete_collection_tasks(
         await db.commit()
 
         return StandardResponse(
-            code=200,
+            code="0",
             message="Collection task deleted successfully",
             data="success"
         )
@@ -193,7 +193,7 @@ async def get_task(
 ):
     """获取归集任务详情"""
     try:
-        # Query the task by ID
+        # 根据ID查询任务
         task = await db.get(CollectionTask, task_id)
         if not task:
             raise HTTPException(
@@ -202,7 +202,7 @@ async def get_task(
             )
 
         return StandardResponse(
-            code=200,
+            code="0",
             message="Success",
             data=converter_to_response(task)
         )

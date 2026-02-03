@@ -118,7 +118,7 @@ async def test_500():
 async def root():
     """根路径，返回服务信息"""
     return StandardResponse(
-        code=200,
+        code="0",
         message="success",
         data={
             "message": f"{settings.app_name} is running",

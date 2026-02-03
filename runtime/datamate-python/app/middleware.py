@@ -12,8 +12,8 @@ logger = get_logger(__name__)
 
 class UserContextMiddleware(BaseHTTPMiddleware):
     """
-    FastAPI middleware that reads `User` header and sets DataScopeHandle.
-    If `jwt_enable` is True, missing header returns 401.
+    读取 `User` 请求头并设置 DataScopeHandle 的 FastAPI 中间件。
+    如果 `jwt_enable` 为 True，缺少请求头将返回 401。
     """
 
     def __init__(self, app):
@@ -24,7 +24,7 @@ class UserContextMiddleware(BaseHTTPMiddleware):
         user: Optional[str] = request.headers.get("User")
         logger.info(f"start filter, current user: {user}, need filter: {self.jwt_enable}")
         if self.jwt_enable and (user is None or user.strip() == ""):
-            payload = {"code": HTTP_401_UNAUTHORIZED, "message": "unauthorized"}
+            payload = {"code": "common.401", "message": "unauthorized", "data": None}
             return Response(content=json.dumps(payload), status_code=HTTP_401_UNAUTHORIZED, media_type="application/json")
 
         DataScopeHandle.set_user_info(user)

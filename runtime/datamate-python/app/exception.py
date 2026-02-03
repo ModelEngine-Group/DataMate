@@ -12,11 +12,11 @@ logger = get_logger(__name__)
 
 # 自定义异常处理器：StarletteHTTPException (包括404等)
 async def starlette_http_exception_handler(request: Request, exc: StarletteHTTPException):
-    """将Starlette的HTTPException转换为标准响应格式"""
+    """将Starlette的HTTPException转换为StandardResponse格式"""
     return JSONResponse(
         status_code=exc.status_code,
         content={
-            "code": exc.status_code,
+            "code": f"common.{exc.status_code}",
             "message": "error",
             "data": {
                 "detail": exc.detail
@@ -26,11 +26,11 @@ async def starlette_http_exception_handler(request: Request, exc: StarletteHTTPE
 
 # 自定义异常处理器：FastAPI HTTPException
 async def fastapi_http_exception_handler(request: Request, exc: HTTPException):
-    """将FastAPI的HTTPException转换为标准响应格式"""
+    """将FastAPI的HTTPException转换为StandardResponse格式"""
     return JSONResponse(
         status_code=exc.status_code,
         content={
-            "code": exc.status_code,
+            "code": f"common.{exc.status_code}",
             "message": "error",
             "data": {
                 "detail": exc.detail
@@ -40,16 +40,16 @@ async def fastapi_http_exception_handler(request: Request, exc: HTTPException):
 
 # 自定义异常处理器：RequestValidationError
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    """将请求验证错误转换为标准响应格式"""
-    # 仅返回每个错误的简要 detail 文本（来自 Pydantic 错误的 `msg` 字段），不返回整个错误对象
+    """将请求验证错误转换为StandardResponse格式"""
+    # 返回每个错误的简要详情文本（来自 Pydantic 错误的 `msg` 字段）
     raw_errors = exc.errors() or []
     errors = [err.get("msg", "Validation error") for err in raw_errors]
 
     return JSONResponse(
         status_code=422,
         content={
-            "code": 422,
-            "message": "error",
+            "code": "common.422",
+            "message": "Validation error",
             "data": {
                 "detail": "Validation error",
                 "errors": errors,
@@ -59,13 +59,13 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 # 自定义异常处理器：未捕获的异常
 async def general_exception_handler(request: Request, exc: Exception):
-    """将未捕获的异常转换为标准响应格式"""
+    """将未捕获的异常转换为StandardResponse格式"""
     logger.error(f"Unhandled exception: {exc}", exc_info=True)
     return JSONResponse(
         status_code=500,
         content={
-            "code": 500,
-            "message": "error",
+            "code": "common.500",
+            "message": "Internal server error",
             "data": {
                 "detail": "Internal server error"
             }

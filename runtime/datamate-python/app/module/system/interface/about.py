@@ -12,7 +12,7 @@ async def health_check():
     """健康检查端点"""
 
     return StandardResponse(
-        code=200,
+        code="0",
         message="success",
         data=HealthResponse(
             status="healthy",

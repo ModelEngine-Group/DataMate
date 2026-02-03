@@ -70,7 +70,7 @@ async def create_ratio_task(
                 )
             )
         return StandardResponse(
-            code=200,
+            code="0",
             message="success",
             data=response_data
         )
@@ -179,7 +179,7 @@ async def list_ratio_tasks(
 
         total_pages = (total + size - 1) // size if size > 0 else 0
         return StandardResponse(
-            code=200,
+            code="0",
             message="success",
             data=PagedRatioTaskResponse(
                 content=content,
@@ -214,7 +214,7 @@ async def delete_ratio_tasks(
         )
         await db.commit()
 
-        return StandardResponse(code=200, message="success", data="success")
+        return StandardResponse(code="0", message="success", data="success")
     except HTTPException:
         await db.rollback()
         raise
@@ -321,7 +321,7 @@ async def get_ratio_task(
         }
 
         return StandardResponse(
-            code=200,
+            code="0",
             message="success",
             data=RatioTaskDetailResponse(
                 id=instance.id,

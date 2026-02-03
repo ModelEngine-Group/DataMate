@@ -16,7 +16,7 @@ async def process_knowledge_base(knowledge_base_id: str, rag_service: RAGService
     try:
         await rag_service.init_graph_rag(knowledge_base_id)
         return StandardResponse(
-            code=200,
+            code="0",
             message="Processing started for knowledge base.",
             data=None
         )
@@ -30,7 +30,7 @@ async def query_knowledge_graph(payload: QueryRequest, rag_service: RAGService =
     """
     try:
         result = await rag_service.query_rag(payload.query, payload.knowledge_base_id)
-        return StandardResponse(code=200, message="success", data=result)
+        return StandardResponse(code="0", message="success", data=result)
     except HTTPException:
         raise
     except Exception as e:

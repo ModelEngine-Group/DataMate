@@ -100,7 +100,7 @@ async def create_synthesis_task(
     )
 
     return StandardResponse(
-        code=200,
+        code="0",
         message="success",
         data=task_item,
     )
@@ -129,7 +129,7 @@ async def get_synthesis_task(
         updated_by=synthesis_task.updated_by,
     )
     return StandardResponse(
-        code=200,
+        code="0",
         message="success",
         data=task_item,
     )
@@ -210,7 +210,7 @@ async def list_synthesis_tasks(
     )
 
     return StandardResponse(
-        code=200,
+        code="0",
         message="Success",
         data=paged,
     )
@@ -259,7 +259,7 @@ async def delete_synthesis_task(
     await db.commit()
 
     return StandardResponse(
-        code=200,
+        code="0",
         message="success",
         data=None,
     )
@@ -311,7 +311,7 @@ async def delete_synthesis_file_task(
     await db.refresh(task)
 
     return StandardResponse(
-        code=200,
+        code="0",
         message="success",
         data=None,
     )
@@ -323,7 +323,7 @@ async def get_prompt_by_type(
 ):
     prompt = get_prompt(synth_type)
     return StandardResponse(
-        code=200,
+        code="0",
         message="Success",
         data=prompt,
     )
@@ -385,7 +385,7 @@ async def list_synthesis_file_tasks(
     )
 
     return StandardResponse(
-        code=200,
+        code="0",
         message="Success",
         data=paged,
     )
@@ -443,7 +443,7 @@ async def list_chunks_by_file(
     )
 
     return StandardResponse(
-        code=200,
+        code="0",
         message="Success",
         data=paged,
     )
@@ -476,7 +476,7 @@ async def list_synthesis_data_by_chunk(
     ]
 
     return StandardResponse(
-        code=200,
+        code="0",
         message="Success",
         data=items,
     )
@@ -508,7 +508,7 @@ async def export_synthesis_task_to_dataset(
         raise HTTPException(status_code=400, detail=str(e))
 
     return StandardResponse(
-        code=200,
+        code="0",
         message="success",
         data=dataset.id,
     )
@@ -538,7 +538,7 @@ async def delete_chunk_with_data(
 
     await db.commit()
 
-    return StandardResponse(code=200, message="success", data=None)
+    return StandardResponse(code="0", message="success", data=None)
 
 
 @router.delete("/chunk/{chunk_id}/data", response_model=StandardResponse)
@@ -558,7 +558,7 @@ async def delete_synthesis_data_by_chunk(
 
     await db.commit()
 
-    return StandardResponse(code=200, message="success", data=deleted)
+    return StandardResponse(code="0", message="success", data=deleted)
 
 
 @router.delete("/data/batch", response_model=StandardResponse)
@@ -568,7 +568,7 @@ async def batch_delete_synthesis_data(
 ):
     """批量删除 t_data_synthesis_data 记录"""
     if not request.ids:
-        return StandardResponse(code=200, message="success", data=0)
+        return StandardResponse(code="0", message="success", data=0)
 
     result = await db.execute(
         delete(SynthesisData).where(SynthesisData.id.in_(request.ids))
@@ -576,7 +576,7 @@ async def batch_delete_synthesis_data(
     deleted = int(getattr(result, "rowcount", 0) or 0)
     await db.commit()
 
-    return StandardResponse(code=200, message="success", data=deleted)
+    return StandardResponse(code="0", message="success", data=deleted)
 
 
 @router.patch("/data/{data_id}", response_model=StandardResponse)
@@ -600,7 +600,7 @@ async def update_synthesis_data_field(
     await db.refresh(record)
 
     return StandardResponse(
-        code=200,
+        code="0",
         message="success",
         data=SynthesisDataItem(
             id=record.id,

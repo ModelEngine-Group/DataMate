@@ -294,7 +294,7 @@ async def create_mapping(
         )
 
         return StandardResponse(
-            code=201,
+            code="0",
             message="success",
             data=response_data,
         )
@@ -338,7 +338,7 @@ async def get_manual_mapping_files(
     )
     file_ids = list(existing_mapping.keys())
     if not file_ids:
-        return StandardResponse(code=200, message="success", data=[])
+        return StandardResponse(code="0", message="success", data=[])
 
     files_result = await db.execute(
         _select(DatasetFiles).where(DatasetFiles.id.in_(file_ids))
@@ -377,7 +377,7 @@ async def get_manual_mapping_files(
         }
         data.append(item)
 
-    return StandardResponse(code=200, message="success", data=data)
+    return StandardResponse(code="0", message="success", data=data)
 
 
 @router.put("/{mapping_id}/files", response_model=StandardResponse[bool])
@@ -413,7 +413,7 @@ async def update_manual_mapping_files(
     requested_ids = {str(fid) for fid in (body.file_ids or [])}
     if not requested_ids:
         # 不做任何变更，但认为成功
-        return StandardResponse(code=200, message="success", data=True)
+        return StandardResponse(code="0", message="success", data=True)
 
     existing_mapping = await sync_service.get_existing_dm_file_mapping(
         mapping.labeling_project_id
@@ -423,7 +423,7 @@ async def update_manual_mapping_files(
     # 仅对新增文件创建任务
     new_ids = sorted(requested_ids - existing_ids)
     if not new_ids:
-        return StandardResponse(code=200, message="success", data=True)
+        return StandardResponse(code="0", message="success", data=True)
 
     stmt = (
         _select(DatasetFiles.dataset_id, DatasetFiles.id)
@@ -498,7 +498,7 @@ async def update_manual_mapping_files(
             delete_orphans=False,
         )
 
-    return StandardResponse(code=200, message="success", data=True)
+    return StandardResponse(code="0", message="success", data=True)
 
 
 @router.post("/{mapping_id}/sync-label-studio-back", response_model=StandardResponse[bool])
@@ -602,7 +602,7 @@ async def import_manual_from_label_studio_to_dataset(
             except Exception:
                 pass
 
-    return StandardResponse(code=200, message="success", data=True)
+    return StandardResponse(code="0", message="success", data=True)
 
 
 @router.post("/{mapping_id}/sync-db", response_model=StandardResponse[int])
@@ -637,7 +637,7 @@ async def sync_manual_annotations_to_database(
         project_id=str(mapping.labeling_project_id),
     )
 
-    return StandardResponse(code=200, message="success", data=updated)
+    return StandardResponse(code="0", message="success", data=updated)
 
 @router.get("", response_model=StandardResponse[PaginatedData[DatasetMappingResponse]])
 async def list_mappings(
@@ -688,7 +688,7 @@ async def list_mappings(
         logger.info(f"List mappings: page={page}, returned {len(mappings)}/{total}, templates_included: {include_template}")
 
         return StandardResponse(
-            code=200,
+            code="0",
             message="success",
             data=paginated_data
         )
@@ -728,7 +728,7 @@ async def get_mapping(
         logger.info(f"Found mapping: {mapping.id}, template_included: {mapping.template is not None}")
 
         return StandardResponse(
-            code=200,
+            code="0",
             message="success",
             data=mapping
         )
@@ -790,7 +790,7 @@ async def get_mappings_by_source(
         logger.info(f"Found {len(mappings)} mappings on page {page}, total: {total}, templates_included: {include_template}")
 
         return StandardResponse(
-            code=200,
+            code="0",
             message="success",
             data=paginated_data
         )
@@ -864,7 +864,7 @@ async def delete_mapping(
         logger.info(f"Successfully deleted mapping: {id}, Label Studio project: {labeling_project_id}")
 
         return StandardResponse(
-            code=200,
+            code="0",
             message="success",
             data=DeleteDatasetResponse(
                 id=id,

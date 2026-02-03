@@ -91,7 +91,7 @@ async def sync_dataset_content(
         logger.info(f"Sync completed: {result.synced_files}/{result.total_files} files")
         
         return StandardResponse(
-            code=200,
+            code="0",
             message="success",
             data=result
         )
@@ -166,7 +166,7 @@ async def sync_annotations(
         logger.info(f"Annotation sync completed: synced_to_dm={result.synced_to_dm}, synced_to_ls={result.synced_to_ls}, conflicts_resolved={result.conflicts_resolved}")
         
         return StandardResponse(
-            code=200,
+            code="0",
             message="success",
             data=result
         )
@@ -200,7 +200,7 @@ async def check_label_studio_connection():
             token_display = settings.label_studio_user_token[:10] + "..." if settings.label_studio_user_token else "None"
             
             return StandardResponse(
-                code=200,
+                code="0",
                 message="success",
                 data={
                     "status": "connected",
@@ -214,7 +214,7 @@ async def check_label_studio_connection():
             token_display = settings.label_studio_user_token[:10] + "..." if settings.label_studio_user_token else "None"
             
             return StandardResponse(
-                code=500,
+                code="common.500",
                 message="error",
                 data={
                     "status": "disconnected",
@@ -314,7 +314,7 @@ async def update_file_tags(
     )
     
     return StandardResponse(
-        code=200,
+        code="0",
         message="标签更新成功",
         data=response_data
     )
