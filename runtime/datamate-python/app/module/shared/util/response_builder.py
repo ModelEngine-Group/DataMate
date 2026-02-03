@@ -1,7 +1,7 @@
 """
 用于创建统一API响应的响应构建工具
 """
-from typing import Any, Optional
+from typing import Any
 
 from app.module.shared.schema.common import StandardResponse, ResponseCode
 

@@ -7,8 +7,25 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi import FastAPI, Request, HTTPException, status
 
 from .core.logging import setup_logging, get_logger
+from .core.exception import BusinessException
 
 logger = get_logger(__name__)
+
+# 自定义异常处理器：BusinessException（优先级最高）
+async def business_exception_handler(request: Request, exc: BusinessException):
+    """
+    将业务异常转换为StandardResponse格式
+
+    业务异常使用预定义的错误码和消息，直接返回给客户端。
+    """
+    return JSONResponse(
+        status_code=500,  # 业务异常默认返回500，错误信息在code字段中
+        content={
+            "code": exc.error_code,
+            "message": exc.message,
+            "data": exc.data
+        }
+    )
 
 # 自定义异常处理器：StarletteHTTPException (包括404等)
 async def starlette_http_exception_handler(request: Request, exc: StarletteHTTPException):

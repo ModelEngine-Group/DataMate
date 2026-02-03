@@ -43,6 +43,8 @@ class ExceptionHandlerMiddleware(BaseHTTPMiddleware):
     确保所有异常都被捕获并转换为 StandardResponse 格式，
     即使在 debug 模式下也不会泄露堆栈信息给客户端。
     堆栈信息只记录到日志文件中。
+
+    注意： BusinessException 不在此处理，由专门的异常处理器处理
     """
 
     async def dispatch(self, request: Request, call_next):
@@ -50,6 +52,11 @@ class ExceptionHandlerMiddleware(BaseHTTPMiddleware):
             response = await call_next(request)
             return response
         except Exception as exc:
+            # 如果是业务异常，不要处理，让专门的异常处理器处理
+            from app.core.exception import BusinessException
+            if isinstance(exc, BusinessException):
+                raise  # 重新抛出，由 business_exception_handler 处理
+
             # 记录完整的堆栈信息到日志（包含文件名、行号、完整错误）
             logger.error(
                 f"Unhandled exception in {request.method} {request.url.path}: {str(exc)}",

@@ -8,11 +8,13 @@ from fastapi_mcp import FastApiMCP
 from sqlalchemy import text
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from app.core.exception import BusinessException, BusinessErrorCodeEnum
 from app.middleware import UserContextMiddleware, ExceptionHandlerMiddleware
 from .core.config import settings
 from .core.logging import setup_logging, get_logger
 from .db.session import AsyncSessionLocal
 from .exception import (
+    business_exception_handler,
     starlette_http_exception_handler,
     fastapi_http_exception_handler,
     validation_exception_handler,
@@ -100,7 +102,8 @@ app.include_router(router)
 # 输出注册的路由（每行一个）
 logger.debug(f"Registered routes refer to http://localhost:{settings.port}/redoc")
 
-# 注册全局异常处理器
+# 注册全局异常处理器（注意顺序：BusinessException 必须在 Exception 之前）
+app.add_exception_handler(BusinessException, business_exception_handler)  # type: ignore
 app.add_exception_handler(StarletteHTTPException, starlette_http_exception_handler) # type: ignore
 app.add_exception_handler(HTTPException, fastapi_http_exception_handler) # type: ignore
 app.add_exception_handler(RequestValidationError, validation_exception_handler) # type: ignore
@@ -116,6 +119,11 @@ async def test_404():
 async def test_500():
     """测试500异常处理"""
     raise Exception("Test uncaught exception")
+
+@app.get("/test-business-exception", include_in_schema=False)
+async def test_business_exception():
+    """测试业务异常处理"""
+    raise BusinessException(BusinessErrorCodeEnum.TASK_NOT_FOUND)
 
 # 根路径重定向到文档
 @app.get("/", response_model=StandardResponse[Dict[str, Any]], include_in_schema=False)
