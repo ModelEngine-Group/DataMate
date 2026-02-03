@@ -88,7 +88,7 @@ async def system_error_handler(request: Request, exc: SystemError) -> JSONRespon
     返回 HTTP 500 和经过净化的错误消息。
     """
     logger.error(
-        f"系统错误发生在 {request.method} {request.url.path}: {exc.message}",
+        f"System error occurred at {request.method} {request.url.path}: {exc.message}",
         exc_info=True
     )
 
@@ -164,7 +164,7 @@ async def generic_exception_handler(request: Request, exc: Exception) -> JSONRes
     并返回经过净化的错误给客户端。
     """
     logger.error(
-        f"未处理的异常发生在 {request.method} {request.url.path}: {str(exc)}",
+        f"Unhandled exception occurred at {request.method} {request.url.path}: {str(exc)}",
         exc_info=True
     )
 

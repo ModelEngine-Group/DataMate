@@ -1,7 +1,7 @@
 """
 全局异常处理中间件，支持自动响应包装
 
-此中间件提供自动的返回值和异常转换，确保所有响应都符合标准化的 JSON 格式。
+此中间件提供自动地返回值和异常转换，确保所有响应都符合标准化的 JSON 格式。
 关键特性：
 - 自动包装 dict/list 响应为 StandardResponse 格式
 - 异常处理，并记录适当的日志
@@ -48,7 +48,7 @@ class ExceptionHandlingMiddleware(BaseHTTPMiddleware):
         except SystemError as exc:
             # 记录系统错误及其完整堆栈跟踪
             logger.error(
-                f"系统错误发生在 {request.method} {request.url.path}",
+                f"System error occurred at {request.method} {request.url.path}",
                 exc_info=True
             )
             return self._error_response(
@@ -59,7 +59,7 @@ class ExceptionHandlingMiddleware(BaseHTTPMiddleware):
 
         except BaseError as exc:
             # 处理其他自定义错误
-            logger.warning(f"BaseError发生在 {request.url.path}: {exc.message}")
+            logger.warning(f"BaseError occurred at {request.url.path}: {exc.message}")
             return self._error_response(
                 code=exc.code,
                 message=exc.message,
@@ -69,7 +69,7 @@ class ExceptionHandlingMiddleware(BaseHTTPMiddleware):
         except Exception as exc:
             # 捕获所有未处理的异常
             logger.error(
-                f"未处理的异常发生在 {request.method} {request.url.path}",
+                f"Unhandled exception occurred at {request.method} {request.url.path}",
                 exc_info=True
             )
             return self._error_response(
