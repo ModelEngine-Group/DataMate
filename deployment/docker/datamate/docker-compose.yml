@@ -314,10 +314,28 @@ services:
     profiles:
       - milvus
 
+  gaussdb:
+    image: opengauss/opengauss-server:latest
+    container_name: opengauss
+    hostname: opengauss
+    privileged: true
+    environment:
+    - GS_PASSWORD=Gaussdb@123
+    ports:
+    - "8888:5432"
+    volumes:
+    - gaussdb_data:/var/lib/opengauss/data
+    command: gaussdb -D /var/lib/opengauss/data
+    restart: unless-stopped
+    networks:
+    - datamate
+
 # ==============================
 # Volumes
 # ==============================
 volumes:
+  gaussdb_data:
+    name: gaussdb-data
   dataset_volume:
     name: datamate-dataset-volume
   flow_volume:

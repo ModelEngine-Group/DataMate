@@ -1,0 +1,56 @@
+{
+  "user": {
+    "actions": {
+      "login": "登录",
+      "register": "注册",
+      "logout": "退出登录"
+    },
+    "messages": {
+      "loginSuccess": "登录成功",
+      "loginFailed": "登录失败，请稍后重试",
+      "signupSuccess": "注册成功，已自动登录",
+      "signupFailed": "注册失败，请稍后重试",
+      "logoutSuccess": "已退出登录",
+      "passwordMismatch": "两次输入的密码不一致"
+    },
+    "loginDialog": {
+      "title": "登录",
+      "description": "请输入您的用户名和密码登录系统",
+      "submitButton": "登录",
+      "noAccount": "还没有账号？",
+      "registerNow": "立即注册"
+    },
+    "signupDialog": {
+      "title": "注册",
+      "description": "创建您的账户以使用 DataMate 系统",
+      "submitButton": "注册",
+      "hasAccount": "已有账号？",
+      "loginNow": "立即登录"
+    }
+  },
+  "fields": {
+    "username": "用户名",
+    "email": "邮箱",
+    "password": "密码",
+    "confirmPassword": "确认密码"
+  },
+  "placeholders": {
+    "username": "请输入用户名",
+    "email": "请输入邮箱",
+    "password": "请输入密码",
+    "confirmPassword": "请再次输入密码"
+  },
+  "validations": {
+    "usernameRequired": "请输入用户名",
+    "emailRequired": "请输入邮箱",
+    "emailInvalid": "请输入有效的邮箱地址",
+    "passwordRequired": "请输入密码",
+    "passwordTooShort": "密码至少需要6个字符",
+    "confirmPasswordRequired": "请确认密码",
+    "passwordMismatch": "两次输入的密码不一致"
+  },
+  "header": {
+    "simplifiedChinese": "简体中文",
+    "english": "English"
+  }
+}

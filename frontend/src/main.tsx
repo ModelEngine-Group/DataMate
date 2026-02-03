@@ -9,6 +9,7 @@ import { store } from "./store";
 import { Provider } from "react-redux";
 import theme from "./theme";
 import {errorConfigStore} from "@/utils/errorConfigStore.ts";
+import "@/i18n";
 
 async function bootstrap() {
   const container = document.getElementById("root");
