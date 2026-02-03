@@ -51,51 +51,51 @@ export function SignupDialog({ open, onOpenChange, onSignup, loading, onLoginCli
       >
         <Form.Item
           name="username"
-          label={t('fields.username')}
-          rules={[{ required: true, message: t('validations.usernameRequired') }]}
+          label={t('user.fields.username')}
+          rules={[{ required: true, message: t('user.validations.usernameRequired') }]}
         >
-          <Input placeholder={t('placeholders.username')} />
+          <Input placeholder={t('user.placeholders.username')} />
         </Form.Item>
 
         <Form.Item
           name="email"
-          label={t('fields.email')}
+          label={t('user.fields.email')}
           rules={[
-            { required: true, message: t('validations.emailRequired') },
-            { type: "email", message: t('validations.emailInvalid') },
+            { required: true, message: t('user.validations.emailRequired') },
+            { type: "email", message: t('user.validations.emailInvalid') },
           ]}
         >
-          <Input placeholder={t('placeholders.email')} type="email" />
+          <Input placeholder={t('user.placeholders.email')} type="email" />
         </Form.Item>
 
         <Form.Item
           name="password"
-          label={t('fields.password')}
+          label={t('user.fields.password')}
           rules={[
-            { required: true, message: t('validations.passwordRequired') },
-            { min: 6, message: t('validations.passwordTooShort') },
+            { required: true, message: t('user.validations.passwordRequired') },
+            { min: 6, message: t('user.validations.passwordTooShort') },
           ]}
         >
-          <Input.Password placeholder={t('placeholders.password')} />
+          <Input.Password placeholder={t('user.placeholders.password')} />
         </Form.Item>
 
         <Form.Item
           name="confirmPassword"
-          label={t('fields.confirmPassword')}
+          label={t('user.fields.confirmPassword')}
           dependencies={["password"]}
           rules={[
-            { required: true, message: t('validations.confirmPasswordRequired') },
+            { required: true, message: t('user.validations.confirmPasswordRequired') },
             ({ getFieldValue }) => ({
               validator(_, value) {
                 if (!value || getFieldValue("password") === value) {
                   return Promise.resolve()
                 }
-                return Promise.reject(new Error(t('validations.passwordMismatch')))
+                return Promise.reject(new Error(t('user.validations.passwordMismatch')))
               },
             }),
           ]}
         >
-          <Input.Password placeholder={t('placeholders.confirmPassword')} />
+          <Input.Password placeholder={t('user.placeholders.confirmPassword')} />
         </Form.Item>
 
         <Form.Item>

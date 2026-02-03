@@ -1,4 +1,8 @@
 {
+  "header": {
+    "simplifiedChinese": "简体中文",
+    "english": "English"
+  },
   "user": {
     "actions": {
       "login": "登录",
@@ -26,31 +30,246 @@
       "submitButton": "注册",
       "hasAccount": "已有账号？",
       "loginNow": "立即登录"
+    },
+    "fields": {
+      "username": "用户名",
+      "email": "邮箱",
+      "password": "密码",
+      "confirmPassword": "确认密码"
+    },
+    "placeholders": {
+      "username": "请输入用户名",
+      "email": "请输入邮箱",
+      "password": "请输入密码",
+      "confirmPassword": "请再次输入密码"
+    },
+    "validations": {
+      "usernameRequired": "请输入用户名",
+      "emailRequired": "请输入邮箱",
+      "emailInvalid": "请输入有效的邮箱地址",
+      "passwordRequired": "请输入密码",
+      "passwordTooShort": "密码至少需要6个字符",
+      "confirmPasswordRequired": "请确认密码",
+      "passwordMismatch": "两次输入的密码不一致"
     }
   },
-  "fields": {
-    "username": "用户名",
-    "email": "邮箱",
-    "password": "密码",
-    "confirmPassword": "确认密码"
+  "dataCollection": {
+    "title": "数据归集",
+    "tabs": {
+      "taskManagement": "任务管理",
+      "taskExecution": "执行记录",
+      "taskTemplate": "模板管理"
+    },
+    "taskManagement": {
+      "filters": {
+        "statusFilter": "状态筛选",
+        "allStatus": "全部状态",
+        "searchPlaceholder": "搜索任务名称..."
+      },
+      "columns": {
+        "taskName": "任务名称",
+        "status": "状态",
+        "template": "所用模板",
+        "syncMode": "同步方式",
+        "cronExpression": "Cron调度表达式",
+        "timeout": "超时时间",
+        "description": "描述",
+        "createdAt": "创建时间",
+        "updatedAt": "更新时间",
+        "actions": "操作"
+      },
+      "actions": {
+        "start": "启动",
+        "stop": "停止",
+        "executionRecords": "执行记录",
+        "delete": "删除"
+      },
+      "messages": {
+        "startSuccess": "任务启动请求已发送",
+        "stopSuccess": "任务停止请求已发送",
+        "deleteSuccess": "任务已删除",
+        "deleteConfirm": "确定要删除该任务吗？此操作不可撤销。",
+        "confirmDelete": "删除",
+        "cancel": "取消"
+      }
+    },
+    "templateManagement": {
+      "filters": {
+        "templateType": "模板类型",
+        "all": "全部",
+        "builtIn": "内置",
+        "custom": "自定义",
+        "searchPlaceholder": "搜索模板名称..."
+      },
+      "columns": {
+        "templateName": "模板名称",
+        "templateType": "模板类型",
+        "source": "源端",
+        "target": "目标端",
+        "description": "描述",
+        "createdAt": "创建时间",
+        "updatedAt": "更新时间"
+      },
+      "messages": {
+        "refreshFailed": "刷新失败"
+      }
+    },
+    "execution": {
+      "filters": {
+        "statusFilter": "状态筛选",
+        "allStatus": "全部状态",
+        "running": "运行中",
+        "success": "成功",
+        "failed": "失败",
+        "stopped": "停止",
+        "searchPlaceholder": "搜索任务名称..."
+      },
+      "duration": {
+        "minutesSuffix": "分钟",
+        "secondsSuffix": "秒"
+      },
+      "messages": {
+        "loadLogFailed": "日志加载失败"
+      },
+      "triggerType": {
+        "manual": "手动",
+        "scheduled": "定时",
+        "api": "API"
+      },
+      "columns": {
+        "taskName": "任务名称",
+        "status": "状态",
+        "startTime": "开始时间",
+        "endTime": "结束时间",
+        "duration": "执行时长",
+        "errorMessage": "错误信息",
+        "actions": "操作"
+      },
+      "actions": {
+        "viewLog": "查看日志"
+      },
+      "modal": {
+        "title": "执行日志",
+        "downloadLog": "下载日志",
+        "close": "关闭",
+        "loading": "Loading...",
+        "empty": "(empty)"
+      },
+      "datePicker": {
+        "startTime": "开始时间",
+        "endTime": "结束时间"
+      }
+    },
+    "createTask": {
+      "title": "创建归集任务",
+      "back": "返回",
+      "cancel": "取消",
+      "submit": "创建任务",
+      "actions": {
+        "formatJson": "格式化JSON"
+      },
+      "basicInfo": {
+        "title": "基本信息",
+        "name": "名称",
+        "namePlaceholder": "请输入任务名称",
+        "nameRequired": "请输入任务名称",
+        "timeout": "超时时间（秒）",
+        "timeoutPlaceholder": "默认 3600",
+        "timeoutRequired": "请输入超时时间",
+        "description": "描述",
+        "descriptionPlaceholder": "请输入任务描述"
+      },
+      "syncConfig": {
+        "title": "同步配置",
+        "syncMode": {
+          "label": "同步方式",
+          "once": "一次性执行",
+          "scheduled": "定时执行"
+        },
+        "cronRequired": "请输入Cron表达式"
+      },
+      "templateConfig": {
+        "title": "模板配置",
+        "selectTemplate": "选择模板",
+        "selectTemplatePlaceholder": "请选择归集模板",
+        "selectTemplateRequired": "请选择归集模板"
+      },
+      "templateParams": {
+        "title": "模板参数"
+      },
+      "sourceParams": {
+        "title": "源端参数"
+      },
+      "targetParams": {
+        "title": "目标端参数"
+      },
+      "messages": {
+        "loadTemplatesFailed": "加载归集模板失败",
+        "createSuccess": "任务创建成功",
+        "errorWithDetail": "{message}：{detail}",
+        "jsonObjectRequired": "必须是JSON对象",
+        "jsonObjectInvalid": "请输入合法的JSON对象",
+        "jsonFormatError": "JSON格式错误",
+        "jsonFormatErrorWithMessage": "JSON格式错误：{message}"
+      },
+      "placeholders": {
+        "enter": "请输入",
+        "select": "请选择",
+        "enterWithLabel": "请输入{label}",
+        "selectWithLabel": "请选择{label}"
+      }
+    },
+    "scheduler": {
+      "monthDaySuffix": "日",
+      "labels": {
+        "executionPeriod": "执行周期",
+        "executionDate": "执行日期",
+        "executionTime": "执行时间",
+        "selectWeekday": "选择周几",
+        "selectDate": "选择日期",
+        "selectTime": "选择时间"
+      },
+      "periods": {
+        "once": "仅执行一次",
+        "daily": "每天执行",
+        "weekly": "每周执行",
+        "monthly": "每月执行"
+      },
+      "weekdays": {
+        "sunday": "周日",
+        "monday": "周一",
+        "tuesday": "周二",
+        "wednesday": "周三",
+        "thursday": "周四",
+        "friday": "周五",
+        "saturday": "周六"
+      },
+      "timePresets": {
+        "morning9": "上午 9:00",
+        "noon12": "中午 12:00",
+        "afternoon2": "下午 2:00",
+        "afternoon6": "下午 6:00",
+        "evening8": "晚上 8:00",
+        "midnight0": "午夜 0:00"
+      }
+    }
   },
-  "placeholders": {
-    "username": "请输入用户名",
-    "email": "请输入邮箱",
-    "password": "请输入密码",
-    "confirmPassword": "请再次输入密码"
-  },
-  "validations": {
-    "usernameRequired": "请输入用户名",
-    "emailRequired": "请输入邮箱",
-    "emailInvalid": "请输入有效的邮箱地址",
-    "passwordRequired": "请输入密码",
-    "passwordTooShort": "密码至少需要6个字符",
-    "confirmPasswordRequired": "请确认密码",
-    "passwordMismatch": "两次输入的密码不一致"
-  },
-  "header": {
-    "simplifiedChinese": "简体中文",
-    "english": "English"
+  "common": {
+    "actions": {
+      "createTask": "创建任务"
+    },
+    "placeholders": {
+      "empty": "-"
+    },
+    "status": {
+      "task": {
+        "running": "运行",
+        "stopped": "停止",
+        "failed": "错误",
+        "completed": "成功",
+        "draft": "草稿",
+        "pending": "就绪"
+      }
+    }
   }
 }

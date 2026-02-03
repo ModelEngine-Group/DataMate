@@ -43,18 +43,18 @@ export function LoginDialog({ open, onOpenChange, onLogin, loading, onSignupClic
       >
         <Form.Item
           name="username"
-          label={t('fields.username')}
-          rules={[{ required: true, message: t('validations.usernameRequired') }]}
+          label={t('user.fields.username')}
+          rules={[{ required: true, message: t('user.validations.usernameRequired') }]}
         >
-          <Input placeholder={t('placeholders.username')} />
+          <Input placeholder={t('user.placeholders.username')} />
         </Form.Item>
 
         <Form.Item
           name="password"
-          label={t('fields.password')}
-          rules={[{ required: true, message: t('validations.passwordRequired') }]}
+          label={t('user.fields.password')}
+          rules={[{ required: true, message: t('user.validations.passwordRequired') }]}
         >
-          <Input.Password placeholder={t('placeholders.password')} />
+          <Input.Password placeholder={t('user.placeholders.password')} />
         </Form.Item>
 
         <Form.Item>

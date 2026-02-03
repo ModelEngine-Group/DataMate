@@ -1,4 +1,8 @@
 {
+  "header": {
+    "simplifiedChinese": "简体中文",
+    "english": "English"
+  },
   "user": {
     "actions": {
       "login": "Login",
@@ -26,31 +30,246 @@
       "submitButton": "Register",
       "hasAccount": "Already have an account?",
       "loginNow": "Login now"
+    },
+    "fields": {
+      "username": "Username",
+      "email": "Email",
+      "password": "Password",
+      "confirmPassword": "Confirm Password"
+    },
+    "placeholders": {
+      "username": "Enter username",
+      "email": "Enter email",
+      "password": "Enter password",
+      "confirmPassword": "Enter password again"
+    },
+    "validations": {
+      "usernameRequired": "Please enter username",
+      "emailRequired": "Please enter email",
+      "emailInvalid": "Please enter a valid email address",
+      "passwordRequired": "Please enter password",
+      "passwordTooShort": "Password must be at least 6 characters",
+      "confirmPasswordRequired": "Please confirm password",
+      "passwordMismatch": "Passwords do not match"
     }
   },
-  "fields": {
-    "username": "Username",
-    "email": "Email",
-    "password": "Password",
-    "confirmPassword": "Confirm Password"
+  "dataCollection": {
+    "title": "Data Collection",
+    "tabs": {
+      "taskManagement": "Task Management",
+      "taskExecution": "Execution Records",
+      "taskTemplate": "Template Management"
+    },
+    "taskManagement": {
+      "filters": {
+        "statusFilter": "Status Filter",
+        "allStatus": "All Status",
+        "searchPlaceholder": "Search task name..."
+      },
+      "columns": {
+        "taskName": "Task Name",
+        "status": "Status",
+        "template": "Template",
+        "syncMode": "Sync Mode",
+        "cronExpression": "Cron Expression",
+        "timeout": "Timeout",
+        "description": "Description",
+        "createdAt": "Created At",
+        "updatedAt": "Updated At",
+        "actions": "Actions"
+      },
+      "actions": {
+        "start": "Start",
+        "stop": "Stop",
+        "executionRecords": "Execution Records",
+        "delete": "Delete"
+      },
+      "messages": {
+        "startSuccess": "Task start request sent",
+        "stopSuccess": "Task stop request sent",
+        "deleteSuccess": "Task deleted",
+        "deleteConfirm": "Are you sure you want to delete this task? This action cannot be undone.",
+        "confirmDelete": "Delete",
+        "cancel": "Cancel"
+      }
+    },
+    "templateManagement": {
+      "filters": {
+        "templateType": "Template Type",
+        "all": "All",
+        "builtIn": "Built-in",
+        "custom": "Custom",
+        "searchPlaceholder": "Search template name..."
+      },
+      "columns": {
+        "templateName": "Template Name",
+        "templateType": "Template Type",
+        "source": "Source",
+        "target": "Target",
+        "description": "Description",
+        "createdAt": "Created At",
+        "updatedAt": "Updated At"
+      },
+      "messages": {
+        "refreshFailed": "Refresh failed"
+      }
+    },
+    "execution": {
+      "filters": {
+        "statusFilter": "Status Filter",
+        "allStatus": "All Status",
+        "running": "Running",
+        "success": "Success",
+        "failed": "Failed",
+        "stopped": "Stopped",
+        "searchPlaceholder": "Search task name..."
+      },
+      "duration": {
+        "minutesSuffix": "min",
+        "secondsSuffix": "s"
+      },
+      "messages": {
+        "loadLogFailed": "Failed to load log"
+      },
+      "triggerType": {
+        "manual": "Manual",
+        "scheduled": "Scheduled",
+        "api": "API"
+      },
+      "columns": {
+        "taskName": "Task Name",
+        "status": "Status",
+        "startTime": "Start Time",
+        "endTime": "End Time",
+        "duration": "Duration",
+        "errorMessage": "Error Message",
+        "actions": "Actions"
+      },
+      "actions": {
+        "viewLog": "View Log"
+      },
+      "modal": {
+        "title": "Execution Log",
+        "downloadLog": "Download Log",
+        "close": "Close",
+        "loading": "Loading...",
+        "empty": "(empty)"
+      },
+      "datePicker": {
+        "startTime": "Start Time",
+        "endTime": "End Time"
+      }
+    },
+    "createTask": {
+      "title": "Create Collection Task",
+      "back": "Back",
+      "cancel": "Cancel",
+      "submit": "Create Task",
+      "actions": {
+        "formatJson": "Format JSON"
+      },
+      "basicInfo": {
+        "title": "Basic Information",
+        "name": "Name",
+        "namePlaceholder": "Please enter task name",
+        "nameRequired": "Please enter task name",
+        "timeout": "Timeout (seconds)",
+        "timeoutPlaceholder": "Default 3600",
+        "timeoutRequired": "Please enter timeout",
+        "description": "Description",
+        "descriptionPlaceholder": "Please enter task description"
+      },
+      "syncConfig": {
+        "title": "Sync Configuration",
+        "syncMode": {
+          "label": "Sync Mode",
+          "once": "Once",
+          "scheduled": "Scheduled"
+        },
+        "cronRequired": "Please enter Cron expression"
+      },
+      "templateConfig": {
+        "title": "Template Configuration",
+        "selectTemplate": "Select Template",
+        "selectTemplatePlaceholder": "Please select collection template",
+        "selectTemplateRequired": "Please select collection template"
+      },
+      "templateParams": {
+        "title": "Template Parameters"
+      },
+      "sourceParams": {
+        "title": "Source Parameters"
+      },
+      "targetParams": {
+        "title": "Target Parameters"
+      },
+      "messages": {
+        "loadTemplatesFailed": "Failed to load collection templates",
+        "createSuccess": "Task created successfully",
+        "errorWithDetail": "{message}: {detail}",
+        "jsonObjectRequired": "Must be a JSON object",
+        "jsonObjectInvalid": "Please enter a valid JSON object",
+        "jsonFormatError": "Invalid JSON format",
+        "jsonFormatErrorWithMessage": "Invalid JSON format: {message}"
+      },
+      "placeholders": {
+        "enter": "Please enter",
+        "select": "Please select",
+        "enterWithLabel": "Please enter {label}",
+        "selectWithLabel": "Please select {label}"
+      }
+    },
+    "scheduler": {
+      "monthDaySuffix": " day",
+      "labels": {
+        "executionPeriod": "Execution Period",
+        "executionDate": "Execution Date",
+        "executionTime": "Execution Time",
+        "selectWeekday": "Select weekday",
+        "selectDate": "Select date",
+        "selectTime": "Select time"
+      },
+      "periods": {
+        "once": "Once",
+        "daily": "Daily",
+        "weekly": "Weekly",
+        "monthly": "Monthly"
+      },
+      "weekdays": {
+        "sunday": "Sunday",
+        "monday": "Monday",
+        "tuesday": "Tuesday",
+        "wednesday": "Wednesday",
+        "thursday": "Thursday",
+        "friday": "Friday",
+        "saturday": "Saturday"
+      },
+      "timePresets": {
+        "morning9": "9:00 AM",
+        "noon12": "12:00 PM",
+        "afternoon2": "2:00 PM",
+        "afternoon6": "6:00 PM",
+        "evening8": "8:00 PM",
+        "midnight0": "12:00 AM"
+      }
+    }
   },
-  "placeholders": {
-    "username": "Enter username",
-    "email": "Enter email",
-    "password": "Enter password",
-    "confirmPassword": "Enter password again"
-  },
-  "validations": {
-    "usernameRequired": "Please enter username",
-    "emailRequired": "Please enter email",
-    "emailInvalid": "Please enter a valid email address",
-    "passwordRequired": "Please enter password",
-    "passwordTooShort": "Password must be at least 6 characters",
-    "confirmPasswordRequired": "Please confirm password",
-    "passwordMismatch": "Passwords do not match"
-  },
-  "header": {
-    "simplifiedChinese": "简体中文",
-    "english": "English"
+  "common": {
+    "actions": {
+      "createTask": "Create Task"
+    },
+    "placeholders": {
+      "empty": "-"
+    },
+    "status": {
+      "task": {
+        "running": "Running",
+        "stopped": "Stopped",
+        "failed": "Failed",
+        "completed": "Completed",
+        "draft": "Draft",
+        "pending": "Ready"
+      }
+    }
   }
 }
