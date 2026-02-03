@@ -19,7 +19,7 @@ from app.db.session import AsyncSessionLocal
 from app.middleware import UserContextMiddleware
 from app.module import router
 from app.module.collection.schedule import load_scheduled_collection_tasks, set_collection_scheduler
-from .module.shared.schedule import Scheduler
+from app.module.shared.schedule import Scheduler
 
 setup_logging()
 logger = get_logger(__name__)
