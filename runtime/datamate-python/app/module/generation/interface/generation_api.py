@@ -496,8 +496,10 @@ async def export_synthesis_task_to_dataset(
     - 仅写入文件，不再创建数据集。
     """
     exporter = SynthesisDatasetExporter(db)
+    generation = GenerationService(db)
     try:
         dataset = await exporter.export_task_to_dataset(task_id, dataset_id)
+        await generation.add_synthesis_to_graph(db, task_id, dataset_id)
     except SynthesisExportError as e:
         logger.error(
             "Failed to export synthesis task %s to dataset %s: %s",
