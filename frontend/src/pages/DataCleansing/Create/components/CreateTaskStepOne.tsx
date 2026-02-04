@@ -1,6 +1,6 @@
 import RadioCard from "@/components/RadioCard";
 import { queryDatasetsUsingGet } from "@/pages/DataManagement/dataset.api";
-import { datasetTypes, mapDataset } from "@/pages/DataManagement/dataset.const";
+import { getDatasetTypeMap, mapDataset } from "@/pages/DataManagement/dataset.const";
 import {
   Dataset,
   DatasetSubType,
@@ -9,6 +9,7 @@ import {
 import { Input, Select, Form, AutoComplete } from "antd";
 import TextArea from "antd/es/input/TextArea";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 export default function CreateTaskStepOne({
   form,
@@ -26,7 +27,9 @@ export default function CreateTaskStepOne({
   };
   setTaskConfig: (config: any) => void;
 }) {
+  const { t } = useTranslation();
   const [datasets, setDatasets] = useState<Dataset[]>([]);
+  const datasetTypes = getDatasetTypeMap(t);
 
   const fetchDatasets = async () => {
     const { data } = await queryDatasetsUsingGet({ page: 1, size: 1000 });

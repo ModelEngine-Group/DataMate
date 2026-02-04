@@ -1,12 +1,13 @@
 import { Select, Input, Form, Radio, Modal, Button, UploadFile, Switch, App, Tag } from "antd";
 import { InboxOutlined } from "@ant-design/icons";
-import { dataSourceOptions, datasetTypeMap } from "../../dataset.const";
+import {getDataSourceMap, getDatasetTypeMap} from "../../dataset.const";
 import { Dataset, DataSource, DatasetType } from "../../dataset.model";
 import { useEffect, useMemo, useState } from "react";
 import { queryTasksUsingGet } from "@/pages/DataCollection/collection.apis";
 import { updateDatasetByIdUsingPut, createDatasetDirectoryUsingPost } from "../../dataset.api";
 import { sliceFile } from "@/utils/file.util";
 import Dragger from "antd/es/upload/Dragger";
+import { useTranslation } from "react-i18next";
 
 const DATASET_TYPE_SAFE_SUFFIXES: Record<DatasetType, string[]> = {
   [DatasetType.TEXT]: [
@@ -98,7 +99,7 @@ function getFileExtension(name?: string): string | null {
   return lower.slice(lastDot);
 }
 
-function resolveDatasetType(data: Dataset | null | undefined): DatasetType | undefined {
+function resolveDatasetType(data: Dataset | null | undefined, t: (key: string) => string): DatasetType | undefined {
   if (!data) return undefined;
 
   const rawDatasetType = (data as any).datasetType as string | undefined;
@@ -112,7 +113,7 @@ function resolveDatasetType(data: Dataset | null | undefined): DatasetType | und
   // 2. 尝试通过 type 字段的中文标签匹配（mapDataset 中会把 type 设置为中文标签）
   const typeLabel = (data as any).type as string | undefined;
   if (typeLabel) {
-    const matched = Object.values(datasetTypeMap).find((item) => item.label === typeLabel);
+    const matched = Object.values(getDatasetTypeMap(t)).find((item) => item.label === typeLabel);
     if (matched) return matched.value;
   }
 
@@ -138,6 +139,9 @@ export default function ImportConfiguration({
   prefix?: string;
 }) {
   const { message } = App.useApp();
+  const { t } = useTranslation();
+  const dataSourceMap = getDataSourceMap(t);
+  const datasetTypeMap = getDatasetTypeMap(t);
   const [form] = Form.useForm();
   const [collectionOptions, setCollectionOptions] = useState([]);
   const [importConfig, setImportConfig] = useState<any>({
@@ -248,7 +252,7 @@ export default function ImportConfiguration({
   };
   const runTypeCheck = (checkFiles: UploadFile[]) => {
     if (!checkFiles || checkFiles.length === 0) return;
-    const datasetType = resolveDatasetType(data);
+    const datasetType = resolveDatasetType(data, t);
     if (datasetType) {
       const safeSuffixes = DATASET_TYPE_SAFE_SUFFIXES[datasetType] || [];
       const typeLabel =
@@ -264,7 +268,7 @@ export default function ImportConfiguration({
 
       if (mismatchedFiles.length > 0) {
         message.warning(
-          `当前数据集类型为 ${typeLabel}，本次选择的部分文件格式与该类型不太匹配，建议确认是否为预期数据。`
+          t("dataManagement.import.warningTypeMismatch", { type: typeLabel })
         );
       }
     }
@@ -392,7 +396,7 @@ export default function ImportConfiguration({
 
   return (
     <Modal
-      title="导入数据"
+      title={t("dataManagement.import.title")}
       open={open}
       width={600}
       onCancel={() => {
@@ -402,13 +406,13 @@ export default function ImportConfiguration({
       maskClosable={false}
       footer={
         <>
-          <Button onClick={onClose}>取消</Button>
+          <Button onClick={onClose}>{t("dataManagement.actions.cancel")}</Button>
           <Button
             type="primary"
             disabled={!fileList?.length && !importConfig.dataSource}
             onClick={handleImportData}
           >
-            确定
+            {t("dataManagement.actions.confirm")}
           </Button>
         </>
       }
@@ -420,19 +424,19 @@ export default function ImportConfiguration({
         onValuesChange={(_, allValues) => setImportConfig(allValues)}
       >
         <Form.Item
-          label="数据源"
+          label={t("dataManagement.formLabels.dataSource")}
           name="source"
-          rules={[{ required: true, message: "请选择数据源" }]}
+          rules={[{ required: true, message: t("dataManagement.import.validation.selectDataSource") }]}
         >
           <Radio.Group
             buttonStyle="solid"
-            options={dataSourceOptions}
+            options={[...Object.values(dataSourceMap)]}
             optionType="button"
           />
         </Form.Item>
         {importConfig?.source === DataSource.COLLECTION && (
-          <Form.Item name="dataSource" label="归集任务" required>
-            <Select placeholder="请选择归集任务" options={collectionOptions} />
+          <Form.Item name="dataSource" label={t("dataManagement.formLabels.collectionTask")} required>
+            <Select placeholder={t("dataManagement.placeholders.selectCollectionTask")} options={collectionOptions} />
           </Form.Item>
         )}
 
@@ -442,36 +446,36 @@ export default function ImportConfiguration({
             <Form.Item
               name="endpoint"
               rules={[{ required: true }]}
-              label="Endpoint"
+              label={t("dataManagement.import.obsEndpoint")}
             >
               <Input
                 className="h-8 text-xs"
-                placeholder="obs.cn-north-4.myhuaweicloud.com"
+                placeholder={t("dataManagement.placeholders.obsEndpoint")}
               />
             </Form.Item>
             <Form.Item
               name="bucket"
               rules={[{ required: true }]}
-              label="Bucket"
+              label={t("dataManagement.import.obsBucket")}
             >
-              <Input className="h-8 text-xs" placeholder="my-bucket" />
+              <Input className="h-8 text-xs" placeholder={t("dataManagement.placeholders.obsBucket")} />
             </Form.Item>
             <Form.Item
               name="accessKey"
               rules={[{ required: true }]}
-              label="Access Key"
+              label={t("dataManagement.import.obsAccessKey")}
             >
-              <Input className="h-8 text-xs" placeholder="Access Key" />
+              <Input className="h-8 text-xs" placeholder={t("dataManagement.import.obsAccessKeyPlaceholder")} />
             </Form.Item>
             <Form.Item
               name="secretKey"
               rules={[{ required: true }]}
-              label="Secret Key"
+              label={t("dataManagement.import.obsSecretKey")}
             >
               <Input
                 type="password"
                 className="h-8 text-xs"
-                placeholder="Secret Key"
+                placeholder={t("dataManagement.import.obsSecretKeyPlaceholder")}
               />
             </Form.Item>
           </div>
@@ -481,7 +485,7 @@ export default function ImportConfiguration({
         {importConfig?.source === DataSource.UPLOAD && (
           <>
             <Form.Item
-              label="自动解压上传的压缩包"
+              label={t("dataManagement.import.autoExtract")}
               name="hasArchive"
               valuePropName="checked"
               initialValue={true}
@@ -489,12 +493,12 @@ export default function ImportConfiguration({
               <Switch />
             </Form.Item>
             <Form.Item
-              label="上传文件 / 文件夹"
+              label={t("dataManagement.import.uploadFiles")}
               name="files"
               rules={[
                 {
                   required: true,
-                  message: "请上传文件或文件夹",
+                  message: t("dataManagement.validation.filesRequired"),
                 },
               ]}
             >
@@ -510,8 +514,8 @@ export default function ImportConfiguration({
                     <p className="ant-upload-drag-icon">
                       <InboxOutlined />
                     </p>
-                    <p className="ant-upload-text">本地文件上传</p>
-                    <p className="ant-upload-hint">拖拽文件到此处或点击选择文件</p>
+                    <p className="ant-upload-text">{t("dataManagement.import.uploadFileTitle")}</p>
+                    <p className="ant-upload-hint">{t("dataManagement.import.uploadFileHint")}</p>
                   </Dragger>
                 </div>
 
@@ -527,8 +531,8 @@ export default function ImportConfiguration({
                     <p className="ant-upload-drag-icon">
                       <InboxOutlined />
                     </p>
-                    <p className="ant-upload-text">本地文件夹上传</p>
-                    <p className="ant-upload-hint">拖拽文件夹到此处或点击选择文件夹</p>
+                    <p className="ant-upload-text">{t("dataManagement.import.uploadFolderTitle")}</p>
+                    <p className="ant-upload-hint">{t("dataManagement.import.uploadFolderHint")}</p>
                   </Dragger>
                 </div>
               </div>
@@ -538,9 +542,9 @@ export default function ImportConfiguration({
                 <div className="mt-3 border border-dashed rounded-md max-h-40 overflow-y-auto p-2 text-xs text-gray-700 space-y-2">
                   {pureFileList.length > 0 && (
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-semibold">文件：</span>
+                      <span className="font-semibold">{t("dataManagement.import.fileLabel")}</span>
                       {pureFileList.map((file) => {
-                        const name = file.name || "未命名文件";
+                        const name = file.name || t("dataManagement.defaults.unnamedFile");
                         const displayName = name.length > 20 ? `${name.slice(0, 20)}...` : name;
                         return (
                           <Tag
@@ -561,7 +565,7 @@ export default function ImportConfiguration({
 
                   {hasFolderUploads && (
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-semibold">文件夹：</span>
+                      <span className="font-semibold">{t("dataManagement.import.folderLabel")}</span>
                       {folderNames.map((name) => {
                         const displayName = name.length > 20 ? `${name.slice(0, 20)}...` : name;
                         return (
@@ -594,32 +598,32 @@ export default function ImportConfiguration({
                 <Form.Item
                   name="databaseType"
                   rules={[{ required: true }]}
-                  label="数据库类型"
+                  label={t("dataManagement.import.dbType")}
                 >
                   <Select
                     className="w-full"
                     options={[
-                      { label: "MySQL", value: "mysql" },
-                      { label: "PostgreSQL", value: "postgresql" },
-                      { label: "MongoDB", value: "mongodb" },
+                      { label: t("dataManagement.import.dbTypeMysql"), value: "mysql" },
+                      { label: t("dataManagement.import.dbTypePostgres"), value: "postgresql" },
+                      { label: t("dataManagement.import.dbTypeMongo"), value: "mongodb" },
                     ]}
                   ></Select>
                 </Form.Item>
                 <Form.Item
                   name="tableName"
                   rules={[{ required: true }]}
-                  label="表名"
+                  label={t("dataManagement.import.dbTableName")}
                 >
-                  <Input className="h-8 text-xs" placeholder="dataset_table" />
+                  <Input className="h-8 text-xs" placeholder={t("dataManagement.placeholders.databaseTable")} />
                 </Form.Item>
                 <Form.Item
                   name="connectionString"
                   rules={[{ required: true }]}
-                  label="连接字符串"
+                  label={t("dataManagement.import.dbConnectionString")}
                 >
                   <Input
                     className="h-8 text-xs col-span-2"
-                    placeholder="数据库连接字符串"
+                    placeholder={t("dataManagement.placeholders.databaseConnection")}
                   />
                 </Form.Item>
               </div>

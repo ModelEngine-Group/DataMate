@@ -6,6 +6,7 @@ import { Card, Table, Progress } from "antd";
 import { AlertTriangle, Tags, BarChart3 } from "lucide-react";
 import DevelopmentInProgress from "@/components/DevelopmentInProgress";
 import { Dataset } from "@/pages/DataManagement/dataset.model.ts";
+import { useTranslation } from "react-i18next";
 
 type DatasetType = "image" | "text" | "tabular";
 
@@ -45,9 +46,9 @@ function getMockMetrics(datasetType: DatasetType, stats: FileStats) {
     const colorConsistency = clamp(100 - (lowQuality / total) * 80);
     const annotationCompleteness = clamp(100 - (unlabeled / total) * 150 - (corrupted / total) * 50);
     return [
-      { metric: "图像清晰度", value: Math.round(clarity * 10) / 10, color: "bg-green-500" },
-      { metric: "色彩一致性", value: Math.round(colorConsistency * 10) / 10, color: "bg-blue-500" },
-      { metric: "标注完整性", value: Math.round(annotationCompleteness * 10) / 10, color: "bg-purple-500" },
+      { metric: t("dataManagement.quality.imageClarity"), value: Math.round(clarity * 10) / 10, color: "bg-green-500" },
+      { metric: t("dataManagement.quality.colorConsistency"), value: Math.round(colorConsistency * 10) / 10, color: "bg-blue-500" },
+      { metric: t("dataManagement.quality.annotationCompleteness"), value: Math.round(annotationCompleteness * 10) / 10, color: "bg-purple-500" },
     ];
   }
 
@@ -56,9 +57,9 @@ function getMockMetrics(datasetType: DatasetType, stats: FileStats) {
     const labelConsistency = clamp(100 - (unlabeled / total) * 140 - (corrupted / total) * 40);
     const metadataCompleteness = clamp(100 - (missingFields / total) * 150);
     return [
-      { metric: "分词/Token质量", value: Math.round(tokenQuality * 10) / 10, color: "bg-green-500" },
-      { metric: "标签一致性", value: Math.round(labelConsistency * 10) / 10, color: "bg-blue-500" },
-      { metric: "元数据完整性", value: Math.round(metadataCompleteness * 10) / 10, color: "bg-purple-500" },
+      { metric: t("dataManagement.quality.tokenQuality"), value: Math.round(tokenQuality * 10) / 10, color: "bg-green-500" },
+      { metric: t("dataManagement.quality.labelConsistency"), value: Math.round(labelConsistency * 10) / 10, color: "bg-blue-500" },
+      { metric: t("dataManagement.quality.metadataCompleteness"), value: Math.round(metadataCompleteness * 10) / 10, color: "bg-purple-500" },
     ];
   }
 
@@ -67,9 +68,9 @@ function getMockMetrics(datasetType: DatasetType, stats: FileStats) {
   const typeConsistency = clamp(100 - (corrupted / total) * 120 - (duplicateRows / total) * 40);
   const uniqueness = clamp(100 - (duplicateRows / total) * 200);
   return [
-    { metric: "缺失值比例控制", value: Math.round(missingValueScore * 10) / 10, color: "bg-green-500" },
-    { metric: "类型一致性", value: Math.round(typeConsistency * 10) / 10, color: "bg-blue-500" },
-    { metric: "唯一性/去重", value: Math.round(uniqueness * 10) / 10, color: "bg-purple-500" },
+    { metric: t("dataManagement.quality.missingValueControl"), value: Math.round(missingValueScore * 10) / 10, color: "bg-green-500" },
+    { metric: t("dataManagement.quality.typeConsistency"), value: Math.round(typeConsistency * 10) / 10, color: "bg-blue-500" },
+    { metric: t("dataManagement.quality.uniqueness"), value: Math.round(uniqueness * 10) / 10, color: "bg-purple-500" },
   ];
 }
 
@@ -282,6 +283,7 @@ function LabelDistributionStats({ distribution }: LabelDistributionProps) {
 
 export default function DataQuality(props: Props = {}) {
   const { dataset, datasetType: propDatasetType, fileStats: propFileStats } = props;
+  const { t } = useTranslation();
 
   // Prefer dataset fields when available, then explicit props, then sensible defaults
   const inferredTypeFromDataset = (dataset && ((dataset as any).type || (dataset as any).datasetType)) as DatasetType | undefined;
@@ -336,20 +338,20 @@ export default function DataQuality(props: Props = {}) {
     const baseIntegrity =
       datasetType === "image"
         ? [
-          { metric: "文件完整性", value: clamp(100 - ((finalFileStats.corrupted || 0) / Math.max(1, finalFileStats.totalFiles)) * 100), color: "bg-green-500" },
-          { metric: "元数据完整性", value: clamp(100 - ((finalFileStats.missingFields || 0) / Math.max(1, finalFileStats.totalFiles)) * 100), color: "bg-blue-500" },
-          { metric: "标签一致性", value: clamp(100 - ((finalFileStats.unlabeled || 0) / Math.max(1, finalFileStats.totalFiles)) * 120), color: "bg-purple-500" },
+          { metric: t("dataManagement.quality.fileIntegrity"), value: clamp(100 - ((finalFileStats.corrupted || 0) / Math.max(1, finalFileStats.totalFiles)) * 100), color: "bg-green-500" },
+          { metric: t("dataManagement.quality.metadataCompleteness"), value: clamp(100 - ((finalFileStats.missingFields || 0) / Math.max(1, finalFileStats.totalFiles)) * 100), color: "bg-blue-500" },
+          { metric: t("dataManagement.quality.labelConsistency"), value: clamp(100 - ((finalFileStats.unlabeled || 0) / Math.max(1, finalFileStats.totalFiles)) * 120), color: "bg-purple-500" },
         ]
         : datasetType === "text"
           ? [
-            { metric: "文件完整性", value: clamp(100 - ((finalFileStats.corrupted || 0) / Math.max(1, finalFileStats.totalFiles)) * 100), color: "bg-green-500" },
-            { metric: "字段完整性", value: clamp(100 - ((finalFileStats.missingFields || 0) / Math.max(1, finalFileStats.totalFiles)) * 120), color: "bg-blue-500" },
-            { metric: "标签一致性", value: clamp(100 - ((finalFileStats.unlabeled || 0) / Math.max(1, finalFileStats.totalFiles)) * 120), color: "bg-purple-500" },
+            { metric: t("dataManagement.quality.fileIntegrity"), value: clamp(100 - ((finalFileStats.corrupted || 0) / Math.max(1, finalFileStats.totalFiles)) * 100), color: "bg-green-500" },
+            { metric: t("dataManagement.quality.fieldIntegrity"), value: clamp(100 - ((finalFileStats.missingFields || 0) / Math.max(1, finalFileStats.totalFiles)) * 120), color: "bg-blue-500" },
+            { metric: t("dataManagement.quality.labelConsistency"), value: clamp(100 - ((finalFileStats.unlabeled || 0) / Math.max(1, finalFileStats.totalFiles)) * 120), color: "bg-purple-500" },
           ]
           : [
-            { metric: "文件完整性", value: clamp(100 - ((finalFileStats.corrupted || 0) / Math.max(1, finalFileStats.totalFiles)) * 100), color: "bg-green-500" },
-            { metric: "列完整性", value: clamp(100 - ((finalFileStats.missingFields || 0) / Math.max(1, finalFileStats.totalFiles)) * 120), color: "bg-blue-500" },
-            { metric: "重复率", value: clamp(100 - ((finalFileStats.duplicateRows || 0) / Math.max(1, finalFileStats.totalFiles)) * 200), color: "bg-purple-500" },
+            { metric: t("dataManagement.quality.fileIntegrity"), value: clamp(100 - ((finalFileStats.corrupted || 0) / Math.max(1, finalFileStats.totalFiles)) * 100), color: "bg-green-500" },
+            { metric: t("dataManagement.quality.columnIntegrity"), value: clamp(100 - ((finalFileStats.missingFields || 0) / Math.max(1, finalFileStats.totalFiles)) * 120), color: "bg-blue-500" },
+            { metric: t("dataManagement.quality.duplicateRate"), value: clamp(100 - ((finalFileStats.duplicateRows || 0) / Math.max(1, finalFileStats.totalFiles)) * 200), color: "bg-purple-500" },
           ];
 
     // if source data is incomplete or only totalFiles known, apply a small random reduction so values are not all 100%
@@ -381,7 +383,7 @@ export default function DataQuality(props: Props = {}) {
       <LabelDistributionStats distribution={(dataset as any)?.distribution} />
 
       <div className="grid md:grid-cols-2 gap-6">
-        <Card title="质量分布">
+        <Card title={t("dataManagement.quality.titleDistribution")}>
           {metrics.map((item, index) => (
             <div key={index} className="space-y-2">
               <div className="flex justify-between text-sm">
@@ -398,7 +400,7 @@ export default function DataQuality(props: Props = {}) {
           ))}
         </Card>
 
-        <Card title="数据完整性">
+        <Card title={t("dataManagement.quality.titleIntegrity")}>
           {integrityMetrics.map((item, index) => (
             <div key={index} className="space-y-2">
               <div className="flex justify-between text-sm">
@@ -420,19 +422,19 @@ export default function DataQuality(props: Props = {}) {
         <div className="flex items-start gap-4">
           <AlertTriangle className="w-6 h-6 text-yellow-600 mt-1 flex-shrink-0" />
           <div>
-            <h4 className="font-semibold text-yellow-800 mb-2">质量改进建议</h4>
+            <h4 className="font-semibold text-yellow-800 mb-2">{t("dataManagement.quality.recommendationTitle")}</h4>
             <ul className="text-sm text-yellow-700 space-y-2">
               <li className="flex items-start gap-2">
                 <span className="w-1.5 h-1.5 bg-yellow-600 rounded-full mt-2 flex-shrink-0" />
-                建议对{Math.max(1, Math.round((finalFileStats.lowQuality || 0) * 1))}项低质量样本进行复查或重新采集
+                {t("dataManagement.quality.recommendationReviewLowQuality", { count: Math.max(1, Math.round((finalFileStats.lowQuality || 0) * 1)) })}
               </li>
               <li className="flex items-start gap-2">
                 <span className="w-1.5 h-1.5 bg-yellow-600 rounded-full mt-2 flex-shrink-0" />
-                检查并补充缺失的元数据字段（现有缺失：{finalFileStats.missingFields || 0}）
+                {t("dataManagement.quality.recommendationSupplementMetadata", { missing: finalFileStats.missingFields || 0 })}
               </li>
               <li className="flex items-start gap-2">
                 <span className="w-1.5 h-1.5 bg-yellow-600 rounded-full mt-2 flex-shrink-0" />
-                考虑增加更多低代表性样本以平衡数据分布
+                {t("dataManagement.quality.recommendationBalanceDistribution")}
               </li>
             </ul>
           </div>
