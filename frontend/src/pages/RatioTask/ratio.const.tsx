@@ -3,7 +3,11 @@ import { RatioTaskItem, RatioStatus } from "./ratio.model";
 import { BarChart3, Calendar, Database } from "lucide-react";
 import { Link } from "react-router";
 
-export const ratioTaskStatusMap: Record<
+export type TFunction = (key: string) => string;
+
+export function getRatioTaskStatusMap(
+  t: TFunction
+): Record<
   string,
   {
     value: RatioStatus;
@@ -11,38 +15,44 @@ export const ratioTaskStatusMap: Record<
     color: string;
     icon?: React.ReactNode;
   }
-> = {
-  [RatioStatus.PENDING]: {
-    value: RatioStatus.PENDING,
-    label: "等待中",
-    color: "gray",
-  },
-  [RatioStatus.RUNNING]: {
-    value: RatioStatus.RUNNING,
-    label: "运行中",
-    color: "blue",
-  },
-  [RatioStatus.COMPLETED]: {
-    value: RatioStatus.COMPLETED,
-    label: "已完成",
-    color: "green",
-  },
-  [RatioStatus.FAILED]: {
-    value: RatioStatus.FAILED,
-    label: "失败",
-    color: "red",
-  },
-  [RatioStatus.PAUSED]: {
-    value: RatioStatus.PAUSED,
-    label: "已暂停",
-    color: "orange",
-  },
-};
+> {
+  return {
+    [RatioStatus.PENDING]: {
+      value: RatioStatus.PENDING,
+      label: t("common.status.task.pending"),
+      color: "gray",
+    },
+    [RatioStatus.RUNNING]: {
+      value: RatioStatus.RUNNING,
+      label: t("common.status.task.running"),
+      color: "blue",
+    },
+    [RatioStatus.COMPLETED]: {
+      value: RatioStatus.COMPLETED,
+      label: t("common.status.task.completed"),
+      color: "green",
+    },
+    [RatioStatus.FAILED]: {
+      value: RatioStatus.FAILED,
+      label: t("common.status.task.failed"),
+      color: "red",
+    },
+    [RatioStatus.PAUSED]: {
+      value: RatioStatus.PAUSED,
+      label: t("common.status.task.paused"),
+      color: "orange",
+    },
+  };
+}
 
-export function mapRatioTask(task: Partial<RatioTaskItem>): RatioTaskItem {
+export function mapRatioTask(
+  task: Partial<RatioTaskItem>,
+  t: TFunction
+): RatioTaskItem {
+  const statusMap = getRatioTaskStatusMap(t);
   return {
     ...task,
-    status: ratioTaskStatusMap[task.status || RatioStatus.PENDING],
+    status: statusMap[task.status || RatioStatus.PENDING],
     createdAt: formatDateTime(task.created_at),
     updatedAt: formatDateTime(task.updated_at),
     description: task.description,
@@ -50,25 +60,25 @@ export function mapRatioTask(task: Partial<RatioTaskItem>): RatioTaskItem {
     iconColor: task.ratio_method === "DATASET" ? "bg-blue-100" : "bg-green-100",
     statistics: [
       {
-        label: "目标数量",
+        label: t("ratioTask.detail.labels.targetCount"),
         icon: <BarChart3 className="w-4 h-4 text-gray-500" />,
         value: (task.totals ?? 0).toLocaleString(),
       },
       {
-        label: "目标数据集",
+        label: t("ratioTask.detail.labels.targetDataset"),
         icon: <Database className="w-4 h-4 text-gray-500" />,
         value: task.target_dataset_name ? (
           <Link to={`/data/management/detail/${task.target_dataset_id}`}>
             {task.target_dataset_name}
           </Link>
         ) : (
-          "无"
+          t("dataManagement.defaults.none")
         ),
       },
       {
-        label: "创建时间",
+        label: t("ratioTask.detail.labels.createdAt"),
         icon: <Calendar className="w-4 h-4 text-gray-500" />,
-        value: task.created_at || "-",
+        value: task.created_at || t("common.placeholders.empty"),
       },
     ],
   };

@@ -1,5 +1,6 @@
 import React from "react";
 import { Form, Input } from "antd";
+import { useTranslation } from "react-i18next";
 
 const { TextArea } = Input;
 
@@ -10,24 +11,25 @@ interface BasicInformationProps {
 const BasicInformation: React.FC<BasicInformationProps> = ({
   totalTargetCount,
 }) => {
+  const { t } = useTranslation();
   return (
     <div className="grid grid-cols-2 gap-2">
       <Form.Item
-        label="任务名称"
+        label={t("ratioTask.create.basicInfo.nameLabel")}
         name="name"
-        rules={[{ required: true, message: "请输入配比任务名称" }]}
+        rules={[{ required: true, message: t("ratioTask.create.basicInfo.nameRequired") }]}
       >
-        <Input placeholder="输入配比任务名称" />
+        <Input placeholder={t("ratioTask.create.basicInfo.namePlaceholder")} />
       </Form.Item>
       <Form.Item
-        label="目标总数量"
+        label={t("ratioTask.create.basicInfo.totalTargetLabel")}
         name="totalTargetCount"
-        rules={[{ required: true, message: "请输入目标总数量" }]}
+        rules={[{ required: true, message: t("ratioTask.create.basicInfo.totalTargetRequired") }]}
       >
-        <Input type="number" placeholder="目标总数量" min={1} />
+        <Input type="number" placeholder={t("ratioTask.create.basicInfo.totalTargetPlaceholder")} min={1} />
       </Form.Item>
-      <Form.Item label="任务描述" name="description" className="col-span-2">
-        <TextArea placeholder="描述配比任务的目的和要求" rows={2} />
+      <Form.Item label={t("ratioTask.create.basicInfo.descriptionLabel")} name="description" className="col-span-2">
+        <TextArea placeholder={t("ratioTask.create.basicInfo.descriptionPlaceholder")} rows={2} />
       </Form.Item>
     </div>
   );

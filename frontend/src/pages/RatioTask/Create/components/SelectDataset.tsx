@@ -1,7 +1,7 @@
-// typescript
 import React, { useEffect, useState } from "react";
 import { Badge, Button, Card, Checkbox, Input, Pagination } from "antd";
 import { Search as SearchIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { Dataset } from "@/pages/DataManagement/dataset.model.ts";
 import {
   queryDatasetsUsingGet,
@@ -24,6 +24,7 @@ const SelectDataset: React.FC<SelectDatasetProps> = ({
                                                        onDistributionsChange,
                                                        onDatasetsChange,
                                                      }) => {
+  const { t } = useTranslation();
   const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -133,20 +134,20 @@ const SelectDataset: React.FC<SelectDatasetProps> = ({
       <div className="flex items-center justify-between p-4 border-bottom">
         <div className="flex items-center gap-4">
           <span className="text-sm font-medium">
-            选择数据集
+            {t("ratioTask.create.selectDataset.title")}
             <span className="text-xs text-gray-500">
-              (已选择: {selectedDatasets.length}/{pagination.total})
+              ({t("ratioTask.create.selectDataset.selectedCount", { current: selectedDatasets.length, total: pagination.total })})
             </span>
           </span>
         </div>
         <Button type="link" size="small" onClick={onClearSelection}>
-          清空选择
+          {t("ratioTask.create.selectDataset.clearSelection")}
         </Button>
       </div>
       <div className="flex-overflow-auto gap-4 p-4">
         <Input
           prefix={<SearchIcon className="text-gray-400" />}
-          placeholder="搜索数据集"
+          placeholder={t("ratioTask.create.selectDataset.searchPlaceholder")}
           value={searchQuery}
           onChange={(e) => {
             setSearchQuery(e.target.value);
@@ -156,7 +157,7 @@ const SelectDataset: React.FC<SelectDatasetProps> = ({
         <div className="flex-1 overflow-auto">
           {loading && (
             <div className="text-center text-gray-500 py-8">
-              正在加载数据集...
+              {t("ratioTask.create.selectDataset.loading")}
             </div>
           )}
           {!loading &&
@@ -190,7 +191,7 @@ const SelectDataset: React.FC<SelectDatasetProps> = ({
                         {dataset.description}
                       </div>
                       <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
-                        <span>{dataset.fileCount}条</span>
+                        <span>{dataset.fileCount}{t("ratioTask.create.ratioConfig.itemSuffix")}</span>
                         <span>{dataset.size}</span>
                       </div>
                       <div className="mt-2">
@@ -206,12 +207,12 @@ const SelectDataset: React.FC<SelectDatasetProps> = ({
                             </div>
                           ) : (
                             <div className="text-xs text-gray-400">
-                              未检测到标签分布
+                              {t("ratioTask.create.selectDataset.noLabelDist")}
                             </div>
                           )
                         ) : (
                           <div className="text-xs text-gray-400">
-                            加载标签分布...
+                            {t("ratioTask.create.selectDataset.loadingLabelDist")}
                           </div>
                         )}
                       </div>

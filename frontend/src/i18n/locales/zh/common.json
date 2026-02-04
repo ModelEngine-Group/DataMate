@@ -589,7 +589,153 @@
         "failed": "错误",
         "completed": "成功",
         "draft": "草稿",
-        "pending": "就绪"
+        "pending": "就绪",
+        "paused": "已暂停"
+      }
+    }
+  },
+  "ratioTask": {
+    "home": {
+      "title": "配比任务",
+      "createTask": "创建配比任务",
+      "filters": {
+        "statusFilter": "状态筛选",
+        "allStatus": "全部状态",
+        "pending": "等待中",
+        "running": "运行中",
+        "success": "已完成",
+        "failed": "失败",
+        "paused": "已暂停"
+      },
+      "columns": {
+        "taskName": "任务名称",
+        "status": "状态",
+        "targetCount": "目标数量",
+        "targetDataset": "目标数据集",
+        "createdAt": "创建时间",
+        "actions": "操作"
+      },
+      "messages": {
+        "deleteSuccess": "任务删除成功",
+        "deleteFailed": "任务删除失败，请稍后重试"
+      },
+      "confirm": {
+        "deleteTitle": "确认删除该任务？",
+        "deleteDesc": "删除后该任务将无法恢复，请谨慎操作。",
+        "okText": "删除",
+        "cancelText": "取消"
+      },
+      "searchPlaceholder": "搜索任务名称..."
+    },
+    "create": {
+      "title": "创建配比任务",
+      "cancel": "取消",
+      "submit": "创建",
+      "basicInfo": {
+        "nameLabel": "任务名称",
+        "namePlaceholder": "输入配比任务名称",
+        "nameRequired": "请输入配比任务名称",
+        "totalTargetLabel": "目标总数量",
+        "totalTargetPlaceholder": "目标总数量",
+        "totalTargetRequired": "请输入目标总数量",
+        "descriptionLabel": "任务描述",
+        "descriptionPlaceholder": "描述配比任务的目的和要求"
+      },
+      "selectDataset": {
+        "title": "选择数据集",
+        "selectedCount": "已选择: {{current}}/{{total}}",
+        "clearSelection": "清空选择",
+        "searchPlaceholder": "搜索数据集",
+        "loading": "正在加载数据集...",
+        "noLabelDist": "未检测到标签分布",
+        "loadingLabelDist": "加载标签分布..."
+      },
+      "ratioConfig": {
+        "title": "配比配置",
+        "configuredCount": "已配置:{{configured}}/{{total}}条",
+        "averageDistribute": "平均分配",
+        "selectDatasetFirst": "请先选择数据集",
+        "totalRatioCount": "总配比数量:",
+        "targetCount": "目标数量:",
+        "label": "标签",
+        "labelValue": "标签值",
+        "labelUpdateTime": "标签更新时间",
+        "quantity": "数量",
+        "actions": "操作",
+        "selectLabel": "选择标签",
+        "selectLabelValue": "选择标签值",
+        "dateStart": "开始时间",
+        "dateEnd": "结束时间",
+        "delete": "删除",
+        "emptyText": "暂无配比项，请添加",
+        "addRatioItem": "添加配比项",
+        "itemSuffix": "条"
+      },
+      "messages": {
+        "configRequired": "请配置配比项",
+        "createSuccess": "配比任务创建成功",
+        "createFailed": "配比任务创建失败，请重试"
+      }
+    },
+    "detail": {
+      "homeLink": "首页",
+      "detailTitle": "配比任务详情",
+      "tabs": {
+        "overview": "概览"
+      },
+      "labels": {
+        "id": "ID",
+        "name": "名称",
+        "targetCount": "目标数量",
+        "targetDataset": "目标数据集",
+        "status": "状态",
+        "createdBy": "创建者",
+        "createdAt": "创建时间",
+        "updatedAt": "更新时间",
+        "description": "描述",
+        "basicInfo": "基本信息"
+      },
+      "messages": {
+        "refreshSuccess": "任务数据刷新成功",
+        "deleteSuccess": "配比任务删除成功",
+        "taskStarted": "任务已启动",
+        "taskStopped": "任务已停止"
+      },
+      "operations": {
+        "refresh": "刷新",
+        "delete": "删除"
+      },
+      "confirm": {
+        "deleteTitle": "确认删除该配比任务？",
+        "deleteDesc": "删除后该任务将无法恢复，请谨慎操作。",
+        "okText": "删除",
+        "cancelText": "取消"
+      },
+      "metrics": {
+        "totalData": "总数据量",
+        "ratioSuccessRate": "配比成功率",
+        "processSpeed": "处理速度",
+        "activeUsers": "活跃用户"
+      },
+      "chart": {
+        "ratioTrendTitle": "配比趋势分析",
+        "successRateCurve": "成功率曲线",
+        "ratioRate": "配比率",
+        "successCount": "成功数",
+        "failCount": "失败数",
+        "monthJan": "一月",
+        "monthFeb": "二月",
+        "monthMar": "三月",
+        "monthApr": "四月",
+        "monthMay": "五月",
+        "monthJun": "六月"
+      },
+      "ratioDisplay": {
+        "title": "数据集配比信息",
+        "datasetUserBehavior": "用户行为数据集",
+        "datasetTransaction": "交易记录数据集",
+        "datasetProduct": "产品信息数据集",
+        "datasetReview": "评价反馈数据集"
       }
     }
   },

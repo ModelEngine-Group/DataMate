@@ -590,7 +590,153 @@
         "failed": "Failed",
         "completed": "Completed",
         "draft": "Draft",
-        "pending": "Ready"
+        "pending": "Ready",
+        "paused": "Paused"
+      }
+    }
+  },
+  "ratioTask": {
+    "home": {
+      "title": "Ratio Tasks",
+      "createTask": "Create Ratio Task",
+      "filters": {
+        "statusFilter": "Status Filter",
+        "allStatus": "All Status",
+        "pending": "Pending",
+        "running": "Running",
+        "success": "Completed",
+        "failed": "Failed",
+        "paused": "Paused"
+      },
+      "columns": {
+        "taskName": "Task Name",
+        "status": "Status",
+        "targetCount": "Target Count",
+        "targetDataset": "Target Dataset",
+        "createdAt": "Created At",
+        "actions": "Actions"
+      },
+      "messages": {
+        "deleteSuccess": "Task deleted successfully",
+        "deleteFailed": "Task deletion failed, please try again later"
+      },
+      "confirm": {
+        "deleteTitle": "Confirm delete this task?",
+        "deleteDesc": "This task cannot be recovered after deletion. Please proceed with caution.",
+        "okText": "Delete",
+        "cancelText": "Cancel"
+      },
+      "searchPlaceholder": "Search task name..."
+    },
+    "create": {
+      "title": "Create Ratio Task",
+      "cancel": "Cancel",
+      "submit": "Create",
+      "basicInfo": {
+        "nameLabel": "Task Name",
+        "namePlaceholder": "Enter ratio task name",
+        "nameRequired": "Please enter ratio task name",
+        "totalTargetLabel": "Target Total Count",
+        "totalTargetPlaceholder": "Target total count",
+        "totalTargetRequired": "Please enter target total count",
+        "descriptionLabel": "Task Description",
+        "descriptionPlaceholder": "Describe the purpose and requirements of the ratio task"
+      },
+      "selectDataset": {
+        "title": "Select Dataset",
+        "selectedCount": "Selected: {{current}}/{{total}}",
+        "clearSelection": "Clear Selection",
+        "searchPlaceholder": "Search dataset",
+        "loading": "Loading datasets...",
+        "noLabelDist": "No label distribution detected",
+        "loadingLabelDist": "Loading label distribution..."
+      },
+      "ratioConfig": {
+        "title": "Ratio Configuration",
+        "configuredCount": "Configured: {{configured}}/{{total}}",
+        "averageDistribute": "Average Distribution",
+        "selectDatasetFirst": "Please select dataset first",
+        "totalRatioCount": "Total ratio count:",
+        "targetCount": "Target count:",
+        "label": "Label",
+        "labelValue": "Label Value",
+        "labelUpdateTime": "Label Update Time",
+        "quantity": "Quantity",
+        "actions": "Actions",
+        "selectLabel": "Select label",
+        "selectLabelValue": "Select label value",
+        "dateStart": "Start Time",
+        "dateEnd": "End Time",
+        "delete": "Delete",
+        "emptyText": "No ratio items yet, please add",
+        "addRatioItem": "Add Ratio Item",
+        "itemSuffix": " items"
+      },
+      "messages": {
+        "configRequired": "Please configure ratio items",
+        "createSuccess": "Ratio task created successfully",
+        "createFailed": "Ratio task creation failed, please try again"
+      }
+    },
+    "detail": {
+      "homeLink": "Home",
+      "detailTitle": "Ratio Task Detail",
+      "tabs": {
+        "overview": "Overview"
+      },
+      "labels": {
+        "id": "ID",
+        "name": "Name",
+        "targetCount": "Target Count",
+        "targetDataset": "Target Dataset",
+        "status": "Status",
+        "createdBy": "Creator",
+        "createdAt": "Created At",
+        "updatedAt": "Updated At",
+        "description": "Description",
+        "basicInfo": "Basic Information"
+      },
+      "messages": {
+        "refreshSuccess": "Task data refreshed successfully",
+        "deleteSuccess": "Ratio task deleted successfully",
+        "taskStarted": "Task started",
+        "taskStopped": "Task stopped"
+      },
+      "operations": {
+        "refresh": "Refresh",
+        "delete": "Delete"
+      },
+      "confirm": {
+        "deleteTitle": "Confirm delete this ratio task?",
+        "deleteDesc": "This task cannot be recovered after deletion. Please proceed with caution.",
+        "okText": "Delete",
+        "cancelText": "Cancel"
+      },
+      "metrics": {
+        "totalData": "Total Data Volume",
+        "ratioSuccessRate": "Ratio Success Rate",
+        "processSpeed": "Processing Speed",
+        "activeUsers": "Active Users"
+      },
+      "chart": {
+        "ratioTrendTitle": "Ratio Trend Analysis",
+        "successRateCurve": "Success Rate Curve",
+        "ratioRate": "Ratio Rate",
+        "successCount": "Success Count",
+        "failCount": "Fail Count",
+        "monthJan": "Jan",
+        "monthFeb": "Feb",
+        "monthMar": "Mar",
+        "monthApr": "Apr",
+        "monthMay": "May",
+        "monthJun": "Jun"
+      },
+      "ratioDisplay": {
+        "title": "Dataset Ratio Information",
+        "datasetUserBehavior": "User Behavior Dataset",
+        "datasetTransaction": "Transaction Record Dataset",
+        "datasetProduct": "Product Info Dataset",
+        "datasetReview": "Review Feedback Dataset"
       }
     }
   },
