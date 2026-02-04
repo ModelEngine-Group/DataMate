@@ -218,9 +218,6 @@ VALUES
 ('ObjectDetectionRectangle', '图像目标检测与预标注', '基于 YOLOv8 的图像目标检测算子。对输入图像进行目标检测，输出带矩形框与类别标签的标注图像，并生成结构化标注 JSON（包含类别、置信度与边界框坐标）。支持将检测结果导出为 Label Studio 兼容的 predictions 预标注格式（rectanglelabels），可在标注任务中直接加载并进行人工校正，从而显著降低人工标注成本并提升标注效率。', '1.0.0', 'image', 'image,json', null, null, '', 12288, false, 'system', 'system')
 ON CONFLICT DO NOTHING;
 
-INSERT INTO t_operator_release(id, version, release_date, changelog)
-VALUES ('MineruFormatter', '1.0.0', '2026-03-30', '["aaa","bbb"]');
-
 INSERT INTO t_operator_category_relation(category_id, operator_id)
 SELECT c.id, o.id
 FROM t_operator_category c

@@ -146,10 +146,6 @@ export const mapOperator = (op: OperatorI) => {
         label: "语言",
         value: "Python",
       },
-      {
-        label: "功能",
-        value: functionLabel,
-      },
     ],
   };
 };

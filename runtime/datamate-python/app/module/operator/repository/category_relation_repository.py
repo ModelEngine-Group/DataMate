@@ -19,7 +19,7 @@ class CategoryRelationRepository:
 
     async def find_all(self, db: AsyncSession) -> List[CategoryRelation]:
         """查询所有分类关系"""
-        result = await db.execute(select(self.model))
+        result = await db.execute(select(CategoryRelation))
         return result.scalars().all()
 
     async def batch_insert(
@@ -45,8 +45,8 @@ class CategoryRelationRepository:
         """批量更新分类关系（先删除后插入）"""
         # Delete existing relations
         await db.execute(
-            delete(self.model)
-            .where(self.model.operator_id == operator_id)
+            delete(CategoryRelation)
+            .where(CategoryRelation.operator_id == operator_id)
         )
         # Insert new relations
         for category_id in category_ids:
@@ -59,18 +59,18 @@ class CategoryRelationRepository:
     async def delete_by_operator_id(self, operator_id: str, db: AsyncSession) -> None:
         """根据算子ID删除分类关系"""
         await db.execute(
-            delete(self.model)
-            .where(self.model.operator_id == operator_id)
+            delete(CategoryRelation)
+            .where(CategoryRelation.operator_id == operator_id)
         )
 
     async def operator_is_predefined(self, operator_id: str, db: AsyncSession) -> bool:
         """检查算子是否为预定义算子"""
         result = await db.execute(
-            select(self.model)
+            select(CategoryRelation)
             .where(
                 and_(
-                    self.model.operator_id == operator_id,
-                    self.model.category_id == CATEGORY_PREDEFINED_ID
+                    CategoryRelation.operator_id == operator_id,
+                    CategoryRelation.category_id == CATEGORY_PREDEFINED_ID
                 )
             )
         )

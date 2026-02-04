@@ -16,7 +16,13 @@ class AbstractParser(ABC):
     """算子文件解析器抽象基类"""
 
     @abstractmethod
-    def parse_yaml_from_archive(self, archive_path: str, entry_path: str) -> OperatorDto:
+    def parse_yaml_from_archive(
+        self,
+        archive_path: str,
+        entry_path: str,
+        file_name: Optional[str] = None,
+        file_size: Optional[int] = None
+    ) -> OperatorDto:
         """
         从压缩包内读取指定路径的 yaml 文件并解析为 OperatorDto
 
@@ -40,7 +46,12 @@ class AbstractParser(ABC):
         """
         pass
 
-    def parse_yaml(self, yaml_content: str) -> OperatorDto:
+    def parse_yaml(
+        self,
+        yaml_content: str,
+        file_name: Optional[str] = None,
+        file_size: Optional[int] = None
+    ) -> OperatorDto:
         """解析 YAML 内容为 OperatorDto"""
         content: Dict[str, Any] = yaml.safe_load(yaml_content)
 
@@ -54,14 +65,24 @@ class AbstractParser(ABC):
             runtime=self._to_json(content.get("runtime")),
             settings=self._to_json(content.get("settings")),
             metrics=self._to_json(content.get("metrics")),
+            file_name=file_name,
+            file_size=file_size,
         )
 
         # Handle changelog
         changelog = content.get("release")
         if isinstance(changelog, list):
-            operator_release = OperatorReleaseDto(changelog=changelog)
+            operator_release = OperatorReleaseDto(
+                id=operator.id,
+                version=operator.version,
+                changelog=changelog
+            )
         else:
-            operator_release = OperatorReleaseDto(changelog=[])
+            operator_release = OperatorReleaseDto(
+                id=operator.id,
+                version=operator.version,
+                changelog=[]
+            )
         operator.releases = [operator_release]
 
         # Build categories
@@ -92,6 +113,6 @@ class AbstractParser(ABC):
         if obj is None:
             return None
         try:
-            return json.dumps(obj)
+            return json.dumps(obj).strip('"').strip("'")
         except (TypeError, ValueError) as e:
             raise ValueError(f"Failed to serialize to JSON: {e}")

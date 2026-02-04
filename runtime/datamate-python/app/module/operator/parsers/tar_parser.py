@@ -13,7 +13,13 @@ from app.module.operator.schema import OperatorDto
 class TarParser(AbstractParser):
     """TAR 压缩包解析器"""
 
-    def parse_yaml_from_archive(self, archive_path: str, entry_path: str) -> OperatorDto:
+    def parse_yaml_from_archive(
+        self,
+        archive_path: str,
+        entry_path: str,
+        file_name: Optional[str] = None,
+        file_size: Optional[int] = None
+    ) -> OperatorDto:
         """从 TAR 文件中解析 YAML"""
         try:
             with tarfile.open(archive_path, 'r:*') as tar:
@@ -22,7 +28,7 @@ class TarParser(AbstractParser):
                         file = tar.extractfile(member)
                         if file:
                             content = file.read().decode('utf-8')
-                            return self.parse_yaml(content)
+                            return self.parse_yaml(content, file_name, file_size)
             raise FileNotFoundError(f"File '{entry_path}' not found in archive")
         except (tarfile.TarError, EOFError) as e:
             raise ValueError(f"Failed to parse TAR file: {e}")

@@ -39,7 +39,7 @@ class OperatorDto(BaseResponseModel):
 class OperatorListRequest(BaseResponseModel):
     """算子列表查询请求"""
     page: int = Field(1, ge=0, description="页码（从0开始）")
-    size: int = Field(10, ge=1, le=100, description="页大小")
+    size: int = Field(10, ge=1, description="页大小")
     categories: List[List[str]] = Field(default_factory=list, description="分类ID列表（每个父分类下的id放到一个列表中）")
     keyword: Optional[str] = Field(None, description="搜索关键词")
     label_name: Optional[str] = Field(None, description="标签名称（暂不支持）")
