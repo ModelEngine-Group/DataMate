@@ -21,22 +21,26 @@ import CardView from "@/components/CardView";
 import CreateTaskModal from "@/pages/DataEvaluation/Create/CreateTask.tsx";
 import useFetchData from "@/hooks/useFetchData.ts";
 import { EvaluationTask } from "@/pages/DataEvaluation/evaluation.model.ts";
-import { mapEvaluationTask } from "@/pages/DataEvaluation/evaluation.const.tsx";
+import {
+  getEvalTaskStatusMap,
+  getEvalMethods,
+  getTaskTypes,
+  mapEvaluationTask,
+} from "@/pages/DataEvaluation/evaluation.const.tsx";
+import { useTranslation } from "react-i18next";
 
 const { Text, Title } = Typography;
-
-const statusMap = {
-  PENDING: { text: '等待中', color: 'warning'},
-  RUNNING: { text: '运行中', color: 'processing'},
-  COMPLETED: { text: '已完成', color: 'success'},
-  STOPPED: { text: '已停止', color: 'default'},
-  FAILED: { text: '失败', color: 'error'},
-};
 
 export default function DataEvaluationPage() {
   const { message } = App.useApp();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [viewMode, setViewMode] = useState<"card" | "list">("list");
+
+  const statusMap = getEvalTaskStatusMap(t);
+  const taskTypes = getTaskTypes(t);
+  const evalMethods = getEvalMethods(t);
+
   const {
     loading,
     tableData,
@@ -47,7 +51,7 @@ export default function DataEvaluationPage() {
     fetchData,
   } = useFetchData<EvaluationTask>(
     getPagedEvaluationTaskUsingGet,
-    mapEvaluationTask,
+    (item) => mapEvaluationTask(item, t),
     30000,
     true,
     [],
@@ -60,43 +64,38 @@ export default function DataEvaluationPage() {
     try {
       // 调用删除接口
       await deleteEvaluationTaskUsingGet(task.id);
-      message.success("任务删除成功");
+      message.success(t("dataEvaluation.home.messages.deleteSuccess"));
       // 重新加载数据
       fetchData().then();
     } catch (error) {
-      message.error("任务删除失败，请稍后重试");
+      message.error(t("dataEvaluation.home.messages.deleteFailed"));
     }
   };
 
   const filterOptions = [
     {
       key: 'status',
-      label: '状态',
-      options: Object.entries(statusMap).map(([value, { text }]) => ({
+      label: t("dataEvaluation.home.filters.status"),
+      options: Object.entries(statusMap).map(([value, { label }]) => ({
         value,
-        label: text,
+        label,
       })),
     },
     {
       key: 'taskType',
-      label: '任务类型',
-      options: [
-        { value: 'QA', label: 'QA评估' },
-        { value: 'COT', label: 'COPT评估' },
-      ],
+      label: t("dataEvaluation.home.filters.taskType"),
+      options: taskTypes,
     },
     {
       key: 'evalMethod',
-      label: '评估方式',
-      options: [
-        { value: 'AUTO', label: '自动评估' },
-      ],
+      label: t("dataEvaluation.home.filters.evalMethod"),
+      options: evalMethods,
     },
   ];
 
   const columns = [
     {
-      title: '任务名称',
+      title: t("dataEvaluation.home.columns.taskName"),
       dataIndex: 'name',
       key: 'name',
       render: (name, record) => (
@@ -109,27 +108,29 @@ export default function DataEvaluationPage() {
       ),
     },
     {
-      title: '任务类型',
+      title: t("dataEvaluation.home.columns.taskType"),
       dataIndex: 'taskType',
       key: 'taskType',
       render: (text: string) => (
         <Tag color={text === 'QA' ? 'blue' : 'default'}>
-          {text === 'QA' ? 'QA评估' : text}
+          {text === 'QA' ? t("dataEvaluation.create.taskTypes.qa") : t("dataEvaluation.create.taskTypes.cot")}
         </Tag>
       ),
     },
     {
-      title: '评估方式',
+      title: t("dataEvaluation.home.columns.evalMethod"),
       dataIndex: 'evalMethod',
       key: 'evalMethod',
       render: (text: string) => (
         <Tag color={text === 'AUTO' ? 'geekblue' : 'orange'}>
-          {text === 'AUTO' ? '自动评估' : '人工评估'}
+          {text === 'AUTO'
+            ? t("dataEvaluation.create.evalMethods.auto")
+            : t("dataEvaluation.create.evalMethods.manual")}
         </Tag>
       ),
     },
     {
-      title: '状态',
+      title: t("dataEvaluation.home.columns.status"),
       dataIndex: 'status',
       key: 'status',
       render: (status: any) => {
@@ -137,7 +138,7 @@ export default function DataEvaluationPage() {
       },
     },
     {
-      title: '进度',
+      title: t("dataEvaluation.home.columns.progress"),
       dataIndex: 'evalProcess',
       key: 'evalProcess',
       render: (progress: number, record: EvaluationTask) => (
@@ -149,13 +150,13 @@ export default function DataEvaluationPage() {
       ),
     },
     {
-      title: "创建时间",
+      title: t("dataEvaluation.home.columns.createdAt"),
       dataIndex: "updatedAt",
       key: "updatedAt",
       width: 180,
     },
     {
-      title: '操作',
+      title: t("dataEvaluation.home.columns.actions"),
       key: 'action',
       render: (_: any, task: EvaluationTask) => (
         <div className="flex items-center gap-2">
@@ -187,13 +188,13 @@ export default function DataEvaluationPage() {
   const operations = [
     {
       key: "delete",
-      label: "删除",
+      label: t("dataEvaluation.home.confirm.okText"),
       danger: true,
       confirm: {
-        title: "确认删除该任务？",
-        description: "删除后该任务将无法恢复，请谨慎操作。",
-        okText: "删除",
-        cancelText: "取消",
+        title: t("dataEvaluation.home.confirm.deleteTitle"),
+        description: t("dataEvaluation.home.confirm.deleteDesc"),
+        okText: t("dataEvaluation.home.confirm.okText"),
+        cancelText: t("dataEvaluation.home.confirm.cancelText"),
         okType: "danger",
       },
       icon: <DeleteOutlined />,
@@ -204,13 +205,15 @@ export default function DataEvaluationPage() {
   return (
     <div className="p-4">
       <div className="flex items-center justify-between mb-4">
-        <Title level={4} style={{ margin: 0 }}>数据评估</Title>
+        <Title level={4} style={{ margin: 0 }}>
+          {t("dataEvaluation.home.title")}
+        </Title>
         <Button
           type="primary"
           icon={<PlusOutlined />}
           onClick={() => setIsModalVisible(true)}
         >
-          创建评估任务
+          {t("dataEvaluation.home.createTask")}
         </Button>
       </div>
       <>
@@ -220,7 +223,7 @@ export default function DataEvaluationPage() {
           onSearchChange={(keyword) =>
             setSearchParams({ ...searchParams, keyword })
           }
-          searchPlaceholder="搜索任务名称..."
+          searchPlaceholder={t("dataEvaluation.home.searchPlaceholder")}
           filters={filterOptions}
           onFiltersChange={handleFiltersChange}
           onClearFilters={() =>

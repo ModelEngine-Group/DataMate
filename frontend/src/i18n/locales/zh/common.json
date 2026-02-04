@@ -575,7 +575,7 @@
       "collection": "归集任务导入 "
     }
   },
-    "common": {
+  "common": {
     "actions": {
       "createTask": "创建任务"
     },
@@ -760,5 +760,208 @@
       "updateFailed": "更新标签失败"
     },
     "uncategorized": "未分类"
+  },
+  "dataEvaluation": {
+    "home": {
+      "title": "数据评估",
+      "createTask": "创建评估任务",
+      "searchPlaceholder": "搜索任务名称...",
+      "filters": {
+        "status": "状态",
+        "taskType": "任务类型",
+        "evalMethod": "评估方式"
+      },
+      "columns": {
+        "taskName": "任务名称",
+        "taskType": "任务类型",
+        "evalMethod": "评估方式",
+        "status": "状态",
+        "progress": "进度",
+        "createdAt": "创建时间",
+        "actions": "操作"
+      },
+      "messages": {
+        "deleteSuccess": "任务删除成功",
+        "deleteFailed": "任务删除失败，请稍后重试"
+      },
+      "confirm": {
+        "deleteTitle": "确认删除该任务？",
+        "deleteDesc": "删除后该任务将无法恢复，请谨慎操作。",
+        "okText": "删除",
+        "cancelText": "取消"
+      }
+    },
+    "create": {
+      "title": "创建评估任务",
+      "addDimension": "添加维度",
+      "delete": "删除",
+      "cancel": "取消",
+      "submit": "创建任务",
+      "viewPrompt": "查看评估提示词",
+      "form": {
+        "name": "任务名称",
+        "taskType": "任务类型",
+        "description": "任务描述",
+        "selectDataset": "选择数据集",
+        "evalMethod": "评估方式",
+        "evalModel": "评估模型",
+        "dimensions": "评估维度",
+        "dimension": "维度",
+        "descriptionCol": "描述",
+        "actions": "操作"
+      },
+      "placeholders": {
+        "name": "输入任务名称",
+        "description": "输入任务描述（可选）",
+        "dataset": "请选择要评估的数据集",
+        "model": "请选择模型",
+        "dimensionName": "输入维度名称",
+        "dimensionDesc": "输入维度描述"
+      },
+      "messages": {
+        "nameRequired": "请输入任务名称",
+        "taskTypeRequired": "请选择任务类型",
+        "datasetRequired": "请选择数据集",
+        "modelRequired": "请选择评估模型",
+        "dimensionNameRequired": "请输入维度名称",
+        "keepAtLeastOneDimension": "至少需要保留一个评估维度",
+        "fetchDatasetsFailed": "获取数据集列表失败",
+        "fetchModelsFailed": "获取模型列表失败",
+        "fetchDimensionsFailed": "获取评估维度失败",
+        "addDimensionFirst": "请先添加评估维度",
+        "createSuccess": "评估任务创建成功",
+        "createFailed": "创建评估任务失败"
+      },
+      "taskTypes": {
+        "qa": "QA评估",
+        "cot": "COT评估"
+      },
+      "evalMethods": {
+        "auto": "模型自动评估",
+        "manual": "人工评估"
+      },
+      "source": {
+        "dataset": "数据集 - ",
+        "synthesis": "合成任务 - ",
+        "default": "-"
+      }
+    },
+    "preview": {
+      "title": "评估提示词预览",
+      "copy": "复制",
+      "close": "关闭",
+      "copiedMessage": "已复制到剪贴板"
+    },
+    "detail": {
+      "breadcrumb": {
+        "home": "数据评估",
+        "detail": "数据评估详情"
+      },
+      "tabs": {
+        "overview": "概览",
+        "evaluationItems": "评估详情"
+      },
+      "basicInfo": "基本信息",
+      "taskNotFound": "任务不存在",
+      "messages": {
+        "fetchTaskFailed": "获取任务详情失败",
+        "fetchItemsFailed": "获取评估条目失败"
+      },
+      "labels": {
+        "id": "ID",
+        "name": "名称",
+        "taskType": "评估类型",
+        "evalMethod": "评估方式",
+        "status": "状态",
+        "evalData": "评估数据",
+        "model": "模型",
+        "createdBy": "创建者",
+        "createdAt": "创建时间",
+        "updatedAt": "更新时间",
+        "description": "描述",
+        "dimensions": "评估维度",
+        "dimension": "维度",
+        "dimensionDesc": "描述"
+      }
+    },
+    "detailItems": {
+      "columns": {
+        "fileName": "文件名",
+        "totalCount": "总条目",
+        "evaluatedCount": "已评估",
+        "pendingCount": "待评估",
+        "evalObject": "评估对象",
+        "evalResult": "评估结果"
+      },
+      "backToFileList": "返回文件列表",
+      "notEvaluated": "未评估",
+      "emptyTask": "任务不存在",
+      "fileId": "文件ID：{{id}}",
+      "totalItems": "共 {{total}} 条"
+    },
+    "evaluate": {
+      "breadcrumb": {
+        "manual": "人工评估"
+      },
+      "manualTaskDesc": "人工评估任务",
+      "stats": {
+        "dataset": "数据集",
+        "sliceMethod": "切片方法",
+        "sampleCount": "样本数量",
+        "createdAt": "创建时间"
+      },
+      "progress": {
+        "current": "当前进度: {{current}} / {{total}}",
+        "complete": "{{percent}}% 完成"
+      },
+      "sliceContent": "切片内容",
+      "sliceLabel": "切片 {{index}}",
+      "sourceFile": "来源文件:",
+      "processingMethod": "处理方法:",
+      "position": "位置:",
+      "section": "章节:",
+      "contentPreview": "内容预览",
+      "prev": "上一个",
+      "next": "下一个",
+      "dimensions": "评估维度",
+      "dimensionsHint": "请为每个维度进行1-5星评分",
+      "evaluationNote": "评估备注",
+      "notePlaceholder": "请输入对该切片的评估备注和建议...",
+      "saveAndNext": "保存并下一个",
+      "completeEval": "完成评估",
+      "scoreAllDimensions": "请为所有维度评分后再保存"
+    },
+    "report": {
+      "breadcrumb": {
+        "report": "评估报告"
+      },
+      "exportReport": "导出报告",
+      "labels": {
+        "overallScore": "总体评分",
+        "sampleCount": "评估样本数",
+        "evalMethod": "评估方式",
+        "progress": "完成进度",
+        "manual": "人工",
+        "model": "模型"
+      },
+      "evalResult": "评估结果",
+      "dimensionScores": "维度评分",
+      "qualityInterpretation": "质量分数解读",
+      "qualityExcellent": "90-100分: 优秀，质量很高",
+      "qualityGood": "80-89分: 良好，质量较好",
+      "qualityFair": "70-79分: 一般，需要改进",
+      "qualityPoor": "60-69分: 较差，需要重点关注",
+      "sliceInfo": "切片信息",
+      "sliceThreshold": "切片阈值:",
+      "sliceSampleCount": "抽样数量:",
+      "sliceMethod": "切片方法:",
+      "evalTime": "评估时间:",
+      "dimensions": "评估维度",
+      "qaPairs": "QA对详情",
+      "question": "问题:",
+      "answer": "回答:",
+      "score": "评分:",
+      "scoreSuffix": "分"
+    }
   }
 }

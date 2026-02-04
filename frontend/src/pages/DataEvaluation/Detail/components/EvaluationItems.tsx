@@ -3,6 +3,7 @@ import { Table, Typography, Button, Space, Empty, Tooltip } from 'antd';
 import { FolderOpen, FileText, ArrowLeft } from 'lucide-react';
 import { queryEvaluationFilesUsingGet, queryEvaluationItemsUsingGet } from '../../evaluation.api';
 import useFetchData from '@/hooks/useFetchData';
+import { useTranslation } from "react-i18next";
 
 const { Text } = Typography;
 
@@ -40,6 +41,7 @@ type EvalItem = {
 };
 
 export default function EvaluationItems({ task }: { task: any }) {
+  const { t } = useTranslation();
   const [selectedFile, setSelectedFile] = useState<{ fileId: string; fileName: string } | null>(null);
 
   // 文件列表数据（使用 useFetchData），pageOffset=0 表示后端分页为 1 基
@@ -89,7 +91,7 @@ export default function EvaluationItems({ task }: { task: any }) {
 
   const fileColumns = [
     {
-      title: '文件名',
+      title: t("dataEvaluation.detailItems.columns.fileName"),
       dataIndex: 'fileName',
       key: 'fileName',
       render: (_: any, record: EvalFile) => (
@@ -100,19 +102,19 @@ export default function EvaluationItems({ task }: { task: any }) {
       ),
     },
     {
-      title: '总条目',
+      title: t("dataEvaluation.detailItems.columns.totalCount"),
       dataIndex: 'totalCount',
       key: 'totalCount',
       width: 120,
     },
     {
-      title: '已评估',
+      title: t("dataEvaluation.detailItems.columns.evaluatedCount"),
       dataIndex: 'evaluatedCount',
       key: 'evaluatedCount',
       width: 120,
     },
     {
-      title: '待评估',
+      title: t("dataEvaluation.detailItems.columns.pendingCount"),
       dataIndex: 'pendingCount',
       key: 'pendingCount',
       width: 120,
@@ -172,7 +174,7 @@ export default function EvaluationItems({ task }: { task: any }) {
     // 判空展示未评估
     const isEmpty = !r || (typeof r === 'string' && r.trim() === '') || (typeof r === 'object' && r !== null && Object.keys(r).length === 0);
     if (isEmpty) {
-      return <Text type="secondary">未评估</Text>;
+      return <Text type="secondary">{t("dataEvaluation.detailItems.notEvaluated")}</Text>;
     }
     return (
       <Tooltip
@@ -192,14 +194,14 @@ export default function EvaluationItems({ task }: { task: any }) {
 
   const itemColumns = [
     {
-      title: '评估对象',
+      title: t("dataEvaluation.detailItems.columns.evalObject"),
       dataIndex: 'evalContent',
       key: 'evalContent',
       render: (_: any, record: EvalItem) => renderEvalObject(record),
       width: COLUMN_WIDTH,
     },
     {
-      title: '评估结果',
+      title: t("dataEvaluation.detailItems.columns.evalResult"),
       dataIndex: 'evalResult',
       key: 'evalResult',
       render: (_: any, record: EvalItem) => renderEvalResult(record),
@@ -207,7 +209,7 @@ export default function EvaluationItems({ task }: { task: any }) {
     },
   ];
 
-  if (!task?.id) return <Empty description="任务不存在" />;
+  if (!task?.id) return <Empty description={t("dataEvaluation.detailItems.emptyTask")} />;
 
   return (
     <div className="flex flex-col gap-4">
@@ -232,13 +234,17 @@ export default function EvaluationItems({ task }: { task: any }) {
           <div className="sticky top-0 z-10 bg-white py-2" style={{ borderBottom: '1px solid #f0f0f0' }}>
             <Space wrap>
               <Button icon={<ArrowLeft size={16} />} onClick={() => { setSelectedFile(null); }}>
-                返回文件列表
+                {t("dataEvaluation.detailItems.backToFileList")}
               </Button>
               <Space>
                 <FileText size={16} />
                 <Text strong>{selectedFile.fileName}</Text>
-                <Text type="secondary">文件ID：{selectedFile.fileId}</Text>
-                <Text type="secondary">共 {itemPagination.total} 条</Text>
+                <Text type="secondary">
+                  {t("dataEvaluation.detailItems.fileId", { id: selectedFile.fileId })}
+                </Text>
+                <Text type="secondary">
+                  {t("dataEvaluation.detailItems.totalItems", { total: itemPagination.total })}
+                </Text>
               </Space>
             </Space>
           </div>

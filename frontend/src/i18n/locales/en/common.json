@@ -576,7 +576,7 @@
       "collection": "Collection Task Import"
     }
   },
-    "common": {
+  "common": {
     "actions": {
       "createTask": "Create Task"
     },
@@ -761,5 +761,208 @@
       "updateFailed": "Failed to update tag"
     },
     "uncategorized": "Uncategorized"
+  },
+  "dataEvaluation": {
+    "home": {
+      "title": "Data Evaluation",
+      "createTask": "Create Evaluation Task",
+      "searchPlaceholder": "Search task name...",
+      "filters": {
+        "status": "Status",
+        "taskType": "Task Type",
+        "evalMethod": "Evaluation Method"
+      },
+      "columns": {
+        "taskName": "Task Name",
+        "taskType": "Task Type",
+        "evalMethod": "Evaluation Method",
+        "status": "Status",
+        "progress": "Progress",
+        "createdAt": "Created At",
+        "actions": "Actions"
+      },
+      "messages": {
+        "deleteSuccess": "Task deleted successfully",
+        "deleteFailed": "Task deletion failed, please try again later"
+      },
+      "confirm": {
+        "deleteTitle": "Confirm delete this task?",
+        "deleteDesc": "This task cannot be recovered after deletion. Please proceed with caution.",
+        "okText": "Delete",
+        "cancelText": "Cancel"
+      }
+    },
+    "create": {
+      "title": "Create Evaluation Task",
+      "addDimension": "Add Dimension",
+      "delete": "Delete",
+      "cancel": "Cancel",
+      "submit": "Create Task",
+      "viewPrompt": "View Evaluation Prompt",
+      "form": {
+        "name": "Task Name",
+        "taskType": "Task Type",
+        "description": "Task Description",
+        "selectDataset": "Select Dataset",
+        "evalMethod": "Evaluation Method",
+        "evalModel": "Evaluation Model",
+        "dimensions": "Evaluation Dimensions",
+        "dimension": "Dimension",
+        "descriptionCol": "Description",
+        "actions": "Actions"
+      },
+      "placeholders": {
+        "name": "Enter task name",
+        "description": "Enter task description (optional)",
+        "dataset": "Select dataset to evaluate",
+        "model": "Select model",
+        "dimensionName": "Enter dimension name",
+        "dimensionDesc": "Enter dimension description"
+      },
+      "messages": {
+        "nameRequired": "Please enter task name",
+        "taskTypeRequired": "Please select task type",
+        "datasetRequired": "Please select dataset",
+        "modelRequired": "Please select evaluation model",
+        "dimensionNameRequired": "Please enter dimension name",
+        "keepAtLeastOneDimension": "At least one evaluation dimension is required",
+        "fetchDatasetsFailed": "Failed to fetch dataset list",
+        "fetchModelsFailed": "Failed to fetch model list",
+        "fetchDimensionsFailed": "Failed to fetch evaluation dimensions",
+        "addDimensionFirst": "Please add evaluation dimensions first",
+        "createSuccess": "Evaluation task created successfully",
+        "createFailed": "Failed to create evaluation task"
+      },
+      "taskTypes": {
+        "qa": "QA Evaluation",
+        "cot": "COT Evaluation"
+      },
+      "evalMethods": {
+        "auto": "Model Auto Evaluation",
+        "manual": "Manual Evaluation"
+      },
+      "source": {
+        "dataset": "Dataset - ",
+        "synthesis": "Synthesis Task - ",
+        "default": "-"
+      }
+    },
+    "preview": {
+      "title": "Evaluation Prompt Preview",
+      "copy": "Copy",
+      "close": "Close",
+      "copiedMessage": "Copied to clipboard"
+    },
+    "detail": {
+      "breadcrumb": {
+        "home": "Data Evaluation",
+        "detail": "Evaluation Task Detail"
+      },
+      "tabs": {
+        "overview": "Overview",
+        "evaluationItems": "Evaluation Items"
+      },
+      "basicInfo": "Basic Information",
+      "taskNotFound": "Task not found",
+      "messages": {
+        "fetchTaskFailed": "Failed to fetch task details",
+        "fetchItemsFailed": "Failed to fetch evaluation items"
+      },
+      "labels": {
+        "id": "ID",
+        "name": "Name",
+        "taskType": "Task Type",
+        "evalMethod": "Evaluation Method",
+        "status": "Status",
+        "evalData": "Evaluation Data",
+        "model": "Model",
+        "createdBy": "Creator",
+        "createdAt": "Created At",
+        "updatedAt": "Updated At",
+        "description": "Description",
+        "dimensions": "Evaluation Dimensions",
+        "dimension": "Dimension",
+        "dimensionDesc": "Description"
+      }
+    },
+    "detailItems": {
+      "columns": {
+        "fileName": "File Name",
+        "totalCount": "Total Items",
+        "evaluatedCount": "Evaluated",
+        "pendingCount": "Pending",
+        "evalObject": "Evaluation Object",
+        "evalResult": "Evaluation Result"
+      },
+      "backToFileList": "Back to file list",
+      "notEvaluated": "Not evaluated",
+      "emptyTask": "Task not found",
+      "fileId": "File ID: {{id}}",
+      "totalItems": "Total {{total}} items"
+    },
+    "evaluate": {
+      "breadcrumb": {
+        "manual": "Manual Evaluation"
+      },
+      "manualTaskDesc": "Manual evaluation task",
+      "stats": {
+        "dataset": "Dataset",
+        "sliceMethod": "Slice Method",
+        "sampleCount": "Sample Count",
+        "createdAt": "Created At"
+      },
+      "progress": {
+        "current": "Current progress: {{current}} / {{total}}",
+        "complete": "{{percent}}% complete"
+      },
+      "sliceContent": "Slice Content",
+      "sliceLabel": "Slice {{index}}",
+      "sourceFile": "Source file:",
+      "processingMethod": "Processing method:",
+      "position": "Position:",
+      "section": "Section:",
+      "contentPreview": "Content preview",
+      "prev": "Previous",
+      "next": "Next",
+      "dimensions": "Evaluation Dimensions",
+      "dimensionsHint": "Please rate each dimension from 1 to 5 stars",
+      "evaluationNote": "Evaluation notes",
+      "notePlaceholder": "Enter your notes and suggestions for this slice...",
+      "saveAndNext": "Save and next",
+      "completeEval": "Complete evaluation",
+      "scoreAllDimensions": "Please rate all dimensions before saving"
+    },
+    "report": {
+      "breadcrumb": {
+        "report": "Evaluation Report"
+      },
+      "exportReport": "Export report",
+      "labels": {
+        "overallScore": "Overall score",
+        "sampleCount": "Evaluated samples",
+        "evalMethod": "Evaluation method",
+        "progress": "Progress",
+        "manual": "Manual",
+        "model": "Model"
+      },
+      "evalResult": "Evaluation Results",
+      "dimensionScores": "Dimension scores",
+      "qualityInterpretation": "Quality interpretation",
+      "qualityExcellent": "90-100: Excellent, very high quality",
+      "qualityGood": "80-89: Good, high quality",
+      "qualityFair": "70-79: Fair, needs improvement",
+      "qualityPoor": "60-69: Poor, needs attention",
+      "sliceInfo": "Slice information",
+      "sliceThreshold": "Slice threshold:",
+      "sliceSampleCount": "Sample count:",
+      "sliceMethod": "Slice method:",
+      "evalTime": "Evaluation time:",
+      "dimensions": "Evaluation Dimensions",
+      "qaPairs": "QA pairs",
+      "question": "Question:",
+      "answer": "Answer:",
+      "score": "Score:",
+      "scoreSuffix": " pts"
+    }
   }
 }

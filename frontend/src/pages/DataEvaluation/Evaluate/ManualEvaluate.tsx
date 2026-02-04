@@ -14,6 +14,7 @@ import {
 import { mockTasks, presetEvaluationDimensions } from "@/mock/evaluation";
 import { useNavigate } from "react-router";
 import DetailHeader from "@/components/DetailHeader";
+import { useTranslation } from "react-i18next";
 
 const { TextArea } = Input;
 const { Title } = Typography;
@@ -50,6 +51,7 @@ const slices: EvaluationSlice[] = Array.from(
 
 const ManualEvaluatePage = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const taskId = mockTasks[0].id;
   // 人工评估状态
   const [currentEvaluationTask, setCurrentEvaluationTask] =
@@ -109,7 +111,7 @@ const ManualEvaluatePage = () => {
     );
 
     if (!hasAllScores) {
-      window.alert("请为所有维度评分后再保存");
+      window.alert(t("dataEvaluation.evaluate.scoreAllDimensions"));
       return;
     }
 
@@ -178,22 +180,22 @@ const ManualEvaluatePage = () => {
   const statistics = [
     {
       icon: <DatabaseOutlined className="text-gray-500" />,
-      label: "数据集",
+      label: t("dataEvaluation.evaluate.stats.dataset"),
       value: currentEvaluationTask?.datasetName || "",
     },
     {
       icon: <ScissorOutlined className="text-gray-500" />,
-      label: "切片方法",
+      label: t("dataEvaluation.evaluate.stats.sliceMethod"),
       value: currentEvaluationTask?.sliceConfig?.method || "",
     },
     {
       icon: <AimOutlined className="text-gray-500" />,
-      label: "样本数量",
+      label: t("dataEvaluation.evaluate.stats.sampleCount"),
       value: evaluationSlices.length,
     },
     {
       icon: <CalendarOutlined className="text-gray-500" />,
-      label: "创建时间",
+      label: t("dataEvaluation.evaluate.stats.createdAt"),
       value: currentEvaluationTask?.createdAt || "",
     },
   ];
@@ -204,17 +206,19 @@ const ManualEvaluatePage = () => {
         items={[
           {
             title: (
-              <span onClick={() => navigate("/data/evaluation")}>数据评估</span>
+              <span onClick={() => navigate("/data/evaluation")}>
+                {t("dataEvaluation.detail.breadcrumb.home")}
+              </span>
             ),
           },
-          { title: "人工评估", key: "manual-evaluate" },
+          { title: t("dataEvaluation.evaluate.breadcrumb.manual"), key: "manual-evaluate" },
         ]}
       />
       {/* 头部信息 */}
       <DetailHeader
         data={{
           name: currentEvaluationTask?.name || "",
-          description: "人工评估任务",
+          description: t("dataEvaluation.evaluate.manualTaskDesc"),
           icon: <FileTextOutlined />,
           createdAt: currentEvaluationTask?.createdAt,
           lastUpdated: currentEvaluationTask?.createdAt,
@@ -225,11 +229,16 @@ const ManualEvaluatePage = () => {
       {/* 进度条 */}
       <div className="flex justify-between items-center mt-4 mb-6">
         <div className="text-xs text-gray-500">
-          当前进度: {currentSliceIndex + 1} / {evaluationSlices.length}
+          {t("dataEvaluation.evaluate.progress.current", {
+            current: currentSliceIndex + 1,
+            total: evaluationSlices.length,
+          })}
         </div>
         <div className="flex items-center gap-4">
           <span className="text-xs text-gray-500">
-            {Math.round(progress)}% 完成
+            {t("dataEvaluation.evaluate.progress.complete", {
+              percent: Math.round(progress),
+            })}
           </span>
           <div className="w-48 bg-gray-200 rounded h-2">
             <div
@@ -249,10 +258,12 @@ const ManualEvaluatePage = () => {
           <div className="border-b border-gray-100 pb-4 mb-4 flex justify-between items-center">
             <span className="text-base font-semibold flex items-center gap-2">
               <FileTextOutlined />
-              切片内容
+              {t("dataEvaluation.evaluate.sliceContent")}
             </span>
             <Badge
-              count={`切片 ${currentSliceIndex + 1}`}
+              count={t("dataEvaluation.evaluate.sliceLabel", {
+                index: currentSliceIndex + 1,
+              })}
               style={{ background: "#fafafa", color: "#333" }}
             />
           </div>
@@ -264,26 +275,34 @@ const ManualEvaluatePage = () => {
                 <div className="bg-gray-50 rounded p-4 text-sm">
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <span className="text-gray-500">来源文件:</span>
+                      <span className="text-gray-500">
+                        {t("dataEvaluation.evaluate.sourceFile")}
+                      </span>
                       <span className="ml-2 font-medium">
                         {currentSlice.sourceFile}
                       </span>
                     </div>
                     <div>
-                      <span className="text-gray-500">处理方法:</span>
+                      <span className="text-gray-500">
+                        {t("dataEvaluation.evaluate.processingMethod")}
+                      </span>
                       <span className="ml-2 font-medium">
                         {currentSlice.metadata.processingMethod}
                       </span>
                     </div>
                     <div>
-                      <span className="text-gray-500">位置:</span>
+                      <span className="text-gray-500">
+                        {t("dataEvaluation.evaluate.position")}
+                      </span>
                       <span className="ml-2 font-medium">
                         {currentSlice.metadata.startPosition}-
                         {currentSlice.metadata.endPosition}
                       </span>
                     </div>
                     <div>
-                      <span className="text-gray-500">章节:</span>
+                      <span className="text-gray-500">
+                        {t("dataEvaluation.evaluate.section")}
+                      </span>
                       <span className="ml-2 font-medium">
                         {currentSlice.metadata.section}
                       </span>
@@ -293,7 +312,9 @@ const ManualEvaluatePage = () => {
 
                 {/* 切片内容 */}
                 <div className="border border-gray-100 rounded p-4 min-h-[180px]">
-                  <div className="text-xs text-gray-500 mb-2">内容预览</div>
+                  <div className="text-xs text-gray-500 mb-2">
+                    {t("dataEvaluation.evaluate.contentPreview")}
+                  </div>
                   <div className="text-gray-900 leading-relaxed">
                     {currentSlice.content}
                   </div>
@@ -309,7 +330,7 @@ const ManualEvaluatePage = () => {
                     }
                     disabled={currentSliceIndex === 0}
                   >
-                    上一个
+                    {t("dataEvaluation.evaluate.prev")}
                   </Button>
                   <span className="text-xs text-gray-500">
                     {currentSliceIndex + 1} / {evaluationSlices.length}
@@ -327,7 +348,7 @@ const ManualEvaluatePage = () => {
                     }
                     disabled={currentSliceIndex === evaluationSlices.length - 1}
                   >
-                    下一个
+                    {t("dataEvaluation.evaluate.next")}
                   </Button>
                 </div>
               </>
@@ -340,10 +361,10 @@ const ManualEvaluatePage = () => {
           <div className="border-b border-gray-100 pb-4 mb-4">
             <span className="text-base font-semibold flex items-center gap-2">
               <StarFilled className="text-yellow-400" />
-              评估维度
+              {t("dataEvaluation.evaluate.dimensions")}
             </span>
             <div className="text-xs text-gray-500 mt-1">
-              请为每个维度进行1-5星评分
+              {t("dataEvaluation.evaluate.dimensionsHint")}
             </div>
           </div>
 
@@ -369,9 +390,11 @@ const ManualEvaluatePage = () => {
 
             {/* 评论区域 */}
             <div className="border border-gray-100 rounded p-4">
-              <span className="font-medium mb-2 block">评估备注</span>
+              <span className="font-medium mb-2 block">
+                {t("dataEvaluation.evaluate.evaluationNote")}
+              </span>
               <TextArea
-                placeholder="请输入对该切片的评估备注和建议..."
+                placeholder={t("dataEvaluation.evaluate.notePlaceholder")}
                 value={sliceComments[currentSlice?.id || ""] || ""}
                 onChange={(e) =>
                   setSliceComments((prev) => ({
@@ -393,8 +416,8 @@ const ManualEvaluatePage = () => {
                 size="large"
               >
                 {currentSliceIndex === evaluationSlices.length - 1
-                  ? "完成评估"
-                  : "保存并下一个"}
+                  ? t("dataEvaluation.evaluate.completeEval")
+                  : t("dataEvaluation.evaluate.saveAndNext")}
               </Button>
             </div>
           </div>
