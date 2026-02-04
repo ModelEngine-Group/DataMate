@@ -4,7 +4,7 @@ File Service
 """
 import os
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional
 
@@ -38,6 +38,7 @@ class FileService:
         self,
         upload_path: str,
         service_id: str,
+        db_session,
         check_info: Optional[str] = None
     ) -> str:
         """
@@ -54,7 +55,7 @@ class FileService:
         req_id = str(uuid.uuid4())
         timeout = datetime.now(timezone.utc).replace(
             microsecond=0
-        ) + timezone.timedelta(seconds=self.DEFAULT_TIMEOUT_SECONDS)
+        ) + timedelta(seconds=self.DEFAULT_TIMEOUT_SECONDS)
 
         pre_request = ChunkUploadPreRequest(
             id=req_id,
@@ -66,7 +67,7 @@ class FileService:
             check_info=check_info,
         )
 
-        await self.chunk_upload_repo.insert(pre_request)
+        await self.chunk_upload_repo.insert(pre_request, db_session)
         return req_id
 
     async def chunk_upload(
@@ -156,10 +157,9 @@ class FileService:
             upload_request, upload_path, file_content
         )
 
-        from datetime import timezone
         pre_request.timeout = datetime.now(timezone.utc).replace(
             microsecond=0
-        ) + timezone.timedelta(seconds=self.DEFAULT_TIMEOUT_SECONDS)
+        ) + timedelta(seconds=self.DEFAULT_TIMEOUT_SECONDS)
         pre_request.increment_uploaded_file_num()
 
         return saved_file
@@ -180,8 +180,7 @@ class FileService:
             pre_request.increment_uploaded_file_num()
             return saved_file
 
-        from datetime import timezone
         pre_request.timeout = datetime.now(timezone.utc).replace(
             microsecond=0
-        ) + timezone.timedelta(seconds=self.DEFAULT_TIMEOUT_SECONDS)
+        ) + timedelta(seconds=self.DEFAULT_TIMEOUT_SECONDS)
         return None

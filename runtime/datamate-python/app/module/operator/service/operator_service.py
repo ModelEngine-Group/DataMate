@@ -458,6 +458,7 @@ class OperatorService:
         req_id = await self.file_service.pre_upload(
             upload_path=upload_path,
             service_id=SERVICE_ID,
+            db_session=db,
             check_info=None
         )
         return {"req_id": req_id}
