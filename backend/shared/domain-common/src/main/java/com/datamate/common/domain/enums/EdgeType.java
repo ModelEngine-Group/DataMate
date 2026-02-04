@@ -10,5 +10,6 @@ public enum EdgeType {
     DATA_CLEANING,
     DATA_LABELING,
     DATA_SYNTHESIS,
-    DATA_RATIO
+    DATA_RATIO,
+    KNOWLEDGE_BASE,
 }
