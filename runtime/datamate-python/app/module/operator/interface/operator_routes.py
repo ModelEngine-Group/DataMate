@@ -2,32 +2,29 @@
 Operator API Routes
 算子 API 路由
 """
-from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, Form
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, Form, File, Body
 from fastapi.responses import FileResponse
 
+from app.core.logging import get_logger
+from app.db.models.operator import Operator, CategoryRelation, OperatorRelease
 from app.db.session import get_db
-from app.module.shared.schema import StandardResponse, PaginatedData
-from app.module.operator.schema import (
-    OperatorDto,
-    OperatorUpdateDto,
-    OperatorListRequest,
-    PreUploadResponse,
-)
-from app.module.operator.service import OperatorService
+from app.module.operator.parsers import ParserHolder
 from app.module.operator.repository import (
     OperatorRepository,
     CategoryRelationRepository,
     OperatorReleaseRepository,
 )
-from app.module.operator.parsers import ParserHolder
-from app.db.models.operator import Operator, CategoryRelation, OperatorRelease
-from app.core.logging import get_logger
-from app.module.shared.file_service import FileService
+from app.module.operator.schema import (
+    OperatorDto,
+    OperatorUpdateDto,
+    OperatorListRequest,
+)
+from app.module.operator.service import OperatorService
 from app.module.shared.chunk_upload_repository import ChunkUploadRepository
-from app.db.models.chunk_upload import ChunkUploadPreRequest
+from app.module.shared.file_service import FileService
+from app.module.shared.schema import StandardResponse, PaginatedData
 
 logger = get_logger(__name__)
 
@@ -102,6 +99,7 @@ async def get_operator(
     """获取算子详情"""
     try:
         operator = await service.get_operator_by_id(operator_id, db)
+        operator.file_name = None  # Don't return file_name
         return StandardResponse(code=200, message="success", data=operator)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -158,21 +156,25 @@ async def create_operator(
     description="上传算子文件并解析元数据"
 )
 async def upload_operator(
-    file_name: str,
+    request: dict = Body(...),
     service: OperatorService = Depends(get_operator_service),
     db=Depends(get_db)
 ):
     """上传算子"""
     try:
+        file_name = request.get("fileName")
+        if not file_name:
+            raise HTTPException(status_code=422, detail="fileName is required")
         operator = await service.upload_operator(file_name, db)
         return StandardResponse(code=200, message="success", data=operator)
     except Exception as e:
+        logger.error(f"{file_name}", e)
         raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.post(
     "/upload/pre-upload",
-    response_model=StandardResponse[PreUploadResponse],
+    response_model=StandardResponse[str],
     summary="预上传",
     description="获取预上传 ID，用于分块上传"
 )
@@ -181,12 +183,17 @@ async def pre_upload(
     db=Depends(get_db)
 ):
     """预上传"""
-    result = await service.pre_upload(db)
-    return StandardResponse(
-        code=200,
-        message="success",
-        data=PreUploadResponse(req_id=result["req_id"])
-    )
+    try:
+        req_id = await service.pre_upload(db)
+        await db.commit()
+        return StandardResponse(
+            code=200,
+            message="success",
+            data=req_id,
+        )
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.post(
@@ -196,13 +203,13 @@ async def pre_upload(
     description="分块上传算子文件"
 )
 async def chunk_upload(
-    req_id: str = Form(..., description="预上传ID"),
-    file_no: int = Form(1, description="文件编号"),
-    file_name: str = Form(..., description="文件名"),
-    total_chunk_num: int = Form(1, description="总分块数"),
-    chunk_no: int = Form(1, description="当前分块号"),
-    file: UploadFile = ...,
-    check_sum_hex: Optional[str] = Form(None, description="校验和"),
+    req_id: str = Form(..., alias="reqId", description="预上传ID"),
+    file_no: int = Form(1, alias="fileNo", description="文件编号"),
+    file_name: str = Form(..., alias="fileName", description="文件名"),
+    total_chunk_num: int = Form(1, alias="totalChunkNum", description="总分块数"),
+    chunk_no: int = Form(1, alias="chunkNo", description="当前分块号"),
+    file: UploadFile = File(...),
+    check_sum_hex: Optional[str] = Form(None, alias="checkSumHex", description="校验和"),
     service: OperatorService = Depends(get_operator_service),
     db=Depends(get_db)
 ):

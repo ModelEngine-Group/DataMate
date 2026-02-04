@@ -5,10 +5,10 @@ Chunk Upload Database Model
 from sqlalchemy import Column, String, Integer, DateTime
 from sqlalchemy.sql import func
 
-from app.db.models.base_entity import Base, BaseEntity
+from app.db.models.base_entity import Base
 
 
-class ChunkUploadPreRequest(BaseEntity):
+class ChunkUploadPreRequest(Base):
     """分片上传预请求"""
     __tablename__ = "t_chunk_upload_request"
 
@@ -34,5 +34,5 @@ class ChunkUploadPreRequest(BaseEntity):
 
     def is_request_timeout(self) -> bool:
         """检查是否已超时"""
-        from datetime import datetime, timezone
-        return self.timeout is not None and datetime.now(timezone.utc) > self.timeout
+        from datetime import datetime
+        return self.timeout is not None and datetime.utcnow() > self.timeout

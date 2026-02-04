@@ -35,6 +35,8 @@ services:
       - flow_volume:/flow
       - log_volume:/var/log/datamate
       - graph_data_volume:/data/rag_storage
+      - operator-upload-volume:/operators/upload
+      - operator-runtime-volume:/operators/extract
     networks: [ datamate ]
     depends_on:
       - datamate-database

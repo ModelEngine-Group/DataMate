@@ -148,10 +148,10 @@ export const mapOperator = (op: OperatorI, t: (key: string) => string) => {
         label: t("operatorMarket.const.language"),
         value: "Python",
       },
-      {
-        label: t("operatorMarket.const.function"),
-        value: functionLabel,
-      },
+      // {
+      //   label: t("operatorMarket.const.function"),
+      //   value: functionLabel,
+      // },
     ],
   };
 };

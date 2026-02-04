@@ -4,21 +4,18 @@ File Service
 """
 import os
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional
 
-from fastapi import UploadFile
-
 from app.core.logging import get_logger
+from app.db.models.chunk_upload import ChunkUploadPreRequest
+from app.module.shared.chunk_upload_repository import ChunkUploadRepository
+from app.module.shared.chunks_saver import ChunksSaver
 from app.module.shared.file_models import (
-    ChunkUploadPreRequestDto,
     ChunkUploadRequestDto,
     FileUploadResult,
 )
-from app.module.shared.chunks_saver import ChunksSaver
-from app.module.shared.chunk_upload_repository import ChunkUploadRepository
-from app.db.models.chunk_upload import ChunkUploadPreRequest
 
 logger = get_logger(__name__)
 
@@ -53,7 +50,7 @@ class FileService:
             预上传请求ID
         """
         req_id = str(uuid.uuid4())
-        timeout = datetime.now(timezone.utc).replace(
+        timeout = datetime.utcnow().replace(
             microsecond=0
         ) + timedelta(seconds=self.DEFAULT_TIMEOUT_SECONDS)
 
@@ -157,7 +154,7 @@ class FileService:
             upload_request, upload_path, file_content
         )
 
-        pre_request.timeout = datetime.now(timezone.utc).replace(
+        pre_request.timeout = datetime.utcnow().replace(
             microsecond=0
         ) + timedelta(seconds=self.DEFAULT_TIMEOUT_SECONDS)
         pre_request.increment_uploaded_file_num()
@@ -180,7 +177,7 @@ class FileService:
             pre_request.increment_uploaded_file_num()
             return saved_file
 
-        pre_request.timeout = datetime.now(timezone.utc).replace(
+        pre_request.timeout = datetime.utcnow().replace(
             microsecond=0
         ) + timedelta(seconds=self.DEFAULT_TIMEOUT_SECONDS)
         return None

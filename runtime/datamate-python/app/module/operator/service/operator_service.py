@@ -231,13 +231,28 @@ class OperatorService:
     ) -> OperatorDto:
         """根据 ID 获取算子详情"""
         result = await db.execute(
-            text("SELECT * FROM v_operator WHERE operator_id = :operator_id"),
+            text("""
+                SELECT
+                    operator_id, operator_name, description, version, inputs, outputs, runtime,
+                    settings, is_star, file_name, file_size, usage_count, metrics,
+                    created_at, updated_at, created_by, updated_by,
+                    STRING_AGG(category_name, ',' ORDER BY created_at DESC) AS categories
+                FROM v_operator
+                WHERE operator_id = :operator_id
+                GROUP BY operator_id, operator_name, description, version, inputs, outputs, runtime,
+                    settings, is_star, file_name, file_size, usage_count, metrics,
+                    created_at, updated_at, created_by, updated_by
+            """),
             {"operator_id": operator_id}
         )
         row = result.fetchone()
 
         if not row:
             raise ValueError(f"Operator {operator_id} not found")
+
+        # Parse categories from comma-separated string
+        categories_str = row.categories if hasattr(row, 'categories') and row.categories else ""
+        categories = [c.strip() for c in categories_str.split(",")] if categories_str else []
 
         # Build DTO
         operator = OperatorDto(
@@ -256,6 +271,7 @@ class OperatorService:
             is_star=row.is_star,
             created_at=row.created_at,
             updated_at=row.updated_at,
+            categories=categories,
         )
 
         # Read requirements and readme if file exists
@@ -265,8 +281,6 @@ class OperatorService:
             )
             operator.requirements = self._read_requirements(extract_path)
             operator.readme = self._get_readme_content(extract_path)
-
-        operator.file_name = None  # Don't return file_name
 
         # Load releases
         releases = await self.operator_release_repo.find_all_by_operator_id(
@@ -301,6 +315,7 @@ class OperatorService:
 
         # Insert operator
         await self.operator_repo.insert(req, db)
+        await db.flush()
 
         # Insert category relations
         if req.categories:
@@ -313,7 +328,7 @@ class OperatorService:
             release = req.releases[0]
             release.id = req.id
             release.version = req.version
-            release.release_date = datetime.now(timezone.utc)
+            release.release_date = datetime.utcnow()
             await self.operator_release_repo.insert(release, db)
 
         # Extract files
@@ -324,8 +339,7 @@ class OperatorService:
                 self._get_extract_path(self._get_stem(req.file_name))
             )
 
-        await db.flush()
-        return await self.get_operator_by_id(req.id, db)
+        return req
 
     async def update_operator(
         self,
@@ -338,6 +352,9 @@ class OperatorService:
 
         # Get existing operator
         existing = await self.get_operator_by_id(operator_id, db)
+
+        # Save original version for release comparison
+        original_version = existing.version
 
         # Merge update request into existing operator
         # Only update fields that are provided (not None)
@@ -377,20 +394,18 @@ class OperatorService:
         await self.operator_repo.update(existing, db)
 
         # Update category relations
-        if req.categories is not None:
+        if req.file_name is not None and req.categories is not None:
             await self.category_relation_repo.batch_update(
                 operator_id, req.categories, db
             )
 
         # Update release
-        logger.info(f"########### {req.releases}")
         if req.releases is not None and len(req.releases) > 0:
             release = req.releases[0]
-            if release.version is None:
-                release.version = existing.version
             release.id = operator_id
-            release.release_date = datetime.now(timezone.utc)
-            if existing.version == release.version:
+            release.version = req.version
+            release.release_date = datetime.utcnow()
+            if original_version == release.version:
                 await self.operator_release_repo.update(release, db)
             else:
                 await self.operator_release_repo.insert(release, db)
@@ -415,7 +430,7 @@ class OperatorService:
         # Check if operator is in use
         in_template = await self.operator_repo.operator_in_template(operator_id, db)
         in_unstop_task = await self.operator_repo.operator_in_unstop_task(operator_id, db)
-        if in_template and in_unstop_task:
+        if in_template or in_unstop_task:
             raise OperatorInInstanceError()
 
         # Check if operator is predefined
@@ -444,13 +459,17 @@ class OperatorService:
         db: AsyncSession
     ) -> OperatorDto:
         """上传算子文件并解析元数据"""
+        file_path = self._get_upload_path(file_name)
+        file_size = os.path.getsize(file_path) if os.path.exists(file_path) else None
         return self.parser_holder.parse_yaml_from_archive(
             self._get_file_type(file_name),
-            self._get_upload_path(file_name),
-            YAML_PATH
+            file_path,
+            YAML_PATH,
+            file_name,
+            file_size
         )
 
-    async def pre_upload(self, db: AsyncSession) -> Dict[str, str]:
+    async def pre_upload(self, db: AsyncSession) -> str:
         """预上传，返回请求 ID"""
         from app.module.operator.constants import OPERATOR_BASE_PATH, UPLOAD_DIR
 
@@ -461,7 +480,7 @@ class OperatorService:
             db_session=db,
             check_info=None
         )
-        return {"req_id": req_id}
+        return req_id
 
     async def chunk_upload(
         self,
@@ -570,17 +589,21 @@ class OperatorService:
     def _get_readme_content(self, extract_path: str) -> str:
         """读取 README 内容"""
         dir_path = Path(extract_path)
-        if not dir_path.exists():
+        if not dir_path.exists() or not dir_path.is_dir():
+            logger.info(f"Directory does not exist or is not a directory: {extract_path}")
             return ""
 
         candidates = ["README.md", "readme.md", "Readme.md"]
         for filename in candidates:
             readme_path = dir_path / filename
-            if readme_path.exists():
+            if readme_path.exists() and readme_path.is_file():
                 try:
-                    return readme_path.read_text(encoding='utf-8')
+                    content = readme_path.read_text(encoding='utf-8')
+                    logger.info(f"Successfully read README from: {readme_path}")
+                    return content
                 except Exception as e:
-                    logger.warning(f"Failed to read README: {e}")
+                    logger.warning(f"Failed to read README from {readme_path}: {e}")
+        logger.info(f"No README found in: {extract_path}")
         return ""
 
     def _get_file_type(self, file_name: str) -> str:
