@@ -1,9 +1,9 @@
 // typescript
 // File: `frontend/src/pages/DataManagement/Detail/components/DataQuality.tsx`
-import React from "react";
+import React, { useMemo } from "react";
 // Run `npm install antd lucide-react` if your editor reports "Module is not installed"
-import { Card } from "antd";
-import { AlertTriangle } from "lucide-react";
+import { Card, Table, Progress } from "antd";
+import { AlertTriangle, Tags, BarChart3 } from "lucide-react";
 import DevelopmentInProgress from "@/components/DevelopmentInProgress";
 import { Dataset } from "@/pages/DataManagement/dataset.model.ts";
 
@@ -73,8 +73,214 @@ function getMockMetrics(datasetType: DatasetType, stats: FileStats) {
   ];
 }
 
+// 数据集标签分布统计组件
+interface LabelDistributionProps {
+  distribution?: Record<string, Record<string, number>>;
+}
+
+function LabelDistributionStats({ distribution }: LabelDistributionProps) {
+  // 将 distribution 数据转换为表格格式
+  const { tableData, totalLabels } = useMemo(() => {
+    if (!distribution) return { tableData: [], totalLabels: 0 };
+
+    const data: Array<{
+      category: string;
+      label: string;
+      count: number;
+      percentage: number;
+    }> = [];
+
+    let total = 0;
+
+    // 遍历 distribution 对象
+    Object.entries(distribution).forEach(([category, labels]) => {
+      if (typeof labels === 'object' && labels !== null) {
+        Object.entries(labels).forEach(([label, count]) => {
+          const numCount = typeof count === 'number' ? count : 0;
+          total += numCount;
+          data.push({
+            category,
+            label,
+            count: numCount,
+            percentage: 0, // 稍后计算
+          });
+        });
+      }
+    });
+
+    // 计算百分比
+    data.forEach(item => {
+      item.percentage = total > 0 ? (item.count / total) * 100 : 0;
+    });
+
+    // 按 count 降序排序
+    data.sort((a, b) => b.count - a.count);
+
+    return { tableData: data, totalLabels: total };
+  }, [distribution]);
+
+  const columns = [
+    {
+      title: '类别',
+      dataIndex: 'category',
+      key: 'category',
+      width: 120,
+      render: (text: string) => (
+        <span className="font-medium text-gray-700">{text || '未分类'}</span>
+      ),
+    },
+    {
+      title: '标签名称',
+      dataIndex: 'label',
+      key: 'label',
+      render: (text: string) => <span>{text}</span>,
+    },
+    {
+      title: '数量',
+      dataIndex: 'count',
+      key: 'count',
+      width: 100,
+      sorter: (a: any, b: any) => a.count - b.count,
+      render: (count: number) => (
+        <span className="font-semibold">{count}</span>
+      ),
+    },
+    {
+      title: '占比',
+      dataIndex: 'percentage',
+      key: 'percentage',
+      width: 200,
+      sorter: (a: any, b: any) => a.percentage - b.percentage,
+      render: (percentage: number, record: any) => (
+        <div className="flex items-center gap-3">
+          <Progress
+            percent={parseFloat(percentage.toFixed(1))}
+            size="small"
+            showInfo={true}
+            strokeColor={{
+              '0%': '#108ee9',
+              '100%': '#87d068',
+            }}
+          />
+        </div>
+      ),
+    },
+  ];
+
+  // 按类别分组的视图数据
+  const categoryGroups = useMemo(() => {
+    if (!tableData.length) return {};
+
+    return tableData.reduce((acc, item) => {
+      if (!acc[item.category]) {
+        acc[item.category] = [];
+      }
+      acc[item.category].push(item);
+      return acc;
+    }, {} as Record<string, typeof tableData>);
+  }, [tableData]);
+
+  if (!distribution || Object.keys(distribution).length === 0) {
+    return (
+      <Card className="bg-gray-50">
+        <div className="text-center py-8 text-gray-400">
+          <Tags className="w-12 h-12 mx-auto mb-3 opacity-50" />
+          <p>暂无标签分布数据</p>
+        </div>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* 统计概览 */}
+      <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-blue-500 rounded-lg">
+              <Tags className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-gray-800">数据集标签统计</h3>
+              <p className="text-sm text-gray-600">
+                共 {Object.keys(categoryGroups).length} 个类别，{totalLabels} 个标签样本
+              </p>
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      {/* 表格视图 */}
+      <Card
+        title={
+          <div className="flex items-center gap-2">
+            <BarChart3 className="w-4 h-4" />
+            <span>标签分布明细</span>
+          </div>
+        }
+      >
+        <Table
+          columns={columns}
+          dataSource={tableData}
+          rowKey={(record) => `${record.category}-${record.label}`}
+          pagination={{
+            pageSize: 10,
+            showTotal: (total) => `共 ${total} 条`,
+            showSizeChanger: true,
+          }}
+          size="small"
+        />
+      </Card>
+
+      {/* 分类卡片视图 */}
+      <div className="grid md:grid-cols-2 gap-4">
+        {Object.entries(categoryGroups).map(([category, items]) => {
+          const categoryTotal = items.reduce((sum, item) => sum + item.count, 0);
+          const topLabels = items.slice(0, 5); // 只显示前5个
+
+          return (
+            <Card
+              key={category}
+              title={<span className="font-semibold">{category}</span>}
+              size="small"
+            >
+              <div className="space-y-3">
+                <div className="text-sm text-gray-600">
+                  总计: <span className="font-semibold">{categoryTotal}</span> 个标签
+                </div>
+                {topLabels.map((item) => (
+                  <div key={item.label} className="space-y-1">
+                    <div className="flex justify-between text-sm">
+                      <span className="truncate flex-1" title={item.label}>
+                        {item.label}
+                      </span>
+                      <span className="font-medium ml-2">{item.count}</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full transition-all duration-300"
+                        style={{
+                          width: `${(item.count / categoryTotal) * 100}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))}
+                {items.length > 5 && (
+                  <div className="text-xs text-gray-500 text-center pt-2">
+                    还有 {items.length - 5} 个标签...
+                  </div>
+                )}
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function DataQuality(props: Props = {}) {
-  return <DevelopmentInProgress showHome={false} />
   const { dataset, datasetType: propDatasetType, fileStats: propFileStats } = props;
 
   // Prefer dataset fields when available, then explicit props, then sensible defaults
@@ -170,7 +376,10 @@ export default function DataQuality(props: Props = {}) {
   }, [datasetType, finalFileStats, completeSource]);
 
   return (
-    <div className="mt-0">
+    <div className="mt-0 space-y-6">
+      {/* 数据集标签统计 */}
+      <LabelDistributionStats distribution={(dataset as any)?.distribution} />
+
       <div className="grid md:grid-cols-2 gap-6">
         <Card title="质量分布">
           {metrics.map((item, index) => (
