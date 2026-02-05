@@ -143,6 +143,7 @@ backend-python:
     - *datasetVolume
     - *flowVolume
     - *logVolume
+    - *operatorVolume
   volumeMounts:
     - name: dataset-volume
       mountPath: /dataset
@@ -150,6 +151,8 @@ backend-python:
       mountPath: /flow
     - name: log-volume
       mountPath: /var/log/datamate
+    - name: operator-volume
+      mountPath: /operators
 
 gateway:
   env:

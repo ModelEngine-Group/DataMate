@@ -62,7 +62,8 @@ RUN cp /opt/datax/plugin/reader/mysqlreader/libs/mysql* /opt/datax/plugin/reader
 
 COPY runtime/datamate-python/deploy/docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh \
-    && dos2unix /docker-entrypoint.sh || true
+    && dos2unix /docker-entrypoint.sh || true \
+    && ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 
 # Expose the application port
 EXPOSE 18000

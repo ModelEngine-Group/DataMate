@@ -231,8 +231,8 @@ else
     	echo -n "Enter choice (default: 2): "; \
     	read DELETE_VOLUMES_CHOICE; \
     	export DELETE_VOLUMES_CHOICE; \
-	fi
-	@$(MAKE) label-studio-$(INSTALLER)-uninstall DELETE_VOLUMES_CHOICE=$$DELETE_VOLUMES_CHOICE; \
+	fi; \
+	$(MAKE) label-studio-$(INSTALLER)-uninstall DELETE_VOLUMES_CHOICE=$$DELETE_VOLUMES_CHOICE; \
 	$(MAKE) milvus-$(INSTALLER)-uninstall DELETE_VOLUMES_CHOICE=$$DELETE_VOLUMES_CHOICE; \
 	$(MAKE) deer-flow-$(INSTALLER)-uninstall DELETE_VOLUMES_CHOICE=$$DELETE_VOLUMES_CHOICE; \
 	$(MAKE) datamate-$(INSTALLER)-uninstall DELETE_VOLUMES_CHOICE=$$DELETE_VOLUMES_CHOICE

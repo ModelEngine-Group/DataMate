@@ -7,9 +7,10 @@ CREATE TABLE IF NOT EXISTS t_clean_template
     id          VARCHAR(64) PRIMARY KEY,
     name        VARCHAR(64) UNIQUE,
     description VARCHAR(256),
-    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    created_by  VARCHAR(256)
+    created_by        VARCHAR(256),
+    updated_by        VARCHAR(256),
+    created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
 
 COMMENT ON TABLE t_clean_template IS '清洗模板表';
@@ -19,6 +20,7 @@ COMMENT ON COLUMN t_clean_template.description IS '模板描述';
 COMMENT ON COLUMN t_clean_template.created_at IS '创建时间';
 COMMENT ON COLUMN t_clean_template.updated_at IS '更新时间';
 COMMENT ON COLUMN t_clean_template.created_by IS '创建者';
+COMMENT ON COLUMN t_clean_template.updated_by IS '更新者';
 
 -- 清洗任务表
 CREATE TABLE IF NOT EXISTS t_clean_task

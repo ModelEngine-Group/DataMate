@@ -9,6 +9,7 @@ from .collection.interface import router as collection_route
 from .rag.interface.rag_interface import router as rag_router
 from .operator.interface import operator_router
 from .operator.interface import category_router
+from .cleaning.interface import router as cleaning_router
 
 router = APIRouter(
     prefix="/api"
@@ -23,5 +24,6 @@ router.include_router(collection_route)
 router.include_router(rag_router)
 router.include_router(operator_router)
 router.include_router(category_router)
+router.include_router(cleaning_router)
 
 __all__ = ["router"]
