@@ -9,6 +9,7 @@ class DatasetType(Enum):
     IMAGE = "IMAGE"
     AUDIO = "AUDIO"
     VIDEO = "VIDEO"
+    OTHER = "OTHER"
 
 class DatasetTypeResponse(BaseModel):
     """数据集类型响应模型"""
@@ -17,6 +18,16 @@ class DatasetTypeResponse(BaseModel):
     description: Optional[str] = Field(None, description="类型描述")
     supportedFormats: List[str] = Field(default_factory=list, description="支持的文件格式")
     icon: Optional[str] = Field(None, description="图标")
+
+class CreateDatasetRequest(BaseModel):
+    """创建数据集请求模型"""
+    name: str = Field(..., description="数据集名称", min_length=1, max_length=100)
+    description: Optional[str] = Field(None, description="数据集描述", max_length=500)
+    datasetType: DatasetType = Field(..., description="数据集类型", alias="datasetType")
+    tags: Optional[List[str]] = Field(None, description="标签列表")
+    dataSource: Optional[str] = Field(None, description="数据源")
+    retentionDays: Optional[int] = Field(None, description="保留天数")
+    status: Optional[str] = Field(None, description="数据集状态")
 
 class DatasetResponse(BaseModel):
     """DM服务数据集响应模型"""

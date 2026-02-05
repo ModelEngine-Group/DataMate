@@ -22,8 +22,8 @@ metrics:
 runtime:
   memory: 10485760
   cpu: 0.05
-  gpu: 0.1
-  npu: 0.1
+  gpu: 0
+  npu: 0
 settings:
   sliderParam:
     name: '滑窗测试'

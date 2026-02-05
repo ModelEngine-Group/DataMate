@@ -62,6 +62,84 @@ class Service:
             logger.error(f"Failed to get dataset {dataset_id}: {e}")
             return None
 
+    async def create_dataset(
+        self,
+        name: str,
+        dataset_type: str,
+        description: str = "",
+        status: Optional[str] = None,
+    ) -> DatasetResponse:
+        """
+        创建数据集（参考Java版本DatasetApplicationService.createDataset）
+
+        Args:
+            name: 数据集名称
+            dataset_type: 数据集类型（TEXT/IMAGE/VIDEO/AUDIO/OTHER）
+            description: 数据集描述
+            status: 数据集状态
+
+        Returns:
+            创建的数据集响应
+        """
+        try:
+            logger.info(f"Creating dataset: {name}, type: {dataset_type}")
+
+            # 1. 检查数据集名称是否已存在
+            result = await self.db.execute(
+                select(Dataset).where(Dataset.name == name)
+            )
+            existing_dataset = result.scalar_one_or_none()
+            if existing_dataset:
+                error_msg = f"Dataset with name '{name}' already exists"
+                logger.error(error_msg)
+                raise Exception(error_msg)
+
+            # 2. 创建数据集对象
+            dataset_id = str(uuid.uuid4())
+            dataset_path = f"{os.path.join('/dataset', dataset_id)}"
+
+            # 如果没有提供status，默认为DRAFT
+            if status is None:
+                status = "DRAFT"
+
+            new_dataset = Dataset(
+                id=dataset_id,
+                name=name,
+                description=description,
+                dataset_type=dataset_type,
+                path=dataset_path,
+                size_bytes=0,
+                file_count=0,
+                status=status,
+                dataset_metadata="{}",
+                version=0,
+                created_by="system",
+            )
+
+            self.db.add(new_dataset)
+            await self.db.flush()
+            await self.db.commit()
+
+            logger.info(f"Successfully created dataset: {new_dataset.id}")
+
+            return DatasetResponse(
+                id=new_dataset.id,  # type: ignore
+                name=new_dataset.name,  # type: ignore
+                description=new_dataset.description or "",  # type: ignore
+                datasetType=new_dataset.dataset_type,  # type: ignore
+                status=new_dataset.status,  # type: ignore
+                fileCount=new_dataset.file_count or 0,  # type: ignore
+                totalSize=new_dataset.size_bytes or 0,  # type: ignore
+                createdAt=new_dataset.created_at,  # type: ignore
+                updatedAt=new_dataset.updated_at,  # type: ignore
+                createdBy=new_dataset.created_by  # type: ignore
+            )
+
+        except Exception as e:
+            await self.db.rollback()
+            logger.error(f"Failed to create dataset: {e}")
+            raise Exception(f"Failed to create dataset: {str(e)}")
+
     async def get_dataset_files(
         self,
         dataset_id: str,

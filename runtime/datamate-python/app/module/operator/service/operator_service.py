@@ -128,7 +128,8 @@ class OperatorService:
                 ov.file_size,
                 ov.usage_count,
                 ov.created_at,
-                ov.updated_at
+                ov.updated_at,
+                string_agg(ov.category_id, ',' ORDER BY ov.created_at DESC) AS categories
             FROM v_operator ov
             {where_clause}
             {group_by}
@@ -143,6 +144,10 @@ class OperatorService:
         # Convert to DTOs
         operators = []
         for row in rows:
+            categories_list = []
+            if row.categories:
+                categories_list = [cat_id for cat_id in row.categories.split(',') if cat_id]
+
             operators.append(OperatorDto(
                 id=row.id,
                 name=row.name,
@@ -157,6 +162,7 @@ class OperatorService:
                 metrics=None,
                 usage_count=row.usage_count,
                 is_star=row.is_star,
+                categories=categories_list,
                 created_at=row.created_at,
                 updated_at=row.updated_at,
             ))
@@ -236,7 +242,7 @@ class OperatorService:
                     operator_id, operator_name, description, version, inputs, outputs, runtime,
                     settings, is_star, file_name, file_size, usage_count, metrics,
                     created_at, updated_at, created_by, updated_by,
-                    STRING_AGG(category_name, ',' ORDER BY created_at DESC) AS categories
+                    string_agg(category_name, ',' ORDER BY created_at DESC) AS categories
                 FROM v_operator
                 WHERE operator_id = :operator_id
                 GROUP BY operator_id, operator_name, description, version, inputs, outputs, runtime,
