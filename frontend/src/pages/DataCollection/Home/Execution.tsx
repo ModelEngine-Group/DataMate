@@ -88,7 +88,7 @@ export default function Execution({ taskId }: { taskId?: string }) {
       ...prev,
       current: 1,
     }));
-  }, [taskId, setSearchParams]);
+  }, [taskId, setSearchParams, t]);
 
   const handleViewLog = async (record: TaskExecution) => {
     setLogOpen(true);

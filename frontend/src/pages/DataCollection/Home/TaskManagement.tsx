@@ -17,6 +17,7 @@ import { getStatusMap, mapCollectionTask } from "../collection.const";
 import useFetchData from "@/hooks/useFetchData";
 import { useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
+import { useEffect } from "react";
 
 export default function TaskManagement() {
   const { message } = App.useApp();
@@ -55,6 +56,10 @@ export default function TaskManagement() {
     [],
     0
   );
+
+  useEffect(() => {
+    fetchData()
+  }, [t]);
 
   const handleStartTask = async (taskId: string) => {
     await executeTaskByIdUsingPost(taskId);
