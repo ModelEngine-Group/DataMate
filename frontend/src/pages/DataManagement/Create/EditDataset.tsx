@@ -6,6 +6,7 @@ import {
 import { useEffect, useState } from "react";
 import { Dataset, DatasetType } from "../dataset.model";
 import { App, Button, Form, Modal } from "antd";
+import { useTranslation } from "react-i18next";
 
 export default function EditDataset({
   open,
@@ -20,6 +21,7 @@ export default function EditDataset({
 }) {
   const [form] = Form.useForm();
   const { message } = App.useApp();
+  const { t } = useTranslation();
 
   const [newDataset, setNewDataset] = useState({
     name: "",
@@ -60,27 +62,27 @@ export default function EditDataset({
     try {
       await updateDatasetByIdUsingPut(data?.id, params);
       onClose();
-      message.success("数据集更新成功");
+      message.success(t("dataManagement.messages.updateSuccess"));
       onRefresh?.(false);
     } catch (error) {
       console.error(error);
-      message.error("数据集更新失败，请重试");
+      message.error(t("dataManagement.messages.updateFailed"));
       return;
     }
   };
 
   return (
     <Modal
-      title={`编辑数据集${data?.name}`}
+      title={t("dataManagement.detail.editTitle", { name: data?.name || "" })}
       onCancel={onClose}
       open={open}
       width={600}
       maskClosable={false}
       footer={
         <>
-          <Button onClick={onClose}>取消</Button>
+          <Button onClick={onClose}>{t("dataManagement.actions.cancel")}</Button>
           <Button type="primary" onClick={handleSubmit}>
-            确定
+            {t("dataManagement.actions.confirm")}
           </Button>
         </>
       }

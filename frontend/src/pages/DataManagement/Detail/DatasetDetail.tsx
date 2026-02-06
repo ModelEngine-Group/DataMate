@@ -8,7 +8,7 @@ import {
   DeleteOutlined,
 } from "@ant-design/icons";
 import DetailHeader from "@/components/DetailHeader";
-import { mapDataset, datasetTypeMap } from "../dataset.const";
+import { getDatasetTypeMap, mapDataset } from "../dataset.const";
 import type { Dataset } from "@/pages/DataManagement/dataset.model";
 import { Link, useNavigate, useParams } from "react-router";
 import { useFilesOperation } from "./useFilesOperation";
@@ -26,27 +26,15 @@ import Overview from "./components/Overview";
 import { Activity, Clock, File, FileType } from "lucide-react";
 import EditDataset from "../Create/EditDataset";
 import ImportConfiguration from "./components/ImportConfiguration";
-
-const tabList = [
-  {
-    key: "overview",
-    label: "概览",
-  },
-  {
-    key: "lineage",
-    label: "数据血缘",
-  },
-  {
-    key: "quality",
-    label: "数据质量",
-  },
-];
+import { useTranslation } from "react-i18next";
 
 export default function DatasetDetail() {
   const { id } = useParams(); // 获取动态路由参数
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
   const { message } = App.useApp();
+  const { t } = useTranslation();
+  const datasetTypeMap = getDatasetTypeMap(t);
   const [showEditDialog, setShowEditDialog] = useState(false);
 
   const [dataset, setDataset] = useState<Dataset>({} as Dataset);
@@ -56,17 +44,17 @@ export default function DatasetDetail() {
   const navigateItems = useMemo(
     () => [
       {
-        title: <Link to="/data/management">数据管理</Link>,
+        title: <Link to="/data/management">{t("dataManagement.detail.breadcrumb")}</Link>,
       },
       {
-        title: dataset.name || "数据集详情",
+        title: dataset.name || t("dataManagement.detail.title"),
       },
     ],
-    [dataset]
+    [dataset, t]
   );
   const fetchDataset = async () => {
     const { data } = await queryDatasetByIdUsingGet(id as unknown as number);
-    setDataset(mapDataset(data));
+    setDataset(mapDataset(data, t));
   };
 
   useEffect(() => {
@@ -86,18 +74,20 @@ export default function DatasetDetail() {
       filesOperation.pagination.current,
       filesOperation.pagination.pageSize
     );
-    if (showMessage) message.success({ content: "数据刷新成功" });
+    if (showMessage) {
+      message.success({ content: t("dataManagement.messages.refreshSuccess") });
+    }
   };
 
   const handleDownload = async () => {
     await downloadDatasetUsingGet(dataset.id);
-    message.success("文件下载成功");
+    message.success(t("dataManagement.messages.fileDownloadSuccess"));
   };
 
   const handleDeleteDataset = async () => {
     await deleteDatasetByIdUsingDelete(dataset.id);
     navigate("/data/management");
-    message.success("数据集删除成功");
+    message.success(t("dataManagement.messages.deleteSuccess"));
   };
 
   useEffect(() => {
@@ -134,7 +124,7 @@ export default function DatasetDetail() {
         datasetTypeMap[dataset?.datasetType as keyof typeof datasetTypeMap]
           ?.label ||
         dataset?.type ||
-        "未知",
+        t("dataManagement.defaults.unknown"),
     },
     {
       icon: <Clock className="text-blue-400 w-4 h-4" />,
@@ -147,7 +137,7 @@ export default function DatasetDetail() {
   const operations = [
     {
       key: "edit",
-      label: "编辑",
+      label: t("dataManagement.actions.edit"),
       icon: <EditOutlined />,
       onClick: () => {
         setShowEditDialog(true);
@@ -156,13 +146,13 @@ export default function DatasetDetail() {
 
     {
       key: "upload",
-      label: "导入数据",
+      label: t("dataManagement.actions.importData"),
       icon: <UploadOutlined />,
       onClick: () => setShowUploadDialog(true),
     },
     {
       key: "export",
-      label: "导出",
+      label: t("dataManagement.actions.export"),
       icon: <DownloadOutlined />,
       // isDropdown: true,
       // items: [
@@ -175,23 +165,38 @@ export default function DatasetDetail() {
     },
     {
       key: "refresh",
-      label: "刷新",
+      label: t("dataManagement.actions.refresh"),
       icon: <ReloadOutlined />,
       onClick: handleRefresh,
     },
     {
       key: "delete",
-      label: "删除",
+      label: t("dataManagement.actions.delete"),
       danger: true,
       confirm: {
-        title: "确认删除该数据集？",
-        description: "删除后该数据集将无法恢复，请谨慎操作。",
-        okText: "删除",
-        cancelText: "取消",
+        title: t("dataManagement.confirm.deleteDatasetTitle"),
+        description: t("dataManagement.confirm.deleteDatasetDesc"),
+        okText: t("dataManagement.confirm.deleteConfirm"),
+        cancelText: t("dataManagement.confirm.deleteCancel"),
         okType: "danger",
       },
       icon: <DeleteOutlined />,
       onClick: handleDeleteDataset,
+    },
+  ];
+
+  const tabList = [
+    {
+      key: "overview",
+      label: t("dataManagement.detail.tabOverview"),
+    },
+    {
+      key: "lineage",
+      label: t("dataManagement.detail.tabLineage"),
+    },
+    {
+      key: "quality",
+      label: t("dataManagement.detail.tabQuality"),
     },
   ];
 

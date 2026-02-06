@@ -29,7 +29,7 @@ import {
   ScanText,
 } from "lucide-react";
 
-export const datasetTypeMap: Record<
+export function getDatasetTypeMap(t: (key: string) => string): Record<
   string,
   {
     value: DatasetType;
@@ -40,50 +40,52 @@ export const datasetTypeMap: Record<
     iconColor?: string;
     children: DatasetSubType[];
   }
-> = {
-  [DatasetType.TEXT]: {
-    value: DatasetType.TEXT,
-    label: "文本",
-    order: 1,
-    icon: ScanText,
-    iconColor: "#A78BFA",
-    children: [
-      DatasetSubType.TEXT_DOCUMENT,
-      DatasetSubType.TEXT_WEB,
-      DatasetSubType.TEXT_DIALOG,
-    ],
-    description: "用于处理和分析文本数据的数据集",
-  },
-  [DatasetType.IMAGE]: {
-    value: DatasetType.IMAGE,
-    label: "图像",
-    order: 2,
-    icon: Image,
-    iconColor: "#38BDF8",
-    children: [DatasetSubType.IMAGE_IMAGE, DatasetSubType.IMAGE_CAPTION],
-    description: "用于处理和分析图像数据的数据集",
-  },
-  [DatasetType.AUDIO]: {
-    value: DatasetType.AUDIO,
-    label: "音频",
-    order: 3,
-    icon: Music,
-    iconColor: "#F59E0B",
-    children: [DatasetSubType.AUDIO_AUDIO, DatasetSubType.AUDIO_JSONL],
-    description: "用于处理和分析音频数据的数据集",
-  },
-  [DatasetType.VIDEO]: {
-    value: DatasetType.VIDEO,
-    label: "视频",
-    order: 3,
-    icon: Film,
-    iconColor: "#22D3EE",
-    children: [DatasetSubType.VIDEO_VIDEO, DatasetSubType.VIDEO_JSONL],
-    description: "用于处理和分析视频数据的数据集",
-  },
-};
+> {
+  return {
+    [DatasetType.TEXT]: {
+      value: DatasetType.TEXT,
+      label: t("dataManagement.datasetTypes.text"),
+      order: 1,
+      icon: ScanText,
+      iconColor: "#A78BFA",
+      children: [
+        DatasetSubType.TEXT_DOCUMENT,
+        DatasetSubType.TEXT_WEB,
+        DatasetSubType.TEXT_DIALOG,
+      ],
+      description: t("dataManagement.datasetTypeDesc.text"),
+    },
+    [DatasetType.IMAGE]: {
+      value: DatasetType.IMAGE,
+      label: t("dataManagement.datasetTypes.image"),
+      order: 2,
+      icon: Image,
+      iconColor: "#38BDF8",
+      children: [DatasetSubType.IMAGE_IMAGE, DatasetSubType.IMAGE_CAPTION],
+      description: t("dataManagement.datasetTypeDesc.image"),
+    },
+    [DatasetType.AUDIO]: {
+      value: DatasetType.AUDIO,
+      label: t("dataManagement.datasetTypes.audio"),
+      order: 3,
+      icon: Music,
+      iconColor: "#F59E0B",
+      children: [DatasetSubType.AUDIO_AUDIO, DatasetSubType.AUDIO_JSONL],
+      description: t("dataManagement.datasetTypeDesc.audio"),
+    },
+    [DatasetType.VIDEO]: {
+      value: DatasetType.VIDEO,
+      label: t("dataManagement.datasetTypes.video"),
+      order: 3,
+      icon: Film,
+      iconColor: "#22D3EE",
+      children: [DatasetSubType.VIDEO_VIDEO, DatasetSubType.VIDEO_JSONL],
+      description: t("dataManagement.datasetTypeDesc.video"),
+    },
+  };
+}
 
-export const datasetSubTypeMap: Record<
+export function getDatasetSubTypeMap(t: (key: string) => string): Record<
   string,
   {
     value: DatasetSubType;
@@ -93,133 +95,153 @@ export const datasetSubTypeMap: Record<
     icon?: any;
     color?: string;
   }
-> = {
-  [DatasetSubType.TEXT_DOCUMENT]: {
-    value: DatasetSubType.TEXT_DOCUMENT,
-    label: "文档",
-    color: "blue",
-    icon: FileText,
-    description: "用于存储和处理各种文档格式的文本数据集",
-  },
-  [DatasetSubType.TEXT_WEB]: {
-    value: DatasetSubType.TEXT_WEB,
-    label: "网页",
-    color: "cyan",
-    icon: FileCode,
-    description: "用于存储和处理网页数据集",
-  },
-  [DatasetSubType.TEXT_DIALOG]: {
-    value: DatasetSubType.TEXT_DIALOG,
-    label: "对话",
-    color: "teal",
-    icon: MessageCircleMore,
-    description: "用于存储和处理对话数据的数据集",
-  },
-  [DatasetSubType.IMAGE_IMAGE]: {
-    value: DatasetSubType.IMAGE_IMAGE,
-    label: "图像",
-    color: "green",
-    icon: FileImage,
-    description: "用于大规模图像预训练模型的数据集",
-  },
-  [DatasetSubType.IMAGE_CAPTION]: {
-    value: DatasetSubType.IMAGE_CAPTION,
-    label: "图像+caption",
-    color: "lightgreen",
-    icon: ImagePlus,
-    description: "用于图像标题生成的数据集",
-  },
-  [DatasetSubType.AUDIO_AUDIO]: {
-    value: DatasetSubType.AUDIO_AUDIO,
-    label: "音频",
-    color: "purple",
-    icon: Music,
-    description: "用于大规模音频预训练模型的数据集",
-  },
-  [DatasetSubType.AUDIO_JSONL]: {
-    value: DatasetSubType.AUDIO_JSONL,
-    label: "音频+JSONL",
-    color: "purple",
-    icon: FileMusic,
-    description: "用于大规模音频预训练模型的数据集",
-  },
-  [DatasetSubType.VIDEO_VIDEO]: {
-    value: DatasetSubType.VIDEO_VIDEO,
-    label: "视频",
-    color: "orange",
-    icon: Video,
-    description: "用于大规模视频预训练模型的数据集",
-  },
-  [DatasetSubType.VIDEO_JSONL]: {
-    value: DatasetSubType.VIDEO_JSONL,
-    label: "视频+JSONL",
-    color: "orange",
-    icon: Videotape,
-    description: "用于大规模视频预训练模型的数据集",
-  },
-};
+> {
+  return {
+    [DatasetSubType.TEXT_DOCUMENT]: {
+      value: DatasetSubType.TEXT_DOCUMENT,
+      label: t("dataManagement.datasetSubTypes.textDocument"),
+      color: "blue",
+      icon: FileText,
+      description: t("dataManagement.datasetSubTypeDesc.textDocument"),
+    },
+    [DatasetSubType.TEXT_WEB]: {
+      value: DatasetSubType.TEXT_WEB,
+      label: t("dataManagement.datasetSubTypes.textWeb"),
+      color: "cyan",
+      icon: FileCode,
+      description: t("dataManagement.datasetSubTypeDesc.textWeb"),
+    },
+    [DatasetSubType.TEXT_DIALOG]: {
+      value: DatasetSubType.TEXT_DIALOG,
+      label: t("dataManagement.datasetSubTypes.textDialog"),
+      color: "teal",
+      icon: MessageCircleMore,
+      description: t("dataManagement.datasetSubTypeDesc.textDialog"),
+    },
+    [DatasetSubType.IMAGE_IMAGE]: {
+      value: DatasetSubType.IMAGE_IMAGE,
+      label: t("dataManagement.datasetSubTypes.imageImage"),
+      color: "green",
+      icon: FileImage,
+      description: t("dataManagement.datasetSubTypeDesc.imageImage"),
+    },
+    [DatasetSubType.IMAGE_CAPTION]: {
+      value: DatasetSubType.IMAGE_CAPTION,
+      label: t("dataManagement.datasetSubTypes.imageCaption"),
+      color: "lightgreen",
+      icon: ImagePlus,
+      description: t("dataManagement.datasetSubTypeDesc.imageCaption"),
+    },
+    [DatasetSubType.AUDIO_AUDIO]: {
+      value: DatasetSubType.AUDIO_AUDIO,
+      label: t("dataManagement.datasetSubTypes.audioAudio"),
+      color: "purple",
+      icon: Music,
+      description: t("dataManagement.datasetSubTypeDesc.audioAudio"),
+    },
+    [DatasetSubType.AUDIO_JSONL]: {
+      value: DatasetSubType.AUDIO_JSONL,
+      label: t("dataManagement.datasetSubTypes.audioJsonl"),
+      color: "purple",
+      icon: FileMusic,
+      description: t("dataManagement.datasetSubTypeDesc.audioJsonl"),
+    },
+    [DatasetSubType.VIDEO_VIDEO]: {
+      value: DatasetSubType.VIDEO_VIDEO,
+      label: t("dataManagement.datasetSubTypes.videoVideo"),
+      color: "orange",
+      icon: Video,
+      description: t("dataManagement.datasetSubTypeDesc.videoVideo"),
+    },
+    [DatasetSubType.VIDEO_JSONL]: {
+      value: DatasetSubType.VIDEO_JSONL,
+      label: t("dataManagement.datasetSubTypes.videoJsonl"),
+      color: "orange",
+      icon: Videotape,
+      description: t("dataManagement.datasetSubTypeDesc.videoJsonl"),
+    },
+  };
+}
 
-export const datasetStatusMap = {
-  [DatasetStatus.ACTIVE]: {
-    label: "活跃",
-    value: DatasetStatus.ACTIVE,
-    color: "#409f17ff",
-    icon: <CheckCircleOutlined />,
-  },
-  [DatasetStatus.PROCESSING]: {
-    label: "处理中",
-    value: DatasetStatus.PROCESSING,
-    color: "#2673e5",
-    icon: <ClockCircleOutlined />,
-  },
-  [DatasetStatus.INACTIVE]: {
-    label: "未激活",
-    value: DatasetStatus.INACTIVE,
-    color: "#4f4444ff",
-    icon: <CloseCircleOutlined />,
-  },
-  [DatasetStatus.DRAFT]: {
-    label: "草稿",
-    value: DatasetStatus.DRAFT,
-    color: "#a1a1a1ff",
-    icon: <FileOutlined />,
-  },
-};
+export function getDatasetStatusMap(t: (key: string) => string) {
+  return {
+    [DatasetStatus.ACTIVE]: {
+      label: t("dataManagement.datasetStatus.active"),
+      value: DatasetStatus.ACTIVE,
+      color: "#409f17ff",
+      icon: <CheckCircleOutlined />,
+    },
+    [DatasetStatus.PROCESSING]: {
+      label: t("dataManagement.datasetStatus.processing"),
+      value: DatasetStatus.PROCESSING,
+      color: "#2673e5",
+      icon: <ClockCircleOutlined />,
+    },
+    [DatasetStatus.INACTIVE]: {
+      label: t("dataManagement.datasetStatus.inactive"),
+      value: DatasetStatus.INACTIVE,
+      color: "#4f4444ff",
+      icon: <CloseCircleOutlined />,
+    },
+    [DatasetStatus.DRAFT]: {
+      label: t("dataManagement.datasetStatus.draft"),
+      value: DatasetStatus.DRAFT,
+      color: "#a1a1a1ff",
+      icon: <FileOutlined />,
+    },
+  };
+}
 
-export const dataSourceMap: Record<string, { label: string; value: string }> = {
-  [DataSource.UPLOAD]: { label: "本地上传", value: DataSource.UPLOAD },
-  [DataSource.COLLECTION]: { label: "归集任务导入 ", value: DataSource.COLLECTION },
-  // [DataSource.DATABASE]: { label: "数据库导入", value: DataSource.DATABASE },
-  // [DataSource.NAS]: { label: "NAS导入", value: DataSource.NAS },
-  // [DataSource.OBS]: { label: "OBS导入", value: DataSource.OBS },
-};
+export function getDataSourceMap(t: (key: string) => string): Record<
+  string,
+  { label: string; value: string }
+> {
+  return {
+    [DataSource.UPLOAD]: {
+      label: t("dataManagement.dataSources.upload"),
+      value: DataSource.UPLOAD,
+    },
+    [DataSource.COLLECTION]: {
+      label: t("dataManagement.dataSources.collection"),
+      value: DataSource.COLLECTION,
+    },
+  };
+}
 
-export const dataSourceOptions = Object.values(dataSourceMap);
+export function getDataSourceOptions(t: (key: string) => string) {
+  return Object.values(getDataSourceMap(t));
+}
 
-export function mapDataset(dataset: AnyObject): Dataset {
+export function mapDataset(dataset: AnyObject, t: (key: string) => string): Dataset {
+  const datasetTypeMap = getDatasetTypeMap(t);
+  const datasetStatusMap = getDatasetStatusMap(t);
   const { icon: IconComponent, iconColor } =
     datasetTypeMap[dataset?.datasetType] || {};
   return {
     ...dataset,
     key: dataset.id,
-    type: datasetTypeMap[dataset.datasetType]?.label || "未知",
+    type: datasetTypeMap[dataset.datasetType]?.label || t("dataManagement.defaults.unknown"),
     size: formatBytes(dataset.totalSize || 0),
-    createdAt: formatDateTime(dataset.createdAt) || "--",
-    updatedAt: formatDateTime(dataset?.updatedAt) || "--",
+    createdAt: formatDateTime(dataset.createdAt) || t("dataManagement.defaults.empty"),
+    updatedAt: formatDateTime(dataset?.updatedAt) || t("dataManagement.defaults.empty"),
     icon: IconComponent ? <IconComponent className="w-full h-full" /> : <Database />,
     iconColor: iconColor,
     status: datasetStatusMap[dataset.status],
     statistics: [
-      { label: "文件数", value: dataset.fileCount || 0 },
-      { label: "大小", value: formatBytes(dataset.totalSize || 0) },
+      { label: t("dataManagement.labels.fileCount"), value: dataset.fileCount || 0 },
+      { label: t("dataManagement.labels.dataSize"), value: formatBytes(dataset.totalSize || 0) },
     ],
     lastModified: dataset.updatedAt,
   };
 }
 
-export const datasetTypes = Object.values(datasetTypeMap).map((type) => ({
-  ...type,
-  options: type.children?.map(
-    (subType) => datasetSubTypeMap[subType as keyof typeof datasetSubTypeMap]
-  ),
-}));
+export function getDatasetTypes(t: (key: string) => string) {
+  const datasetTypeMap = getDatasetTypeMap(t);
+  const datasetSubTypeMap = getDatasetSubTypeMap(t);
+  return Object.values(datasetTypeMap).map((type) => ({
+    ...type,
+    options: type.children?.map(
+      (subType) => datasetSubTypeMap[subType as keyof typeof datasetSubTypeMap]
+    ),
+  }));
+}

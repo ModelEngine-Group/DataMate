@@ -1,10 +1,13 @@
 import { App, Button, Descriptions, DescriptionsProps, Modal, Table, Input, Spin } from "antd";
 import { formatBytes, formatDateTime } from "@/utils/unit";
 import { Download, Trash2, Folder, File } from "lucide-react";
-import { datasetTypeMap } from "../../dataset.const";
+import { getDatasetTypeMap } from "../../dataset.const";
+import { useTranslation } from "react-i18next";
 
 export default function Overview({ dataset, filesOperation, fetchDataset }) {
   const { modal, message } = App.useApp();
+  const { t } = useTranslation();
+  const datasetTypeMap = getDatasetTypeMap(t);
   const {
     fileList,
     pagination,
@@ -44,71 +47,71 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
   const items: DescriptionsProps["items"] = [
     {
       key: "id",
-      label: "ID",
+      label: t("dataManagement.labels.id"),
       children: dataset.id,
     },
     {
       key: "name",
-      label: "名称",
+      label: t("dataManagement.labels.name"),
       children: dataset.name,
     },
     {
       key: "fileCount",
-      label: "文件数",
+      label: t("dataManagement.labels.fileCount"),
       children: dataset.fileCount || 0,
     },
     {
       key: "size",
-      label: "数据大小",
+      label: t("dataManagement.labels.dataSize"),
       children: dataset.size || "0 B",
     },
 
     {
       key: "datasetType",
-      label: "类型",
-      children: datasetTypeMap[dataset?.datasetType]?.label || "未知",
+      label: t("dataManagement.labels.type"),
+      children: datasetTypeMap[dataset?.datasetType]?.label || t("dataManagement.defaults.unknown"),
     },
     {
       key: "status",
-      label: "状态",
-      children: dataset?.status?.label || "未知",
+      label: t("dataManagement.labels.status"),
+      children: dataset?.status?.label || t("dataManagement.defaults.unknown"),
     },
     {
       key: "createdBy",
-      label: "创建者",
-      children: dataset.createdBy || "未知",
+      label: t("dataManagement.labels.creator"),
+      children: dataset.createdBy || t("dataManagement.defaults.unknown"),
     },
     {
       key: "targetLocation",
-      label: "存储路径",
-      children: dataset.targetLocation || "未知",
+      label: t("dataManagement.labels.storagePath"),
+      children: dataset.targetLocation || t("dataManagement.defaults.unknown"),
     },
     {
       key: "pvcName",
-      label: "存储名称",
-      children: dataset.pvcName || "未知",
+      label: t("dataManagement.labels.storageName"),
+      children: dataset.pvcName || t("dataManagement.defaults.unknown"),
     },
     {
       key: "createdAt",
-      label: "创建时间",
+      label: t("dataManagement.labels.createdAt"),
       children: dataset.createdAt,
     },
     {
       key: "updatedAt",
-      label: "更新时间",
+      label: t("dataManagement.labels.updatedAt"),
       children: dataset.updatedAt,
     },
     {
       key: "description",
-      label: "描述",
-      children: dataset.description || "无",
+      label: t("dataManagement.labels.description"),
+      children: dataset.description || t("dataManagement.defaults.none"),
     },
   ];
 
   // 文件列表列定义
   const columns = [
     {
-      title: "文件名",
+      title: t("dataManagement.columns.fileName"),
       dataIndex: "fileName",
       key: "fileName",
       fixed: "left",
@@ -157,7 +160,7 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
       },
     },
     {
-      title: "大小",
+      title: t("dataManagement.columns.fileSize"),
       dataIndex: "fileSize",
       key: "fileSize",
       width: 150,
@@ -170,36 +173,36 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
       },
     },
     {
-      title: "包含文件数",
+      title: t("dataManagement.columns.filesInFolder"),
       dataIndex: "fileCount",
       key: "fileCount",
       width: 120,
       render: (text: number, record: any) => {
         const isDirectory = record.id.startsWith('directory-');
         if (!isDirectory) {
-          return "-";
+          return t("dataManagement.defaults.empty");
         }
         return record.fileCount ?? 0;
       },
     },
     {
-      title: "上传时间",
+      title: t("dataManagement.columns.uploadTime"),
       dataIndex: "uploadTime",
       key: "uploadTime",
       width: 200,
       render: (text) => formatDateTime(text),
     },
     {
-      title: "标签",
+      title: t("dataManagement.columns.tags"),
       dataIndex: "tags",
       key: "tags",
       width: 220,
       render: (value: any, record: any) => {
         const isDirectory = typeof record.id === "string" && record.id.startsWith("directory-");
-        if (isDirectory) return "-";
+        if (isDirectory) return t("dataManagement.defaults.empty");
 
         let raw = value;
-        if (!raw) return "-";
+        if (!raw) return t("dataManagement.defaults.empty");
 
         // 后端目前将 tags 作为 JSON 字符串存储在 t_dm_dataset_files.tags 中
         // 这里尝试解析为 FileTag 数组结构 [{ type, from_name, values: { [type]: [...] } }]
@@ -212,7 +215,7 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
           }
         }
 
-        if (!Array.isArray(raw) || raw.length === 0) return "-";
+        if (!Array.isArray(raw) || raw.length === 0) return t("dataManagement.defaults.empty");
 
         const labels: string[] = [];
         raw.forEach((tag: any) => {
@@ -231,24 +234,24 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
           }
         });
 
-        if (!labels.length) return "-";
+        if (!labels.length) return t("dataManagement.defaults.empty");
         return labels.join(", ");
       },
     },
     {
-      title: "标签更新时间",
+      title: t("dataManagement.columns.tagsUpdatedAt"),
       dataIndex: "tagsUpdatedAt",
       key: "tagsUpdatedAt",
       width: 200,
       render: (text: any, record: any) => {
         const isDirectory = typeof record.id === "string" && record.id.startsWith("directory-");
-        if (isDirectory) return "-";
-        if (!text) return "-";
+        if (isDirectory) return t("dataManagement.defaults.empty");
+        if (!text) return t("dataManagement.defaults.empty");
         return formatDateTime(text);
       },
     },
     {
-      title: "操作",
+      title: t("dataManagement.columns.actions"),
       key: "action",
       width: 180,
       fixed: "right",
@@ -266,7 +269,7 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
                 type="link"
                 onClick={() => handleDownloadDirectory(fullPath, record.fileName)}
               >
-                下载
+                {t("dataManagement.actions.download")}
               </Button>
               <Button
                 size="small"
@@ -274,7 +277,7 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
                 onClick={() => {
                   let newDirName = record.fileName;
                   modal.confirm({
-                    title: '重命名文件夹',
+                    title: t("dataManagement.actions.renameFolder"),
                     content: (
                       <Input
                         autoFocus
@@ -284,11 +287,11 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
                         }}
                       />
                     ),
-                    okText: '确定',
-                    cancelText: '取消',
+                    okText: t("dataManagement.actions.confirm"),
+                    cancelText: t("dataManagement.actions.cancel"),
                     onOk: async () => {
                       if (!newDirName) {
-                        message.warning('请输入文件夹名称');
+                        message.warning(t("dataManagement.placeholders.folderName"));
                         return Promise.reject();
                       }
                       await handleRenameDirectory(fullPath, record.fileName, newDirName);
@@ -297,18 +300,18 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
                   });
                 }}
               >
-                重命名
+                {t("dataManagement.actions.rename")}
               </Button>
               <Button
                 size="small"
                 type="link"
                 onClick={() => {
                   modal.confirm({
-                    title: '确认删除文件夹？',
-                    content: `删除文件夹 "${record.fileName}" 将同时删除其中的所有文件和子文件夹，此操作不可恢复。`,
-                    okText: '删除',
-                    okType: 'danger',
-                    cancelText: '取消',
+                    title: t("dataManagement.confirm.deleteFolderTitle"),
+                    content: t("dataManagement.confirm.deleteFolderDesc", { name: record.fileName }),
+                    okText: t("dataManagement.confirm.deleteConfirm"),
+                    okType: "danger",
+                    cancelText: t("dataManagement.confirm.deleteCancel"),
                     onOk: async () => {
                       await handleDeleteDirectory(fullPath, record.fileName);
                       fetchDataset();
@@ -316,7 +319,7 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
                   });
                 }}
               >
-                删除
+                {t("dataManagement.actions.delete")}
               </Button>
             </div>
           );
@@ -329,7 +332,7 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
             type="link"
             onClick={() => handleDownloadFile(record)}
           >
-            下载
+            {t("dataManagement.actions.download")}
           </Button>
           <Button
             size="small"
@@ -342,7 +345,7 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
               let newBaseName = baseName;
 
               modal.confirm({
-                title: '重命名文件',
+                title: t("dataManagement.actions.renameFile"),
                 content: (
                   <div className="space-y-2">
                     <Input
@@ -355,11 +358,11 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
                     />
                   </div>
                 ),
-                okText: '确定',
-                cancelText: '取消',
+                okText: t("dataManagement.actions.confirm"),
+                cancelText: t("dataManagement.actions.cancel"),
                 onOk: async () => {
                   if (!newBaseName) {
-                    message.warning('请输入文件名称');
+                    message.warning(t("dataManagement.placeholders.fileName"));
                     return Promise.reject();
                   }
                   await handleRenameFile(record, newBaseName);
@@ -368,7 +371,7 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
               });
             }}
           >
-            重命名
+            {t("dataManagement.actions.rename")}
           </Button>
           <Button
             size="small"
@@ -379,7 +382,7 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
             }
           }
           >
-            删除
+            {t("dataManagement.actions.delete")}
           </Button>
         </div>
       )},
@@ -391,7 +394,7 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
       <div className=" flex flex-col gap-4">
         {/* 基本信息 */}
         <Descriptions
-          title="基本信息"
+          title={t("dataManagement.detail.sectionBasicInfo")}
           layout="vertical"
           size="small"
           items={items}
@@ -400,28 +403,30 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
 
         {/* 文件列表 */}
         <div className="flex items-center justify-between mt-8 mb-2">
-          <h2 className="text-base font-semibold">文件列表</h2>
+          <h2 className="text-base font-semibold">
+            {t("dataManagement.detail.sectionFileList")}
+          </h2>
           <Button
             type="primary"
             size="small"
             onClick={() => {
               let dirName = "";
               modal.confirm({
-                title: "新建文件夹",
+                title: t("dataManagement.actions.createFolder"),
                 content: (
                   <Input
                     autoFocus
-                    placeholder="请输入文件夹名称"
+                    placeholder={t("dataManagement.placeholders.folderName")}
                     onChange={(e) => {
                       dirName = e.target.value?.trim();
                     }}
                   />
                 ),
-                okText: "确定",
-                cancelText: "取消",
+                okText: t("dataManagement.actions.confirm"),
+                cancelText: t("dataManagement.actions.cancel"),
                 onOk: async () => {
                   if (!dirName) {
-                    message.warning("请输入文件夹名称");
+                    message.warning(t("dataManagement.placeholders.folderName"));
                     return Promise.reject();
                   }
                   await handleCreateDirectory(dirName);
@@ -429,27 +434,27 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
               });
             }}
           >
-            新建文件夹
+            {t("dataManagement.actions.createFolder")}
           </Button>
         </div>
         {selectedFiles.length > 0 && (
           <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
             <span className="text-sm text-blue-700 font-medium">
-              已选择 {selectedFiles.length} 个文件
+              {t("dataManagement.detail.selectedFiles", { count: selectedFiles.length })}
             </span>
             <Button
               onClick={handleBatchExport}
               className="ml-auto bg-transparent"
             >
               <Download className="w-4 h-4 mr-2" />
-              批量导出
+              {t("dataManagement.actions.batchExport")}
             </Button>
             <Button
               onClick={handleBatchDeleteFiles}
               className="text-red-600 hover:text-red-700 hover:bg-red-50 bg-transparent"
             >
               <Trash2 className="w-4 h-4 mr-2" />
-              批量删除
+              {t("dataManagement.actions.batchDelete")}
             </Button>
           </div>
         )}
@@ -487,12 +492,16 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
                       d="M10 19l-7-7m0 0l7-7m-7 7h18"
                     />
                   </svg>
-                  返回上一级
+                  {t("dataManagement.detail.goUp")}
                 </span>
               </Button>
             )}
             {filesOperation.pagination.prefix && (
-              <span className="ml-2 text-gray-600">当前路径: {filesOperation.pagination.prefix}</span>
+              <span className="ml-2 text-gray-600">
+                {t("dataManagement.detail.currentPath", {
+                  path: filesOperation.pagination.prefix,
+                })}
+              </span>
             )}
           </div>
           <Table
@@ -504,7 +513,7 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
             scroll={{ x: "max-content", y: 600 }}
             pagination={{
               ...pagination,
-              showTotal: (total) => `共 ${total} 条`,
+              showTotal: (total) => t("dataManagement.detail.totalItems", { total }),
               onChange: (page, pageSize) => {
                 filesOperation.fetchFiles(filesOperation.pagination.prefix, page, pageSize);
               }
@@ -514,7 +523,7 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
       </div>
       {/* 文件预览弹窗 */}
       <Modal
-        title={`文件预览：${previewFileName}`}
+        title={t("dataManagement.detail.previewTitle", { name: previewFileName })}
         open={previewVisible}
         onCancel={() => setPreviewVisible(false)}
         footer={null}
@@ -549,50 +558,64 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
               </pre>
             ) : (
               <span className="text-gray-500 text-sm">
-                暂无预览内容，或当前文件类型暂不支持预览。
+                {t("dataManagement.detail.previewEmpty")}
               </span>
             )}
           </div>
 
           {/* 右侧文件信息（来自 t_dm_dataset_files） */}
           <div className="w-72 border border-gray-200 rounded-md p-3 bg-white overflow-auto">
-            <h3 className="text-sm font-semibold mb-3">文件信息</h3>
+            <h3 className="text-sm font-semibold mb-3">
+              {t("dataManagement.detail.previewInfoTitle")}
+            </h3>
             <div className="space-y-2 text-xs text-gray-700">
               <div>
-                <span className="text-gray-500">文件名：</span>
+                <span className="text-gray-500">
+                  {t("dataManagement.labels.fileName")}：
+                </span>
                 <span>{previewFileDetail?.fileName || previewFileName}</span>
               </div>
               {previewFileDetail?.originalName && (
                 <div>
-                  <span className="text-gray-500">原始文件名：</span>
+                  <span className="text-gray-500">
+                    {t("dataManagement.labels.originalName")}：
+                  </span>
                   <span>{previewFileDetail.originalName}</span>
                 </div>
               )}
               {previewFileDetail?.fileType && (
                 <div>
-                  <span className="text-gray-500">文件类型：</span>
+                  <span className="text-gray-500">
+                    {t("dataManagement.labels.fileType")}：
+                  </span>
                   <span>{previewFileDetail.fileType}</span>
                 </div>
               )}
               {typeof previewFileDetail?.fileSize === "number" && (
                 <div>
-                  <span className="text-gray-500">文件大小：</span>
+                  <span className="text-gray-500">
+                    {t("dataManagement.labels.fileSize")}：
+                  </span>
                   <span>{formatBytes(previewFileDetail.fileSize || 0)}</span>
                 </div>
               )}
               {previewFileDetail?.status && (
                 <div>
-                  <span className="text-gray-500">状态：</span>
+                  <span className="text-gray-500">
+                    {t("dataManagement.labels.status")}：
+                  </span>
                   <span>{previewFileDetail.status}</span>
                 </div>
               )}
               {previewFileDetail?.tags && (
                 <div>
-                  <span className="text-gray-500">标签：</span>
+                  <span className="text-gray-500">
+                    {t("dataManagement.labels.tags")}：
+                  </span>
                   <span>
                     {(() => {
                       let raw = previewFileDetail.tags as any;
-                      if (!raw) return "-";
+                      if (!raw) return t("dataManagement.defaults.empty");
 
                       if (typeof raw === "string") {
                         try {
@@ -602,7 +625,9 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
                         }
                       }
 
-                      if (!Array.isArray(raw) || raw.length === 0) return "-";
+                      if (!Array.isArray(raw) || raw.length === 0) {
+                        return t("dataManagement.defaults.empty");
+                      }
 
                       const labels: string[] = [];
                       raw.forEach((tag: any) => {
@@ -621,7 +646,7 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
                         }
                       });
 
-                      if (!labels.length) return "-";
+                      if (!labels.length) return t("dataManagement.defaults.empty");
                       return labels.join(", ");
                     })()}
                   </span>
@@ -629,36 +654,48 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
               )}
               {previewFileDetail?.tagsUpdatedAt && (
                 <div>
-                  <span className="text-gray-500">标签更新时间：</span>
+                  <span className="text-gray-500">
+                    {t("dataManagement.labels.tagsUpdatedAt")}：
+                  </span>
                   <span>{formatDateTime(previewFileDetail.tagsUpdatedAt)}</span>
                 </div>
               )}
               {previewFileDetail?.uploadTime && (
                 <div>
-                  <span className="text-gray-500">上传时间：</span>
+                  <span className="text-gray-500">
+                    {t("dataManagement.labels.uploadTime")}：
+                  </span>
                   <span>{formatDateTime(previewFileDetail.uploadTime)}</span>
                 </div>
               )}
               {previewFileDetail?.uploadedBy && (
                 <div>
-                  <span className="text-gray-500">上传者：</span>
+                  <span className="text-gray-500">
+                    {t("dataManagement.labels.uploadedBy")}：
+                  </span>
                   <span>{previewFileDetail.uploadedBy}</span>
                 </div>
               )}
               {previewFileDetail?.filePath && (
                 <div>
-                  <span className="text-gray-500">文件路径：</span>
+                  <span className="text-gray-500">
+                    {t("dataManagement.labels.filePath")}：
+                  </span>
                   <span>{previewFileDetail.filePath}</span>
                 </div>
               )}
               {previewFileDetail?.description && (
                 <div>
-                  <span className="text-gray-500">描述：</span>
+                  <span className="text-gray-500">
+                    {t("dataManagement.labels.description")}：
+                  </span>
                   <span>{previewFileDetail.description}</span>
                 </div>
               )}
               <div>
-                <span className="text-gray-500">标注信息：</span>
+                <span className="text-gray-500">
+                  {t("dataManagement.labels.annotation")}：
+                </span>
                 <span>
                   {(() => {
                     const raw = (previewFileDetail?.annotation 
