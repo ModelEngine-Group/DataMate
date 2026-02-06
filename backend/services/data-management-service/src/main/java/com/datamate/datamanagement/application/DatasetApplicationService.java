@@ -111,8 +111,10 @@ public class DatasetApplicationService {
             collectionEdge.setDescription(dataset.getDescription());
             collectionEdge.setFromNodeId(collectionNode.getId());
             collectionEdge.setToNodeId(datasetNode.getId());
+            lineageService.generateGraph(collectionNode, collectionEdge, datasetNode);
+        } else {
+            lineageService.generateGraph(datasetNode, null, null);
         }
-        lineageService.generateGraph(collectionNode, collectionEdge, datasetNode);
     }
 
     public DatasetLineage getDatasetLineage(String datasetId) {
