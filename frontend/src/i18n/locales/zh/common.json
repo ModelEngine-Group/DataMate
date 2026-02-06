@@ -183,7 +183,7 @@
         "title": "同步配置",
         "syncMode": {
           "label": "同步方式",
-          "once": "一次性执行",
+          "once": "立即执行",
           "scheduled": "定时执行"
         },
         "cronRequired": "请输入Cron表达式"
