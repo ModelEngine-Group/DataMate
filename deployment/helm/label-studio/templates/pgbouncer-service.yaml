@@ -1,0 +1,21 @@
+{{- if .Values.pgbouncer.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "label-studio.fullname" . }}-pgbouncer
+  labels:
+    app.kubernetes.io/name: {{ include "label-studio.name" . }}-pgbouncer
+    helm.sh/chart: {{ include "label-studio.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: 6432
+      targetPort: pgbouncer
+      protocol: TCP
+      name: pgbouncer
+  selector:
+    app.kubernetes.io/name: {{ include "label-studio.name" . }}-pgbouncer
+    app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}

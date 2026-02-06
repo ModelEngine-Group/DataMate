@@ -38,9 +38,9 @@ spec:
             - name: POSTGRE_PASSWORD
               value: {{ .Values.env.POSTGRE_PASSWORD | quote }}
             - name: POSTGRE_PORT
-              value: {{ .Values.env.POSTGRE_PORT | quote }}
+              value: {{ if .Values.pgbouncer.enabled }}{{ "6432" | quote }}{{ else }}{{ .Values.env.POSTGRE_PORT | quote }}{{ end }}
             - name: POSTGRE_HOST
-              value: {{ .Values.env.POSTGRE_HOST | quote }}
+              value: {{ if .Values.pgbouncer.enabled }}{{ printf "%s-pgbouncer" (include "label-studio.fullname" .) | quote }}{{ else }}{{ .Values.env.POSTGRE_HOST | quote }}{{ end }}
             - name: LABEL_STUDIO_HOST
               value: {{ .Values.env.LABEL_STUDIO_HOST | quote }}
             - name: LOCAL_FILES_SERVING_ENABLED

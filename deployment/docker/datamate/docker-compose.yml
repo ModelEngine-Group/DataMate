@@ -199,6 +199,26 @@ services:
   # ==============================
   # Optional: Label Studio (profile: label-studio)
   # ==============================
+  label-studio-pgbouncer:
+    container_name: label-studio-pgbouncer
+    image: pgbouncer/pgbouncer:latest
+    restart: on-failure
+    ports:
+      - "6432:6432"
+    environment:
+      - DATABASES_HOST=datamate-database
+      - DATABASES_PORT=5432
+      - DATABASES_NAME=labelstudio
+      - DATABASES_USER=postgres
+      - DATABASES_PASSWORD=${DB_PASSWORD:-password}
+      - POOL_MODE=transaction
+      - MAX_CLIENT_CONN=100
+      - DEFAULT_POOL_SIZE=20
+      - MAX_DB_CONNECTIONS=20
+    networks:
+      - datamate
+    profiles: [ label-studio ]
+
   label-studio:
     container_name: label-studio
     stdin_open: true
@@ -212,14 +232,14 @@ services:
     ports:
       - "30001:8000"
     depends_on:
-      - datamate-database
+      - label-studio-pgbouncer
     environment:
       - DJANGO_DB=default
       - POSTGRE_NAME=labelstudio
       - POSTGRE_USER=postgres
       - POSTGRE_PASSWORD=${DB_PASSWORD:-password}
-      - POSTGRE_PORT=5432
-      - POSTGRE_HOST=datamate-database
+      - POSTGRE_PORT=6432
+      - POSTGRE_HOST=label-studio-pgbouncer
       - LABEL_STUDIO_HOST=${LABEL_STUDIO_HOST:-}
       - LOCAL_FILES_SERVING_ENABLED=true
       - LOCAL_FILES_DOCUMENT_ROOT=/label-studio/local
