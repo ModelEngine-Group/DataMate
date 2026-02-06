@@ -92,7 +92,8 @@ export default function DatasetManagementPage() {
       setTags(data.map((tag) => tag.name));
     };
     fetchTags();
-  }, []);
+    fetchStatistics();
+  }, [t]);
 
   const filterOptions = useMemo(
     () => [
