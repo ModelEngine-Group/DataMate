@@ -1,10 +1,6 @@
-// typescript
-// File: `frontend/src/pages/DataManagement/Detail/components/DataQuality.tsx`
 import React, { useMemo } from "react";
-// Run `npm install antd lucide-react` if your editor reports "Module is not installed"
 import { Card, Table, Progress } from "antd";
 import { AlertTriangle, Tags, BarChart3 } from "lucide-react";
-import DevelopmentInProgress from "@/components/DevelopmentInProgress";
 import { Dataset } from "@/pages/DataManagement/dataset.model.ts";
 import { useTranslation } from "react-i18next";
 
@@ -34,6 +30,7 @@ function randInt(min: number, max: number) {
 }
 
 function getMockMetrics(datasetType: DatasetType, stats: FileStats) {
+  const { t } = useTranslation();
   const total = Math.max(1, stats.totalFiles || 1);
   const corrupted = stats.corrupted || 0;
   const unlabeled = stats.unlabeled || 0;
