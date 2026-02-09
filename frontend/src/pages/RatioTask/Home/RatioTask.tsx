@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button, Card, Table, App, Badge, Popconfirm } from "antd";
 import { Plus } from "lucide-react";
 import { DeleteOutlined } from "@ant-design/icons";
@@ -37,6 +37,10 @@ export default function RatioTasksPage() {
     [],
     0
   );
+
+  useEffect(() => {
+    fetchData();
+  }, [t]);
 
   const handleDeleteTask = async (task: RatioTaskItem) => {
     try {
@@ -117,8 +121,8 @@ export default function RatioTasksPage() {
     },
     {
       title: t("ratioTask.home.columns.createdAt"),
-      dataIndex: "created_at",
-      key: "created_at",
+      dataIndex: "createdAt",
+      key: "createdAt",
       width: 180,
     },
     {
