@@ -57,7 +57,7 @@ export function mapRatioTask(
     updatedAt: formatDateTime(task.updated_at),
     description: task.description,
     icon: <BarChart3 />,
-    iconColor: task.ratio_method === "DATASET" ? "bg-blue-100" : "bg-green-100",
+    iconColor: "#A78BFA",
     statistics: [
       {
         label: t("ratioTask.detail.labels.targetCount"),
