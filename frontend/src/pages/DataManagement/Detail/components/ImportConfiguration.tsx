@@ -22,6 +22,9 @@ const DATASET_TYPE_SAFE_SUFFIXES: Record<DatasetType, string[]> = {
     ".html",
     ".htm",
     ".log",
+    ".pdf",
+    ".doc",
+    ".docx",
   ],
   [DatasetType.IMAGE]: [
     ".jpg",
