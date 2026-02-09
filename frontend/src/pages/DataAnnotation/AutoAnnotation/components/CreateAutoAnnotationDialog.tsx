@@ -5,6 +5,7 @@ import { queryDatasetsUsingGet } from "@/pages/DataManagement/dataset.api";
 import { mapDataset } from "@/pages/DataManagement/dataset.const";
 import { DatasetType, type DatasetFile, type Dataset } from "@/pages/DataManagement/dataset.model";
 import DatasetFileTransfer from "@/components/business/DatasetFileTransfer";
+import { useTranslation } from "react-i18next";
 
 const { Option } = Select;
 
@@ -102,6 +103,7 @@ export default function CreateAutoAnnotationDialog({
 	onCancel,
 	onSuccess,
 }: CreateAutoAnnotationDialogProps) {
+  const { t } = useTranslation();
 	const [form] = Form.useForm();
 	const [loading, setLoading] = useState(false);
 	const [datasets, setDatasets] = useState<any[]>([]);
@@ -129,7 +131,7 @@ export default function CreateAutoAnnotationDialog({
 				pageSize: 1000,
 			});
 			const imageDatasets = (data.content || [])
-				.map(mapDataset)
+				.map(dataset => mapDataset(dataset, t))
 				.filter((ds: any) => ds.datasetType === DatasetType.IMAGE);
 			setDatasets(imageDatasets);
 		} catch (error) {
@@ -161,14 +163,13 @@ export default function CreateAutoAnnotationDialog({
 			const selectedFiles = Object.values(selectedFilesMap) as any[];
 			// 自动标注任务现在允许跨多个数据集，后端会按 fileIds 分组并为每个数据集分别创建/复用 LS 项目。
 			// 这里仅用第一个涉及到的 datasetId（或表单中的 datasetId）作为任务的“主数据集”展示字段。
-			const datasetIds = Array.from(
-				new Set(
-					selectedFiles
-						.map((file) => file?.datasetId)
-						.filter((id) => id !== undefined && id !== null && id !== ""),
-					),
-				),
-			);
+      const datasetIds = Array.from(
+        new Set(
+          selectedFiles
+            .map((file) => file?.datasetId)
+            .filter((id) => id !== undefined && id !== null && id !== ""),
+        ),
+      );
 
 			const effectiveDatasetId = values.datasetId || datasetIds[0];
 

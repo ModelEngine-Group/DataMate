@@ -12,6 +12,7 @@ import DatasetFileTransfer from "@/components/business/DatasetFileTransfer";
 import { DatasetType, type Dataset, type DatasetFile } from "@/pages/DataManagement/dataset.model";
 import type { AnnotationTemplate } from "../../annotation.model";
 import { DataType } from "../../annotation.model";
+import { useTranslation } from "react-i18next";
 
 const { Option } = Select;
 
@@ -107,6 +108,7 @@ export default function CreateAnnotationTask({
   onClose: () => void;
   onRefresh: () => void;
 }) {
+  const { t } = useTranslation();
   const [manualForm] = Form.useForm();
   const [autoForm] = Form.useForm();
   const [datasets, setDatasets] = useState<Dataset[]>([]);
@@ -131,7 +133,7 @@ export default function CreateAnnotationTask({
           page: 0,
           pageSize: 1000,  // Use camelCase for HTTP params
         });
-        setDatasets(datasetData.content.map(mapDataset) || []);
+        setDatasets(datasetData.content.map(dataset => mapDataset(dataset, t)) || []);
 
         // Fetch templates
         const templateResponse = await queryAnnotationTemplatesUsingGet({

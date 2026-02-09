@@ -98,7 +98,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onCancel, on
   const fetchDatasets = async () => {
     try {
       const { data } = await queryDatasetsUsingGet({ page: 1, size: 1000 });
-      setDatasets(data.content.map(mapDataset) || []);
+      setDatasets(data.content.map(dataset => mapDataset(dataset, t)) || []);
     } catch (error) {
       console.error('Error fetching datasets:', error);
       message.error(t("dataEvaluation.create.messages.fetchDatasetsFailed"));

@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { createAnnotationTaskUsingPost, queryAnnotationTemplatesUsingGet } from "../../annotation.api";
 import { Dataset } from "@/pages/DataManagement/dataset.model";
 import type { AnnotationTemplate } from "../../annotation.model";
+import { useTranslation } from "react-i18next";
 
 export default function CreateAnnotationTask({
   open,
@@ -16,6 +17,7 @@ export default function CreateAnnotationTask({
   onClose: () => void;
   onRefresh: () => void;
 }) {
+  const { t } = useTranslation();
   const [form] = Form.useForm();
   const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [templates, setTemplates] = useState<AnnotationTemplate[]>([]);
@@ -31,7 +33,7 @@ export default function CreateAnnotationTask({
           page: 0,
           pageSize: 1000,  // Use camelCase for HTTP params
         });
-        setDatasets(datasetData.content.map(mapDataset) || []);
+        setDatasets(datasetData.content.map(dataset => mapDataset(dataset, t)) || []);
 
         // Fetch templates
         const templateResponse = await queryAnnotationTemplatesUsingGet({
