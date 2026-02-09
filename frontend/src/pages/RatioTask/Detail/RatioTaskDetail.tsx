@@ -61,7 +61,7 @@ export default function RatioTaskDetail() {
 
   useEffect(() => {
     fetchRatioTask();
-  }, []);
+  }, [t]);
 
   const handleRefresh = useCallback(
     async (showMessage = true) => {
