@@ -208,10 +208,6 @@ export function getDataSourceMap(t: (key: string) => string): Record<
   };
 }
 
-export function getDataSourceOptions(t: (key: string) => string) {
-  return Object.values(getDataSourceMap(t));
-}
-
 export function mapDataset(dataset: AnyObject, t: (key: string) => string): Dataset {
   const datasetTypeMap = getDatasetTypeMap(t);
   const datasetStatusMap = getDatasetStatusMap(t);
