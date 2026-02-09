@@ -86,15 +86,6 @@ export default function DatasetManagementPage() {
 
   const [tags, setTags] = useState<string[]>([]);
 
-  useEffect(() => {
-    const fetchTags = async () => {
-      const { data } = await queryDatasetTagsUsingGet();
-      setTags(data.map((tag) => tag.name));
-    };
-    fetchTags();
-    fetchStatistics();
-  }, [t]);
-
   const filterOptions = useMemo(
     () => [
       {
@@ -135,8 +126,18 @@ export default function DatasetManagementPage() {
     0
   );
 
+  useEffect(() => {
+    const fetchTags = async () => {
+      const { data } = await queryDatasetTagsUsingGet();
+      setTags(data.map((tag) => tag.name));
+    };
+    fetchTags();
+    fetchData();
+    fetchStatistics();
+  }, [t]);
+
   const handleDownloadDataset = async (dataset: Dataset) => {
-    await downloadDatasetUsingGet(dataset.id, dataset.name);
+    await downloadDatasetUsingGet(dataset.id);
     message.success(t("dataManagement.messages.downloadSuccess"));
   };
 
@@ -248,12 +249,6 @@ export default function DatasetManagementPage() {
       key: "fileCount",
       width: 100,
     },
-    // {
-    //   title: "创建者",
-    //   dataIndex: "createdBy",
-    //   key: "createdBy",
-    //   width: 120,
-    // },
     {
       title: t("dataManagement.columns.storagePath"),
       dataIndex: "targetLocation",

@@ -77,6 +77,8 @@ interface LabelDistributionProps {
 }
 
 function LabelDistributionStats({ distribution }: LabelDistributionProps) {
+  const { t } = useTranslation();
+
   // 将 distribution 数据转换为表格格式
   const { tableData, totalLabels } = useMemo(() => {
     if (!distribution) return { tableData: [], totalLabels: 0 };
@@ -119,22 +121,22 @@ function LabelDistributionStats({ distribution }: LabelDistributionProps) {
 
   const columns = [
     {
-      title: '类别',
+      title: t("dataManagement.quality.labelDistribution.category"),
       dataIndex: 'category',
       key: 'category',
       width: 120,
       render: (text: string) => (
-        <span className="font-medium text-gray-700">{text || '未分类'}</span>
+        <span className="font-medium text-gray-700">{text || t("dataManagement.quality.labelDistribution.uncategorized")}</span>
       ),
     },
     {
-      title: '标签名称',
+      title: t("dataManagement.quality.labelDistribution.labelName"),
       dataIndex: 'label',
       key: 'label',
       render: (text: string) => <span>{text}</span>,
     },
     {
-      title: '数量',
+      title: t("dataManagement.quality.labelDistribution.count"),
       dataIndex: 'count',
       key: 'count',
       width: 100,
@@ -144,7 +146,7 @@ function LabelDistributionStats({ distribution }: LabelDistributionProps) {
       ),
     },
     {
-      title: '占比',
+      title: t("dataManagement.quality.labelDistribution.percentage"),
       dataIndex: 'percentage',
       key: 'percentage',
       width: 200,
@@ -183,7 +185,7 @@ function LabelDistributionStats({ distribution }: LabelDistributionProps) {
       <Card className="bg-gray-50">
         <div className="text-center py-8 text-gray-400">
           <Tags className="w-12 h-12 mx-auto mb-3 opacity-50" />
-          <p>暂无标签分布数据</p>
+          <p>{t("dataManagement.quality.labelDistribution.noData")}</p>
         </div>
       </Card>
     );
@@ -199,9 +201,9 @@ function LabelDistributionStats({ distribution }: LabelDistributionProps) {
               <Tags className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h3 className="font-semibold text-gray-800">数据集标签统计</h3>
+              <h3 className="font-semibold text-gray-800">{t("dataManagement.quality.labelDistribution.statisticsTitle")}</h3>
               <p className="text-sm text-gray-600">
-                共 {Object.keys(categoryGroups).length} 个类别，{totalLabels} 个标签样本
+                {t("dataManagement.quality.labelDistribution.statisticsSummary", { categoryCount: Object.keys(categoryGroups).length, totalLabels })}
               </p>
             </div>
           </div>
@@ -213,7 +215,7 @@ function LabelDistributionStats({ distribution }: LabelDistributionProps) {
         title={
           <div className="flex items-center gap-2">
             <BarChart3 className="w-4 h-4" />
-            <span>标签分布明细</span>
+            <span>{t("dataManagement.quality.labelDistribution.detailsCardTitle")}</span>
           </div>
         }
       >
@@ -244,7 +246,7 @@ function LabelDistributionStats({ distribution }: LabelDistributionProps) {
             >
               <div className="space-y-3">
                 <div className="text-sm text-gray-600">
-                  总计: <span className="font-semibold">{categoryTotal}</span> 个标签
+                  {t("dataManagement.quality.labelDistribution.totalLabels", { count: categoryTotal })}
                 </div>
                 {topLabels.map((item) => (
                   <div key={item.label} className="space-y-1">
@@ -266,7 +268,7 @@ function LabelDistributionStats({ distribution }: LabelDistributionProps) {
                 ))}
                 {items.length > 5 && (
                   <div className="text-xs text-gray-500 text-center pt-2">
-                    还有 {items.length - 5} 个标签...
+                    {t("dataManagement.quality.labelDistribution.moreLabels", { count: items.length - 5 })}
                   </div>
                 )}
               </div>

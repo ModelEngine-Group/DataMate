@@ -206,17 +206,17 @@
       "messages": {
         "loadTemplatesFailed": "Failed to load collection templates",
         "createSuccess": "Task created successfully",
-        "errorWithDetail": "{message}: {detail}",
+        "errorWithDetail": "{{message}}: {{detail}}",
         "jsonObjectRequired": "Must be a JSON object",
         "jsonObjectInvalid": "Please enter a valid JSON object",
         "jsonFormatError": "Invalid JSON format",
-        "jsonFormatErrorWithMessage": "Invalid JSON format: {message}"
+        "jsonFormatErrorWithMessage": "Invalid JSON format: {{message}}"
       },
       "placeholders": {
         "enter": "Please enter",
         "select": "Please select",
-        "enterWithLabel": "Please enter {label}",
-        "selectWithLabel": "Please select {label}"
+        "enterWithLabel": "Please enter {{label}}",
+        "selectWithLabel": "Please select {{label}}"
       }
     },
     "scheduler": {
@@ -356,7 +356,7 @@
       "deleteDatasetTitle": "Confirm delete this dataset?",
       "deleteDatasetDesc": "This dataset cannot be recovered after deletion. Proceed with caution.",
       "deleteFolderTitle": "Confirm delete folder?",
-      "deleteFolderDesc": "Deleting folder \"{name}\" will remove all files and subfolders. This action cannot be undone.",
+      "deleteFolderDesc": "Deleting folder \"{{name}}\" will remove all files and subfolders. This action cannot be undone.",
       "deleteConfirm": "Delete",
       "deleteCancel": "Cancel"
     },
@@ -368,14 +368,14 @@
       "tabQuality": "Data Quality",
       "sectionBasicInfo": "Basic Information",
       "sectionFileList": "File List",
-      "selectedFiles": "Selected {count} files",
+      "selectedFiles": "Selected {{count}} files",
       "goUp": "Go up",
-      "currentPath": "Current path: {path}",
-      "totalItems": "Total {total} items",
-      "previewTitle": "File Preview: {name}",
+      "currentPath": "Current path: {{path}}",
+      "totalItems": "Total {{total}} items",
+      "previewTitle": "File Preview: {{name}}",
       "previewEmpty": "No preview available or unsupported file type.",
       "previewInfoTitle": "File Info",
-      "editTitle": "Edit Dataset - {name}"
+      "editTitle": "Edit Dataset - {{name}}"
     },
     "labels": {
       "id": "ID",
@@ -409,7 +409,7 @@
     },
     "lineage": {
       "title": "Data Lineage",
-      "stats": "{nodes} nodes · {edges} edges",
+      "stats": "{{nodes}} nodes · {{edges}} edges",
       "legendDatasource": "Data Source",
       "legendDataset": "Dataset",
       "legendModel": "Model",
@@ -422,6 +422,7 @@
       "edgeTypeSynthesis": "Data Synthesis",
       "edgeTypeRatio": "Data Ratio",
       "edgeTypeDefault": "Processing Flow",
+      "edgeTypeDefaultLabel": "Processing Flow",
       "detailBasicInfo": "Basic Information",
       "detailId": "ID:",
       "detailName": "Name:",
@@ -436,13 +437,21 @@
       "detailNoDownstream": "No downstream impacts",
       "processDetail": "Process Detail",
       "processId": "Process ID:",
+      "relationships": "Upstream and Downstream",
       "processUpstream": "Upstream:",
       "processDownstream": "Downstream:",
+      "processDescription": "Description",
+      "processEmpty": "No process description",
       "nodeTypeDatasource": "Data Source",
       "nodeTypeDataset": "Dataset",
       "nodeTypeModel": "Model",
       "nodeTypeKnowledge": "Knowledge Base",
-      "filesCount": "{count} files"
+      "filesCount": "{{count}} files · {{size}}",
+      "statusRunning": "Running",
+      "statusStopped": "Stopped",
+      "statusActive": "Active",
+      "statusInactive": "Inactive",
+      "statusDraft": "Draft"
     },
     "quality": {
       "titleDistribution": "Quality Distribution",
@@ -461,8 +470,8 @@
       "metricColumnIntegrity": "Column Integrity",
       "metricDuplicateRate": "Duplicate Rate",
       "recommendationTitle": "Quality Improvement Suggestions",
-      "recommendationReviewLowQuality": "Review or recollect {count} low-quality samples",
-      "recommendationSupplementMetadata": "Check and supplement missing metadata fields (missing: {missing})",
+      "recommendationReviewLowQuality": "Review or recollect {{count}} low-quality samples",
+      "recommendationSupplementMetadata": "Check and supplement missing metadata fields (missing: {{missing}})",
       "recommendationBalanceDistribution": "Consider adding more underrepresented samples to balance distribution",
       "imageClarity": "Image Clarity",
       "colorConsistency": "Color Consistency",
@@ -476,7 +485,21 @@
       "fileIntegrity": "File Integrity",
       "fieldIntegrity": "Field Integrity",
       "columnIntegrity": "Column Integrity",
-      "duplicateRate": "Duplicate Rate"
+      "duplicateRate": "Duplicate Rate",
+      "labelDistribution": {
+        "title": "Label Distribution Details",
+        "category": "Category",
+        "labelName": "Label Name",
+        "count": "Count",
+        "percentage": "Percentage",
+        "noData": "No label distribution data",
+        "noDataSubtitle": "No label distribution data available",
+        "statisticsTitle": "Dataset Label Statistics",
+        "statisticsSummary": "{{categoryCount}} categories, {{totalLabels}} label samples",
+        "detailsCardTitle": "Label Distribution Details",
+        "totalLabels": "Total: {{count}} labels",
+        "moreLabels": "And {{count}} more labels..."
+      }
     },
     "import": {
       "title": "Import Data",
@@ -486,7 +509,7 @@
       "uploadFolderHint": "Drag folder here or click to select folder",
       "fileLabel": "File:",
       "folderLabel": "Folder:",
-      "warningTypeMismatch": "Dataset type is {type}. Some selected files may not match; please confirm.",
+      "warningTypeMismatch": "Dataset type is {{type}}. Some selected files may not match; please confirm.",
       "warningUseFolderUpload": "To upload a folder, use the \"Local Folder Upload\" area on the right.",
       "warningUseFileUpload": "To upload a single file, use the \"Local File Upload\" area on the left.",
       "obsEndpoint": "Endpoint",
@@ -553,7 +576,7 @@
       "collection": "Collection Task Import"
     }
   },
-  "common": {
+    "common": {
     "actions": {
       "createTask": "Create Task"
     },
@@ -570,5 +593,27 @@
         "pending": "Ready"
       }
     }
+  },
+  "tagManagement": {
+    "manageTags": "Manage Tags",
+    "addTag": "Add Tag",
+    "tagName": "Tag Name",
+    "tagNamePlaceholder": "Enter tag name...",
+    "createTag": "Create",
+    "selectExistingTags": "Select existing tags",
+    "createNewTag": "Create new tag",
+    "newTagNamePlaceholder": "Enter new tag name...",
+    "noAvailableTags": "No available tags. Please create a tag first.",
+    "cancel": "Cancel",
+    "messages": {
+      "fetchFailed": "Failed to fetch tags",
+      "addSuccess": "Tag added successfully",
+      "addFailed": "Failed to add tag",
+      "deleteSuccess": "Tag deleted successfully",
+      "deleteFailed": "Failed to delete tag",
+      "updateSuccess": "Tag updated successfully",
+      "updateFailed": "Failed to update tag"
+    },
+    "uncategorized": "Uncategorized"
   }
 }

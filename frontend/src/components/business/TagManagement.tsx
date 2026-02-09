@@ -3,6 +3,7 @@ import { Drawer, Input, Button, App } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import { Edit, Save, TagIcon, X, Trash } from "lucide-react";
 import { TagItem } from "@/pages/DataManagement/dataset.model";
+import { useTranslation } from "react-i18next";
 
 interface CustomTagProps {
   isEditable?: boolean;
@@ -105,6 +106,7 @@ const TagManager: React.FC = ({
 }) => {
   const [showTagManager, setShowTagManager] = useState(false);
   const { message } = App.useApp();
+  const { t } = useTranslation();
   const [tags, setTags] = useState<{ id: number; name: string }[]>([]);
   const [newTag, setNewTag] = useState("");
   const [editingTag, setEditingTag] = useState<string | null>(null);
@@ -117,7 +119,7 @@ const TagManager: React.FC = ({
       const { data } = await onFetch?.();
       setTags(data || []);
     } catch (e) {
-      message.error("获取标签失败");
+      message.error(t("tagManagement.messages.fetchFailed"));
     }
   };
 
@@ -129,9 +131,9 @@ const TagManager: React.FC = ({
       });
       fetchTags();
       setNewTag("");
-      message.success("标签添加成功");
+      message.success(t("tagManagement.messages.addSuccess"));
     } catch (error) {
-      message.error("添加标签失败");
+      message.error(t("tagManagement.messages.addFailed"));
     }
   };
 
@@ -140,9 +142,9 @@ const TagManager: React.FC = ({
     try {
       await onDelete?.(tag.id);
       fetchTags();
-      message.success("标签删除成功");
+      message.success(t("tagManagement.messages.deleteSuccess"));
     } catch (error) {
-      message.error("删除标签失败");
+      message.error(t("tagManagement.messages.deleteFailed"));
     }
   };
 
@@ -150,9 +152,9 @@ const TagManager: React.FC = ({
     try {
       await onUpdate?.({ ...oldTag, name: newTag });
       fetchTags();
-      message.success("标签更新成功");
+      message.success(t("tagManagement.messages.updateSuccess"));
     } catch (error) {
-      message.error("更新标签失败");
+      message.error(t("tagManagement.messages.updateFailed"));
     }
   };
 
@@ -192,19 +194,19 @@ const TagManager: React.FC = ({
         icon={<TagIcon className="w-4 h-4 mr-2" />}
         onClick={() => setShowTagManager(true)}
       >
-        标签管理
+        {t("tagManagement.manageTags")}
       </Button>
       <Drawer
         open={showTagManager}
         onClose={() => setShowTagManager(false)}
-        title="标签管理"
+        title={t("tagManagement.manageTags")}
         width={500}
       >
         <div className="space-y-4 flex-overflow">
           {/* Add New Tag */}
           <div className="flex gap-2">
             <Input
-              placeholder="输入标签名称..."
+              placeholder={t("tagManagement.tagNamePlaceholder")}
               value={newTag}
               allowClear
               onChange={(e) => setNewTag(e.target.value)}
@@ -220,7 +222,7 @@ const TagManager: React.FC = ({
               disabled={!newTag.trim()}
               icon={<PlusOutlined />}
             >
-              添加
+              {t("tagManagement.createTag")}
             </Button>
           </div>
 

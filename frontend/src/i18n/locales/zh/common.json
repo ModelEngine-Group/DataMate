@@ -206,17 +206,17 @@
       "messages": {
         "loadTemplatesFailed": "加载归集模板失败",
         "createSuccess": "任务创建成功",
-        "errorWithDetail": "{message}：{detail}",
+        "errorWithDetail": "{{message}}：{{detail}}",
         "jsonObjectRequired": "必须是JSON对象",
         "jsonObjectInvalid": "请输入合法的JSON对象",
         "jsonFormatError": "JSON格式错误",
-        "jsonFormatErrorWithMessage": "JSON格式错误：{message}"
+        "jsonFormatErrorWithMessage": "JSON格式错误：{{message}}"
       },
       "placeholders": {
         "enter": "请输入",
         "select": "请选择",
-        "enterWithLabel": "请输入{label}",
-        "selectWithLabel": "请选择{label}"
+        "enterWithLabel": "请输入{{label}}",
+        "selectWithLabel": "请选择{{label}}"
       }
     },
     "scheduler": {
@@ -356,7 +356,7 @@
       "deleteDatasetTitle": "确认删除该数据集？",
       "deleteDatasetDesc": "删除后该数据集将无法恢复，请谨慎操作。",
       "deleteFolderTitle": "确认删除文件夹？",
-      "deleteFolderDesc": "删除文件夹 \"{name}\" 将同时删除其中的所有文件和子文件夹，此操作不可恢复。",
+      "deleteFolderDesc": "删除文件夹 \"{{name}}\" 将同时删除其中的所有文件和子文件夹，此操作不可恢复。",
       "deleteConfirm": "删除",
       "deleteCancel": "取消"
     },
@@ -368,14 +368,14 @@
       "tabQuality": "数据质量",
       "sectionBasicInfo": "基本信息",
       "sectionFileList": "文件列表",
-      "selectedFiles": "已选择 {count} 个文件",
+      "selectedFiles": "已选择 {{count}} 个文件",
       "goUp": "返回上一级",
-      "currentPath": "当前路径: {path}",
-      "totalItems": "共 {total} 条",
-      "previewTitle": "文件预览：{name}",
+      "currentPath": "当前路径: {{path}}",
+      "totalItems": "共 {{total}} 条",
+      "previewTitle": "文件预览：{{name}}",
       "previewEmpty": "暂无预览内容，或当前文件类型暂不支持预览。",
       "previewInfoTitle": "文件信息",
-      "editTitle": "编辑数据集 - {name}"
+      "editTitle": "编辑数据集 - {{name}}"
     },
     "labels": {
       "id": "ID",
@@ -409,7 +409,7 @@
     },
     "lineage": {
       "title": "数据血缘图",
-      "stats": "{nodes} 个节点 · {edges} 条边",
+      "stats": "{{nodes}} 个节点 · {{edges}} 条边",
       "legendDatasource": "数据源",
       "legendDataset": "数据集",
       "legendModel": "模型",
@@ -436,13 +436,21 @@
       "detailNoDownstream": "无下游影响",
       "processDetail": "流程详情",
       "processId": "流程ID:",
+      "relationships": "上下游关系",
       "processUpstream": "上游:",
       "processDownstream": "下游:",
+      "processDescription": "描述",
+      "processEmpty": "无流程描述",
       "nodeTypeDatasource": "数据源",
       "nodeTypeDataset": "数据集",
       "nodeTypeModel": "模型",
       "nodeTypeKnowledge": "知识库",
-      "filesCount": "{count} 个文件"
+      "filesCount": "{{count}} 个文件 · {{size}}",
+      "statusRunning": "运行中",
+      "statusStopped": "已停止",
+      "statusActive": "活跃",
+      "statusInactive": "未激活",
+      "statusDraft": "草稿"
     },
     "quality": {
       "titleDistribution": "质量分布",
@@ -461,8 +469,8 @@
       "metricColumnIntegrity": "列完整性",
       "metricDuplicateRate": "重复率",
       "recommendationTitle": "质量改进建议",
-      "recommendationReviewLowQuality": "建议对{count}项低质量样本进行复查或重新采集",
-      "recommendationSupplementMetadata": "检查并补充缺失的元数据字段（现有缺失：{missing}）",
+      "recommendationReviewLowQuality": "建议对{{count}}项低质量样本进行复查或重新采集",
+      "recommendationSupplementMetadata": "检查并补充缺失的元数据字段（现有缺失：{{missing}}）",
       "recommendationBalanceDistribution": "考虑增加更多低代表性样本以平衡数据分布",
       "imageClarity": "图像清晰度",
       "colorConsistency": "色彩一致性",
@@ -476,7 +484,21 @@
       "fileIntegrity": "文件完整性",
       "fieldIntegrity": "字段完整性",
       "columnIntegrity": "列完整性",
-      "duplicateRate": "重复率"
+      "duplicateRate": "重复率",
+      "labelDistribution": {
+        "title": "标签分布明细",
+        "category": "类别",
+        "labelName": "标签名称",
+        "count": "数量",
+        "percentage": "占比",
+        "noData": "暂无标签分布数据",
+        "noDataSubtitle": "暂无标签分布数据可用",
+        "statisticsTitle": "数据集标签统计",
+        "statisticsSummary": "共 {{categoryCount}} 个类别，{{totalLabels}} 个标签样本",
+        "detailsCardTitle": "标签分布明细",
+        "totalLabels": "总计: {{count}} 个标签",
+        "moreLabels": "还有 {{count}} 个标签..."
+      }
     },
     "import": {
       "title": "导入数据",
@@ -486,7 +508,7 @@
       "uploadFolderHint": "拖拽文件夹到此处或点击选择文件夹",
       "fileLabel": "文件：",
       "folderLabel": "文件夹：",
-      "warningTypeMismatch": "当前数据集类型为 {type}，本次选择的部分文件格式与该类型不太匹配，建议确认是否为预期数据。",
+      "warningTypeMismatch": "当前数据集类型为 {{type}}，本次选择的部分文件格式与该类型不太匹配，建议确认是否为预期数据。",
       "warningUseFolderUpload": "如需上传文件夹，请使用右侧\"本地文件夹上传\"区域。",
       "warningUseFileUpload": "如需上传单个文件，请使用左侧\"本地文件上传\"区域。",
       "obsEndpoint": "Endpoint",
@@ -553,7 +575,7 @@
       "collection": "归集任务导入 "
     }
   },
-  "common": {
+    "common": {
     "actions": {
       "createTask": "创建任务"
     },
@@ -570,5 +592,27 @@
         "pending": "就绪"
       }
     }
+  },
+  "tagManagement": {
+    "manageTags": "标签管理",
+    "addTag": "添加标签",
+    "tagName": "标签名称",
+    "tagNamePlaceholder": "输入标签名称...",
+    "createTag": "添加",
+    "selectExistingTags": "选择现有标签",
+    "createNewTag": "创建新标签",
+    "newTagNamePlaceholder": "输入新标签名称...",
+    "noAvailableTags": "没有可用标签，请先创建标签。",
+    "cancel": "取消",
+    "messages": {
+      "fetchFailed": "获取标签失败",
+      "addSuccess": "标签添加成功",
+      "addFailed": "添加标签失败",
+      "deleteSuccess": "标签删除成功",
+      "deleteFailed": "删除标签失败",
+      "updateSuccess": "标签更新成功",
+      "updateFailed": "更新标签失败"
+    },
+    "uncategorized": "未分类"
   }
 }
