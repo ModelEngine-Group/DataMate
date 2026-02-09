@@ -72,13 +72,19 @@ export function mapRatioTask(
             {task.target_dataset_name}
           </Link>
         ) : (
-          t("dataManagement.defaults.none")
+          task?.target_dataset && task?.target_dataset.name ? (
+            <Link to={`/data/management/detail/${task?.target_dataset.id}`}>
+              {task?.target_dataset.name}
+            </Link>
+          ) : (
+            t("dataManagement.defaults.none")
+          )
         ),
       },
       {
         label: t("ratioTask.detail.labels.createdAt"),
         icon: <Calendar className="w-4 h-4 text-gray-500" />,
-        value: task.created_at || t("common.placeholders.empty"),
+        value: formatDateTime(task.created_at) || t("common.placeholders.empty"),
       },
     ],
   };

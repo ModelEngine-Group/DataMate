@@ -101,20 +101,6 @@ export default function RatioTaskDetail() {
 
   // 操作列表
   const operations = [
-    // {
-    //   key: "execute",
-    //   label: "启动",
-    //   icon: <PlayIcon className="w-4 h-4 text-gray-500" />,
-    //   onClick: handleExecute,
-    //   disabled: ratioTask.status === "RUNNING",
-    // },
-    // {
-    //   key: "stop",
-    //   label: "停止",
-    //   icon: <Pause className="w-4 h-4 text-gray-500" />,
-    //   onClick: handleStop,
-    //   disabled: ratioTask.status !== "RUNNING",
-    // },
     {
       key: "refresh",
       label: t("ratioTask.detail.operations.refresh"),
@@ -158,9 +144,19 @@ export default function RatioTaskDetail() {
       key: "dataset",
       label: t("ratioTask.detail.labels.targetDataset"),
       children: (
-        <Link to={`/data/management/detail/${ratioTask.target_dataset_id}`}>
-          {ratioTask.target_dataset_name}
-        </Link>
+        ratioTask.target_dataset_name ? (
+          <Link to={`/data/management/detail/${ratioTask.target_dataset_id}`}>
+            {ratioTask.target_dataset_name}
+          </Link>
+        ) : (
+          ratioTask?.target_dataset && ratioTask?.target_dataset.name ? (
+            <Link to={`/data/management/detail/${ratioTask?.target_dataset.id}`}>
+              {ratioTask?.target_dataset.name}
+            </Link>
+          ) : (
+            t("dataManagement.defaults.none")
+          )
+        )
       ),
     },
     {
