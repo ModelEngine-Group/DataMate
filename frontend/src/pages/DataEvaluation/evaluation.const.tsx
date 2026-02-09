@@ -130,7 +130,7 @@ export function mapEvaluationTask(
     updatedAt: formatDateTime(task.updatedAt),
     description: task.description,
     icon: <BarChart3 />,
-    iconColor: task.ratio_method === "DATASET" ? "bg-blue-100" : "bg-green-100",
+    iconColor: "#A78BFA",
     statistics: [
       {
         label: t ? t("dataEvaluation.detail.labels.taskType") : "任务类型",
