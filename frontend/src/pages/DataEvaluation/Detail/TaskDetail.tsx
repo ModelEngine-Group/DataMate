@@ -75,7 +75,7 @@ const EvaluationDetailPage: React.FC = () => {
         fetchEvaluationItems(1, pagination.pageSize),
       ]).finally(() => setLoading(false));
     }
-  }, [id]);
+  }, [id, t]);
 
   if (loading && !task) {
     return (

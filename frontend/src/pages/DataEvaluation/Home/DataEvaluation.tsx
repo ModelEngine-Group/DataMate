@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Button,
   Card,
@@ -57,6 +57,10 @@ export default function DataEvaluationPage() {
     [],
     0
   );
+
+  useEffect(() => {
+    fetchData();
+  }, [t]);
 
   const [isModalVisible, setIsModalVisible] = useState(false);
 
