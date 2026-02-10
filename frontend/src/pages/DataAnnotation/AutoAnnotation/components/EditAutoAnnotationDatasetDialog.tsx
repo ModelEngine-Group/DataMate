@@ -5,6 +5,7 @@ import { getAutoAnnotationTaskFilesUsingGet, updateAutoAnnotationTaskFilesUsingP
 import DatasetFileTransfer from "@/components/business/DatasetFileTransfer";
 import type { DatasetFile, Dataset } from "@/pages/DataManagement/dataset.model";
 import { DatasetType } from "@/pages/DataManagement/dataset.model";
+import { useTranslation } from "react-i18next";
 
 interface EditAutoAnnotationDatasetDialogProps {
   visible: boolean;
@@ -29,6 +30,7 @@ export default function EditAutoAnnotationDatasetDialog({
   onCancel,
   onSuccess,
 }: EditAutoAnnotationDatasetDialogProps) {
+  const { t } = useTranslation();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [selectedFilesMap, setSelectedFilesMap] = useState<Record<string, DatasetFile>>({});
@@ -87,7 +89,7 @@ export default function EditAutoAnnotationDatasetDialog({
         setInitialFileIds(new Set(Object.keys(nextMap)));
       } catch (e) {
         console.error("Failed to fetch auto annotation task files:", e);
-        message.error("获取任务当前数据集文件失败");
+        message.error(t("dataAnnotation.dialogs.editDataset.fetchFilesFailed"));
       }
     })();
 
@@ -107,7 +109,7 @@ export default function EditAutoAnnotationDatasetDialog({
   const handleSubmit = async () => {
     try {
       if (imageFileCount === 0) {
-        message.error("请至少选择一个图像文件");
+        message.error(t("dataAnnotation.create.messages.selectAtLeastOneImageFile"));
         return;
       }
 
@@ -142,11 +144,11 @@ export default function EditAutoAnnotationDatasetDialog({
       };
 
       await updateAutoAnnotationTaskFilesUsingPut(task.id, payload);
-      message.success("任务数据集已更新，将仅对新增的图像执行自动标注");
+      message.success(t("dataAnnotation.dialogs.editDataset.success"));
       onSuccess();
     } catch (error: any) {
       console.error("Failed to update auto annotation task files:", error);
-      message.error(error?.message || "更新任务数据集失败");
+      message.error(error?.message || t("dataAnnotation.dialogs.editDataset.failed"));
     } finally {
       setLoading(false);
     }
@@ -154,7 +156,7 @@ export default function EditAutoAnnotationDatasetDialog({
 
   return (
     <Modal
-      title="编辑任务数据集"
+      title={t("dataAnnotation.home.editDataset")}
       open={visible}
       onCancel={onCancel}
       onOk={handleSubmit}
@@ -163,17 +165,15 @@ export default function EditAutoAnnotationDatasetDialog({
       destroyOnClose
     >
       <Form form={form} layout="vertical" preserve={false}>
-        <Form.Item label="任务名称">
+        <Form.Item label={t("dataAnnotation.create.form.name")}>
           <Input value={task?.name} disabled />
         </Form.Item>
 
-        <Form.Item label="选择数据集和图像文件" required>
+        <Form.Item label={t("dataAnnotation.create.form.selectDatasetAndFiles")} required>
           <DatasetFileTransfer
             open={visible}
             selectedFilesMap={selectedFilesMap}
             onSelectedFilesChange={(next) => {
-              // 不允许删除任务最初已包含的文件：
-              // 无论在 UI 中如何操作，这些初始文件都会被强制保留
               const merged: Record<string, DatasetFile> = { ...next };
               initialFileIds.forEach((id) => {
                 if (!merged[id] && initialFilesMap[id]) {
@@ -192,8 +192,7 @@ export default function EditAutoAnnotationDatasetDialog({
           />
           {selectedDataset && (
             <div className="mt-2 p-2 bg-blue-50 rounded border border-blue-200 text-xs">
-              当前数据集：<span className="font-medium">{selectedDataset.name}</span> - 已选择
-              <span className="font-medium text-blue-600"> {imageFileCount} </span>个图像文件
+              {t("dataAnnotation.create.form.currentDatasetImages", { name: selectedDataset.name, count: imageFileCount })}
             </div>
           )}
         </Form.Item>

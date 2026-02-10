@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, Query
 
+from app.core.exception import SuccessResponse
 from app.module.shared.schema import StandardResponse, PaginatedData
 from app.module.system.schema.models import (
     CreateModelRequest,
@@ -17,7 +18,7 @@ router = APIRouter(prefix="/models", tags=["models"])
 async def get_providers(svc: ModelsService = Depends()):
     """获取厂商列表，与 Java GET /models/providers 一致。"""
     data = await svc.get_providers()
-    return StandardResponse(code=200, message="success", data=data)
+    return SuccessResponse(data=data)
 
 
 @router.get("/list", response_model=StandardResponse[PaginatedData[ModelsResponse]])
@@ -40,21 +41,21 @@ async def get_models(
         isDefault=isDefault,
     )
     data = await svc.get_models(q)
-    return StandardResponse(code=200, message="success", data=data)
+    return SuccessResponse(data=data)
 
 
 @router.post("/create", response_model=StandardResponse[ModelsResponse])
 async def create_model(req: CreateModelRequest, svc: ModelsService = Depends()):
     """创建模型配置，与 Java POST /models/create 一致。"""
     data = await svc.create_model(req)
-    return StandardResponse(code=200, message="success", data=data)
+    return SuccessResponse(data=data)
 
 
 @router.get("/{model_id}", response_model=StandardResponse[ModelsResponse])
 async def get_model_detail(model_id: str, svc: ModelsService = Depends()):
     """获取模型详情，与 Java GET /models/{modelId} 一致。"""
     data = await svc.get_model_detail(model_id)
-    return StandardResponse(code=200, message="success", data=data)
+    return SuccessResponse(data=data)
 
 
 @router.put("/{model_id}", response_model=StandardResponse[ModelsResponse])
@@ -65,11 +66,11 @@ async def update_model(
 ):
     """更新模型配置，与 Java PUT /models/{modelId} 一致。"""
     data = await svc.update_model(model_id, req)
-    return StandardResponse(code=200, message="success", data=data)
+    return SuccessResponse(data=data)
 
 
 @router.delete("/{model_id}", response_model=StandardResponse[None])
 async def delete_model(model_id: str, svc: ModelsService = Depends()):
     """删除模型配置，与 Java DELETE /models/{modelId} 一致。"""
     await svc.delete_model(model_id)
-    return StandardResponse(code=200, message="success", data=None)
+    return SuccessResponse(data=None)

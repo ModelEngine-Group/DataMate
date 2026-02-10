@@ -84,6 +84,7 @@ def converter_to_response(task: CollectionTask) -> CollectionTaskBase:
     )
 
 def convert_for_create(task: CollectionTaskCreate, task_id: str) -> CollectionTask:
+    schedule_expression = task.schedule_expression if task.sync_mode == SyncMode.SCHEDULED else None
     return CollectionTask(
         id=task_id,
         name=task.name,
@@ -92,7 +93,7 @@ def convert_for_create(task: CollectionTaskCreate, task_id: str) -> CollectionTa
         template_id=task.template_id,
         target_path=f"/dataset/local/{task_id}",
         config=json.dumps(task.config.dict()),
-        schedule_expression=task.schedule_expression,
+        schedule_expression=schedule_expression,
         status=TaskStatus.PENDING.name
     )
 

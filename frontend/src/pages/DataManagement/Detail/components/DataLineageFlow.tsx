@@ -4,6 +4,7 @@ import { Card, Badge } from "antd"
 import { Database, Table, Brain, BookOpen, X } from "lucide-react"
 import {Dataset} from "@/pages/DataManagement/dataset.model.ts";
 import { queryDatasetLineageByIdUsingGet } from "@/pages/DataManagement/dataset.api.ts";
+import { useTranslation } from "react-i18next";
 
 interface Node {
   id: string
@@ -79,11 +80,11 @@ const nodeConfig = {
 }
 
 const edgeTypeLabels: Record<string, string> = {
-  DATA_COLLECTION: "数据归集",
-  DATA_CLEANING: "数据处理",
-  DATA_LABELING: "数据标注",
-  DATA_SYNTHESIS: "数据合成",
-  DATA_RATIO: "数据配比",
+  DATA_COLLECTION: "dataManagement.lineage.edgeTypeCollection",
+  DATA_CLEANING: "dataManagement.lineage.edgeTypeCleaning",
+  DATA_LABELING: "dataManagement.lineage.edgeTypeLabeling",
+  DATA_SYNTHESIS: "dataManagement.lineage.edgeTypeSynthesis",
+  DATA_RATIO: "dataManagement.lineage.edgeTypeRatio",
 }
 
 const nodeTypeToUi: Record<string, Node["type"]> = {
@@ -113,6 +114,7 @@ const layoutConfig = {
 }
 
 export default function DataLineageFlow({ dataset }: { dataset: Dataset }) {
+  const { t } = useTranslation();
   const [graphNodes, setGraphNodes] = useState<Node[]>([])
   const [graphEdges, setGraphEdges] = useState<Edge[]>([])
   const [selectedNode, setSelectedNode] = useState<Node | null>(null)
@@ -158,7 +160,7 @@ export default function DataLineageFlow({ dataset }: { dataset: Dataset }) {
         id: edge.id || `${edge.fromNodeId}-${edge.toNodeId}-${index}`,
         from: edge.fromNodeId,
         to: edge.toNodeId,
-        label: edge.name || (edge.edgeType ? edgeTypeLabels[edge.edgeType] || edge.edgeType : "处理流程"),
+        label: edge.name || (edge.edgeType ? t(edgeTypeLabels[edge.edgeType]) || edge.edgeType : t("dataManagement.lineage.edgeTypeDefault")),
         edgeType: edge.edgeType,
         processId: edge.processId,
         description: edge.description,
@@ -424,32 +426,32 @@ export default function DataLineageFlow({ dataset }: { dataset: Dataset }) {
     [graphNodes.length, graphEdges.length]
   )
 
-  return (
+      return (
     <div className="flex gap-4">
       <Card className="flex-1 overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3 border-b bg-white/80 backdrop-blur">
           <div className="flex items-center gap-3">
-            <div className="text-sm font-semibold text-foreground">数据血缘图</div>
+            <div className="text-sm font-semibold text-foreground">{t("dataManagement.lineage.title")}</div>
             <div className="text-xs text-muted-foreground">
-              {stats.nodes} 个节点 · {stats.edges} 条边
+              {t("dataManagement.lineage.stats", { nodes: stats.nodes, edges: stats.edges })}
             </div>
           </div>
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
             <span className="flex items-center gap-1">
               <span className="h-2 w-2 rounded-full" style={{ backgroundColor: nodeConfig.datasource.color }} />
-              数据源
+              {t("dataManagement.lineage.legendDatasource")}
             </span>
             <span className="flex items-center gap-1">
               <span className="h-2 w-2 rounded-full" style={{ backgroundColor: nodeConfig.dataset.color }} />
-              数据集
+              {t("dataManagement.lineage.legendDataset")}
             </span>
             <span className="flex items-center gap-1">
               <span className="h-2 w-2 rounded-full" style={{ backgroundColor: nodeConfig.model.color }} />
-              模型
+              {t("dataManagement.lineage.legendModel")}
             </span>
             <span className="flex items-center gap-1">
               <span className="h-2 w-2 rounded-full" style={{ backgroundColor: nodeConfig.knowledge.color }} />
-              知识库
+              {t("dataManagement.lineage.legendKnowledge")}
             </span>
           </div>
         </div>
@@ -486,8 +488,8 @@ export default function DataLineageFlow({ dataset }: { dataset: Dataset }) {
 
           {graphNodes.length === 0 && (
             <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground">
-              <div className="text-sm">暂无血缘数据</div>
-              <div className="text-xs mt-2">完成归集或关联流程后将自动生成血缘图</div>
+              <div className="text-sm">{t("dataManagement.lineage.emptyTitle")}</div>
+              <div className="text-xs mt-2">{t("dataManagement.lineage.emptyDesc")}</div>
             </div>
           )}
 
@@ -564,7 +566,7 @@ export default function DataLineageFlow({ dataset }: { dataset: Dataset }) {
                     )}
                     {node.fileCount !== undefined && (
                       <div className="text-xs text-muted-foreground mt-1">
-                        {node.fileCount} 个文件 · {node.size}
+                        {t("dataManagement.lineage.filesCount", { count: node.fileCount, size: node.size })}
                       </div>
                     )}
                   </div>
@@ -605,10 +607,10 @@ export default function DataLineageFlow({ dataset }: { dataset: Dataset }) {
                       color: nodeConfig[selectedNode.type].color,
                     }}
                   >
-                    {selectedNode.type === "datasource" && "数据源"}
-                    {selectedNode.type === "dataset" && "数据集"}
-                    {selectedNode.type === "model" && "模型"}
-                    {selectedNode.type === "knowledge" && "知识库"}
+                    {selectedNode.type === "datasource" && t("dataManagement.lineage.nodeTypeDatasource")}
+                    {selectedNode.type === "dataset" && t("dataManagement.lineage.nodeTypeDataset")}
+                    {selectedNode.type === "model" && t("dataManagement.lineage.nodeTypeModel")}
+                    {selectedNode.type === "knowledge" && t("dataManagement.lineage.nodeTypeKnowledge")}
                   </Badge>
                 </div>
               </div>
@@ -629,12 +631,12 @@ export default function DataLineageFlow({ dataset }: { dataset: Dataset }) {
                     <span className="font-mono text-xs">{selectedNode.id}</span>
                   </div>
                   <div className="flex justify-between py-1.5 border-b">
-                    <span className="text-muted-foreground">名称:</span>
+                    <span className="text-muted-foreground">{t("dataManagement.lineage.detailName")}</span>
                     <span>{selectedNode.label}</span>
                   </div>
                   {selectedNode.status && (
                     <div className="flex justify-between py-1.5 border-b">
-                      <span className="text-muted-foreground">状态:</span>
+                      <span className="text-muted-foreground">{t("dataManagement.lineage.detailStatus")}</span>
                       <span className="flex items-center gap-1.5">
                         <div
                           className="w-2 h-2 rounded-full animate-pulse"
@@ -649,19 +651,19 @@ export default function DataLineageFlow({ dataset }: { dataset: Dataset }) {
                   )}
                   {selectedNode.fileCount !== undefined && (
                     <div className="flex justify-between py-1.5 border-b">
-                      <span className="text-muted-foreground">文件数:</span>
+                      <span className="text-muted-foreground">{t("dataManagement.lineage.detailFileCount")}</span>
                       <span>{selectedNode.fileCount}</span>
                     </div>
                   )}
                   {selectedNode.size && (
                     <div className="flex justify-between py-1.5 border-b">
-                      <span className="text-muted-foreground">数据大小:</span>
+                      <span className="text-muted-foreground">{t("dataManagement.lineage.detailDataSize")}</span>
                       <span>{selectedNode.size}</span>
                     </div>
                   )}
                   {selectedNode.updateTime && (
                     <div className="flex justify-between py-1.5 border-b">
-                      <span className="text-muted-foreground">更新时间:</span>
+                      <span className="text-muted-foreground">{t("dataManagement.lineage.detailUpdateTime")}</span>
                       <span className="text-xs">{selectedNode.updateTime}</span>
                     </div>
                   )}
@@ -669,12 +671,12 @@ export default function DataLineageFlow({ dataset }: { dataset: Dataset }) {
               </div>
 
               <div>
-                <h4 className="text-xs font-medium text-muted-foreground mb-2">描述</h4>
+                <h4 className="text-xs font-medium text-muted-foreground mb-2">{t("dataManagement.lineage.detailDescription")}</h4>
                 <p className="text-sm text-muted-foreground">{selectedNode.description}</p>
               </div>
 
               <div>
-                <h4 className="text-xs font-medium text-muted-foreground mb-2">上游依赖</h4>
+                <h4 className="text-xs font-medium text-muted-foreground mb-2">{t("dataManagement.lineage.detailUpstream")}</h4>
                 <div className="space-y-1.5">
                   {graphEdges
                     .filter((e) => e.to === selectedNode.id)
@@ -694,13 +696,13 @@ export default function DataLineageFlow({ dataset }: { dataset: Dataset }) {
                       ) : null
                     })}
                   {graphEdges.filter((e) => e.to === selectedNode.id).length === 0 && (
-                    <p className="text-sm text-muted-foreground">无上游依赖</p>
+                    <p className="text-sm text-muted-foreground">{t("dataManagement.lineage.detailNoUpstream")}</p>
                   )}
                 </div>
               </div>
 
               <div>
-                <h4 className="text-xs font-medium text-muted-foreground mb-2">下游影响</h4>
+                <h4 className="text-xs font-medium text-muted-foreground mb-2">{t("dataManagement.lineage.detailDownstream")}</h4>
                 <div className="space-y-1.5">
                   {graphEdges
                     .filter((e) => e.from === selectedNode.id)
@@ -720,7 +722,7 @@ export default function DataLineageFlow({ dataset }: { dataset: Dataset }) {
                       ) : null
                     })}
                   {graphEdges.filter((e) => e.from === selectedNode.id).length === 0 && (
-                    <p className="text-sm text-muted-foreground">无下游影响</p>
+                    <p className="text-sm text-muted-foreground">{t("dataManagement.lineage.detailNoDownstream")}</p>
                   )}
                 </div>
               </div>
@@ -740,11 +742,11 @@ export default function DataLineageFlow({ dataset }: { dataset: Dataset }) {
           <div className="h-full flex flex-col">
             <div className="flex items-start justify-between p-4 border-b bg-muted/40">
               <div className="space-y-1 flex-1 min-w-0">
-                <h3 className="text-base font-semibold text-balance">流程详情</h3>
+                <h3 className="text-base font-semibold text-balance">{t("dataManagement.lineage.processDetail")}</h3>
                 <Badge variant="outline" className="text-xs text-muted-foreground">
                   {selectedEdge.edgeType
-                    ? edgeTypeLabels[selectedEdge.edgeType] || selectedEdge.edgeType
-                    : "处理流程"}
+                    ? t(edgeTypeLabels[selectedEdge.edgeType]) || selectedEdge.edgeType
+                    : t("dataManagement.lineage.edgeTypeDefault")}
                 </Badge>
               </div>
               <button
@@ -756,40 +758,40 @@ export default function DataLineageFlow({ dataset }: { dataset: Dataset }) {
             </div>
             <div className="flex-1 overflow-auto p-4 space-y-4">
               <div>
-                <h4 className="text-xs font-medium text-muted-foreground mb-2">基本信息</h4>
+                <h4 className="text-xs font-medium text-muted-foreground mb-2">{t("dataManagement.lineage.detailBasicInfo")}</h4>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between py-1.5 border-b">
                     <span className="text-muted-foreground">ID:</span>
                     <span className="font-mono text-xs">{selectedEdge.id}</span>
                   </div>
                   <div className="flex justify-between py-1.5 border-b">
-                    <span className="text-muted-foreground">名称:</span>
+                    <span className="text-muted-foreground">{t("dataManagement.lineage.detailName")}</span>
                     <span>{selectedEdge.label}</span>
                   </div>
                   {selectedEdge.processId && (
                     <div className="flex justify-between py-1.5 border-b">
-                      <span className="text-muted-foreground">流程ID:</span>
+                      <span className="text-muted-foreground">{t("dataManagement.lineage.processId")}</span>
                       <span className="font-mono text-xs">{selectedEdge.processId}</span>
                     </div>
                   )}
                 </div>
               </div>
               <div>
-                <h4 className="text-xs font-medium text-muted-foreground mb-2">上下游关系</h4>
+                <h4 className="text-xs font-medium text-muted-foreground mb-2">{t("dataManagement.lineage.relationships")}</h4>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between py-1.5 border-b">
-                    <span className="text-muted-foreground">上游:</span>
+                    <span className="text-muted-foreground">{t("dataManagement.lineage.processUpstream")}</span>
                     <span>{graphNodes.find((n) => n.id === selectedEdge.from)?.label || selectedEdge.from}</span>
                   </div>
                   <div className="flex justify-between py-1.5 border-b">
-                    <span className="text-muted-foreground">下游:</span>
+                    <span className="text-muted-foreground">{t("dataManagement.lineage.processDownstream")}</span>
                     <span>{graphNodes.find((n) => n.id === selectedEdge.to)?.label || selectedEdge.to}</span>
                   </div>
                 </div>
               </div>
               {selectedEdge.description && (
                 <div>
-                  <h4 className="text-xs font-medium text-muted-foreground mb-2">描述</h4>
+                  <h4 className="text-xs font-medium text-muted-foreground mb-2">{t("dataManagement.lineage.processDescription")}</h4>
                   <p className="text-sm text-muted-foreground">{selectedEdge.description}</p>
                 </div>
               )}

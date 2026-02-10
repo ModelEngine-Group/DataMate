@@ -27,10 +27,10 @@ logger = get_logger(__name__)
 async def list_executions(
     page: int = 1,
     size: int = 20,
-    task_id: Optional[str] = Query(None, description="任务ID"),
-    task_name: Optional[str] = Query(None, description="任务名称模糊查询"),
-    start_time: Optional[datetime] = Query(None, description="开始执行时间范围-起（started_at >= start_time）"),
-    end_time: Optional[datetime] = Query(None, description="开始执行时间范围-止（started_at <= end_time）"),
+    task_id: Optional[str] = Query(None, description="Task ID"),
+    task_name: Optional[str] = Query(None, description="Fuzzy search by task name"),
+    start_time: Optional[datetime] = Query(None, description="Start time range from (started_at >= start_time)"),
+    end_time: Optional[datetime] = Query(None, description="Start time range to (started_at <= end_time)"),
     db: AsyncSession = Depends(get_db)
 ):
     """分页查询归集任务执行记录"""
@@ -63,7 +63,7 @@ async def list_executions(
         total_pages = math.ceil(total / size) if total > 0 else 0
 
         return StandardResponse(
-            code=200,
+            code="0",
             message="Success",
             data=PaginatedData(
                 content=items,
@@ -84,7 +84,7 @@ async def get_execution_log(
     execution_id: str,
     db: AsyncSession = Depends(get_db)
 ):
-    """获取执行记录对应的日志文件内容"""
+    """Get log file content for execution record"""
     try:
         execution = await db.get(TaskExecution, execution_id)
         if not execution:

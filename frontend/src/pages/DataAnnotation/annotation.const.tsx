@@ -6,6 +6,8 @@ import {
   CloseCircleOutlined,
 } from "@ant-design/icons";
 
+export type TFunction = (key: string, options?: any) => string;
+
 export const AnnotationTaskStatusMap = {
   [AnnotationTaskStatus.ACTIVE]: {
     label: "活跃",
@@ -26,46 +28,6 @@ export const AnnotationTaskStatusMap = {
     icon: <CloseCircleOutlined />,
   },
 };
-
-export function mapAnnotationTask(task: any) {
-  // Normalize labeling project id from possible backend field names
-  const labelingProjId = task?.labelingProjId || task?.labelingProjectId || task?.projId || task?.labeling_project_id || "";
-
-  const statsArray = task?.statistics
-    ? [
-      { label: "准确率", value: task.statistics.accuracy ?? "-" },
-      { label: "平均时长", value: task.statistics.averageTime ?? "-" },
-      { label: "待复核", value: task.statistics.reviewCount ?? "-" },
-    ]
-    : [];
-
-  return {
-    ...task,
-    id: task.id,
-    // provide consistent field for components
-    labelingProjId,
-    projId: labelingProjId,
-    name: task.name,
-    description: task.description || "",
-    datasetName: task.datasetName || task.dataset_name || "-",
-    createdAt: task.createdAt || task.created_at || "-",
-    updatedAt: task.updatedAt || task.updated_at || "-",
-    icon: <StickyNote />,
-    iconColor: "bg-blue-100",
-    status: {
-      label:
-        task.status === "completed"
-          ? "已完成"
-          : task.status === "processing"
-            ? "进行中"
-            : task.status === "skipped"
-              ? "已跳过"
-              : "待开始",
-      color: "bg-blue-100",
-    },
-    statistics: statsArray,
-  };
-}
 
 export const DataTypeMap = {
   [DataType.TEXT]: {
@@ -137,4 +99,155 @@ export const TemplateTypeMap = {
     label: "自定义",
     value: TemplateType.CUSTOM
   },
+}
+
+// Internationalization helper functions
+export function getAnnotationTaskStatusMap(t?: TFunction) {
+  const tFn = t || ((key: string) => key);
+  return {
+    [AnnotationTaskStatus.ACTIVE]: {
+      label: tFn('dataAnnotation.const.status.active'),
+      value: AnnotationTaskStatus.ACTIVE,
+      color: "#409f17ff",
+      icon: <CheckCircleOutlined />,
+    },
+    [AnnotationTaskStatus.PROCESSING]: {
+      label: tFn('dataAnnotation.const.status.processing'),
+      value: AnnotationTaskStatus.PROCESSING,
+      color: "#2673e5",
+      icon: <ClockCircleOutlined />,
+    },
+    [AnnotationTaskStatus.INACTIVE]: {
+      label: tFn('dataAnnotation.const.status.inactive'),
+      value: AnnotationTaskStatus.INACTIVE,
+      color: "#4f4444ff",
+      icon: <CloseCircleOutlined />,
+    },
+  };
+}
+
+export function getDataTypeMap(t?: TFunction) {
+  const tFn = t || ((key: string) => key);
+  return {
+    [DataType.TEXT]: {
+      label: tFn('dataAnnotation.const.dataType.text'),
+      value: DataType.TEXT
+    },
+    [DataType.IMAGE]: {
+      label: tFn('dataAnnotation.const.dataType.image'),
+      value: DataType.IMAGE
+    },
+    [DataType.AUDIO]: {
+      label: tFn('dataAnnotation.const.dataType.audio'),
+      value: DataType.AUDIO
+    },
+    [DataType.VIDEO]: {
+      label: tFn('dataAnnotation.const.dataType.video'),
+      value: DataType.VIDEO
+    },
+  };
+}
+
+export function getClassificationMap(t?: TFunction) {
+  const tFn = t || ((key: string) => key);
+  return {
+    [Classification.COMPUTER_VERSION]: {
+      label: tFn('dataAnnotation.const.classification.cv'),
+      value: Classification.COMPUTER_VERSION
+    },
+    [Classification.NLP]: {
+      label: tFn('dataAnnotation.const.classification.nlp'),
+      value: Classification.NLP
+    },
+    [Classification.AUDIO]: {
+      label: tFn('dataAnnotation.const.classification.audio'),
+      value: Classification.AUDIO
+    },
+    [Classification.QUALITY_CONTROL]: {
+      label: tFn('dataAnnotation.const.classification.qualityControl'),
+      value: Classification.QUALITY_CONTROL
+    },
+    [Classification.CUSTOM]: {
+      label: tFn('dataAnnotation.const.classification.custom'),
+      value: Classification.CUSTOM
+    },
+  };
+}
+
+export function getAnnotationTypeMap(t?: TFunction) {
+  const tFn = t || ((key: string) => key);
+  return {
+    [AnnotationType.CLASSIFICATION]: {
+      label: tFn('dataAnnotation.const.annotationType.classification'),
+      value: AnnotationType.CLASSIFICATION
+    },
+    [AnnotationType.OBJECT_DETECTION]: {
+      label: tFn('dataAnnotation.const.annotationType.objectDetection'),
+      value: AnnotationType.OBJECT_DETECTION
+    },
+    [AnnotationType.SEGMENTATION]: {
+      label: tFn('dataAnnotation.const.annotationType.segmentation'),
+      value: AnnotationType.SEGMENTATION
+    },
+    [AnnotationType.NER]: {
+      label: tFn('dataAnnotation.const.annotationType.ner'),
+      value: AnnotationType.NER
+    },
+  };
+}
+
+export function getTemplateTypeMap(t?: TFunction) {
+  const tFn = t || ((key: string) => key);
+  return {
+    [TemplateType.SYSTEM]: {
+      label: tFn('dataAnnotation.const.templateType.system'),
+      value: TemplateType.SYSTEM
+    },
+    [TemplateType.CUSTOM]: {
+      label: tFn('dataAnnotation.const.templateType.custom'),
+      value: TemplateType.CUSTOM
+    },
+  };
+}
+
+export function mapAnnotationTask(task: any, t?: TFunction) {
+  // Normalize labeling project id from possible backend field names
+  const labelingProjId = task?.labelingProjId || task?.labelingProjectId || task?.projId || task?.labeling_project_id || "";
+
+  const tFn = t || ((key: string) => key);
+
+  const statsArray = task?.statistics
+    ? [
+      { label: tFn('dataAnnotation.const.stats.accuracy'), value: task.statistics.accuracy ?? tFn('common.placeholders.empty') },
+      { label: tFn('dataAnnotation.const.stats.averageTime'), value: task.statistics.averageTime ?? tFn('common.placeholders.empty') },
+      { label: tFn('dataAnnotation.const.stats.reviewCount'), value: task.statistics.reviewCount ?? tFn('common.placeholders.empty') },
+    ]
+    : [];
+
+  return {
+    ...task,
+    id: task.id,
+    // provide consistent field for components
+    labelingProjId,
+    projId: labelingProjId,
+    name: task.name,
+    description: task.description || "",
+    datasetName: task.datasetName || task.dataset_name || tFn('common.placeholders.empty'),
+    createdAt: task.createdAt || task.created_at || tFn('common.placeholders.empty'),
+    updatedAt: task.updatedAt || task.updated_at || tFn('common.placeholders.empty'),
+    icon: <StickyNote />,
+    iconColor: "bg-blue-100",
+    status: {
+      label:
+        task.status === "completed"
+          ? tFn('dataAnnotation.const.status.completed')
+          : task.status === "processing"
+            ? tFn('dataAnnotation.const.status.processing')
+            : task.status === "skipped"
+              ? tFn('dataAnnotation.const.status.skipped')
+              : tFn('dataAnnotation.const.status.pending'),
+      color: "bg-blue-100",
+    },
+    statistics: statsArray,
+  };
 }

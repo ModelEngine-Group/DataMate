@@ -13,6 +13,7 @@ import {
 } from "@/pages/DataManagement/dataset.api";
 import { formatBytes } from "@/utils/unit";
 import { useDebouncedEffect } from "@/hooks/useDebouncedEffect";
+import { useTranslation } from "react-i18next";
 
 interface DatasetFileTransferProps
   extends React.HTMLAttributes<HTMLDivElement> {
@@ -90,6 +91,7 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
   disabled,
   ...props
 }) => {
+  const { t } = useTranslation();
   const [datasets, setDatasets] = React.useState<Dataset[]>([]);
   const [datasetSearch, setDatasetSearch] = React.useState<string>("");
   const [datasetPagination, setDatasetPagination] = React.useState<{
@@ -144,7 +146,7 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
       type: datasetTypeFilter,
     });
 
-    let mapped: any[] = (data.content || []).map(mapDataset);
+    let mapped: any[] = (data.content || []).map(dataset => mapDataset(dataset, t));
 
     // 兜底：在前端再按 datasetTypeFilter 过滤一次，确保只展示指定类型的数据集
     if (datasetTypeFilter) {

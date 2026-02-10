@@ -4,6 +4,7 @@ import { ArrowLeft, ChevronRight } from "lucide-react";
 import { createRatioTaskUsingPost } from "@/pages/RatioTask/ratio.api.ts";
 import type { Dataset } from "@/pages/DataManagement/dataset.model.ts";
 import { useNavigate } from "react-router";
+import { useTranslation } from "react-i18next";
 import SelectDataset from "@/pages/RatioTask/Create/components/SelectDataset.tsx";
 import BasicInformation from "@/pages/RatioTask/Create/components/BasicInformation.tsx";
 import RatioConfig from "@/pages/RatioTask/Create/components/RatioConfig.tsx";
@@ -11,6 +12,7 @@ import {formatDate} from "@/utils/unit.ts";
 
 export default function CreateRatioTask() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [form] = Form.useForm();
   // 配比任务相关状态
   const [ratioTaskForm, setRatioTaskForm] = useState({
@@ -33,7 +35,7 @@ export default function CreateRatioTask() {
     try {
       const values = await form.validateFields();
       if (!ratioTaskForm.ratioConfigs.length) {
-        message.error("请配置配比项");
+        message.error(t("ratioTask.create.messages.configRequired"));
         return;
       }
       const totals = String(values.totalTargetCount);
@@ -53,10 +55,10 @@ export default function CreateRatioTask() {
         totals,
         config,
       });
-      message.success("配比任务创建成功");
+      message.success(t("ratioTask.create.messages.createSuccess"));
       navigate("/data/synthesis/ratio-task");
     } catch {
-      message.error("配比任务创建失败，请重试");
+      message.error(t("ratioTask.create.messages.createFailed"));
     } finally {
       setCreating(false);
     }
@@ -77,7 +79,7 @@ export default function CreateRatioTask() {
           >
             <ArrowLeft className="w-4 h-4 mr-1" />
           </Button>
-          <h1 className="text-xl font-bold bg-clip-text">创建配比任务</h1>
+          <h1 className="text-xl font-bold bg-clip-text">{t("ratioTask.create.title")}</h1>
         </div>
       </div>
       <div className="h-full flex-overflow-auto border-card">
@@ -138,7 +140,7 @@ export default function CreateRatioTask() {
         </div>
         <div className="flex justify-end gap-2 p-6">
           <Button onClick={() => navigate("/data/synthesis/ratio-task")}>
-            取消
+            {t("ratioTask.create.cancel")}
           </Button>
           <Button
             type="primary"
@@ -148,7 +150,7 @@ export default function CreateRatioTask() {
               !ratioTaskForm.name || ratioTaskForm.ratioConfigs.length === 0
             }
           >
-            创建
+            {t("ratioTask.create.submit")}
           </Button>
         </div>
       </div>

@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS t_dm_datasets (
     file_count BIGINT DEFAULT 0,
     record_count BIGINT DEFAULT 0,
     retention_days INTEGER DEFAULT 0,
-    tags TEXT,
+    tags JSONB,
     metadata JSONB,
     status VARCHAR(50) DEFAULT 'DRAFT',
     is_public BOOLEAN DEFAULT FALSE,

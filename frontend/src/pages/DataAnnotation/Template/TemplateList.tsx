@@ -21,37 +21,45 @@ import {
     deleteAnnotationTemplateByIdUsingDelete,
 } from "../annotation.api";
 import type { AnnotationTemplate } from "../annotation.model";
+import { TemplateType } from "../annotation.model";
 import TemplateForm from "./TemplateForm.tsx";
 import TemplateDetail from "./TemplateDetail.tsx";
 import {SearchControls} from "@/components/SearchControls.tsx";
 import useFetchData from "@/hooks/useFetchData.ts";
 import {
-  AnnotationTypeMap,
-  ClassificationMap,
-  DataTypeMap,
-  TemplateTypeMap
+    getClassificationMap,
+    getDataTypeMap,
+    getAnnotationTypeMap,
+    getTemplateTypeMap
 } from "@/pages/DataAnnotation/annotation.const.tsx";
+import { useTranslation } from "react-i18next";
 
 const TemplateList: React.FC = () => {
+    const { t } = useTranslation();
+    const ClassificationMap = getClassificationMap(t);
+    const DataTypeMap = getDataTypeMap(t);
+    const AnnotationTypeMap = getAnnotationTypeMap(t);
+    const TemplateTypeMap = getTemplateTypeMap(t);
+
     const filterOptions = [
       {
         key: "category",
-        label: "分类",
+        label: t('dataAnnotation.template.filters.category'),
         options: [...Object.values(ClassificationMap)],
       },
       {
         key: "dataType",
-        label: "数据类型",
+        label: t('dataAnnotation.template.filters.dataType'),
         options: [...Object.values(DataTypeMap)],
       },
       {
         key: "labelingType",
-        label: "标注类型",
+        label: t('dataAnnotation.template.filters.labelingType'),
         options: [...Object.values(AnnotationTypeMap)],
       },
       {
         key: "builtIn",
-        label: "模板类型",
+        label: t('dataAnnotation.template.filters.builtIn'),
         options: [...Object.values(TemplateTypeMap)],
       },
     ];
@@ -94,13 +102,13 @@ const TemplateList: React.FC = () => {
         try {
             const response = await deleteAnnotationTemplateByIdUsingDelete(templateId);
             if (response.code === 200) {
-                message.success("模板删除成功");
+                message.success(t('dataAnnotation.template.messages.deleteSuccess'));
                 fetchData();
             } else {
-                message.error(response.message || "删除模板失败");
+                message.error(response.message || t('dataAnnotation.template.messages.deleteFailed'));
             }
         } catch (error) {
-            message.error("删除模板失败");
+            message.error(t('dataAnnotation.template.messages.deleteFailed'));
             console.error(error);
         }
     };
@@ -123,7 +131,7 @@ const TemplateList: React.FC = () => {
 
     const columns: ColumnsType<AnnotationTemplate> = [
         {
-            title: "模板名称",
+            title: t('dataAnnotation.template.columns.name'),
             dataIndex: "name",
             key: "name",
             width: 200,
@@ -133,7 +141,7 @@ const TemplateList: React.FC = () => {
                 (record.description?.toLowerCase().includes(value.toString().toLowerCase()) ?? false),
         },
         {
-            title: "描述",
+            title: t('dataAnnotation.template.columns.description'),
             dataIndex: "description",
             key: "description",
             ellipsis: {
@@ -159,64 +167,64 @@ const TemplateList: React.FC = () => {
             ),
         },
         {
-            title: "数据类型",
+            title: t('dataAnnotation.template.columns.dataType'),
             dataIndex: "dataType",
             key: "dataType",
             width: 120,
             render: (dataType: string) => (
-                <Tag color="cyan">{dataType}</Tag>
+                <Tag color="cyan">{DataTypeMap[dataType as keyof typeof DataTypeMap]?.label ?? dataType}</Tag>
             ),
         },
         {
-            title: "标注类型",
+            title: t('dataAnnotation.template.columns.labelingType'),
             dataIndex: "labelingType",
             key: "labelingType",
             width: 150,
             render: (labelingType: string) => (
-                <Tag color="geekblue">{labelingType}</Tag>
+                <Tag color="geekblue">{AnnotationTypeMap[labelingType as keyof typeof AnnotationTypeMap]?.label ?? labelingType}</Tag>
             ),
         },
         {
-            title: "分类",
+            title: t('dataAnnotation.template.columns.category'),
             dataIndex: "category",
             key: "category",
             width: 150,
             render: (category: string) => (
-                <Tag color={getCategoryColor(category)}>{category}</Tag>
+                <Tag color={getCategoryColor(category)}>{ClassificationMap[category as keyof typeof ClassificationMap]?.label ?? category}</Tag>
             ),
         },
         {
-            title: "类型",
+            title: t('dataAnnotation.template.columns.builtIn'),
             dataIndex: "builtIn",
             key: "builtIn",
             width: 100,
             render: (builtIn: boolean) => (
                 <Tag color={builtIn ? "gold" : "default"}>
-                    {builtIn ? "系统内置" : "自定义"}
+                    {builtIn ? TemplateTypeMap[TemplateType.SYSTEM]?.label : TemplateTypeMap[TemplateType.CUSTOM]?.label}
                 </Tag>
             ),
         },
         {
-            title: "版本",
+            title: t('dataAnnotation.template.columns.version'),
             dataIndex: "version",
             key: "version",
             width: 80,
         },
         {
-            title: "创建时间",
+            title: t('dataAnnotation.template.columns.createdAt'),
             dataIndex: "createdAt",
             key: "createdAt",
             width: 180,
             render: (date: string) => new Date(date).toLocaleString(),
         },
         {
-            title: "操作",
+            title: t('dataAnnotation.template.columns.actions'),
             key: "action",
             width: 200,
             fixed: "right",
             render: (_, record) => (
                 <Space size="small">
-                    <Tooltip title="查看详情">
+                    <Tooltip title={t('dataAnnotation.template.actions.viewDetail')}>
                         <Button
                             type="link"
                             icon={<EyeOutlined />}
@@ -225,7 +233,7 @@ const TemplateList: React.FC = () => {
                     </Tooltip>
                     {!record.builtIn && (
                         <>
-                            <Tooltip title="编辑">
+                            <Tooltip title={t('dataAnnotation.template.actions.edit')}>
                                 <Button
                                     type="link"
                                     icon={<EditOutlined />}
@@ -233,12 +241,12 @@ const TemplateList: React.FC = () => {
                                 />
                             </Tooltip>
                             <Popconfirm
-                                title="确定要删除这个模板吗？"
+                                title={t('dataAnnotation.template.messages.deleteConfirm')}
                                 onConfirm={() => handleDelete(record.id)}
-                                okText="确定"
-                                cancelText="取消"
+                                okText={t('dataAnnotation.template.messages.confirmDelete')}
+                                cancelText={t('dataAnnotation.template.messages.cancelDelete')}
                             >
-                                <Tooltip title="删除">
+                                <Tooltip title={t('dataAnnotation.template.actions.delete')}>
                                     <Button
                                         type="link"
                                         danger
@@ -262,7 +270,7 @@ const TemplateList: React.FC = () => {
                     <SearchControls
                       searchTerm={searchParams.keyword}
                       onSearchChange={handleKeywordChange}
-                      searchPlaceholder="搜索任务名称、描述"
+                      searchPlaceholder={t('dataAnnotation.template.searchPlaceholder')}
                       filters={filterOptions}
                       onFiltersChange={handleFiltersChange}
                       showViewToggle={true}
@@ -274,7 +282,7 @@ const TemplateList: React.FC = () => {
                 {/* Right side: Create button */}
                 <div className="flex items-center gap-2">
                     <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
-                        创建模板
+                        {t('dataAnnotation.template.create')}
                     </Button>
                 </div>
             </div>

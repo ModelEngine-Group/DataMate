@@ -12,7 +12,7 @@ import { useEffect, useMemo, useState } from "react";
 import { SearchControls } from "@/components/SearchControls";
 import CardView from "@/components/CardView";
 import type { Dataset } from "@/pages/DataManagement/dataset.model";
-import { datasetStatusMap, datasetTypeMap, mapDataset } from "../dataset.const";
+import { getDatasetStatusMap, getDatasetTypeMap, mapDataset } from "../dataset.const";
 import useFetchData from "@/hooks/useFetchData";
 import {
   downloadDatasetUsingGet,
@@ -27,10 +27,14 @@ import {
 import { formatBytes } from "@/utils/unit";
 import EditDataset from "../Create/EditDataset";
 import ImportConfiguration from "../Detail/components/ImportConfiguration";
+import { useTranslation } from "react-i18next";
 
 export default function DatasetManagementPage() {
   const navigate = useNavigate();
   const { message } = App.useApp();
+  const { t } = useTranslation();
+  const datasetStatusMap = getDatasetStatusMap(t);
+  const datasetTypeMap = getDatasetTypeMap(t);
   const [viewMode, setViewMode] = useState<"card" | "list">("card");
   const [editDatasetOpen, setEditDatasetOpen] = useState(false);
   const [currentDataset, setCurrentDataset] = useState<Dataset | null>(null);
@@ -46,33 +50,33 @@ export default function DatasetManagementPage() {
     const statistics = {
       size: [
         {
-          title: "数据集总数",
+          title: t("dataManagement.stats.totalDatasets"),
           value: data?.totalDatasets || 0,
         },
         {
-          title: "文件总数",
+          title: t("dataManagement.stats.totalFiles"),
           value: data?.totalFiles || 0,
         },
         {
-          title: "总大小",
+          title: t("dataManagement.stats.totalSize"),
           value: formatBytes(data?.totalSize) || '0 B',
         },
       ],
       count: [
         {
-          title: "文本",
+          title: t("dataManagement.stats.text"),
           value: data?.count?.text || 0,
         },
         {
-          title: "图像",
+          title: t("dataManagement.stats.image"),
           value: data?.count?.image || 0,
         },
         {
-          title: "音频",
+          title: t("dataManagement.stats.audio"),
           value: data?.count?.audio || 0,
         },
         {
-          title: "视频",
+          title: t("dataManagement.stats.video"),
           value: data?.count?.video || 0,
         },
       ],
@@ -82,34 +86,26 @@ export default function DatasetManagementPage() {
 
   const [tags, setTags] = useState<string[]>([]);
 
-  useEffect(() => {
-    const fetchTags = async () => {
-      const { data } = await queryDatasetTagsUsingGet();
-      setTags(data.map((tag) => tag.name));
-    };
-    fetchTags();
-  }, []);
-
   const filterOptions = useMemo(
     () => [
       {
         key: "type",
-        label: "类型",
+        label: t("dataManagement.filters.type"),
         options: [...Object.values(datasetTypeMap)],
       },
       {
         key: "status",
-        label: "状态",
+        label: t("dataManagement.filters.status"),
         options: [...Object.values(datasetStatusMap)],
       },
       {
         key: "tags",
-        label: "标签",
+        label: t("dataManagement.filters.tags"),
         mode: "multiple",
         options: tags.map((tag) => ({ label: tag, value: tag })),
       },
     ],
-    [tags]
+    [tags, datasetStatusMap, datasetTypeMap, t]
   );
 
   const {
@@ -123,23 +119,33 @@ export default function DatasetManagementPage() {
     handleKeywordChange,
   } = useFetchData<Dataset>(
     queryDatasetsUsingGet,
-    mapDataset,
+    (dataset) => mapDataset(dataset, t),
     30000, // 30秒轮询间隔
     true, // 自动刷新
     [fetchStatistics], // 额外的轮询函数
     0
   );
 
+  useEffect(() => {
+    const fetchTags = async () => {
+      const { data } = await queryDatasetTagsUsingGet();
+      setTags(data.map((tag) => tag.name));
+    };
+    fetchTags();
+    fetchData();
+    fetchStatistics();
+  }, [t]);
+
   const handleDownloadDataset = async (dataset: Dataset) => {
-    await downloadDatasetUsingGet(dataset.id, dataset.name);
-    message.success("数据集下载成功");
+    await downloadDatasetUsingGet(dataset.id);
+    message.success(t("dataManagement.messages.downloadSuccess"));
   };
 
   const handleDeleteDataset = async (id: number) => {
     if (!id) return;
     await deleteDatasetByIdUsingDelete(id);
     fetchData({ pageOffset: 0 });
-    message.success("数据删除成功");
+    message.success(t("dataManagement.messages.deleteSuccess"));
   };
 
   const handleImportData = (dataset: Dataset) => {
@@ -150,14 +156,14 @@ export default function DatasetManagementPage() {
   const handleRefresh = async (showMessage = true) => {
     await fetchData({ pageOffset: 0 });
     if (showMessage) {
-      message.success("数据已刷新");
+      message.success(t("dataManagement.messages.refreshSuccess"));
     }
   };
 
   const operations = [
     {
       key: "edit",
-      label: "编辑",
+      label: t("dataManagement.actions.edit"),
       icon: <EditOutlined />,
       onClick: (item: Dataset) => {
         setCurrentDataset(item);
@@ -166,7 +172,7 @@ export default function DatasetManagementPage() {
     },
     {
       key: "import",
-      label: "导入",
+      label: t("dataManagement.actions.import"),
       icon: <UploadOutlined />,
       onClick: (item: Dataset) => {
         handleImportData(item);
@@ -174,7 +180,7 @@ export default function DatasetManagementPage() {
     },
     {
       key: "download",
-      label: "下载",
+      label: t("dataManagement.actions.download"),
       icon: <DownloadOutlined />,
       onClick: (item: Dataset) => {
         if (!item.id) return;
@@ -183,13 +189,13 @@ export default function DatasetManagementPage() {
     },
     {
       key: "delete",
-      label: "删除",
+      label: t("dataManagement.actions.delete"),
       danger: true,
       confirm: {
-        title: "确认删除该数据集？",
-        description: "删除后该数据集将无法恢复，请谨慎操作。",
-        okText: "删除",
-        cancelText: "取消",
+        title: t("dataManagement.confirm.deleteDatasetTitle"),
+        description: t("dataManagement.confirm.deleteDatasetDesc"),
+        okText: t("dataManagement.confirm.deleteConfirm"),
+        cancelText: t("dataManagement.confirm.deleteCancel"),
         okType: "danger",
       },
       icon: <DeleteOutlined />,
@@ -199,7 +205,7 @@ export default function DatasetManagementPage() {
 
   const columns = [
     {
-      title: "名称",
+      title: t("dataManagement.columns.name"),
       dataIndex: "name",
       key: "name",
       fixed: "left",
@@ -213,13 +219,13 @@ export default function DatasetManagementPage() {
       ),
     },
     {
-      title: "类型",
+      title: t("dataManagement.columns.type"),
       dataIndex: "type",
       key: "type",
       width: 100,
     },
     {
-      title: "状态",
+      title: t("dataManagement.columns.status"),
       dataIndex: "status",
       key: "status",
       render: (status: any) => {
@@ -232,44 +238,38 @@ export default function DatasetManagementPage() {
       width: 120,
     },
     {
-      title: "大小",
+      title: t("dataManagement.columns.size"),
       dataIndex: "size",
       key: "size",
       width: 120,
     },
     {
-      title: "文件数",
+      title: t("dataManagement.columns.fileCount"),
       dataIndex: "fileCount",
       key: "fileCount",
       width: 100,
     },
-    // {
-    //   title: "创建者",
-    //   dataIndex: "createdBy",
-    //   key: "createdBy",
-    //   width: 120,
-    // },
     {
-      title: "存储路径",
+      title: t("dataManagement.columns.storagePath"),
       dataIndex: "targetLocation",
       key: "targetLocation",
       width: 200,
       ellipsis: true,
     },
     {
-      title: "创建时间",
+      title: t("dataManagement.columns.createdAt"),
       dataIndex: "createdAt",
       key: "createdAt",
       width: 180,
     },
     {
-      title: "更新时间",
+      title: t("dataManagement.columns.updatedAt"),
       dataIndex: "updatedAt",
       key: "updatedAt",
       width: 180,
     },
     {
-      title: "操作",
+      title: t("dataManagement.columns.actions"),
       key: "actions",
       width: 200,
       fixed: "right",
@@ -327,7 +327,7 @@ export default function DatasetManagementPage() {
     <div className="gap-4 h-full flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">数据管理</h1>
+        <h1 className="text-xl font-bold">{t("dataManagement.title")}</h1>
         <div className="flex gap-2 items-center">
           {/* tasks */}
           <TagManager
@@ -341,7 +341,7 @@ export default function DatasetManagementPage() {
               type="primary"
               icon={<PlusOutlined className="w-4 h-4 mr-2" />}
             >
-              创建数据集
+              {t("dataManagement.actions.createDataset")}
             </Button>
           </Link>
         </div>
@@ -364,7 +364,7 @@ export default function DatasetManagementPage() {
       <SearchControls
         searchTerm={searchParams.keyword}
         onSearchChange={handleKeywordChange}
-        searchPlaceholder="搜索数据集名称、描述"
+        searchPlaceholder={t("dataManagement.search.placeholder")}
         filters={filterOptions}
         onFiltersChange={handleFiltersChange}
         onClearFilters={() => setSearchParams({ ...searchParams, filter: {} })}

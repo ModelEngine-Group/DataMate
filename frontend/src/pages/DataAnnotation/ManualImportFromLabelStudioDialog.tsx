@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Modal, Form, Select, Input, message } from "antd";
 import type { AnnotationTask } from "./annotation.model";
 import { importManualAnnotationFromLabelStudioUsingPost } from "./annotation.api";
+import { useTranslation } from "react-i18next";
 
 interface ManualImportFromLabelStudioDialogProps {
   visible: boolean;
@@ -26,6 +27,7 @@ export default function ManualImportFromLabelStudioDialog({
   onCancel,
   onSuccess,
 }: ManualImportFromLabelStudioDialogProps) {
+  const { t } = useTranslation();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
 
@@ -44,7 +46,7 @@ export default function ManualImportFromLabelStudioDialog({
       const fileName: string | undefined = values.fileName;
 
       if (!task?.id) {
-        message.error("未找到标注任务");
+        message.error(t("dataAnnotation.home.messages.taskNotFound"));
         return;
       }
 
@@ -54,14 +56,14 @@ export default function ManualImportFromLabelStudioDialog({
         fileName: fileName?.trim() || undefined,
       });
 
-      message.success("已从 Label Studio 导出结果并保存到数据集");
+      message.success(t("dataAnnotation.dialogs.importFromLS.success"));
       onSuccess();
     } catch (e: any) {
       if (e?.errorFields) {
         return;
       }
       console.error("Failed to import manual annotations from Label Studio:", e);
-      message.error(e?.message || "后向同步失败，请稍后重试");
+      message.error(e?.message || t("dataAnnotation.dialogs.importFromLS.failed"));
     } finally {
       setLoading(false);
     }
@@ -69,7 +71,7 @@ export default function ManualImportFromLabelStudioDialog({
 
   return (
     <Modal
-      title="从 Label Studio 导回结果"
+      title={t("dataAnnotation.dialogs.importFromLS.title")}
       open={visible}
       onCancel={onCancel}
       onOk={handleOk}
@@ -77,14 +79,14 @@ export default function ManualImportFromLabelStudioDialog({
       destroyOnClose
     >
       <Form form={form} layout="vertical">
-        <Form.Item label="标注任务">
+        <Form.Item label={t("dataAnnotation.dialogs.importFromLS.taskLabel")}>
           <span>{task?.name || "-"}</span>
         </Form.Item>
 
         <Form.Item
-          label="导出/导入格式"
+          label={t("dataAnnotation.dialogs.importFromLS.exportFormat")}
           name="exportFormat"
-          rules={[{ required: true, message: "请选择导出格式" }]}
+          rules={[{ required: true, message: t("dataAnnotation.dialogs.importFromLS.exportFormatRequired") }]}
         >
           <Select
             options={EXPORT_FORMAT_OPTIONS.map((fmt) => ({
@@ -95,19 +97,16 @@ export default function ManualImportFromLabelStudioDialog({
         </Form.Item>
 
         <Form.Item
-          label="保存文件名（可选，不含扩展名）"
+          label={t("dataAnnotation.dialogs.importFromLS.fileNameLabel")}
           name="fileName"
         >
           <Input
-            placeholder="留空则使用默认文件名，如 ls_export_xxx_时间戳"
+            placeholder={t("dataAnnotation.dialogs.importFromLS.fileNamePlaceholder")}
           />
         </Form.Item>
 
         <div className="text-xs text-gray-500 mt-2">
-          将从与该标注任务关联的 Label Studio 项目中，
-          按所选格式导出完整标注结果，并作为一个文件保存到源数据集下的
-          <span className="font-semibold">「标注数据」</span> 文件夹中。
-          不会修改已有标签，仅追加一个导出工件文件。
+          {t("dataAnnotation.dialogs.importFromLS.description")}
         </div>
       </Form>
     </Modal>

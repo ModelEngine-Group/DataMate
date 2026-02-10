@@ -7,7 +7,7 @@ fi
 
 # 启动应用
 echo "=========================================="
-echo "Starting Label Studio Adapter..."
+echo "Starting DataMate Backend Service..."
 echo "Host: ${HOST:-0.0.0.0}"
 echo "Port: ${PORT:-18000}"
 echo "Debug: ${DEBUG:-false}"

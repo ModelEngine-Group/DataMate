@@ -9,6 +9,7 @@ import {
   DatePicker
 } from "antd";
 import { BarChart3 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { Dataset } from "@/pages/DataManagement/dataset.model.ts";
 
 const TIME_RANGE_OPTIONS = [
@@ -56,6 +57,7 @@ const RatioConfig: FC<RatioConfigProps> = ({
                                              distributions,
                                              onChange,
                                            }) => {
+  const { t } = useTranslation();
   const [ratioConfigs, setRatioConfigs] = useState<RatioConfigItem[]>([]);
 
   const totalConfigured = useMemo(
@@ -162,9 +164,9 @@ const RatioConfig: FC<RatioConfigProps> = ({
     <div className="border-card flex-1 flex flex-col min-w-[320px]">
       <div className="flex items-center justify-between p-4 border-bottom">
         <span className="text-sm font-bold">
-          配比配置
+          {t("ratioTask.create.ratioConfig.title")}
           <span className="text-xs text-gray-500 ml-1">
-            (已配置:{totalConfigured}/{totalTargetCount}条)
+            ({t("ratioTask.create.ratioConfig.configuredCount", { configured: totalConfigured, total: totalTargetCount })})
           </span>
         </span>
         <div className="flex items-center gap-2">
@@ -174,7 +176,7 @@ const RatioConfig: FC<RatioConfigProps> = ({
             onClick={generateAutoRatio}
             disabled={selectedDatasets.length === 0}
           >
-            平均分配
+            {t("ratioTask.create.ratioConfig.averageDistribute")}
           </Button>
         </div>
       </div>
@@ -182,7 +184,7 @@ const RatioConfig: FC<RatioConfigProps> = ({
       {selectedDatasets.length === 0 ? (
         <div className="text-center py-8 text-gray-500">
           <BarChart3 className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-          <p className="text-sm">请先选择数据集</p>
+          <p className="text-sm">{t("ratioTask.create.ratioConfig.selectDatasetFirst")}</p>
         </div>
       ) : (
         <div className="flex-overflow-auto gap-4 p-4">
@@ -190,7 +192,7 @@ const RatioConfig: FC<RatioConfigProps> = ({
             <div className="p-3 bg-gray-50 rounded-lg mb-4">
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <span className="text-gray-500">总配比数量:</span>
+                  <span className="text-gray-500">{t("ratioTask.create.ratioConfig.totalRatioCount")}</span>
                   <span className="ml-2 font-medium">
                     {ratioConfigs
                       .reduce((sum, config) => sum + config.quantity, 0)
@@ -198,7 +200,7 @@ const RatioConfig: FC<RatioConfigProps> = ({
                   </span>
                 </div>
                 <div>
-                  <span className="text-gray-500">目标数量:</span>
+                  <span className="text-gray-500">{t("ratioTask.create.ratioConfig.targetCount")}</span>
                   <span className="ml-2 font-medium">
                     {totalTargetCount.toLocaleString()}
                   </span>
@@ -230,7 +232,7 @@ const RatioConfig: FC<RatioConfigProps> = ({
 
               const columns = [
                 {
-                  title: "标签",
+                  title: t("ratioTask.create.ratioConfig.label"),
                   dataIndex: "labelFilter",
                   key: "labelFilter",
                   render: (_: any, record: RatioConfigItem) => {
@@ -243,7 +245,7 @@ const RatioConfig: FC<RatioConfigProps> = ({
                     return (
                       <Select
                         style={{ width: "160px" }}
-                        placeholder="选择标签"
+                        placeholder={t("ratioTask.create.ratioConfig.selectLabel")}
                         value={record.labelFilter?.label}
                         options={availableLabels}
                         allowClear
@@ -262,7 +264,7 @@ const RatioConfig: FC<RatioConfigProps> = ({
                   },
                 },
                 {
-                  title: "标签值",
+                  title: t("ratioTask.create.ratioConfig.labelValue"),
                   dataIndex: "labelValue",
                   key: "labelValue",
                   render: (_: any, record: RatioConfigItem) => {
@@ -282,7 +284,7 @@ const RatioConfig: FC<RatioConfigProps> = ({
                     return (
                       <Select
                         style={{ width: "180px" }}
-                        placeholder="选择标签值"
+                        placeholder={t("ratioTask.create.ratioConfig.selectLabelValue")}
                         value={record.labelFilter?.value || undefined}
                         options={options}
                         allowClear
@@ -301,7 +303,7 @@ const RatioConfig: FC<RatioConfigProps> = ({
                   },
                 },
                 {
-                  title: "标签更新时间",
+                  title: t("ratioTask.create.ratioConfig.labelUpdateTime"),
                   dataIndex: "dateRange",
                   key: "dateRange",
                   render: (_: any, record: RatioConfigItem) => {
@@ -311,14 +313,14 @@ const RatioConfig: FC<RatioConfigProps> = ({
                         onChange={(date) => {
                           updateConfig(record.id, { dateRange: date });
                         }}
-                        placeholder={["开始时间", "结束时间"]}
+                        placeholder={[t("ratioTask.create.ratioConfig.dateStart"), t("ratioTask.create.ratioConfig.dateEnd")]}
                         allowClear
                       />
                     );
                   },
                 },
                 {
-                  title: "数量",
+                  title: t("ratioTask.create.ratioConfig.quantity"),
                   dataIndex: "quantity",
                   key: "quantity",
                   render: (_: any, record: RatioConfigItem) => (
@@ -333,12 +335,12 @@ const RatioConfig: FC<RatioConfigProps> = ({
                   ),
                 },
                 {
-                  title: "操作",
+                  title: t("ratioTask.create.ratioConfig.actions"),
                   dataIndex: "actions",
                   key: "actions",
                   render: (_: any, record: RatioConfigItem) => (
                     <Button danger size="small" onClick={() => removeConfig(record.id)}>
-                      删除
+                      {t("ratioTask.create.ratioConfig.delete")}
                     </Button>
                   ),
                 },
@@ -349,7 +351,7 @@ const RatioConfig: FC<RatioConfigProps> = ({
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
                       <span className="font-medium text-sm">{dataset.name}</span>
-                      <Badge color="gray">{dataset.fileCount}条</Badge>
+                      <Badge color="gray">{dataset.fileCount}{t("ratioTask.create.ratioConfig.itemSuffix")}</Badge>
                     </div>
                     <div className="text-xs text-gray-500">
                       {datasetConfigs.reduce((s, c) => s + (c.percentage || 0), 0)}%
@@ -362,12 +364,12 @@ const RatioConfig: FC<RatioConfigProps> = ({
                     pagination={false}
                     rowKey="id"
                     size="small"
-                    locale={{ emptyText: "暂无配比项，请添加" }}
+                    locale={{ emptyText: t("ratioTask.create.ratioConfig.emptyText") }}
                   />
 
                   <div className="flex justify-end mt-3">
                     <Button size="small" onClick={() => addConfig(datasetId)}>
-                      添加配比项
+                      {t("ratioTask.create.ratioConfig.addRatioItem")}
                     </Button>
                   </div>
                 </Card>

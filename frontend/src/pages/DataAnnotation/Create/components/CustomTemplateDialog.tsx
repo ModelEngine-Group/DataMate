@@ -17,6 +17,7 @@ import {
   BarsOutlined,
   DeploymentUnitOutlined,
 } from "@ant-design/icons";
+import { useTranslation } from "react-i18next";
 
 interface CustomTemplateDialogProps {
   open: boolean;
@@ -110,6 +111,7 @@ export default function CustomTemplateDialog({
   onSaveTemplate,
   datasetType,
 }: CustomTemplateDialogProps) {
+  const { t } = useTranslation();
   const [templateName, setTemplateName] = useState("");
   const [templateDescription, setTemplateDescription] = useState("");
   const [templateCode, setTemplateCode] = useState(
@@ -118,11 +120,11 @@ export default function CustomTemplateDialog({
 
   const handleSave = () => {
     if (!templateName.trim()) {
-      message.error("请输入模板名称");
+      message.error(t("dataAnnotation.dialogs.customTemplate.nameRequired"));
       return;
     }
     if (!templateCode.trim()) {
-      message.error("请输入模板代码");
+      message.error(t("dataAnnotation.dialogs.customTemplate.codeRequired"));
       return;
     }
     const templateData = {
@@ -135,7 +137,7 @@ export default function CustomTemplateDialog({
     };
     onSaveTemplate(templateData);
     onOpenChange(false);
-    message.success("自定义模板已保存");
+    message.success(t("dataAnnotation.dialogs.customTemplate.saveSuccess"));
     setTemplateName("");
     setTemplateDescription("");
     setTemplateCode(
@@ -147,25 +149,25 @@ export default function CustomTemplateDialog({
     <Modal
       open={open}
       onCancel={() => onOpenChange(false)}
-      okText={"保存模板"}
+      okText={t("dataAnnotation.dialogs.customTemplate.okText")}
       onOk={handleSave}
       width={1200}
       className="max-h-[80vh] overflow-auto"
-      title="自定义标注模板"
+      title={t("dataAnnotation.dialogs.customTemplate.title")}
     >
       <div className="flex min-h-[500px]">
         <div className="flex-1 pl-6">
           <Form layout="vertical">
-            <Form.Item label="模板名称 *" required>
+            <Form.Item label={t("dataAnnotation.dialogs.customTemplate.nameLabel")} required>
               <Input
-                placeholder="输入模板名称"
+                placeholder={t("dataAnnotation.dialogs.customTemplate.namePlaceholder")}
                 value={templateName}
                 onChange={(e) => setTemplateName(e.target.value)}
               />
             </Form.Item>
-            <Form.Item label="模板描述">
+            <Form.Item label={t("dataAnnotation.dialogs.customTemplate.descriptionLabel")}>
               <Input
-                placeholder="输入模板描述"
+                placeholder={t("dataAnnotation.dialogs.customTemplate.descriptionPlaceholder")}
                 value={templateDescription}
                 onChange={(e) => setTemplateDescription(e.target.value)}
               />
@@ -173,18 +175,18 @@ export default function CustomTemplateDialog({
           </Form>
           <div className="flex gap-6">
             <div className="flex-1">
-              <div className="mb-2 font-medium">代码</div>
+              <div className="mb-2 font-medium">{t("dataAnnotation.dialogs.customTemplate.codeLabel")}</div>
               <Card>
                 <TextArea
                   rows={20}
                   value={templateCode}
                   onChange={(e) => setTemplateCode(e.target.value)}
-                  placeholder="输入模板代码"
+                  placeholder={t("dataAnnotation.dialogs.customTemplate.codePlaceholder")}
                 />
               </Card>
             </div>
             <div className="w-96 border-l border-gray-100 pl-6">
-              <div className="mb-2 font-medium">预览</div>
+              <div className="mb-2 font-medium">{t("dataAnnotation.dialogs.customTemplate.previewLabel")}</div>
               <Card
                 cover={
                   <img

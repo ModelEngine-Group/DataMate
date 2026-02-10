@@ -1,29 +1,17 @@
-import {Card, Badge, Button, Modal, Table, Tag} from "antd";
+import { Card, Badge, Button, Modal, Table, Tag } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { SearchControls } from "@/components/SearchControls";
 import { queryExecutionLogUsingPost } from "../collection.apis";
 import useFetchData from "@/hooks/useFetchData";
 import { useEffect, useState } from "react";
-import {TaskExecution} from "@/pages/DataCollection/collection.model.ts";
-import {mapTaskExecution} from "@/pages/DataCollection/collection.const.ts";
+import { TaskExecution } from "@/pages/DataCollection/collection.model.ts";
+import { mapTaskExecution } from "@/pages/DataCollection/collection.const.ts";
 import { queryExecutionLogFileByIdUsingGet } from "../collection.apis";
 import { FileTextOutlined } from "@ant-design/icons";
-
-const filterOptions = [
-  {
-    key: "status",
-    label: "状态筛选",
-    options: [
-      { value: "all", label: "全部状态" },
-      { value: "RUNNING", label: "运行中" },
-      { value: "SUCCESS", label: "成功" },
-      { value: "FAILED", label: "失败" },
-      { value: "STOPPED", label: "停止" },
-    ],
-  },
-];
+import { useTranslation } from "react-i18next";
 
 export default function Execution({ taskId }: { taskId?: string }) {
+  const { t } = useTranslation();
   const [dateRange, setDateRange] = useState<[any, any] | null>(null);
   const [logOpen, setLogOpen] = useState(false);
   const [logLoading, setLogLoading] = useState(false);
@@ -32,13 +20,27 @@ export default function Execution({ taskId }: { taskId?: string }) {
   const [logFilename, setLogFilename] = useState<string>("");
   const [logBlobUrl, setLogBlobUrl] = useState<string>("");
 
+  const filterOptions = [
+    {
+      key: "status",
+      label: t("dataCollection.execution.filters.statusFilter"),
+      options: [
+        { value: "all", label: t("dataCollection.execution.filters.allStatus") },
+        { value: "RUNNING", label: t("dataCollection.execution.filters.running") },
+        { value: "SUCCESS", label: t("dataCollection.execution.filters.success") },
+        { value: "FAILED", label: t("dataCollection.execution.filters.failed") },
+        { value: "STOPPED", label: t("dataCollection.execution.filters.stopped") },
+      ],
+    },
+  ];
+
   const formatDuration = (seconds?: number) => {
-    if (seconds === undefined || seconds === null) return "-";
+    if (seconds === undefined || seconds === null) return t("common.placeholders.empty");
     const total = Math.max(0, Math.floor(seconds));
-    if (total < 60) return `${total}s`;
+    if (total < 60) return `${total}${t("dataCollection.execution.duration.secondsSuffix")}`;
     const min = Math.floor(total / 60);
     const sec = total % 60;
-    return `${min}min${sec}s`;
+    return `${min}${t("dataCollection.execution.duration.minutesSuffix")}${sec}${t("dataCollection.execution.duration.secondsSuffix")}`;
   };
 
   const handleReset = () => {
@@ -74,7 +76,7 @@ export default function Execution({ taskId }: { taskId?: string }) {
         end_time,
       });
     },
-    mapTaskExecution,
+    (execution) => mapTaskExecution(execution, t),
     30000,
     false,
     [],
@@ -86,7 +88,7 @@ export default function Execution({ taskId }: { taskId?: string }) {
       ...prev,
       current: 1,
     }));
-  }, [taskId, setSearchParams]);
+  }, [taskId, setSearchParams, t]);
 
   const handleViewLog = async (record: TaskExecution) => {
     setLogOpen(true);
@@ -106,7 +108,7 @@ export default function Execution({ taskId }: { taskId?: string }) {
       const text = await blob.text();
       setLogContent(text);
     } catch (e: any) {
-      setLogContent(e?.data?.detail || e?.message || "Failed to load log");
+      setLogContent(e?.data?.detail || e?.message || t("dataCollection.execution.messages.loadLogFailed"));
     } finally {
       setLogLoading(false);
     }
@@ -114,7 +116,7 @@ export default function Execution({ taskId }: { taskId?: string }) {
 
   const columns: ColumnsType<any> = [
     {
-      title: "任务名称",
+      title: t("dataCollection.execution.columns.taskName"),
       dataIndex: "taskName",
       key: "taskName",
       fixed: "left",
@@ -123,7 +125,7 @@ export default function Execution({ taskId }: { taskId?: string }) {
       ),
     },
     {
-      title: "状态",
+      title: t("dataCollection.execution.columns.status"),
       dataIndex: "status",
       key: "status",
       render: (status: any) => ((
@@ -132,23 +134,23 @@ export default function Execution({ taskId }: { taskId?: string }) {
       ),
     },
     {
-      title: "开始时间",
+      title: t("dataCollection.execution.columns.startTime"),
       dataIndex: "startedAt",
       key: "startedAt",
     },
     {
-      title: "结束时间",
+      title: t("dataCollection.execution.columns.endTime"),
       dataIndex: "completedAt",
       key: "completedAt",
     },
     {
-      title: "执行时长",
+      title: t("dataCollection.execution.columns.duration"),
       dataIndex: "durationSeconds",
       key: "durationSeconds",
       render: (v?: number) => formatDuration(v),
     },
     {
-      title: "错误信息",
+      title: t("dataCollection.execution.columns.errorMessage"),
       dataIndex: "errorMessage",
       key: "errorMessage",
       render: (msg?: string) =>
@@ -157,11 +159,11 @@ export default function Execution({ taskId }: { taskId?: string }) {
             {msg}
           </span>
         ) : (
-          <span style={{ color: "#bbb" }}>-</span>
+          <span style={{ color: "#bbb" }}>{t("common.placeholders.empty")}</span>
         ),
     },
     {
-      title: "操作",
+      title: t("dataCollection.execution.columns.actions"),
       key: "action",
       fixed: "right",
       width: 120,
@@ -171,7 +173,7 @@ export default function Execution({ taskId }: { taskId?: string }) {
           icon={<FileTextOutlined />}
           onClick={() => handleViewLog(record)}
         >
-          查看日志
+          {t("dataCollection.execution.actions.viewLog")}
         </Button>
       ),
     },
@@ -208,7 +210,7 @@ export default function Execution({ taskId }: { taskId?: string }) {
             }));
           }}
           onReload={handleReset}
-          searchPlaceholder="搜索任务名称..."
+          searchPlaceholder={t("dataCollection.execution.filters.searchPlaceholder")}
           className="flex-1"
         />
       </div>
@@ -224,7 +226,7 @@ export default function Execution({ taskId }: { taskId?: string }) {
       </Card>
 
       <Modal
-        title={logTitle || "执行日志"}
+        title={logTitle || t("dataCollection.execution.modal.title")}
         open={logOpen}
         onCancel={() => {
           setLogOpen(false);
@@ -248,7 +250,7 @@ export default function Execution({ taskId }: { taskId?: string }) {
                     document.body.removeChild(a);
                   }}
                 >
-                  下载日志
+                  {t("dataCollection.execution.modal.downloadLog")}
                 </Button>
               ) : null}
               <Button
@@ -261,7 +263,7 @@ export default function Execution({ taskId }: { taskId?: string }) {
                   }
                 }}
               >
-                关闭
+                {t("dataCollection.execution.modal.close")}
               </Button>
             </div>
           </div>
@@ -283,7 +285,9 @@ export default function Execution({ taskId }: { taskId?: string }) {
             wordBreak: "break-word",
           }}
         >
-          {logLoading ? "Loading..." : (logContent || "(empty)")}
+          {logLoading
+            ? t("dataCollection.execution.modal.loading")
+            : (logContent || t("dataCollection.execution.modal.empty"))}
         </div>
       </Modal>
     </div>

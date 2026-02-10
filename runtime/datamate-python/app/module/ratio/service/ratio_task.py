@@ -10,11 +10,13 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import get_logger
+from app.db.models.base_entity import LineageNode, LineageEdge
 from app.db.models.ratio_task import RatioInstance, RatioRelation
 from app.db.models import Dataset, DatasetFiles
 from app.db.session import AsyncSessionLocal
 from app.module.dataset.schema.dataset_file import DatasetFileTag
-from app.module.shared.schema import TaskStatus
+from app.module.shared.common.lineage import LineageService
+from app.module.shared.schema import TaskStatus, NodeType, EdgeType
 from app.module.ratio.schema.ratio_task import FilterCondition
 
 logger = get_logger(__name__)
@@ -126,7 +128,12 @@ class RatioTaskService:
                 # Done
                 instance.status = TaskStatus.COMPLETED.name
                 logger.info(f"Dataset ratio execution completed: instance={instance_id}, files={added_count}, size={added_size}, {instance.status}")
-
+                await RatioTaskService._add_task_to_graph(
+                    session=session,
+                    src_relations=relations,
+                    task=instance,
+                    dst_dataset=target_ds,
+                )
             except Exception as e:
                 logger.exception(f"Dataset ratio execution failed for {instance_id}: {e}")
                 try:
@@ -326,3 +333,50 @@ class RatioTaskService:
             for tag_data in file_tag.get_tags():
                 all_tags.append(tag_data)
         return all_tags
+
+    @staticmethod
+    async def _add_task_to_graph(
+        session: AsyncSession,
+        src_relations: List[RatioRelation],
+        task: RatioInstance,
+        dst_dataset: Dataset,
+    ) -> None:
+        """
+        在比例抽取任务完成后，将数据集加入血缘图。
+        ratio_task(DATASOURCE) -> dataset(DATASET) via DATA_RATIO edge
+        """
+        try:
+            if not src_relations:
+                logger.warning("Source ratio relations is empty when building lineage graph")
+                return
+
+            lineage_service = LineageService(db=session)
+            dst_node = LineageNode(
+                id=dst_dataset.id,
+                node_type=NodeType.DATASET.value,
+                name=dst_dataset.name,
+                description=dst_dataset.description,
+            )
+            for rel in src_relations:
+                ds: Optional[Dataset] = await session.get(Dataset, rel.source_dataset_id)
+                src_node = LineageNode(
+                    id=rel.source_dataset_id,
+                    node_type=NodeType.DATASET.value,
+                    name=ds.name,
+                    description=ds.description,
+                )
+                ratio_edge = LineageEdge(
+                    process_id=task.id,
+                    name=task.name,
+                    edge_type=EdgeType.DATA_RATIO.value,
+                    description=task.description,
+                    from_node_id=rel.source_dataset_id,
+                    to_node_id=dst_node.id,
+                )
+                await lineage_service.generate_graph(src_node, ratio_edge, dst_node)
+                logger.info("Add dataset lineage graph: %s -> %s -> %s", src_node.id, ratio_edge.id, dst_node.id)
+            await session.commit()
+            logger.info("Add dataset lineage graph success")
+        except Exception as exc:
+            logger.error("Failed to add dataset lineage graph: %s", exc)
+            await session.rollback()

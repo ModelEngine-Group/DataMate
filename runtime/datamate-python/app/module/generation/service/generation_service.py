@@ -8,13 +8,14 @@ from langchain_core.language_models import BaseChatModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.db.models.base_entity import LineageNode, LineageEdge
 from app.db.models.data_synthesis import (
     DataSynthInstance,
     DataSynthesisFileInstance,
     DataSynthesisChunkInstance,
     SynthesisData,
 )
-from app.db.models.dataset_management import DatasetFiles
+from app.db.models.dataset_management import DatasetFiles, Dataset
 from app.db.session import logger
 from app.module.generation.schema.generation import Config, SyntheConfig
 from app.module.generation.service.prompt import (
@@ -26,6 +27,8 @@ from app.module.shared.common.text_split import DocumentSplitter
 from app.module.shared.util.model_chat import extract_json_substring
 from app.module.shared.llm import LLMFactory
 from app.module.system.service.common_service import get_model_by_id
+from app.module.shared.common.lineage import LineageService
+from app.module.shared.schema import NodeType, EdgeType
 
 
 def _filter_docs(split_docs, chunk_size):
@@ -657,3 +660,52 @@ class GenerationService:
         file_task.processed_chunks = new_value
         await self.db.commit()
         await self.db.refresh(file_task)
+
+    async def add_synthesis_to_graph(self, db: AsyncSession, task_id: str, dest_dataset_id: str) -> None:
+        """记录数据合成血缘关系：源数据集 -> 合成数据集 via DATA_SYNTHESIS"""
+        try:
+            # 获取任务和目标数据集信息
+            task = await self.db.get(DataSynthInstance, task_id)
+            src_dataset_result = await db.execute(
+                select(DatasetFiles.dataset_id)
+                .join(DataSynthesisFileInstance, DatasetFiles.id == DataSynthesisFileInstance.source_file_id)
+                .where(DataSynthesisFileInstance.synthesis_instance_id == task_id)
+                .limit(1)
+            )
+            src_dataset_id = src_dataset_result.scalar_one_or_none()
+            src_dataset = await self.db.get(Dataset, src_dataset_id)
+            dst_dataset = await self.db.get(Dataset, dest_dataset_id)
+
+            if not task or not dst_dataset:
+                logger.warning("Missing task or destination dataset for lineage graph")
+                return
+
+            src_node = LineageNode(
+                id=src_dataset.id,
+                node_type=NodeType.DATASET.value,
+                name=src_dataset.name,
+                description=src_dataset.description
+            )
+            dest_node = LineageNode(
+                id=dst_dataset.id,
+                node_type=NodeType.DATASET.value,
+                name=dst_dataset.name,
+                description=dst_dataset.description
+            )
+            synthesis_edge = LineageEdge(
+                process_id=task_id,
+                name=task.name,
+                edge_type=EdgeType.DATA_SYNTHESIS.value,
+                description=task.description,
+                from_node_id=src_node.id,
+                to_node_id=dst_dataset.id
+            )
+
+            # 生成血缘图
+            lineage_service = LineageService(db=db)
+            await lineage_service.generate_graph(src_node, synthesis_edge, dest_node)
+            await self.db.commit()
+
+            logger.info(f"Added synthesis lineage: {src_node.name} -> {dest_dataset.name}")
+        except Exception as exc:
+            logger.error(f"Failed to add synthesis lineage: {exc}")

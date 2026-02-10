@@ -43,9 +43,9 @@ export default function CleansingTaskCreate() {
         outputs: item.outputs,
       })),
     };
-    navigate("/data/cleansing?view=task");
     await createCleaningTaskUsingPost(task);
     message.success("任务已创建");
+    navigate("/data/cleansing?view=task");
   };
 
   const canProceed = () => {

@@ -1,15 +1,15 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, Path
+from fastapi import APIRouter, Depends, Query, Path, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 from pydantic import BaseModel, Field, ConfigDict
 
+from app.core.exception import ErrorCodes, BusinessError, SuccessResponse
 from app.db.session import get_db
 from app.module.shared.schema import StandardResponse
 from app.module.dataset import DatasetManagementService
 from app.core.logging import get_logger
 from app.core.config import settings
-from app.exception import NoDatasetInfoFoundError, DatasetMappingNotFoundError
 
 from ..client import LabelStudioClient
 from ..service.sync import SyncService
@@ -39,7 +39,7 @@ async def sync_dataset_content(
 ):
     """
     Sync Dataset Content (Files and Annotations)
-    
+
     根据指定的mapping ID，同步DM程序数据集中的内容到Label Studio数据集中。
     默认同时同步文件和标注数据。
     """
@@ -59,14 +59,14 @@ async def sync_dataset_content(
                 status_code=404,
                 detail=f"Mapping not found: {request.id}"
             )
-        
+
         # Sync dataset files
         result = await sync_service.sync_dataset_files(request.id, request.batch_size)
-        
+
         # Sync annotations if requested
         if request.sync_annotations:
             logger.info(f"Syncing annotations: direction={request.annotation_direction}")
-            
+
             # 根据方向执行标注同步
             if request.annotation_direction == "ls_to_dm":
                 await sync_service.sync_annotations_from_ls_to_dm(
@@ -87,26 +87,23 @@ async def sync_dataset_content(
                     request.overwrite,
                     request.overwrite_labeling_project
                 )
-        
+
         logger.info(f"Sync completed: {result.synced_files}/{result.total_files} files")
-        
+
         return StandardResponse(
-            code=200,
+            code="0",
             message="success",
             data=result
         )
-        
+
     except HTTPException:
         raise
-    except NoDatasetInfoFoundError as e:
-        logger.error(f"Failed to get dataset info: {e}")
-        raise HTTPException(status_code=404, detail=str(e))
-    except DatasetMappingNotFoundError as e:
-        logger.error(f"Mapping not found: {e}")
-        raise HTTPException(status_code=404, detail=str(e))
+    except BusinessError as e:
+        # 业务异常已经由全局异常处理器处理
+        raise
     except Exception as e:
         logger.error(f"Error syncing dataset content: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise
 
 
 @router.post("/annotation/sync", response_model=StandardResponse[SyncAnnotationsResponse])
@@ -136,7 +133,7 @@ async def sync_annotations(
                 status_code=404,
                 detail=f"Mapping not found: {request.id}"
             )
-        
+
         # 根据方向执行同步
         if request.direction == "ls_to_dm":
             result = await sync_service.sync_annotations_from_ls_to_dm(
@@ -162,15 +159,15 @@ async def sync_annotations(
                 status_code=400,
                 detail=f"Invalid direction: {request.direction}"
             )
-        
+
         logger.info(f"Annotation sync completed: synced_to_dm={result.synced_to_dm}, synced_to_ls={result.synced_to_ls}, conflicts_resolved={result.conflicts_resolved}")
-        
+
         return StandardResponse(
-            code=200,
+            code="0",
             message="success",
             data=result
         )
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -190,17 +187,17 @@ async def check_label_studio_connection():
             base_url=settings.label_studio_base_url,
             token=settings.label_studio_user_token
         )
-        
+
         # 尝试获取项目列表来测试连接
         try:
             response = await ls_client.client.get("/api/projects")
             response.raise_for_status()
             projects = response.json()
-            
+
             token_display = settings.label_studio_user_token[:10] + "..." if settings.label_studio_user_token else "None"
-            
+
             return StandardResponse(
-                code=200,
+                code="0",
                 message="success",
                 data={
                     "status": "connected",
@@ -212,9 +209,9 @@ async def check_label_studio_connection():
             )
         except Exception as e:
             token_display = settings.label_studio_user_token[:10] + "..." if settings.label_studio_user_token else "None"
-            
+
             return StandardResponse(
-                code=500,
+                code="common.500",
                 message="error",
                 data={
                     "status": "disconnected",
@@ -247,74 +244,74 @@ async def update_file_tags(
     Update File Tags (Partial Update with Auto Format Conversion)
 
     接收部分标签更新并合并到指定文件（只修改提交的标签，其余保持不变），并更新 `tags_updated_at`。
-    
+
     支持两种标签格式：
     1. 简化格式（外部用户提交）:
        [{"from_name": "label", "to_name": "image", "values": ["cat", "dog"]}]
-    
+
     2. 完整格式（内部存储）:
-       [{"id": "...", "from_name": "label", "to_name": "image", "type": "choices", 
+       [{"id": "...", "from_name": "label", "to_name": "image", "type": "choices",
          "value": {"choices": ["cat", "dog"]}}]
-    
+
     系统会自动根据数据集关联的模板将简化格式转换为完整格式。
     请求与响应使用 Pydantic 模型 `UpdateFileTagsRequest` / `UpdateFileTagsResponse`。
     """
     service = DatasetManagementService(db)
-    
+
     # 首先获取文件所属的数据集
     from sqlalchemy.future import select
     from app.db.models import DatasetFiles
-    
+
     result = await db.execute(
         select(DatasetFiles).where(DatasetFiles.id == file_id)
     )
     file_record = result.scalar_one_or_none()
-    
+
     if not file_record:
         raise HTTPException(status_code=404, detail=f"File not found: {file_id}")
-    
+
     dataset_id = str(file_record.dataset_id)  # type: ignore - Convert Column to str
-    
+
     # 查找数据集关联的模板ID
     from ..service.mapping import DatasetMappingService
-    
+
     mapping_service = DatasetMappingService(db)
     template_id = await mapping_service.get_template_id_by_dataset_id(dataset_id)
-    
+
     if template_id:
         logger.info(f"Found template {template_id} for dataset {dataset_id}, will auto-convert tag format")
     else:
         logger.warning(f"No template found for dataset {dataset_id}, tags must be in full format")
-    
+
     # 更新标签（如果有模板ID则自动转换格式）
     success, error_msg, updated_at = await service.update_file_tags_partial(
         file_id=file_id,
         new_tags=request.tags,
         template_id=template_id  # 传递模板ID以启用自动转换
     )
-    
+
     if not success:
         if "not found" in (error_msg or "").lower():
             raise HTTPException(status_code=404, detail=error_msg)
         raise HTTPException(status_code=500, detail=error_msg or "更新标签失败")
-    
+
     # 重新获取更新后的文件记录（获取完整标签列表）
     result = await db.execute(
         select(DatasetFiles).where(DatasetFiles.id == file_id)
     )
     file_record = result.scalar_one_or_none()
-    
+
     if not file_record:
         raise HTTPException(status_code=404, detail=f"File not found: {file_id}")
-    
+
     response_data = UpdateFileTagsResponse(
         fileId=file_id,
         tags=file_record.tags or [],  # type: ignore
         tagsUpdatedAt=updated_at or datetime.now()
     )
-    
+
     return StandardResponse(
-        code=200,
+        code="0",
         message="标签更新成功",
         data=response_data
     )

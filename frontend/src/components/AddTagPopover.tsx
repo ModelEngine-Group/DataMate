@@ -1,6 +1,7 @@
 import { Button, Input, Popover, theme, Tag, Empty } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface Tag {
   id: number;
@@ -22,6 +23,7 @@ export default function AddTagPopover({
   onCreateAndTag,
 }: AddTagPopoverProps) {
   const { token } = theme.useToken();
+  const { t } = useTranslation();
   const [showPopover, setShowPopover] = useState(false);
 
   const [newTag, setNewTag] = useState("");
@@ -68,12 +70,12 @@ export default function AddTagPopover({
         content={
           <div className="space-y-4 w-[300px]">
             <h4 className="font-medium border-b pb-2 border-gray-100">
-              添加标签
+              {t("tagManagement.addTag")}
             </h4>
             {/* Available Tags */}
             {availableTags?.length ? (
               <div className="space-y-2">
-                <h5 className="text-sm">选择现有标签</h5>
+                <h5 className="text-sm">{t("tagManagement.selectExistingTags")}</h5>
                 <div className="max-h-32 overflow-y-auto space-y-1">
                   {availableTags.map((tag) => (
                     <span
@@ -91,15 +93,15 @@ export default function AddTagPopover({
                 </div>
               </div>
             ) : (
-              <Empty description="没有可用标签，请先创建标签。" />
+              <Empty description={t("tagManagement.noAvailableTags")} />
             )}
 
             {/* Create New Tag */}
             <div className="space-y-2 border-t border-gray-100 pt-3">
-              <h5 className="text-sm">创建新标签</h5>
+              <h5 className="text-sm">{t("tagManagement.createNewTag")}</h5>
               <div className="flex gap-2">
                 <Input
-                  placeholder="输入新标签名称..."
+                  placeholder={t("tagManagement.newTagNamePlaceholder")}
                   value={newTag}
                   onChange={(e) => setNewTag(e.target.value)}
                   className="h-8 text-sm"
@@ -109,13 +111,13 @@ export default function AddTagPopover({
                   disabled={!newTag.trim()}
                   type="primary"
                 >
-                  添加
+                  {t("tagManagement.createTag")}
                 </Button>
               </div>
             </div>
 
             <Button block onClick={() => setShowPopover(false)}>
-              取消
+              {t("tagManagement.cancel")}
             </Button>
           </div>
         }
@@ -126,7 +128,7 @@ export default function AddTagPopover({
           className="cursor-pointer"
           onClick={() => setShowPopover(true)}
         >
-          添加标签
+          {t("tagManagement.addTag")}
         </Tag>
       </Popover>
     </>

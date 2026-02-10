@@ -17,6 +17,7 @@ const getOperatorVisual = (
     image: "de36b61c-9e8a-4422-8c31-d30585c7100f",
     audio: "42dd9392-73e4-458c-81ff-41751ada47b5",
     video: "a233d584-73c8-4188-ad5d-8f7c8dda9c27",
+    multimodal: "4d7dbd77-0a92-44f3-9056-2cd62d4a71e4",
   } as const;
 
   const hasCategoryId = (key: keyof typeof CATEGORY_IDS) =>

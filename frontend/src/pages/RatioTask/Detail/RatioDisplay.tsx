@@ -1,16 +1,11 @@
-import { BarChart3, Layers } from "lucide-react";
 import {
   PieChart,
   Pie,
   Cell,
   Tooltip,
   ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
 } from "recharts";
+import { useTranslation } from "react-i18next";
 
 interface DatasetRatio {
   name: string;
@@ -20,11 +15,12 @@ interface DatasetRatio {
 }
 
 export default function RatioDisplay() {
+  const { t } = useTranslation();
   const datasets: DatasetRatio[] = [
-    { name: "用户行为数据集", ratio: 45, count: 450000, color: "#3b82f6" },
-    { name: "交易记录数据集", ratio: 30, count: 300000, color: "#8b5cf6" },
-    { name: "产品信息数据集", ratio: 15, count: 150000, color: "#ec4899" },
-    { name: "评价反馈数据集", ratio: 10, count: 100000, color: "#f59e0b" },
+    { name: t("ratioTask.detail.ratioDisplay.datasetUserBehavior"), ratio: 45, count: 450000, color: "#3b82f6" },
+    { name: t("ratioTask.detail.ratioDisplay.datasetTransaction"), ratio: 30, count: 300000, color: "#8b5cf6" },
+    { name: t("ratioTask.detail.ratioDisplay.datasetProduct"), ratio: 15, count: 150000, color: "#ec4899" },
+    { name: t("ratioTask.detail.ratioDisplay.datasetReview"), ratio: 10, count: 100000, color: "#f59e0b" },
   ];
 
   const chartData = datasets.map((d) => ({
@@ -37,7 +33,7 @@ export default function RatioDisplay() {
   return (
     <div className="mt-8">
       <h3 className="text-lg font-semibold text-foreground mb-6 flex items-center gap-2">
-        数据集配比信息
+        {t("ratioTask.detail.ratioDisplay.title")}
       </h3>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

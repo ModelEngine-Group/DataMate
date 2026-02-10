@@ -6,6 +6,8 @@ import type { MenuProps } from 'antd'
 import { LoginDialog } from "./LoginDialog"
 import { SignupDialog } from "./SignupDialog"
 import { post} from "@/utils/request.ts";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 
 function loginUsingPost(data: any) {
   return post("/api/user/login", data);
@@ -16,6 +18,7 @@ function signupUsingPost(data: any) {
 }
 
 export function Header() {
+  const { t } = useTranslation();
   const [loginOpen, setLoginOpen] = useState(false)
   const [signupOpen, setSignupOpen] = useState(false)
   const [loading, setLoading] = useState(false);
@@ -26,13 +29,13 @@ export function Header() {
       const response = await loginUsingPost(values);
       // Store the token in localStorage
       localStorage.setItem('session', JSON.stringify(response.data));
-      message.success('登录成功');
+      message.success(t('user.messages.loginSuccess'));
       setLoginOpen(false);
       // Optionally refresh the page or update the UI
       window.location.reload();
     } catch (error) {
       console.error('Login error:', error);
-      message.error('登录失败，请稍后重试');
+      message.error(t('user.messages.loginFailed'));
     } finally {
       setLoading(false);
     }
@@ -45,7 +48,7 @@ export function Header() {
     confirmPassword: string
   }) => {
     if (values.password !== values.confirmPassword) {
-      message.error('两次输入的密码不一致');
+      message.error(t('user.messages.passwordMismatch'));
       return;
     }
 
@@ -54,12 +57,12 @@ export function Header() {
       const { username, email, password } = values;
       const response = await signupUsingPost({ username, email, password });
 
-      message.success('注册成功，已自动登录');
+      message.success(t('user.messages.signupSuccess'));
       localStorage.setItem('session', JSON.stringify(response.data));
       setSignupOpen(false);
     } catch (error) {
       console.error('Registration error:', error);
-      message.error('注册失败，请稍后重试');
+      message.error(t('user.messages.signupFailed'));
     } finally {
       setLoading(false);
     }
@@ -67,7 +70,7 @@ export function Header() {
 
   const handleLogout = () => {
     localStorage.removeItem('session');
-    message.success('已退出登录');
+    message.success(t('user.messages.logoutSuccess'));
     // Refresh the page after logout
     window.location.reload();
   };
@@ -91,12 +94,20 @@ export function Header() {
   const languageMenuItems: MenuProps['items'] = [
     {
       key: 'zh',
-      label: '简体中文',
+      label: t('header.simplifiedChinese'),
+      onClick: () => {
+        i18n.changeLanguage('zh');
+        localStorage.setItem('language', 'zh');
+      },
     },
-    // {
-    //   key: 'en',
-    //   label: 'English',
-    // }
+    {
+      key: 'en',
+      label: t('header.english'),
+      onClick: () => {
+        i18n.changeLanguage('en');
+        localStorage.setItem('language', 'en');
+      },
+    }
   ]
 
   const userDropdownItems: MenuProps['items'] = localStorage.getItem("session")
@@ -110,7 +121,7 @@ export function Header() {
       },
       {
         key: 'logout',
-        label: '退出登录',
+        label: t('user.actions.logout'),
         icon: <LogIn className="h-4 w-4" />,
         onClick: handleLogout,
       },
@@ -118,7 +129,7 @@ export function Header() {
     : [
       {
         key: 'login',
-        label: '登录',
+        label: t('user.actions.login'),
         icon: <LogIn className="h-4 w-4" />,
         onClick: () => setLoginOpen(true),
       },
@@ -127,7 +138,7 @@ export function Header() {
       },
       {
         key: 'register',
-        label: '注册',
+        label: t('user.actions.register'),
         icon: <UserPlus className="h-4 w-4" />,
         onClick: () => setSignupOpen(true),
       },
@@ -155,7 +166,7 @@ export function Header() {
             >
               <Button type="text" className="flex items-center gap-2">
                 <Globe className="h-4 w-4" />
-                <span>简体中文</span>
+                <span>{i18n.language === 'zh' ? t('header.simplifiedChinese') : t('header.english')}</span>
               </Button>
             </Dropdown>
 

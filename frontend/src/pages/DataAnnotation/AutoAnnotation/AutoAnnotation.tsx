@@ -23,6 +23,7 @@ import {
 import CreateAutoAnnotationDialog from "./components/CreateAutoAnnotationDialog";
 import EditAutoAnnotationDatasetDialog from "./components/EditAutoAnnotationDatasetDialog";
 import ImportFromLabelStudioDialog from "./components/ImportFromLabelStudioDialog";
+import { useTranslation } from "react-i18next";
 
 const STATUS_COLORS: Record<AutoAnnotationStatus, string> = {
 	pending: "default",
@@ -32,23 +33,8 @@ const STATUS_COLORS: Record<AutoAnnotationStatus, string> = {
 	cancelled: "default",
 };
 
-const STATUS_LABELS: Record<AutoAnnotationStatus, string> = {
-	pending: "等待中",
-	running: "处理中",
-	completed: "已完成",
-	failed: "失败",
-	cancelled: "已取消",
-};
-
-const MODEL_SIZE_LABELS: Record<string, string> = {
-	n: "YOLOv8n (最快)",
-	s: "YOLOv8s",
-	m: "YOLOv8m",
-	l: "YOLOv8l (推荐)",
-	x: "YOLOv8x (最精确)",
-};
-
 export default function AutoAnnotation() {
+	const { t } = useTranslation();
 	const [loading, setLoading] = useState(false);
 	const [tasks, setTasks] = useState<AutoAnnotationTask[]>([]);
 	const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -108,7 +94,7 @@ export default function AutoAnnotation() {
 			setTasks(response.data || response || []);
 		} catch (error) {
 			console.error("Failed to fetch auto annotation tasks:", error);
-			if (!silent) message.error("获取任务列表失败");
+			if (!silent) message.error(t("dataAnnotation.autoAnnotation.messages.fetchTasksFailed"));
 		} finally {
 			if (!silent) setLoading(false);
 		}
@@ -126,25 +112,25 @@ export default function AutoAnnotation() {
 
 	const handleSyncToDatabase = (task: AutoAnnotationTask) => {
 		Modal.confirm({
-			title: `确认将自动标注任务「${task.name}」在 Label Studio 中的标注结果同步到数据库吗？`,
+			title: t("dataAnnotation.autoAnnotation.messages.syncToDbTitle", { name: task.name }),
 			content: (
 				<div>
-					<div>此操作会根据 Label Studio 中的任务数据覆盖当前文件标签与标注信息。</div>
-					<div>同步完成后，可在数据管理的文件详情中查看最新标签与标注。</div>
+					<div>{t("dataAnnotation.autoAnnotation.messages.syncToDbContent1")}</div>
+					<div>{t("dataAnnotation.autoAnnotation.messages.syncToDbContent2")}</div>
 				</div>
 			),
-			okText: "同步到数据库",
-			cancelText: "取消",
+			okText: t("dataAnnotation.home.actions.syncToDb"),
+			cancelText: t("dataAnnotation.home.confirm.deleteCancelText"),
 			onOk: async () => {
-				const hide = message.loading("正在从 Label Studio 同步标注到数据库...", 0);
+				const hide = message.loading(t("dataAnnotation.autoAnnotation.messages.syncLoading"), 0);
 				try {
 					await syncAutoAnnotationToDatabaseUsingPost(task.id);
 					hide();
-					message.success("同步完成");
+					message.success(t("dataAnnotation.autoAnnotation.messages.syncSuccess"));
 				} catch (e) {
 					console.error(e);
 					hide();
-					message.error("同步失败，请稍后重试");
+					message.error(t("dataAnnotation.autoAnnotation.messages.syncFailed"));
 				}
 			},
 		});
@@ -152,20 +138,20 @@ export default function AutoAnnotation() {
 
 	const handleDelete = (task: AutoAnnotationTask) => {
 		Modal.confirm({
-			title: `确认删除自动标注任务「${task.name}」吗？`,
-			content: "删除任务后，已生成的标注结果不会被删除。",
-			okText: "删除",
+			title: t("dataAnnotation.autoAnnotation.confirm.deleteTitle", { name: task.name }),
+			content: t("dataAnnotation.autoAnnotation.confirm.deleteContent"),
+			okText: t("dataAnnotation.autoAnnotation.confirm.deleteOkText"),
 			okType: "danger",
-			cancelText: "取消",
+			cancelText: t("dataAnnotation.autoAnnotation.confirm.deleteCancelText"),
 			onOk: async () => {
 				try {
 					await deleteAutoAnnotationTaskByIdUsingDelete(task.id);
-					message.success("任务删除成功");
+					message.success(t("dataAnnotation.autoAnnotation.messages.deleteSuccess"));
 					fetchTasks();
 					setSelectedRowKeys((keys) => keys.filter((k) => k !== task.id));
 				} catch (error) {
 					console.error(error);
-					message.error("删除失败，请稍后重试");
+					message.error(t("dataAnnotation.autoAnnotation.messages.deleteFailed"));
 				}
 			},
 		});
@@ -173,32 +159,32 @@ export default function AutoAnnotation() {
 
 	const handleDownload = async (task: AutoAnnotationTask) => {
 		try {
-			message.loading("正在准备下载...", 0);
+			message.loading(t("dataAnnotation.autoAnnotation.messages.downloadPreparing"), 0);
 			await downloadAutoAnnotationResultUsingGet(task.id);
 			message.destroy();
-			message.success("下载已开始");
+			message.success(t("dataAnnotation.autoAnnotation.messages.downloadStarted"));
 		} catch (error) {
 			console.error(error);
 			message.destroy();
-			message.error("下载失败");
+			message.error(t("dataAnnotation.autoAnnotation.messages.downloadFailed"));
 		}
 	};
 
 	const handleAnnotate = (task: AutoAnnotationTask) => {
 		const datasetId = task.datasetId;
 		if (!datasetId) {
-			message.error("该任务未绑定数据集，无法跳转 Label Studio");
+			message.error(t("dataAnnotation.autoAnnotation.messages.noDatasetBound"));
 			return;
 		}
 
 		const projId = datasetProjectMap[String(datasetId)];
 		if (!projId) {
-			message.error("未找到对应的标注工程，请先为该数据集创建手动标注任务");
+			message.error(t("dataAnnotation.autoAnnotation.messages.noProjectFound"));
 			return;
 		}
 
 		if (!labelStudioBase) {
-			message.error("无法跳转到 Label Studio：未配置 Label Studio 基础 URL");
+			message.error(t("dataAnnotation.autoAnnotation.messages.cannotJumpNoBase"));
 			return;
 		}
 
@@ -209,13 +195,13 @@ export default function AutoAnnotation() {
 	const handleViewResult = (task: AutoAnnotationTask) => {
 		if (task.outputPath) {
 			Modal.info({
-				title: "标注结果路径",
+				title: t("dataAnnotation.autoAnnotation.messages.resultPathTitle"),
 				content: (
 					<div>
-						<p>输出路径：{task.outputPath}</p>
-						<p>检测对象数：{task.detectedObjects}</p>
+						<p>{t("dataAnnotation.autoAnnotation.messages.outputPath")}: {task.outputPath}</p>
+						<p>{t("dataAnnotation.autoAnnotation.columns.detectedObjects")}: {task.detectedObjects}</p>
 						<p>
-							处理图片数：{task.processedImages} / {task.totalImages}
+							{t("dataAnnotation.autoAnnotation.messages.processedImages")}: {task.processedImages} / {task.totalImages}
 						</p>
 					</div>
 				),
@@ -224,9 +210,9 @@ export default function AutoAnnotation() {
 	};
 
 	const columns: ColumnType<AutoAnnotationTask>[] = [
-		{ title: "任务名称", dataIndex: "name", key: "name", width: 200 },
+		{ title: t("dataAnnotation.autoAnnotation.columns.name"), dataIndex: "name", key: "name", width: 200 },
 		{
-			title: "数据集",
+			title: t("dataAnnotation.autoAnnotation.columns.dataset"),
 			dataIndex: "datasetName",
 			key: "datasetName",
 			width: 220,
@@ -249,47 +235,47 @@ export default function AutoAnnotation() {
 			},
 		},
 		{
-			title: "模型",
+			title: t("dataAnnotation.autoAnnotation.columns.modelSize"),
 			dataIndex: ["config", "modelSize"],
 			key: "modelSize",
 			width: 120,
-			render: (size: string) => MODEL_SIZE_LABELS[size] || size,
+			render: (size: string) => t(`dataAnnotation.autoAnnotation.modelSizeLabels.${size}`) || size,
 		},
 		{
-			title: "置信度",
+			title: t("dataAnnotation.autoAnnotation.columns.confThreshold"),
 			dataIndex: ["config", "confThreshold"],
 			key: "confThreshold",
 			width: 100,
 			render: (threshold: number) => `${(threshold * 100).toFixed(0)}%`,
 		},
 		{
-			title: "目标类别",
+			title: t("dataAnnotation.autoAnnotation.columns.targetClasses"),
 			dataIndex: ["config", "targetClasses"],
 			key: "targetClasses",
 			width: 120,
 			render: (classes: number[]) => (
 				<Tooltip
-					title={classes.length > 0 ? classes.join(", ") : "全部类别"}
+					title={classes.length > 0 ? classes.join(", ") : t("dataAnnotation.home.allCategories")}
 				>
 					<span>
 						{classes.length > 0
-							? `${classes.length} 个类别`
-							: "全部类别"}
+							? t("dataAnnotation.home.categoriesCount", { count: classes.length })
+							: t("dataAnnotation.home.allCategories")}
 					</span>
 				</Tooltip>
 			),
 		},
 		{
-			title: "状态",
+			title: t("dataAnnotation.autoAnnotation.columns.status"),
 			dataIndex: "status",
 			key: "status",
 			width: 100,
 			render: (status: AutoAnnotationStatus) => (
-				<Tag color={STATUS_COLORS[status]}>{STATUS_LABELS[status]}</Tag>
+				<Tag color={STATUS_COLORS[status]}>{t(`dataAnnotation.autoAnnotation.statusLabels.${status}`)}</Tag>
 			),
 		},
 		{
-			title: "进度",
+			title: t("dataAnnotation.autoAnnotation.columns.progress"),
 			dataIndex: "progress",
 			key: "progress",
 			width: 150,
@@ -303,52 +289,50 @@ export default function AutoAnnotation() {
 			),
 		},
 		{
-			title: "检测对象数",
+			title: t("dataAnnotation.autoAnnotation.columns.detectedObjects"),
 			dataIndex: "detectedObjects",
 			key: "detectedObjects",
 			width: 100,
 			render: (count: number) => count.toLocaleString(),
 		},
 		{
-			title: "创建时间",
+			title: t("dataAnnotation.autoAnnotation.columns.createdAt"),
 			dataIndex: "createdAt",
 			key: "createdAt",
 			width: 150,
 			render: (time: string) => new Date(time).toLocaleString(),
 		},
 		{
-			title: "操作",
+			title: t("dataAnnotation.autoAnnotation.columns.actions"),
 			key: "actions",
 			width: 300,
 			fixed: "right",
 			render: (_: any, record: AutoAnnotationTask) => (
 				<Space size="small">
-					{/* 一级功能：编辑（跳转 Label Studio） + 同步（导回结果） */}
-					<Tooltip title="在 Label Studio 中手动标注">
+					<Tooltip title={t("dataAnnotation.home.actions.annotate")}>
 						<Button
 							type="link"
 							size="small"
 							icon={<EditOutlined />}
 							onClick={() => handleAnnotate(record)}
 						>
-							编辑
+							{t("dataAnnotation.home.actions.edit")}
 						</Button>
 					</Tooltip>
-					<Tooltip title="从 Label Studio 同步标注结果到数据库">
+					<Tooltip title={t("dataAnnotation.autoAnnotation.actions.syncToDb")}>
 						<Button
 							type="link"
 							size="small"
 							icon={<SyncOutlined />}
 							onClick={() => handleSyncToDatabase(record)}
 						>
-							同步到数据库
+							{t("dataAnnotation.autoAnnotation.actions.syncToDb")}
 						</Button>
 					</Tooltip>
 
-					{/* 已完成任务的查看/下载结果仍保留 */}
 					{record.status === "completed" && (
 						<>
-							<Tooltip title="查看结果信息">
+							<Tooltip title={t("dataAnnotation.autoAnnotation.viewResult")}>
 								<Button
 									type="link"
 									size="small"
@@ -356,7 +340,7 @@ export default function AutoAnnotation() {
 									onClick={() => handleViewResult(record)}
 								/>
 							</Tooltip>
-							<Tooltip title="下载标注结果 ZIP">
+							<Tooltip title={t("dataAnnotation.autoAnnotation.downloadResult")}>
 								<Button
 									type="link"
 									size="small"
@@ -367,25 +351,24 @@ export default function AutoAnnotation() {
 						</>
 					)}
 
-					{/* 二级功能菜单：折叠的删除任务 + 编辑任务数据集 */}
 					<Dropdown
 						menu={{
 							items: [
 								{
 									key: "export-result",
-									label: "导出标注结果",
+									label: t("dataAnnotation.autoAnnotation.actions.exportResult"),
 									icon: <DownloadOutlined />,
 									onClick: () => handleImportFromLabelStudio(record),
 								},
 								{
 									key: "edit-dataset",
-									label: "编辑任务数据集",
+									label: t("dataAnnotation.autoAnnotation.actions.editDataset"),
 									icon: <SettingOutlined />,
 									onClick: () => handleEditTaskDataset(record),
 								},
 								{
 									key: "delete",
-									label: "删除任务",
+									label: t("dataAnnotation.autoAnnotation.actions.delete"),
 									icon: <DeleteOutlined />,
 									danger: true,
 									onClick: () => handleDelete(record),
@@ -394,9 +377,8 @@ export default function AutoAnnotation() {
 						}}
 						trigger={["click"]}
 					>
-						<Button type="link" size="small" icon={<MoreOutlined />}
-						>
-							更多
+						<Button type="link" size="small" icon={<MoreOutlined />}>
+							{t("dataAnnotation.autoAnnotation.more")}
 						</Button>
 					</Dropdown>
 				</Space>
@@ -407,7 +389,7 @@ export default function AutoAnnotation() {
 	return (
 		<div>
 			<Card
-				title="自动标注任务"
+				title={t("dataAnnotation.autoAnnotation.title")}
 				extra={
 					<Space>
 						<Button
@@ -415,14 +397,14 @@ export default function AutoAnnotation() {
 							icon={<PlusOutlined />}
 							onClick={() => setShowCreateDialog(true)}
 						>
-							创建任务
+							{t("dataAnnotation.autoAnnotation.createTask")}
 						</Button>
 						<Button
 							icon={<ReloadOutlined />}
 							loading={loading}
 							onClick={() => fetchTasks()}
 						>
-							刷新
+							{t("dataAnnotation.autoAnnotation.refresh")}
 						</Button>
 					</Space>
 				}

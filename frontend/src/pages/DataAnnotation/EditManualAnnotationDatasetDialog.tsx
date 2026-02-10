@@ -4,6 +4,7 @@ import type { AnnotationTask } from "./annotation.model";
 import DatasetFileTransfer from "@/components/business/DatasetFileTransfer";
 import type { DatasetFile, Dataset } from "@/pages/DataManagement/dataset.model";
 import { getManualAnnotationMappingFilesUsingGet, updateManualAnnotationMappingFilesUsingPut } from "./annotation.api";
+import { useTranslation } from "react-i18next";
 
 interface EditManualAnnotationDatasetDialogProps {
   visible: boolean;
@@ -18,6 +19,7 @@ export default function EditManualAnnotationDatasetDialog({
   onCancel,
   onSuccess,
 }: EditManualAnnotationDatasetDialogProps) {
+  const { t } = useTranslation();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [selectedFilesMap, setSelectedFilesMap] = useState<Record<string, DatasetFile>>({});
@@ -85,7 +87,7 @@ export default function EditManualAnnotationDatasetDialog({
       } catch (e) {
         console.error("Failed to fetch manual mapping files:", e);
         if (!cancelled) {
-          message.error("获取任务当前数据集文件失败");
+          message.error(t("dataAnnotation.dialogs.editDataset.fetchFilesFailed"));
         }
       }
     })();
@@ -106,7 +108,7 @@ export default function EditManualAnnotationDatasetDialog({
   const handleSubmit = async () => {
     try {
       if (selectedCount === 0) {
-        message.error("请至少选择一个文件");
+        message.error(t("dataAnnotation.create.messages.selectAtLeastOneFile"));
         return;
       }
 
@@ -121,11 +123,11 @@ export default function EditManualAnnotationDatasetDialog({
       };
 
       await updateManualAnnotationMappingFilesUsingPut(task.id, payload);
-      message.success("任务数据集已更新，将仅为新增文件在 Label Studio 中创建任务");
+      message.success(t("dataAnnotation.dialogs.editDataset.success"));
       onSuccess();
     } catch (error: any) {
       console.error("Failed to update manual annotation mapping files:", error);
-      message.error(error?.message || "更新任务数据集失败");
+      message.error(error?.message || t("dataAnnotation.dialogs.editDataset.failed"));
     } finally {
       setLoading(false);
     }
@@ -133,7 +135,7 @@ export default function EditManualAnnotationDatasetDialog({
 
   return (
     <Modal
-      title="编辑任务数据集"
+      title={t("dataAnnotation.home.editDataset")}
       open={visible}
       onCancel={onCancel}
       onOk={handleSubmit}
@@ -142,17 +144,15 @@ export default function EditManualAnnotationDatasetDialog({
       destroyOnClose
     >
       <Form form={form} layout="vertical" preserve={false}>
-        <Form.Item label="任务名称">
+        <Form.Item label={t("dataAnnotation.create.form.name")}>
           <Input value={task?.name} disabled />
         </Form.Item>
 
-        <Form.Item label="选择数据集和文件" required>
+        <Form.Item label={t("dataAnnotation.create.form.selectDatasetAndFiles")} required>
           <DatasetFileTransfer
             open={visible}
             selectedFilesMap={selectedFilesMap}
             onSelectedFilesChange={(next) => {
-              // 不允许删除任务最初已包含的文件：
-              // 无论在 UI 中如何操作，这些初始文件都会被强制保留
               const merged: Record<string, DatasetFile> = { ...next } as any;
               initialFileIds.forEach((id) => {
                 if (!merged[id] && initialFilesMap[id]) {
@@ -164,7 +164,6 @@ export default function EditManualAnnotationDatasetDialog({
             onDatasetSelect={(dataset) => {
               setSelectedDataset(dataset as Dataset | null);
             }}
-            // 手动标注支持所有数据集/文件类型，但编辑时仅允许在创建任务的数据集中追加
             singleDatasetOnly
             fixedDatasetId={task.datasetId}
             lockedFileIds={Array.from(initialFileIds)}
@@ -172,12 +171,11 @@ export default function EditManualAnnotationDatasetDialog({
           <div className="mt-2 p-2 bg-blue-50 rounded border border-blue-200 text-xs">
             {selectedDataset ? (
               <>
-                当前数据集：<span className="font-medium">{selectedDataset.name}</span> - 已选择
-                <span className="font-medium text-blue-600"> {selectedCount} </span>个文件
+                {t("dataAnnotation.create.form.currentDataset", { name: selectedDataset.name, count: selectedCount })}
               </>
             ) : (
               <>
-                已选择<span className="font-medium text-blue-600"> {selectedCount} </span>个文件
+                {t("dataAnnotation.dialogs.editDataset.selectedCount", { count: selectedCount })}
               </>
             )}
           </div>

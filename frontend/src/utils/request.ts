@@ -1,5 +1,6 @@
-import { message } from "antd";
+import {message} from "antd";
 import Loading from "./loading";
+import {errorConfigStore} from "@/utils/errorConfigStore.ts";
 
 /**
  * 通用请求工具类
@@ -191,8 +192,7 @@ class Request {
       error.statusText = processedResponse.statusText;
 
       try {
-        const errorData = await processedResponse.json();
-        error.data = errorData;
+        error.data = await processedResponse.json();
         // message.error(`请求失败，错误信息: ${errorData.message}`);
       } catch {
         // 忽略JSON解析错误
@@ -527,22 +527,93 @@ request.addRequestInterceptor((config) => {
   return config;
 });
 
-// 添加默认响应拦截器 - 错误处理
-request.addResponseInterceptor((response, config) => {
-  // 可以在这里添加全局错误处理逻辑
-  // 比如token过期自动跳转登录页等
-  if (response && response.status === 401) {
-    // 清除无效的session
-    localStorage.removeItem('session');
+// --- 常量配置 ---
+const DEFAULT_ERROR_MSG = '系统繁忙，请稍后重试';
+// 需要触发重新登录的 Code 集合 (包含 HTTP 401 和 业务 Token 过期码)
+const AUTH_ERR_CODES = [401, '401'];
 
-    // 显示登录弹窗
-    const loginEvent = new CustomEvent('show-login');
-    window.dispatchEvent(loginEvent);
+// --- 辅助函数：防抖处理登录失效 ---
+let isRelogging = false;
+const handleLoginRedirect = () => {
+  if (isRelogging) return;
+  isRelogging = true;
 
-    // 返回一个拒绝的Promise，防止继续处理这个错误
-    return Promise.reject(response);
+  // 1. 清除 Session / Token
+  localStorage.removeItem('session');
+
+  // 2. 触发登录弹窗事件 (根据你的架构，这里可以是 dispatch event 或 router 跳转)
+  const loginEvent = new CustomEvent('show-login');
+  window.dispatchEvent(loginEvent);
+
+  // 3. 重置标志位 (3秒后才允许再次触发)
+  setTimeout(() => {
+    isRelogging = false;
+  }, 3000);
+};
+
+request.addResponseInterceptor(async (response, config) => {
+  // 1. 基础防御：如果没有 response (比如网络直接断了)，可能需要走 reject
+  if (!response) {
+    return Promise.reject(new Error('网络连接异常'));
   }
-  return response;
+
+  const { status } = response;
+
+  // ------------------ 修改重点开始 ------------------
+
+  let resData: {};
+
+  try {
+    // 关键点 1: response.data 在原生 fetch 中是不存在的，必须用 .json() 解析
+    // 关键点 2: 必须用 .clone()，因为流只能读一次。读了克隆的，原版 response 还能留给外面用
+    // 关键点 3: 必须 await，因为读取流是异步的
+    resData = await response.clone().json();
+  } catch (e) {
+    // 如果后端返回的不是 JSON (比如 404 HTML 页面，或者空字符串)，json() 会报错
+    // 这里捕获异常，保证 resData 至少是个空对象，不会导致后面取值 crash
+    console.warn('响应体不是有效的JSON:', e);
+    resData = {};
+  }
+
+  // 2. 获取统一的错误码 (转为字符串以匹配 JSON 配置的 Key)
+  // 优先取后端 body 里的 business code，没有则取 HTTP status
+  const code = resData.code ?? status;
+  const codeStr = String(code);
+
+  // 3. 判断成功 (根据你的后端约定：200/0 为成功)
+  // 如果是成功状态，直接返回 response，不拦截
+  if (status === 200 && (code === 200 || code === 0 || code === '0')) {
+    return response;
+  }
+
+  // --- 进入错误处理分支 ---
+
+  // 4. 获取错误文案 (这是我们优化的核心)
+  // 优先级：Store配置文件 > 后端返回的 message > 默认文案
+  const configMsg = errorConfigStore.getMessage(codeStr);
+  const errorMsg = configMsg || resData.message || resData.msg || DEFAULT_ERROR_MSG;
+
+  // 5. 打印日志 (方便开发排查)
+  console.warn(`[API Error] Path: ${config?.url}, Code: ${codeStr}, Msg: ${errorMsg}`);
+
+  // 6. 全局弹窗提示 (排除 401，因为 401 通常直接弹登录框，不需要再弹个 Toast)
+  if (!AUTH_ERR_CODES.includes(code) && !AUTH_ERR_CODES.includes(codeStr)) {
+    // TODO: 替换为你实际的 UI 弹窗，例如 message.error(errorMsg)
+    message.error(errorMsg);
+  }
+
+  // 7. 处理 Token 过期 / 未登录
+  if (AUTH_ERR_CODES.includes(code) || AUTH_ERR_CODES.includes(codeStr)) {
+    handleLoginRedirect();
+  }
+
+  // 8. 返回拒绝的 Promise，中断后续业务代码的 .then() 执行
+  // 将处理过的 errorMsg 塞回去，方便组件内 catch 使用
+  return Promise.reject({
+    ...resData,
+    message: errorMsg,
+    status: status
+  });
 });
 
 // 导出方法

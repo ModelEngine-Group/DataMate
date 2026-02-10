@@ -5,7 +5,7 @@ import asyncio
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exception import BusinessErrorCodeEnum, BusinessException
+from app.core.exception import ErrorCodes, BusinessError
 from app.core.logging import get_logger
 from app.db.models import EvaluationItem, EvaluationTask, DatasetFiles
 from app.db.models.data_evaluation import EvaluationFile
@@ -185,7 +185,7 @@ class EvaluationExecutorFactory:
         for executor in self.executors:
             if executor.get_source_type().value == source_type:
                 return executor
-        raise BusinessException(BusinessErrorCodeEnum.TASK_TYPE_ERROR.value)
+        raise BusinessError(ErrorCodes.EVALUATION_TASK_TYPE_ERROR)
 
 
 class EvaluationTaskService:

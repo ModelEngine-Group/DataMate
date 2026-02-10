@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Tabs, Button } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import { Plus, ArrowRight } from "lucide-react";
-import DataAnnotation from "../DataAnnotation/Annotate/components/TextAnnotation";
 import { useNavigate } from "react-router";
 import InstructionTemplateTab from "./components/InstructionTemplateTab";
 import SynthesisTaskTab from "./components/SynthesisTaskTab";
@@ -24,16 +23,6 @@ export default function DataSynthesisPage() {
             <ArrowRight className="w-4 h-4 rotate-180 mr-2" />
           </Button>
         </div>
-        <DataAnnotation
-          task={undefined}
-          currentFileIndex={0}
-          onSaveAndNext={function (): void {
-            throw new Error("Function not implemented.");
-          }}
-          onSkipAndNext={function (): void {
-            throw new Error("Function not implemented.");
-          }}
-        />
       </div>
     );
   }

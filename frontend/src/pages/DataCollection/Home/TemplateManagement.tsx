@@ -4,6 +4,7 @@ import { SearchControls } from "@/components/SearchControls";
 import useFetchData from "@/hooks/useFetchData";
 import { queryDataXTemplatesUsingGet } from "../collection.apis";
 import { formatDateTime } from "@/utils/unit";
+import { useTranslation } from "react-i18next";
 
 type CollectionTemplate = {
   id: string;
@@ -20,15 +21,16 @@ type CollectionTemplate = {
 
 export default function TemplateManagement() {
   const { message } = App.useApp();
+  const { t } = useTranslation();
 
   const filters = [
     {
       key: "builtIn",
-      label: "模板类型",
+      label: t("dataCollection.templateManagement.filters.templateType"),
       options: [
-        { value: "all", label: "全部" },
-        { value: "true", label: "内置" },
-        { value: "false", label: "自定义" },
+        { value: "all", label: t("dataCollection.templateManagement.filters.all") },
+        { value: "true", label: t("dataCollection.templateManagement.filters.builtIn") },
+        { value: "false", label: t("dataCollection.templateManagement.filters.custom") },
       ],
     },
   ];
@@ -70,7 +72,7 @@ export default function TemplateManagement() {
 
   const columns: ColumnsType<CollectionTemplate> = [
     {
-      title: "模板名称",
+      title: t("dataCollection.templateManagement.columns.templateName"),
       dataIndex: "name",
       key: "name",
       fixed: "left",
@@ -78,16 +80,20 @@ export default function TemplateManagement() {
       ellipsis: true,
     },
     {
-      title: "模板类型",
+      title: t("dataCollection.templateManagement.columns.templateType"),
       dataIndex: "builtIn",
       key: "builtIn",
       width: 120,
       render: (v?: boolean) => (
-        <Tag color={v ? "blue" : "default"}>{v ? "内置" : "自定义"}</Tag>
+        <Tag color={v ? "blue" : "default"}>
+          {v
+            ? t("dataCollection.templateManagement.filters.builtIn")
+            : t("dataCollection.templateManagement.filters.custom")}
+        </Tag>
       ),
     },
     {
-      title: "源端",
+      title: t("dataCollection.templateManagement.columns.source"),
       key: "source",
       width: 220,
       ellipsis: true,
@@ -96,7 +102,7 @@ export default function TemplateManagement() {
       ),
     },
     {
-      title: "目标端",
+      title: t("dataCollection.templateManagement.columns.target"),
       key: "target",
       width: 220,
       ellipsis: true,
@@ -105,21 +111,21 @@ export default function TemplateManagement() {
       ),
     },
     {
-      title: "描述",
+      title: t("dataCollection.templateManagement.columns.description"),
       dataIndex: "description",
       key: "description",
       width: 260,
       ellipsis: true,
-      render: (v?: string) => v || "-",
+      render: (v?: string) => v || t("common.placeholders.empty"),
     },
     {
-      title: "创建时间",
+      title: t("dataCollection.templateManagement.columns.createdAt"),
       dataIndex: "createdAt",
       key: "createdAt",
       width: 160,
     },
     {
-      title: "更新时间",
+      title: t("dataCollection.templateManagement.columns.updatedAt"),
       dataIndex: "updatedAt",
       key: "updatedAt",
       width: 160,
@@ -137,7 +143,7 @@ export default function TemplateManagement() {
             current: 1,
           }))
         }
-        searchPlaceholder="搜索模板名称..."
+        searchPlaceholder={t("dataCollection.templateManagement.filters.searchPlaceholder")}
         filters={filters}
         onFiltersChange={handleFiltersChange}
         showViewToggle={false}
@@ -149,7 +155,7 @@ export default function TemplateManagement() {
           }))
         }
         onReload={() => {
-          fetchData().catch(() => message.error("刷新失败"));
+          fetchData().catch(() => message.error(t("dataCollection.templateManagement.messages.refreshFailed")));
         }}
       />
 

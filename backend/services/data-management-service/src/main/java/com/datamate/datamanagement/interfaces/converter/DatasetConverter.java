@@ -4,15 +4,8 @@ import com.datamate.common.domain.model.ChunkUploadRequest;
 import com.datamate.datamanagement.domain.model.dataset.Dataset;
 import com.datamate.datamanagement.domain.model.dataset.DatasetFile;
 import com.datamate.datamanagement.domain.model.dataset.FileTag;
-import com.datamate.datamanagement.domain.model.dataset.Tag;
 import com.datamate.datamanagement.interfaces.dto.*;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
@@ -34,7 +27,6 @@ public interface DatasetConverter {
     @Mapping(source = "sizeBytes", target = "totalSize")
     @Mapping(source = "path", target = "targetLocation")
     @Mapping(source = "files", target = "distribution", qualifiedByName = "getDistribution")
-    @Mapping(source = "tags", target = "tags", qualifiedByName = "getDatasetTags")
     DatasetResponse convertToResponse(Dataset dataset);
 
     /**
@@ -90,29 +82,5 @@ public interface DatasetConverter {
             }
         }
         return distribution;
-    }
-
-    /**
-     * 获取数据集标签
-     *
-     * @param datasetTag 数据集标签
-     * @return 标签
-     */
-    @Named("getDatasetTags")
-    default List<TagResponse> getDatasetTags(String datasetTag) {
-        List<TagResponse> tagResponses = new ArrayList<>();
-        if (StringUtils.isBlank(datasetTag)) {
-            return tagResponses;
-        }
-        ObjectMapper mapper = new ObjectMapper();
-        try {
-            mapper.registerModule(new JavaTimeModule());
-            // 可选：配置日期时间格式
-            mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-            return mapper.readValue(datasetTag, new TypeReference<List<Tag>>() {
-            }).stream().map(TagConverter.INSTANCE::convertToResponse).toList();
-        } catch (Exception e) {
-            return Collections.emptyList();
-        }
     }
 }

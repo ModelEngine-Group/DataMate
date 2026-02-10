@@ -5,20 +5,10 @@ import { useEffect, useState } from 'react';
 import { getEvaluationTaskByIdUsingGet, queryEvaluationItemsUsingGet } from '../evaluation.api';
 import { EvaluationTask, EvaluationStatus } from '../evaluation.model';
 import DetailHeader from "@/components/DetailHeader.tsx";
-import {TaskStatusMap} from "@/pages/DataCleansing/cleansing.const.tsx";
 import EvaluationItems from "@/pages/DataEvaluation/Detail/components/EvaluationItems.tsx";
 import Overview from "@/pages/DataEvaluation/Detail/components/Overview.tsx";
-
-const tabList = [
-  {
-    key: "overview",
-    label: "概览",
-  },
-  {
-    key: "evaluationItems",
-    label: "评估详情",
-  }
-];
+import { useTranslation } from "react-i18next";
+import { mapEvaluationTask } from "@/pages/DataEvaluation/evaluation.const.tsx";
 
 interface EvaluationItem {
   id: string;
@@ -35,6 +25,7 @@ interface EvaluationItem {
 
 const EvaluationDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState<boolean>(true);
   const [task, setTask] = useState<EvaluationTask | null>(null);
   const [items, setItems] = useState<EvaluationItem[]>([]);
@@ -48,9 +39,9 @@ const EvaluationDetailPage: React.FC = () => {
   const fetchTaskDetail = async () => {
     try {
       const response = await getEvaluationTaskByIdUsingGet(id);
-      setTask(response.data);
+      setTask(mapEvaluationTask(response.data, t));
     } catch (error) {
-      message.error('Failed to fetch task details');
+      message.error(t("dataEvaluation.detail.messages.fetchTaskFailed"));
       console.error('Error fetching task detail:', error);
     }
   };
@@ -69,7 +60,7 @@ const EvaluationDetailPage: React.FC = () => {
         total: response.data.totalElements || 0,
       });
     } catch (error) {
-      message.error('Failed to fetch evaluation items');
+      message.error(t("dataEvaluation.detail.messages.fetchItemsFailed"));
       console.error('Error fetching evaluation items:', error);
     } finally {
       setLoading(false);
@@ -84,7 +75,7 @@ const EvaluationDetailPage: React.FC = () => {
         fetchEvaluationItems(1, pagination.pageSize),
       ]).finally(() => setLoading(false));
     }
-  }, [id]);
+  }, [id, t]);
 
   if (loading && !task) {
     return (
@@ -95,22 +86,33 @@ const EvaluationDetailPage: React.FC = () => {
   }
 
   if (!task) {
-    return <div>Task not found</div>;
+    return <div>{t("dataEvaluation.detail.taskNotFound")}</div>;
   }
+
+  const tabList = [
+    {
+      key: "overview",
+      label: t("dataEvaluation.detail.tabs.overview"),
+    },
+    {
+      key: "evaluationItems",
+      label: t("dataEvaluation.detail.tabs.evaluationItems"),
+    },
+  ];
 
   const breadItems = [
     {
-      title: <Link to="/data/evaluation">数据评估</Link>,
+      title: <Link to="/data/evaluation">{t("dataEvaluation.detail.breadcrumb.home")}</Link>,
     },
     {
-      title: "数据评估详情",
+      title: t("dataEvaluation.detail.breadcrumb.detail"),
     },
   ];
 
   const headerData = {
     ...task,
     icon: <LayoutList className="w-8 h-8" />,
-    status: TaskStatusMap[task?.status],
+    status: task?.status,
     createdAt: task?.createdAt,
     lastUpdated: task?.updatedAt,
   };

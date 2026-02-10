@@ -77,6 +77,11 @@ If you are in an offline environment, you can run the following command to downl
 make download
 ```
 
+### Deploy Label Studio as an annotation tool
+```bash
+make install-label-studio
+```
+
 ### Build and deploy Mineru Enhanced PDF Processing
 ```bash
 make build-mineru

@@ -6,11 +6,13 @@ import { Link, useNavigate } from "react-router";
 import { createDatasetUsingPost } from "../dataset.api";
 import { DatasetType } from "../dataset.model";
 import BasicInformation from "./components/BasicInformation";
+import { useTranslation } from "react-i18next";
 
 export default function DatasetCreate() {
   const navigate = useNavigate();
   const { message } = App.useApp();
   const [form] = Form.useForm();
+  const { t } = useTranslation();
 
   const [newDataset, setNewDataset] = useState({
     name: "",
@@ -28,11 +30,11 @@ export default function DatasetCreate() {
     };
     try {
       const { data } = await createDatasetUsingPost(params);
-      message.success(`数据集创建成功`);
+      message.success(t("dataManagement.messages.createSuccess"));
       navigate("/data/management/detail/" + data.id);
     } catch (error) {
       console.error(error);
-      message.error("数据集创建失败，请重试");
+      message.error(t("dataManagement.messages.createFailed"));
       return;
     }
   };
@@ -51,7 +53,9 @@ export default function DatasetCreate() {
               <ArrowLeft className="w-4 h-4 mr-1" />
             </Button>
           </Link>
-          <h1 className="text-xl font-bold bg-clip-text">创建数据集</h1>
+          <h1 className="text-xl font-bold bg-clip-text">
+            {t("dataManagement.actions.createDataset")}
+          </h1>
         </div>
       </div>
 
@@ -68,13 +72,15 @@ export default function DatasetCreate() {
           </Form>
         </div>
         <div className="flex gap-2 justify-end p-6 border-top">
-          <Button onClick={() => navigate("/data/management")}>取消</Button>
+          <Button onClick={() => navigate("/data/management")}>
+            {t("dataManagement.actions.cancel")}
+          </Button>
           <Button
             type="primary"
             disabled={!newDataset.name || !newDataset.datasetType}
             onClick={handleSubmit}
           >
-            确定
+            {t("dataManagement.actions.confirm")}
           </Button>
         </div>
       </div>

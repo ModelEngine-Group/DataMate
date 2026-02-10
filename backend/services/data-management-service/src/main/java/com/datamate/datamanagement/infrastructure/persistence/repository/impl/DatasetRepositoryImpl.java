@@ -65,10 +65,12 @@ public class DatasetRepositoryImpl extends CrudRepository<DatasetMapper, Dataset
           */
         for (String tagName : query.getTags()) {
             wrapper.and(w ->
-                w.apply("tags IS NOT NULL " +
-                    "AND JSON_VALID(tags) = 1 " +
-                    "AND JSON_LENGTH(tags) > 0 " +
-                    "AND JSON_SEARCH(tags, 'one', {0}, NULL, '$[*].name') IS NOT NULL", tagName)
+                w.apply("EXISTS ( " +
+                    "SELECT 1 FROM jsonb_array_elements( " +
+                    "CASE WHEN jsonb_typeof(tags::jsonb) = 'array' THEN tags::jsonb ELSE '[]'::jsonb END " +
+                    ") AS tag " +
+                    "WHERE tag->>'name' = {0} " +
+                    ")", tagName)
             );
         }
         wrapper.orderByDesc(Dataset::getCreatedAt);
