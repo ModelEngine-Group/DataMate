@@ -86,6 +86,26 @@ class ErrorCodes:
     RATIO_ALREADY_EXISTS: Final = ErrorCode("ratio.0003", "Task already exists", 400)
     RATIO_DELETE_FAILED: Final = ErrorCode("ratio.0004", "Failed to delete task", 500)
 
+    # ========== 清洗模块 ==========
+    CLEANING_TASK_NOT_FOUND: Final = ErrorCode("cleaning.0001", "Cleaning task not found", 404)
+    CLEANING_NAME_DUPLICATED: Final = ErrorCode("cleaning.0002", "Cleaning task name is duplicated", 400)
+    CLEANING_TEMPLATE_NOT_FOUND: Final = ErrorCode("cleaning.0003", "Cleaning template not found", 404)
+    CLEANING_TEMPLATE_NAME_DUPLICATED: Final = ErrorCode("cleaning.0004", "Cleaning template name is duplicated", 400)
+    CLEANING_INVALID_OPERATOR_INPUT: Final = ErrorCode("cleaning.0005", "Invalid operator input/output types", 400)
+    CLEANING_INVALID_EXECUTOR_TYPE: Final = ErrorCode("cleaning.0006", "Invalid executor type", 400)
+    CLEANING_DATASET_NOT_FOUND: Final = ErrorCode("cleaning.0007", "Dataset not found", 404)
+    CLEANING_FILE_SYSTEM_ERROR: Final = ErrorCode("cleaning.0008", "File system error", 500)
+    CLEANING_SETTINGS_PARSE_ERROR: Final = ErrorCode("cleaning.0009", "Settings parse error", 400)
+    CLEANING_TASK_ID_REQUIRED: Final = ErrorCode("cleaning.0010", "Task ID is required", 400)
+
+    # ========== 算子市场模块 ==========
+    OPERATOR_NOT_FOUND: Final = ErrorCode("operator.0001", "Operator not found", 404)
+    OPERATOR_IN_INSTANCE: Final = ErrorCode("operator.0002", "Operator is in use", 400)
+    OPERATOR_CANNOT_DELETE_PREDEFINED: Final = ErrorCode("operator.0003", "Cannot delete predefined operator", 400)
+    OPERATOR_UNSUPPORTED_FILE_TYPE: Final = ErrorCode("operator.0004", "Unsupported file type", 400)
+    OPERATOR_PARSE_FAILED: Final = ErrorCode("operator.0005", "Failed to parse operator package", 400)
+    OPERATOR_FIELD_NOT_FOUND: Final = ErrorCode("operator.0006", "Required field is missing", 400)
+
     # ========== 系统模块 ==========
     SYSTEM_MODEL_NOT_FOUND: Final = ErrorCode("system.0006", "Model configuration not found", 404)
     SYSTEM_MODEL_HEALTH_CHECK_FAILED: Final = ErrorCode("system.0007", "Model health check failed", 500)

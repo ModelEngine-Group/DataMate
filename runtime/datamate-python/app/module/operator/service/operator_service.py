@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, text, func
 
 from app.core.logging import get_logger
+from app.core.exception import BusinessError, ErrorCodes
 from app.module.operator.repository import (
     OperatorRepository,
     CategoryRelationRepository,
@@ -30,11 +31,6 @@ from app.module.operator.constants import (
     EXTRACT_DIR,
     YAML_PATH,
     SERVICE_ID,
-)
-from app.module.operator.exceptions import (
-    SettingsParseError,
-    OperatorInInstanceError,
-    CannotDeletePredefinedOperatorError,
 )
 from app.module.shared.file_service import FileService
 from app.module.shared.file_models import (
@@ -254,7 +250,7 @@ class OperatorService:
         row = result.fetchone()
 
         if not row:
-            raise ValueError(f"Operator {operator_id} not found")
+            raise BusinessError(ErrorCodes.OPERATOR_NOT_FOUND, operator_id)
 
         # Parse categories from comma-separated string
         categories_str = row.categories if hasattr(row, 'categories') and row.categories else ""
@@ -437,14 +433,14 @@ class OperatorService:
         in_template = await self.operator_repo.operator_in_template(operator_id, db)
         in_unstop_task = await self.operator_repo.operator_in_unstop_task(operator_id, db)
         if in_template or in_unstop_task:
-            raise OperatorInInstanceError()
+            raise BusinessError(ErrorCodes.OPERATOR_IN_INSTANCE)
 
         # Check if operator is predefined
         is_predefined = await self.category_relation_repo.operator_is_predefined(
             operator_id, db
         )
         if is_predefined:
-            raise CannotDeletePredefinedOperatorError()
+            raise BusinessError(ErrorCodes.OPERATOR_CANNOT_DELETE_PREDEFINED)
 
         # Get operator for file cleanup
         operator = await self.get_operator_by_id(operator_id, db)
@@ -550,7 +546,7 @@ class OperatorService:
 
             operator.settings = json.dumps(settings)
         except json.JSONDecodeError as e:
-            raise SettingsParseError(str(e))
+            raise BusinessError(ErrorCodes.OPERATOR_PARSE_FAILED, str(e))
 
     def _convert_to_list_string(self, value: Any) -> str:
         """转换为逗号分隔的字符串"""
