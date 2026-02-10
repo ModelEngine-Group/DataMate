@@ -4,7 +4,7 @@ Operator API Routes
 """
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, Form, File, Body
+from fastapi import APIRouter, Depends, UploadFile, Form, File, Body
 from fastapi.responses import FileResponse
 
 from app.core.logging import get_logger
@@ -30,6 +30,7 @@ logger = get_logger(__name__)
 
 router = APIRouter(prefix="/operators", tags=["Operator"])
 
+
 def get_operator_service() -> OperatorService:
     """获取算子服务实例"""
     return OperatorService(
@@ -51,7 +52,7 @@ def get_operator_service() -> OperatorService:
 async def list_operators(
     request: OperatorListRequest,
     service: OperatorService = Depends(get_operator_service),
-    db=Depends(get_db)
+    db = Depends(get_db),
 ):
     """查询算子列表"""
     operators = await service.get_operators(
@@ -70,7 +71,7 @@ async def list_operators(
         db=db
     )
 
-    total_pages = (count + request.size - 1) // request.size  # Ceiling division
+    total_pages = (count + request.size - 1) // request.size
 
     return StandardResponse(
         code="0",
@@ -94,15 +95,12 @@ async def list_operators(
 async def get_operator(
     operator_id: str,
     service: OperatorService = Depends(get_operator_service),
-    db=Depends(get_db)
+    db = Depends(get_db)
 ):
     """获取算子详情"""
-    try:
-        operator = await service.get_operator_by_id(operator_id, db)
-        operator.file_name = None  # Don't return file_name
-        return StandardResponse(code="0", message="success", data=operator)
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+    operator = await service.get_operator_by_id(operator_id, db)
+    operator.file_name = None
+    return StandardResponse(code="0", message="success", data=operator)
 
 
 @router.put(
@@ -115,17 +113,12 @@ async def update_operator(
     operator_id: str,
     request: OperatorUpdateDto,
     service: OperatorService = Depends(get_operator_service),
-    db=Depends(get_db)
+    db = Depends(get_db)
 ):
     """更新算子"""
-    try:
-        operator = await service.update_operator(operator_id, request, db)
-        await db.commit()
-        return StandardResponse(code="0", message="success", data=operator)
-    except Exception as e:
-        logger.error(f"{operator_id}  {request}", e)
-        await db.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
+    operator = await service.update_operator(operator_id, request, db)
+    await db.commit()
+    return StandardResponse(code="0", message="success", data=operator)
 
 
 @router.post(
@@ -137,16 +130,12 @@ async def update_operator(
 async def create_operator(
     request: OperatorDto,
     service: OperatorService = Depends(get_operator_service),
-    db=Depends(get_db)
+    db = Depends(get_db)
 ):
     """创建算子"""
-    try:
-        operator = await service.create_operator(request, db)
-        await db.commit()
-        return StandardResponse(code="0", message="success", data=operator)
-    except Exception as e:
-        await db.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
+    operator = await service.create_operator(request, db)
+    await db.commit()
+    return StandardResponse(code="0", message="success", data=operator)
 
 
 @router.post(
@@ -158,18 +147,15 @@ async def create_operator(
 async def upload_operator(
     request: dict = Body(...),
     service: OperatorService = Depends(get_operator_service),
-    db=Depends(get_db)
+    db = Depends(get_db),
 ):
     """上传算子"""
-    try:
-        file_name = request.get("fileName")
-        if not file_name:
-            raise HTTPException(status_code=422, detail="fileName is required")
-        operator = await service.upload_operator(file_name, db)
-        return StandardResponse(code="0", message="success", data=operator)
-    except Exception as e:
-        logger.error(f"{file_name}", e)
-        raise HTTPException(status_code=400, detail=str(e))
+    file_name = request.get("fileName")
+    if not file_name:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=422, detail="fileName is required")
+    operator = await service.upload_operator(file_name, db)
+    return StandardResponse(code="0", message="success", data=operator)
 
 
 @router.post(
@@ -180,20 +166,16 @@ async def upload_operator(
 )
 async def pre_upload(
     service: OperatorService = Depends(get_operator_service),
-    db=Depends(get_db)
+    db = Depends(get_db),
 ):
     """预上传"""
-    try:
-        req_id = await service.pre_upload(db)
-        await db.commit()
-        return StandardResponse(
-            code="0",
-            message="success",
-            data=req_id,
-        )
-    except Exception as e:
-        await db.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
+    req_id = await service.pre_upload(db)
+    await db.commit()
+    return StandardResponse(
+        code="0",
+        message="success",
+        data=req_id,
+    )
 
 
 @router.post(
@@ -211,26 +193,22 @@ async def chunk_upload(
     file: UploadFile = File(...),
     check_sum_hex: Optional[str] = Form(None, alias="checkSumHex", description="校验和"),
     service: OperatorService = Depends(get_operator_service),
-    db=Depends(get_db)
+    db = Depends(get_db),
 ):
     """分块上传"""
-    try:
-        file_content = await file.read()
-        result = await service.chunk_upload(
-            req_id=req_id,
-            file_no=file_no,
-            file_name=file_name,
-            total_chunk_num=total_chunk_num,
-            chunk_no=chunk_no,
-            check_sum_hex=check_sum_hex,
-            file_content=file_content,
-            db=db
-        )
-        await db.commit()
-        return StandardResponse(code="0", message="success", data=result.dict())
-    except Exception as e:
-        await db.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
+    file_content = await file.read()
+    result = await service.chunk_upload(
+        req_id=req_id,
+        file_no=file_no,
+        file_name=file_name,
+        total_chunk_num=total_chunk_num,
+        chunk_no=chunk_no,
+        check_sum_hex=check_sum_hex,
+        file_content=file_content,
+        db=db
+    )
+    await db.commit()
+    return StandardResponse(code="0", message="success", data=result.dict())
 
 
 @router.delete(
@@ -242,16 +220,12 @@ async def chunk_upload(
 async def delete_operator(
     operator_id: str,
     service: OperatorService = Depends(get_operator_service),
-    db=Depends(get_db)
+    db = Depends(get_db),
 ):
     """删除算子"""
-    try:
-        await service.delete_operator(operator_id, db)
-        await db.commit()
-        return StandardResponse(code="0", message="success", data=None)
-    except Exception as e:
-        await db.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
+    await service.delete_operator(operator_id, db)
+    await db.commit()
+    return StandardResponse(code="0", message="success", data=None)
 
 
 @router.get(
@@ -261,17 +235,15 @@ async def delete_operator(
     description="下载示例算子文件"
 )
 async def download_example_operator(
-    service: OperatorService = Depends(get_operator_service)
+    service: OperatorService = Depends(get_operator_service),
 ):
     """下载示例算子"""
     from app.module.operator.constants import EXAMPLE_OPERATOR_PATH
+
     example_path = EXAMPLE_OPERATOR_PATH
-    try:
-        file_path = service.download_example_operator(example_path)
-        return FileResponse(
-            path=str(file_path),
-            filename=file_path.name,
-            media_type="application/octet-stream"
-        )
-    except FileNotFoundError:
-        raise HTTPException(status_code=404, detail="Example file not found")
+    file_path = service.download_example_operator(example_path)
+    return FileResponse(
+        path=str(file_path),
+        filename=file_path.name,
+        media_type="application/octet-stream"
+    )

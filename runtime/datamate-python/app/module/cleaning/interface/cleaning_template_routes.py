@@ -1,7 +1,9 @@
 import math
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, Query
+
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select, func
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import get_logger
 from app.db.session import get_db
@@ -9,11 +11,9 @@ from app.module.cleaning.schema import (
     CleaningTemplateDto,
     CreateCleaningTemplateRequest,
     UpdateCleaningTemplateRequest,
-    OperatorInstanceDto,
 )
 from app.module.cleaning.service import CleaningTemplateService
 from app.module.shared.schema import StandardResponse, PaginatedData
-from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = get_logger(__name__)
 
@@ -48,15 +48,16 @@ def _get_template_service(db: AsyncSession) -> CleaningTemplateService:
         CleaningTemplateRepository,
         OperatorInstanceRepository,
     )
-    from app.db.models.cleaning import CleaningTemplate, OperatorInstance
 
     operator_service = _get_operator_service()
 
+    template_repo = CleaningTemplateRepository(None)
+
     return CleaningTemplateService(
-        template_repo=CleaningTemplateRepository(None),
+        template_repo=template_repo,
         operator_instance_repo=OperatorInstanceRepository(None),
         operator_service=operator_service,
-        validator=CleanTaskValidator(),
+        validator=CleanTaskValidator(task_repo=None, template_repo=template_repo),
     )
 
 
@@ -73,39 +74,36 @@ async def get_cleaning_templates(
     db: AsyncSession = Depends(get_db),
 ):
     """Query cleaning templates with pagination"""
-    try:
-        from app.db.models.cleaning import CleaningTemplate
+    from app.db.models.cleaning import CleaningTemplate
 
-        template_service = _get_template_service(db)
+    template_service = _get_template_service(db)
 
-        query = select(CleaningTemplate)
+    query = select(CleaningTemplate)
 
-        if keyword:
-            keyword_pattern = f"%{keyword}%"
-            query = query.where(
-                CleaningTemplate.name.ilike(keyword_pattern) | CleaningTemplate.description.ilike(keyword_pattern)
-            )
-
-        count_query = select(func.count()).select_from(query.subquery())
-        total = (await db.execute(count_query)).scalar_one()
-        items = await template_service.get_templates(db, keyword)
-
-        total_pages = math.ceil(total / size) if total > 0 else 0
-
-        return StandardResponse(
-            code="0",
-            message="success",
-            data=PaginatedData(
-                content=items,
-                total_elements=total,
-                total_pages=total_pages,
-                page=page,
-                size=size,
-            )
+    if keyword:
+        keyword_pattern = f"%{keyword}%"
+        query = query.where(
+            CleaningTemplate.name.ilike(keyword_pattern) | CleaningTemplate.description.ilike(keyword_pattern)
         )
-    except Exception as e:
-        logger.error(f"Failed to get cleaning templates: {e}", exc_info=True)
-        raise HTTPException(status_code=400, detail=str(e))
+
+    count_query = select(func.count()).select_from(query.subquery())
+    total = (await db.execute(count_query)).scalar_one()
+
+    items = await template_service.get_templates(db, keyword)
+
+    total_pages = math.ceil(total / size) if total > 0 else 0
+
+    return StandardResponse(
+        code="0",
+        message="success",
+        data=PaginatedData(
+            content=items,
+            total_elements=total,
+            total_pages=total_pages,
+            page=page,
+            size=size,
+        )
+    )
 
 
 @router.post(
@@ -119,16 +117,12 @@ async def create_cleaning_template(
     db: AsyncSession = Depends(get_db),
 ):
     """Create cleaning template"""
-    try:
-        template_service = _get_template_service(db)
+    template_service = _get_template_service(db)
 
-        template = await template_service.create_template(db, request)
-        await db.commit()
-        return StandardResponse(code="0", message="success", data=template)
-    except Exception as e:
-        await db.rollback()
-        logger.error(f"Failed to create cleaning template: {e}", exc_info=True)
-        raise HTTPException(status_code=400, detail=str(e))
+    template = await template_service.create_template(db, request)
+    await db.commit()
+
+    return StandardResponse(code="0", message="success", data=template)
 
 
 @router.get(
@@ -142,14 +136,10 @@ async def get_cleaning_template(
     db: AsyncSession = Depends(get_db),
 ):
     """Get cleaning template by ID"""
-    try:
-        template_service = _get_template_service(db)
+    template_service = _get_template_service(db)
 
-        template = await template_service.get_template(db, template_id)
-        return StandardResponse(code="0", message="success", data=template)
-    except Exception as e:
-        logger.error(f"Failed to get cleaning template {template_id}: {e}", exc_info=True)
-        raise HTTPException(status_code=404, detail=str(e))
+    template = await template_service.get_template(db, template_id)
+    return StandardResponse(code="0", message="success", data=template)
 
 
 @router.put(
@@ -164,16 +154,12 @@ async def update_cleaning_template(
     db: AsyncSession = Depends(get_db),
 ):
     """Update cleaning template"""
-    try:
-        template_service = _get_template_service(db)
+    template_service = _get_template_service(db)
 
-        template = await template_service.update_template(db, template_id, request)
-        await db.commit()
-        return StandardResponse(code="0", message="success", data=template)
-    except Exception as e:
-        await db.rollback()
-        logger.error(f"Failed to update cleaning template {template_id}: {e}", exc_info=True)
-        raise HTTPException(status_code=400, detail=str(e))
+    template = await template_service.update_template(db, template_id, request)
+    await db.commit()
+
+    return StandardResponse(code="0", message="success", data=template)
 
 
 @router.delete(
@@ -187,12 +173,8 @@ async def delete_cleaning_template(
     db: AsyncSession = Depends(get_db),
 ):
     """Delete cleaning template"""
-    try:
-        template_service = _get_template_service(db)
-        await template_service.delete_template(db, template_id)
-        await db.commit()
-        return StandardResponse(code="0", message="success", data=template_id)
-    except Exception as e:
-        await db.rollback()
-        logger.error(f"Failed to delete cleaning template {template_id}: {e}", exc_info=True)
-        raise HTTPException(status_code=400, detail=str(e))
+    template_service = _get_template_service(db)
+    await template_service.delete_template(db, template_id)
+    await db.commit()
+
+    return StandardResponse(code="0", message="success", data=template_id)

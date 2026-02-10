@@ -74,14 +74,10 @@ export default function OperatorMarketPage() {
   };
 
   const handleDeleteOperator = async (operator: OperatorI) => {
-    try {
-      await deleteOperatorByIdUsingDelete(operator.id);
-      message.success("算子删除成功");
-      fetchData();
-      await initCategoriesTree();
-    } catch (error) {
-      message.error("算子删除失败");
-    }
+    await deleteOperatorByIdUsingDelete(operator.id);
+    message.success("算子删除成功");
+    fetchData();
+    await initCategoriesTree();
   };
 
   const handleStar = async (operator: OperatorI) => {

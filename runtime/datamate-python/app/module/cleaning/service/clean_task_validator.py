@@ -1,10 +1,29 @@
-import re
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.exception import BusinessError, ErrorCodes
 from app.module.cleaning.schema import OperatorInstanceDto
-from app.module.cleaning.exceptions import InvalidOperatorInputError, ExecutorTypeError
 
 
 class CleanTaskValidator:
     """Validator for cleaning tasks and templates"""
+
+    def __init__(self, task_repo=None, template_repo=None):
+        self.task_repo = task_repo
+        self.template_repo = template_repo
+
+    async def check_task_name_duplication(self, db: AsyncSession, name: str) -> None:
+        """Check if task name is duplicated"""
+        if not name:
+            raise BusinessError(ErrorCodes.CLEANING_NAME_DUPLICATED)
+        if await self.task_repo.is_name_exist(db, name):
+            raise BusinessError(ErrorCodes.CLEANING_NAME_DUPLICATED)
+
+    async def check_template_name_duplication(self, db: AsyncSession, name: str) -> None:
+        """Check if template name is duplicated"""
+        if not name:
+            raise BusinessError(ErrorCodes.CLEANING_TEMPLATE_NAME_DUPLICATED)
+        if await self.template_repo.is_name_exist(db, name):
+            raise BusinessError(ErrorCodes.CLEANING_TEMPLATE_NAME_DUPLICATED)
 
     @staticmethod
     def check_input_and_output(instances: list[OperatorInstanceDto]) -> None:
@@ -17,16 +36,23 @@ class CleanTaskValidator:
             next_op = instances[i + 1]
 
             if not current.outputs:
-                raise InvalidOperatorInputError(f"Operator {current.id} has no outputs defined")
+                raise BusinessError(
+                    ErrorCodes.CLEANING_INVALID_OPERATOR_INPUT,
+                    f"Operator {current.id} has no outputs defined"
+                )
 
             if not next_op.inputs:
-                raise InvalidOperatorInputError(f"Operator {next_op.id} has no inputs defined")
+                raise BusinessError(
+                    ErrorCodes.CLEANING_INVALID_OPERATOR_INPUT,
+                    f"Operator {next_op.id} has no inputs defined"
+                )
 
             current_outputs = set(current.outputs.split(','))
             next_inputs = set(next_op.inputs.split(','))
 
             if not current_outputs.intersection(next_inputs):
-                raise InvalidOperatorInputError(
+                raise BusinessError(
+                    ErrorCodes.CLEANING_INVALID_OPERATOR_INPUT,
                     f"Operator {current.id} outputs {current.outputs} "
                     f"but operator {next_op.id} requires {next_op.inputs}"
                 )
@@ -48,7 +74,8 @@ class CleanTaskValidator:
                         executor_types.add("datamate")
 
         if len(executor_types) > 1:
-            raise ExecutorTypeError(
+            raise BusinessError(
+                ErrorCodes.CLEANING_INVALID_EXECUTOR_TYPE,
                 "Cannot mix DataMate and DataJuicer operators in same task"
             )
 
@@ -58,4 +85,4 @@ class CleanTaskValidator:
     def check_task_id(task_id: str) -> None:
         """Validate task ID"""
         if not task_id:
-            raise ValueError("Task ID cannot be empty")
+            raise BusinessError(ErrorCodes.CLEANING_TASK_ID_REQUIRED)

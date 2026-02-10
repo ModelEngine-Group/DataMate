@@ -4,15 +4,17 @@ from typing import List
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.exception import BusinessError, ErrorCodes
 from app.core.logging import get_logger
+from app.module.cleaning import UpdateCleaningTemplateRequest
+from app.module.cleaning.repository import (
+    CleaningTemplateRepository,
+    OperatorInstanceRepository,
+)
 from app.module.cleaning.schema import (
     CleaningTemplateDto,
     CreateCleaningTemplateRequest,
     OperatorInstanceDto,
-)
-from app.module.cleaning.repository import (
-    CleaningTemplateRepository,
-    OperatorInstanceRepository,
 )
 from app.module.cleaning.service.clean_task_validator import CleanTaskValidator
 
@@ -97,7 +99,7 @@ class CleaningTemplateService:
         """Get template by ID"""
         template = await self.template_repo.find_template_by_id(db, template_id)
         if not template:
-            raise ValueError(f"Template {template_id} not found")
+            raise BusinessError(ErrorCodes.CLEANING_TEMPLATE_NOT_FOUND, template_id)
 
         template_dto = CleaningTemplateDto(
             id=template.id,
@@ -144,6 +146,7 @@ class CleaningTemplateService:
         """Create new template"""
         from app.db.models.cleaning import CleaningTemplate
 
+        await self.validator.check_template_name_duplication(db, request.name)
         self.validator.check_input_and_output(request.instance)
         self.validator.check_and_get_executor_type(request.instance)
 
@@ -164,14 +167,13 @@ class CleaningTemplateService:
         self,
         db: AsyncSession,
         template_id: str,
-        request: CreateCleaningTemplateRequest
+        request: UpdateCleaningTemplateRequest
     ) -> CleaningTemplateDto:
         """Update template"""
-        from app.db.models.cleaning import CleaningTemplate
 
         template = await self.template_repo.find_template_by_id(db, template_id)
         if not template:
-            raise ValueError(f"Template {template_id} not found")
+            raise BusinessError(ErrorCodes.CLEANING_TEMPLATE_NOT_FOUND, template_id)
 
         template.name = request.name
         template.description = request.description

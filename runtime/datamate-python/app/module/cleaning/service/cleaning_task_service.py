@@ -1,16 +1,21 @@
 import json
-import os
-import uuid
 import re
 import shutil
+import uuid
 from pathlib import Path
 from typing import List, Dict, Any, Set
-from datetime import datetime
 
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import get_logger
+from app.db.models.base_entity import LineageNode, LineageEdge
+from app.core.exception import BusinessError, ErrorCodes
+from app.module.cleaning.repository import (
+    CleaningTaskRepository,
+    CleaningResultRepository,
+    OperatorInstanceRepository,
+)
 from app.module.cleaning.schema import (
     CleaningTaskDto,
     CreateCleaningTaskRequest,
@@ -20,20 +25,10 @@ from app.module.cleaning.schema import (
     CleaningProcess,
     CleaningTaskStatus,
 )
-from app.module.cleaning.repository import (
-    CleaningTaskRepository,
-    CleaningResultRepository,
-    OperatorInstanceRepository,
-)
-from app.module.cleaning.service.cleaning_task_scheduler import CleaningTaskScheduler
 from app.module.cleaning.service.clean_task_validator import CleanTaskValidator
-from app.module.cleaning.exceptions import (
-    CleaningTaskNotFoundError,
-    FileSystemError,
-)
-from app.module.shared.schema.lineage import NodeType, EdgeType
-from app.db.models.base_entity import LineageNode, LineageEdge
+from app.module.cleaning.service.cleaning_task_scheduler import CleaningTaskScheduler
 from app.module.shared.common.lineage import LineageService
+from app.module.shared.schema.lineage import NodeType, EdgeType
 
 logger = get_logger(__name__)
 
@@ -99,7 +94,7 @@ class CleaningTaskService:
         """Get task by ID"""
         task = await self.task_repo.find_task_by_id(db, task_id)
         if not task:
-            raise CleaningTaskNotFoundError(task_id)
+            raise BusinessError(ErrorCodes.CLEANING_TASK_NOT_FOUND, task_id)
 
         await self._set_process(db, task)
 
@@ -138,6 +133,7 @@ class CleaningTaskService:
             instances = await self.get_instance_by_template_id(db, request.template_id)
             request.instance = instances
 
+        await self.validator.check_task_name_duplication(db, request.name)
         self.validator.check_input_and_output(request.instance)
         executor_type = self.validator.check_and_get_executor_type(request.instance)
 
@@ -162,7 +158,7 @@ class CleaningTaskService:
 
         src_dataset = await self.dataset_service.get_dataset(request.src_dataset_id)
         if not src_dataset:
-            raise Exception(f"Source dataset not found: {request.src_dataset_id}")
+            raise BusinessError(ErrorCodes.CLEANING_DATASET_NOT_FOUND, request.src_dataset_id)
 
         task_dto = CleaningTaskDto(
             id=task_id,
@@ -265,7 +261,7 @@ class CleaningTaskService:
                 yaml.dump(process_config, f, default_flow_style=False, allow_unicode=True)
         except Exception as e:
             logger.error(f"Failed to write process.yaml: {e}")
-            raise FileSystemError(f"Failed to write process.yaml: {e}")
+            raise BusinessError(ErrorCodes.CLEANING_FILE_SYSTEM_ERROR, str(e))
 
     def _get_default_values(self, operator) -> Dict[str, Any]:
         """Get default values from operator settings"""
@@ -403,7 +399,7 @@ class CleaningTaskService:
 
         task = await self.task_repo.find_task_by_id(db, task_id)
         if not task:
-            raise CleaningTaskNotFoundError(task_id)
+            raise BusinessError(ErrorCodes.CLEANING_TASK_NOT_FOUND, task_id)
 
         await self.scan_dataset(db, task_id, task.src_dataset_id, succeed_set)
         await self.result_repo.delete_by_instance_id(db, task_id, "FAILED")

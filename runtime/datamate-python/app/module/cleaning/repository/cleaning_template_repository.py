@@ -1,6 +1,6 @@
 from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, func
 from app.db.models.cleaning import CleaningTemplate
 
 
@@ -55,3 +55,9 @@ class CleaningTemplateRepository:
         query = delete(self.model).where(self.model.id == template_id)
         await db.execute(query)
         await db.flush()
+
+    async def is_name_exist(self, db: AsyncSession, name: str) -> bool:
+        """Check if template name exists"""
+        query = select(func.count()).select_from(self.model).where(self.model.name == name)
+        result = await db.execute(query)
+        return result.scalar_one() > 0 if result else False

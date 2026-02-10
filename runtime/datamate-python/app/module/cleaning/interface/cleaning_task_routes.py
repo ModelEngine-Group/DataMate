@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import get_logger
@@ -64,13 +64,15 @@ def _get_task_service(db: AsyncSession) -> CleaningTaskService:
     dataset_service = DatasetManagementService(db)
     lineage_service = LineageService(db)
 
+    task_repo = CleaningTaskRepository(None)
+
     return CleaningTaskService(
-        task_repo=CleaningTaskRepository(None),
+        task_repo=task_repo,
         result_repo=CleaningResultRepository(None),
         operator_instance_repo=OperatorInstanceRepository(None),
         operator_service=operator_service,
         scheduler=scheduler,
-        validator=CleanTaskValidator(),
+        validator=CleanTaskValidator(task_repo=task_repo, template_repo=None),
         dataset_service=dataset_service,
         lineage_service=lineage_service,
     )
@@ -122,20 +124,15 @@ async def create_cleaning_task(
     db: AsyncSession = Depends(get_db),
 ):
     """Create cleaning task"""
-    try:
-        task_service = _get_task_service(db)
+    task_service = _get_task_service(db)
 
-        task = await task_service.create_task(db, request)
-        await db.commit()
+    task = await task_service.create_task(db, request)
+    await db.commit()
 
-        await task_service.execute_task(db, task.id)
-        await db.commit()
+    await task_service.execute_task(db, task.id)
+    await db.commit()
 
-        return StandardResponse(code="0", message="success", data=task)
-    except Exception as e:
-        await db.rollback()
-        logger.error(f"Failed to create cleaning task: {e}", exc_info=True)
-        raise HTTPException(status_code=400, detail=str(e))
+    return StandardResponse(code="0", message="success", data=task)
 
 
 @router.get(
@@ -149,13 +146,9 @@ async def get_cleaning_task(
     db: AsyncSession = Depends(get_db),
 ):
     """Get cleaning task by ID"""
-    try:
-        task_service = _get_task_service(db)
-        task = await task_service.get_task(db, task_id)
-        return StandardResponse(code="0", message="success", data=task)
-    except Exception as e:
-        logger.error(f"Failed to get cleaning task {task_id}: {e}", exc_info=True)
-        raise HTTPException(status_code=404, detail=str(e))
+    task_service = _get_task_service(db)
+    task = await task_service.get_task(db, task_id)
+    return StandardResponse(code="0", message="success", data=task)
 
 
 @router.delete(
@@ -169,15 +162,10 @@ async def delete_cleaning_task(
     db: AsyncSession = Depends(get_db),
 ):
     """Delete cleaning task"""
-    try:
-        task_service = _get_task_service(db)
-        await task_service.delete_task(db, task_id)
-        await db.commit()
-        return StandardResponse(code="0", message="success", data=task_id)
-    except Exception as e:
-        await db.rollback()
-        logger.error(f"Failed to delete cleaning task {task_id}: {e}", exc_info=True)
-        raise HTTPException(status_code=400, detail=str(e))
+    task_service = _get_task_service(db)
+    await task_service.delete_task(db, task_id)
+    await db.commit()
+    return StandardResponse(code="0", message="success", data=task_id)
 
 
 @router.post(
@@ -191,13 +179,9 @@ async def stop_cleaning_task(
     db: AsyncSession = Depends(get_db),
 ):
     """Stop cleaning task"""
-    try:
-        task_service = _get_task_service(db)
-        await task_service.stop_task(db, task_id)
-        return StandardResponse(code="0", message="success", data=task_id)
-    except Exception as e:
-        logger.error(f"Failed to stop cleaning task {task_id}: {e}", exc_info=True)
-        raise HTTPException(status_code=400, detail=str(e))
+    task_service = _get_task_service(db)
+    await task_service.stop_task(db, task_id)
+    return StandardResponse(code="0", message="success", data=task_id)
 
 
 @router.post(
@@ -211,15 +195,10 @@ async def execute_cleaning_task(
     db: AsyncSession = Depends(get_db),
 ):
     """Execute cleaning task"""
-    try:
-        task_service = _get_task_service(db)
-        await task_service.execute_task(db, task_id)
-        await db.commit()
-        return StandardResponse(code="0", message="success", data=task_id)
-    except Exception as e:
-        await db.rollback()
-        logger.error(f"Failed to execute cleaning task {task_id}: {e}", exc_info=True)
-        raise HTTPException(status_code=400, detail=str(e))
+    task_service = _get_task_service(db)
+    await task_service.execute_task(db, task_id)
+    await db.commit()
+    return StandardResponse(code="0", message="success", data=task_id)
 
 
 @router.get(
@@ -233,13 +212,9 @@ async def get_cleaning_task_results(
     db: AsyncSession = Depends(get_db),
 ):
     """Get cleaning task results"""
-    try:
-        task_service = _get_task_service(db)
-        results = await task_service.get_task_results(db, task_id)
-        return StandardResponse(code="0", message="success", data=results)
-    except Exception as e:
-        logger.error(f"Failed to get task results {task_id}: {e}", exc_info=True)
-        raise HTTPException(status_code=400, detail=str(e))
+    task_service = _get_task_service(db)
+    results = await task_service.get_task_results(db, task_id)
+    return StandardResponse(code="0", message="success", data=results)
 
 
 @router.get(
@@ -254,10 +229,6 @@ async def get_cleaning_task_log(
     db: AsyncSession = Depends(get_db),
 ):
     """Get cleaning task log"""
-    try:
-        task_service = _get_task_service(db)
-        logs = await task_service.get_task_log(db, task_id, retry_count)
-        return StandardResponse(code="0", message="success", data=logs)
-    except Exception as e:
-        logger.error(f"Failed to get task log {task_id}: {e}", exc_info=True)
-        raise HTTPException(status_code=400, detail=str(e))
+    task_service = _get_task_service(db)
+    logs = await task_service.get_task_log(db, task_id, retry_count)
+    return StandardResponse(code="0", message="success", data=logs)
