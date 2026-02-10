@@ -1,0 +1,54 @@
+name: image_processor
+display_name: Image Processor
+version: 1.0.0
+description: |
+  Process images: classify content type and extract text using OCR.
+category: ImageOp
+tags:
+  - image
+  - processing
+  - classification
+  - ocr
+  - text-extraction
+author: DataMate
+license: MIT
+input_schema:
+  type: object
+  properties:
+    image_path:
+      type: string
+      description: Path or URL to the image file
+      required: true
+    language:
+      type: string
+      description: OCR language code (e.g., 'eng', 'chi_sim')
+      required: false
+      default: "eng"
+output_schema:
+  type: object
+  properties:
+    category:
+      type: string
+      description: Detected image category (document/screenshot/photo/chart/qrcode)
+    text:
+      type: string
+      description: Extracted text content from the image
+    confidence:
+      type: number
+      description: Classification confidence score (0-1)
+    image_info:
+      type: object
+      description: Image metadata
+      properties:
+        width:
+          type: integer
+        height:
+          type: integer
+        format:
+          type: string
+        size:
+          type: integer
+requirements:
+  - pytesseract>=0.3.10
+  - Pillow>=9.0.0
+dependencies: []
