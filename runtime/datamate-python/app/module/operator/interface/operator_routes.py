@@ -73,7 +73,7 @@ async def list_operators(
     total_pages = (count + request.size - 1) // request.size  # Ceiling division
 
     return StandardResponse(
-        code=200,
+        code="0",
         message="success",
         data=PaginatedData(
             page=request.page,
@@ -100,7 +100,7 @@ async def get_operator(
     try:
         operator = await service.get_operator_by_id(operator_id, db)
         operator.file_name = None  # Don't return file_name
-        return StandardResponse(code=200, message="success", data=operator)
+        return StandardResponse(code="0", message="success", data=operator)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
@@ -121,7 +121,7 @@ async def update_operator(
     try:
         operator = await service.update_operator(operator_id, request, db)
         await db.commit()
-        return StandardResponse(code=200, message="success", data=operator)
+        return StandardResponse(code="0", message="success", data=operator)
     except Exception as e:
         logger.error(f"{operator_id}  {request}", e)
         await db.rollback()
@@ -143,7 +143,7 @@ async def create_operator(
     try:
         operator = await service.create_operator(request, db)
         await db.commit()
-        return StandardResponse(code=200, message="success", data=operator)
+        return StandardResponse(code="0", message="success", data=operator)
     except Exception as e:
         await db.rollback()
         raise HTTPException(status_code=400, detail=str(e))
@@ -166,7 +166,7 @@ async def upload_operator(
         if not file_name:
             raise HTTPException(status_code=422, detail="fileName is required")
         operator = await service.upload_operator(file_name, db)
-        return StandardResponse(code=200, message="success", data=operator)
+        return StandardResponse(code="0", message="success", data=operator)
     except Exception as e:
         logger.error(f"{file_name}", e)
         raise HTTPException(status_code=400, detail=str(e))
@@ -187,7 +187,7 @@ async def pre_upload(
         req_id = await service.pre_upload(db)
         await db.commit()
         return StandardResponse(
-            code=200,
+            code="0",
             message="success",
             data=req_id,
         )
@@ -227,7 +227,7 @@ async def chunk_upload(
             db=db
         )
         await db.commit()
-        return StandardResponse(code=200, message="success", data=result.dict())
+        return StandardResponse(code="0", message="success", data=result.dict())
     except Exception as e:
         await db.rollback()
         raise HTTPException(status_code=400, detail=str(e))
@@ -248,7 +248,7 @@ async def delete_operator(
     try:
         await service.delete_operator(operator_id, db)
         await db.commit()
-        return StandardResponse(code=200, message="success", data=None)
+        return StandardResponse(code="0", message="success", data=None)
     except Exception as e:
         await db.rollback()
         raise HTTPException(status_code=400, detail=str(e))

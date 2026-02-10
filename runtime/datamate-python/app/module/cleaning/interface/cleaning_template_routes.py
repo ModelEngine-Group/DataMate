@@ -93,7 +93,7 @@ async def get_cleaning_templates(
         total_pages = math.ceil(total / size) if total > 0 else 0
 
         return StandardResponse(
-            code=200,
+            code="0",
             message="success",
             data=PaginatedData(
                 content=items,
@@ -124,7 +124,7 @@ async def create_cleaning_template(
 
         template = await template_service.create_template(db, request)
         await db.commit()
-        return StandardResponse(code=200, message="success", data=template)
+        return StandardResponse(code="0", message="success", data=template)
     except Exception as e:
         await db.rollback()
         logger.error(f"Failed to create cleaning template: {e}", exc_info=True)
@@ -146,7 +146,7 @@ async def get_cleaning_template(
         template_service = _get_template_service(db)
 
         template = await template_service.get_template(db, template_id)
-        return StandardResponse(code=200, message="success", data=template)
+        return StandardResponse(code="0", message="success", data=template)
     except Exception as e:
         logger.error(f"Failed to get cleaning template {template_id}: {e}", exc_info=True)
         raise HTTPException(status_code=404, detail=str(e))
@@ -169,7 +169,7 @@ async def update_cleaning_template(
 
         template = await template_service.update_template(db, template_id, request)
         await db.commit()
-        return StandardResponse(code=200, message="success", data=template)
+        return StandardResponse(code="0", message="success", data=template)
     except Exception as e:
         await db.rollback()
         logger.error(f"Failed to update cleaning template {template_id}: {e}", exc_info=True)
@@ -191,7 +191,7 @@ async def delete_cleaning_template(
         template_service = _get_template_service(db)
         await template_service.delete_template(db, template_id)
         await db.commit()
-        return StandardResponse(code=200, message="success", data=template_id)
+        return StandardResponse(code="0", message="success", data=template_id)
     except Exception as e:
         await db.rollback()
         logger.error(f"Failed to delete cleaning template {template_id}: {e}", exc_info=True)

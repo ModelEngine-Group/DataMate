@@ -31,6 +31,9 @@ from app.module.cleaning.exceptions import (
     CleaningTaskNotFoundError,
     FileSystemError,
 )
+from app.module.shared.schema.lineage import NodeType, EdgeType
+from app.db.models.base_entity import LineageNode, LineageEdge
+from app.module.shared.common.lineage import LineageService
 
 logger = get_logger(__name__)
 
@@ -50,6 +53,7 @@ class CleaningTaskService:
         scheduler: CleaningTaskScheduler,
         validator: CleanTaskValidator,
         dataset_service,
+        lineage_service: LineageService,
     ):
         self.task_repo = task_repo
         self.result_repo = result_repo
@@ -58,6 +62,7 @@ class CleaningTaskService:
         self.scheduler = scheduler
         self.validator = validator
         self.dataset_service = dataset_service
+        self.lineage_service = lineage_service
 
     async def get_tasks(
         self,
@@ -153,6 +158,7 @@ class CleaningTaskService:
             logger.info(f"Successfully created dataset: {dest_dataset_id}")
         else:
             logger.info(f"Using existing dataset: {dest_dataset_id}")
+            dest_dataset_response = await self.dataset_service.get_dataset(dest_dataset_id)
 
         src_dataset = await self.dataset_service.get_dataset(request.src_dataset_id)
         if not src_dataset:
@@ -174,6 +180,8 @@ class CleaningTaskService:
 
         await self.task_repo.insert_task(db, task_dto)
 
+        await self._add_cleaning_to_graph(src_dataset, task_dto, dest_dataset_response)
+
         await self.operator_instance_repo.insert_instance(db, task_id, request.instance)
 
         all_operators = await self.operator_service.get_operators(db=db, page=0, size=1000, categories=[], keyword=None, is_star=None)
@@ -182,6 +190,40 @@ class CleaningTaskService:
         await self.prepare_task(dest_dataset_id, task_id, request.instance, operator_map, executor_type)
 
         return await self.get_task(db, task_id)
+
+    async def _add_cleaning_to_graph(
+        self,
+        src_dataset,
+        task: CleaningTaskDto,
+        dest_dataset,
+    ) -> None:
+        """
+        添加清洗任务到血缘图
+        """
+        from_node = LineageNode(
+            id=src_dataset.id,
+            node_type=NodeType.DATASET.value,
+            name=src_dataset.name,
+            description=src_dataset.description or "",
+        )
+
+        to_node = LineageNode(
+            id=dest_dataset.id,
+            node_type=NodeType.DATASET.value,
+            name=dest_dataset.name,
+            description=dest_dataset.description or "",
+        )
+
+        edge = LineageEdge(
+            process_id=task.id,
+            name=task.name or "",
+            description=task.description or "",
+            edge_type=EdgeType.DATA_CLEANING.value,
+            from_node_id=from_node.id,
+            to_node_id=to_node.id,
+        )
+
+        await self.lineage_service.generate_graph(from_node, edge, to_node)
 
     async def prepare_task(
         self,
