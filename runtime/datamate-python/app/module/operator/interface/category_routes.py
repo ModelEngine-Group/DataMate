@@ -40,4 +40,4 @@ async def get_category_tree(
 ):
     """获取分类树"""
     result = await service.get_all_categories(db)
-    return StandardResponse(code=200, message="success", data=result)
+    return StandardResponse(code="0", message="success", data=result)

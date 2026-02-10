@@ -53,6 +53,7 @@ def _get_task_service(db: AsyncSession) -> CleaningTaskService:
     )
     from app.module.cleaning.runtime_client import RuntimeClient
     from app.module.dataset.service import DatasetManagementService
+    from app.module.shared.common.lineage import LineageService
 
     runtime_client = RuntimeClient()
     scheduler = CleaningTaskScheduler(
@@ -61,6 +62,7 @@ def _get_task_service(db: AsyncSession) -> CleaningTaskService:
     )
     operator_service = _get_operator_service()
     dataset_service = DatasetManagementService(db)
+    lineage_service = LineageService(db)
 
     return CleaningTaskService(
         task_repo=CleaningTaskRepository(None),
@@ -70,6 +72,7 @@ def _get_task_service(db: AsyncSession) -> CleaningTaskService:
         scheduler=scheduler,
         validator=CleanTaskValidator(),
         dataset_service=dataset_service,
+        lineage_service=lineage_service,
     )
 
 
@@ -95,7 +98,7 @@ async def get_cleaning_tasks(
     total_pages = (count + size - 1) // size if size > 0 else 0
 
     return StandardResponse(
-        code=200,
+        code="0",
         message="success",
         data=PaginatedData(
             page=page,
@@ -128,7 +131,7 @@ async def create_cleaning_task(
         await task_service.execute_task(db, task.id)
         await db.commit()
 
-        return StandardResponse(code=200, message="success", data=task)
+        return StandardResponse(code="0", message="success", data=task)
     except Exception as e:
         await db.rollback()
         logger.error(f"Failed to create cleaning task: {e}", exc_info=True)
@@ -149,7 +152,7 @@ async def get_cleaning_task(
     try:
         task_service = _get_task_service(db)
         task = await task_service.get_task(db, task_id)
-        return StandardResponse(code=200, message="success", data=task)
+        return StandardResponse(code="0", message="success", data=task)
     except Exception as e:
         logger.error(f"Failed to get cleaning task {task_id}: {e}", exc_info=True)
         raise HTTPException(status_code=404, detail=str(e))
@@ -170,7 +173,7 @@ async def delete_cleaning_task(
         task_service = _get_task_service(db)
         await task_service.delete_task(db, task_id)
         await db.commit()
-        return StandardResponse(code=200, message="success", data=task_id)
+        return StandardResponse(code="0", message="success", data=task_id)
     except Exception as e:
         await db.rollback()
         logger.error(f"Failed to delete cleaning task {task_id}: {e}", exc_info=True)
@@ -191,7 +194,7 @@ async def stop_cleaning_task(
     try:
         task_service = _get_task_service(db)
         await task_service.stop_task(db, task_id)
-        return StandardResponse(code=200, message="success", data=task_id)
+        return StandardResponse(code="0", message="success", data=task_id)
     except Exception as e:
         logger.error(f"Failed to stop cleaning task {task_id}: {e}", exc_info=True)
         raise HTTPException(status_code=400, detail=str(e))
@@ -211,7 +214,8 @@ async def execute_cleaning_task(
     try:
         task_service = _get_task_service(db)
         await task_service.execute_task(db, task_id)
-        return StandardResponse(code=200, message="success", data=task_id)
+        await db.commit()
+        return StandardResponse(code="0", message="success", data=task_id)
     except Exception as e:
         await db.rollback()
         logger.error(f"Failed to execute cleaning task {task_id}: {e}", exc_info=True)
@@ -232,7 +236,7 @@ async def get_cleaning_task_results(
     try:
         task_service = _get_task_service(db)
         results = await task_service.get_task_results(db, task_id)
-        return StandardResponse(code=200, message="success", data=results)
+        return StandardResponse(code="0", message="success", data=results)
     except Exception as e:
         logger.error(f"Failed to get task results {task_id}: {e}", exc_info=True)
         raise HTTPException(status_code=400, detail=str(e))
@@ -253,7 +257,7 @@ async def get_cleaning_task_log(
     try:
         task_service = _get_task_service(db)
         logs = await task_service.get_task_log(db, task_id, retry_count)
-        return StandardResponse(code=200, message="success", data=logs)
+        return StandardResponse(code="0", message="success", data=logs)
     except Exception as e:
         logger.error(f"Failed to get task log {task_id}: {e}", exc_info=True)
         raise HTTPException(status_code=400, detail=str(e))
