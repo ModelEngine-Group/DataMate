@@ -23,7 +23,7 @@ logger = get_logger(__name__)
 
 # 固定厂商列表
 PROVIDERS = [
-    ProviderItem(provider="ModelEngine", baseUrl="http://localhost:9981"),
+    ProviderItem(provider="ModelEngine", baseUrl="http://nginxservice/open/router/v1"),
     ProviderItem(provider="Ollama", baseUrl="http://localhost:11434"),
     ProviderItem(provider="OpenAI", baseUrl="https://api.openai.com/v1"),
     ProviderItem(provider="DeepSeek", baseUrl="https://api.deepseek.com/v1"),
