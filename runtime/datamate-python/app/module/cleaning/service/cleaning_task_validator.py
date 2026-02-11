@@ -2,6 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exception import BusinessError, ErrorCodes
 from app.module.cleaning.schema import OperatorInstanceDto
+from app.module.operator.constants import CATEGORY_DATA_JUICER_ID, CATEGORY_DATAMATE_ID
 
 
 class CleaningTaskValidator:
@@ -68,9 +69,9 @@ class CleaningTaskValidator:
         for instance in instances:
             if instance.categories:
                 for category in instance.categories:
-                    if "datajuicer" in category.lower():
+                    if CATEGORY_DATA_JUICER_ID in category.lower():
                         executor_types.add("default")
-                    elif "datamate" in category.lower():
+                    elif CATEGORY_DATAMATE_ID in category.lower():
                         executor_types.add("datamate")
 
         if len(executor_types) > 1:
