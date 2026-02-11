@@ -44,7 +44,7 @@ def _get_task_service(db: AsyncSession) -> CleaningTaskService:
     """Get cleaning task service instance"""
     from app.module.cleaning.service import (
         CleaningTaskScheduler,
-        CleanTaskValidator,
+        CleaningTaskValidator,
     )
     from app.module.cleaning.repository import (
         CleaningTaskRepository,
@@ -72,7 +72,7 @@ def _get_task_service(db: AsyncSession) -> CleaningTaskService:
         operator_instance_repo=OperatorInstanceRepository(None),
         operator_service=operator_service,
         scheduler=scheduler,
-        validator=CleanTaskValidator(task_repo=task_repo, template_repo=None),
+        validator=CleaningTaskValidator(task_repo=task_repo, template_repo=None),
         dataset_service=dataset_service,
         lineage_service=lineage_service,
     )

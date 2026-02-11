@@ -25,7 +25,7 @@ from app.module.cleaning.schema import (
     CleaningProcess,
     CleaningTaskStatus,
 )
-from app.module.cleaning.service.clean_task_validator import CleanTaskValidator
+from app.module.cleaning.service.cleaning_task_validator import CleaningTaskValidator
 from app.module.cleaning.service.cleaning_task_scheduler import CleaningTaskScheduler
 from app.module.shared.common.lineage import LineageService
 from app.module.shared.schema.lineage import NodeType, EdgeType
@@ -46,7 +46,7 @@ class CleaningTaskService:
         operator_instance_repo: OperatorInstanceRepository,
         operator_service,
         scheduler: CleaningTaskScheduler,
-        validator: CleanTaskValidator,
+        validator: CleaningTaskValidator,
         dataset_service,
         lineage_service: LineageService,
     ):

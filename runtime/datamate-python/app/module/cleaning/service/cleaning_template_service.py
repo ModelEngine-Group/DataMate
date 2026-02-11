@@ -16,7 +16,7 @@ from app.module.cleaning.schema import (
     CreateCleaningTemplateRequest,
     OperatorInstanceDto,
 )
-from app.module.cleaning.service.clean_task_validator import CleanTaskValidator
+from app.module.cleaning.service.cleaning_task_validator import CleaningTaskValidator
 
 logger = get_logger(__name__)
 
@@ -29,7 +29,7 @@ class CleaningTemplateService:
         template_repo: CleaningTemplateRepository,
         operator_instance_repo: OperatorInstanceRepository,
         operator_service,
-        validator: CleanTaskValidator,
+        validator: CleaningTaskValidator,
     ):
         self.template_repo = template_repo
         self.operator_instance_repo = operator_instance_repo

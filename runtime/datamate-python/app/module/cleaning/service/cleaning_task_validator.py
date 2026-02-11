@@ -4,7 +4,7 @@ from app.core.exception import BusinessError, ErrorCodes
 from app.module.cleaning.schema import OperatorInstanceDto
 
 
-class CleanTaskValidator:
+class CleaningTaskValidator:
     """Validator for cleaning tasks and templates"""
 
     def __init__(self, task_repo=None, template_repo=None):
@@ -69,7 +69,7 @@ class CleanTaskValidator:
             if instance.categories:
                 for category in instance.categories:
                     if "datajuicer" in category.lower():
-                        executor_types.add("datajuicer")
+                        executor_types.add("default")
                     elif "datamate" in category.lower():
                         executor_types.add("datamate")
 

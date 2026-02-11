@@ -43,7 +43,7 @@ def _get_operator_service():
 
 def _get_template_service(db: AsyncSession) -> CleaningTemplateService:
     """Get cleaning template service instance"""
-    from app.module.cleaning.service import CleanTaskValidator
+    from app.module.cleaning.service import CleaningTaskValidator
     from app.module.cleaning.repository import (
         CleaningTemplateRepository,
         OperatorInstanceRepository,
@@ -57,7 +57,7 @@ def _get_template_service(db: AsyncSession) -> CleaningTemplateService:
         template_repo=template_repo,
         operator_instance_repo=OperatorInstanceRepository(None),
         operator_service=operator_service,
-        validator=CleanTaskValidator(task_repo=None, template_repo=template_repo),
+        validator=CleaningTaskValidator(task_repo=None, template_repo=template_repo),
     )
 
 

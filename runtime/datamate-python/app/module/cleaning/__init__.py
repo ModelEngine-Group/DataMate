@@ -19,7 +19,7 @@ from .repository import (
 )
 
 from .service import (
-    CleanTaskValidator,
+    CleaningTaskValidator,
     CleaningTaskScheduler,
     CleaningTemplateService,
     CleaningTaskService,
@@ -42,7 +42,7 @@ __all__ = [
     "CleaningTemplateRepository",
     "CleaningResultRepository",
     "OperatorInstanceRepository",
-    "CleanTaskValidator",
+    "CleaningTaskValidator",
     "CleaningTaskScheduler",
     "CleaningTemplateService",
     "CleaningTaskService",
