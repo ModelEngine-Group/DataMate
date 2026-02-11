@@ -125,7 +125,10 @@ class DataJuicerExecutor(RayExecutor):
                 pass
 
             # 特殊处理：识别被过滤的数据
-            processed_file_ids = set(processed_dataset.unique("fileId"))
+            if processed_dataset.count() == 0:
+                processed_file_ids = set()
+            else:
+                processed_file_ids = set(processed_dataset.unique("fileId"))
             filtered_file_ids = original_file_ids - processed_file_ids
 
             if filtered_file_ids:
@@ -133,9 +136,11 @@ class DataJuicerExecutor(RayExecutor):
                 for sample_dict in dataset.iter_batches(batch_format="pandas", batch_size=2048):
                     for _, row in sample_dict.iterrows():
                         if str(row.get("fileId", "")) in filtered_file_ids:
-                            sample_dict["fileSize"] = "0"
-                            sample_dict["fileType"] = ""
-                            TaskInfoPersistence().update_task_result(sample_dict)
+                            row["fileSize"] = "0"
+                            row["fileType"] = ""
+                            row["execute_status"] = SUCCESS_STATUS
+                            row[Fields.instance_id] = self.cfg.instance_id
+                            TaskInfoPersistence().update_task_result(row)
 
             self.scan_files()
         except Exception as e:
