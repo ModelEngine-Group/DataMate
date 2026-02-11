@@ -6,6 +6,7 @@ import json
 import os
 import uuid
 import shutil
+from datetime import datetime
 from pathlib import Path
 from typing import List, Optional, Dict, Any, TYPE_CHECKING
 
@@ -306,7 +307,6 @@ class OperatorService:
         db: AsyncSession
     ) -> OperatorDto:
         """创建算子"""
-        from datetime import datetime, timezone
 
         # Generate ID if not provided
         if not req.id:
@@ -330,7 +330,7 @@ class OperatorService:
             release = req.releases[0]
             release.id = req.id
             release.version = req.version
-            release.release_date = datetime.utcnow()
+            release.release_date = datetime.now()
             await self.operator_release_repo.insert(release, db)
 
         # Extract files
@@ -350,7 +350,6 @@ class OperatorService:
         db: AsyncSession
     ) -> OperatorDto:
         """更新算子"""
-        from datetime import datetime, timezone
 
         # Get existing operator
         existing = await self.get_operator_by_id(operator_id, db)
@@ -406,7 +405,7 @@ class OperatorService:
             release = req.releases[0]
             release.id = operator_id
             release.version = req.version
-            release.release_date = datetime.utcnow()
+            release.release_date = datetime.now()
             if original_version == release.version:
                 await self.operator_release_repo.update(release, db)
             else:
