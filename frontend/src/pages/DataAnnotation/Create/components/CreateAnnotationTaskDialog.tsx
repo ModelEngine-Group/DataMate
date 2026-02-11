@@ -181,7 +181,7 @@ export default function CreateAnnotationTask({
     setImageFileCount(count);
   }, [selectedFilesMap]);
 
-  const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".bmp", ".gif", ".tiff", ".webp"];
+  const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".bmp", ".gif", ".tiff", ".webp", ".h5", ".pt"];
   const TEXT_EXTENSIONS = [".txt", ".md", ".csv", ".tsv", ".jsonl", ".log"];
   const AUDIO_EXTENSIONS = [".wav", ".mp3", ".flac", ".aac", ".ogg", ".m4a", ".wma"];
   const VIDEO_EXTENSIONS = [".mp4", ".avi", ".mov", ".mkv", ".flv", ".wmv", ".webm"];
