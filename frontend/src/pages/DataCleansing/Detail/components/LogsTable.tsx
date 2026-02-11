@@ -30,7 +30,7 @@ export default function LogsTable({taskLog, fetchTaskLog, retryCount} : {taskLog
             ))}
           </select>
         </div>
-        <span className="text-s text-gray-500 px-2">{t("dataCleansing.detail.logTable.nthRun", { selectedLog: selectedLog })}</span>
+        <span className="text-s text-gray-500 px-2">{t("dataCleansing.detail.logTable.nthRun", { num: num })}</span>
       </div>
       <div className="text-gray-300 p-4 border border-gray-700 bg-gray-800 rounded-lg">
         <div className="font-mono text-sm">
