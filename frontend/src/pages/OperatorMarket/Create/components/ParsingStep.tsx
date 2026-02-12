@@ -1,22 +1,24 @@
 import { Progress } from "antd";
 import { Settings, FileText, CheckCircle } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export default function ParsingStep({ parseProgress, uploadedFiles }) {
+  const { t } = useTranslation();
   return (
     <div className="text-center py-2">
       <div className="w-24 h-24 mx-auto mb-6 bg-blue-50 rounded-full flex items-center justify-center">
         <Settings className="w-12 h-12 text-blue-500 animate-spin" />
       </div>
       <h2 className="text-2xl font-bold text-gray-900 mb-4">
-        正在解析算子文件
+        {t("operatorMarket.create.parse.title")}
       </h2>
       <p className="text-gray-600 mb-8">
-        系统正在自动分析您的算子文件，提取配置信息...
+        {t("operatorMarket.create.parse.description")}
       </p>
 
       {/* 已上传文件列表 */}
       <div className="mb-8">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">已上传文件</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">{t("operatorMarket.create.parse.uploadedFiles")}</h3>
         <div className="space-y-2">
           {uploadedFiles.map((file, index) => (
             <div
@@ -43,7 +45,7 @@ export default function ParsingStep({ parseProgress, uploadedFiles }) {
           status="active"
           strokeColor="#3B82F6"
         />
-        <p className="mt-2 text-sm text-gray-600">解析进度: {parseProgress}%</p>
+        <p className="mt-2 text-sm text-gray-600">{t("operatorMarket.create.parse.progress")}: {parseProgress}%</p>
       </div>
     </div>
   );

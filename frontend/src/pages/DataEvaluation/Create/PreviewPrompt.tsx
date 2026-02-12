@@ -1,5 +1,6 @@
 import React from 'react';
 import { Button, message, Modal } from 'antd';
+import { useTranslation } from "react-i18next";
 
 interface PreviewPromptModalProps {
   previewVisible: boolean;
@@ -8,20 +9,21 @@ interface PreviewPromptModalProps {
 }
 
 const PreviewPromptModal: React.FC<PreviewPromptModalProps> = ({ previewVisible, onCancel, evaluationPrompt }) => {
+  const { t } = useTranslation();
   return (
     <Modal
-      title="评估提示词预览"
+      title={t("dataEvaluation.preview.title")}
       open={previewVisible}
       onCancel={onCancel}
       footer={[
         <Button key="copy" onClick={() => {
           navigator.clipboard.writeText(evaluationPrompt).then();
-          message.success('已复制到剪贴板');
+          message.success(t("dataEvaluation.preview.copiedMessage"));
         }}>
-          复制
+          {t("dataEvaluation.preview.copy")}
         </Button>,
         <Button key="close" type="primary" onClick={onCancel}>
-          关闭
+          {t("dataEvaluation.preview.close")}
         </Button>
       ]}
       width={800}

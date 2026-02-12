@@ -25,6 +25,7 @@ import AddDataDialog from "../components/AddDataDialog";
 import CreateKnowledgeBase from "../components/CreateKnowledgeBase";
 import KnowledgeGraphView, { GraphEntitySelection } from "../components/KnowledgeGraphView";
 import { Network } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface StatisticItem {
   icon?: React.ReactNode;
@@ -44,6 +45,7 @@ interface RecallResult {
 }
 
 const KnowledgeBaseDetailPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { message } = App.useApp();
   const { id } = useParams<{ id: string }>();
@@ -60,14 +62,18 @@ const KnowledgeBaseDetailPage: React.FC = () => {
 
   const fetchKnowledgeBaseDetails = async (id: string) => {
     const { data } = await queryKnowledgeBaseByIdUsingGet(id);
-    setKnowledgeBase(mapKnowledgeBase(data));
+    setKnowledgeBase(mapKnowledgeBase(data, true, t));
   };
 
   useEffect(() => {
     if (id) {
       fetchKnowledgeBaseDetails(id);
     }
-  }, [id]);
+  }, [id, t]);
+
+  useEffect(() => {
+    fetchFiles()
+  }, [t]);
 
   useEffect(() => {
     if (!graphVisible) {
@@ -91,7 +97,7 @@ const KnowledgeBaseDetailPage: React.FC = () => {
     handleKeywordChange,
   } = useFetchData<KBFile>(
     (params) => id ? queryKnowledgeBaseFilesUsingGet(id, params) : Promise.resolve({ data: [] }),
-    mapFileData
+    (file) => mapFileData(file, t)
   );
 
   // File table logic
@@ -100,16 +106,16 @@ const KnowledgeBaseDetailPage: React.FC = () => {
       await deleteKnowledgeBaseFileByIdUsingDelete(knowledgeBase!.id, {
         ids: [file.id]
       });
-      message.success("文件已删除");
+      message.success(t("knowledgeBase.detail.messages.fileDeleted"));
       fetchFiles();
     } catch {
-      message.error("文件删除失败");
+      message.error(t("knowledgeBase.detail.messages.fileDeleteFailed"));
     }
   };
 
   const handleDeleteKB = async (kb: KnowledgeBaseItem) => {
     await deleteKnowledgeBaseByIdUsingDelete(kb.id);
-    message.success("知识库已删除");
+    message.success(t("knowledgeBase.detail.messages.kbDeleted"));
     navigate("/data/knowledge-base");
   };
 
@@ -172,7 +178,7 @@ const KnowledgeBaseDetailPage: React.FC = () => {
   const graphOperation: DetailOperation | null = knowledgeBase?.type === KBType.GRAPH
     ? {
         key: "graph",
-        label: "知识图谱",
+        label: t("knowledgeBase.detail.graph.title"),
         icon: <Network />,
         onClick: handleOpenGraph,
       }
@@ -181,7 +187,7 @@ const KnowledgeBaseDetailPage: React.FC = () => {
   const baseOperations: DetailOperation[] = [
     {
       key: "edit",
-      label: "编辑知识库",
+      label: t("knowledgeBase.detail.actions.edit"),
       icon: <EditOutlined className="w-4 h-4" />,
       onClick: () => {
         setShowEdit(true);
@@ -189,7 +195,7 @@ const KnowledgeBaseDetailPage: React.FC = () => {
     },
     {
       key: "refresh",
-      label: "刷新知识库",
+      label: t("knowledgeBase.detail.actions.refresh"),
       icon: <ReloadOutlined className="w-4 h-4" />,
       onClick: () => {
         handleRefreshPage();
@@ -197,13 +203,13 @@ const KnowledgeBaseDetailPage: React.FC = () => {
     },
     {
       key: "delete",
-      label: "删除知识库",
+      label: t("knowledgeBase.detail.actions.delete"),
       danger: true,
       confirm: {
-        title: "确认删除该知识库吗？",
-        description: "删除后将无法恢复，请谨慎操作。",
-        cancelText: "取消",
-        okText: "删除",
+        title: t("knowledgeBase.detail.confirm.deleteTitle"),
+        description: t("knowledgeBase.detail.confirm.deleteDescription"),
+        cancelText: t("knowledgeBase.detail.confirm.cancelText"),
+        okText: t("knowledgeBase.detail.confirm.okText"),
         okType: "danger",
         onConfirm: () => knowledgeBase && handleDeleteKB(knowledgeBase),
       },
@@ -216,7 +222,7 @@ const KnowledgeBaseDetailPage: React.FC = () => {
   const fileOps = [
     {
       key: "delete",
-      label: "删除文件",
+      label: t("knowledgeBase.detail.actions.deleteFile"),
       icon: <DeleteOutlined className="w-4 h-4" />,
       danger: true,
       onClick: handleDeleteFile,
@@ -225,7 +231,7 @@ const KnowledgeBaseDetailPage: React.FC = () => {
 
   const fileColumns = [
     {
-      title: "文件名",
+      title: t("knowledgeBase.detail.columns.fileName"),
       dataIndex: "name",
       key: "name",
       width: 200,
@@ -238,7 +244,7 @@ const KnowledgeBaseDetailPage: React.FC = () => {
       )
     },
     {
-      title: "状态",
+      title: t("knowledgeBase.detail.columns.status"),
       dataIndex: "status",
       key: "vectorizationStatus",
       width: 120,
@@ -251,28 +257,28 @@ const KnowledgeBaseDetailPage: React.FC = () => {
       },
     },
     {
-      title: "分块数",
+      title: t("knowledgeBase.detail.columns.chunkCount"),
       dataIndex: "chunkCount",
       key: "chunkCount",
       width: 100,
       ellipsis: true,
     },
     {
-      title: "创建时间",
+      title: t("knowledgeBase.detail.columns.createdAt"),
       dataIndex: "createdAt",
       key: "createdAt",
       ellipsis: true,
       width: 180,
     },
     {
-      title: "更新时间",
+      title: t("knowledgeBase.detail.columns.updatedAt"),
       dataIndex: "updatedAt",
       key: "updatedAt",
       ellipsis: true,
       width: 180,
     },
     {
-      title: "操作",
+      title: t("knowledgeBase.detail.columns.actions"),
       key: "actions",
       align: "right" as const,
       width: 100,
@@ -298,7 +304,7 @@ const KnowledgeBaseDetailPage: React.FC = () => {
       <div className="mb-4">
         <Breadcrumb>
           <Breadcrumb.Item>
-            <a onClick={() => navigate("/data/knowledge-base")}>知识库</a>
+            <a onClick={() => navigate("/data/knowledge-base")}>{t("knowledgeBase.detail.breadcrumb.kbList")}</a>
           </Breadcrumb.Item>
           <Breadcrumb.Item>{knowledgeBase?.name}</Breadcrumb.Item>
         </Breadcrumb>
@@ -322,7 +328,7 @@ const KnowledgeBaseDetailPage: React.FC = () => {
           <div className="absolute inset-0 flex flex-col cosmic-modal-panel">
             <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 backdrop-blur">
               <div>
-                <div className="text-lg font-semibold text-white/90">知识图谱</div>
+                <div className="text-lg font-semibold text-white/90">{t("knowledgeBase.detail.graph.title")}</div>
                 <div className="text-xs text-white/50">{knowledgeBase?.name}</div>
               </div>
               <div className="flex gap-2">
@@ -334,7 +340,7 @@ const KnowledgeBaseDetailPage: React.FC = () => {
                   loading={graphLoading}
                   className="cosmic-btn"
                 >
-                  刷新
+                  {t("knowledgeBase.detail.graph.refresh")}
                 </Button>
                 <Button
                   type="primary"
@@ -342,7 +348,7 @@ const KnowledgeBaseDetailPage: React.FC = () => {
                   onClick={handleCloseGraph}
                   className="cosmic-btn danger"
                 >
-                  关闭
+                  {t("knowledgeBase.detail.graph.close")}
                 </Button>
               </div>
             </div>
@@ -362,21 +368,21 @@ const KnowledgeBaseDetailPage: React.FC = () => {
               {graphSelection && (
                 <div className="absolute bottom-4 right-4 w-80 max-h-[65vh] overflow-auto rounded-lg bg-slate-900/95 text-white shadow-[0_10px_50px_rgba(15,23,42,0.7)] border border-white/15 p-4">
                   <div className="text-sm font-semibold mb-1 text-white">
-                    {graphSelection.type === "node" ? "节点详情" : "边详情"}
+                    {graphSelection.type === "node" ? t("knowledgeBase.detail.graph.nodeDetail") : t("knowledgeBase.detail.graph.edgeDetail")}
                   </div>
                   <div className="text-xs text-white/70 mb-3">ID: {graphSelection.data.id}</div>
                   {graphSelection.type === "edge" && (
                     <div className="space-y-1 text-xs mb-3">
                       <div className="flex justify-between gap-2">
-                        <span className="text-white/60">类型</span>
+                        <span className="text-white/60">{t("knowledgeBase.detail.graph.typeLabel")}</span>
                         <span className="text-right break-all text-white">{graphSelection.data.type}</span>
                       </div>
                       <div className="flex justify-between gap-2">
-                        <span className="text-white/60">源节点</span>
+                        <span className="text-white/60">{t("knowledgeBase.detail.graph.sourceNode")}</span>
                         <span className="text-right break-all text-white">{graphSelection.data.source}</span>
                       </div>
                       <div className="flex justify-between gap-2">
-                        <span className="text-white/60">目标节点</span>
+                        <span className="text-white/60">{t("knowledgeBase.detail.graph.targetNode")}</span>
                         <span className="text-right break-all text-white">{graphSelection.data.target}</span>
                       </div>
                       <div className="border-t border-white/15 my-2" />
@@ -385,7 +391,7 @@ const KnowledgeBaseDetailPage: React.FC = () => {
                   {graphSelection.type === "node" && (
                     <div className="space-y-1 text-xs mb-3">
                       <div className="flex justify-between gap-2">
-                        <span className="text-white/60">标签</span>
+                        <span className="text-white/60">{t("knowledgeBase.detail.graph.labelLabel")}</span>
                         <span className="text-right break-all text-white">
                           {graphSelection.data.labels?.join(", ") || "-"}
                         </span>
@@ -403,7 +409,7 @@ const KnowledgeBaseDetailPage: React.FC = () => {
                       </div>
                     ))}
                     {!Object.keys(graphSelection.data.properties ?? {}).length && (
-                      <div className="text-white/60">暂无属性</div>
+                      <div className="text-white/60">{t("knowledgeBase.detail.graph.noProperties")}</div>
                     )}
                   </div>
                 </div>
@@ -416,10 +422,10 @@ const KnowledgeBaseDetailPage: React.FC = () => {
         <div className="flex items-center justify-between mb-4 gap-3">
           <div className="flex items-center gap-2">
             <Button type={activeTab === 'fileList' ? 'primary' : 'default'} onClick={() => setActiveTab('fileList')}>
-              文件列表
+              {t("knowledgeBase.detail.tabs.fileList")}
             </Button>
             <Button type={activeTab === 'recallTest' ? 'primary' : 'default'} onClick={() => setActiveTab('recallTest')}>
-              召回测试
+              {t("knowledgeBase.detail.tabs.recallTest")}
             </Button>
           </div>
           {activeTab === 'fileList' && (
@@ -428,7 +434,7 @@ const KnowledgeBaseDetailPage: React.FC = () => {
                 <SearchControls
                   searchTerm={searchParams.keyword}
                   onSearchChange={handleKeywordChange}
-                  searchPlaceholder="搜索文件名..."
+                  searchPlaceholder={t("knowledgeBase.detail.searchPlaceholder")}
                   filters={[]}
                   onFiltersChange={handleFiltersChange}
                   onClearFilters={() => setSearchParams({ ...searchParams, filter: { type: [], status: [], tags: [] } })}
@@ -452,14 +458,14 @@ const KnowledgeBaseDetailPage: React.FC = () => {
           />
         ) : (
           <div className="p-2">
-            <div style={{ fontSize: 14, fontWeight: 300, marginBottom: 8 }}>基于语义文本检索和全文检索后的加权平均结果</div>
+            <div style={{ fontSize: 14, fontWeight: 300, marginBottom: 8 }}>{t("knowledgeBase.detail.recallTest.description")}</div>
             <div className="flex items-center mb-4">
               <Input.Search
                 value={recallQuery}
                 onChange={e => setRecallQuery(e.target.value)}
                 onSearch={handleRecallTest}
-                placeholder="请输入召回测试问题"
-                enterButton="检索"
+                placeholder={t("knowledgeBase.detail.recallTest.placeholder")}
+                enterButton={t("knowledgeBase.detail.recallTest.searchButton")}
                 loading={recallLoading}
                 style={{ width: "100%", fontSize: 18, height: 48 }}
               />
@@ -467,17 +473,17 @@ const KnowledgeBaseDetailPage: React.FC = () => {
             {recallLoading ? (
               <Spin className="mt-8" />
             ) : recallResults.length === 0 ? (
-              <Empty description="暂无召回结果" />
+              <Empty description={t("knowledgeBase.detail.recallTest.noResult")} />
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {recallResults.map((item, idx) => (
-                  <Card key={idx} title={`得分：${item.score?.toFixed(4) ?? "-"}`}
+                  <Card key={idx} title={`${t("knowledgeBase.detail.recallTest.scoreLabel")}${item.score?.toFixed(4) ?? "-"}`}
                     extra={<span style={{ fontSize: 12 }}>ID: {item.entity?.id ?? "-"}</span>}
                     style={{ wordBreak: "break-all" }}
                   >
                     <div style={{ marginBottom: 8, fontWeight: 500 }}>{item.entity?.text ?? ""}</div>
                     <div style={{ fontSize: 12, color: '#888' }}>
-                      metadata: <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all', margin: 0 }}>{item.entity?.metadata}</pre>
+                      {t("knowledgeBase.detail.recallTest.metadataLabel")} <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all', margin: 0 }}>{item.entity?.metadata}</pre>
                     </div>
                   </Card>
                 ))}

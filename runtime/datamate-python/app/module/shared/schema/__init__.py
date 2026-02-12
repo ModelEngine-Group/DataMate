@@ -4,10 +4,16 @@ from .common import (
     PaginatedData,
     TaskStatus
 )
+from .lineage import (
+    NodeType,
+    EdgeType
+)
 
 __all__ = [
     "BaseResponseModel",
     "StandardResponse",
     "PaginatedData",
-    "TaskStatus"
+    "TaskStatus",
+    "NodeType",
+    "EdgeType"
 ]

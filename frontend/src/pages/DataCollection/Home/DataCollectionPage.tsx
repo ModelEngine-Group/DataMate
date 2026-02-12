@@ -5,10 +5,12 @@ import TaskManagement from "./TaskManagement";
 import Execution from "./Execution.tsx";
 import TemplateManagement from "./TemplateManagement";
 import { useLocation, useNavigate } from "react-router";
+import { useTranslation } from "react-i18next";
 
 export default function DataCollection() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState("task-management");
   const [taskId, setTaskId] = useState<string | undefined>(undefined);
 
@@ -27,7 +29,7 @@ export default function DataCollection() {
     <div className="gap-4 h-full flex flex-col">
       <div className="flex justify-between items-end">
         <div>
-          <h1 className="text-xl font-bold text-gray-900 mb-2">数据归集</h1>
+          <h1 className="text-xl font-bold text-gray-900 mb-2">{t("dataCollection.title")}</h1>
         </div>
         <div>
           <Button
@@ -35,16 +37,16 @@ export default function DataCollection() {
             onClick={() => navigate("/data/collection/create-task")}
             icon={<PlusOutlined />}
           >
-            创建任务
+            {t("common.actions.createTask")}
           </Button>
         </div>
       </div>
       <Tabs
         activeKey={activeTab}
         items={[
-          { label: "任务管理", key: "task-management" },
-          { label: "执行记录", key: "task-execution" },
-          { label: "模板管理", key: "task-template" },
+          { label: t("dataCollection.tabs.taskManagement"), key: "task-management" },
+          { label: t("dataCollection.tabs.taskExecution"), key: "task-execution" },
+          { label: t("dataCollection.tabs.taskTemplate"), key: "task-template" },
         ]}
         onChange={(tab) => {
           setActiveTab(tab);

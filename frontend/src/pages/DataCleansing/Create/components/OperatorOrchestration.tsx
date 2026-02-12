@@ -1,6 +1,7 @@
 import React, {useMemo, useState} from "react";
 import { Card, Input, Tag, Select, Button } from "antd";
 import { DeleteOutlined } from "@ant-design/icons";
+import { useTranslation } from "react-i18next";
 import { CleansingTemplate } from "../../cleansing.model";
 import { Workflow } from "lucide-react";
 import {CategoryI, OperatorI} from "@/pages/OperatorMarket/operator.model";
@@ -47,6 +48,7 @@ const OperatorFlow: React.FC<OperatorFlowProps> = ({
   handleDropToContainer,
   handleDragEnd,
 }) => {
+  const { t } = useTranslation();
   const [editingIndex, setEditingIndex] = useState<string | null>(null);
 
   const categoryMap = useMemo(() => {
@@ -89,7 +91,7 @@ const OperatorFlow: React.FC<OperatorFlowProps> = ({
         <div className="flex flex-wrap gap-2 justify-between items-start">
           <span className="font-semibold text-base flex items-center gap-2">
             <Workflow className="w-5 h-5" />
-            算子编排({selectedOperators.length}){" "}
+            {t("dataCleansing.operatorOrchestration.title")}({selectedOperators.length}){" "}
             <Button
               type="link"
               size="small"
@@ -99,11 +101,11 @@ const OperatorFlow: React.FC<OperatorFlowProps> = ({
               }}
               disabled={selectedOperators.length === 0}
             >
-              清空
+              {t("dataCleansing.operatorOrchestration.clear")}
             </Button>
           </span>
           <Select
-            placeholder="选择模板"
+            placeholder={t("dataCleansing.operatorOrchestration.selectTemplate")}
             className="min-w-64"
             options={templates}
             value={currentTemplate?.value}
@@ -181,7 +183,7 @@ const OperatorFlow: React.FC<OperatorFlowProps> = ({
                 </span>
               </div>
               {operator?.categories?.map((categoryId) => {
-                return <Tag color="default">{categoryMap[categoryId].name}</Tag>
+                return <Tag color="default" key={categoryId}>{categoryMap[categoryId]?.name}</Tag>
               })}
               {/* 操作按钮 */}
               <span
@@ -199,9 +201,9 @@ const OperatorFlow: React.FC<OperatorFlowProps> = ({
         {selectedOperators.length === 0 && (
           <div className="text-center py-16 text-gray-400 border-2 border-dashed border-gray-100 rounded-lg">
             <Workflow className="w-full h-10 mb-4 opacity-50" />
-            <div className="text-lg font-medium mb-2">开始构建您的算子流程</div>
+            <div className="text-lg font-medium mb-2">{t("dataCleansing.operatorOrchestration.startBuilding")}</div>
             <div className="text-sm">
-              从左侧算子库拖拽算子到此处，或点击算子添加
+              {t("dataCleansing.operatorOrchestration.dragTip")}
             </div>
           </div>
         )}

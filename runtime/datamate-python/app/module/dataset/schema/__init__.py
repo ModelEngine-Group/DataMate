@@ -10,6 +10,7 @@ from .dataset_file import (
 from .dataset import (
     DatasetResponse,
     DatasetTypeResponse,
+    CreateDatasetRequest,
 )
 
 __all__ = [
@@ -21,4 +22,5 @@ __all__ = [
     "BatchUpdateFileTagsResponse",
     "FileTagUpdateResult",
     "FileTagUpdate",
+    "CreateDatasetRequest",
 ]

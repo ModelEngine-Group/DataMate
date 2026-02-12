@@ -1,4 +1,4 @@
-import { defineConfig } from "vite";
+import {defineConfig} from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path"; // 需要安装 Node.js 的类型声明（@types/node）
@@ -12,11 +12,7 @@ export default defineConfig({
     },
   },
   server: {
-    // headers: {
-    //   "Access-Control-Allow-Origin": "*",
-    //   "access-control-allow-headers":
-    //     "Origin, X-Requested-With, Content-Type, Accept",
-    // },
+    host: "0.0.0.0",
     proxy: {
       "^/api": {
         target: "http://localhost:8080", // 本地后端服务地址

@@ -4,6 +4,7 @@ import {
   Trash2,
   LayoutList,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import DetailHeader from "@/components/DetailHeader";
 import { Link, useNavigate, useParams } from "react-router";
 import {
@@ -16,6 +17,7 @@ import {EditOutlined, ReloadOutlined, NumberOutlined} from "@ant-design/icons";
 
 // 任务详情页面组件
 export default function CleansingTemplateDetail() {
+  const { t } = useTranslation();
   const { id = "" } = useParams(); // 获取动态路由参数
   const { message } = App.useApp();
   const navigate = useNavigate();
@@ -25,16 +27,16 @@ export default function CleansingTemplateDetail() {
     if (!id) return;
     try {
       const { data } = await queryCleaningTemplateByIdUsingGet(id);
-      setTemplate(mapTemplate(data));
+      setTemplate(mapTemplate(data, t));
     } catch (error) {
-      message.error("获取任务详情失败");
+      message.error(t("dataCleansing.template.messages.templateDetailFailed"));
       navigate("/data/cleansing");
     }
   };
 
   const deleteTemplate = async () => {
     await deleteCleaningTemplateByIdUsingDelete(id);
-    message.success("模板已删除");
+    message.success(t("dataCleansing.template.messages.templateDeleted"));
     navigate("/data/cleansing");
   };
 
@@ -58,7 +60,7 @@ export default function CleansingTemplateDetail() {
   const statistics = [
     {
       icon: <NumberOutlined className="w-4 h-4 text-green-500" />,
-      label: "算子数量",
+      label: t("dataCleansing.detail.statistics.operatorCount"),
       value: template?.instance?.length || 0,
     },
   ];
@@ -66,19 +68,19 @@ export default function CleansingTemplateDetail() {
   const operations = [
     {
       key: "update",
-      label: "更新任务",
+      label: t("dataCleansing.actions.updateTemplate"),
       icon: <EditOutlined className="w-4 h-4" />,
       onClick: () => navigate(`/data/cleansing/update-template/${id}`),
     },
     {
       key: "refresh",
-      label: "更新任务",
+      label: t("dataCleansing.actions.refreshTemplate"),
       icon: <ReloadOutlined className="w-4 h-4" />,
       onClick: handleRefresh,
     },
     {
       key: "delete",
-      label: "删除任务",
+      label: t("dataCleansing.actions.deleteTemplate"),
       icon: <Trash2 className="w-4 h-4" />,
       danger: true,
       onClick: deleteTemplate,
@@ -88,16 +90,16 @@ export default function CleansingTemplateDetail() {
   const tabList = [
     {
       key: "operators",
-      label: "处理算子",
+      label: t("dataCleansing.detail.tabs.operators"),
     },
   ];
 
   const breadItems = [
     {
-      title: <Link to="/data/cleansing">数据处理</Link>,
+      title: <Link to="/data/cleansing">{t("dataCleansing.detail.breadcrumb.dataProcessing")}</Link>,
     },
     {
-      title: "模板详情",
+      title: t("dataCleansing.detail.breadcrumb.templateDetail"),
     },
   ];
 

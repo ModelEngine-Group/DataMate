@@ -1,9 +1,10 @@
 import RadioCard from "@/components/RadioCard";
 import { Input, Select, Form } from "antd";
-import { datasetTypes } from "../../dataset.const";
+import { getDatasetTypes } from "../../dataset.const";
 import { useEffect, useState } from "react";
 import { queryDatasetTagsUsingGet } from "../../dataset.api";
 import {queryTasksUsingGet} from "@/pages/DataCollection/collection.apis.ts";
+import { useTranslation } from "react-i18next";
 
 export default function BasicInformation({
   data,
@@ -14,6 +15,8 @@ export default function BasicInformation({
   setData: any;
   hidden?: string[];
 }) {
+  const { t } = useTranslation();
+  const datasetTypes = getDatasetTypes(t);
   const [tagOptions, setTagOptions] = useState<
     {
       label: JSX.Element;
@@ -59,24 +62,27 @@ export default function BasicInformation({
   return (
     <>
       <Form.Item
-        label="名称"
+        label={t("dataManagement.formLabels.name")}
         name="name"
-        rules={[{ required: true, message: "请输入数据集名称" }]}
+        rules={[{ required: true, message: t("dataManagement.validation.nameRequired") }]}
       >
-        <Input placeholder="输入数据集名称" />
+        <Input placeholder={t("dataManagement.placeholders.datasetName")} />
       </Form.Item>
       {!hidden.includes("description") && (
-        <Form.Item name="description" label="描述">
-          <Input.TextArea placeholder="描述数据集的用途和内容" rows={3} />
+        <Form.Item name="description" label={t("dataManagement.formLabels.description")}>
+          <Input.TextArea
+            placeholder={t("dataManagement.placeholders.datasetDescription")}
+            rows={3}
+          />
         </Form.Item>
       )}
 
       {/* 数据集类型选择 - 使用卡片形式 */}
       {!hidden.includes("datasetType") && (
         <Form.Item
-          label="类型"
+          label={t("dataManagement.formLabels.type")}
           name="datasetType"
-          rules={[{ required: true, message: "请选择数据集类型" }]}
+          rules={[{ required: true, message: t("dataManagement.validation.typeRequired") }]}
         >
           <RadioCard
             options={datasetTypes}
@@ -86,18 +92,24 @@ export default function BasicInformation({
         </Form.Item>
       )}
       {!hidden.includes("tags") && (
-        <Form.Item label="标签" name="tags">
+        <Form.Item label={t("dataManagement.formLabels.tags")} name="tags">
           <Select
             className="w-full"
             mode="tags"
             options={tagOptions}
-            placeholder="请选择标签"
+            placeholder={t("dataManagement.placeholders.selectTags")}
           />
         </Form.Item>
       )}
       {!hidden.includes("dataSource") && (
-        <Form.Item name="dataSource" label="关联归集任务">
-          <Select placeholder="请选择归集任务" options={collectionOptions} />
+        <Form.Item
+          name="dataSource"
+          label={t("dataManagement.formLabels.collectionTask")}
+        >
+          <Select
+            placeholder={t("dataManagement.placeholders.selectCollectionTask")}
+            options={collectionOptions}
+          />
         </Form.Item>
       )}
     </>

@@ -176,8 +176,8 @@ const mockTemplates: FlowTemplate[] = [
   },
   {
     id: 2,
-    name: "文本数据清洗流程",
-    description: "通用文本数据清洗和标准化流程",
+    name: "文本数据处理流程",
+    description: "通用文本数据处理和标准化流程",
     category: "文本处理",
     nodes: [
       {
@@ -202,7 +202,7 @@ const mockTemplates: FlowTemplate[] = [
         id: "node3",
         type: "data-enhancement",
         name: "文本增强",
-        description: "文本清洗和格式化",
+        description: "文本处理和格式化",
         position: { x: 500, y: 100 },
         config: { removeHtml: true, normalizeWhitespace: true },
         status: "idle",
@@ -210,8 +210,8 @@ const mockTemplates: FlowTemplate[] = [
       {
         id: "node4",
         type: "data-output",
-        name: "清洗结果输出",
-        description: "输出清洗后的文本",
+        name: "处理结果输出",
+        description: "输出处理后的文本",
         position: { x: 700, y: 100 },
         config: { format: "jsonl" },
         status: "idle",
@@ -240,7 +240,7 @@ const mockExecutions: FlowExecution[] = [
   },
   {
     id: 2,
-    templateName: "文本数据清洗流程",
+    templateName: "文本数据处理流程",
     status: "completed",
     progress: 100,
     startTime: "2024-01-23 10:15:00",

@@ -2,6 +2,7 @@ import json
 import time
 from typing import Dict
 
+from datamate.common.utils.file_scanner import FileScanner
 import ray
 from jsonargparse import dict_to_namespace
 from loguru import logger
@@ -78,3 +79,7 @@ class RayExecutor:
     def update_db(self, status):
         task_info = TaskInfoPersistence()
         task_info.update_result(self.cfg.dataset_id, self.cfg.instance_id, status)
+
+    def scan_files(self):
+        scanner = FileScanner(self.cfg.dataset_id)
+        scanner.scan_and_process(self.cfg.export_path)

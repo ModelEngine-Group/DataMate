@@ -3,11 +3,13 @@ import { Download } from "lucide-react";
 import {useEffect, useState} from "react";
 import {useParams} from "react-router";
 import {TaskStatus} from "@/pages/DataCleansing/cleansing.model.ts";
-import {TaskStatusMap} from "@/pages/DataCleansing/cleansing.const.tsx";
+import {getTaskStatusMap} from "@/pages/DataCleansing/cleansing.const.tsx";
+import { useTranslation } from "react-i18next";
 
 // 模拟文件列表数据
 export default function FileTable({result, fetchTaskResult}) {
   const { id = "" } = useParams();
+  const { t } = useTranslation();
   const [showFileCompareDialog, setShowFileCompareDialog] = useState(false);
   const [selectedFile, setSelectedFile] = useState<any>(null);
   const [selectedFileIds, setSelectedFileIds] = useState<string[]>([]);
@@ -75,7 +77,7 @@ export default function FileTable({result, fetchTaskResult}) {
       ),
     },
     {
-      title: "文件名",
+      title: t("dataCleansing.detail.fileTable.fileName"),
       dataIndex: "srcName",
       key: "srcName",
       width: 200,
@@ -87,7 +89,7 @@ export default function FileTable({result, fetchTaskResult}) {
       }: any) => (
         <div className="p-4 w-64">
           <Input
-            placeholder="搜索文件名"
+            placeholder={t("dataCleansing.detail.fileTable.searchFileName")}
             value={selectedKeys[0]}
             onChange={(e) =>
               setSelectedKeys(e.target.value ? [e.target.value] : [])
@@ -97,10 +99,10 @@ export default function FileTable({result, fetchTaskResult}) {
           />
           <div className="flex gap-2">
             <Button size="small" onClick={() => confirm()}>
-              搜索
+              {t("dataCleansing.actions.search")}
             </Button>
             <Button size="small" onClick={() => clearFilters()}>
-              重置
+              {t("dataCleansing.actions.reset")}
             </Button>
           </div>
         </div>
@@ -112,7 +114,7 @@ export default function FileTable({result, fetchTaskResult}) {
       ),
     },
     {
-      title: "清洗后文件名",
+      title: t("dataCleansing.detail.fileTable.processedFileName"),
       dataIndex: "destName",
       key: "destName",
       width: 200,
@@ -124,7 +126,7 @@ export default function FileTable({result, fetchTaskResult}) {
                        }: any) => (
         <div className="p-4 w-64">
           <Input
-            placeholder="搜索文件名"
+            placeholder={t("dataCleansing.detail.fileTable.searchFileName")}
             value={selectedKeys[0]}
             onChange={(e) =>
               setSelectedKeys(e.target.value ? [e.target.value] : [])
@@ -134,10 +136,10 @@ export default function FileTable({result, fetchTaskResult}) {
           />
           <div className="flex gap-2">
             <Button size="small" onClick={() => confirm()}>
-              搜索
+              {t("dataCleansing.actions.search")}
             </Button>
             <Button size="small" onClick={() => clearFilters()}>
-              重置
+              {t("dataCleansing.actions.reset")}
             </Button>
           </div>
         </div>
@@ -149,7 +151,7 @@ export default function FileTable({result, fetchTaskResult}) {
       ),
     },
     {
-      title: "文件类型",
+      title: t("dataCleansing.detail.fileTable.fileType"),
       dataIndex: "srcType",
       key: "srcType",
       filterDropdown: ({
@@ -160,7 +162,7 @@ export default function FileTable({result, fetchTaskResult}) {
                        }: any) => (
         <div className="p-4 w-64">
           <Input
-            placeholder="搜索文件类型"
+            placeholder={t("dataCleansing.detail.fileTable.searchFileType")}
             value={selectedKeys[0]}
             onChange={(e) =>
               setSelectedKeys(e.target.value ? [e.target.value] : [])
@@ -170,10 +172,10 @@ export default function FileTable({result, fetchTaskResult}) {
           />
           <div className="flex gap-2">
             <Button size="small" onClick={() => confirm()}>
-              搜索
+              {t("dataCleansing.actions.search")}
             </Button>
             <Button size="small" onClick={() => clearFilters()}>
-              重置
+              {t("dataCleansing.actions.reset")}
             </Button>
           </div>
         </div>
@@ -185,7 +187,7 @@ export default function FileTable({result, fetchTaskResult}) {
       ),
     },
     {
-      title: "清洗后文件类型",
+      title: t("dataCleansing.detail.fileTable.processedFileType"),
       dataIndex: "destType",
       key: "destType",
       filterDropdown: ({
@@ -196,7 +198,7 @@ export default function FileTable({result, fetchTaskResult}) {
                        }: any) => (
         <div className="p-4 w-64">
           <Input
-            placeholder="搜索文件类型"
+            placeholder={t("dataCleansing.detail.fileTable.searchFileType")}
             value={selectedKeys[0]}
             onChange={(e) =>
               setSelectedKeys(e.target.value ? [e.target.value] : [])
@@ -206,10 +208,10 @@ export default function FileTable({result, fetchTaskResult}) {
           />
           <div className="flex gap-2">
             <Button size="small" onClick={() => confirm()}>
-              搜索
+              {t("dataCleansing.actions.search")}
             </Button>
             <Button size="small" onClick={() => clearFilters()}>
-              重置
+              {t("dataCleansing.actions.reset")}
             </Button>
           </div>
         </div>
@@ -221,7 +223,7 @@ export default function FileTable({result, fetchTaskResult}) {
       ),
     },
     {
-      title: "清洗前大小",
+      title: t("dataCleansing.detail.fileTable.beforeSize"),
       dataIndex: "srcSize",
       key: "srcSize",
       sorter: (a: any, b: any) => {
@@ -240,7 +242,7 @@ export default function FileTable({result, fetchTaskResult}) {
       ),
     },
     {
-      title: "清洗后大小",
+      title: t("dataCleansing.detail.fileTable.afterSize"),
       dataIndex: "destSize",
       key: "destSize",
       sorter: (a: any, b: any) => {
@@ -261,12 +263,12 @@ export default function FileTable({result, fetchTaskResult}) {
       ),
     },
     {
-      title: "状态",
+      title: t("dataCleansing.detail.fileTable.status"),
       dataIndex: "status",
       key: "status",
       filters: [
-        { text: "已完成", value: "COMPLETED" },
-        { text: "失败", value: "FAILED" },
+        { text: t("dataCleansing.status.completed"), value: "COMPLETED" },
+        { text: t("dataCleansing.status.failed"), value: "FAILED" },
       ],
       onFilter: (value: string, record: any) => record.status === value,
       render: (status: string) => (
@@ -276,12 +278,12 @@ export default function FileTable({result, fetchTaskResult}) {
               ? "success"
               : "error"
           }
-          text={TaskStatusMap[status as TaskStatus].label}
+          text={getTaskStatusMap(t)[status as TaskStatus].label}
         />
       ),
     },
     {
-      title: "操作",
+      title: t("dataCleansing.detail.fileTable.actions"),
       key: "action",
       width: 200,
       render: (_text: string, record: any) => (
@@ -292,7 +294,7 @@ export default function FileTable({result, fetchTaskResult}) {
               size="small"
               onClick={() => handleViewFileCompare(record)}
             >
-              对比
+              {t("dataCleansing.actions.compare")}
             </Button>
           ) : (
             <Button
@@ -300,11 +302,11 @@ export default function FileTable({result, fetchTaskResult}) {
               size="small"
               disabled
             >
-              对比
+              {t("dataCleansing.actions.compare")}
             </Button>
           )}
-          <Popover content="暂未开放">
-              <Button type="link" size="small" disabled>下载</Button>
+          <Popover content={t("dataCleansing.detail.fileTable.downloadNotAvailable")}>
+              <Button type="link" size="small" disabled>{t("dataCleansing.actions.download")}</Button>
           </Popover>
         </div>
       ),
@@ -317,7 +319,7 @@ export default function FileTable({result, fetchTaskResult}) {
         <div className="mb-4 flex justify-between">
           <div className="flex items-center gap-2">
             <span className="text-sm text-gray-600">
-              已选择 {selectedFileIds.length} 个文件
+              {t("dataCleansing.detail.fileTable.downloadNotAvailable", {count: selectedFileIds.length})}
             </span>
             <Button
               onClick={handleBatchDownload}
@@ -325,7 +327,7 @@ export default function FileTable({result, fetchTaskResult}) {
               type="primary"
               icon={<Download className="w-4 h-4 mr-2" />}
             >
-              批量下载
+              {t("dataCleansing.actions.batchDownload")}
             </Button>
           </div>
         </div>
@@ -344,50 +346,50 @@ export default function FileTable({result, fetchTaskResult}) {
         onCancel={() => setShowFileCompareDialog(false)}
         footer={null}
         width={900}
-        title={<span>文件对比 - {selectedFile?.fileName}</span>}
+        title={<span>{t("dataCleansing.detail.fileTable.compareDialogTitle", {fileName: selectedFile?.fileName})}</span>}
       >
         <div className="grid grid-cols-2 gap-6 py-6">
           <div>
-            <h4 className="font-medium text-gray-900">清洗前</h4>
+            <h4 className="font-medium text-gray-900">{t("dataCleansing.detail.fileTable.beforeProcessing")}</h4>
             <div className="border border-gray-200 rounded-lg p-6 bg-gray-50 min-h-48 flex items-center justify-center">
               <div className="text-center text-gray-500">
                 <div className="w-16 h-16 bg-gray-300 rounded-lg mx-auto mb-2" />
-                <div className="text-sm">原始文件预览</div>
+                <div className="text-sm">{t("dataCleansing.detail.fileTable.originalFilePreview")}</div>
                 <div className="text-xs text-gray-400">
-                  大小: {formatFileSize(selectedFile?.srcSize)}
+                  {t("dataCleansing.detail.fileTable.size")}: {formatFileSize(selectedFile?.srcSize)}
                 </div>
               </div>
             </div>
             <div className="text-sm text-gray-600 mt-3 space-y-1">
               <div>
-                <span className="font-medium">文件格式:</span> {selectedFile?.srcType}
+                <span className="font-medium">{t("dataCleansing.detail.fileTable.fileFormat")}:</span> {selectedFile?.srcType}
               </div>
             </div>
           </div>
           <div>
-            <h4 className="font-medium text-gray-900">清洗后</h4>
+            <h4 className="font-medium text-gray-900">{t("dataCleansing.detail.fileTable.afterProcessing")}</h4>
             <div className="border border-gray-200 rounded-lg p-6 bg-gray-50 min-h-48 flex items-center justify-center">
               <div className="text-center text-gray-500">
                 <div className="w-16 h-16 bg-blue-300 rounded-lg mx-auto mb-2" />
-                <div className="text-sm">处理后文件预览</div>
+                <div className="text-sm">{t("dataCleansing.detail.fileTable.processedFilePreview")}</div>
                 <div className="text-xs text-gray-400">
-                  大小: {formatFileSize(selectedFile?.destSize)}
+                  {t("dataCleansing.detail.fileTable.size")}: {formatFileSize(selectedFile?.destSize)}
                 </div>
               </div>
             </div>
             <div className="text-sm text-gray-600 mt-3 space-y-1">
               <div>
-                <span className="font-medium">文件格式:</span> {selectedFile?.destType}
+                <span className="font-medium">{t("dataCleansing.detail.fileTable.fileFormat")}:</span> {selectedFile?.destType}
               </div>
             </div>
           </div>
         </div>
         <div className="border-t border-gray-200 mt-6 pt-4">
-          <h4 className="font-medium text-gray-900 mb-3">处理效果对比</h4>
+          <h4 className="font-medium text-gray-900 mb-3">{t("dataCleansing.detail.fileTable.processingEffect")}</h4>
           <div className="grid grid-cols-3 gap-4 text-sm">
             <div className="bg-green-50 p-4 rounded-lg">
-              <div className="font-medium text-green-700">文件大小优化</div>
-              <div className="text-green-600">减少了 {(100 * (selectedFile?.srcSize - selectedFile?.destSize) / selectedFile?.srcSize).toFixed(2)}%</div>
+              <div className="font-medium text-green-700">{t("dataCleansing.detail.fileTable.sizeOptimization")}</div>
+              <div className="text-green-600">{t("dataCleansing.detail.fileTable.reduced", {percent: (100 * (selectedFile?.srcSize - selectedFile?.destSize) / selectedFile?.srcSize).toFixed(2)})}</div>
             </div>
           </div>
         </div>

@@ -21,6 +21,17 @@ from .data_evaluation import (
     EvaluationItem
 )
 
+from .operator import (
+    Operator,
+    Category,
+    CategoryRelation,
+    OperatorRelease
+)
+
+from .chunk_upload import (
+    ChunkUploadPreRequest
+)
+
 __all__ = [
     "Dataset",
     "DatasetTag",
@@ -32,4 +43,9 @@ __all__ = [
     "LabelingProject",
     "EvaluationTask",
     "EvaluationItem",
+    "Operator",
+    "Category",
+    "CategoryRelation",
+    "OperatorRelease",
+    "ChunkUploadPreRequest",
 ]

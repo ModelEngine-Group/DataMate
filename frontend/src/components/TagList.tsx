@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { PlusOutlined } from "@ant-design/icons";
 import type { InputRef } from "antd";
 import { Flex, Input, Tag, theme, Tooltip } from "antd";
+import { useTranslation } from "react-i18next";
 
 const tagInputStyle: React.CSSProperties = {
   width: 64,
@@ -25,6 +26,7 @@ const TagList: React.FC<TagListProps> = ({
   onAdd,
   onEdit,
 }) => {
+  const { t } = useTranslation();
   const { token } = theme.useToken();
   const [inputVisible, setInputVisible] = useState(false);
   const [inputValue, setInputValue] = useState("");
@@ -139,7 +141,7 @@ const TagList: React.FC<TagListProps> = ({
         />
       ) : (
         <Tag style={tagPlusStyle} icon={<PlusOutlined />} onClick={showInput}>
-          新增标签
+          {t('components.tagList.addTag')}
         </Tag>
       )}
     </Flex>

@@ -6,6 +6,7 @@ import org.apache.ibatis.type.MappedJdbcTypes;
 import org.apache.ibatis.type.MappedTypes;
 import org.postgresql.util.PGobject;
 
+import java.lang.reflect.Field;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
@@ -16,6 +17,10 @@ public class PgJsonTypeHandler extends JacksonTypeHandler {
 
     public PgJsonTypeHandler(Class<?> type) {
         super(type);
+    }
+
+    public PgJsonTypeHandler(Class<?> type, Field field) {
+        super(type, field);
     }
 
     @Override

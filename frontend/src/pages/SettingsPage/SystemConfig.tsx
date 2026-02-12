@@ -1,5 +1,6 @@
 import { Input, Select, Switch, Button, Table, Spin } from "antd";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { getSysParamList, updateSysParamValue } from './settings.apis';
 
 interface SystemParam {
@@ -14,6 +15,7 @@ interface SystemParam {
 }
 
 export default function SystemConfig() {
+  const { t } = useTranslation();
   const [sysParams, setSysParams] = useState<SystemParam[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingParams, setEditingParams] = useState<Record<string, string>>({});
@@ -118,13 +120,13 @@ export default function SystemConfig() {
   // 表格列定义
   const columns = [
     {
-      title: "参数名",
+      title: t('settings.systemConfig.columns.paramName'),
       dataIndex: "id",
       key: "id",
       width: 180,
     },
     {
-      title: "参数值",
+      title: t('settings.systemConfig.columns.paramValue'),
       dataIndex: "paramValue",
       key: "paramValue",
       width: 200,
@@ -154,7 +156,7 @@ export default function SystemConfig() {
               options={options}
               disabled={!record.canModify}
               style={{ width: '150px' }}
-              placeholder="请选择值"
+              placeholder={t('settings.systemConfig.placeholders.selectValue')}
             />
           );
         }
@@ -186,13 +188,13 @@ export default function SystemConfig() {
       },
     },
     {
-      title: "描述",
+      title: t('settings.systemConfig.columns.description'),
       dataIndex: "description",
       key: "description",
       width: 300,
     },
     {
-      title: "是否启用",
+      title: t('settings.systemConfig.columns.isEnabled'),
       dataIndex: "isEnabled",
       key: "isEnabled",
       width: 100,
@@ -205,8 +207,8 @@ export default function SystemConfig() {
   return (
     <div className="h-full flex flex-col">
       <div className="flex items-top justify-between">
-        <h2 className="text-lg font-medium mb-4">系统参数配置</h2>
-        <Button onClick={fetchSysParams}>刷新</Button>
+        <h2 className="text-lg font-medium mb-4">{t('settings.systemConfig.title')}</h2>
+        <Button onClick={fetchSysParams}>{t('settings.systemConfig.refresh')}</Button>
       </div>
       <div className="flex-1 border-card overflow-auto p-6">
         {loading ? (

@@ -7,48 +7,50 @@ import {
   Workflow,
   Zap,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 // 流程图组件
 export default function ProcessFlowDiagram() {
+  const { t } = useTranslation();
   const flowSteps = [
     {
       id: "start",
-      label: "开始",
+      label: t("dataCleansing.processFlow.start"),
       type: "start",
       icon: Play,
       color: "bg-green-500",
     },
     {
       id: "select",
-      label: "选择数据集",
+      label: t("dataCleansing.processFlow.selectDataset"),
       type: "process",
       icon: Database,
       color: "bg-blue-500",
     },
     {
       id: "config",
-      label: "基本配置",
+      label: t("dataCleansing.steps.basicInfo"),
       type: "process",
       icon: Settings,
       color: "bg-purple-500",
     },
     {
       id: "operators",
-      label: "算子编排",
+      label: t("dataCleansing.steps.operatorOrchestration"),
       type: "process",
       icon: Workflow,
       color: "bg-orange-500",
     },
     {
       id: "execute",
-      label: "执行任务",
+      label: t("dataCleansing.actions.startTask"),
       type: "process",
       icon: Zap,
       color: "bg-red-500",
     },
     {
       id: "end",
-      label: "完成",
+      label: t("dataCleansing.processFlow.complete"),
       type: "end",
       icon: CheckCircle,
       color: "bg-green-500",

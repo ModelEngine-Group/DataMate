@@ -26,11 +26,11 @@ const ParamConfig: React.FC<ParamConfigProps> = ({
   onParamChange,
 }) => {
   if (!param) return null;
-  let defaultVal: any = param.defaultVal;
+  let defaultVal: any = operator.overrides?.[paramKey] ?? param.defaultVal;
   if (param.type === "range") {
-    
-    defaultVal = Array.isArray(param.defaultVal)
-      ? param.defaultVal
+
+    defaultVal = Array.isArray(defaultVal)
+      ? defaultVal
       : [
           param?.properties?.[0]?.defaultVal,
           param?.properties?.[1]?.defaultVal,
@@ -217,9 +217,10 @@ const ParamConfig: React.FC<ParamConfigProps> = ({
           key={paramKey}
         >
           <Switch
+            value={value}
             checkedChildren={param.checkedLabel}
             unCheckedChildren={param.unCheckedLabel}
-            defaultChecked={param.defaultVal === 'true'}
+            defaultChecked={String(param.defaultVal).toLowerCase() === 'true'}
             onChange={(checked) => updateValue(checked)}
           />
         </Form.Item>

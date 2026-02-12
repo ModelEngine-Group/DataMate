@@ -4,6 +4,7 @@ import { Card, Button, Badge, Input, Tabs, Modal, Breadcrumb, Tag, Spin, Empty, 
 import { queryKnowledgeBaseFileDetailUsingGet } from "@/pages/KnowledgeBase/knowledge-base.api";
 import { Link, useParams } from "react-router";
 import DetailHeader from "@/components/DetailHeader";
+import { useTranslation } from "react-i18next";
 
 interface RagChunk {
   id: string;
@@ -11,34 +12,8 @@ interface RagChunk {
   metadata: unknown; // may be string or object
 }
 
-// 状态标签
-const getStatusLabel = (status: string) => {
-  const labels: Record<string, string> = {
-    ready: "就绪",
-    processing: "处理中",
-    vectorizing: "向量化中",
-    importing: "导入中",
-    error: "错误",
-    disabled: "已禁用",
-    completed: "已完成",
-  };
-  return labels[status] || status;
-};
-
-const getStatusColor = (status: string) => {
-  const colors: Record<string, string> = {
-    ready: "green",
-    processing: "blue",
-    vectorizing: "purple",
-    importing: "orange",
-    error: "blue",
-    disabled: "gray",
-    completed: "green",
-  };
-  return colors[status] || "default";
-};
-
 const KnowledgeBaseFileDetail: React.FC = () => {
+  const { t } = useTranslation();
   const { id } = useParams();
   // id 为路由中的 ragFileId，knowledgeBaseId 通过上一级 detail 路由或 query 传入
   const search = new URLSearchParams(window.location.search);
@@ -101,7 +76,7 @@ const KnowledgeBaseFileDetail: React.FC = () => {
       };
       setPaged(normalized);
     } catch (err: unknown) {
-      const msg = typeof err === "object" && err !== null && "message" in err ? String((err as { message?: string }).message) : "加载失败";
+      const msg = typeof err === "object" && err !== null && "message" in err ? String((err as { message?: string }).message) : t("knowledgeBase.fileDetail.messages.loadFailed");
       setError(msg);
     } finally {
       setLoading(false);
@@ -111,7 +86,7 @@ const KnowledgeBaseFileDetail: React.FC = () => {
   useEffect(() => {
     fetchChunks(currentPage);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [knowledgeBaseId, ragFileId, currentPage]);
+  }, [knowledgeBaseId, ragFileId, currentPage, t]);
 
   const totalElements = paged?.totalElements ?? 0;
   const totalPages = paged?.totalPages ?? 0;
@@ -143,7 +118,7 @@ const KnowledgeBaseFileDetail: React.FC = () => {
       {error && <Alert type="error" message={error} showIcon />}
       <div className="flex items-center justify-between">
         <div className="text-sm text-gray-600">
-          共 {totalElements} 个分块，第 {totalElements === 0 ? 0 : (currentPage - 1) * pageSize + 1}-
+          {t("knowledgeBase.fileDetail.messages.chunkCount", { count: totalElements })}，第 {totalElements === 0 ? 0 : (currentPage - 1) * pageSize + 1}-
           {Math.min(currentPage * pageSize, totalElements)} 个
         </div>
         <div className="flex items-center gap-2">
@@ -152,17 +127,17 @@ const KnowledgeBaseFileDetail: React.FC = () => {
             onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
             disabled={currentPage <= 1}
           >
-            上一页
+            {t("knowledgeBase.fileDetail.messages.previousPage")}
           </Button>
           <span className="text-sm text-gray-600">
             {totalPages === 0 ? 0 : currentPage} / {totalPages}
           </span>
           <Button
             size="small"
-            onClick={() => setCurrentPage(Math.min(totalPages || 1, currentPage + 1))}
+            onClick={() => setCurrentPage(Math.min(totalPages ||1, currentPage + 1))}
             disabled={currentPage >= (totalPages || 1)}
           >
-            下一页
+            {t("knowledgeBase.fileDetail.messages.nextPage")}
           </Button>
         </div>
       </div>
@@ -173,7 +148,7 @@ const KnowledgeBaseFileDetail: React.FC = () => {
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
                   <div className="flex-1 flex items-center gap-2">
-                    <h4 className="text-sm font-semibold">分块 {chunk.id}</h4>
+                    <h4 className="text-sm font-semibold">{t("knowledgeBase.fileDetail.messages.chunkLabel")} {chunk.id}</h4>
                     {/* 算子名：从 metadata.sliceOperator 显示 */}
                     {chunk.metadata?.sliceOperator && (
                       <Tag className="text-xs">
@@ -189,7 +164,7 @@ const KnowledgeBaseFileDetail: React.FC = () => {
                           size="small"
                           onClick={() => handleSaveChunk(chunk.id)}
                         >
-                          保存
+                          {t("knowledgeBase.fileDetail.actions.save")}
                         </Button>
                         <Button
                           size="small"
@@ -198,7 +173,7 @@ const KnowledgeBaseFileDetail: React.FC = () => {
                             setEditChunkContent("");
                           }}
                         >
-                          取消
+                          {t("knowledgeBase.fileDetail.actions.cancel")}
                         </Button>
                       </>
                     ) : (
@@ -229,7 +204,7 @@ const KnowledgeBaseFileDetail: React.FC = () => {
                 </div>
                 {/* 元数据展示，保持和召回结果风格一致 */}
                 <div className="mt-2 text-xs text-gray-600">
-                  <div className="font-medium">metadata:</div>
+                  <div className="font-medium">{t("knowledgeBase.fileDetail.modal.metadata")}:</div>
                   <pre className="whitespace-pre-wrap break-all m-0">
                     {typeof chunk.metadata === "string"
                       ? chunk.metadata
@@ -238,17 +213,17 @@ const KnowledgeBaseFileDetail: React.FC = () => {
                 </div>
                 {/* 结构化元数据的快捷标签（若可用） */}
                 <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
-                  {chunk?.metadata?.position && <span>位置: {chunk.metadata.position}</span>}
+                  {chunk?.metadata?.position && <span>{t("knowledgeBase.fileDetail.columns.position")}: {chunk.metadata.position}</span>}
                   {chunk?.metadata?.tokens && <span>Token: {chunk.metadata.tokens}</span>}
-                  {chunk?.metadata?.page && <span>页码: {chunk.metadata.page}</span>}
-                  {chunk?.metadata?.section && <span>章节: {chunk.metadata.section}</span>}
+                  {chunk?.metadata?.page && <span>{t("knowledgeBase.fileDetail.columns.page")}: {chunk.metadata.page}</span>}
+                  {chunk?.metadata?.section && <span>{t("knowledgeBase.fileDetail.columns.section")}: {chunk.metadata.section}</span>}
                 </div>
               </div>
             </div>
           </Card>
         ))}
         {!loading && currentChunks.length === 0 && (
-          <Empty description="暂无分块数据" />
+          <Empty description={t("knowledgeBase.fileDetail.messages.noChunks")} />
         )}
       </div>
     </div>
@@ -258,8 +233,8 @@ const KnowledgeBaseFileDetail: React.FC = () => {
     <div className="flex flex-col gap-4">
       <Breadcrumb
         items={[
-          { title: <Link to="/data/knowledge-base">知识库</Link> },
-          { title: (<Link to={kbLink}>知识库详情</Link>) },
+          { title: <Link to="/data/knowledge-base">{t("knowledgeBase.fileDetail.breadcrumb.kbList")}</Link> },
+          { title: (<Link to={kbLink}>{t("knowledgeBase.fileDetail.breadcrumb.kbDetail")}</Link>) },
           { title: fileName || `文件 ${ragFileId}` },
         ]}
       />
@@ -269,14 +244,14 @@ const KnowledgeBaseFileDetail: React.FC = () => {
           id: ragFileId,
           icon: <FileBox className="w-full h-full" />,
           iconColor: "#a27e7e",
-          status: { label: "就绪", color: "default" },
+          status: { label: t("knowledgeBase.fileDetail.messages.ready"), color: "default" },
           name: fileName || `文件 ${ragFileId}`,
-          description: `${totalElements} 个分块`,
+          description: `${totalElements} ${t("knowledgeBase.fileDetail.messages.chunkCount", { count: 0 })}`,
           createdAt: "",
           lastUpdated: "",
         }}
         statistics={[]}
-        operations={[{ key: "download", label: "下载", icon: <Download className="w-4 h-4" />, onClick: () => {} }]}
+        operations={[{ key: "download", label: t("knowledgeBase.fileDetail.actions.download"), icon: <Download className="w-4 h-4" />, onClick: () => {} }]}
       />
       <Card>
         {loading ? <div className="flex items-center justify-center py-8"><Spin /></div> : renderChunks()}
@@ -287,24 +262,24 @@ const KnowledgeBaseFileDetail: React.FC = () => {
         open={!!showSliceTraceDialog}
         onCancel={() => setShowSliceTraceDialog(null)}
         footer={null}
-        title="知识切片回溯"
+        title={t("knowledgeBase.fileDetail.modal.sliceTraceTitle")}
         width={800}
         destroyOnClose
       >
         {/* 简化为内容占位，真实数据待后端提供更多字段 */}
         <div className="space-y-4">
           <div className="bg-gray-50 rounded-lg p-4">
-            <h4 className="font-medium mb-3">切片处理流程</h4>
+            <h4 className="font-medium mb-3">{t("knowledgeBase.fileDetail.modal.sliceProcessTitle")}</h4>
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-medium">
                   1
                 </div>
                 <div className="flex-1">
-                  <p className="font-medium">原始文档导入</p>
-                  <p className="text-sm text-gray-600">文件: {ragFileId}</p>
+                  <p className="font-medium">{t("knowledgeBase.fileDetail.modal.originalDocImport")}</p>
+                  <p className="text-sm text-gray-600">{t("knowledgeBase.fileDetail.modal.fileLabel")}: {ragFileId}</p>
                 </div>
-                <Badge>完成</Badge>
+                <Badge>{t("knowledgeBase.fileDetail.modal.completed")}</Badge>
               </div>
             </div>
           </div>
@@ -316,7 +291,7 @@ const KnowledgeBaseFileDetail: React.FC = () => {
         open={!!chunkDetailModal}
         onCancel={() => setChunkDetailModal(null)}
         footer={null}
-        title={`分块详细信息 - 分块 ${chunkDetailModal ?? ""}`}
+        title={`${t("knowledgeBase.fileDetail.modal.chunkDetailTitle")} ${chunkDetailModal ?? ""}`}
         width={900}
         destroyOnClose
       >
@@ -325,10 +300,10 @@ const KnowledgeBaseFileDetail: React.FC = () => {
           items={[
             {
               key: "content",
-              label: "内容详情",
+              label: t("knowledgeBase.fileDetail.modal.contentDetail"),
               children: (
                 <div>
-                  <div className="font-medium mb-1">分块内容</div>
+                  <div className="font-medium mb-1">{t("knowledgeBase.fileDetail.modal.chunkContent")}</div>
                   <Input.TextArea
                     value={currentChunks.find((c) => c.id === chunkDetailModal)?.text || ""}
                     rows={8}
@@ -340,23 +315,23 @@ const KnowledgeBaseFileDetail: React.FC = () => {
             },
             {
               key: "metadata",
-              label: "元数据",
+              label: t("knowledgeBase.fileDetail.modal.metadata"),
               children: (
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <div className="font-medium mb-1">位置</div>
+                    <div className="font-medium mb-1">{t("knowledgeBase.fileDetail.modal.position")}</div>
                     <Input value={currentChunks.find((c) => c.id === chunkDetailModal)?.metadata?.position || ""} readOnly />
                   </div>
                   <div>
-                    <div className="font-medium mb-1">Token数量</div>
+                    <div className="font-medium mb-1">{t("knowledgeBase.fileDetail.modal.tokenCount")}</div>
                     <Input value={currentChunks.find((c) => c.id === chunkDetailModal)?.metadata?.tokens || ""} readOnly />
                   </div>
                   <div>
-                    <div className="font-medium mb-1">页码</div>
+                    <div className="font-medium mb-1">{t("knowledgeBase.fileDetail.modal.pageNumber")}</div>
                     <Input value={currentChunks.find((c) => c.id === chunkDetailModal)?.metadata?.page || ""} readOnly />
                   </div>
                   <div>
-                    <div className="font-medium mb-1">章节</div>
+                    <div className="font-medium mb-1">{t("knowledgeBase.fileDetail.modal.chapter")}</div>
                     <Input value={currentChunks.find((c) => c.id === chunkDetailModal)?.metadata?.section || ""} readOnly />
                   </div>
                 </div>

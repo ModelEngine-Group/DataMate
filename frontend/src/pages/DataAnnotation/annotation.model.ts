@@ -121,6 +121,9 @@ export interface AutoAnnotationTask {
   datasetName?: string;
   sourceDatasets?: string[];
 
+  // 当前任务关联的 DM 文件 ID 列表（由后端返回，可选）
+  fileIds?: string[];
+
   config: {
     modelSize: string;
     confThreshold: number;

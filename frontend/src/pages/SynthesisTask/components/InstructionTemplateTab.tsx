@@ -2,12 +2,14 @@ import { useState } from "react";
 import { Card, Table, Badge, Button } from "antd";
 import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import { Plus, FileText } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { Template } from "@/pages/SynthesisTask/synthesis";
 import { useNavigate } from "react-router";
 import { mockTemplates } from "@/mock/synthesis";
 import { SearchControls } from "@/components/SearchControls";
 
 export default function InstructionTemplateTab() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -35,7 +37,7 @@ export default function InstructionTemplateTab() {
   // 模板表格列
   const templateColumns = [
     {
-      title: "模板名称",
+      title: t('synthesisTask.templates.columns.name'),
       dataIndex: "name",
       key: "name",
       fixed: "left",
@@ -56,17 +58,17 @@ export default function InstructionTemplateTab() {
       ),
     },
     {
-      title: "类型",
+      title: t('synthesisTask.templates.columns.type'),
       dataIndex: "type",
       key: "type",
       render: (type: string) => (
         <Badge className="text-xs">
-          {type === "preset" ? "预置" : "自定义"}
+          {type === "preset" ? t('synthesisTask.templates.typeMap.preset') : t('synthesisTask.templates.typeMap.custom')}
         </Badge>
       ),
     },
     {
-      title: "分类",
+      title: t('synthesisTask.templates.columns.category'),
       dataIndex: "category",
       key: "category",
       render: (category: string) => (
@@ -76,7 +78,7 @@ export default function InstructionTemplateTab() {
       ),
     },
     {
-      title: "变量数量",
+      title: t('synthesisTask.templates.columns.variables'),
       dataIndex: "variables",
       key: "variables",
       render: (variables: string[]) => (
@@ -86,7 +88,7 @@ export default function InstructionTemplateTab() {
       ),
     },
     {
-      title: "使用次数",
+      title: t('synthesisTask.templates.columns.usageCount'),
       dataIndex: "usageCount",
       key: "usageCount",
       render: (usageCount: number) => (
@@ -94,13 +96,13 @@ export default function InstructionTemplateTab() {
       ),
     },
     {
-      title: "质量评分",
+      title: t('synthesisTask.templates.columns.qualityScore'),
       dataIndex: "quality",
       key: "quality",
       render: (quality: number) => (quality ? `${quality}%` : "-"),
     },
     {
-      title: "最后使用",
+      title: t('synthesisTask.templates.columns.lastUsed'),
       dataIndex: "lastUsed",
       key: "lastUsed",
       render: (lastUsed: string) => (
@@ -108,7 +110,7 @@ export default function InstructionTemplateTab() {
       ),
     },
     {
-      title: "操作",
+      title: t('synthesisTask.templates.columns.actions'),
       key: "actions",
       fixed: "right",
       render: (_: any, template: Template) => (
@@ -129,15 +131,15 @@ export default function InstructionTemplateTab() {
       <SearchControls
         searchTerm={searchQuery}
         onSearchChange={setSearchQuery}
-        searchPlaceholder="搜索模板名称或描述..."
+        searchPlaceholder={t('synthesisTask.templates.searchPlaceholder')}
         filters={[
           {
             key: "type",
-            label: "类型",
+            label: t('synthesisTask.templates.columns.type'),
             options: [
-              { label: "全部类型", value: "all" },
-              { label: "预置模板", value: "preset" },
-              { label: "自定义模板", value: "custom" },
+              { label: t('synthesisTask.templates.typeMap.all'), value: "all" },
+              { label: t('synthesisTask.templates.typeMap.preset'), value: "preset" },
+              { label: t('synthesisTask.templates.typeMap.custom'), value: "custom" },
             ],
           },
         ]}
@@ -162,12 +164,12 @@ export default function InstructionTemplateTab() {
               <div className="text-center py-12">
                 <FileText className="w-12 h-12 text-gray-400 mx-auto mb-3" />
                 <h3 className="text-base font-semibold text-gray-900 mb-2">
-                  暂无指令模板
+                  {t('synthesisTask.templates.empty.title')}
                 </h3>
                 <p className="text-gray-500 mb-4 text-sm">
                   {searchQuery
-                    ? "没有找到匹配的模板"
-                    : "开始创建您的第一个指令模板"}
+                    ? t('synthesisTask.templates.empty.noMatch')
+                    : t('synthesisTask.templates.empty.createFirst')}
                 </p>
                 {!searchQuery && (
                   <Button
@@ -177,7 +179,7 @@ export default function InstructionTemplateTab() {
                     className="px-6 py-2 text-sm font-semibold bg-purple-600 hover:bg-purple-700 shadow-lg"
                   >
                     <Plus className="w-3 h-3 mr-1" />
-                    创建模板
+                    {t('synthesisTask.templates.actions.createTemplate')}
                   </Button>
                 )}
               </div>

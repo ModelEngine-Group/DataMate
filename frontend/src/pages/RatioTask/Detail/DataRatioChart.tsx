@@ -10,21 +10,34 @@ import {
   LineChart,
   Line,
 } from "recharts"
-
-const chartData = [
-  { name: "一月", 配比率: 65, 成功数: 2400, 失败数: 240 },
-  { name: "二月", 配比率: 72, 成功数: 2210, 失败数: 221 },
-  { name: "三月", 配比率: 78, 成功数: 2290, 失败数: 229 },
-  { name: "四月", 配比率: 84, 成功数: 2000, 失败数: 200 },
-  { name: "五月", 配比率: 90, 成功数: 2181, 失败数: 218 },
-  { name: "六月", 配比率: 94, 成功数: 2500, 失败数: 250 },
-]
+import { useTranslation } from "react-i18next"
+import { useMemo } from "react"
 
 export default function DataRatioChart() {
+  const { t } = useTranslation()
+  const chartData = useMemo(
+    () => [
+      { name: t("ratioTask.detail.chart.monthJan"), ratioRate: 65, successCount: 2400, failCount: 240 },
+      { name: t("ratioTask.detail.chart.monthFeb"), ratioRate: 72, successCount: 2210, failCount: 221 },
+      { name: t("ratioTask.detail.chart.monthMar"), ratioRate: 78, successCount: 2290, failCount: 229 },
+      { name: t("ratioTask.detail.chart.monthApr"), ratioRate: 84, successCount: 2000, failCount: 200 },
+      { name: t("ratioTask.detail.chart.monthMay"), ratioRate: 90, successCount: 2181, failCount: 218 },
+      { name: t("ratioTask.detail.chart.monthJun"), ratioRate: 94, successCount: 2500, failCount: 250 },
+    ],
+    [t]
+  )
+  const legendFormatter = (value: string) => {
+    const keyMap: Record<string, string> = {
+      ratioRate: t("ratioTask.detail.chart.ratioRate"),
+      successCount: t("ratioTask.detail.chart.successCount"),
+      failCount: t("ratioTask.detail.chart.failCount"),
+    }
+    return keyMap[value] ?? value
+  }
   return (
     <div className="lg:col-span-3 space-y-6">
       <div className="border-border bg-card/50 backdrop-blur p-6">
-        <h3 className="text-base font-semibold text-foreground mb-4">配比趋势分析</h3>
+        <h3 className="text-base font-semibold text-foreground mb-4">{t("ratioTask.detail.chart.ratioTrendTitle")}</h3>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--border))" />
@@ -37,16 +50,17 @@ export default function DataRatioChart() {
                 borderRadius: "8px",
               }}
               cursor={{ fill: "rgba(59, 130, 246, 0.1)" }}
+              formatter={(value: number, name: string) => [value, legendFormatter(name)]}
             />
-            <Legend />
-            <Bar dataKey="成功数" stackId="a" fill="#3b82f6" radius={[8, 8, 0, 0]} />
-            <Bar dataKey="失败数" stackId="a" fill="#ef4444" radius={[8, 8, 0, 0]} />
+            <Legend formatter={legendFormatter} />
+            <Bar dataKey="successCount" stackId="a" fill="#3b82f6" radius={[8, 8, 0, 0]} />
+            <Bar dataKey="failCount" stackId="a" fill="#ef4444" radius={[8, 8, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
 
       <div className="border-border bg-card/50 backdrop-blur p-6">
-        <h3 className="text-base font-semibold text-foreground mb-4">成功率曲线</h3>
+        <h3 className="text-base font-semibold text-foreground mb-4">{t("ratioTask.detail.chart.successRateCurve")}</h3>
         <ResponsiveContainer width="100%" height={250}>
           <LineChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--border))" />
@@ -59,10 +73,11 @@ export default function DataRatioChart() {
                 borderRadius: "8px",
               }}
               cursor={{ stroke: "rgba(34, 197, 94, 0.2)" }}
+              formatter={(value: number, name: string) => [value, legendFormatter(name)]}
             />
             <Line
               type="monotone"
-              dataKey="配比率"
+              dataKey="ratioRate"
               stroke="#22c55e"
               strokeWidth={2}
               dot={{ fill: "#22c55e", r: 4 }}

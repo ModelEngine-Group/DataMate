@@ -1,6 +1,7 @@
 package com.datamate.common.domain.utils;
 
 import java.io.File;
+import java.util.UUID;
 
 /**
  * 通用工具类
@@ -20,5 +21,21 @@ public class CommonUtils {
             filename = filePath.substring(lastSlashIndex + 1);
         }
         return filename;
+    }
+
+    /**
+     * 判断字符串是否是uuid
+     *
+     * @param str 要判断的字符串
+     * @return 判断结果
+     */
+    public static boolean isUUID(String str) {
+        if (str == null) return false;
+        try {
+            UUID.fromString(str);
+            return true;
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
     }
 }

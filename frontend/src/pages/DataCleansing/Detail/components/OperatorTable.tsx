@@ -2,20 +2,22 @@ import {Badge, Button, Input, Table, Typography} from "antd";
 import {useNavigate} from "react-router";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/Card"
 import { GitBranch } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export default function OperatorTable({ task }: { task: any }) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const operatorColumns = [
     {
-      title: "序号",
+      title: t("dataCleansing.detail.operatorTable.serialNumber"),
       dataIndex: "index",
       key: "index",
       width: 80,
       render: (text: any, record: any, index: number) => index + 1,
     },
     {
-      title: "算子名称",
+      title: t("dataCleansing.detail.operatorTable.operatorName"),
       dataIndex: "name",
       key: "name",
       render: (text, record) => (
@@ -28,7 +30,7 @@ export default function OperatorTable({ task }: { task: any }) {
       filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }: any) => (
         <div className="p-4 w-64">
           <Input
-            placeholder="搜索算子名称"
+            placeholder={t("dataCleansing.detail.operatorTable.searchOperatorName")}
             value={selectedKeys[0]}
             onChange={(e) => setSelectedKeys(e.target.value ? [e.target.value] : [])}
             onPressEnter={() => confirm()}
@@ -36,10 +38,10 @@ export default function OperatorTable({ task }: { task: any }) {
           />
           <div className="flex gap-2">
             <Button size="sm" onClick={() => confirm()}>
-              搜索
+              {t("dataCleansing.actions.search")}
             </Button>
             <Button size="sm" onClick={() => clearFilters()}>
-              重置
+              {t("dataCleansing.actions.reset")}
             </Button>
           </div>
         </div>
@@ -47,51 +49,51 @@ export default function OperatorTable({ task }: { task: any }) {
       onFilter: (value: string, record: any) => record.name.toLowerCase().includes(value.toLowerCase()),
     },
     {
-      title: "开始时间",
+      title: t("dataCleansing.detail.operatorTable.startTime"),
       dataIndex: "startTime",
       key: "startTime",
       sorter: (a: any, b: any) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
     },
     {
-      title: "结束时间",
+      title: t("dataCleansing.detail.operatorTable.endTime"),
       dataIndex: "endTime",
       key: "endTime",
       sorter: (a: any, b: any) => new Date(a.endTime).getTime() - new Date(b.endTime).getTime(),
     },
     {
-      title: "执行时长",
+      title: t("dataCleansing.detail.operatorTable.duration"),
       dataIndex: "duration",
       key: "duration",
     },
     {
-      title: "处理文件数",
+      title: t("dataCleansing.detail.operatorTable.processedFiles"),
       dataIndex: "processedFiles",
       key: "processedFiles",
       sorter: (a: any, b: any) => a.processedFiles - b.processedFiles,
     },
     {
-      title: "成功率",
+      title: t("dataCleansing.detail.operatorTable.successRate"),
       dataIndex: "successRate",
       key: "successRate",
       sorter: (a: any, b: any) => a.successRate - b.successRate,
       render: (rate: number) => `${rate}%`,
     },
     {
-      title: "状态",
+      title: t("dataCleansing.detail.operatorTable.status"),
       dataIndex: "status",
       key: "status",
       filters: [
-        { text: "已完成", value: "已完成" },
-        { text: "失败", value: "失败" },
-        { text: "运行中", value: "运行中" },
+        { text: t("dataCleansing.detail.operatorTable.completed"), value: t("dataCleansing.detail.operatorTable.completed") },
+        { text: t("dataCleansing.detail.operatorTable.failed"), value: t("dataCleansing.detail.operatorTable.failed") },
+        { text: t("dataCleansing.detail.operatorTable.running"), value: t("dataCleansing.detail.operatorTable.running") },
       ],
       onFilter: (value: string, record: any) => record.status === value,
       render: (status: string) => (
         <Badge
           status={
-            status === "已完成"
+            status === t("dataCleansing.detail.operatorTable.completed")
               ? "success"
-              : status === "运行中"
+              : status === t("dataCleansing.detail.operatorTable.running")
               ? "processing"
               : "error"
           }
@@ -107,9 +109,9 @@ export default function OperatorTable({ task }: { task: any }) {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <GitBranch className="w-5 h-5 text-purple-600" />
-              算子执行报告
+              {t("dataCleansing.detail.operatorTable.title")}
             </CardTitle>
-            <CardDescription>每个算子的详细执行情况</CardDescription>
+            <CardDescription>{t("dataCleansing.detail.operatorTable.description")}</CardDescription>
           </CardHeader>
           <CardContent>
             <Table columns={operatorColumns} dataSource={Object.values(task?.instance).map((item) => ({

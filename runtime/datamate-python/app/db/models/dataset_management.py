@@ -61,6 +61,7 @@ class DatasetFiles(Base):
     check_sum = Column(String(64), nullable=True, comment="文件校验和")
     tags = Column(JSON, nullable=True, comment="文件标签信息")
     tags_updated_at = Column(TIMESTAMP, nullable=True, comment="标签最后更新时间")
+    annotation = Column(JSON, nullable=True, comment="完整标注结果（原始JSON）")
     dataset_filemetadata = Column("metadata", JSON, nullable=True, comment="文件元数据")
     status = Column(String(50), default='ACTIVE', comment="文件状态：ACTIVE/DELETED/PROCESSING")
     upload_time = Column(TIMESTAMP, server_default=func.current_timestamp(), comment="上传时间")

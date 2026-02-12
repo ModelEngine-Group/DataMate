@@ -1,5 +1,6 @@
 import { Button, Form, Input, Modal } from "antd"
 import { UserPlus } from "lucide-react"
+import { useTranslation } from "react-i18next"
 
 interface SignupDialogProps {
   open: boolean
@@ -15,6 +16,7 @@ interface SignupDialogProps {
 }
 
 export function SignupDialog({ open, onOpenChange, onSignup, loading, onLoginClick }: SignupDialogProps) {
+  const { t } = useTranslation()
   const [form] = Form.useForm()
 
   const handleSubmit = async (values: any) => {
@@ -27,7 +29,7 @@ export function SignupDialog({ open, onOpenChange, onSignup, loading, onLoginCli
       title={
         <div className="flex items-center gap-2">
           <UserPlus className="h-5 w-5" />
-          <span>注册</span>
+          <span>{t('user.signupDialog.title')}</span>
         </div>
       }
       open={open}
@@ -39,7 +41,7 @@ export function SignupDialog({ open, onOpenChange, onSignup, loading, onLoginCli
       width={400}
       maskClosable={false}
     >
-      <div className="text-gray-500 mb-6">创建您的账户以使用 DataMate 系统</div>
+      <div className="text-gray-500 mb-6">{t('user.signupDialog.description')}</div>
 
       <Form
         form={form}
@@ -49,51 +51,51 @@ export function SignupDialog({ open, onOpenChange, onSignup, loading, onLoginCli
       >
         <Form.Item
           name="username"
-          label="用户名"
-          rules={[{ required: true, message: "请输入用户名" }]}
+          label={t('user.fields.username')}
+          rules={[{ required: true, message: t('user.validations.usernameRequired') }]}
         >
-          <Input placeholder="请输入用户名" />
+          <Input placeholder={t('user.placeholders.username')} />
         </Form.Item>
 
         <Form.Item
           name="email"
-          label="邮箱"
+          label={t('user.fields.email')}
           rules={[
-            { required: true, message: "请输入邮箱" },
-            { type: "email", message: "请输入有效的邮箱地址" },
+            { required: true, message: t('user.validations.emailRequired') },
+            { type: "email", message: t('user.validations.emailInvalid') },
           ]}
         >
-          <Input placeholder="请输入邮箱" type="email" />
+          <Input placeholder={t('user.placeholders.email')} type="email" />
         </Form.Item>
 
         <Form.Item
           name="password"
-          label="密码"
+          label={t('user.fields.password')}
           rules={[
-            { required: true, message: "请输入密码" },
-            { min: 6, message: "密码至少需要6个字符" },
+            { required: true, message: t('user.validations.passwordRequired') },
+            { min: 6, message: t('user.validations.passwordTooShort') },
           ]}
         >
-          <Input.Password placeholder="请输入密码" />
+          <Input.Password placeholder={t('user.placeholders.password')} />
         </Form.Item>
 
         <Form.Item
           name="confirmPassword"
-          label="确认密码"
+          label={t('user.fields.confirmPassword')}
           dependencies={["password"]}
           rules={[
-            { required: true, message: "请确认密码" },
+            { required: true, message: t('user.validations.confirmPasswordRequired') },
             ({ getFieldValue }) => ({
               validator(_, value) {
                 if (!value || getFieldValue("password") === value) {
                   return Promise.resolve()
                 }
-                return Promise.reject(new Error("两次输入的密码不一致"))
+                return Promise.reject(new Error(t('user.validations.passwordMismatch')))
               },
             }),
           ]}
         >
-          <Input.Password placeholder="请再次输入密码" />
+          <Input.Password placeholder={t('user.placeholders.confirmPassword')} />
         </Form.Item>
 
         <Form.Item>
@@ -103,10 +105,10 @@ export function SignupDialog({ open, onOpenChange, onSignup, loading, onLoginCli
             loading={loading}
             block
           >
-            注册
+            {t('user.signupDialog.submitButton')}
           </Button>
           <div className="mt-4 text-center text-sm">
-            已有账号？
+            {t('user.signupDialog.hasAccount')}
             <a 
               className="text-blue-500 hover:text-blue-600 ml-1 cursor-pointer"
               onClick={(e) => {
@@ -115,7 +117,7 @@ export function SignupDialog({ open, onOpenChange, onSignup, loading, onLoginCli
                 onLoginClick && onLoginClick();
               }}
             >
-              立即登录
+              {t('user.signupDialog.loginNow')}
             </a>
           </div>
         </Form.Item>

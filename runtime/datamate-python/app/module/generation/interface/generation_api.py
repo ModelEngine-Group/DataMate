@@ -1,10 +1,11 @@
 import uuid
 from typing import cast
 
-from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
+from fastapi import APIRouter, Depends, BackgroundTasks
 from sqlalchemy import select, func, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.exception import ErrorCodes, BusinessError, SuccessResponse, transaction
 from app.core.logging import get_logger
 from app.db.models.data_synthesis import (
     save_synthesis_task,
@@ -56,30 +57,32 @@ async def create_synthesis_task(
         )
         dataset_files = ds_result.scalars().all()
 
-    # 保存任务到数据库
+    # 保存任务到数据库（在事务中）
     request.source_file_id = [str(f.id) for f in dataset_files]
-    synthesis_task = await save_synthesis_task(db, request)
 
-    # 将已有的 DatasetFiles 记录保存到 t_data_synthesis_file_instances
-    synth_files = []
-    for f in dataset_files:
-        file_instance = DataSynthesisFileInstance(
-            id=str(uuid.uuid4()),  # 使用新的 UUID 作为文件任务记录的主键，避免与 DatasetFiles 主键冲突
-            synthesis_instance_id=synthesis_task.id,
-            file_name=f.file_name,
-            source_file_id=str(f.id),
-            status="pending",
-            total_chunks=0,
-            processed_chunks=0,
-            created_by="system",
-            updated_by="system",
-        )
-        synth_files.append(file_instance)
+    async with transaction(db):
+        synthesis_task = await save_synthesis_task(db, request)
 
-    if dataset_files:
-        db.add_all(synth_files)
-        await db.commit()
+        # 将已有的 DatasetFiles 记录保存到 t_data_synthesis_file_instances
+        synth_files = []
+        for f in dataset_files:
+            file_instance = DataSynthesisFileInstance(
+                id=str(uuid.uuid4()),  # 使用新的 UUID 作为文件任务记录的主键，避免与 DatasetFiles 主键冲突
+                synthesis_instance_id=synthesis_task.id,
+                file_name=f.file_name,
+                source_file_id=str(f.id),
+                status="pending",
+                total_chunks=0,
+                processed_chunks=0,
+                created_by="system",
+                updated_by="system",
+            )
+            synth_files.append(file_instance)
 
+        if dataset_files:
+            db.add_all(synth_files)
+
+    # 事务已提交，启动后台任务
     generation_service = GenerationService(db)
     # 异步处理任务：只传任务 ID，后台任务中使用新的 DB 会话重新加载任务对象
     background_tasks.add_task(generation_service.process_task, synthesis_task.id)
@@ -99,11 +102,7 @@ async def create_synthesis_task(
         updated_by=synthesis_task.updated_by,
     )
 
-    return StandardResponse(
-        code=200,
-        message="success",
-        data=task_item,
-    )
+    return SuccessResponse(data=task_item)
 
 
 @router.get("/task/{task_id}", response_model=StandardResponse[DataSynthesisTaskItem])
@@ -114,7 +113,7 @@ async def get_synthesis_task(
     """获取数据合成任务详情"""
     synthesis_task = await db.get(DataSynthInstance, task_id)
     if not synthesis_task:
-        raise HTTPException(status_code=404, detail="Synthesis task not found")
+        raise BusinessError(ErrorCodes.GENERATION_TASK_NOT_FOUND, data={"task_id": task_id})
 
     task_item = DataSynthesisTaskItem(
         id=synthesis_task.id,
@@ -128,11 +127,7 @@ async def get_synthesis_task(
         created_by=synthesis_task.created_by,
         updated_by=synthesis_task.updated_by,
     )
-    return StandardResponse(
-        code=200,
-        message="success",
-        data=task_item,
-    )
+    return SuccessResponse(data=task_item)
 
 
 @router.get("/tasks", response_model=StandardResponse[PagedDataSynthesisTaskResponse], status_code=200)
@@ -209,11 +204,7 @@ async def list_synthesis_tasks(
         size=page_size,
     )
 
-    return StandardResponse(
-        code=200,
-        message="Success",
-        data=paged,
-    )
+    return SuccessResponse(data=paged)
 
 
 @router.delete("/task/{task_id}", response_model=StandardResponse)
@@ -224,7 +215,7 @@ async def delete_synthesis_task(
     """删除数据合成任务"""
     task = await db.get(DataSynthInstance, task_id)
     if not task:
-        raise HTTPException(status_code=404, detail="Synthesis task not found")
+        raise BusinessError(ErrorCodes.GENERATION_TASK_NOT_FOUND, data={"task_id": task_id})
 
     # 1. 删除与该任务相关的 SynthesisData、Chunk、File 记录
     # 先查出所有文件任务 ID
@@ -258,11 +249,7 @@ async def delete_synthesis_task(
     await db.delete(task)
     await db.commit()
 
-    return StandardResponse(
-        code=200,
-        message="success",
-        data=None,
-    )
+    return SuccessResponse(data=None)
 
 
 @router.delete("/task/{task_id}/{file_id}", response_model=StandardResponse)
@@ -275,11 +262,11 @@ async def delete_synthesis_file_task(
     # 先获取任务和文件任务记录
     task = await db.get(DataSynthInstance, task_id)
     if not task:
-        raise HTTPException(status_code=404, detail="Synthesis task not found")
+        raise BusinessError(ErrorCodes.GENERATION_TASK_NOT_FOUND, data={"task_id": task_id})
 
     file_task = await db.get(DataSynthesisFileInstance, file_id)
     if not file_task:
-        raise HTTPException(status_code=404, detail="Synthesis file task not found")
+        raise BusinessError(ErrorCodes.GENERATION_FILE_NOT_FOUND, data={"file_id": file_id})
 
     # 删除 SynthesisData（根据文件任务ID）
     await db.execute(
@@ -310,11 +297,7 @@ async def delete_synthesis_file_task(
     await db.commit()
     await db.refresh(task)
 
-    return StandardResponse(
-        code=200,
-        message="success",
-        data=None,
-    )
+    return SuccessResponse(data=None)
 
 
 @router.get("/prompt", response_model=StandardResponse[str])
@@ -322,11 +305,7 @@ async def get_prompt_by_type(
     synth_type: SynthesisType,
 ):
     prompt = get_prompt(synth_type)
-    return StandardResponse(
-        code=200,
-        message="Success",
-        data=prompt,
-    )
+    return SuccessResponse(data=prompt)
 
 
 @router.get("/task/{task_id}/files", response_model=StandardResponse[PagedDataSynthesisFileTaskResponse])
@@ -340,7 +319,7 @@ async def list_synthesis_file_tasks(
     # 先校验任务是否存在
     task = await db.get(DataSynthInstance, task_id)
     if not task:
-        raise HTTPException(status_code=404, detail="Synthesis task not found")
+        raise BusinessError(ErrorCodes.GENERATION_TASK_NOT_FOUND, data={"task_id": task_id})
 
     base_query = select(DataSynthesisFileInstance).where(
         DataSynthesisFileInstance.synthesis_instance_id == task_id
@@ -384,11 +363,7 @@ async def list_synthesis_file_tasks(
         size=page_size,
     )
 
-    return StandardResponse(
-        code=200,
-        message="Success",
-        data=paged,
-    )
+    return SuccessResponse(data=paged)
 
 
 @router.get("/file/{file_id}/chunks", response_model=StandardResponse[PagedDataSynthesisChunkResponse])
@@ -402,7 +377,7 @@ async def list_chunks_by_file(
     # 校验文件任务是否存在
     file_task = await db.get(DataSynthesisFileInstance, file_id)
     if not file_task:
-        raise HTTPException(status_code=404, detail="Synthesis file task not found")
+        raise BusinessError(ErrorCodes.GENERATION_FILE_NOT_FOUND, data={"file_id": file_id})
 
     base_query = select(DataSynthesisChunkInstance).where(
         DataSynthesisChunkInstance.synthesis_file_instance_id == file_id
@@ -442,11 +417,7 @@ async def list_chunks_by_file(
         size=page_size,
     )
 
-    return StandardResponse(
-        code=200,
-        message="Success",
-        data=paged,
-    )
+    return SuccessResponse(data=paged)
 
 
 @router.get("/chunk/{chunk_id}/data", response_model=StandardResponse[list[SynthesisDataItem]])
@@ -458,7 +429,7 @@ async def list_synthesis_data_by_chunk(
     # 可选：校验 chunk 是否存在
     chunk = await db.get(DataSynthesisChunkInstance, chunk_id)
     if not chunk:
-        raise HTTPException(status_code=404, detail="Chunk not found")
+        raise BusinessError(ErrorCodes.GENERATION_CHUNK_NOT_FOUND, data={"chunk_id": chunk_id})
 
     result = await db.execute(
         select(SynthesisData).where(SynthesisData.chunk_instance_id == chunk_id)
@@ -475,11 +446,7 @@ async def list_synthesis_data_by_chunk(
         for row in rows
     ]
 
-    return StandardResponse(
-        code=200,
-        message="Success",
-        data=items,
-    )
+    return SuccessResponse(data=items)
 
 
 @router.post("/task/{task_id}/export-dataset/{dataset_id}", response_model=StandardResponse[str])
@@ -496,8 +463,10 @@ async def export_synthesis_task_to_dataset(
     - 仅写入文件，不再创建数据集。
     """
     exporter = SynthesisDatasetExporter(db)
+    generation = GenerationService(db)
     try:
         dataset = await exporter.export_task_to_dataset(task_id, dataset_id)
+        await generation.add_synthesis_to_graph(db, task_id, dataset_id)
     except SynthesisExportError as e:
         logger.error(
             "Failed to export synthesis task %s to dataset %s: %s",
@@ -505,13 +474,9 @@ async def export_synthesis_task_to_dataset(
             dataset_id,
             e,
         )
-        raise HTTPException(status_code=400, detail=str(e))
+        raise BusinessError(ErrorCodes.OPERATION_FAILED, data={"error": str(e)})
 
-    return StandardResponse(
-        code=200,
-        message="success",
-        data=dataset.id,
-    )
+    return SuccessResponse(data=dataset.id)
 
 
 @router.delete("/chunk/{chunk_id}", response_model=StandardResponse)
@@ -522,7 +487,7 @@ async def delete_chunk_with_data(
     """删除单条 t_data_synthesis_chunk_instances 记录及其关联的所有 t_data_synthesis_data"""
     chunk = await db.get(DataSynthesisChunkInstance, chunk_id)
     if not chunk:
-        raise HTTPException(status_code=404, detail="Chunk not found")
+        raise BusinessError(ErrorCodes.GENERATION_CHUNK_NOT_FOUND, data={"chunk_id": chunk_id})
 
     # 先删除与该 chunk 关联的合成数据
     await db.execute(
@@ -538,7 +503,7 @@ async def delete_chunk_with_data(
 
     await db.commit()
 
-    return StandardResponse(code=200, message="success", data=None)
+    return SuccessResponse(data=None)
 
 
 @router.delete("/chunk/{chunk_id}/data", response_model=StandardResponse)
@@ -549,7 +514,7 @@ async def delete_synthesis_data_by_chunk(
     """仅删除指定 chunk 下的全部 t_data_synthesis_data 记录，返回删除条数"""
     chunk = await db.get(DataSynthesisChunkInstance, chunk_id)
     if not chunk:
-        raise HTTPException(status_code=404, detail="Chunk not found")
+        raise BusinessError(ErrorCodes.GENERATION_CHUNK_NOT_FOUND, data={"chunk_id": chunk_id})
 
     result = await db.execute(
         delete(SynthesisData).where(SynthesisData.chunk_instance_id == chunk_id)
@@ -558,7 +523,7 @@ async def delete_synthesis_data_by_chunk(
 
     await db.commit()
 
-    return StandardResponse(code=200, message="success", data=deleted)
+    return SuccessResponse(data=deleted)
 
 
 @router.delete("/data/batch", response_model=StandardResponse)
@@ -568,7 +533,7 @@ async def batch_delete_synthesis_data(
 ):
     """批量删除 t_data_synthesis_data 记录"""
     if not request.ids:
-        return StandardResponse(code=200, message="success", data=0)
+        return SuccessResponse(data=0)
 
     result = await db.execute(
         delete(SynthesisData).where(SynthesisData.id.in_(request.ids))
@@ -576,7 +541,7 @@ async def batch_delete_synthesis_data(
     deleted = int(getattr(result, "rowcount", 0) or 0)
     await db.commit()
 
-    return StandardResponse(code=200, message="success", data=deleted)
+    return SuccessResponse(data=deleted)
 
 
 @router.patch("/data/{data_id}", response_model=StandardResponse)
@@ -591,7 +556,7 @@ async def update_synthesis_data_field(
     """
     record = await db.get(SynthesisData, data_id)
     if not record:
-        raise HTTPException(status_code=404, detail="Synthesis data not found")
+        raise BusinessError(ErrorCodes.GENERATION_DATA_NOT_FOUND, data={"data_id": data_id})
 
     # 直接整体覆盖 data 字段
     record.data = body.data
@@ -600,7 +565,7 @@ async def update_synthesis_data_field(
     await db.refresh(record)
 
     return StandardResponse(
-        code=200,
+        code="0",
         message="success",
         data=SynthesisDataItem(
             id=record.id,

@@ -3,11 +3,13 @@ import { Button, Menu } from "antd";
 import { SettingOutlined, ApiOutlined } from "@ant-design/icons";
 import { Component, X } from "lucide-react";
 import { useNavigate } from "react-router";
+import { useTranslation } from "react-i18next";
 import SystemConfig from "./SystemConfig";
 import ModelAccess from "./ModelAccess";
 import WebhookConfig from "./WebhookConfig";
 
 export default function SettingsPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("model-access");
 
@@ -25,19 +27,19 @@ export default function SettingsPage() {
               {
                 key: "model-access",
                 icon: <Component className="w-4 h-4" />,
-                label: "模型接入",
+                label: t('settings.tabs.modelAccess'),
               },
               {
                 key: "system-config",
                 icon: <SettingOutlined />,
-                label: "参数配置",
+                label: t('settings.tabs.systemConfig'),
               },
               {
                 key: "webhook-config",
                 icon: <ApiOutlined />,
-                label: "Webhook",
+                label: t('settings.tabs.webhook'),
                 disabled: true,
-                title: "暂未开放"
+                title: t('settings.tabs.notAvailable'),
               },
             ]}
             selectedKeys={[activeTab]}

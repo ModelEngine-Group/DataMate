@@ -1,10 +1,14 @@
 import { useState, useEffect } from "react";
-import { Card, Button, Table, message, Modal, Tabs, Tag, Progress, Tooltip } from "antd";
+import { Card, Button, Table, message, Modal, Tabs, Tag, Progress, Tooltip, Dropdown } from "antd";
 import {
   PlusOutlined,
   EditOutlined,
   DeleteOutlined,
   SyncOutlined,
+  MoreOutlined,
+  SettingOutlined,
+  ExportOutlined,
+  ImportOutlined,
 } from "@ant-design/icons";
 import { SearchControls } from "@/components/SearchControls";
 import CardView from "@/components/CardView";
@@ -16,33 +20,24 @@ import {
   syncAnnotationTaskUsingPost,
   queryAutoAnnotationTasksUsingGet,
   deleteAutoAnnotationTaskByIdUsingDelete,
-  syncAutoAnnotationTaskToLabelStudioUsingPost,
   getAutoAnnotationLabelStudioProjectUsingGet,
   loginAnnotationUsingGet,
+  syncManualAnnotationToDatabaseUsingPost,
+  syncAutoAnnotationToDatabaseUsingPost,
 } from "../annotation.api";
 import { mapAnnotationTask } from "../annotation.const";
 import CreateAnnotationTask from "../Create/components/CreateAnnotationTaskDialog";
 import { ColumnType } from "antd/es/table";
 import { TemplateList } from "../Template";
+import EditAutoAnnotationDatasetDialog from "../AutoAnnotation/components/EditAutoAnnotationDatasetDialog";
+import ImportFromLabelStudioDialog from "../AutoAnnotation/components/ImportFromLabelStudioDialog";
+import ManualImportFromLabelStudioDialog from "../ManualImportFromLabelStudioDialog";
+import EditManualAnnotationDatasetDialog from "../EditManualAnnotationDatasetDialog";
+import { useTranslation } from "react-i18next";
 // Note: DevelopmentInProgress intentionally not used here
 
-const AUTO_STATUS_LABELS: Record<string, string> = {
-  pending: "等待中",
-  running: "处理中",
-  completed: "已完成",
-  failed: "失败",
-  cancelled: "已取消",
-};
-
-const AUTO_MODEL_SIZE_LABELS: Record<string, string> = {
-  n: "YOLOv8n (最快)",
-  s: "YOLOv8s",
-  m: "YOLOv8m",
-  l: "YOLOv8l (推荐)",
-  x: "YOLOv8x (最精确)",
-};
-
 export default function DataAnnotation() {
+  const { t } = useTranslation();
   // return <DevelopmentInProgress showTime="2025.10.30" />;
   const [activeTab, setActiveTab] = useState("tasks");
   const [viewMode, setViewMode] = useState<"list" | "card">("list");
@@ -57,12 +52,20 @@ export default function DataAnnotation() {
     fetchData,
     handleFiltersChange,
     handleKeywordChange,
-  } = useFetchData(queryAnnotationTasksUsingGet, mapAnnotationTask, 30000, true, [], 0);
+  } = useFetchData(queryAnnotationTasksUsingGet, (item) => mapAnnotationTask(item, t), 30000, true, [], 0);
 
   const [labelStudioBase, setLabelStudioBase] = useState<string | null>(null);
   const [selectedRowKeys, setSelectedRowKeys] = useState<(string | number)[]>([]);
   const [selectedRows, setSelectedRows] = useState<any[]>([]);
   const [datasetProjectMap, setDatasetProjectMap] = useState<Record<string, string>>({});
+  const [editingAutoTask, setEditingAutoTask] = useState<any | null>(null);
+  const [showEditAutoDatasetDialog, setShowEditAutoDatasetDialog] = useState(false);
+  const [editingManualTask, setEditingManualTask] = useState<AnnotationTask | null>(null);
+  const [showEditManualDatasetDialog, setShowEditManualDatasetDialog] = useState(false);
+  const [importingAutoTask, setImportingAutoTask] = useState<any | null>(null);
+  const [showImportAutoDialog, setShowImportAutoDialog] = useState(false);
+  const [importingManualTask, setImportingManualTask] = useState<AnnotationTask | null>(null);
+  const [showImportManualDialog, setShowImportManualDialog] = useState(false);
 
   // 拉取自动标注任务（供轮询和创建成功后立即刷新复用）
   const refreshAutoTasks = async (silent = false) => {
@@ -75,7 +78,7 @@ export default function DataAnnotation() {
     } catch (error) {
       console.error("Failed to fetch auto annotation tasks:", error);
       if (!silent) {
-        message.error("获取自动标注任务失败");
+        message.error(t('dataAnnotation.home.messages.fetchAutoTasksFailed'));
       }
     }
   };
@@ -141,47 +144,47 @@ export default function DataAnnotation() {
           if (base) {
             const target = `${base}/projects/${labelingProjId}/data`;
             window.open(target, "_blank");
-          } else {
-            // no external Label Studio URL configured — do not perform internal redirect in this version
-            message.error("无法跳转到 Label Studio：未配置 Label Studio 基础 URL");
-            return;
-          }
         } else {
-          // no labeling project id available — do not attempt internal redirect in this version
-          message.error("无法跳转到 Label Studio：该映射未绑定标注项目");
+          // no external Label Studio URL configured — do not perform internal redirect in this version
+          message.error(t('dataAnnotation.home.messages.cannotJumpNoBase'));
           return;
         }
-      } catch (error) {
-        // on error, surface a user-friendly message instead of redirecting
-        message.error("无法跳转到 Label Studio：发生错误，请检查配置或控制台日志");
+      } else {
+        // no labeling project id available — do not attempt internal redirect in this version
+        message.error(t('dataAnnotation.home.messages.cannotJumpNoMapping'));
         return;
+      }
+    } catch (error) {
+      // on error, surface a user-friendly message instead of redirecting
+      message.error(t('dataAnnotation.home.messages.cannotJumpError'));
+      return;
       }
     })();
   };
 
   const handleDelete = (task: AnnotationTask) => {
     Modal.confirm({
-      title: `确认删除标注任务「${task.name}」吗？`,
+      title: t('dataAnnotation.home.confirm.deleteTaskTitle', { name: task.name }),
       content: (
         <div>
-          <div>删除标注任务不会删除对应数据集。</div>
-          <div>如需保留当前标注结果，请在同步后再删除。</div>
+          <div>{t('dataAnnotation.home.confirm.deleteTaskContent1')}</div>
+          <div>{t('dataAnnotation.home.confirm.deleteTaskContent2')}</div>
         </div>
       ),
-      okText: "删除",
+      okText: t('dataAnnotation.home.confirm.deleteOkText'),
       okType: "danger",
-      cancelText: "取消",
+      cancelText: t('dataAnnotation.home.confirm.deleteCancelText'),
       onOk: async () => {
         try {
           await deleteAnnotationTaskByIdUsingDelete(task.id);
-          message.success("映射删除成功");
+          message.success(t('dataAnnotation.home.messages.deleteSuccess'));
           fetchData();
           // clear selection if deleted item was selected
           setSelectedRowKeys((keys) => keys.filter((k) => k !== task.id));
           setSelectedRows((rows) => rows.filter((r) => r.id !== task.id));
         } catch (e) {
           console.error(e);
-          message.error("删除失败，请稍后重试");
+          message.error(t('dataAnnotation.home.messages.deleteFailed'));
         }
       },
     });
@@ -189,15 +192,15 @@ export default function DataAnnotation() {
 
   const handleDeleteAuto = (task: any) => {
     Modal.confirm({
-      title: `确认删除自动标注任务「${task.name}」吗？`,
-      content: <div>删除任务后，已生成的标注结果不会被删除。</div>,
-      okText: "删除",
+      title: t('dataAnnotation.home.confirm.deleteAutoTaskTitle', { name: task.name }),
+      content: <div>{t('dataAnnotation.home.confirm.deleteAutoTaskContent')}</div>,
+      okText: t('dataAnnotation.home.confirm.deleteOkText'),
       okType: "danger",
-      cancelText: "取消",
+      cancelText: t('dataAnnotation.home.confirm.deleteCancelText'),
       onOk: async () => {
         try {
           await deleteAutoAnnotationTaskByIdUsingDelete(task.id);
-          message.success("自动标注任务删除成功");
+          message.success(t('dataAnnotation.home.messages.autoTaskDeleteSuccess'));
           // 重新拉取自动标注任务
           setAutoTasks((prev) => prev.filter((t: any) => t.id !== task.id));
           // 清理选中
@@ -205,35 +208,120 @@ export default function DataAnnotation() {
           setSelectedRows((rows) => rows.filter((r) => r.id !== task.id));
         } catch (e) {
           console.error(e);
-          message.error("删除失败，请稍后重试");
+          message.error(t('dataAnnotation.home.messages.deleteFailed'));
         }
       },
     });
   };
 
-  const handleSyncAutoToLabelStudio = (task: any) => {
-    if (task.autoStatus !== "completed") {
-      message.warning("仅已完成的自动标注任务可以同步到 Label Studio");
+  const handleEditAutoTaskDataset = (row: any) => {
+    if (!row?.id) {
+      message.error(t('dataAnnotation.home.messages.autoTaskNotFound'));
+      return;
+    }
+
+    const full = autoTasks.find((t: any) => t.id === row.id);
+    if (!full) {
+      message.error(t('dataAnnotation.home.messages.autoTaskNotFound') + t('dataAnnotation.home.messages.deleteFailed').split('，')[1]);
+      return;
+    }
+
+    setEditingAutoTask(full);
+    setShowEditAutoDatasetDialog(true);
+  };
+
+  const handleEditManualTaskDataset = (task: AnnotationTask) => {
+    if (!task?.id) {
+      message.error(t('dataAnnotation.home.messages.taskNotFound'));
+      return;
+    }
+    setEditingManualTask(task);
+    setShowEditManualDatasetDialog(true);
+  };
+
+  const handleImportManualFromLabelStudio = (task: AnnotationTask) => {
+    if (!task?.id) {
+      message.error(t('dataAnnotation.home.messages.taskNotFound'));
+      return;
+    }
+
+    setImportingManualTask(task);
+    setShowImportManualDialog(true);
+  };
+
+  const handleSyncManualToDatabase = async (task: AnnotationTask) => {
+    if (!task?.id) {
+      message.error(t('dataAnnotation.home.messages.taskNotFound'));
       return;
     }
 
     Modal.confirm({
-      title: `确认同步自动标注任务「${task.name}」到 Label Studio 吗？`,
+      title: t('dataAnnotation.home.messages.syncToDbTitle', { name: task.name }),
       content: (
         <div>
-          <div>将把该任务的检测结果作为预测框写入 Label Studio。</div>
-          <div>不会覆盖已有人工标注，仅作为可编辑的预测结果。</div>
+          <div>{t('dataAnnotation.home.messages.syncToDbContent1')}</div>
+          <div>{t('dataAnnotation.home.messages.syncToDbContent2')}</div>
         </div>
       ),
-      okText: "同步",
-      cancelText: "取消",
+      okText: t('dataAnnotation.home.actions.syncToDb'),
+      cancelText: t('dataAnnotation.home.confirm.deleteCancelText'),
       onOk: async () => {
+        const hide = message.loading(t('dataAnnotation.dialogs.syncToDb.loading'), 0);
         try {
-          await syncAutoAnnotationTaskToLabelStudioUsingPost(task.id);
-          message.success("自动标注结果同步请求已发送");
+          await syncManualAnnotationToDatabaseUsingPost(task.id as any);
+          hide();
+          message.success(t('dataAnnotation.dialogs.syncToDb.success'));
         } catch (e) {
           console.error(e);
-          message.error("自动标注结果同步失败，请稍后重试");
+          hide();
+          message.error(t('dataAnnotation.dialogs.syncToDb.fail'));
+        }
+      },
+    });
+  };
+
+  const handleImportAutoFromLabelStudio = (row: any) => {
+    if (!row?.id) {
+      message.error(t('dataAnnotation.home.messages.autoTaskNotFound'));
+      return;
+    }
+
+    const full = autoTasks.find((t: any) => t.id === row.id);
+    if (!full) {
+      message.error(t('dataAnnotation.home.messages.autoTaskNotFound') + t('dataAnnotation.home.messages.deleteFailed').split('，')[1]);
+      return;
+    }
+
+    setImportingAutoTask(full);
+    setShowImportAutoDialog(true);
+  };
+
+  const handleSyncAutoToDatabase = (row: any) => {
+    if (!row?.id) {
+      message.error(t('dataAnnotation.home.messages.autoTaskNotFound'));
+      return;
+    }
+
+    Modal.confirm({
+      title: t('dataAnnotation.home.messages.syncToDbTitle', { name: row.name }),
+      content: (
+        <div>
+          <div>{t('dataAnnotation.home.messages.syncToDbContent1')}</div>
+          <div>{t('dataAnnotation.home.messages.syncToDbContent2')}</div>
+        </div>
+      ),
+      okText: t('dataAnnotation.home.actions.syncToDb'),
+      cancelText: t('dataAnnotation.home.confirm.deleteCancelText'),
+      onOk: async () => {
+        const hide = message.loading(t('dataAnnotation.dialogs.syncToDb.loading'), 0);
+        try {
+          await syncAutoAnnotationToDatabaseUsingPost(row.id);
+          hide();
+          message.success(t('dataAnnotation.dialogs.syncToDb.success'));
+        } catch (e) {
+          console.error(e);
+          hide();
+          message.error(t('dataAnnotation.dialogs.syncToDb.fail'));
         }
       },
     });
@@ -243,7 +331,7 @@ export default function DataAnnotation() {
     (async () => {
       try {
         if (!labelStudioBase) {
-          message.error("无法跳转到 Label Studio：未配置 Label Studio 基础 URL");
+          message.error(t('dataAnnotation.home.messages.cannotJumpNoBase'));
           return;
         }
 
@@ -261,7 +349,7 @@ export default function DataAnnotation() {
         if (!projId) {
           const datasetId = task.datasetId;
           if (!datasetId) {
-            message.error("该自动标注任务未绑定数据集，无法跳转 Label Studio");
+            message.error(t('dataAnnotation.home.messages.cannotJumpAutoNoDataset'));
             return;
           }
 
@@ -269,7 +357,7 @@ export default function DataAnnotation() {
         }
 
         if (!projId) {
-          message.error("未找到对应的标注工程，请先为该任务或数据集创建标注项目");
+          message.error(t('dataAnnotation.home.messages.cannotJumpAutoNoProject'));
           return;
         }
 
@@ -277,26 +365,26 @@ export default function DataAnnotation() {
         window.open(target, "_blank");
       } catch (error) {
         console.error(error);
-        message.error("无法跳转到 Label Studio：发生错误，请稍后重试");
+        message.error(t('dataAnnotation.home.messages.cannotJumpError'));
       }
     })();
   };
 
   const handleSync = (task: AnnotationTask, batchSize: number = 50) => {
     Modal.confirm({
-      title: `确认同步标注任务「${task.name}」吗？`,
+      title: t('dataAnnotation.home.confirm.syncTitle', { name: task.name }),
       content: (
         <div>
-          <div>标注工程中文件列表将与数据集保持一致，差异项将会被修正。</div>
-          <div>标注工程中的标签与数据集中标签将进行合并，冲突项将以最新一次内容为准。</div>
+          <div>{t('dataAnnotation.home.confirm.syncContent1')}</div>
+          <div>{t('dataAnnotation.home.confirm.syncContent2')}</div>
         </div>
       ),
-      okText: "同步",
-      cancelText: "取消",
+      okText: t('dataAnnotation.home.confirm.syncOkText'),
+      cancelText: t('dataAnnotation.home.confirm.syncCancelText'),
       onOk: async () => {
         try {
           await syncAnnotationTaskUsingPost({ id: task.id, batchSize });
-          message.success("任务同步请求已发送");
+          message.success(t('dataAnnotation.home.messages.syncRequestSent'));
           // optional: refresh list/status
           fetchData();
           // clear selection for the task
@@ -304,7 +392,7 @@ export default function DataAnnotation() {
           setSelectedRows((rows) => rows.filter((r) => r.id !== task.id));
         } catch (e) {
           console.error(e);
-          message.error("同步失败，请稍后重试");
+          message.error(t('dataAnnotation.home.messages.syncFailed'));
         }
       },
     });
@@ -314,31 +402,31 @@ export default function DataAnnotation() {
     if (!selectedRows || selectedRows.length === 0) return;
     const manualRows = selectedRows.filter((r) => r._kind !== "auto");
     if (manualRows.length === 0) {
-      message.warning("请选择手动标注任务进行同步");
+      message.warning(t('dataAnnotation.home.messages.batchSyncManualOnly'));
       return;
     }
     Modal.confirm({
-      title: `确认同步所选 ${manualRows.length} 个标注任务吗？`,
+      title: t('dataAnnotation.home.confirm.batchSyncTitle', { count: manualRows.length }),
       content: (
         <div>
-          <div>标注工程中文件列表将与数据集保持一致，差异项将会被修正。</div>
-          <div>标注工程中的标签与数据集中标签将进行合并，冲突项将以最新一次内容为准。</div>
+          <div>{t('dataAnnotation.home.confirm.syncContent1')}</div>
+          <div>{t('dataAnnotation.home.confirm.syncContent2')}</div>
         </div>
       ),
-      okText: "同步",
-      cancelText: "取消",
+      okText: t('dataAnnotation.home.confirm.syncOkText'),
+      cancelText: t('dataAnnotation.home.confirm.syncCancelText'),
       onOk: async () => {
         try {
           await Promise.all(
             manualRows.map((r) => syncAnnotationTaskUsingPost({ id: r.id, batchSize }))
           );
-          message.success("批量同步请求已发送");
+          message.success(t('dataAnnotation.home.messages.batchSyncSuccess'));
           fetchData();
           setSelectedRowKeys([]);
           setSelectedRows([]);
         } catch (e) {
           console.error(e);
-          message.error("批量同步失败，请稍后重试");
+          message.error(t('dataAnnotation.home.messages.batchSyncFailed'));
         }
       },
     });
@@ -349,16 +437,16 @@ export default function DataAnnotation() {
     const manualRows = selectedRows.filter((r) => r._kind !== "auto");
     const autoRows = selectedRows.filter((r) => r._kind === "auto");
     Modal.confirm({
-      title: `确认删除所选 ${selectedRows.length} 个标注任务吗？`,
+      title: t('dataAnnotation.home.confirm.batchDeleteTitle', { count: selectedRows.length }),
       content: (
         <div>
-          <div>删除标注任务不会删除对应数据集。</div>
-          <div>如需保留当前标注结果，请在同步后再删除。</div>
+          <div>{t('dataAnnotation.home.confirm.deleteTaskContent1')}</div>
+          <div>{t('dataAnnotation.home.confirm.deleteTaskContent2')}</div>
         </div>
       ),
-      okText: "删除",
+      okText: t('dataAnnotation.home.confirm.deleteOkText'),
       okType: "danger",
-      cancelText: "取消",
+      cancelText: t('dataAnnotation.home.confirm.deleteCancelText'),
       onOk: async () => {
         try {
           await Promise.all(
@@ -367,13 +455,13 @@ export default function DataAnnotation() {
               ...autoRows.map((r) => deleteAutoAnnotationTaskByIdUsingDelete(r.id)),
             ]
           );
-          message.success("批量删除已完成");
+          message.success(t('dataAnnotation.home.messages.batchDeleteSuccess'));
           fetchData();
           setSelectedRowKeys([]);
           setSelectedRows([]);
         } catch (e) {
           console.error(e);
-          message.error("批量删除失败，请稍后重试");
+          message.error(t('dataAnnotation.home.messages.batchDeleteFailed'));
         }
       },
     });
@@ -382,7 +470,7 @@ export default function DataAnnotation() {
   const operations = [
     {
       key: "annotate",
-      label: "标注",
+      label: t('dataAnnotation.home.actions.annotate'),
       icon: (
         <EditOutlined
           className="w-4 h-4 text-green-400"
@@ -392,14 +480,20 @@ export default function DataAnnotation() {
       onClick: handleAnnotate,
     },
     {
-      key: "sync",
-      label: "同步",
-      icon: <SyncOutlined className="w-4 h-4" style={{ color: "#722ed1" }} />,
-      onClick: handleSync,
+      key: "sync-db",
+      label: t('dataAnnotation.home.actions.syncToDb'),
+      icon: <SyncOutlined className="w-4 h-4" style={{ color: "#1890ff" }} />,
+      onClick: handleSyncManualToDatabase,
+    },
+    {
+      key: "export-result",
+      label: t('dataAnnotation.home.actions.exportResult'),
+      icon: <ExportOutlined className="w-4 h-4" />, // 导出/下载类图标
+      onClick: handleImportManualFromLabelStudio,
     },
     {
       key: "delete",
-      label: "删除",
+      label: t('dataAnnotation.home.actions.delete'),
       icon: <DeleteOutlined style={{ color: "#f5222d" }} />,
       onClick: handleDelete,
     },
@@ -448,41 +542,41 @@ export default function DataAnnotation() {
 
   const columns: ColumnType<any>[] = [
     {
-      title: "任务名称",
+      title: t('dataAnnotation.home.columns.taskName'),
       dataIndex: "name",
       key: "name",
       fixed: "left" as const,
     },
     {
-      title: "类型",
+      title: t('dataAnnotation.home.columns.type'),
       key: "kind",
       width: 100,
       render: (_: any, record: any) =>
-        record._kind === "auto" ? "自动标注" : "手动标注",
+        record._kind === "auto" ? t('dataAnnotation.home.autoAnnotation') : t('dataAnnotation.home.manualAnnotation'),
     },
     {
-      title: "任务ID",
+      title: t('dataAnnotation.home.columns.taskId'),
       dataIndex: "id",
       key: "id",
     },
     {
-      title: "数据集",
+      title: t('dataAnnotation.home.columns.dataset'),
       dataIndex: "datasetName",
       key: "datasetName",
       width: 180,
     },
     {
-      title: "模型",
+      title: t('dataAnnotation.home.columns.model'),
       key: "modelSize",
       width: 160,
       render: (_: any, record: any) => {
         if (record._kind !== "auto") return "-";
         const size = record.autoConfig?.modelSize;
-        return AUTO_MODEL_SIZE_LABELS[size] || size || "-";
+        return t(`dataAnnotation.home.autoModelSizeLabels.${size}`) || size || "-";
       },
     },
     {
-      title: "置信度",
+      title: t('dataAnnotation.home.columns.confidence'),
       key: "confThreshold",
       width: 120,
       render: (_: any, record: any) => {
@@ -493,34 +587,34 @@ export default function DataAnnotation() {
       },
     },
     {
-      title: "目标类别",
+      title: t('dataAnnotation.home.columns.targetClasses'),
       key: "targetClasses",
       width: 160,
       render: (_: any, record: any) => {
         if (record._kind !== "auto") return "-";
         const classes: number[] = record.autoConfig?.targetClasses || [];
-        if (!classes.length) return "全部类别";
+        if (!classes.length) return t('dataAnnotation.home.allCategories');
         const text = classes.join(", ");
         return (
           <Tooltip title={text}>
-            <span>{`${classes.length} 个类别`}</span>
+            <span>{t('dataAnnotation.home.categoriesCount', { count: classes.length })}</span>
           </Tooltip>
         );
       },
     },
     {
-      title: "自动标注状态",
+      title: t('dataAnnotation.home.columns.autoStatus'),
       key: "autoStatus",
       width: 130,
       render: (_: any, record: any) => {
         if (record._kind !== "auto") return "-";
         const status = record.autoStatus as string;
-        const label = AUTO_STATUS_LABELS[status] || status || "-";
+        const label = t(`dataAnnotation.home.autoStatusLabels.${status}`) || status || "-";
         return <Tag>{label}</Tag>;
       },
     },
     {
-      title: "自动标注进度",
+      title: t('dataAnnotation.home.columns.autoProgress'),
       key: "autoProgress",
       width: 200,
       render: (_: any, record: any) => {
@@ -539,7 +633,7 @@ export default function DataAnnotation() {
       },
     },
     {
-      title: "检测对象数",
+      title: t('dataAnnotation.home.columns.detectedObjects'),
       key: "detectedObjects",
       width: 120,
       render: (_: any, record: any) => {
@@ -554,55 +648,127 @@ export default function DataAnnotation() {
       },
     },
     {
-      title: "创建时间",
+      title: t('dataAnnotation.home.columns.createdAt'),
       dataIndex: "createdAt",
       key: "createdAt",
       width: 180,
     },
     {
-      title: "更新时间",
+      title: t('dataAnnotation.home.columns.updatedAt'),
       dataIndex: "updatedAt",
       key: "updatedAt",
       width: 180,
     },
     {
-      title: "操作",
+      title: t('dataAnnotation.home.columns.actions'),
       key: "actions",
       fixed: "right" as const,
-      width: 220,
+      width: 260,
       dataIndex: "actions",
       render: (_: any, task: any) => (
         <div className="flex items-center justify-center space-x-1">
-          {task._kind === "manual" &&
-            operations.map((operation) => (
+          {task._kind === "manual" && (
+            <>
               <Button
-                key={operation.key}
                 type="text"
-                icon={operation.icon}
-                onClick={() => (operation?.onClick as any)?.(task)}
-                title={operation.label}
-              />
-            ))}
+                icon={<EditOutlined style={{ color: "#52c41a" }} />}
+                onClick={() => handleAnnotate(task)}
+                title={t('dataAnnotation.home.actions.annotate')}
+              >
+                {t('dataAnnotation.home.actions.edit')}
+              </Button>
+              <Button
+                type="text"
+                icon={<SyncOutlined style={{ color: "#1890ff" }} />}
+                onClick={() => handleSyncManualToDatabase(task)}
+                title={t('dataAnnotation.home.actions.syncToDb')}
+              >
+                {t('dataAnnotation.home.actions.syncToDb')}
+              </Button>
+
+              <Dropdown
+                menu={{
+                  items: [
+                    {
+                      key: "export-result",
+                      label: t('dataAnnotation.home.actions.exportResult'),
+                      icon: <ExportOutlined />,
+                      onClick: () => handleImportManualFromLabelStudio(task),
+                    },
+                    {
+                      key: "edit-dataset",
+                      label: t('dataAnnotation.home.editDataset'),
+                      icon: <SettingOutlined />,
+                      onClick: () => handleEditManualTaskDataset(task),
+                    },
+                    {
+                      key: "delete",
+                      label: t('dataAnnotation.home.actions.delete'),
+                      icon: <DeleteOutlined />,
+                      danger: true,
+                      onClick: () => handleDelete(task),
+                    },
+                  ],
+                }}
+                trigger={["click"]}
+              >
+                <Button type="text" icon={<MoreOutlined />} title={t('dataAnnotation.home.actions.moreActions')} />
+              </Dropdown>
+            </>
+          )}
           {task._kind === "auto" && (
             <>
               <Button
                 type="text"
                 icon={<EditOutlined style={{ color: "#52c41a" }} />}
                 onClick={() => handleAnnotateAuto(task)}
-                title="在 Label Studio 中标注"
-              />
+                title={t('dataAnnotation.home.actions.annotate')}
+              >
+                {t('dataAnnotation.home.actions.edit')}
+              </Button>
+
               <Button
                 type="text"
-                icon={<SyncOutlined style={{ color: "#722ed1" }} />}
-                onClick={() => handleSyncAutoToLabelStudio(task)}
-                title="同步自动标注结果到 Label Studio"
-              />
-              <Button
-                type="text"
-                icon={<DeleteOutlined style={{ color: "#f5222d" }} />}
-                onClick={() => handleDeleteAuto(task)}
-                title="删除自动标注任务"
-              />
+                icon={<SyncOutlined style={{ color: "#1890ff" }} />}
+                onClick={() => handleSyncAutoToDatabase(task)}
+                title={t('dataAnnotation.home.actions.syncToDb')}
+              >
+                {t('dataAnnotation.home.actions.syncToDb')}
+              </Button>
+
+              {/* 二级功能：编辑任务数据集 + 删除任务（折叠菜单） */}
+              <Dropdown
+                menu={{
+                  items: [
+                    {
+                      key: "export-result",
+                      label: t('dataAnnotation.home.actions.exportResult'),
+                      icon: <ExportOutlined />,
+                      onClick: () => handleImportAutoFromLabelStudio(task),
+                    },
+                    {
+                      key: "edit-dataset",
+                      label: t('dataAnnotation.home.editDataset'),
+                      icon: <SettingOutlined />,
+                      onClick: () => handleEditAutoTaskDataset(task),
+                    },
+                    {
+                      key: "delete",
+                      label: t('dataAnnotation.home.actions.delete'),
+                      icon: <DeleteOutlined />,
+                      danger: true,
+                      onClick: () => handleDeleteAuto(task),
+                    },
+                  ],
+                }}
+                trigger={["click"]}
+              >
+                <Button
+                  type="text"
+                  icon={<MoreOutlined />}
+                  title={t('dataAnnotation.home.actions.moreActions')}
+                />
+              </Dropdown>
             </>
           )}
         </div>
@@ -614,7 +780,7 @@ export default function DataAnnotation() {
     <div className="flex flex-col h-full gap-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">数据标注</h1>
+        <h1 className="text-xl font-bold">{t('dataAnnotation.home.title')}</h1>
       </div>
 
       {/* Tabs */}
@@ -624,7 +790,7 @@ export default function DataAnnotation() {
         items={[
           {
             key: "tasks",
-            label: "标注任务",
+            label: t('dataAnnotation.home.tabs.tasks'),
             children: (
               <div className="flex flex-col gap-4">
                 {/* Search, Filters and Buttons in one row */}
@@ -634,7 +800,7 @@ export default function DataAnnotation() {
                     <SearchControls
                       searchTerm={searchParams.keyword}
                       onSearchChange={handleKeywordChange}
-                      searchPlaceholder="搜索任务名称、描述"
+                      searchPlaceholder={t('dataAnnotation.home.searchPlaceholder')}
                       onFiltersChange={handleFiltersChange}
                       viewMode={viewMode}
                       onViewModeChange={setViewMode}
@@ -649,21 +815,21 @@ export default function DataAnnotation() {
                       onClick={() => handleBatchSync(50)}
                       disabled={selectedRowKeys.length === 0}
                     >
-                      批量同步
+                      {t('dataAnnotation.home.batchSync')}
                     </Button>
                     <Button
                       danger
                       onClick={handleBatchDelete}
                       disabled={selectedRowKeys.length === 0}
                     >
-                      批量删除
+                      {t('dataAnnotation.home.batchDelete')}
                     </Button>
                     <Button
                       type="primary"
                       icon={<PlusOutlined />}
                       onClick={() => setShowCreateDialog(true)}
                     >
-                      创建标注任务
+                      {t('dataAnnotation.home.createTask')}
                     </Button>
                   </div>
                 </div>
@@ -714,11 +880,73 @@ export default function DataAnnotation() {
           },
           {
             key: "templates",
-            label: "标注模板",
+            label: t('dataAnnotation.home.tabs.templates'),
             children: <TemplateList />,
           },
         ]}
       />
+
+      {editingAutoTask && (
+        <EditAutoAnnotationDatasetDialog
+          visible={showEditAutoDatasetDialog}
+          task={editingAutoTask}
+          onCancel={() => {
+            setShowEditAutoDatasetDialog(false);
+            setEditingAutoTask(null);
+          }}
+          onSuccess={() => {
+            setShowEditAutoDatasetDialog(false);
+            setEditingAutoTask(null);
+            refreshAutoTasks();
+          }}
+        />
+      )}
+
+      {editingManualTask && (
+        <EditManualAnnotationDatasetDialog
+          visible={showEditManualDatasetDialog}
+          task={editingManualTask}
+          onCancel={() => {
+            setShowEditManualDatasetDialog(false);
+            setEditingManualTask(null);
+          }}
+          onSuccess={() => {
+            setShowEditManualDatasetDialog(false);
+            setEditingManualTask(null);
+          }}
+        />
+      )}
+
+      {importingManualTask && (
+        <ManualImportFromLabelStudioDialog
+          visible={showImportManualDialog}
+          task={importingManualTask}
+          onCancel={() => {
+            setShowImportManualDialog(false);
+            setImportingManualTask(null);
+          }}
+          onSuccess={() => {
+            setShowImportManualDialog(false);
+            setImportingManualTask(null);
+          }}
+        />
+      )}
+
+      {importingAutoTask && (
+        <ImportFromLabelStudioDialog
+          visible={showImportAutoDialog}
+          // 这里直接透传自动标注任务结构（与 AutoAnnotation 页面保持一致字段）
+          task={importingAutoTask as any}
+          onCancel={() => {
+            setShowImportAutoDialog(false);
+            setImportingAutoTask(null);
+          }}
+          onSuccess={() => {
+            setShowImportAutoDialog(false);
+            setImportingAutoTask(null);
+          }}
+        />
+      )}
     </div>
   );
 }

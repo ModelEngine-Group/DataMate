@@ -3,14 +3,12 @@ import {
   Breadcrumb,
   App,
   Tabs,
-  Button,
-  Card,
-  Progress,
   Badge,
   Descriptions,
   DescriptionsProps,
 } from "antd";
 import { ReloadOutlined, DeleteOutlined } from "@ant-design/icons";
+import { useTranslation } from "react-i18next";
 import DetailHeader from "@/components/DetailHeader";
 import { Link, useNavigate, useParams } from "react-router";
 import {
@@ -20,80 +18,75 @@ import {
 import { post } from "@/utils/request";
 import type { RatioTaskItem } from "@/pages/RatioTask/ratio.model";
 import { mapRatioTask } from "../ratio.const";
-import { Copy, Pause, PlayIcon } from "lucide-react";
 import DataRatioChart from "./DataRatioChart";
 import RatioDisplay from "./RatioDisplay";
 import DataMetrics from "./DataMetrics";
 
-const tabList = [
-  {
-    key: "overview",
-    label: "概览",
-  },
-  // {
-  //   key: "analysis",
-  //   label: "配比分析",
-  // },
-  // {
-  //   key: "config",
-  //   label: "配比配置",
-  // },
-];
-
 export default function RatioTaskDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState("overview");
   const { message } = App.useApp();
   const [ratioTask, setRatioTask] = useState<RatioTaskItem>(
     {} as RatioTaskItem
   );
 
+  const tabList = useMemo(
+    () => [
+      {
+        key: "overview",
+        label: t("ratioTask.detail.tabs.overview"),
+      },
+    ],
+    [t]
+  );
+
   const navigateItems = useMemo(
     () => [
       {
-        title: <Link to="/data/synthesis/ratio-task">首页</Link>,
+        title: <Link to="/data/synthesis/ratio-task">{t("ratioTask.detail.homeLink")}</Link>,
       },
       {
-        title: ratioTask.name || "配比任务详情",
+        title: ratioTask.name || t("ratioTask.detail.detailTitle"),
       },
     ],
-    [ratioTask]
+    [ratioTask, t]
   );
 
   const fetchRatioTask = useCallback(async () => {
     const { data } = await getRatioTaskByIdUsingGet(id as string);
-    setRatioTask(mapRatioTask(data));
-  }, [id]);
+    setRatioTask(mapRatioTask(data, t));
+  }, [id, t]);
 
   useEffect(() => {
     fetchRatioTask();
-  }, []);
+  }, [t]);
 
   const handleRefresh = useCallback(
     async (showMessage = true) => {
       await fetchRatioTask();
-      if (showMessage) message.success({ content: "任务数据刷新成功" });
+      if (showMessage) message.success({ content: t("ratioTask.detail.messages.refreshSuccess") });
     },
-    [fetchRatioTask, message]
+    [fetchRatioTask, message, t]
   );
 
   const handleDelete = async () => {
     await deleteRatioTasksUsingDelete(id as string);
     navigate("/ratio/task");
-    message.success("配比任务删除成功");
+    message.success(t("ratioTask.detail.messages.deleteSuccess"));
   };
 
   const handleExecute = async () => {
     await post(`/api/synthesis/ratio-task/${id}/execute`);
     handleRefresh();
-    message.success("任务已启动");
+    message.success(t("ratioTask.detail.messages.taskStarted"));
   };
 
   const handleStop = async () => {
     await post(`/api/synthesis/ratio-task/${id}/stop`);
     handleRefresh();
-    message.success("任务已停止");
+    message.success(t("ratioTask.detail.messages.taskStopped"));
   };
 
   useEffect(() => {
@@ -108,35 +101,21 @@ export default function RatioTaskDetail() {
 
   // 操作列表
   const operations = [
-    // {
-    //   key: "execute",
-    //   label: "启动",
-    //   icon: <PlayIcon className="w-4 h-4 text-gray-500" />,
-    //   onClick: handleExecute,
-    //   disabled: ratioTask.status === "RUNNING",
-    // },
-    // {
-    //   key: "stop",
-    //   label: "停止",
-    //   icon: <Pause className="w-4 h-4 text-gray-500" />,
-    //   onClick: handleStop,
-    //   disabled: ratioTask.status !== "RUNNING",
-    // },
     {
       key: "refresh",
-      label: "刷新",
+      label: t("ratioTask.detail.operations.refresh"),
       icon: <ReloadOutlined />,
       onClick: handleRefresh,
     },
     {
       key: "delete",
-      label: "删除",
+      label: t("ratioTask.detail.operations.delete"),
       danger: true,
       confirm: {
-        title: "确认删除该配比任务？",
-        description: "删除后该任务将无法恢复，请谨慎操作。",
-        okText: "删除",
-        cancelText: "取消",
+        title: t("ratioTask.detail.confirm.deleteTitle"),
+        description: t("ratioTask.detail.confirm.deleteDesc"),
+        okText: t("ratioTask.detail.confirm.okText"),
+        cancelText: t("ratioTask.detail.confirm.cancelText"),
         okType: "danger",
       },
       icon: <DeleteOutlined />,
@@ -148,54 +127,64 @@ export default function RatioTaskDetail() {
   const items: DescriptionsProps["items"] = [
     {
       key: "id",
-      label: "ID",
+      label: t("ratioTask.detail.labels.id"),
       children: ratioTask.id,
     },
     {
       key: "name",
-      label: "名称",
+      label: t("ratioTask.detail.labels.name"),
       children: ratioTask.name,
     },
     {
       key: "totals",
-      label: "目标数量",
+      label: t("ratioTask.detail.labels.targetCount"),
       children: ratioTask.totals,
     },
     {
       key: "dataset",
-      label: "目标数据集",
+      label: t("ratioTask.detail.labels.targetDataset"),
       children: (
-        <Link to={`/data/management/detail/${ratioTask.target_dataset_id}`}>
-          {ratioTask.target_dataset_name}
-        </Link>
+        ratioTask.target_dataset_name ? (
+          <Link to={`/data/management/detail/${ratioTask.target_dataset_id}`}>
+            {ratioTask.target_dataset_name}
+          </Link>
+        ) : (
+          ratioTask?.target_dataset && ratioTask?.target_dataset.name ? (
+            <Link to={`/data/management/detail/${ratioTask?.target_dataset.id}`}>
+              {ratioTask?.target_dataset.name}
+            </Link>
+          ) : (
+            t("dataManagement.defaults.none")
+          )
+        )
       ),
     },
     {
       key: "status",
-      label: "状态",
+      label: t("ratioTask.detail.labels.status"),
       children: (
         <Badge color={ratioTask.status?.color} text={ratioTask.status?.label} />
       ),
     },
     {
       key: "createdBy",
-      label: "创建者",
-      children: ratioTask.createdBy || "未知",
+      label: t("ratioTask.detail.labels.createdBy"),
+      children: ratioTask.createdBy || t("dataManagement.defaults.unknown"),
     },
     {
       key: "createdAt",
-      label: "创建时间",
+      label: t("ratioTask.detail.labels.createdAt"),
       children: ratioTask.createdAt,
     },
     {
       key: "updatedAt",
-      label: "更新时间",
+      label: t("ratioTask.detail.labels.updatedAt"),
       children: ratioTask.updatedAt,
     },
     {
       key: "description",
-      label: "描述",
-      children: ratioTask.description || "无",
+      label: t("ratioTask.detail.labels.description"),
+      children: ratioTask.description || t("dataManagement.defaults.none"),
     },
   ];
 
@@ -215,7 +204,7 @@ export default function RatioTaskDetail() {
           {activeTab === "overview" && (
             <>
               <Descriptions
-                title="基本信息"
+                title={t("ratioTask.detail.labels.basicInfo")}
                 layout="vertical"
                 size="small"
                 items={items}

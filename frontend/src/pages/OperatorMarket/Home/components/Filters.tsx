@@ -1,6 +1,7 @@
 import { Button, Checkbox, Tooltip } from "antd";
 import { FilterOutlined } from "@ant-design/icons";
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { CategoryI, CategoryTreeI } from "../../operator.model";
 
 interface FilterOption {
@@ -29,6 +30,7 @@ const FilterSection: React.FC<FilterSectionProps> = ({
   onSelectionChange,
   showIcons = false,
 }) => {
+  const { t } = useTranslation();
   const handleCheckboxChange = (value: string, checked: boolean) => {
     if (checked) {
       onSelectionChange([...selectedValues, value]);
@@ -69,7 +71,7 @@ const FilterSection: React.FC<FilterSectionProps> = ({
               onChange={(e) => handleSelectAll(e.target.checked)}
             />
             <div className="flex items-center gap-1 flex-1 ml-1">
-              <span className="text-gray-600 font-medium">全选</span>
+              <span className="text-gray-600 font-medium">{t("operatorMarket.home.filters.selectAll")}</span>
             </div>
             <span className="text-gray-400">({total})</span>
           </label>
@@ -120,6 +122,7 @@ const Filters: React.FC<FiltersProps> = ({
   setSelectedFilters,
   setSelectedStar,
 }) => {
+  const { t } = useTranslation();
   const clearAllFilters = () => {
     const newFilters = Object.keys(selectedFilters).reduce((acc, key) => {
       acc[key] = [];
@@ -135,11 +138,11 @@ const Filters: React.FC<FiltersProps> = ({
   const starCategory = {
     id: "starStatus",
     count: starCount,
-    name: "收藏状态",
+    name: t("operatorMarket.home.filters.starStatus"),
     categories: [{
       id: "isStar",
       count: starCount,
-      name: "已收藏"
+      name: t("operatorMarket.home.filters.starred")
     }]
   };
 
@@ -148,7 +151,7 @@ const Filters: React.FC<FiltersProps> = ({
       {/* Filter Header */}
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium text-gray-900 flex items-center gap-2">
-          <Tooltip title="隐藏筛选器">
+          <Tooltip title={t("operatorMarket.home.filters.hide")}>
             <Button
               type="text"
               size="small"
@@ -157,14 +160,14 @@ const Filters: React.FC<FiltersProps> = ({
               className="cursor-pointer hover:text-blue-500"
             ></Button>
           </Tooltip>
-          <span>筛选器</span>
+          <span>{t("operatorMarket.home.filters.title")}</span>
         </h3>
         {hasActiveFilters && (
           <span
             onClick={clearAllFilters}
             className="cursor-pointer text-sm text-gray-500 hover:text-blue-500"
           >
-            清除
+            {t("operatorMarket.home.filters.clear")}
           </span>
         )}
       </div>

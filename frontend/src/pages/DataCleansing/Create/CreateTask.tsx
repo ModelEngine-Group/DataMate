@@ -7,8 +7,10 @@ import { createCleaningTaskUsingPost } from "../cleansing.api";
 import CreateTaskStepOne from "./components/CreateTaskStepOne";
 import { useCreateStepTwo } from "./hooks/useCreateStepTwo";
 import { DatasetType } from "@/pages/DataManagement/dataset.model";
+import { useTranslation } from "react-i18next";
 
 export default function CleansingTaskCreate() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [form] = Form.useForm();
   const [taskConfig, setTaskConfig] = useState({
@@ -43,9 +45,9 @@ export default function CleansingTaskCreate() {
         outputs: item.outputs,
       })),
     };
-    navigate("/data/cleansing?view=task");
     await createCleaningTaskUsingPost(task);
-    message.success("任务已创建");
+    message.success(t("dataCleansing.task.messages.taskCreated"));
+    navigate("/data/cleansing?view=task");
   };
 
   const canProceed = () => {
@@ -93,13 +95,13 @@ export default function CleansingTaskCreate() {
               <ArrowLeft className="w-4 h-4 mr-1" />
             </Button>
           </Link>
-          <h1 className="text-xl font-bold">创建清洗任务</h1>
+          <h1 className="text-xl font-bold">{t("dataCleansing.actions.createTask")}</h1>
         </div>
         <div className="w-1/2">
           <Steps
             size="small"
             current={currentStep - 1}
-            items={[{ title: "基本信息" }, { title: "算子编排" }]}
+            items={[{ title: t("dataCleansing.steps.basicInfo") }, { title: t("dataCleansing.steps.operatorOrchestration") }]}
           />
         </div>
       </div>
@@ -107,8 +109,8 @@ export default function CleansingTaskCreate() {
       <div className="flex-overflow-auto bg-white border-card">
         <div className="flex-1 overflow-auto m-6">{renderStepContent()}</div>
         <div className="flex justify-end p-6 gap-3 border-top">
-          <Button onClick={() => navigate("/data/cleansing")}>取消</Button>
-          {currentStep > 1 && <Button onClick={handlePrev}>上一步</Button>}
+          <Button onClick={() => navigate("/data/cleansing")}>{t("dataCleansing.actions.cancel")}</Button>
+          {currentStep > 1 && <Button onClick={handlePrev}>{t("dataCleansing.actions.previous")}</Button>}
           {currentStep === 2 ? (
             <Button
               type="primary"
@@ -116,7 +118,7 @@ export default function CleansingTaskCreate() {
               onClick={handleSave}
               disabled={!canProceed()}
             >
-              创建任务
+              {t("dataCleansing.actions.createTask")}
             </Button>
           ) : (
             <Button
@@ -124,7 +126,7 @@ export default function CleansingTaskCreate() {
               onClick={handleNext}
               disabled={!canProceed()}
             >
-              下一步
+              {t("dataCleansing.actions.next")}
             </Button>
           )}
         </div>

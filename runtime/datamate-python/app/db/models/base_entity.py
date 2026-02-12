@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, TIMESTAMP
+from sqlalchemy import Column, String, TIMESTAMP, Text, JSON
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.sql import func
 
@@ -20,3 +20,32 @@ class BaseEntity(Base):
 
     # default: do enforce data scope unless subclass sets this to True
     __ignore_data_scope__ = False
+
+
+class LineageNode(Base):
+    """数据血缘：节点表（实体对象）"""
+
+    __tablename__ = "t_lineage_node"
+
+    id = Column(String(36), primary_key=True, comment="节点ID")
+    graph_id = Column(String(36), nullable=True, comment="图ID")
+    node_type = Column(String(64), nullable=False, comment="节点类型")
+    name = Column(String(256), nullable=False, comment="节点名称")
+    description = Column(Text, nullable=True, comment="节点描述")
+    node_metadata = Column(Text, nullable=True, comment="节点扩展信息（JSON）")
+
+
+class LineageEdge(Base):
+    """数据血缘：边表（处理流程）"""
+
+    __tablename__ = "t_lineage_edge"
+
+    id = Column(String(36), primary_key=True, comment="边ID")
+    graph_id = Column(String(36), nullable=True, comment="图ID")
+    process_id = Column(String(36), nullable=True, comment="处理流程ID")
+    edge_type = Column(String(64), nullable=False, comment="边类型")
+    name = Column(String(256), nullable=True, comment="边名称")
+    description = Column(Text, nullable=True, comment="边描述")
+    edge_metadata = Column(Text, nullable=True, comment="边扩展信息（JSON）")
+    from_node_id = Column(String(36), nullable=False, comment="源节点ID")
+    to_node_id = Column(String(36), nullable=False, comment="目标节点ID")

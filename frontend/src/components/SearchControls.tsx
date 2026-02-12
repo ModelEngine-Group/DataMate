@@ -6,6 +6,7 @@ import {
   ReloadOutlined,
 } from "@ant-design/icons";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface FilterOption {
   key: string;
@@ -53,7 +54,7 @@ export function SearchControls({
   searchTerm,
   showFilters = true,
   showViewToggle = true,
-  searchPlaceholder = "搜索...",
+  searchPlaceholder,
   filters = [],
   dateRange,
   showDatePicker = false,
@@ -65,6 +66,7 @@ export function SearchControls({
   onViewModeChange,
   onClearFilters,
 }: SearchControlsProps) {
+  const { t } = useTranslation();
   const [selectedFilters, setSelectedFilters] = useState<{
     [key: string]: string[];
   }>({});
@@ -124,7 +126,7 @@ export function SearchControls({
           <div className="relative flex-1">
             <Input
               allowClear
-              placeholder={searchPlaceholder}
+              placeholder={searchPlaceholder || t('components.searchControls.searchPlaceholder')}
               value={searchTerm}
               onChange={(e) => onSearchChange(e.target.value)}
               prefix={<SearchOutlined className="w-4 h-4 text-gray-400" />}
@@ -156,15 +158,15 @@ export function SearchControls({
           )}
         </div>
 
-        {showDatePicker && (
-          <DatePicker.RangePicker
-            value={dateRange as any}
-            onChange={onDateChange}
-            style={{ width: 260 }}
-            allowClear
-            placeholder={["开始时间", "结束时间"]}
-          />
-        )}
+          {showDatePicker && (
+            <DatePicker.RangePicker
+              value={dateRange as any}
+              onChange={onDateChange}
+              style={{ width: 260 }}
+              allowClear
+              placeholder={[t('components.searchControls.startTime'), t('components.searchControls.endTime')]}
+            />
+          )}
 
         {/* Right side */}
         <div className="flex items-center gap-2">
@@ -194,7 +196,7 @@ export function SearchControls({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 flex-wrap flex-1">
               <span className="text-sm font-medium text-gray-700">
-                已选筛选:
+                {t('components.searchControls.selectedFilters')}
               </span>
               {Object.entries(selectedFilters).map(([filterKey, values]) =>
                 values.map((value) => {
@@ -229,7 +231,7 @@ export function SearchControls({
               onClick={handleClearAllFilters}
               className="text-gray-500 hover:text-gray-700"
             >
-              清除全部
+              {t('components.searchControls.clearAll')}
             </Button>
           </div>
         </div>

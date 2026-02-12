@@ -1,5 +1,6 @@
 import { Input, Form } from "antd";
 import {useEffect} from "react";
+import { useTranslation } from "react-i18next";
 
 const { TextArea } = Input;
 
@@ -14,6 +15,7 @@ export default function CreateTemplateStepOne({
     React.SetStateAction<{ name: string; description: string; type: string }>
   >;
 }) {
+  const { t } = useTranslation();
   const handleValuesChange = (_, allValues) => {
     setTemplateConfig({ ...templateConfig, ...allValues });
   };
@@ -30,14 +32,14 @@ export default function CreateTemplateStepOne({
       onValuesChange={handleValuesChange}
     >
       <Form.Item
-        label="模板名称"
+        label={t("dataCleansing.template.form.name")}
         name="name"
-        rules={[{ required: true, message: "请输入模板名称" }]}
+        rules={[{ required: true, message: t("dataCleansing.template.form.nameRequired") }]}
       >
-        <Input placeholder="输入模板名称" />
+        <Input placeholder={t("dataCleansing.template.form.namePlaceholder")} />
       </Form.Item>
-      <Form.Item label="模板描述" name="description">
-        <TextArea placeholder="描述模板的用途和特点" rows={4} />
+      <Form.Item label={t("dataCleansing.template.form.description")} name="description">
+        <TextArea placeholder={t("dataCleansing.template.form.descriptionPlaceholder")} rows={4} />
       </Form.Item>
     </Form>
   );

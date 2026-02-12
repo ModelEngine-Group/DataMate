@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button, Card, Table, App, Badge, Popconfirm } from "antd";
 import { Plus } from "lucide-react";
 import { DeleteOutlined } from "@ant-design/icons";
 import type { RatioTaskItem } from "@/pages/RatioTask/ratio.model";
 import { useNavigate } from "react-router";
+import { useTranslation } from "react-i18next";
 import CardView from "@/components/CardView";
 import { SearchControls } from "@/components/SearchControls";
 import {
@@ -16,6 +17,7 @@ import { mapRatioTask } from "../ratio.const";
 export default function RatioTasksPage() {
   const { message } = App.useApp();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [viewMode, setViewMode] = useState<"card" | "list">("list");
 
   const {
@@ -29,44 +31,45 @@ export default function RatioTasksPage() {
     handleKeywordChange,
   } = useFetchData<RatioTaskItem>(
     queryRatioTasksUsingGet,
-    mapRatioTask,
+    (item) => mapRatioTask(item, t),
     30000,
     true,
     [],
     0
   );
 
+  useEffect(() => {
+    fetchData();
+  }, [t]);
+
   const handleDeleteTask = async (task: RatioTaskItem) => {
     try {
-      // 调用删除接口
       await deleteRatioTasksUsingDelete(task.id);
-      message.success("任务删除成功");
-      // 重新加载数据
+      message.success(t("ratioTask.home.messages.deleteSuccess"));
       fetchData();
     } catch (error) {
-      message.error("任务删除失败，请稍后重试");
+      message.error(t("ratioTask.home.messages.deleteFailed"));
     }
   };
 
-  // 搜索、筛选和视图控制相关
   const filters = [
     {
       key: "status",
-      label: "状态筛选",
+      label: t("ratioTask.home.filters.statusFilter"),
       options: [
-        { label: "全部状态", value: "all" },
-        { label: "等待中", value: "PENDING" },
-        { label: "运行中", value: "RUNNING" },
-        { label: "已完成", value: "SUCCESS" },
-        { label: "失败", value: "FAILED" },
-        { label: "已暂停", value: "PAUSED" },
+        { label: t("ratioTask.home.filters.allStatus"), value: "all" },
+        { label: t("ratioTask.home.filters.pending"), value: "PENDING" },
+        { label: t("ratioTask.home.filters.running"), value: "RUNNING" },
+        { label: t("ratioTask.home.filters.success"), value: "SUCCESS" },
+        { label: t("ratioTask.home.filters.failed"), value: "FAILED" },
+        { label: t("ratioTask.home.filters.paused"), value: "PAUSED" },
       ],
     },
   ];
 
   const columns = [
     {
-      title: "任务名称",
+      title: t("ratioTask.home.columns.taskName"),
       dataIndex: "name",
       key: "name",
       width: 200,
@@ -82,7 +85,7 @@ export default function RatioTasksPage() {
       ),
     },
     {
-      title: "状态",
+      title: t("ratioTask.home.columns.status"),
       dataIndex: "status",
       key: "status",
       width: 120,
@@ -97,13 +100,13 @@ export default function RatioTasksPage() {
       },
     },
     {
-      title: "目标数量",
+      title: t("ratioTask.home.columns.targetCount"),
       dataIndex: "totals",
       key: "totals",
       width: 120,
     },
     {
-      title: "目标数据集",
+      title: t("ratioTask.home.columns.targetDataset"),
       dataIndex: "target_dataset_name",
       key: "target_dataset_name",
       render: (text: string, task: RatioTaskItem) => (
@@ -117,13 +120,13 @@ export default function RatioTasksPage() {
       ),
     },
     {
-      title: "创建时间",
-      dataIndex: "created_at",
-      key: "created_at",
+      title: t("ratioTask.home.columns.createdAt"),
+      dataIndex: "createdAt",
+      key: "createdAt",
       width: 180,
     },
     {
-      title: "操作",
+      title: t("ratioTask.home.columns.actions"),
       key: "actions",
       width: 120,
       fixed: "right" as const,
@@ -131,13 +134,18 @@ export default function RatioTasksPage() {
         <div className="flex items-center gap-2">
           {operations.map((op) => {
             if (op.confirm) {
-              <Popconfirm
-                title={op.confirm.title}
-                description={op.confirm.description}
-                onConfirm={() => op.onClick(task)}
-              >
-                <Button type="text" icon={op.icon} />
-              </Popconfirm>;
+              return (
+                <Popconfirm
+                  key={op.key}
+                  title={op.confirm.title}
+                  description={op.confirm.description}
+                  okText={op.confirm.okText}
+                  cancelText={op.confirm.cancelText}
+                  onConfirm={() => op.onClick(task)}
+                >
+                  <Button type="text" icon={op.icon} danger={op.danger} />
+                </Popconfirm>
+              );
             }
             return (
               <Button
@@ -157,13 +165,13 @@ export default function RatioTasksPage() {
   const operations = [
     {
       key: "delete",
-      label: "删除",
+      label: t("ratioTask.home.confirm.okText"),
       danger: true,
       confirm: {
-        title: "确认删除该任务？",
-        description: "删除后该任务将无法恢复，请谨慎操作。",
-        okText: "删除",
-        cancelText: "取消",
+        title: t("ratioTask.home.confirm.deleteTitle"),
+        description: t("ratioTask.home.confirm.deleteDesc"),
+        okText: t("ratioTask.home.confirm.okText"),
+        cancelText: t("ratioTask.home.confirm.cancelText"),
         okType: "danger",
       },
       icon: <DeleteOutlined />,
@@ -174,21 +182,20 @@ export default function RatioTasksPage() {
   return (
     <div className="h-full flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold">配比任务</h2>
+        <h2 className="text-xl font-bold">{t("ratioTask.home.title")}</h2>
         <Button
           type="primary"
           onClick={() => navigate("/data/synthesis/ratio-task/create")}
           icon={<Plus className="w-4 h-4" />}
         >
-          创建配比任务
+          {t("ratioTask.home.createTask")}
         </Button>
       </div>
       <>
-        {/* 搜索、筛选和视图控制 */}
         <SearchControls
           searchTerm={searchParams.keyword}
           onSearchChange={handleKeywordChange}
-          searchPlaceholder="搜索任务名称..."
+          searchPlaceholder={t("ratioTask.home.searchPlaceholder")}
           filters={filters}
           onFiltersChange={handleFiltersChange}
           onClearFilters={() =>
@@ -199,7 +206,6 @@ export default function RatioTasksPage() {
           showViewToggle
           onReload={fetchData}
         />
-        {/* 任务列表 */}
         {viewMode === "list" ? (
           <Card>
             <Table

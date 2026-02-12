@@ -7,7 +7,7 @@ from app.db.models import DatasetFiles
 
 from app.core.logging import get_logger
 from app.core.config import settings
-from app.exception import NoDatasetInfoFoundError
+from app.core.exception import ErrorCodes, BusinessError
 
 from ..client import LabelStudioClient
 from ..schema import (
@@ -388,7 +388,7 @@ class SyncService:
         # 获取DM数据集信息
         dataset_info = await self.dm_client.get_dataset(effective_dataset_id)
         if not dataset_info:
-            raise NoDatasetInfoFoundError(mapping.dataset_id)
+            raise BusinessError(ErrorCodes.NOT_FOUND, data={"dataset_id": mapping.dataset_id})
         
         total_files = dataset_info.fileCount
         logger.debug(f"Total files in DM dataset: {total_files}")

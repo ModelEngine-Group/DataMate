@@ -62,6 +62,84 @@ class Service:
             logger.error(f"Failed to get dataset {dataset_id}: {e}")
             return None
 
+    async def create_dataset(
+        self,
+        name: str,
+        dataset_type: str,
+        description: str = "",
+        status: Optional[str] = None,
+    ) -> DatasetResponse:
+        """
+        创建数据集（参考Java版本DatasetApplicationService.createDataset）
+
+        Args:
+            name: 数据集名称
+            dataset_type: 数据集类型（TEXT/IMAGE/VIDEO/AUDIO/OTHER）
+            description: 数据集描述
+            status: 数据集状态
+
+        Returns:
+            创建的数据集响应
+        """
+        try:
+            logger.info(f"Creating dataset: {name}, type: {dataset_type}")
+
+            # 1. 检查数据集名称是否已存在
+            result = await self.db.execute(
+                select(Dataset).where(Dataset.name == name)
+            )
+            existing_dataset = result.scalar_one_or_none()
+            if existing_dataset:
+                error_msg = f"Dataset with name '{name}' already exists"
+                logger.error(error_msg)
+                raise Exception(error_msg)
+
+            # 2. 创建数据集对象
+            dataset_id = str(uuid.uuid4())
+            dataset_path = f"{os.path.join('/dataset', dataset_id)}"
+
+            # 如果没有提供status，默认为DRAFT
+            if status is None:
+                status = "DRAFT"
+
+            new_dataset = Dataset(
+                id=dataset_id,
+                name=name,
+                description=description,
+                dataset_type=dataset_type,
+                path=dataset_path,
+                size_bytes=0,
+                file_count=0,
+                status=status,
+                dataset_metadata="{}",
+                version=0,
+                created_by="system",
+            )
+
+            self.db.add(new_dataset)
+            await self.db.flush()
+            await self.db.commit()
+
+            logger.info(f"Successfully created dataset: {new_dataset.id}")
+
+            return DatasetResponse(
+                id=new_dataset.id,  # type: ignore
+                name=new_dataset.name,  # type: ignore
+                description=new_dataset.description or "",  # type: ignore
+                datasetType=new_dataset.dataset_type,  # type: ignore
+                status=new_dataset.status,  # type: ignore
+                fileCount=new_dataset.file_count or 0,  # type: ignore
+                totalSize=new_dataset.size_bytes or 0,  # type: ignore
+                createdAt=new_dataset.created_at,  # type: ignore
+                updatedAt=new_dataset.updated_at,  # type: ignore
+                createdBy=new_dataset.created_by  # type: ignore
+            )
+
+        except Exception as e:
+            await self.db.rollback()
+            logger.error(f"Failed to create dataset: {e}")
+            raise Exception(f"Failed to create dataset: {str(e)}")
+
     async def get_dataset_files(
         self,
         dataset_id: str,
@@ -116,7 +194,8 @@ class Service:
                     uploadedBy=None,
                     lastAccessTime=f.last_access_time,  # type: ignore
                     tags=f.tags,  # type: ignore
-                    tags_updated_at=f.tags_updated_at  # type: ignore
+                    tags_updated_at=f.tags_updated_at,  # type: ignore
+                    annotation=getattr(f, "annotation", None),  # type: ignore
                 )
                 for f in files
             ]
@@ -178,7 +257,7 @@ class Service:
 
         如果提供了 template_id，会自动将简化格式的标签转换为完整格式。
         简化格式: {"from_name": "x", "to_name": "y", "values": [...]}
-        完整格式: {"id": "...", "from_name": "x", "to_name": "y", "type": "...", "value": {"type": [...]}}
+        完整格式: {"id": "...", "from_name": "x", "to_name": "y", "type": "...", "values": {"type": [...]}}
 
         Args:
             file_id: 文件ID
@@ -320,6 +399,84 @@ class Service:
         except Exception as e:
             await self.db.rollback()
             logger.error(f"Failed to add files to dataset {dataset_id}: {str(e)}", exc_info=True)
+
+    async def add_files_to_dataset_subdir(self, dataset_id: str, source_paths: List[str], subdir: str):
+        """将文件添加到数据集下的指定子目录中，并创建对应的数据库记录。
+
+        与 add_files_to_dataset 行为类似，但允许将文件放入形如
+        ``<dataset.path>/<subdir>/<filename>`` 的结构中，适用于诸如
+        "标注数据" 这类逻辑分组目录。
+        """
+
+        logger.info(f"Starting to add files to dataset {dataset_id} under subdir '{subdir}'")
+
+        try:
+            # Get dataset and existing files
+            dataset = await self.db.get(Dataset, dataset_id)
+            if not dataset:
+                logger.error(f"Dataset not found: {dataset_id}")
+                return
+
+            # Get existing files to check for duplicates (按 file_path 去重)
+            result = await self.db.execute(
+                select(DatasetFiles).where(DatasetFiles.dataset_id == dataset_id)
+            )
+            existing_files_map: Dict[str, DatasetFiles] = {}
+            for dataset_file in result.scalars().all():
+                existing_files_map[dataset_file.file_path] = dataset_file  # type: ignore[attr-defined]
+
+            # Get or create dataset root directory, then拼接子目录
+            dataset_root = await self._get_or_create_dataset_directory(dataset)
+            dataset_dir = os.path.join(dataset_root, subdir)
+            os.makedirs(dataset_dir, exist_ok=True)
+
+            # Process each source file
+            for source_path in source_paths:
+                try:
+                    file_record = await self.create_new_dataset_file(dataset_dir, dataset_id, source_path)
+                    if not file_record:
+                        continue
+
+                    target_path = file_record.file_path  # type: ignore[attr-defined]
+                    file_size = file_record.file_size  # type: ignore[attr-defined]
+
+                    # 如果同一 dataset_id + file_path 已存在，则更新大小，否则追加
+                    if target_path in existing_files_map:
+                        logger.warning(
+                            f"File {target_path} already exists in dataset {dataset.id}, updating size only",
+                        )
+                        dataset_file = existing_files_map.get(target_path)
+                        if dataset_file is not None:
+                            dataset.size_bytes = (dataset.size_bytes or 0) - (dataset_file.file_size or 0) + file_size  # type: ignore[attr-defined]
+                            dataset.updated_at = datetime.now()
+                            dataset_file.file_size = file_size  # type: ignore[attr-defined]
+                            dataset_file.updated_at = datetime.now()  # type: ignore[attr-defined]
+                    else:
+                        # 新文件：插入记录并更新统计
+                        self.db.add(file_record)
+                        dataset.file_count = (dataset.file_count or 0) + 1  # type: ignore[attr-defined]
+                        dataset.size_bytes = (dataset.size_bytes or 0) + file_record.file_size  # type: ignore[attr-defined]
+                        dataset.updated_at = datetime.now()
+                        dataset.status = 'ACTIVE'
+
+                    # 复制物理文件到目标路径
+                    logger.info(f"copy file {source_path} to {target_path}")
+                    dst_dir = os.path.dirname(target_path)
+                    await asyncio.to_thread(os.makedirs, dst_dir, exist_ok=True)
+                    await asyncio.to_thread(shutil.copy2, source_path, target_path)
+
+                    await self.db.commit()
+
+                except Exception as e:
+                    logger.error(f"Error processing file {source_path} into subdir {subdir}: {str(e)}", e)
+                    await self.db.rollback()
+
+        except Exception as e:
+            await self.db.rollback()
+            logger.error(
+                f"Failed to add files to dataset {dataset_id} under subdir '{subdir}': {str(e)}",
+                exc_info=True,
+            )
 
     async def handle_dataset_file(self, dataset, existing_files_map: dict[Any, Any], file_record: DatasetFiles, source_path: str):
         target_path = file_record.file_path

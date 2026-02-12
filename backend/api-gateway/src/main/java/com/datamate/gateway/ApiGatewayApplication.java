@@ -42,8 +42,18 @@ public class ApiGatewayApplication {
                  .uri("http://datamate-backend-python:18000"))
 
             // 知识图谱RAG服务路由
-            .route("graph-rag", r -> r.path("/api/rag/**")
+            .route("python-service", r -> r.path("/api/rag/**", "api/models/**")
                  .uri("http://datamate-backend-python:18000"))
+
+            // 数据评估服务路由
+            .route("data-operator", r -> r.path("/api/operators/**")
+                .uri("http://datamate-backend-python:18000"))
+
+            .route("data-categories", r -> r.path("/api/categories/**")
+                .uri("http://datamate-backend-python:18000"))
+
+            .route("data-cleaning", r -> r.path("/api/cleaning/**")
+                .uri("http://datamate-backend-python:18000"))
 
             .route("deer-flow-frontend", r -> r.path("/chat/**")
                 .uri("http://deer-flow-frontend:3000"))

@@ -49,7 +49,7 @@ const TagSelector: React.FC<TagSelectorProps> = ({
         setError(null);
         try {
             const response = await getTagConfigUsingGet();
-            if (response.code === 200 && response.data) {
+            if (response.data) {
                 const config: LabelStudioTagConfig = response.data;
                 const { objectOptions, controlOptions } = parseTagConfig(config);
 

@@ -8,7 +8,8 @@ import { ModelI } from "@/pages/SettingsPage/ModelAccess.tsx";
 import { createEvaluationTaskUsingPost } from "@/pages/DataEvaluation/evaluation.api.ts";
 import { queryPromptTemplatesUsingGet } from "@/pages/DataEvaluation/evaluation.api.ts";
 import PreviewPromptModal from "@/pages/DataEvaluation/Create/PreviewPrompt.tsx";
-import { EVAL_METHODS, TASK_TYPES } from "@/pages/DataEvaluation/evaluation.const.tsx";
+import { getEvalMethods, getTaskTypes } from "@/pages/DataEvaluation/evaluation.const.tsx";
+import { useTranslation } from "react-i18next";
 
 interface Dataset {
   id: string;
@@ -39,6 +40,7 @@ const DEFAULT_EVAL_METHOD = 'AUTO';
 const DEFAULT_TASK_TYPE = 'QA';
 
 const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onCancel, onSuccess }) => {
+  const { t } = useTranslation();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [datasets, setDatasets] = useState<Dataset[]>([]);
@@ -55,7 +57,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onCancel, on
 
   const handleAddDimension = () => {
     if (!newDimension.dimension.trim()) {
-      message.warning('请输入维度名称');
+      message.warning(t("dataEvaluation.create.messages.dimensionNameRequired"));
       return;
     }
     setDimensions([...dimensions, { ...newDimension, key: `dim-${Date.now()}` }]);
@@ -64,7 +66,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onCancel, on
 
   const handleDeleteDimension = (key: string) => {
     if (dimensions.length <= 1) {
-      message.warning('至少需要保留一个评估维度');
+      message.warning(t("dataEvaluation.create.messages.keepAtLeastOneDimension"));
       return;
     }
     setDimensions(dimensions.filter(item => item.key !== key));
@@ -96,10 +98,10 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onCancel, on
   const fetchDatasets = async () => {
     try {
       const { data } = await queryDatasetsUsingGet({ page: 1, size: 1000 });
-      setDatasets(data.content.map(mapDataset) || []);
+      setDatasets(data.content.map(dataset => mapDataset(dataset, t)) || []);
     } catch (error) {
       console.error('Error fetching datasets:', error);
-      message.error('获取数据集列表失败');
+      message.error(t("dataEvaluation.create.messages.fetchDatasetsFailed"));
     }
   };
 
@@ -109,7 +111,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onCancel, on
       setModels(data.content || []);
     } catch (error) {
       console.error('Error fetching models:', error);
-      message.error('获取模型列表失败');
+      message.error(t("dataEvaluation.create.messages.fetchModelsFailed"));
     }
   };
 
@@ -157,13 +159,13 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onCancel, on
       }
     } catch (error) {
       console.error('Error fetching prompt templates:', error);
-      message.error('获取评估维度失败');
+      message.error(t("dataEvaluation.create.messages.fetchDimensionsFailed"));
     }
   };
 
   const generateEvaluationPrompt = () => {
     if (dimensions.length === 0) {
-      message.warning('请先添加评估维度');
+      message.warning(t("dataEvaluation.create.messages.addDimensionFirst"));
       return;
     }
     const template = promptTemplates.find(t => t.evalType === taskType);
@@ -184,7 +186,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onCancel, on
 
   const handleSubmit = async (values: any) => {
     if (dimensions.length === 0) {
-      message.warning('请至少添加一个评估维度');
+      message.warning(t("dataEvaluation.create.messages.addDimensionFirst"));
       return;
     }
 
@@ -209,13 +211,13 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onCancel, on
       };
 
       await createEvaluationTaskUsingPost(payload);
-      message.success('评估任务创建成功');
+      message.success(t("dataEvaluation.create.messages.createSuccess"));
       onSuccess();
       form.resetFields();
       onCancel();
     } catch (error: any) {
       console.error('Error creating task:', error);
-      message.error(error.response?.data?.message || '创建评估任务失败');
+      message.error(error.response?.data?.message || t("dataEvaluation.create.messages.createFailed"));
     } finally {
       setLoading(false);
     }
@@ -223,19 +225,19 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onCancel, on
 
   const columns = [
     {
-      title: '维度',
+      title: t("dataEvaluation.create.form.dimension"),
       dataIndex: 'dimension',
       key: 'dimension',
       width: '30%',
     },
     {
-      title: '描述',
+      title: t("dataEvaluation.create.form.descriptionCol"),
       dataIndex: 'description',
       key: 'description',
       width: '60%',
     },
     {
-      title: '操作',
+      title: t("dataEvaluation.create.form.actions"),
       key: 'action',
       width: '10%',
       render: (_: any, record: any) => (
@@ -245,7 +247,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onCancel, on
             style={{ color: dimensions.length <= 1 ? '#ccc' : '#ff4d4f' }}
             className={dimensions.length <= 1 ? 'disabled-link' : ''}
           >
-            删除
+            {t("dataEvaluation.create.delete")}
           </a>
         </Space>
       ),
@@ -254,7 +256,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onCancel, on
 
   return (
     <Modal
-      title="创建评估任务"
+      title={t("dataEvaluation.create.title")}
       open={visible}
       onCancel={onCancel}
       footer={null}
@@ -280,40 +282,40 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onCancel, on
         <Row gutter={16}>
           <Col span={12}>
             <Form.Item
-              label="任务名称"
+              label={t("dataEvaluation.create.form.name")}
               name="name"
-              rules={[{ required: true, message: '请输入任务名称' }]}
+              rules={[{ required: true, message: t("dataEvaluation.create.messages.nameRequired") }]}
             >
-              <Input placeholder="输入任务名称" />
+              <Input placeholder={t("dataEvaluation.create.placeholders.name")} />
             </Form.Item>
           </Col>
           <Col span={12}>
             <Form.Item
-              label="任务类型"
+              label={t("dataEvaluation.create.form.taskType")}
               name="taskType"
-              rules={[{ required: true, message: '请选择任务类型' }]}
+              rules={[{ required: true, message: t("dataEvaluation.create.messages.taskTypeRequired") }]}
             >
-              <Select options={TASK_TYPES} />
+              <Select options={getTaskTypes(t)} />
             </Form.Item>
           </Col>
         </Row>
 
         <Form.Item
-          label="任务描述"
+          label={t("dataEvaluation.create.form.description")}
           name="description"
         >
-          <Input.TextArea placeholder="输入任务描述（可选）" rows={3} />
+          <Input.TextArea placeholder={t("dataEvaluation.create.placeholders.description")} rows={3} />
         </Form.Item>
 
         <Row gutter={16}>
           <Col span={12}>
             <Form.Item
-              label="选择数据集"
+              label={t("dataEvaluation.create.form.selectDataset")}
               name="datasetId"
-              rules={[{ required: true, message: '请选择数据集' }]}
+              rules={[{ required: true, message: t("dataEvaluation.create.messages.datasetRequired") }]}
             >
               <Select
-                placeholder="请选择要评估的数据集"
+                placeholder={t("dataEvaluation.create.placeholders.dataset")}
                 showSearch
                 optionFilterProp="label"
               >
@@ -330,11 +332,11 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onCancel, on
           </Col>
           <Col span={12}>
             <Form.Item
-              label="评估方式"
+              label={t("dataEvaluation.create.form.evalMethod")}
               name="evalMethod"
               initialValue={DEFAULT_EVAL_METHOD}
             >
-              <Select options={EVAL_METHODS} />
+              <Select options={getEvalMethods(t)} />
             </Form.Item>
           </Col>
         </Row>
@@ -348,19 +350,19 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onCancel, on
           {({ getFieldValue }) => getFieldValue('evalMethod') === 'AUTO' && (
             <>
               <Form.Item
-                label="评估模型"
+                label={t("dataEvaluation.create.form.evalModel")}
                 name="modelId"
-                rules={[{ required: true, message: '请选择评估模型' }]}
+                rules={[{ required: true, message: t("dataEvaluation.create.messages.modelRequired") }]}
               >
                 <Select
-                  placeholder="请选择模型"
+                  placeholder={t("dataEvaluation.create.placeholders.model")}
                   options={chatModelOptions}
                   showSearch
                   optionFilterProp="label"
                 />
               </Form.Item>
 
-              <Form.Item label="评估维度">
+              <Form.Item label={t("dataEvaluation.create.form.dimensions")}>
                 <Table
                   columns={columns}
                   dataSource={dimensions}
@@ -370,13 +372,13 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onCancel, on
                 />
                 <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
                   <Input
-                    placeholder="输入维度名称"
+                    placeholder={t("dataEvaluation.create.placeholders.dimensionName")}
                     value={newDimension.dimension}
                     onChange={(e) => setNewDimension({...newDimension, dimension: e.target.value})}
                     style={{ flex: 1 }}
                   />
                   <Input
-                    placeholder="输入维度描述"
+                    placeholder={t("dataEvaluation.create.placeholders.dimensionDesc")}
                     value={newDimension.description}
                     onChange={(e) => setNewDimension({...newDimension, description: e.target.value})}
                     style={{ flex: 2 }}
@@ -386,7 +388,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onCancel, on
                     onClick={handleAddDimension}
                     disabled={!newDimension.dimension.trim()}
                   >
-                    添加维度
+                    {t("dataEvaluation.create.addDimension")}
                   </Button>
                 </div>
               </Form.Item>
@@ -400,7 +402,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onCancel, on
               icon={<EyeOutlined />}
               onClick={generateEvaluationPrompt}
             >
-              查看评估提示词
+              {t("dataEvaluation.create.viewPrompt")}
             </Button>
           </div>
         </Form.Item>
@@ -408,10 +410,10 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ visible, onCancel, on
         <Form.Item>
           <div style={{ textAlign: 'right' }}>
             <Button onClick={onCancel} style={{ marginRight: 8 }}>
-              取消
+              {t("dataEvaluation.create.cancel")}
             </Button>
             <Button type="primary" htmlType="submit" loading={loading}>
-              创建任务
+              {t("dataEvaluation.create.submit")}
             </Button>
           </div>
         </Form.Item>

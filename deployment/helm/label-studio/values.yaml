@@ -66,4 +66,27 @@ datasetVolume:
   enabled: true
   claimName: datamate-dataset-pvc # if empty, uses same PVC as persistence or creates a dedicated one
 
+# PgBouncer configuration for connection pooling
+pgbouncer:
+  enabled: true
+  replicaCount: 1
+
+  image:
+    repository: pgbouncer/pgbouncer
+    tag: "latest"
+    pullPolicy: IfNotPresent
+
+  # Connection pool settings
+  poolMode: transaction  # transaction, session, or statement
+  maxClientConn: 100     # Maximum number of client connections
+  defaultPoolSize: 20    # Default pool size per database (max connections to PostgreSQL)
+  maxDbConnections: 20   # Maximum database connections (hard limit)
+
+  resources: {}
+
+  nodeSelector: {}
+
+  tolerations: []
+
+  affinity: {}
 

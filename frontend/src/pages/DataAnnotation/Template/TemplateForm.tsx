@@ -93,7 +93,7 @@ const TemplateForm: React.FC<TemplateFormProps> = ({
                 response = await updateAnnotationTemplateByIdUsingPut(template!.id, requestData);
             }
 
-            if (response.code === 200) {
+            if (response.data) {
                 message.success(`模板${mode === "create" ? "创建" : "更新"}成功`);
                 form.resetFields();
                 onSuccess();

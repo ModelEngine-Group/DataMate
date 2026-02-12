@@ -2,6 +2,11 @@ package com.datamate.rag.indexer.application;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.datamate.common.domain.enums.EdgeType;
+import com.datamate.common.domain.enums.NodeType;
+import com.datamate.common.domain.model.LineageEdge;
+import com.datamate.common.domain.model.LineageNode;
+import com.datamate.common.domain.service.LineageService;
 import com.datamate.common.infrastructure.exception.BusinessException;
 import com.datamate.common.infrastructure.exception.KnowledgeBaseErrorCode;
 import com.datamate.common.interfaces.PagedResponse;
@@ -9,6 +14,10 @@ import com.datamate.common.interfaces.PagingQuery;
 import com.datamate.common.setting.domain.entity.ModelConfig;
 import com.datamate.common.setting.domain.repository.ModelConfigRepository;
 import com.datamate.common.setting.infrastructure.client.ModelClient;
+import com.datamate.datamanagement.domain.model.dataset.Dataset;
+import com.datamate.datamanagement.domain.model.dataset.DatasetFile;
+import com.datamate.datamanagement.infrastructure.persistence.repository.DatasetFileRepository;
+import com.datamate.datamanagement.infrastructure.persistence.repository.DatasetRepository;
 import com.datamate.rag.indexer.domain.model.FileStatus;
 import com.datamate.rag.indexer.domain.model.KnowledgeBase;
 import com.datamate.rag.indexer.domain.model.RagChunk;
@@ -36,7 +45,10 @@ import org.springframework.util.StringUtils;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * 知识库服务类
@@ -51,7 +63,10 @@ public class KnowledgeBaseService {
     private final RagFileRepository ragFileRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final ModelConfigRepository modelConfigRepository;
+    private final DatasetRepository datasetRepository;
+    private final DatasetFileRepository datasetFileRepository;
     private final MilvusService milvusService;
+    private final LineageService lineageService;
 
     /**
      * 创建知识库
@@ -151,6 +166,7 @@ public class KnowledgeBaseService {
         }).toList();
         ragFileRepository.saveBatch(ragFiles, 100);
         eventPublisher.publishEvent(new DataInsertedEvent(knowledgeBase, request));
+        updateLineageGraph(knowledgeBase, request.getFiles());
     }
 
     public PagedResponse<RagFile> listFiles(String knowledgeBaseId, RagFileReq request) {
@@ -221,5 +237,56 @@ public class KnowledgeBaseService {
             item.getEntity().put("metadata", metadata);
         });
         return searchResults;
+    }
+
+    /**
+     * 向知识库添加文件的时候，将相关数据集加入血缘图
+     *
+     * @param knowledgeBase 知识库
+     * @param files 数据集中选择的文件
+     */
+    private void updateLineageGraph(KnowledgeBase knowledgeBase, List<AddFilesReq.FileInfo> files) {
+        LineageNode kbNode = lineageService.getNodeById(knowledgeBase.getId());
+        if (kbNode == null) {
+            kbNode = new LineageNode();
+                kbNode.setId(knowledgeBase.getId());
+                kbNode.setNodeType(NodeType.KNOWLEDGE_BASE);
+                kbNode.setName(knowledgeBase.getName());
+                kbNode.setDescription(knowledgeBase.getDescription());
+        }
+
+        // 获取所有唯一的数据集ID
+        Set<String> datasetIds = files.stream()
+            .map(fileInfo -> {
+                DatasetFile datasetFile = datasetFileRepository.getById(fileInfo.id());
+                return datasetFile != null ? datasetFile.getDatasetId() : null;
+            })
+            .filter(Objects::nonNull)
+            .collect(Collectors.toSet());
+
+        // 为每个数据集创建血缘关系
+        for (String datasetId : datasetIds) {
+            Dataset dataset = datasetRepository.getById(datasetId);
+            if (dataset == null) continue;
+
+            // 创建源数据集节点
+            LineageNode datasetNode = new LineageNode();
+            datasetNode.setId(dataset.getId());
+            datasetNode.setNodeType(NodeType.DATASET);
+            datasetNode.setName(dataset.getName());
+            datasetNode.setDescription(dataset.getDescription());
+
+            // 创建血缘边
+            LineageEdge edge = new LineageEdge();
+                edge.setProcessId(knowledgeBase.getId());
+                edge.setName("");
+                edge.setEdgeType(EdgeType.KNOWLEDGE_BASE);
+                edge.setDescription("Add the files from dataset to the knowledge base.");
+                edge.setFromNodeId(dataset.getId());
+                edge.setToNodeId(knowledgeBase.getId());
+
+            // 生成血缘图
+            lineageService.generateGraph(datasetNode, edge, kbNode);
+        }
     }
 }

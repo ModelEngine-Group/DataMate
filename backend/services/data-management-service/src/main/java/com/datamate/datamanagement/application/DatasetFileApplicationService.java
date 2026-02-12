@@ -7,6 +7,7 @@ import com.datamate.common.domain.model.FileUploadResult;
 import com.datamate.common.domain.service.FileService;
 import com.datamate.common.domain.utils.AnalyzerUtils;
 import com.datamate.common.domain.utils.ArchiveAnalyzer;
+import com.datamate.common.domain.utils.CommonUtils;
 import com.datamate.common.infrastructure.exception.BusinessAssert;
 import com.datamate.common.infrastructure.exception.BusinessException;
 import com.datamate.common.infrastructure.exception.CommonErrorCode;
@@ -23,7 +24,6 @@ import com.datamate.datamanagement.infrastructure.persistence.repository.Dataset
 import com.datamate.datamanagement.infrastructure.persistence.repository.DatasetRepository;
 import com.datamate.datamanagement.interfaces.converter.DatasetConverter;
 import com.datamate.datamanagement.interfaces.dto.AddFilesRequest;
-import com.datamate.datamanagement.interfaces.dto.CopyFilesRequest;
 import com.datamate.datamanagement.interfaces.dto.CreateDirectoryRequest;
 import com.datamate.datamanagement.interfaces.dto.UploadFileRequest;
 import com.datamate.datamanagement.interfaces.dto.UploadFilesPreRequest;
@@ -36,6 +36,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -56,7 +57,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -189,7 +189,7 @@ public class DatasetFileApplicationService {
         } else {
             DatasetFile exist = datasetFilesMap.get(path.toString());
             if (exist == null) {
-                datasetFile.setId("file-" + datasetFile.getFileName());
+                datasetFile.setId(datasetFile.getFileName());
                 datasetFile.setFileSize(path.toFile().length());
             } else {
                 datasetFile = exist;
@@ -202,12 +202,22 @@ public class DatasetFileApplicationService {
      * 获取文件详情
      */
     @Transactional(readOnly = true)
-    public DatasetFile getDatasetFile(String datasetId, String fileId) {
+    public DatasetFile getDatasetFile(Dataset dataset, String fileId, String prefix) {
+        prefix = StringUtils.isBlank(prefix) ? "" : prefix;
+        if (dataset != null && !CommonUtils.isUUID(fileId) && !fileId.startsWith(".") && !prefix.startsWith(".")) {
+            DatasetFile file = new DatasetFile();
+            file.setId(fileId);
+            file.setFileName(fileId);
+            file.setDatasetId(dataset.getId());
+            file.setFileSize(0L);
+            file.setFilePath(dataset.getPath() + File.separator + prefix + fileId);
+            return file;
+        }
         DatasetFile file = datasetFileRepository.getById(fileId);
-        if (file == null) {
+        if (file == null || dataset == null) {
             throw new IllegalArgumentException("File not found: " + fileId);
         }
-        if (!file.getDatasetId().equals(datasetId)) {
+        if (!file.getDatasetId().equals(dataset.getId())) {
             throw new IllegalArgumentException("File does not belong to the specified dataset");
         }
         return file;
@@ -217,12 +227,14 @@ public class DatasetFileApplicationService {
      * 删除文件
      */
     @Transactional
-    public void deleteDatasetFile(String datasetId, String fileId) {
-        DatasetFile file = getDatasetFile(datasetId, fileId);
+    public void deleteDatasetFile(String datasetId, String fileId, String prefix) {
         Dataset dataset = datasetRepository.getById(datasetId);
+        DatasetFile file = getDatasetFile(dataset, fileId, prefix);
         dataset.setFiles(new ArrayList<>(Collections.singleton(file)));
         datasetFileRepository.removeById(fileId);
-        dataset.removeFile(file);
+        if (CommonUtils.isUUID(fileId)) {
+            dataset.removeFile(file);
+        }
         datasetRepository.updateById(dataset);
         // 删除文件时，上传到数据集中的文件会同时删除数据库中的记录和文件系统中的文件，归集过来的文件仅删除数据库中的记录
         if (file.getFilePath().startsWith(dataset.getPath())) {
@@ -239,10 +251,10 @@ public class DatasetFileApplicationService {
      * 下载文件
      */
     @Transactional(readOnly = true)
-    public Resource downloadFile(String datasetId, String fileId) {
-        DatasetFile file = getDatasetFile(datasetId, fileId);
+    public Resource downloadFile(DatasetFile file) {
         try {
             Path filePath = Paths.get(file.getFilePath()).normalize();
+            log.info("start download file {}", file.getFilePath());
             Resource resource = new UrlResource(filePath.toUri());
             if (resource.exists()) {
                 return resource;
@@ -255,7 +267,7 @@ public class DatasetFileApplicationService {
     }
 
     /**
-     * 下载文件
+     * 下载数据集所有文件为 ZIP
      */
     @Transactional(readOnly = true)
     public void downloadDatasetFileAsZip(String datasetId, HttpServletResponse response) {
@@ -263,25 +275,39 @@ public class DatasetFileApplicationService {
         if (Objects.isNull(dataset)) {
             throw BusinessException.of(DataManagementErrorCode.DATASET_NOT_FOUND);
         }
-        List<DatasetFile> allByDatasetId = datasetFileRepository.findAllByDatasetId(datasetId);
-        Set<String> filePaths = allByDatasetId.stream().map(DatasetFile::getFilePath).collect(Collectors.toSet());
         String datasetPath = dataset.getPath();
-        Path downloadPath = Path.of(datasetPath);
+        Path downloadPath = Paths.get(datasetPath).normalize();
+        
+        // 检查路径是否存在
+        if (!Files.exists(downloadPath) || !Files.isDirectory(downloadPath)) {
+            throw BusinessException.of(DataManagementErrorCode.DATASET_NOT_FOUND);
+        }
+        
         response.setContentType("application/zip");
-        String zipName = String.format("dataset_%s.zip",
+        String zipName = String.format("dataset_%s_%s.zip",
+                dataset.getName() != null ? dataset.getName().replaceAll("[^a-zA-Z0-9_-]", "_") : "dataset",
                 LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
-        response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + zipName);
+        response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + zipName + "\"");
+        
         try (ZipArchiveOutputStream zos = new ZipArchiveOutputStream(response.getOutputStream())) {
             try (Stream<Path> pathStream = Files.walk(downloadPath)) {
-                List<Path> allPaths = pathStream.filter(path -> path.toString().startsWith(datasetPath))
-                    .filter(path -> filePaths.stream().anyMatch(filePath -> filePath.startsWith(path.toString())))
-                    .toList();
-                for (Path path : allPaths) {
-                    addToZipFile(path, downloadPath, zos);
-                }
+                pathStream
+                    .filter(path -> {
+                        // 确保路径在数据集目录内，防止路径遍历攻击
+                        Path normalized = path.normalize();
+                        return normalized.startsWith(downloadPath);
+                    })
+                    .forEach(path -> {
+                        try {
+                            addToZipFile(path, downloadPath, zos);
+                        } catch (IOException e) {
+                            log.error("Failed to add file to zip: {}", path, e);
+                        }
+                    });
             }
+            zos.finish();
         } catch (IOException e) {
-            log.error("Failed to download files in batches.", e);
+            log.error("Failed to download dataset files as zip for dataset {}", datasetId, e);
             throw BusinessException.of(SystemErrorCode.FILE_SYSTEM_ERROR);
         }
     }
@@ -402,13 +428,23 @@ public class DatasetFileApplicationService {
         for (FileUploadResult file : unpacked) {
             File savedFile = file.getSavedFile();
             LocalDateTime currentTime = LocalDateTime.now();
+            // 统一 fileName：无论是否通过文件夹/压缩包上传，都只保留纯文件名
+            String originalFileName = file.getFileName();
+            String baseFileName = originalFileName;
+            if (originalFileName != null) {
+                String normalized = originalFileName.replace("\\", "/");
+                int lastSlash = normalized.lastIndexOf('/');
+                if (lastSlash >= 0 && lastSlash + 1 < normalized.length()) {
+                    baseFileName = normalized.substring(lastSlash + 1);
+                }
+            }
             DatasetFile datasetFile = DatasetFile.builder()
                 .id(UUID.randomUUID().toString())
                 .datasetId(datasetId)
                 .fileSize(savedFile.length())
                 .uploadTime(currentTime)
                 .lastAccessTime(currentTime)
-                .fileName(file.getFileName())
+                .fileName(baseFileName)
                 .filePath(savedFile.getPath())
                 .fileType(AnalyzerUtils.getExtension(file.getFileName()))
                 .build();
@@ -614,23 +650,21 @@ public class DatasetFileApplicationService {
      */
     @Transactional
     public void renameFile(String datasetId, String fileId, RenameFileRequest request) {
-        DatasetFile file = getDatasetFile(datasetId, fileId);
         Dataset dataset = datasetRepository.getById(datasetId);
         if (dataset == null) {
             throw BusinessException.of(DataManagementErrorCode.DATASET_NOT_FOUND);
         }
 
+        DatasetFile file = getDatasetFile(dataset, fileId, null);
         String newName = Optional.ofNullable(request.getNewName()).orElse("").trim();
         if (newName.isEmpty()) {
             throw BusinessException.of(CommonErrorCode.PARAM_ERROR);
         }
 
         String originalFileName = file.getFileName();
-        String baseName = originalFileName;
         String extension = "";
         int dotIndex = originalFileName.lastIndexOf('.');
         if (dotIndex > 0 && dotIndex < originalFileName.length() - 1) {
-            baseName = originalFileName.substring(0, dotIndex);
             extension = originalFileName.substring(dotIndex); // 包含点号，如 .jpg
         }
 
@@ -790,63 +824,6 @@ public class DatasetFileApplicationService {
     }
 
     /**
-     * 复制文件到数据集目录
-     *
-     * @param datasetId 数据集id
-     * @param req       复制文件请求
-     * @return 复制的文件列表
-     */
-    @Transactional
-    public List<DatasetFile> copyFilesToDatasetDir(String datasetId, CopyFilesRequest req) {
-        Dataset dataset = datasetRepository.getById(datasetId);
-        BusinessAssert.notNull(dataset, SystemErrorCode.RESOURCE_NOT_FOUND);
-        List<DatasetFile> copiedFiles = new ArrayList<>();
-        List<DatasetFile> existDatasetFiles = datasetFileRepository.findAllByDatasetId(datasetId);
-        dataset.setFiles(existDatasetFiles);
-        for (String sourceFilePath : req.sourcePaths()) {
-            Path sourcePath = Paths.get(sourceFilePath);
-            if (!Files.exists(sourcePath) || !Files.isRegularFile(sourcePath)) {
-                log.warn("Source file does not exist or is not a regular file: {}", sourceFilePath);
-                continue;
-            }
-            String fileName = sourcePath.getFileName().toString();
-            File sourceFile = sourcePath.toFile();
-            LocalDateTime currentTime = LocalDateTime.now();
-            DatasetFile datasetFile = DatasetFile.builder()
-                    .id(UUID.randomUUID().toString())
-                    .datasetId(datasetId)
-                    .fileName(fileName)
-                    .fileType(AnalyzerUtils.getExtension(fileName))
-                    .fileSize(sourceFile.length())
-                    .filePath(Paths.get(dataset.getPath(), fileName).toString())
-                    .uploadTime(currentTime)
-                    .lastAccessTime(currentTime)
-                    .build();
-            setDatasetFileId(datasetFile, dataset);
-            dataset.addFile(datasetFile);
-            copiedFiles.add(datasetFile);
-        }
-        datasetFileRepository.saveOrUpdateBatch(copiedFiles, 100);
-        dataset.active();
-        datasetRepository.updateById(dataset);
-        CompletableFuture.runAsync(() -> copyFilesToDatasetDir(req.sourcePaths(), dataset));
-        return copiedFiles;
-    }
-
-    private void copyFilesToDatasetDir(List<String> sourcePaths, Dataset dataset) {
-        for (String sourcePath : sourcePaths) {
-            Path sourceFilePath = Paths.get(sourcePath);
-            Path targetFilePath = Paths.get(dataset.getPath(), sourceFilePath.getFileName().toString());
-            try {
-                Files.createDirectories(Path.of(dataset.getPath()));
-                Files.copy(sourceFilePath, targetFilePath);
-            } catch (IOException e) {
-                log.error("Failed to copy file from {} to {}", sourcePath, targetFilePath, e);
-            }
-        }
-    }
-
-    /**
      * 添加文件到数据集（仅创建数据库记录，不执行文件系统操作）
      *
      * @param datasetId 数据集id
@@ -855,49 +832,94 @@ public class DatasetFileApplicationService {
      */
     @Transactional
     public List<DatasetFile> addFilesToDataset(String datasetId, AddFilesRequest req) {
+        if (!req.isValidPrefix()) {
+            throw BusinessException.of(DataManagementErrorCode.DIRECTORY_NOT_FOUND);
+        }
         Dataset dataset = datasetRepository.getById(datasetId);
         BusinessAssert.notNull(dataset, SystemErrorCode.RESOURCE_NOT_FOUND);
         List<DatasetFile> addedFiles = new ArrayList<>();
         List<DatasetFile> existDatasetFiles = datasetFileRepository.findAllByDatasetId(datasetId);
         dataset.setFiles(existDatasetFiles);
-
-        boolean softAdd = req.softAdd();
-        String metadata;
         try {
-            Map<String, Boolean> metadataMap = Map.of("softAdd", softAdd);
             ObjectMapper objectMapper = new ObjectMapper();
-            metadata = objectMapper.writeValueAsString(metadataMap);
-        } catch (JsonProcessingException e) {
-            log.error("Failed to serialize metadataMap", e);
+
+            for (AddFilesRequest.FileRequest file : req.getFiles()) {
+                DatasetFile datasetFile = getDatasetFileForAdd(req, file, dataset, objectMapper);
+                setDatasetFileId(datasetFile, dataset);
+                dataset.addFile(datasetFile);
+                addedFiles.add(datasetFile);
+                addFile(file.getFilePath(), datasetFile.getFilePath(), req.isSoftAdd());
+            }
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Failed to add file to dataset {}", dataset.getName(), e);
             throw BusinessException.of(SystemErrorCode.UNKNOWN_ERROR);
         }
 
-        for (String sourceFilePath : req.sourcePaths()) {
-            Path sourcePath = Paths.get(sourceFilePath);
-            String fileName = sourcePath.getFileName().toString();
-            File sourceFile = sourcePath.toFile();
-            LocalDateTime currentTime = LocalDateTime.now();
-
-            DatasetFile datasetFile = DatasetFile.builder()
-                .id(UUID.randomUUID().toString())
-                .datasetId(datasetId)
-                .fileName(fileName)
-                .fileType(AnalyzerUtils.getExtension(fileName))
-                .fileSize(sourceFile.length())
-                .filePath(sourceFilePath)
-                .uploadTime(currentTime)
-                .lastAccessTime(currentTime)
-                .metadata(metadata)
-                .build();
-            setDatasetFileId(datasetFile, dataset);
-            dataset.addFile(datasetFile);
-            addedFiles.add(datasetFile);
-        }
         datasetFileRepository.saveOrUpdateBatch(addedFiles, 100);
         dataset.active();
         datasetRepository.updateById(dataset);
-        // Note: addFilesToDataset only creates DB records, no file system operations
-        // If file copy is needed, use copyFilesToDatasetDir endpoint instead
         return addedFiles;
+    }
+
+    private void addFile(String sourPath, String targetPath, boolean softAdd) {
+        if (StringUtils.isBlank(sourPath) || StringUtils.isBlank(targetPath)) {
+            return;
+        }
+        Path source = Paths.get(sourPath).normalize();
+        Path target = Paths.get(targetPath).normalize();
+
+        // 检查源文件是否存在且为普通文件
+        if (!Files.exists(source) || !Files.isRegularFile(source)) {
+            log.warn("Source file does not exist or is not a regular file: {}", sourPath);
+            throw BusinessException.of(SystemErrorCode.FILE_SYSTEM_ERROR);
+        }
+
+        try {
+            Path parent = target.getParent();
+            // 创建目标目录（如果需要）
+            if (parent != null) {
+                Files.createDirectories(parent);
+            }
+            Files.deleteIfExists(target);
+            if (softAdd) {
+                // 优先尝试创建硬链接，失败后尝试创建符号链接；若均失败抛出异常
+                try {
+                    Files.createLink(target, source);
+                    return;
+                } catch (Throwable hardEx) {
+                    log.warn("create hard link failed from {} to {}: {}", source, target, hardEx.getMessage());
+                }
+                Files.createSymbolicLink(target, source);
+            } else {
+                // 覆盖已存在的目标文件，保持与其他地方行为一致
+                Files.copy(source, target);
+            }
+        } catch (IOException e) {
+            log.error("Failed to add file from {} to {}", source, target, e);
+            throw BusinessException.of(SystemErrorCode.FILE_SYSTEM_ERROR);
+        }
+    }
+
+    private static DatasetFile getDatasetFileForAdd(AddFilesRequest req, AddFilesRequest.FileRequest file,
+                                                    Dataset dataset, ObjectMapper objectMapper) throws JsonProcessingException {
+        Path sourcePath = Paths.get(file.getFilePath());
+        File sourceFile = sourcePath.toFile();
+        file.getMetadata().put("softAdd", req.isSoftAdd());
+        LocalDateTime currentTime = LocalDateTime.now();
+        String fileName = sourcePath.getFileName().toString();
+
+        return DatasetFile.builder()
+                .id(UUID.randomUUID().toString())
+                .datasetId(dataset.getId())
+                .fileName(fileName)
+                .fileType(AnalyzerUtils.getExtension(fileName))
+                .fileSize(sourceFile.length())
+                .filePath(Paths.get(dataset.getPath(), req.getPrefix(), fileName).toString())
+                .uploadTime(currentTime)
+                .lastAccessTime(currentTime)
+                .metadata(objectMapper.writeValueAsString(file.getMetadata()))
+                .build();
     }
 }

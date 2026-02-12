@@ -4,11 +4,13 @@ import { EyeOutlined } from '@ant-design/icons';
 import PreviewPromptModal from "@/pages/DataEvaluation/Create/PreviewPrompt.tsx";
 import { formatDateTime } from "@/utils/unit.ts";
 import { evalTaskStatusMap, getEvalMethod, getEvalType, getSource } from "@/pages/DataEvaluation/evaluation.const.tsx";
+import { useTranslation } from "react-i18next";
 
 const Overview = ({ task }) => {
+  const { t } = useTranslation();
   const [previewVisible, setPreviewVisible] = useState(false);
   if (!task) {
-    return <Empty description="未找到评估任务信息" />;
+    return <Empty description={t("dataEvaluation.detail.taskNotFound")} />;
   }
 
   const generateEvaluationPrompt = () => {
@@ -19,70 +21,70 @@ const Overview = ({ task }) => {
   const items: DescriptionsProps["items"] = [
     {
       key: "id",
-      label: "ID",
+      label: t("dataEvaluation.detail.labels.id"),
       children: task.id,
     },
     {
       key: "name",
-      label: "名称",
+      label: t("dataEvaluation.detail.labels.name"),
       children: task.name,
     },
     {
       key: "evalType",
-      label: "评估类型",
-      children: getEvalType(task.taskType),
+      label: t("dataEvaluation.detail.labels.taskType"),
+      children: getEvalType(task.taskType, t),
     },
     {
       key: "evalMethod",
-      label: "评估方式",
-      children: getEvalMethod(task.evalMethod),
+      label: t("dataEvaluation.detail.labels.evalMethod"),
+      children: getEvalMethod(task.evalMethod, t),
     },
     {
       key: "status",
-      label: "状态",
-      children: evalTaskStatusMap[task.status]?.label || "未知",
+      label: t("dataEvaluation.detail.labels.status"),
+      children: task.status?.label || t("dataManagement.defaults.unknown"),
     },
     {
       key: "source",
-      label: "评估数据",
-      children: getSource(task.sourceType) + task.sourceName,
+      label: t("dataEvaluation.detail.labels.evalData"),
+      children: getSource(task.sourceType, t) + task.sourceName,
     },
     {
       key: "evalConfig.modelName",
-      label: "模型",
+      label: t("dataEvaluation.detail.labels.model"),
       children: task.evalConfig?.modelName || task.evalConfig?.modelId,
     },
     {
       key: "createdBy",
-      label: "创建者",
-      children: task.createdBy || "未知",
+      label: t("dataEvaluation.detail.labels.createdBy"),
+      children: task.createdBy || t("dataManagement.defaults.unknown"),
     },
     {
       key: "createdAt",
-      label: "创建时间",
+      label: t("dataEvaluation.detail.labels.createdAt"),
       children: formatDateTime(task.createdAt),
     },
     {
       key: "updatedAt",
-      label: "更新时间",
+      label: t("dataEvaluation.detail.labels.updatedAt"),
       children: formatDateTime(task.updatedAt),
     },
     {
       key: "description",
-      label: "描述",
-      children: task.description || "无",
+      label: t("dataEvaluation.detail.labels.description"),
+      children: task.description || t("dataManagement.defaults.none"),
     },
   ];
 
   const columns = [
     {
-      title: '维度',
+      title: t("dataEvaluation.detail.labels.dimension"),
       dataIndex: 'dimension',
       key: 'dimension',
       width: '30%',
     },
     {
-      title: '描述',
+      title: t("dataEvaluation.detail.labels.dimensionDesc"),
       dataIndex: 'description',
       key: 'description',
       width: '60%',
@@ -94,13 +96,15 @@ const Overview = ({ task }) => {
       <div className=" flex flex-col gap-4">
         {/* 基本信息 */}
         <Descriptions
-          title="基本信息"
+          title={t("dataEvaluation.detail.basicInfo")}
           layout="vertical"
           size="small"
           items={items}
           column={5}
         />
-        <h2 className="text-base font-semibold mt-8">评估维度</h2>
+        <h2 className="text-base font-semibold mt-8">
+          {t("dataEvaluation.detail.labels.dimensions")}
+        </h2>
         <div className="overflow-x-auto">
           <Table
             size="middle"
@@ -116,7 +120,7 @@ const Overview = ({ task }) => {
             icon={<EyeOutlined />}
             onClick={generateEvaluationPrompt}
           >
-            查看评估提示词
+            {t("dataEvaluation.create.viewPrompt")}
           </Button>
         </div>
         <PreviewPromptModal

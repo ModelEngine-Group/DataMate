@@ -26,15 +26,31 @@ class StandardResponse(BaseResponseModel, Generic[T]):
     """
     标准API响应格式
 
-    所有API端点应返回此格式，确保响应的一致性
+    所有API端点（包括错误响应）都应返回此格式
     """
-    code: int = Field(..., description="HTTP状态码")
+    code: str = Field(..., description="业务状态码（字符串）。成功使用 '0'，错误使用 '{module}.{sequence}' 格式（如 'rag.001'）")
     message: str = Field(..., description="响应消息")
-    data: T = Field(..., description="响应数据")
+    data: T = Field(default=None, description="响应数据")
 
     class Config:
         populate_by_name = True
         alias_generator = to_camel
+
+
+class ResponseCode(str, Enum):
+    """通用响应码枚举"""
+
+    # 成功响应
+    SUCCESS = "0"  # 操作成功
+
+    # 通用错误
+    BAD_REQUEST = "common.400"  # 错误的请求
+    UNAUTHORIZED = "common.401"  # 未授权
+    FORBIDDEN = "common.403"  # 禁止访问
+    NOT_FOUND = "common.404"  # 资源未找到
+    VALIDATION_ERROR = "common.422"  # 验证错误
+    INTERNAL_ERROR = "common.500"  # 服务器内部错误
+    SERVICE_UNAVAILABLE = "common.503"  # 服务不可用
 
 class PaginatedData(BaseResponseModel, Generic[T]):
     """分页数据容器"""

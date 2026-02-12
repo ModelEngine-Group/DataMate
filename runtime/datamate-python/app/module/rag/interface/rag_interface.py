@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, Depends
 
+from app.core.exception import ErrorCodes, BusinessError, SuccessResponse
 from app.db.session import get_db
 from app.module.rag.service.rag_service import RAGService
 from app.module.shared.schema import StandardResponse
@@ -9,30 +9,20 @@ from ..schema.rag_schema import QueryRequest
 router = APIRouter(prefix="/rag", tags=["rag"])
 
 @router.post("/process/{knowledge_base_id}")
-async def process_knowledge_base(knowledge_base_id: str, db: AsyncSession = Depends(get_db)):
+async def process_knowledge_base(knowledge_base_id: str, rag_service: RAGService = Depends()):
     """
-    Process all unprocessed files in a knowledge base.
+    处理知识库中所有未处理的文件
     """
-    try:
-        await RAGService(db).init_graph_rag(knowledge_base_id)
-        return StandardResponse(
-            code=200,
-            message="Processing started for knowledge base.",
-            data=None
-        )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    await rag_service.init_graph_rag(knowledge_base_id)
+    return SuccessResponse(
+        data=None,
+        message="Processing started for knowledge base."
+    )
 
 @router.post("/query")
-async def query_knowledge_graph(payload: QueryRequest, db: AsyncSession = Depends(get_db)):
+async def query_knowledge_graph(payload: QueryRequest, rag_service: RAGService = Depends()):
     """
-    Query the knowledge graph with the given query text and knowledge base ID.
+    使用给定的查询文本和知识库 ID 查询知识图谱
     """
-    try:
-        rag_service = RAGService(db)
-        result = await rag_service.query_rag(payload.query, payload.knowledge_base_id)
-        return StandardResponse(code=200, message="success", data=result)
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    result = await rag_service.query_rag(payload.query, payload.knowledge_base_id)
+    return SuccessResponse(data=result)

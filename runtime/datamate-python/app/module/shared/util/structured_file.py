@@ -73,11 +73,11 @@ class COTItemHandler(StructuredFileItemHandler):
         self.schema = {
             "type": "object",
             "properties": {
-                "question": {"type": "string"},
-                "conclusion": {"type": "string"},
+                "instruction": {"type": "string"},
+                "output": {"type": "string"},
                 "chain_of_thought": {"type": "string"}
             },
-            "required": ["question", "conclusion", "chain_of_thought"],
+            "required": ["question", "instruction", "output"],
         }
         self.schema_list = {
             "type": "array",

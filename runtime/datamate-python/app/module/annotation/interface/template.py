@@ -40,7 +40,7 @@ async def create_template(
     - **category**: 模板分类（默认custom）
     """
     template = await template_service.create_template(db, request)
-    return StandardResponse(code=200, message="success", data=template)
+    return StandardResponse(code="0", message="success", data=template)
 
 
 @router.get(
@@ -57,7 +57,7 @@ async def get_template(
     template = await template_service.get_template(db, template_id)
     if not template:
         raise HTTPException(status_code=404, detail="Template not found")
-    return StandardResponse(code=200, message="success", data=template)
+    return StandardResponse(code="0", message="success", data=template)
 
 
 @router.get(
@@ -92,7 +92,7 @@ async def list_template(
         labeling_type=labelingType,
         built_in=builtIn
     )
-    return StandardResponse(code=200, message="success", data=templates)
+    return StandardResponse(code="0", message="success", data=templates)
 
 
 @router.put(
@@ -112,7 +112,7 @@ async def update_template(
     template = await template_service.update_template(db, template_id, request)
     if not template:
         raise HTTPException(status_code=404, detail="Template not found")
-    return StandardResponse(code=200, message="success", data=template)
+    return StandardResponse(code="0", message="success", data=template)
 
 
 @router.delete(
@@ -129,4 +129,4 @@ async def delete_template(
     success = await template_service.delete_template(db, template_id)
     if not success:
         raise HTTPException(status_code=404, detail="Template not found")
-    return StandardResponse(code=200, message="success", data=True)
+    return StandardResponse(code="0", message="success", data=True)

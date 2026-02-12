@@ -1,15 +1,17 @@
 import { Alert, Input, Form } from "antd";
 import TextArea from "antd/es/input/TextArea";
 import React, { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import ParamConfig from "@/pages/DataCleansing/Create/components/ParamConfig.tsx";
 import { ChevronRight, Plus, Trash2 } from "lucide-react";
-import {MetricI} from "@/pages/OperatorMarket/operator.model.ts";
+import { MetricI } from "@/pages/OperatorMarket/operator.model.ts";
 
 export default function ConfigureStep({
   parsedInfo,
   parseError,
   setParsedInfo,
 }) {
+  const { t } = useTranslation();
   const [form] = Form.useForm();
 
   useEffect(() => {
@@ -85,7 +87,7 @@ export default function ConfigureStep({
       {parseError && (
         <div className="mb-4">
           <Alert
-            message="解析过程中发现问题"
+            message={t("operatorMarket.create.messages.parseError")}
             description={parseError}
             type="error"
             showIcon
@@ -103,32 +105,32 @@ export default function ConfigureStep({
           }}
         >
           {/* 基本信息 */}
-          <h3 className="text-lg font-semibold text-gray-900">基本信息</h3>
-          <Form.Item label="ID" name="id" rules={[{ required: true }]}>
+          <h3 className="text-lg font-semibold text-gray-900">{t("operatorMarket.create.configure.basicInfo")}</h3>
+          <Form.Item label={t("operatorMarket.create.configure.labels.id")} name="id" rules={[{ required: true }]}>
             <Input value={parsedInfo.id} readOnly />
           </Form.Item>
-          <Form.Item label="名称" name="name" rules={[{ required: true }]}>
+          <Form.Item label={t("operatorMarket.create.configure.labels.name")} name="name" rules={[{ required: true }]}>
             <Input value={parsedInfo.name} />
           </Form.Item>
-          <Form.Item label="版本" name="version" rules={[{ required: true }]}>
+          <Form.Item label={t("operatorMarket.create.configure.labels.version")} name="version" rules={[{ required: true }]}>
             <Input value={parsedInfo.version} />
           </Form.Item>
           <Form.Item
-            label="描述"
+            label={t("operatorMarket.create.configure.labels.description")}
             name="description"
             rules={[{ required: false }]}
           >
             <TextArea value={parsedInfo.description} />
           </Form.Item>
           <Form.Item
-            label="输入类型"
+            label={t("operatorMarket.create.configure.labels.inputs")}
             name="inputs"
             rules={[{ required: true }]}
           >
             <Input value={parsedInfo.inputs} />
           </Form.Item>
           <Form.Item
-            label="输出类型"
+            label={t("operatorMarket.create.configure.labels.outputs")}
             name="outputs"
             rules={[{ required: true }]}
           >
@@ -136,20 +138,18 @@ export default function ConfigureStep({
           </Form.Item>
 
           <>
-            <h3 className="text-lg font-semibold text-gray-900 mt-10 mb-2">
-              更新日志
-            </h3>
-            {parsedInfo?.releases?.[0].changelog?.length == 0 ? (
+            <h3 className="text-lg font-semibold text-gray-900 mt-10 mb-2">{t("operatorMarket.create.configure.changeLog.title")}</h3>
+            {parsedInfo?.releases?.[0]?.changelog?.length == 0 ? (
               <div className="text-gray-500 text-sm py-4 text-center bg-gray-50 rounded-lg border border-dashed border-gray-300">
-                暂无版本发布信息
+                {t("operatorMarket.detail.changeLog.noReleases")}
                 <button onClick={handleAddChange} className="ml-2 text-blue-600 hover:underline">
-                  点击初始化
+                  {t("operatorMarket.detail.changeLog.initialize")}
                 </button>
               </div>
             ) : (
               <ul className="space-y-2">
                 {/* 增加空数组保护：(currentRelease.changelog || []) */}
-                {(parsedInfo?.releases?.[0].changelog || []).map((change, changeIndex) => (
+                {(parsedInfo?.releases?.[0]?.changelog || []).map((change, changeIndex) => (
                   <li key={changeIndex} className="group flex items-start gap-2 hover:bg-gray-50 p-1 rounded transition-colors">
                     <ChevronRight className="w-4 h-4 text-gray-400 mt-2.5 flex-shrink-0" />
 
@@ -167,7 +167,7 @@ export default function ConfigureStep({
                     <button
                       onClick={() => handleDeleteChange(changeIndex)}
                       className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-500 transition-opacity"
-                      title="删除此行"
+                      title={t("operatorMarket.create.configure.changeLog.deleteLine")}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -181,7 +181,7 @@ export default function ConfigureStep({
                   <div className="bg-gray-100 group-hover:bg-blue-100 rounded-full p-0.5">
                     <Plus className="w-4 h-4" />
                   </div>
-                  添加一行更新日志
+                  {t("operatorMarket.create.configure.changeLog.addLine")}
                 </button>
               </ul>
             )}
@@ -189,8 +189,8 @@ export default function ConfigureStep({
 
           {/* 性能指标 */}
           {metrics?.length > 0 && (
-            <>
-              <h3 className="text-lg font-semibold text-gray-900 mt-10 mb-2">性能指标</h3>
+            < >
+              <h3 className="text-lg font-semibold text-gray-900 mt-10 mb-2">{t("operatorMarket.detail.overview.performance")}</h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {metrics.map((item: MetricI, index) => (
                   <div
@@ -212,7 +212,7 @@ export default function ConfigureStep({
           {parsedInfo.configs && Object.keys(parsedInfo.configs).length > 0 && (
             <>
               <h3 className="text-lg font-semibold text-gray-900 mt-10 mb-2">
-                高级配置
+                {t("operatorMarket.detail.overview.advancedConfiguration")}
               </h3>
               <Form layout="vertical">
                 {Object.entries(parsedInfo?.configs).map(([key, param]) => (

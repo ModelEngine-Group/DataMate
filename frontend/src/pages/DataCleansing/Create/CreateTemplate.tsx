@@ -10,10 +10,12 @@ import {
 } from "../cleansing.api";
 import CleansingTemplateStepOne from "./components/CreateTemplateStepOne";
 import { useCreateStepTwo } from "./hooks/useCreateStepTwo";
+import { useTranslation } from "react-i18next";
 
 export default function CleansingTemplateCreate() {
   const { id = "" } = useParams()
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [form] = Form.useForm();
   const [templateConfig, setTemplateConfig] = useState({
     name: "",
@@ -26,7 +28,7 @@ export default function CleansingTemplateCreate() {
       const { data } = await queryCleaningTemplateByIdUsingGet(id);
       setTemplateConfig(data);
     } catch (error) {
-      message.error("获取任务详情失败");
+      message.error(t("dataCleansing.template.messages.templateDetailFailed"));
       navigate("/data/cleansing");
     }
   };
@@ -50,8 +52,8 @@ export default function CleansingTemplateCreate() {
       })),
     };
 
-    !id && await createCleaningTemplateUsingPost(template) && message.success("模板创建成功");
-    id && await updateCleaningTemplateByIdUsingPut(id, template) && message.success("模板更新成功");
+    !id && await createCleaningTemplateUsingPost(template) && message.success(t("dataCleansing.template.messages.templateCreated"));
+    id && await updateCleaningTemplateByIdUsingPut(id, template) && message.success(t("dataCleansing.template.messages.templateUpdated"));
     navigate("/data/cleansing?view=template");
   };
 
@@ -103,13 +105,13 @@ export default function CleansingTemplateCreate() {
               <ArrowLeft className="w-4 h-4 mr-1" />
             </Button>
           </Link>
-          <h1 className="text-xl font-bold">{id ? '更新清洗模板' : '创建清洗模板'}</h1>
+          <h1 className="text-xl font-bold">{id ? t("dataCleansing.actions.updateTemplate") : t("dataCleansing.actions.createTemplate")}</h1>
         </div>
         <div className="w-1/2">
           <Steps
             size="small"
             current={currentStep}
-            items={[{ title: "基本信息" }, { title: "算子编排" }]}
+            items={[{ title: t("dataCleansing.steps.basicInfo") }, { title: t("dataCleansing.steps.operatorOrchestration") }]}
           />
         </div>
       </div>
@@ -117,15 +119,15 @@ export default function CleansingTemplateCreate() {
       <div className="flex-overflow-auto border-card">
         <div className="flex-1 overflow-auto m-6">{renderStepContent()}</div>
         <div className="flex justify-end p-6 gap-3 border-top">
-          <Button onClick={() => navigate("/data/cleansing")}>取消</Button>
-          {currentStep > 1 && <Button onClick={handlePrev}>上一步</Button>}
+          <Button onClick={() => navigate("/data/cleansing")}>{t("dataCleansing.actions.cancel")}</Button>
+          {currentStep > 1 && <Button onClick={handlePrev}>{t("dataCleansing.actions.previous")}</Button>}
           {currentStep === 2 ? (
             <Button
               type="primary"
               onClick={handleSave}
               disabled={!canProceed()}
             >
-              {id ? '更新模板' : '创建模板'}
+              {id ? t("dataCleansing.actions.updateTemplate") : t("dataCleansing.actions.createTemplate")}
             </Button>
           ) : (
             <Button
@@ -133,7 +135,7 @@ export default function CleansingTemplateCreate() {
               onClick={handleNext}
               disabled={!canProceed()}
             >
-              下一步
+              {t("dataCleansing.actions.next")}
             </Button>
           )}
         </div>

@@ -7,6 +7,7 @@ import ActionDropdown from "./ActionDropdown";
 import { Database } from "lucide-react";
 
 interface BadgeItem {
+  name: string;
   label: string;
   color?: string;
   background?: string;
@@ -84,7 +85,7 @@ const TagsRenderer = ({ tags }: { tags?: Array<string | BadgeItem> }) => {
         if (typeof tag === "string") {
           tagElement.textContent = tag;
         } else {
-          tagElement.textContent = tag.label;
+          tagElement.textContent = tag.label ? tag.label : tag.name;
         }
         tempDiv.appendChild(tagElement);
         tagElements.push(tagElement);
@@ -145,7 +146,7 @@ const TagsRenderer = ({ tags }: { tags?: Array<string | BadgeItem> }) => {
                 : { background: tag.background, color: tag.color }
             }
           >
-            {typeof tag === "string" ? tag : tag.label}
+            {typeof tag === "string" ? tag : (tag.label ? tag.label : tag.name)}
           </Tag>
         ))}
       </div>
@@ -164,7 +165,7 @@ const TagsRenderer = ({ tags }: { tags?: Array<string | BadgeItem> }) => {
               : { background: tag.background, color: tag.color }
           }
         >
-          {typeof tag === "string" ? tag : tag.label}
+          {typeof tag === "string" ? tag : (tag.label ? tag.label : tag.name)}
         </Tag>
       ))}
       {hiddenTags.length > 0 && (
@@ -255,7 +256,7 @@ function CardView<T extends BaseCardDataType>(props: CardViewProps<T>) {
                                 color: item.tags[0].color,
                               }}
                             >
-                              {item.tags[0].label}
+                              {item.tags[0].label ? item.tags[0].label : item.tags[0].name}
                             </Tag>
                           )}
                         {item?.status && (

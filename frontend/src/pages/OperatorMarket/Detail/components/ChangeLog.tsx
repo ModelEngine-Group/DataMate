@@ -1,7 +1,9 @@
 import {Badge, Card } from "antd";
 import { ChevronRight } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export default function ChangeLog({ operator }) {
+  const { t } = useTranslation();
   return (
     <div className="flex flex-col gap-4">
       {operator.releases?.map((release, index) => (
@@ -9,18 +11,18 @@ export default function ChangeLog({ operator }) {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-lg font-semibold text-gray-900">
-                版本 {release.version}
+                {t("operatorMarket.detail.changeLog.title")} {release.version}
               </h3>
               <p className="text-sm text-gray-600">{new Date(release.releaseDate).toLocaleString()}</p>
             </div>
             {index === 0 && (
               <Badge className="bg-blue-100 text-blue-800 border border-blue-200">
-                最新版本
+                {t("operatorMarket.detail.changeLog.latestVersion")}
               </Badge>
             )}
           </div>
           <ul className="space-y-2">
-            {release.changelog.map((change, changeIndex) => (
+            {release.changelog?.map((change, changeIndex) => (
               <li key={changeIndex} className="flex items-start gap-2">
                 <ChevronRight className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
                 <span className="text-gray-700">{change}</span>

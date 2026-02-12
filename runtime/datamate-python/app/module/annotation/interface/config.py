@@ -20,7 +20,7 @@ logger = get_logger(__name__)
 async def get_config():
     """获取配置信息（已废弃，请使用 /api/annotation/about）"""
     return StandardResponse(
-        code=200,
+        code="0",
         message="success",
         data=ConfigResponse(
             label_studio_url=settings.label_studio_base_url,
@@ -39,9 +39,9 @@ async def get_tag_config():
     if not config:
         logger.error("Failed to load tag configuration")
         return StandardResponse(
-            code=500, 
+            code="common.500", 
             message="Failed to load tag configuration",
             data={"objects": {}, "controls": {}}
         )
     
-    return StandardResponse(code=200, message="success", data=config)
+    return StandardResponse(code="0", message="success", data=config)

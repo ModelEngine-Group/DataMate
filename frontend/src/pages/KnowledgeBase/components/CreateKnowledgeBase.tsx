@@ -12,6 +12,8 @@ import {
 } from "../knowledge-base.api";
 import { KnowledgeBaseItem, KBType } from "../knowledge-base.model";
 import { showSettings } from "@/store/slices/settingsSlice";
+import { getKBTypeMap } from "../knowledge-base.const";
+import { useTranslation } from "react-i18next";
 
 export default function CreateKnowledgeBase({
   isEdit,
@@ -26,6 +28,7 @@ export default function CreateKnowledgeBase({
   onUpdate: () => void;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [form] = Form.useForm();
   const [models, setModels] = useState<ModelI[]>([]);
@@ -73,6 +76,22 @@ export default function CreateKnowledgeBase({
   const typeValue = Form.useWatch("type", form);
   const isGraphKB = typeValue === KBType.GRAPH;
 
+  const kbTypes = getKBTypeMap(t);
+  const typeOptions = [
+    {
+      value: KBType.DOCUMENT,
+      label: kbTypes[KBType.DOCUMENT]?.label || t("knowledgeBase.const.type.vector"),
+      description: kbTypes[KBType.DOCUMENT]?.description || t("knowledgeBase.create.type.documentDesc"),
+      icon: BookOpen,
+    },
+    {
+      value: KBType.GRAPH,
+      label: kbTypes[KBType.GRAPH]?.label || t("knowledgeBase.const.type.graph"),
+      description: kbTypes[KBType.GRAPH]?.description || t("knowledgeBase.create.type.graphDesc"),
+      icon: Share2,
+    },
+  ];
+
   const handleCreateKnowledgeBase = async () => {
     try {
       const values = await form.validateFields();
@@ -82,15 +101,15 @@ export default function CreateKnowledgeBase({
       };
       if (isEdit && data) {
         await updateKnowledgeBaseByIdUsingPut(data.id!, payload);
-        message.success("知识库更新成功");
+        message.success(t("knowledgeBase.create.messages.updateSuccess"));
       } else {
         await createKnowledgeBaseUsingPost(payload);
-        message.success("知识库创建成功");
+        message.success(t("knowledgeBase.create.messages.createSuccess"));
       }
       setOpen(false);
       onUpdate();
     } catch (error) {
-      message.error("操作失败:", error.data.message);
+      message.error(t("knowledgeBase.create.messages.operationFailed") + error.data.message);
     }
   };
 
@@ -110,49 +129,36 @@ export default function CreateKnowledgeBase({
             setOpen(true);
           }}
         >
-          创建知识库
+          {t("knowledgeBase.create.title")}
         </Button>
       )}
       <Modal
-        title={isEdit ? "编辑知识库" : "创建知识库"}
+        title={isEdit ? t("knowledgeBase.create.editTitle") : t("knowledgeBase.create.title")}
         open={open}
-        okText="确定"
-        cancelText="取消"
+        okText={t("knowledgeBase.create.okText")}
+        cancelText={t("knowledgeBase.create.cancelText")}
         maskClosable={false}
         onCancel={handleCloseModal}
         onOk={handleCreateKnowledgeBase}
       >
         <Form form={form} layout="vertical">
           <Form.Item
-            label="知识库类型"
+            label={t("knowledgeBase.create.form.typeLabel")}
             name="type"
-            rules={[{ required: true, message: "请选择知识库类型" }]}
+            rules={[{ required: true, message: t("knowledgeBase.create.form.typeRequired") }]}
           >
             <RadioCard
               value={typeValue}
               onChange={(val) => form.setFieldValue("type", val)}
-              options={[
-                {
-                  value: KBType.DOCUMENT,
-                  label: "向量知识库",
-                  description: "适用于文档类知识，支持召回+生成",
-                  icon: BookOpen,
-                },
-                {
-                  value: KBType.GRAPH,
-                  label: "知识图谱",
-                  description: "自定义实体/关系，强化结构化推理",
-                  icon: Share2,
-                },
-              ]}
+              options={typeOptions}
             />
           </Form.Item>
           {isGraphKB && (
             <Form.Item
               label={
                 <div className="flex items-center gap-2">
-                  <span>识别实体（可多选）</span>
-                  <Tooltip title="实体信息将作为图谱节点，支持多维关系追踪">
+                  <span>{t("knowledgeBase.create.form.entityLabel")}</span>
+                  <Tooltip title={t("knowledgeBase.create.form.entityTooltip")}>
                     <InfoCircleOutlined className="text-gray-400" />
                   </Tooltip>
                 </div>
@@ -162,32 +168,32 @@ export default function CreateKnowledgeBase({
             >
               <Select
                 mode="tags"
-                placeholder="输入实体名称并按回车添加，如 人物、组织、事件"
+                placeholder={t("knowledgeBase.create.form.entityPlaceholder")}
                 tokenSeparators={[",", " "]}
               />
             </Form.Item>
           )}
           <Form.Item
-            label="知识库名称"
+            label={t("knowledgeBase.create.form.nameLabel")}
             name="name"
-            rules={[{ required: true, message: "请输入知识库名称" }]}
+            rules={[{ required: true, message: t("knowledgeBase.create.form.nameRequired") }]}
           >
-            <Input placeholder="请输入知识库名称" />
+            <Input placeholder={t("knowledgeBase.create.form.namePlaceholder")} />
           </Form.Item>
           <Form.Item
-            label="描述"
+            label={t("knowledgeBase.create.form.descriptionLabel")}
             name="description"
             rules={[{ required: false }]}
           >
-            <Input.TextArea placeholder="请输入知识库描述（可选）" rows={4} />
+            <Input.TextArea placeholder={t("knowledgeBase.create.form.descriptionPlaceholder")} rows={4} />
           </Form.Item>
           <Form.Item
-            label="索引模型"
+            label={t("knowledgeBase.create.form.embeddingModelLabel")}
             name="embeddingModel"
-            rules={[{ required: true, message: "请选择索引模型" }]}
+            rules={[{ required: true, message: t("knowledgeBase.create.form.embeddingModelRequired") }]}
           >
             <Select
-              placeholder="请选择索引模型"
+              placeholder={t("knowledgeBase.create.form.embeddingModelPlaceholder")}
               options={embeddingModelOptions}
               disabled={isEdit} // 编辑模式下禁用索引模型修改
               popupRender={(menu) => (
@@ -199,19 +205,19 @@ export default function CreateKnowledgeBase({
                     icon={<PlusOutlined />}
                     onClick={() => dispatch(showSettings())}
                   >
-                    添加模型
+                    {t("knowledgeBase.create.form.addModel")}
                   </Button>
                 </>
               )}
             />
           </Form.Item>
           <Form.Item
-            label="文本理解模型"
+            label={t("knowledgeBase.create.form.chatModelLabel")}
             name="chatModel"
-            rules={[{ required: true, message: "请选择文本理解模型" }]}
+            rules={[{ required: true, message: t("knowledgeBase.create.form.chatModelRequired") }]}
           >
             <Select
-              placeholder="请选择文本理解模型"
+              placeholder={t("knowledgeBase.create.form.chatModelPlaceholder")}
               options={chatModelOptions}
               popupRender={(menu) => (
                 <>
@@ -222,7 +228,7 @@ export default function CreateKnowledgeBase({
                     icon={<PlusOutlined />}
                     onClick={() => dispatch(showSettings())}
                   >
-                    添加模型
+                    {t("knowledgeBase.create.form.addModel")}
                   </Button>
                 </>
               )}

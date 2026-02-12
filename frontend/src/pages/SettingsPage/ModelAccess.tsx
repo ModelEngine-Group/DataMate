@@ -17,6 +17,7 @@ import {
   PlusOutlined,
 } from "@ant-design/icons";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { SearchControls } from "@/components/SearchControls";
 import useFetchData from "@/hooks/useFetchData";
 import {
@@ -55,6 +56,7 @@ interface ProviderI {
 }
 
 export default function ModelAccess() {
+  const { t } = useTranslation();
   const [form] = Form.useForm();
   const [showModelDialog, setShowModelDialog] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -89,9 +91,12 @@ export default function ModelAccess() {
       await fn();
       setShowModelDialog(false);
       fetchData();
-      message.success("模型添加成功");
+      message.success(t('settings.modelAccess.messages.addSuccess'));
     } catch (error) {
-      message.error(`${error?.data?.message}：${error?.data?.data}`);
+      message.error(t('settings.modelAccess.messages.error', { 
+        message: error?.data?.message, 
+        detail: error?.data?.data 
+      }));
     }
   };
   const [providerOptions, setProviderOptions] = useState<ProviderI[]>([]);
@@ -128,7 +133,7 @@ export default function ModelAccess() {
 
   const columns = [
     {
-      title: "模型名称",
+      title: t('settings.modelAccess.columns.modelName'),
       dataIndex: "modelName",
       key: "modelName",
       fixed: "left",
@@ -136,31 +141,31 @@ export default function ModelAccess() {
       ellipsis: true,
     },
     {
-      title: "创建时间",
+      title: t('settings.modelAccess.columns.createdAt'),
       dataIndex: "createdAt",
       key: "createdAt",
       ellipsis: true,
     },
     {
-      title: "模型提供商",
+      title: t('settings.modelAccess.columns.provider'),
       dataIndex: "provider",
       key: "provider",
       ellipsis: true,
     },
     {
-      title: "模型类型",
+      title: t('settings.modelAccess.columns.type'),
       dataIndex: "type",
       key: "type",
       ellipsis: true,
     },
     {
-      title: "更新时间",
+      title: t('settings.modelAccess.columns.updatedAt'),
       dataIndex: "updatedAt",
       key: "updatedAt",
       ellipsis: true,
     },
     {
-      title: "操作",
+      title: t('common.actions.actions'), // Reuse existing key for "Actions"
       key: "action",
       fixed: "right" as const,
       ellipsis: true,
@@ -168,7 +173,7 @@ export default function ModelAccess() {
         return [
           {
             key: "edit",
-            label: "编辑",
+            label: t('dataManagement.actions.edit'), // Reuse existing key for "Edit"
             icon: <EditOutlined />,
             onClick: () => {
               setIsEditMode(true);
@@ -179,13 +184,13 @@ export default function ModelAccess() {
           },
           {
             key: "delete",
-            label: "删除",
+            label: t('dataManagement.actions.delete'), // Reuse existing key for "Delete"
             danger: true,
             icon: <DeleteOutlined />,
             confirm: {
-              title: "确定要删除该任务吗？此操作不可撤销。",
-              okText: "删除",
-              cancelText: "取消",
+              title: t('dataCollection.taskManagement.messages.deleteConfirm'), // Reuse existing delete confirm
+              okText: t('dataCollection.taskManagement.messages.confirmDelete'), // Reuse existing confirm delete
+              cancelText: t('dataCollection.taskManagement.messages.cancel'), // Reuse existing cancel
               okType: "danger",
             },
             onClick: () => handleDeleteModel(record.id),
@@ -226,7 +231,7 @@ export default function ModelAccess() {
   return (
     <>
       <div className="flex items-top justify-between">
-        <h2 className="text-lg font-medium mb-4">模型接入</h2>
+        <h2 className="text-lg font-medium mb-4">{t('settings.modelAccess.title')}</h2>
         <Button
           type="primary"
           icon={<PlusOutlined />}
@@ -243,7 +248,7 @@ export default function ModelAccess() {
             setShowModelDialog(true);
           }}
         >
-          添加模型
+          {t('settings.modelAccess.addModel')}
         </Button>
       </div>
       <SearchControls
@@ -255,17 +260,17 @@ export default function ModelAccess() {
             current: 1,
           }))
         }
-        searchPlaceholder="搜索模型描述..."
+        searchPlaceholder={t('settings.modelAccess.searchPlaceholder')}
         filters={[
           {
             key: "provider",
-            label: "模型提供商",
-            options: [{ value: "all", label: "全部" }, ...providerOptions],
+            label: t('settings.modelAccess.filters.provider'),
+            options: [{ value: "all", label: t('settings.modelAccess.filters.all') }, ...providerOptions],
           },
           {
             key: "type",
-            label: "模型类型",
-            options: [{ value: "all", label: "全部" }, ...typeOptions],
+            label: t('settings.modelAccess.filters.type'),
+            options: [{ value: "all", label: t('settings.modelAccess.filters.all') }, ...typeOptions],
           },
         ]}
         onFiltersChange={handleFiltersChange}
@@ -294,13 +299,13 @@ export default function ModelAccess() {
       <Modal
         open={showModelDialog}
         onCancel={() => setShowModelDialog(false)}
-        title={isEditMode ? "编辑模型" : "添加模型"}
+        title={isEditMode ? t('settings.modelAccess.modal.titleEdit') : t('settings.modelAccess.modal.titleAdd')}
         footer={[
           <Button key="cancel" onClick={() => setShowModelDialog(false)}>
-            取消
+            {t('dataManagement.actions.cancel')}
           </Button>,
           <Button key="ok" type="primary" onClick={handleAddModel}>
-            确定
+            {t('dataManagement.actions.confirm')}
           </Button>,
         ]}
       >
@@ -313,12 +318,12 @@ export default function ModelAccess() {
         >
           <Form.Item
             name="provider"
-            label="服务提供商"
+            label={t('settings.modelAccess.modal.form.provider')}
             required
-            rules={[{ required: true, message: "请选择服务提供商" }]}
+            rules={[{ required: true, message: t('settings.modelAccess.modal.form.providerRequired') }]}
           >
             <Select
-              placeholder="选择服务提供商"
+              placeholder={t('settings.modelAccess.modal.form.providerPlaceholder')}
               options={providerOptions}
               onChange={(value) => {
                 const selectedProvider = providerOptions.find(
@@ -330,35 +335,35 @@ export default function ModelAccess() {
           </Form.Item>
           <Form.Item
             name="baseUrl"
-            label="接口地址"
+            label={t('settings.modelAccess.modal.form.baseUrl')}
             required
             rules={[
-              { required: true, message: "请输入接口地址" },
+              { required: true, message: t('settings.modelAccess.modal.form.baseUrlRequired') },
               {
                 pattern: /^https?:\/\/.+/,
-                message: "请输入有效的URL地址，必须以http://或https://开头",
+                message: t('settings.modelAccess.modal.form.baseUrlInvalid'),
               },
             ]}
           >
-            <Input placeholder="输入接口地址，如：https://api.openai.com" />
+            <Input placeholder={t('settings.modelAccess.modal.form.baseUrlPlaceholder')} />
           </Form.Item>
           <Form.Item
             name="modelName"
-            label="模型名称"
+            label={t('settings.modelAccess.modal.form.modelName')}
             required
-            tooltip="请输入模型名称"
-            rules={[{ required: true, message: "请输入模型名称" }]}
+            tooltip={t('settings.modelAccess.modal.form.modelNameTooltip')}
+            rules={[{ required: true, message: t('settings.modelAccess.modal.form.modelNameRequired') }]}
           >
-            <Input placeholder="输入模型名称" />
+            <Input placeholder={t('settings.modelAccess.modal.form.modelNamePlaceholder')} />
           </Form.Item>
           <Form.Item
             name="apiKey"
-            label="API密钥"
+            label={t('settings.modelAccess.modal.form.apiKey')}
             required
-            rules={[{ required: true, message: "请输入API密钥" }]}
+            rules={[{ required: true, message: t('settings.modelAccess.modal.form.apiKeyRequired') }]}
           >
             <Input
-              placeholder="输入或生成API密钥"
+              placeholder={t('settings.modelAccess.modal.form.apiKeyPlaceholder')}
               addonAfter={
                 <ReloadOutlined
                   onClick={() => {
@@ -371,17 +376,17 @@ export default function ModelAccess() {
           </Form.Item>
           <Form.Item
             name="type"
-            label="模型类型"
+            label={t('settings.modelAccess.modal.form.type')}
             required
-            rules={[{ required: true, message: "请选择模型类型" }]}
+            rules={[{ required: true, message: t('settings.modelAccess.modal.form.typeRequired') }]}
           >
-            <Select options={typeOptions} placeholder="选择模型类型"></Select>
+            <Select options={typeOptions} placeholder={t('settings.modelAccess.modal.form.typePlaceholder')}></Select>
           </Form.Item>
           <Form.Item
             name="isDefault"
-            label="设为默认"
+            label={t('settings.modelAccess.modal.form.isDefault')}
             required
-            tooltip="当模型类型下仅有一个模型服务时，自动将其设为默认值。"
+            tooltip={t('settings.modelAccess.modal.form.isDefaultTooltip')}
           >
             <Switch />
           </Form.Item>

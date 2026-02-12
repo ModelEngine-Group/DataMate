@@ -39,7 +39,15 @@ jobs:
           elif [[ $GITHUB_REF == refs/heads/main ]]; then
             echo "TAGS=$BASE_IMAGE:amd64" >> $GITHUB_OUTPUT
           else
-            echo "TAGS=$BASE_IMAGE:amd64-temp" >> $GITHUB_OUTPUT
+            # 使用分支名作为 tag
+            if [[ $GITHUB_REF == refs/heads/* ]]; then
+              BRANCH_NAME=${GITHUB_REF#refs/heads/}
+              # 清理分支名，将特殊字符替换为连字符
+              BRANCH_TAG=$(echo "$BRANCH_NAME" | sed 's/[^a-zA-Z0-9._-]/-/g')
+              echo "TAGS=$BASE_IMAGE:amd64-$BRANCH_TAG" >> $GITHUB_OUTPUT
+            else
+              echo "TAGS=$BASE_IMAGE:amd64-temp" >> $GITHUB_OUTPUT
+            fi
           fi
 
       - name: Build Docker Image
@@ -80,7 +88,15 @@ jobs:
           elif [[ $GITHUB_REF == refs/heads/main ]]; then
             echo "TAGS=$BASE_IMAGE:arm64" >> $GITHUB_OUTPUT
           else
-            echo "TAGS=$BASE_IMAGE:arm64-temp" >> $GITHUB_OUTPUT
+            # 使用分支名作为 tag
+            if [[ $GITHUB_REF == refs/heads/* ]]; then
+              BRANCH_NAME=${GITHUB_REF#refs/heads/}
+              # 清理分支名，将特殊字符替换为连字符
+              BRANCH_TAG=$(echo "$BRANCH_NAME" | sed 's/[^a-zA-Z0-9._-]/-/g')
+              echo "TAGS=$BASE_IMAGE:arm64-$BRANCH_TAG" >> $GITHUB_OUTPUT
+            else
+              echo "TAGS=$BASE_IMAGE:arm64-temp" >> $GITHUB_OUTPUT
+            fi
           fi
 
       - name: Build Docker Image
@@ -120,9 +136,19 @@ jobs:
             echo "ARM_TAGS=$BASE_IMAGE:arm64" >> $GITHUB_OUTPUT
             echo "AMD_TAGS=$BASE_IMAGE:amd64" >> $GITHUB_OUTPUT
           else
-            echo "TAGS=$BASE_IMAGE:temp" >> $GITHUB_OUTPUT
-            echo "ARM_TAGS=$BASE_IMAGE:arm64-temp" >> $GITHUB_OUTPUT
-            echo "AMD_TAGS=$BASE_IMAGE:amd64-temp" >> $GITHUB_OUTPUT
+            # 使用分支名作为 tag
+            if [[ $GITHUB_REF == refs/heads/* ]]; then
+              BRANCH_NAME=${GITHUB_REF#refs/heads/}
+              # 清理分支名，将特殊字符替换为连字符
+              BRANCH_TAG=$(echo "$BRANCH_NAME" | sed 's/[^a-zA-Z0-9._-]/-/g')
+              echo "TAGS=$BASE_IMAGE:$BRANCH_TAG" >> $GITHUB_OUTPUT
+              echo "ARM_TAGS=$BASE_IMAGE:arm64-$BRANCH_TAG" >> $GITHUB_OUTPUT
+              echo "AMD_TAGS=$BASE_IMAGE:amd64-$BRANCH_TAG" >> $GITHUB_OUTPUT
+            else
+              echo "TAGS=$BASE_IMAGE:temp" >> $GITHUB_OUTPUT
+              echo "ARM_TAGS=$BASE_IMAGE:arm64-temp" >> $GITHUB_OUTPUT
+              echo "AMD_TAGS=$BASE_IMAGE:amd64-temp" >> $GITHUB_OUTPUT
+            fi
           fi
 
       - name: Manifest Docker Image

@@ -14,18 +14,12 @@ import { PlusOutlined } from "@ant-design/icons";
 import { addKnowledgeBaseFilesUsingPost } from "../knowledge-base.api";
 import DatasetFileTransfer from "@/components/business/DatasetFileTransfer";
 import { DescriptionsItemType } from "antd/es/descriptions";
-import { DatasetFileCols } from "../knowledge-base.const";
+import { getDatasetFileCols } from "../knowledge-base.const";
 import { DatasetType } from "@/pages/DataManagement/dataset.model";
-
-const sliceOptions = [
-  { label: "默认分块", value: "DEFAULT_CHUNK" },
-  { label: "章节分块", value: "CHAPTER_CHUNK" },
-  { label: "段落分块", value: "PARAGRAPH_CHUNK" },
-  { label: "长度分块", value: "LENGTH_CHUNK" },
-  { label: "自定义分割符分块", value: "CUSTOM_SEPARATOR_CHUNK" },
-];
+import { useTranslation } from "react-i18next";
 
 export default function AddDataDialog({ knowledgeBase, onDataAdded }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const { message } = App.useApp();
   const [form] = Form.useForm();
@@ -35,11 +29,11 @@ export default function AddDataDialog({ knowledgeBase, onDataAdded }) {
 
   // 定义分块选项
   const sliceOptions = [
-    { label: "默认分块", value: "DEFAULT_CHUNK" },
-    { label: "按章节分块", value: "CHAPTER_CHUNK" },
-    { label: "按段落分块", value: "PARAGRAPH_CHUNK" },
-    { label: "固定长度分块", value: "FIXED_LENGTH_CHUNK" },
-    { label: "自定义分隔符分块", value: "CUSTOM_SEPARATOR_CHUNK" },
+    { label: t("knowledgeBase.const.sliceMethod.default"), value: "DEFAULT_CHUNK" },
+    { label: t("knowledgeBase.const.sliceMethod.chapter"), value: "CHAPTER_CHUNK" },
+    { label: t("knowledgeBase.const.sliceMethod.paragraph"), value: "PARAGRAPH_CHUNK" },
+    { label: t("knowledgeBase.const.sliceMethod.fixedLength"), value: "FIXED_LENGTH_CHUNK" },
+    { label: t("knowledgeBase.const.sliceMethod.customSeparator"), value: "CUSTOM_SEPARATOR_CHUNK" },
   ];
 
   // 定义初始状态
@@ -52,16 +46,16 @@ export default function AddDataDialog({ knowledgeBase, onDataAdded }) {
 
   const steps = [
     {
-      title: "选择数据集文件",
-      description: "从多个数据集中选择文件",
+      title: t("knowledgeBase.addData.steps.selectFiles.title"),
+      description: t("knowledgeBase.addData.steps.selectFiles.description"),
     },
     {
-      title: "配置参数",
-      description: "设置数据处理参数",
+      title: t("knowledgeBase.addData.steps.configParams.title"),
+      description: t("knowledgeBase.addData.steps.configParams.description"),
     },
     {
-      title: "确认上传",
-      description: "确认信息并上传",
+      title: t("knowledgeBase.addData.steps.confirmUpload.title"),
+      description: t("knowledgeBase.addData.steps.confirmUpload.description"),
     },
   ];
 
@@ -77,26 +71,26 @@ export default function AddDataDialog({ knowledgeBase, onDataAdded }) {
     // 验证当前步骤
     if (currentStep === 0) {
       if (getSelectedFilesCount() === 0) {
-        message.warning("请至少选择一个文件");
+        message.warning(t("knowledgeBase.addData.messages.selectOneFile"));
         return;
       }
     }
     if (currentStep === 1) {
       // 验证切片参数
       if (!newKB.processType) {
-        message.warning("请选择分块方式");
+        message.warning(t("knowledgeBase.addData.messages.selectSliceMethod"));
         return;
       }
       if (!newKB.chunkSize || Number(newKB.chunkSize) <= 0) {
-        message.warning("请输入有效的分块大小");
+        message.warning(t("knowledgeBase.addData.messages.validChunkSize"));
         return;
       }
       if (!newKB.overlapSize || Number(newKB.overlapSize) < 0) {
-        message.warning("请输入有效的重叠长度");
+        message.warning(t("knowledgeBase.addData.messages.validOverlapSize"));
         return;
       }
       if (newKB.processType === "CUSTOM_SEPARATOR_CHUNK" && !newKB.delimiter) {
-        message.warning("请输入分隔符");
+        message.warning(t("knowledgeBase.addData.messages.inputDelimiter"));
         return;
       }
     }
@@ -122,7 +116,7 @@ export default function AddDataDialog({ knowledgeBase, onDataAdded }) {
 
   const handleAddData = async () => {
     if (getSelectedFilesCount() === 0) {
-      message.warning("请至少选择一个文件");
+      message.warning(t("knowledgeBase.addData.messages.selectOneFile"));
       return;
     }
 
@@ -141,11 +135,11 @@ export default function AddDataDialog({ knowledgeBase, onDataAdded }) {
       // 先通知父组件刷新数据（确保刷新发生在重置前）
       onDataAdded?.();
 
-      message.success("数据添加成功");
+      message.success(t("knowledgeBase.addData.messages.addSuccess"));
       // 重置状态
       setOpen(false);
     } catch (error) {
-      message.error("数据添加失败，请重试");
+      message.error(t("knowledgeBase.addData.messages.addFailed"));
       console.error("添加文件失败:", error);
     }
   };
@@ -156,47 +150,47 @@ export default function AddDataDialog({ knowledgeBase, onDataAdded }) {
 
   const descItems: DescriptionsItemType[] = [
     {
-      label: "知识库名称",
+      label: t("knowledgeBase.addData.confirm.kbName"),
       key: "knowledgeBaseName",
       children: knowledgeBase?.name,
     },
     {
-      label: "数据来源",
+      label: t("knowledgeBase.addData.confirm.dataSource"),
       key: "dataSource",
-      children: "数据集",
+      children: t("knowledgeBase.addData.confirm.dataset"),
     },
     {
-      label: "文件总数",
+      label: t("knowledgeBase.addData.confirm.totalFiles"),
       key: "totalFileCount",
       children: Object.keys(selectedFilesMap).length,
     },
     {
-      label: "分块方式",
+      label: t("knowledgeBase.addData.confirm.sliceMethod"),
       key: "chunkingMethod",
       children:
         sliceOptions.find((opt) => opt.value === newKB.processType)?.label ||
         "",
     },
     {
-      label: "分块大小",
+      label: t("knowledgeBase.addData.confirm.chunkSize"),
       key: "chunkSize",
       children: newKB.chunkSize,
     },
     {
-      label: "重叠长度",
+      label: t("knowledgeBase.addData.confirm.overlapSize"),
       key: "overlapSize",
       children: newKB.overlapSize,
     },
     ...(newKB.processType === "CUSTOM_SEPARATOR_CHUNK" && newKB.delimiter
       ? [
           {
-            label: "分隔符",
+            label: t("knowledgeBase.addData.confirm.delimiter"),
             children: <span className="font-mono">{newKB.delimiter}</span>,
           },
         ]
       : []),
     {
-      label: "文件列表",
+      label: t("knowledgeBase.addData.confirm.fileList"),
       key: "fileList",
       span: 3,
       children: (
@@ -205,7 +199,7 @@ export default function AddDataDialog({ knowledgeBase, onDataAdded }) {
           rowKey="id"
           size="small"
           dataSource={Object.values(selectedFilesMap)}
-          columns={DatasetFileCols}
+          columns={getDatasetFileCols(t)}
         />
       ),
     },
@@ -221,20 +215,20 @@ export default function AddDataDialog({ knowledgeBase, onDataAdded }) {
           setOpen(true);
         }}
       >
-        添加数据
+        {t("knowledgeBase.addData.title")}
       </Button>
       <Modal
-        title="添加数据"
+        title={t("knowledgeBase.addData.title")}
         open={open}
         onCancel={handleModalCancel}
         footer={
           <div className="space-x-2">
             {currentStep === 0 && (
-              <Button onClick={handleModalCancel}>取消</Button>
+              <Button onClick={handleModalCancel}>{t("knowledgeBase.addData.confirm.cancel")}</Button>
             )}
             {currentStep > 0 && (
               <Button disabled={false} onClick={handlePrev}>
-                上一步
+                {t("knowledgeBase.addData.confirm.previous")}
               </Button>
             )}
             {currentStep < steps.length - 1 ? (
@@ -248,11 +242,11 @@ export default function AddDataDialog({ knowledgeBase, onDataAdded }) {
                 }
                 onClick={handleNext}
               >
-                下一步
+                {t("knowledgeBase.addData.confirm.next")}
               </Button>
             ) : (
               <Button type="primary" onClick={handleAddData}>
-                确认上传
+                {t("knowledgeBase.addData.confirmUpload")}
               </Button>
             )}
           </div>
@@ -287,7 +281,7 @@ export default function AddDataDialog({ knowledgeBase, onDataAdded }) {
           >
             <div className="space-y-6">
               <Form.Item
-                label="分块方式"
+                label={t("knowledgeBase.addData.form.sliceMethodLabel")}
                 name="processType"
                 required
                 rules={[{ required: true }]}
@@ -297,43 +291,43 @@ export default function AddDataDialog({ knowledgeBase, onDataAdded }) {
 
               <div className="grid grid-cols-2 gap-6">
                 <Form.Item
-                  label="分块大小"
+                  label={t("knowledgeBase.addData.form.chunkSizeLabel")}
                   name="chunkSize"
                   rules={[
                     {
                       required: true,
-                      message: "请输入分块大小",
+                      message: t("knowledgeBase.addData.messages.validChunkSize"),
                     },
                   ]}
                 >
-                  <Input type="number" placeholder="请输入分块大小" />
+                  <Input type="number" placeholder={t("knowledgeBase.addData.form.chunkSizePlaceholder")} />
                 </Form.Item>
                 <Form.Item
-                  label="重叠长度"
+                  label={t("knowledgeBase.addData.form.overlapLabel")}
                   name="overlapSize"
                   rules={[
                     {
                       required: true,
-                      message: "请输入重叠长度",
+                      message: t("knowledgeBase.addData.messages.validOverlapSize"),
                     },
                   ]}
                 >
-                  <Input type="number" placeholder="请输入重叠长度" />
+                  <Input type="number" placeholder={t("knowledgeBase.addData.form.overlapPlaceholder")} />
                 </Form.Item>
               </div>
 
               {newKB.processType === "CUSTOM_SEPARATOR_CHUNK" && (
                 <Form.Item
-                  label="分隔符"
+                  label={t("knowledgeBase.addData.form.delimiterLabel")}
                   name="delimiter"
                   rules={[
                     {
                       required: true,
-                      message: "请输入分隔符",
+                      message: t("knowledgeBase.addData.messages.inputDelimiter"),
                     },
                   ]}
                 >
-                  <Input placeholder="输入分隔符，如 \n\n" />
+                  <Input placeholder={t("knowledgeBase.addData.form.delimiterPlaceholder")} />
                 </Form.Item>
               )}
             </div>
@@ -341,11 +335,11 @@ export default function AddDataDialog({ knowledgeBase, onDataAdded }) {
 
           <div className="space-y-6" hidden={currentStep !== 2}>
             <div className="">
-              <div className="text-lg font-medium mb-3">上传信息确认</div>
+              <div className="text-lg font-medium mb-3">{t("knowledgeBase.addData.confirm.uploadConfirmTitle")}</div>
               <Descriptions layout="vertical" size="small" items={descItems} />
             </div>
             <div className="text-sm text-yellow-600">
-              提示：上传后系统将自动处理文件，请耐心等待
+              {t("knowledgeBase.addData.confirm.uploadHint")}
             </div>
           </div>
         </div>

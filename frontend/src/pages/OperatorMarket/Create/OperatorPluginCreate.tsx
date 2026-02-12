@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import UploadStep from "./components/UploadStep";
 import ParsingStep from "./components/ParsingStep";
 import ConfigureStep from "./components/ConfigureStep";
@@ -24,6 +25,7 @@ import {
 import { sliceFile } from "@/utils/file.util";
 
 export default function OperatorPluginCreate() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { id } = useParams();
   const { message } = App.useApp();
@@ -52,7 +54,7 @@ export default function OperatorPluginCreate() {
       const fileSize = files[0].size;
       await handleUpload({
         task: createTask({
-          dataset: { id: "operator-upload", name: "上传算子" },
+          dataset: { id: "operator-upload", name: t("operatorMarket.create.title") },
         }),
         files: [
           {
@@ -77,7 +79,7 @@ export default function OperatorPluginCreate() {
       setParsedInfo({ ...res.data, fileName, fileSize, configs, defaultParams});
       setUploadStep("parsing");
     } catch (err) {
-      setParseError("文件解析失败，" + err.data.message);
+      setParseError(t("operatorMarket.create.messages.fileParseFailed") + " " + err.data.message);
     } finally {
       setIsUploading(false);
       setUploadStep("configure");
@@ -93,7 +95,7 @@ export default function OperatorPluginCreate() {
       }
       setUploadStep("preview");
     } catch (err) {
-      message.error("算子发布失败，" + err.data.message);
+      message.error(t("operatorMarket.create.messages.publishFailed") + "，" + err.data.message);
     }
   };
 
@@ -128,7 +130,7 @@ export default function OperatorPluginCreate() {
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <h1 className="text-xl font-bold text-gray-900">
-            {id ? "更新算子" : "上传算子"}
+            {id ? t("operatorMarket.create.updateTitle") : t("operatorMarket.create.title")}
           </h1>
         </div>
         <div className="w-1/2">
@@ -136,19 +138,19 @@ export default function OperatorPluginCreate() {
             size="small"
             items={[
               {
-                title: "上传文件",
+                title: t("operatorMarket.create.steps.uploadFile"),
                 icon: <Upload />,
               },
               {
-                title: "解析文件",
+                title: t("operatorMarket.create.steps.parseFile"),
                 icon: <Settings />,
               },
               {
-                title: "配置信息",
+                title: t("operatorMarket.create.steps.configure"),
                 icon: <TagIcon />,
               },
               {
-                title: "发布完成",
+                title: t("operatorMarket.create.steps.publish"),
                 icon: <CheckCircle />,
               },
             ]}

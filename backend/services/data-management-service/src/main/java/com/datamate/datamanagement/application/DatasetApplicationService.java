@@ -2,6 +2,11 @@ package com.datamate.datamanagement.application;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.datamate.common.domain.enums.EdgeType;
+import com.datamate.common.domain.enums.NodeType;
+import com.datamate.common.domain.model.LineageEdge;
+import com.datamate.common.domain.model.LineageNode;
+import com.datamate.common.domain.service.LineageService;
 import com.datamate.common.domain.utils.ChunksSaver;
 import com.datamate.common.setting.application.SysParamApplicationService;
 import com.datamate.datamanagement.interfaces.dto.*;
@@ -17,7 +22,6 @@ import com.datamate.datamanagement.infrastructure.persistence.mapper.TagMapper;
 import com.datamate.datamanagement.infrastructure.persistence.repository.DatasetFileRepository;
 import com.datamate.datamanagement.infrastructure.persistence.repository.DatasetRepository;
 import com.datamate.datamanagement.interfaces.converter.DatasetConverter;
-import com.datamate.datamanagement.interfaces.dto.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -54,6 +58,7 @@ public class DatasetApplicationService {
     private final CollectionTaskClient collectionTaskClient;
     private final DatasetFileApplicationService datasetFileApplicationService;
     private final SysParamApplicationService sysParamService;
+    private final LineageService lineageService;
 
     @Value("${datamate.data-management.base-path:/dataset}")
     private String datasetBasePath;
@@ -72,6 +77,8 @@ public class DatasetApplicationService {
             dataset.setTags(processTagNames(createDatasetRequest.getTags()));
         }
         datasetRepository.save(dataset);
+        // 记录血缘关系
+        addDatasetToGraph(dataset, null);
 
         //todo 需要解耦这块逻辑
         if (StringUtils.hasText(createDatasetRequest.getDataSource())) {
@@ -79,6 +86,45 @@ public class DatasetApplicationService {
             processDataSourceAsync(dataset.getId(), createDatasetRequest.getDataSource());
         }
         return dataset;
+    }
+
+    private void addDatasetToGraph(Dataset dataset, CollectionTaskDetailResponse collection) {
+        LineageNode datasetNode = new LineageNode();
+        datasetNode.setId(dataset.getId());
+        datasetNode.setNodeType(NodeType.DATASET);
+        datasetNode.setName(dataset.getName());
+        datasetNode.setDescription(dataset.getDescription());
+
+        LineageNode collectionNode = null;
+        LineageEdge collectionEdge = null;
+        if(Objects.nonNull(collection)) {
+            collectionNode = new LineageNode();
+            collectionNode.setId(collection.getId());
+            collectionNode.setName(collection.getName());
+            collectionNode.setDescription(collection.getDescription());
+            collectionNode.setNodeType(NodeType.DATASOURCE);
+
+            collectionEdge = new LineageEdge();
+            collectionEdge.setProcessId(collection.getId());
+            collectionEdge.setName(collection.getName());
+            collectionEdge.setEdgeType(EdgeType.DATA_COLLECTION);
+            collectionEdge.setDescription(dataset.getDescription());
+            collectionEdge.setFromNodeId(collectionNode.getId());
+            collectionEdge.setToNodeId(datasetNode.getId());
+            lineageService.generateGraph(collectionNode, collectionEdge, datasetNode);
+        } else {
+            lineageService.generateGraph(datasetNode, null, null);
+        }
+    }
+
+    public DatasetLineage getDatasetLineage(String datasetId) {
+        Dataset dataset = datasetRepository.getById(datasetId);
+        if (Objects.isNull(dataset)) {
+            return new DatasetLineage();
+        }
+        LineageNode datasetNode = lineageService.getNodeById(datasetId);
+        String graphId = datasetNode.getGraphId();
+        return new DatasetLineage(lineageService.getNodesByGraphId(graphId), lineageService.getEdgesByGraphId(graphId));
     }
 
     public String getDatasetPvcName() {
@@ -100,11 +146,11 @@ public class DatasetApplicationService {
         if (Objects.nonNull(updateDatasetRequest.getStatus())) {
             dataset.setStatus(updateDatasetRequest.getStatus());
         }
+        datasetRepository.updateById(dataset);
         if (StringUtils.hasText(updateDatasetRequest.getDataSource())) {
             // 数据源id不为空，使用异步线程进行文件扫盘落库
             processDataSourceAsync(dataset.getId(), updateDatasetRequest.getDataSource());
         }
-        datasetRepository.updateById(dataset);
         return dataset;
     }
 
@@ -148,7 +194,7 @@ public class DatasetApplicationService {
     /**
      * 处理标签名称，创建或获取标签
      */
-    private String processTagNames(List<String> tagNames) {
+    private List<Tag> processTagNames(List<String> tagNames) {
         Set<Tag> tags = new HashSet<>();
         for (String tagName : tagNames) {
             Tag tag = tagMapper.findByName(tagName);
@@ -163,16 +209,7 @@ public class DatasetApplicationService {
             tagMapper.updateUsageCount(tag.getId(), tag.getUsageCount());
             tags.add(tag);
         }
-        ObjectMapper mapper = new ObjectMapper();
-        try {
-            mapper.registerModule(new JavaTimeModule());
-            // 可选：配置日期时间格式
-            mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-            return mapper.writeValueAsString(tags);
-        } catch (JsonProcessingException e) {
-            log.warn("Parse tags to json error.");
-            return null;
-        }
+        return tags.stream().toList();
     }
 
     /**
@@ -248,7 +285,7 @@ public class DatasetApplicationService {
             if (CollectionUtils.isEmpty(filePaths)) {
                 return;
             }
-            datasetFileApplicationService.copyFilesToDatasetDir(datasetId, new CopyFilesRequest(filePaths));
+            datasetFileApplicationService.addFilesToDataset(datasetId, new AddFilesRequest(filePaths));
             log.info("Success file scan, total files: {}", filePaths.size());
         } catch (Exception e) {
             log.error("处理数据源文件扫描失败，数据集ID: {}, 数据源ID: {}", datasetId, dataSourceId, e);
@@ -261,6 +298,8 @@ public class DatasetApplicationService {
             log.warn("Fail to get collection task detail, task ID: {}", dataSourceId);
             return Collections.emptyList();
         }
+        // 记录血缘关系
+        addDatasetToGraph(dataset, taskDetail);
         Path targetPath = Paths.get(taskDetail.getTargetPath());
         if (!Files.exists(targetPath) || !Files.isDirectory(targetPath)) {
             log.warn("Target path not exists or is not a directory: {}", taskDetail.getTargetPath());

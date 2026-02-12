@@ -4,6 +4,7 @@ import { DatasetType } from "@/pages/DataManagement/dataset.model";
 import { Steps, Card, Select, Input, Button, Form, message, Tag, Tooltip, InputNumber } from "antd";
 import { Eye, ArrowLeft, ArrowRight, Play, Search, Sparkles, Brain, Layers } from "lucide-react";
 import { Link, useNavigate } from "react-router";
+import { useTranslation } from "react-i18next";
 import { queryDatasetsUsingGet } from "../DataManagement/dataset.api";
 import DatasetFileTransfer from "@/components/business/DatasetFileTransfer";
 import { createSynthesisTaskUsingPost, getPromptByTypeUsingGet } from "./synthesis-api";
@@ -26,6 +27,7 @@ interface CreateTaskApiResponse {
 }
 
 export default function SynthesisTaskCreate() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [form] = Form.useForm();
   const [createStep, setCreateStep] = useState(1);
@@ -89,7 +91,7 @@ export default function SynthesisTaskCreate() {
       setQuestionPrompt(prompt || "");
     } catch (e) {
       console.error(e);
-      message.error("获取问题 Prompt 模板失败");
+      message.error(t('synthesisTask.create.messages.fetchQuestionPromptFailed'));
       setQuestionPrompt("");
     }
   };
@@ -103,7 +105,7 @@ export default function SynthesisTaskCreate() {
       setAnswerPrompt(prompt || "");
     } catch (e) {
       console.error(e);
-      message.error("获取答案 Prompt 模板失败");
+      message.error(t('synthesisTask.create.messages.fetchAnswerPromptFailed'));
       setAnswerPrompt("");
     }
   };
@@ -123,7 +125,7 @@ export default function SynthesisTaskCreate() {
         }));
         setModelOptions(options);
       } catch (error) {
-        console.error("加载模型列表失败", error);
+        console.error(t('synthesisTask.create.messages.loadModelsFailed'), error);
       } finally {
         setModelsLoading(false);
       }
@@ -172,15 +174,15 @@ export default function SynthesisTaskCreate() {
     try {
       const values = (await form.validateFields()) as CreateTaskFormValues;
       if (!(taskType === "qa" || taskType === "cot")) {
-        message.error("请选择一个合成类型");
+        message.error(t('synthesisTask.create.messages.selectType'));
         return;
       }
       if (!questionModelId || !answerModelId) {
-        message.error("请选择问题和答案使用的模型");
+        message.error(t('synthesisTask.create.messages.selectModels'));
         return;
       }
       if (selectedFiles.length === 0) {
-        message.error("请至少选择一个文件");
+        message.error(t('synthesisTask.create.messages.selectFiles'));
         return;
       }
 
@@ -232,18 +234,18 @@ export default function SynthesisTaskCreate() {
         typeof res?.data !== "undefined";
 
       if (ok) {
-        message.success("合成任务创建成功");
+        message.success(t('synthesisTask.create.messages.createSuccess'));
         navigate("/data/synthesis/task");
       } else {
-        message.error(res?.message || "合成任务创建失败");
+        message.error(res?.message || t('synthesisTask.create.messages.createFailed'));
       }
     } catch (error) {
       if (typeof error === "object" && error && "errorFields" in error) {
-        message.error("请填写所有必填项");
+        message.error(t('synthesisTask.create.messages.fillRequired'));
         return;
       }
       console.error(error);
-      message.error(error instanceof Error ? error.message : "合成任务创建失败");
+      message.error(error instanceof Error ? error.message : t('synthesisTask.create.messages.createFailed'));
     } finally {
       setSubmitting(false);
     }
@@ -254,11 +256,10 @@ export default function SynthesisTaskCreate() {
     {
       id: "sft-qa",
       type: "qa" as const,
-      title: "SFT 问答数据合成",
-      subtitle: "从长文档自动生成高质量问答样本",
-      badge: "推荐",
-      description:
-        "适用于构建监督微调（SFT）问答数据集，支持从知识库或长文档中抽取关键问答对。",
+      title: t('synthesisTask.create.template.templates.sftQa.title'),
+      subtitle: t('synthesisTask.create.template.templates.sftQa.subtitle'),
+      badge: t('synthesisTask.create.template.templates.sftQa.badge'),
+      description: t('synthesisTask.create.template.templates.sftQa.description'),
       colorClass: "from-sky-500/10 via-sky-400/5 to-transparent",
       borderClass: "border-sky-100 hover:border-sky-300",
       icon: Sparkles,
@@ -266,11 +267,10 @@ export default function SynthesisTaskCreate() {
     {
       id: "cot-reasoning",
       type: "cot" as const,
-      title: "COT 链式推理合成",
-      subtitle: "一步步推理过程与最终答案",
-      badge: "推理增强",
-      description:
-        "生成包含模型推理中间过程的 COT 数据，用于提升模型的复杂推理和解释能力。",
+      title: t('synthesisTask.create.template.templates.cotReasoning.title'),
+      subtitle: t('synthesisTask.create.template.templates.cotReasoning.subtitle'),
+      badge: t('synthesisTask.create.template.templates.cotReasoning.badge'),
+      description: t('synthesisTask.create.template.templates.cotReasoning.description'),
       colorClass: "from-violet-500/10 via-violet-400/5 to-transparent",
       borderClass: "border-violet-100 hover:border-violet-300",
       icon: Brain,
@@ -295,12 +295,12 @@ export default function SynthesisTaskCreate() {
       return (
         <div className="flex-1 p-4 overflow-auto">
           <Form form={form} layout="vertical" initialValues={formValues} onValuesChange={handleValuesChange} autoComplete="off">
-            <h2 className="font-medium text-gray-900 text-lg mb-2">基本信息</h2>
-            <Form.Item label="任务名称" name="name" rules={[{ required: true, message: "请输入任务名称" }]}>
-              <Input placeholder="输入任务名称" className="h-9 text-sm" />
+            <h2 className="font-medium text-gray-900 text-lg mb-2">{t('synthesisTask.create.step1')}</h2>
+            <Form.Item label={t('synthesisTask.create.form.name')} name="name" rules={[{ required: true, message: t('synthesisTask.create.form.nameRequired') }]}>
+              <Input placeholder={t('synthesisTask.create.form.namePlaceholder')} className="h-9 text-sm" />
             </Form.Item>
-            <Form.Item label="任务描述" name="description">
-              <TextArea placeholder="描述任务的目的和要求（可选）" rows={3} className="resize-none text-sm" />
+            <Form.Item label={t('synthesisTask.create.form.description')} name="description">
+              <TextArea placeholder={t('synthesisTask.create.form.descriptionPlaceholder')} rows={3} className="resize-none text-sm" />
             </Form.Item>
             <DatasetFileTransfer open selectedFilesMap={selectedMap} onSelectedFilesChange={setSelectedMap} onDatasetSelect={(dataset) => {
               setSelectedDataset(dataset);
@@ -308,10 +308,10 @@ export default function SynthesisTaskCreate() {
             }} datasetTypeFilter={DatasetType.TEXT} />
             {selectedDataset && (
               <div className="mt-4 p-3 bg-gray-50 rounded border text-xs text-gray-600">
-                当前数据集：<span className="font-medium text-gray-900">{selectedDataset.name}</span>
+                {t('synthesisTask.create.form.currentDataset', { name: selectedDataset.name, count: selectedFiles.length })}
               </div>
             )}
-            <Form.Item hidden name="sourceDataset" rules={[{ required: true, message: "请选择数据集" }]}>
+            <Form.Item hidden name="sourceDataset" rules={[{ required: true, message: t('synthesisTask.create.form.datasetRequired') }]}>
               <Input type="hidden" />
             </Form.Item>
           </Form>
@@ -330,14 +330,14 @@ export default function SynthesisTaskCreate() {
                   <div>
                     <h1 className="text-sm font-semibold text-slate-900 flex items-center gap-1.5">
                       <Sparkles className="w-4 h-4 text-amber-500" />
-                      合成指令模板
+                      {t('synthesisTask.create.template.title')}
                     </h1>
                     <p className="text-[11px] text-slate-500 mt-0.5">
-                      从左侧选择一个模板，我们会自动为你填充合适的 Prompt 与合成策略。
+                      {t('synthesisTask.create.template.description')}
                     </p>
                   </div>
                   <Tag color="blue" className="text-[10px] px-2 py-0.5 rounded-full">
-                    单选
+                    {t('synthesisTask.create.template.singleSelect')}
                   </Tag>
                 </div>
 
@@ -345,7 +345,7 @@ export default function SynthesisTaskCreate() {
                   <div className="relative">
                     <Search className="w-3 h-3 absolute left-2 top-1/2 -translate-y-1/2 text-gray-400" />
                     <Input
-                      placeholder="搜索模板名称，如：SFT 问答 / COT 推理"
+                      placeholder={t('synthesisTask.create.template.searchPlaceholder')}
                       className="pl-6 text-[11px] h-7 rounded-full bg-slate-50/80 border-slate-100 focus:bg-white"
                       disabled
                     />
@@ -438,17 +438,17 @@ export default function SynthesisTaskCreate() {
                   <div>
                     <h1 className="text-sm font-semibold text-slate-900 flex items-center gap-1.5">
                       <Layers className="w-4 h-4 text-indigo-500" />
-                      合成配置
+                      {t('synthesisTask.create.config.title')}
                     </h1>
                     <p className="text-[11px] text-slate-500 mt-0.5">
-                      根据左侧模板自动带出配置，你也可以在此基础上进行微调。
+                      {t('synthesisTask.create.config.description')}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
                     <Tooltip title="在正式创建任务前，先小批量运行验证效果">
                       <Button size="small" className="hover:bg-white text-[11px]" type="default">
                         <Eye className="w-3 h-3 mr-1" />
-                        启用调测
+                        {t('synthesisTask.actions.enableDebug')}
                       </Button>
                     </Tooltip>
                   </div>
@@ -458,16 +458,16 @@ export default function SynthesisTaskCreate() {
                   {/* 步骤说明条 */}
                   <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-slate-50 border border-slate-100 text-[11px] text-slate-500">
                     <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-indigo-600 text-white text-[10px] font-semibold">1</span>
-                    <span>设置合成总数</span>
+                    <span>{t('synthesisTask.create.config.steps.1')}</span>
                     <span className="text-slate-300">/</span>
                     <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-indigo-600 text-white text-[10px] font-semibold">2</span>
-                    <span>配置文本切片策略</span>
+                    <span>{t('synthesisTask.create.config.steps.2')}</span>
                     <span className="text-slate-300">/</span>
                     <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-indigo-600 text-white text-[10px] font-semibold">3</span>
-                    <span>配置问题合成参数</span>
+                    <span>{t('synthesisTask.create.config.steps.3')}</span>
                     <span className="text-slate-300">/</span>
                     <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-indigo-600 text-white text-[10px] font-semibold">4</span>
-                    <span>配置答案合成参数</span>
+                    <span>{t('synthesisTask.create.config.steps.4')}</span>
                   </div>
 
                   {/* 1. 合成总数配置 */}
@@ -710,16 +710,16 @@ export default function SynthesisTaskCreate() {
               <ArrowLeft className="w-4 h-4 mr-1" />
             </Button>
           </Link>
-          <h1 className="text-xl font-bold bg-clip-text">创建合成任务</h1>
+          <h1 className="text-xl font-bold bg-clip-text">{t('synthesisTask.create.title')}</h1>
         </div>
-        <Steps current={createStep - 1} size="small" items={[{ title: "基本信息" }, { title: "合成编排" }]} style={{ width: "50%", marginLeft: "auto" }} />
+        <Steps current={createStep - 1} size="small" items={[{ title: t('synthesisTask.create.step1') }, { title: t('synthesisTask.create.step2') }]} style={{ width: "50%", marginLeft: "auto" }} />
       </div>
       <div className="border-card flex-overflow-auto">
         {renderCreateTaskPage()}
         <div className="flex gap-2 justify-end p-4 border-top">
           {createStep === 1 ? (
             <>
-              <Button onClick={() => navigate("/data/synthesis/task")}>取消</Button>
+              <Button onClick={() => navigate("/data/synthesis/task")}>{t('synthesisTask.actions.cancel')}</Button>
               <Button
                 type="primary"
                 onClick={() => {
@@ -730,7 +730,7 @@ export default function SynthesisTaskCreate() {
                 }}
                 disabled={!form.getFieldValue("name") || !selectedDataset || selectedFiles.length === 0}
               >
-                下一步
+                {t('synthesisTask.actions.next')}
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </>
@@ -738,7 +738,7 @@ export default function SynthesisTaskCreate() {
             <>
               <Button onClick={() => setCreateStep(1)} className="px-4 py-2 text-sm" type="default">
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                上一步
+                {t('synthesisTask.actions.prev')}
               </Button>
               <Button
                 onClick={handleCreateTask}
@@ -755,7 +755,7 @@ export default function SynthesisTaskCreate() {
                 type="primary"
               >
                 <Play className="w-4 h-4 mr-2" />
-                创建任务
+                {t('synthesisTask.actions.createTask')}
               </Button>
             </>
           )}

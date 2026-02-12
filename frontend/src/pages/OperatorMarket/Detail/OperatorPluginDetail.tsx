@@ -9,6 +9,7 @@ import {
 import {Clock, GitBranch} from "lucide-react";
 import DetailHeader from "@/components/DetailHeader";
 import {Link, useNavigate, useParams} from "react-router";
+import { useTranslation } from "react-i18next";
 import Overview from "./components/Overview";
 import Requirement from "./components/Requirement";
 import Documentation from "./components/Documentation";
@@ -20,6 +21,7 @@ import { OperatorI } from "../operator.model";
 import { mapOperator } from "../operator.const";
 
 export default function OperatorPluginDetail() {
+  const { t } = useTranslation();
   const { id } = useParams(); // 获取动态路由参数
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
@@ -29,7 +31,7 @@ export default function OperatorPluginDetail() {
   const fetchOperator = async () => {
     try {
       const { data } = await queryOperatorByIdUsingGet(id as unknown as number);
-      setOperator(mapOperator(data));
+      setOperator(mapOperator(data, t))
       setIsStar(data.isStar)
     } catch (error) {
       setOperator("error");
@@ -64,7 +66,7 @@ export default function OperatorPluginDetail() {
   const handleDelete = async () => {
     await deleteOperatorByIdUsingDelete(operator.id);
     navigate("/data/operator-market");
-    message.success("算子删除成功");
+    message.success(t("operatorMarket.detail.operations.messages.deleteSuccess"));
   };
 
   // 模拟算子数据
@@ -84,7 +86,7 @@ export default function OperatorPluginDetail() {
   const operations = [
     {
       key: "favorite",
-      label: "收藏",
+      label: t("operatorMarket.detail.operations.favorite"),
       icon: (isStar ? (
           <StarFilled style={{ color: '#f59e0b' }} />
         ) : (
@@ -95,19 +97,19 @@ export default function OperatorPluginDetail() {
     },
     {
       key: "update",
-      label: "更新",
+      label: t("operatorMarket.detail.operations.update"),
       icon: <UploadOutlined />,
       onClick: () => navigate("/data/operator-market/create/" + operator.id),
     },
     {
       key: "delete",
-      label: "删除",
+      label: t("operatorMarket.detail.operations.delete"),
       danger: true,
       confirm: {
-        title: "确认删除当前算子？",
-        description: "删除后该算子将无法恢复，请谨慎操作。",
-        okText: "删除",
-        cancelText: "取消",
+        title: t("operatorMarket.detail.operations.confirm.title"),
+        description: t("operatorMarket.detail.operations.confirm.description"),
+        okText: t("operatorMarket.detail.operations.confirm.okText"),
+        cancelText: t("operatorMarket.detail.operations.confirm.cancelText"),
         okType: "danger"
       },
       icon: <DeleteOutlined />,
@@ -121,7 +123,7 @@ export default function OperatorPluginDetail() {
       <Breadcrumb
         items={[
           {
-            title: <Link to="/data/operator-market">算子市场</Link>,
+            title: <Link to="/data/operator-market">{t("operatorMarket.detail.breadcrumb.market")}</Link>,
             href: "/data/operator-market",
           },
           {
@@ -138,19 +140,19 @@ export default function OperatorPluginDetail() {
         tabList={[
           {
             key: "overview",
-            label: "概览",
+            label: t("operatorMarket.detail.tabs.overview"),
           },
           {
             key: "requirement",
-            label: "系统规格",
+            label: t("operatorMarket.detail.tabs.requirement"),
           },
           {
             key: "documentation",
-            label: "文档",
+            label: t("operatorMarket.detail.tabs.documentation"),
           },
           {
             key: "changeLog",
-            label: "更新日志",
+            label: t("operatorMarket.detail.tabs.changeLog"),
           },
           // {
           //   key: "service",

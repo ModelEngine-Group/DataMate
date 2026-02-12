@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import { Button, Modal } from "antd";
+import { useTranslation } from "react-i18next";
 
 interface ErrorContextType {
   hasError: boolean;
@@ -24,6 +25,7 @@ interface ErrorBoundaryProps {
   children?: React.ReactNode;
   onReset?: () => void;
   showDetails?: boolean;
+  t?: (key: string, options?: any) => string;
 }
 
 export default class ErrorBoundary extends Component<
@@ -112,20 +114,21 @@ export default class ErrorBoundary extends Component<
 
   renderErrorDetails = () => {
     const { error, errorInfo } = this.state;
+    const t = this.props.t || ((key: string) => key);
 
     if (!this.props.showDetails) return null;
 
     return (
       <div className="bg-gray-100 p-4 mt-4 text-left rounded">
         <div className="mt-2">
-          <strong>错误信息:</strong>
+          <strong>{t('components.errorBoundary.errorMessage')}</strong>
           <pre className="bg-gray-600 px-4 py-2 rounded text-white overflow-auto">
             {error?.toString()}
           </pre>
         </div>
         {errorInfo && (
           <div className="mt-2">
-            <strong>组件堆栈:</strong>
+            <strong>{t('components.errorBoundary.componentStack')}</strong>
             <pre className="bg-gray-600 max-h-100 px-4 py-2 rounded text-white overflow-auto">
               {errorInfo.componentStack}
             </pre>
@@ -141,13 +144,13 @@ export default class ErrorBoundary extends Component<
         <Modal visible width={1000} footer={null} closable={false}>
           <div className="text-center p-6">
             <div className="text-3xl">⚠️</div>
-            <h1 className="text-xl p-2">出了点问题</h1>
-            <p className="text-sm text-gray-400">应用程序遇到了意外错误。</p>
+            <h1 className="text-xl p-2">{this.props.t?.('components.errorBoundary.title') || '出了点问题'}</h1>
+            <p className="text-sm text-gray-400">{this.props.t?.('components.errorBoundary.description') || '应用程序遇到了意外错误。'}</p>
 
             <div className="flex justify-center gap-4 my-4">
-              <Button onClick={this.handleReload}>刷新页面</Button>
+              <Button onClick={this.handleReload}>{this.props.t?.('components.errorBoundary.reloadPage') || '刷新页面'}</Button>
               <Button type="primary" onClick={this.handleGoHome}>
-                返回首页
+                {this.props.t?.('components.errorBoundary.goHome') || '返回首页'}
               </Button>
             </div>
 
@@ -155,10 +158,10 @@ export default class ErrorBoundary extends Component<
 
             <div className="mt-4 border-t border-gray-100 pt-4 text-center">
               <p className="text-sm text-gray-500">
-                如果问题持续存在，请联系技术支持
+                {this.props.t?.('components.errorBoundary.contactSupport') || '如果问题持续存在，请联系技术支持'}
               </p>
               <small className="text-xs text-gray-400">
-                错误 ID: {this.state.errorTimestamp}
+                {this.props.t?.('components.errorBoundary.errorId', { timestamp: this.state.errorTimestamp }) || `错误 ID: ${this.state.errorTimestamp}`}
               </small>
             </div>
           </div>

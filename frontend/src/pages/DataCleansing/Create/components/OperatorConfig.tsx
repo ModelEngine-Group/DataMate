@@ -3,6 +3,7 @@ import { Tag, Divider, Form } from "antd";
 import ParamConfig from "./ParamConfig";
 import { Settings } from "lucide-react";
 import { OperatorI } from "@/pages/OperatorMarket/operator.model";
+import { useTranslation } from "react-i18next";
 
 // OperatorConfig/OperatorTemplate 类型需根据主文件实际导入
 interface OperatorConfigProps {
@@ -24,12 +25,13 @@ const OperatorConfig: React.FC<OperatorConfigProps> = ({
   renderParamConfig,
   handleConfigChange,
 }) => {
+  const { t } = useTranslation();
   return (
     <div className="w-1/4 min-w-3xs flex flex-col h-full">
       <div className="px-4 pb-4 border-b border-gray-200">
         <span className="font-semibold text-base flex items-center gap-2">
           <Settings />
-          参数配置
+          {t("dataCleansing.actions.config")}
         </span>
       </div>
       <div className="flex-1 overflow-auto p-4">
@@ -70,7 +72,7 @@ const OperatorConfig: React.FC<OperatorConfigProps> = ({
         ) : (
           <div className="text-center py-12 text-gray-400">
             <Settings className="w-full w-10 h-10 mb-4 opacity-50" />
-            <div>请选择一个算子进行参数配置</div>
+            <div>{t("dataCleansing.actions.selectOperatorConfig")}</div>
           </div>
         )}
       </div>

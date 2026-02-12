@@ -1,14 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Table, Progress, Badge, Button, Tooltip, Card, App } from "antd";
 import {
   PlayCircleOutlined,
   PauseCircleOutlined,
   DeleteOutlined,
 } from "@ant-design/icons";
+import { useTranslation } from "react-i18next";
 import { SearchControls } from "@/components/SearchControls";
 import CardView from "@/components/CardView";
 import { useNavigate } from "react-router";
-import { mapTask, TaskStatusMap } from "../../cleansing.const";
+import {getTaskStatusMap, mapTask} from "../../cleansing.const";
 import {
   TaskStatus,
   type CleansingTask,
@@ -22,14 +23,15 @@ import {
 } from "../../cleansing.api";
 
 export default function TaskList() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { message } = App.useApp();
   const [viewMode, setViewMode] = useState<"card" | "list">("card");
   const filterOptions = [
     {
       key: "status",
-      label: "状态",
-      options: [...Object.values(TaskStatusMap)],
+      label: t("dataCleansing.task.columns.status"),
+      options: [...Object.values(getTaskStatusMap(t))],
     },
   ];
 
@@ -42,25 +44,29 @@ export default function TaskList() {
     fetchData,
     handleFiltersChange,
     handleKeywordChange,
-  } = useFetchData(queryCleaningTasksUsingGet, mapTask);
+  } = useFetchData(queryCleaningTasksUsingGet, task => mapTask(task, t));
 
   const pauseTask = async (item: CleansingTask) => {
     await stopCleaningTaskUsingPost(item.id);
-    message.success("任务已暂停");
+    message.success(t("dataCleansing.task.messages.taskPaused"));
     fetchData();
   };
 
   const startTask = async (item: CleansingTask) => {
     await executeCleaningTaskUsingPost(item.id);
-    message.success("任务已启动");
+    message.success(t("dataCleansing.task.messages.taskStarted"));
     fetchData();
   };
 
   const deleteTask = async (item: CleansingTask) => {
     await deleteCleaningTaskByIdUsingDelete(item.id);
-    message.success("任务已删除");
+    message.success(t("dataCleansing.task.messages.taskDeleted"));
     fetchData();
   };
+
+  useEffect(() => {
+    fetchData();
+  }, [t]);
 
   const taskOperations = (record: CleansingTask) => {
     const isRunning = record.status?.value === TaskStatus.RUNNING;
@@ -72,14 +78,14 @@ export default function TaskList() {
     const isComplete = record.status?.value === TaskStatus.COMPLETED;
     const pauseBtn = {
       key: "pause",
-      label: "暂停",
+      label: t("dataCleansing.actions.pause"),
       icon: isRunning ? <PauseCircleOutlined /> : <PlayCircleOutlined />,
       onClick: pauseTask, // implement pause/play logic
     };
 
     const startBtn = {
       key: "start",
-      label: "启动",
+      label: t("dataCleansing.actions.start"),
       icon: isRunning ? <PauseCircleOutlined /> : <PlayCircleOutlined />,
       disabled: isComplete,
       onClick: startTask, // implement pause/play logic
@@ -93,7 +99,7 @@ export default function TaskList() {
         : []),
       {
         key: "delete",
-        label: "删除",
+        label: t("dataCleansing.actions.delete"),
         danger: true,
         icon: <DeleteOutlined />,
         onClick: deleteTask, // implement delete logic
@@ -103,7 +109,7 @@ export default function TaskList() {
 
   const taskColumns = [
     {
-      title: "任务名称",
+      title: t("dataCleansing.task.columns.taskName"),
       dataIndex: "name",
       key: "name",
       fixed: "left",
@@ -123,14 +129,14 @@ export default function TaskList() {
       },
     },
     {
-      title: "任务ID",
+      title: t("dataCleansing.task.columns.taskId"),
       dataIndex: "id",
       key: "id",
       width: 150,
       ellipsis: true,
     },
     {
-      title: "源数据集",
+      title: t("dataCleansing.task.columns.srcDataset"),
       dataIndex: "srcDatasetId",
       key: "srcDatasetId",
       width: 150,
@@ -149,7 +155,7 @@ export default function TaskList() {
       },
     },
     {
-      title: "目标数据集",
+      title: t("dataCleansing.task.columns.destDataset"),
       dataIndex: "destDatasetId",
       key: "destDatasetId",
       width: 150,
@@ -168,7 +174,7 @@ export default function TaskList() {
       },
     },
     {
-      title: "状态",
+      title: t("dataCleansing.task.columns.status"),
       dataIndex: "status",
       key: "status",
       width: 100,
@@ -177,7 +183,7 @@ export default function TaskList() {
       },
     },
     {
-      title: "进度",
+      title: t("dataCleansing.task.columns.progress"),
       dataIndex: "process",
       key: "process",
       width: 150,
@@ -189,7 +195,7 @@ export default function TaskList() {
       },
     },
     {
-      title: "已处理文件数",
+      title: t("dataCleansing.task.columns.processedFiles"),
       dataIndex: "finishedFileNum",
       key: "finishedFileNum",
       width: 120,
@@ -197,7 +203,7 @@ export default function TaskList() {
       ellipsis: true,
     },
     {
-      title: "总文件数",
+      title: t("dataCleansing.task.columns.totalFiles"),
       dataIndex: "totalFileNum",
       key: "totalFileNum",
       width: 100,
@@ -205,35 +211,35 @@ export default function TaskList() {
       ellipsis: true,
     },
     {
-      title: "执行耗时",
+      title: t("dataCleansing.task.columns.duration"),
       dataIndex: "duration",
       key: "duration",
       width: 100,
       ellipsis: true,
     },
     {
-      title: "开始时间",
+      title: t("dataCleansing.task.columns.startTime"),
       dataIndex: "startedAt",
       key: "startedAt",
       width: 180,
       ellipsis: true,
     },
     {
-      title: "结束时间",
+      title: t("dataCleansing.task.columns.endTime"),
       dataIndex: "finishedAt",
       key: "finishedAt",
       width: 180,
       ellipsis: true,
     },
     {
-      title: "创建时间",
+      title: t("dataCleansing.task.columns.createdAt"),
       dataIndex: "createdAt",
       key: "createdAt",
       width: 180,
       ellipsis: true,
     },
     {
-      title: "数据量变化",
+      title: t("dataCleansing.task.columns.dataSizeChange"),
       dataIndex: "dataSizeChange",
       key: "dataSizeChange",
       width: 180,
@@ -246,7 +252,7 @@ export default function TaskList() {
       },
     },
     {
-      title: "操作",
+      title: t("dataCleansing.task.columns.actions"),
       key: "action",
       fixed: "right",
       render: (text: string, record: any) => (
@@ -274,7 +280,7 @@ export default function TaskList() {
       <SearchControls
         searchTerm={searchParams.keyword}
         onSearchChange={handleKeywordChange}
-        searchPlaceholder="搜索任务名称、描述"
+        searchPlaceholder={t("dataCleansing.placeholders.searchTaskName")}
         filters={filterOptions}
         onFiltersChange={handleFiltersChange}
         viewMode={viewMode}

@@ -1,10 +1,12 @@
 import { Spin } from "antd";
 import { Upload, FileText } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export default function UploadStep({ isUploading, onUpload }) {
+  const { t } = useTranslation();
   const supportedFormats = [
-    { ext: ".zip", desc: "压缩包文件" },
-    { ext: ".tar", desc: "压缩包文件" },
+    { ext: ".zip", desc: t("operatorMarket.create.upload.formats.zip") },
+    { ext: ".tar", desc: t("operatorMarket.create.upload.formats.tar") },
   ];
 
   return (
@@ -12,15 +14,15 @@ export default function UploadStep({ isUploading, onUpload }) {
       <div className="w-24 h-24 mx-auto mb-6 bg-blue-50 rounded-full flex items-center justify-center">
         <Upload className="w-12 h-12 text-blue-500" />
       </div>
-      <h2 className="text-2xl font-bold text-gray-900 mb-4">上传算子文件</h2>
+      <h2 className="text-2xl font-bold text-gray-900 mb-4">{t("operatorMarket.create.upload.title")}</h2>
       <p className="text-gray-600 mb-8">
-        支持多种格式的算子文件，系统将自动解析配置信息
+        {t("operatorMarket.create.upload.description")}
       </p>
 
       {/* 支持的格式 */}
       <div className="mb-8">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          支持的文件格式
+          {t("operatorMarket.create.upload.supportedFormats")}
         </h3>
         <div className="flex gap-4">
           {supportedFormats.map((format, index) => (
@@ -60,16 +62,16 @@ export default function UploadStep({ isUploading, onUpload }) {
         {isUploading ? (
           <div className="flex flex-col items-center">
             <Spin size="large" />
-            <p className="mt-4 text-gray-600">正在上传文件...</p>
+            <p className="mt-4 text-gray-600">{t("operatorMarket.create.upload.uploadArea.uploading")}</p>
           </div>
         ) : (
           <div>
             <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
             <p className="text-lg text-gray-600 mb-2">
-              拖拽文件到此处或点击选择文件
+              {t("operatorMarket.create.upload.uploadArea.dragDrop")}
             </p>
             <p className="text-sm text-gray-500">
-              仅支持单个文件上传
+              {t("operatorMarket.create.upload.uploadArea.onlySingle")}
             </p>
           </div>
         )}

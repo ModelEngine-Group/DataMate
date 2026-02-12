@@ -2,12 +2,14 @@ import { useEffect, useState } from "react";
 import { Tabs, Button } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router";
+import { useTranslation } from "react-i18next";
 import TaskList from "./components/TaskList";
 import TemplateList from "./components/TemplateList";
 import ProcessFlowDiagram from "./components/ProcessFlowDiagram";
 import { useSearchParams } from "@/hooks/useSearchParams";
 
 export default function DataProcessingPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const urlParams = useSearchParams();
   const [currentView, setCurrentView] = useState<"task" | "template">("task");
@@ -22,20 +24,20 @@ export default function DataProcessingPage() {
     <div className="h-full flex flex-col gap-4">
       {/* Header */}
       <div className="flex justify-between items-center">
-        <h1 className="text-xl font-bold">数据处理</h1>
+        <h1 className="text-xl font-bold">{t("dataCleansing.title")}</h1>
         <div className="flex gap-2">
           <Button
             icon={<PlusOutlined />}
             onClick={() => navigate("/data/cleansing/create-template")}
           >
-            创建清洗模板
+            {t("dataCleansing.actions.createTemplate")}
           </Button>
           <Button
             type="primary"
             icon={<PlusOutlined />}
             onClick={() => navigate("/data/cleansing/create-task")}
           >
-            创建清洗任务
+            {t("dataCleansing.actions.createTask")}
           </Button>
         </div>
       </div>
@@ -46,11 +48,11 @@ export default function DataProcessingPage() {
         items={[
           {
             key: "task",
-            label: "任务列表",
+            label: t("dataCleansing.tabs.taskList"),
           },
           {
             key: "template",
-            label: "模板管理",
+            label: t("dataCleansing.tabs.templateManagement"),
           },
         ]}
       />

@@ -8,6 +8,7 @@ import {
   ThunderboltOutlined,
 } from "@ant-design/icons";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface WebhookEvent {
   id: string;
@@ -26,76 +27,77 @@ interface WebhookConfig {
   retryCount: number;
 }
 
-const availableEvents: WebhookEvent[] = [
+const getAvailableEvents = (t: any): WebhookEvent[] => [
   {
     id: "project_created",
-    name: "项目创建",
-    description: "新项目被创建时触发",
-    category: "项目管理",
+    name: t('settings.webhook.eventTypes.projectCreated.name'),
+    description: t('settings.webhook.eventTypes.projectCreated.description'),
+    category: t('settings.webhook.events.projectManagement'),
   },
   {
     id: "project_updated",
-    name: "项目更新",
-    description: "项目信息被修改时触发",
-    category: "项目管理",
+    name: t('settings.webhook.eventTypes.projectUpdated.name'),
+    description: t('settings.webhook.eventTypes.projectUpdated.description'),
+    category: t('settings.webhook.events.projectManagement'),
   },
   {
     id: "project_deleted",
-    name: "项目删除",
-    description: "项目被删除时触发",
-    category: "项目管理",
+    name: t('settings.webhook.eventTypes.projectDeleted.name'),
+    description: t('settings.webhook.eventTypes.projectDeleted.description'),
+    category: t('settings.webhook.events.projectManagement'),
   },
   {
     id: "task_created",
-    name: "任务创建",
-    description: "新任务被创建时触发",
-    category: "任务管理",
+    name: t('settings.webhook.eventTypes.taskCreated.name'),
+    description: t('settings.webhook.eventTypes.taskCreated.description'),
+    category: t('settings.webhook.events.taskManagement'),
   },
   {
     id: "task_updated",
-    name: "任务更新",
-    description: "任务状态或内容被更新时触发",
-    category: "任务管理",
+    name: t('settings.webhook.eventTypes.taskUpdated.name'),
+    description: t('settings.webhook.eventTypes.taskUpdated.description'),
+    category: t('settings.webhook.events.taskManagement'),
   },
   {
     id: "task_completed",
-    name: "任务完成",
-    description: "任务被标记为完成时触发",
-    category: "任务管理",
+    name: t('settings.webhook.eventTypes.taskCompleted.name'),
+    description: t('settings.webhook.eventTypes.taskCompleted.description'),
+    category: t('settings.webhook.events.taskManagement'),
   },
   {
     id: "annotation_created",
-    name: "标注创建",
-    description: "新标注被创建时触发",
-    category: "标注管理",
+    name: t('settings.webhook.eventTypes.annotationCreated.name'),
+    description: t('settings.webhook.eventTypes.annotationCreated.description'),
+    category: t('settings.webhook.events.annotationManagement'),
   },
   {
     id: "annotation_updated",
-    name: "标注更新",
-    description: "标注被修改时触发",
-    category: "标注管理",
+    name: t('settings.webhook.eventTypes.annotationUpdated.name'),
+    description: t('settings.webhook.eventTypes.annotationUpdated.description'),
+    category: t('settings.webhook.events.annotationManagement'),
   },
   {
     id: "annotation_deleted",
-    name: "标注删除",
-    description: "标注被删除时触发",
-    category: "标注管理",
+    name: t('settings.webhook.eventTypes.annotationDeleted.name'),
+    description: t('settings.webhook.eventTypes.annotationDeleted.description'),
+    category: t('settings.webhook.events.annotationManagement'),
   },
   {
     id: "model_trained",
-    name: "模型训练完成",
-    description: "模型训练任务完成时触发",
-    category: "模型管理",
+    name: t('settings.webhook.eventTypes.modelTrained.name'),
+    description: t('settings.webhook.eventTypes.modelTrained.description'),
+    category: t('settings.webhook.events.modelManagement'),
   },
   {
     id: "prediction_created",
-    name: "预测生成",
-    description: "新预测结果生成时触发",
-    category: "预测管理",
+    name: t('settings.webhook.eventTypes.predictionCreated.name'),
+    description: t('settings.webhook.eventTypes.predictionCreated.description'),
+    category: t('settings.webhook.events.predictionManagement'),
   },
 ];
 
 export default function WebhookConfig() {
+  const { t } = useTranslation();
   const [newWebhook, setNewWebhook] = useState({
     name: "",
     url: "",
@@ -126,6 +128,8 @@ export default function WebhookConfig() {
     },
   ]);
 
+  const availableEvents = getAvailableEvents(t);
+
   const handleAddWebhook = () => {
     setNewWebhook({
       name: "",
@@ -151,9 +155,9 @@ export default function WebhookConfig() {
     <div>
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-lg font-medium">Webhook 配置</h3>
+          <h3 className="text-lg font-medium">{t('settings.webhook.title')}</h3>
         </div>
-        <Button onClick={handleAddWebhook}>新增Webhook</Button>
+        <Button onClick={handleAddWebhook}>{t('settings.webhook.addWebhook')}</Button>
       </div>
       <div className="grid gap-4">
         {webhooks.map((webhook) => (
@@ -164,7 +168,7 @@ export default function WebhookConfig() {
                   <span className="font-medium">{webhook.name}</span>
                   <Badge
                     status={webhook.status === "active" ? "success" : "default"}
-                    text={webhook.status === "active" ? "启用" : "禁用"}
+                    text={webhook.status === "active" ? t('settings.webhook.status.active') : t('settings.webhook.status.inactive')}
                   />
                 </div>
                 <div className="space-y-2">
@@ -173,7 +177,7 @@ export default function WebhookConfig() {
                     {webhook.url}
                   </p>
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-sm text-gray-500">事件:</span>
+                    <span className="text-sm text-gray-500">{t('settings.webhook.details.events')}</span>
                     {webhook.events.map((event) => {
                       const eventInfo = availableEvents.find(
                         (e) => e.id === event
@@ -190,11 +194,11 @@ export default function WebhookConfig() {
                   <div className="flex items-center gap-4 text-sm text-gray-500">
                     <span className="flex items-center gap-1">
                       <KeyOutlined />
-                      Secret: {webhook.secret.substring(0, 12)}...
+                      {t('settings.webhook.details.secret')} {webhook.secret.substring(0, 12)}...
                     </span>
                     <span className="flex items-center gap-1">
                       <ReloadOutlined />
-                      重试: {webhook.retryCount}次
+                      {t('settings.webhook.details.retry')} {webhook.retryCount}次
                     </span>
                   </div>
                 </div>
@@ -211,17 +215,17 @@ export default function WebhookConfig() {
       <Modal
         open={showWebhookDialog}
         onCancel={() => setShowWebhookDialog(false)}
-        title="新增 Webhook"
+        title={t('settings.webhook.modal.title')}
         footer={[
           <Button key="cancel" onClick={() => setShowWebhookDialog(false)}>
-            取消
+            {t('dataManagement.actions.cancel')}
           </Button>,
           <Button
             key="ok"
             type="primary"
             onClick={() => setShowWebhookDialog(false)}
           >
-            创建Webhook
+            {t('settings.webhook.buttons.create')}
           </Button>,
         ]}
       >
@@ -232,18 +236,18 @@ export default function WebhookConfig() {
             setNewWebhook({ ...newWebhook, ...changedValues });
           }}
         >
-          <Form.Item name="name" label="Webhook名称">
-            <Input placeholder="输入Webhook名称" />
+          <Form.Item name="name" label={t('settings.webhook.modal.form.name')}>
+            <Input placeholder={t('settings.webhook.modal.form.namePlaceholder')} />
           </Form.Item>
-          <Form.Item name="retryCount" label="重试次数">
+          <Form.Item name="retryCount" label={t('settings.webhook.modal.form.retryCount')}>
             <Input type="number" />
           </Form.Item>
-          <Form.Item name="url" label="Webhook URL">
-            <Input placeholder="https://your-domain.com/webhook" />
+          <Form.Item name="url" label={t('settings.webhook.modal.form.url')}>
+            <Input placeholder={t('settings.webhook.modal.form.urlPlaceholder')} />
           </Form.Item>
-          <Form.Item name="secret" label="Secret Key">
+          <Form.Item name="secret" label={t('settings.webhook.modal.form.secret')}>
             <Input
-              placeholder="用于验证Webhook请求的密钥"
+              placeholder={t('settings.webhook.modal.form.secretPlaceholder')}
               addonAfter={
                 <Button
                   icon={<ReloadOutlined />}
@@ -254,7 +258,7 @@ export default function WebhookConfig() {
               }
             />
           </Form.Item>
-          <Form.Item label="选择事件">
+          <Form.Item label={t('settings.webhook.modal.form.selectEvents')}>
             <div className="max-h-48 overflow-y-auto border rounded-lg p-3 space-y-3">
               {Object.entries(
                 availableEvents.reduce((acc, event) => {

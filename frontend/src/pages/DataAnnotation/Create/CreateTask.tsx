@@ -16,6 +16,7 @@ import {
   DatasetType,
   type Dataset,
 } from "@/pages/DataManagement/dataset.model";
+import { useTranslation } from "react-i18next";
 
 interface Template {
   id: string;
@@ -28,16 +29,13 @@ interface Template {
   isCustom?: boolean;
 }
 
-const templateCategories = ["Computer Vision", "Natural Language Processing"];
-
 export default function AnnotationTaskCreate() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [form] = Form.useForm();
   const [showCustomTemplateDialog, setShowCustomTemplateDialog] =
     useState(false);
   const [selectedCategory, setSelectedCategory] = useState("Computer Vision");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [datasetFilter, setDatasetFilter] = useState("all");
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(
     null
   );
@@ -51,6 +49,15 @@ export default function AnnotationTaskCreate() {
     datasetId: "",
     templateId: "",
   });
+
+  // Helper to get translated category label
+  const getCategoryLabel = (category: string) => {
+    if (category === "Computer Vision") return t('dataAnnotation.create.templateCategories.cv');
+    if (category === "Natural Language Processing") return t('dataAnnotation.create.templateCategories.nlp');
+    return category;
+  };
+
+  const templateCategories = ["Computer Vision", "Natural Language Processing"];
 
   const fetchDatasets = async () => {
     const { data } = await queryDatasetsUsingGet();
@@ -95,11 +102,11 @@ export default function AnnotationTaskCreate() {
         (tpl) => tpl.id === values.templateId
       );
       if (!dataset) {
-        message.error("请选择数据集");
+        message.error(t('dataAnnotation.create.form.datasetRequired'));
         return;
       }
       if (!template) {
-        message.error("请选择标注模板");
+        message.error(t('dataAnnotation.create.form.templateRequired'));
         return;
       }
       const taskData = {
@@ -109,7 +116,7 @@ export default function AnnotationTaskCreate() {
         template,
       };
       // onCreateTask(taskData); // 实际创建逻辑
-      message.success("标注任务创建成功");
+      message.success(t('dataAnnotation.create.messages.createSuccess'));
       navigate("/data/annotation");
     } catch (e) {
       // 校验失败
@@ -119,7 +126,7 @@ export default function AnnotationTaskCreate() {
   const handleSaveCustomTemplate = (templateData: any) => {
     setSelectedTemplate(templateData);
     setFormValues((prev) => ({ ...prev, templateId: templateData.id }));
-    message.success(`自定义模板 "${templateData.name}" 已创建`);
+    message.success(t('dataAnnotation.create.messages.createSuccess', { name: templateData.name }));
   };
 
   return (
@@ -131,7 +138,7 @@ export default function AnnotationTaskCreate() {
             <ArrowLeft className="w-4 h-4 mr-1" />
           </Button>
         </Link>
-        <h1 className="text-xl font-bold bg-clip-text">创建标注任务</h1>
+        <h1 className="text-xl font-bold bg-clip-text">{t('dataAnnotation.create.title')}</h1>
       </div>
 
       <div className="flex-overflow-auto bg-white rounded-lg shadow-sm">
@@ -143,31 +150,31 @@ export default function AnnotationTaskCreate() {
             layout="vertical"
           >
             {/* 基本信息 */}
-            <h2 className="font-medium text-gray-900 text-lg mb-2">基本信息</h2>
+            <h2 className="font-medium text-gray-900 text-lg mb-2">{t('dataAnnotation.create.basicInfo')}</h2>
             <Form.Item
-              label="任务名称"
+              label={t('dataAnnotation.create.form.name')}
               name="name"
-              rules={[{ required: true, message: "请输入任务名称" }]}
+              rules={[{ required: true, message: t('dataAnnotation.create.form.nameRequired') }]}
             >
-              <Input placeholder="输入任务名称" />
+              <Input placeholder={t('dataAnnotation.create.form.namePlaceholder')} />
             </Form.Item>
             <Form.Item
-              label="任务描述"
+              label={t('dataAnnotation.create.form.description')}
               name="description"
-              rules={[{ required: true, message: "请输入任务描述" }]}
+              rules={[{ required: true, message: t('dataAnnotation.create.form.nameRequired') }]}
             >
-              <TextArea placeholder="详细描述标注任务的要求和目标" rows={3} />
+              <TextArea placeholder={t('dataAnnotation.create.form.descriptionPlaceholder')} rows={3} />
             </Form.Item>
             <Form.Item
-              label="选择数据集"
+              label={t('dataAnnotation.create.form.dataset')}
               name="datasetId"
-              rules={[{ required: true, message: "请选择数据集" }]}
+              rules={[{ required: true, message: t('dataAnnotation.create.form.datasetRequired') }]}
             >
               <Select
                 optionFilterProp="children"
                 value={formValues.datasetId}
                 onChange={handleDatasetSelect}
-                placeholder="请选择数据集"
+                placeholder={t('dataAnnotation.create.form.datasetRequired')}
                 size="large"
                 options={datasets.map((dataset) => ({
                   label: (
@@ -177,7 +184,7 @@ export default function AnnotationTaskCreate() {
                         {dataset.name}
                       </div>
                       <div className="text-xs text-gray-500">
-                        {dataset?.fileCount} 文件 • {dataset.size}
+                        {dataset?.fileCount} {t('common.table.file')} • {dataset.size}
                       </div>
                     </div>
                   ),
@@ -188,11 +195,11 @@ export default function AnnotationTaskCreate() {
 
             {/* 模板选择 */}
             <h2 className="font-medium text-gray-900 text-lg mt-6 mb-2 flex items-center gap-2">
-              模板选择
+              {t('dataAnnotation.create.templateSelection')}
             </h2>
             <Form.Item
               name="templateId"
-              rules={[{ required: true, message: "请选择标注模板" }]}
+              rules={[{ required: true, message: t('dataAnnotation.create.form.templateRequired') }]}
             >
               <div className="flex">
                 {/* Category Sidebar */}
@@ -218,7 +225,7 @@ export default function AnnotationTaskCreate() {
                           }
                           style={{ textAlign: "left", marginBottom: 8 }}
                         >
-                          {category}
+                          {getCategoryLabel(category)}
                         </Button>
                       );
                     })}
@@ -228,7 +235,7 @@ export default function AnnotationTaskCreate() {
                       icon={<PlusOutlined />}
                       onClick={() => setShowCustomTemplateDialog(true)}
                     >
-                      自定义模板
+                      {t('dataAnnotation.create.customTemplate')}
                     </Button>
                   </div>
                 </div>
@@ -289,7 +296,7 @@ export default function AnnotationTaskCreate() {
                             <div className="flex items-center space-x-2">
                               <PlusOutlined />
                               <span className="font-medium text-sm">
-                                自定义模板
+                                {t('dataAnnotation.create.customTemplate')}
                               </span>
                             </div>
                             {selectedTemplate?.isCustom && (
@@ -297,7 +304,7 @@ export default function AnnotationTaskCreate() {
                             )}
                           </div>
                           <p className="text-xs text-gray-600">
-                            创建符合特定需求的标注模板
+                            {t('dataAnnotation.create.customTemplateDesc')}
                           </p>
                         </div>
                       </div>
@@ -312,7 +319,7 @@ export default function AnnotationTaskCreate() {
                       className="text-sm font-medium"
                       style={{ color: "#1677ff" }}
                     >
-                      已选择模板
+                      {t('dataAnnotation.create.selectedTemplate')}
                     </span>
                   </div>
                   <p
@@ -327,9 +334,9 @@ export default function AnnotationTaskCreate() {
           </Form>
         </div>
         <div className="flex gap-2 justify-end border-t border-gray-200 p-6">
-          <Button onClick={() => navigate("/data/annotation")}>取消</Button>
+          <Button onClick={() => navigate("/data/annotation")}>{t('dataAnnotation.create.cancel')}</Button>
           <Button type="primary" onClick={handleSubmit}>
-            创建任务
+            {t('dataAnnotation.create.submit')}
           </Button>
         </div>
       </div>

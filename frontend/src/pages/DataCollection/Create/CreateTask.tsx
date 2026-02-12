@@ -4,12 +4,11 @@ import { Link, useNavigate } from "react-router";
 import { ArrowLeft } from "lucide-react";
 import { createTaskUsingPost, queryDataXTemplatesUsingGet } from "../collection.apis";
 import SimpleCronScheduler from "@/pages/DataCollection/Create/SimpleCronScheduler";
-import { SyncModeMap } from "../collection.const";
+import { getSyncModeMap } from "../collection.const";
 import { SyncMode } from "../collection.model";
+import { useTranslation } from "react-i18next";
 
 const { TextArea } = Input;
-
-const syncModeOptions = Object.values(SyncModeMap);
 
 type CollectionTemplate = {
   id: string;
@@ -34,12 +33,16 @@ type TemplateFieldDef = {
   required?: boolean;
   options?: Array<{ label: string; value: string | number } | string | number>;
   defaultValue?: any;
+  index?: number;
+  properties?: Record<string, TemplateFieldDef>;
 };
 
 export default function CollectionTaskCreate() {
   const navigate = useNavigate();
   const [form] = Form.useForm();
   const { message } = App.useApp();
+  const { t } = useTranslation();
+  const syncModeOptions = Object.values(getSyncModeMap(t));
 
   const [templates, setTemplates] = useState<CollectionTemplate[]>([]);
   const [templatesLoading, setTemplatesLoading] = useState(false);
@@ -57,9 +60,9 @@ export default function CollectionTaskCreate() {
     },
   });
   const [scheduleExpression, setScheduleExpression] = useState({
-    type: "once",
+    type: "daily",
     time: "00:00",
-    cronExpression: "0 0 0 * * ?",
+    cronExpression: "0 0 * * *",
   });
 
   useEffect(() => {
@@ -70,7 +73,7 @@ export default function CollectionTaskCreate() {
         const list: CollectionTemplate[] = resp?.data?.content || [];
         setTemplates(list);
       } catch (e) {
-        message.error("加载归集模板失败");
+        message.error(t("dataCollection.createTask.messages.loadTemplatesFailed"));
       } finally {
         setTemplatesLoading(false);
       }
@@ -78,14 +81,130 @@ export default function CollectionTaskCreate() {
     run()
   }, []);
 
+  const parseJsonObjectInput = (value: any) => {
+    if (value === undefined || value === null) return value;
+    if (typeof value === "string") {
+      const trimmed = value.trim();
+      if (!trimmed) return undefined;
+      const parsed = JSON.parse(trimmed);
+      if (parsed === null || Array.isArray(parsed) || typeof parsed !== "object") {
+        throw new Error(t("dataCollection.createTask.messages.jsonObjectRequired"));
+      }
+      return parsed;
+    }
+    if (typeof value === "object") {
+      if (Array.isArray(value) || value === null) {
+        throw new Error(t("dataCollection.createTask.messages.jsonObjectRequired"));
+      }
+      return value;
+    }
+    throw new Error(t("dataCollection.createTask.messages.jsonObjectRequired"));
+  };
+
+  const tryFormatJsonValue = (value: any) => {
+    const parsed = parseJsonObjectInput(value);
+    if (parsed === undefined) return undefined;
+    return JSON.stringify(parsed, null, 2);
+  };
+
+  const handleFormatJsonField = (name: (string | number)[]) => {
+    const currentValue = form.getFieldValue(name);
+    try {
+      const formatted = tryFormatJsonValue(currentValue);
+      if (formatted !== undefined) {
+        form.setFieldValue(name, formatted);
+      }
+    } catch (error: any) {
+      message.error(error?.message || t("dataCollection.createTask.messages.jsonFormatError"));
+    }
+  };
+
+  const normalizeConfigSection = (
+    sectionValue: any,
+    defs?: Record<string, TemplateFieldDef>
+  ) => {
+    if (!defs || typeof defs !== "object") return sectionValue;
+    const normalized =
+      Array.isArray(sectionValue) ? [...sectionValue] : { ...(sectionValue || {}) };
+
+    Object.entries(defs).forEach(([key, def]) => {
+      const fieldType = (def?.type || "input").toLowerCase();
+      const required = def?.required !== false;
+      const value = sectionValue?.[key];
+
+      if (fieldType === "jsonobject") {
+        const parsed = parseJsonObjectInput(value);
+        if (parsed === undefined && !required) {
+          if (normalized && !Array.isArray(normalized)) {
+            delete normalized[key];
+          }
+        } else if (normalized && !Array.isArray(normalized)) {
+          normalized[key] = parsed;
+        }
+        return;
+      }
+
+      if (fieldType === "multiple") {
+        if (value && typeof value === "object") {
+          normalized[key] = normalizeConfigSection(value, def?.properties);
+        }
+        return;
+      }
+
+      if (fieldType === "multiplelist") {
+        if (Array.isArray(value)) {
+          normalized[key] = value.map((item) =>
+            normalizeConfigSection(item, def?.properties)
+          );
+        }
+      }
+    });
+
+    return normalized;
+  };
+
   const handleSubmit = async () => {
     try {
-      await form.validateFields();
-      await createTaskUsingPost(newTask);
-      message.success("任务创建成功");
+      const values = await form.validateFields();
+      const payload = { ...newTask, ...values };
+      if (payload.syncMode === SyncMode.SCHEDULED) {
+        if (!payload.scheduleExpression) {
+          payload.scheduleExpression = scheduleExpression.cronExpression;
+        }
+        if (!payload.scheduleExpression) {
+          message.error(t("dataCollection.createTask.syncConfig.cronRequired"));
+          return;
+        }
+      } else {
+        delete payload.scheduleExpression;
+      }
+      if (selectedTemplate?.templateContent) {
+        payload.config = {
+          ...(payload.config || {}),
+          parameter: normalizeConfigSection(
+            payload.config?.parameter,
+            selectedTemplate.templateContent.parameter
+          ),
+          reader: normalizeConfigSection(
+            payload.config?.reader,
+            selectedTemplate.templateContent.reader
+          ),
+          writer: normalizeConfigSection(
+            payload.config?.writer,
+            selectedTemplate.templateContent.writer
+          ),
+        };
+      }
+      await createTaskUsingPost(payload);
+      message.success(t("dataCollection.createTask.messages.createSuccess"));
       navigate("/data/collection");
     } catch (error) {
-      message.error(`${error?.data?.message}：${error?.data?.data}`);
+      message.error(
+        t("dataCollection.createTask.messages.errorWithDetail", {
+          message: error?.data?.message ?? "",
+          detail: error?.data?.data ?? "",
+        })
+      );
     }
   };
 
@@ -107,9 +226,40 @@ export default function CollectionTaskCreate() {
       const description = def?.description;
       const fieldType = (def?.type || "input").toLowerCase();
       const required = def?.required !== false;
-      const rules = required
-        ? [{ required: true, message: `请输入${label}` }]
-        : undefined;
+      const rules: any[] = [];
+      if (required) {
+        rules.push({
+          required: true,
+          message: t("dataCollection.createTask.placeholders.enterWithLabel", { label }),
+        });
+      }
+      if (fieldType === "jsonobject") {
+        rules.push({
+          validator: (_: any, value: any) => {
+            if (
+              value === undefined ||
+              value === null ||
+              (typeof value === "string" && value.trim() === "")
+            ) {
+              return Promise.resolve();
+            }
+            try {
+              parseJsonObjectInput(value);
+              return Promise.resolve();
+            } catch (e) {
+              return Promise.reject(
+                new Error(
+                  t("dataCollection.createTask.messages.jsonFormatErrorWithMessage", {
+                    message:
+                      (e as Error)?.message ||
+                      t("dataCollection.createTask.messages.jsonObjectInvalid"),
+                  })
+                )
+              );
+            }
+          },
+        });
+      }
       const name = section.concat(key)
 
       switch (fieldType) {
@@ -122,7 +272,39 @@ export default function CollectionTaskCreate() {
               tooltip={description}
               rules={rules}
             >
-              <Input.Password placeholder={description || `请输入${label}`} />
+              <Input.Password
+                placeholder={
+                  description ||
+                  t("dataCollection.createTask.placeholders.enterWithLabel", { label })
+                }
+              />
+            </Form.Item>
+          ));
+          break;
+        case "jsonobject":
+          items_.push((
+            <Form.Item
+              key={`${section}.${key}`}
+              name={name}
+              label={label}
+              tooltip={description}
+              rules={rules.length ? rules : undefined}
+              extra={(
+                <div className="flex justify-end">
+                  <Button size="small" onClick={() => handleFormatJsonField(name)}>
+                    {t("dataCollection.createTask.actions.formatJson")}
+                  </Button>
+                </div>
+              )}
+            >
+              <TextArea
+                placeholder={
+                  description ||
+                  t("dataCollection.createTask.placeholders.enterWithLabel", { label })
+                }
+                autoSize={{ minRows: 4, maxRows: 12 }}
+                className="font-mono"
+              />
             </Form.Item>
           ));
           break;
@@ -131,13 +313,20 @@ export default function CollectionTaskCreate() {
             <Form.Item
               name={name}
               label={label}
-              rules={rules}
+              rules={rules.length ? rules : undefined}
             >
-              <Select placeholder={description || `请输入${label}`} mode="tags" />
+              <Select
+                placeholder={
+                  description ||
+                  t("dataCollection.createTask.placeholders.enterWithLabel", { label })
+                }
+                mode="tags"
+              />
             </Form.Item>
           ));
           break;
         case "select":
+        case "option":
           const options = (def?.options || []).map((opt: any) => {
             if (typeof opt === "string" || typeof opt === "number") {
               return { label: String(opt), value: opt };
@@ -150,9 +339,15 @@ export default function CollectionTaskCreate() {
               name={name}
               label={label}
               tooltip={description}
-              rules={rules}
+              rules={rules.length ? rules : undefined}
             >
-              <Select placeholder={description || `请选择${label}`} options={options} />
+              <Select
+                placeholder={
+                  description ||
+                  t("dataCollection.createTask.placeholders.selectWithLabel", { label })
+                }
+                options={options}
+              />
             </Form.Item>
           ));
           break;
@@ -172,9 +367,14 @@ export default function CollectionTaskCreate() {
               name={name.concat(0)}
               label={label}
               tooltip={description}
-              rules={rules}
+              rules={rules.length ? rules : undefined}
             >
-              <Input placeholder={description || `请输入${label}`} />
+              <Input
+                placeholder={
+                  description ||
+                  t("dataCollection.createTask.placeholders.enterWithLabel", { label })
+                }
+              />
             </Form.Item>
           ));
           break;
@@ -185,9 +385,14 @@ export default function CollectionTaskCreate() {
               name={name}
               label={label}
               tooltip={description}
-              rules={rules}
+              rules={rules.length ? rules : undefined}
             >
-              <Input placeholder={description || `请输入${label}`} />
+              <Input
+                placeholder={
+                  description ||
+                  t("dataCollection.createTask.placeholders.enterWithLabel", { label })
+                }
+              />
             </Form.Item>
           ));
       }
@@ -214,7 +419,9 @@ export default function CollectionTaskCreate() {
               <ArrowLeft className="w-4 h-4 mr-1" />
             </Button>
           </Link>
-          <h1 className="text-xl font-bold bg-clip-text">创建归集任务</h1>
+          <h1 className="text-xl font-bold bg-clip-text">
+            {t("dataCollection.createTask.title")}
+          </h1>
         </div>
       </div>
 
@@ -230,41 +437,53 @@ export default function CollectionTaskCreate() {
             }}
           >
             {/* 基本信息 */}
-            <h2 className="font-medium text-gray-900 text-lg mb-2">基本信息</h2>
+            <h2 className="font-medium text-gray-900 text-lg mb-2">
+              {t("dataCollection.createTask.basicInfo.title")}
+            </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
               <Form.Item
-                label="名称"
+                label={t("dataCollection.createTask.basicInfo.name")}
                 name="name"
-                rules={[{ required: true, message: "请输入任务名称" }]}
+                rules={[{ required: true, message: t("dataCollection.createTask.basicInfo.nameRequired") }]}
               >
-                <Input placeholder="请输入任务名称" />
+                <Input placeholder={t("dataCollection.createTask.basicInfo.namePlaceholder")} />
               </Form.Item>
 
               <Form.Item
-                label="超时时间（秒）"
+                label={t("dataCollection.createTask.basicInfo.timeout")}
                 name="timeoutSeconds"
-                rules={[{ required: true, message: "请输入超时时间" }]}
+                rules={[{ required: true, message: t("dataCollection.createTask.basicInfo.timeoutRequired") }]}
                 initialValue={3600}
               >
                 <InputNumber
                   className="w-full"
                   min={1}
                   precision={0}
-                  placeholder="默认 3600"
+                  placeholder={t("dataCollection.createTask.basicInfo.timeoutPlaceholder")}
                 />
               </Form.Item>
 
-              <Form.Item className="md:col-span-2" label="描述" name="description">
-                <TextArea placeholder="请输入任务描述" rows={2} />
+              <Form.Item
+                className="md:col-span-2"
+                label={t("dataCollection.createTask.basicInfo.description")}
+                name="description"
+              >
+                <TextArea
+                  placeholder={t("dataCollection.createTask.basicInfo.descriptionPlaceholder")}
+                  rows={2}
+                />
               </Form.Item>
             </div>
 
             {/* 同步配置 */}
             <h2 className="font-medium text-gray-900 pt-2 mb-1 text-lg">
-              同步配置
+              {t("dataCollection.createTask.syncConfig.title")}
             </h2>
-            <Form.Item name="syncMode" label="同步方式">
+            <Form.Item
+              name="syncMode"
+              label={t("dataCollection.createTask.syncConfig.syncMode.label")}
+            >
               <Radio.Group
                 value={newTask.syncMode}
                 options={syncModeOptions}
@@ -284,7 +503,7 @@ export default function CollectionTaskCreate() {
             {newTask.syncMode === SyncMode.SCHEDULED && (
               <Form.Item
                 label=""
-                rules={[{ required: true, message: "请输入Cron表达式" }]}
+                rules={[{ required: true, message: t("dataCollection.createTask.syncConfig.cronRequired") }]}
               >
                 <SimpleCronScheduler
                   className="px-2 py-1 rounded"
@@ -302,16 +521,16 @@ export default function CollectionTaskCreate() {
 
             {/* 模板配置 */}
             <h2 className="font-medium text-gray-900 pt-4 mb-2 text-lg">
-              模板配置
+              {t("dataCollection.createTask.templateConfig.title")}
             </h2>
 
             <Form.Item
-              label="选择模板"
+              label={t("dataCollection.createTask.templateConfig.selectTemplate")}
               name="templateId"
-              rules={[{ required: true, message: "请选择归集模板" }]}
+              rules={[{ required: true, message: t("dataCollection.createTask.templateConfig.selectTemplateRequired") }]}
             >
               <Select
-                placeholder="请选择归集模板"
+                placeholder={t("dataCollection.createTask.templateConfig.selectTemplatePlaceholder")}
                 loading={templatesLoading}
                 onChange={(templateId) => {
                   setSelectedTemplateId(templateId);
@@ -348,7 +567,7 @@ export default function CollectionTaskCreate() {
                 {getPropertyCountSafe(selectedTemplate.templateContent?.parameter) > 0 ? (
                   <>
                     <h3 className="font-medium text-gray-900 pt-2 mb-2">
-                      模板参数
+                      {t("dataCollection.createTask.templateParams.title")}
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
                     {renderTemplateFields(
@@ -362,7 +581,7 @@ export default function CollectionTaskCreate() {
                 {getPropertyCountSafe(selectedTemplate.templateContent?.reader) > 0 ? (
                   <>
                     <h3 className="font-medium text-gray-900 pt-2 mb-2">
-                      源端参数
+                      {t("dataCollection.createTask.sourceParams.title")}
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
                     {renderTemplateFields(
@@ -376,7 +595,7 @@ export default function CollectionTaskCreate() {
                 {getPropertyCountSafe(selectedTemplate.templateContent?.writer) > 0 ? (
                   <>
                     <h3 className="font-medium text-gray-900 pt-2 mb-2">
-                      目标端参数
+                      {t("dataCollection.createTask.targetParams.title")}
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
                     {renderTemplateFields(
@@ -391,9 +610,11 @@ export default function CollectionTaskCreate() {
           </Form>
         </div>
         <div className="flex gap-2 justify-end border-top p-4">
-          <Button onClick={() => navigate("/data/collection")}>取消</Button>
+          <Button onClick={() => navigate("/data/collection")}>
+            {t("dataCollection.createTask.cancel")}
+          </Button>
           <Button type="primary" onClick={handleSubmit}>
-            创建任务
+            {t("dataCollection.createTask.submit")}
           </Button>
         </div>
       </div>

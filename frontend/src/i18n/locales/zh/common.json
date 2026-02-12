@@ -1,0 +1,2615 @@
+{
+  "header": {
+    "simplifiedChinese": "简体中文",
+    "english": "English"
+  },
+  "user": {
+    "actions": {
+      "login": "登录",
+      "register": "注册",
+      "logout": "退出登录"
+    },
+    "messages": {
+      "loginSuccess": "登录成功",
+      "loginFailed": "登录失败，请稍后重试",
+      "signupSuccess": "注册成功，已自动登录",
+      "signupFailed": "注册失败，请稍后重试",
+      "logoutSuccess": "已退出登录",
+      "passwordMismatch": "两次输入的密码不一致"
+    },
+    "loginDialog": {
+      "title": "登录",
+      "description": "请输入您的用户名和密码登录系统",
+      "submitButton": "登录",
+      "noAccount": "还没有账号？",
+      "registerNow": "立即注册"
+    },
+    "signupDialog": {
+      "title": "注册",
+      "description": "创建您的账户以使用 DataMate 系统",
+      "submitButton": "注册",
+      "hasAccount": "已有账号？",
+      "loginNow": "立即登录"
+    },
+    "fields": {
+      "username": "用户名",
+      "email": "邮箱",
+      "password": "密码",
+      "confirmPassword": "确认密码"
+    },
+    "placeholders": {
+      "username": "请输入用户名",
+      "email": "请输入邮箱",
+      "password": "请输入密码",
+      "confirmPassword": "请再次输入密码"
+    },
+    "validations": {
+      "usernameRequired": "请输入用户名",
+      "emailRequired": "请输入邮箱",
+      "emailInvalid": "请输入有效的邮箱地址",
+      "passwordRequired": "请输入密码",
+      "passwordTooShort": "密码至少需要6个字符",
+      "confirmPasswordRequired": "请确认密码",
+      "passwordMismatch": "两次输入的密码不一致"
+    }
+  },
+  "dataCollection": {
+    "title": "数据归集",
+    "description": "创建、导入和管理数据集",
+    "tabs": {
+      "taskManagement": "任务管理",
+      "taskExecution": "执行记录",
+      "taskTemplate": "模板管理"
+    },
+    "taskManagement": {
+      "filters": {
+        "statusFilter": "状态筛选",
+        "allStatus": "全部状态",
+        "searchPlaceholder": "搜索任务名称..."
+      },
+      "columns": {
+        "taskName": "任务名称",
+        "status": "状态",
+        "template": "所用模板",
+        "syncMode": "同步方式",
+        "cronExpression": "Cron调度表达式",
+        "timeout": "超时时间",
+        "description": "描述",
+        "createdAt": "创建时间",
+        "updatedAt": "更新时间",
+        "actions": "操作"
+      },
+      "actions": {
+        "start": "启动",
+        "stop": "停止",
+        "executionRecords": "执行记录",
+        "delete": "删除"
+      },
+      "messages": {
+        "startSuccess": "任务启动请求已发送",
+        "stopSuccess": "任务停止请求已发送",
+        "deleteSuccess": "任务已删除",
+        "deleteConfirm": "确定要删除该任务吗？此操作不可撤销。",
+        "confirmDelete": "删除",
+        "cancel": "取消"
+      }
+    },
+    "templateManagement": {
+      "filters": {
+        "templateType": "模板类型",
+        "all": "全部",
+        "builtIn": "内置",
+        "custom": "自定义",
+        "searchPlaceholder": "搜索模板名称..."
+      },
+      "columns": {
+        "templateName": "模板名称",
+        "templateType": "模板类型",
+        "source": "源端",
+        "target": "目标端",
+        "description": "描述",
+        "createdAt": "创建时间",
+        "updatedAt": "更新时间"
+      },
+      "messages": {
+        "refreshFailed": "刷新失败"
+      }
+    },
+    "execution": {
+      "filters": {
+        "statusFilter": "状态筛选",
+        "allStatus": "全部状态",
+        "running": "运行中",
+        "success": "成功",
+        "failed": "失败",
+        "stopped": "停止",
+        "searchPlaceholder": "搜索任务名称..."
+      },
+      "duration": {
+        "minutesSuffix": "分钟",
+        "secondsSuffix": "秒"
+      },
+      "messages": {
+        "loadLogFailed": "日志加载失败"
+      },
+      "triggerType": {
+        "manual": "手动",
+        "scheduled": "定时",
+        "api": "API"
+      },
+      "columns": {
+        "taskName": "任务名称",
+        "status": "状态",
+        "startTime": "开始时间",
+        "endTime": "结束时间",
+        "duration": "执行时长",
+        "errorMessage": "错误信息",
+        "actions": "操作"
+      },
+      "actions": {
+        "viewLog": "查看日志"
+      },
+      "modal": {
+        "title": "执行日志",
+        "downloadLog": "下载日志",
+        "close": "关闭",
+        "loading": "Loading...",
+        "empty": "(empty)"
+      },
+      "datePicker": {
+        "startTime": "开始时间",
+        "endTime": "结束时间"
+      }
+    },
+    "createTask": {
+      "title": "创建归集任务",
+      "back": "返回",
+      "cancel": "取消",
+      "submit": "创建任务",
+      "actions": {
+        "formatJson": "格式化JSON"
+      },
+      "basicInfo": {
+        "title": "基本信息",
+        "name": "名称",
+        "namePlaceholder": "请输入任务名称",
+        "nameRequired": "请输入任务名称",
+        "timeout": "超时时间（秒）",
+        "timeoutPlaceholder": "默认 3600",
+        "timeoutRequired": "请输入超时时间",
+        "description": "描述",
+        "descriptionPlaceholder": "请输入任务描述"
+      },
+      "syncConfig": {
+        "title": "同步配置",
+        "syncMode": {
+          "label": "同步方式",
+          "once": "立即执行",
+          "scheduled": "定时执行"
+        },
+        "cronRequired": "请输入Cron表达式"
+      },
+      "templateConfig": {
+        "title": "模板配置",
+        "selectTemplate": "选择模板",
+        "selectTemplatePlaceholder": "请选择归集模板",
+        "selectTemplateRequired": "请选择归集模板"
+      },
+      "templateParams": {
+        "title": "模板参数"
+      },
+      "sourceParams": {
+        "title": "源端参数"
+      },
+      "targetParams": {
+        "title": "目标端参数"
+      },
+      "messages": {
+        "loadTemplatesFailed": "加载归集模板失败",
+        "createSuccess": "任务创建成功",
+        "errorWithDetail": "{{message}}：{{detail}}",
+        "jsonObjectRequired": "必须是JSON对象",
+        "jsonObjectInvalid": "请输入合法的JSON对象",
+        "jsonFormatError": "JSON格式错误",
+        "jsonFormatErrorWithMessage": "JSON格式错误：{{message}}"
+      },
+      "placeholders": {
+        "enter": "请输入",
+        "select": "请选择",
+        "enterWithLabel": "请输入{{label}}",
+        "selectWithLabel": "请选择{{label}}"
+      }
+    },
+    "scheduler": {
+      "monthDaySuffix": "日",
+      "labels": {
+        "executionPeriod": "执行周期",
+        "executionDate": "执行日期",
+        "executionTime": "执行时间",
+        "selectWeekday": "选择周几",
+        "selectDate": "选择日期",
+        "selectTime": "选择时间"
+      },
+      "periods": {
+        "once": "仅执行一次",
+        "daily": "每天执行",
+        "weekly": "每周执行",
+        "monthly": "每月执行"
+      },
+      "weekdays": {
+        "sunday": "周日",
+        "monday": "周一",
+        "tuesday": "周二",
+        "wednesday": "周三",
+        "thursday": "周四",
+        "friday": "周五",
+        "saturday": "周六"
+      },
+      "timePresets": {
+        "morning9": "上午 9:00",
+        "noon12": "中午 12:00",
+        "afternoon2": "下午 2:00",
+        "afternoon6": "下午 6:00",
+        "evening8": "晚上 8:00",
+        "midnight0": "午夜 0:00"
+      }
+    }
+  },
+  "dataManagement": {
+    "title": "数据管理",
+    "description": "创建、导入和管理数据集",
+    "actions": {
+      "createDataset": "创建数据集",
+      "edit": "编辑",
+      "import": "导入",
+      "importData": "导入数据",
+      "download": "下载",
+      "delete": "删除",
+      "refresh": "刷新",
+      "export": "导出",
+      "batchExport": "批量导出",
+      "batchDelete": "批量删除",
+      "rename": "重命名",
+      "createFolder": "新建文件夹",
+      "cancel": "取消",
+      "confirm": "确定"
+    },
+    "stats": {
+      "totalDatasets": "数据集总数",
+      "totalFiles": "文件总数",
+      "totalSize": "总大小",
+      "text": "文本",
+      "image": "图像",
+      "audio": "音频",
+      "video": "视频"
+    },
+    "filters": {
+      "type": "类型",
+      "status": "状态",
+      "tags": "标签"
+    },
+    "search": {
+      "placeholder": "搜索数据集名称、描述"
+    },
+    "columns": {
+      "name": "名称",
+      "type": "类型",
+      "status": "状态",
+      "size": "大小",
+      "fileCount": "文件数",
+      "storagePath": "存储路径",
+      "createdAt": "创建时间",
+      "updatedAt": "更新时间",
+      "actions": "操作",
+      "fileName": "文件名",
+      "fileSize": "大小",
+      "filesInFolder": "包含文件数",
+      "uploadTime": "上传时间",
+      "tags": "标签",
+      "tagsUpdatedAt": "标签更新时间"
+    },
+    "formLabels": {
+      "name": "名称",
+      "description": "描述",
+      "type": "类型",
+      "tags": "标签",
+      "collectionTask": "关联归集任务",
+      "dataSource": "数据源",
+      "autoExtract": "自动解压上传的压缩包",
+      "uploadFiles": "上传文件 / 文件夹",
+      "databaseType": "数据库类型",
+      "tableName": "表名",
+      "connectionString": "连接字符串",
+      "obsEndpoint": "Endpoint",
+      "obsBucket": "Bucket",
+      "obsAccessKey": "Access Key",
+      "obsSecretKey": "Secret Key"
+    },
+    "placeholders": {
+      "datasetName": "输入数据集名称",
+      "datasetDescription": "描述数据集的用途和内容",
+      "selectTags": "请选择标签",
+      "selectCollectionTask": "请选择归集任务",
+      "selectDataSource": "请选择数据源",
+      "selectType": "请选择数据集类型",
+      "obsEndpoint": "obs.cn-north-4.myhuaweicloud.com",
+      "obsBucket": "my-bucket",
+      "databaseTable": "dataset_table",
+      "databaseConnection": "数据库连接字符串",
+      "fileName": "请输入文件名称",
+      "folderName": "请输入文件夹名称"
+    },
+    "validation": {
+      "nameRequired": "请输入数据集名称",
+      "typeRequired": "请选择数据集类型",
+      "filesRequired": "请上传文件或文件夹"
+    },
+    "messages": {
+      "createSuccess": "数据集创建成功",
+      "createFailed": "数据集创建失败，请重试",
+      "updateSuccess": "数据集更新成功",
+      "updateFailed": "数据集更新失败，请重试",
+      "deleteSuccess": "数据删除成功",
+      "downloadSuccess": "数据集下载成功",
+      "refreshSuccess": "数据已刷新",
+      "fileDownloadSuccess": "文件下载成功"
+    },
+    "confirm": {
+      "deleteDatasetTitle": "确认删除该数据集？",
+      "deleteDatasetDesc": "删除后该数据集将无法恢复，请谨慎操作。",
+      "deleteFolderTitle": "确认删除文件夹？",
+      "deleteFolderDesc": "删除文件夹 \"{{name}}\" 将同时删除其中的所有文件和子文件夹，此操作不可恢复。",
+      "deleteConfirm": "删除",
+      "deleteCancel": "取消"
+    },
+    "detail": {
+      "breadcrumb": "数据管理",
+      "title": "数据集详情",
+      "tabOverview": "概览",
+      "tabLineage": "数据血缘",
+      "tabQuality": "数据质量",
+      "sectionBasicInfo": "基本信息",
+      "sectionFileList": "文件列表",
+      "selectedFiles": "已选择 {{count}} 个文件",
+      "goUp": "返回上一级",
+      "currentPath": "当前路径: {{path}}",
+      "totalItems": "共 {{total}} 条",
+      "previewTitle": "文件预览：{{name}}",
+      "previewEmpty": "暂无预览内容，或当前文件类型暂不支持预览。",
+      "previewInfoTitle": "文件信息",
+      "editTitle": "编辑数据集 - {{name}}"
+    },
+    "labels": {
+      "id": "ID",
+      "name": "名称",
+      "fileCount": "文件数",
+      "dataSize": "数据大小",
+      "type": "类型",
+      "status": "状态",
+      "creator": "创建者",
+      "storagePath": "存储路径",
+      "storageName": "存储名称",
+      "createdAt": "创建时间",
+      "updatedAt": "更新时间",
+      "description": "描述",
+      "fileName": "文件名",
+      "originalName": "原始文件名",
+      "fileType": "文件类型",
+      "fileSize": "文件大小",
+      "tags": "标签",
+      "tagsUpdatedAt": "标签更新时间",
+      "uploadTime": "上传时间",
+      "uploadedBy": "上传者",
+      "filePath": "文件路径",
+      "annotation": "标注信息"
+    },
+    "defaults": {
+      "unknown": "未知",
+      "none": "无",
+      "empty": "-",
+      "unnamedFile": "未命名文件"
+    },
+    "lineage": {
+      "title": "数据血缘图",
+      "stats": "{{nodes}} 个节点 · {{edges}} 条边",
+      "legendDatasource": "数据源",
+      "legendDataset": "数据集",
+      "legendModel": "模型",
+      "legendKnowledge": "知识库",
+      "emptyTitle": "暂无血缘数据",
+      "emptyDesc": "完成归集或关联流程后将自动生成血缘图",
+      "edgeTypeCollection": "数据归集",
+      "edgeTypeCleaning": "数据处理",
+      "edgeTypeLabeling": "数据标注",
+      "edgeTypeSynthesis": "数据合成",
+      "edgeTypeRatio": "数据配比",
+      "edgeTypeDefault": "处理流程",
+      "detailBasicInfo": "基本信息",
+      "detailId": "ID:",
+      "detailName": "名称:",
+      "detailStatus": "状态:",
+      "detailFileCount": "文件数:",
+      "detailDataSize": "数据大小:",
+      "detailUpdateTime": "更新时间:",
+      "detailDescription": "描述",
+      "detailUpstream": "上游依赖",
+      "detailDownstream": "下游影响",
+      "detailNoUpstream": "无上游依赖",
+      "detailNoDownstream": "无下游影响",
+      "processDetail": "流程详情",
+      "processId": "流程ID:",
+      "relationships": "上下游关系",
+      "processUpstream": "上游:",
+      "processDownstream": "下游:",
+      "processDescription": "描述",
+      "processEmpty": "无流程描述",
+      "nodeTypeDatasource": "数据源",
+      "nodeTypeDataset": "数据集",
+      "nodeTypeModel": "模型",
+      "nodeTypeKnowledge": "知识库",
+      "filesCount": "{{count}} 个文件 · {{size}}",
+      "statusRunning": "运行中",
+      "statusStopped": "已停止",
+      "statusActive": "活跃",
+      "statusInactive": "未激活",
+      "statusDraft": "草稿"
+    },
+    "quality": {
+      "titleDistribution": "质量分布",
+      "titleIntegrity": "数据完整性",
+      "metricImageClarity": "图像清晰度",
+      "metricColorConsistency": "色彩一致性",
+      "metricAnnotationCompleteness": "标注完整性",
+      "metricTokenQuality": "分词/Token质量",
+      "metricLabelConsistency": "标签一致性",
+      "metricMetadataCompleteness": "元数据完整性",
+      "metricMissingValueControl": "缺失值比例控制",
+      "metricTypeConsistency": "类型一致性",
+      "metricUniqueness": "唯一性/去重",
+      "metricFileIntegrity": "文件完整性",
+      "metricFieldIntegrity": "字段完整性",
+      "metricColumnIntegrity": "列完整性",
+      "metricDuplicateRate": "重复率",
+      "recommendationTitle": "质量改进建议",
+      "recommendationReviewLowQuality": "建议对{{count}}项低质量样本进行复查或重新采集",
+      "recommendationSupplementMetadata": "检查并补充缺失的元数据字段（现有缺失：{{missing}}）",
+      "recommendationBalanceDistribution": "考虑增加更多低代表性样本以平衡数据分布",
+      "imageClarity": "图像清晰度",
+      "colorConsistency": "色彩一致性",
+      "annotationCompleteness": "标注完整性",
+      "tokenQuality": "分词/Token质量",
+      "labelConsistency": "标签一致性",
+      "metadataCompleteness": "元数据完整性",
+      "missingValueControl": "缺失值比例控制",
+      "typeConsistency": "类型一致性",
+      "uniqueness": "唯一性/去重",
+      "fileIntegrity": "文件完整性",
+      "fieldIntegrity": "字段完整性",
+      "columnIntegrity": "列完整性",
+      "duplicateRate": "重复率",
+      "labelDistribution": {
+        "title": "标签分布明细",
+        "category": "类别",
+        "labelName": "标签名称",
+        "count": "数量",
+        "percentage": "占比",
+        "noData": "暂无标签分布数据",
+        "noDataSubtitle": "暂无标签分布数据可用",
+        "statisticsTitle": "数据集标签统计",
+        "statisticsSummary": "共 {{categoryCount}} 个类别，{{totalLabels}} 个标签样本",
+        "detailsCardTitle": "标签分布明细",
+        "totalLabels": "总计: {{count}} 个标签",
+        "moreLabels": "还有 {{count}} 个标签..."
+      }
+    },
+    "import": {
+      "title": "导入数据",
+      "uploadFileTitle": "本地文件上传",
+      "uploadFileHint": "拖拽文件到此处或点击选择文件",
+      "uploadFolderTitle": "本地文件夹上传",
+      "uploadFolderHint": "拖拽文件夹到此处或点击选择文件夹",
+      "fileLabel": "文件：",
+      "folderLabel": "文件夹：",
+      "warningTypeMismatch": "当前数据集类型为 {{type}}，本次选择的部分文件格式与该类型不太匹配，建议确认是否为预期数据。",
+      "warningUseFolderUpload": "如需上传文件夹，请使用右侧\"本地文件夹上传\"区域。",
+      "warningUseFileUpload": "如需上传单个文件，请使用左侧\"本地文件上传\"区域。",
+      "obsEndpoint": "Endpoint",
+      "obsBucket": "Bucket",
+      "obsAccessKey": "Access Key",
+      "obsSecretKey": "Secret Key",
+      "dbType": "数据库类型",
+      "dbTableName": "表名",
+      "dbConnectionString": "连接字符串",
+      "dbTypeMysql": "MySQL",
+      "dbTypePostgres": "PostgreSQL",
+      "dbTypeMongo": "MongoDB",
+      "obsAccessKeyPlaceholder": "Access Key",
+      "obsSecretKeyPlaceholder": "Secret Key",
+      "validation": {
+        "selectDataSource": "请选择数据源"
+      },
+      "autoExtract": "自动解压上传的压缩包",
+      "uploadFiles": "上传文件 / 文件夹",
+      "unnamedFile": "未命名文件"
+    },
+    "datasetTypes": {
+      "text": "文本",
+      "image": "图像",
+      "audio": "音频",
+      "video": "视频"
+    },
+    "datasetTypeDesc": {
+      "text": "用于处理和分析文本数据的数据集",
+      "image": "用于处理和分析图像数据的数据集",
+      "audio": "用于处理和分析音频数据的数据集",
+      "video": "用于处理和分析视频数据的数据集"
+    },
+    "datasetSubTypes": {
+      "textDocument": "文档",
+      "textWeb": "网页",
+      "textDialog": "对话",
+      "imageImage": "图像",
+      "imageCaption": "图像+caption",
+      "audioAudio": "音频",
+      "audioJsonl": "音频+JSONL",
+      "videoVideo": "视频",
+      "videoJsonl": "视频+JSONL"
+    },
+    "datasetSubTypeDesc": {
+      "textDocument": "用于存储和处理各种文档格式的文本数据集",
+      "textWeb": "用于存储和处理网页数据集",
+      "textDialog": "用于存储和处理对话数据的数据集",
+      "imageImage": "用于大规模图像预训练模型的数据集",
+      "imageCaption": "用于图像标题生成的数据集",
+      "audioAudio": "用于大规模音频预训练模型的数据集",
+      "audioJsonl": "用于大规模音频预训练模型的数据集",
+      "videoVideo": "用于大规模视频预训练模型的数据集",
+      "videoJsonl": "用于大规模视频预训练模型的数据集"
+    },
+    "datasetStatus": {
+      "active": "活跃",
+      "processing": "处理中",
+      "inactive": "未激活",
+      "draft": "草稿"
+    },
+    "dataSources": {
+      "upload": "本地上传",
+      "collection": "归集任务导入 "
+    }
+  },
+  "common": {
+    "settings": {
+      "title": "设置"
+    },
+    "taskCenter": {
+      "title": "任务中心"
+    },
+    "actions": {
+      "createTask": "创建任务",
+      "actions": "操作",
+      "openSidebar": "展开侧边栏",
+      "closeSidebar": "收起侧边栏"
+    },
+    "placeholders": {
+      "empty": "-"
+    },
+    "status": {
+      "task": {
+        "running": "运行",
+        "stopped": "停止",
+        "failed": "错误",
+        "completed": "成功",
+        "draft": "草稿",
+        "pending": "就绪",
+        "paused": "已暂停"
+      }
+    }
+  },
+  "ratioTask": {
+    "home": {
+      "title": "配比任务",
+      "createTask": "创建配比任务",
+      "filters": {
+        "statusFilter": "状态筛选",
+        "allStatus": "全部状态",
+        "pending": "等待中",
+        "running": "运行中",
+        "success": "已完成",
+        "failed": "失败",
+        "paused": "已暂停"
+      },
+      "columns": {
+        "taskName": "任务名称",
+        "status": "状态",
+        "targetCount": "目标数量",
+        "targetDataset": "目标数据集",
+        "createdAt": "创建时间",
+        "actions": "操作"
+      },
+      "messages": {
+        "deleteSuccess": "任务删除成功",
+        "deleteFailed": "任务删除失败，请稍后重试"
+      },
+      "confirm": {
+        "deleteTitle": "确认删除该任务？",
+        "deleteDesc": "删除后该任务将无法恢复，请谨慎操作。",
+        "okText": "删除",
+        "cancelText": "取消"
+      },
+      "searchPlaceholder": "搜索任务名称..."
+    },
+    "create": {
+      "title": "创建配比任务",
+      "cancel": "取消",
+      "submit": "创建",
+      "basicInfo": {
+        "nameLabel": "任务名称",
+        "namePlaceholder": "输入配比任务名称",
+        "nameRequired": "请输入配比任务名称",
+        "totalTargetLabel": "目标总数量",
+        "totalTargetPlaceholder": "目标总数量",
+        "totalTargetRequired": "请输入目标总数量",
+        "descriptionLabel": "任务描述",
+        "descriptionPlaceholder": "描述配比任务的目的和要求"
+      },
+      "selectDataset": {
+        "title": "选择数据集",
+        "selectedCount": "已选择: {{current}}/{{total}}",
+        "clearSelection": "清空选择",
+        "searchPlaceholder": "搜索数据集",
+        "loading": "正在加载数据集...",
+        "noLabelDist": "未检测到标签分布",
+        "loadingLabelDist": "加载标签分布..."
+      },
+      "ratioConfig": {
+        "title": "配比配置",
+        "configuredCount": "已配置:{{configured}}/{{total}}条",
+        "averageDistribute": "平均分配",
+        "selectDatasetFirst": "请先选择数据集",
+        "totalRatioCount": "总配比数量:",
+        "targetCount": "目标数量:",
+        "label": "标签",
+        "labelValue": "标签值",
+        "labelUpdateTime": "标签更新时间",
+        "quantity": "数量",
+        "actions": "操作",
+        "selectLabel": "选择标签",
+        "selectLabelValue": "选择标签值",
+        "dateStart": "开始时间",
+        "dateEnd": "结束时间",
+        "delete": "删除",
+        "emptyText": "暂无配比项，请添加",
+        "addRatioItem": "添加配比项",
+        "itemSuffix": "条"
+      },
+      "messages": {
+        "configRequired": "请配置配比项",
+        "createSuccess": "配比任务创建成功",
+        "createFailed": "配比任务创建失败，请重试"
+      }
+    },
+    "detail": {
+      "homeLink": "首页",
+      "detailTitle": "配比任务详情",
+      "tabs": {
+        "overview": "概览"
+      },
+      "labels": {
+        "id": "ID",
+        "name": "名称",
+        "targetCount": "目标数量",
+        "targetDataset": "目标数据集",
+        "status": "状态",
+        "createdBy": "创建者",
+        "createdAt": "创建时间",
+        "updatedAt": "更新时间",
+        "description": "描述",
+        "basicInfo": "基本信息"
+      },
+      "messages": {
+        "refreshSuccess": "任务数据刷新成功",
+        "deleteSuccess": "配比任务删除成功",
+        "taskStarted": "任务已启动",
+        "taskStopped": "任务已停止"
+      },
+      "operations": {
+        "refresh": "刷新",
+        "delete": "删除"
+      },
+      "confirm": {
+        "deleteTitle": "确认删除该配比任务？",
+        "deleteDesc": "删除后该任务将无法恢复，请谨慎操作。",
+        "okText": "删除",
+        "cancelText": "取消"
+      },
+      "metrics": {
+        "totalData": "总数据量",
+        "ratioSuccessRate": "配比成功率",
+        "processSpeed": "处理速度",
+        "activeUsers": "活跃用户"
+      },
+      "chart": {
+        "ratioTrendTitle": "配比趋势分析",
+        "successRateCurve": "成功率曲线",
+        "ratioRate": "配比率",
+        "successCount": "成功数",
+        "failCount": "失败数",
+        "monthJan": "一月",
+        "monthFeb": "二月",
+        "monthMar": "三月",
+        "monthApr": "四月",
+        "monthMay": "五月",
+        "monthJun": "六月"
+      },
+      "ratioDisplay": {
+        "title": "数据集配比信息",
+        "datasetUserBehavior": "用户行为数据集",
+        "datasetTransaction": "交易记录数据集",
+        "datasetProduct": "产品信息数据集",
+        "datasetReview": "评价反馈数据集"
+      }
+    }
+  },
+  "tagManagement": {
+    "manageTags": "标签管理",
+    "addTag": "添加标签",
+    "tagName": "标签名称",
+    "tagNamePlaceholder": "输入标签名称...",
+    "createTag": "添加",
+    "selectExistingTags": "选择现有标签",
+    "createNewTag": "创建新标签",
+    "newTagNamePlaceholder": "输入新标签名称...",
+    "noAvailableTags": "没有可用标签，请先创建标签。",
+    "cancel": "取消",
+    "messages": {
+      "fetchFailed": "获取标签失败",
+      "addSuccess": "标签添加成功",
+      "addFailed": "添加标签失败",
+      "deleteSuccess": "标签删除成功",
+      "deleteFailed": "删除标签失败",
+      "updateSuccess": "标签更新成功",
+      "updateFailed": "更新标签失败"
+    },
+    "uncategorized": "未分类"
+  },
+  "dataEvaluation": {
+    "home": {
+      "title": "数据评估",
+      "description": "质量分析、性能评估和偏见检测",
+      "createTask": "创建评估任务",
+      "searchPlaceholder": "搜索任务名称...",
+      "filters": {
+        "status": "状态",
+        "taskType": "任务类型",
+        "evalMethod": "评估方式"
+      },
+      "columns": {
+        "taskName": "任务名称",
+        "taskType": "任务类型",
+        "evalMethod": "评估方式",
+        "status": "状态",
+        "progress": "进度",
+        "createdAt": "创建时间",
+        "actions": "操作"
+      },
+      "messages": {
+        "deleteSuccess": "任务删除成功",
+        "deleteFailed": "任务删除失败，请稍后重试"
+      },
+      "confirm": {
+        "deleteTitle": "确认删除该任务？",
+        "deleteDesc": "删除后该任务将无法恢复，请谨慎操作。",
+        "okText": "删除",
+        "cancelText": "取消"
+      }
+    },
+    "create": {
+      "title": "创建评估任务",
+      "addDimension": "添加维度",
+      "delete": "删除",
+      "cancel": "取消",
+      "submit": "创建任务",
+      "viewPrompt": "查看评估提示词",
+      "form": {
+        "name": "任务名称",
+        "taskType": "任务类型",
+        "description": "任务描述",
+        "selectDataset": "选择数据集",
+        "evalMethod": "评估方式",
+        "evalModel": "评估模型",
+        "dimensions": "评估维度",
+        "dimension": "维度",
+        "descriptionCol": "描述",
+        "actions": "操作"
+      },
+      "placeholders": {
+        "name": "输入任务名称",
+        "description": "输入任务描述（可选）",
+        "dataset": "请选择要评估的数据集",
+        "model": "请选择模型",
+        "dimensionName": "输入维度名称",
+        "dimensionDesc": "输入维度描述"
+      },
+      "messages": {
+        "nameRequired": "请输入任务名称",
+        "taskTypeRequired": "请选择任务类型",
+        "datasetRequired": "请选择数据集",
+        "modelRequired": "请选择评估模型",
+        "dimensionNameRequired": "请输入维度名称",
+        "keepAtLeastOneDimension": "至少需要保留一个评估维度",
+        "fetchDatasetsFailed": "获取数据集列表失败",
+        "fetchModelsFailed": "获取模型列表失败",
+        "fetchDimensionsFailed": "获取评估维度失败",
+        "addDimensionFirst": "请先添加评估维度",
+        "createSuccess": "评估任务创建成功",
+        "createFailed": "创建评估任务失败"
+      },
+      "taskTypes": {
+        "qa": "QA评估",
+        "cot": "COT评估"
+      },
+      "evalMethods": {
+        "auto": "模型自动评估",
+        "manual": "人工评估"
+      },
+      "source": {
+        "dataset": "数据集 - ",
+        "synthesis": "合成任务 - ",
+        "default": "-"
+      }
+    },
+    "preview": {
+      "title": "评估提示词预览",
+      "copy": "复制",
+      "close": "关闭",
+      "copiedMessage": "已复制到剪贴板"
+    },
+    "detail": {
+      "breadcrumb": {
+        "home": "数据评估",
+        "detail": "数据评估详情"
+      },
+      "tabs": {
+        "overview": "概览",
+        "evaluationItems": "评估详情"
+      },
+      "basicInfo": "基本信息",
+      "taskNotFound": "任务不存在",
+      "messages": {
+        "fetchTaskFailed": "获取任务详情失败",
+        "fetchItemsFailed": "获取评估条目失败"
+      },
+      "labels": {
+        "id": "ID",
+        "name": "名称",
+        "taskType": "评估类型",
+        "evalMethod": "评估方式",
+        "status": "状态",
+        "evalData": "评估数据",
+        "model": "模型",
+        "createdBy": "创建者",
+        "createdAt": "创建时间",
+        "updatedAt": "更新时间",
+        "description": "描述",
+        "dimensions": "评估维度",
+        "dimension": "维度",
+        "dimensionDesc": "描述"
+      }
+    },
+    "detailItems": {
+      "columns": {
+        "fileName": "文件名",
+        "totalCount": "总条目",
+        "evaluatedCount": "已评估",
+        "pendingCount": "待评估",
+        "evalObject": "评估对象",
+        "evalResult": "评估结果"
+      },
+      "backToFileList": "返回文件列表",
+      "notEvaluated": "未评估",
+      "emptyTask": "任务不存在",
+      "fileId": "文件ID：{{id}}",
+      "totalItems": "共 {{total}} 条"
+    },
+    "evaluate": {
+      "breadcrumb": {
+        "manual": "人工评估"
+      },
+      "manualTaskDesc": "人工评估任务",
+      "stats": {
+        "dataset": "数据集",
+        "sliceMethod": "切片方法",
+        "sampleCount": "样本数量",
+        "createdAt": "创建时间"
+      },
+      "progress": {
+        "current": "当前进度: {{current}} / {{total}}",
+        "complete": "{{percent}}% 完成"
+      },
+      "sliceContent": "切片内容",
+      "sliceLabel": "切片 {{index}}",
+      "sourceFile": "来源文件:",
+      "processingMethod": "处理方法:",
+      "position": "位置:",
+      "section": "章节:",
+      "contentPreview": "内容预览",
+      "prev": "上一个",
+      "next": "下一个",
+      "dimensions": "评估维度",
+      "dimensionsHint": "请为每个维度进行1-5星评分",
+      "evaluationNote": "评估备注",
+      "notePlaceholder": "请输入对该切片的评估备注和建议...",
+      "saveAndNext": "保存并下一个",
+      "completeEval": "完成评估",
+      "scoreAllDimensions": "请为所有维度评分后再保存"
+    },
+    "report": {
+      "breadcrumb": {
+        "report": "评估报告"
+      },
+      "exportReport": "导出报告",
+      "labels": {
+        "overallScore": "总体评分",
+        "sampleCount": "评估样本数",
+        "evalMethod": "评估方式",
+        "progress": "完成进度",
+        "manual": "人工",
+        "model": "模型"
+      },
+      "evalResult": "评估结果",
+      "dimensionScores": "维度评分",
+      "qualityInterpretation": "质量分数解读",
+      "qualityExcellent": "90-100分: 优秀，质量很高",
+      "qualityGood": "80-89分: 良好，质量较好",
+      "qualityFair": "70-79分: 一般，需要改进",
+      "qualityPoor": "60-69分: 较差，需要重点关注",
+      "sliceInfo": "切片信息",
+      "sliceThreshold": "切片阈值:",
+      "sliceSampleCount": "抽样数量:",
+      "sliceMethod": "切片方法:",
+      "evalTime": "评估时间:",
+      "dimensions": "评估维度",
+      "qaPairs": "QA对详情",
+      "question": "问题:",
+      "answer": "回答:",
+      "score": "评分:",
+      "scoreSuffix": "分"
+    }
+  },
+  "dataAnnotation": {
+    "home": {
+      "title": "数据标注",
+      "description": "对数据进行标注和标记",
+      "tabs": {
+        "tasks": "标注任务",
+        "templates": "标注模板"
+      },
+      "columns": {
+        "taskName": "任务名称",
+        "type": "类型",
+        "taskId": "任务ID",
+        "dataset": "数据集",
+        "model": "模型",
+        "confidence": "置信度",
+        "targetClasses": "目标类别",
+        "autoStatus": "自动标注状态",
+        "autoProgress": "自动标注进度",
+        "detectedObjects": "检测对象数",
+        "createdAt": "创建时间",
+        "updatedAt": "更新时间",
+        "actions": "操作"
+      },
+      "actions": {
+        "annotate": "标注",
+        "edit": "编辑",
+        "syncToDb": "同步到数据库",
+        "exportResult": "导出标注结果",
+        "delete": "删除",
+        "moreActions": "更多操作"
+      },
+      "confirm": {
+        "deleteTaskTitle": "确认删除标注任务「{{name}}」吗？",
+        "deleteTaskContent1": "删除标注任务不会删除对应数据集。",
+        "deleteTaskContent2": "如需保留当前标注结果，请在同步后再删除。",
+        "deleteAutoTaskTitle": "确认删除自动标注任务「{{name}}」吗？",
+        "deleteAutoTaskContent": "删除任务后，已生成的标注结果不会被删除。",
+        "deleteOkText": "删除",
+        "deleteCancelText": "取消",
+        "syncTitle": "确认同步标注任务「{{name}}」吗？",
+        "syncContent1": "标注工程中文件列表将与数据集保持一致，差异项将会被修正。",
+        "syncContent2": "标注工程中的标签与数据集中标签将进行合并，冲突项将以最新一次内容为准。",
+        "syncOkText": "同步",
+        "syncCancelText": "取消",
+        "batchSyncTitle": "确认同步所选 {{count}} 个标注任务吗？",
+        "batchDeleteTitle": "确认删除所选 {{count}} 个标注任务吗？"
+      },
+      "messages": {
+        "deleteSuccess": "映射删除成功",
+        "deleteFailed": "删除失败，请稍后重试",
+        "autoTaskDeleteSuccess": "自动标注任务删除成功",
+        "batchSyncSuccess": "批量同步请求已发送",
+        "batchSyncFailed": "批量同步失败，请稍后重试",
+        "batchDeleteSuccess": "批量删除已完成",
+        "batchDeleteFailed": "批量删除失败，请稍后重试",
+        "syncRequestSent": "任务同步请求已发送",
+        "syncFailed": "同步失败，请稍后重试",
+        "cannotJumpNoBase": "无法跳转到 Label Studio：未配置 Label Studio 基础 URL",
+        "cannotJumpNoMapping": "无法跳转到 Label Studio：该映射未绑定标注项目",
+        "cannotJumpError": "无法跳转到 Label Studio：发生错误，请检查配置或控制台日志",
+        "cannotJumpAutoNoDataset": "该自动标注任务未绑定数据集，无法跳转 Label Studio",
+        "cannotJumpAutoNoProject": "未找到对应的标注工程，请先为该任务或数据集创建标注项目",
+        "autoTaskNotFound": "未找到对应的自动标注任务",
+        "taskNotFound": "未找到对应的标注任务",
+        "fetchAutoTasksFailed": "获取自动标注任务失败",
+        "syncToDbTitle": "确认将「{{name}}」在 Label Studio 中的标注结果同步到数据库吗？",
+        "syncToDbContent1": "此操作会根据 Label Studio 中的任务数据覆盖当前文件标签与标注信息。",
+        "syncToDbContent2": "同步完成后，可在数据管理的文件详情中查看最新标签与标注。",
+        "syncToDbLoading": "正在从 Label Studio 同步标注到数据库...",
+        "syncToDbSuccess": "同步完成",
+        "syncToDbFailed": "同步失败，请稍后重试",
+        "batchSyncManualOnly": "请选择手动标注任务进行同步"
+      },
+      "searchPlaceholder": "搜索任务名称、描述",
+      "autoStatusLabels": {
+        "pending": "等待中",
+        "running": "处理中",
+        "completed": "已完成",
+        "failed": "失败",
+        "cancelled": "已取消"
+      },
+      "autoModelSizeLabels": {
+        "n": "YOLOv8n (最快)",
+        "s": "YOLOv8s",
+        "m": "YOLOv8m",
+        "l": "YOLOv8l (推荐)",
+        "x": "YOLOv8x (最精确)"
+      },
+      "batchSync": "批量同步",
+      "batchDelete": "批量删除",
+      "createTask": "创建标注任务",
+      "manualAnnotation": "手动标注",
+      "autoAnnotation": "自动标注",
+      "allCategories": "全部类别",
+      "categoriesCount": "{{count}} 个类别",
+      "editDataset": "编辑任务数据集",
+      "editTask": "编辑任务"
+    },
+    "create": {
+      "title": "创建标注任务",
+      "back": "返回",
+      "cancel": "取消",
+      "submit": "创建任务",
+      "basicInfo": "基本信息",
+      "form": {
+        "name": "任务名称",
+        "namePlaceholder": "输入任务名称",
+        "nameRequired": "请输入任务名称",
+        "nameMinLength": "任务名称至少需要 3 个字符（不含首尾空格，Label Studio 限制）",
+        "nameMaxLength": "任务名称不能超过100个字符",
+        "description": "任务描述",
+        "descriptionPlaceholder": "详细描述标注任务的要求和目标",
+        "dataset": "选择数据集",
+        "datasetRequired": "请选择数据集",
+        "template": "标注模板",
+        "templateRequired": "请选择标注模板",
+        "noTemplatesAvailable": "暂无可用模板，请先创建模板",
+        "selectTemplate": "请选择标注模板",
+        "noTemplatesFound": "暂无模板，请前往「标注模板」页面创建",
+        "selectDatasetAndFiles": "选择数据集和文件",
+        "currentDataset": "当前数据集：{{name}} - 已选择 {{count}} 个文件",
+        "currentDatasetImages": "当前数据集：{{name}} - 已选择 {{count}} 个图像文件",
+        "modelSize": "模型规模",
+        "modelSizeRequired": "请选择模型规模",
+        "confThreshold": "置信度阈值",
+        "confThresholdRequired": "请选择置信度阈值",
+        "targetClasses": "目标类别",
+        "selectAllClasses": "选中所有类别",
+        "selectTargetClasses": "选择目标类别"
+      },
+      "templateCategories": {
+        "cv": "计算机视觉",
+        "nlp": "自然语言处理"
+      },
+      "customTemplate": "自定义模板",
+      "customTemplateDesc": "创建符合特定需求的标注模板",
+      "selectedTemplate": "已选择模板",
+      "templateSelection": "模板选择",
+      "manual": "手动标注",
+      "auto": "自动标注",
+      "ok": "确定",
+      "messages": {
+        "selectAtLeastOneFile": "请至少选择一个文件",
+        "selectAtLeastOneImageFile": "请至少选择一个图像文件",
+        "createSuccess": "创建标注任务成功",
+        "createFailed": "创建失败，请稍后重试",
+        "autoCreateSuccess": "自动标注任务创建成功",
+        "autoCreateFailed": "创建自动标注任务失败",
+        "datasetTypeFiltered": "已根据模板类型筛选数据集，请重新选择数据集和文件"
+      }
+    },
+    "template": {
+      "title": "标注模板",
+      "create": "创建模板",
+      "filters": {
+        "category": "分类",
+        "dataType": "数据类型",
+        "labelingType": "标注类型",
+        "builtIn": "模板类型"
+      },
+      "columns": {
+        "name": "模板名称",
+        "description": "描述",
+        "dataType": "数据类型",
+        "labelingType": "标注类型",
+        "category": "分类",
+        "builtIn": "类型",
+        "version": "版本",
+        "createdAt": "创建时间",
+        "actions": "操作"
+      },
+      "messages": {
+        "deleteSuccess": "模板删除成功",
+        "deleteFailed": "删除模板失败",
+        "deleteConfirm": "确定要删除这个模板吗？",
+        "confirmDelete": "确定",
+        "cancelDelete": "取消"
+      },
+      "actions": {
+        "viewDetail": "查看详情",
+        "edit": "编辑",
+        "delete": "删除"
+      },
+      "searchPlaceholder": "搜索模板名称、描述"
+    },
+    "autoAnnotation": {
+      "title": "自动标注",
+      "createTask": "创建自动标注任务",
+      "columns": {
+        "name": "任务名称",
+        "dataset": "数据集",
+        "modelSize": "模型规模",
+        "confThreshold": "置信度",
+        "targetClasses": "目标类别",
+        "status": "状态",
+        "progress": "进度",
+        "detectedObjects": "检测对象数",
+        "createdAt": "创建时间",
+        "actions": "操作"
+      },
+      "statusLabels": {
+        "pending": "等待中",
+        "running": "处理中",
+        "completed": "已完成",
+        "failed": "失败",
+        "cancelled": "已取消"
+      },
+      "modelSizeLabels": {
+        "n": "YOLOv8n (最快)",
+        "s": "YOLOv8s",
+        "m": "YOLOv8m",
+        "l": "YOLOv8l (推荐)",
+        "x": "YOLOv8x (最精确)"
+      },
+      "actions": {
+        "annotate": "标注",
+        "syncToDb": "同步到数据库",
+        "exportResult": "导出标注结果",
+        "editDataset": "编辑任务数据集",
+        "delete": "删除任务",
+        "moreActions": "更多操作"
+      },
+      "confirm": {
+        "deleteTitle": "确认删除自动标注任务「{{name}}」吗？",
+        "deleteContent": "删除任务后，已生成的标注结果不会被删除。",
+        "deleteOkText": "删除",
+        "deleteCancelText": "取消"
+      },
+      "messages": {
+        "deleteSuccess": "自动标注任务删除成功",
+        "deleteFailed": "删除失败，请稍后重试"
+      }
+    },
+    "annotate": {
+      "title": "标注工作台",
+      "saveSuccess": "标注已保存",
+      "skipSuccess": "已跳过",
+      "backToList": "返回列表"
+    },
+    "dialogs": {
+      "editDataset": {
+        "title": "编辑数据集",
+        "description": "修改该任务的数据集文件",
+        "selectedCount": "已选择 {{count}} 个文件",
+        "cancel": "取消",
+        "save": "保存",
+        "loading": "保存中...",
+        "success": "数据集更新成功",
+        "failed": "数据集更新失败，请稍后重试",
+        "fetchFilesFailed": "获取任务当前数据集文件失败"
+      },
+      "importFromLS": {
+        "title": "从 Label Studio 导入",
+        "description": "从 Label Studio 导入标注结果到本地",
+        "cancel": "取消",
+        "import": "导入",
+        "loading": "导入中...",
+        "success": "导入成功",
+        "failed": "导入失败，请稍后重试"
+      },
+      "syncToDb": {
+        "loading": "正在从 Label Studio 同步标注到数据库...",
+        "success": "同步完成",
+        "fail": "同步失败，请稍后重试"
+      }
+    },
+    "const": {
+      "status": {
+        "active": "活跃",
+        "processing": "处理中",
+        "inactive": "未激活",
+        "completed": "已完成",
+        "skipped": "已跳过",
+        "pending": "待开始"
+      },
+      "dataType": {
+        "text": "文本",
+        "image": "图片",
+        "audio": "音频",
+        "video": "视频"
+      },
+      "classification": {
+        "cv": "计算机视觉",
+        "nlp": "自然语言处理",
+        "audio": "音频",
+        "qualityControl": "质量控制",
+        "custom": "自定义"
+      },
+      "annotationType": {
+        "classification": "分类",
+        "objectDetection": "目标检测",
+        "segmentation": "分割",
+        "ner": "命名实体识别"
+      },
+      "templateType": {
+        "system": "系统内置",
+        "custom": "自定义"
+      },
+      "stats": {
+        "accuracy": "准确率",
+        "averageTime": "平均时长",
+        "reviewCount": "待复核"
+      }
+    }
+  },
+  "dataCleansing": {
+    "title": "数据处理",
+    "description": "数据清洗、处理和转换",
+    "tabs": {
+      "taskList": "任务列表",
+      "templateManagement": "模板管理"
+    },
+    "actions": {
+      "createTask": "创建任务",
+      "createTemplate": "创建模板",
+      "updateTask": "执行任务",
+      "updateTemplate": "更新模板",
+      "startTask": "执行任务",
+      "pauseTask": "暂停任务",
+      "deleteTask": "删除任务",
+      "deleteTemplate": "删除模板",
+      "refreshTask": "更新任务",
+      "refreshTemplate": "更新模板",
+      "cancel": "取消",
+      "confirm": "确定",
+      "back": "返回",
+      "previous": "上一步",
+      "next": "下一步",
+      "clear": "清空",
+      "save": "保存",
+      "start": "启动",
+      "pause": "暂停",
+      "compare": "对比",
+      "download": "下载",
+      "delete": "删除",
+      "batchDownload": "批量下载",
+      "edit": "编辑",
+      "selectAll": "全选",
+      "search": "搜索",
+      "reset": "重置",
+      "config": "参数配置",
+      "selectOperatorConfig": "请选择一个算子进行参数配置"
+    },
+    "steps": {
+      "basicInfo": "基本信息",
+      "operatorOrchestration": "算子编排"
+    },
+    "task": {
+      "columns": {
+        "taskName": "任务名称",
+        "taskId": "任务ID",
+        "srcDataset": "源数据集",
+        "destDataset": "目标数据集",
+        "status": "状态",
+        "progress": "进度",
+        "processedFiles": "已处理文件数",
+        "totalFiles": "总文件数",
+        "duration": "执行耗时",
+        "startTime": "开始时间",
+        "endTime": "结束时间",
+        "createdAt": "创建时间",
+        "dataSizeChange": "数据量变化",
+        "actions": "操作"
+      },
+      "form": {
+        "name": "名称",
+        "namePlaceholder": "输入任务名称",
+        "description": "描述",
+        "descriptionPlaceholder": "描述任务的目标和要求",
+        "srcDataset": "源数据集",
+        "srcDatasetPlaceholder": "请选择源数据集",
+        "destDatasetName": "目标数据集名称",
+        "destDatasetNamePlaceholder": "输入或选择目标数据集名称",
+        "destDatasetType": "目标数据集类型",
+        "destDatasetTypeRequired": "请选择目标数据集类型"
+      },
+      "sections": {
+        "taskInfo": "任务信息",
+        "dataSourceSelection": "数据源选择"
+      },
+      "messages": {
+        "taskCreated": "任务已创建",
+        "taskStarted": "任务已启动",
+        "taskPaused": "任务已暂停",
+        "taskDeleted": "任务已删除",
+        "taskDetailFailed": "获取任务详情失败",
+        "fetchTaskResultFailed": "获取数据处理结果失败",
+        "fetchTaskLogFailed": "获取数据处理日志失败"
+      }
+    },
+    "template": {
+      "columns": {
+        "templateName": "模板名称",
+        "templateId": "模板ID",
+        "operatorCount": "算子数量"
+      },
+      "form": {
+        "name": "模板名称",
+        "namePlaceholder": "输入模板名称",
+        "nameRequired": "请输入模板名称",
+        "description": "模板描述",
+        "descriptionPlaceholder": "描述模板的用途和特点"
+      },
+      "messages": {
+        "templateCreated": "模板创建成功",
+        "templateUpdated": "模板更新成功",
+        "templateDeleted": "模板已删除",
+        "templateDetailFailed": "获取任务详情失败"
+      }
+    },
+    "detail": {
+      "tabs": {
+        "basicInfo": "基本信息",
+        "operators": "处理算子",
+        "files": "处理文件",
+        "logs": "运行日志"
+      },
+      "statistics": {
+        "totalDuration": "总耗时",
+        "successFiles": "成功文件",
+        "failedFiles": "失败文件",
+        "successRate": "成功率",
+        "operatorCount": "算子数量"
+      },
+      "fileTable": {
+        "fileName": "文件名",
+        "processedFileName": "处理后文件名",
+        "fileType": "文件类型",
+        "processedFileType": "处理后文件类型",
+        "beforeSize": "处理前大小",
+        "afterSize": "处理后大小",
+        "status": "状态",
+        "actions": "操作",
+        "searchFileName": "搜索文件名",
+        "searchFileType": "搜索文件类型",
+        "selectFiles": "已选择 {{count}} 个文件",
+        "notCompleted": "未完成",
+        "downloadNotAvailable": "暂未开放",
+        "compareDialogTitle": "文件对比 - {{fileName}}",
+        "beforeProcessing": "处理前",
+        "afterProcessing": "处理后",
+        "originalFilePreview": "原始文件预览",
+        "processedFilePreview": "处理后文件预览",
+        "size": "大小",
+        "fileFormat": "文件格式",
+        "processingEffect": "处理效果对比",
+        "sizeOptimization": "文件大小优化",
+        "reduced": "减少了 {{percent}}%"
+      },
+      "logTable": {
+        "selectRun": "选择运行轮次",
+        "currentDisplay": "当前展示: 第 {{num}} 次",
+        "nthRun": "第 {{num}} 次",
+        "noLogs": "当前任务无可用日志"
+      },
+      "operatorTable": {
+        "serialNumber": "序号",
+        "operatorName": "算子名称",
+        "startTime": "开始时间",
+        "endTime": "结束时间",
+        "duration": "执行时长",
+        "processedFiles": "处理文件数",
+        "successRate": "成功率",
+        "status": "状态",
+        "searchOperatorName": "搜索算子名称",
+        "completed": "已完成",
+        "failed": "失败",
+        "running": "运行中",
+        "title": "算子执行报告",
+        "description": "每个算子的详细执行情况"
+      },
+      "basicInfo": {
+        "executionSummary": "执行摘要",
+        "basicInformation": "基本信息",
+        "processingProgress": "处理进度",
+        "taskId": "任务ID",
+        "taskName": "任务名称",
+        "srcDataset": "源数据集",
+        "destDataset": "目标数据集",
+        "startTime": "开始时间",
+        "description": "任务描述",
+        "endTime": "结束时间",
+        "retryCount": "重试次数",
+        "completed": "已完成: {{count}}",
+        "processing": "处理中: {{count}}",
+        "failed": "失败: {{count}}"
+      },
+      "breadcrumb": {
+        "dataProcessing": "数据处理",
+        "taskDetail": "任务详情",
+        "templateDetail": "模板详情"
+      }
+    },
+    "operatorLibrary": {
+      "title": "算子库",
+      "searchPlaceholder": "搜索算子名称...",
+      "selectCategory": "选择分类",
+      "showFavoritesOnly": "只看收藏",
+      "selectAll": "全选",
+      "noMatchFound": "未找到匹配的算子"
+    },
+    "operatorOrchestration": {
+      "title": "算子编排",
+      "clear": "清空",
+      "selectTemplate": "选择模板",
+      "startBuilding": "开始构建您的算子流程",
+      "dragTip": "从左侧算子库拖拽算子到此处，或点击算子添加"
+    },
+    "placeholders": {
+      "searchTaskName": "搜索任务名称、描述",
+      "searchTemplateName": "搜索模板名称、描述"
+    },
+    "processFlow": {
+      "start": "开始",
+      "selectDataset": "选择数据集",
+      "complete": "完成"
+    },
+    "status": {
+      "completed": "已完成",
+      "failed": "失败",
+      "running": "运行中",
+      "pending": "等待中",
+      "stopped": "已停止"
+    }
+  },
+  "knowledgeBase": {
+    "title": "知识生成",
+    "description": "面向RAG的知识库构建",
+    "home": {
+      "columns": {
+        "name": "知识库",
+        "createdAt": "创建时间",
+        "updatedAt": "更新时间",
+        "description": "描述",
+        "actions": "操作"
+      },
+      "actions": {
+        "edit": "编辑",
+        "delete": "删除"
+      },
+      "confirm": {
+        "deleteTitle": "确认删除",
+        "deleteDescription": "此操作不可撤销，是否继续？",
+        "okText": "删除",
+        "cancelText": "取消"
+      },
+      "messages": {
+        "deleteSuccess": "知识库删除成功",
+        "deleteFailed": "知识库删除失败"
+      },
+      "searchPlaceholder": "搜索知识库..."
+    },
+    "detail": {
+      "tabs": {
+        "fileList": "文件列表",
+        "recallTest": "召回测试"
+      },
+      "columns": {
+        "fileName": "文件名",
+        "status": "状态",
+        "chunkCount": "分块数",
+        "createdAt": "创建时间",
+        "updatedAt": "更新时间",
+        "actions": "操作"
+      },
+      "actions": {
+        "edit": "编辑知识库",
+        "refresh": "刷新知识库",
+        "delete": "删除知识库",
+        "deleteFile": "删除文件"
+      },
+      "confirm": {
+        "deleteTitle": "确认删除该知识库吗？",
+        "deleteDescription": "删除后将无法恢复，请谨慎操作。",
+        "okText": "删除",
+        "cancelText": "取消"
+      },
+      "messages": {
+        "fileDeleted": "文件已删除",
+        "fileDeleteFailed": "文件删除失败",
+        "kbDeleted": "知识库已删除"
+      },
+      "recallTest": {
+        "description": "基于语义文本检索和全文检索后的加权平均结果",
+        "placeholder": "请输入召回测试问题",
+        "searchButton": "检索",
+        "noResult": "暂无召回结果",
+        "scoreLabel": "得分：",
+        "metadataLabel": "metadata:"
+      },
+      "graph": {
+        "title": "知识图谱",
+        "refresh": "刷新",
+        "close": "关闭",
+        "nodeDetail": "节点详情",
+        "edgeDetail": "边详情",
+        "typeLabel": "类型",
+        "sourceNode": "源节点",
+        "targetNode": "目标节点",
+        "labelLabel": "标签",
+        "noProperties": "暂无属性"
+      },
+      "breadcrumb": {
+        "kbList": "知识库"
+      },
+      "searchPlaceholder": "搜索文件名..."
+    },
+    "fileDetail": {
+      "columns": {
+        "position": "位置",
+        "tokens": "Token",
+        "page": "页码",
+        "section": "章节"
+      },
+      "actions": {
+        "download": "下载",
+        "save": "保存",
+        "cancel": "取消"
+      },
+      "messages": {
+        "noChunks": "暂无分块数据",
+        "chunkCount": "个分块",
+        "ready": "就绪",
+        "previousPage": "上一页",
+        "nextPage": "下一页",
+        "chunkLabel": "分块",
+        "loadFailed": "加载失败"
+      },
+      "modal": {
+        "sliceTraceTitle": "知识切片回溯",
+        "sliceProcessTitle": "切片处理流程",
+        "originalDocImport": "原始文档导入",
+        "fileLabel": "文件",
+        "completed": "完成",
+        "chunkDetailTitle": "分块详细信息 - 分块",
+        "contentDetail": "内容详情",
+        "chunkContent": "分块内容",
+        "metadata": "元数据",
+        "position": "位置",
+        "tokenCount": "Token数量",
+        "pageNumber": "页码",
+        "chapter": "章节"
+      },
+      "breadcrumb": {
+        "kbList": "知识库",
+        "kbDetail": "知识库详情"
+      }
+    },
+    "create": {
+      "title": "创建知识库",
+      "editTitle": "编辑知识库",
+      "okText": "确定",
+      "cancelText": "取消",
+      "form": {
+        "typeLabel": "知识库类型",
+        "typeRequired": "请选择知识库类型",
+        "nameLabel": "知识库名称",
+        "namePlaceholder": "请输入知识库名称",
+        "nameRequired": "请输入知识库名称",
+        "descriptionLabel": "描述",
+        "descriptionPlaceholder": "请输入知识库描述（可选）",
+        "embeddingModelLabel": "索引模型",
+        "embeddingModelRequired": "请选择索引模型",
+        "embeddingModelPlaceholder": "请选择索引模型",
+        "chatModelLabel": "文本理解模型",
+        "chatModelRequired": "请选择文本理解模型",
+        "chatModelPlaceholder": "请选择文本理解模型",
+        "entityLabel": "识别实体（可多选）",
+        "entityPlaceholder": "输入实体名称并按回车添加，如 人物、组织、事件",
+        "entityTooltip": "实体信息将作为图谱节点，支持多维关系追踪",
+        "addModel": "添加模型"
+      },
+      "type": {
+        "document": "向量知识库",
+        "documentDesc": "适用于文档类知识，支持召回+生成",
+        "graph": "知识图谱",
+        "graphDesc": "自定义实体/关系，强化结构化推理"
+      },
+      "messages": {
+        "updateSuccess": "知识库更新成功",
+        "createSuccess": "知识库创建成功",
+        "operationFailed": "操作失败："
+      }
+    },
+    "addData": {
+      "title": "添加数据",
+      "confirmUpload": "确认上传",
+      "steps": {
+        "selectFiles": {
+          "title": "选择数据集文件",
+          "description": "从多个数据集中选择文件"
+        },
+        "configParams": {
+          "title": "配置参数",
+          "description": "设置数据处理参数"
+        },
+        "confirmUpload": {
+          "title": "确认上传",
+          "description": "确认信息并上传"
+        }
+      },
+      "form": {
+        "sliceMethodLabel": "分块方式",
+        "chunkSizeLabel": "分块大小",
+        "chunkSizePlaceholder": "请输入分块大小",
+        "overlapLabel": "重叠长度",
+        "overlapPlaceholder": "请输入重叠长度",
+        "delimiterLabel": "分隔符",
+        "delimiterPlaceholder": "请输入分隔符",
+        "delimiterHint": "输入分隔符，如 \\n\\n"
+      },
+      "confirm": {
+        "uploadConfirmTitle": "上传信息确认",
+        "uploadHint": "提示：上传后系统将自动处理文件，请耐心等待",
+        "kbName": "知识库名称",
+        "dataSource": "数据来源",
+        "dataset": "数据集",
+        "totalFiles": "文件总数",
+        "sliceMethod": "分块方式",
+        "chunkSize": "分块大小",
+        "overlapSize": "重叠长度",
+        "delimiter": "分隔符",
+        "fileList": "文件列表",
+        "previous": "上一步",
+        "next": "下一步",
+        "cancel": "取消"
+      },
+      "messages": {
+        "selectOneFile": "请至少选择一个文件",
+        "selectSliceMethod": "请选择分块方式",
+        "validChunkSize": "请输入有效的分块大小",
+        "validOverlapSize": "请输入有效的重叠长度",
+        "inputDelimiter": "请输入分隔符",
+        "addSuccess": "数据添加成功",
+        "addFailed": "数据添加失败，请重试"
+      },
+      "placeholders": {
+        "chunkSize": "请输入分块大小",
+        "overlapSize": "请输入重叠长度",
+        "delimiter": "输入分隔符，如 \\n\\n"
+      }
+    },
+    "const": {
+      "type": {
+        "vector": "向量知识库",
+        "vectorDesc": "面向非结构化文档的检索问答",
+        "graph": "知识图谱",
+        "graphDesc": "管理实体与关系的图谱知识"
+      },
+      "status": {
+        "ready": "就绪",
+        "processing": "处理中",
+        "vectorizing": "向量化中",
+        "importing": "导入中",
+        "error": "错误",
+        "disabled": "已禁用",
+        "completed": "已完成",
+        "processed": "已处理",
+        "processFailed": "处理失败",
+        "unprocessed": "未处理",
+        "unknown": "未知状态"
+      },
+      "sliceMethod": {
+        "default": "默认分块",
+        "chapter": "按章节分块",
+        "paragraph": "按段落分块",
+        "fixedLength": "固定长度分块",
+        "customSeparator": "自定义分隔符分块"
+      },
+      "statistics": {
+        "embeddingModel": "索引模型",
+        "chatModel": "文本理解模型",
+        "fileCount": "文件数",
+        "chunkCount": "分块数",
+        "none": "无"
+      },
+      "fileColumns": {
+        "dataset": "所属数据集",
+        "fileName": "文件名",
+        "fileSize": "大小"
+      }
+    }
+  },
+  "operatorMarket": {
+    "title": "算子市场",
+    "description": "算子上传与管理",
+    "home": {
+      "title": "算子市场",
+      "actions": {
+        "downloadExample": "下载示例算子",
+        "upload": "上传算子"
+      },
+      "filters": {
+        "title": "筛选器",
+        "hide": "隐藏筛选器",
+        "clear": "清除",
+        "selectAll": "全选",
+        "starStatus": "收藏状态",
+        "starred": "已收藏"
+      },
+      "search": {
+        "placeholder": "搜索算子名称、描述..."
+      },
+      "empty": {
+        "title": "没有找到匹配的算子",
+        "subtitle": "尝试调整筛选条件或搜索关键词"
+      },
+      "operations": {
+        "update": "更新",
+        "delete": "删除",
+        "confirm": {
+          "title": "确认删除",
+          "description": "此操作不可撤销，是否继续？",
+          "okText": "删除",
+          "cancelText": "取消"
+        },
+        "messages": {
+          "deleteSuccess": "算子删除成功",
+          "deleteFailed": "算子删除失败",
+          "downloadSuccess": "文件下载成功"
+        }
+      }
+    },
+    "detail": {
+      "breadcrumb": {
+        "market": "算子市场"
+      },
+      "tabs": {
+        "overview": "概览",
+        "requirement": "系统规格",
+        "documentation": "文档",
+        "changeLog": "更新日志"
+      },
+      "operations": {
+        "favorite": "收藏",
+        "update": "更新",
+        "delete": "删除",
+        "confirm": {
+          "title": "确认删除当前算子？",
+          "description": "删除后该算子将无法恢复，请谨慎操作。",
+          "okText": "删除",
+          "cancelText": "取消"
+        },
+        "messages": {
+          "deleteSuccess": "算子删除成功"
+        }
+      },
+      "overview": {
+        "title": "基本信息",
+        "version": "版本",
+        "category": "分类",
+        "description": "描述",
+        "inputs": "输入类型",
+        "outputs": "输出类型",
+        "createdAt": "创建时间",
+        "lastModified": "最后修改",
+        "performance": "性能指标",
+        "advancedConfiguration": "高级配置",
+        "supportedFormats": "支持格式",
+        "inputFormats": "输入格式",
+        "outputFormats": "输出格式"
+      },
+      "documentation": {
+        "title": "文档"
+      },
+      "changeLog": {
+        "title": "版本",
+        "latestVersion": "最新版本",
+        "noReleases": "暂无版本发布信息",
+        "initialize": "点击初始化"
+      }
+    },
+    "create": {
+      "title": "上传算子",
+      "updateTitle": "更新算子",
+      "steps": {
+        "uploadFile": "上传文件",
+        "parseFile": "解析文件",
+        "configure": "配置信息",
+        "publish": "发布完成"
+      },
+      "upload": {
+        "title": "上传算子文件",
+        "description": "支持多种格式的算子文件，系统将自动解析配置信息",
+        "supportedFormats": "支持的文件格式",
+        "formats": {
+          "zip": "压缩包文件",
+          "tar": "压缩包文件"
+        },
+        "uploadArea": {
+          "dragDrop": "拖拽文件到此处或点击选择文件",
+          "onlySingle": "仅支持单个文件上传",
+          "uploading": "正在上传文件..."
+        }
+      },
+      "parse": {
+        "title": "正在解析算子文件",
+        "description": "系统正在自动分析您的算子文件，提取配置信息...",
+        "uploadedFiles": "已上传文件",
+        "progress": "解析进度"
+      },
+      "configure": {
+        "title": "配置信息",
+        "basicInfo": "基本信息",
+        "labels": {
+          "id": "ID",
+          "name": "名称",
+          "version": "版本",
+          "description": "描述",
+          "inputs": "输入类型",
+          "outputs": "输出类型"
+        },
+        "changeLog": {
+          "title": "更新日志",
+          "addLine": "添加一行更新日志",
+          "deleteLine": "删除此行"
+        },
+        "performance": "性能指标"
+      },
+      "preview": {
+        "title": "发布成功！",
+        "description": "您的算子已成功发布到算子市场",
+        "continueUpload": "继续上传",
+        "backToHome": "返回主页"
+      },
+      "actions": {
+        "reupload": "重新上传",
+        "publish": "发布算子",
+        "update": "更新算子"
+      },
+      "messages": {
+        "parseError": "解析过程中发现问题",
+        "publishFailed": "算子发布失败",
+        "fileParseFailed": "文件解析失败"
+      }
+    },
+    "const": {
+      "modal": {
+        "multimodal": "多模态",
+        "text": "文本",
+        "image": "图像",
+        "video": "视频",
+        "audio": "音频"
+      },
+      "usageCount": "使用次数",
+      "type": "类型",
+      "size": "大小",
+      "language": "语言",
+      "function": "功能"
+    }
+  },
+  "settings": {
+    "title": "设置",
+    "tabs": {
+      "modelAccess": "模型接入",
+      "systemConfig": "参数配置",
+      "webhook": "Webhook",
+      "notAvailable": "暂未开放"
+    },
+    "modelAccess": {
+      "title": "模型接入",
+      "addModel": "添加模型",
+      "searchPlaceholder": "搜索模型描述...",
+      "columns": {
+        "modelName": "模型名称",
+        "createdAt": "创建时间",
+        "updatedAt": "更新时间",
+        "provider": "模型提供商",
+        "type": "模型类型"
+      },
+      "filters": {
+        "provider": "模型提供商",
+        "type": "模型类型",
+        "all": "全部"
+      },
+      "modal": {
+        "titleAdd": "添加模型",
+        "titleEdit": "编辑模型",
+        "form": {
+          "provider": "服务提供商",
+          "providerPlaceholder": "选择服务提供商",
+          "providerRequired": "请选择服务提供商",
+          "baseUrl": "接口地址",
+          "baseUrlPlaceholder": "输入接口地址，如：https://api.openai.com",
+          "baseUrlRequired": "请输入接口地址",
+          "baseUrlInvalid": "请输入有效的URL地址，必须以http://或https://开头",
+          "modelName": "模型名称",
+          "modelNamePlaceholder": "输入模型名称",
+          "modelNameRequired": "请输入模型名称",
+          "modelNameTooltip": "请输入模型名称",
+          "apiKey": "API密钥",
+          "apiKeyPlaceholder": "输入或生成API密钥",
+          "apiKeyRequired": "请输入API密钥",
+          "type": "模型类型",
+          "typePlaceholder": "选择模型类型",
+          "typeRequired": "请选择模型类型",
+          "isDefault": "设为默认",
+          "isDefaultTooltip": "当模型类型下仅有一个模型服务时，自动将其设为默认值。"
+        }
+      },
+      "messages": {
+        "addSuccess": "模型添加成功",
+        "error": "{{message}}：{{detail}}"
+      }
+    },
+    "systemConfig": {
+      "title": "系统参数配置",
+      "refresh": "刷新",
+      "columns": {
+        "paramName": "参数名",
+        "paramValue": "参数值",
+        "description": "描述",
+        "isEnabled": "是否启用"
+      },
+      "placeholders": {
+        "selectValue": "请选择值"
+      }
+    },
+    "webhook": {
+      "title": "Webhook 配置",
+      "addWebhook": "新增Webhook",
+      "events": {
+        "projectManagement": "项目管理",
+        "taskManagement": "任务管理",
+        "annotationManagement": "标注管理",
+        "modelManagement": "模型管理",
+        "predictionManagement": "预测管理"
+      },
+      "eventTypes": {
+        "projectCreated": {
+          "name": "项目创建",
+          "description": "新项目被创建时触发"
+        },
+        "projectUpdated": {
+          "name": "项目更新",
+          "description": "项目信息被修改时触发"
+        },
+        "projectDeleted": {
+          "name": "项目删除",
+          "description": "项目被删除时触发"
+        },
+        "taskCreated": {
+          "name": "任务创建",
+          "description": "新任务被创建时触发"
+        },
+        "taskUpdated": {
+          "name": "任务更新",
+          "description": "任务状态或内容被更新时触发"
+        },
+        "taskCompleted": {
+          "name": "任务完成",
+          "description": "任务被标记为完成时触发"
+        },
+        "annotationCreated": {
+          "name": "标注创建",
+          "description": "新标注被创建时触发"
+        },
+        "annotationUpdated": {
+          "name": "标注更新",
+          "description": "标注被修改时触发"
+        },
+        "annotationDeleted": {
+          "name": "标注删除",
+          "description": "标注被删除时触发"
+        },
+        "modelTrained": {
+          "name": "模型训练完成",
+          "description": "模型训练任务完成时触发"
+        },
+        "predictionCreated": {
+          "name": "预测生成",
+          "description": "新预测结果生成时触发"
+        }
+      },
+      "status": {
+        "active": "启用",
+        "inactive": "禁用"
+      },
+      "details": {
+        "events": "事件:",
+        "secret": "Secret:",
+        "retry": "重试:"
+      },
+      "modal": {
+        "title": "新增 Webhook",
+        "form": {
+          "name": "Webhook名称",
+          "namePlaceholder": "输入Webhook名称",
+          "retryCount": "重试次数",
+          "url": "Webhook URL",
+          "urlPlaceholder": "https://your-domain.com/webhook",
+          "secret": "Secret Key",
+          "secretPlaceholder": "用于验证Webhook请求的密钥",
+          "selectEvents": "选择事件"
+        }
+      },
+      "buttons": {
+        "create": "创建Webhook"
+      }
+    }
+  },
+  "synthesisTask": {
+    "title": "数据合成",
+    "description": "智能数据合成和配比",
+    "tabs": {
+      "tasks": "合成任务",
+      "templates": "指令模板"
+    },
+    "actions": {
+      "createTask": "创建任务",
+      "createTemplate": "创建模板",
+      "createSynthesisTask": "创建合成任务",
+      "enableDebug": "启用调测",
+      "archive": "归档",
+      "evaluate": "立即评估",
+      "viewDetail": "查看详情",
+      "delete": "删除",
+      "confirmDelete": "确认删除",
+      "cancel": "取消",
+      "confirm": "确定",
+      "refresh": "刷新",
+      "next": "下一步",
+      "prev": "上一步"
+    },
+    "home": {
+      "searchPlaceholder": "搜索任务名称...",
+      "empty": {
+        "title": "暂无合成任务",
+        "noMatch": "没有找到匹配的任务",
+        "createFirst": "开始创建您的第一个合成任务"
+      },
+      "filters": {
+        "type": "类型",
+        "allTypes": "全部类型"
+      },
+      "columns": {
+        "taskName": "任务名称",
+        "taskId": "任务ID",
+        "type": "类型",
+        "fileCount": "文件数",
+        "createdAt": "创建时间",
+        "actions": "操作"
+      },
+      "typeMap": {
+        "qa": "问答对生成",
+        "cot": "链式推理生成"
+      },
+      "confirm": {
+        "deleteTitle": "确认删除任务?",
+        "deleteContent": "任务名：{{name}}",
+        "archiveTitle": "确认归档该合成任务?",
+        "archiveContent": "任务名：{{name}}"
+      },
+      "modal": {
+        "evalTitle": "创建评估任务",
+        "evalName": "评估任务名称",
+        "evalMethod": "评估方式",
+        "evalModel": "评估模型",
+        "evalSource": "来源：合成任务（SYNTHESIS）",
+        "sourceName": "源名称：{{name}}",
+        "startEval": "开始评估",
+        "placeholders": {
+          "evalName": "例如：数据评估",
+          "modelLoading": "加载模型中...",
+          "selectModel": "请选择用于评估的模型"
+        },
+        "dimensions": {
+          "questionIndependence": "问题是否独立",
+          "questionIndependenceDesc": "仅分析问题，问题的主体和客体都比较明确，即使有省略，也符合语言习惯。在不需要补充其他信息的情况下不会引起疑惑。",
+          "grammarError": "语法是否错误",
+          "grammarErrorDesc": "问题为疑问句，答案为陈述句；不存在词语搭配不当的情况；连接词和标点符号不存在错用情况；逻辑混乱的情况不存在；语法结构都正确且完整。",
+          "answerRelevance": "回答是否有针对性",
+          "answerRelevanceDesc": "回答应对问题中的所有疑问点提供正面、直接的回答，不应引起疑惑。同时，答案不应有任何内容的遗漏，需构成一个完整的陈述。"
+        }
+      },
+      "archive": {
+        "success": "归档成功",
+        "failed": "归档失败",
+        "datasetFailed": "创建数据集失败"
+      }
+    },
+    "create": {
+      "title": "创建合成任务",
+      "step1": "基本信息",
+      "step2": "合成编排",
+      "form": {
+        "name": "任务名称",
+        "namePlaceholder": "输入任务名称",
+        "nameRequired": "请输入任务名称",
+        "description": "任务描述",
+        "descriptionPlaceholder": "描述任务的目的和要求（可选）",
+        "selectDataset": "选择数据集",
+        "currentDataset": "当前数据集：{{name}} - 已选择 {{count}} 个文件",
+        "datasetRequired": "请选择数据集"
+      },
+      "template": {
+        "title": "合成指令模板",
+        "description": "从左侧选择一个模板，我们会自动为你填充合适的 Prompt 与合成策略。",
+        "singleSelect": "单选",
+        "searchPlaceholder": "搜索模板名称，如：SFT 问答 / COT 推理",
+        "templates": {
+          "sftQa": {
+            "title": "SFT 问答数据合成",
+            "subtitle": "从长文档自动生成高质量问答样本",
+            "badge": "推荐",
+            "description": "适用于构建监督微调（SFT）问答数据集，支持从知识库或长文档中抽取关键问答对。"
+          },
+          "cotReasoning": {
+            "title": "COT 链式推理合成",
+            "subtitle": "一步步推理过程与最终答案",
+            "badge": "推理增强",
+            "description": "生成包含模型推理中间过程的 COT 数据，用于提升模型的复杂推理和解释能力。"
+          }
+        },
+        "tooltips": {
+          "selected": "当前已选模板",
+          "apply": "点击应用此模板"
+        }
+      },
+      "config": {
+        "title": "合成配置",
+        "description": "根据左侧模板自动带出配置，你也可以在此基础上进行微调。",
+        "steps": {
+          "1": "设置合成总数",
+          "2": "配置文本切片策略",
+          "3": "配置问题合成参数",
+          "4": "配置答案合成参数"
+        },
+        "totalLimit": {
+          "title": "合成总数上限",
+          "description": "控制整个任务最多生成的 QA 对数量",
+          "placeholder": "可选项，建议在大规模合成时设置上限"
+        },
+        "slice": {
+          "title": "文本切片配置",
+          "description": "影响上下文长度与召回粒度",
+          "strategy": "分块策略",
+          "size": "分块大小",
+          "overlap": "重叠大小",
+          "customDelimiter": "自定义分隔符",
+          "delimiterPlaceholder": "例如：\\n\\n 或 ###",
+          "options": {
+            "default": "默认分块",
+            "chapter": "按章节分块",
+            "paragraph": "按段落分块",
+            "fixedLength": "固定长度分块",
+            "customSeparator": "自定义分隔符分块"
+          }
+        },
+        "question": {
+          "title": "问题合成配置",
+          "description": "控制每个 chunk 生成的问题数量与多样性",
+          "count": "问题生成数量",
+          "countDesc": "每千tokens生成的问题条数",
+          "temperature": "温度 (Temperature)",
+          "temperatureDesc": "数值越大，问题越发散、多样",
+          "useModel": "使用模型",
+          "useModelDesc": "用于生成问题的对话模型",
+          "promptTemplate": "问题 Prompt 模板",
+          "promptDesc": "用于指导模型如何从切片文本中生成高质量问题，可在保持变量占位符不变的前提下个性化修改。",
+          "qaPlaceholder": "将根据 SFT 问答合成场景预填问题生成 Prompt，可按需微调",
+          "cotPlaceholder": "将根据 COT 推理合成场景预填问题生成 Prompt，可按需微调"
+        },
+        "answer": {
+          "title": "答案合成配置",
+          "description": "控制答案生成的稳定性与风格",
+          "temperature": "温度 (Temperature)",
+          "temperatureDesc": "数值越小，答案越稳定、保守",
+          "useModel": "使用模型",
+          "useModelDesc": "用于生成答案的对话模型",
+          "promptTemplate": "答案 Prompt 模板",
+          "promptDesc": "用于约束模型回答的风格与内容范围，例如是否需要分步推理、是否必须引用原文关键信息等。",
+          "qaPlaceholder": "将根据 SFT 问答合成场景预填答案生成 Prompt，可按需微调",
+          "cotPlaceholder": "将根据 COT 推理合成场景预填答案生成 Prompt，可按需微调"
+        }
+      },
+      "messages": {
+        "selectType": "请选择一个合成类型",
+        "selectModels": "请选择问题和答案使用的模型",
+        "selectFiles": "请至少选择一个文件",
+        "fillRequired": "请填写所有必填项",
+        "createSuccess": "合成任务创建成功",
+        "createFailed": "合成任务创建失败",
+        "fetchQuestionPromptFailed": "获取问题 Prompt 模板失败",
+        "fetchAnswerPromptFailed": "获取答案 Prompt 模板失败",
+        "loadModelsFailed": "加载模型列表失败"
+      }
+    },
+    "templates": {
+      "title": "指令模板",
+      "searchPlaceholder": "搜索模板名称或描述...",
+      "empty": {
+        "title": "暂无指令模板",
+        "noMatch": "没有找到匹配的模板",
+        "createFirst": "开始创建您的第一个指令模板"
+      },
+      "filters": {
+        "type": "类型",
+        "allTypes": "全部类型",
+        "preset": "预置模板",
+        "custom": "自定义模板"
+      },
+      "columns": {
+        "name": "模板名称",
+        "type": "类型",
+        "category": "分类",
+        "variables": "变量数量",
+        "usageCount": "使用次数",
+        "qualityScore": "质量评分",
+        "lastUsed": "最后使用",
+        "actions": "操作"
+      },
+      "typeMap": {
+        "all": "全部类型",
+        "preset": "预置",
+        "custom": "自定义"
+      }
+    },
+    "createTemplate": {
+      "title": "创建新模板",
+      "editTitle": "编辑模板",
+      "form": {
+        "basicInfo": "基本信息",
+        "name": "模板名称",
+        "namePlaceholder": "输入模板名称",
+        "nameRequired": "请输入模板名称",
+        "category": "分类",
+        "categoryPlaceholder": "选择分类",
+        "categoryRequired": "请选择分类",
+        "description": "模板描述",
+        "descriptionPlaceholder": "简要描述模板的用途和特点",
+        "promptContent": "Prompt内容",
+        "promptPlaceholder": "输入prompt内容，使用 {变量名} 格式定义变量",
+        "promptRequired": "请输入Prompt内容",
+        "promptHint": "提示：使用 {变量名} 格式定义变量，例如 {{text}} 或 {{input}}",
+        "testInput": "测试输入",
+        "testInputPlaceholder": "输入测试数据",
+        "testOutput": "测试输出",
+        "testOutputPlaceholder": "点击测试按钮查看输出结果"
+      },
+      "variables": {
+        "title": "变量管理",
+        "empty": "暂无变量，在Prompt中使用 {变量名} 格式定义",
+        "addPlaceholder": "添加变量名（如：text, input, question）",
+        "add": "添加"
+      },
+      "test": {
+        "title": "模板测试",
+        "testing": "测试中...",
+        "testButton": "测试模板"
+      },
+      "actions": {
+        "createTemplate": "创建模板",
+        "saveTemplate": "保存模板",
+        "cancel": "取消"
+      },
+      "messages": {
+        "saved": "模板已保存",
+        "testOutput": "基于输入 \"{{input}}\"生成的测试结果：\n\n这是一个模拟的输出结果，展示了模板的工作效果。在实际使用中，这里会显示AI模型根据您的模板和输入生成的真实结果。\n\n模板变量已正确替换，输出格式符合预期。",
+        "testFailed": "测试失败"
+      },
+      "categories": {
+        "qa": "问答对生成",
+        "distillation": "蒸馏数据集",
+        "textGeneration": "文本生成",
+        "multimodal": "多模态生成"
+      }
+    },
+    "detail": {
+      "title": "合成数据详情",
+      "breadcrumb": {
+        "tasks": "合成任务",
+        "taskDetail": "任务详情",
+        "fileDetail": "文件详情"
+      },
+      "chunkList": {
+        "title": "Chunk 列表",
+        "total": "共 {{count}} 条",
+        "empty": "暂无 Chunk",
+        "chunkIndex": "Chunk #{{index}}",
+        "confirmDeleteTitle": "确认删除该 Chunk 及其合成数据？",
+        "confirmDeleteDesc": "ID：{{id}}"
+      },
+      "synthData": {
+        "title": "合成数据",
+        "empty": "该 Chunk 暂无合成数据",
+        "noChunkSelected": "请选择左侧 Chunk",
+        "currentChunk": "当前 Chunk #{{index}}",
+        "record": "记录 {{index}}",
+        "confirmDeleteTitle": "确认删除该条合成数据？",
+        "confirmDeleteDesc": "ID：{{id}}",
+        "edit": {
+          "cancel": "取消",
+          "confirm": "确定"
+        },
+        "id": "ID：{{id}}"
+      },
+      "messages": {
+        "deleteSuccess": "删除成功",
+        "deleteFailed": "删除失败，请稍后重试",
+        "saveSuccess": "保存成功",
+        "saveFailed": "保存失败，请稍后重试"
+      },
+      "pagination": {
+        "total": "共 {{total}} 条"
+      }
+    },
+    "fileTask": {
+      "breadcrumb": {
+        "tasks": "合成任务",
+        "taskDetail": "任务详情"
+      },
+      "tabs": {
+        "files": "处理文件"
+      },
+      "columns": {
+        "file": "文件",
+        "status": "状态",
+        "totalChunks": "切片总数",
+        "progress": "处理进度",
+        "createdAt": "创建时间",
+        "updatedAt": "更新时间",
+        "actions": "操作"
+      },
+      "status": {
+        "unknown": "未知",
+        "processing": "处理中",
+        "completed": "已完成",
+        "failed": "失败"
+      },
+      "operations": {
+        "refresh": "刷新",
+        "delete": "删除任务"
+      },
+      "confirm": {
+        "deleteTitle": "确认删除该合成任务？",
+        "deleteDescription": "删除后将无法恢复，请谨慎操作。",
+        "okText": "确认删除",
+        "cancelText": "取消"
+      },
+      "messages": {
+        "fetchFailed": "获取合成任务详情失败",
+        "deleteSuccess": "合成任务已删除",
+        "deleteFailed": "删除合成任务失败"
+      },
+      "statistics": {
+        "type": "类型",
+        "fileCount": "文件数"
+      },
+      "typeMap": {
+        "qa": "问答对生成",
+        "cot": "链式推理生成"
+      }
+    },
+    "messages": {
+      "deleteSuccess": "删除成功",
+      "deleteFailed": "删除失败",
+      "evaluationCreated": "评估任务创建成功",
+      "evaluationCreateFailed": "评估任务创建失败",
+      "fetchModelsFailed": "获取模型列表失败"
+    }
+  },
+  "components": {
+    "errorBoundary": {
+      "title": "发生错误",
+      "retry": "重试",
+      "goHome": "返回首页"
+    },
+    "searchControls": {
+      "searchPlaceholder": "搜索...",
+      "dateRange": {
+        "start": "开始日期",
+        "end": "结束日期",
+        "placeholder": "选择日期范围"
+      },
+      "filters": {
+        "label": "筛选",
+        "clearAll": "清除所有"
+      }
+    },
+    "tagList": {
+      "addTag": "添加标签"
+    },
+    "actionDropdown": {
+      "confirm": "确认",
+      "cancel": "取消"
+    },
+    "developmentInProgress": {
+      "title": "开发中",
+      "description": "此功能正在开发中，敬请期待。",
+      "goHome": "返回首页"
+    },
+    "business": {
+      "taskPopover": {
+        "title": "任务详情",
+        "empty": "无任务信息",
+        "actions": {
+          "viewDetail": "查看详情",
+          "delete": "删除",
+          "archive": "归档"
+        },
+        "progress": {
+          "label": "进度",
+          "running": "运行中",
+          "completed": "已完成"
+        },
+        "schedule": {
+          "label": "调度",
+          "nextRun": "下次运行",
+          "lastRun": "上次运行"
+        },
+        "source": {
+          "label": "来源",
+          "dataset": "数据集",
+          "collection": "归集任务"
+        }
+      }
+    }
+  },
+  "hooks": {
+    "tagConfig": {
+      "fetchFailed": "获取标签配置失败",
+      "loadError": "加载标签配置时出错"
+    },
+    "sliceUpload": {
+      "uploadDataset": "上传数据集",
+      "fileModifiedOrDeleted": "文件被修改或删除，请重新选择文件上传",
+      "uploadFailed": "文件上传失败，请稍后重试"
+    },
+    "fetchData": {
+      "totalItems": "共",
+      "loginRequired": "请登录",
+      "fetchFailed": "数据获取失败，请稍后重试"
+    }
+  },
+  "home": {
+    "hero": {
+      "subtitle": "AI数据集准备工具",
+      "title": "DataMate 构建高质量 AI数据集",
+      "description": "从数据管理到知识生成，一站式解决企业AI数据处理的场景问题。",
+      "getStartedButton": "开始使用",
+      "chatAssistantButton": "对话助手",
+      "checkingButton": "检查中...",
+      "dataOrchestrationButton": "数据智能编排"
+    },
+    "sections": {
+      "featuresTitle": "功能模块"
+    },
+    "orchestrationHighlight": {
+      "title": "数据智能编排 - 可视化流程设计",
+      "description": "拖拽式设计复杂数据处理管道，让数据流转更加直观高效。",
+      "coreFeaturesTitle": "🎯 核心功能：",
+      "feature1": "可视化流程设计器",
+      "feature2": "丰富的数据处理组件库",
+      "feature3": "实时流程执行监控",
+      "smartFeaturesTitle": "⚡ 智能特性：",
+      "smartFeature1": "自动优化数据流转路径",
+      "smartFeature2": "智能错误检测和修复建议",
+      "smartFeature3": "模板化流程快速复用",
+      "startButton": "开始编排"
+    },
+    "dataAgentHighlight": {
+      "title": "Data Agent - 对话式业务操作",
+      "description": "告别复杂界面，用自然语言完成所有数据集相关业务。",
+      "examplesTitle": "💬 对话示例：",
+      "example1": "帮我创建一个图像分类数据集",
+      "example2": "分析一下数据质量，生成报告",
+      "example3": "启动合成任务，目标1000条数据",
+      "smartFeaturesTitle": "🚀 智能特性：",
+      "smartFeature1": "理解复杂需求，自动执行",
+      "smartFeature2": "提供专业建议和优化方案",
+      "smartFeature3": "学习使用习惯，个性化服务",
+      "startButton": "开始对话"
+    },
+    "workflowShowcase": {
+      "title": "完整的数据处理工作流",
+      "description": "从原始数据到高质量数据集的全流程解决方案。",
+      "step1Title": "数据收集",
+      "step1Description": "支持多种数据源导入，包括本地文件、数据库、API等。",
+      "step2Title": "智能编排",
+      "step2Description": "可视化设计数据处理流程，自动化执行复杂任务。",
+      "step3Title": "智能处理",
+      "step3Description": "自动化的数据处理、标注和质量评估流程。",
+      "step4Title": "质量保证",
+      "step4Description": "全面的质量评估和偏见检测，确保数据集可靠性。",
+      "startButton": "开始构建数据集"
+    },
+    "features": {
+      "orchestration": {
+        "title": "智能编排",
+        "description": "可视化数据处理流程编排，拖拽式设计复杂的数据处理管道"
+      },
+      "chatAssistant": {
+        "title": "对话助手",
+        "description": "通过自然语言对话完成复杂的数据集操作和业务流程"
+      },
+      "evaluation": {
+        "title": "全面评估",
+        "description": "多维度数据质量评估，包含统计分析、性能测试和偏见检测"
+      },
+      "processing": {
+        "title": "高效处理",
+        "description": "完整的数据处理流水线，从原始数据到可用数据集"
+      },
+      "knowledge": {
+        "title": "知识管理",
+        "description": "构建面向RAG的知识库，支持智能问答和检索"
+      }
+    }
+  },
+  "datasetFileTransfer": {
+    "columns": {
+      "datasetName": "所属数据集",
+      "fileName": "文件名",
+      "fileSize": "大小"
+    },
+    "datasetColumns": {
+      "name": "数据集名称",
+      "fileCount": "文件数",
+      "totalSize": "大小"
+    },
+    "selectDataset": "选择数据集",
+    "searchDatasetPlaceholder": "搜索数据集名称...",
+    "selectFiles": "选择文件",
+    "selectAllCurrentDataset": "全选当前数据集",
+    "searchFilesPlaceholder": "搜索文件名称...",
+    "preview": "预览",
+    "cancelPreview": "取消预览",
+    "messages": {
+      "pleaseSelectDataset": "请先选择一个数据集",
+      "singleDatasetOnlyWarning": "当前仅支持从一个数据集选择文件，请先清空已选文件后再切换数据集",
+      "selectAllSuccess": "已选中当前数据集的全部 {{count}} 个文件",
+      "noFilesAvailable": "当前数据集下没有可选文件",
+      "selectAllFailed": "全选整个数据集失败，请稍后重试"
+    }
+  }
+}

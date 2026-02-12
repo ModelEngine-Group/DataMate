@@ -74,6 +74,11 @@ make help
 make download
 ```
 
+### 部署Label Studio作为标注工具
+```bash
+make install-label-studio
+```
+
 ### 构建并部署Mineru增强pdf处理
 ```bash
 make build-mineru

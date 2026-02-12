@@ -3,8 +3,10 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { useTranslation } from "react-i18next";
 
 export default function Documentation({ operator }) {
+  const { t } = useTranslation();
   return (
     <div className="flex flex-col gap-4">
       <Card>

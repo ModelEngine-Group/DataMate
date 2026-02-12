@@ -23,8 +23,8 @@ logger = get_logger(__name__)
 async def list_templates(
     page: int = 1,
     size: int = 20,
-    name: Optional[str] = Query(None, description="模板名称模糊查询"),
-    built_in: Optional[bool] = Query(None, description="是否系统内置模板"),
+    name: Optional[str] = Query(None, description="Fuzzy search by template name"),
+    built_in: Optional[bool] = Query(None, description="Filter by system built-in template"),
     db: AsyncSession = Depends(get_db)
 ):
     """分页查询归集任务模板"""
@@ -51,7 +51,7 @@ async def list_templates(
         total_pages = math.ceil(total / size) if total > 0 else 0
 
         return StandardResponse(
-            code=200,
+            code="0",
             message="Success",
             data=PaginatedData(
                 content=items,

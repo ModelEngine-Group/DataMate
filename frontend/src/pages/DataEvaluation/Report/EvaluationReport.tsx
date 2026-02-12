@@ -16,8 +16,10 @@ import {
   presetEvaluationDimensions,
 } from "@/mock/evaluation";
 import { Link } from "react-router";
+import { useTranslation } from "react-i18next";
 
 const EvaluationTaskReport = () => {
+  const { t } = useTranslation();
   // const navigate = useNavigate();
   const selectedTask = mockTasks[0]; // 假设我们只展示第一个任务的报告
 
@@ -38,9 +40,9 @@ const EvaluationTaskReport = () => {
           <Breadcrumb
             items={[
               {
-                title: <Link to="/data/evaluation">数据评估</Link>,
+                title: <Link to="/data/evaluation">{t("dataEvaluation.detail.breadcrumb.home")}</Link>,
               },
-              { title: "评估报告", key: "report" },
+              { title: t("dataEvaluation.report.breadcrumb.report"), key: "report" },
             ]}
           ></Breadcrumb>
           <div className="flex items-center gap-2">
@@ -48,7 +50,7 @@ const EvaluationTaskReport = () => {
               className="flex items-center gap-2"
               icon={<Download className="w-4 h-4" />}
             >
-              导出报告
+              {t("dataEvaluation.report.exportReport")}
             </Button>
           </div>
         </div>
@@ -65,7 +67,9 @@ const EvaluationTaskReport = () => {
                   <div className="text-2xl font-bold text-gray-900">
                     {selectedTask.score || 0}
                   </div>
-                  <div className="text-sm text-gray-500">总体评分</div>
+                  <div className="text-sm text-gray-500">
+                    {t("dataEvaluation.report.labels.overallScore")}
+                  </div>
                 </div>
               </div>
             </div>
@@ -81,7 +85,9 @@ const EvaluationTaskReport = () => {
                   <div className="text-2xl font-bold text-gray-900">
                     {selectedTask.sliceConfig?.sampleCount}
                   </div>
-                  <div className="text-sm text-gray-500">评估样本数</div>
+                  <div className="text-sm text-gray-500">
+                    {t("dataEvaluation.report.labels.sampleCount")}
+                  </div>
                 </div>
               </div>
             </div>
@@ -95,9 +101,13 @@ const EvaluationTaskReport = () => {
                 </div>
                 <div>
                   <div className="text-2xl font-bold text-gray-900">
-                    {selectedTask.evaluationType === "manual" ? "人工" : "模型"}
+                    {selectedTask.evaluationType === "manual"
+                      ? t("dataEvaluation.report.labels.manual")
+                      : t("dataEvaluation.report.labels.model")}
                   </div>
-                  <div className="text-sm text-gray-500">评估方式</div>
+                  <div className="text-sm text-gray-500">
+                    {t("dataEvaluation.report.labels.evalMethod")}
+                  </div>
                 </div>
               </div>
             </div>
@@ -113,7 +123,9 @@ const EvaluationTaskReport = () => {
                   <div className="text-2xl font-bold text-gray-900">
                     {selectedTask.progress}%
                   </div>
-                  <div className="text-sm text-gray-500">完成进度</div>
+                  <div className="text-sm text-gray-500">
+                    {t("dataEvaluation.report.labels.progress")}
+                  </div>
                 </div>
               </div>
             </div>
@@ -127,14 +139,16 @@ const EvaluationTaskReport = () => {
             title={
               <span className="flex items-center gap-2">
                 <TrendingUp className="w-5 h-5" />
-                评估结果
+                {t("dataEvaluation.report.evalResult")}
               </span>
             }
             styles={{ body: { paddingTop: 0 } }}
           >
             {/* 维度评分 */}
             <div className="mt-4">
-              <h4 className="font-medium mb-3">维度评分</h4>
+              <h4 className="font-medium mb-3">
+                {t("dataEvaluation.report.dimensionScores")}
+              </h4>
               <div className="space-y-3">
                 {allDimensions.map((dimension) => {
                   const score = 75 + Math.floor(Math.random() * 20); // 模拟评分
@@ -149,7 +163,8 @@ const EvaluationTaskReport = () => {
                             {dimension.name}
                           </span>
                           <span className="text-sm font-bold text-blue-600">
-                            {score}分
+                            {score}
+                            {t("dataEvaluation.report.scoreSuffix")}
                           </span>
                         </div>
                         <div className="w-full bg-gray-200 rounded-full h-2">
@@ -167,23 +182,25 @@ const EvaluationTaskReport = () => {
 
             {/* 质量分数解读 */}
             <div className="border-t pt-4 mt-4">
-              <h4 className="font-medium mb-3">质量分数解读</h4>
+              <h4 className="font-medium mb-3">
+                {t("dataEvaluation.report.qualityInterpretation")}
+              </h4>
               <div className="space-y-2 text-sm">
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 bg-green-500 rounded-full" />
-                  <span>90-100分: 优秀，质量很高</span>
+                  <span>{t("dataEvaluation.report.qualityExcellent")}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 bg-blue-500 rounded-full" />
-                  <span>80-89分: 良好，质量较好</span>
+                  <span>{t("dataEvaluation.report.qualityGood")}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 bg-yellow-500 rounded-full" />
-                  <span>70-79分: 一般，需要改进</span>
+                  <span>{t("dataEvaluation.report.qualityFair")}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 bg-red-500 rounded-full" />
-                  <span>60-69分: 较差，需要重点关注</span>
+                  <span>{t("dataEvaluation.report.qualityPoor")}</span>
                 </div>
               </div>
             </div>
@@ -194,7 +211,7 @@ const EvaluationTaskReport = () => {
             title={
               <span className="flex items-center gap-2">
                 <Scissors className="w-5 h-5" />
-                切片信息
+                {t("dataEvaluation.report.sliceInfo")}
               </span>
             }
             styles={{ body: { paddingTop: 0 } }}
@@ -202,25 +219,25 @@ const EvaluationTaskReport = () => {
             <div className="space-y-4 mt-4">
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <span className="text-gray-500">切片阈值:</span>
+                  <span className="text-gray-500">{t("dataEvaluation.report.sliceThreshold")}</span>
                   <span className="ml-2 font-medium">
                     {selectedTask.sliceConfig?.threshold}
                   </span>
                 </div>
                 <div>
-                  <span className="text-gray-500">抽样数量:</span>
+                  <span className="text-gray-500">{t("dataEvaluation.report.sliceSampleCount")}</span>
                   <span className="ml-2 font-medium">
                     {selectedTask.sliceConfig?.sampleCount}
                   </span>
                 </div>
                 <div>
-                  <span className="text-gray-500">切片方法:</span>
+                  <span className="text-gray-500">{t("dataEvaluation.report.sliceMethod")}</span>
                   <span className="ml-2 font-medium">
                     {selectedTask.sliceConfig?.method}
                   </span>
                 </div>
                 <div>
-                  <span className="text-gray-500">评估时间:</span>
+                  <span className="text-gray-500">{t("dataEvaluation.report.evalTime")}</span>
                   <span className="ml-2 font-medium">
                     {selectedTask.completedAt || selectedTask.createdAt}
                   </span>
@@ -228,7 +245,7 @@ const EvaluationTaskReport = () => {
               </div>
 
               <div className="border-t pt-4">
-                <h4 className="font-medium mb-3">评估维度</h4>
+                <h4 className="font-medium mb-3">{t("dataEvaluation.report.dimensions")}</h4>
                 <div className="flex flex-wrap gap-2">
                   {allDimensions.map((dimension) => (
                     <Badge
@@ -253,7 +270,7 @@ const EvaluationTaskReport = () => {
           title={
             <span className="flex items-center gap-2">
               <MessageSquare className="w-5 h-5" />
-              QA对详情
+              {t("dataEvaluation.report.qaPairs")}
             </span>
           }
           styles={{ body: { paddingTop: 0 } }}
@@ -264,19 +281,19 @@ const EvaluationTaskReport = () => {
                 <div className="space-y-3">
                   <div>
                     <span className="text-sm font-medium text-gray-700 mb-1">
-                      问题:
+                      {t("dataEvaluation.report.question")}
                     </span>
                     <span className="text-gray-900">{qa.question}</span>
                   </div>
                   <div>
                     <span className="text-sm font-medium text-gray-700 mb-1">
-                      回答:
+                      {t("dataEvaluation.report.answer")}
                     </span>
                     <span className="text-gray-900">{qa.answer}</span>
                   </div>
                   <div className="flex items-center justify-between pt-2 border-t">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-500">评分:</span>
+                      <span className="text-sm text-gray-500">{t("dataEvaluation.report.score")}</span>
                       <div className="flex items-center gap-1">
                         {[1, 2, 3, 4, 5].map((star) => (
                           <Star

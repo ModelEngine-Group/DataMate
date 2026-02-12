@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { FolderOpenOutlined, DeleteOutlined, EyeOutlined, ExperimentOutlined } from "@ant-design/icons";
 import { Link, useNavigate } from "react-router";
+import { useTranslation } from "react-i18next";
 import { SearchControls } from "@/components/SearchControls";
 import { formatDateTime } from "@/utils/unit";
 import {
@@ -51,6 +52,7 @@ interface SynthesisTask {
 }
 
 export default function SynthesisTaskTab() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [tasks, setTasks] = useState<SynthesisTask[]>([]);
@@ -103,8 +105,8 @@ export default function SynthesisTaskTab() {
 
   // 类型映射
   const typeMap: Record<string, string> = {
-    QA: "问答对生成",
-    COT: "链式推理生成",
+    QA: t('synthesisTask.home.typeMap.qa'),
+    COT: t('synthesisTask.home.typeMap.cot'),
   };
 
   // 表格列
@@ -132,7 +134,7 @@ export default function SynthesisTaskTab() {
           }}
           className="h-auto p-0 font-semibold text-gray-700 hover:bg-transparent"
         >
-          任务名称
+          {t('synthesisTask.home.columns.taskName')}
           {sortBy === "name" &&
             (sortOrder === "asc" ? (
               <ArrowUp className="w-3 h-3 ml-1" />
@@ -161,7 +163,7 @@ export default function SynthesisTaskTab() {
       ),
     },
     {
-      title: "任务ID",
+      title: t('synthesisTask.home.columns.taskId'),
       dataIndex: "id",
       key: "id",
       width: 140,
@@ -172,7 +174,7 @@ export default function SynthesisTaskTab() {
       ),
     },
     {
-      title: "类型",
+      title: t('synthesisTask.home.columns.type'),
       dataIndex: "synthesis_type",
       key: "synthesis_type",
       width: 100,
@@ -183,7 +185,7 @@ export default function SynthesisTaskTab() {
       ),
     },
     {
-      title: "文件数",
+      title: t('synthesisTask.home.columns.fileCount'),
       dataIndex: "total_files",
       key: "total_files",
       width: 70,
@@ -194,7 +196,7 @@ export default function SynthesisTaskTab() {
       ),
     },
     {
-      title: "创建时间",
+      title: t('synthesisTask.home.columns.createdAt'),
       dataIndex: "created_at",
       key: "created_at",
       width: 200,
@@ -205,13 +207,13 @@ export default function SynthesisTaskTab() {
       ),
     },
     {
-      title: "操作",
+      title: t('synthesisTask.home.columns.actions'),
       key: "actions",
       fixed: "right" as const,
       width: 120,
       render: (_: unknown, task: SynthesisTask) => (
         <div className="flex items-center justify-start gap-1">
-          <Tooltip title="查看详情">
+          <Tooltip title={t('synthesisTask.actions.viewDetail')}>
             <Button
               onClick={() => navigate(`/data/synthesis/task/${task.id}`)}
               className="hover:bg-blue-50 p-1 h-7 w-7 flex items-center justify-center"
@@ -219,7 +221,7 @@ export default function SynthesisTaskTab() {
               icon={<EyeOutlined />}
             />
           </Tooltip>
-          <Tooltip title="立即评估">
+          <Tooltip title={t('synthesisTask.actions.evaluate')}>
             <Button
               type="text"
               className="hover:bg-purple-50 p-1 h-7 w-7 flex items-center justify-center text-purple-600"
@@ -227,23 +229,23 @@ export default function SynthesisTaskTab() {
               onClick={() => openEvalModal(task)}
             />
           </Tooltip>
-          <Tooltip title="留用合成数据到数据集">
+          <Tooltip title={t('synthesisTask.actions.archive')}>
             <Button
               type="text"
               className="hover:bg-green-50 p-1 h-7 w-7 flex items-center justify-center text-green-600"
               icon={<FolderOpenOutlined />}
               onClick={() => {
                 Modal.confirm({
-                  title: "确认归档该合成任务?",
-                  content: `任务名称：${task.name}`,
-                  okText: "归档",
-                  cancelText: "取消",
+                  title: t('synthesisTask.home.confirm.archiveTitle'),
+                  content: t('synthesisTask.home.confirm.archiveContent', { name: task.name }),
+                  okText: t('synthesisTask.actions.archive'),
+                  cancelText: t('synthesisTask.actions.cancel'),
                   onOk: () => handleArchiveTask(task),
                 });
               }}
             />
           </Tooltip>
-          <Tooltip title="删除任务">
+          <Tooltip title={t('synthesisTask.actions.delete')}>
             <Button
               danger
               type="text"
@@ -251,18 +253,18 @@ export default function SynthesisTaskTab() {
               icon={<DeleteOutlined />}
               onClick={() => {
                 Modal.confirm({
-                  title: `确认删除任务?`,
-                  content: `任务名：${task.name}`,
-                  okText: "删除",
+                  title: t('synthesisTask.home.confirm.deleteTitle'),
+                  content: t('synthesisTask.home.confirm.deleteContent', { name: task.name }),
+                  okText: t('synthesisTask.actions.delete'),
                   okType: "danger",
-                  cancelText: "取消",
+                  cancelText: t('synthesisTask.actions.cancel'),
                   onOk: async () => {
                     try {
                       await deleteSynthesisTaskByIdUsingDelete(task.id);
-                      message.success("删除成功");
+                      message.success(t('synthesisTask.messages.deleteSuccess'));
                       loadTasks();
                     } catch {
-                      message.error("删除失败");
+                      message.error(t('synthesisTask.messages.deleteFailed'));
                     }
                   },
                 });
@@ -296,19 +298,19 @@ export default function SynthesisTaskTab() {
       const datasetRes = await createDatasetUsingPost(datasetReq);
       const datasetId = datasetRes?.data?.id;
       if (!datasetId) {
-        message.error("创建数据集失败");
+        message.error(t('synthesisTask.home.archive.datasetFailed'));
         return;
       }
 
       // 2. 调用后端归档接口，将合成数据写入该数据集
       await archiveSynthesisTaskToDatasetUsingPost(task.id, datasetId);
 
-      message.success("归档成功");
+      message.success(t('synthesisTask.home.archive.success'));
       // 3. 可选：跳转到数据集详情页
       navigate(`/data/management/detail/${datasetId}`);
     } catch (e) {
       console.error(e);
-      message.error("归档失败");
+      message.error(t('synthesisTask.home.archive.failed'));
     }
   };
 
@@ -333,7 +335,7 @@ export default function SynthesisTaskTab() {
       setModels(data?.content || []);
     } catch (e) {
       console.error(e);
-      message.error("获取模型列表失败");
+      message.error(t('synthesisTask.messages.fetchModelsFailed'));
     } finally {
       setModelLoading(false);
     }
@@ -381,14 +383,14 @@ export default function SynthesisTaskTab() {
         },
       };
       await createEvaluationTaskUsingPost(payload);
-      message.success("评估任务创建成功");
+      message.success(t('synthesisTask.messages.evaluationCreated'));
       setEvalModalVisible(false);
       setCurrentEvalTask(null);
       evalForm.resetFields();
     } catch (error) {
       const err = error as { errorFields?: unknown; response?: { data?: { message?: string } } };
       if (err?.errorFields) return; // 表单校验错误
-      message.error(err?.response?.data?.message || "评估任务创建失败");
+      message.error(err?.response?.data?.message || t('synthesisTask.messages.evaluationCreateFailed'));
     } finally {
       setEvalLoading(false);
     }
@@ -400,15 +402,15 @@ export default function SynthesisTaskTab() {
       <SearchControls
         searchTerm={searchQuery}
         onSearchChange={setSearchQuery}
-        searchPlaceholder="搜索任务名称..."
+        searchPlaceholder={t('synthesisTask.home.searchPlaceholder')}
         filters={[
           {
             key: "status",
-            label: "类型",
+            label: t('synthesisTask.home.filters.type'),
             options: [
-              { label: "全部类型", value: "all" },
-              { label: "问答对生成", value: "QA" },
-              { label: "链式推理生成", value: "COT" },
+              { label: t('synthesisTask.home.filters.allTypes'), value: "all" },
+              { label: t('synthesisTask.home.typeMap.qa'), value: "QA" },
+              { label: t('synthesisTask.home.typeMap.cot'), value: "COT" },
             ],
           },
         ]}
@@ -442,12 +444,10 @@ export default function SynthesisTaskTab() {
               <div className="text-center py-12">
                 <Sparkles className="w-12 h-12 text-gray-400 mx-auto mb-3" />
                 <h3 className="text-base font-semibold text-gray-900 mb-2">
-                  暂无合成任务
+                  {searchQuery ? t('synthesisTask.home.empty.noMatch') : t('synthesisTask.home.empty.title')}
                 </h3>
                 <p className="text-gray-500 mb-4 text-sm">
-                  {searchQuery
-                    ? "没有找到匹配的任务"
-                    : "开始创建您的第一个合成任务"}
+                  {searchQuery ? t('synthesisTask.home.empty.noMatch') : t('synthesisTask.home.empty.createFirst')}
                 </p>
                 {!searchQuery && filterStatus === "all" && (
                   <Button
@@ -455,7 +455,7 @@ export default function SynthesisTaskTab() {
                     className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 shadow-lg"
                   >
                     <Plus className="w-3 h-3 mr-1" />
-                    创建合成任务
+                    {t('synthesisTask.actions.createSynthesisTask')}
                   </Button>
                 )}
               </div>
@@ -465,7 +465,7 @@ export default function SynthesisTaskTab() {
       </Card>
 
       <Modal
-        title="创建评估任务"
+        title={t('synthesisTask.home.modal.evalTitle')}
         open={evalModalVisible}
         onCancel={() => {
           setEvalModalVisible(false);
@@ -474,8 +474,8 @@ export default function SynthesisTaskTab() {
         }}
         onOk={handleCreateEvaluation}
         confirmLoading={evalLoading}
-        okText="开始评估"
-        cancelText="取消"
+        okText={t('synthesisTask.home.modal.startEval')}
+        cancelText={t('synthesisTask.actions.cancel')}
       >
         <Form
           form={evalForm}
@@ -485,14 +485,14 @@ export default function SynthesisTaskTab() {
           }}
         >
           <Form.Item
-            label="评估任务名称"
+            label={t('synthesisTask.home.modal.evalName')}
             name="name"
-            rules={[{ required: true, message: "请输入评估任务名称" }]}
+            rules={[{ required: true, message: t('synthesisTask.home.modal.evalNameRequired') }]}
           >
-            <Input placeholder="例如：数据评估" />
+            <Input placeholder={t('synthesisTask.home.modal.placeholders.evalName')} />
           </Form.Item>
           <Form.Item
-            label="任务类型"
+            label={t('synthesisTask.home.modal.taskType')}
             name="taskType"
           >
             <Select
@@ -501,21 +501,21 @@ export default function SynthesisTaskTab() {
                 {
                   label:
                     currentEvalTask?.synthesis_type === "COT"
-                      ? "COT评估"
-                      : "QA评估",
+                      ? t('synthesisTask.home.modal.evalMethod.cot')
+                      : t('synthesisTask.home.modal.evalMethod.qa'),
                   value: currentEvalTask?.synthesis_type || "QA",
                 },
               ]}
             />
           </Form.Item>
           <Form.Item
-            label="评估方式"
+            label={t('synthesisTask.home.modal.evalMethod')}
             name="evalMethod"
-            rules={[{ required: true, message: "请选择评估方式" }]}
+            rules={[{ required: true, message: t('synthesisTask.home.modal.evalMethodRequired') }]}
           >
             <Select
               options={[
-                { label: "模型自动评估", value: "AUTO" },
+                { label: t('synthesisTask.home.modal.evalMethod.auto'), value: "AUTO" },
               ]}
             />
           </Form.Item>

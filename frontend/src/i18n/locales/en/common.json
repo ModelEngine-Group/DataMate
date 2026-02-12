@@ -1,0 +1,2615 @@
+{
+  "header": {
+    "simplifiedChinese": "简体中文",
+    "english": "English"
+  },
+  "user": {
+    "actions": {
+      "login": "Login",
+      "register": "Register",
+      "logout": "Logout"
+    },
+    "messages": {
+      "loginSuccess": "Login successful",
+      "loginFailed": "Login failed, please try again later",
+      "signupSuccess": "Registration successful, auto-login",
+      "signupFailed": "Registration failed, please try again later",
+      "logoutSuccess": "Logged out successfully",
+      "passwordMismatch": "Passwords do not match"
+    },
+    "loginDialog": {
+      "title": "Login",
+      "description": "Enter your username and password to log in to the system",
+      "submitButton": "Login",
+      "noAccount": "Don't have an account?",
+      "registerNow": "Register now"
+    },
+    "signupDialog": {
+      "title": "Register",
+      "description": "Create your account to use DataMate system",
+      "submitButton": "Register",
+      "hasAccount": "Already have an account?",
+      "loginNow": "Login now"
+    },
+    "fields": {
+      "username": "Username",
+      "email": "Email",
+      "password": "Password",
+      "confirmPassword": "Confirm Password"
+    },
+    "placeholders": {
+      "username": "Enter username",
+      "email": "Enter email",
+      "password": "Enter password",
+      "confirmPassword": "Enter password again"
+    },
+    "validations": {
+      "usernameRequired": "Please enter username",
+      "emailRequired": "Please enter email",
+      "emailInvalid": "Please enter a valid email address",
+      "passwordRequired": "Please enter password",
+      "passwordTooShort": "Password must be at least 6 characters",
+      "confirmPasswordRequired": "Please confirm password",
+      "passwordMismatch": "Passwords do not match"
+    }
+  },
+  "dataCollection": {
+    "title": "Data Collection",
+    "description": "Create, import and manage datasets",
+    "tabs": {
+      "taskManagement": "Task Management",
+      "taskExecution": "Execution Records",
+      "taskTemplate": "Template Management"
+    },
+    "taskManagement": {
+      "filters": {
+        "statusFilter": "Status Filter",
+        "allStatus": "All Status",
+        "searchPlaceholder": "Search task name..."
+      },
+      "columns": {
+        "taskName": "Task Name",
+        "status": "Status",
+        "template": "Template",
+        "syncMode": "Sync Mode",
+        "cronExpression": "Cron Expression",
+        "timeout": "Timeout",
+        "description": "Description",
+        "createdAt": "Created At",
+        "updatedAt": "Updated At",
+        "actions": "Actions"
+      },
+      "actions": {
+        "start": "Start",
+        "stop": "Stop",
+        "executionRecords": "Execution Records",
+        "delete": "Delete"
+      },
+      "messages": {
+        "startSuccess": "Task start request sent",
+        "stopSuccess": "Task stop request sent",
+        "deleteSuccess": "Task deleted",
+        "deleteConfirm": "Are you sure you want to delete this task? This action cannot be undone.",
+        "confirmDelete": "Delete",
+        "cancel": "Cancel"
+      }
+    },
+    "templateManagement": {
+      "filters": {
+        "templateType": "Template Type",
+        "all": "All",
+        "builtIn": "Built-in",
+        "custom": "Custom",
+        "searchPlaceholder": "Search template name..."
+      },
+      "columns": {
+        "templateName": "Template Name",
+        "templateType": "Template Type",
+        "source": "Source",
+        "target": "Target",
+        "description": "Description",
+        "createdAt": "Created At",
+        "updatedAt": "Updated At"
+      },
+      "messages": {
+        "refreshFailed": "Refresh failed"
+      }
+    },
+    "execution": {
+      "filters": {
+        "statusFilter": "Status Filter",
+        "allStatus": "All Status",
+        "running": "Running",
+        "success": "Success",
+        "failed": "Failed",
+        "stopped": "Stopped",
+        "searchPlaceholder": "Search task name..."
+      },
+      "duration": {
+        "minutesSuffix": "min",
+        "secondsSuffix": "s"
+      },
+      "messages": {
+        "loadLogFailed": "Failed to load log"
+      },
+      "triggerType": {
+        "manual": "Manual",
+        "scheduled": "Scheduled",
+        "api": "API"
+      },
+      "columns": {
+        "taskName": "Task Name",
+        "status": "Status",
+        "startTime": "Start Time",
+        "endTime": "End Time",
+        "duration": "Duration",
+        "errorMessage": "Error Message",
+        "actions": "Actions"
+      },
+      "actions": {
+        "viewLog": "View Log"
+      },
+      "modal": {
+        "title": "Execution Log",
+        "downloadLog": "Download Log",
+        "close": "Close",
+        "loading": "Loading...",
+        "empty": "(empty)"
+      },
+      "datePicker": {
+        "startTime": "Start Time",
+        "endTime": "End Time"
+      }
+    },
+    "createTask": {
+      "title": "Create Collection Task",
+      "back": "Back",
+      "cancel": "Cancel",
+      "submit": "Create Task",
+      "actions": {
+        "formatJson": "Format JSON"
+      },
+      "basicInfo": {
+        "title": "Basic Information",
+        "name": "Name",
+        "namePlaceholder": "Please enter task name",
+        "nameRequired": "Please enter task name",
+        "timeout": "Timeout (seconds)",
+        "timeoutPlaceholder": "Default 3600",
+        "timeoutRequired": "Please enter timeout",
+        "description": "Description",
+        "descriptionPlaceholder": "Please enter task description"
+      },
+      "syncConfig": {
+        "title": "Sync Configuration",
+        "syncMode": {
+          "label": "Sync Mode",
+          "once": "Once",
+          "scheduled": "Scheduled"
+        },
+        "cronRequired": "Please enter Cron expression"
+      },
+      "templateConfig": {
+        "title": "Template Configuration",
+        "selectTemplate": "Select Template",
+        "selectTemplatePlaceholder": "Please select collection template",
+        "selectTemplateRequired": "Please select collection template"
+      },
+      "templateParams": {
+        "title": "Template Parameters"
+      },
+      "sourceParams": {
+        "title": "Source Parameters"
+      },
+      "targetParams": {
+        "title": "Target Parameters"
+      },
+      "messages": {
+        "loadTemplatesFailed": "Failed to load collection templates",
+        "createSuccess": "Task created successfully",
+        "errorWithDetail": "{{message}}: {{detail}}",
+        "jsonObjectRequired": "Must be a JSON object",
+        "jsonObjectInvalid": "Please enter a valid JSON object",
+        "jsonFormatError": "Invalid JSON format",
+        "jsonFormatErrorWithMessage": "Invalid JSON format: {{message}}"
+      },
+      "placeholders": {
+        "enter": "Please enter",
+        "select": "Please select",
+        "enterWithLabel": "Please enter {{label}}",
+        "selectWithLabel": "Please select {{label}}"
+      }
+    },
+    "scheduler": {
+      "monthDaySuffix": " day",
+      "labels": {
+        "executionPeriod": "Execution Period",
+        "executionDate": "Execution Date",
+        "executionTime": "Execution Time",
+        "selectWeekday": "Select weekday",
+        "selectDate": "Select date",
+        "selectTime": "Select time"
+      },
+      "periods": {
+        "once": "Once",
+        "daily": "Daily",
+        "weekly": "Weekly",
+        "monthly": "Monthly"
+      },
+      "weekdays": {
+        "sunday": "Sunday",
+        "monday": "Monday",
+        "tuesday": "Tuesday",
+        "wednesday": "Wednesday",
+        "thursday": "Thursday",
+        "friday": "Friday",
+        "saturday": "Saturday"
+      },
+      "timePresets": {
+        "morning9": "9:00 AM",
+        "noon12": "12:00 PM",
+        "afternoon2": "2:00 PM",
+        "afternoon6": "6:00 PM",
+        "evening8": "8:00 PM",
+        "midnight0": "12:00 AM"
+      }
+    }
+  },
+  "dataManagement": {
+    "title": "Data Management",
+    "description": "Create, import and manage datasets",
+    "actions": {
+      "createDataset": "Create Dataset",
+      "edit": "Edit",
+      "import": "Import",
+      "importData": "Import Data",
+      "download": "Download",
+      "delete": "Delete",
+      "refresh": "Refresh",
+      "export": "Export",
+      "batchExport": "Batch Export",
+      "batchDelete": "Batch Delete",
+      "rename": "Rename",
+      "createFolder": "New Folder",
+      "cancel": "Cancel",
+      "confirm": "Confirm"
+    },
+    "stats": {
+      "totalDatasets": "Total Datasets",
+      "totalFiles": "Total Files",
+      "totalSize": "Total Size",
+      "text": "Text",
+      "image": "Image",
+      "audio": "Audio",
+      "video": "Video"
+    },
+    "filters": {
+      "type": "Type",
+      "status": "Status",
+      "tags": "Tags"
+    },
+    "search": {
+      "placeholder": "Search dataset name or description"
+    },
+    "columns": {
+      "name": "Name",
+      "type": "Type",
+      "status": "Status",
+      "size": "Size",
+      "fileCount": "File Count",
+      "storagePath": "Storage Path",
+      "createdAt": "Created At",
+      "updatedAt": "Updated At",
+      "actions": "Actions",
+      "fileName": "File Name",
+      "fileSize": "Size",
+      "filesInFolder": "Files in Folder",
+      "uploadTime": "Upload Time",
+      "tags": "Tags",
+      "tagsUpdatedAt": "Tags Updated At"
+    },
+    "formLabels": {
+      "name": "Name",
+      "description": "Description",
+      "type": "Type",
+      "tags": "Tags",
+      "collectionTask": "Collection Task",
+      "dataSource": "Data Source",
+      "autoExtract": "Auto-extract uploaded archives",
+      "uploadFiles": "Upload Files / Folder",
+      "databaseType": "Database Type",
+      "tableName": "Table Name",
+      "connectionString": "Connection String",
+      "obsEndpoint": "Endpoint",
+      "obsBucket": "Bucket",
+      "obsAccessKey": "Access Key",
+      "obsSecretKey": "Secret Key"
+    },
+    "placeholders": {
+      "datasetName": "Enter dataset name",
+      "datasetDescription": "Describe dataset purpose and content",
+      "selectTags": "Select tags",
+      "selectCollectionTask": "Select collection task",
+      "selectDataSource": "Select data source",
+      "selectType": "Select dataset type",
+      "obsEndpoint": "obs.cn-north-4.myhuaweicloud.com",
+      "obsBucket": "my-bucket",
+      "databaseTable": "dataset_table",
+      "databaseConnection": "Database connection string",
+      "fileName": "Enter file name",
+      "folderName": "Enter folder name"
+    },
+    "validation": {
+      "nameRequired": "Please enter dataset name",
+      "typeRequired": "Please select dataset type",
+      "filesRequired": "Please upload file or folder"
+    },
+    "messages": {
+      "createSuccess": "Dataset created successfully",
+      "createFailed": "Dataset creation failed, please try again",
+      "updateSuccess": "Dataset updated successfully",
+      "updateFailed": "Dataset update failed, please try again",
+      "deleteSuccess": "Dataset deleted",
+      "downloadSuccess": "Dataset downloaded successfully",
+      "refreshSuccess": "Data refreshed",
+      "fileDownloadSuccess": "File downloaded successfully"
+    },
+    "confirm": {
+      "deleteDatasetTitle": "Confirm delete this dataset?",
+      "deleteDatasetDesc": "This dataset cannot be recovered after deletion. Proceed with caution.",
+      "deleteFolderTitle": "Confirm delete folder?",
+      "deleteFolderDesc": "Deleting folder \"{{name}}\" will remove all files and subfolders. This action cannot be undone.",
+      "deleteConfirm": "Delete",
+      "deleteCancel": "Cancel"
+    },
+    "detail": {
+      "breadcrumb": "Data Management",
+      "title": "Dataset Detail",
+      "tabOverview": "Overview",
+      "tabLineage": "Data Lineage",
+      "tabQuality": "Data Quality",
+      "sectionBasicInfo": "Basic Information",
+      "sectionFileList": "File List",
+      "selectedFiles": "Selected {{count}} files",
+      "goUp": "Go up",
+      "currentPath": "Current path: {{path}}",
+      "totalItems": "Total {{total}} items",
+      "previewTitle": "File Preview: {{name}}",
+      "previewEmpty": "No preview available or unsupported file type.",
+      "previewInfoTitle": "File Info",
+      "editTitle": "Edit Dataset - {{name}}"
+    },
+    "labels": {
+      "id": "ID",
+      "name": "Name",
+      "fileCount": "File Count",
+      "dataSize": "Data Size",
+      "type": "Type",
+      "status": "Status",
+      "creator": "Creator",
+      "storagePath": "Storage Path",
+      "storageName": "Storage Name",
+      "createdAt": "Created At",
+      "updatedAt": "Updated At",
+      "description": "Description",
+      "fileName": "File Name",
+      "originalName": "Original Name",
+      "fileType": "File Type",
+      "fileSize": "File Size",
+      "tags": "Tags",
+      "tagsUpdatedAt": "Tags Updated At",
+      "uploadTime": "Upload Time",
+      "uploadedBy": "Uploaded By",
+      "filePath": "File Path",
+      "annotation": "Annotation"
+    },
+    "defaults": {
+      "unknown": "Unknown",
+      "none": "None",
+      "empty": "-",
+      "unnamedFile": "Unnamed File"
+    },
+    "lineage": {
+      "title": "Data Lineage",
+      "stats": "{{nodes}} nodes · {{edges}} edges",
+      "legendDatasource": "Data Source",
+      "legendDataset": "Dataset",
+      "legendModel": "Model",
+      "legendKnowledge": "Knowledge Base",
+      "emptyTitle": "No lineage data",
+      "emptyDesc": "Lineage will appear after collection or workflow linkage",
+      "edgeTypeCollection": "Data Collection",
+      "edgeTypeCleaning": "Data Processing",
+      "edgeTypeLabeling": "Data Annotation",
+      "edgeTypeSynthesis": "Data Synthesis",
+      "edgeTypeRatio": "Data Ratio",
+      "edgeTypeDefault": "Processing Flow",
+      "detailBasicInfo": "Basic Information",
+      "detailId": "ID:",
+      "detailName": "Name:",
+      "detailStatus": "Status:",
+      "detailFileCount": "File Count:",
+      "detailDataSize": "Data Size:",
+      "detailUpdateTime": "Updated At:",
+      "detailDescription": "Description",
+      "detailUpstream": "Upstream",
+      "detailDownstream": "Downstream",
+      "detailNoUpstream": "No upstream dependencies",
+      "detailNoDownstream": "No downstream impacts",
+      "processDetail": "Process Detail",
+      "processId": "Process ID:",
+      "relationships": "Upstream and Downstream",
+      "processUpstream": "Upstream:",
+      "processDownstream": "Downstream:",
+      "processDescription": "Description",
+      "processEmpty": "No process description",
+      "nodeTypeDatasource": "Data Source",
+      "nodeTypeDataset": "Dataset",
+      "nodeTypeModel": "Model",
+      "nodeTypeKnowledge": "Knowledge Base",
+      "filesCount": "{{count}} files · {{size}}",
+      "statusRunning": "Running",
+      "statusStopped": "Stopped",
+      "statusActive": "Active",
+      "statusInactive": "Inactive",
+      "statusDraft": "Draft"
+    },
+    "quality": {
+      "titleDistribution": "Quality Distribution",
+      "titleIntegrity": "Data Integrity",
+      "metricImageClarity": "Image Clarity",
+      "metricColorConsistency": "Color Consistency",
+      "metricAnnotationCompleteness": "Annotation Completeness",
+      "metricTokenQuality": "Token Quality",
+      "metricLabelConsistency": "Label Consistency",
+      "metricMetadataCompleteness": "Metadata Completeness",
+      "metricMissingValueControl": "Missing Value Control",
+      "metricTypeConsistency": "Type Consistency",
+      "metricUniqueness": "Uniqueness/Dedup",
+      "metricFileIntegrity": "File Integrity",
+      "metricFieldIntegrity": "Field Integrity",
+      "metricColumnIntegrity": "Column Integrity",
+      "metricDuplicateRate": "Duplicate Rate",
+      "recommendationTitle": "Quality Improvement Suggestions",
+      "recommendationReviewLowQuality": "Review or recollect {{count}} low-quality samples",
+      "recommendationSupplementMetadata": "Check and supplement missing metadata fields (missing: {{missing}})",
+      "recommendationBalanceDistribution": "Consider adding more underrepresented samples to balance distribution",
+      "imageClarity": "Image Clarity",
+      "colorConsistency": "Color Consistency",
+      "annotationCompleteness": "Annotation Completeness",
+      "tokenQuality": "Token Quality",
+      "labelConsistency": "Label Consistency",
+      "metadataCompleteness": "Metadata Completeness",
+      "missingValueControl": "Missing Value Control",
+      "typeConsistency": "Type Consistency",
+      "uniqueness": "Uniqueness/Dedup",
+      "fileIntegrity": "File Integrity",
+      "fieldIntegrity": "Field Integrity",
+      "columnIntegrity": "Column Integrity",
+      "duplicateRate": "Duplicate Rate",
+      "labelDistribution": {
+        "title": "Label Distribution Details",
+        "category": "Category",
+        "labelName": "Label Name",
+        "count": "Count",
+        "percentage": "Percentage",
+        "noData": "No label distribution data",
+        "noDataSubtitle": "No label distribution data available",
+        "statisticsTitle": "Dataset Label Statistics",
+        "statisticsSummary": "{{categoryCount}} categories, {{totalLabels}} label samples",
+        "detailsCardTitle": "Label Distribution Details",
+        "totalLabels": "Total: {{count}} labels",
+        "moreLabels": "And {{count}} more labels..."
+      }
+    },
+    "import": {
+      "title": "Import Data",
+      "uploadFileTitle": "Local File Upload",
+      "uploadFileHint": "Drag files here or click to select files",
+      "uploadFolderTitle": "Local Folder Upload",
+      "uploadFolderHint": "Drag folder here or click to select folder",
+      "fileLabel": "File:",
+      "folderLabel": "Folder:",
+      "warningTypeMismatch": "Dataset type is {{type}}. Some selected files may not match; please confirm.",
+      "warningUseFolderUpload": "To upload a folder, use the \"Local Folder Upload\" area on the right.",
+      "warningUseFileUpload": "To upload a single file, use the \"Local File Upload\" area on the left.",
+      "obsEndpoint": "Endpoint",
+      "obsBucket": "Bucket",
+      "obsAccessKey": "Access Key",
+      "obsSecretKey": "Secret Key",
+      "dbType": "Database Type",
+      "dbTableName": "Table Name",
+      "dbConnectionString": "Connection String",
+      "dbTypeMysql": "MySQL",
+      "dbTypePostgres": "PostgreSQL",
+      "dbTypeMongo": "MongoDB",
+      "obsAccessKeyPlaceholder": "Access Key",
+      "obsSecretKeyPlaceholder": "Secret Key",
+      "validation": {
+        "selectDataSource": "Please select data source"
+      },
+      "autoExtract": "Auto-extract uploaded archives",
+      "uploadFiles": "Upload Files / Folder",
+      "unnamedFile": "Unnamed File"
+    },
+    "datasetTypes": {
+      "text": "Text",
+      "image": "Image",
+      "audio": "Audio",
+      "video": "Video"
+    },
+    "datasetTypeDesc": {
+      "text": "Dataset for processing and analyzing text data",
+      "image": "Dataset for processing and analyzing image data",
+      "audio": "Dataset for processing and analyzing audio data",
+      "video": "Dataset for processing and analyzing video data"
+    },
+    "datasetSubTypes": {
+      "textDocument": "Document",
+      "textWeb": "Web",
+      "textDialog": "Dialog",
+      "imageImage": "Image",
+      "imageCaption": "Image + Caption",
+      "audioAudio": "Audio",
+      "audioJsonl": "Audio + JSONL",
+      "videoVideo": "Video",
+      "videoJsonl": "Video + JSONL"
+    },
+    "datasetSubTypeDesc": {
+      "textDocument": "Dataset for storing and processing document text",
+      "textWeb": "Dataset for storing and processing web data",
+      "textDialog": "Dataset for storing and processing dialog data",
+      "imageImage": "Dataset for large-scale image pretraining",
+      "imageCaption": "Dataset for image captioning",
+      "audioAudio": "Dataset for large-scale audio pretraining",
+      "audioJsonl": "Dataset for large-scale audio pretraining",
+      "videoVideo": "Dataset for large-scale video pretraining",
+      "videoJsonl": "Dataset for large-scale video pretraining"
+    },
+    "datasetStatus": {
+      "active": "Active",
+      "processing": "Processing",
+      "inactive": "Inactive",
+      "draft": "Draft"
+    },
+    "dataSources": {
+      "upload": "Local Upload",
+      "collection": "Collection Task Import"
+    }
+  },
+  "common": {
+    "settings": {
+      "title": "Settings"
+    },
+    "taskCenter": {
+      "title": "Task Center"
+    },
+    "actions": {
+      "createTask": "Create Task",
+      "actions": "Actions",
+      "openSidebar": "Open Sidebar",
+      "closeSidebar": "Close Sidebar"
+    },
+    "placeholders": {
+      "empty": "-"
+    },
+    "status": {
+      "task": {
+        "running": "Running",
+        "stopped": "Stopped",
+        "failed": "Failed",
+        "completed": "Completed",
+        "draft": "Draft",
+        "pending": "Ready",
+        "paused": "Paused"
+      }
+    }
+  },
+  "ratioTask": {
+    "home": {
+      "title": "Ratio Tasks",
+      "createTask": "Create Ratio Task",
+      "filters": {
+        "statusFilter": "Status Filter",
+        "allStatus": "All Status",
+        "pending": "Pending",
+        "running": "Running",
+        "success": "Completed",
+        "failed": "Failed",
+        "paused": "Paused"
+      },
+      "columns": {
+        "taskName": "Task Name",
+        "status": "Status",
+        "targetCount": "Target Count",
+        "targetDataset": "Target Dataset",
+        "createdAt": "Created At",
+        "actions": "Actions"
+      },
+      "messages": {
+        "deleteSuccess": "Task deleted successfully",
+        "deleteFailed": "Task deletion failed, please try again later"
+      },
+      "confirm": {
+        "deleteTitle": "Confirm delete this task?",
+        "deleteDesc": "This task cannot be recovered after deletion. Please proceed with caution.",
+        "okText": "Delete",
+        "cancelText": "Cancel"
+      },
+      "searchPlaceholder": "Search task name..."
+    },
+    "create": {
+      "title": "Create Ratio Task",
+      "cancel": "Cancel",
+      "submit": "Create",
+      "basicInfo": {
+        "nameLabel": "Task Name",
+        "namePlaceholder": "Enter ratio task name",
+        "nameRequired": "Please enter ratio task name",
+        "totalTargetLabel": "Target Total Count",
+        "totalTargetPlaceholder": "Target total count",
+        "totalTargetRequired": "Please enter target total count",
+        "descriptionLabel": "Task Description",
+        "descriptionPlaceholder": "Describe the purpose and requirements of the ratio task"
+      },
+      "selectDataset": {
+        "title": "Select Dataset",
+        "selectedCount": "Selected: {{current}}/{{total}}",
+        "clearSelection": "Clear Selection",
+        "searchPlaceholder": "Search dataset",
+        "loading": "Loading datasets...",
+        "noLabelDist": "No label distribution detected",
+        "loadingLabelDist": "Loading label distribution..."
+      },
+      "ratioConfig": {
+        "title": "Ratio Configuration",
+        "configuredCount": "Configured: {{configured}}/{{total}}",
+        "averageDistribute": "Average Distribution",
+        "selectDatasetFirst": "Please select dataset first",
+        "totalRatioCount": "Total ratio count:",
+        "targetCount": "Target count:",
+        "label": "Label",
+        "labelValue": "Label Value",
+        "labelUpdateTime": "Label Update Time",
+        "quantity": "Quantity",
+        "actions": "Actions",
+        "selectLabel": "Select label",
+        "selectLabelValue": "Select label value",
+        "dateStart": "Start Time",
+        "dateEnd": "End Time",
+        "delete": "Delete",
+        "emptyText": "No ratio items yet, please add",
+        "addRatioItem": "Add Ratio Item",
+        "itemSuffix": " items"
+      },
+      "messages": {
+        "configRequired": "Please configure ratio items",
+        "createSuccess": "Ratio task created successfully",
+        "createFailed": "Ratio task creation failed, please try again"
+      }
+    },
+    "detail": {
+      "homeLink": "Home",
+      "detailTitle": "Ratio Task Detail",
+      "tabs": {
+        "overview": "Overview"
+      },
+      "labels": {
+        "id": "ID",
+        "name": "Name",
+        "targetCount": "Target Count",
+        "targetDataset": "Target Dataset",
+        "status": "Status",
+        "createdBy": "Creator",
+        "createdAt": "Created At",
+        "updatedAt": "Updated At",
+        "description": "Description",
+        "basicInfo": "Basic Information"
+      },
+      "messages": {
+        "refreshSuccess": "Task data refreshed successfully",
+        "deleteSuccess": "Ratio task deleted successfully",
+        "taskStarted": "Task started",
+        "taskStopped": "Task stopped"
+      },
+      "operations": {
+        "refresh": "Refresh",
+        "delete": "Delete"
+      },
+      "confirm": {
+        "deleteTitle": "Confirm delete this ratio task?",
+        "deleteDesc": "This task cannot be recovered after deletion. Please proceed with caution.",
+        "okText": "Delete",
+        "cancelText": "Cancel"
+      },
+      "metrics": {
+        "totalData": "Total Data Volume",
+        "ratioSuccessRate": "Ratio Success Rate",
+        "processSpeed": "Processing Speed",
+        "activeUsers": "Active Users"
+      },
+      "chart": {
+        "ratioTrendTitle": "Ratio Trend Analysis",
+        "successRateCurve": "Success Rate Curve",
+        "ratioRate": "Ratio Rate",
+        "successCount": "Success Count",
+        "failCount": "Fail Count",
+        "monthJan": "Jan",
+        "monthFeb": "Feb",
+        "monthMar": "Mar",
+        "monthApr": "Apr",
+        "monthMay": "May",
+        "monthJun": "Jun"
+      },
+      "ratioDisplay": {
+        "title": "Dataset Ratio Information",
+        "datasetUserBehavior": "User Behavior Dataset",
+        "datasetTransaction": "Transaction Record Dataset",
+        "datasetProduct": "Product Info Dataset",
+        "datasetReview": "Review Feedback Dataset"
+      }
+    }
+  },
+  "tagManagement": {
+    "manageTags": "Manage Tags",
+    "addTag": "Add Tag",
+    "tagName": "Tag Name",
+    "tagNamePlaceholder": "Enter tag name...",
+    "createTag": "Create",
+    "selectExistingTags": "Select existing tags",
+    "createNewTag": "Create new tag",
+    "newTagNamePlaceholder": "Enter new tag name...",
+    "noAvailableTags": "No available tags. Please create a tag first.",
+    "cancel": "Cancel",
+    "messages": {
+      "fetchFailed": "Failed to fetch tags",
+      "addSuccess": "Tag added successfully",
+      "addFailed": "Failed to add tag",
+      "deleteSuccess": "Tag deleted successfully",
+      "deleteFailed": "Failed to delete tag",
+      "updateSuccess": "Tag updated successfully",
+      "updateFailed": "Failed to update tag"
+    },
+    "uncategorized": "Uncategorized"
+  },
+  "dataEvaluation": {
+    "home": {
+      "title": "Data Evaluation",
+      "description": "Quality analysis, performance evaluation and bias detection",
+      "createTask": "Create Evaluation Task",
+      "searchPlaceholder": "Search task name...",
+      "filters": {
+        "status": "Status",
+        "taskType": "Task Type",
+        "evalMethod": "Evaluation Method"
+      },
+      "columns": {
+        "taskName": "Task Name",
+        "taskType": "Task Type",
+        "evalMethod": "Evaluation Method",
+        "status": "Status",
+        "progress": "Progress",
+        "createdAt": "Created At",
+        "actions": "Actions"
+      },
+      "messages": {
+        "deleteSuccess": "Task deleted successfully",
+        "deleteFailed": "Task deletion failed, please try again later"
+      },
+      "confirm": {
+        "deleteTitle": "Confirm delete this task?",
+        "deleteDesc": "This task cannot be recovered after deletion. Please proceed with caution.",
+        "okText": "Delete",
+        "cancelText": "Cancel"
+      }
+    },
+    "create": {
+      "title": "Create Evaluation Task",
+      "addDimension": "Add Dimension",
+      "delete": "Delete",
+      "cancel": "Cancel",
+      "submit": "Create Task",
+      "viewPrompt": "View Evaluation Prompt",
+      "form": {
+        "name": "Task Name",
+        "taskType": "Task Type",
+        "description": "Task Description",
+        "selectDataset": "Select Dataset",
+        "evalMethod": "Evaluation Method",
+        "evalModel": "Evaluation Model",
+        "dimensions": "Evaluation Dimensions",
+        "dimension": "Dimension",
+        "descriptionCol": "Description",
+        "actions": "Actions"
+      },
+      "placeholders": {
+        "name": "Enter task name",
+        "description": "Enter task description (optional)",
+        "dataset": "Select dataset to evaluate",
+        "model": "Select model",
+        "dimensionName": "Enter dimension name",
+        "dimensionDesc": "Enter dimension description"
+      },
+      "messages": {
+        "nameRequired": "Please enter task name",
+        "taskTypeRequired": "Please select task type",
+        "datasetRequired": "Please select dataset",
+        "modelRequired": "Please select evaluation model",
+        "dimensionNameRequired": "Please enter dimension name",
+        "keepAtLeastOneDimension": "At least one evaluation dimension is required",
+        "fetchDatasetsFailed": "Failed to fetch dataset list",
+        "fetchModelsFailed": "Failed to fetch model list",
+        "fetchDimensionsFailed": "Failed to fetch evaluation dimensions",
+        "addDimensionFirst": "Please add evaluation dimensions first",
+        "createSuccess": "Evaluation task created successfully",
+        "createFailed": "Failed to create evaluation task"
+      },
+      "taskTypes": {
+        "qa": "QA Evaluation",
+        "cot": "COT Evaluation"
+      },
+      "evalMethods": {
+        "auto": "Model Auto Evaluation",
+        "manual": "Manual Evaluation"
+      },
+      "source": {
+        "dataset": "Dataset - ",
+        "synthesis": "Synthesis Task - ",
+        "default": "-"
+      }
+    },
+    "preview": {
+      "title": "Evaluation Prompt Preview",
+      "copy": "Copy",
+      "close": "Close",
+      "copiedMessage": "Copied to clipboard"
+    },
+    "detail": {
+      "breadcrumb": {
+        "home": "Data Evaluation",
+        "detail": "Evaluation Task Detail"
+      },
+      "tabs": {
+        "overview": "Overview",
+        "evaluationItems": "Evaluation Items"
+      },
+      "basicInfo": "Basic Information",
+      "taskNotFound": "Task not found",
+      "messages": {
+        "fetchTaskFailed": "Failed to fetch task details",
+        "fetchItemsFailed": "Failed to fetch evaluation items"
+      },
+      "labels": {
+        "id": "ID",
+        "name": "Name",
+        "taskType": "Task Type",
+        "evalMethod": "Evaluation Method",
+        "status": "Status",
+        "evalData": "Evaluation Data",
+        "model": "Model",
+        "createdBy": "Creator",
+        "createdAt": "Created At",
+        "updatedAt": "Updated At",
+        "description": "Description",
+        "dimensions": "Evaluation Dimensions",
+        "dimension": "Dimension",
+        "dimensionDesc": "Description"
+      }
+    },
+    "detailItems": {
+      "columns": {
+        "fileName": "File Name",
+        "totalCount": "Total Items",
+        "evaluatedCount": "Evaluated",
+        "pendingCount": "Pending",
+        "evalObject": "Evaluation Object",
+        "evalResult": "Evaluation Result"
+      },
+      "backToFileList": "Back to file list",
+      "notEvaluated": "Not evaluated",
+      "emptyTask": "Task not found",
+      "fileId": "File ID: {{id}}",
+      "totalItems": "Total {{total}} items"
+    },
+    "evaluate": {
+      "breadcrumb": {
+        "manual": "Manual Evaluation"
+      },
+      "manualTaskDesc": "Manual evaluation task",
+      "stats": {
+        "dataset": "Dataset",
+        "sliceMethod": "Slice Method",
+        "sampleCount": "Sample Count",
+        "createdAt": "Created At"
+      },
+      "progress": {
+        "current": "Current progress: {{current}} / {{total}}",
+        "complete": "{{percent}}% complete"
+      },
+      "sliceContent": "Slice Content",
+      "sliceLabel": "Slice {{index}}",
+      "sourceFile": "Source file:",
+      "processingMethod": "Processing method:",
+      "position": "Position:",
+      "section": "Section:",
+      "contentPreview": "Content preview",
+      "prev": "Previous",
+      "next": "Next",
+      "dimensions": "Evaluation Dimensions",
+      "dimensionsHint": "Please rate each dimension from 1 to 5 stars",
+      "evaluationNote": "Evaluation notes",
+      "notePlaceholder": "Enter your notes and suggestions for this slice...",
+      "saveAndNext": "Save and next",
+      "completeEval": "Complete evaluation",
+      "scoreAllDimensions": "Please rate all dimensions before saving"
+    },
+    "report": {
+      "breadcrumb": {
+        "report": "Evaluation Report"
+      },
+      "exportReport": "Export report",
+      "labels": {
+        "overallScore": "Overall score",
+        "sampleCount": "Evaluated samples",
+        "evalMethod": "Evaluation method",
+        "progress": "Progress",
+        "manual": "Manual",
+        "model": "Model"
+      },
+      "evalResult": "Evaluation Results",
+      "dimensionScores": "Dimension scores",
+      "qualityInterpretation": "Quality interpretation",
+      "qualityExcellent": "90-100: Excellent, very high quality",
+      "qualityGood": "80-89: Good, high quality",
+      "qualityFair": "70-79: Fair, needs improvement",
+      "qualityPoor": "60-69: Poor, needs attention",
+      "sliceInfo": "Slice information",
+      "sliceThreshold": "Slice threshold:",
+      "sliceSampleCount": "Sample count:",
+      "sliceMethod": "Slice method:",
+      "evalTime": "Evaluation time:",
+      "dimensions": "Evaluation Dimensions",
+      "qaPairs": "QA pairs",
+      "question": "Question:",
+      "answer": "Answer:",
+      "score": "Score:",
+      "scoreSuffix": " pts"
+    }
+  },
+  "dataAnnotation": {
+    "home": {
+      "title": "Data Annotation",
+      "description": "Annotate and tag data",
+      "tabs": {
+        "tasks": "Annotation Tasks",
+        "templates": "Annotation Templates"
+      },
+      "columns": {
+        "taskName": "Task Name",
+        "type": "Type",
+        "taskId": "Task ID",
+        "dataset": "Dataset",
+        "model": "Model",
+        "confidence": "Confidence",
+        "targetClasses": "Target Classes",
+        "autoStatus": "Auto Status",
+        "autoProgress": "Auto Progress",
+        "detectedObjects": "Detected Objects",
+        "createdAt": "Created At",
+        "updatedAt": "Updated At",
+        "actions": "Actions"
+      },
+      "actions": {
+        "annotate": "Annotate",
+        "edit": "Edit",
+        "syncToDb": "Sync to Database",
+        "exportResult": "Export Annotations",
+        "delete": "Delete",
+        "moreActions": "More Actions"
+      },
+      "confirm": {
+        "deleteTaskTitle": "Confirm delete annotation task '{{name}}'?",
+        "deleteTaskContent1": "Deleting the annotation task will not delete the corresponding dataset.",
+        "deleteTaskContent2": "If you want to keep current annotation results, please sync before deleting.",
+        "deleteAutoTaskTitle": "Confirm delete auto annotation task '{{name}}'?",
+        "deleteAutoTaskContent": "After deleting the task, the generated annotation results will not be deleted.",
+        "deleteOkText": "Delete",
+        "deleteCancelText": "Cancel",
+        "syncTitle": "Confirm sync annotation task '{{name}}'?",
+        "syncContent1": "The file list in the annotation project will be consistent with the dataset, and differences will be corrected.",
+        "syncContent2": "Labels in the annotation project will be merged with labels in the dataset, conflicts will be based on the latest content.",
+        "syncOkText": "Sync",
+        "syncCancelText": "Cancel",
+        "batchSyncTitle": "Confirm sync {{count}} selected annotation tasks?",
+        "batchDeleteTitle": "Confirm delete {{count}} selected annotation tasks?"
+      },
+      "messages": {
+        "deleteSuccess": "Mapping deleted successfully",
+        "deleteFailed": "Deletion failed, please try again later",
+        "autoTaskDeleteSuccess": "Auto annotation task deleted successfully",
+        "batchSyncSuccess": "Batch sync request sent",
+        "batchSyncFailed": "Batch sync failed, please try again later",
+        "batchDeleteSuccess": "Batch delete completed",
+        "batchDeleteFailed": "Batch delete failed, please try again later",
+        "syncRequestSent": "Task sync request sent",
+        "syncFailed": "Sync failed, please try again later",
+        "cannotJumpNoBase": "Cannot jump to Label Studio: Label Studio base URL not configured",
+        "cannotJumpNoMapping": "Cannot jump to Label Studio: No mapping bound to annotation project",
+        "cannotJumpError": "Cannot jump to Label Studio: Error occurred, please check configuration or console logs",
+        "cannotJumpAutoNoDataset": "This auto annotation task is not bound to a dataset, cannot jump to Label Studio",
+        "cannotJumpAutoNoProject": "No corresponding annotation project found, please create annotation project for this task or dataset first",
+        "autoTaskNotFound": "Corresponding auto annotation task not found",
+        "taskNotFound": "Corresponding annotation task not found",
+        "fetchAutoTasksFailed": "Failed to fetch auto annotation tasks",
+        "syncToDbTitle": "Confirm sync '{{name}}' annotations from Label Studio to database?",
+        "syncToDbContent1": "This operation will override current file tags and annotation information based on task data in Label Studio.",
+        "syncToDbContent2": "After sync, you can view latest tags and annotations in dataset file details.",
+        "syncToDbLoading": "Syncing annotations from Label Studio to database...",
+        "syncToDbSuccess": "Sync completed",
+        "syncToDbFailed": "Sync failed, please try again later",
+        "batchSyncManualOnly": "Please select manual annotation tasks for sync"
+      },
+      "searchPlaceholder": "Search task name, description",
+      "autoStatusLabels": {
+        "pending": "Pending",
+        "running": "Running",
+        "completed": "Completed",
+        "failed": "Failed",
+        "cancelled": "Cancelled"
+      },
+      "autoModelSizeLabels": {
+        "n": "YOLOv8n (Fastest)",
+        "s": "YOLOv8s",
+        "m": "YOLOv8m",
+        "l": "YOLOv8l (Recommended)",
+        "x": "YOLOv8x (Most Accurate)"
+      },
+      "batchSync": "Batch Sync",
+      "batchDelete": "Batch Delete",
+      "createTask": "Create Annotation Task",
+      "manualAnnotation": "Manual Annotation",
+      "autoAnnotation": "Auto Annotation",
+      "allCategories": "All Categories",
+      "categoriesCount": "{{count}} categories",
+      "editDataset": "Edit Dataset",
+      "editTask": "Edit Task"
+    },
+    "create": {
+      "title": "Create Annotation Task",
+      "back": "Back",
+      "cancel": "Cancel",
+      "submit": "Create Task",
+      "basicInfo": "Basic Information",
+      "form": {
+        "name": "Task Name",
+        "namePlaceholder": "Enter task name",
+        "nameRequired": "Please enter task name",
+        "nameMinLength": "Task name must be at least 3 characters (excluding leading/trailing spaces, Label Studio limit)",
+        "nameMaxLength": "Task name cannot exceed 100 characters",
+        "description": "Task Description",
+        "descriptionPlaceholder": "Describe the requirements and goals of the annotation task in detail",
+        "dataset": "Select Dataset",
+        "datasetRequired": "Please select dataset",
+        "template": "Annotation Template",
+        "templateRequired": "Please select annotation template",
+        "noTemplatesAvailable": "No templates available, please create templates first",
+        "selectTemplate": "Please select annotation template",
+        "noTemplatesFound": "No matching templates found, please create templates in 'Annotation Templates' page",
+        "selectDatasetAndFiles": "Select Dataset and Files",
+        "currentDataset": "Current dataset: {{name}} - Selected {{count}} files",
+        "currentDatasetImages": "Current dataset: {{name}} - Selected {{count}} image files",
+        "modelSize": "Model Size",
+        "modelSizeRequired": "Please select model size",
+        "confThreshold": "Confidence Threshold",
+        "confThresholdRequired": "Please select confidence threshold",
+        "targetClasses": "Target Classes",
+        "selectAllClasses": "Select All Classes",
+        "selectTargetClasses": "Select target classes"
+      },
+      "templateCategories": {
+        "cv": "Computer Vision",
+        "nlp": "Natural Language Processing"
+      },
+      "customTemplate": "Custom Template",
+      "customTemplateDesc": "Create annotation template that meets specific needs",
+      "selectedTemplate": "Selected Template",
+      "templateSelection": "Template Selection",
+      "manual": "Manual Annotation",
+      "auto": "Auto Annotation",
+      "ok": "Confirm",
+      "messages": {
+        "selectAtLeastOneFile": "Please select at least one file",
+        "selectAtLeastOneImageFile": "Please select at least one image file",
+        "createSuccess": "Annotation task created successfully",
+        "createFailed": "Failed to create annotation task, please try again",
+        "autoCreateSuccess": "Auto annotation task created successfully",
+        "autoCreateFailed": "Failed to create auto annotation task",
+        "datasetTypeFiltered": "Datasets have been filtered by template type, please re-select dataset and files"
+      }
+    },
+    "template": {
+      "title": "Annotation Templates",
+      "create": "Create Template",
+      "filters": {
+        "category": "Classification",
+        "dataType": "Data Type",
+        "labelingType": "Labeling Type",
+        "builtIn": "Template Type"
+      },
+      "columns": {
+        "name": "Template Name",
+        "description": "Description",
+        "dataType": "Data Type",
+        "labelingType": "Labeling Type",
+        "category": "Classification",
+        "builtIn": "Type",
+        "version": "Version",
+        "createdAt": "Created At",
+        "actions": "Actions"
+      },
+      "messages": {
+        "deleteSuccess": "Template deleted successfully",
+        "deleteFailed": "Failed to delete template",
+        "deleteConfirm": "Are you sure you want to delete this template?",
+        "confirmDelete": "Confirm",
+        "cancelDelete": "Cancel"
+      },
+      "actions": {
+        "viewDetail": "View Details",
+        "edit": "Edit",
+        "delete": "Delete"
+      },
+      "searchPlaceholder": "Search template name, description"
+    },
+    "autoAnnotation": {
+      "title": "Auto Annotation",
+      "createTask": "Create Auto Annotation Task",
+      "columns": {
+        "name": "Task Name",
+        "dataset": "Dataset",
+        "modelSize": "Model Size",
+        "confThreshold": "Confidence",
+        "targetClasses": "Target Classes",
+        "status": "Status",
+        "progress": "Progress",
+        "detectedObjects": "Detected Objects",
+        "createdAt": "Created At",
+        "actions": "Actions"
+      },
+      "statusLabels": {
+        "pending": "Pending",
+        "running": "Running",
+        "completed": "Completed",
+        "failed": "Failed",
+        "cancelled": "Cancelled"
+      },
+      "modelSizeLabels": {
+        "n": "YOLOv8n (Fastest)",
+        "s": "YOLOv8s",
+        "m": "YOLOv8m",
+        "l": "YOLOv8l (Recommended)",
+        "x": "YOLOv8x (Most Accurate)"
+      },
+      "actions": {
+        "annotate": "Annotate",
+        "syncToDb": "Sync to Database",
+        "exportResult": "Export Annotations",
+        "editDataset": "Edit Dataset",
+        "delete": "Delete",
+        "moreActions": "More Actions"
+      },
+      "confirm": {
+        "deleteTitle": "Confirm delete auto annotation task '{{name}}'?",
+        "deleteContent": "After deleting the task, the generated annotation results will not be deleted.",
+        "deleteOkText": "Delete",
+        "deleteCancelText": "Cancel"
+      },
+      "messages": {
+        "deleteSuccess": "Auto annotation task deleted successfully",
+        "deleteFailed": "Deletion failed, please try again later"
+      }
+    },
+    "annotate": {
+      "title": "Annotation Workspace",
+      "saveSuccess": "Annotation saved",
+      "skipSuccess": "Skipped",
+      "backToList": "Back to List"
+    },
+    "dialogs": {
+      "editDataset": {
+        "title": "Edit Dataset",
+        "description": "Modify dataset files for this task",
+        "selectedCount": "Selected {{count}} files",
+        "cancel": "Cancel",
+        "save": "Save",
+        "loading": "Saving...",
+        "success": "Dataset updated successfully",
+        "failed": "Failed to update dataset, please try again later",
+        "fetchFilesFailed": "Failed to fetch task current dataset files"
+      },
+      "importFromLS": {
+        "title": "Import from Label Studio",
+        "description": "Import annotation results from Label Studio to local",
+        "cancel": "Cancel",
+        "import": "Import",
+        "loading": "Importing...",
+        "success": "Import successful",
+        "failed": "Import failed, please try again later"
+      },
+      "syncToDb": {
+        "loading": "Syncing annotations from Label Studio to database...",
+        "success": "Sync completed",
+        "fail": "Sync failed, please try again later"
+      }
+    },
+    "const": {
+      "status": {
+        "active": "Active",
+        "processing": "Processing",
+        "inactive": "Inactive",
+        "completed": "Completed",
+        "skipped": "Skipped",
+        "pending": "Ready"
+      },
+      "dataType": {
+        "text": "Text",
+        "image": "Image",
+        "audio": "Audio",
+        "video": "Video"
+      },
+      "classification": {
+        "cv": "Computer Vision",
+        "nlp": "Natural Language Processing",
+        "audio": "Audio",
+        "qualityControl": "Quality Control",
+        "custom": "Custom"
+      },
+      "annotationType": {
+        "classification": "Classification",
+        "objectDetection": "Object Detection",
+        "segmentation": "Segmentation",
+        "ner": "Named Entity Recognition"
+      },
+      "templateType": {
+        "system": "System Built-in",
+        "custom": "Custom"
+      },
+      "stats": {
+        "accuracy": "Accuracy",
+        "averageTime": "Average Time",
+        "reviewCount": "Pending Review"
+      }
+    }
+  },
+  "dataCleansing": {
+    "title": "Data Processing",
+    "description": "Data cleansing, processing and transformation",
+    "tabs": {
+      "taskList": "Task List",
+      "templateManagement": "Template Management"
+    },
+    "actions": {
+      "createTask": "Create Task",
+      "createTemplate": "Create Template",
+      "updateTask": "Execute Task",
+      "updateTemplate": "Update Template",
+      "startTask": "Execute Task",
+      "pauseTask": "Pause Task",
+      "deleteTask": "Delete Task",
+      "deleteTemplate": "Delete Template",
+      "refreshTask": "Refresh Task",
+      "refreshTemplate": "Refresh Template",
+      "cancel": "Cancel",
+      "confirm": "Confirm",
+      "back": "Back",
+      "previous": "Previous",
+      "next": "Next",
+      "clear": "Clear",
+      "save": "Save",
+      "start": "Start",
+      "pause": "Pause",
+      "compare": "Compare",
+      "download": "Download",
+      "delete": "Delete",
+      "batchDownload": "Batch Download",
+      "edit": "Edit",
+      "selectAll": "Select All",
+      "search": "Search",
+      "reset": "Reset",
+      "config": "Parameter Configuration",
+      "selectOperatorConfig": "Please select an operator for parameter configuration"
+    },
+    "steps": {
+      "basicInfo": "Basic Info",
+      "operatorOrchestration": "Operator Orchestration"
+    },
+    "task": {
+      "columns": {
+        "taskName": "Task Name",
+        "taskId": "Task ID",
+        "srcDataset": "Source Dataset",
+        "destDataset": "Target Dataset",
+        "status": "Status",
+        "progress": "Progress",
+        "processedFiles": "Processed Files",
+        "totalFiles": "Total Files",
+        "duration": "Duration",
+        "startTime": "Start Time",
+        "endTime": "End Time",
+        "createdAt": "Created At",
+        "dataSizeChange": "Data Size Change",
+        "actions": "Actions"
+      },
+      "form": {
+        "name": "Name",
+        "namePlaceholder": "Enter task name",
+        "description": "Description",
+        "descriptionPlaceholder": "Describe the task goals and requirements",
+        "srcDataset": "Source Dataset",
+        "srcDatasetPlaceholder": "Please select source dataset",
+        "destDatasetName": "Target Dataset Name",
+        "destDatasetNamePlaceholder": "Enter or select target dataset name",
+        "destDatasetType": "Target Dataset Type",
+        "destDatasetTypeRequired": "Please select target dataset type"
+      },
+      "sections": {
+        "taskInfo": "Task Info",
+        "dataSourceSelection": "Data Source Selection"
+      },
+      "messages": {
+        "taskCreated": "Task created successfully",
+        "taskStarted": "Task started successfully",
+        "taskPaused": "Task paused successfully",
+        "taskDeleted": "Task deleted successfully",
+        "taskDetailFailed": "Failed to fetch task details",
+        "fetchTaskResultFailed": "Failed to fetch task results",
+        "fetchTaskLogFailed": "Failed to fetch task logs"
+      }
+    },
+    "template": {
+      "columns": {
+        "templateName": "Template Name",
+        "templateId": "Template ID",
+        "operatorCount": "Operator Count"
+      },
+      "form": {
+        "name": "Template Name",
+        "namePlaceholder": "Enter template name",
+        "nameRequired": "Please enter template name",
+        "description": "Template Description",
+        "descriptionPlaceholder": "Describe the template purpose and features"
+      },
+      "messages": {
+        "templateCreated": "Template created successfully",
+        "templateUpdated": "Template updated successfully",
+        "templateDeleted": "Template deleted successfully",
+        "templateDetailFailed": "Failed to fetch task details"
+      }
+    },
+    "detail": {
+      "tabs": {
+        "basicInfo": "Basic Info",
+        "operators": "Operators",
+        "files": "Files",
+        "logs": "Logs"
+      },
+      "statistics": {
+        "totalDuration": "Total Duration",
+        "successFiles": "Success Files",
+        "failedFiles": "Failed Files",
+        "successRate": "Success Rate",
+        "operatorCount": "Operator Count"
+      },
+      "fileTable": {
+        "fileName": "File Name",
+        "processedFileName": "Processed File Name",
+        "fileType": "File Type",
+        "processedFileType": "Processed File Type",
+        "beforeSize": "Before Size",
+        "afterSize": "After Size",
+        "status": "Status",
+        "actions": "Actions",
+        "searchFileName": "Search file name",
+        "searchFileType": "Search file type",
+        "selectFiles": "{{count}} files selected",
+        "notCompleted": "Not Completed",
+        "downloadNotAvailable": "Not Available Yet",
+        "compareDialogTitle": "File Comparison - {{fileName}}",
+        "beforeProcessing": "Before Processing",
+        "afterProcessing": "After Processing",
+        "originalFilePreview": "Original File Preview",
+        "processedFilePreview": "Processed File Preview",
+        "size": "Size",
+        "fileFormat": "File Format",
+        "processingEffect": "Processing Effect Comparison",
+        "sizeOptimization": "File Size Optimization",
+        "reduced": "Reduced by {{percent}}%"
+      },
+      "logTable": {
+        "selectRun": "Select Run",
+        "currentDisplay": "Current Display: {{num}}th Run",
+        "nthRun": "{{num}}th Run",
+        "noLogs": "No logs available for this task"
+      },
+      "operatorTable": {
+        "serialNumber": "Serial Number",
+        "operatorName": "Operator Name",
+        "startTime": "Start Time",
+        "endTime": "End Time",
+        "duration": "Duration",
+        "processedFiles": "Processed Files",
+        "successRate": "Success Rate",
+        "status": "Status",
+        "searchOperatorName": "Search operator name",
+        "completed": "Completed",
+        "failed": "Failed",
+        "running": "Running",
+        "title": "Operator Execution Report",
+        "description": "Detailed execution status of each operator"
+      },
+      "basicInfo": {
+        "executionSummary": "Execution Summary",
+        "basicInformation": "Basic Information",
+        "processingProgress": "Processing Progress",
+        "taskId": "Task ID",
+        "taskName": "Task Name",
+        "srcDataset": "Source Dataset",
+        "destDataset": "Target Dataset",
+        "startTime": "Start Time",
+        "description": "Task Description",
+        "endTime": "End Time",
+        "retryCount": "Retry Count",
+        "completed": "Completed: {{count}}",
+        "processing": "Processing: {{count}}",
+        "failed": "Failed: {{count}}"
+      },
+      "breadcrumb": {
+        "dataProcessing": "Data Processing",
+        "taskDetail": "Task Detail",
+        "templateDetail": "Template Detail"
+      }
+    },
+    "operatorLibrary": {
+      "title": "Operator Library",
+      "searchPlaceholder": "Search operator name...",
+      "selectCategory": "Select Category",
+      "showFavoritesOnly": "Show Favorites Only",
+      "selectAll": "Select All",
+      "noMatchFound": "No matching operators found"
+    },
+    "operatorOrchestration": {
+      "title": "Operator Orchestration",
+      "clear": "Clear",
+      "selectTemplate": "Select Template",
+      "startBuilding": "Start building your operator workflow",
+      "dragTip": "Drag operators from the left library here, or click to add"
+    },
+    "placeholders": {
+      "searchTaskName": "Search task name, description",
+      "searchTemplateName": "Search template name, description"
+    },
+    "processFlow": {
+      "start": "Start",
+      "selectDataset": "Select Dataset",
+      "complete": "Complete"
+    },
+    "status": {
+      "completed": "Completed",
+      "failed": "Failed",
+      "running": "Running",
+      "pending": "Pending",
+      "stopped": "Stopped"
+    }
+  },
+  "knowledgeBase": {
+    "title": "Knowledge Generation",
+    "description": "RAG-oriented knowledge base construction",
+    "home": {
+      "columns": {
+        "name": "Knowledge Base",
+        "createdAt": "Created At",
+        "updatedAt": "Updated At",
+        "description": "Description",
+        "actions": "Actions"
+      },
+      "actions": {
+        "edit": "Edit",
+        "delete": "Delete"
+      },
+      "confirm": {
+        "deleteTitle": "Confirm Delete",
+        "deleteDescription": "This action cannot be undone. Continue?",
+        "okText": "Delete",
+        "cancelText": "Cancel"
+      },
+      "messages": {
+        "deleteSuccess": "Knowledge base deleted successfully",
+        "deleteFailed": "Failed to delete knowledge base"
+      },
+      "searchPlaceholder": "Search knowledge base..."
+    },
+    "detail": {
+      "tabs": {
+        "fileList": "File List",
+        "recallTest": "Recall Test"
+      },
+      "columns": {
+        "fileName": "File Name",
+        "status": "Status",
+        "chunkCount": "Chunk Count",
+        "createdAt": "Created At",
+        "updatedAt": "Updated At",
+        "actions": "Actions"
+      },
+      "actions": {
+        "edit": "Edit Knowledge Base",
+        "refresh": "Refresh Knowledge Base",
+        "delete": "Delete Knowledge Base",
+        "deleteFile": "Delete File"
+      },
+      "confirm": {
+        "deleteTitle": "Confirm deletion of this knowledge base?",
+        "deleteDescription": "It cannot be recovered after deletion. Please operate with caution.",
+        "okText": "Delete",
+        "cancelText": "Cancel"
+      },
+      "messages": {
+        "fileDeleted": "File deleted",
+        "fileDeleteFailed": "Failed to delete file",
+        "kbDeleted": "Knowledge base deleted"
+      },
+      "recallTest": {
+        "description": "Weighted average results based on semantic text retrieval and full-text retrieval",
+        "placeholder": "Please enter recall test question",
+        "searchButton": "Retrieve",
+        "noResult": "No recall results",
+        "scoreLabel": "Score:",
+        "metadataLabel": "metadata:"
+      },
+      "graph": {
+        "title": "Knowledge Graph",
+        "refresh": "Refresh",
+        "close": "Close",
+        "nodeDetail": "Node Details",
+        "edgeDetail": "Edge Details",
+        "typeLabel": "Type",
+        "sourceNode": "Source Node",
+        "targetNode": "Target Node",
+        "labelLabel": "Labels",
+        "noProperties": "No properties"
+      },
+      "breadcrumb": {
+        "kbList": "Knowledge Bases"
+      },
+      "searchPlaceholder": "Search file name..."
+    },
+    "fileDetail": {
+      "columns": {
+        "position": "Position",
+        "tokens": "Token",
+        "page": "Page",
+        "section": "Section"
+      },
+      "actions": {
+        "download": "Download",
+        "save": "Save",
+        "cancel": "Cancel"
+      },
+      "messages": {
+        "noChunks": "No chunk data",
+        "chunkCount": "chunks",
+        "ready": "Ready",
+        "previousPage": "Previous Page",
+        "nextPage": "Next Page",
+        "chunkLabel": "Chunk",
+        "loadFailed": "Load failed"
+      },
+      "modal": {
+        "sliceTraceTitle": "Knowledge Slice Trace",
+        "sliceProcessTitle": "Slice Processing Flow",
+        "originalDocImport": "Original Document Import",
+        "fileLabel": "File",
+        "completed": "Completed",
+        "chunkDetailTitle": "Chunk Details - Chunk",
+        "contentDetail": "Content Details",
+        "chunkContent": "Chunk Content",
+        "metadata": "Metadata",
+        "position": "Position",
+        "tokenCount": "Token Count",
+        "pageNumber": "Page Number",
+        "chapter": "Chapter"
+      },
+      "breadcrumb": {
+        "kbList": "Knowledge Bases",
+        "kbDetail": "Knowledge Base Detail"
+      }
+    },
+    "create": {
+      "title": "Create Knowledge Base",
+      "editTitle": "Edit Knowledge Base",
+      "okText": "Confirm",
+      "cancelText": "Cancel",
+      "form": {
+        "typeLabel": "Knowledge Base Type",
+        "typeRequired": "Please select knowledge base type",
+        "nameLabel": "Knowledge Base Name",
+        "namePlaceholder": "Please enter knowledge base name",
+        "nameRequired": "Please enter knowledge base name",
+        "descriptionLabel": "Description",
+        "descriptionPlaceholder": "Please enter knowledge base description (optional)",
+        "embeddingModelLabel": "Embedding Model",
+        "embeddingModelRequired": "Please select embedding model",
+        "embeddingModelPlaceholder": "Please select embedding model",
+        "chatModelLabel": "Chat Model",
+        "chatModelRequired": "Please select chat model",
+        "chatModelPlaceholder": "Please select chat model",
+        "entityLabel": "Recognize Entities (Multiple Selection)",
+        "entityPlaceholder": "Enter entity name and press Enter to add, e.g., Person, Organization, Event",
+        "entityTooltip": "Entity information will serve as graph nodes, supporting multi-dimensional relationship tracking",
+        "addModel": "Add Model"
+      },
+      "type": {
+        "document": "Vector Knowledge Base",
+        "documentDesc": "Suitable for document knowledge, supports retrieval + generation",
+        "graph": "Knowledge Graph",
+        "graphDesc": "Custom entities/relationships, enhance structured reasoning"
+      },
+      "messages": {
+        "updateSuccess": "Knowledge base updated successfully",
+        "createSuccess": "Knowledge base created successfully",
+        "operationFailed": "Operation failed:"
+      }
+    },
+    "addData": {
+      "title": "Add Data",
+      "confirmUpload": "Confirm Upload",
+      "steps": {
+        "selectFiles": {
+          "title": "Select Dataset Files",
+          "description": "Select files from multiple datasets"
+        },
+        "configParams": {
+          "title": "Configure Parameters",
+          "description": "Set data processing parameters"
+        },
+        "confirmUpload": {
+          "title": "Confirm Upload",
+          "description": "Confirm information and upload"
+        }
+      },
+      "form": {
+        "sliceMethodLabel": "Chunking Method",
+        "chunkSizeLabel": "Chunk Size",
+        "chunkSizePlaceholder": "Please enter chunk size",
+        "overlapLabel": "Overlap Length",
+        "overlapPlaceholder": "Please enter overlap length",
+        "delimiterLabel": "Delimiter",
+        "delimiterPlaceholder": "Please enter delimiter",
+        "delimiterHint": "Enter delimiter, e.g., \\n\\n"
+      },
+      "confirm": {
+        "uploadConfirmTitle": "Upload Confirmation",
+        "uploadHint": "Tip: The system will automatically process files after upload, please wait patiently",
+        "kbName": "Knowledge Base Name",
+        "dataSource": "Data Source",
+        "dataset": "Dataset",
+        "totalFiles": "Total Files",
+        "sliceMethod": "Chunking Method",
+        "chunkSize": "Chunk Size",
+        "overlapSize": "Overlap Length",
+        "delimiter": "Delimiter",
+        "fileList": "File List",
+        "previous": "Previous",
+        "next": "Next",
+        "cancel": "Cancel"
+      },
+      "messages": {
+        "selectOneFile": "Please select at least one file",
+        "selectSliceMethod": "Please select chunking method",
+        "validChunkSize": "Please enter valid chunk size",
+        "validOverlapSize": "Please enter valid overlap length",
+        "inputDelimiter": "Please enter delimiter",
+        "addSuccess": "Data added successfully",
+        "addFailed": "Failed to add data, please try again"
+      },
+      "placeholders": {
+        "chunkSize": "Please enter chunk size",
+        "overlapSize": "Please enter overlap length",
+        "delimiter": "Enter delimiter, e.g., \\n\\n"
+      }
+    },
+    "const": {
+      "type": {
+        "vector": "Vector Knowledge Base",
+        "vectorDesc": "Retrieval Q&A for unstructured documents",
+        "graph": "Knowledge Graph",
+        "graphDesc": "Graph knowledge managing entities and relationships"
+      },
+      "status": {
+        "ready": "Ready",
+        "processing": "Processing",
+        "vectorizing": "Vectorizing",
+        "importing": "Importing",
+        "error": "Error",
+        "disabled": "Disabled",
+        "completed": "Completed",
+        "processed": "Processed",
+        "processFailed": "Process Failed",
+        "unprocessed": "Unprocessed",
+        "unknown": "Unknown Status"
+      },
+      "sliceMethod": {
+        "default": "Default Chunk",
+        "chapter": "Chapter Chunk",
+        "paragraph": "Paragraph Chunk",
+        "fixedLength": "Fixed Length Chunk",
+        "customSeparator": "Custom Separator Chunk"
+      },
+      "statistics": {
+        "embeddingModel": "Embedding Model",
+        "chatModel": "Chat Model",
+        "fileCount": "File Count",
+        "chunkCount": "Chunk Count",
+        "none": "None"
+      },
+      "fileColumns": {
+        "dataset": "Dataset",
+        "fileName": "File Name",
+        "fileSize": "Size"
+      }
+    }
+  },
+  "operatorMarket": {
+    "title": "Operator Market",
+    "description": "Operator upload and management",
+    "home": {
+      "title": "Operator Market",
+      "actions": {
+        "downloadExample": "Download Example Operator",
+        "upload": "Upload Operator"
+      },
+      "filters": {
+        "title": "Filters",
+        "hide": "Hide Filters",
+        "clear": "Clear",
+        "selectAll": "Select All",
+        "starStatus": "Favorite Status",
+        "starred": "Favorited"
+      },
+      "search": {
+        "placeholder": "Search operator name, description..."
+      },
+      "empty": {
+        "title": "No matching operators found",
+        "subtitle": "Try adjusting filters or search keywords"
+      },
+      "operations": {
+        "update": "Update",
+        "delete": "Delete",
+        "confirm": {
+          "title": "Confirm Delete",
+          "description": "This action cannot be undone. Continue?",
+          "okText": "Delete",
+          "cancelText": "Cancel"
+        },
+        "messages": {
+          "deleteSuccess": "Operator deleted successfully",
+          "deleteFailed": "Operator deletion failed",
+          "downloadSuccess": "File downloaded successfully"
+        }
+      }
+    },
+    "detail": {
+      "breadcrumb": {
+        "market": "Operator Market"
+      },
+      "tabs": {
+        "overview": "Overview",
+        "requirement": "System Requirements",
+        "documentation": "Documentation",
+        "changeLog": "Change Log"
+      },
+      "operations": {
+        "favorite": "Favorite",
+        "update": "Update",
+        "delete": "Delete",
+        "confirm": {
+          "title": "Confirm delete current operator?",
+          "description": "The operator cannot be recovered after deletion. Please proceed with caution.",
+          "okText": "Delete",
+          "cancelText": "Cancel"
+        },
+        "messages": {
+          "deleteSuccess": "Operator deleted successfully"
+        }
+      },
+      "overview": {
+        "title": "Basic Information",
+        "version": "Version",
+        "category": "Category",
+        "description": "Description",
+        "inputs": "Input Types",
+        "outputs": "Output Types",
+        "createdAt": "Created At",
+        "lastModified": "Last Modified",
+        "performance": "Performance Metrics",
+        "advancedConfiguration": "Advanced Configuration",
+        "supportedFormats": "Supported Formats",
+        "inputFormats": "Input Formats",
+        "outputFormats": "Output Formats"
+      },
+      "documentation": {
+        "title": "Documentation"
+      },
+      "changeLog": {
+        "title": "Version",
+        "latestVersion": "Latest Version",
+        "noReleases": "No version release information",
+        "initialize": "Click to initialize"
+      }
+    },
+    "create": {
+      "title": "Upload Operator",
+      "updateTitle": "Update Operator",
+      "steps": {
+        "uploadFile": "Upload File",
+        "parseFile": "Parse File",
+        "configure": "Configure Information",
+        "publish": "Publish Complete"
+      },
+      "upload": {
+        "title": "Upload Operator File",
+        "description": "Supports multiple operator file formats, system will automatically parse configuration information",
+        "supportedFormats": "Supported File Formats",
+        "formats": {
+          "zip": "Archive File",
+          "tar": "Archive File"
+        },
+        "uploadArea": {
+          "dragDrop": "Drag files here or click to select files",
+          "onlySingle": "Only single file upload is supported",
+          "uploading": "Uploading file..."
+        }
+      },
+      "parse": {
+        "title": "Parsing operator file",
+        "description": "System is automatically analyzing your operator file and extracting configuration information...",
+        "uploadedFiles": "Uploaded Files",
+        "progress": "Parsing Progress"
+      },
+      "configure": {
+        "title": "Configure Information",
+        "basicInfo": "Basic Information",
+        "labels": {
+          "id": "ID",
+          "name": "Name",
+          "version": "Version",
+          "description": "Description",
+          "inputs": "Input Types",
+          "outputs": "Output Types"
+        },
+        "changeLog": {
+          "title": "Change Log",
+          "addLine": "Add a change log line",
+          "deleteLine": "Delete this line"
+        },
+        "performance": "Performance Metrics"
+      },
+      "preview": {
+        "title": "Publish Successful!",
+        "description": "Your operator has been successfully published to the operator market",
+        "continueUpload": "Continue Upload",
+        "backToHome": "Back to Home"
+      },
+      "actions": {
+        "reupload": "Re-upload",
+        "publish": "Publish Operator",
+        "update": "Update Operator"
+      },
+      "messages": {
+        "parseError": "Issues found during parsing",
+        "publishFailed": "Operator publication failed",
+        "fileParseFailed": "File parsing failed"
+      }
+    },
+    "const": {
+      "modal": {
+        "multimodal": "Multimodal",
+        "text": "Text",
+        "image": "Image",
+        "video": "Video",
+        "audio": "Audio"
+      },
+      "usageCount": "Usage Count",
+      "type": "Type",
+      "size": "Size",
+      "language": "Language",
+      "function": "Function"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "tabs": {
+      "modelAccess": "Model Access",
+      "systemConfig": "System Config",
+      "webhook": "Webhook",
+      "notAvailable": "Not available yet"
+    },
+    "modelAccess": {
+      "title": "Model Access",
+      "addModel": "Add Model",
+      "searchPlaceholder": "Search model description...",
+      "columns": {
+        "modelName": "Model Name",
+        "createdAt": "Created At",
+        "updatedAt": "Updated At",
+        "provider": "Provider",
+        "type": "Type"
+      },
+      "filters": {
+        "provider": "Provider",
+        "type": "Type",
+        "all": "All"
+      },
+      "modal": {
+        "titleAdd": "Add Model",
+        "titleEdit": "Edit Model",
+        "form": {
+          "provider": "Service Provider",
+          "providerPlaceholder": "Select service provider",
+          "providerRequired": "Please select service provider",
+          "baseUrl": "API Endpoint",
+          "baseUrlPlaceholder": "Enter API endpoint, e.g.: https://api.openai.com",
+          "baseUrlRequired": "Please enter API endpoint",
+          "baseUrlInvalid": "Please enter a valid URL, must start with http:// or https://",
+          "modelName": "Model Name",
+          "modelNamePlaceholder": "Enter model name",
+          "modelNameRequired": "Please enter model name",
+          "modelNameTooltip": "Please enter model name",
+          "apiKey": "API Key",
+          "apiKeyPlaceholder": "Enter or generate API key",
+          "apiKeyRequired": "Please enter API key",
+          "type": "Model Type",
+          "typePlaceholder": "Select model type",
+          "typeRequired": "Please select model type",
+          "isDefault": "Set as Default",
+          "isDefaultTooltip": "When there is only one model service under the model type, it will be automatically set as default value."
+        }
+      },
+      "messages": {
+        "addSuccess": "Model added successfully",
+        "error": "{{message}}: {{detail}}"
+      }
+    },
+    "systemConfig": {
+      "title": "System Configuration",
+      "refresh": "Refresh",
+      "columns": {
+        "paramName": "Parameter Name",
+        "paramValue": "Parameter Value",
+        "description": "Description",
+        "isEnabled": "Enabled"
+      },
+      "placeholders": {
+        "selectValue": "Please select value"
+      }
+    },
+    "webhook": {
+      "title": "Webhook Configuration",
+      "addWebhook": "Add Webhook",
+      "events": {
+        "projectManagement": "Project Management",
+        "taskManagement": "Task Management",
+        "annotationManagement": "Annotation Management",
+        "modelManagement": "Model Management",
+        "predictionManagement": "Prediction Management"
+      },
+      "eventTypes": {
+        "projectCreated": {
+          "name": "Project Created",
+          "description": "Triggered when a new project is created"
+        },
+        "projectUpdated": {
+          "name": "Project Updated",
+          "description": "Triggered when project information is modified"
+        },
+        "projectDeleted": {
+          "name": "Project Deleted",
+          "description": "Triggered when a project is deleted"
+        },
+        "taskCreated": {
+          "name": "Task Created",
+          "description": "Triggered when a new task is created"
+        },
+        "taskUpdated": {
+          "name": "Task Updated",
+          "description": "Triggered when task status or content is updated"
+        },
+        "taskCompleted": {
+          "name": "Task Completed",
+          "description": "Triggered when a task is marked as completed"
+        },
+        "annotationCreated": {
+          "name": "Annotation Created",
+          "description": "Triggered when a new annotation is created"
+        },
+        "annotationUpdated": {
+          "name": "Annotation Updated",
+          "description": "Triggered when an annotation is modified"
+        },
+        "annotationDeleted": {
+          "name": "Annotation Deleted",
+          "description": "Triggered when an annotation is deleted"
+        },
+        "modelTrained": {
+          "name": "Model Training Completed",
+          "description": "Triggered when model training task is completed"
+        },
+        "predictionCreated": {
+          "name": "Prediction Generated",
+          "description": "Triggered when a new prediction result is generated"
+        }
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Disabled"
+      },
+      "details": {
+        "events": "Events:",
+        "secret": "Secret:",
+        "retry": "Retry:"
+      },
+      "modal": {
+        "title": "Add Webhook",
+        "form": {
+          "name": "Webhook Name",
+          "namePlaceholder": "Enter webhook name",
+          "retryCount": "Retry Count",
+          "url": "Webhook URL",
+          "urlPlaceholder": "https://your-domain.com/webhook",
+          "secret": "Secret Key",
+          "secretPlaceholder": "Key for verifying webhook requests",
+          "selectEvents": "Select Events"
+        }
+      },
+      "buttons": {
+        "create": "Create Webhook"
+      }
+    }
+  },
+  "synthesisTask": {
+    "title": "Data Synthesis",
+    "description": "Intelligent data synthesis and ratio",
+    "tabs": {
+      "tasks": "Synthesis Tasks",
+      "templates": "Instruction Templates"
+    },
+    "actions": {
+      "createTask": "Create Task",
+      "createTemplate": "Create Template",
+      "createSynthesisTask": "Create Synthesis Task",
+      "enableDebug": "Enable Debug",
+      "archive": "Archive",
+      "evaluate": "Evaluate Now",
+      "viewDetail": "View Details",
+      "delete": "Delete",
+      "confirmDelete": "Confirm Delete",
+      "cancel": "Cancel",
+      "confirm": "Confirm",
+      "refresh": "Refresh",
+      "next": "Next",
+      "prev": "Previous"
+    },
+    "home": {
+      "searchPlaceholder": "Search task name...",
+      "empty": {
+        "title": "No Synthesis Tasks",
+        "noMatch": "No matching tasks found",
+        "createFirst": "Create your first synthesis task"
+      },
+      "filters": {
+        "type": "Type",
+        "allTypes": "All Types"
+      },
+      "columns": {
+        "taskName": "Task Name",
+        "taskId": "Task ID",
+        "type": "Type",
+        "fileCount": "File Count",
+        "createdAt": "Created At",
+        "actions": "Actions"
+      },
+      "typeMap": {
+        "qa": "QA Pair Generation",
+        "cot": "Chain of Thought Generation"
+      },
+      "confirm": {
+        "deleteTitle": "Confirm delete this task?",
+        "deleteContent": "Task name: {{name}}",
+        "archiveTitle": "Confirm archive this synthesis task?",
+        "archiveContent": "Task name: {{name}}"
+      },
+      "modal": {
+        "evalTitle": "Create Evaluation Task",
+        "evalName": "Evaluation Task Name",
+        "evalMethod": "Evaluation Method",
+        "evalModel": "Evaluation Model",
+        "evalSource": "Source: Synthesis Task (SYNTHESIS)",
+        "sourceName": "Source Name: {{name}}",
+        "startEval": "Start Evaluation",
+        "placeholders": {
+          "evalName": "e.g., Data Evaluation",
+          "modelLoading": "Loading models...",
+          "selectModel": "Select model for evaluation"
+        },
+        "dimensions": {
+          "questionIndependence": "Question Independence",
+          "questionIndependenceDesc": "Analyze only the question; the subject and object are clear...",
+          "grammarError": "Grammar Errors",
+          "grammarErrorDesc": "The question is interrogative, the answer is declarative...",
+          "answerRelevance": "Answer Relevance",
+          "answerRelevanceDesc": "The answer should provide a direct, positive response..."
+        }
+      },
+      "archive": {
+        "success": "Archive successful",
+        "failed": "Archive failed",
+        "datasetFailed": "Failed to create dataset"
+      }
+    },
+    "create": {
+      "title": "Create Synthesis Task",
+      "step1": "Basic Information",
+      "step2": "Synthesis Orchestration",
+      "form": {
+        "name": "Task Name",
+        "namePlaceholder": "Enter task name",
+        "nameRequired": "Please enter task name",
+        "description": "Task Description",
+        "descriptionPlaceholder": "Describe the purpose and requirements of the task (optional)",
+        "selectDataset": "Select Dataset",
+        "currentDataset": "Current dataset: {{name}} - Selected {{count}} files",
+        "datasetRequired": "Please select dataset"
+      },
+      "template": {
+        "title": "Synthesis Instruction Template",
+        "description": "Select a template from the left, we will automatically fill in appropriate prompts and synthesis strategies for you.",
+        "singleSelect": "Single Select",
+        "searchPlaceholder": "Search template name, e.g., SFT QA / COT Reasoning",
+        "templates": {
+          "sftQa": {
+            "title": "SFT QA Synthesis",
+            "subtitle": "Automatically generate high-quality Q&A pairs from long documents",
+            "badge": "Recommended",
+            "description": "Suitable for building SFT Q&A datasets, supports extracting key Q&A pairs from knowledge bases or long documents."
+          },
+          "cotReasoning": {
+            "title": "COT Chain of Thought Synthesis",
+            "subtitle": "Step-by-step reasoning process and final answer",
+            "badge": "Reasoning Enhanced",
+            "description": "Generate COT data containing model reasoning intermediate process, used to improve model complex reasoning and explanation capabilities."
+          }
+        },
+        "tooltips": {
+          "selected": "Current selected template",
+          "apply": "Click to apply this template"
+        }
+      },
+      "config": {
+        "title": "Synthesis Configuration",
+        "description": "Configuration is automatically brought out according to the template on the left, you can also make fine adjustments on this basis.",
+        "steps": {
+          "1": "Set total count",
+          "2": "Configure text slicing strategy",
+          "3": "Configure question synthesis parameters",
+          "4": "Configure answer synthesis parameters"
+        },
+        "totalLimit": {
+          "title": "Total synthesis limit",
+          "description": "Control the maximum number of QA pairs generated for the entire task",
+          "placeholder": "Optional, recommended to set upper limit for large-scale synthesis"
+        },
+        "slice": {
+          "title": "Text Slice Configuration",
+          "description": "Affects context length and recall granularity",
+          "strategy": "Slice Strategy",
+          "size": "Slice Size",
+          "overlap": "Overlap Size",
+          "customDelimiter": "Custom Delimiter",
+          "delimiterPlaceholder": "e.g., \\n\\n or ###",
+          "options": {
+            "default": "Default Chunk",
+            "chapter": "Chapter Chunk",
+            "paragraph": "Paragraph Chunk",
+            "fixedLength": "Fixed Length Chunk",
+            "customSeparator": "Custom Separator Chunk"
+          }
+        },
+        "question": {
+          "title": "Question Synthesis Configuration",
+          "description": "Control the number and diversity of questions generated per chunk",
+          "count": "Question Generation Count",
+          "countDesc": "Number of questions generated per thousand tokens",
+          "temperature": "Temperature",
+          "temperatureDesc": "Higher value, more diverse questions",
+          "useModel": "Use Model",
+          "useModelDesc": "Conversational model for generating questions",
+          "promptTemplate": "Question Prompt Template",
+          "promptDesc": "Used to guide the model on how to generate high-quality questions from sliced text...",
+          "qaPlaceholder": "Will pre-fill question generation Prompt based on SFT QA synthesis scenario, can be adjusted as needed",
+          "cotPlaceholder": "Will pre-fill question generation Prompt based on COT reasoning synthesis scenario, can be adjusted as needed"
+        },
+        "answer": {
+          "title": "Answer Synthesis Configuration",
+          "description": "Control the stability and style of answer generation",
+          "temperature": "Temperature",
+          "temperatureDesc": "Lower value, more stable and conservative answers",
+          "useModel": "Use Model",
+          "useModelDesc": "Conversational model for generating answers",
+          "promptTemplate": "Answer Prompt Template",
+          "promptDesc": "Used to constrain the style and content range of model answers, e.g., whether step-by-step reasoning is needed...",
+          "qaPlaceholder": "Will pre-fill answer generation Prompt based on SFT QA synthesis scenario, can be adjusted as needed",
+          "cotPlaceholder": "Will pre-fill answer generation Prompt based on COT reasoning synthesis scenario, can be adjusted as needed"
+        }
+      },
+      "messages": {
+        "selectType": "Please select a synthesis type",
+        "selectModels": "Please select models for question and answer",
+        "selectFiles": "Please select at least one file",
+        "fillRequired": "Please fill in all required fields",
+        "createSuccess": "Synthesis task created successfully",
+        "createFailed": "Failed to create synthesis task",
+        "fetchQuestionPromptFailed": "Failed to fetch question Prompt template",
+        "fetchAnswerPromptFailed": "Failed to fetch answer Prompt template",
+        "loadModelsFailed": "Failed to load model list"
+      }
+    },
+    "templates": {
+      "title": "Instruction Templates",
+      "searchPlaceholder": "Search template name or description...",
+      "empty": {
+        "title": "No Instruction Templates",
+        "noMatch": "No matching templates found",
+        "createFirst": "Create your first instruction template"
+      },
+      "filters": {
+        "type": "Type",
+        "allTypes": "All Types",
+        "preset": "Preset Template",
+        "custom": "Custom Template"
+      },
+      "columns": {
+        "name": "Template Name",
+        "type": "Type",
+        "category": "Category",
+        "variables": "Variable Count",
+        "usageCount": "Usage Count",
+        "qualityScore": "Quality Score",
+        "lastUsed": "Last Used",
+        "actions": "Actions"
+      },
+      "typeMap": {
+        "all": "All Types",
+        "preset": "Preset",
+        "custom": "Custom"
+      }
+    },
+    "createTemplate": {
+      "title": "Create New Template",
+      "editTitle": "Edit Template",
+      "form": {
+        "basicInfo": "Basic Information",
+        "name": "Template Name",
+        "namePlaceholder": "Enter template name",
+        "nameRequired": "Please enter template name",
+        "category": "Category",
+        "categoryPlaceholder": "Select category",
+        "categoryRequired": "Please select category",
+        "description": "Template Description",
+        "descriptionPlaceholder": "Briefly describe the purpose and characteristics of the template",
+        "promptContent": "Prompt Content",
+        "promptPlaceholder": "Enter prompt content, use {variable_name} format to define variables",
+        "promptRequired": "Please enter Prompt content",
+        "promptHint": "Tip: Use {variable_name} format to define variables, e.g., {{text}} or {input}",
+        "testInput": "Test Input",
+        "testInputPlaceholder": "Enter test data",
+        "testOutput": "Test Output",
+        "testOutputPlaceholder": "Click test button to view output results"
+      },
+      "variables": {
+        "title": "Variable Management",
+        "empty": "No variables yet, define variables in Prompt using {variable_name} format",
+        "addPlaceholder": "Add variable name (e.g., text, input, question)",
+        "add": "Add"
+      },
+      "test": {
+        "title": "Template Test",
+        "testing": "Testing...",
+        "testButton": "Test Template"
+      },
+      "actions": {
+        "createTemplate": "Create Template",
+        "saveTemplate": "Save Template",
+        "cancel": "Cancel"
+      },
+      "messages": {
+        "saved": "Template saved",
+        "testOutput": "Test result generated based on input \"{{input}}\"...",
+        "testFailed": "Test failed"
+      },
+      "categories": {
+        "qa": "QA Pair Generation",
+        "distillation": "Distillation Dataset",
+        "textGeneration": "Text Generation",
+        "multimodal": "Multimodal Generation"
+      }
+    },
+    "detail": {
+      "title": "Synthesis Data Detail",
+      "breadcrumb": {
+        "tasks": "Synthesis Tasks",
+        "taskDetail": "Task Detail",
+        "fileDetail": "File Detail"
+      },
+      "chunkList": {
+        "title": "Chunk List",
+        "total": "Total {{count}} items",
+        "empty": "No Chunks",
+        "chunkIndex": "Chunk #{{index}}",
+        "confirmDeleteTitle": "Confirm delete this Chunk and its synthesis data?",
+        "confirmDeleteDesc": "ID: {{id}}"
+      },
+      "synthData": {
+        "title": "Synthesis Data",
+        "empty": "No synthesis data for this Chunk",
+        "noChunkSelected": "Please select a Chunk on the left",
+        "currentChunk": "Current Chunk #{{index}}",
+        "record": "Record {{index}}",
+        "confirmDeleteTitle": "Confirm delete this synthesis data?",
+        "confirmDeleteDesc": "ID: {{id}}",
+        "edit": {
+          "cancel": "Cancel",
+          "confirm": "Confirm"
+        },
+        "id": "ID: {{id}}"
+      },
+      "messages": {
+        "deleteSuccess": "Delete successful",
+        "deleteFailed": "Delete failed, please try again later",
+        "saveSuccess": "Save successful",
+        "saveFailed": "Save failed, please try again later"
+      },
+      "pagination": {
+        "total": "Total {{total}} items"
+      }
+    },
+    "fileTask": {
+      "breadcrumb": {
+        "tasks": "Synthesis Tasks",
+        "taskDetail": "Task Detail"
+      },
+      "tabs": {
+        "files": "Processed Files"
+      },
+      "columns": {
+        "file": "File",
+        "status": "Status",
+        "totalChunks": "Total Chunks",
+        "progress": "Processing Progress",
+        "createdAt": "Created At",
+        "updatedAt": "Updated At",
+        "actions": "Actions"
+      },
+      "status": {
+        "unknown": "Unknown",
+        "processing": "Processing",
+        "completed": "Completed",
+        "failed": "Failed"
+      },
+      "operations": {
+        "refresh": "Refresh",
+        "delete": "Delete Task"
+      },
+      "confirm": {
+        "deleteTitle": "Confirm delete this synthesis task?",
+        "deleteDescription": "This task cannot be recovered after deletion, please proceed with caution.",
+        "okText": "Confirm Delete",
+        "cancelText": "Cancel"
+      },
+      "messages": {
+        "fetchFailed": "Failed to fetch synthesis task details",
+        "deleteSuccess": "Synthesis task deleted",
+        "deleteFailed": "Failed to delete synthesis task"
+      },
+      "statistics": {
+        "type": "Type",
+        "fileCount": "File Count"
+      },
+      "typeMap": {
+        "qa": "QA Pair Generation",
+        "cot": "Chain of Thought Generation"
+      }
+    },
+    "messages": {
+      "deleteSuccess": "Delete successful",
+      "deleteFailed": "Delete failed",
+      "evaluationCreated": "Evaluation task created successfully",
+      "evaluationCreateFailed": "Failed to create evaluation task",
+      "fetchModelsFailed": "Failed to fetch model list"
+    }
+  },
+  "components": {
+    "errorBoundary": {
+      "title": "An error occurred",
+      "retry": "Retry",
+      "goHome": "Go Home"
+    },
+    "searchControls": {
+      "searchPlaceholder": "Search...",
+      "dateRange": {
+        "start": "Start Date",
+        "end": "End Date",
+        "placeholder": "Select date range"
+      },
+      "filters": {
+        "label": "Filters",
+        "clearAll": "Clear All"
+      }
+    },
+    "tagList": {
+      "addTag": "Add Tag"
+    },
+    "actionDropdown": {
+      "confirm": "Confirm",
+      "cancel": "Cancel"
+    },
+    "developmentInProgress": {
+      "title": "Under Development",
+      "description": "This feature is under development, stay tuned.",
+      "goHome": "Go Home"
+    },
+    "business": {
+      "taskPopover": {
+        "title": "Task Details",
+        "empty": "No task information",
+        "actions": {
+          "viewDetail": "View Details",
+          "delete": "Delete",
+          "archive": "Archive"
+        },
+        "progress": {
+          "label": "Progress",
+          "running": "Running",
+          "completed": "Completed"
+        },
+        "schedule": {
+          "label": "Schedule",
+          "nextRun": "Next Run",
+          "lastRun": "Last Run"
+        },
+        "source": {
+          "label": "Source",
+          "dataset": "Dataset",
+          "collection": "Collection Task"
+        }
+      }
+    }
+  },
+  "hooks": {
+    "tagConfig": {
+      "fetchFailed": "Failed to fetch tag configuration",
+      "loadError": "Error loading tag configuration"
+    },
+    "sliceUpload": {
+      "uploadDataset": "Upload Dataset",
+      "fileModifiedOrDeleted": "File has been modified or deleted, please reselect the file to upload",
+      "uploadFailed": "File upload failed, please try again later"
+    },
+    "fetchData": {
+      "totalItems": "Total",
+      "loginRequired": "Please login",
+      "fetchFailed": "Failed to fetch data, please try again later"
+    }
+  },
+  "home": {
+    "hero": {
+      "subtitle": "AI Dataset Preparation Tool",
+      "title": "Building High-Quality AI Datasets",
+      "description": "From data management to knowledge generation, one-stop solution for enterprise AI data processing scenarios.",
+      "getStartedButton": "Get Started",
+      "chatAssistantButton": "Chat Assistant",
+      "checkingButton": "Checking...",
+      "dataOrchestrationButton": "Data Orchestration"
+    },
+    "sections": {
+      "featuresTitle": "Feature Modules"
+    },
+    "orchestrationHighlight": {
+      "title": "Data Orchestration - Visual Process Design",
+      "description": "Drag-and-drop design of complex data processing pipelines, making data flow more intuitive and efficient.",
+      "coreFeaturesTitle": "Core Features:",
+      "feature1": "Visual Process Designer",
+      "feature2": "Rich Data Processing Component Library",
+      "feature3": "Real-time Process Execution Monitoring",
+      "smartFeaturesTitle": "Smart Features:",
+      "smartFeature1": "Automatic data flow path optimization",
+      "smartFeature2": "Smart error detection and repair suggestions",
+      "smartFeature3": "Template-based process rapid reuse",
+      "startButton": "Start Orchestration"
+    },
+    "dataAgentHighlight": {
+      "title": "Data Agent - Conversational Business Operations",
+      "description": "Say goodbye to complex interfaces, complete all dataset-related business operations with natural language.",
+      "examplesTitle": "Conversation Examples:",
+      "example1": "Help me create an image classification dataset",
+      "example2": "Analyze data quality and generate a report",
+      "example3": "Start synthesis task with target of 1000 data points",
+      "smartFeaturesTitle": "Smart Features:",
+      "smartFeature1": "Understand complex requirements and execute automatically",
+      "smartFeature2": "Provide professional advice and optimization solutions",
+      "smartFeature3": "Learn usage habits for personalized service",
+      "startButton": "Start Conversation"
+    },
+    "workflowShowcase": {
+      "title": "Complete Data Processing Workflow",
+      "description": "End-to-end solution from raw data to high-quality datasets.",
+      "step1Title": "Data Collection",
+      "step1Description": "Support importing from various data sources including local files, databases, APIs, etc.",
+      "step2Title": "Smart Orchestration",
+      "step2Description": "Visualize data processing workflows, automate complex tasks.",
+      "step3Title": "Smart Processing",
+      "step3Description": "Automated data processing, annotation, and quality assessment workflows.",
+      "step4Title": "Quality Assurance",
+      "step4Description": "Comprehensive quality evaluation and bias detection to ensure dataset reliability.",
+      "startButton": "Start Building Dataset"
+    },
+    "features": {
+      "orchestration": {
+        "title": "Smart Orchestration",
+        "description": "Visual data processing workflow orchestration, drag-and-drop design of complex data processing pipelines"
+      },
+      "chatAssistant": {
+        "title": "Chat Assistant",
+        "description": "Complete complex dataset operations and business processes through natural language conversation"
+      },
+      "evaluation": {
+        "title": "Comprehensive Evaluation",
+        "description": "Multi-dimensional data quality assessment, including statistical analysis, performance testing and bias detection"
+      },
+      "processing": {
+        "title": "Efficient Processing",
+        "description": "Complete data processing pipeline from raw data to usable datasets"
+      },
+      "knowledge": {
+        "title": "Knowledge Management",
+        "description": "Build RAG-oriented knowledge bases, supporting intelligent Q&A and retrieval"
+      }
+    }
+  },
+  "datasetFileTransfer": {
+    "columns": {
+      "datasetName": "Dataset",
+      "fileName": "File Name",
+      "fileSize": "Size"
+    },
+    "datasetColumns": {
+      "name": "Dataset Name",
+      "fileCount": "File Count",
+      "totalSize": "Size"
+    },
+    "selectDataset": "Select Dataset",
+    "searchDatasetPlaceholder": "Search dataset name...",
+    "selectFiles": "Select Files",
+    "selectAllCurrentDataset": "Select All in Current Dataset",
+    "searchFilesPlaceholder": "Search file name...",
+    "preview": "Preview",
+    "cancelPreview": "Cancel Preview",
+    "messages": {
+      "pleaseSelectDataset": "Please select a dataset first",
+      "singleDatasetOnlyWarning": "Files can only be selected from one dataset at a time. Please clear selected files before switching datasets",
+      "selectAllSuccess": "Selected all {{count}} files in the current dataset",
+      "noFilesAvailable": "No files available in the current dataset",
+      "selectAllFailed": "Failed to select all files in dataset, please try again later"
+    }
+  }
+}

@@ -126,8 +126,6 @@ OPENAPI_DIR="openapi/specs"
 SERVICES=(
     "data-annotation-service"
     "data-management-service"
-    "operator-market-service"
-    "data-cleaning-service"
     "data-synthesis-service"
     "data-evaluation-service"
     "pipeline-orchestration-service"

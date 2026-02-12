@@ -4,9 +4,11 @@ import { Button } from "antd";
 import OperatorUpload from "@/app/(layout)/operator-market/components/operator-upload";
 import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useTranslation } from "react-i18next";
 
 export default function OperatorUpdatePage() {
-    const router = useRouter();
+  const { t } = useTranslation();
+  const router = useRouter();
     return (
         <div className="h-screen bg-gray-50">
             {/* Header */}
@@ -14,7 +16,7 @@ export default function OperatorUpdatePage() {
                 <Button onClick={() => router.push("/operator-market")} className="flex items-center gap-2">
                     <ArrowLeft className="w-4 h-4" />
                 </Button>
-                <h1 className="text-2xl font-bold text-gray-900">更新算子</h1>
+                <h1 className="text-2xl font-bold text-gray-900">{t("operatorMarket.create.updateTitle")}</h1>
             </div>
 
             {/* Content */}

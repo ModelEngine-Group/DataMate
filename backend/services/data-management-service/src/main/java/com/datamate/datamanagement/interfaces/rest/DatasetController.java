@@ -80,6 +80,11 @@ public class DatasetController {
         return DatasetConverter.INSTANCE.convertToResponse(dataset);
     }
 
+    @GetMapping("/{datasetId}/lineage")
+    public DatasetLineage getDatasetLineage(@PathVariable("datasetId") String datasetId) {
+        return datasetApplicationService.getDatasetLineage(datasetId);
+    }
+
     /**
      * 根据ID删除数据集
      *

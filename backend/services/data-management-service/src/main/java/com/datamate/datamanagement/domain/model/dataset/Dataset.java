@@ -3,6 +3,7 @@ package com.datamate.datamanagement.domain.model.dataset;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.datamate.common.domain.model.base.BaseEntity;
+import com.datamate.common.infrastructure.config.PgJsonTypeHandler;
 import com.datamate.datamanagement.common.enums.DatasetStatusType;
 import com.datamate.datamanagement.common.enums.DatasetType;
 import lombok.Getter;
@@ -66,7 +67,8 @@ public class Dataset extends BaseEntity<String> {
     /**
      * 标签列表, JSON格式
      */
-    private String tags;
+    @TableField(typeHandler = PgJsonTypeHandler.class)
+    private List<Tag> tags;
     /**
      * 额外元数据，JSON格式
      */

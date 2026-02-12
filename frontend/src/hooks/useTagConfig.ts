@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { message } from "antd";
+import { useTranslation } from "react-i18next";
 import { getTagConfigUsingGet } from "../pages/DataAnnotation/annotation.api";
 import type { LabelStudioTagConfig } from "../pages/DataAnnotation/annotation.tagconfig";
 import { parseTagConfig, type TagOption } from "../pages/DataAnnotation/annotation.tagconfig";
@@ -18,6 +19,7 @@ interface UseTagConfigReturn {
  * @param includeLabelingOnly - If true, only include controls with category="labeling" (default: true)
  */
 export function useTagConfig(includeLabelingOnly: boolean = true): UseTagConfigReturn {
+    const { t } = useTranslation();
     const [config, setConfig] = useState<LabelStudioTagConfig | null>(null);
     const [objectOptions, setObjectOptions] = useState<TagOption[]>([]);
     const [controlOptions, setControlOptions] = useState<TagOption[]>([]);
@@ -29,7 +31,7 @@ export function useTagConfig(includeLabelingOnly: boolean = true): UseTagConfigR
         setError(null);
         try {
             const response = await getTagConfigUsingGet();
-            if (response.code === 200 && response.data) {
+            if (response.data) {
                 const tagConfig: LabelStudioTagConfig = response.data;
                 setConfig(tagConfig);
 
@@ -38,12 +40,12 @@ export function useTagConfig(includeLabelingOnly: boolean = true): UseTagConfigR
                 setObjectOptions(objects);
                 setControlOptions(controls);
             } else {
-                const errorMsg = response.message || "获取标签配置失败";
+                const errorMsg = response.message || t('hooks.tagConfig.fetchFailed');
                 setError(errorMsg);
                 message.error(errorMsg);
             }
         } catch (err: any) {
-            const errorMsg = err.message || "加载标签配置时出错";
+            const errorMsg = err.message || t('hooks.tagConfig.loadError');
             setError(errorMsg);
             console.error("Failed to fetch tag config:", err);
             message.error(errorMsg);

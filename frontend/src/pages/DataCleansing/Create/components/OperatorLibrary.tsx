@@ -1,4 +1,5 @@
 import React, {useEffect, useMemo, useState} from "react";
+import { useTranslation } from "react-i18next";
 import {Button, Card, Checkbox, Collapse, Input, Select, Tag, Tooltip,} from "antd";
 import {SearchOutlined, StarFilled, StarOutlined} from "@ant-design/icons";
 import {CategoryI, OperatorI} from "@/pages/OperatorMarket/operator.model";
@@ -97,6 +98,7 @@ const OperatorLibrary: React.FC<OperatorLibraryProps> = ({
   toggleOperator,
   handleDragStart,
 }) => {
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState("");
   const [showFavorites, setShowFavorites] = useState(false);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
@@ -216,7 +218,7 @@ const OperatorLibrary: React.FC<OperatorLibraryProps> = ({
       <div className="pb-4 border-b border-gray-200">
         <span className="flex items-center font-semibold text-base">
           <Layers className="w-4 h-4 mr-2" />
-          算子库({operatorList.length})
+          {t("dataCleansing.operatorLibrary.title")}({operatorList.length})
         </span>
       </div>
       <div className="flex flex-col h-full pt-4 pr-4 overflow-hidden">
@@ -224,7 +226,7 @@ const OperatorLibrary: React.FC<OperatorLibraryProps> = ({
         <div className="flex flex-wrap gap-2 border-b border-gray-100 pb-2">
           <Input
             prefix={<SearchOutlined />}
-            placeholder="搜索算子名称..."
+            placeholder={t("dataCleansing.operatorLibrary.searchPlaceholder")}
             value={searchTerm}
             allowClear
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -236,9 +238,9 @@ const OperatorLibrary: React.FC<OperatorLibraryProps> = ({
             mode="multiple"
             allowClear
             className="flex-1"
-            placeholder="选择分类"
+            placeholder={t("dataCleansing.operatorLibrary.selectCategory")}
           ></Select>
-          <Tooltip title="只看收藏">
+          <Tooltip title={t("dataCleansing.operatorLibrary.showFavoritesOnly")}>
             <span
               className="cursor-pointer"
               onClick={() => setShowFavorites(!showFavorites)}
@@ -259,7 +261,7 @@ const OperatorLibrary: React.FC<OperatorLibraryProps> = ({
                 handleSelectAll(operatorListFiltered);
               }}
             >
-              全选
+              {t("dataCleansing.operatorLibrary.selectAll")}
               <Tag>{operatorListFiltered.length}</Tag>
             </Button>
           </div>
@@ -278,7 +280,7 @@ const OperatorLibrary: React.FC<OperatorLibraryProps> = ({
           {operatorListFiltered.length === 0 && (
             <div className="text-center py-8 text-gray-400">
               <SearchOutlined className="text-3xl mb-2 opacity-50" />
-              <div>未找到匹配的算子</div>
+              <div>{t("dataCleansing.operatorLibrary.noMatchFound")}</div>
             </div>
           )}
         </div>

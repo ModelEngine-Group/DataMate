@@ -31,7 +31,10 @@ operator_package/
 | `language` | 算子使用的语言，当前仅支持python                | python |
 | `raw_id` | **关键字段**，必须与 `process.py` 中的类名完全一致 | TestMapper |
 | `version` | 语义化版本号                             | 1.0.0 |
-| `modal` / `inputs` / `outputs` | 支持的数据模态 (text/image/audio/video)   | text |
+| `vendor` | 厂商                             | datamate |
+| `modal` | 支持的数据模态 (text/image/audio/video)   | text |
+| `inputs` | 输入的数据模态 (text/image/audio/video)   | text |
+| `outputs` | 输出的数据模态 (text/image/audio/video)   | text |
 
 ### 2.2 算子版本更新日志 (release)
 
@@ -49,8 +52,8 @@ release:
 
 ```yaml
 runtime:
-  memory: 10MB  # 内存限制
-  cpu: 1000m    # CPU 核心数 (m代表毫核)
+  memory: 10485760  # 内存 单位bytes
+  cpu: 0.05    # CPU 核心数
   gpu: 0.1      # GPU 卡数
   npu: 0.1      # NPU 卡数
   storage: 10MB # 存储空间
@@ -175,7 +178,7 @@ class YourOperatorName(Mapper):
     """
     算子类名建议使用驼峰命名法定义，例如 TestMapper
     """
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.slider_param = float(kwargs.get("sliderParam", 0.5))
@@ -185,7 +188,7 @@ class YourOperatorName(Mapper):
         self.range_param = kwargs.get('rangeParam', [0, 0])
         self.checkbox_param = kwargs.get('checkboxParam', [])
         self.input_param = kwargs.get('inputParam', '').strip()
-    
+
     def execute(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         """
         核心处理逻辑
@@ -196,9 +199,26 @@ class YourOperatorName(Mapper):
         # input_text = sample['text']
         # processed_text = do_something(input_text)
         # sample['text'] = processed_text
-        
+
         return sample
 
+```
+
+其中，sample字段包含如下参数：
+
+```json
+{
+  "text": "源文件读取的文本内容",
+  "data": "源文件读取的二进制数据（针对图片等）",
+  "fileName": "源文件名",
+  "fileType": "源文件类型（扩展名）",
+  "fileId": "源文件ID",
+  "filePath": "源文件路径",
+  "fileSize": "源文件大小",
+  "export_path": "目标文件导出路径信息",
+  "ext_params": "额外扩展参数",
+  "target_type": "目标文件类型"
+}
 ```
 
 ---
@@ -222,7 +242,7 @@ from datamate.core.base_op import OPERATORS
 
 # 假设 process.py 位于 operator_package 目录下
 OPERATORS.register_module(
-    module_name='YourOperatorName', 
+    module_name='YourOperatorName',
     module_path="ops.user.operator_package.process"
 )
 
@@ -253,7 +273,7 @@ OPERATORS.register_module(
 
 ```python
 OPERATORS.register_module(
-    module_name='TestMapper', 
+    module_name='TestMapper',
     # 这里 ops.user.my_custom_op.process 中的 'my_custom_op' 为包目录名
     module_path="ops.user.my_custom_op.process"
 )

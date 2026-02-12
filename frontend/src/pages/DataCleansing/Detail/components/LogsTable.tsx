@@ -1,9 +1,11 @@
 import {useEffect, useState} from "react";
 import {useParams} from "react-router";
 import {FileClock} from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export default function LogsTable({taskLog, fetchTaskLog, retryCount} : {taskLog: any[], fetchTaskLog: () => Promise<any>, retryCount: number}) {
   const { id = "" } = useParams();
+  const { t } = useTranslation();
   const [selectedLog, setSelectedLog] = useState(retryCount + 1);
 
   useEffect(() => {
@@ -15,7 +17,7 @@ export default function LogsTable({taskLog, fetchTaskLog, retryCount} : {taskLog
       {/* --- 新增区域：左上角 Select 组件 --- */}
       <div className="flex items-center justify-between pb-3">
         <div className="flex items-center gap-3">
-          <label className="text-sm font-medium text-gray-500">选择运行轮次:</label>
+          <label className="text-sm font-medium text-gray-500">{t("dataCleansing.detail.logTable.selectRun")}:</label>
           <select
             value={selectedLog}
             onChange={(e) => setSelectedLog(Number(e.target.value))}
@@ -23,12 +25,12 @@ export default function LogsTable({taskLog, fetchTaskLog, retryCount} : {taskLog
           >
             {Array.from({ length: retryCount + 1 }, (_, i) => retryCount + 1 - i).map((num) => (
               <option key={num} value={num}>
-                第 {num} 次
+                {t("dataCleansing.detail.logTable.currentDisplay", { num: num })}
               </option>
             ))}
           </select>
         </div>
-        <span className="text-s text-gray-500 px-2">当前展示: 第 {selectedLog} 次</span>
+        <span className="text-s text-gray-500 px-2">{t("dataCleansing.detail.logTable.nthRun", { num: selectedLog })}</span>
       </div>
       <div className="text-gray-300 p-4 border border-gray-700 bg-gray-800 rounded-lg">
         <div className="font-mono text-sm">
@@ -55,7 +57,7 @@ export default function LogsTable({taskLog, fetchTaskLog, retryCount} : {taskLog
     <div className="text-center py-12">
       <FileClock className="w-16 h-16 text-gray-300 mx-auto mb-4" />
       <h3 className="text-lg font-medium text-gray-900 mb-2">
-        当前任务无可用日志
+        {t("dataCleansing.detail.logTable.noLogs")}
       </h3>
     </div>
   );

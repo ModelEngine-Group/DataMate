@@ -11,6 +11,8 @@ import {
 import DatasetFileTransfer from "@/components/business/DatasetFileTransfer";
 import { DatasetType, type Dataset, type DatasetFile } from "@/pages/DataManagement/dataset.model";
 import type { AnnotationTemplate } from "../../annotation.model";
+import { DataType } from "../../annotation.model";
+import { useTranslation } from "react-i18next";
 
 const { Option } = Select;
 
@@ -106,6 +108,7 @@ export default function CreateAnnotationTask({
   onClose: () => void;
   onRefresh: () => void;
 }) {
+  const { t } = useTranslation();
   const [manualForm] = Form.useForm();
   const [autoForm] = Form.useForm();
   const [datasets, setDatasets] = useState<Dataset[]>([]);
@@ -118,6 +121,8 @@ export default function CreateAnnotationTask({
   const [selectedFilesMap, setSelectedFilesMap] = useState<Record<string, DatasetFile>>({});
   const [selectedDataset, setSelectedDataset] = useState<Dataset | null>(null);
   const [imageFileCount, setImageFileCount] = useState(0);
+  const [manualDatasetTypeFilter, setManualDatasetTypeFilter] = useState<DatasetType | undefined>(undefined);
+  const [manualAllowedExtensions, setManualAllowedExtensions] = useState<string[] | undefined>(undefined);
 
   useEffect(() => {
     if (!open) return;
@@ -128,7 +133,7 @@ export default function CreateAnnotationTask({
           page: 0,
           pageSize: 1000,  // Use camelCase for HTTP params
         });
-        setDatasets(datasetData.content.map(mapDataset) || []);
+        setDatasets(datasetData.content.map(dataset => mapDataset(dataset, t)) || []);
 
         // Fetch templates
         const templateResponse = await queryAnnotationTemplatesUsingGet({
@@ -137,7 +142,7 @@ export default function CreateAnnotationTask({
         });
 
         // The API returns: {code, message, data: {content, total, page, ...}}
-        if (templateResponse.code === 200 && templateResponse.data) {
+        if (templateResponse.data) {
           const fetchedTemplates = templateResponse.data.content || [];
           console.log("Fetched templates:", fetchedTemplates);
           setTemplates(fetchedTemplates);
@@ -176,6 +181,85 @@ export default function CreateAnnotationTask({
     setImageFileCount(count);
   }, [selectedFilesMap]);
 
+  const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".bmp", ".gif", ".tiff", ".webp", ".h5", ".pt"];
+  const TEXT_EXTENSIONS = [".txt", ".md", ".csv", ".tsv", ".jsonl", ".log"];
+  const AUDIO_EXTENSIONS = [".wav", ".mp3", ".flac", ".aac", ".ogg", ".m4a", ".wma"];
+  const VIDEO_EXTENSIONS = [".mp4", ".avi", ".mov", ".mkv", ".flv", ".wmv", ".webm"];
+
+  const mapTemplateDataTypeToDatasetType = (raw?: string): DatasetType | undefined => {
+    if (!raw) return undefined;
+    const v = String(raw).trim().toLowerCase();
+
+    // 兼容多种表示方式：
+    // - 英文大写/小写：IMAGE / image / Text / TEXT
+    // - 后端枚举 DataType：text / image / audio / video
+    // - 中文展示文案：图像 / 文本 / 音频 / 视频
+    // - 少量常见别称：图片 等
+
+    const textTokens = new Set([
+      "text",
+      DataType.TEXT.toLowerCase(),
+      "文本",
+    ]);
+    const imageTokens = new Set([
+      "image",
+      DataType.IMAGE.toLowerCase(),
+      "图像",
+      "图片",
+    ]);
+    const audioTokens = new Set([
+      "audio",
+      DataType.AUDIO.toLowerCase(),
+      "音频",
+    ]);
+    const videoTokens = new Set([
+      "video",
+      DataType.VIDEO.toLowerCase(),
+      "视频",
+    ]);
+
+    if (textTokens.has(v)) return DatasetType.TEXT;
+    if (imageTokens.has(v)) return DatasetType.IMAGE;
+    if (audioTokens.has(v)) return DatasetType.AUDIO;
+    if (videoTokens.has(v)) return DatasetType.VIDEO;
+
+    return undefined;
+  };
+
+  const getAllowedExtensionsForTemplateDataType = (raw?: string): string[] | undefined => {
+    if (!raw) return undefined;
+    const v = String(raw).trim().toLowerCase();
+
+    const textTokens = new Set<string>([
+      "text",
+      DataType.TEXT.toLowerCase(),
+      "文本",
+    ]);
+    const imageTokens = new Set<string>([
+      "image",
+      DataType.IMAGE.toLowerCase(),
+      "图像",
+      "图片",
+    ]);
+    const audioTokens = new Set<string>([
+      "audio",
+      DataType.AUDIO.toLowerCase(),
+      "音频",
+    ]);
+    const videoTokens = new Set<string>([
+      "video",
+      DataType.VIDEO.toLowerCase(),
+      "视频",
+    ]);
+
+    if (textTokens.has(v)) return TEXT_EXTENSIONS;
+    if (imageTokens.has(v)) return IMAGE_EXTENSIONS;
+    if (audioTokens.has(v)) return AUDIO_EXTENSIONS;
+    if (videoTokens.has(v)) return VIDEO_EXTENSIONS;
+
+    return undefined;
+  };
+
   const handleManualSubmit = async () => {
     try {
       const values = await manualForm.validateFields();
@@ -184,7 +268,7 @@ export default function CreateAnnotationTask({
       const selectedFiles = Object.values(selectedFilesMap) as any[];
 
       if (selectedFiles.length === 0) {
-        message?.error?.("请至少选择一个文件");
+        message?.error?.(t('dataAnnotation.create.messages.selectAtLeastOneFile'));
         setSubmitting(false);
         return;
       }
@@ -209,12 +293,12 @@ export default function CreateAnnotationTask({
       };
 
       await createAnnotationTaskUsingPost(requestData);
-      message?.success?.("创建标注任务成功");
+      message?.success?.(t('dataAnnotation.create.messages.createSuccess'));
       onClose();
       onRefresh();
     } catch (err: any) {
       console.error("Create annotation task failed", err);
-      const msg = err?.message || err?.data?.message || "创建失败，请稍后重试";
+      const msg = err?.message || err?.data?.message || t('dataAnnotation.create.messages.createFailed');
       (message as any)?.error?.(msg);
     } finally {
       setSubmitting(false);
@@ -226,7 +310,7 @@ export default function CreateAnnotationTask({
       const values = await autoForm.validateFields();
 
       if (imageFileCount === 0) {
-        message.error("请至少选择一个图像文件");
+        message.error(t('dataAnnotation.create.messages.selectAtLeastOneImageFile'));
         return;
       }
 
@@ -263,19 +347,18 @@ export default function CreateAnnotationTask({
           modelSize: values.modelSize,
           confThreshold: values.confThreshold,
           targetClasses: selectAllClasses ? [] : values.targetClasses || [],
-          outputDatasetName: values.outputDatasetName || undefined,
         },
       };
 
       await createAutoAnnotationTaskUsingPost(payload);
-      message.success("自动标注任务创建成功");
+      message.success(t('dataAnnotation.create.messages.autoCreateSuccess'));
       // 触发上层刷新自动标注任务列表
       (onRefresh as any)?.("auto");
       onClose();
     } catch (error: any) {
       if (error.errorFields) return;
       console.error("Failed to create auto annotation task:", error);
-      message.error(error.message || "创建自动标注任务失败");
+      message.error(error.message || t('dataAnnotation.create.messages.autoCreateFailed'));
     } finally {
       setSubmitting(false);
     }
@@ -292,18 +375,18 @@ export default function CreateAnnotationTask({
     <Modal
       open={open}
       onCancel={onClose}
-      title="创建标注任务"
+      title={t('dataAnnotation.create.title')}
       footer={
         <>
           <Button onClick={onClose} disabled={submitting}>
-            取消
+            {t('dataAnnotation.create.cancel')}
           </Button>
           <Button
             type="primary"
             onClick={activeMode === "manual" ? handleManualSubmit : handleAutoSubmit}
             loading={submitting}
           >
-            确定
+            {t('dataAnnotation.create.ok')}
           </Button>
         </>
       }
@@ -315,11 +398,93 @@ export default function CreateAnnotationTask({
         items={[
           {
             key: "manual",
-            label: "手动标注",
+            label: t('dataAnnotation.create.manual'),
             children: (
               <Form form={manualForm} layout="vertical">
-                {/* 选择数据集和文件（支持多数据集、多文件） */}
-                <Form.Item label="选择数据集和文件" required>
+                {/* 任务名称放在第一行，必填 */}
+                <Form.Item
+                  label={t('dataAnnotation.create.form.name')}
+                  name="name"
+                  rules={[
+                    {
+                      required: true,
+                      validator: (_rule, value) => {
+                        const trimmed = (value || "").trim();
+                        if (!trimmed) {
+                          return Promise.reject(new Error(t('dataAnnotation.create.form.nameRequired')));
+                        }
+                        if (trimmed.length < 3) {
+                          return Promise.reject(
+                            new Error(t('dataAnnotation.create.form.nameMinLength')),
+                          );
+                        }
+                        return Promise.resolve();
+                      },
+                    },
+                  ]}
+                >
+                  <Input
+                    placeholder={t('dataAnnotation.create.form.namePlaceholder')}
+                    onChange={() => setNameManuallyEdited(true)}
+                  />
+                </Form.Item>
+
+                {/* 第二行：先选模板，再选数据集，模板的数据类型驱动可选数据集类型 */}
+                <Form.Item
+                  label={t('dataAnnotation.create.form.template')}
+                  name="templateId"
+                  rules={[{ required: true, message: t('dataAnnotation.create.form.templateRequired') }]}
+                >
+                  <Select
+                    placeholder={templates.length === 0 ? t('dataAnnotation.create.form.noTemplatesAvailable') : t('dataAnnotation.create.form.selectTemplate')}
+                    showSearch
+                    optionFilterProp="label"
+                    notFoundContent={templates.length === 0 ? t('dataAnnotation.create.form.noTemplatesFound') : t('dataAnnotation.create.form.noTemplatesAvailable')}
+                    options={templates
+                      .filter((template) => {
+                        const tplType = mapTemplateDataTypeToDatasetType(template.dataType);
+                        if (!selectedDataset || !selectedDataset.datasetType) return true;
+                        if (!tplType) return true;
+                        return tplType === selectedDataset.datasetType;
+                      })
+                      .map((template) => ({
+                        label: template.name,
+                        value: template.id,
+                        title: template.description,
+                      }))}
+                    onChange={(value) => {
+                      manualForm.setFieldsValue({ templateId: value });
+
+                      const tpl = templates.find((t) => t.id === value);
+                      const nextType = mapTemplateDataTypeToDatasetType(tpl?.dataType);
+                      setManualDatasetTypeFilter(nextType);
+
+                      const nextExtensions = getAllowedExtensionsForTemplateDataType(tpl?.dataType);
+                      setManualAllowedExtensions(nextExtensions);
+
+                      // 若当前已选数据集类型与模板不匹配，则清空当前选择
+                      if (selectedDataset && nextType && selectedDataset.datasetType !== nextType) {
+                        setSelectedDataset(null);
+                        setSelectedFilesMap({});
+                        manualForm.setFieldsValue({ datasetId: "" });
+                        message.warning(t('dataAnnotation.create.messages.datasetTypeFiltered'));
+                      }
+                    }}
+                    optionRender={(option) => (
+                      <div>
+                        <div style={{ fontWeight: 500 }}>{option.label}</div>
+                        {option.data.title && (
+                          <div style={{ fontSize: 12, color: '#999', marginTop: 2 }}>
+                            {option.data.title}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  />
+                </Form.Item>
+
+                {/* 选择数据集和文件（仅允许单一数据集，多文件），需先选模板再操作 */}
+                <Form.Item label={t('dataAnnotation.create.form.selectDatasetAndFiles')} required>
                   <DatasetFileTransfer
                     open
                     selectedFilesMap={selectedFilesMap}
@@ -338,11 +503,14 @@ export default function CreateAnnotationTask({
                         manualForm.setFieldsValue({ name: defaultName });
                       }
                     }}
+                    datasetTypeFilter={manualDatasetTypeFilter}
+                    allowedFileExtensions={manualAllowedExtensions}
+                    singleDatasetOnly
+                    disabled={!manualForm.getFieldValue("templateId")}
                   />
                   {selectedDataset && (
                     <div className="mt-2 p-2 bg-blue-50 rounded border border-blue-200 text-xs">
-                      当前数据集：<span className="font-medium">{selectedDataset.name}</span> - 已选择
-                      <span className="font-medium text-blue-600"> {Object.keys(selectedFilesMap).length} </span>个文件
+                      {t('dataAnnotation.create.form.currentDataset', { name: selectedDataset.name, count: Object.keys(selectedFilesMap).length })}
                     </div>
                   )}
                 </Form.Item>
@@ -351,91 +519,35 @@ export default function CreateAnnotationTask({
                 <Form.Item
                   hidden
                   name="datasetId"
-                  rules={[{ required: true, message: "请选择数据集" }]}
+                  rules={[{ required: true, message: t('dataAnnotation.create.form.datasetRequired') }]}
                 >
                   <Input type="hidden" />
                 </Form.Item>
-
-                {/* 标注工程名称 */}
-                <Form.Item
-                  label="标注工程名称"
-                  name="name"
-                  rules={[
-                    {
-                      validator: (_rule, value) => {
-                        const trimmed = (value || "").trim();
-                        if (!trimmed) {
-                          return Promise.reject(new Error("请输入任务名称"));
-                        }
-                        if (trimmed.length < 3) {
-                          return Promise.reject(
-                            new Error("任务名称至少需要 3 个字符（不含首尾空格，Label Studio 限制）"),
-                          );
-                        }
-                        return Promise.resolve();
-                      },
-                    },
-                  ]}
-                >
-                  <Input
-                    placeholder="输入标注工程名称"
-                    onChange={() => setNameManuallyEdited(true)}
-                  />
-                </Form.Item>
                 {/* 描述变为可选 */}
-                <Form.Item label="描述" name="description">
-                  <TextArea placeholder="（可选）详细描述标注任务的要求和目标" rows={3} />
-                </Form.Item>
-
-                {/* 标注模板选择 */}
-                <Form.Item
-                  label="标注模板"
-                  name="templateId"
-                  rules={[{ required: true, message: "请选择标注模板" }]}
-                >
-                  <Select
-                    placeholder={templates.length === 0 ? "暂无可用模板，请先创建模板" : "请选择标注模板"}
-                    showSearch
-                    optionFilterProp="label"
-                    notFoundContent={templates.length === 0 ? "暂无模板，请前往「标注模板」页面创建" : "未找到匹配的模板"}
-                    options={templates.map((template) => ({
-                      label: template.name,
-                      value: template.id,
-                      // Add description as subtitle
-                      title: template.description,
-                    }))}
-                    optionRender={(option) => (
-                      <div>
-                        <div style={{ fontWeight: 500 }}>{option.label}</div>
-                        {option.data.title && (
-                          <div style={{ fontSize: 12, color: '#999', marginTop: 2 }}>
-                            {option.data.title}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  />
+                <Form.Item label={t('dataAnnotation.create.form.description')} name="description">
+                  <TextArea placeholder={t('dataAnnotation.create.form.descriptionPlaceholder')} rows={3} />
                 </Form.Item>
               </Form>
             ),
           },
           {
             key: "auto",
-            label: "自动标注",
+            label: t('dataAnnotation.create.auto'),
             children: (
               <Form form={autoForm} layout="vertical" preserve={false}>
+                {/* 自动标注：任务名称仍然放在第一行，必填 */}
                 <Form.Item
                   name="name"
-                  label="任务名称"
+                  label={t('dataAnnotation.create.form.name')}
                   rules={[
-                    { required: true, message: "请输入任务名称" },
-                    { max: 100, message: "任务名称不能超过100个字符" },
+                    { required: true, message: t('dataAnnotation.create.form.nameRequired') },
+                    { max: 100, message: t('dataAnnotation.create.form.nameMaxLength') },
                   ]}
                 >
-                  <Input placeholder="请输入任务名称" />
+                  <Input placeholder={t('dataAnnotation.create.form.namePlaceholder')} />
                 </Form.Item>
 
-                <Form.Item label="选择数据集和图像文件" required>
+                <Form.Item label={t('dataAnnotation.create.form.selectDatasetAndFiles')} required>
                   <DatasetFileTransfer
                     open
                     selectedFilesMap={selectedFilesMap}
@@ -445,11 +557,12 @@ export default function CreateAnnotationTask({
                       autoForm.setFieldsValue({ datasetId: dataset?.id ?? "" });
                     }}
                     datasetTypeFilter={DatasetType.IMAGE}
+                    allowedFileExtensions={IMAGE_EXTENSIONS}
+                    singleDatasetOnly
                   />
                   {selectedDataset && (
                     <div className="mt-2 p-2 bg-blue-50 rounded border border-blue-200 text-xs">
-                      当前数据集：<span className="font-medium">{selectedDataset.name}</span> - 已选择
-                      <span className="font-medium text-blue-600"> {imageFileCount} </span>个图像文件
+                      {t('dataAnnotation.create.form.currentDataset', { name: selectedDataset.name, count: imageFileCount })}
                     </div>
                   )}
                 </Form.Item>
@@ -457,30 +570,30 @@ export default function CreateAnnotationTask({
                 <Form.Item
                   hidden
                   name="datasetId"
-                  rules={[{ required: true, message: "请选择数据集" }]}
+                  rules={[{ required: true, message: t('dataAnnotation.create.form.datasetRequired') }]}
                 >
                   <Input type="hidden" />
                 </Form.Item>
 
                 <Form.Item
                   name="modelSize"
-                  label="模型规模"
-                  rules={[{ required: true, message: "请选择模型规模" }]}
+                  label={t('dataAnnotation.create.form.modelSize')}
+                  rules={[{ required: true, message: t('dataAnnotation.create.form.modelSizeRequired') }]}
                   initialValue="l"
                 >
                   <Select>
-                    <Option value="n">YOLOv8n (最快)</Option>
-                    <Option value="s">YOLOv8s</Option>
-                    <Option value="m">YOLOv8m</Option>
-                    <Option value="l">YOLOv8l (推荐)</Option>
-                    <Option value="x">YOLOv8x (最精确)</Option>
+                    <Option value="n">{t('dataAnnotation.home.autoModelSizeLabels.n')}</Option>
+                    <Option value="s">{t('dataAnnotation.home.autoModelSizeLabels.s')}</Option>
+                    <Option value="m">{t('dataAnnotation.home.autoModelSizeLabels.m')}</Option>
+                    <Option value="l">{t('dataAnnotation.home.autoModelSizeLabels.l')}</Option>
+                    <Option value="x">{t('dataAnnotation.home.autoModelSizeLabels.x')}</Option>
                   </Select>
                 </Form.Item>
 
                 <Form.Item
                   name="confThreshold"
-                  label="置信度阈值"
-                  rules={[{ required: true, message: "请选择置信度阈值" }]}
+                  label={t('dataAnnotation.create.form.confThreshold')}
+                  rules={[{ required: true, message: t('dataAnnotation.create.form.confThresholdRequired') }]}
                   initialValue={0.7}
                 >
                   <Slider
@@ -491,16 +604,16 @@ export default function CreateAnnotationTask({
                   />
                 </Form.Item>
 
-                <Form.Item label="目标类别">
+                <Form.Item label={t('dataAnnotation.create.form.targetClasses')}>
                   <Checkbox
                     checked={selectAllClasses}
                     onChange={(e) => handleClassSelectionChange(e.target.checked)}
                   >
-                    选中所有类别
+                    {t('dataAnnotation.create.form.selectAllClasses')}
                   </Checkbox>
                   {!selectAllClasses && (
                     <Form.Item name="targetClasses" noStyle>
-                      <Select mode="multiple" placeholder="选择目标类别" style={{ marginTop: 8 }}>
+                      <Select mode="multiple" placeholder={t('dataAnnotation.create.form.selectTargetClasses')} style={{ marginTop: 8 }}>
                         {COCO_CLASSES.map((cls) => (
                           <Option key={cls.id} value={cls.id}>
                             {cls.label} ({cls.name})
@@ -509,10 +622,6 @@ export default function CreateAnnotationTask({
                       </Select>
                     </Form.Item>
                   )}
-                </Form.Item>
-
-                <Form.Item name="outputDatasetName" label="输出数据集名称 (可选)">
-                  <Input placeholder="留空则将结果写入原数据集的标签中" />
                 </Form.Item>
               </Form>
             ),

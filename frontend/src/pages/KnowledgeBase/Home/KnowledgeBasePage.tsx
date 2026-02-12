@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, Button, Table, Tooltip, message } from "antd";
 import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
 import { SearchControls } from "@/components/SearchControls";
@@ -12,8 +12,10 @@ import useFetchData from "@/hooks/useFetchData";
 import { KnowledgeBaseItem } from "../knowledge-base.model";
 import CreateKnowledgeBase from "../components/CreateKnowledgeBase";
 import { mapKnowledgeBase } from "../knowledge-base.const";
+import { useTranslation } from "react-i18next";
 
 export default function KnowledgeBasePage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<"card" | "list">("card");
   const [isEdit, setIsEdit] = useState(false);
@@ -29,23 +31,27 @@ export default function KnowledgeBasePage() {
     handleKeywordChange,
   } = useFetchData<KnowledgeBaseItem>(
     queryKnowledgeBasesUsingPost,
-    (kb) => mapKnowledgeBase(kb, false) // 在首页不显示索引模型和文本理解模型字段
+    (kb) => mapKnowledgeBase(kb, false, t) // 在首页不显示索引模型和文本理解模型字段
   );
+
+  useEffect(() => {
+    fetchData();
+  }, [t])
 
   const handleDeleteKB = async (kb: KnowledgeBaseItem) => {
     try {
       await deleteKnowledgeBaseByIdUsingDelete(kb.id);
-      message.success("知识库删除成功");
+      message.success(t("knowledgeBase.home.messages.deleteSuccess"));
       fetchData();
     } catch (error) {
-      message.error("知识库删除失败");
+      message.error(t("knowledgeBase.home.messages.deleteFailed"));
     }
   };
 
   const operations = [
     {
       key: "edit",
-      label: "编辑",
+      label: t("knowledgeBase.home.actions.edit"),
       icon: <EditOutlined />,
       onClick: (item) => {
         setIsEdit(true);
@@ -54,15 +60,15 @@ export default function KnowledgeBasePage() {
     },
     {
       key: "delete",
-      label: "删除",
+      label: t("knowledgeBase.home.actions.delete"),
       danger: true,
       icon: <DeleteOutlined />,
       confirm: {
-        title: "确认删除",
-        description: "此操作不可撤销，是否继续？",
-        okText: "删除",
-        okType: "danger",
-        cancelText: "取消",
+        title: t("knowledgeBase.home.confirm.deleteTitle"),
+        description: t("knowledgeBase.home.confirm.deleteDescription"),
+        okText: t("knowledgeBase.home.confirm.okText"),
+        okType: "danger" as const,
+        cancelText: t("knowledgeBase.home.confirm.cancelText"),
       },
       onClick: (item) => handleDeleteKB(item),
     },
@@ -70,7 +76,7 @@ export default function KnowledgeBasePage() {
 
   const columns = [
     {
-      title: "知识库",
+      title: t("knowledgeBase.home.columns.name"),
       dataIndex: "name",
       key: "name",
       fixed: "left" as const,
@@ -86,28 +92,28 @@ export default function KnowledgeBasePage() {
       ),
     },
     {
-      title: "创建时间",
+      title: t("knowledgeBase.home.columns.createdAt"),
       dataIndex: "createdAt",
       key: "createdAt",
       ellipsis: true,
       width: 150,
     },
     {
-      title: "更新时间",
+      title: t("knowledgeBase.home.columns.updatedAt"),
       dataIndex: "updatedAt",
       key: "updatedAt",
       ellipsis: true,
       width: 150,
     },
     {
-      title: "描述",
+      title: t("knowledgeBase.home.columns.description"),
       dataIndex: "description",
       key: "description",
       width: 120,
       ellipsis: true,
     },
     {
-      title: "操作",
+      title: t("knowledgeBase.home.columns.actions"),
       key: "actions",
       fixed: "right" as const,
       width: 150,
@@ -131,7 +137,7 @@ export default function KnowledgeBasePage() {
   return (
     <div className="h-full flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">知识生成</h1>
+        <h1 className="text-xl font-bold">{t("knowledgeBase.title")}</h1>
         <CreateKnowledgeBase
           isEdit={isEdit}
           data={currentKB}
@@ -148,7 +154,7 @@ export default function KnowledgeBasePage() {
       <SearchControls
         searchTerm={searchParams.keyword}
         onSearchChange={handleKeywordChange}
-        searchPlaceholder="搜索知识库..."
+        searchPlaceholder={t("knowledgeBase.home.searchPlaceholder")}
         filters={[]}
         onFiltersChange={handleFiltersChange}
         onClearFilters={() => setSearchParams({ ...searchParams, filter: {} })}

@@ -4,7 +4,8 @@ import { OperatorI } from "./operator.model";
 import { formatDateTime } from "@/utils/unit.ts";
 
 const getOperatorVisual = (
-  op: OperatorI
+  op: OperatorI,
+  t: (key: string) => string
 ): { modal: String; icon: React.ReactNode; iconColor?: string } => {
   const type = (op?.type || "").toLowerCase();
   const categories = (op?.categories || []).map((c) => (c || "").toLowerCase());
@@ -17,6 +18,7 @@ const getOperatorVisual = (
     image: "de36b61c-9e8a-4422-8c31-d30585c7100f",
     audio: "42dd9392-73e4-458c-81ff-41751ada47b5",
     video: "a233d584-73c8-4188-ad5d-8f7c8dda9c27",
+    multimodal: "4d7dbd77-0a92-44f3-9056-2cd62d4a71e4",
   } as const;
 
   const hasCategoryId = (key: keyof typeof CATEGORY_IDS) =>
@@ -60,7 +62,7 @@ const getOperatorVisual = (
 
   if (isMultimodal) {
     return {
-      modal: "多模态",
+      modal: t("operatorMarket.const.modal.multimodal"),
       icon: <Atom className="w-full h-full" />,
       iconColor: "#F472B6",
     };
@@ -68,7 +70,7 @@ const getOperatorVisual = (
 
   if (isVideoOp) {
     return {
-      modal: "视频",
+      modal: t("operatorMarket.const.modal.video"),
       icon: <Film className="w-full h-full" />,
       iconColor: "#22D3EE",
     };
@@ -76,7 +78,7 @@ const getOperatorVisual = (
 
   if (isAudioOp) {
     return {
-      modal: "音频",
+      modal: t("operatorMarket.const.modal.audio"),
       icon: <Music className="w-full h-full" />,
       iconColor: "#F59E0B",
     };
@@ -84,7 +86,7 @@ const getOperatorVisual = (
 
   if (isImageOp) {
     return {
-      modal: "图片",
+      modal: t("operatorMarket.const.modal.image"),
       icon: <Image className="w-full h-full" />,
       iconColor: "#38BDF8", // 图像算子背景色
     };
@@ -92,21 +94,33 @@ const getOperatorVisual = (
 
   if (isTextOp) {
     return {
-      modal: "文本",
+      modal: t("operatorMarket.const.modal.text"),
       icon: <FileText className="w-full h-full" />,
       iconColor: "#A78BFA", // 文本算子背景色
     };
   }
 
   return {
-    modal: "多模态",
+    modal: t("operatorMarket.const.modal.multimodal"),
     icon: <Code className="w-full h-full" />,
     iconColor: undefined,
   };
 };
 
-export const mapOperator = (op: OperatorI) => {
-  const visual = getOperatorVisual(op);
+export const mapOperator = (op: OperatorI, t: (key: string) => string) => {
+  const visual = getOperatorVisual(op, t);
+
+  const FUNCTION_CATEGORY_IDS = {
+    cleaning: "8c09476a-a922-418f-a908-733f8a0de521",
+    annotation: "cfa9d8e2-5b5f-4f1e-9f12-1234567890ab",
+  } as const;
+
+  const categories = op?.categories || [];
+  const functionLabel = categories.includes(FUNCTION_CATEGORY_IDS.annotation)
+    ? t("dataAnnotation.title")
+    : categories.includes(FUNCTION_CATEGORY_IDS.cleaning)
+    ? t("dataCleansing.title")
+    : "-";
 
   return {
     ...op,
@@ -119,21 +133,25 @@ export const mapOperator = (op: OperatorI) => {
       "--",
     statistics: [
       {
-        label: "使用次数",
+        label: t("operatorMarket.const.usageCount"),
         value: op?.usageCount || 0
       },
       {
-        label: "类型",
+        label: t("operatorMarket.const.type"),
         value: visual.modal || "text",
       },
       {
-        label: "大小",
+        label: t("operatorMarket.const.size"),
         value: formatBytes(op?.fileSize),
       },
       {
-        label: "语言",
+        label: t("operatorMarket.const.language"),
         value: "Python",
       },
+      // {
+      //   label: t("operatorMarket.const.function"),
+      //   value: functionLabel,
+      // },
     ],
   };
 };
