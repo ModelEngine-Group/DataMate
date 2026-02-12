@@ -20,8 +20,6 @@
     <modules>
         <!-- 核心服务 -->
         <module>data-management-service</module>
-        <module>operator-market-service</module>
-        <module>data-cleaning-service</module>
 
         <!-- RAG服务 -->
         <module>rag-indexer-service</module>

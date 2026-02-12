@@ -56,16 +56,6 @@
             <artifactId>data-management-service</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <dependency>
-            <groupId>com.datamate</groupId>
-            <artifactId>operator-market-service</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.datamate</groupId>
-            <artifactId>data-cleaning-service</artifactId>
-            <version>${project.version}</version>
-        </dependency>
 
         <!-- RAG服务依赖 -->
         <dependency>

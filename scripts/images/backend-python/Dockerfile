@@ -55,13 +55,15 @@ ENV NLTK_DATA=/usr/local/nltk_data
 
 # Copy the rest of the application
 COPY runtime/datamate-python /app
+COPY runtime/ops/examples/test_operator/test_operator.tar /app/test_operator.tar
 
 COPY --from=datax-builder /DataX/target/datax/datax /opt/datax
 RUN cp /opt/datax/plugin/reader/mysqlreader/libs/mysql* /opt/datax/plugin/reader/starrocksreader/libs/
 
 COPY runtime/datamate-python/deploy/docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh \
-    && dos2unix /docker-entrypoint.sh || true
+    && dos2unix /docker-entrypoint.sh || true \
+    && ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 
 # Expose the application port
 EXPOSE 18000

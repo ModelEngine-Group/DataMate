@@ -14,6 +14,7 @@ from loguru import logger
 from datamate.core.base_op import FileExporter, SUCCESS_STATUS
 from datamate.core.constant import Fields
 from datamate.wrappers.executor import RayExecutor
+from datamate.sql_manager.persistence_atction import TaskInfoPersistence
 
 DJ_OUTPUT = "outputs"
 
@@ -103,6 +104,10 @@ class DataJuicerExecutor(RayExecutor):
         logger.info('Read data...')
         dataset = dataset.map(FileExporter().read_file, num_cpus=0.05)
 
+        # 保存原始数据文件ID集合，用于后续过滤数据检测
+        original_file_ids = set(dataset.unique("fileId"))
+
+        # 写入数据集文件
         with open(self.dataset_path, "w", encoding="utf-8") as f:
             for batch_df in dataset.iter_batches(batch_format="pandas", batch_size=2048):
                 batch_df.to_json(f, orient="records", lines=True, force_ascii=False)
@@ -118,6 +123,26 @@ class DataJuicerExecutor(RayExecutor):
             processed_dataset = processed_dataset.map(FileExporter().save_file_and_db, num_cpus=0.05)
             for _ in processed_dataset.iter_batches():
                 pass
+
+            # 特殊处理：识别被过滤的数据
+            if processed_dataset.count() == 0:
+                processed_file_ids = set()
+            else:
+                processed_file_ids = set(processed_dataset.unique("fileId"))
+            filtered_file_ids = original_file_ids - processed_file_ids
+
+            if filtered_file_ids:
+                logger.info(f"Found {len(filtered_file_ids)} filtered files, updating task result only")
+                for sample_dict in dataset.iter_batches(batch_format="pandas", batch_size=2048):
+                    for _, row in sample_dict.iterrows():
+                        if str(row.get("fileId", "")) in filtered_file_ids:
+                            row["fileSize"] = "0"
+                            row["fileType"] = ""
+                            row["execute_status"] = SUCCESS_STATUS
+                            row[Fields.instance_id] = self.cfg.instance_id
+                            TaskInfoPersistence().update_task_result(row)
+
+            self.scan_files()
         except Exception as e:
             logger.error(f"An unexpected error occurred.", e)
             raise e

@@ -22,7 +22,7 @@ export default function ChangeLog({ operator }) {
             )}
           </div>
           <ul className="space-y-2">
-            {release.changelog.map((change, changeIndex) => (
+            {release.changelog?.map((change, changeIndex) => (
               <li key={changeIndex} className="flex items-start gap-2">
                 <ChevronRight className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
                 <span className="text-gray-700">{change}</span>

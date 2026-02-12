@@ -39,7 +39,7 @@ export default function TemplateList() {
       },
       {
         key: "delete",
-        label: t("dataCleansing.actions.deleteTemplate"),
+        label: t("dataCleansing.actions.delete"),
         danger: true,
         icon: <DeleteOutlined />,
         onClick: deleteTemplate, // implement delete logic

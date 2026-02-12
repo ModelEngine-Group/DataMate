@@ -69,7 +69,7 @@ class ExceptionHandlingMiddleware(BaseHTTPMiddleware):
         except Exception as exc:
             # 捕获所有未处理的异常
             logger.error(
-                f"Unhandled exception occurred at {request.method} {request.url.path}",
+                f"Unhandled exception occurred at {request.method} {request.url.path}", exc,
                 exc_info=True
             )
             return self._error_response(
