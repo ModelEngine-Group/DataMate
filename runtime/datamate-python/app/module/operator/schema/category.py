@@ -6,7 +6,7 @@ from typing import List, Optional
 from datetime import datetime
 from pydantic import BaseModel, Field
 
-from app.module.shared.schema import BaseResponseModel
+from app.module.shared.schema import BaseResponseModel, PaginatedData
 
 
 class CategoryDto(BaseResponseModel):
@@ -32,6 +32,10 @@ class CategoryTreePagedResponse(BaseResponseModel):
     """分类树分页响应"""
     star_count: int = Field(0, description="收藏的算子数量")
     categories: List[CategoryTreeResponse] = Field(default_factory=list, description="分类树列表")
+
+
+class PaginatedCategoryTree(PaginatedData):
+    star_count: int = Field(0, description="收藏的算子数量")
 
 
 class CategoryRelationDto(BaseResponseModel):

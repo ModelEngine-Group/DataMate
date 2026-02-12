@@ -60,7 +60,7 @@ class CategoryService:
         # Build category trees
         parent_ids = sorted(
             grouped_by_parent.keys(),
-            key=lambda pid: category_map[pid].created_at or 0
+            key=lambda pid: pid
         )
 
         category_trees = []

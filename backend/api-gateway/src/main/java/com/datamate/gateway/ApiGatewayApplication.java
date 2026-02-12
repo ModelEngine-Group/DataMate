@@ -46,7 +46,10 @@ public class ApiGatewayApplication {
                  .uri("http://datamate-backend-python:18000"))
 
             // 数据评估服务路由
-            .route("data-operator", r -> r.path("/api/operators/**", "api/categories/**")
+            .route("data-operator", r -> r.path("/api/operators/**")
+                .uri("http://datamate-backend-python:18000"))
+
+            .route("data-categories", r -> r.path("/api/categories/**")
                 .uri("http://datamate-backend-python:18000"))
 
             .route("data-cleaning", r -> r.path("/api/cleaning/**")

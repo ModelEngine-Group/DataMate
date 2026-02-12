@@ -19,5 +19,5 @@ class CategoryRepository:
 
     async def find_all(self, db: AsyncSession) -> List[Category]:
         """查询所有分类"""
-        result = await db.execute(select(self.model))
+        result = await db.execute(select(Category))
         return result.scalars().all()
