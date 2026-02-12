@@ -155,7 +155,7 @@ VALUES
     ('661f9500-f3ac-52e5-b827-557766550002', 'InvisibleCharactersCleaner', 2, NULL),
     ('661f9500-f3ac-52e5-b827-557766550002', 'FullWidthCharacterCleaner', 3, NULL),
     ('661f9500-f3ac-52e5-b827-557766550002', 'TraditionalChineseCleaner', 4, NULL),
-    ('661f9500-f3ac-52e5-b827-557766550002', 'FileWithShortOrLongLengthFilter', 5, '{"fileLength": {"defaultVal": [50, 8192]}}'),
+    ('661f9500-f3ac-52e5-b827-557766550002', 'FileWithShortOrLongLengthFilter', 5, '{"fileLength": [50, 8192]}'),
     ('661f9500-f3ac-52e5-b827-557766550002', 'FileWithHighRepeatPhraseRateFilter', 6, NULL),
     ('661f9500-f3ac-52e5-b827-557766550002', 'FileWithHighSpecialCharRateFilter', 7, NULL),
     ('661f9500-f3ac-52e5-b827-557766550002', 'DuplicateFilesFilter', 8, NULL)
@@ -164,24 +164,24 @@ ON CONFLICT (instance_id, operator_id, op_index) DO NOTHING;
 
 INSERT INTO t_operator_instance (instance_id, operator_id, op_index, settings_override)
 VALUES
-    ('772a0611-a4bd-63f6-c938-668877660003', 'HtmlTagCleaner', 1, '{"removeTableTags": {"defaultVal": "false"}}'), -- 表格对RAG可能有价值，暂不去除表格
+    ('772a0611-a4bd-63f6-c938-668877660003', 'HtmlTagCleaner', 1, '{"removeTableTags": "false"}'), -- 表格对RAG可能有价值，暂不去除表格
     ('772a0611-a4bd-63f6-c938-668877660003', 'ContentCleaner', 2, NULL),
     ('772a0611-a4bd-63f6-c938-668877660003', 'LegendCleaner', 3, NULL),
     ('772a0611-a4bd-63f6-c938-668877660003', 'XMLTagCleaner', 4, NULL),
     ('772a0611-a4bd-63f6-c938-668877660003', 'UnicodeSpaceCleaner', 5, NULL),
     ('772a0611-a4bd-63f6-c938-668877660003', 'ExtraSpaceCleaner', 6, NULL),
     ('772a0611-a4bd-63f6-c938-668877660003', 'DuplicateSentencesFilter', 7, NULL),
-    ('772a0611-a4bd-63f6-c938-668877660003', 'FileWithShortOrLongLengthFilter', 8, '{"fileLength": {"defaultVal": [20, 100000]}}')
+    ('772a0611-a4bd-63f6-c938-668877660003', 'FileWithShortOrLongLengthFilter', 8, '{"fileLength": [20, 100000]}')
 ON CONFLICT (instance_id, operator_id, op_index) DO NOTHING;
 
 INSERT INTO t_operator_instance (instance_id, operator_id, op_index, settings_override)
 VALUES
-    ('883b1722-b5ce-7407-d049-779988770004', 'HtmlTagCleaner', 1, '{"removeTableTags": {"defaultVal": "true"}}'),
+    ('883b1722-b5ce-7407-d049-779988770004', 'HtmlTagCleaner', 1, '{"removeTableTags": "true"}'),
     ('883b1722-b5ce-7407-d049-779988770004', 'AnonymizedUrlCleaner', 2, NULL),
     ('883b1722-b5ce-7407-d049-779988770004', 'EmojiCleaner', 3, NULL),
     ('883b1722-b5ce-7407-d049-779988770004', 'InvisibleCharactersCleaner', 4, NULL),
     ('883b1722-b5ce-7407-d049-779988770004', 'ExtraSpaceCleaner', 5, NULL),
-    ('883b1722-b5ce-7407-d049-779988770004', 'DuplicateFilesFilter', 6, '{"fileDuplicateThreshold": {"defaultVal": 0.6}}')
+    ('883b1722-b5ce-7407-d049-779988770004', 'DuplicateFilesFilter', 6, '{"fileDuplicateThreshold": 0.6}')
 ON CONFLICT (instance_id, operator_id, op_index) DO NOTHING;
 
 INSERT INTO t_operator_instance (instance_id, operator_id, op_index, settings_override)
@@ -190,6 +190,6 @@ VALUES
     ('994c2833-c6df-8518-e150-880099880005', 'ImgDuplicatedImagesCleaner', 2, NULL),
     ('994c2833-c6df-8518-e150-880099880005', 'ImgSimilarImagesCleaner', 3, NULL),
     ('994c2833-c6df-8518-e150-880099880005', 'ImgDirectionCorrect', 4, NULL),
-    ('994c2833-c6df-8518-e150-880099880005', 'ImgResize', 5, '{"targetSize": {"properties": [{"name": "宽度", "defaultVal": 512}, {"name": "高度", "defaultVal": 512}]}}'),
-    ('994c2833-c6df-8518-e150-880099880005', 'ImgTypeUnify', 6, '{"imgType": {"defaultVal": "jpg"}}')
+    ('994c2833-c6df-8518-e150-880099880005', 'ImgResize', 5, '{"widthSize": 512, "heightSize": 512}'),
+    ('994c2833-c6df-8518-e150-880099880005', 'ImgTypeUnify', 6, '{"imgType": "jpg"}')
 ON CONFLICT (instance_id, operator_id, op_index) DO NOTHING;

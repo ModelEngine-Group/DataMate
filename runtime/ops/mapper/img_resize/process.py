@@ -17,7 +17,9 @@ from datamate.core.base_op import Mapper
 class ImgResize(Mapper):
     def __init__(self, *args, **kwargs):
         super(ImgResize, self).__init__(*args, **kwargs)
-        self._target_size = kwargs.get("targetSize", [256, 256])
+        self._width = int(kwargs.get("widthSize", 256))
+        self._height = int(kwargs.get("heightSize", 256))
+        self._target_size = [self._width, self._height]
 
     @classmethod
     def _img_resize(cls, data: List[float], target_size: List[int]) -> List[float]:
