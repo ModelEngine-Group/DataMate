@@ -179,7 +179,7 @@ class Service:
 
         如果提供了 template_id，会自动将简化格式的标签转换为完整格式。
         简化格式: {"from_name": "x", "to_name": "y", "values": [...]}
-        完整格式: {"id": "...", "from_name": "x", "to_name": "y", "type": "...", "value": {"type": [...]}}
+        完整格式: {"id": "...", "from_name": "x", "to_name": "y", "type": "...", "values": {"type": [...]}}
 
         Args:
             file_id: 文件ID
