@@ -4,7 +4,7 @@ import { RightOutlined } from "@ant-design/icons";
 import { mapDataset } from "@/pages/DataManagement/dataset.const";
 import {
   Dataset,
-  DatasetFile,
+  DatasetFile, DatasetStatus,
   DatasetType,
 } from "@/pages/DataManagement/dataset.model";
 import {
@@ -55,27 +55,29 @@ interface DatasetFileTransferProps
   disabled?: boolean;
 }
 
-const fileCols = [
-  {
-    title: "所属数据集",
-    dataIndex: "datasetName",
-    key: "datasetName",
-    ellipsis: true,
-  },
-  {
-    title: "文件名",
-    dataIndex: "fileName",
-    key: "fileName",
-    ellipsis: true,
-  },
-  {
-    title: "大小",
-    dataIndex: "fileSize",
-    key: "fileSize",
-    ellipsis: true,
-    render: formatBytes,
-  },
-];
+function getFileCols(t: (key: string) => string) {
+  return [
+    {
+      title: t("datasetFileTransfer.columns.datasetName"),
+      dataIndex: "datasetName",
+      key: "datasetName",
+      ellipsis: true,
+    },
+    {
+      title: t("datasetFileTransfer.columns.fileName"),
+      dataIndex: "fileName",
+      key: "fileName",
+      ellipsis: true,
+    },
+    {
+      title: t("datasetFileTransfer.columns.fileSize"),
+      dataIndex: "fileSize",
+      key: "fileSize",
+      ellipsis: true,
+      render: formatBytes,
+    },
+  ];
+}
 
 // Customize Table Transfer
 const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
@@ -107,6 +109,7 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
     pageSize: number;
     total: number;
   }>({ current: 1, pageSize: 10, total: 0 });
+  const fileCols = getFileCols(t);
 
   const [showFiles, setShowFiles] = React.useState<boolean>(false);
   const [selectedDataset, setSelectedDataset] = React.useState<Dataset | null>(
@@ -254,7 +257,7 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
 
   const handleSelectAllInDataset = useCallback(async () => {
     if (!selectedDataset) {
-      message.warning("请先选择一个数据集");
+      message.warning(t("datasetFileTransfer.messages.pleaseSelectDataset"));
       return;
     }
 
@@ -268,7 +271,7 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
       );
       const currentId = String(selectedDataset.id);
       if (existingIds.size > 0 && (!existingIds.has(currentId) || existingIds.size > 1)) {
-        message.warning("当前仅支持从一个数据集选择文件，请先清空已选文件后再切换数据集");
+        message.warning(t("datasetFileTransfer.messages.singleDatasetOnlyWarning"));
         return;
       }
     }
@@ -335,13 +338,13 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
 
       const count = allFiles.length;
       if (count > 0) {
-        message.success(`已选中当前数据集的全部 ${count} 个文件`);
+        message.success(t("datasetFileTransfer.messages.selectAllSuccess", { count }));
       } else {
-        message.info("当前数据集下没有可选文件");
+        message.info(t("datasetFileTransfer.messages.noFilesAvailable"));
       }
     } catch (error) {
       console.error("Failed to select all files in dataset", error);
-      message.error("全选整个数据集失败，请稍后重试");
+      message.error(t("datasetFileTransfer.messages.selectAllFailed"));
     } finally {
       setSelectingAll(false);
     }
@@ -364,7 +367,7 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
       );
       const recId = recordDatasetId !== undefined && recordDatasetId !== null ? String(recordDatasetId) : undefined;
       if (existingIds.size > 0 && recId && !existingIds.has(recId)) {
-        message.warning("当前仅支持从一个数据集选择文件，请先清空已选文件后再切换数据集");
+        message.warning(t("datasetFileTransfer.messages.singleDatasetOnlyWarning"));
         return;
       }
     }
@@ -399,7 +402,7 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
 
   const datasetCols = [
     {
-      title: "数据集名称",
+      title: t("datasetFileTransfer.datasetColumns.name"),
       dataIndex: "name",
       key: "name",
       ellipsis: true,
@@ -420,13 +423,13 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
       },
     },
     {
-      title: "文件数",
+      title: t("datasetFileTransfer.datasetColumns.fileCount"),
       dataIndex: "fileCount",
       key: "fileCount",
       ellipsis: true,
     },
     {
-      title: "大小",
+      title: t("datasetFileTransfer.datasetColumns.totalSize"),
       dataIndex: "totalSize",
       key: "totalSize",
       ellipsis: true,
@@ -438,10 +441,10 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
     <div {...props}>
       <div className="grid grid-cols-25 gap-4 w-full">
         <div className="border-card flex flex-col col-span-12">
-          <div className="border-bottom p-2 font-bold">选择数据集</div>
+          <div className="border-bottom p-2 font-bold">{t("datasetFileTransfer.selectDataset")}</div>
           <div className="p-2">
             <Input
-              placeholder="搜索数据集名称..."
+              placeholder={t("datasetFileTransfer.searchDatasetPlaceholder")}
               value={datasetSearch}
               allowClear
               onChange={(e) => !disabled && setDatasetSearch(e.target.value)}
@@ -478,7 +481,7 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
                     String(record.id) !== String(lockedDatasetId)
                   ) {
                     message.warning(
-                      "当前仅支持从一个数据集选择文件，请先清空已选文件后再切换数据集"
+                      t("datasetFileTransfer.messages.singleDatasetOnlyWarning")
                     );
                     return;
                   }
@@ -509,7 +512,7 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
         <RightOutlined />
         <div className="border-card flex flex-col col-span-12">
           <div className="border-bottom p-2 font-bold flex justify-between items-center">
-            <span>选择文件</span>
+            <span>{t("datasetFileTransfer.selectFiles")}</span>
             <Button
               type="link"
               size="small"
@@ -517,12 +520,12 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
               disabled={!selectedDataset || !!disabled}
               loading={selectingAll}
             >
-              全选当前数据集
+              {t("datasetFileTransfer.selectAllCurrentDataset")}
             </Button>
           </div>
           <div className="p-2">
             <Input
-              placeholder="搜索文件名称..."
+              placeholder={t("datasetFileTransfer.searchFilesPlaceholder")}
               value={filesSearch}
               onChange={(e) => setFilesSearch(e.target.value)}
             />
@@ -598,7 +601,7 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
         </div>
       </div>
       <Button className="mt-4" onClick={() => setShowFiles(!showFiles)}>
-        {showFiles ? "取消预览" : "预览"}
+        {showFiles ? t("datasetFileTransfer.cancelPreview") : t("datasetFileTransfer.preview")}
       </Button>
       <div hidden={!showFiles}>
         <Table

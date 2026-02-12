@@ -104,7 +104,7 @@ class TagFormatConverter:
                         "from_name": "label",
                         "to_name": "image",
                         "type": "choices",
-                        "value": {
+                        "values": {
                             "choices": ["cat", "dog"]
                         }
                     }
@@ -144,7 +144,7 @@ class TagFormatConverter:
                 "from_name": from_name,
                 "to_name": to_name,
                 "type": control_type,
-                "value": {
+                "values": {
                     control_type: values
                 }
             }
@@ -167,7 +167,7 @@ class TagFormatConverter:
         # Simplified format has 'values' at top level and no 'type' field
         has_values = 'values' in tag
         has_type = 'type' in tag
-        has_value = 'value' in tag
+        has_value = 'values' in tag
         
         # If it has 'values' but no 'type', it's simplified
         # If it has 'type' and nested 'value', it's already full format

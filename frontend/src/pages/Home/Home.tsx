@@ -12,23 +12,52 @@ import {
 import { features, menuItems } from "../Layout/Menu.tsx";
 import { useState } from 'react';
 import { useNavigate } from "react-router";
-import { Card } from "antd";
+import { Card, Dropdown, Button } from "antd";
+import type { MenuProps } from 'antd';
+import { Globe } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 
 export default function WelcomePage() {
   const navigate = useNavigate();
   const [isChecking, setIsChecking] = useState(false);
+  const { t } = useTranslation();
+
+  const languageMenuItems: MenuProps['items'] = [
+    {
+      key: 'zh',
+      label: t('header.simplifiedChinese'),
+      onClick: () => {
+        i18n.changeLanguage('zh');
+        localStorage.setItem('language', 'zh');
+      },
+    },
+    {
+      key: 'en',
+      label: t('header.english'),
+      onClick: () => {
+        i18n.changeLanguage('en');
+        localStorage.setItem('language', 'en');
+      },
+    }
+  ];
 
   // 检查接口连通性的函数
   const checkDeerFlowDeploy = async (): Promise<boolean> => {
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      
       const response = await fetch('/deer-flow-backend/config', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
-        timeout: 5000, // 5秒超时
+        signal: controller.signal,
         cache: 'no-store'
       });
+      
+      clearTimeout(timeoutId);
 
       // 检查 HTTP 状态码在 200-299 范围内
       if (response.ok) {
@@ -65,20 +94,30 @@ export default function WelcomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 relative">
+      <Dropdown
+        menu={{ items: languageMenuItems }}
+        placement="bottomRight"
+      >
+        <Button type="text" className="flex items-center gap-2 absolute top-4 right-4 z-50 bg-white/80 hover:bg-white">
+          <Globe className="h-4 w-4" />
+          <span>{i18n.language === 'zh' ? t('header.simplifiedChinese') : t('header.english')}</span>
+        </Button>
+      </Dropdown>
+
       <div className="max-w-7xl mx-auto px-4 py-12">
         {/* Hero Section */}
         <div className="text-center mb-16">
           <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-medium mb-6">
             <Sparkles className="w-4 h-4" />
-            AI数据集准备工具
+            {t('home.hero.subtitle')}
           </div>
           <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
             DataMate
-            <span className="text-blue-600"> 构建高质量 AI数据集</span>
+            <span className="text-blue-600"> {t('home.hero.title')}</span>
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
-            从数据管理到知识生成，一站式解决企业AI数据处理的场景问题。
+            {t('home.hero.description')}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <span
@@ -86,20 +125,20 @@ export default function WelcomePage() {
               className="cursor-pointer rounded px-4 py-2 inline-flex items-center bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg"
             >
               <Database className="mr-2 w-4 h-4" />
-              开始使用
+              {t('home.hero.getStartedButton')}
             </span>
             <span
               onClick={handleChatClick}
               className="cursor-pointer rounded px-4 py-2 inline-flex items-center bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <MessageSquare className="mr-2 w-4 h-4" />
-                      {isChecking ? '检查中...' : '对话助手'}
+                      {isChecking ? t('home.hero.checkingButton') : t('home.hero.chatAssistantButton')}
             </span>
             <span
               onClick={() => navigate("/orchestration")}
               className="cursor-pointer rounded px-4 py-2 inline-flex items-center bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white shadow-lg"
             >
-              数据智能编排
+              {t('home.hero.dataOrchestrationButton')}
               <ArrowRight className="ml-2 w-4 h-4" />
             </span>
           </div>
@@ -116,10 +155,10 @@ export default function WelcomePage() {
                 <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
                   <feature.icon className="w-6 h-6 text-blue-600" />
                 </div>
-                <div className="text-lg">{feature.title}</div>
+                <div className="text-lg">{t(feature.titleKey || 'home.features.title' + index)}</div>
               </div>
               <div className="text-center">
-                <p className="text-gray-600 text-sm">{feature.description}</p>
+                <p className="text-gray-600 text-sm">{t(feature.descriptionKey || 'home.features.description' + index)}</p>
               </div>
             </Card>
           ))}
@@ -128,7 +167,7 @@ export default function WelcomePage() {
         {/* Menu Items Grid */}
         <div className="mb-16">
           <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
-            功能模块
+            {t('home.sections.featuresTitle')}
           </h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {menuItems.map((item) => (
@@ -145,12 +184,12 @@ export default function WelcomePage() {
                   </div>
                   <div className="flex items-center justify-center gap-2 mb-2"></div>
                   <div className="text-xl group-hover:text-blue-600 transition-colors">
-                    {item.title}
+                    {t(item.i18Key)}
                   </div>
                 </div>
                 <div className="text-center">
                   <div className="text-sm group-hover:text-gray-700 transition-colors">
-                    {item.description}
+                    {t(item.descriptionKey)}
                   </div>
                 </div>
               </Card>
@@ -167,46 +206,46 @@ export default function WelcomePage() {
                   <GitBranch className="w-8 h-8 text-white" />
                 </div>
                 <h3 className="text-2xl font-bold text-orange-900 mb-2">
-                  数据智能编排 - 可视化流程设计
+                  {t('home.orchestrationHighlight.title')}
                 </h3>
                 <p className="text-orange-700">
-                  拖拽式设计复杂数据处理管道，让数据流转更加直观高效
+                  {t('home.orchestrationHighlight.description')}
                 </p>
               </div>
 
               <div className="grid md:grid-cols-2 gap-8 mb-6">
                 <div className="space-y-3">
                   <h4 className="font-semibold text-orange-900">
-                    🎯 核心功能：
+                    {t('home.orchestrationHighlight.coreFeaturesTitle')}
                   </h4>
                   <div className="space-y-2">
                     <div className="bg-white/60 rounded-lg p-3 text-sm text-orange-800">
-                      可视化流程设计器
+                      {t('home.orchestrationHighlight.feature1')}
                     </div>
                     <div className="bg-white/60 rounded-lg p-3 text-sm text-orange-800">
-                      丰富的数据处理组件库
+                      {t('home.orchestrationHighlight.feature2')}
                     </div>
                     <div className="bg-white/60 rounded-lg p-3 text-sm text-orange-800">
-                      实时流程执行监控
+                      {t('home.orchestrationHighlight.feature3')}
                     </div>
                   </div>
                 </div>
                 <div className="space-y-3">
                   <h4 className="font-semibold text-orange-900">
-                    ⚡ 智能特性：
+                    {t('home.orchestrationHighlight.smartFeaturesTitle')}
                   </h4>
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 text-sm text-orange-800">
                       <Zap className="w-4 h-4 text-orange-500" />
-                      自动优化数据流转路径
+                      {t('home.orchestrationHighlight.smartFeature1')}
                     </div>
                     <div className="flex items-center gap-2 text-sm text-orange-800">
                       <Target className="w-4 h-4 text-orange-500" />
-                      智能错误检测和修复建议
+                      {t('home.orchestrationHighlight.smartFeature2')}
                     </div>
                     <div className="flex items-center gap-2 text-sm text-orange-800">
                       <Sparkles className="w-4 h-4 text-orange-500" />
-                      模板化流程快速复用
+                      {t('home.orchestrationHighlight.smartFeature3')}
                     </div>
                   </div>
                 </div>
@@ -218,7 +257,7 @@ export default function WelcomePage() {
                   className="cursor-pointer rounded px-4 py-2 inline-flex items-center bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white shadow-lg"
                 >
                   <GitBranch className="mr-2 w-4 h-4" />
-                  开始编排
+                  {t('home.orchestrationHighlight.startButton')}
                 </span>
               </div>
             </div>
@@ -234,27 +273,27 @@ export default function WelcomePage() {
                   <MessageSquare className="w-8 h-8 text-white" />
                 </div>
                 <h3 className="text-2xl font-bold text-purple-900 mb-2">
-                  Data Agent - 对话式业务操作
+                  {t('home.dataAgentHighlight.title')}
                 </h3>
                 <p className="text-purple-700">
-                  告别复杂界面，用自然语言完成所有数据集相关业务
+                  {t('home.dataAgentHighlight.description')}
                 </p>
               </div>
 
               <div className="grid md:grid-cols-2 gap-8 mb-6">
                 <div className="space-y-3">
                   <h4 className="font-semibold text-purple-900">
-                    💬 对话示例：
+                    {t('home.dataAgentHighlight.examplesTitle')}
                   </h4>
                   <div className="space-y-2">
                     <div className="bg-white/60 rounded-lg p-3 text-sm text-purple-800">
-                      "帮我创建一个图像分类数据集"
+                      "{t('home.dataAgentHighlight.example1')}"
                     </div>
                     <div className="bg-white/60 rounded-lg p-3 text-sm text-purple-800">
-                      "分析一下数据质量，生成报告"
+                      "{t('home.dataAgentHighlight.example2')}"
                     </div>
                     <div className="bg-white/60 rounded-lg p-3 text-sm text-purple-800">
-                      "启动合成任务，目标1000条数据"
+                      "{t('home.dataAgentHighlight.example3')}"
                     </div>
                   </div>
                 </div>
@@ -265,15 +304,15 @@ export default function WelcomePage() {
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 text-sm text-purple-800">
                       <Zap className="w-4 h-4 text-purple-500" />
-                      理解复杂需求，自动执行
+                      {t('home.dataAgentHighlight.smartFeature1')}
                     </div>
                     <div className="flex items-center gap-2 text-sm text-purple-800">
                       <Target className="w-4 h-4 text-purple-500" />
-                      提供专业建议和优化方案
+                      {t('home.dataAgentHighlight.smartFeature2')}
                     </div>
                     <div className="flex items-center gap-2 text-sm text-purple-800">
                       <Sparkles className="w-4 h-4 text-purple-500" />
-                      学习使用习惯，个性化服务
+                      {t('home.dataAgentHighlight.smartFeature3')}
                     </div>
                   </div>
                 </div>
@@ -285,7 +324,7 @@ export default function WelcomePage() {
                     className="cursor-pointer rounded px-4 py-2 inline-flex items-center bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg"
                 >
                   <MessageSquare className="mr-2 w-4 h-4" />
-                        {isChecking ? '检查中...' : '开始对话'}
+                        {isChecking ? t('home.hero.checkingButton') : t('home.dataAgentHighlight.startButton')}
                 </span>
               </div>
             </div>
@@ -298,10 +337,10 @@ export default function WelcomePage() {
             <div className="p-8">
               <div className="text-center mb-8">
                 <h3 className="text-2xl font-bold text-blue-900 mb-2">
-                  完整的数据处理工作流
+                  {t('home.workflowShowcase.title')}
                 </h3>
                 <p className="text-blue-700">
-                  从原始数据到高质量数据集的全流程解决方案
+                  {t('home.workflowShowcase.description')}
                 </p>
               </div>
 
@@ -310,36 +349,36 @@ export default function WelcomePage() {
                   <div className="w-16 h-16 bg-blue-500 rounded-xl flex items-center justify-center mx-auto mb-4">
                     <FolderOpen className="w-8 h-8 text-white" />
                   </div>
-                  <h4 className="font-semibold text-blue-900 mb-2">数据收集</h4>
+                  <h4 className="font-semibold text-blue-900 mb-2">{t('home.workflowShowcase.step1Title')}</h4>
                   <p className="text-sm text-blue-700">
-                    支持多种数据源导入，包括本地文件、数据库、API等
+                    {t('home.workflowShowcase.step1Description')}
                   </p>
                 </div>
                 <div className="text-center">
                   <div className="w-16 h-16 bg-orange-500 rounded-xl flex items-center justify-center mx-auto mb-4">
                     <GitBranch className="w-8 h-8 text-white" />
                   </div>
-                  <h4 className="font-semibold text-blue-900 mb-2">智能编排</h4>
+                  <h4 className="font-semibold text-blue-900 mb-2">{t('home.workflowShowcase.step2Title')}</h4>
                   <p className="text-sm text-blue-700">
-                    可视化设计数据处理流程，自动化执行复杂任务
+                    {t('home.workflowShowcase.step2Description')}
                   </p>
                 </div>
                 <div className="text-center">
                   <div className="w-16 h-16 bg-purple-500 rounded-xl flex items-center justify-center mx-auto mb-4">
                     <Settings className="w-8 h-8 text-white" />
                   </div>
-                  <h4 className="font-semibold text-blue-900 mb-2">智能处理</h4>
+                  <h4 className="font-semibold text-blue-900 mb-2">{t('home.workflowShowcase.step3Title')}</h4>
                   <p className="text-sm text-blue-700">
-                    自动化的数据处理、标注和质量评估流程
+                    {t('home.workflowShowcase.step3Description')}
                   </p>
                 </div>
                 <div className="text-center">
                   <div className="w-16 h-16 bg-green-500 rounded-xl flex items-center justify-center mx-auto mb-4">
                     <Target className="w-8 h-8 text-white" />
                   </div>
-                  <h4 className="font-semibold text-blue-900 mb-2">质量保证</h4>
+                  <h4 className="font-semibold text-blue-900 mb-2">{t('home.workflowShowcase.step4Title')}</h4>
                   <p className="text-sm text-blue-700">
-                    全面的质量评估和偏见检测，确保数据集可靠性
+                    {t('home.workflowShowcase.step4Description')}
                   </p>
                 </div>
               </div>
@@ -350,7 +389,7 @@ export default function WelcomePage() {
                   className="cursor-pointer rounded px-4 py-2 inline-flex items-center bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg"
                 >
                   <Sparkles className="mr-2 w-4 h-4" />
-                  开始构建数据集
+                  {t('home.workflowShowcase.startButton')}
                 </span>
               </div>
             </div>

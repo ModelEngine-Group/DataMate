@@ -17,6 +17,7 @@ import {
 } from "antd";
 import type { PaginationProps } from "antd";
 import { MoreOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
+import { useTranslation } from "react-i18next";
 import {
   queryChunksByFileUsingGet,
   querySynthesisDataByChunkUsingGet,
@@ -67,6 +68,7 @@ interface SynthesisTaskInfo {
 const { Title, Text } = Typography;
 
 export default function SynthDataDetail() {
+  const { t } = useTranslation();
   const { id: fileId = "" } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -255,17 +257,17 @@ export default function SynthDataDetail() {
 
   const breadItems = [
     {
-      title: <Link to="/data/synthesis/task">合成任务</Link>,
+      title: <Link to="/data/synthesis/task">{t('synthesisTask.detail.breadcrumb.tasks')}</Link>,
     },
     {
       title: state.taskId ? (
-        <Link to={`/data/synthesis/task/${state.taskId}`}>{taskInfo?.name || "任务详情"}</Link>
+        <Link to={`/data/synthesis/task/${state.taskId}`}>{taskInfo?.name || t('synthesisTask.detail.breadcrumb.taskDetail')}</Link>
       ) : (
-        taskInfo?.name || "任务详情"
+        taskInfo?.name || t('synthesisTask.detail.breadcrumb.taskDetail')
       ),
     },
     {
-      title: state.fileName || "文件详情",
+      title: state.fileName || t('synthesisTask.detail.breadcrumb.fileDetail'),
     },
   ];
 
@@ -282,13 +284,13 @@ export default function SynthDataDetail() {
       {chunkConfirmVisibleId && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/30">
           <div className="bg-white rounded-lg px-6 py-4 shadow-lg min-w-[320px] max-w-[420px]">
-            <div className="text-sm font-medium mb-2">确认删除该 Chunk 及其合成数据？</div>
+            <div className="text-sm font-medium mb-2">{t('synthesisTask.detail.chunkList.confirmDeleteTitle')}</div>
             <div className="text-xs text-gray-500 mb-4 break-all">
-              ID: {chunkConfirmVisibleId}
+              {t('synthesisTask.detail.chunkList.confirmDeleteDesc', { id: chunkConfirmVisibleId })}
             </div>
             <div className="flex justify-end gap-2 text-sm">
               <Button size="small" onClick={hideChunkConfirm}>
-                取消
+                {t('synthesisTask.actions.cancel')}
               </Button>
               <Button
                 size="small"
@@ -300,7 +302,7 @@ export default function SynthDataDetail() {
                   hideChunkConfirm();
                 }}
               >
-                删除
+                {t('synthesisTask.actions.delete')}
               </Button>
             </div>
           </div>
@@ -311,13 +313,13 @@ export default function SynthDataDetail() {
       {dataConfirmVisibleId && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/30">
           <div className="bg-white rounded-lg px-6 py-4 shadow-lg min-w-[320px] max-w-[480px]">
-            <div className="text-sm font-medium mb-2">确认删除该条合成数据？</div>
+            <div className="text-sm font-medium mb-2">{t('synthesisTask.detail.synthData.confirmDeleteTitle')}</div>
             <div className="text-xs text-gray-500 mb-4 break-all">
-              ID: {dataConfirmVisibleId}
+              {t('synthesisTask.detail.synthData.confirmDeleteDesc', { id: dataConfirmVisibleId })}
             </div>
             <div className="flex justify-end gap-2 text-sm">
               <Button size="small" onClick={hideDataConfirm}>
-                取消
+                {t('synthesisTask.actions.cancel')}
               </Button>
               <Button
                 size="small"
@@ -328,7 +330,7 @@ export default function SynthDataDetail() {
                   hideDataConfirm();
                 }}
               >
-                删除
+                {t('synthesisTask.actions.delete')}
               </Button>
             </div>
           </div>
@@ -341,9 +343,9 @@ export default function SynthDataDetail() {
           <div className="basis-2/5 max-w-[40%] flex flex-col min-w-0">
             <div className="rounded-lg border border-gray-100 bg-white shadow-sm flex flex-col overflow-hidden h-full">
               <div className="px-4 py-3 border-b border-gray-100 text-sm font-medium bg-gray-50/80 flex items-center justify-between">
-                <span>Chunk 列表</span>
+                <span>{t('synthesisTask.detail.chunkList.title')}</span>
                 {chunkPagination.total ? (
-                  <span className="text-xs text-gray-400">共 {chunkPagination.total} 条</span>
+                  <span className="text-xs text-gray-400">{t('synthesisTask.detail.chunkList.total', { count: chunkPagination.total })}</span>
                 ) : null}
               </div>
               <div className="flex-1 overflow-auto">
@@ -352,7 +354,7 @@ export default function SynthDataDetail() {
                     <Spin size="small" />
                   </div>
                 ) : chunks.length === 0 ? (
-                  <Empty description="暂无 Chunk" style={{ marginTop: 40 }} />
+                  <Empty description={t('synthesisTask.detail.chunkList.empty')} style={{ marginTop: 40 }} />
                 ) : (
                   <List
                     size="small"
@@ -374,13 +376,12 @@ export default function SynthDataDetail() {
                             <div className="flex items-center justify-between text-[12px] text-gray-500">
                               <div className="flex items-center gap-2">
                                 <span className="text-xs font-medium text-gray-800">
-                                  Chunk #{item.chunk_index}
+                                  {t('synthesisTask.detail.chunkList.chunkIndex', { index: item.chunk_index })}
                                 </span>
                               </div>
                               <div className="flex items-center gap-2">
                                 {/* 右侧显示 Chunk ID，完整展示 */}
                                 <span className="text-[11px] text-gray-400" title={item.id}>
-                                  ID: {item.id}
                                 </span>
                                 <Button
                                   type="text"
@@ -406,17 +407,17 @@ export default function SynthDataDetail() {
                 )}
               </div>
               {chunkPagination.total ? (
-                <div className="border-t border-gray-100 px-3 py-2 flex justify-end bg-white">
-                  <Pagination
-                    size="small"
-                    current={chunkPagination.page}
-                    pageSize={chunkPagination.size}
-                    total={chunkPagination.total}
-                    onChange={handleChunkPageChange}
-                    showSizeChanger
-                    showTotal={(total) => `共 ${total} 条`}
-                  />
-                </div>
+              <div className="border-t border-gray-100 px-3 py-2 flex justify-end bg-white">
+                <Pagination
+                  size="small"
+                  current={chunkPagination.page}
+                  pageSize={chunkPagination.size}
+                  total={chunkPagination.total}
+                  onChange={handleChunkPageChange}
+                  showSizeChanger
+                  showTotal={(total) => t('synthesisTask.detail.pagination.total', { total })}
+                />
+              </div>
               ) : null}
             </div>
           </div>
@@ -425,10 +426,10 @@ export default function SynthDataDetail() {
           <div className="basis-3/5 max-w-[60%] flex flex-col min-w-0">
             <div className="rounded-lg border border-gray-100 bg-white shadow-sm flex flex-col overflow-hidden h-full">
               <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between bg-gray-50/80 text-sm font-medium">
-                <span>合成数据</span>
+                <span>{t('synthesisTask.detail.synthData.title')}</span>
                 {currentChunk && (
                   <Tag color="blue" className="text-xs px-2 py-0.5 m-0 rounded-full border-none bg-blue-100 text-blue-200">
-                    当前 Chunk #{currentChunk.chunk_index}
+                    {t('synthesisTask.detail.synthData.currentChunk', { index: currentChunk.chunk_index })}
                   </Tag>
                 )}
               </div>
@@ -438,9 +439,9 @@ export default function SynthDataDetail() {
                     <Spin size="small" />
                   </div>
                 ) : !selectedChunkId ? (
-                  <Empty description="请选择左侧 Chunk" style={{ marginTop: 40 }} />
+                  <Empty description={t('synthesisTask.detail.synthData.noChunkSelected')} style={{ marginTop: 40 }} />
                 ) : synthDataList.length === 0 ? (
-                  <Empty description="该 Chunk 暂无合成数据" style={{ marginTop: 40 }} />
+                  <Empty description={t('synthesisTask.detail.synthData.empty')} style={{ marginTop: 40 }} />
                 ) : (
                   <div className="space-y-4">
                     {synthDataList.map((item, index) => {
@@ -451,9 +452,9 @@ export default function SynthDataDetail() {
                           className="border border-gray-100 rounded-md p-3 bg-white hover:bg-blue-50/80 transition-colors"
                         >
                           <div className="mb-2 text-[12px] text-gray-500 flex justify-between items-center">
-                            <span>记录 {index + 1}</span>
+                            <span>{t('synthesisTask.detail.synthData.record', { index: index + 1 })}</span>
                             <div className="flex items-center gap-2">
-                              <span title={item.id}>ID：{item.id}</span>
+                              <span title={item.id}>{t('synthesisTask.common.id', { id: item.id })}</span>
                               {!isEditing && (
                                 <>
                                   <Button
@@ -522,14 +523,14 @@ export default function SynthDataDetail() {
                           {isEditing && (
                             <div className="flex justify-end gap-2 mt-2">
                               <Button size="small" onClick={cancelEdit}>
-                                取消
+                                {t('synthesisTask.actions.cancel')}
                               </Button>
                               <Button
                                 size="small"
                                 type="primary"
                                 onClick={() => handleSaveEdit(item)}
                               >
-                                确定
+                                {t('synthesisTask.actions.confirm')}
                               </Button>
                             </div>
                           )}

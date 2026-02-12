@@ -2,6 +2,7 @@ import { TaskItem } from "@/pages/DataManagement/dataset.model";
 import { calculateSHA256, checkIsFilesExist } from "@/utils/file.util";
 import { App } from "antd";
 import { useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 export function useFileSliceUpload(
   {
@@ -13,15 +14,16 @@ export function useFileSliceUpload(
     uploadChunk: (id: string, formData: FormData, config: any) => Promise<any>;
     cancelUpload: ((reqId: number) => Promise<any>) | null;
   },
-  showTaskCenter = true // 上传时是否显示任务中心
+  showTaskCenter = true // Whether to show task center during upload
 ) {
   const { message } = App.useApp();
+  const { t } = useTranslation();
   const [taskList, setTaskList] = useState<TaskItem[]>([]);
   const taskListRef = useRef<TaskItem[]>([]); // 用于固定任务顺序
 
   const createTask = (detail: any = {}) => {
     const { dataset } = detail;
-    const title = `上传数据集: ${dataset.name} `;
+    const title = `${t('hooks.sliceUpload.uploadDataset')}: ${dataset.name} `;
     const controller = new AbortController();
     const task: TaskItem = {
       key: dataset.id,
@@ -57,7 +59,7 @@ export function useFileSliceUpload(
       task.cancelFn();
     }
     if (task.updateEvent) {
-      // 携带前缀信息，便于刷新后仍停留在当前目录
+      // Carry prefix info to stay in current directory after refresh
       window.dispatchEvent(
         new CustomEvent(task.updateEvent, {
           detail: { prefix: (task as any).prefix },
@@ -166,7 +168,7 @@ export function useFileSliceUpload(
   const handleUpload = async ({ task, files }) => {
     const isErrorFile = await checkIsFilesExist(files);
     if (isErrorFile) {
-      message.error("文件被修改或删除，请重新选择文件上传");
+      message.error(t('hooks.sliceUpload.fileModifiedOrDeleted'));
       removeTask({
         ...task,
         isCancel: false,
@@ -180,7 +182,7 @@ export function useFileSliceUpload(
       await uploadFile({ task, files, totalSize });
     } catch (err) {
       console.error(err);
-      message.error("文件上传失败，请稍后重试");
+      message.error(t('hooks.sliceUpload.uploadFailed'));
       removeTask({
         ...task,
         isCancel: true,

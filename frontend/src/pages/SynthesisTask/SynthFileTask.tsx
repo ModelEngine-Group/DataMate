@@ -5,6 +5,7 @@ import { DeleteOutlined, ReloadOutlined } from "@ant-design/icons";
 import { Badge, Breadcrumb, Button, Table, Tabs, Progress, Tooltip } from "antd";
 import type { BadgeProps } from "antd";
 import type { ColumnsType, TablePaginationConfig } from "antd/es/table";
+import { useTranslation } from "react-i18next";
 
 import DetailHeader from "@/components/DetailHeader";
 import {
@@ -50,6 +51,7 @@ interface SynthesisTaskInfo {
 }
 
 export default function SynthFileTask() {
+  const { t } = useTranslation();
   const { id: taskId = "" } = useParams();
   const navigate = useNavigate();
   const { message } = App.useApp();
@@ -73,7 +75,7 @@ export default function SynthFileTask() {
       if (!raw) return;
       setTaskInfo(raw);
     } catch {
-      message.error("获取合成任务详情失败");
+      message.error(t('synthesisTask.fileTask.messages.fetchFailed'));
       navigate("/data/synthesis/task");
     }
   };
@@ -131,7 +133,7 @@ export default function SynthFileTask() {
 
   const columns: ColumnsType<SynthesisFileTaskItem> = [
     {
-      title: "文件",
+      title: t('synthesisTask.fileTask.columns.file'),
       key: "file",
       render: (_text, record) => (
         <div className="flex items-center gap-2">
@@ -150,32 +152,32 @@ export default function SynthFileTask() {
       ),
     },
     {
-      title: "状态",
+      title: t('synthesisTask.fileTask.columns.status'),
       dataIndex: "status",
       key: "status",
       render: (status?: string) => {
         let badgeStatus: BadgeProps["status"] = "default";
-        let text = status || "未知";
+        let text = status || t('synthesisTask.fileTask.status.unknown');
         if (status === "pending" || status === "PROCESSING" || status === "processing") {
           badgeStatus = "processing";
-          text = "处理中";
+          text = t('synthesisTask.fileTask.status.processing');
         } else if (status === "COMPLETED" || status === "completed") {
           badgeStatus = "success";
-          text = "已完成";
+          text = t('synthesisTask.fileTask.status.completed');
         } else if (status === "FAILED" || status === "failed") {
           badgeStatus = "error";
-          text = "失败";
+          text = t('synthesisTask.fileTask.status.failed');
         }
         return <Badge status={badgeStatus} text={text} />;
       },
     },
     {
-      title: "切片总数",
+      title: t('synthesisTask.fileTask.columns.totalChunks'),
       dataIndex: "total_chunks",
       key: "total_chunks",
     },
     {
-      title: "处理进度",
+      title: t('synthesisTask.fileTask.columns.progress'),
       key: "progress",
       render: (_text, record) => {
         const total = record.total_chunks || 0;
@@ -194,22 +196,22 @@ export default function SynthFileTask() {
       },
     },
     {
-      title: "创建时间",
+      title: t('synthesisTask.fileTask.columns.createdAt'),
       dataIndex: "created_at",
       key: "created_at",
       render: (val?: string) => (val ? formatDateTime(val) : "-"),
     },
     {
-      title: "更新时间",
+      title: t('synthesisTask.fileTask.columns.updatedAt'),
       dataIndex: "updated_at",
       key: "updated_at",
       render: (val?: string) => (val ? formatDateTime(val) : "-"),
     },
     {
-      title: "操作",
+      title: t('synthesisTask.fileTask.columns.actions'),
       key: "actions",
       render: () => (
-        <Tooltip title="删除">
+        <Tooltip title={t('synthesisTask.fileTask.operations.delete')}>
           <Button
             type="text"
             danger
@@ -236,10 +238,10 @@ export default function SynthFileTask() {
     if (!taskId) return;
     try {
       await deleteSynthesisTaskByIdUsingDelete(taskId);
-      message.success("合成任务已删除");
+      message.success(t('synthesisTask.fileTask.messages.deleteSuccess'));
       navigate("/data/synthesis/task");
     } catch {
-      message.error("删除合成任务失败");
+      message.error(t('synthesisTask.fileTask.messages.deleteFailed'));
     }
   };
 
@@ -258,18 +260,18 @@ export default function SynthFileTask() {
     {
       key: "type",
       icon: <Sparkles className="w-4 h-4 text-blue-500" />,
-      label: "类型",
+      label: t('synthesisTask.fileTask.statistics.type'),
       value:
         taskInfo?.synthesis_type === "QA"
-          ? "问答对生成"
+          ? t('synthesisTask.fileTask.typeMap.qa')
           : taskInfo?.synthesis_type === "COT"
-          ? "链式推理生成"
+          ? t('synthesisTask.fileTask.typeMap.cot')
           : taskInfo?.synthesis_type || "--",
     },
     {
       key: "fileCount",
       icon: <Folder className="w-4 h-4 text-purple-500" />,
-      label: "文件数",
+      label: t('synthesisTask.fileTask.statistics.fileCount'),
       value: taskInfo?.total_files ?? "--",
     },
   ];
@@ -277,20 +279,20 @@ export default function SynthFileTask() {
   const operations = [
     {
       key: "refresh",
-      label: "刷新",
+      label: t('synthesisTask.fileTask.operations.refresh'),
       icon: <ReloadOutlined className="w-4 h-4" />,
       onClick: handleRefresh,
     },
     {
       key: "delete",
-      label: "删除任务",
+      label: t('synthesisTask.fileTask.operations.delete'),
       icon: <DeleteOutlined className="w-4 h-4" />,
       danger: true,
       confirm: {
-        title: "确认删除该合成任务？",
-        description: "删除后将无法恢复，请谨慎操作。",
-        okText: "确认删除",
-        cancelText: "取消",
+        title: t('synthesisTask.fileTask.confirm.deleteTitle'),
+        description: t('synthesisTask.fileTask.confirm.deleteDescription'),
+        okText: t('synthesisTask.fileTask.confirm.okText'),
+        cancelText: t('synthesisTask.fileTask.confirm.cancelText'),
         onConfirm: handleDelete,
         placement: "top",
         overlayStyle: {
@@ -303,16 +305,16 @@ export default function SynthFileTask() {
   const tabList = [
     {
       key: "files",
-      label: "处理文件",
+      label: t('synthesisTask.fileTask.tabs.files'),
     },
   ];
 
   const breadItems = [
     {
-      title: <Link to="/data/synthesis/task">合成任务</Link>,
+      title: <Link to="/data/synthesis/task">{t('synthesisTask.fileTask.breadcrumb.tasks')}</Link>,
     },
     {
-      title: taskInfo?.name || "任务详情",
+      title: taskInfo?.name || t('synthesisTask.fileTask.breadcrumb.taskDetail'),
     },
   ];
 

@@ -16,16 +16,18 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useDebouncedEffect } from "./useDebouncedEffect";
 import Loading from "@/utils/loading";
 import { App } from "antd";
+import { useTranslation } from "react-i18next";
 
 export default function useFetchData<T>(
   fetchFunc: (params?: any) => Promise<any>,
   mapDataFunc: (data: Partial<T>) => T = (data) => data as T,
-  pollingInterval: number = 30000, // 默认30秒轮询一次
-  autoRefresh: boolean = false, // 是否自动开始轮询，默认 false
-  additionalPollingFuncs: (() => Promise<any>)[] = [], // 额外的轮询函数
+  pollingInterval: number = 30000, // Default polling interval 30 seconds
+  autoRefresh: boolean = false, // Whether to auto start polling, default false
+  additionalPollingFuncs: (() => Promise<any>)[] = [], // Additional polling functions
   pageOffset: number = 1
 ) {
   const { message } = App.useApp();
+  const { t } = useTranslation();
 
   // 轮询相关状态
   const [isPolling, setIsPolling] = useState(false);
@@ -51,12 +53,12 @@ export default function useFetchData<T>(
     pageSize: 12,
   });
 
-  // 分页配置
+  // Pagination configuration
   const [pagination, setPagination] = useState({
     total: 0,
     showSizeChanger: true,
     pageSizeOptions: ["12", "24", "48"],
-    showTotal: (total: number) => `共 ${total} 条`,
+    showTotal: (total: number) => `${t('hooks.fetchData.totalItems')}: ${total}`,
     onChange: (current: number, pageSize?: number) => {
       setSearchParams((prev) => ({
         ...prev,
@@ -155,9 +157,9 @@ export default function useFetchData<T>(
         }
       } catch (error) {
         if (error.status === 401) {
-          message.warn("请登录");
+          message.warn(t('hooks.fetchData.loginRequired'));
         } else {
-          message.error("数据获取失败，请稍后重试");
+          message.error(t('hooks.fetchData.fetchFailed'));
         }
       } finally {
         Loading.hide();

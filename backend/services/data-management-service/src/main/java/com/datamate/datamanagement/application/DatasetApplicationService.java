@@ -285,7 +285,7 @@ public class DatasetApplicationService {
             if (CollectionUtils.isEmpty(filePaths)) {
                 return;
             }
-            datasetFileApplicationService.copyFilesToDatasetDir(datasetId, new CopyFilesRequest(filePaths));
+            datasetFileApplicationService.addFilesToDataset(datasetId, new AddFilesRequest(filePaths));
             log.info("Success file scan, total files: {}", filePaths.size());
         } catch (Exception e) {
             log.error("处理数据源文件扫描失败，数据集ID: {}, 数据源ID: {}", datasetId, dataSourceId, e);

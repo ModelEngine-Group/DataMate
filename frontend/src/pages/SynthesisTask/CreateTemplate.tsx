@@ -11,11 +11,13 @@ import {
 } from "antd";
 import { Plus, ArrowLeft, Play, Save, RefreshCw, Code, X } from "lucide-react";
 import { useNavigate } from "react-router";
+import { useTranslation } from "react-i18next";
 import { mockTemplates } from "@/mock/annotation";
 
 const { TextArea } = Input;
 
 export default function InstructionTemplateCreate() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(
     null
@@ -78,11 +80,7 @@ export default function InstructionTemplateCreate() {
     setTimeout(() => {
       form.setFieldValue(
         "testOutput",
-        `基于输入"${values.testInput}"生成的测试结果：
-
-这是一个模拟的输出结果，展示了模板的工作效果。在实际使用中，这里会显示AI模型根据您的模板和输入生成的真实结果。
-
-模板变量已正确替换，输出格式符合预期。`
+        t('synthesisTask.createTemplate.messages.testOutput', { input: values.testInput })
       );
       setIsTestingTemplate(false);
     }, 2000);
@@ -119,7 +117,7 @@ export default function InstructionTemplateCreate() {
         };
         setTemplates([newTemplate, ...templates]);
       }
-      message.success("模板已保存");
+      message.success(t('synthesisTask.createTemplate.messages.saved'));
       navigate("/data/synthesis/task");
     } catch {
       // 校验失败
@@ -135,7 +133,7 @@ export default function InstructionTemplateCreate() {
             <ArrowLeft className="w-4 h-4 mr-2" />
           </Button>
           <h1 className="text-xl font-bold bg-clip-text">
-            {selectedTemplate ? "编辑模板" : "创建新模板"}
+            {selectedTemplate ? t('synthesisTask.createTemplate.editTitle') : t('synthesisTask.createTemplate.title')}
           </h1>
         </div>
       </div>
@@ -147,56 +145,55 @@ export default function InstructionTemplateCreate() {
             initialValues={initialValues}
             autoComplete="off"
           >
-            <h2 className="font-medium text-gray-900 text-lg mb-2">基本信息</h2>
+            <h2 className="font-medium text-gray-900 text-lg mb-2">{t('synthesisTask.createTemplate.form.basicInfo')}</h2>
             <div className="grid grid-cols-2 gap-4">
               <Form.Item
-                label="模板名称"
+                label={t('synthesisTask.createTemplate.form.name')}
                 name="name"
-                rules={[{ required: true, message: "请输入模板名称" }]}
+                rules={[{ required: true, message: t('synthesisTask.createTemplate.form.nameRequired') }]}
               >
-                <Input placeholder="输入模板名称" />
+                <Input placeholder={t('synthesisTask.createTemplate.form.namePlaceholder')} />
               </Form.Item>
               <Form.Item
-                label="分类"
+                label={t('synthesisTask.createTemplate.form.category')}
                 name="category"
-                rules={[{ required: true, message: "请选择分类" }]}
+                rules={[{ required: true, message: t('synthesisTask.createTemplate.form.categoryRequired') }]}
               >
                 <Select
-                  placeholder="选择分类"
+                  placeholder={t('synthesisTask.createTemplate.form.categoryPlaceholder')}
                   options={[
-                    { label: "问答对生成", value: "问答对生成" },
-                    { label: "蒸馏数据集", value: "蒸馏数据集" },
-                    { label: "文本生成", value: "文本生成" },
-                    { label: "多模态生成", value: "多模态生成" },
+                    { label: t('synthesisTask.createTemplate.categories.qa'), value: "qa" },
+                    { label: t('synthesisTask.createTemplate.categories.distillation'), value: "distillation" },
+                    { label: t('synthesisTask.createTemplate.categories.textGeneration'), value: "textGeneration" },
+                    { label: t('synthesisTask.createTemplate.categories.multimodal'), value: "multimodal" },
                   ]}
                 />
               </Form.Item>
             </div>
-            <Form.Item label="模板描述" name="description">
-              <Input placeholder="简要描述模板的用途和特点" />
+            <Form.Item label={t('synthesisTask.createTemplate.form.description')} name="description">
+              <Input placeholder={t('synthesisTask.createTemplate.form.descriptionPlaceholder')} />
             </Form.Item>
             <h2 className="font-medium text-gray-900 text-lg mt-6 mb-2">
-              Prompt内容
+              {t('synthesisTask.createTemplate.form.promptContent')}
             </h2>
             <Form.Item
-              label="Prompt内容"
+              label={t('synthesisTask.createTemplate.form.promptContent')}
               name="prompt"
-              rules={[{ required: true, message: "请输入Prompt内容" }]}
+              rules={[{ required: true, message: t('synthesisTask.createTemplate.form.promptRequired') }]}
             >
               <TextArea
-                placeholder="输入prompt内容，使用 {变量名} 格式定义变量"
+                placeholder={t('synthesisTask.createTemplate.form.promptPlaceholder')}
                 rows={10}
                 className="font-mono text-xs resize-none"
                 onChange={handlePromptChange}
               />
             </Form.Item>
             <p className="text-xs text-gray-500 mb-2">
-              提示：使用 {"{变量名}"} 格式定义变量，例如 {"{text}"} 或{" "}
-              {"{input}"}
+              {t('synthesisTask.createTemplate.form.promptHint')}
             </p>
             <div className="mb-4">
               <span className="text-sm font-semibold text-gray-700">
-                变量管理
+                {t('synthesisTask.createTemplate.variables.title')}
               </span>
               <div className="flex flex-wrap gap-2 min-h-[50px] p-3 border rounded-xl bg-gray-50 mt-2">
                 {variables.map((variable, index) => (
@@ -218,14 +215,14 @@ export default function InstructionTemplateCreate() {
                 ))}
                 {variables.length === 0 && (
                   <span className="text-xs text-gray-400">
-                    暂无变量，在Prompt中使用 {"{变量名}"} 格式定义
+                    {t('synthesisTask.createTemplate.variables.empty')}
                   </span>
                 )}
               </div>
               <div className="flex gap-2 mt-2">
                 <Input
                   ref={variableInputRef}
-                  placeholder="添加变量名（如：text, input, question）"
+                  placeholder={t('synthesisTask.createTemplate.variables.addPlaceholder')}
                   className="h-8 text-sm"
                   onPressEnter={handleAddVariable}
                 />
@@ -235,25 +232,25 @@ export default function InstructionTemplateCreate() {
                   className="px-4 text-sm"
                 >
                   <Plus className="w-3 h-3 mr-1" />
-                  添加
+                  {t('synthesisTask.createTemplate.variables.add')}
                 </Button>
               </div>
             </div>
             <h2 className="font-medium text-gray-900 text-lg mb-2 pt-2">
-              模板测试
+              {t('synthesisTask.createTemplate.test.title')}
             </h2>
             <div className="grid grid-cols-2 gap-4">
-              <Form.Item label="测试输入" name="testInput">
+              <Form.Item label={t('synthesisTask.createTemplate.form.testInput')} name="testInput">
                 <TextArea
-                  placeholder="输入测试数据"
+                  placeholder={t('synthesisTask.createTemplate.form.testInputPlaceholder')}
                   rows={5}
                   className="resize-none text-sm"
                 />
               </Form.Item>
-              <Form.Item label="测试输出" name="testOutput">
+              <Form.Item label={t('synthesisTask.createTemplate.form.testOutput')} name="testOutput">
                 <TextArea
                   readOnly
-                  placeholder="点击测试按钮查看输出结果"
+                  placeholder={t('synthesisTask.createTemplate.form.testOutputPlaceholder')}
                   rows={5}
                   className="resize-none bg-gray-50 text-sm"
                 />
@@ -272,10 +269,10 @@ export default function InstructionTemplateCreate() {
               {isTestingTemplate ? (
                 <>
                   <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
-                  测试中...
+                  {t('synthesisTask.createTemplate.test.testing')}
                 </>
               ) : (
-                <>测试模板</>
+                <>{t('synthesisTask.createTemplate.test.testButton')}</>
               )}
             </Button>
           </Form>
@@ -292,14 +289,14 @@ export default function InstructionTemplateCreate() {
             className="px-6 py-2 text-sm font-semibold bg-purple-600 hover:bg-purple-700 shadow-lg"
           >
             <Save className="w-3 h-3 mr-1" />
-            保存模板
+            {t('synthesisTask.createTemplate.actions.saveTemplate')}
           </Button>
           <Button
             onClick={() => navigate("/data/synthesis/task")}
             type="default"
             className="px-4 py-2 text-sm"
           >
-            取消
+            {t('synthesisTask.createTemplate.actions.cancel')}
           </Button>
         </div>
       </div>

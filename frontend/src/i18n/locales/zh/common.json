@@ -55,6 +55,7 @@
   },
   "dataCollection": {
     "title": "数据归集",
+    "description": "创建、导入和管理数据集",
     "tabs": {
       "taskManagement": "任务管理",
       "taskExecution": "执行记录",
@@ -256,6 +257,7 @@
   },
   "dataManagement": {
     "title": "数据管理",
+    "description": "创建、导入和管理数据集",
     "actions": {
       "createDataset": "创建数据集",
       "edit": "编辑",
@@ -576,9 +578,17 @@
     }
   },
   "common": {
+    "settings": {
+      "title": "设置"
+    },
+    "taskCenter": {
+      "title": "任务中心"
+    },
     "actions": {
       "createTask": "创建任务",
-      "actions": "操作"
+      "actions": "操作",
+      "openSidebar": "展开侧边栏",
+      "closeSidebar": "收起侧边栏"
     },
     "placeholders": {
       "empty": "-"
@@ -765,6 +775,7 @@
   "dataEvaluation": {
     "home": {
       "title": "数据评估",
+      "description": "质量分析、性能评估和偏见检测",
       "createTask": "创建评估任务",
       "searchPlaceholder": "搜索任务名称...",
       "filters": {
@@ -968,6 +979,7 @@
   "dataAnnotation": {
     "home": {
       "title": "数据标注",
+      "description": "对数据进行标注和标记",
       "tabs": {
         "tasks": "标注任务",
         "templates": "标注模板"
@@ -1271,6 +1283,7 @@
   },
   "dataCleansing": {
     "title": "数据处理",
+    "description": "数据清洗、处理和转换",
     "tabs": {
       "taskList": "任务列表",
       "templateManagement": "模板管理"
@@ -1490,6 +1503,7 @@
   },
   "knowledgeBase": {
     "title": "知识生成",
+    "description": "面向RAG的知识库构建",
     "home": {
       "columns": {
         "name": "知识库",
@@ -1747,6 +1761,7 @@
   },
   "operatorMarket": {
     "title": "算子市场",
+    "description": "算子上传与管理",
     "home": {
       "title": "算子市场",
       "actions": {
@@ -1963,7 +1978,7 @@
       },
       "messages": {
         "addSuccess": "模型添加成功",
-        "error": "{message}：{detail}"
+        "error": "{{message}}：{{detail}}"
       }
     },
     "systemConfig": {
@@ -2060,6 +2075,541 @@
       "buttons": {
         "create": "创建Webhook"
       }
+    }
+  },
+  "synthesisTask": {
+    "title": "数据合成",
+    "description": "智能数据合成和配比",
+    "tabs": {
+      "tasks": "合成任务",
+      "templates": "指令模板"
+    },
+    "actions": {
+      "createTask": "创建任务",
+      "createTemplate": "创建模板",
+      "createSynthesisTask": "创建合成任务",
+      "enableDebug": "启用调测",
+      "archive": "归档",
+      "evaluate": "立即评估",
+      "viewDetail": "查看详情",
+      "delete": "删除",
+      "confirmDelete": "确认删除",
+      "cancel": "取消",
+      "confirm": "确定",
+      "refresh": "刷新",
+      "next": "下一步",
+      "prev": "上一步"
+    },
+    "home": {
+      "searchPlaceholder": "搜索任务名称...",
+      "empty": {
+        "title": "暂无合成任务",
+        "noMatch": "没有找到匹配的任务",
+        "createFirst": "开始创建您的第一个合成任务"
+      },
+      "filters": {
+        "type": "类型",
+        "allTypes": "全部类型"
+      },
+      "columns": {
+        "taskName": "任务名称",
+        "taskId": "任务ID",
+        "type": "类型",
+        "fileCount": "文件数",
+        "createdAt": "创建时间",
+        "actions": "操作"
+      },
+      "typeMap": {
+        "qa": "问答对生成",
+        "cot": "链式推理生成"
+      },
+      "confirm": {
+        "deleteTitle": "确认删除任务?",
+        "deleteContent": "任务名：{{name}}",
+        "archiveTitle": "确认归档该合成任务?",
+        "archiveContent": "任务名：{{name}}"
+      },
+      "modal": {
+        "evalTitle": "创建评估任务",
+        "evalName": "评估任务名称",
+        "evalMethod": "评估方式",
+        "evalModel": "评估模型",
+        "evalSource": "来源：合成任务（SYNTHESIS）",
+        "sourceName": "源名称：{{name}}",
+        "startEval": "开始评估",
+        "placeholders": {
+          "evalName": "例如：数据评估",
+          "modelLoading": "加载模型中...",
+          "selectModel": "请选择用于评估的模型"
+        },
+        "dimensions": {
+          "questionIndependence": "问题是否独立",
+          "questionIndependenceDesc": "仅分析问题，问题的主体和客体都比较明确，即使有省略，也符合语言习惯。在不需要补充其他信息的情况下不会引起疑惑。",
+          "grammarError": "语法是否错误",
+          "grammarErrorDesc": "问题为疑问句，答案为陈述句；不存在词语搭配不当的情况；连接词和标点符号不存在错用情况；逻辑混乱的情况不存在；语法结构都正确且完整。",
+          "answerRelevance": "回答是否有针对性",
+          "answerRelevanceDesc": "回答应对问题中的所有疑问点提供正面、直接的回答，不应引起疑惑。同时，答案不应有任何内容的遗漏，需构成一个完整的陈述。"
+        }
+      },
+      "archive": {
+        "success": "归档成功",
+        "failed": "归档失败",
+        "datasetFailed": "创建数据集失败"
+      }
+    },
+    "create": {
+      "title": "创建合成任务",
+      "step1": "基本信息",
+      "step2": "合成编排",
+      "form": {
+        "name": "任务名称",
+        "namePlaceholder": "输入任务名称",
+        "nameRequired": "请输入任务名称",
+        "description": "任务描述",
+        "descriptionPlaceholder": "描述任务的目的和要求（可选）",
+        "selectDataset": "选择数据集",
+        "currentDataset": "当前数据集：{{name}} - 已选择 {{count}} 个文件",
+        "datasetRequired": "请选择数据集"
+      },
+      "template": {
+        "title": "合成指令模板",
+        "description": "从左侧选择一个模板，我们会自动为你填充合适的 Prompt 与合成策略。",
+        "singleSelect": "单选",
+        "searchPlaceholder": "搜索模板名称，如：SFT 问答 / COT 推理",
+        "templates": {
+          "sftQa": {
+            "title": "SFT 问答数据合成",
+            "subtitle": "从长文档自动生成高质量问答样本",
+            "badge": "推荐",
+            "description": "适用于构建监督微调（SFT）问答数据集，支持从知识库或长文档中抽取关键问答对。"
+          },
+          "cotReasoning": {
+            "title": "COT 链式推理合成",
+            "subtitle": "一步步推理过程与最终答案",
+            "badge": "推理增强",
+            "description": "生成包含模型推理中间过程的 COT 数据，用于提升模型的复杂推理和解释能力。"
+          }
+        },
+        "tooltips": {
+          "selected": "当前已选模板",
+          "apply": "点击应用此模板"
+        }
+      },
+      "config": {
+        "title": "合成配置",
+        "description": "根据左侧模板自动带出配置，你也可以在此基础上进行微调。",
+        "steps": {
+          "1": "设置合成总数",
+          "2": "配置文本切片策略",
+          "3": "配置问题合成参数",
+          "4": "配置答案合成参数"
+        },
+        "totalLimit": {
+          "title": "合成总数上限",
+          "description": "控制整个任务最多生成的 QA 对数量",
+          "placeholder": "可选项，建议在大规模合成时设置上限"
+        },
+        "slice": {
+          "title": "文本切片配置",
+          "description": "影响上下文长度与召回粒度",
+          "strategy": "分块策略",
+          "size": "分块大小",
+          "overlap": "重叠大小",
+          "customDelimiter": "自定义分隔符",
+          "delimiterPlaceholder": "例如：\\n\\n 或 ###",
+          "options": {
+            "default": "默认分块",
+            "chapter": "按章节分块",
+            "paragraph": "按段落分块",
+            "fixedLength": "固定长度分块",
+            "customSeparator": "自定义分隔符分块"
+          }
+        },
+        "question": {
+          "title": "问题合成配置",
+          "description": "控制每个 chunk 生成的问题数量与多样性",
+          "count": "问题生成数量",
+          "countDesc": "每千tokens生成的问题条数",
+          "temperature": "温度 (Temperature)",
+          "temperatureDesc": "数值越大，问题越发散、多样",
+          "useModel": "使用模型",
+          "useModelDesc": "用于生成问题的对话模型",
+          "promptTemplate": "问题 Prompt 模板",
+          "promptDesc": "用于指导模型如何从切片文本中生成高质量问题，可在保持变量占位符不变的前提下个性化修改。",
+          "qaPlaceholder": "将根据 SFT 问答合成场景预填问题生成 Prompt，可按需微调",
+          "cotPlaceholder": "将根据 COT 推理合成场景预填问题生成 Prompt，可按需微调"
+        },
+        "answer": {
+          "title": "答案合成配置",
+          "description": "控制答案生成的稳定性与风格",
+          "temperature": "温度 (Temperature)",
+          "temperatureDesc": "数值越小，答案越稳定、保守",
+          "useModel": "使用模型",
+          "useModelDesc": "用于生成答案的对话模型",
+          "promptTemplate": "答案 Prompt 模板",
+          "promptDesc": "用于约束模型回答的风格与内容范围，例如是否需要分步推理、是否必须引用原文关键信息等。",
+          "qaPlaceholder": "将根据 SFT 问答合成场景预填答案生成 Prompt，可按需微调",
+          "cotPlaceholder": "将根据 COT 推理合成场景预填答案生成 Prompt，可按需微调"
+        }
+      },
+      "messages": {
+        "selectType": "请选择一个合成类型",
+        "selectModels": "请选择问题和答案使用的模型",
+        "selectFiles": "请至少选择一个文件",
+        "fillRequired": "请填写所有必填项",
+        "createSuccess": "合成任务创建成功",
+        "createFailed": "合成任务创建失败",
+        "fetchQuestionPromptFailed": "获取问题 Prompt 模板失败",
+        "fetchAnswerPromptFailed": "获取答案 Prompt 模板失败",
+        "loadModelsFailed": "加载模型列表失败"
+      }
+    },
+    "templates": {
+      "title": "指令模板",
+      "searchPlaceholder": "搜索模板名称或描述...",
+      "empty": {
+        "title": "暂无指令模板",
+        "noMatch": "没有找到匹配的模板",
+        "createFirst": "开始创建您的第一个指令模板"
+      },
+      "filters": {
+        "type": "类型",
+        "allTypes": "全部类型",
+        "preset": "预置模板",
+        "custom": "自定义模板"
+      },
+      "columns": {
+        "name": "模板名称",
+        "type": "类型",
+        "category": "分类",
+        "variables": "变量数量",
+        "usageCount": "使用次数",
+        "qualityScore": "质量评分",
+        "lastUsed": "最后使用",
+        "actions": "操作"
+      },
+      "typeMap": {
+        "all": "全部类型",
+        "preset": "预置",
+        "custom": "自定义"
+      }
+    },
+    "createTemplate": {
+      "title": "创建新模板",
+      "editTitle": "编辑模板",
+      "form": {
+        "basicInfo": "基本信息",
+        "name": "模板名称",
+        "namePlaceholder": "输入模板名称",
+        "nameRequired": "请输入模板名称",
+        "category": "分类",
+        "categoryPlaceholder": "选择分类",
+        "categoryRequired": "请选择分类",
+        "description": "模板描述",
+        "descriptionPlaceholder": "简要描述模板的用途和特点",
+        "promptContent": "Prompt内容",
+        "promptPlaceholder": "输入prompt内容，使用 {变量名} 格式定义变量",
+        "promptRequired": "请输入Prompt内容",
+        "promptHint": "提示：使用 {变量名} 格式定义变量，例如 {{text}} 或 {{input}}",
+        "testInput": "测试输入",
+        "testInputPlaceholder": "输入测试数据",
+        "testOutput": "测试输出",
+        "testOutputPlaceholder": "点击测试按钮查看输出结果"
+      },
+      "variables": {
+        "title": "变量管理",
+        "empty": "暂无变量，在Prompt中使用 {变量名} 格式定义",
+        "addPlaceholder": "添加变量名（如：text, input, question）",
+        "add": "添加"
+      },
+      "test": {
+        "title": "模板测试",
+        "testing": "测试中...",
+        "testButton": "测试模板"
+      },
+      "actions": {
+        "createTemplate": "创建模板",
+        "saveTemplate": "保存模板",
+        "cancel": "取消"
+      },
+      "messages": {
+        "saved": "模板已保存",
+        "testOutput": "基于输入 \"{{input}}\"生成的测试结果：\n\n这是一个模拟的输出结果，展示了模板的工作效果。在实际使用中，这里会显示AI模型根据您的模板和输入生成的真实结果。\n\n模板变量已正确替换，输出格式符合预期。",
+        "testFailed": "测试失败"
+      },
+      "categories": {
+        "qa": "问答对生成",
+        "distillation": "蒸馏数据集",
+        "textGeneration": "文本生成",
+        "multimodal": "多模态生成"
+      }
+    },
+    "detail": {
+      "title": "合成数据详情",
+      "breadcrumb": {
+        "tasks": "合成任务",
+        "taskDetail": "任务详情",
+        "fileDetail": "文件详情"
+      },
+      "chunkList": {
+        "title": "Chunk 列表",
+        "total": "共 {{count}} 条",
+        "empty": "暂无 Chunk",
+        "chunkIndex": "Chunk #{{index}}",
+        "confirmDeleteTitle": "确认删除该 Chunk 及其合成数据？",
+        "confirmDeleteDesc": "ID：{{id}}"
+      },
+      "synthData": {
+        "title": "合成数据",
+        "empty": "该 Chunk 暂无合成数据",
+        "noChunkSelected": "请选择左侧 Chunk",
+        "currentChunk": "当前 Chunk #{{index}}",
+        "record": "记录 {{index}}",
+        "confirmDeleteTitle": "确认删除该条合成数据？",
+        "confirmDeleteDesc": "ID：{{id}}",
+        "edit": {
+          "cancel": "取消",
+          "confirm": "确定"
+        },
+        "id": "ID：{{id}}"
+      },
+      "messages": {
+        "deleteSuccess": "删除成功",
+        "deleteFailed": "删除失败，请稍后重试",
+        "saveSuccess": "保存成功",
+        "saveFailed": "保存失败，请稍后重试"
+      },
+      "pagination": {
+        "total": "共 {{total}} 条"
+      }
+    },
+    "fileTask": {
+      "breadcrumb": {
+        "tasks": "合成任务",
+        "taskDetail": "任务详情"
+      },
+      "tabs": {
+        "files": "处理文件"
+      },
+      "columns": {
+        "file": "文件",
+        "status": "状态",
+        "totalChunks": "切片总数",
+        "progress": "处理进度",
+        "createdAt": "创建时间",
+        "updatedAt": "更新时间",
+        "actions": "操作"
+      },
+      "status": {
+        "unknown": "未知",
+        "processing": "处理中",
+        "completed": "已完成",
+        "failed": "失败"
+      },
+      "operations": {
+        "refresh": "刷新",
+        "delete": "删除任务"
+      },
+      "confirm": {
+        "deleteTitle": "确认删除该合成任务？",
+        "deleteDescription": "删除后将无法恢复，请谨慎操作。",
+        "okText": "确认删除",
+        "cancelText": "取消"
+      },
+      "messages": {
+        "fetchFailed": "获取合成任务详情失败",
+        "deleteSuccess": "合成任务已删除",
+        "deleteFailed": "删除合成任务失败"
+      },
+      "statistics": {
+        "type": "类型",
+        "fileCount": "文件数"
+      },
+      "typeMap": {
+        "qa": "问答对生成",
+        "cot": "链式推理生成"
+      }
+    },
+    "messages": {
+      "deleteSuccess": "删除成功",
+      "deleteFailed": "删除失败",
+      "evaluationCreated": "评估任务创建成功",
+      "evaluationCreateFailed": "评估任务创建失败",
+      "fetchModelsFailed": "获取模型列表失败"
+    }
+  },
+  "components": {
+    "errorBoundary": {
+      "title": "发生错误",
+      "retry": "重试",
+      "goHome": "返回首页"
+    },
+    "searchControls": {
+      "searchPlaceholder": "搜索...",
+      "dateRange": {
+        "start": "开始日期",
+        "end": "结束日期",
+        "placeholder": "选择日期范围"
+      },
+      "filters": {
+        "label": "筛选",
+        "clearAll": "清除所有"
+      }
+    },
+    "tagList": {
+      "addTag": "添加标签"
+    },
+    "actionDropdown": {
+      "confirm": "确认",
+      "cancel": "取消"
+    },
+    "developmentInProgress": {
+      "title": "开发中",
+      "description": "此功能正在开发中，敬请期待。",
+      "goHome": "返回首页"
+    },
+    "business": {
+      "taskPopover": {
+        "title": "任务详情",
+        "empty": "无任务信息",
+        "actions": {
+          "viewDetail": "查看详情",
+          "delete": "删除",
+          "archive": "归档"
+        },
+        "progress": {
+          "label": "进度",
+          "running": "运行中",
+          "completed": "已完成"
+        },
+        "schedule": {
+          "label": "调度",
+          "nextRun": "下次运行",
+          "lastRun": "上次运行"
+        },
+        "source": {
+          "label": "来源",
+          "dataset": "数据集",
+          "collection": "归集任务"
+        }
+      }
+    }
+  },
+  "hooks": {
+    "tagConfig": {
+      "fetchFailed": "获取标签配置失败",
+      "loadError": "加载标签配置时出错"
+    },
+    "sliceUpload": {
+      "uploadDataset": "上传数据集",
+      "fileModifiedOrDeleted": "文件被修改或删除，请重新选择文件上传",
+      "uploadFailed": "文件上传失败，请稍后重试"
+    },
+    "fetchData": {
+      "totalItems": "共",
+      "loginRequired": "请登录",
+      "fetchFailed": "数据获取失败，请稍后重试"
+    }
+  },
+  "home": {
+    "hero": {
+      "subtitle": "AI数据集准备工具",
+      "title": "DataMate 构建高质量 AI数据集",
+      "description": "从数据管理到知识生成，一站式解决企业AI数据处理的场景问题。",
+      "getStartedButton": "开始使用",
+      "chatAssistantButton": "对话助手",
+      "checkingButton": "检查中...",
+      "dataOrchestrationButton": "数据智能编排"
+    },
+    "sections": {
+      "featuresTitle": "功能模块"
+    },
+    "orchestrationHighlight": {
+      "title": "数据智能编排 - 可视化流程设计",
+      "description": "拖拽式设计复杂数据处理管道，让数据流转更加直观高效。",
+      "coreFeaturesTitle": "🎯 核心功能：",
+      "feature1": "可视化流程设计器",
+      "feature2": "丰富的数据处理组件库",
+      "feature3": "实时流程执行监控",
+      "smartFeaturesTitle": "⚡ 智能特性：",
+      "smartFeature1": "自动优化数据流转路径",
+      "smartFeature2": "智能错误检测和修复建议",
+      "smartFeature3": "模板化流程快速复用",
+      "startButton": "开始编排"
+    },
+    "dataAgentHighlight": {
+      "title": "Data Agent - 对话式业务操作",
+      "description": "告别复杂界面，用自然语言完成所有数据集相关业务。",
+      "examplesTitle": "💬 对话示例：",
+      "example1": "帮我创建一个图像分类数据集",
+      "example2": "分析一下数据质量，生成报告",
+      "example3": "启动合成任务，目标1000条数据",
+      "smartFeaturesTitle": "🚀 智能特性：",
+      "smartFeature1": "理解复杂需求，自动执行",
+      "smartFeature2": "提供专业建议和优化方案",
+      "smartFeature3": "学习使用习惯，个性化服务",
+      "startButton": "开始对话"
+    },
+    "workflowShowcase": {
+      "title": "完整的数据处理工作流",
+      "description": "从原始数据到高质量数据集的全流程解决方案。",
+      "step1Title": "数据收集",
+      "step1Description": "支持多种数据源导入，包括本地文件、数据库、API等。",
+      "step2Title": "智能编排",
+      "step2Description": "可视化设计数据处理流程，自动化执行复杂任务。",
+      "step3Title": "智能处理",
+      "step3Description": "自动化的数据处理、标注和质量评估流程。",
+      "step4Title": "质量保证",
+      "step4Description": "全面的质量评估和偏见检测，确保数据集可靠性。",
+      "startButton": "开始构建数据集"
+    },
+    "features": {
+      "orchestration": {
+        "title": "智能编排",
+        "description": "可视化数据处理流程编排，拖拽式设计复杂的数据处理管道"
+      },
+      "chatAssistant": {
+        "title": "对话助手",
+        "description": "通过自然语言对话完成复杂的数据集操作和业务流程"
+      },
+      "evaluation": {
+        "title": "全面评估",
+        "description": "多维度数据质量评估，包含统计分析、性能测试和偏见检测"
+      },
+      "processing": {
+        "title": "高效处理",
+        "description": "完整的数据处理流水线，从原始数据到可用数据集"
+      },
+      "knowledge": {
+        "title": "知识管理",
+        "description": "构建面向RAG的知识库，支持智能问答和检索"
+      }
+    }
+  },
+  "datasetFileTransfer": {
+    "columns": {
+      "datasetName": "所属数据集",
+      "fileName": "文件名",
+      "fileSize": "大小"
+    },
+    "datasetColumns": {
+      "name": "数据集名称",
+      "fileCount": "文件数",
+      "totalSize": "大小"
+    },
+    "selectDataset": "选择数据集",
+    "searchDatasetPlaceholder": "搜索数据集名称...",
+    "selectFiles": "选择文件",
+    "selectAllCurrentDataset": "全选当前数据集",
+    "searchFilesPlaceholder": "搜索文件名称...",
+    "preview": "预览",
+    "cancelPreview": "取消预览",
+    "messages": {
+      "pleaseSelectDataset": "请先选择一个数据集",
+      "singleDatasetOnlyWarning": "当前仅支持从一个数据集选择文件，请先清空已选文件后再切换数据集",
+      "selectAllSuccess": "已选中当前数据集的全部 {{count}} 个文件",
+      "noFilesAvailable": "当前数据集下没有可选文件",
+      "selectAllFailed": "全选整个数据集失败，请稍后重试"
     }
   }
 }

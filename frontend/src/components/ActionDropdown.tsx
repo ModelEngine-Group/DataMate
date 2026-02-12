@@ -1,6 +1,7 @@
 import { Dropdown, Popconfirm, Button, Space } from "antd";
 import { EllipsisOutlined } from "@ant-design/icons";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface ActionItem {
   key: string;
@@ -34,6 +35,7 @@ const ActionDropdown = ({
   onAction,
   placement = "bottomRight",
 }: ActionDropdownProps) => {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const handleActionClick = (action: ActionItem) => {
     if (action.confirm) {
@@ -60,8 +62,8 @@ const ActionDropdown = ({
                   onAction?.(action.key, action);
                   setOpen(false);
                 }}
-                okText={action.confirm.okText || "确定"}
-                cancelText={action.confirm.cancelText || "取消"}
+                okText={action.confirm.okText || t('components.actionDropdown.confirm')}
+                cancelText={action.confirm.cancelText || t('components.actionDropdown.cancel')}
                 okType={action.danger ? "danger" : "primary"}
                 styles={{ root: { zIndex: 9999 } }}
               >

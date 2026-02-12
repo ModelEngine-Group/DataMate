@@ -22,7 +22,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -157,7 +156,8 @@ public class DatasetFileController {
     @PostMapping("/upload/copy")
     public List<DatasetFileResponse> copyFilesToDatasetDir(@PathVariable("datasetId") String datasetId,
                                                       @RequestBody @Valid CopyFilesRequest req) {
-        List<DatasetFile> datasetFiles = datasetFileApplicationService.copyFilesToDatasetDir(datasetId, req);
+        AddFilesRequest addFilesRequest = new AddFilesRequest(req.sourcePaths());
+        List<DatasetFile> datasetFiles = datasetFileApplicationService.addFilesToDataset(datasetId, addFilesRequest);
         return DatasetConverter.INSTANCE.convertToResponseList(datasetFiles);
     }
 

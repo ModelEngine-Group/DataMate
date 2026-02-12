@@ -10,8 +10,10 @@ import TaskUpload from "./TaskUpload";
 import SettingsPage from "../SettingsPage/SettingsPage";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { showSettings, hideSettings } from "@/store/slices/settingsSlice";
+import { useTranslation } from "react-i18next";
 
 const AsiderAndHeaderLayout = () => {
+  const { t } = useTranslation();
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const [activeItem, setActiveItem] = useState<string>("");
@@ -76,12 +78,12 @@ const AsiderAndHeaderLayout = () => {
           inlineCollapsed={!sidebarOpen}
           items={menuItems.map((item) => ({
             key: item.id,
-            label: item.title,
+            label: t(item.i18Key),
             icon: item.icon ? <item.icon className="w-4 h-4" /> : null,
             children: item.children
               ? item.children.map((subItem) => ({
                   key: subItem.id,
-                  label: subItem.title,
+                  label: t(subItem.i18Key),
                   icon: subItem.icon ? (
                     <subItem.icon className="w-4 h-4" />
                   ) : null,
@@ -105,7 +107,7 @@ const AsiderAndHeaderLayout = () => {
               forceRender
               title={
                 <div className="flex items-center justify-between gap-2 border-b border-gray-200 pb-2 mb-2">
-                  <h4 className="font-bold">任务中心</h4>
+                  <h4 className="font-bold">{t("common.taskCenter.title")}</h4>
                   <X
                     onClick={() => setTaskCenterVisible(false)}
                     className="cursor-pointer w-4 h-4 text-gray-500 hover:text-gray-900"
@@ -118,7 +120,7 @@ const AsiderAndHeaderLayout = () => {
               destroyOnHidden={false}
             >
               <Button block onClick={() => setTaskCenterVisible(true)}>
-                任务中心
+                {t("common.taskCenter.title")}
               </Button>
             </Popover>
             <Button
@@ -127,7 +129,7 @@ const AsiderAndHeaderLayout = () => {
                 dispatch(showSettings());
               }}
             >
-              设置
+              {t("common.settings.title")}
             </Button>
           </div>
         ) : (
@@ -135,7 +137,7 @@ const AsiderAndHeaderLayout = () => {
             <div className="relative">
               <Popover
                 forceRender
-                title="任务中心"
+                title={t("common.taskCenter.title")}
                 open={taskCenterVisible}
                 content={<TaskUpload />}
                 trigger="click"
@@ -160,7 +162,7 @@ const AsiderAndHeaderLayout = () => {
         )}
       </div>
       <Drawer
-        title="设置"
+        title={t("common.settings.title")}
         placement="bottom"
         width="100%"
         height="100%"
@@ -183,7 +185,7 @@ const AsiderAndHeaderLayout = () => {
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
         className="absolute top-1/2 -right-3 -translate-y-1/2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-gray-600 text-white shadow-md hover:bg-gray-700 transition-colors"
-        title={sidebarOpen ? "展开侧边栏" : "收起侧边栏"}
+        title={sidebarOpen ? t("common.actions.openSidebar") : t("common.actions.closeSidebar")}
       >
         {sidebarOpen ? <ChevronLeft className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
       </button>

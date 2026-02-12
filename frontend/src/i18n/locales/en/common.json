@@ -55,6 +55,7 @@
   },
   "dataCollection": {
     "title": "Data Collection",
+    "description": "Create, import and manage datasets",
     "tabs": {
       "taskManagement": "Task Management",
       "taskExecution": "Execution Records",
@@ -256,6 +257,7 @@
   },
   "dataManagement": {
     "title": "Data Management",
+    "description": "Create, import and manage datasets",
     "actions": {
       "createDataset": "Create Dataset",
       "edit": "Edit",
@@ -576,9 +578,17 @@
     }
   },
   "common": {
+    "settings": {
+      "title": "Settings"
+    },
+    "taskCenter": {
+      "title": "Task Center"
+    },
     "actions": {
       "createTask": "Create Task",
-      "actions": "Actions"
+      "actions": "Actions",
+      "openSidebar": "Open Sidebar",
+      "closeSidebar": "Close Sidebar"
     },
     "placeholders": {
       "empty": "-"
@@ -765,6 +775,7 @@
   "dataEvaluation": {
     "home": {
       "title": "Data Evaluation",
+      "description": "Quality analysis, performance evaluation and bias detection",
       "createTask": "Create Evaluation Task",
       "searchPlaceholder": "Search task name...",
       "filters": {
@@ -968,6 +979,7 @@
   "dataAnnotation": {
     "home": {
       "title": "Data Annotation",
+      "description": "Annotate and tag data",
       "tabs": {
         "tasks": "Annotation Tasks",
         "templates": "Annotation Templates"
@@ -1271,6 +1283,7 @@
   },
   "dataCleansing": {
     "title": "Data Processing",
+    "description": "Data cleansing, processing and transformation",
     "tabs": {
       "taskList": "Task List",
       "templateManagement": "Template Management"
@@ -1490,6 +1503,7 @@
   },
   "knowledgeBase": {
     "title": "Knowledge Generation",
+    "description": "RAG-oriented knowledge base construction",
     "home": {
       "columns": {
         "name": "Knowledge Base",
@@ -1747,6 +1761,7 @@
   },
   "operatorMarket": {
     "title": "Operator Market",
+    "description": "Operator upload and management",
     "home": {
       "title": "Operator Market",
       "actions": {
@@ -1963,7 +1978,7 @@
       },
       "messages": {
         "addSuccess": "Model added successfully",
-        "error": "{message}: {detail}"
+        "error": "{{message}}: {{detail}}"
       }
     },
     "systemConfig": {
@@ -2060,6 +2075,541 @@
       "buttons": {
         "create": "Create Webhook"
       }
+    }
+  },
+  "synthesisTask": {
+    "title": "Data Synthesis",
+    "description": "Intelligent data synthesis and ratio",
+    "tabs": {
+      "tasks": "Synthesis Tasks",
+      "templates": "Instruction Templates"
+    },
+    "actions": {
+      "createTask": "Create Task",
+      "createTemplate": "Create Template",
+      "createSynthesisTask": "Create Synthesis Task",
+      "enableDebug": "Enable Debug",
+      "archive": "Archive",
+      "evaluate": "Evaluate Now",
+      "viewDetail": "View Details",
+      "delete": "Delete",
+      "confirmDelete": "Confirm Delete",
+      "cancel": "Cancel",
+      "confirm": "Confirm",
+      "refresh": "Refresh",
+      "next": "Next",
+      "prev": "Previous"
+    },
+    "home": {
+      "searchPlaceholder": "Search task name...",
+      "empty": {
+        "title": "No Synthesis Tasks",
+        "noMatch": "No matching tasks found",
+        "createFirst": "Create your first synthesis task"
+      },
+      "filters": {
+        "type": "Type",
+        "allTypes": "All Types"
+      },
+      "columns": {
+        "taskName": "Task Name",
+        "taskId": "Task ID",
+        "type": "Type",
+        "fileCount": "File Count",
+        "createdAt": "Created At",
+        "actions": "Actions"
+      },
+      "typeMap": {
+        "qa": "QA Pair Generation",
+        "cot": "Chain of Thought Generation"
+      },
+      "confirm": {
+        "deleteTitle": "Confirm delete this task?",
+        "deleteContent": "Task name: {{name}}",
+        "archiveTitle": "Confirm archive this synthesis task?",
+        "archiveContent": "Task name: {{name}}"
+      },
+      "modal": {
+        "evalTitle": "Create Evaluation Task",
+        "evalName": "Evaluation Task Name",
+        "evalMethod": "Evaluation Method",
+        "evalModel": "Evaluation Model",
+        "evalSource": "Source: Synthesis Task (SYNTHESIS)",
+        "sourceName": "Source Name: {{name}}",
+        "startEval": "Start Evaluation",
+        "placeholders": {
+          "evalName": "e.g., Data Evaluation",
+          "modelLoading": "Loading models...",
+          "selectModel": "Select model for evaluation"
+        },
+        "dimensions": {
+          "questionIndependence": "Question Independence",
+          "questionIndependenceDesc": "Analyze only the question; the subject and object are clear...",
+          "grammarError": "Grammar Errors",
+          "grammarErrorDesc": "The question is interrogative, the answer is declarative...",
+          "answerRelevance": "Answer Relevance",
+          "answerRelevanceDesc": "The answer should provide a direct, positive response..."
+        }
+      },
+      "archive": {
+        "success": "Archive successful",
+        "failed": "Archive failed",
+        "datasetFailed": "Failed to create dataset"
+      }
+    },
+    "create": {
+      "title": "Create Synthesis Task",
+      "step1": "Basic Information",
+      "step2": "Synthesis Orchestration",
+      "form": {
+        "name": "Task Name",
+        "namePlaceholder": "Enter task name",
+        "nameRequired": "Please enter task name",
+        "description": "Task Description",
+        "descriptionPlaceholder": "Describe the purpose and requirements of the task (optional)",
+        "selectDataset": "Select Dataset",
+        "currentDataset": "Current dataset: {{name}} - Selected {{count}} files",
+        "datasetRequired": "Please select dataset"
+      },
+      "template": {
+        "title": "Synthesis Instruction Template",
+        "description": "Select a template from the left, we will automatically fill in appropriate prompts and synthesis strategies for you.",
+        "singleSelect": "Single Select",
+        "searchPlaceholder": "Search template name, e.g., SFT QA / COT Reasoning",
+        "templates": {
+          "sftQa": {
+            "title": "SFT QA Synthesis",
+            "subtitle": "Automatically generate high-quality Q&A pairs from long documents",
+            "badge": "Recommended",
+            "description": "Suitable for building SFT Q&A datasets, supports extracting key Q&A pairs from knowledge bases or long documents."
+          },
+          "cotReasoning": {
+            "title": "COT Chain of Thought Synthesis",
+            "subtitle": "Step-by-step reasoning process and final answer",
+            "badge": "Reasoning Enhanced",
+            "description": "Generate COT data containing model reasoning intermediate process, used to improve model complex reasoning and explanation capabilities."
+          }
+        },
+        "tooltips": {
+          "selected": "Current selected template",
+          "apply": "Click to apply this template"
+        }
+      },
+      "config": {
+        "title": "Synthesis Configuration",
+        "description": "Configuration is automatically brought out according to the template on the left, you can also make fine adjustments on this basis.",
+        "steps": {
+          "1": "Set total count",
+          "2": "Configure text slicing strategy",
+          "3": "Configure question synthesis parameters",
+          "4": "Configure answer synthesis parameters"
+        },
+        "totalLimit": {
+          "title": "Total synthesis limit",
+          "description": "Control the maximum number of QA pairs generated for the entire task",
+          "placeholder": "Optional, recommended to set upper limit for large-scale synthesis"
+        },
+        "slice": {
+          "title": "Text Slice Configuration",
+          "description": "Affects context length and recall granularity",
+          "strategy": "Slice Strategy",
+          "size": "Slice Size",
+          "overlap": "Overlap Size",
+          "customDelimiter": "Custom Delimiter",
+          "delimiterPlaceholder": "e.g., \\n\\n or ###",
+          "options": {
+            "default": "Default Chunk",
+            "chapter": "Chapter Chunk",
+            "paragraph": "Paragraph Chunk",
+            "fixedLength": "Fixed Length Chunk",
+            "customSeparator": "Custom Separator Chunk"
+          }
+        },
+        "question": {
+          "title": "Question Synthesis Configuration",
+          "description": "Control the number and diversity of questions generated per chunk",
+          "count": "Question Generation Count",
+          "countDesc": "Number of questions generated per thousand tokens",
+          "temperature": "Temperature",
+          "temperatureDesc": "Higher value, more diverse questions",
+          "useModel": "Use Model",
+          "useModelDesc": "Conversational model for generating questions",
+          "promptTemplate": "Question Prompt Template",
+          "promptDesc": "Used to guide the model on how to generate high-quality questions from sliced text...",
+          "qaPlaceholder": "Will pre-fill question generation Prompt based on SFT QA synthesis scenario, can be adjusted as needed",
+          "cotPlaceholder": "Will pre-fill question generation Prompt based on COT reasoning synthesis scenario, can be adjusted as needed"
+        },
+        "answer": {
+          "title": "Answer Synthesis Configuration",
+          "description": "Control the stability and style of answer generation",
+          "temperature": "Temperature",
+          "temperatureDesc": "Lower value, more stable and conservative answers",
+          "useModel": "Use Model",
+          "useModelDesc": "Conversational model for generating answers",
+          "promptTemplate": "Answer Prompt Template",
+          "promptDesc": "Used to constrain the style and content range of model answers, e.g., whether step-by-step reasoning is needed...",
+          "qaPlaceholder": "Will pre-fill answer generation Prompt based on SFT QA synthesis scenario, can be adjusted as needed",
+          "cotPlaceholder": "Will pre-fill answer generation Prompt based on COT reasoning synthesis scenario, can be adjusted as needed"
+        }
+      },
+      "messages": {
+        "selectType": "Please select a synthesis type",
+        "selectModels": "Please select models for question and answer",
+        "selectFiles": "Please select at least one file",
+        "fillRequired": "Please fill in all required fields",
+        "createSuccess": "Synthesis task created successfully",
+        "createFailed": "Failed to create synthesis task",
+        "fetchQuestionPromptFailed": "Failed to fetch question Prompt template",
+        "fetchAnswerPromptFailed": "Failed to fetch answer Prompt template",
+        "loadModelsFailed": "Failed to load model list"
+      }
+    },
+    "templates": {
+      "title": "Instruction Templates",
+      "searchPlaceholder": "Search template name or description...",
+      "empty": {
+        "title": "No Instruction Templates",
+        "noMatch": "No matching templates found",
+        "createFirst": "Create your first instruction template"
+      },
+      "filters": {
+        "type": "Type",
+        "allTypes": "All Types",
+        "preset": "Preset Template",
+        "custom": "Custom Template"
+      },
+      "columns": {
+        "name": "Template Name",
+        "type": "Type",
+        "category": "Category",
+        "variables": "Variable Count",
+        "usageCount": "Usage Count",
+        "qualityScore": "Quality Score",
+        "lastUsed": "Last Used",
+        "actions": "Actions"
+      },
+      "typeMap": {
+        "all": "All Types",
+        "preset": "Preset",
+        "custom": "Custom"
+      }
+    },
+    "createTemplate": {
+      "title": "Create New Template",
+      "editTitle": "Edit Template",
+      "form": {
+        "basicInfo": "Basic Information",
+        "name": "Template Name",
+        "namePlaceholder": "Enter template name",
+        "nameRequired": "Please enter template name",
+        "category": "Category",
+        "categoryPlaceholder": "Select category",
+        "categoryRequired": "Please select category",
+        "description": "Template Description",
+        "descriptionPlaceholder": "Briefly describe the purpose and characteristics of the template",
+        "promptContent": "Prompt Content",
+        "promptPlaceholder": "Enter prompt content, use {variable_name} format to define variables",
+        "promptRequired": "Please enter Prompt content",
+        "promptHint": "Tip: Use {variable_name} format to define variables, e.g., {{text}} or {input}",
+        "testInput": "Test Input",
+        "testInputPlaceholder": "Enter test data",
+        "testOutput": "Test Output",
+        "testOutputPlaceholder": "Click test button to view output results"
+      },
+      "variables": {
+        "title": "Variable Management",
+        "empty": "No variables yet, define variables in Prompt using {variable_name} format",
+        "addPlaceholder": "Add variable name (e.g., text, input, question)",
+        "add": "Add"
+      },
+      "test": {
+        "title": "Template Test",
+        "testing": "Testing...",
+        "testButton": "Test Template"
+      },
+      "actions": {
+        "createTemplate": "Create Template",
+        "saveTemplate": "Save Template",
+        "cancel": "Cancel"
+      },
+      "messages": {
+        "saved": "Template saved",
+        "testOutput": "Test result generated based on input \"{{input}}\"...",
+        "testFailed": "Test failed"
+      },
+      "categories": {
+        "qa": "QA Pair Generation",
+        "distillation": "Distillation Dataset",
+        "textGeneration": "Text Generation",
+        "multimodal": "Multimodal Generation"
+      }
+    },
+    "detail": {
+      "title": "Synthesis Data Detail",
+      "breadcrumb": {
+        "tasks": "Synthesis Tasks",
+        "taskDetail": "Task Detail",
+        "fileDetail": "File Detail"
+      },
+      "chunkList": {
+        "title": "Chunk List",
+        "total": "Total {{count}} items",
+        "empty": "No Chunks",
+        "chunkIndex": "Chunk #{{index}}",
+        "confirmDeleteTitle": "Confirm delete this Chunk and its synthesis data?",
+        "confirmDeleteDesc": "ID: {{id}}"
+      },
+      "synthData": {
+        "title": "Synthesis Data",
+        "empty": "No synthesis data for this Chunk",
+        "noChunkSelected": "Please select a Chunk on the left",
+        "currentChunk": "Current Chunk #{{index}}",
+        "record": "Record {{index}}",
+        "confirmDeleteTitle": "Confirm delete this synthesis data?",
+        "confirmDeleteDesc": "ID: {{id}}",
+        "edit": {
+          "cancel": "Cancel",
+          "confirm": "Confirm"
+        },
+        "id": "ID: {{id}}"
+      },
+      "messages": {
+        "deleteSuccess": "Delete successful",
+        "deleteFailed": "Delete failed, please try again later",
+        "saveSuccess": "Save successful",
+        "saveFailed": "Save failed, please try again later"
+      },
+      "pagination": {
+        "total": "Total {{total}} items"
+      }
+    },
+    "fileTask": {
+      "breadcrumb": {
+        "tasks": "Synthesis Tasks",
+        "taskDetail": "Task Detail"
+      },
+      "tabs": {
+        "files": "Processed Files"
+      },
+      "columns": {
+        "file": "File",
+        "status": "Status",
+        "totalChunks": "Total Chunks",
+        "progress": "Processing Progress",
+        "createdAt": "Created At",
+        "updatedAt": "Updated At",
+        "actions": "Actions"
+      },
+      "status": {
+        "unknown": "Unknown",
+        "processing": "Processing",
+        "completed": "Completed",
+        "failed": "Failed"
+      },
+      "operations": {
+        "refresh": "Refresh",
+        "delete": "Delete Task"
+      },
+      "confirm": {
+        "deleteTitle": "Confirm delete this synthesis task?",
+        "deleteDescription": "This task cannot be recovered after deletion, please proceed with caution.",
+        "okText": "Confirm Delete",
+        "cancelText": "Cancel"
+      },
+      "messages": {
+        "fetchFailed": "Failed to fetch synthesis task details",
+        "deleteSuccess": "Synthesis task deleted",
+        "deleteFailed": "Failed to delete synthesis task"
+      },
+      "statistics": {
+        "type": "Type",
+        "fileCount": "File Count"
+      },
+      "typeMap": {
+        "qa": "QA Pair Generation",
+        "cot": "Chain of Thought Generation"
+      }
+    },
+    "messages": {
+      "deleteSuccess": "Delete successful",
+      "deleteFailed": "Delete failed",
+      "evaluationCreated": "Evaluation task created successfully",
+      "evaluationCreateFailed": "Failed to create evaluation task",
+      "fetchModelsFailed": "Failed to fetch model list"
+    }
+  },
+  "components": {
+    "errorBoundary": {
+      "title": "An error occurred",
+      "retry": "Retry",
+      "goHome": "Go Home"
+    },
+    "searchControls": {
+      "searchPlaceholder": "Search...",
+      "dateRange": {
+        "start": "Start Date",
+        "end": "End Date",
+        "placeholder": "Select date range"
+      },
+      "filters": {
+        "label": "Filters",
+        "clearAll": "Clear All"
+      }
+    },
+    "tagList": {
+      "addTag": "Add Tag"
+    },
+    "actionDropdown": {
+      "confirm": "Confirm",
+      "cancel": "Cancel"
+    },
+    "developmentInProgress": {
+      "title": "Under Development",
+      "description": "This feature is under development, stay tuned.",
+      "goHome": "Go Home"
+    },
+    "business": {
+      "taskPopover": {
+        "title": "Task Details",
+        "empty": "No task information",
+        "actions": {
+          "viewDetail": "View Details",
+          "delete": "Delete",
+          "archive": "Archive"
+        },
+        "progress": {
+          "label": "Progress",
+          "running": "Running",
+          "completed": "Completed"
+        },
+        "schedule": {
+          "label": "Schedule",
+          "nextRun": "Next Run",
+          "lastRun": "Last Run"
+        },
+        "source": {
+          "label": "Source",
+          "dataset": "Dataset",
+          "collection": "Collection Task"
+        }
+      }
+    }
+  },
+  "hooks": {
+    "tagConfig": {
+      "fetchFailed": "Failed to fetch tag configuration",
+      "loadError": "Error loading tag configuration"
+    },
+    "sliceUpload": {
+      "uploadDataset": "Upload Dataset",
+      "fileModifiedOrDeleted": "File has been modified or deleted, please reselect the file to upload",
+      "uploadFailed": "File upload failed, please try again later"
+    },
+    "fetchData": {
+      "totalItems": "Total",
+      "loginRequired": "Please login",
+      "fetchFailed": "Failed to fetch data, please try again later"
+    }
+  },
+  "home": {
+    "hero": {
+      "subtitle": "AI Dataset Preparation Tool",
+      "title": "Building High-Quality AI Datasets",
+      "description": "From data management to knowledge generation, one-stop solution for enterprise AI data processing scenarios.",
+      "getStartedButton": "Get Started",
+      "chatAssistantButton": "Chat Assistant",
+      "checkingButton": "Checking...",
+      "dataOrchestrationButton": "Data Orchestration"
+    },
+    "sections": {
+      "featuresTitle": "Feature Modules"
+    },
+    "orchestrationHighlight": {
+      "title": "Data Orchestration - Visual Process Design",
+      "description": "Drag-and-drop design of complex data processing pipelines, making data flow more intuitive and efficient.",
+      "coreFeaturesTitle": "Core Features:",
+      "feature1": "Visual Process Designer",
+      "feature2": "Rich Data Processing Component Library",
+      "feature3": "Real-time Process Execution Monitoring",
+      "smartFeaturesTitle": "Smart Features:",
+      "smartFeature1": "Automatic data flow path optimization",
+      "smartFeature2": "Smart error detection and repair suggestions",
+      "smartFeature3": "Template-based process rapid reuse",
+      "startButton": "Start Orchestration"
+    },
+    "dataAgentHighlight": {
+      "title": "Data Agent - Conversational Business Operations",
+      "description": "Say goodbye to complex interfaces, complete all dataset-related business operations with natural language.",
+      "examplesTitle": "Conversation Examples:",
+      "example1": "Help me create an image classification dataset",
+      "example2": "Analyze data quality and generate a report",
+      "example3": "Start synthesis task with target of 1000 data points",
+      "smartFeaturesTitle": "Smart Features:",
+      "smartFeature1": "Understand complex requirements and execute automatically",
+      "smartFeature2": "Provide professional advice and optimization solutions",
+      "smartFeature3": "Learn usage habits for personalized service",
+      "startButton": "Start Conversation"
+    },
+    "workflowShowcase": {
+      "title": "Complete Data Processing Workflow",
+      "description": "End-to-end solution from raw data to high-quality datasets.",
+      "step1Title": "Data Collection",
+      "step1Description": "Support importing from various data sources including local files, databases, APIs, etc.",
+      "step2Title": "Smart Orchestration",
+      "step2Description": "Visualize data processing workflows, automate complex tasks.",
+      "step3Title": "Smart Processing",
+      "step3Description": "Automated data processing, annotation, and quality assessment workflows.",
+      "step4Title": "Quality Assurance",
+      "step4Description": "Comprehensive quality evaluation and bias detection to ensure dataset reliability.",
+      "startButton": "Start Building Dataset"
+    },
+    "features": {
+      "orchestration": {
+        "title": "Smart Orchestration",
+        "description": "Visual data processing workflow orchestration, drag-and-drop design of complex data processing pipelines"
+      },
+      "chatAssistant": {
+        "title": "Chat Assistant",
+        "description": "Complete complex dataset operations and business processes through natural language conversation"
+      },
+      "evaluation": {
+        "title": "Comprehensive Evaluation",
+        "description": "Multi-dimensional data quality assessment, including statistical analysis, performance testing and bias detection"
+      },
+      "processing": {
+        "title": "Efficient Processing",
+        "description": "Complete data processing pipeline from raw data to usable datasets"
+      },
+      "knowledge": {
+        "title": "Knowledge Management",
+        "description": "Build RAG-oriented knowledge bases, supporting intelligent Q&A and retrieval"
+      }
+    }
+  },
+  "datasetFileTransfer": {
+    "columns": {
+      "datasetName": "Dataset",
+      "fileName": "File Name",
+      "fileSize": "Size"
+    },
+    "datasetColumns": {
+      "name": "Dataset Name",
+      "fileCount": "File Count",
+      "totalSize": "Size"
+    },
+    "selectDataset": "Select Dataset",
+    "searchDatasetPlaceholder": "Search dataset name...",
+    "selectFiles": "Select Files",
+    "selectAllCurrentDataset": "Select All in Current Dataset",
+    "searchFilesPlaceholder": "Search file name...",
+    "preview": "Preview",
+    "cancelPreview": "Cancel Preview",
+    "messages": {
+      "pleaseSelectDataset": "Please select a dataset first",
+      "singleDatasetOnlyWarning": "Files can only be selected from one dataset at a time. Please clear selected files before switching datasets",
+      "selectAllSuccess": "Selected all {{count}} files in the current dataset",
+      "noFilesAvailable": "No files available in the current dataset",
+      "selectAllFailed": "Failed to select all files in dataset, please try again later"
     }
   }
 }
