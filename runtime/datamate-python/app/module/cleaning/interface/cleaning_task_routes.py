@@ -181,6 +181,7 @@ async def stop_cleaning_task(
     """Stop cleaning task"""
     task_service = _get_task_service(db)
     await task_service.stop_task(db, task_id)
+    await db.commit()
     return StandardResponse(code="0", message="success", data=task_id)
 
 

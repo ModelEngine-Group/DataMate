@@ -43,5 +43,4 @@ jobs:
           echo "${{ secrets.HUAWEI_CLOUD_SWR_LOGIN_PWD}}" | docker login swr.cn-east-3.myhuaweicloud.com --username=cn-east-3@HPUA3ZGOTQFAFMM59DB9 --password-stdin
           docker push "${TARGET_IMAGE}"-amd
           docker push "${TARGET_IMAGE}"-arm
-          docker manifest create "${TARGET_IMAGE}" "${TARGET_IMAGE}"-amd "${TARGET_IMAGE}"-arm
-          docker manifest push "${TARGET_IMAGE}"
+          docker buildx imagetools create -t "${TARGET_IMAGE}" "${TARGET_IMAGE}"-amd "${TARGET_IMAGE}"-arm
