@@ -41,6 +41,7 @@ public:
     data:
       DB_PASSWORD: "password"
       CERT_PASS: ""
+      DOMAIN: ""
 
 datasetVolume: &datasetVolume
   name: dataset-volume
@@ -177,6 +178,11 @@ frontend:
         secretKeyRef:
           name: datamate-conf
           key: CERT_PASS
+    - name: DOMAIN
+      valueFrom:
+        secretKeyRef:
+          name: datamate-conf
+          key: DOMAIN
   volumes:
     - *logVolume
     - name: cert-volume

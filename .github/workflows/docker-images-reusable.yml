@@ -153,7 +153,6 @@ jobs:
 
       - name: Manifest Docker Image
         run: |
-          docker manifest create ${{ steps.set-tag.outputs.TAGS }} \
+          docker buildx imagetools create -t ${{ steps.set-tag.outputs.TAGS }} \
             ${{ steps.set-tag.outputs.AMD_TAGS }} \
             ${{ steps.set-tag.outputs.ARM_TAGS }}
-          docker manifest push ${{ steps.set-tag.outputs.TAGS }}
