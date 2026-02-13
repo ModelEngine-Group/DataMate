@@ -207,7 +207,7 @@ VALUES
 ('ImgDenoise', '图片噪点去除', '去除图片中的噪点，主要适用于自然场景。', '1.0.0', 'image', 'image', null, null, '', 4096, false, 'system', 'system'),
 ('ImgDuplicatedImagesCleaner', '重复图片去除', '去除重复的图片。', '1.0.0', 'image', 'image', null, null, '', 8192, false, 'system', 'system'),
 ('ImgPerspectiveTransformation', '图片透视变换', '自适应校正图片的视角，主要适用于文档校正场景。', '1.0.0', 'image', 'image', null, null, '', 8192, false, 'system', 'system'),
-('ImgResize', '图片重采样', '将图片放大或缩小到指定像素。', '1.0.0', 'image', 'image', null, '{"targetSize": {"name": "重采样尺寸", "name_en": "Resample Size", "type": "multiple", "properties": [{"type": "inputNumber", "name": "宽度", "description": "像素", "defaultVal": 256, "min": 1, "max": 4096, "step": 1}, {"type": "inputNumber", "name": "高度", "description": "像素", "defaultVal": 256, "min": 1, "max": 4096, "step": 1}]}}', '', 8192, false, 'system', 'system'),
+('ImgResize', '图片重采样', '将图片放大或缩小到指定像素。', '1.0.0', 'image', 'image', null, '{"widthSize":{"name":"宽度","type":"inputNumber","description":"像素","defaultVal":256,"min":1,"max":4096,"step":1},"heightSize":{"type":"inputNumber","name":"高度","description":"像素","defaultVal":256,"min":1,"max":4096,"step":1}}', '', 8192, false, 'system', 'system'),
 ('ImgSaturation', '图片饱和度增强', '自适应调节图片的饱和度，主要适用于自然场景图片。', '1.0.0', 'image', 'image', null, null, '', 4096, false, 'system', 'system'),
 ('ImgShadowRemove', '图片阴影去除', '去除图片中的阴影，主要适用于文档场景。', '1.0.0', 'image', 'image', null, null, '', 4096, false, 'system', 'system'),
 ('ImgSharpness', '图片锐度增强', '自适应调节图片的锐度，主要适用于自然场景图片。', '1.0.0', 'image', 'image', null, null, '', 4096, false, 'system', 'system'),
