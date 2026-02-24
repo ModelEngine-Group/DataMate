@@ -9,11 +9,13 @@ import com.datamate.datamanagement.domain.model.dataset.Dataset;
 import com.datamate.datamanagement.interfaces.converter.DatasetConverter;
 import com.datamate.datamanagement.interfaces.dto.*;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springaicommunity.mcp.annotation.McpTool;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -25,6 +27,7 @@ import java.util.Map;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/data-management/datasets")
+@Validated
 public class DatasetController {
     private final DatasetApplicationService datasetApplicationService;
 
@@ -60,7 +63,10 @@ public class DatasetController {
      * @return 数据集响应
      */
     @GetMapping("/{datasetId}")
-    public DatasetResponse getDatasetById(@PathVariable("datasetId") String datasetId) {
+    public DatasetResponse getDatasetById(
+            @PathVariable("datasetId")
+            @Pattern(regexp = "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$", message = "数据集ID格式不正确，应为UUID格式")
+            String datasetId) {
         DatasetResponse dataset = DatasetConverter.INSTANCE.convertToResponse(datasetApplicationService.getDataset(datasetId));
         dataset.setPvcName(datasetApplicationService.getDatasetPvcName());
         return dataset;
@@ -74,14 +80,20 @@ public class DatasetController {
      * @return 更新后的数据集响应
      */
     @PutMapping("/{datasetId}")
-    public DatasetResponse updateDataset(@PathVariable("datasetId") String datasetId,
-                                         @RequestBody UpdateDatasetRequest updateDatasetRequest) {
+    public DatasetResponse updateDataset(
+            @PathVariable("datasetId")
+            @Pattern(regexp = "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$", message = "数据集ID格式不正确，应为UUID格式")
+            String datasetId,
+            @RequestBody UpdateDatasetRequest updateDatasetRequest) {
         Dataset dataset = datasetApplicationService.updateDataset(datasetId, updateDatasetRequest);
         return DatasetConverter.INSTANCE.convertToResponse(dataset);
     }
 
     @GetMapping("/{datasetId}/lineage")
-    public DatasetLineage getDatasetLineage(@PathVariable("datasetId") String datasetId) {
+    public DatasetLineage getDatasetLineage(
+            @PathVariable("datasetId")
+            @Pattern(regexp = "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$", message = "数据集ID格式不正确，应为UUID格式")
+            String datasetId) {
         return datasetApplicationService.getDatasetLineage(datasetId);
     }
 
@@ -91,13 +103,18 @@ public class DatasetController {
      * @param datasetId 数据集ID
      */
     @DeleteMapping("/{datasetId}")
-    public void deleteDataset(@PathVariable("datasetId") String datasetId) {
+    public void deleteDataset(
+            @PathVariable("datasetId")
+            @Pattern(regexp = "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$", message = "数据集ID格式不正确，应为UUID格式")
+            String datasetId) {
         datasetApplicationService.deleteDataset(datasetId);
     }
 
     @GetMapping("/{datasetId}/statistics")
     public ResponseEntity<Response<DatasetStatisticsResponse>> getDatasetStatistics(
-        @PathVariable("datasetId") String datasetId) {
+            @PathVariable("datasetId")
+            @Pattern(regexp = "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$", message = "数据集ID格式不正确，应为UUID格式")
+            String datasetId) {
         try {
             Map<String, Object> stats = datasetApplicationService.getDatasetStatistics(datasetId);
 
