@@ -149,7 +149,7 @@ public class KnowledgeBaseService {
 
         // 将 KnowledgeBase 转换为 KnowledgeBaseResp，并计算 fileCount 和 chunkCount
         List<KnowledgeBaseResp> respList = page.getRecords().stream().map(this::getKnowledgeBaseResp).toList();
-        return PagedResponse.of(respList, page.getCurrent(), page.getTotal(), page.getPages());
+        return PagedResponse.of(page.getCurrent(), page.getSize(), page.getTotal(), page.getPages(), respList);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -173,7 +173,7 @@ public class KnowledgeBaseService {
         IPage<RagFile> page = new Page<>(request.getPage(), request.getSize());
         request.setKnowledgeBaseId(knowledgeBaseId);
         page = ragFileRepository.page(page, request);
-        return PagedResponse.of(page.getRecords(), page.getCurrent(), page.getTotal(), page.getPages());
+        return PagedResponse.of(page.getCurrent(), page.getSize(), page.getTotal(), page.getPages(), page.getRecords());
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -214,7 +214,7 @@ public class KnowledgeBaseService {
                 .build());
 
         long totalCount = Long.parseLong(countResults.getQueryResults().getFirst().getEntity().get("count(*)").toString());
-        return PagedResponse.of(ragChunks, pagingQuery.getPage(), totalCount, (int) Math.ceil((double) totalCount / pagingQuery.getSize()));
+        return PagedResponse.of(pagingQuery.getPage(), pagingQuery.getSize(), totalCount, (int) Math.ceil((double) totalCount / pagingQuery.getSize()), ragChunks);
     }
 
     /**
