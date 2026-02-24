@@ -13,7 +13,7 @@ info:
   version: 1.0.0
 
 servers:
-  - url: http://localhost:8092/api/v1/data-management
+  - url: http://localhost:8092/api/data-management
     description: Development server
 
 tags:
@@ -27,7 +27,7 @@ tags:
     description: 标签管理
 
 paths:
-  /data-management/datasets:
+  /api/data-management/datasets:
     get:
       tags: [Dataset]
       operationId: getDatasets
@@ -93,20 +93,14 @@ paths:
             schema:
               $ref: '#/components/schemas/CreateDatasetRequest'
       responses:
-        '201':
+        '200':
           description: 创建成功
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/DatasetResponse'
-        '400':
-          description: 请求参数错误
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
 
-  /data-management/datasets/{datasetId}:
+  /api/data-management/datasets/{datasetId}:
     get:
       tags: [Dataset]
       operationId: getDatasetById
@@ -187,7 +181,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /data-management/datasets/{datasetId}/files:
+  /api/data-management/datasets/{datasetId}/files:
     get:
       tags: [DatasetFile]
       summary: 获取数据集文件列表
@@ -200,6 +194,12 @@ paths:
           schema:
             type: string
           description: 数据集ID
+        - name: isWithDirectory
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: 是否包含目录结构
         - name: page
           in: query
           schema:
@@ -212,6 +212,12 @@ paths:
             type: integer
             default: 20
           description: 每页大小
+        - name: prefix
+          in: query
+          schema:
+            type: string
+            default: ""
+          description: 路径前缀，用于过滤子目录下的文件
         - name: fileType
           in: query
           schema:
@@ -229,9 +235,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PagedDatasetFileResponse'
+                $ref: '#/components/schemas/PagedDatasetFileResponseWrapper'
 
-  /data-management/datasets/{datasetId}/files/directories:
+  /api/data-management/datasets/{datasetId}/files/directories:
     post:
       tags: [ DatasetFile ]
       operationId: createDirectory
@@ -254,7 +260,7 @@ paths:
         '200':
           description: 创建成功
 
-  /data-management/datasets/{datasetId}/files/{fileId}:
+  /api/data-management/datasets/{datasetId}/files/{fileId}:
     get:
       tags: [DatasetFile]
       summary: 获取文件详情
@@ -273,13 +279,25 @@ paths:
           schema:
             type: string
           description: 文件ID
+        - name: prefix
+          in: query
+          schema:
+            type: string
+            default: ""
+          description: 路径前缀，用于定位文件
       responses:
         '200':
           description: 成功
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DatasetFileResponse'
+                $ref: '#/components/schemas/DatasetFileResponseWrapper'
+        '404':
+          description: 文件不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
     delete:
       tags: [DatasetFile]
@@ -299,11 +317,27 @@ paths:
           schema:
             type: string
           description: 文件ID
+        - name: prefix
+          in: query
+          schema:
+            type: string
+            default: ""
+          description: 路径前缀，用于定位文件
       responses:
-        '204':
+        '200':
           description: 删除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 文件不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
-  /data-management/datasets/{datasetId}/files/{fileId}/download:
+  /api/data-management/datasets/{datasetId}/files/{fileId}/download:
     get:
       tags: [DatasetFile]
       operationId: downloadDatasetFile
@@ -331,7 +365,7 @@ paths:
                 type: string
                 format: binary
 
-  /data-management/datasets/{datasetId}/files/download:
+  /api/data-management/datasets/{datasetId}/files/download:
     get:
       tags: [ DatasetFile ]
       operationId: downloadDatasetFileAsZip
@@ -353,7 +387,108 @@ paths:
                 type: string
                 format: binary
 
-  /data-management/datasets/{datasetId}/files/upload/add:
+  /api/data-management/datasets/{datasetId}/files/directories/download:
+    get:
+      tags: [DatasetFile]
+      operationId: downloadDirectory
+      summary: 下载目录
+      description: 下载指定目录（压缩为 ZIP）
+      parameters:
+        - name: datasetId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 数据集ID
+        - name: prefix
+          in: query
+          schema:
+            type: string
+            default: ""
+          description: 目录前缀路径
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/zip:
+              schema:
+                type: string
+                format: binary
+
+    delete:
+      tags: [DatasetFile]
+      operationId: deleteDirectory
+      summary: 删除目录
+      description: 删除目录及其所有内容
+      parameters:
+        - name: datasetId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 数据集ID
+        - name: prefix
+          in: query
+          schema:
+            type: string
+            default: ""
+          description: 目录前缀路径
+      responses:
+        '200':
+          description: 删除成功
+
+    put:
+      tags: [DatasetFile]
+      operationId: renameDirectory
+      summary: 重命名目录
+      description: 重命名数据集目录
+      parameters:
+        - name: datasetId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 数据集ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RenameDirectoryRequest'
+      responses:
+        '200':
+          description: 重命名成功
+
+  /api/data-management/datasets/{datasetId}/files/{fileId}/rename:
+    put:
+      tags: [DatasetFile]
+      operationId: renameFile
+      summary: 重命名文件
+      description: 重命名数据集文件
+      parameters:
+        - name: datasetId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 数据集ID
+        - name: fileId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 文件ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RenameFileRequest'
+      responses:
+        '200':
+          description: 重命名成功
+
+  /api/data-management/datasets/{datasetId}/files/upload/add:
       post:
           tags: [ DatasetFile ]
           operationId: addFilesToDataset
@@ -382,7 +517,36 @@ paths:
                               items:
                                   $ref: '#/components/schemas/DatasetFileResponse'
 
-  /data-management/datasets/{datasetId}/files/upload/pre-upload:
+  /api/data-management/datasets/{datasetId}/files/upload/copy:
+    post:
+      tags: [DatasetFile]
+      operationId: copyFilesToDataset
+      summary: 拷贝文件到数据集
+      description: 将指定路径中的文件拷贝到数据集目录下
+      parameters:
+        - name: datasetId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 数据集ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CopyFilesRequest'
+      responses:
+        '200':
+          description: 拷贝成功，返回创建的文件记录列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DatasetFileResponse'
+
+  /api/data-management/datasets/{datasetId}/files/upload/pre-upload:
     post:
       tags: [ DatasetFile ]
       operationId: preUpload
@@ -407,9 +571,9 @@ paths:
           content:
             application/json:
               schema:
-                type: string
+                $ref: '#/components/schemas/StringResponseWrapper'
 
-  /data-management/datasets/{datasetId}/files/upload/chunk:
+  /api/data-management/datasets/{datasetId}/files/upload/chunk:
     post:
       tags: [ DatasetFile ]
       operationId: chunkUpload
@@ -432,7 +596,7 @@ paths:
         '200':
           description: 上传成功
 
-  /data-management/dataset-types:
+  /api/data-management/dataset-types:
     get:
       operationId: getDatasetTypes
       tags: [DatasetType]
@@ -448,7 +612,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/DatasetTypeResponse'
 
-  /data-management/tags:
+  /api/data-management/tags:
     get:
       tags: [Tag]
       operationId: getTags
@@ -466,9 +630,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/TagResponse'
+                $ref: '#/components/schemas/TagListResponse'
 
     post:
       tags: [Tag]
@@ -482,14 +644,98 @@ paths:
             schema:
               $ref: '#/components/schemas/CreateTagRequest'
       responses:
-        '201':
+        '200':
           description: 创建成功
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TagResponse'
+                $ref: '#/components/schemas/TagResponseWrapper'
+        '400':
+          description: 请求参数错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
-  /data-management/datasets/{datasetId}/statistics:
+    put:
+      tags: [Tag]
+      operationId: updateTag
+      summary: 更新标签
+      description: 更新现有标签信息
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTagRequest'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TagResponseWrapper'
+
+    delete:
+      tags: [Tag]
+      operationId: deleteTag
+      summary: 删除标签
+      description: 删除指定的标签（批量删除）
+      parameters:
+        - name: ids
+          in: query
+          required: true
+          schema:
+            type: array
+            items:
+              type: string
+            maxItems: 10
+          description: 标签ID列表，最多10个
+          style: form
+          explode: false
+      responses:
+        '200':
+          description: 删除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '400':
+          description: 请求参数错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/data-management/datasets/{datasetId}/lineage:
+    get:
+      tags: [Dataset]
+      operationId: getDatasetLineage
+      summary: 获取数据集血缘信息
+      description: 获取数据集的血缘关系信息
+      parameters:
+        - name: datasetId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: 数据集ID
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatasetLineage'
+        '404':
+          description: 数据集不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/data-management/datasets/{datasetId}/statistics:
     get:
       tags: [Dataset]
       operationId: getDatasetStatistics
@@ -508,7 +754,27 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DatasetStatisticsResponse'
+                $ref: '#/components/schemas/DatasetStatisticsResponseWrapper'
+        '404':
+          description: 数据集不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/data-management/datasets/statistics:
+    get:
+      tags: [Dataset]
+      operationId: getAllDatasetStatistics
+      summary: 获取所有数据集统计信息
+      description: 获取所有数据集的统计信息汇总
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllDatasetStatisticsResponseWrapper'
 
 components:
   schemas:
@@ -537,6 +803,9 @@ components:
         last:
           type: boolean
           description: 是否为最后一页
+        number:
+          type: integer
+          description: 页码
 
     DatasetResponse:
       type: object
@@ -550,17 +819,20 @@ components:
         description:
           type: string
           description: 数据集描述
-        type:
-          $ref: '#/components/schemas/DatasetTypeResponse'
+        datasetType:
+          type: string
+          description: 数据集类型
         status:
           type: string
-          enum: [ACTIVE, INACTIVE, PROCESSING]
           description: 数据集状态
         tags:
           type: array
           items:
             $ref: '#/components/schemas/TagResponse'
           description: 标签列表
+        retentionDays:
+          type: integer
+          description: 数据集保留天数
         dataSource:
           type: string
           description: 数据源
@@ -589,53 +861,82 @@ components:
         createdBy:
           type: string
           description: 创建者
+        updatedBy:
+          type: string
+          description: 更新者
+        distribution:
+          type: object
+          additionalProperties:
+            type: object
+            additionalProperties:
+              type: integer
+              format: int64
+          description: 分布信息
+        pvcName:
+          type: string
+          description: 数据集pvc名称
 
     CreateDatasetRequest:
       type: object
       required:
         - name
-        - type
+        - datasetType
       properties:
         name:
           type: string
           description: 数据集名称
           minLength: 1
-          maxLength: 100
+          maxLength: 255
         description:
           type: string
           description: 数据集描述
           maxLength: 500
-        type:
+        datasetType:
           type: string
-          description: 数据集类型
+          description: 数据集类型，取值范围为TEXT/IMAGE/VIDEO/AUDIO/OTHER
+          enum: [TEXT, IMAGE, VIDEO, AUDIO, OTHER]
         tags:
           type: array
           items:
             type: string
           description: 标签列表
+          maxItems: 20
         dataSource:
           type: string
           description: 数据源
-        targetLocation:
+          maxLength: 255
+        retentionDays:
+          type: integer
+          description: 保留天数
+          minimum: 0
+        status:
           type: string
-          description: 目标位置
+          enum: [DRAFT, ACTIVE, PROCESSING, ARCHIVED, PUBLISHED, DEPRECATED]
+          description: 数据集状态
 
     UpdateDatasetRequest:
       type: object
+      required:
+        - name
       properties:
         name:
           type: string
           description: 数据集名称
-          maxLength: 100
+          maxLength: 255
         description:
           type: string
           description: 数据集描述
           maxLength: 500
+        dataSource:
+          type: string
+          description: 数据源
+          maxLength: 255
         tags:
           type: array
           items:
             type: string
           description: 标签列表
+          maxItems: 20
         status:
           type: string
           enum: [DRAFT, ACTIVE, PROCESSING, ARCHIVED, PUBLISHED, DEPRECATED]
@@ -657,15 +958,57 @@ components:
         totalSize:
           type: integer
           format: int64
+          minimum: 1
           description: 总文件大小（字节）
         prefix:
           type: string
           description: 目标子目录前缀，例如 "images/"，为空表示数据集根目录
+          maxLength: 500
       required: [ totalFileNum ]
+
+    AddFilesRequest:
+      type: object
+      description: 将源文件路径添加到数据集的请求
+      properties:
+        files:
+          type: array
+          description: 文件列表
+          items:
+            $ref: '#/components/schemas/FileRequest'
+          minItems: 1
+          maxItems: 1000
+        softAdd:
+          type: boolean
+          description: 如果为 true，则仅在数据库中创建记录（默认 false）
+          default: false
+        prefix:
+          type: string
+          description: 目标子目录前缀
+          maxLength: 500
+          default: ""
+      required:
+        - files
+
+    FileRequest:
+      type: object
+      description: 文件请求对象
+      properties:
+        filePath:
+          type: string
+          description: 文件路径
+          maxLength: 1000
+        metadata:
+          type: object
+          additionalProperties: true
+          description: 文件元数据
+      required:
+        - filePath
 
     CreateDirectoryRequest:
       type: object
       description: 创建数据集子目录请求
+      required:
+        - directoryName
       properties:
         parentPrefix:
           type: string
@@ -673,7 +1016,7 @@ components:
         directoryName:
           type: string
           description: 新建目录名称
-      required: [ directoryName ]
+          maxLength: 255
 
     UploadFileRequest:
       type: object
@@ -686,24 +1029,29 @@ components:
           type: integer
           format: int32
           description: 文件编号（批量中的第几个）
+          minimum: 0
         fileName:
           type: string
           description: 文件名称
+          maxLength: 255
         totalChunkNum:
           type: integer
           format: int32
           description: 文件总分片数量
+          minimum: 1
         chunkNo:
           type: integer
           format: int32
           description: 当前分片编号（从1开始）
+          minimum: 1
         file:
           type: string
           format: binary
           description: 分片二进制内容
         checkSumHex:
           type: string
-          description: 分片校验和（十六进制）
+          description: 分片校验和（十六进制字符串，64位）
+          pattern: '^[0-9a-fA-F]{64}$'
       required: [ reqId, fileNo, fileName, totalChunkNum, chunkNo, file ]
 
     DatasetTypeResponse:
@@ -752,6 +1100,9 @@ components:
         last:
           type: boolean
           description: 是否为最后一页
+        number:
+          type: integer
+          description: 页码
 
     DatasetFileResponse:
       type: object
@@ -782,13 +1133,34 @@ components:
         filePath:
           type: string
           description: 文件路径
+        tags:
+          type: string
+          description: 文件标签（JSON 字符串）
+        tagsUpdatedAt:
+          type: string
+          format: date-time
+          description: 标签更新时间
+        metadata:
+          type: string
+          description: 文件元数据（包含标注信息等，JSON 字符串）
         uploadTime:
           type: string
           format: date-time
           description: 上传时间
+        lastAccessTime:
+          type: string
+          format: date-time
+          description: 最后更新时间
         uploadedBy:
           type: string
           description: 上传者
+        directory:
+          type: boolean
+          description: 是否为目录
+        fileCount:
+          type: integer
+          format: int64
+          description: 目录文件数量
 
     TagResponse:
       type: object
@@ -808,6 +1180,9 @@ components:
         usageCount:
           type: integer
           description: 使用次数
+        category:
+          type: string
+          description: 标签分类
 
     CreateTagRequest:
       type: object
@@ -818,7 +1193,7 @@ components:
           type: string
           description: 标签名称
           minLength: 1
-          maxLength: 50
+          maxLength: 100
         color:
           type: string
           description: 标签颜色
@@ -826,7 +1201,11 @@ components:
         description:
           type: string
           description: 标签描述
-          maxLength: 200
+          maxLength: 500
+        category:
+          type: string
+          description: 标签分类
+          maxLength: 50
 
     DatasetStatisticsResponse:
       type: object
@@ -873,18 +1252,210 @@ components:
           type: string
           description: 请求路径
 
-    AddFilesRequest:
-        type: object
-        description: 将源文件路径添加到数据集的请求
-        properties:
-            sourcePaths:
-                type: array
-                items:
-                    type: string
-                description: 源文件路径列表（相对或绝对路径），每个元素表示一个要添加的文件或目录路径
-            softAdd:
-                type: boolean
-                description: 如果为 true，则仅在数据库中创建记录（默认 false）
-                default: false
-        required:
-            - sourcePaths
+    CopyFilesRequest:
+      type: object
+      description: 拷贝文件到数据集的请求
+      properties:
+        sourcePaths:
+          type: array
+          items:
+            type: string
+          description: 源文件路径列表（相对或绝对路径），每个元素表示一个要添加的文件或目录路径
+      required:
+        - sourcePaths
+
+    UpdateTagRequest:
+      type: object
+      description: 更新标签请求
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          description: 标签ID
+        name:
+          type: string
+          description: 标签名称
+          maxLength: 100
+        color:
+          type: string
+          description: 标签颜色，十六进制格式
+          pattern: '^#[0-9A-Fa-f]{6}$'
+        description:
+          type: string
+          description: 标签描述
+          maxLength: 500
+
+    RenameFileRequest:
+      type: object
+      description: 重命名数据集文件请求
+      required:
+        - newName
+      properties:
+        newName:
+          type: string
+          description: 新的文件名称（不包含后缀）
+          maxLength: 255
+
+    RenameDirectoryRequest:
+      type: object
+      description: 重命名数据集目录请求
+      required:
+        - prefix
+        - newName
+      properties:
+        prefix:
+          type: string
+          description: 目录前缀，例如 "images/"，与列表/删除目录接口保持一致
+          maxLength: 500
+        newName:
+          type: string
+          description: 新的目录名称
+          maxLength: 255
+
+    DatasetLineage:
+      type: object
+      description: 数据集血缘信息
+      properties:
+        upstreamDatasets:
+          type: array
+          description: 上游数据集
+          items:
+            $ref: '#/components/schemas/DatasetResponse'
+        downstreamDatasets:
+          type: array
+          description: 下游数据集
+          items:
+            $ref: '#/components/schemas/DatasetResponse'
+        tasks:
+          type: array
+          description: 相关任务
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              type:
+                type: string
+
+    AllDatasetStatisticsResponse:
+      type: object
+      description: 所有数据集统计信息汇总
+      properties:
+        totalDatasets:
+          type: integer
+          description: 总数据集数量
+        totalFiles:
+          type: integer
+          description: 总文件数量
+        totalSize:
+          type: integer
+          format: int64
+          description: 总大小（字节）
+        datasetsByType:
+          type: object
+          additionalProperties:
+            type: integer
+          description: 按类型分组的统计
+        datasetsByStatus:
+          type: object
+          additionalProperties:
+            type: integer
+          description: 按状态分组的统计
+
+    TagListResponse:
+      type: object
+      description: 标签列表响应
+      properties:
+        code:
+          type: integer
+          description: 响应代码
+        message:
+          type: string
+          description: 响应消息
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/TagResponse'
+          description: 标签列表
+
+    DatasetStatisticsResponseWrapper:
+      type: object
+      description: 数据集统计信息响应包装器
+      properties:
+        code:
+          type: integer
+          description: 响应代码
+        message:
+          type: string
+          description: 响应消息
+        data:
+          $ref: '#/components/schemas/DatasetStatisticsResponse'
+
+    AllDatasetStatisticsResponseWrapper:
+      type: object
+      description: 所有数据集统计信息响应包装器
+      properties:
+        code:
+          type: integer
+          description: 响应代码
+        message:
+          type: string
+          description: 响应消息
+        data:
+          $ref: '#/components/schemas/AllDatasetStatisticsResponse'
+
+    PagedDatasetFileResponseWrapper:
+      type: object
+      description: 数据集文件分页响应包装器
+      properties:
+        code:
+          type: integer
+          description: 响应代码
+        message:
+          type: string
+          description: 响应消息
+        data:
+          $ref: '#/components/schemas/PagedDatasetFileResponse'
+
+    DatasetFileResponseWrapper:
+      type: object
+      description: 数据集文件响应包装器
+      properties:
+        code:
+          type: integer
+          description: 响应代码
+        message:
+          type: string
+          description: 响应消息
+        data:
+          $ref: '#/components/schemas/DatasetFileResponse'
+
+    StringResponseWrapper:
+      type: object
+      description: 字符串响应包装器
+      properties:
+        code:
+          type: integer
+          description: 响应代码
+        message:
+          type: string
+          description: 响应消息
+        data:
+          type: string
+          description: 响应数据
+
+    TagResponseWrapper:
+      type: object
+      description: 标签响应包装器
+      properties:
+        code:
+          type: integer
+          description: 响应代码
+        message:
+          type: string
+          description: 响应消息
+        data:
+          $ref: '#/components/schemas/TagResponse'
