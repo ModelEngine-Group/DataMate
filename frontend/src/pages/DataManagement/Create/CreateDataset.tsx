@@ -34,7 +34,7 @@ export default function DatasetCreate() {
       navigate("/data/management/detail/" + data.id);
     } catch (error) {
       console.error(error);
-      message.error(t("dataManagement.messages.createFailed"));
+      message.error(error.message);
       return;
     }
   };

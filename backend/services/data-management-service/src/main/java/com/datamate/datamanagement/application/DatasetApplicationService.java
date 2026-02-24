@@ -188,7 +188,7 @@ public class DatasetApplicationService {
         String datasetPvcName = getDatasetPvcName();
         List<DatasetResponse> datasetResponses = DatasetConverter.INSTANCE.convertToResponse(page.getRecords());
         datasetResponses.forEach(dataset -> dataset.setPvcName(datasetPvcName));
-        return PagedResponse.of(datasetResponses, page.getCurrent(), page.getTotal(), page.getPages());
+        return PagedResponse.of(page.getCurrent(), page.getSize(), page.getTotal(), page.getPages(), datasetResponses);
     }
 
     /**

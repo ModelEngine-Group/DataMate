@@ -135,7 +135,7 @@ public class DatasetFileApplicationService {
             }
             List<DatasetFile> datasetFiles = pageData.stream().map(path -> getDatasetFile(path, datasetFilesMap)).toList();
 
-            return new PagedResponse<>(page, size, total, totalPages, datasetFiles);
+            return PagedResponse.of(page, size, total, totalPages, datasetFiles);
         } catch (IOException e) {
             log.warn("list dataset path error");
             return PagedResponse.of(new Page<>(page, size));

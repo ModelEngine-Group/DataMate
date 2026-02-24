@@ -3,6 +3,7 @@ package com.datamate.datamanagement.interfaces.dto;
 import com.datamate.common.interfaces.PagingQuery;
 import com.datamate.datamanagement.common.enums.DatasetStatusType;
 import com.datamate.datamanagement.common.enums.DatasetType;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -30,12 +31,14 @@ public class DatasetPagingQuery extends PagingQuery {
     /**
      * 标签名过滤
      */
+    @Size(max = 10, message = "过滤标签数量不能超过10个")
     @McpToolParam(description = "标签名过滤", required = false)
     private List<String> tags = new ArrayList<>();
 
     /**
      * 关键词搜索（名称或描述）
      */
+    @Size(max = 100, message = "关键词长度不能超过100个字符")
     @McpToolParam(description = "关键词搜索（名称或描述）", required = false)
     private String keyword;
 

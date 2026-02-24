@@ -43,7 +43,7 @@ public class ModelConfigApplicationService {
     public PagedResponse<ModelConfig> getModels(QueryModelRequest queryModelRequest) {
         // 从数据库查询模型配置
         IPage<ModelConfig> page = modelConfigRepository.page(queryModelRequest);
-        return PagedResponse.of(page.getRecords(), page.getCurrent(), page.getTotal(), page.getPages());
+        return PagedResponse.of(page);
     }
 
     public ModelConfig getModelDetail(String modelId) {
