@@ -12,6 +12,7 @@ import lombok.Setter;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -43,7 +44,7 @@ public class AddFilesRequest {
         @Size(max = 1000, message = "文件路径长度不能超过1000个字符")
         private String filePath;
 
-        private Map<String, Object> metadata;
+        private Map<String, Object> metadata = new HashMap<>();
     }
 
     private boolean softAdd;
