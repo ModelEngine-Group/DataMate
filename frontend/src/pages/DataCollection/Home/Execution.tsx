@@ -27,9 +27,8 @@ export default function Execution({ taskId }: { taskId?: string }) {
       options: [
         { value: "all", label: t("dataCollection.execution.filters.allStatus") },
         { value: "RUNNING", label: t("dataCollection.execution.filters.running") },
-        { value: "SUCCESS", label: t("dataCollection.execution.filters.success") },
+        { value: "COMPLETED", label: t("dataCollection.execution.filters.success") },
         { value: "FAILED", label: t("dataCollection.execution.filters.failed") },
-        { value: "STOPPED", label: t("dataCollection.execution.filters.stopped") },
       ],
     },
   ];
@@ -44,6 +43,7 @@ export default function Execution({ taskId }: { taskId?: string }) {
   };
 
   const handleReset = () => {
+    setDateRange(null);
     setSearchParams({
       keyword: "",
       filter: {
@@ -53,8 +53,9 @@ export default function Execution({ taskId }: { taskId?: string }) {
       },
       current: 1,
       pageSize: 10,
+      start_time: undefined,
+      end_time: undefined,
     });
-    setDateRange(null);
   };
 
   const {
@@ -67,11 +68,12 @@ export default function Execution({ taskId }: { taskId?: string }) {
     handleKeywordChange,
   } = useFetchData<TaskExecution>(
     (params) => {
-      const { keyword, start_time, end_time, ...rest } = params || {};
+      const { keyword, start_time, end_time, status, ...rest } = params || {};
       return queryExecutionLogUsingPost({
         ...rest,
         task_id: taskId || undefined,
         task_name: keyword || undefined,
+        status: status || undefined,
         start_time,
         end_time,
       });
@@ -187,26 +189,40 @@ export default function Execution({ taskId }: { taskId?: string }) {
           searchTerm={searchParams.keyword}
           onSearchChange={handleKeywordChange}
           filters={filterOptions}
+          selectedFilters={searchParams.filter}
           onFiltersChange={handleFiltersChange}
           showViewToggle={false}
-          onClearFilters={() =>
+          onClearFilters={() => {
+            setDateRange(null);
             setSearchParams((prev) => ({
               ...prev,
               filter: { ...prev.filter, status: [] },
               current: 1,
-            }))
-          }
+              keyword: "",
+              start_time: undefined,
+              end_time: undefined,
+            }));
+          }}
           showDatePicker
           dateRange={dateRange as any}
           onDateChange={(date) => {
+            // 自动修正日期顺序：确保开始时间 <= 结束时间
+            if (date && date[0] && date[1] && date[0].isAfter(date[1])) {
+              // 如果开始时间晚于结束时间，交换它们
+              date = [date[1], date[0]];
+            }
             setDateRange(date as any);
-            const start = (date?.[0] as any)?.toISOString?.() || undefined;
-            const end = (date?.[1] as any)?.toISOString?.() || undefined;
+            // 转换为不带时区的 ISO 格式字符串（YYYY-MM-DDTHH:mm:ss）
+            const toLocalISOString = (d: any) => {
+              if (!d) return undefined;
+              const pad = (n: number) => String(n).padStart(2, '0');
+              return `${d.year()}-${pad(d.month() + 1)}-${pad(d.date())}T${pad(d.hour())}:${pad(d.minute())}:${pad(d.second())}`;
+            };
             setSearchParams((prev) => ({
               ...prev,
               current: 1,
-              start_time: start,
-              end_time: end,
+              start_time: toLocalISOString(date?.[0]),
+              end_time: toLocalISOString(date?.[1]),
             }));
           }}
           onReload={handleReset}

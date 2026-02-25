@@ -78,6 +78,7 @@ async def list_tasks(
     page: int = 1,
     size: int = 20,
     name: Optional[str] = Query(None, description="Fuzzy search by task name"),
+    status: Optional[str] = Query(None, description="Filter by task status"),
     db: AsyncSession = Depends(get_db)
 ):
     """分页查询归集任务"""
@@ -88,6 +89,9 @@ async def list_tasks(
 
     if name:
         query = query.where(CollectionTask.name.ilike(f"%{name}%"))
+
+    if status:
+        query = query.where(CollectionTask.status == status)
 
     # 获取总数
     count_query = select(func.count()).select_from(query.subquery())

@@ -6,6 +6,7 @@ import {
   ReloadOutlined,
 } from "@ant-design/icons";
 import { useEffect, useState } from "react";
+import React from "react";
 import { useTranslation } from "react-i18next";
 
 interface FilterOption {
@@ -56,7 +57,8 @@ export function SearchControls({
   showViewToggle = true,
   searchPlaceholder,
   filters = [],
-  dateRange,
+  selectedFilters: externalSelectedFilters,
+  dateRange: externalDateRange,
   showDatePicker = false,
   showReload = true,
   onReload,
@@ -67,9 +69,35 @@ export function SearchControls({
   onClearFilters,
 }: SearchControlsProps) {
   const { t } = useTranslation();
-  const [selectedFilters, setSelectedFilters] = useState<{
+
+  // 内部状态（如果外部没有传入 selectedFilters）
+  const [internalSelectedFilters, setInternalSelectedFilters] = useState<{
     [key: string]: string[];
   }>({});
+
+  // 使用外部传入的 selectedFilters，如果没有则使用内部状态
+  const selectedFilters = externalSelectedFilters !== undefined
+    ? externalSelectedFilters
+    : internalSelectedFilters;
+
+  // 内部 dateRange 状态（用于禁用逻辑）
+  const [internalDateRange, setInternalDateRange] = useState<typeof externalDateRange>(externalDateRange);
+
+  // 同步外部 dateRange 到内部状态
+  useEffect(() => {
+    setInternalDateRange(externalDateRange);
+  }, [externalDateRange]);
+
+  // 更新筛选值的函数
+  const updateSelectedFilters = (newFilters: Record<string, string[]>) => {
+    if (externalSelectedFilters !== undefined) {
+      // 受控模式：直接调用 onFiltersChange
+      onFiltersChange?.(newFilters);
+    } else {
+      // 非受控模式：更新内部状态
+      setInternalSelectedFilters(newFilters);
+    }
+  };
 
   const filtersMap: Record<string, FilterOption> = filters.reduce(
     (prev, cur) => ({ ...prev, [cur.key]: cur }),
@@ -80,23 +108,23 @@ export function SearchControls({
   const handleFilterChange = (filterKey: string, value: string) => {
     const filteredValues = {
       ...selectedFilters,
-      [filterKey]: !value ? [] : [value],
+      [filterKey]: !value || value === 'all' ? [] : [value],
     };
-    setSelectedFilters(filteredValues);
+    updateSelectedFilters(filteredValues);
   };
 
   // 清除已选筛选
   const handleClearFilter = (filterKey: string, value: string | string[]) => {
     const isMultiple = filtersMap[filterKey]?.mode === "multiple";
     if (!isMultiple) {
-      setSelectedFilters({
+      updateSelectedFilters({
         ...selectedFilters,
         [filterKey]: [],
       });
     } else {
       const currentValues = selectedFilters[filterKey]?.[0] || [];
       const newValues = currentValues.filter((v) => v !== value);
-      setSelectedFilters({
+      updateSelectedFilters({
         ...selectedFilters,
         [filterKey]: [newValues],
       });
@@ -104,18 +132,27 @@ export function SearchControls({
   };
 
   const handleClearAllFilters = () => {
-    setSelectedFilters({});
+    updateSelectedFilters({});
     onClearFilters?.();
   };
 
   const hasActiveFilters = Object.values(selectedFilters).some(
-    (values) => values?.[0]?.length > 0
+    (values) => Array.isArray(values) && values.length > 0 && values[0] !== undefined
   );
 
+  // 同步外部 selectedFilters 到内部状态
   useEffect(() => {
+    if (externalSelectedFilters !== undefined) {
+      setInternalSelectedFilters(externalSelectedFilters);
+    }
+  }, [externalSelectedFilters]);
+
+  // 非受控模式下，当内部状态变化时通知父组件
+  useEffect(() => {
+    if (externalSelectedFilters !== undefined) return; // 受控模式不需要这个 effect
     if (Object.keys(selectedFilters).length === 0) return;
     onFiltersChange?.(selectedFilters);
-  }, [selectedFilters]);
+  }, [selectedFilters, onFiltersChange, externalSelectedFilters]);
 
   return (
     <div className={className}>
@@ -160,11 +197,79 @@ export function SearchControls({
 
           {showDatePicker && (
             <DatePicker.RangePicker
-              value={dateRange as any}
-              onChange={onDateChange}
-              style={{ width: 260 }}
+              value={internalDateRange as any}
+              onChange={(date) => {
+                setInternalDateRange(date);
+                onDateChange?.(date);
+              }}
+              showTime={{ format: 'HH:mm:ss' }}
+              format="YYYY-MM-DD HH:mm:ss"
+              style={{ width: 380 }}
               allowClear
               placeholder={[t('components.searchControls.startTime'), t('components.searchControls.endTime')]}
+              disabledDate={(current, info) => {
+                // 只禁用日期部分，同一天不禁用
+                const startDate = info.from;
+                if (!startDate) {
+                  return false;
+                }
+                // 如果是同一天，不禁用（让时间选择器处理）
+                if (current.isSame(startDate, 'day')) {
+                  return false;
+                }
+                // 禁用早于开始日期的日期
+                return current.isBefore(startDate, 'day');
+              }}
+              disabledTime={(current, partial, info) => {
+                // partial 是 'start' 或 'end'，表示当前正在选择哪个
+                // info.from 是已选择的开始日期
+                const startDate = info.from;
+
+                if (partial !== 'end' || !startDate) {
+                  return {
+                    disabledHours: () => [],
+                    disabledMinutes: () => [],
+                    disabledSeconds: () => [],
+                  };
+                }
+
+                const startHour = startDate.hour();
+                const startMinute = startDate.minute();
+                const startSecond = startDate.second();
+
+                return {
+                  disabledHours: () => {
+                    const hours = [];
+                    for (let i = 0; i < startHour; i++) {
+                      hours.push(i);
+                    }
+                    return hours;
+                  },
+                  disabledMinutes: (selectedHour) => {
+                    if (selectedHour > startHour) {
+                      return [];
+                    }
+                    const minutes = [];
+                    for (let i = 0; i < startMinute; i++) {
+                      minutes.push(i);
+                    }
+                    return minutes;
+                  },
+                  disabledSeconds: (selectedHour, selectedMinute) => {
+                    if (selectedHour > startHour) {
+                      return [];
+                    }
+                    if (selectedHour === startHour && selectedMinute > startMinute) {
+                      return [];
+                    }
+                    const seconds = [];
+                    for (let i = 0; i < startSecond; i++) {
+                      seconds.push(i);
+                    }
+                    return seconds;
+                  },
+                };
+              }}
             />
           )}
 
@@ -191,7 +296,7 @@ export function SearchControls({
       </div>
 
       {/* Active Filters Display */}
-      {hasActiveFilters && (
+      {(hasActiveFilters || internalDateRange) && (
         <div className="mt-4 pt-4 border-t border-gray-200">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 flex-wrap flex-1">
@@ -199,7 +304,8 @@ export function SearchControls({
                 {t('components.searchControls.selectedFilters')}
               </span>
               {Object.entries(selectedFilters).map(([filterKey, values]) =>
-                values.map((value) => {
+                // 只处理数组类型的筛选值
+                Array.isArray(values) && values.map((value) => {
                   const filter = filtersMap[filterKey];
 
                   const getLabeledValue = (item: string) => {
@@ -222,16 +328,39 @@ export function SearchControls({
                     : getLabeledValue(value);
                 })
               )}
+              {/* 显示时间范围标签 */}
+              {internalDateRange && internalDateRange[0] && (
+                <Tag closable onClose={() => {
+                  setInternalDateRange(null);
+                  onDateChange?.(null);
+                }} color="blue">
+                  {t('components.searchControls.startTime')}: {internalDateRange[0]?.format('YYYY-MM-DD HH:mm:ss')}
+                </Tag>
+              )}
+              {internalDateRange && internalDateRange[1] && (
+                <React.Fragment key="time-separator">
+                  <span className="text-gray-400 mx-1">~</span>
+                  <Tag closable onClose={() => {
+                    setInternalDateRange(null);
+                    onDateChange?.(null);
+                  }} color="blue">
+                    {t('components.searchControls.endTime')}: {internalDateRange[1]?.format('YYYY-MM-DD HH:mm:ss')}
+                  </Tag>
+                </React.Fragment>
+              )}
             </div>
 
             {/* Clear all filters button on the right */}
             <Button
               type="text"
               size="small"
-              onClick={handleClearAllFilters}
+              onClick={() => {
+                handleClearAllFilters();
+                onDateChange?.(null);
+              }}
               className="text-gray-500 hover:text-gray-700"
             >
-              {t('components.searchControls.clearAll')}
+              {t('components.searchControls.filters.clearAll')}
             </Button>
           </div>
         </div>
