@@ -146,7 +146,7 @@ AsyncSessionLocal = sessionmaker(
 
 Base = declarative_base()
 
-async def get_db() -> AsyncSession:
+async def get_db() -> AsyncGenerator[Any, Any]:
     """Dependency for database session."""
     async with AsyncSessionLocal() as session:
         try:
