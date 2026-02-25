@@ -46,6 +46,8 @@ class KnowledgeBaseResp(BaseModel):
     chat: Optional[ModelConfig] = Field(None, description="聊天模型配置")
     created_at: Optional[datetime] = Field(None, alias="createdAt", description="创建时间")
     updated_at: Optional[datetime] = Field(None, alias="updatedAt", description="更新时间")
+    created_by: Optional[str] = Field(None, alias="createdBy", description="创建人")
+    updated_by: Optional[str] = Field(None, alias="updatedBy", description="更新人")
 
     class Config:
         populate_by_name = True  # 允许使用 snake_case 或 camelCase
@@ -83,6 +85,8 @@ class RagFileResp(BaseModel):
     err_msg: Optional[str] = Field(None, alias="errMsg", description="错误信息")
     created_at: Optional[datetime] = Field(None, alias="createdAt", description="创建时间")
     updated_at: Optional[datetime] = Field(None, alias="updatedAt", description="更新时间")
+    created_by: Optional[str] = Field(None, alias="createdBy", description="创建人")
+    updated_by: Optional[str] = Field(None, alias="updatedBy", description="更新人")
 
     class Config:
         populate_by_name = True  # 允许使用 snake_case 或 camelCase
@@ -152,32 +156,31 @@ class PagedResponse(BaseModel):
 
     对应 Java: com.datamate.common.interfaces.PagedResponse
     """
-    items: List[Any] = Field(..., description="数据列表")
-    total: int = Field(..., description="总记录数")
+    content: List[Any] = Field(..., description="数据列表")
+    total_elements: int = Field(alias="totalElements", description="总记录数")
     page: int = Field(..., description="当前页码")
-    page_size: int = Field(alias="pageSize", description="每页数量")
+    size: int = Field(..., description="每页数量")
     total_pages: int = Field(alias="totalPages", description="总页数")
 
     @classmethod
-    def create(cls, items: List[Any], total: int, page: int, page_size: int):
+    def create(cls, content: List[Any], total_elements: int, page: int, size: int):
         """创建分页响应
 
         Args:
-            items: 数据列表
-            total: 总记录数
+            content: 数据列表
+            total_elements: 总记录数
             page: 当前页码
-            page_size: 每页数量
+            size: 每页数量
 
         Returns:
             PagedResponse 实例
         """
-        total_pages = (total + page_size - 1) // page_size if page_size > 0 else 0
-        # 使用内部字段名（snake_case）
+        total_pages = (total_elements + size - 1) // size if size > 0 else 0
         return cls(
-            items=items,
-            total=total,
+            content=content,
+            total_elements=total_elements,
             page=page,
-            page_size=page_size,
+            size=size,
             total_pages=total_pages
         )
 
@@ -185,10 +188,10 @@ class PagedResponse(BaseModel):
         populate_by_name = True  # 允许使用 snake_case 或 camelCase
         json_schema_extra = {
             "example": {
-                "items": [],
-                "total": 100,
+                "content": [],
+                "totalElements": 100,
                 "page": 1,
-                "pageSize": 10,
+                "size": 10,
                 "totalPages": 10
             }
         }

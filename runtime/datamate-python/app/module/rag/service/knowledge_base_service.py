@@ -26,7 +26,7 @@ from app.module.rag.schema.request import (
     RetrieveReq,
     PagingQuery,
 )
-from app.module.rag.schema.response import KnowledgeBaseResp, PagedResponse, RagChunkResp
+from app.module.rag.schema.response import KnowledgeBaseResp, PagedResponse, RagChunkResp, RagFileResp
 from app.module.rag.service.etl_service import ETLService
 from app.module.rag.service.file_service import FileService
 
@@ -179,7 +179,6 @@ class KnowledgeBaseService:
         file_count = await self.file_repo.count_by_knowledge_base(knowledge_base_id)
         chunk_count = await self.file_repo.count_chunks_by_knowledge_base(knowledge_base_id)
 
-        # 构建响应
         response = KnowledgeBaseResp(
             id=knowledge_base.id,
             name=knowledge_base.name,
@@ -190,7 +189,9 @@ class KnowledgeBaseService:
             file_count=file_count,
             chunk_count=chunk_count,
             created_at=knowledge_base.created_at,
-            updated_at=knowledge_base.updated_at
+            updated_at=knowledge_base.updated_at,
+            created_by=knowledge_base.created_by,
+            updated_by=knowledge_base.updated_by
         )
 
         return response
@@ -229,15 +230,17 @@ class KnowledgeBaseService:
                 file_count=file_count,
                 chunk_count=chunk_count,
                 created_at=item.created_at,
-                updated_at=item.updated_at
+                updated_at=item.updated_at,
+                created_by=item.created_by,
+                updated_by=item.updated_by
             )
             responses.append(response)
 
         return PagedResponse.create(
-            items=responses,
-            total=total,
+            content=responses,
+            total_elements=total,
             page=request.page,
-            page_size=request.page_size
+            size=request.page_size
         )
 
     async def add_files(self, request: AddFilesReq) -> dict:
@@ -306,11 +309,27 @@ class KnowledgeBaseService:
             page_size=request.page_size
         )
 
+        # 转换为响应对象
+        responses = [RagFileResp(
+            id=item.id,
+            knowledge_base_id=item.knowledge_base_id,
+            file_name=item.file_name,
+            file_id=item.file_id,
+            chunk_count=item.chunk_count,
+            metadata=item.file_metadata,
+            status=item.status,
+            err_msg=item.err_msg,
+            created_at=item.created_at,
+            updated_at=item.updated_at,
+            created_by=item.created_by,
+            updated_by=item.updated_by
+        ) for item in items]
+
         return PagedResponse.create(
-            items=items,
-            total=total,
+            content=responses,
+            total_elements=total,
             page=request.page,
-            page_size=request.page_size
+            size=request.page_size
         )
 
     async def delete_files(self, knowledge_base_id: str, request: DeleteFilesReq) -> None:
@@ -527,10 +546,10 @@ class KnowledgeBaseService:
             )
 
             return PagedResponse.create(
-                items=chunks,
-                total=total,
+                content=chunks,
+                total_elements=total,
                 page=paging_query.page,
-                page_size=paging_query.size
+                size=paging_query.size
             )
 
         except Exception as e:
