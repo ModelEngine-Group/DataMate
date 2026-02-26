@@ -90,6 +90,7 @@
         "stopSuccess": "任务停止请求已发送",
         "deleteSuccess": "任务已删除",
         "deleteConfirm": "确定要删除该任务吗？此操作不可撤销。",
+        "deleteConfirmMessage": "确定要删除任务「{{taskName}}」吗？删除后将无法恢复。",
         "confirmDelete": "删除",
         "cancel": "取消"
       }

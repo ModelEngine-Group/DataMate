@@ -90,6 +90,7 @@
         "stopSuccess": "Task stop request sent",
         "deleteSuccess": "Task deleted",
         "deleteConfirm": "Are you sure you want to delete this task? This action cannot be undone.",
+        "deleteConfirmMessage": "Are you sure you want to delete task \"{{taskName}}\"? This action cannot be undone.",
         "confirmDelete": "Delete",
         "cancel": "Cancel"
       }
