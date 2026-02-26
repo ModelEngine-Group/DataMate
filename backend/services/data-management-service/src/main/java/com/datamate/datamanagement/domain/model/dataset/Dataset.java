@@ -72,6 +72,7 @@ public class Dataset extends BaseEntity<String> {
     /**
      * 额外元数据，JSON格式
      */
+    @TableField(typeHandler = PgJsonTypeHandler.class)
     private String metadata;
     /**
      * 数据集状态
