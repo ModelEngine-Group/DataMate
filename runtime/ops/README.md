@@ -36,7 +36,17 @@ operator_package/
 | `inputs` | 输入的数据模态 (text/image/audio/video)   | text |
 | `outputs` | 输出的数据模态 (text/image/audio/video)   | text |
 
-### 2.2 算子版本更新日志 (release)
+### 2.2 算子功能分类
+
+定义算子功能分类，支持清洗与标注。
+
+```yaml
+types:
+  - 'cleaning'
+  - 'annotation'
+```
+
+### 2.3 算子版本更新日志 (release)
 
 定义算子当前版本较上版本更新内容。
 
@@ -46,7 +56,7 @@ release:
   - '支持基本处理操作'
 ```
 
-### 2.2 运行时资源与指标 (runtime & metrics)
+### 2.4 运行时资源与指标 (runtime & metrics)
 
 定义算子运行时的资源配额及性能指标参考。
 
@@ -65,7 +75,7 @@ metrics:        # 算子性能参考指标
     metric: '99.5%'
 ```
 
-### 2.3 参数设置 (settings) - UI 组件规范
+### 2.5 参数设置 (settings) - UI 组件规范
 
 通过 `settings` 字段，开发者可以自定义用户在前端界面配置算子时的交互组件。系统支持以下类型：
 

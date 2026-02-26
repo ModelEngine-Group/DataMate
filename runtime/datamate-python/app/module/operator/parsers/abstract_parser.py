@@ -92,6 +92,11 @@ class AbstractParser(ABC):
             CATEGORY_MAP.get(self._to_lower(content.get("vendor")), CATEGORY_OTHER_VENDOR_ID),
             CATEGORY_CUSTOMIZED_ID,
         ]
+        types = content.get("types")
+        if isinstance(types, list):
+            for t in types:
+                if self._to_lower(t) in CATEGORY_MAP:
+                    categories.append(CATEGORY_MAP[self._to_lower(t)])
         operator.categories = categories
 
         return operator
