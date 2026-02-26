@@ -196,7 +196,7 @@ export function SearchControls({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 flex-wrap flex-1">
               <span className="text-sm font-medium text-gray-700">
-                {t('components.searchControls.selectedFilters')}
+                {t('components.searchControls.filters.label')}
               </span>
               {Object.entries(selectedFilters).map(([filterKey, values]) =>
                 values.map((value) => {
@@ -231,7 +231,7 @@ export function SearchControls({
               onClick={handleClearAllFilters}
               className="text-gray-500 hover:text-gray-700"
             >
-              {t('components.searchControls.clearAll')}
+              {t('components.searchControls.filters.clearAll')}
             </Button>
           </div>
         </div>
