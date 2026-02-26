@@ -83,6 +83,7 @@ class RagFileResp(BaseModel):
     metadata: Optional[dict] = Field(None, description="元数据")
     status: FileStatus = Field(..., description="处理状态")
     err_msg: Optional[str] = Field(None, alias="errMsg", description="错误信息")
+    progress: int = Field(default=0, ge=0, le=100, description="处理进度(0-100)")
     created_at: Optional[datetime] = Field(None, alias="createdAt", description="创建时间")
     updated_at: Optional[datetime] = Field(None, alias="updatedAt", description="更新时间")
     created_by: Optional[str] = Field(None, alias="createdBy", description="创建人")
@@ -99,6 +100,7 @@ class RagFileResp(BaseModel):
                 "chunkCount": 15,
                 "metadata": {"size": 1024, "format": "pdf"},
                 "status": "PROCESSED",
+                "progress": 100,
                 "createdAt": "2025-01-01T00:00:00"
             }
         }

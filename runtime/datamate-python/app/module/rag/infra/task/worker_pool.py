@@ -59,6 +59,8 @@ class WorkerPool:
         """
         self.semaphore = asyncio.Semaphore(max_workers)
         self.max_workers = max_workers
+        self._lock = asyncio.Lock()
+        self._active_count = 0
 
     async def submit(
         self,
@@ -77,12 +79,18 @@ class WorkerPool:
             协程的返回值
         """
         async with self.semaphore:
+            async with self._lock:
+                self._active_count += 1
+
             try:
                 result = await coro(*args, **kwargs)
                 return result
             except Exception as e:
                 logger.error(f"任务执行失败: {e}")
                 raise
+            finally:
+                async with self._lock:
+                    self._active_count -= 1
 
     async def submit_batch(
         self,
@@ -116,12 +124,14 @@ class WorkerPool:
 
         return [r for r in results if not isinstance(r, Exception)]
 
-    def get_available_workers(self) -> int:
-        """获取可用的工作协程数
+    async def get_status(self) -> dict:
+        """获取工作池状态
 
         Returns:
-            可用的工作协程数
+            状态字典，包含 max_workers, active_count, available
         """
-        # 注意：Semaphore 的值在内部维护，无法直接获取
-        # 这里返回最大值作为近似
-        return self.max_workers
+        return {
+            "max_workers": self.max_workers,
+            "active_count": self._active_count,
+            "available": self.max_workers - self._active_count,
+        }

@@ -76,6 +76,7 @@ class RagFile(BaseEntity):
         comment="处理状态",
     )
     err_msg = Column(String(2048), nullable=True, comment="错误信息")
+    progress = Column(Integer, default=0, nullable=False, comment="处理进度(0-100)")
 
     def __repr__(self):
         return f"<RagFile(id={self.id}, file_name={self.file_name}, status={self.status})>"

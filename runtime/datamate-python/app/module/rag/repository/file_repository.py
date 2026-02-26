@@ -283,6 +283,27 @@ class RagFileRepository:
         rag_file.chunk_count = chunk_count
         await self.db.flush()
 
+    async def update_progress(
+        self,
+        rag_file_id: str,
+        progress: int
+    ) -> None:
+        """更新文件处理进度
+
+        Args:
+            rag_file_id: RAG 文件 ID
+            progress: 进度值 (0-100)
+
+        Raises:
+            BusinessError: 文件不存在
+        """
+        rag_file = await self.get_by_id(rag_file_id)
+        if not rag_file:
+            raise BusinessError(ErrorCodes.RAG_FILE_NOT_FOUND)
+
+        rag_file.progress = max(0, min(100, progress))
+        await self.db.flush()
+
     async def count_by_knowledge_base(
         self,
         knowledge_base_id: str

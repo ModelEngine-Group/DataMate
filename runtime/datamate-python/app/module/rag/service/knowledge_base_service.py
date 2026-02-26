@@ -204,7 +204,8 @@ class KnowledgeBaseService:
     ) -> dict:
         """添加文件到知识库
 
-        存入数据库后立即返回，后台异步处理文件。
+        验证知识库、创建文件记录、启动后台处理。
+        数据库提交后立即返回，不等待文件处理完成。
 
         Args:
             request: 添加文件请求
@@ -213,16 +214,18 @@ class KnowledgeBaseService:
         Returns:
             包含成功和跳过文件数量的字典
         """
+        # 1. 验证知识库存在
         knowledge_base = await self.kb_repo.get_by_id(request.knowledge_base_id)
         if not knowledge_base:
             raise BusinessError(ErrorCodes.RAG_KNOWLEDGE_BASE_NOT_FOUND)
 
-        # 添加文件记录
+        # 2. 创建文件记录
         rag_files, skipped_file_ids = await self._create_rag_files(request)
 
+        # 3. 立即提交事务，接口返回
         await self.db.commit()
 
-        # 启动后台处理
+        # 4. 注册后台任务（异步处理）
         if rag_files and background_tasks:
             self.file_processor.start_background_processing(
                 background_tasks=background_tasks,
@@ -231,6 +234,7 @@ class KnowledgeBaseService:
                 request_data=request.model_dump(),
             )
 
+        # 5. 返回结果
         return {
             "success_count": len(rag_files),
             "skipped_count": len(skipped_file_ids),
@@ -311,6 +315,7 @@ class KnowledgeBaseService:
             metadata=item.file_metadata,
             status=item.status,
             err_msg=item.err_msg,
+            progress=getattr(item, "progress", 0),
             created_at=item.created_at,
             updated_at=item.updated_at,
             created_by=item.created_by,

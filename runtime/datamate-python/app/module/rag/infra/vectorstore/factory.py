@@ -33,7 +33,7 @@ class VectorStoreFactory:
         collection_name: str,
         embedding: Embeddings,
         *,
-        drop_old: bool = True,
+        drop_old: bool = False,
         consistency_level: str = "Strong",
     ) -> Any:
         """创建 Milvus 向量存储实例（支持混合检索）
@@ -41,7 +41,7 @@ class VectorStoreFactory:
         Args:
             collection_name: 集合名称（知识库名称）
             embedding: LangChain Embeddings 实例
-            drop_old: 是否删除已存在同名集合
+            drop_old: 是否删除已存在同名集合（默认 False，避免数据丢失）
             consistency_level: 一致性级别
 
         Returns:
@@ -55,18 +55,22 @@ class VectorStoreFactory:
             embedding_instance=embedding,
         )
 
-        # 删除旧集合（如果存在）
+        # 根据参数删除旧集合（仅在显式要求时）
         if drop_old:
             drop_collection(collection_name)
 
-        # 创建集合（5个字段：id、text、metadata、vector、sparse）
+        # 仅在集合不存在时创建（避免覆盖已有数据）
         create_collection(
             collection_name=collection_name,
             dimension=dimension,
             consistency_level=consistency_level,
         )
 
-        # 创建 Milvus 实例
+        # 创建 Milvus 实例（drop_old=False，确保不会自动删除）
+        # 注意：必须指定 primary_field="id"，因为集合定义中主键字段名为 id
+        # 注意：必须指定 metadata_field="metadata"，确保所有 metadata 数据存放到此字段
+        # 注意:enable_dynamic_field=False,禁止使用动态字段没,所有数据只存放到定义的字段中
+        # 注意：metadata_schema 指定 metadata 字段类型为 JSON
         return Milvus(
             embedding_function=embedding,
             collection_name=collection_name,
@@ -77,4 +81,8 @@ class VectorStoreFactory:
             drop_old=False,
             consistency_level=consistency_level,
             auto_id=False,
+            primary_field="id",
+            metadata_field="metadata",
+            enable_dynamic_field=False,
+            metadata_schema={"metadata": "JSON"},
         )

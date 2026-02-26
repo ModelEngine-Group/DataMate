@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS t_rag_file
     metadata          JSONB,
     status            VARCHAR(50),
     err_msg           TEXT,
+    progress          INTEGER DEFAULT 0,
     created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_by        VARCHAR(255),
@@ -56,6 +57,7 @@ COMMENT ON COLUMN t_rag_file.chunk_count IS '切片数';
 COMMENT ON COLUMN t_rag_file.metadata IS '元数据';
 COMMENT ON COLUMN t_rag_file.status IS '文件状态';
 COMMENT ON COLUMN t_rag_file.err_msg IS '错误信息';
+COMMENT ON COLUMN t_rag_file.progress IS '处理进度(0-100)';
 COMMENT ON COLUMN t_rag_file.created_at IS '创建时间';
 COMMENT ON COLUMN t_rag_file.updated_at IS '更新时间';
 COMMENT ON COLUMN t_rag_file.created_by IS '创建者';

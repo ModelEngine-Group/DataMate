@@ -125,7 +125,7 @@ def create_collection(
             fields=fields,
             functions=[bm25_function],
             description="Knowledge base collection",
-            enable_dynamic_field=True,
+            enable_dynamic_field=False,
         )
 
         client.create_collection(
