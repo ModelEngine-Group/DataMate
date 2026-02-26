@@ -5,7 +5,7 @@
 与 Java 实体保持一致。
 """
 from enum import Enum
-from sqlalchemy import Column, String, Integer, JSON, Enum as SQLEnum
+from sqlalchemy import Column, String, Integer, JSON
 from app.db.models.base_entity import BaseEntity
 
 
@@ -42,7 +42,7 @@ class KnowledgeBase(BaseEntity):
     name = Column(String(255), nullable=False, unique=True, comment="知识库名称")
     description = Column(String(512), nullable=True, comment="知识库描述")
     type = Column(
-        SQLEnum(RagType),
+        String(50),
         nullable=False,
         default=RagType.DOCUMENT,
         comment="RAG类型",
@@ -70,7 +70,7 @@ class RagFile(BaseEntity):
     chunk_count = Column(Integer, nullable=True, comment="分块数量")
     file_metadata = Column("metadata", JSON, nullable=True, comment="元数据（JSON格式）")
     status = Column(
-        SQLEnum(FileStatus),
+        String(50),
         nullable=False,
         default=FileStatus.UNPROCESSED,
         comment="处理状态",

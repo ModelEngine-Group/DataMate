@@ -9,10 +9,9 @@ Milvus 2.6.x 自动处理 BM25 稀疏向量，无需手动生成。
 from __future__ import annotations
 
 import logging
-from typing import Any, List, Optional
+from typing import List, Optional
 
 from langchain_core.documents import Document
-from langchain_core.embeddings import Embeddings
 
 from app.core.config import settings
 from app.module.rag.infra.embeddings import EmbeddingFactory
@@ -86,79 +85,79 @@ def create_java_compatible_collection(
         dimension: 向量维度
         consistency_level: 一致性级别
     """
-    from pymilvus import MilvusClient, DataType, FunctionType
+    from pymilvus import MilvusClient, DataType, FunctionType, CollectionSchema, FieldSchema, Function
 
     from app.core.exception import BusinessError, ErrorCodes
 
     try:
         conn_args = _connection_args()
-        token = conn_args.get("token") if conn_args.get("token") else ""
-        client = MilvusClient(uri=conn_args["uri"], token=token)
+
+        # 创建 Milvus 客户端
+        client = MilvusClient(uri=conn_args["uri"], token="")
 
         # 检查集合是否已存在
         if client.has_collection(collection_name):
             logger.info("集合 %s 已存在，跳过创建", collection_name)
             return
 
-        # 定义 schema
-        schema = MilvusClient.create_schema()
+        # 创建字段
+        fields = [
+            # 1. 主键字段 id
+            FieldSchema(
+                name="id",
+                dtype=DataType.VARCHAR,
+                max_length=36,
+                is_primary=True,
+                auto_id=False
+            ),
+            # 2. 文本字段 text（启用 analyzer 用于 BM25）
+            FieldSchema(
+                name="text",
+                dtype=DataType.VARCHAR,
+                max_length=65535,
+                enable_analyzer=True,
+                enable_match=True
+            ),
+            # 3. 元数据字段 metadata
+            FieldSchema(
+                name="metadata",
+                dtype=DataType.JSON
+            ),
+            # 4. 密集向量字段 vector
+            FieldSchema(
+                name="vector",
+                dtype=DataType.FLOAT_VECTOR,
+                dim=dimension
+            ),
+            # 5. 稀疏向量字段 sparse（BM25）
+            FieldSchema(
+                name="sparse",
+                dtype=DataType.SPARSE_FLOAT_VECTOR
+            )
+        ]
 
-        # 1. 主键字段 id
-        schema.add_field(
-            field_name="id",
-            datatype=DataType.VARCHAR,
-            max_length=36,
-            is_primary=True,
-            auto_id=False
+        # 创建 BM25 函数（不使用 params，避免 Milvus 参数错误）
+        function = Function(
+            name="text_bm25_emb",
+            function_type=FunctionType.BM25,
+            input_field_names=["text"],
+            output_field_names=["sparse"]
         )
 
-        # 2. 文本字段 text（启用 analyzer 用于 BM25）
-        schema.add_field(
-            field_name="text",
-            datatype=DataType.VARCHAR,
-            max_length=65535,
-            enable_analyzer=True,
-            enable_match=True
+        # 创建 schema
+        schema = CollectionSchema(
+            fields=fields,
+            functions=[function],
+            description="Knowledge base collection",
+            enable_dynamic_field=True
         )
 
-        # 3. 元数据字段 metadata
-        schema.add_field(
-            field_name="metadata",
-            datatype=DataType.JSON
-        )
-
-        # 4. 密集向量字段 vector
-        schema.add_field(
-            field_name="vector",
-            datatype=DataType.FLOAT_VECTOR,
-            dim=dimension
-        )
-
-        # 5. 稀疏向量字段 sparse（BM25）
-        schema.add_field(
-            field_name="sparse",
-            datatype=DataType.SPARSE_FLOAT_VECTOR
-        )
-
-        # 创建集合（BM25 将在首次添加文档时自动配置）
+        # 创建集合（不包含索引）
+        # 索引会在首次插入数据时由 Milvus/LangChain 自动创建
         client.create_collection(
             collection_name=collection_name,
             schema=schema,
             consistency_level=consistency_level
-        )
-
-        # 创建向量索引
-        client.create_index(
-            collection_name=collection_name,
-            field_name="vector",
-            index_params={
-                "index_type": "HNSW",
-                "metric_type": "COSINE",
-                "params": {
-                    "M": 16,
-                    "efConstruction": 256
-                }
-            }
         )
 
         logger.info("成功创建 Java 兼容的集合: %s (维度: %d)", collection_name, dimension)
@@ -182,12 +181,10 @@ def get_vector_dimension(embedding_model: str, base_url: Optional[str] = None, a
     Raises:
         BusinessError: 无法获取维度
     """
-    from langchain_core.embeddings import Embeddings
 
     from app.core.exception import BusinessError, ErrorCodes
 
     try:
-        import asyncio
         embedding = EmbeddingFactory.create_embeddings(
             model_name=embedding_model,
             base_url=base_url,
@@ -195,7 +192,8 @@ def get_vector_dimension(embedding_model: str, base_url: Optional[str] = None, a
         )
 
         test_text = "test"
-        embedding_vector = asyncio.run(asyncio.to_thread(embedding.embed_query, test_text))
+        # 直接调用同步的 embed_query 方法
+        embedding_vector = embedding.embed_query(test_text)
         dimension = len(embedding_vector)
 
         logger.info("获取模型 %s 的向量维度: %d", embedding_model, dimension)
@@ -208,6 +206,7 @@ def get_vector_dimension(embedding_model: str, base_url: Optional[str] = None, a
 
 def delete_chunks_by_rag_file_ids(collection_name: str, rag_file_ids: List[str]) -> None:
     """按 RAG 文件 ID 列表删除 Milvus 中的分块。用于文件删除时清理向量数据。"""
+    import json
     if not rag_file_ids:
         return
     from pymilvus import MilvusClient
@@ -216,10 +215,13 @@ def delete_chunks_by_rag_file_ids(collection_name: str, rag_file_ids: List[str])
 
     try:
         conn_args = _connection_args()
-        client = MilvusClient(uri=conn_args["uri"], token=conn_args.get("token") or None)
+        client = MilvusClient(uri=conn_args["uri"], token="")
+
         # metadata 为 JSON 字段，按 rag_file_id 过滤
+        # 使用 JSON_CONTAINS 的正确语法
         for rid in rag_file_ids:
-            filter_expr = f'metadata["rag_file_id"] == "{rid}"'
+            json_value = json.dumps({"rag_file_id": rid})
+            filter_expr = f'JSON_CONTAINS(metadata, \'{json_value}\')'
             try:
                 client.delete(collection_name=collection_name, filter=filter_expr)
             except Exception as del_err:
@@ -230,66 +232,25 @@ def delete_chunks_by_rag_file_ids(collection_name: str, rag_file_ids: List[str])
         raise BusinessError(ErrorCodes.RAG_MILVUS_ERROR, f"删除分块失败: {str(e)}") from e
 
 
-def get_milvus_vectorstore(
-    collection_name: str,
-    embedding: Embeddings,
-    *,
-    drop_old: bool = False,
-    consistency_level: str = "Strong",
-) -> Any:
-    """创建带全文检索（BM25）的 Milvus 向量存储实例.
-
-    使用 langchain-milvus.Milvus + BM25BuiltInFunction，支持混合检索。
-
-    Args:
-        collection_name: 集合名称（通常为知识库名称）
-        embedding: LangChain Embeddings 实例
-        drop_old: 是否在创建时删除已存在同名集合
-        consistency_level: 一致性级别
-
-    Returns:
-        Milvus 向量存储实例，支持 add_documents / similarity_search / as_retriever 等
-    """
-    from langchain_milvus import BM25BuiltInFunction, Milvus
-
-    return Milvus(
-        embedding_function=embedding,
-        collection_name=collection_name,
-        connection_args=_connection_args(),
-        builtin_function=BM25BuiltInFunction(),
-        vector_field=["dense", "sparse"],
-        consistency_level=consistency_level,
-        drop_old=drop_old,
-    )
-
-
 def chunks_to_langchain_documents(
-    chunks: List[Any],
-    *,
-    ids: Optional[List[str]] = None,
-    id_key: str = "chunk_id",
-) -> tuple[List[Document], List[str]]:
-    """将领域 DocumentChunk 列表转为 LangChain Document 列表及 id 列表.
+    chunks: list,
+    ids: List[str] = None
+) -> tuple[list, List[str]]:
+    """将 DocumentChunk 转换为 LangChain Document 格式
 
     Args:
-        chunks: 分块列表，每项有 .text 与 .metadata
-        ids: 若提供则作为文档 id，否则从 metadata[id_key] 取或生成
-        id_key: metadata 中作为 id 的键名
+        chunks: DocumentChunk 列表
+        ids: 可选的 ID 列表
 
     Returns:
-        (documents, ids)
+        (documents, ids): LangChain Document 列表和对应的 ID 列表
     """
-    from uuid import uuid4
+    if ids is None:
+        ids = [str(i) for i in range(len(chunks))]
 
-    documents: List[Document] = []
-    out_ids: List[str] = []
-    for i, ch in enumerate(chunks):
-        text = getattr(ch, "text", str(ch))
-        meta = getattr(ch, "metadata", {}) or {}
-        if ids and i < len(ids):
-            doc_id = ids[i]
-        else:
-            doc_id = meta.get(id_key) or str(uuid4())
-        documents.append(Document(page_content=text, metadata=dict(meta)))
-        out_ids.append(doc_id)
-    return documents, out_ids
+    documents = []
+    for chunk, chunk_id in zip(chunks, ids):
+        doc = Document(page_content=chunk.text, metadata=chunk.metadata)
+        documents.append(doc)
+
+    return documents, ids

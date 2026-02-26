@@ -34,21 +34,24 @@ class KnowledgeBaseCreateReq(BaseModel):
     embedding_model: str = Field(
         ...,
         min_length=1,
+        alias="embeddingModel",
         description="嵌入模型ID"
     )
     chat_model: Optional[str] = Field(
         None,
+        alias="chatModel",
         description="聊天模型ID"
     )
 
     class Config:
+        populate_by_name = True
         json_schema_extra = {
             "example": {
                 "name": "my_knowledge_base",
                 "description": "我的知识库",
                 "type": "DOCUMENT",
-                "embedding_model": "text-embedding-ada-002",
-                "chat_model": "gpt-4"
+                "embeddingModel": "text-embedding-ada-002",
+                "chatModel": "gpt-4"
             }
         }
 
@@ -72,6 +75,7 @@ class KnowledgeBaseUpdateReq(BaseModel):
     )
 
     class Config:
+        populate_by_name = True
         json_schema_extra = {
             "example": {
                 "name": "updated_knowledge_base",
@@ -94,11 +98,13 @@ class KnowledgeBaseQueryReq(BaseModel):
         default=10,
         ge=1,
         le=100,
+        alias="size",
         description="每页数量"
     )
     keyword: Optional[str] = Field(
         None,
         max_length=255,
+        alias="name",
         description="搜索关键词（模糊匹配知识库名称或描述）"
     )
     type: Optional[RagType] = Field(
@@ -107,11 +113,12 @@ class KnowledgeBaseQueryReq(BaseModel):
     )
 
     class Config:
+        populate_by_name = True
         json_schema_extra = {
             "example": {
                 "page": 1,
-                "page_size": 10,
-                "keyword": "测试",
+                "size": 10,
+                "name": "测试",
                 "type": "DOCUMENT"
             }
         }
@@ -123,15 +130,14 @@ class FileInfo(BaseModel):
     对应 Java: com.datamate.rag.indexer.interfaces.dto.AddFilesReq.FileInfo
     """
     id: str = Field(..., description="文件ID (对应 t_dm_dataset_files.id)")
-    dataset_id: str = Field(..., description="数据集ID")
-    file_name: str = Field(..., description="文件名")
+    file_name: str = Field(alias="fileName", description="文件名")
 
     class Config:
+        populate_by_name = True
         json_schema_extra = {
             "example": {
                 "id": "file-uuid-123",
-                "dataset_id": "dataset-uuid-456",
-                "file_name": "document.pdf"
+                "fileName": "document.pdf"
             }
         }
 
@@ -141,21 +147,24 @@ class AddFilesReq(BaseModel):
 
     对应 Java: com.datamate.rag.indexer.interfaces.dto.AddFilesReq
     """
-    knowledge_base_id: str = Field(..., description="知识库ID（从路径参数获取，这里保留用于兼容）")
+    knowledge_base_id: Optional[str] = Field(None, alias="knowledgeBaseId", description="知识库ID（从路径参数获取，这里保留用于兼容）")
     process_type: ProcessType = Field(
         default=ProcessType.DEFAULT_CHUNK,
+        alias="processType",
         description="分块处理类型"
     )
     chunk_size: int = Field(
         default=500,
         ge=50,
         le=2000,
+        alias="chunkSize",
         description="分块大小"
     )
     overlap_size: int = Field(
         default=50,
         ge=0,
         le=500,
+        alias="overlapSize",
         description="重叠大小"
     )
     delimiter: Optional[str] = Field(
@@ -177,15 +186,16 @@ class AddFilesReq(BaseModel):
         return v
 
     class Config:
+        populate_by_name = True
         json_schema_extra = {
             "example": {
-                "knowledge_base_id": "kb-uuid-123",
-                "process_type": "DEFAULT_CHUNK",
-                "chunk_size": 500,
-                "overlap_size": 50,
+                "knowledgeBaseId": "kb-uuid-123",
+                "processType": "DEFAULT_CHUNK",
+                "chunkSize": 500,
+                "overlapSize": 50,
                 "files": [
-                    {"id": "file-1", "dataset_id": "dataset-uuid-456", "file_name": "doc1.pdf"},
-                    {"id": "file-2", "dataset_id": "dataset-uuid-456", "file_name": "doc2.pdf"}
+                    {"id": "file-1", "fileName": "doc1.pdf"},
+                    {"id": "file-2", "fileName": "doc2.pdf"}
                 ]
             }
         }
@@ -199,13 +209,15 @@ class DeleteFilesReq(BaseModel):
     file_ids: List[str] = Field(
         ...,
         min_length=1,
+        alias="ids",
         description="要删除的文件ID列表"
     )
 
     class Config:
+        populate_by_name = True
         json_schema_extra = {
             "example": {
-                "file_ids": ["file-1", "file-2", "file-3"]
+                "ids": ["file-1", "file-2", "file-3"]
             }
         }
 
@@ -224,11 +236,13 @@ class RagFileReq(BaseModel):
         default=10,
         ge=1,
         le=100,
+        alias="size",
         description="每页数量"
     )
     keyword: Optional[str] = Field(
         None,
         max_length=255,
+        alias="fileName",
         description="搜索关键词（模糊匹配文件名）"
     )
     status: Optional[FileStatus] = Field(
@@ -237,11 +251,12 @@ class RagFileReq(BaseModel):
     )
 
     class Config:
+        populate_by_name = True
         json_schema_extra = {
             "example": {
                 "page": 1,
-                "page_size": 10,
-                "keyword": "测试",
+                "size": 10,
+                "fileName": "测试",
                 "status": "PROCESSED"
             }
         }
@@ -261,6 +276,7 @@ class RetrieveReq(BaseModel):
         default=5,
         ge=1,
         le=20,
+        alias="topK",
         description="返回前 K 个结果"
     )
     threshold: Optional[float] = Field(
@@ -272,16 +288,18 @@ class RetrieveReq(BaseModel):
     knowledge_base_ids: List[str] = Field(
         ...,
         min_length=1,
+        alias="knowledgeBaseIds",
         description="要检索的知识库ID列表"
     )
 
     class Config:
+        populate_by_name = True
         json_schema_extra = {
             "example": {
                 "query": "什么是机器学习？",
-                "top_k": 5,
+                "topK": 5,
                 "threshold": 0.7,
-                "knowledge_base_ids": ["kb-1", "kb-2"]
+                "knowledgeBaseIds": ["kb-1", "kb-2"]
             }
         }
 

@@ -6,8 +6,10 @@
 import uuid
 from typing import List, Tuple
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
 from app.db.models.knowledge_gen import RagFile, FileStatus
+from app.db.models.dataset_management import DatasetFiles
 from app.module.rag.schema.request import AddFilesReq
 from app.module.rag.repository import RagFileRepository, KnowledgeBaseRepository
 from app.module.rag.infra.milvus.vectorstore import delete_chunks_by_rag_file_ids
@@ -58,28 +60,22 @@ class FileService:
         if not request.files or len(request.files) == 0:
             raise BusinessError(ErrorCodes.BAD_REQUEST, "文件列表不能为空")
 
-        # 导入 dataset 服务
-        from app.module.dataset.service.service import Service as DatasetService
-
-        dataset_service = DatasetService(self.db)
-
         # 验证文件存在并创建 RAG 文件记录
         rag_files = []
         skipped_file_ids = []
 
         for file_info in request.files:
             try:
-                # 通过 dataset 服务验证文件是否存在
-                file_path = await dataset_service.get_file_download_url(
-                    dataset_id=file_info.dataset_id,
-                    file_id=file_info.id
+                # 根据 file_info.id (DatasetFile ID) 查询文件信息
+                result = await self.db.execute(
+                    select(DatasetFiles).where(DatasetFiles.id == file_info.id)
                 )
+                dataset_file = result.scalar_one_or_none()
 
                 # 跳过不存在的文件
-                if not file_path:
+                if not dataset_file:
                     logger.warning(
-                        f"文件不存在，跳过处理: dataset_id={file_info.dataset_id}, "
-                        f"file_id={file_info.id}, file_name={file_info.file_name}"
+                        f"文件不存在，跳过处理: file_id={file_info.id}"
                     )
                     skipped_file_ids.append(file_info.id)
                     continue
@@ -88,23 +84,20 @@ class FileService:
                 rag_file = RagFile(
                     id=str(uuid.uuid4()),
                     knowledge_base_id=request.knowledge_base_id,
-                    file_name=file_info.file_name,
+                    file_name=dataset_file.file_name,
                     file_id=file_info.id,
-                    chunk_count=None,
                     file_metadata={
                         "process_type": request.process_type.value,
-                        "dataset_id": file_info.dataset_id,
-                        "file_path": file_path
+                        "dataset_id": dataset_file.dataset_id,
+                        "file_path": dataset_file.file_path
                     },
                     status=FileStatus.UNPROCESSED,
-                    err_msg=None
                 )
                 rag_files.append(rag_file)
 
             except Exception as e:
                 logger.error(
-                    f"处理文件信息失败: dataset_id={file_info.dataset_id}, "
-                    f"file_id={file_info.id}, error={e}"
+                    f"处理文件信息失败: file_id={file_info.id}, error={e}"
                 )
                 skipped_file_ids.append(file_info.id)
                 continue

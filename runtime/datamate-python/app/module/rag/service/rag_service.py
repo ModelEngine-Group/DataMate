@@ -182,3 +182,21 @@ class RAGService:
         chain = create_retrieval_chain(retriever, combine_chain)
         result = await chain.ainvoke({"input": query})
         return result.get("answer", "")
+
+    async def index(self, documents: list[dict], knowledge_base_id: int) -> dict:
+        kb = await self._get_knowledge_base(str(knowledge_base_id))
+        embedding_entity = await self._get_models(kb.embedding_model)
+        embedding = EmbeddingFactory.create_embeddings(
+            model_name=embedding_entity.model_name,
+            base_url=getattr(embedding_entity, "base_url", None),
+            api_key=getattr(embedding_entity, "api_key", None),
+        )
+        vectorstore = VectorStoreFactory.create(
+            collection_name=kb.name,
+            embedding=embedding,
+        )
+        from langchain_core.documents import Document
+        docs = [Document(page_content=doc.get("content", ""), metadata=doc.get("metadata", {})) for doc in documents]
+        await vectorstore.aadd_documents(docs)
+        logger.info(f"Indexed {len(documents)} documents into knowledge base {knowledge_base_id}")
+        return {"indexed_count": len(documents), "collection_name": kb.name}

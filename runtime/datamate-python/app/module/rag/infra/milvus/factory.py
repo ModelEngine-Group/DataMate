@@ -28,7 +28,7 @@ class VectorStoreFactory:
         collection_name: str,
         embedding: Embeddings,
         *,
-        drop_old: bool = False,
+        drop_old: bool = True,
         consistency_level: str = "Strong",
     ) -> Any:
         """
@@ -44,13 +44,35 @@ class VectorStoreFactory:
             langchain_milvus.Milvus 实例
         """
         from langchain_milvus import BM25BuiltInFunction, Milvus
+        from app.module.rag.infra.milvus.vectorstore import (
+            drop_collection,
+            create_java_compatible_collection,
+        )
 
+        # 获取向量维度
+        test_text = "test"
+        dimension = len(embedding.embed_query(test_text))
+
+        # 删除旧集合（如果存在）
+        if drop_old:
+            drop_collection(collection_name)
+
+        # 创建与 Java 兼容的 schema（只有5个字段：id、text、metadata、vector、sparse）
+        create_java_compatible_collection(
+            collection_name=collection_name,
+            dimension=dimension,
+            consistency_level=consistency_level
+        )
+
+        # 创建 Milvus 实例（不自动创建集合，使用已有的 schema）
         return Milvus(
             embedding_function=embedding,
             collection_name=collection_name,
             connection_args=VectorStoreFactory.get_connection_args(),
             builtin_function=BM25BuiltInFunction(),
-            vector_field=["dense", "sparse"],
+            text_field="text",
+            vector_field=["vector"],
+            drop_old=False,
             consistency_level=consistency_level,
-            drop_old=drop_old,
+            auto_id=False
         )

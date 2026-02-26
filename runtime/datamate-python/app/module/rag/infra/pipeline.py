@@ -73,7 +73,6 @@ async def load_and_split(
     )
     chunks = await splitter.split(
         parsed.text,
-        file_name=parsed.file_name,
         **base_chunk_metadata,
     )
 
