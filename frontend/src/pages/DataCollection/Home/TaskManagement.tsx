@@ -42,12 +42,14 @@ export default function TaskManagement() {
     searchParams,
     setSearchParams,
     fetchData,
+    handleFiltersChange,
   } = useFetchData(
     (params) => {
-      const { keyword, ...rest } = params || {};
+      const { keyword, status, ...rest } = params || {};
       return queryTasksUsingGet({
         ...rest,
         name: keyword || undefined,
+        status: status || undefined,
       });
     },
     (task) => mapCollectionTask(task, t),
@@ -247,13 +249,15 @@ export default function TaskManagement() {
         }
         searchPlaceholder={t("dataCollection.taskManagement.filters.searchPlaceholder")}
         filters={filters}
-        onFiltersChange={() => {}}
+        selectedFilters={searchParams.filter}
+        onFiltersChange={handleFiltersChange}
         showViewToggle={false}
         onClearFilters={() =>
           setSearchParams((prev) => ({
             ...prev,
             filter: { ...prev.filter, status: [] },
             current: 1,
+            keyword: "",
           }))
         }
         onReload={fetchData}

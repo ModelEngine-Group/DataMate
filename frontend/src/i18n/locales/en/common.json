@@ -2446,6 +2446,9 @@
     },
     "searchControls": {
       "searchPlaceholder": "Search...",
+      "startTime": "Start Time",
+      "endTime": "End Time",
+      "selectedFilters": "Selected Filters:",
       "dateRange": {
         "start": "Start Date",
         "end": "End Date",

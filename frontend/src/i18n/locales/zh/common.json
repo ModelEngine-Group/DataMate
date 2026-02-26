@@ -2446,6 +2446,9 @@
     },
     "searchControls": {
       "searchPlaceholder": "搜索...",
+      "startTime": "开始时间",
+      "endTime": "结束时间",
+      "selectedFilters": "已选筛选：",
       "dateRange": {
         "start": "开始日期",
         "end": "结束日期",

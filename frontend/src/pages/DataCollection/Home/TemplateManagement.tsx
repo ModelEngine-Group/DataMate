@@ -45,18 +45,10 @@ export default function TemplateManagement() {
     handleFiltersChange,
   } = useFetchData<CollectionTemplate>(
     (params) => {
-      const { keyword, builtIn, ...rest } = params || {};
-      const builtInValue = Array.isArray(builtIn)
-        ? builtIn?.[0]
-        : builtIn;
-
+      const { keyword, ...rest } = params || {};
       return queryDataXTemplatesUsingGet({
         ...rest,
         name: keyword || undefined,
-        built_in:
-          builtInValue && builtInValue !== "all"
-            ? builtInValue === "true"
-            : undefined,
       });
     },
     (tpl) => ({
@@ -145,6 +137,7 @@ export default function TemplateManagement() {
         }
         searchPlaceholder={t("dataCollection.templateManagement.filters.searchPlaceholder")}
         filters={filters}
+        selectedFilters={searchParams.filter}
         onFiltersChange={handleFiltersChange}
         showViewToggle={false}
         onClearFilters={() =>
@@ -152,6 +145,7 @@ export default function TemplateManagement() {
             ...prev,
             filter: { ...prev.filter, builtIn: [] },
             current: 1,
+            keyword: "",
           }))
         }
         onReload={() => {
