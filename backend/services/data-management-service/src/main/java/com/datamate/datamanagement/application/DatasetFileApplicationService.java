@@ -877,6 +877,10 @@ public class DatasetFileApplicationService {
         }
 
         try {
+            if (Files.exists(target) && Files.isSameFile(source, target)) {
+                return;
+            }
+
             Path parent = target.getParent();
             // 创建目标目录（如果需要）
             if (parent != null) {
