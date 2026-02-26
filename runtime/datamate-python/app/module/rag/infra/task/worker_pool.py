@@ -1,13 +1,35 @@
 """
 工作协程池
 
-使用 asyncio.Semaphore 控制并发数，替代 Java 的虚拟线程 + 信号量
+使用 asyncio.Semaphore 控制并发数，替代 Java 的虚拟线程 + 信号量。
+提供全局单例，确保所有文件处理共享同一个并发池。
 """
 import asyncio
-from typing import Callable, Any, Coroutine
+from typing import Callable, Any, Coroutine, Optional
 import logging
 
 logger = logging.getLogger(__name__)
+
+# 全局单例
+_global_pool: Optional["WorkerPool"] = None
+
+
+def get_global_pool(max_workers: int = 10) -> "WorkerPool":
+    """获取全局 WorkerPool 单例
+
+    所有文件处理任务共享同一个并发池，确保最多 10 个文件并行处理。
+
+    Args:
+        max_workers: 最大并发数（仅在首次创建时生效）
+
+    Returns:
+        全局 WorkerPool 实例
+    """
+    global _global_pool
+    if _global_pool is None:
+        _global_pool = WorkerPool(max_workers)
+        logger.info("创建全局 WorkerPool，最大并发数: %d", max_workers)
+    return _global_pool
 
 
 class WorkerPool:

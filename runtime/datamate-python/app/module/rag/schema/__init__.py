@@ -5,7 +5,7 @@ RAG 模块 Schema 导出
 """
 from .enums import ProcessType
 from app.db.models.knowledge_gen import RagType, FileStatus
-from .entity import RagChunk
+from .types import RagChunk
 from app.db.models.knowledge_gen import KnowledgeBase, RagFile
 from .request import (
     KnowledgeBaseCreateReq,

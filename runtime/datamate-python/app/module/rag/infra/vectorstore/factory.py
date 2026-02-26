@@ -1,7 +1,7 @@
 """
 向量存储工厂
 
-使用 LangChain Milvus 创建向量存储实例，支持混合检索（向量 + BM25）
+使用 LangChain Milvus 创建向量存储实例，支持混合检索（向量 + BM25）。
 """
 from __future__ import annotations
 
@@ -10,6 +10,11 @@ from typing import Any
 from langchain_core.embeddings import Embeddings
 
 from app.core.config import settings
+from app.module.rag.infra.vectorstore.store import (
+    create_collection,
+    drop_collection,
+    get_vector_dimension,
+)
 
 
 class VectorStoreFactory:
@@ -31,8 +36,7 @@ class VectorStoreFactory:
         drop_old: bool = True,
         consistency_level: str = "Strong",
     ) -> Any:
-        """
-        创建 Milvus 向量存储实例（支持混合检索）
+        """创建 Milvus 向量存储实例（支持混合检索）
 
         Args:
             collection_name: 集合名称（知识库名称）
@@ -44,27 +48,25 @@ class VectorStoreFactory:
             langchain_milvus.Milvus 实例
         """
         from langchain_milvus import BM25BuiltInFunction, Milvus
-        from app.module.rag.infra.milvus.vectorstore import (
-            drop_collection,
-            create_java_compatible_collection,
-        )
 
         # 获取向量维度
-        test_text = "test"
-        dimension = len(embedding.embed_query(test_text))
+        dimension = get_vector_dimension(
+            embedding_model="",
+            embedding_instance=embedding,
+        )
 
         # 删除旧集合（如果存在）
         if drop_old:
             drop_collection(collection_name)
 
-        # 创建与 Java 兼容的 schema（只有5个字段：id、text、metadata、vector、sparse）
-        create_java_compatible_collection(
+        # 创建集合（5个字段：id、text、metadata、vector、sparse）
+        create_collection(
             collection_name=collection_name,
             dimension=dimension,
-            consistency_level=consistency_level
+            consistency_level=consistency_level,
         )
 
-        # 创建 Milvus 实例（不自动创建集合，使用已有的 schema）
+        # 创建 Milvus 实例
         return Milvus(
             embedding_function=embedding,
             collection_name=collection_name,
@@ -74,5 +76,5 @@ class VectorStoreFactory:
             vector_field=["vector"],
             drop_old=False,
             consistency_level=consistency_level,
-            auto_id=False
+            auto_id=False,
         )

@@ -13,7 +13,7 @@ from app.db.models.dataset_management import DatasetFiles
 from app.db.models.knowledge_gen import KnowledgeBase, RagFile, FileStatus
 from app.db.session import get_db, AsyncSessionLocal
 from app.module.rag.infra.embeddings import EmbeddingFactory
-from app.module.rag.infra.milvus.factory import VectorStoreFactory
+from app.module.rag.infra.vectorstore import VectorStoreFactory
 from app.module.shared.common.document_loaders import load_documents
 from .graph_rag import (
     DEFAULT_WORKING_DIR,
