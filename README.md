@@ -40,7 +40,8 @@ If you like this project, please give it a Star⭐️!
 
 ### Docker Quick deploy
 ```shell
-wget -qO docker-compose.yml https://raw.githubusercontent.com/ModelEngine-Group/DataMate/refs/heads/main/deployment/docker/datamate/docker-compose.yml && docker compose up -d
+wget -qO docker-compose.yml https://raw.githubusercontent.com/ModelEngine-Group/DataMate/refs/heads/main/deployment/docker/datamate/docker-compose.yml \
+ && REGISTRY=ghcr.io/modelengine-group/ docker compose up -d
 ```
 
 ### Clone the Code

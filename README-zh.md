@@ -37,7 +37,8 @@
 
 ### Docker一键部署
 ```shell
-wget -qO docker-compose.yml https://raw.githubusercontent.com/ModelEngine-Group/DataMate/refs/heads/main/deployment/docker/datamate/docker-compose.yml && docker compose up -d
+wget -qO docker-compose.yml https://raw.githubusercontent.com/ModelEngine-Group/DataMate/refs/heads/main/deployment/docker/datamate/docker-compose.yml \
+ && REGISTRY=ghcr.io/modelengine-group/ docker compose up -d
 ```
 
 ### 拉取代码
