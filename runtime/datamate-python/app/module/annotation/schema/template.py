@@ -14,6 +14,7 @@ class LabelDefinition(BaseModel):
     options: Optional[List[str]] = Field(None, description="选项列表（用于choices类型）")
     labels: Optional[List[str]] = Field(None, description="标签列表（用于rectanglelabels等类型）")
     required: bool = Field(False, description="是否必填")
+    choice: Optional[str] = Field(None, description="选项设置")
     description: Optional[str] = Field(None, description="标签描述")
     
     model_config = ConfigDict(populate_by_name=True)

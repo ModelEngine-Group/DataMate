@@ -55,7 +55,10 @@ class AnnotationTemplateService:
             # 添加可选属性
             if label.required:
                 label_attrs.append('required="true"')
-            
+
+            if label.choice:
+                label_attrs.append(f'choice="{label.choice}"')
+
             tag_type = label.type.capitalize() if label.type else "Choices"
             
             # 检查是否需要子元素
