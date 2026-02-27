@@ -380,65 +380,6 @@ export default function DataQuality(props: Props = {}) {
     <div className="mt-0 space-y-6">
       {/* 数据集标签统计 */}
       <LabelDistributionStats distribution={(dataset as any)?.distribution} />
-
-      <div className="grid md:grid-cols-2 gap-6">
-        <Card title={t("dataManagement.quality.titleDistribution")}>
-          {metrics.map((item, index) => (
-            <div key={index} className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>{item.metric}</span>
-                <span className="font-semibold">{item.value}%</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-3">
-                <div
-                  className={`${item.color} h-3 rounded-full transition-all duration-500`}
-                  style={{ width: `${item.value}%` }}
-                />
-              </div>
-            </div>
-          ))}
-        </Card>
-
-        <Card title={t("dataManagement.quality.titleIntegrity")}>
-          {integrityMetrics.map((item, index) => (
-            <div key={index} className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>{item.metric}</span>
-                <span className="font-semibold">{item.value}%</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-3">
-                <div
-                  className={`${item.color} h-3 rounded-full transition-all duration-500`}
-                  style={{ width: `${item.value}%` }}
-                />
-              </div>
-            </div>
-          ))}
-        </Card>
-      </div>
-
-      <Card className="bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-200">
-        <div className="flex items-start gap-4">
-          <AlertTriangle className="w-6 h-6 text-yellow-600 mt-1 flex-shrink-0" />
-          <div>
-            <h4 className="font-semibold text-yellow-800 mb-2">{t("dataManagement.quality.recommendationTitle")}</h4>
-            <ul className="text-sm text-yellow-700 space-y-2">
-              <li className="flex items-start gap-2">
-                <span className="w-1.5 h-1.5 bg-yellow-600 rounded-full mt-2 flex-shrink-0" />
-                {t("dataManagement.quality.recommendationReviewLowQuality", { count: Math.max(1, Math.round((finalFileStats.lowQuality || 0) * 1)) })}
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="w-1.5 h-1.5 bg-yellow-600 rounded-full mt-2 flex-shrink-0" />
-                {t("dataManagement.quality.recommendationSupplementMetadata", { missing: finalFileStats.missingFields || 0 })}
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="w-1.5 h-1.5 bg-yellow-600 rounded-full mt-2 flex-shrink-0" />
-                {t("dataManagement.quality.recommendationBalanceDistribution")}
-              </li>
-            </ul>
-          </div>
-        </div>
-      </Card>
     </div>
   );
 }
