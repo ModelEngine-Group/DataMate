@@ -112,6 +112,7 @@
         "createdAt": "Created At",
         "updatedAt": "Updated At"
       },
+      "columnSettings": "Column Settings",
       "messages": {
         "refreshFailed": "Refresh failed"
       }

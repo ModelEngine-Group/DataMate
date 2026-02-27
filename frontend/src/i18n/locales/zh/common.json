@@ -112,6 +112,7 @@
         "createdAt": "创建时间",
         "updatedAt": "更新时间"
       },
+      "columnSettings": "列设置",
       "messages": {
         "refreshFailed": "刷新失败"
       }

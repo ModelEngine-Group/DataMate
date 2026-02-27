@@ -185,19 +185,6 @@ INSERT INTO t_dc_collection_templates (
           'system'
       ),
       (
-          '3',
-          'MYSQL归集模板',
-          '将MYSQL数据库中的数据以csv文件的形式归集到DataMate平台上。',
-          'mysqlreader',
-          'mysqlreader',
-          'txtfilewriter',
-          'txtfilewriter',
-          '{"parameter": {}, "reader": {"username": {"name": "用户名","description": "数据库的用户名。","type": "input", "required": true, "index": 2}, "password": {"name": "密码","description": "数据库的密码。","type": "password", "required": true, "index": 3}, "connection": {"name": "数据库连接信息", "description": "数据库连接信息。", "type": "multipleList", "size": 1, "index": 1, "properties": {"jdbcUrl": {"type": "inputList", "name": "数据库连接", "description": "数据库连接url。", "required": true, "index": 1}, "querySql": {"type": "inputList", "name": "查询sql", "description": "输入符合语法的sql查询语句。", "required": true, "index": 2}}}}, "writer": {"header": {"name": "列名","description": "查询结果的列名，最终会体现为csv文件的表头。","type": "selectTag", "required": false}}}',
-          TRUE,
-          'system',
-          'system'
-      ),
-      (
           '4',
           'StarRocks归集模板',
           '将StarRocks中的数据以csv文件的形式归集到DataMate平台上。',
