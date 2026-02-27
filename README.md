@@ -38,7 +38,7 @@ If you like this project, please give it a Star⭐️!
 - Kubernetes (for service deployment - k8s method)
 - Helm (for service deployment - k8s method)
 
-### Quick deploy
+### Docker Quick deploy
 ```shell
 wget -qO docker-compose.yml https://raw.githubusercontent.com/ModelEngine-Group/DataMate/refs/heads/main/deployment/docker/datamate/docker-compose.yml && docker compose up -d
 ```

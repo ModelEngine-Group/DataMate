@@ -35,7 +35,7 @@
 - kubernetes (用于部署服务-k8s方式)
 - Helm (用于部署服务-k8s方式)
 
-### 一键部署
+### Docker一键部署
 ```shell
 wget -qO docker-compose.yml https://raw.githubusercontent.com/ModelEngine-Group/DataMate/refs/heads/main/deployment/docker/datamate/docker-compose.yml && docker compose up -d
 ```
