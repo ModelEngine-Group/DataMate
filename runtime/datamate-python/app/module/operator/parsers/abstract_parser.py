@@ -8,7 +8,8 @@ from abc import ABC, abstractmethod
 from typing import Dict, Any, Optional
 
 from app.module.operator.schema import OperatorDto, OperatorReleaseDto
-from app.module.operator.constants import CATEGORY_MAP, CATEGORY_OTHER_VENDOR_ID, CATEGORY_CUSTOMIZED_ID
+from app.module.operator.constants import CATEGORY_MAP, CATEGORY_OTHER_VENDOR_ID, CATEGORY_CUSTOMIZED_ID, \
+    CATEGORY_CLEANING_ID
 from app.module.operator.exceptions import FieldNotFoundError
 
 
@@ -86,12 +87,22 @@ class AbstractParser(ABC):
         operator.releases = [operator_release]
 
         # Build categories
-        categories = [
+        categories = []
+        types = content.get("types")
+        if isinstance(types, list):
+            for t in types:
+                if self._to_lower(t) in CATEGORY_MAP:
+                    categories.append(CATEGORY_MAP[self._to_lower(t)])
+        if len(categories) == 0:
+            categories.append(CATEGORY_CLEANING_ID)
+
+        categories.extend([
             CATEGORY_MAP.get(self._to_lower(content.get("language")), ""),
             CATEGORY_MAP.get(self._to_lower(content.get("modal")), ""),
             CATEGORY_MAP.get(self._to_lower(content.get("vendor")), CATEGORY_OTHER_VENDOR_ID),
             CATEGORY_CUSTOMIZED_ID,
-        ]
+        ])
+
         operator.categories = categories
 
         return operator

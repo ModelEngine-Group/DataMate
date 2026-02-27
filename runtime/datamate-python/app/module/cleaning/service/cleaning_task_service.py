@@ -180,6 +180,11 @@ class CleaningTaskService:
 
         await self.operator_instance_repo.insert_instance(db, task_id, request.instance)
 
+        # Increment operator usage count
+        operator_ids = [inst.id for inst in request.instance if inst.id]
+        if operator_ids:
+            await self.operator_service.increment_usage_count(operator_ids, db)
+
         all_operators = await self.operator_service.get_operators(db=db, page=0, size=1000, categories=[], keyword=None, is_star=None)
         operator_map = {op.id: op for op in all_operators}
 

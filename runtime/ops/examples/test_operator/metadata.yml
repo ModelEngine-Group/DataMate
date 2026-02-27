@@ -7,6 +7,9 @@ version: '1.0.0'
 modal: 'text'     # text/image/audio/video/multimodal
 inputs: 'text'    # text/image/audio/video/multimodal
 outputs: 'text'   # text/image/audio/video/multimodal
+types:
+  - 'cleaning'
+  - 'annotation'
 release:
   - '首次发布'
   - '支持基本处理操作'

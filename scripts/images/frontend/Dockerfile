@@ -12,7 +12,7 @@ FROM nginx:1.29 AS runner
 RUN --mount=type=cache,target=/var/cache/apt \
     --mount=type=cache,target=/var/lib/apt \
     apt update \
-    && apt install -y dos2unix python3 python3-dev python3-venv libaugeas-dev gcc \
+    && apt install -y dos2unix python3 python3-dev python3-venv libaugeas-dev gcc vim cron \
     && python3 -m venv /opt/certbot/ \
     && /opt/certbot/bin/pip install --upgrade pip \
     && /opt/certbot/bin/pip install certbot certbot-nginx \
