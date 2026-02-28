@@ -35,7 +35,7 @@ export default function CreateKnowledgeBase({
   const dispatch = useDispatch();
 
   const embeddingModelOptions = models
-    .filter((model) => model.type === "EMBEDDING")
+    .filter((model) => model.type === "EMBEDDING" || model.type === "MULTIMODAL_EMBEDDING")
     .map((model) => ({
       label: model.modelName + " (" + model.provider + ")",
       value: model.id,

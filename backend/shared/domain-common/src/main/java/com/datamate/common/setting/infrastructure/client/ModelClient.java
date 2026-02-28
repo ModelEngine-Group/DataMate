@@ -27,6 +27,13 @@ public class ModelClient {
     }
 
     public static EmbeddingModel invokeEmbeddingModel(ModelConfig modelConfig) {
+        if (modelConfig.getType() == ModelType.MULTIMODAL_EMBEDDING) {
+            return new MultimodalEmbeddingAdapter(
+                    modelConfig.getBaseUrl(),
+                    modelConfig.getApiKey(),
+                    modelConfig.getModelName()
+            );
+        }
         return OpenAiEmbeddingModel.builder()
                 .baseUrl(modelConfig.getBaseUrl())
                 .apiKey(modelConfig.getApiKey())

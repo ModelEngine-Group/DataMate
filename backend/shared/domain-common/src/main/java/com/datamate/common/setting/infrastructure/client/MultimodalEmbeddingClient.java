@@ -6,6 +6,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,33 +42,22 @@ public class MultimodalEmbeddingClient {
         this.apiEndpoint = detectApiEndpoint();
     }
 
-    /**
-     * 根据 baseUrl 检测 API 端点
-     */
     private String detectApiEndpoint() {
         if (isDashScope) {
-            // 阿里云百炼：使用专用多模态端点
             return "https://dashscope.aliyuncs.com/api/v1/services/embeddings/multimodal-embedding/multimodal-embedding";
         }
-        // 其他提供商：假设使用标准 /embeddings 端点
         return baseUrl + "/embeddings";
     }
 
-    /**
-     * 对纯文本进行嵌入
-     */
     public float[] embedText(String text) {
         Map<String, Object> content = new HashMap<>();
         content.put("text", text);
         return embed(List.of(content));
     }
 
-    /**
-     * 对图像进行嵌入
-     */
     public float[] embedImage(String imageUrl, String text) {
         Map<String, Object> content = new HashMap<>();
-        content.put("image", imageUrl);
+        content.put("image", convertToDataUrl(imageUrl));
         if (text != null && !text.isEmpty()) {
             content.put("text", text);
         }
@@ -72,8 +65,55 @@ public class MultimodalEmbeddingClient {
     }
 
     /**
-     * 通用嵌入方法
+     * 将图片路径或URL转换为Data URL格式
      */
+    private String convertToDataUrl(String imageInput) {
+        if (imageInput == null || imageInput.isEmpty()) {
+            throw new IllegalArgumentException("Image input cannot be null or empty");
+        }
+
+        if (imageInput.startsWith("http://") || imageInput.startsWith("https://") || imageInput.startsWith("data:")) {
+            return imageInput;
+        }
+
+        Path imagePath = Path.of(imageInput);
+        if (!Files.exists(imagePath)) {
+            throw new RuntimeException("Image file not found: " + imageInput);
+        }
+
+        try {
+            String mimeType = detectMimeType(imagePath);
+            byte[] imageBytes = Files.readAllBytes(imagePath);
+            String base64 = Base64.getEncoder().encodeToString(imageBytes);
+            return "data:" + mimeType + ";base64," + base64;
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to read image file: " + imageInput, e);
+        }
+    }
+
+    /**
+     * 根据文件扩展名检测 MIME 类型
+     */
+    private String detectMimeType(Path imagePath) {
+        String fileName = imagePath.getFileName().toString().toLowerCase();
+        if (fileName.endsWith(".jpg") || fileName.endsWith(".jpeg")) {
+            return "image/jpeg";
+        } else if (fileName.endsWith(".png")) {
+            return "image/png";
+        } else if (fileName.endsWith(".gif")) {
+            return "image/gif";
+        } else if (fileName.endsWith(".bmp")) {
+            return "image/bmp";
+        } else if (fileName.endsWith(".webp")) {
+            return "image/webp";
+        } else if (fileName.endsWith(".svg")) {
+            return "image/svg+xml";
+        } else if (fileName.endsWith(".tiff") || fileName.endsWith(".tif")) {
+            return "image/tiff";
+        }
+        return "image/jpeg";
+    }
+
     private float[] embed(List<Map<String, Object>> contents) {
         Map<String, Object> requestBody = buildRequestBody(contents);
 
@@ -97,7 +137,6 @@ public class MultimodalEmbeddingClient {
 
             JsonNode responseJson = objectMapper.readTree(response.getBody());
 
-            // 尝试阿里云百炼格式: output.embeddings[0].embedding
             JsonNode outputNode = responseJson.path("output");
             if (!outputNode.isMissingNode()) {
                 JsonNode embeddingsArray = outputNode.path("embeddings");
@@ -107,7 +146,6 @@ public class MultimodalEmbeddingClient {
                 }
             }
 
-            // 尝试通用格式: data[0].embedding
             JsonNode dataArray = responseJson.path("data");
             if (dataArray.isArray() && dataArray.size() > 0) {
                 JsonNode embeddingNode = dataArray.get(0).path("embedding");
@@ -120,30 +158,22 @@ public class MultimodalEmbeddingClient {
         }
     }
 
-    /**
-     * 构建请求体
-     */
     private Map<String, Object> buildRequestBody(List<Map<String, Object>> contents) {
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("model", modelName);
 
         if (isDashScope) {
-            // 阿里云百炼 HTTP API 格式: input.contents
             Map<String, Object> input = new HashMap<>();
             input.put("contents", contents);
             requestBody.put("input", input);
             requestBody.put("parameters", new HashMap<>());
         } else {
-            // 通用格式: input 数组
             requestBody.put("input", contents);
         }
 
         return requestBody;
     }
 
-    /**
-     * 从 JSON 节点提取嵌入向量
-     */
     private float[] extractEmbedding(JsonNode embeddingNode) {
         if (embeddingNode.isMissingNode() || !embeddingNode.isArray()) {
             throw new RuntimeException("Invalid response format: embedding is not an array");
@@ -155,9 +185,6 @@ public class MultimodalEmbeddingClient {
         return embedding;
     }
 
-    /**
-     * 健康检查：对测试文本进行嵌入
-     */
     public void checkHealth() {
         embedText("health check");
         log.info("Multimodal embedding model health check passed: {}", modelName);

@@ -50,14 +50,32 @@ class RAGService:
         llm_callable = await build_llm_model_func(
             chat_model.model_name, chat_model.base_url, chat_model.api_key
         )
-        embedding_callable = await build_embedding_func(
-            embedding_model.model_name,
-            embedding_model.base_url,
-            embedding_model.api_key,
-            embedding_dim=LLMFactory.get_embedding_dimension(
-                embedding_model.model_name, embedding_model.base_url, embedding_model.api_key
-            ),
-        )
+
+        # 根据模型类型选择不同的 embedding 方式
+        if embedding_model.type == "MULTIMODAL_EMBEDDING":
+            multimodal_client = LLMFactory.create_multimodal_embedding(
+                embedding_model.model_name,
+                embedding_model.base_url,
+                embedding_model.api_key
+            )
+            # 获取维度
+            test_embedding = multimodal_client.embed_text("test")
+            embedding_dim = len(test_embedding)
+            embedding_callable = await build_embedding_func(
+                embedding_model.model_name,
+                embedding_model.base_url,
+                embedding_model.api_key,
+                embedding_dim=embedding_dim,
+            )
+        else:
+            embedding_callable = await build_embedding_func(
+                embedding_model.model_name,
+                embedding_model.base_url,
+                embedding_model.api_key,
+                embedding_dim=LLMFactory.get_embedding_dimension(
+                    embedding_model.model_name, embedding_model.base_url, embedding_model.api_key
+                ),
+            )
 
         kb_working_dir = os.path.join(DEFAULT_WORKING_DIR, kb.name)
         self.rag = await initialize_rag(llm_callable, embedding_callable, kb_working_dir)
