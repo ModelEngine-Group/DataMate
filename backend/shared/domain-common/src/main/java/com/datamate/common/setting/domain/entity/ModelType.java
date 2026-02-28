@@ -14,5 +14,9 @@ public enum ModelType {
     /**
      * 嵌入模型
      */
-    EMBEDDING
+    EMBEDDING,
+    /**
+     * 多模态嵌入模型
+     */
+    MULTIMODAL_EMBEDDING
 }

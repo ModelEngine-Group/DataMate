@@ -2,6 +2,7 @@ package com.datamate.common.setting.infrastructure.client;
 
 import com.datamate.common.infrastructure.exception.BusinessException;
 import com.datamate.common.setting.domain.entity.ModelConfig;
+import com.datamate.common.setting.domain.entity.ModelType;
 import com.datamate.common.setting.infrastructure.exception.ModelsErrorCode;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.embedding.EmbeddingModel;
@@ -21,6 +22,7 @@ public class ModelClient {
         return switch (modelConfig.getType()) {
             case CHAT -> modelInterface.cast(invokeChatModel(modelConfig));
             case EMBEDDING -> modelInterface.cast(invokeEmbeddingModel(modelConfig));
+            case MULTIMODAL_EMBEDDING -> modelInterface.cast(invokeMultimodalEmbeddingModel(modelConfig));
         };
     }
 
@@ -40,11 +42,20 @@ public class ModelClient {
                 .build();
     }
 
+    public static MultimodalEmbeddingClient invokeMultimodalEmbeddingModel(ModelConfig modelConfig) {
+        return new MultimodalEmbeddingClient(
+                modelConfig.getBaseUrl(),
+                modelConfig.getApiKey(),
+                modelConfig.getModelName()
+        );
+    }
+
     public static void checkHealth(ModelConfig modelConfig) {
         try {
             switch (modelConfig.getType()) {
                 case CHAT -> checkChatModelHealth(modelConfig);
                 case EMBEDDING -> checkEmbeddingModelHealth(modelConfig);
+                case MULTIMODAL_EMBEDDING -> checkMultimodalEmbeddingModelHealth(modelConfig);
             }
         } catch (Exception e) {
             log.error("Model health check failed for modelConfig: {}", modelConfig, e);
@@ -60,5 +71,14 @@ public class ModelClient {
     private static void checkChatModelHealth(ModelConfig modelConfig) {
         ChatModel chatModel = invokeChatModel(modelConfig);
         chatModel.chat("hello");
+    }
+
+    private static void checkMultimodalEmbeddingModelHealth(ModelConfig modelConfig) {
+        try {
+            MultimodalEmbeddingClient client = invokeMultimodalEmbeddingModel(modelConfig);
+            client.checkHealth();
+        } catch (Exception e) {
+            throw new RuntimeException("Multimodal embedding health check failed", e);
+        }
     }
 }

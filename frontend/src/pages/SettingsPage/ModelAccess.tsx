@@ -70,6 +70,7 @@ export default function ModelAccess() {
   const [typeOptions] = useState([
     { value: "CHAT", label: "CHAT" },
     { value: "EMBEDDING", label: "EMBEDDING" },
+    { value: "MULTIMODAL_EMBEDDING", label: "MULTIMODAL_EMBEDDING" },
   ]);
 
   const {

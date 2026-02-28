@@ -12,6 +12,7 @@ class ModelType(str, Enum):
     """模型类型枚举，与 Java ModelType 一致。"""
     CHAT = "CHAT"
     EMBEDDING = "EMBEDDING"
+    MULTIMODAL_EMBEDDING = "MULTIMODAL_EMBEDDING"
 
 
 # --- 请求 DTO ---
