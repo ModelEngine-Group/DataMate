@@ -72,6 +72,10 @@ class CollectionTaskService:
             if not template:
                 logger.error(f"template {task.template_name} not exist")
                 return
+
+            # 设置任务状态为 RUNNING
+            task.status = TaskStatus.RUNNING.name
+            await session.commit()
             task_execution = create_execute_record(task)
             session.add(task_execution)
             await session.commit()

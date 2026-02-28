@@ -82,12 +82,14 @@
       "actions": {
         "start": "Start",
         "stop": "Stop",
+        "retry": "Retry",
         "executionRecords": "Execution Records",
         "delete": "Delete"
       },
       "messages": {
         "startSuccess": "Task start request sent",
         "stopSuccess": "Task stop request sent",
+        "retrySuccess": "Task retry request sent",
         "deleteSuccess": "Task deleted",
         "deleteConfirm": "Are you sure you want to delete this task? This action cannot be undone.",
         "deleteConfirmMessage": "Are you sure you want to delete task \"{{taskName}}\"? This action cannot be undone.",

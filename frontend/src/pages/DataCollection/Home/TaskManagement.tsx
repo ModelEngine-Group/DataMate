@@ -1,9 +1,11 @@
 import { App, Button, Card, Modal, Table, Tag, Tooltip } from "antd";
 import {
   DeleteOutlined,
+  EditOutlined,
   PauseCircleOutlined,
   PlayCircleOutlined,
   ProfileOutlined,
+  ReloadOutlined,
 } from "@ant-design/icons";
 import { SearchControls } from "@/components/SearchControls";
 import {
@@ -35,6 +37,7 @@ export default function TaskManagement() {
     taskId: "",
     taskName: "",
   });
+
   const filters = [
     {
       key: "status",
@@ -101,8 +104,26 @@ export default function TaskManagement() {
     setDeleteModal({ visible: false, taskId: "", taskName: "" });
   };
 
+  const handleRetryTask = async (taskId: string) => {
+    await executeTaskByIdUsingPost(taskId);
+    message.success(t("dataCollection.taskManagement.messages.retrySuccess"));
+    fetchData();
+  };
+
+  const handleEditTask = (record: CollectionTask) => {
+    navigate(`/data/collection/create-task?taskId=${encodeURIComponent(record.id)}`);
+  };
+
   const taskOperations = (record: CollectionTask) => {
-    const isStopped = record.status === TaskStatus.STOPPED;
+    // 获取实际的枚举值
+    const statusValue = record.status?.value || record.status;
+
+    const isStopped = statusValue === TaskStatus.STOPPED;
+    const isFailed = statusValue === TaskStatus.FAILED;
+    const isPending = statusValue === TaskStatus.PENDING;
+    const isRunning = statusValue === TaskStatus.RUNNING;
+    const isCompleted = statusValue === TaskStatus.COMPLETED;
+
     const startButton = {
       key: "start",
       label: t("dataCollection.taskManagement.actions.start"),
@@ -115,7 +136,20 @@ export default function TaskManagement() {
       icon: <PauseCircleOutlined />,
       onClick: () => handleStopTask(record.id),
     };
-    return [
+    const retryButton = {
+      key: "retry",
+      label: t("dataCollection.taskManagement.actions.retry"),
+      icon: <ReloadOutlined />,
+      onClick: () => handleRetryTask(record.id),
+    };
+    const editButton = {
+      key: "edit",
+      label: t("dataCollection.taskManagement.actions.edit"),
+      icon: <EditOutlined />,
+      onClick: () => handleEditTask(record),
+    };
+
+    const operations = [
       {
         key: "executions",
         label: t("dataCollection.taskManagement.actions.executionRecords"),
@@ -125,20 +159,46 @@ export default function TaskManagement() {
             `/data/collection?tab=task-execution&taskId=${encodeURIComponent(record.id)}`
           ),
       },
-      {
-        key: "delete",
-        label: t("dataCollection.taskManagement.actions.delete"),
-        danger: true,
-        icon: <DeleteOutlined />,
-        modal: {
-          title: t("dataCollection.taskManagement.messages.deleteConfirm"),
-          okText: t("dataCollection.taskManagement.messages.confirmDelete"),
-          cancelText: t("dataCollection.taskManagement.messages.cancel"),
-          okType: "danger",
-        },
-        onClick: () => showDeleteConfirm(record.id, record.name),
-      },
     ];
+
+    // 根据状态添加不同的操作按钮
+    // PENDING 状态可以启动和编辑
+    if (isPending) {
+      operations.push(startButton);
+      operations.push(editButton);
+    }
+    // RUNNING 状态可以编辑
+    else if (isRunning) {
+      operations.push(editButton);
+    }
+    // FAILED 状态可以重试和编辑
+    else if (isFailed) {
+      operations.push(retryButton);
+      operations.push(editButton);
+    }
+    // STOPPED 状态可以启动和编辑
+    else if (isStopped) {
+      operations.push(startButton);
+      operations.push(editButton);
+    }
+    // COMPLETED 状态的任务不可编辑
+    else if (isCompleted) {
+      // 不添加任何操作
+    }
+    // 其他状态（如 DRAFT）可以编辑
+    else {
+      operations.push(editButton);
+    }
+
+    operations.push({
+      key: "delete",
+      label: t("dataCollection.taskManagement.actions.delete"),
+      danger: true,
+      icon: <DeleteOutlined />,
+      onClick: () => showDeleteConfirm(record.id, record.name),
+    });
+
+    return operations;
   };
 
   const columns = [

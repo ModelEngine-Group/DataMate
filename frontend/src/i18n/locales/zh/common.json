@@ -82,12 +82,14 @@
       "actions": {
         "start": "启动",
         "stop": "停止",
+        "retry": "重试",
         "executionRecords": "执行记录",
         "delete": "删除"
       },
       "messages": {
         "startSuccess": "任务启动请求已发送",
         "stopSuccess": "任务停止请求已发送",
+        "retrySuccess": "任务重试请求已发送",
         "deleteSuccess": "任务已删除",
         "deleteConfirm": "确定要删除该任务吗？此操作不可撤销。",
         "deleteConfirmMessage": "确定要删除任务「{{taskName}}」吗？删除后将无法恢复。",

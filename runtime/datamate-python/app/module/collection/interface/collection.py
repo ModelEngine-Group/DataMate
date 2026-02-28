@@ -120,6 +120,29 @@ async def list_tasks(
     )
 
 
+@router.post("/{task_id}/execute", response_model=StandardResponse[str], operation_id="execute_task")
+async def execute_task(
+    task_id: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """执行归集任务"""
+    from app.module.collection.service.collection import CollectionTaskService
+
+    # 验证任务是否存在
+    task = await db.execute(select(CollectionTask).where(CollectionTask.id == task_id))
+    task = task.scalar_one_or_none()
+    if not task:
+        raise BusinessError(ErrorCodes.COLLECTION_TASK_NOT_FOUND, data={"task_id": task_id})
+
+    # 调用服务执行任务
+    await CollectionTaskService.run_async(task_id)
+
+    return SuccessResponse(
+        data=task_id,
+        message="Task execution started"
+    )
+
+
 @router.delete("", response_model=StandardResponse[str], status_code=200)
 async def delete_collection_tasks(
     ids: list[str] = Query(..., description="List of task IDs to delete"),
