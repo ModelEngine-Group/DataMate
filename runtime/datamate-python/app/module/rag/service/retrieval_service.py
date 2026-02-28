@@ -6,7 +6,7 @@
 import logging
 from typing import List
 
-from pymilvus import MilvusClient
+from pymilvus import AnnSearchRequest, MilvusClient, RRFRanker, Function, FunctionType
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -81,11 +81,11 @@ class RetrievalService:
         all_results = await self._execute_hybrid_search(knowledge_bases, query_vector, request.query, request.top_k)
 
         # 按分数排序
-        all_results.sort(key=lambda x: x.get("distance", 0), reverse=True)
+        all_results.sort(key=lambda x: x.get("score") or x.get("distance", 0), reverse=True)
 
         # 应用阈值过滤
         if request.threshold is not None:
-            all_results = [r for r in all_results if r.get("distance", 0) >= request.threshold]
+            all_results = [r for r in all_results if (r.get("score") or r.get("distance", 0)) >= 0]
 
         # 格式化返回结果
         return self._format_results(all_results)
@@ -108,13 +108,38 @@ class RetrievalService:
                     logger.warning("集合 %s 不存在，跳过", kb.name)
                     continue
 
+                dense_search = AnnSearchRequest(
+                    data=[query_vector],
+                    anns_field="vector",
+                    param={"nprobe": 10},
+                    limit=top_k,
+                )
+
+                sparse_search = AnnSearchRequest(
+                    data=[query_text],
+                    anns_field="sparse",
+                    param={"metric_type": "BM25", "params": {}},
+                    limit=top_k,
+                )
+
+                ranker = Function(
+                    name="rrf",
+                    input_field_names=[],  # Must be an empty list
+                    function_type=FunctionType.RERANK,
+                    params={
+                        "reranker": "rrf",
+                        "k": 100
+                    }
+                )
                 search_results = client.hybrid_search(
                     collection_name=kb.name,
-                    data=[{"vector": query_vector, "sparse": query_text}],
-                    anns_field=["vector", "sparse"],
+                    reqs=[dense_search, sparse_search],
+                    ranker=ranker,
+                    output_fields=["id", "text", "metadata"],
                     limit=top_k,
-                    ranker={"type": "weighted", "weights": [0.1, 0.9]},
                 )
+
+                logger.info(f"----------, {search_results.__str__()}")
 
                 if search_results and len(search_results) > 0:
                     for result in search_results[0]:
@@ -137,7 +162,7 @@ class RetrievalService:
                 "id": entity.get("id", ""),
                 "text": entity.get("text", ""),
                 "metadata": entity.get("metadata", {}),
-                "score": r.get("distance", 0),
+                "score": r.get("score") or r.get("distance", 0),
                 "knowledgeBaseId": r.get("knowledge_base_id", ""),
                 "knowledgeBaseName": r.get("knowledge_base_name", ""),
             })
