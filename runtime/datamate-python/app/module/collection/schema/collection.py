@@ -4,7 +4,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel, Field, validator, ConfigDict
+from pydantic import BaseModel, Field, validator, ConfigDict, field_validator
 from pydantic.alias_generators import to_camel
 
 from app.db.models.data_collection import CollectionTask, TaskExecution, CollectionTemplate
@@ -56,6 +56,36 @@ class CollectionTaskCreate(BaseModel):
     template_id: str = Field(..., description="模板ID")
     dataset_name: Optional[str] = Field(None, description="数据集名称")
     dataset_type: Optional[DatasetType] = Field(DatasetType.TEXT, description="数据集类型")
+
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        populate_by_name=True
+    )
+
+class CollectionTaskUpdate(BaseModel):
+    """任务更新模型 - 只包含可更新的字段"""
+    description: Optional[str] = Field(None, description="任务描述")
+    schedule_expression: Optional[str] = Field(None, description="调度表达式（cron）- 仅SCHEDULED模式可修改")
+    timeout_seconds: Optional[int] = Field(None, description="超时时间（秒）")
+    config: Optional[CollectionConfig] = Field(None, description="任务配置")
+
+    @field_validator('schedule_expression')
+    @classmethod
+    def validate_schedule_expression(cls, v, info):
+        """验证调度表达式"""
+        if v is not None:
+            # SCHEDULED 模式必须有调度表达式
+            if not v or not v.strip():
+                raise ValueError("schedule_expression is required for SCHEDULED mode")
+        return v
+
+    @field_validator('timeout_seconds')
+    @classmethod
+    def validate_timeout(cls, v):
+        """验证超时时间"""
+        if v is not None and v <= 0:
+            raise ValueError("timeout_seconds must be greater than 0")
+        return v
 
     model_config = ConfigDict(
         alias_generator=to_camel,

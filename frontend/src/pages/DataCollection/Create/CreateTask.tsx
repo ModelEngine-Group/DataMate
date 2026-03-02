@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Input, Button, Radio, Form, App, Select, InputNumber } from "antd";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { ArrowLeft } from "lucide-react";
-import { createTaskUsingPost, queryDataXTemplatesUsingGet } from "../collection.apis";
+import { createTaskUsingPost, updateTaskUsingPut, queryDataXTemplatesUsingGet, queryTasksUsingGet } from "../collection.apis";
 import SimpleCronScheduler from "@/pages/DataCollection/Create/SimpleCronScheduler";
 import { getSyncModeMap } from "../collection.const";
 import { SyncMode } from "../collection.model";
@@ -39,10 +39,16 @@ type TemplateFieldDef = {
 
 export default function CollectionTaskCreate() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [form] = Form.useForm();
   const { message } = App.useApp();
   const { t } = useTranslation();
   const syncModeOptions = Object.values(getSyncModeMap(t));
+
+  // 编辑模式
+  const taskId = searchParams.get("taskId");
+  const isEditMode = !!taskId;
+  const [editLoading, setEditLoading] = useState(false);
 
   const [templates, setTemplates] = useState<CollectionTemplate[]>([]);
   const [templatesLoading, setTemplatesLoading] = useState(false);
@@ -65,8 +71,52 @@ export default function CollectionTaskCreate() {
     cronExpression: "0 0 * * *",
   });
 
+  // 解析 cron 表达式
+  const parseCronExpression = (cronExpr: string) => {
+    const parts = cronExpr.trim().split(/\s+/);
+    if (parts.length !== 5) {
+      // 无效的 cron 表达式，返回默认值
+      return {
+        type: "daily" as const,
+        time: "00:00",
+        cronExpression: cronExpr,
+      };
+    }
+
+    const [minute, hour, day, month, weekday] = parts;
+    const formattedHour = hour.padStart(2, "0");
+    const formattedMinute = minute.padStart(2, "0");
+    const time = `${formattedHour}:${formattedMinute}`;
+
+    // 判断类型：monthly (指定日期), weekly (指定星期), daily (都是 *)
+    if (day !== "*" && month === "*") {
+      // monthly: 例如 "0 9 1 * *" 表示每月1号9点
+      return {
+        type: "monthly" as const,
+        time,
+        monthDay: parseInt(day, 10),
+        cronExpression: cronExpr,
+      };
+    } else if (weekday !== "*" && day === "*") {
+      // weekly: 例如 "0 9 * * 1" 表示每周一9点
+      return {
+        type: "weekly" as const,
+        time,
+        weekDay: parseInt(weekday, 10),
+        cronExpression: cronExpr,
+      };
+    } else {
+      // daily: 例如 "0 9 * * *" 表示每天9点
+      return {
+        type: "daily" as const,
+        time,
+        cronExpression: cronExpr,
+      };
+    }
+  };
+
   useEffect(() => {
-    const run = async () => {
+    const loadTemplates = async () => {
       setTemplatesLoading(true);
       try {
         const resp: any = await queryDataXTemplatesUsingGet({ page: 1, size: 1000 });
@@ -78,8 +128,56 @@ export default function CollectionTaskCreate() {
         setTemplatesLoading(false);
       }
     };
-    run()
-  }, []);
+
+    const loadTask = async () => {
+      if (!taskId) return;
+      setEditLoading(true);
+      try {
+        const resp: any = await queryTasksUsingGet({ page: 1, size: 1 });
+        const task = resp?.data?.content?.find((t: any) => t.id === taskId);
+        if (task) {
+          // 设置表单值
+          setSelectedTemplateId(task.templateId);
+          form.setFieldsValue({
+            name: task.name,
+            description: task.description,
+            syncMode: task.syncMode,
+            scheduleExpression: task.scheduleExpression || "",
+            timeoutSeconds: task.timeoutSeconds || 3600,
+            templateId: task.templateId,
+            config: task.config || { parameter: {}, reader: {}, writer: {} },
+          });
+          setNewTask({
+            name: task.name,
+            description: task.description,
+            syncMode: task.syncMode,
+            scheduleExpression: task.scheduleExpression || "",
+            timeoutSeconds: task.timeoutSeconds || 3600,
+            templateId: task.templateId,
+            config: task.config || { parameter: {}, reader: {}, writer: {} },
+          });
+          // 解析 cron 表达式
+          if (task.scheduleExpression) {
+            const parsedSchedule = parseCronExpression(task.scheduleExpression);
+            setScheduleExpression(parsedSchedule);
+          }
+        } else {
+          message.error(t("dataCollection.taskManagement.messages.updateFailed"));
+          navigate("/data/collection");
+        }
+      } catch (e) {
+        message.error(t("dataCollection.taskManagement.messages.updateFailed"));
+        navigate("/data/collection");
+      } finally {
+        setEditLoading(false);
+      }
+    };
+
+    loadTemplates();
+    if (isEditMode) {
+      loadTask();
+    }
+  }, [taskId]);
 
   const parseJsonObjectInput = (value: any) => {
     if (value === undefined || value === null) return value;
@@ -195,10 +293,30 @@ export default function CollectionTaskCreate() {
           ),
         };
       }
-      await createTaskUsingPost(payload);
-      message.success(t("dataCollection.createTask.messages.createSuccess"));
+
+      if (isEditMode) {
+        // 编辑模式：只更新允许的字段
+        const updateData: any = {
+          description: payload.description,
+          timeoutSeconds: payload.timeoutSeconds,
+          config: payload.config,
+        };
+        if (payload.syncMode === SyncMode.SCHEDULED && payload.scheduleExpression) {
+          updateData.scheduleExpression = payload.scheduleExpression;
+        }
+        await updateTaskUsingPut(taskId!, updateData);
+        message.success(t("dataCollection.taskManagement.messages.updateSuccess"));
+      } else {
+        // 创建模式
+        await createTaskUsingPost(payload);
+        message.success(t("dataCollection.createTask.messages.createSuccess"));
+      }
       navigate("/data/collection");
     } catch (error) {
+      if (error.errorFields) {
+        // 表单验证错误，不显示消息
+        return;
+      }
       message.error(
         t("dataCollection.createTask.messages.errorWithDetail", {
           message: error?.data?.message ?? "",
@@ -412,22 +530,30 @@ export default function CollectionTaskCreate() {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center">
-          <Link to="/data/collection">
-            <Button type="text">
-              <ArrowLeft className="w-4 h-4 mr-1" />
-            </Button>
-          </Link>
-          <h1 className="text-xl font-bold bg-clip-text">
-            {t("dataCollection.createTask.title")}
-          </h1>
+      {editLoading ? (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-gray-500">{t("common.loading")}</div>
         </div>
-      </div>
+      ) : (
+        <>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center">
+              <Link to="/data/collection">
+                <Button type="text">
+                  <ArrowLeft className="w-4 h-4 mr-1" />
+                </Button>
+              </Link>
+              <h1 className="text-xl font-bold bg-clip-text">
+                {isEditMode
+                  ? t("dataCollection.createTask.editTitle")
+                  : t("dataCollection.createTask.title")}
+              </h1>
+            </div>
+          </div>
 
-      <div className="flex-overflow-auto border-card">
-        <div className="flex-1 overflow-auto p-4">
-          <Form
+          <div className="flex-overflow-auto border-card">
+            <div className="flex-1 overflow-auto p-4">
+              <Form
             form={form}
             layout="vertical"
             className="[&_.ant-form-item]:mb-3 [&_.ant-form-item-label]:pb-1"
@@ -447,7 +573,10 @@ export default function CollectionTaskCreate() {
                 name="name"
                 rules={[{ required: true, message: t("dataCollection.createTask.basicInfo.nameRequired") }]}
               >
-                <Input placeholder={t("dataCollection.createTask.basicInfo.namePlaceholder")} />
+                <Input
+                  placeholder={t("dataCollection.createTask.basicInfo.namePlaceholder")}
+                  disabled={isEditMode}
+                />
               </Form.Item>
 
               <Form.Item
@@ -487,6 +616,7 @@ export default function CollectionTaskCreate() {
               <Radio.Group
                 value={newTask.syncMode}
                 options={syncModeOptions}
+                disabled={isEditMode}
                 onChange={(e) => {
                   const value = e.target.value;
                   setNewTask({
@@ -532,6 +662,7 @@ export default function CollectionTaskCreate() {
               <Select
                 placeholder={t("dataCollection.createTask.templateConfig.selectTemplatePlaceholder")}
                 loading={templatesLoading}
+                disabled={isEditMode}
                 onChange={(templateId) => {
                   setSelectedTemplateId(templateId);
                   form.setFieldsValue({
@@ -607,17 +738,21 @@ export default function CollectionTaskCreate() {
                 ) : null}
               </>
             ) : null}
-          </Form>
-        </div>
-        <div className="flex gap-2 justify-end border-top p-4">
-          <Button onClick={() => navigate("/data/collection")}>
-            {t("dataCollection.createTask.cancel")}
-          </Button>
-          <Button type="primary" onClick={handleSubmit}>
-            {t("dataCollection.createTask.submit")}
-          </Button>
-        </div>
-      </div>
+            </Form>
+            </div>
+            <div className="flex gap-2 justify-end border-top p-4">
+              <Button onClick={() => navigate("/data/collection")}>
+                {t("dataCollection.createTask.cancel")}
+              </Button>
+              <Button type="primary" onClick={handleSubmit}>
+                {isEditMode
+                  ? t("dataCollection.createTask.updateButton")
+                  : t("dataCollection.createTask.submit")}
+              </Button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

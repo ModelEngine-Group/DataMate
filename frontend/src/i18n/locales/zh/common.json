@@ -83,6 +83,7 @@
         "start": "启动",
         "stop": "停止",
         "retry": "重试",
+        "edit": "编辑",
         "executionRecords": "执行记录",
         "delete": "删除"
       },
@@ -90,11 +91,18 @@
         "startSuccess": "任务启动请求已发送",
         "stopSuccess": "任务停止请求已发送",
         "retrySuccess": "任务重试请求已发送",
+        "updateSuccess": "任务更新成功",
+        "updateFailed": "任务更新失败",
         "deleteSuccess": "任务已删除",
         "deleteConfirm": "确定要删除该任务吗？此操作不可撤销。",
         "deleteConfirmMessage": "确定要删除任务「{{taskName}}」吗？删除后将无法恢复。",
         "confirmDelete": "删除",
         "cancel": "取消"
+      },
+      "edit": {
+        "title": "编辑任务",
+        "taskInfo": "任务信息",
+        "resetHint": "保存后任务状态将重置为待执行，可以重新执行"
       }
     },
     "templateManagement": {
@@ -167,9 +175,11 @@
     },
     "createTask": {
       "title": "创建归集任务",
+      "editTitle": "编辑归集任务",
       "back": "返回",
       "cancel": "取消",
       "submit": "创建任务",
+      "updateButton": "更新任务",
       "actions": {
         "formatJson": "格式化JSON"
       },

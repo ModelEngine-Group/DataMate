@@ -83,6 +83,7 @@
         "start": "Start",
         "stop": "Stop",
         "retry": "Retry",
+        "edit": "Edit",
         "executionRecords": "Execution Records",
         "delete": "Delete"
       },
@@ -90,11 +91,18 @@
         "startSuccess": "Task start request sent",
         "stopSuccess": "Task stop request sent",
         "retrySuccess": "Task retry request sent",
+        "updateSuccess": "Task updated successfully",
+        "updateFailed": "Failed to update task",
         "deleteSuccess": "Task deleted",
         "deleteConfirm": "Are you sure you want to delete this task? This action cannot be undone.",
         "deleteConfirmMessage": "Are you sure you want to delete task \"{{taskName}}\"? This action cannot be undone.",
         "confirmDelete": "Delete",
         "cancel": "Cancel"
+      },
+      "edit": {
+        "title": "Edit Task",
+        "taskInfo": "Task Information",
+        "resetHint": "After saving, the task status will be reset to PENDING and can be re-executed"
       }
     },
     "templateManagement": {
@@ -167,9 +175,11 @@
     },
     "createTask": {
       "title": "Create Collection Task",
+      "editTitle": "Edit Collection Task",
       "back": "Back",
       "cancel": "Cancel",
       "submit": "Create Task",
+      "updateButton": "Update Task",
       "actions": {
         "formatJson": "Format JSON"
       },
