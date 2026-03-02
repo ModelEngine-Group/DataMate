@@ -4,7 +4,7 @@ RAG 模块响应 DTO
 定义所有 API 响应的数据结构
 与 Java 响应 DTO 保持字段一致
 """
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional, Any
 from datetime import datetime
 from app.db.models.knowledge_gen import RagType, FileStatus
@@ -15,18 +15,21 @@ class ModelConfig(BaseModel):
 
     对应 Java: com.datamate.common.setting.domain.entity.ModelConfig
     """
-    id: str = Field(..., description="模型ID")
-    name: str = Field(..., description="模型名称")
-    provider: str = Field(..., description="模型提供商")
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "id": "model-uuid-123",
-                "name": "text-embedding-ada-002",
-                "provider": "openai"
-            }
-        }
+    id: str = Field(..., description="模型ID")
+    created_at: Optional[datetime] = Field(None, alias="createdAt", description="创建时间")
+    updated_at: Optional[datetime] = Field(None, alias="updatedAt", description="更新时间")
+    created_by: Optional[str] = Field(None, alias="createdBy", description="创建人")
+    updated_by: Optional[str] = Field(None, alias="updatedBy", description="更新人")
+    model_name: str = Field(..., alias="modelName", description="模型名称")
+    provider: str = Field(..., description="模型提供商")
+    base_url: str = Field(..., alias="baseUrl", description="API 基础地址")
+    api_key: str = Field(default="", alias="apiKey", description="API 密钥")
+    type: str = Field(..., description="模型类型")
+    is_enabled: bool = Field(default=True, alias="isEnabled", description="是否启用")
+    is_default: bool = Field(default=False, alias="isDefault", description="是否默认")
+    is_deleted: bool = Field(default=False, alias="isDeleted", description="是否删除")
 
 
 class KnowledgeBaseResp(BaseModel):
@@ -34,6 +37,28 @@ class KnowledgeBaseResp(BaseModel):
 
     对应 Java: com.datamate.rag.indexer.interfaces.dto.KnowledgeBaseResp
     """
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True,
+        json_schema_extra={
+            "example": {
+                "id": "kb-uuid-123",
+                "name": "my_knowledge_base",
+                "description": "我的知识库",
+                "type": "DOCUMENT",
+                "embeddingModel": "text-embedding-ada-002",
+                "chatModel": "gpt-4",
+                "fileCount": 10,
+                "chunkCount": 150,
+                "embedding": {
+                    "id": "model-1",
+                    "modelName": "text-embedding-ada-002",
+                    "provider": "openai"
+                }
+            }
+        }
+    )
+
     id: str = Field(..., description="知识库ID")
     name: str = Field(..., description="知识库名称")
     description: Optional[str] = Field(None, description="知识库描述")
@@ -49,49 +74,16 @@ class KnowledgeBaseResp(BaseModel):
     created_by: Optional[str] = Field(None, alias="createdBy", description="创建人")
     updated_by: Optional[str] = Field(None, alias="updatedBy", description="更新人")
 
-    class Config:
-        populate_by_name = True  # 允许使用 snake_case 或 camelCase
-        json_schema_extra = {
-            "example": {
-                "id": "kb-uuid-123",
-                "name": "my_knowledge_base",
-                "description": "我的知识库",
-                "type": "DOCUMENT",
-                "embeddingModel": "text-embedding-ada-002",
-                "chatModel": "gpt-4",
-                "fileCount": 10,
-                "chunkCount": 150,
-                "embedding": {
-                    "id": "model-1",
-                    "name": "text-embedding-ada-002",
-                    "provider": "openai"
-                }
-            }
-        }
-
 
 class RagFileResp(BaseModel):
     """RAG 文件响应
 
     对应 Java: com.datamate.rag.indexer.domain.model.RagFile
     """
-    id: str = Field(..., description="RAG文件ID")
-    knowledge_base_id: str = Field(alias="knowledgeBaseId", description="知识库ID")
-    file_name: str = Field(alias="fileName", description="文件名")
-    file_id: str = Field(alias="fileId", description="原始文件ID")
-    chunk_count: Optional[int] = Field(None, alias="chunkCount", description="分块数量")
-    metadata: Optional[dict] = Field(None, description="元数据")
-    status: FileStatus = Field(..., description="处理状态")
-    err_msg: Optional[str] = Field(None, alias="errMsg", description="错误信息")
-    progress: int = Field(default=0, ge=0, le=100, description="处理进度(0-100)")
-    created_at: Optional[datetime] = Field(None, alias="createdAt", description="创建时间")
-    updated_at: Optional[datetime] = Field(None, alias="updatedAt", description="更新时间")
-    created_by: Optional[str] = Field(None, alias="createdBy", description="创建人")
-    updated_by: Optional[str] = Field(None, alias="updatedBy", description="更新人")
-
-    class Config:
-        populate_by_name = True  # 允许使用 snake_case 或 camelCase
-        json_schema_extra = {
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True,
+        json_schema_extra={
             "example": {
                 "id": "rag-file-uuid-123",
                 "knowledgeBaseId": "kb-uuid-123",
@@ -104,6 +96,21 @@ class RagFileResp(BaseModel):
                 "createdAt": "2025-01-01T00:00:00"
             }
         }
+    )
+
+    id: str = Field(..., description="RAG文件ID")
+    knowledge_base_id: str = Field(alias="knowledgeBaseId", description="知识库ID")
+    file_name: str = Field(alias="fileName", description="文件名")
+    file_id: str = Field(alias="fileId", description="原始文件ID")
+    chunk_count: Optional[int] = Field(None, alias="chunkCount", description="分块数量")
+    metadata: Optional[dict] = Field(None, validation_alias="file_metadata", description="元数据")
+    status: FileStatus = Field(..., description="处理状态")
+    err_msg: Optional[str] = Field(None, alias="errMsg", description="错误信息")
+    progress: int = Field(default=0, ge=0, le=100, description="处理进度(0-100)")
+    created_at: Optional[datetime] = Field(None, alias="createdAt", description="创建时间")
+    updated_at: Optional[datetime] = Field(None, alias="updatedAt", description="更新时间")
+    created_by: Optional[str] = Field(None, alias="createdBy", description="创建人")
+    updated_by: Optional[str] = Field(None, alias="updatedBy", description="更新人")
 
 
 class RagChunkResp(BaseModel):

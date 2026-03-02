@@ -6,7 +6,7 @@
 """
 import logging
 import uuid
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 from fastapi import BackgroundTasks
 from sqlalchemy import select
@@ -15,6 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.exception import BusinessError, ErrorCodes
 from app.db.models.dataset_management import DatasetFiles
 from app.db.models.knowledge_gen import KnowledgeBase, RagFile, FileStatus
+from app.db.models.models import Models
 from app.module.rag.infra.vectorstore import drop_collection, rename_collection, delete_chunks_by_rag_file_ids
 from app.module.rag.repository import KnowledgeBaseRepository, RagFileRepository
 from app.module.rag.schema.request import (
@@ -25,7 +26,7 @@ from app.module.rag.schema.request import (
     DeleteFilesReq,
     RagFileReq,
 )
-from app.module.rag.schema.response import KnowledgeBaseResp, PagedResponse, RagFileResp
+from app.module.rag.schema.response import KnowledgeBaseResp, PagedResponse, RagFileResp, ModelConfig
 from app.module.rag.service.file_processor import FileProcessor
 
 logger = logging.getLogger(__name__)
@@ -123,14 +124,7 @@ class KnowledgeBaseService:
         await self.db.commit()
 
     async def get_by_id(self, knowledge_base_id: str) -> KnowledgeBaseResp:
-        """获取知识库详情
-
-        Args:
-            knowledge_base_id: 知识库 ID
-
-        Returns:
-            知识库响应对象
-        """
+        """获取知识库详情"""
         knowledge_base = await self.kb_repo.get_by_id(knowledge_base_id)
         if not knowledge_base:
             raise BusinessError(ErrorCodes.RAG_KNOWLEDGE_BASE_NOT_FOUND)
@@ -138,30 +132,46 @@ class KnowledgeBaseService:
         file_count = await self.file_repo.count_by_knowledge_base(knowledge_base_id)
         chunk_count = await self.file_repo.count_chunks_by_knowledge_base(knowledge_base_id)
 
-        return KnowledgeBaseResp(
-            id=knowledge_base.id,
-            name=knowledge_base.name,
-            description=knowledge_base.description,
-            type=knowledge_base.type,
-            embedding_model=knowledge_base.embedding_model,
-            chat_model=knowledge_base.chat_model,
-            file_count=file_count,
-            chunk_count=chunk_count,
-            created_at=knowledge_base.created_at,
-            updated_at=knowledge_base.updated_at,
-            created_by=knowledge_base.created_by,
-            updated_by=knowledge_base.updated_by,
+        data = self._kb_to_dict(knowledge_base)
+        data.update({
+            "file_count": file_count,
+            "chunk_count": chunk_count,
+            "embedding": await self._get_model_config(knowledge_base.embedding_model),
+            "chat": await self._get_model_config(knowledge_base.chat_model),
+        })
+        return KnowledgeBaseResp(**data)
+
+    def _kb_to_dict(self, kb: KnowledgeBase) -> dict:
+        """知识库实体转字典"""
+        return {
+            "id": kb.id,
+            "name": kb.name,
+            "description": kb.description,
+            "type": kb.type,
+            "embedding_model": kb.embedding_model,
+            "chat_model": kb.chat_model,
+            "created_at": kb.created_at,
+            "updated_at": kb.updated_at,
+            "created_by": kb.created_by,
+            "updated_by": kb.updated_by,
+        }
+
+    async def _get_model_config(self, model_id: Optional[str]) -> Optional[ModelConfig]:
+        """获取模型配置"""
+        if not model_id:
+            return None
+
+        result = await self.db.execute(
+            select(Models).where(
+                Models.id == model_id,
+                (Models.is_deleted == False) | (Models.is_deleted.is_(None))
+            )
         )
+        model = result.scalar_one_or_none()
+        return ModelConfig.model_validate(model) if model else None
 
     async def list(self, request: KnowledgeBaseQueryReq) -> PagedResponse:
-        """分页查询知识库列表
-
-        Args:
-            request: 查询请求
-
-        Returns:
-            分页响应
-        """
+        """分页查询知识库列表"""
         items, total = await self.kb_repo.list(
             keyword=request.keyword,
             rag_type=request.type,
@@ -173,20 +183,12 @@ class KnowledgeBaseService:
         for item in items:
             file_count = await self.file_repo.count_by_knowledge_base(item.id)
             chunk_count = await self.file_repo.count_chunks_by_knowledge_base(item.id)
-            responses.append(KnowledgeBaseResp(
-                id=item.id,
-                name=item.name,
-                description=item.description,
-                type=item.type,
-                embedding_model=item.embedding_model,
-                chat_model=item.chat_model,
-                file_count=file_count,
-                chunk_count=chunk_count,
-                created_at=item.created_at,
-                updated_at=item.updated_at,
-                created_by=item.created_by,
-                updated_by=item.updated_by,
-            ))
+            data = self._kb_to_dict(item)
+            data.update({
+                "file_count": file_count,
+                "chunk_count": chunk_count,
+            })
+            responses.append(KnowledgeBaseResp(**data))
 
         return PagedResponse.create(
             content=responses,
@@ -286,15 +288,7 @@ class KnowledgeBaseService:
         return rag_files, skipped_file_ids
 
     async def list_files(self, knowledge_base_id: str, request: RagFileReq) -> PagedResponse:
-        """获取知识库文件列表
-
-        Args:
-            knowledge_base_id: 知识库 ID
-            request: 查询请求
-
-        Returns:
-            分页响应
-        """
+        """获取知识库文件列表"""
         if not await self.kb_repo.get_by_id(knowledge_base_id):
             raise BusinessError(ErrorCodes.RAG_KNOWLEDGE_BASE_NOT_FOUND)
 
@@ -306,21 +300,7 @@ class KnowledgeBaseService:
             page_size=request.page_size,
         )
 
-        responses = [RagFileResp(
-            id=item.id,
-            knowledge_base_id=item.knowledge_base_id,
-            file_name=item.file_name,
-            file_id=item.file_id,
-            chunk_count=item.chunk_count,
-            metadata=item.file_metadata,
-            status=item.status,
-            err_msg=item.err_msg,
-            progress=getattr(item, "progress", 0),
-            created_at=item.created_at,
-            updated_at=item.updated_at,
-            created_by=item.created_by,
-            updated_by=item.updated_by,
-        ) for item in items]
+        responses = [RagFileResp.model_validate(item) for item in items]
 
         return PagedResponse.create(
             content=responses,
