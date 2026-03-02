@@ -118,17 +118,18 @@ class RetrievalService:
                 sparse_search = AnnSearchRequest(
                     data=[query_text],
                     anns_field="sparse",
-                    param={"metric_type": "BM25", "params": {}},
+                    param={"drop_ratio_search": 0.2},
                     limit=top_k,
                 )
 
                 ranker = Function(
-                    name="rrf",
-                    input_field_names=[],  # Must be an empty list
+                    name="weight",
+                    input_field_names=[],
                     function_type=FunctionType.RERANK,
                     params={
-                        "reranker": "rrf",
-                        "k": 100
+                        "reranker": "weighted",
+                        "weights": [0.1, 0.9],
+                        "norm_score": True,
                     }
                 )
                 search_results = client.hybrid_search(

@@ -107,7 +107,7 @@ def create_collection(
         # 创建字段
         fields = [
             FieldSchema(name="id", dtype=DataType.VARCHAR, max_length=36, is_primary=True, auto_id=False),
-            FieldSchema(name="text", dtype=DataType.VARCHAR, max_length=65535, enable_analyzer=True, enable_match=True),
+            FieldSchema(name="text", dtype=DataType.VARCHAR, max_length=65535, enable_analyzer=True),
             FieldSchema(name="metadata", dtype=DataType.JSON),
             FieldSchema(name="vector", dtype=DataType.FLOAT_VECTOR, dim=dimension),
             FieldSchema(name="sparse", dtype=DataType.SPARSE_FLOAT_VECTOR),
@@ -128,9 +128,31 @@ def create_collection(
             enable_dynamic_field=False,
         )
 
+        # BM25 索引参数
+        sparse_index_params = {
+            "inverted_index_algo": "DAAT_MAXSCORE",
+            "bm25_k1": 1.2,
+            "bm25_b": 0.75,
+        }
+
+        index_params = client.prepare_index_params()
+        index_params.add_index(
+            field_name="sparse",
+            index_type="SPARSE_INVERTED_INDEX",
+            metric_type="BM25",
+            params=sparse_index_params
+        )
+        index_params.add_index(
+            field_name="vector",
+            index_type="FLAT",
+            metric_type="COSINE",
+            params={}
+        )
+
         client.create_collection(
             collection_name=collection_name,
             schema=schema,
+            index_params=index_params,
             consistency_level=consistency_level,
         )
 
