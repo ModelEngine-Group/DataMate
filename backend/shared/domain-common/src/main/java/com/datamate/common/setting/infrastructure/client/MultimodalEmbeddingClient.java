@@ -60,7 +60,7 @@ public class MultimodalEmbeddingClient {
             imageUrl != null ? imageUrl.length() : "null", text);
         
         Map<String, Object> content = new HashMap<>();
-        String convertedUrl = convertToDataUrl(imageUrl);
+        String convertedUrl = convertToDataUrl(imageUrl, "image");
         content.put("image", convertedUrl);
         
         log.info("Image converted, final data URL length: {}, starts with: {}", 
@@ -77,60 +77,123 @@ public class MultimodalEmbeddingClient {
         return result;
     }
 
+    public float[] embedVideo(String videoUrl, String text) {
+        log.info("embedVideo called - videoUrl length: {}, text: '{}'", 
+            videoUrl != null ? videoUrl.length() : "null", text);
+        
+        Map<String, Object> content = new HashMap<>();
+        String convertedUrl = convertToDataUrl(videoUrl, "video");
+        content.put("video", convertedUrl);
+        
+        log.info("Video converted, final data URL length: {}, starts with: {}", 
+            convertedUrl.length(), 
+            convertedUrl.substring(0, Math.min(50, convertedUrl.length())));
+        
+        if (text != null && !text.isEmpty()) {
+            content.put("text", text);
+            log.info("Added text to embedding request: '{}'", text);
+        }
+        
+        float[] result = embed(List.of(content));
+        log.info("Video embedding result dimension: {}", result.length);
+        return result;
+    }
+
     /**
-     * 将图片路径或URL转换为Data URL格式
+     * 将文件路径或URL转换为Data URL格式
+     * @param fileInput 文件路径或URL
+     * @param type 文件类型 (image/video)
      */
-    private String convertToDataUrl(String imageInput) {
-        if (imageInput == null || imageInput.isEmpty()) {
-            throw new IllegalArgumentException("Image input cannot be null or empty");
+    private String convertToDataUrl(String fileInput, String type) {
+        if (fileInput == null || fileInput.isEmpty()) {
+            throw new IllegalArgumentException("File input cannot be null or empty");
         }
 
         // 如果已经是 data URL 或 http URL，直接返回
-        if (imageInput.startsWith("data:") || imageInput.startsWith("http://") || imageInput.startsWith("https://")) {
-            log.debug("Using image URL directly, length: {}", imageInput.length());
-            return imageInput;
+        if (fileInput.startsWith("data:") || fileInput.startsWith("http://") || fileInput.startsWith("https://")) {
+            log.debug("Using {} URL directly, length: {}", type, fileInput.length());
+            return fileInput;
         }
 
         // 本地文件路径
-        Path imagePath = Path.of(imageInput);
-        if (!Files.exists(imagePath)) {
-            throw new RuntimeException("Image file not found: " + imageInput);
+        Path filePath = Path.of(fileInput);
+        if (!Files.exists(filePath)) {
+            throw new RuntimeException("File not found: " + fileInput);
         }
 
         try {
-            String mimeType = detectMimeType(imagePath);
-            byte[] imageBytes = Files.readAllBytes(imagePath);
-            String base64 = Base64.getEncoder().encodeToString(imageBytes);
+            String mimeType = detectMimeType(filePath, type);
+            byte[] fileBytes = Files.readAllBytes(filePath);
+            String base64 = Base64.getEncoder().encodeToString(fileBytes);
             String dataUrl = "data:" + mimeType + ";base64," + base64;
             log.debug("Converted local file to data URL, file size: {} bytes, base64 length: {}", 
-                imageBytes.length, base64.length());
+                fileBytes.length, base64.length());
             return dataUrl;
         } catch (IOException e) {
-            throw new RuntimeException("Failed to read image file: " + imageInput, e);
+            throw new RuntimeException("Failed to read file: " + fileInput, e);
         }
+    }
+
+    /**
+     * 将图片路径或URL转换为Data URL格式（兼容旧方法）
+     */
+    private String convertToDataUrl(String imageInput) {
+        return convertToDataUrl(imageInput, "image");
     }
 
     /**
      * 根据文件扩展名检测 MIME 类型
      */
-    private String detectMimeType(Path imagePath) {
-        String fileName = imagePath.getFileName().toString().toLowerCase();
-        if (fileName.endsWith(".jpg") || fileName.endsWith(".jpeg")) {
+    private String detectMimeType(Path filePath, String type) {
+        String fileName = filePath.getFileName().toString().toLowerCase();
+        
+        if ("video".equals(type)) {
+            if (fileName.endsWith(".mp4")) {
+                return "video/mp4";
+            } else if (fileName.endsWith(".avi")) {
+                return "video/x-msvideo";
+            } else if (fileName.endsWith(".mov")) {
+                return "video/quicktime";
+            } else if (fileName.endsWith(".mkv")) {
+                return "video/x-matroska";
+            } else if (fileName.endsWith(".wmv")) {
+                return "video/x-ms-wmv";
+            } else if (fileName.endsWith(".flv")) {
+                return "video/x-flv";
+            } else if (fileName.endsWith(".webm")) {
+                return "video/webm";
+            } else if (fileName.endsWith(".m4v")) {
+                return "video/x-m4v";
+            } else if (fileName.endsWith(".3gp")) {
+                return "video/3gpp";
+            }
+            return "video/mp4";
+        } else {
+            // Image types
+            if (fileName.endsWith(".jpg") || fileName.endsWith(".jpeg")) {
+                return "image/jpeg";
+            } else if (fileName.endsWith(".png")) {
+                return "image/png";
+            } else if (fileName.endsWith(".gif")) {
+                return "image/gif";
+            } else if (fileName.endsWith(".bmp")) {
+                return "image/bmp";
+            } else if (fileName.endsWith(".webp")) {
+                return "image/webp";
+            } else if (fileName.endsWith(".svg")) {
+                return "image/svg+xml";
+            } else if (fileName.endsWith(".tiff") || fileName.endsWith(".tif")) {
+                return "image/tiff";
+            }
             return "image/jpeg";
-        } else if (fileName.endsWith(".png")) {
-            return "image/png";
-        } else if (fileName.endsWith(".gif")) {
-            return "image/gif";
-        } else if (fileName.endsWith(".bmp")) {
-            return "image/bmp";
-        } else if (fileName.endsWith(".webp")) {
-            return "image/webp";
-        } else if (fileName.endsWith(".svg")) {
-            return "image/svg+xml";
-        } else if (fileName.endsWith(".tiff") || fileName.endsWith(".tif")) {
-            return "image/tiff";
         }
-        return "image/jpeg";
+    }
+
+    /**
+     * 根据文件扩展名检测 MIME 类型（兼容旧方法）
+     */
+    private String detectMimeType(Path imagePath) {
+        return detectMimeType(imagePath, "image");
     }
 
     private float[] embed(List<Map<String, Object>> contents) {

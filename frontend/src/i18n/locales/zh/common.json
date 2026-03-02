@@ -1572,6 +1572,7 @@
         "scoreLabel": "得分：",
         "metadataLabel": "metadata:",
         "imageResult": "图片结果",
+        "videoResult": "视频结果",
         "textResult": "文本结果",
         "error": "检索失败：{{error}}"
       },
@@ -1705,6 +1706,8 @@
         "totalFiles": "文件总数",
         "fileType": "文件类型",
         "imageFiles": "图片文件",
+        "videoFiles": "视频文件",
+        "mediaFiles": "媒体文件",
         "sliceMethod": "分块方式",
         "chunkSize": "分块大小",
         "overlapSize": "重叠长度",

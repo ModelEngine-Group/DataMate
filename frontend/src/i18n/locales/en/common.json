@@ -1572,6 +1572,7 @@
         "scoreLabel": "Score:",
         "metadataLabel": "metadata:",
         "imageResult": "Image Result",
+        "videoResult": "Video Result",
         "textResult": "Text Result",
         "error": "Search failed: {{error}}"
       },
@@ -1705,6 +1706,8 @@
         "totalFiles": "Total Files",
         "fileType": "File Type",
         "imageFiles": "Image Files",
+        "videoFiles": "Video Files",
+        "mediaFiles": "Media Files",
         "sliceMethod": "Chunking Method",
         "chunkSize": "Chunk Size",
         "overlapSize": "Overlap Length",

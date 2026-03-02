@@ -1,3 +1,4 @@
+import type { UploadFile } from "antd/es/upload/interface";
 import type React from "react";
 import { useEffect, useState } from "react";
 import { Table, Badge, Button, Breadcrumb, Tooltip, App, Card, Input, Empty, Spin, Upload } from "antd";
@@ -59,6 +60,7 @@ const KnowledgeBaseDetailPage: React.FC = () => {
   const [recallQuery, setRecallQuery] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [imageLoading, setImageLoading] = useState(false);
+  const [imageFileList, setImageFileList] = useState<UploadFile[]>([]);
   const [graphVisible, setGraphVisible] = useState(false);
   const [graphLoading, setGraphLoading] = useState(false);
   const [graphData, setGraphData] = useState<{ nodes: KnowledgeGraphNode[]; edges: KnowledgeGraphEdge[] }>({ nodes: [], edges: [] });
@@ -160,6 +162,7 @@ const KnowledgeBaseDetailPage: React.FC = () => {
       const base64 = e.target?.result as string;
       if (!base64) return;
 
+      setImageUrl(base64);
       setImageLoading(true);
       try {
         const results = await retrieveKnowledgeBaseByImage({
@@ -181,6 +184,7 @@ const KnowledgeBaseDetailPage: React.FC = () => {
     setRecallQuery("");
     setRecallResults([]);
     setImageUrl("");
+    setImageFileList([]);
   };
 
   const handleGraphFetch = async () => {
@@ -511,11 +515,13 @@ const KnowledgeBaseDetailPage: React.FC = () => {
                 loading={recallLoading}
                 style={{ fontSize: 14 }}
               />
-              <div className="mt-2">
-                <Button onClick={handleClearRecallTest} icon={<CloseOutlined />} size="small">
-                  {t("components.searchControls.filters.clearAll")}
-                </Button>
-              </div>
+              {(recallQuery || imageUrl || imageFileList.length > 0) && (
+                <div className="mt-2">
+                  <Button onClick={handleClearRecallTest} icon={<CloseOutlined />} size="small">
+                    {t("components.searchControls.filters.clearAll")}
+                  </Button>
+                </div>
+              )}
             </div>
 
             {/* 图片检索 */}
@@ -525,9 +531,21 @@ const KnowledgeBaseDetailPage: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <Upload
                     accept="image/*"
+                    fileList={imageFileList}
                     beforeUpload={(file) => {
+                      const uploadFile: UploadFile = {
+                        uid: file.uid || `${Date.now()}`,
+                        name: file.name,
+                        status: 'done',
+                        originFileObj: file,
+                      };
+                      setImageFileList([uploadFile]);
                       handleImageRecallTest(file);
                       return false;
+                    }}
+                    onRemove={() => {
+                      setImageFileList([]);
+                      setImageUrl("");
                     }}
                     maxCount={1}
                   >
@@ -565,6 +583,7 @@ const KnowledgeBaseDetailPage: React.FC = () => {
                 {recallResults.map((item, idx) => {
                   const metadata = item.entity?.metadata ? JSON.parse(item.entity.metadata) : {};
                   const isImage = metadata?.is_image === "true";
+                  const isVideo = metadata?.is_video === "true";
 
                   return (
                     <Card
@@ -574,8 +593,19 @@ const KnowledgeBaseDetailPage: React.FC = () => {
                       style={{ wordBreak: "break-all" }}
                     >
                       <div style={{ marginBottom: 8, fontWeight: 500 }}>
-                        {isImage ? `🖼️ ${t("knowledgeBase.detail.recallTest.imageResult")}` : `📄 ${t("knowledgeBase.detail.recallTest.textResult")}`}
+                        {isVideo ? `🎬 ${t("knowledgeBase.detail.recallTest.videoResult")}` : 
+                         isImage ? `🖼️ ${t("knowledgeBase.detail.recallTest.imageResult")}` : 
+                         `📄 ${t("knowledgeBase.detail.recallTest.textResult")}`}
                       </div>
+                      {isVideo && metadata?.original_file_id && metadata?.dataset_id && (
+                        <div style={{ marginBottom: 8 }}>
+                          <video 
+                            src={`/api/data-management/datasets/${metadata.dataset_id}/files/${metadata.original_file_id}/download`}
+                            controls
+                            style={{ maxWidth: 200, maxHeight: 120 }}
+                          />
+                        </div>
+                      )}
                       {isImage && metadata?.original_file_id && metadata?.dataset_id && (
                         <div style={{ marginBottom: 8 }}>
                           <img 

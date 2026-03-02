@@ -19,6 +19,7 @@ import { DatasetType } from "@/pages/DataManagement/dataset.model";
 import { useTranslation } from "react-i18next";
 
 const IMAGE_EXTENSIONS = ["jpg", "jpeg", "png", "gif", "bmp", "webp", "svg", "tiff", "tif"];
+const VIDEO_EXTENSIONS = ["mp4", "avi", "mov", "mkv", "wmv", "flv", "webm", "m4v", "3gp"];
 
 export default function AddDataDialog({ knowledgeBase, onDataAdded }) {
   const { t } = useTranslation();
@@ -28,13 +29,38 @@ export default function AddDataDialog({ knowledgeBase, onDataAdded }) {
   const [currentStep, setCurrentStep] = useState(0);
   const [selectedFilesMap, setSelectedFilesMap] = useState({});
 
-  const isAllImageFiles = () => {
+  const isImageFile = (fileName) => {
+    const ext = fileName?.split(".").pop()?.toLowerCase();
+    return IMAGE_EXTENSIONS.includes(ext);
+  };
+
+  const isVideoFile = (fileName) => {
+    const ext = fileName?.split(".").pop()?.toLowerCase();
+    return VIDEO_EXTENSIONS.includes(ext);
+  };
+
+  const isMediaFile = (fileName) => {
+    return isImageFile(fileName) || isVideoFile(fileName);
+  };
+
+  const isAllMediaFiles = () => {
     const files = Object.values(selectedFilesMap);
     if (files.length === 0) return false;
     return files.every((file) => {
       const ext = file.fileName?.split(".").pop()?.toLowerCase();
-      return IMAGE_EXTENSIONS.includes(ext);
+      return IMAGE_EXTENSIONS.includes(ext) || VIDEO_EXTENSIONS.includes(ext);
     });
+  };
+
+  const getMediaType = () => {
+    const files = Object.values(selectedFilesMap);
+    if (files.length === 0) return null;
+    const hasImage = files.some((file) => isImageFile(file.fileName));
+    const hasVideo = files.some((file) => isVideoFile(file.fileName));
+    if (hasImage && hasVideo) return "mixed";
+    if (hasVideo) return "video";
+    if (hasImage) return "image";
+    return null;
   };
 
   const sliceOptions = [
@@ -52,7 +78,7 @@ export default function AddDataDialog({ knowledgeBase, onDataAdded }) {
     delimiter: "",
   });
 
-  const steps = isAllImageFiles()
+  const steps = isAllMediaFiles()
     ? [
         {
           title: t("knowledgeBase.addData.steps.selectFiles.title"),
@@ -88,7 +114,7 @@ export default function AddDataDialog({ knowledgeBase, onDataAdded }) {
         message.warning(t("knowledgeBase.addData.messages.selectOneFile"));
         return;
       }
-      if (isAllImageFiles()) {
+      if (isAllMediaFiles()) {
         setCurrentStep(1);
         return;
       }
@@ -115,7 +141,7 @@ export default function AddDataDialog({ knowledgeBase, onDataAdded }) {
   };
 
   const handlePrev = () => {
-    if (currentStep === 1 && isAllImageFiles()) {
+    if (currentStep === 1 && isAllMediaFiles()) {
       setCurrentStep(0);
       return;
     }
@@ -163,26 +189,36 @@ export default function AddDataDialog({ knowledgeBase, onDataAdded }) {
     setOpen(false);
   };
 
-  const getImageDescItems = (): DescriptionsItemType[] => [
-    { label: t("knowledgeBase.addData.confirm.kbName"), key: "kbName", children: knowledgeBase?.name },
-    { label: t("knowledgeBase.addData.confirm.dataSource"), key: "dataSource", children: t("knowledgeBase.addData.confirm.dataset") },
-    { label: t("knowledgeBase.addData.confirm.totalFiles"), key: "totalFiles", children: getSelectedFilesCount() },
-    { label: t("knowledgeBase.addData.confirm.fileType"), key: "fileType", children: t("knowledgeBase.addData.confirm.imageFiles") },
-    {
-      label: t("knowledgeBase.addData.confirm.fileList"),
-      key: "fileList",
-      span: 3,
-      children: (
-        <Table
-          scroll={{ y: 400 }}
-          rowKey="id"
-          size="small"
-          dataSource={Object.values(selectedFilesMap)}
-          columns={getDatasetFileCols(t)}
-        />
-      ),
-    },
-  ];
+  const getMediaDescItems = (): DescriptionsItemType[] => {
+    const mediaType = getMediaType();
+    let fileTypeLabel = t("knowledgeBase.addData.confirm.mediaFiles");
+    if (mediaType === "image") {
+      fileTypeLabel = t("knowledgeBase.addData.confirm.imageFiles");
+    } else if (mediaType === "video") {
+      fileTypeLabel = t("knowledgeBase.addData.confirm.videoFiles");
+    }
+    
+    return [
+      { label: t("knowledgeBase.addData.confirm.kbName"), key: "kbName", children: knowledgeBase?.name },
+      { label: t("knowledgeBase.addData.confirm.dataSource"), key: "dataSource", children: t("knowledgeBase.addData.confirm.dataset") },
+      { label: t("knowledgeBase.addData.confirm.totalFiles"), key: "totalFiles", children: getSelectedFilesCount() },
+      { label: t("knowledgeBase.addData.confirm.fileType"), key: "fileType", children: fileTypeLabel },
+      {
+        label: t("knowledgeBase.addData.confirm.fileList"),
+        key: "fileList",
+        span: 3,
+        children: (
+          <Table
+            scroll={{ y: 400 }}
+            rowKey="id"
+            size="small"
+            dataSource={Object.values(selectedFilesMap)}
+            columns={getDatasetFileCols(t)}
+          />
+        ),
+      },
+    ];
+  };
 
   const getTextDescItems = (): DescriptionsItemType[] => [
     { label: t("knowledgeBase.addData.confirm.kbName"), key: "kbName", children: knowledgeBase?.name },
@@ -210,8 +246,8 @@ export default function AddDataDialog({ knowledgeBase, onDataAdded }) {
     },
   ];
 
-  const descItems = isAllImageFiles() ? getImageDescItems() : getTextDescItems();
-  const finalStepIndex = isAllImageFiles() ? 1 : 2;
+  const descItems = isAllMediaFiles() ? getMediaDescItems() : getTextDescItems();
+  const finalStepIndex = isAllMediaFiles() ? 1 : 2;
 
   return (
     <>
@@ -234,7 +270,7 @@ export default function AddDataDialog({ knowledgeBase, onDataAdded }) {
             {currentStep === 0 && (
               <Button onClick={handleModalCancel}>{t("knowledgeBase.addData.confirm.cancel")}</Button>
             )}
-            {currentStep > 0 && !(isAllImageFiles() && currentStep === 1) && (
+            {currentStep > 0 && !(isAllMediaFiles() && currentStep === 1) && (
               <Button onClick={handlePrev}>
                 {t("knowledgeBase.addData.confirm.previous")}
               </Button>
@@ -242,7 +278,7 @@ export default function AddDataDialog({ knowledgeBase, onDataAdded }) {
             {currentStep < finalStepIndex ? (
               <Button
                 type="primary"
-                disabled={getSelectedFilesCount() === 0 || (!isAllImageFiles() && (!newKB.chunkSize || !newKB.overlapSize || !newKB.processType))}
+                disabled={getSelectedFilesCount() === 0 || (!isAllMediaFiles() && (!newKB.chunkSize || !newKB.overlapSize || !newKB.processType))}
                 onClick={handleNext}
               >
                 {t("knowledgeBase.addData.confirm.next")}
@@ -273,7 +309,7 @@ export default function AddDataDialog({ knowledgeBase, onDataAdded }) {
             />
           )}
 
-          {!isAllImageFiles() && (
+          {!isAllMediaFiles() && (
             <Form
               hidden={currentStep !== 1}
               form={form}

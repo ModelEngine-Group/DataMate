@@ -132,6 +132,14 @@ class MultimodalEmbedding:
         contents = [content]
         return self._embed(contents)
 
+    def embed_video(self, video_url: str, text: str = "") -> list[float]:
+        """对视频（可选文本）进行嵌入。"""
+        content = {"video": video_url}
+        if text:
+            content["text"] = text
+        contents = [content]
+        return self._embed(contents)
+
     def _embed(self, contents: list[dict]) -> list[float]:
         """通用嵌入方法。"""
         headers = {

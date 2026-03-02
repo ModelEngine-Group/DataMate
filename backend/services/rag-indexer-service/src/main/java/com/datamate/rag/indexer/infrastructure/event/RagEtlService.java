@@ -59,6 +59,10 @@ public class RagEtlService {
             "jpg", "jpeg", "png", "gif", "bmp", "webp", "svg", "tiff", "tif"
     );
 
+    private static final Set<String> VIDEO_EXTENSIONS = Set.of(
+            "mp4", "avi", "mov", "mkv", "wmv", "flv", "webm", "m4v", "3gp"
+    );
+
     private final MilvusService milvusService;
 
     private final RagFileRepository ragFileRepository;
@@ -111,18 +115,58 @@ public class RagEtlService {
         DatasetFile file = datasetFileRepository.getById(ragFile.getFileId());
         ModelConfig model = modelConfigRepository.getById(event.knowledgeBase().getEmbeddingModel());
         boolean isImageFile = isImageFile(file.getFileType());
+        boolean isVideoFile = isVideoFile(file.getFileType());
         boolean isMultimodalModel = model.getType() == ModelType.MULTIMODAL_EMBEDDING;
 
         if (isImageFile && isMultimodalModel) {
             processImageFileWithMultimodal(ragFile, file, model, event);
+        } else if (isVideoFile && isMultimodalModel) {
+            processVideoFileWithMultimodal(ragFile, file, model, event);
         } else if (isImageFile) {
             log.warn("Image file {} cannot be processed with non-multimodal embedding model. Skipping.", file.getFileName());
             ragFile.setStatus(FileStatus.PROCESS_FAILED);
             ragFile.setErrMsg("图片文件需要多模态嵌入模型支持");
             ragFileRepository.updateById(ragFile);
+        } else if (isVideoFile) {
+            log.warn("Video file {} cannot be processed with non-multimodal embedding model. Skipping.", file.getFileName());
+            ragFile.setStatus(FileStatus.PROCESS_FAILED);
+            ragFile.setErrMsg("视频文件需要多模态嵌入模型支持");
+            ragFileRepository.updateById(ragFile);
         } else {
             processTextFile(ragFile, file, model, event);
         }
+    }
+
+    private void processVideoFileWithMultimodal(RagFile ragFile, DatasetFile file, ModelConfig model, DataInsertedEvent event) {
+        MultimodalEmbeddingClient client = new MultimodalEmbeddingClient(
+                model.getBaseUrl(),
+                model.getApiKey(),
+                model.getModelName()
+        );
+
+        float[] embeddingVector = client.embedVideo(file.getFilePath(), "");
+        Embedding embedding = Embedding.from(embeddingVector);
+
+        if (!milvusService.hasCollection(event.knowledgeBase().getName())) {
+            milvusService.createCollection(event.knowledgeBase().getName(), embeddingVector.length);
+        }
+
+        TextSegment segment = TextSegment.from(
+                "[视频文件: " + file.getFileName() + "]",
+                new dev.langchain4j.data.document.Metadata()
+                        .put("rag_file_id", ragFile.getId())
+                        .put("original_file_id", ragFile.getFileId())
+                        .put("dataset_id", file.getDatasetId())
+                        .put("file_type", file.getFileType())
+                        .put("is_video", "true")
+                        .put("file_name", file.getFileName())
+        );
+
+        ragFile.setChunkCount(1);
+        ragFileRepository.updateById(ragFile);
+
+        milvusService.addAll(event.knowledgeBase().getName(), List.of(segment), List.of(embedding));
+        log.info("Successfully processed video file {} with multimodal embedding", file.getFileName());
     }
 
     private void processImageFileWithMultimodal(RagFile ragFile, DatasetFile file, ModelConfig model, DataInsertedEvent event) {
@@ -186,6 +230,11 @@ public class RagEtlService {
     private boolean isImageFile(String fileType) {
         if (fileType == null) return false;
         return IMAGE_EXTENSIONS.contains(fileType.toLowerCase());
+    }
+
+    private boolean isVideoFile(String fileType) {
+        if (fileType == null) return false;
+        return VIDEO_EXTENSIONS.contains(fileType.toLowerCase());
     }
 
     public DocumentParser documentParser(String fileType) {
