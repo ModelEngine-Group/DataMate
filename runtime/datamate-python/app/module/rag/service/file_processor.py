@@ -108,7 +108,11 @@ class FileProcessor:
 
         async def process_with_semaphore(rag_file: RagFile):
             async with self.worker_pool.semaphore:
-                await self._process_single_file(db, rag_file, knowledge_base, request)
+                async with AsyncSessionLocal() as file_db:
+                    try:
+                        await self._process_single_file(file_db, rag_file, knowledge_base, request)
+                    finally:
+                        await file_db.close()
 
         tasks = [process_with_semaphore(f) for f in files]
         await asyncio.gather(*tasks, return_exceptions=True)
