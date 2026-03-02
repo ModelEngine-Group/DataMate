@@ -565,3 +565,4 @@ async def test_create_user(client):
 - **Ignoring Sessions**: Not properly managing database sessions
 - **No Testing**: Skipping integration tests
 - **Tight Coupling**: Direct database access in routes
+- **Overly Large Functions**: Avoid functions that do too much; break into smaller, focused functions.

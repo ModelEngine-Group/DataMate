@@ -241,20 +241,130 @@ class FileProcessor:
         """
         file_repo = RagFileRepository(db)
 
-        # 获取或创建 Embeddings 实例
-        embedding = await self._get_embeddings(db, knowledge_base)
+        # 过滤和清理分块
+        valid_chunks = await self._filter_and_clean_chunks(chunks, rag_file)
+        if not valid_chunks:
+            return
 
         # 创建向量存储
+        vectorstore = await self._create_vectorstore(db, knowledge_base, file_repo, rag_file)
+
+        # 添加元数据
+        self._add_metadata_to_chunks(valid_chunks, rag_file, knowledge_base)
+
+        # 分批存储
+        await self._store_chunks_in_batches(vectorstore, valid_chunks, rag_file)
+
+    async def _filter_and_clean_chunks(
+        self,
+        chunks: List[DocumentChunk],
+        rag_file: RagFile,
+    ) -> List[DocumentChunk]:
+        """过滤和清理无效的分块
+
+        Args:
+            chunks: 原始分块列表
+            rag_file: RAG 文件实体
+
+        Returns:
+            有效的分块列表
+        """
+        valid_chunks = []
+        for idx, chunk in enumerate(chunks):
+            cleaned_text = self._clean_text(chunk.text)
+            self._log_chunk_cleaning(idx, chunk.text, cleaned_text)
+
+            if cleaned_text and len(cleaned_text.strip()) > 0:
+                chunk.text = cleaned_text
+                valid_chunks.append(chunk)
+            else:
+                logger.warning(
+                    "跳过无效分块: rag_file_id=%s, chunk_index=%s, 原始长度=%d",
+                    rag_file.id,
+                    chunk.metadata.get("chunk_index"),
+                    len(chunk.text) if chunk.text else 0
+                )
+
+        if not valid_chunks:
+            logger.warning("文件 %s 没有有效的分块内容", rag_file.file_name)
+            return []
+
+        logger.info(
+            "文件 %s 有效分块数量: %d / %d",
+            rag_file.file_name,
+            len(valid_chunks),
+            len(chunks)
+        )
+        return valid_chunks
+
+    def _log_chunk_cleaning(self, idx: int, original_text: str, cleaned_text: str) -> None:
+        """记录分块清理日志
+
+        Args:
+            idx: 分块索引
+            original_text: 原始文本
+            cleaned_text: 清理后文本
+        """
+        if idx >= 3:
+            return
+
+        logger.debug(
+            "分块 %d 清理前 (长度=%d): %.100s%s",
+            idx,
+            len(original_text) if original_text else 0,
+            repr(original_text[:100]) if original_text else "None",
+            "..." if original_text and len(original_text) > 100 else ""
+        )
+        logger.debug(
+            "分块 %d 清理后 (长度=%d): %.100s%s",
+            idx,
+            len(cleaned_text) if cleaned_text else 0,
+            repr(cleaned_text[:100]) if cleaned_text else "None",
+            "..." if cleaned_text and len(cleaned_text) > 100 else ""
+        )
+
+    async def _create_vectorstore(
+        self,
+        db: AsyncSession,
+        knowledge_base: KnowledgeBase,
+        file_repo: RagFileRepository,
+        rag_file: RagFile,
+    ):
+        """创建向量存储
+
+        Args:
+            db: 数据库 session
+            knowledge_base: 知识库实体
+            file_repo: 文件仓储
+            rag_file: RAG 文件实体
+
+        Returns:
+            向量存储实例
+        """
+        embedding = await self._get_embeddings(db, knowledge_base)
         vectorstore = VectorStoreFactory.create(
             collection_name=knowledge_base.name,
             embedding=embedding,
         )
 
-        # 更新进度
         await self._update_progress(db, file_repo, rag_file.id, 60)
         await db.commit()
 
-        # 构建完整的 metadata
+        return vectorstore
+
+    def _add_metadata_to_chunks(
+        self,
+        chunks: List[DocumentChunk],
+        rag_file: RagFile,
+        knowledge_base: KnowledgeBase,
+    ) -> None:
+        """为分块添加元数据
+
+        Args:
+            chunks: 分块列表
+            rag_file: RAG 文件实体
+            knowledge_base: 知识库实体
+        """
         base_metadata = {
             "rag_file_id": rag_file.id,
             "original_file_id": rag_file.file_id,
@@ -264,12 +374,92 @@ class FileProcessor:
         for chunk in chunks:
             chunk.metadata.update(base_metadata)
 
-        # 生成 ID 并存储
-        ids = [str(uuid.uuid4()) for _ in chunks]
-        documents, doc_ids = chunks_to_documents(chunks, ids=ids)
-        vectorstore.add_documents(documents=documents, ids=doc_ids)
+    async def _store_chunks_in_batches(
+        self,
+        vectorstore,
+        chunks: List[DocumentChunk],
+        rag_file: RagFile,
+    ) -> None:
+        """分批存储分块到向量数据库
+
+        Args:
+            vectorstore: 向量存储实例
+            chunks: 分块列表
+            rag_file: RAG 文件实体
+        """
+        batch_size = 20
+        total_chunks = len(chunks)
+
+        for batch_start in range(0, total_chunks, batch_size):
+            batch_end = min(batch_start + batch_size, total_chunks)
+            batch_chunks = chunks[batch_start:batch_end]
+
+            await self._store_single_batch(
+                vectorstore,
+                batch_chunks,
+                batch_start,
+                batch_end,
+                total_chunks
+            )
 
         logger.info("文件 %s 向量存储完成，数量: %d", rag_file.file_name, len(chunks))
+
+    async def _store_single_batch(
+        self,
+        vectorstore,
+        batch_chunks: List[DocumentChunk],
+        batch_start: int,
+        batch_end: int,
+        total_chunks: int,
+    ) -> None:
+        """存储单个批次的分块
+
+        Args:
+            vectorstore: 向量存储实例
+            batch_chunks: 批次分块列表
+            batch_start: 批次起始索引
+            batch_end: 批次结束索引
+            total_chunks: 总分块数
+        """
+        logger.info("处理分块批次 %d-%d / %d", batch_start + 1, batch_end, total_chunks)
+
+        self._log_batch_details(batch_chunks, batch_start)
+
+        ids = [str(uuid.uuid4()) for _ in batch_chunks]
+        documents, doc_ids = chunks_to_documents(batch_chunks, ids=ids)
+
+        try:
+            vectorstore.add_documents(documents=documents, ids=doc_ids)
+            logger.info("批次 %d-%d 存储成功", batch_start + 1, batch_end)
+        except Exception as e:
+            logger.error(
+                "批次 %d-%d 存储失败: %s\n第一个文档内容: %.200s",
+                batch_start + 1,
+                batch_end,
+                str(e),
+                documents[0].page_content if documents else "N/A"
+            )
+            raise
+
+    def _log_batch_details(
+        self,
+        batch_chunks: List[DocumentChunk],
+        batch_start: int,
+    ) -> None:
+        """记录批次详细信息
+
+        Args:
+            batch_chunks: 批次分块列表
+            batch_start: 批次起始索引
+        """
+        for i, chunk in enumerate(batch_chunks[:2]):
+            logger.debug(
+                "批次内分块 %d: 长度=%d, 文本=%.50s%s",
+                batch_start + i,
+                len(chunk.text),
+                chunk.text[:50],
+                "..." if len(chunk.text) > 50 else ""
+            )
 
     async def _get_embeddings(
         self,
@@ -390,6 +580,85 @@ class FileProcessor:
         await file_repo.update_status(rag_file_id, FileStatus.PROCESSED)
         await file_repo.update_progress(rag_file_id, 100)
         await db.commit()
+
+    def _clean_text(self, text: str) -> str:
+        """清理文本内容
+
+        移除无效字符、控制字符，并规范化空白字符。
+
+        Args:
+            text: 原始文本
+
+        Returns:
+            清理后的文本，如果无效则返回空字符串
+        """
+        import re
+
+        if not text or not isinstance(text, str):
+            return ""
+
+        text = self._remove_control_characters(text)
+        text = self._normalize_whitespace(text)
+        text = self._remove_empty_lines(text)
+
+        if not self._has_printable_content(text):
+            return ""
+
+        return text.strip()
+
+    def _remove_control_characters(self, text: str) -> str:
+        """移除控制字符和零宽字符
+
+        Args:
+            text: 原始文本
+
+        Returns:
+            清理后的文本
+        """
+        import re
+        text = re.sub(r'[\x00-\x09\x0b\x0c\x0e-\x1f\x7f-\x9f]', '', text)
+        text = re.sub(r'[\u200b-\u200f\u2028-\u202f\ufeff]', '', text)
+        return text
+
+    def _normalize_whitespace(self, text: str) -> str:
+        """规范化空白字符
+
+        Args:
+            text: 原始文本
+
+        Returns:
+            规范化后的文本
+        """
+        import re
+        text = re.sub(r'[ \t]+', ' ', text)
+        text = '\n'.join(line.strip() for line in text.split('\n'))
+        text = re.sub(r'\n{3,}', '\n\n', text)
+        return text
+
+    def _remove_empty_lines(self, text: str) -> str:
+        """移除空行
+
+        Args:
+            text: 原始文本
+
+        Returns:
+            移除空行后的文本
+        """
+        return '\n'.join(line for line in text.split('\n') if line.strip())
+
+    def _has_printable_content(self, text: str) -> bool:
+        """检查文本是否包含可打印内容
+
+        Args:
+            text: 文本内容
+
+        Returns:
+            是否包含可打印字符
+        """
+        import re
+        if not text or not text.strip():
+            return False
+        return bool(re.search(r'[\w\u4e00-\u9fff]', text))
 
     async def _mark_failed(
         self,

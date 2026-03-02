@@ -92,8 +92,13 @@ class UniversalDocLoader:
             kwargs.setdefault("text_content", False)
         if loader_cls == CSVLoader and "csv_args" not in kwargs:
             kwargs["csv_args"] = {"delimiter": ","}
-        if loader_cls == UnstructuredExcelLoader and "mode" not in kwargs:
-            kwargs.setdefault("mode", "elements")
+        if loader_cls == UnstructuredExcelLoader:
+            # Excel 文件使用 "single" 模式，避免生成过多无意义的元素
+            # "elements" 模式会为每个单元格生成单独的文档，可能导致大量空内容
+            if "mode" not in kwargs:
+                kwargs.setdefault("mode", "single")
+            # 确保加载表格结构
+            kwargs.setdefault("include_header", True)
         if loader_cls == UnstructuredFileLoader and "mode" not in kwargs:
             kwargs.setdefault("mode", "elements")
         return kwargs
