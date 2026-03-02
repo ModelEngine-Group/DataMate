@@ -1,0 +1,129 @@
+name: 'WSI 智能增强分析算子'
+description: 'WSIEnhance 是一个面向全玻片扫描图像（WSI）的智能分析与增强处理系统，提供组织检测、伪影识别、质量评估和 Patch 提取等核心功能。'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'WSIEnhanceMapper'
+version: '1.0.0'
+modal: 'image'
+inputs: 'image'
+outputs: 'image'
+release:
+  - '首次发布：WSI 智能增强分析'
+  - '支持组织检测、笔迹检测、伪影检测、气泡检测'
+  - '支持 Patch 批量提取和质量过滤'
+  - '支持 HistoQC 集成'
+metrics:
+  - name: '检测准确率'
+    metric: '98.0%'
+  - name: '处理速度'
+    metric: '5 sec/slide'
+  - name: '内存使用'
+    metric: '1GB'
+  - name: '吞吐量'
+    metric: '0.2 slides/sec'
+runtime:
+  memory: 1073741824
+  cpu: 1.0
+  gpu: 0.2
+  npu: 0
+  storage: 5GB
+settings:
+  save_patches:
+    name: '提取 Patch'
+    description: '是否从组织区域提取 256x256 的 Patch 用于后续分析'
+    type: 'switch'
+    defaultVal: 'false'
+    required: false
+    checkedLabel: '提取 Patch'
+    unCheckedLabel: '不提取'
+  save_patch_positions:
+    name: '导出 Patch 位置'
+    description: '是否导出 Patch 在原图中的位置 JSON（不保存图片）'
+    type: 'switch'
+    defaultVal: 'true'
+    required: false
+    checkedLabel: '导出位置'
+    unCheckedLabel: '不导出'
+  enable_bubble:
+    name: '气泡检测'
+    description: '是否启用气泡检测（开启后会识别并标注气泡区域）'
+    type: 'switch'
+    defaultVal: 'false'
+    required: false
+    checkedLabel: '已启用'
+    unCheckedLabel: '未启用'
+  enable_artifact:
+    name: '伪影检测'
+    description: '是否启用伪影检测（开启后会识别染色异常、折叠等伪影）'
+    type: 'switch'
+    defaultVal: 'true'
+    required: false
+    checkedLabel: '已启用'
+    unCheckedLabel: '未启用'
+  treat_folding_as_tissue:
+    name: '折叠处理策略'
+    description: '如何将组织折叠区域分类（算作组织或标为伪影剔除）'
+    type: 'radio'
+    defaultVal: 'tissue'
+    required: false
+    options:
+      - label: '算作组织（绿色）'
+        value: 'tissue'
+      - label: '标为伪影（剔除）'
+        value: 'artifact'
+  patch_size:
+    name: 'Patch 尺寸'
+    description: '提取的 Patch 大小（像素）'
+    type: 'slider'
+    defaultVal: 256
+    min: 128
+    max: 512
+    step: 64
+  patch_bg_thresh:
+    name: '背景灰度阈值'
+    description: 'Patch 过滤：灰度超过此值视为背景（越大越严格）'
+    type: 'slider'
+    defaultVal: 210
+    min: 180
+    max: 240
+    step: 5
+  patch_max_bg_ratio:
+    name: '最大背景比例'
+    description: 'Patch 中允许的背景最大占比（0-1 之间）'
+    type: 'slider'
+    defaultVal: 0.85
+    min: 0.5
+    max: 0.95
+    step: 0.05
+  thumbnail_size:
+    name: '缩略图尺寸'
+    description: '生成缩略图的最大边长（像素）'
+    type: 'slider'
+    defaultVal: 3072
+    min: 1024
+    max: 8192
+    step: 512
+  sat_thresh:
+    name: '组织饱和度下限'
+    description: 'HSV 饱和度阈值，越小越包含淡染/浅粉区'
+    type: 'slider'
+    defaultVal: 8
+    min: 5
+    max: 20
+    step: 1
+  val_max:
+    name: '组织亮度上限'
+    description: 'HSV 亮度上限，越大越包含左侧/底部浅粉区'
+    type: 'slider'
+    defaultVal: 225
+    min: 200
+    max: 250
+    step: 5
+  tissue_min_area:
+    name: '最小组织面积'
+    description: '缩略图上保留的最小组织连通域面积（像素）'
+    type: 'slider'
+    defaultVal: 1000
+    min: 500
+    max: 5000
+    step: 100
