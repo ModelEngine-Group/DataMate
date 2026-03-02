@@ -1,15 +1,17 @@
-from typing import List, Union, Optional
 from pathlib import Path
+from typing import List, Union, Optional
 
-from langchain_core.documents import Document
 from langchain_community.document_loaders import (
     TextLoader,
     JSONLoader,
     CSVLoader,
     UnstructuredMarkdownLoader,
+    UnstructuredFileLoader,
+    UnstructuredExcelLoader,
     PyPDFLoader,
-    Docx2txtLoader
+    Docx2txtLoader, BSHTMLLoader
 )
+from langchain_core.documents import Document
 
 from app.core.logging import get_logger
 
@@ -18,7 +20,7 @@ log = get_logger(__name__)
 class UniversalDocLoader:
     """
     通用泛文本文档加载类
-    支持格式：TXT/JSON/CSV/Markdown/Word(.docx)/PPT(.pptx)/PDF
+    支持格式：TXT/JSON/CSV/Markdown/Word(.docx)/PPT(.pptx)/PDF/Excel(.xlsx,.xls)/各种文本文件
     """
     # 格式-加载器映射（轻量优先）
     SUPPORTED_FORMATS = {
@@ -27,9 +29,20 @@ class UniversalDocLoader:
         ".json": JSONLoader,
         ".csv": CSVLoader,
         ".md": UnstructuredMarkdownLoader,
+        ".markdown": UnstructuredMarkdownLoader,
+        ".log": TextLoader,
+        ".xml": TextLoader,
+        ".html": BSHTMLLoader,
+        ".htm": BSHTMLLoader,
+        ".yaml": TextLoader,
+        ".yml": TextLoader,
         # 办公文档类
         ".docx": Docx2txtLoader,
         ".doc": Docx2txtLoader,
+        ".pptx": UnstructuredFileLoader,
+        ".ppt": UnstructuredFileLoader,
+        ".xlsx": UnstructuredExcelLoader,
+        ".xls": UnstructuredExcelLoader,
         # PDF 类
         ".pdf": PyPDFLoader
     }
@@ -79,6 +92,15 @@ class UniversalDocLoader:
             kwargs.setdefault("text_content", False)
         if loader_cls == CSVLoader and "csv_args" not in kwargs:
             kwargs["csv_args"] = {"delimiter": ","}
+        if loader_cls == UnstructuredExcelLoader:
+            # Excel 文件使用 "single" 模式，避免生成过多无意义的元素
+            # "elements" 模式会为每个单元格生成单独的文档，可能导致大量空内容
+            if "mode" not in kwargs:
+                kwargs.setdefault("mode", "single")
+            # 确保加载表格结构
+            kwargs.setdefault("include_header", True)
+        if loader_cls == UnstructuredFileLoader and "mode" not in kwargs:
+            kwargs.setdefault("mode", "elements")
         return kwargs
 
 

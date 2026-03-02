@@ -32,6 +32,8 @@ from .chunk_upload import (
     ChunkUploadPreRequest
 )
 
+from .knowledge_gen import KnowledgeBase, RagFile
+
 __all__ = [
     "Dataset",
     "DatasetTag",
@@ -48,4 +50,6 @@ __all__ = [
     "CategoryRelation",
     "OperatorRelease",
     "ChunkUploadPreRequest",
+    "KnowledgeBase",
+    "RagFile",
 ]

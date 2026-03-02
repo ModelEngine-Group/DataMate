@@ -97,7 +97,11 @@ const KnowledgeBaseDetailPage: React.FC = () => {
     handleKeywordChange,
   } = useFetchData<KBFile>(
     (params) => id ? queryKnowledgeBaseFilesUsingGet(id, params) : Promise.resolve({ data: [] }),
-    (file) => mapFileData(file, t)
+    (file) => mapFileData(file, t),
+    30000, // 30秒轮询间隔
+    false, // 不自动轮询
+    [], // 额外的轮询函数
+    0 // pageOffset: Python 后端期望 page 从 1 开始，前端 current=1 时传 page=1
   );
 
   // File table logic

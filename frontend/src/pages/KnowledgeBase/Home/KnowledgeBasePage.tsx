@@ -31,7 +31,11 @@ export default function KnowledgeBasePage() {
     handleKeywordChange,
   } = useFetchData<KnowledgeBaseItem>(
     queryKnowledgeBasesUsingPost,
-    (kb) => mapKnowledgeBase(kb, false, t) // 在首页不显示索引模型和文本理解模型字段
+    (kb) => mapKnowledgeBase(kb, false, t), // 在首页不显示索引模型和文本理解模型字段
+    30000, // 30秒轮询间隔
+    false, // 不自动轮询
+    [], // 额外的轮询函数
+    0 // pageOffset: Python 后端期望 page 从 1 开始，前端 current=1 时传 page=1
   );
 
   useEffect(() => {
