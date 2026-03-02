@@ -12,6 +12,7 @@ import com.datamate.common.infrastructure.exception.KnowledgeBaseErrorCode;
 import com.datamate.common.interfaces.PagedResponse;
 import com.datamate.common.interfaces.PagingQuery;
 import com.datamate.common.setting.domain.entity.ModelConfig;
+import com.datamate.common.setting.domain.entity.ModelType;
 import com.datamate.common.setting.domain.repository.ModelConfigRepository;
 import com.datamate.common.setting.infrastructure.client.ModelClient;
 import com.datamate.datamanagement.domain.model.dataset.Dataset;
@@ -36,6 +37,7 @@ import io.milvus.v2.service.vector.request.QueryReq;
 import io.milvus.v2.service.vector.response.QueryResp;
 import io.milvus.v2.service.vector.response.SearchResp;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.ApplicationEventPublisher;
@@ -58,6 +60,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class KnowledgeBaseService {
     private final KnowledgeBaseRepository knowledgeBaseRepository;
     private final RagFileRepository ragFileRepository;
@@ -227,10 +230,77 @@ public class KnowledgeBaseService {
         KnowledgeBase knowledgeBase = Optional.ofNullable(knowledgeBaseRepository.getById(request.getKnowledgeBaseIds().getFirst()))
                 .orElseThrow(() -> BusinessException.of(KnowledgeBaseErrorCode.KNOWLEDGE_BASE_NOT_FOUND));
         ModelConfig modelConfig = modelConfigRepository.getById(knowledgeBase.getEmbeddingModel());
-        EmbeddingModel embeddingModel = ModelClient.invokeEmbeddingModel(modelConfig);
-        Embedding embedding = embeddingModel.embed(request.getQuery()).content();
-        SearchResp searchResp = milvusService.hybridSearch(knowledgeBase.getName(), request.getQuery(), embedding.vector(), request.getTopK());
+
+        SearchResp searchResp;
+        int topK = request.getTopK() > 0 ? request.getTopK() : 10;
+
+        if (modelConfig.getType() == ModelType.MULTIMODAL_EMBEDDING) {
+            // 多模态模型：使用纯向量检索
+            com.datamate.common.setting.infrastructure.client.MultimodalEmbeddingClient client =
+                new com.datamate.common.setting.infrastructure.client.MultimodalEmbeddingClient(
+                    modelConfig.getBaseUrl(),
+                    modelConfig.getApiKey(),
+                    modelConfig.getModelName()
+                );
+            float[] embedding = client.embedText(request.getQuery());
+            searchResp = milvusService.vectorSearch(knowledgeBase.getName(), embedding, topK);
+        } else {
+            // 普通模型：使用混合检索（BM25 + 向量）
+            EmbeddingModel embeddingModel = ModelClient.invokeEmbeddingModel(modelConfig);
+            Embedding embedding = embeddingModel.embed(request.getQuery()).content();
+            searchResp = milvusService.hybridSearch(knowledgeBase.getName(), request.getQuery(), embedding.vector(), topK);
+        }
+
         List<SearchResp.SearchResult> searchResults = searchResp.getSearchResults().getFirst();
+        searchResults.forEach(item -> {
+            String metadata = item.getEntity().get("metadata").toString();
+            item.getEntity().put("metadata", metadata);
+        });
+        return searchResults;
+    }
+
+    /**
+     * 图片检索知识库内容
+     *
+     * @param request 图片检索请求
+     * @return 检索结果
+     */
+    public List<SearchResp.SearchResult> retrieveByImage(ImageRetrieveReq request) {
+        KnowledgeBase knowledgeBase = Optional.ofNullable(knowledgeBaseRepository.getById(request.getKnowledgeBaseIds().getFirst()))
+                .orElseThrow(() -> BusinessException.of(KnowledgeBaseErrorCode.KNOWLEDGE_BASE_NOT_FOUND));
+        ModelConfig modelConfig = modelConfigRepository.getById(knowledgeBase.getEmbeddingModel());
+
+        // 检查是否为多模态模型
+        if (modelConfig.getType() != ModelType.MULTIMODAL_EMBEDDING) {
+            throw BusinessException.of(KnowledgeBaseErrorCode.KNOWLEDGE_BASE_NOT_FOUND,
+                "图片检索需要多模态嵌入模型，当前知识库使用的是普通嵌入模型");
+        }
+
+        // 使用多模态客户端进行图片嵌入
+        com.datamate.common.setting.infrastructure.client.MultimodalEmbeddingClient client =
+            new com.datamate.common.setting.infrastructure.client.MultimodalEmbeddingClient(
+                modelConfig.getBaseUrl(),
+                modelConfig.getApiKey(),
+                modelConfig.getModelName()
+            );
+
+        int topK = request.getTopK() > 0 ? request.getTopK() : 10;
+        String queryText = request.getQueryText() != null ? request.getQueryText() : "";
+
+        log.info("Image retrieval - imageUrl length: {}, queryText: {}, topK: {}",
+            request.getImageUrl() != null ? request.getImageUrl().length() : 0, queryText, topK);
+
+        float[] embedding = client.embedImage(request.getImageUrl(), queryText);
+        log.info("Generated embedding dimension: {}, first 5 values: {}",
+            embedding.length,
+            java.util.Arrays.toString(java.util.Arrays.copyOf(embedding, Math.min(5, embedding.length))));
+
+        // 纯向量检索
+        SearchResp searchResp = milvusService.vectorSearch(knowledgeBase.getName(), embedding, topK);
+        List<SearchResp.SearchResult> searchResults = searchResp.getSearchResults().getFirst();
+
+        log.info("Retrieved {} results, scores: {}", searchResults.size(),
+            searchResults.stream().map(r -> String.format("%.4f", r.getScore())).toList());
 
         searchResults.forEach(item -> {
             String metadata = item.getEntity().get("metadata").toString();

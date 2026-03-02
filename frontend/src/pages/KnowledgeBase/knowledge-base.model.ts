@@ -10,6 +10,21 @@ export enum KBType {
   GRAPH = "GRAPH",
 }
 
+export enum ModelType {
+  CHAT = "CHAT",
+  EMBEDDING = "EMBEDDING",
+  MULTIMODAL_EMBEDDING = "MULTIMODAL_EMBEDDING",
+}
+
+export interface ModelConfig {
+  id: string;
+  modelName: string;
+  provider: string;
+  baseUrl: string;
+  type: ModelType;
+  isEnabled: boolean;
+}
+
 export interface KnowledgeBaseItem {
   id: string;
   name: string;
@@ -21,8 +36,8 @@ export interface KnowledgeBaseItem {
   chatModel: string;
   fileCount: number;
   chunkCount: number;
-  embedding: never;
-  chat: never;
+  embedding?: ModelConfig;
+  chat?: ModelConfig;
   customEntities?: string[];
 }
 

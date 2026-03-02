@@ -54,6 +54,16 @@ export function retrieveKnowledgeBaseContent(data: {
   return post("/api/knowledge-base/retrieve", data);
 }
 
+// 图片检索知识库内容（多模态）
+export function retrieveKnowledgeBaseByImage(data: {
+  imageUrl: string;
+  queryText?: string;
+  topK?: number;
+  knowledgeBaseIds: string[];
+}) {
+  return post("/api/knowledge-base/retrieve-by-image", data);
+}
+
 // 新增：获取知识库文件详情（分页的切片数据）
 export function queryKnowledgeBaseFileDetailUsingGet(
   knowledgeBaseId: string,

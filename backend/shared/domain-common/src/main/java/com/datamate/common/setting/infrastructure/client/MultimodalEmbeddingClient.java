@@ -56,12 +56,25 @@ public class MultimodalEmbeddingClient {
     }
 
     public float[] embedImage(String imageUrl, String text) {
+        log.info("embedImage called - imageUrl length: {}, text: '{}'", 
+            imageUrl != null ? imageUrl.length() : "null", text);
+        
         Map<String, Object> content = new HashMap<>();
-        content.put("image", convertToDataUrl(imageUrl));
+        String convertedUrl = convertToDataUrl(imageUrl);
+        content.put("image", convertedUrl);
+        
+        log.info("Image converted, final data URL length: {}, starts with: {}", 
+            convertedUrl.length(), 
+            convertedUrl.substring(0, Math.min(50, convertedUrl.length())));
+        
         if (text != null && !text.isEmpty()) {
             content.put("text", text);
+            log.info("Added text to embedding request: '{}'", text);
         }
-        return embed(List.of(content));
+        
+        float[] result = embed(List.of(content));
+        log.info("Embedding result dimension: {}", result.length);
+        return result;
     }
 
     /**
@@ -72,10 +85,13 @@ public class MultimodalEmbeddingClient {
             throw new IllegalArgumentException("Image input cannot be null or empty");
         }
 
-        if (imageInput.startsWith("http://") || imageInput.startsWith("https://") || imageInput.startsWith("data:")) {
+        // 如果已经是 data URL 或 http URL，直接返回
+        if (imageInput.startsWith("data:") || imageInput.startsWith("http://") || imageInput.startsWith("https://")) {
+            log.debug("Using image URL directly, length: {}", imageInput.length());
             return imageInput;
         }
 
+        // 本地文件路径
         Path imagePath = Path.of(imageInput);
         if (!Files.exists(imagePath)) {
             throw new RuntimeException("Image file not found: " + imageInput);
@@ -85,7 +101,10 @@ public class MultimodalEmbeddingClient {
             String mimeType = detectMimeType(imagePath);
             byte[] imageBytes = Files.readAllBytes(imagePath);
             String base64 = Base64.getEncoder().encodeToString(imageBytes);
-            return "data:" + mimeType + ";base64," + base64;
+            String dataUrl = "data:" + mimeType + ";base64," + base64;
+            log.debug("Converted local file to data URL, file size: {} bytes, base64 length: {}", 
+                imageBytes.length, base64.length());
+            return dataUrl;
         } catch (IOException e) {
             throw new RuntimeException("Failed to read image file: " + imageInput, e);
         }
@@ -124,6 +143,8 @@ public class MultimodalEmbeddingClient {
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
 
         try {
+            log.debug("Sending embedding request to: {}, contents size: {}", apiEndpoint, contents.size());
+            
             ResponseEntity<String> response = restTemplate.exchange(
                     apiEndpoint,
                     HttpMethod.POST,
@@ -132,28 +153,38 @@ public class MultimodalEmbeddingClient {
             );
 
             if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
+                log.error("Embedding API call failed with status: {}", response.getStatusCode());
                 throw new RuntimeException("Embedding API call failed: " + response.getStatusCode());
             }
 
             JsonNode responseJson = objectMapper.readTree(response.getBody());
+            log.debug("Received embedding response, checking format...");
 
+            // 尝试阿里云百炼格式: output.embeddings[0].embedding
             JsonNode outputNode = responseJson.path("output");
             if (!outputNode.isMissingNode()) {
                 JsonNode embeddingsArray = outputNode.path("embeddings");
                 if (embeddingsArray.isArray() && embeddingsArray.size() > 0) {
                     JsonNode embeddingNode = embeddingsArray.get(0).path("embedding");
-                    return extractEmbedding(embeddingNode);
+                    float[] embedding = extractEmbedding(embeddingNode);
+                    log.info("Successfully extracted embedding from DashScope format, dimension: {}", embedding.length);
+                    return embedding;
                 }
             }
 
+            // 尝试通用格式: data[0].embedding
             JsonNode dataArray = responseJson.path("data");
             if (dataArray.isArray() && dataArray.size() > 0) {
                 JsonNode embeddingNode = dataArray.get(0).path("embedding");
-                return extractEmbedding(embeddingNode);
+                float[] embedding = extractEmbedding(embeddingNode);
+                log.info("Successfully extracted embedding from generic format, dimension: {}", embedding.length);
+                return embedding;
             }
 
+            log.error("Invalid response format: {}", response.getBody());
             throw new RuntimeException("Invalid response format: missing embedding data");
         } catch (Exception e) {
+            log.error("Embedding API call failed: {}", e.getMessage(), e);
             throw new RuntimeException("Embedding API call failed: " + e.getMessage(), e);
         }
     }

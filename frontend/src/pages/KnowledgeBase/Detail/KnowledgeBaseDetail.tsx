@@ -1,11 +1,12 @@
 import type React from "react";
 import { useEffect, useState } from "react";
-import { Table, Badge, Button, Breadcrumb, Tooltip, App, Card, Input, Empty, Spin } from "antd";
+import { Table, Badge, Button, Breadcrumb, Tooltip, App, Card, Input, Empty, Spin, Upload } from "antd";
 import {
   DeleteOutlined,
   EditOutlined,
   ReloadOutlined,
   CloseOutlined,
+  UploadOutlined,
 } from "@ant-design/icons";
 import { useNavigate, useParams } from "react-router";
 import DetailHeader from "@/components/DetailHeader";
@@ -18,6 +19,7 @@ import {
   queryKnowledgeBaseByIdUsingGet,
   queryKnowledgeBaseFilesUsingGet,
   retrieveKnowledgeBaseContent,
+  retrieveKnowledgeBaseByImage,
   fetchKnowledgeGraph,
 } from "../knowledge-base.api";
 import useFetchData from "@/hooks/useFetchData";
@@ -55,6 +57,8 @@ const KnowledgeBaseDetailPage: React.FC = () => {
   const [recallLoading, setRecallLoading] = useState(false);
   const [recallResults, setRecallResults] = useState<RecallResult[]>([]);
   const [recallQuery, setRecallQuery] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [imageLoading, setImageLoading] = useState(false);
   const [graphVisible, setGraphVisible] = useState(false);
   const [graphLoading, setGraphLoading] = useState(false);
   const [graphData, setGraphData] = useState<{ nodes: KnowledgeGraphNode[]; edges: KnowledgeGraphEdge[] }>({ nodes: [], edges: [] });
@@ -128,20 +132,55 @@ const KnowledgeBaseDetailPage: React.FC = () => {
   };
 
   const handleRecallTest = async () => {
-    if (!recallQuery || !knowledgeBase?.id) return;
+    if (!recallQuery.trim()) {
+      setRecallResults([]);
+      return;
+    }
+
     setRecallLoading(true);
     try {
-      const result = await retrieveKnowledgeBaseContent({
+      const results = await retrieveKnowledgeBaseContent({
         query: recallQuery,
         topK: 10,
-        threshold: 0.2,
-        knowledgeBaseIds: [knowledgeBase.id],
+        knowledgeBaseIds: [id!],
       });
-      setRecallResults(result?.data || []);
-    } catch {
-      setRecallResults([]);
+      setRecallResults(results.data || []);
+    } catch (error) {
+      message.error(t("knowledgeBase.detail.recallTest.error", { error: error.data?.message || error }));
+    } finally {
+      setRecallLoading(false);
     }
-    setRecallLoading(false);
+  };
+
+  const handleImageRecallTest = async (file: File) => {
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const base64 = e.target?.result as string;
+      if (!base64) return;
+
+      setImageLoading(true);
+      try {
+        const results = await retrieveKnowledgeBaseByImage({
+          imageUrl: base64,
+          topK: 10,
+          knowledgeBaseIds: [id!],
+        });
+        setRecallResults(results.data || []);
+      } catch (error) {
+        message.error(t("knowledgeBase.detail.recallTest.error", { error: error.data?.message || error }));
+      } finally {
+        setImageLoading(false);
+      };
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleClearRecallTest = () => {
+    setRecallQuery("");
+    setRecallResults([]);
+    setImageUrl("");
   };
 
   const handleGraphFetch = async () => {
@@ -459,7 +498,10 @@ const KnowledgeBaseDetailPage: React.FC = () => {
         ) : (
           <div className="p-2">
             <div style={{ fontSize: 14, fontWeight: 300, marginBottom: 8 }}>{t("knowledgeBase.detail.recallTest.description")}</div>
-            <div className="flex items-center mb-4">
+
+            {/* 文本检索 */}
+            <div className="mb-4">
+              <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 4 }}>{t("knowledgeBase.detail.recallTest.textSearch")}</div>
               <Input.Search
                 value={recallQuery}
                 onChange={e => setRecallQuery(e.target.value)}
@@ -467,26 +509,90 @@ const KnowledgeBaseDetailPage: React.FC = () => {
                 placeholder={t("knowledgeBase.detail.recallTest.placeholder")}
                 enterButton={t("knowledgeBase.detail.recallTest.searchButton")}
                 loading={recallLoading}
-                style={{ width: "100%", fontSize: 18, height: 48 }}
+                style={{ fontSize: 14 }}
               />
+              <div className="mt-2">
+                <Button onClick={handleClearRecallTest} icon={<CloseOutlined />} size="small">
+                  {t("components.searchControls.filters.clearAll")}
+                </Button>
+              </div>
             </div>
-            {recallLoading ? (
-              <Spin className="mt-8" />
+
+            {/* 图片检索 */}
+            <div className="mb-4">
+              <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 4 }}>{t("knowledgeBase.detail.recallTest.imageSearch")}</div>
+              {knowledgeBase?.embedding?.type === 'MULTIMODAL_EMBEDDING' ? (
+                <div className="flex items-center gap-2">
+                  <Upload
+                    accept="image/*"
+                    beforeUpload={(file) => {
+                      handleImageRecallTest(file);
+                      return false;
+                    }}
+                    maxCount={1}
+                  >
+                    <Button
+                      type="primary"
+                      icon={<UploadOutlined />}
+                      loading={imageLoading}
+                    >
+                      {t("knowledgeBase.detail.recallTest.uploadImage")}
+                    </Button>
+                  </Upload>
+                  {imageUrl && (
+                    <div className="flex items-center gap-2">
+                      <img src={imageUrl} alt="Uploaded" style={{ maxWidth: 100, maxHeight: 60, objectFit: 'contain' }} />
+                      <Button onClick={() => setImageUrl("")} icon={<CloseOutlined />} size="small" />
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div style={{ color: '#999', fontSize: 12 }}>
+                  {t("knowledgeBase.detail.recallTest.imageSearchDisabled")}
+                </div>
+              )}
+            </div>
+
+            {/* 检索结果 */}
+            {recallLoading || imageLoading ? (
+              <div className="flex justify-center">
+                <Spin />
+              </div>
             ) : recallResults.length === 0 ? (
               <Empty description={t("knowledgeBase.detail.recallTest.noResult")} />
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {recallResults.map((item, idx) => (
-                  <Card key={idx} title={`${t("knowledgeBase.detail.recallTest.scoreLabel")}${item.score?.toFixed(4) ?? "-"}`}
-                    extra={<span style={{ fontSize: 12 }}>ID: {item.entity?.id ?? "-"}</span>}
-                    style={{ wordBreak: "break-all" }}
-                  >
-                    <div style={{ marginBottom: 8, fontWeight: 500 }}>{item.entity?.text ?? ""}</div>
-                    <div style={{ fontSize: 12, color: '#888' }}>
-                      {t("knowledgeBase.detail.recallTest.metadataLabel")} <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all', margin: 0 }}>{item.entity?.metadata}</pre>
-                    </div>
-                  </Card>
-                ))}
+                {recallResults.map((item, idx) => {
+                  const metadata = item.entity?.metadata ? JSON.parse(item.entity.metadata) : {};
+                  const isImage = metadata?.is_image === "true";
+
+                  return (
+                    <Card
+                      key={idx}
+                      title={`${t("knowledgeBase.detail.recallTest.scoreLabel")}${item.score?.toFixed(4) ?? "-"}`}
+                      extra={<span style={{ fontSize: 12 }}>ID: {item.entity?.id ?? "-"}</span>}
+                      style={{ wordBreak: "break-all" }}
+                    >
+                      <div style={{ marginBottom: 8, fontWeight: 500 }}>
+                        {isImage ? `🖼️ ${t("knowledgeBase.detail.recallTest.imageResult")}` : `📄 ${t("knowledgeBase.detail.recallTest.textResult")}`}
+                      </div>
+                      {isImage && metadata?.original_file_id && metadata?.dataset_id && (
+                        <div style={{ marginBottom: 8 }}>
+                          <img 
+                            src={`/api/data-management/datasets/${metadata.dataset_id}/files/${metadata.original_file_id}/download`} 
+                            alt="Result" 
+                            style={{ maxWidth: 200, maxHeight: 120, objectFit: 'contain' }} 
+                          />
+                        </div>
+                      )}
+                      <div style={{ marginBottom: 8 }}>{item.entity?.text ?? ""}</div>
+                      <div style={{ fontSize: 12, color: '#888' }}>
+                        {t("knowledgeBase.detail.recallTest.metadataLabel")}
+                        <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all', margin: 0 }}>{item.entity?.metadata}</pre>
+                      </div>
+                    </Card>
+                  );
+                })}
               </div>
             )}
           </div>

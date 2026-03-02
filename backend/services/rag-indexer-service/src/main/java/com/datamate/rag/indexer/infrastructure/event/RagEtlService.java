@@ -144,9 +144,10 @@ public class RagEtlService {
                 new dev.langchain4j.data.document.Metadata()
                         .put("rag_file_id", ragFile.getId())
                         .put("original_file_id", ragFile.getFileId())
+                        .put("dataset_id", file.getDatasetId())
                         .put("file_type", file.getFileType())
                         .put("is_image", "true")
-                        .put("image_path", file.getFilePath())
+                        .put("file_name", file.getFileName())
         );
 
         ragFile.setChunkCount(1);

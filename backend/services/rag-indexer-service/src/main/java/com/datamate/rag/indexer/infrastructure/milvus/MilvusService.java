@@ -17,6 +17,7 @@ import io.milvus.v2.service.collection.request.HasCollectionReq;
 import io.milvus.v2.service.vector.request.AnnSearchReq;
 import io.milvus.v2.service.vector.request.FunctionScore;
 import io.milvus.v2.service.vector.request.HybridSearchReq;
+import io.milvus.v2.service.vector.request.SearchReq;
 import io.milvus.v2.service.vector.request.InsertReq;
 import io.milvus.v2.service.vector.request.data.BaseVector;
 import io.milvus.v2.service.vector.request.data.EmbeddedText;
@@ -216,5 +217,27 @@ public class MilvusService {
                 .limit(topK)
                 .build());
         return searchResp;
+    }
+
+    /**
+     * 纯向量检索（用于图片查询和多模态检索）
+     *
+     * @param collectionName 集合名称
+     * @param queryVector    查询向量
+     * @param topK           返回数量
+     * @return 检索结果
+     */
+    public SearchResp vectorSearch(String collectionName, float[] queryVector, int topK) {
+        List<BaseVector> queryVectors = Collections.singletonList(new FloatVec(queryVector));
+        
+        SearchReq searchReq = SearchReq.builder()
+                .collectionName(collectionName)
+                .data(queryVectors)
+                .annsField("vector")
+                .topK(topK)
+                .outputFields(Arrays.asList("id", "text", "metadata"))
+                .build();
+
+        return this.getMilvusClient().search(searchReq);
     }
 }

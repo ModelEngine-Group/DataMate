@@ -1562,11 +1562,18 @@
       },
       "recallTest": {
         "description": "基于语义文本检索和全文检索后的加权平均结果",
+        "textSearch": "文本检索",
+        "imageSearch": "图片检索",
+        "uploadImage": "上传图片检索",
+        "imageSearchDisabled": "当前知识库使用的嵌入模型不支持图片检索，请使用多模态嵌入模型",
         "placeholder": "请输入召回测试问题",
         "searchButton": "检索",
         "noResult": "暂无召回结果",
         "scoreLabel": "得分：",
-        "metadataLabel": "metadata:"
+        "metadataLabel": "metadata:",
+        "imageResult": "图片结果",
+        "textResult": "文本结果",
+        "error": "检索失败：{{error}}"
       },
       "graph": {
         "title": "知识图谱",
@@ -1696,6 +1703,8 @@
         "dataSource": "数据来源",
         "dataset": "数据集",
         "totalFiles": "文件总数",
+        "fileType": "文件类型",
+        "imageFiles": "图片文件",
         "sliceMethod": "分块方式",
         "chunkSize": "分块大小",
         "overlapSize": "重叠长度",

@@ -138,7 +138,15 @@ public class KnowledgeBaseController {
      * @return 检索结果
      */
     @PostMapping("/retrieve")
-    public List<SearchResp.SearchResult> retrieve(@RequestBody @Valid RetrieveReq request) {
-        return knowledgeBaseService.retrieve(request);
+    public List<SearchResp.SearchResult> retrieve(@RequestBody @Valid RetrieveReq retrieveReq) {
+        return knowledgeBaseService.retrieve(retrieveReq);
+    }
+
+    /**
+     * 图片检索知识库
+     */
+    @PostMapping("/retrieve-by-image")
+    public List<SearchResp.SearchResult> retrieveByImage(@RequestBody @Valid ImageRetrieveReq request) {
+        return knowledgeBaseService.retrieveByImage(request);
     }
 }

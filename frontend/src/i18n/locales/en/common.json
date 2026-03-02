@@ -1562,11 +1562,18 @@
       },
       "recallTest": {
         "description": "Weighted average results based on semantic text retrieval and full-text retrieval",
+        "textSearch": "Text Search",
+        "imageSearch": "Image Search",
+        "uploadImage": "Upload Image to Search",
+        "imageSearchDisabled": "The current embedding model does not support image search. Please use a multimodal embedding model.",
         "placeholder": "Please enter recall test question",
         "searchButton": "Retrieve",
         "noResult": "No recall results",
         "scoreLabel": "Score:",
-        "metadataLabel": "metadata:"
+        "metadataLabel": "metadata:",
+        "imageResult": "Image Result",
+        "textResult": "Text Result",
+        "error": "Search failed: {{error}}"
       },
       "graph": {
         "title": "Knowledge Graph",
@@ -1696,6 +1703,8 @@
         "dataSource": "Data Source",
         "dataset": "Dataset",
         "totalFiles": "Total Files",
+        "fileType": "File Type",
+        "imageFiles": "Image Files",
         "sliceMethod": "Chunking Method",
         "chunkSize": "Chunk Size",
         "overlapSize": "Overlap Length",
