@@ -1,0 +1,43 @@
+name: '视频处理套件'
+name_en: 'video_analysis_operator'
+description: '集成安全检查、视频切除、视频标注、摘要生成及视频分类的视频工程处理套件'
+description_en: 'An integrated suite for safety check, video cutting, annotation, summary, and classification for medical video engineering.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'VideoAnalysisOperator'
+version: '1.0.0'
+modal: 'video'
+types:
+  - 'cleaning'
+  - 'annotation'
+inputs: 'video'
+outputs: 'video'
+
+runtime:
+  cpu: '4.0'
+  memory: '32212254720' 
+  npu: '1.0'          
+  storage: '30GB'
+
+settings:
+  - name: '任务选择'
+    raw_id: 'taskType'
+    type: 'select'
+    defaultVal: 'safety_check'
+    options:
+      - label: '安全检查'
+        value: 'safety_check'
+      - label: '视频切除'
+        value: 'video_cut'
+      - label: '视频标注'
+        value: 'video_annot'
+      - label: '摘要生成'
+        value: 'summary_gen'
+      - label: '视频分类'
+        value: 'video_classify'
+
+  - name: 'Qwen权重绝对路径'
+    description: '昇腾910B服务器上模型存放的物理路径'
+    raw_id: 'modelPath'
+    type: 'input'
+    defaultVal: '/mnt/nvme0n1/home/gtx/Video_Analysis_System/models/qwen/Qwen/Qwen2.5-VL-7B-Instruct'
