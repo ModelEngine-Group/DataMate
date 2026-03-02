@@ -12,7 +12,7 @@
 // stopPolling();  // 停止轮询
 // 手动调用 fetchData() 时，如果正在轮询，会重新开始轮询计时
 // 轮询时会同时执行主要的 fetchFunction 和所有额外的轮询函数
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useDebouncedEffect } from "./useDebouncedEffect";
 import Loading from "@/utils/loading";
 import { App } from "antd";
@@ -32,6 +32,7 @@ export default function useFetchData<T>(
   // 轮询相关状态
   const [isPolling, setIsPolling] = useState(false);
   const pollingTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const isPollingRef = useRef(false);
 
   // 表格数据
   const [tableData, setTableData] = useState<T[]>([]);
@@ -45,13 +46,22 @@ export default function useFetchData<T>(
       type: [] as string[],
       status: [] as string[],
       tags: [] as string[],
-      // 通用分类筛选（如算子市场的分类 ID 列表）
       categories: [] as string[][],
       selectedStar: false,
     },
     current: 1,
     pageSize: 12,
   });
+
+  // 使用 ref 存储 searchParams 的值
+  const searchParamsRef = useRef(searchParams);
+  searchParamsRef.current = searchParams;
+
+  // 组件挂载状态 ref
+  const isMountedRef = useRef(true);
+  
+  // 跟踪上一次的 searchParams，用于避免重复请求
+  const prevSearchParamsRef = useRef<string>("");
 
   // Pagination configuration
   const [pagination, setPagination] = useState({
@@ -78,9 +88,9 @@ export default function useFetchData<T>(
 
   const handleKeywordChange = (keyword: string) => {
     setSearchParams({
-        ...searchParams,
-        current: 1,
-        keyword: keyword,
+      ...searchParams,
+      current: 1,
+      keyword: keyword,
     });
   };
 
@@ -100,20 +110,19 @@ export default function useFetchData<T>(
 
   const fetchData = useCallback(
     async (extraParams = {}, skipPollingRestart = false) => {
-      const { keyword, filter, current, pageSize } = searchParams;
+      const { keyword, filter, current, pageSize } = searchParamsRef.current;
+      
       if (!skipPollingRestart) {
         Loading.show();
         setLoading(true);
       }
 
-      // 如果正在轮询且不是轮询触发的调用，先停止当前轮询
-      const wasPolling = isPolling && !skipPollingRestart;
+      const wasPolling = isPollingRef.current && !skipPollingRestart;
       if (wasPolling) {
         clearPollingTimer();
       }
 
       try {
-        // 同时执行主要数据获取和额外的轮询函数
         const apiParams = {
           categories: filter.categories,
           ...extraParams,
@@ -124,13 +133,12 @@ export default function useFetchData<T>(
           built_in: filter?.builtIn !== undefined ? (getFirstOfArray(filter?.builtIn) === "true") : undefined,
           tags: filter?.tags?.length ? filter.tags.join(",") : undefined,
           page: current - pageOffset,
-          size: pageSize,  // Use camelCase for HTTP query params
+          size: pageSize,
         };
 
-        // 添加可能存在的额外参数（如 start_time, end_time 等）
-        Object.keys(searchParams).forEach(key => {
+        Object.keys(searchParamsRef.current).forEach(key => {
           if (!['keyword', 'filter', 'current', 'pageSize'].includes(key) && apiParams[key as keyof typeof apiParams] === undefined) {
-            (apiParams as any)[key] = (searchParams as any)[key];
+            (apiParams as any)[key] = (searchParamsRef.current as any)[key];
           }
         });
 
@@ -140,7 +148,11 @@ export default function useFetchData<T>(
         ];
 
         const results = await Promise.all(promises);
-        const { data } = results[0]; // 主要数据结果
+        const { data } = results[0];
+
+        if (!isMountedRef.current) {
+          return;
+        }
 
         setPagination((prev) => ({
           ...prev,
@@ -152,12 +164,11 @@ export default function useFetchData<T>(
         }
         setTableData(result);
 
-        // 如果之前正在轮询且不是轮询触发的调用，重新开始轮询
         if (wasPolling) {
           const poll = () => {
             pollingTimerRef.current = setTimeout(() => {
               fetchData({}, true).then(() => {
-                if (pollingTimerRef.current) {
+                if (pollingTimerRef.current && isMountedRef.current) {
                   poll();
                 }
               });
@@ -166,24 +177,30 @@ export default function useFetchData<T>(
           poll();
         }
       } catch (error) {
+        if (!isMountedRef.current) {
+          return;
+        }
+        
         if (error.status === 401) {
           message.warn(t('hooks.fetchData.loginRequired'));
         } else {
           message.error(t('hooks.fetchData.fetchFailed'));
         }
       } finally {
-        Loading.hide();
-        setLoading(false);
+        if (isMountedRef.current) {
+          Loading.hide();
+          setLoading(false);
+        }
       }
     },
     [
-      searchParams,
       fetchFunc,
       mapDataFunc,
-      isPolling,
       clearPollingTimer,
       pollingInterval,
       message,
+      t,
+      pageOffset,
       additionalPollingFuncs,
     ]
   );
@@ -192,11 +209,12 @@ export default function useFetchData<T>(
   const startPolling = useCallback(() => {
     clearPollingTimer();
     setIsPolling(true);
+    isPollingRef.current = true;
 
     const poll = () => {
       pollingTimerRef.current = setTimeout(() => {
         fetchData({}, true).then(() => {
-          if (pollingTimerRef.current) {
+          if (pollingTimerRef.current && isMountedRef.current) {
             poll();
           }
         });
@@ -210,27 +228,58 @@ export default function useFetchData<T>(
   const stopPolling = useCallback(() => {
     clearPollingTimer();
     setIsPolling(false);
+    isPollingRef.current = false;
   }, [clearPollingTimer]);
 
   // 搜索参数变化时，自动刷新数据
-  // keyword 变化时，防抖500ms后刷新
-  useDebouncedEffect(
-    () => {
-      fetchData();
-    },
-    [searchParams],
-    searchParams?.keyword ? 500 : 0
-  );
-
-  // 组件卸载时清理轮询
+  // 使用 useEffect + 深比较，而不是将对象作为依赖项
   useEffect(() => {
+    if (!isMountedRef.current) return;
+    
+    // 序列化当前参数
+    const currentParamsString = JSON.stringify({
+      keyword: searchParams.keyword,
+      filterType: searchParams.filter.type,
+      filterStatus: searchParams.filter.status,
+      filterTags: searchParams.filter.tags,
+      filterCategories: searchParams.filter.categories,
+      selectedStar: searchParams.filter.selectedStar,
+      current: searchParams.current,
+      pageSize: searchParams.pageSize,
+    });
+    
+    // 检查参数是否真的变化了
+    if (currentParamsString === prevSearchParamsRef.current) {
+      return;
+    }
+    prevSearchParamsRef.current = currentParamsString;
+    
+    // 防抖处理
+    const timer = setTimeout(() => {
+      if (isMountedRef.current) {
+        fetchData();
+      }
+    }, searchParams?.keyword ? 500 : 0);
+    
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [searchParams, fetchData]);
+
+  // 组件卸载时清理轮询和状态
+  useEffect(() => {
+    isMountedRef.current = true;
+    
     if (autoRefresh) {
       startPolling();
     }
+    
     return () => {
+      isMountedRef.current = false;
       clearPollingTimer();
+      Loading.hideAll();
     };
-  }, [clearPollingTimer]);
+  }, []);
 
   return {
     loading,
