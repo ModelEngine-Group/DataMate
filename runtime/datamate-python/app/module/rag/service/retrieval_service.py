@@ -7,12 +7,12 @@ import json
 import logging
 from typing import List
 
-from pymilvus import AnnSearchRequest, MilvusClient, RRFRanker, Function, FunctionType
+from pymilvus import AnnSearchRequest, Function, FunctionType
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import settings
 from app.core.exception import BusinessError, ErrorCodes
 from app.module.rag.infra.embeddings import EmbeddingFactory
+from app.module.rag.infra.vectorstore.milvus_client import get_milvus_client
 from app.module.rag.repository import KnowledgeBaseRepository, RagFileRepository
 from app.module.rag.schema.request import RetrieveReq, PagingQuery
 from app.module.rag.schema.response import PagedResponse, RagChunkResp
@@ -100,8 +100,7 @@ class RetrievalService:
     ) -> List[dict]:
         """执行混合检索"""
         all_results = []
-        token = getattr(settings, "milvus_token", None)
-        client = MilvusClient(uri=settings.milvus_uri, token=token or "")
+        client = get_milvus_client()
 
         for kb in knowledge_bases:
             try:
@@ -206,9 +205,7 @@ class RetrievalService:
         if not rag_file:
             raise BusinessError(ErrorCodes.RAG_FILE_NOT_FOUND)
 
-        # 查询 Milvus
-        token = getattr(settings, "milvus_token", None)
-        client = MilvusClient(uri=settings.milvus_uri, token=token or "")
+        client = get_milvus_client()
 
         try:
             # 查询总数

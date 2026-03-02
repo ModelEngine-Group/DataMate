@@ -18,29 +18,14 @@ import logging
 from typing import List, Optional
 
 from langchain_core.documents import Document
-from pymilvus import MilvusClient, DataType, FunctionType, CollectionSchema, FieldSchema, Function
+from pymilvus import DataType, FunctionType, CollectionSchema, FieldSchema, Function
 
-from app.core.config import settings
 from app.core.exception import BusinessError, ErrorCodes
 from app.module.rag.infra.document.types import DocumentChunk
 from app.module.rag.infra.embeddings import EmbeddingFactory
+from app.module.rag.infra.vectorstore.milvus_client import get_milvus_client
 
 logger = logging.getLogger(__name__)
-
-
-def _get_connection_args() -> dict:
-    """获取 Milvus 连接参数"""
-    args: dict = {"uri": settings.milvus_uri}
-    token = getattr(settings, "milvus_token", None)
-    if token:
-        args["token"] = token
-    return args
-
-
-def _get_client() -> MilvusClient:
-    """获取 Milvus 客户端"""
-    conn_args = _get_connection_args()
-    return MilvusClient(uri=conn_args["uri"], token=conn_args.get("token", ""))
 
 
 def drop_collection(collection_name: str) -> None:
@@ -50,7 +35,7 @@ def drop_collection(collection_name: str) -> None:
         collection_name: 集合名称
     """
     try:
-        client = _get_client()
+        client = get_milvus_client()
         if client.has_collection(collection_name):
             client.drop_collection(collection_name)
             logger.info("成功删除集合: %s", collection_name)
@@ -67,13 +52,15 @@ def rename_collection(old_name: str, new_name: str) -> None:
         new_name: 新集合名称
     """
     from pymilvus import utility, connections
+    from app.core.config import settings
 
     try:
-        conn_args = _get_connection_args()
+        uri = settings.milvus_uri
+        token = getattr(settings, "milvus_token", None) or ""
         connections.connect(
             alias="default",
-            uri=conn_args["uri"],
-            token=conn_args.get("token", ""),
+            uri=uri,
+            token=token,
         )
         if utility.has_collection(old_name, using="default"):
             utility.rename_collection(old_name, new_name, using="default")
@@ -98,7 +85,7 @@ def create_collection(
         consistency_level: 一致性级别
     """
     try:
-        client = _get_client()
+        client = get_milvus_client()
 
         if client.has_collection(collection_name):
             logger.info("集合 %s 已存在，跳过创建", collection_name)
@@ -211,7 +198,7 @@ def delete_chunks_by_rag_file_ids(collection_name: str, rag_file_ids: List[str])
         return
 
     try:
-        client = _get_client()
+        client = get_milvus_client()
 
         for rid in rag_file_ids:
             json_value = json.dumps({"rag_file_id": rid})

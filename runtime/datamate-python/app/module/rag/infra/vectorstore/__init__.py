@@ -4,6 +4,7 @@
 提供 Milvus 向量存储的创建、管理和数据操作功能。
 """
 from app.module.rag.infra.vectorstore.factory import VectorStoreFactory
+from app.module.rag.infra.vectorstore.milvus_client import get_milvus_client
 from app.module.rag.infra.vectorstore.store import (
     chunks_to_documents,
     create_collection,
@@ -15,6 +16,7 @@ from app.module.rag.infra.vectorstore.store import (
 
 __all__ = [
     "VectorStoreFactory",
+    "get_milvus_client",
     "create_collection",
     "drop_collection",
     "rename_collection",
