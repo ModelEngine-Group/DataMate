@@ -114,18 +114,28 @@ export default function useFetchData<T>(
 
       try {
         // 同时执行主要数据获取和额外的轮询函数
+        const apiParams = {
+          categories: filter.categories,
+          ...extraParams,
+          keyword,
+          isStar: filter.selectedStar ? true : undefined,
+          type: getFirstOfArray(filter?.type) || undefined,
+          status: getFirstOfArray(filter?.status) || undefined,
+          built_in: filter?.builtIn !== undefined ? (getFirstOfArray(filter?.builtIn) === "true") : undefined,
+          tags: filter?.tags?.length ? filter.tags.join(",") : undefined,
+          page: current - pageOffset,
+          size: pageSize,  // Use camelCase for HTTP query params
+        };
+
+        // 添加可能存在的额外参数（如 start_time, end_time 等）
+        Object.keys(searchParams).forEach(key => {
+          if (!['keyword', 'filter', 'current', 'pageSize'].includes(key) && apiParams[key as keyof typeof apiParams] === undefined) {
+            (apiParams as any)[key] = (searchParams as any)[key];
+          }
+        });
+
         const promises = [
-          fetchFunc({
-            categories: filter.categories,
-            ...extraParams,
-            keyword,
-            isStar: filter.selectedStar ? true : undefined,
-            type: getFirstOfArray(filter?.type) || undefined,
-            status: getFirstOfArray(filter?.status) || undefined,
-            tags: filter?.tags?.length ? filter.tags.join(",") : undefined,
-            page: current - pageOffset,
-            size: pageSize,  // Use camelCase for HTTP query params
-          }),
+          fetchFunc(apiParams),
           ...additionalPollingFuncs.map((func) => func()),
         ];
 

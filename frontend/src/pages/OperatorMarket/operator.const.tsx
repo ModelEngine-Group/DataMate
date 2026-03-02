@@ -113,6 +113,7 @@ export const mapOperator = (op: OperatorI, t: (key: string) => string) => {
   const FUNCTION_CATEGORY_IDS = {
     cleaning: "8c09476a-a922-418f-a908-733f8a0de521",
     annotation: "cfa9d8e2-5b5f-4f1e-9f12-1234567890ab",
+    system: "96a3b07a-3439-4557-a835-525faad60ca3"
   } as const;
 
   const categories = op?.categories || [];
@@ -142,7 +143,7 @@ export const mapOperator = (op: OperatorI, t: (key: string) => string) => {
       },
       {
         label: t("operatorMarket.const.size"),
-        value: formatBytes(op?.fileSize),
+        value: categories?.includes(FUNCTION_CATEGORY_IDS.system) ? '-' : formatBytes(op?.fileSize),
       },
       {
         label: t("operatorMarket.const.language"),

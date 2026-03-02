@@ -90,6 +90,7 @@
         "stopSuccess": "任务停止请求已发送",
         "deleteSuccess": "任务已删除",
         "deleteConfirm": "确定要删除该任务吗？此操作不可撤销。",
+        "deleteConfirmMessage": "确定要删除任务「{{taskName}}」吗？删除后将无法恢复。",
         "confirmDelete": "删除",
         "cancel": "取消"
       }
@@ -111,6 +112,7 @@
         "createdAt": "创建时间",
         "updatedAt": "更新时间"
       },
+      "columnSettings": "列设置",
       "messages": {
         "refreshFailed": "刷新失败"
       }
@@ -2446,6 +2448,9 @@
     },
     "searchControls": {
       "searchPlaceholder": "搜索...",
+      "startTime": "开始时间",
+      "endTime": "结束时间",
+      "selectedFilters": "已选筛选：",
       "dateRange": {
         "start": "开始日期",
         "end": "结束日期",
@@ -2514,7 +2519,7 @@
   "home": {
     "hero": {
       "subtitle": "AI数据集准备工具",
-      "title": "DataMate 构建高质量 AI数据集",
+      "title": "构建高质量 AI数据集",
       "description": "从数据管理到知识生成，一站式解决企业AI数据处理的场景问题。",
       "getStartedButton": "开始使用",
       "chatAssistantButton": "对话助手",

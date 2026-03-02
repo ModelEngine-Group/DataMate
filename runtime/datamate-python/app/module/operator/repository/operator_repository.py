@@ -6,7 +6,7 @@ import json
 from typing import List, Optional
 from datetime import datetime, timezone
 
-from sqlalchemy import select, text, update
+from sqlalchemy import select, text, update, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.operator import Operator
@@ -115,7 +115,7 @@ class OperatorRepository:
             update(Operator)
             .where(Operator.id.in_(operator_ids))
             .values(
-                usage_count=Operator.usage_count + 1,
-                updated_at=datetime.now(timezone.utc),
+                usage_count=func.coalesce(Operator.usage_count, 0) + 1,
+                updated_at=datetime.utcnow(),
             )
         )

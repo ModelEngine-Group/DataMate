@@ -1,4 +1,4 @@
-import { App, Button, Card, Popconfirm, Table, Tag, Tooltip } from "antd";
+import { App, Button, Card, Modal, Table, Tag, Tooltip } from "antd";
 import {
   DeleteOutlined,
   PauseCircleOutlined,
@@ -17,13 +17,24 @@ import { getStatusMap, mapCollectionTask } from "../collection.const";
 import useFetchData from "@/hooks/useFetchData";
 import { useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export default function TaskManagement() {
   const { message } = App.useApp();
   const navigate = useNavigate();
   const { t } = useTranslation();
   const statusMap = getStatusMap(t);
+
+  // 删除确认弹窗状态
+  const [deleteModal, setDeleteModal] = useState<{
+    visible: boolean;
+    taskId: string;
+    taskName: string;
+  }>({
+    visible: false,
+    taskId: "",
+    taskName: "",
+  });
   const filters = [
     {
       key: "status",
@@ -42,12 +53,14 @@ export default function TaskManagement() {
     searchParams,
     setSearchParams,
     fetchData,
+    handleFiltersChange,
   } = useFetchData(
     (params) => {
-      const { keyword, ...rest } = params || {};
+      const { keyword, status, ...rest } = params || {};
       return queryTasksUsingGet({
         ...rest,
         name: keyword || undefined,
+        status: status || undefined,
       });
     },
     (task) => mapCollectionTask(task, t),
@@ -76,7 +89,16 @@ export default function TaskManagement() {
   const handleDeleteTask = async (taskId: string) => {
     await deleteTaskByIdUsingDelete(taskId);
     message.success(t("dataCollection.taskManagement.messages.deleteSuccess"));
+    setDeleteModal({ visible: false, taskId: "", taskName: "" });
     fetchData();
+  };
+
+  const showDeleteConfirm = (taskId: string, taskName: string) => {
+    setDeleteModal({ visible: true, taskId, taskName });
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteModal({ visible: false, taskId: "", taskName: "" });
   };
 
   const taskOperations = (record: CollectionTask) => {
@@ -108,13 +130,13 @@ export default function TaskManagement() {
         label: t("dataCollection.taskManagement.actions.delete"),
         danger: true,
         icon: <DeleteOutlined />,
-        confirm: {
+        modal: {
           title: t("dataCollection.taskManagement.messages.deleteConfirm"),
           okText: t("dataCollection.taskManagement.messages.confirmDelete"),
           cancelText: t("dataCollection.taskManagement.messages.cancel"),
           okType: "danger",
         },
-        onClick: () => handleDeleteTask(record.id),
+        onClick: () => showDeleteConfirm(record.id, record.name),
       },
     ];
   };
@@ -201,7 +223,7 @@ export default function TaskManagement() {
       fixed: "right" as const,
       render: (_: any, record: CollectionTask) => {
         return taskOperations(record).map((op) => {
-          const button = (
+          return (
             <Tooltip key={op.key} title={op.label}>
               <Button
                 type="text"
@@ -211,23 +233,6 @@ export default function TaskManagement() {
               />
             </Tooltip>
           );
-          if (op.confirm) {
-            return (
-              <Popconfirm
-                key={op.key}
-                title={op.confirm.title}
-                okText={op.confirm.okText}
-                cancelText={op.confirm.cancelText}
-                okType={op.danger ? "danger" : "primary"}
-                onConfirm={() => op.onClick()}
-              >
-                <Tooltip key={op.key} title={op.label}>
-                  <Button type="text" icon={op.icon} danger={op?.danger} />
-                </Tooltip>
-              </Popconfirm>
-            );
-          }
-          return button;
         });
       },
     },
@@ -247,13 +252,15 @@ export default function TaskManagement() {
         }
         searchPlaceholder={t("dataCollection.taskManagement.filters.searchPlaceholder")}
         filters={filters}
-        onFiltersChange={() => {}}
+        selectedFilters={searchParams.filter}
+        onFiltersChange={handleFiltersChange}
         showViewToggle={false}
         onClearFilters={() =>
           setSearchParams((prev) => ({
             ...prev,
             filter: { ...prev.filter, status: [] },
             current: 1,
+            keyword: "",
           }))
         }
         onReload={fetchData}
@@ -275,6 +282,23 @@ export default function TaskManagement() {
           scroll={{ x: "max-content", y: "calc(100vh - 25rem)" }}
         />
       </Card>
+
+      {/* 删除确认弹窗 */}
+      <Modal
+        title={t("dataCollection.taskManagement.messages.deleteConfirm")}
+        open={deleteModal.visible}
+        onOk={() => handleDeleteTask(deleteModal.taskId)}
+        onCancel={handleCancelDelete}
+        okType="danger"
+        okText={t("dataCollection.taskManagement.messages.confirmDelete")}
+        cancelText={t("dataCollection.taskManagement.messages.cancel")}
+      >
+        <p>
+          {t("dataCollection.taskManagement.messages.deleteConfirmMessage", {
+            taskName: deleteModal.taskName,
+          })}
+        </p>
+      </Modal>
     </div>
   );
 }

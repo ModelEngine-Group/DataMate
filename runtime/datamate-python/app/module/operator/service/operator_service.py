@@ -619,6 +619,14 @@ class OperatorService:
         """获取上传文件路径"""
         return os.path.join(OPERATOR_BASE_PATH, UPLOAD_DIR, file_name)
 
+    async def increment_usage_count(
+        self,
+        operator_ids: List[str],
+        db: AsyncSession
+    ) -> None:
+        """增加算子使用次数"""
+        await self.operator_repo.increment_usage_count(operator_ids, db)
+
     def _get_extract_path(self, file_stem: str) -> str:
         """获取解压路径"""
         return os.path.join(OPERATOR_BASE_PATH, EXTRACT_DIR, file_stem)

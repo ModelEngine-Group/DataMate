@@ -29,6 +29,7 @@ async def list_executions(
     size: int = 20,
     task_id: Optional[str] = Query(None, description="Task ID"),
     task_name: Optional[str] = Query(None, description="Fuzzy search by task name"),
+    status: Optional[str] = Query(None, description="Filter by execution status"),
     start_time: Optional[datetime] = Query(None, description="Start time range from (started_at >= start_time)"),
     end_time: Optional[datetime] = Query(None, description="Start time range to (started_at <= end_time)"),
     db: AsyncSession = Depends(get_db)
@@ -42,6 +43,9 @@ async def list_executions(
 
         if task_name:
             query = query.where(TaskExecution.task_name.ilike(f"%{task_name}%"))
+
+        if status:
+            query = query.where(TaskExecution.status == status)
 
         if start_time:
             query = query.where(TaskExecution.started_at >= start_time)
