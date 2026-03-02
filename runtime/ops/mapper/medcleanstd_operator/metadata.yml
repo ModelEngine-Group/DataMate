@@ -1,0 +1,88 @@
+name: '医疗文本清洗标准化算子'
+description: 'MedCleanStd 是一个面向医疗文本的智能化清洗与标准化处理系统，集成了文档解析、文本纠错、命名实体识别（NER）和医学术语标准化四大核心功能。'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'MedCleanStdMapper'
+version: '1.0.0'
+modal: 'text'
+inputs: 'text'
+outputs: 'text'
+release:
+  - '首次发布：医疗文本清洗与标准化处理'
+  - '支持文档解析、文本纠错、NER 实体识别、术语标准化'
+  - '支持 NPU/GPU/CPU多硬件平台自适应'
+metrics:
+  - name: '准确率'
+    metric: '95.0%'
+  - name: '处理速度'
+    metric: '300 ms/doc'
+  - name: '内存使用'
+    metric: '512MB'
+  - name: '吞吐量'
+    metric: '3 docs/sec'
+runtime:
+  memory: 536870912
+  cpu: 0.5
+  gpu: 0.1
+  npu: 0.1
+  storage: 1GB
+settings:
+  use_proper_corrector:
+    name: '启用拼音纠错'
+    description: '是否启用 ProperCorrector 进行拼音和错别字纠正（开启后精度更高但速度较慢，约 600ms/次）'
+    type: 'switch'
+    defaultVal: 'false'
+    required: false
+    checkedLabel: '已启用'
+    unCheckedLabel: '未启用'
+  use_l1_cache:
+    name: '启用 L1 缓存'
+    description: '是否启用高频术语 L1 缓存（开启后高频词处理速度提升至<1ms）'
+    type: 'switch'
+    defaultVal: 'true'
+    required: false
+    checkedLabel: '已启用'
+    unCheckedLabel: '未启用'
+  ner_schema:
+    name: 'NER 抽取目标'
+    description: '选择需要抽取的实体类型'
+    type: 'checkbox'
+    defaultVal: '疾病，症状'
+    required: true
+    options:
+      - label: '疾病'
+        value: '疾病'
+      - label: '症状'
+        value: '症状'
+      - label: '药品'
+        value: '药品'
+      - label: '手术'
+        value: '手术'
+      - label: '检查'
+        value: '检查'
+      - label: '检验'
+        value: '检验'
+  max_sentences:
+    name: '分句块大小'
+    description: '每个处理 chunk 包含的最大句子数（影响处理粒度和内存占用）'
+    type: 'slider'
+    defaultVal: 10
+    min: 5
+    max: 40
+    step: 1
+  normalizer_batch_size:
+    name: '标准化批大小'
+    description: '术语标准化时的向量编码批处理大小（NPU 设备可调大）'
+    type: 'slider'
+    defaultVal: 24
+    min: 8
+    max: 64
+    step: 8
+  max_entity_length:
+    name: '最大实体长度'
+    description: '超过此长度的实体将被过滤（避免输出过长实体）'
+    type: 'slider'
+    defaultVal: 50
+    min: 20
+    max: 100
+    step: 5
