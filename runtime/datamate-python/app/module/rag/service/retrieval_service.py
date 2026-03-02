@@ -3,6 +3,7 @@
 
 负责知识库内容的检索，支持向量 + BM25 混合检索。
 """
+import json
 import logging
 from typing import List
 
@@ -159,11 +160,20 @@ class RetrievalService:
         formatted = []
         for r in all_results:
             entity = r.get("entity", {})
+            metadata = entity.get("metadata", {})
+            if isinstance(metadata, dict):
+                metadata_str = json.dumps(metadata, ensure_ascii=False)
+            else:
+                metadata_str = metadata if metadata else "{}"
+
             formatted.append({
-                "id": entity.get("id", ""),
-                "text": entity.get("text", ""),
-                "metadata": entity.get("metadata", {}),
+                "entity": {
+                    "metadata": metadata_str,
+                    "text": entity.get("text", ""),
+                    "id": entity.get("id", ""),
+                },
                 "score": r.get("score") or r.get("distance", 0),
+                "id": entity.get("id", ""),
                 "knowledgeBaseId": r.get("knowledge_base_id", ""),
                 "knowledgeBaseName": r.get("knowledge_base_name", ""),
             })
