@@ -1,0 +1,52 @@
+name: '多模态向量嵌入'
+name_en: 'Multimodal Embedding'
+description: '将图片或视频转换为向量嵌入，支持多模态嵌入模型（如阿里云百炼 multimodal-embedding-v1）。自动检测文件类型。'
+description_en: 'Generates vector embeddings from images or videos using multimodal embedding models. Auto-detects file type.'
+language: 'python'
+vendor: 'datamate'
+raw_id: 'MultimodalEmbeddingMapper'
+version: '1.0.0'
+modal: 'multimodal'
+inputs: 'multimodal'
+outputs: 'multimodal'
+types:
+  - 'cleaning'
+  - 'annotation'
+release:
+  - '首次发布'
+  - '支持图片和视频向量嵌入生成'
+metrics:
+  - name: '吞吐量'
+    metric: '5 images/sec, 2 videos/sec'
+  - name: '准确率'
+    metric: '99.5%'
+runtime:
+  memory: 1048576000  # 1GB
+  cpu: 1.0
+  gpu: 0
+  npu: 0
+settings:
+  apiUrl:
+    name: 'API 地址'
+    description: '多模态嵌入模型的 API 地址（如 https://dashscope.aliyuncs.com/compatible-mode/v1）'
+    type: 'input'
+    defaultVal: 'https://dashscope.aliyuncs.com/compatible-mode/v1'
+    required: true
+  apiKey:
+    name: 'API Key'
+    description: 'API 密钥，用于身份验证'
+    type: 'input'
+    defaultVal: ''
+    required: true
+  modelName:
+    name: '模型名称'
+    description: '嵌入模型名称（如 multimodal-embedding-v1）'
+    type: 'input'
+    defaultVal: 'multimodal-embedding-v1'
+    required: true
+  textPrompt:
+    name: '文本提示'
+    description: '可选的文本提示，与图片/视频一起发送以增强嵌入效果'
+    type: 'input'
+    defaultVal: ''
+    required: false
