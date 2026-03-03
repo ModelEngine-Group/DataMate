@@ -1,11 +1,11 @@
 name: '多模态向量嵌入'
 name_en: 'Multimodal Embedding'
-description: '将图片或视频转换为向量嵌入，支持多模态嵌入模型（如阿里云百炼 multimodal-embedding-v1）。自动检测文件类型。'
-description_en: 'Generates vector embeddings from images or videos using multimodal embedding models. Auto-detects file type.'
+description: '将图片或视频转换为向量嵌入，支持多模态嵌入模型（如阿里云百炼 multimodal-embedding-v1）。自动检测文件类型，自动入库到 Milvus 向量数据库。'
+description_en: 'Generates vector embeddings from images or videos using multimodal embedding models. Auto-detects file type. Automatically stores in Milvus vector database.'
 language: 'python'
 vendor: 'datamate'
 raw_id: 'MultimodalEmbeddingMapper'
-version: '1.0.0'
+version: '2.0.0'
 modal: 'multimodal'
 inputs: 'multimodal'
 outputs: 'multimodal'
@@ -13,8 +13,8 @@ types:
   - 'cleaning'
   - 'annotation'
 release:
-  - '首次发布'
   - '支持图片和视频向量嵌入生成'
+  - '支持自动入库到 Milvus 向量数据库'
 metrics:
   - name: '吞吐量'
     metric: '5 images/sec, 2 videos/sec'
@@ -50,3 +50,9 @@ settings:
     type: 'input'
     defaultVal: ''
     required: false
+  milvusUri:
+    name: 'Milvus 地址'
+    description: 'Milvus 向量数据库连接地址（如 http://localhost:19530）'
+    type: 'input'
+    defaultVal: 'http://localhost:19530'
+    required: true

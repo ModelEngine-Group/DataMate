@@ -265,6 +265,25 @@ OPERATORS.register_module(
 1. **依赖管理**：如果算子依赖非标准库（如 pandas, numpy），请在 `requirements.txt` 中列出。
 2. **异常处理**：在 `process.py` 中建议添加适当的 try-catch 逻辑，避免单条数据异常导致整个任务崩溃。
 3. **数据类型**：在 `metadata.yml` 中定义的参数类型（如 slider 返回 float，input 返回 string），在 Python 代码中使用时需注意类型转换。
+4. **输出变量规范**：**算子运行过程中生成的新变量（不在 sample 初始值里的）必须放到 `ext_params` 中**，避免不同 sample 字段长度不一致。例如：
+   ```python
+   def execute(self, sample: Dict[str, Any]) -> Dict[str, Any]:
+       # 获取 ext_params，如果不存在则创建
+       ext_params = sample.get("ext_params", {}) or {}
+       
+       # 处理逻辑...
+       embedding = self._generate_embedding(data)
+       
+       # 将新生成的变量放入 ext_params
+       ext_params["embedding"] = embedding
+       ext_params["embedding_dimension"] = len(embedding)
+       ext_params["milvus_inserted"] = True
+       
+       # 更新 sample
+       sample["ext_params"] = ext_params
+       
+       return sample
+   ```
 
 ---
 
