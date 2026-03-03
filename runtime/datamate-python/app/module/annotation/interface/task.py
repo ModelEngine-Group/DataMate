@@ -72,20 +72,23 @@ async def sync_dataset_content(
                 await sync_service.sync_annotations_from_ls_to_dm(
                     mapping,
                     request.batch_size,
-                    request.overwrite
+                    request.overwrite,
+                    sync_files_first=False,
                 )
             elif request.annotation_direction == "dm_to_ls":
                 await sync_service.sync_annotations_from_dm_to_ls(
                     mapping,
                     request.batch_size,
-                    request.overwrite_labeling_project
+                    request.overwrite_labeling_project,
+                    sync_files_first=False,
                 )
             elif request.annotation_direction == "bidirectional":
                 await sync_service.sync_annotations_bidirectional(
                     mapping,
                     request.batch_size,
                     request.overwrite,
-                    request.overwrite_labeling_project
+                    request.overwrite_labeling_project,
+                    sync_files_first=False,
                 )
 
         logger.info(f"Sync completed: {result.synced_files}/{result.total_files} files")
@@ -139,20 +142,23 @@ async def sync_annotations(
             result = await sync_service.sync_annotations_from_ls_to_dm(
                 mapping,
                 request.batch_size,
-                request.overwrite
+                request.overwrite,
+                sync_files_first=True,
             )
         elif request.direction == "dm_to_ls":
             result = await sync_service.sync_annotations_from_dm_to_ls(
                 mapping,
                 request.batch_size,
-                request.overwrite_labeling_project
+                request.overwrite_labeling_project,
+                sync_files_first=True,
             )
         elif request.direction == "bidirectional":
             result = await sync_service.sync_annotations_bidirectional(
                 mapping,
                 request.batch_size,
                 request.overwrite,
-                request.overwrite_labeling_project
+                request.overwrite_labeling_project,
+                sync_files_first=True,
             )
         else:
             raise HTTPException(

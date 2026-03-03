@@ -612,14 +612,13 @@ async def sync_manual_annotations_to_database(
 ):
     """从 Label Studio 项目同步当前手动标注结果到 DM 数据库。
 
-    行为：
-    - 基于 mapping_id 定位 Label Studio 项目；
-    - 遍历项目下所有 task，按 task.data.file_id 找到对应 t_dm_dataset_files 记录；
-    - 读取每个 task 的 annotations + predictions，写入：
-      * tags: 从 result 中提取的标签概要，供 DM 列表/预览展示；
-      * annotation: 完整原始 JSON 结果；
-      * tags_updated_at: 当前时间戳。
-    返回值为成功更新的文件数量。
+        行为：
+        - 基于 mapping_id 定位 Label Studio 项目；
+        - 先执行 DM -> Label Studio 的文件差异同步（增量创建新文件任务、删除孤儿任务）；
+        - 再执行双向标签同步（LS <-> DM），按时间戳保留较新标注：
+            * LS 更新时间更新 -> 覆盖 DM；
+            * DM tags_updated_at 更新 -> 覆盖 LS。
+        返回值为同步变更数量（LS->DM + DM->LS）。
     """
 
     mapping_service = DatasetMappingService(db)
@@ -631,13 +630,28 @@ async def sync_manual_annotations_to_database(
         base_url=settings.label_studio_base_url,
         token=settings.label_studio_user_token,
     )
-    sync_service = LSAnnotationSyncService(db, ls_client)
 
-    updated = await sync_service.sync_project_annotations_to_dm(
-        project_id=str(mapping.labeling_project_id),
+    dm_client = DatasetManagementService(db)
+    sync_orchestrator = SyncService(dm_client, ls_client, mapping_service)
+    file_sync_result = await sync_orchestrator.sync_files(mapping, batch_size=50)
+    logger.info(
+        "Manual sync-db pre file-sync done: mapping=%s, created=%s, deleted=%s, total=%s",
+        mapping_id,
+        file_sync_result.get("created", 0),
+        file_sync_result.get("deleted", 0),
+        file_sync_result.get("total", 0),
     )
 
-    return StandardResponse(code="0", message="success", data=updated)
+    annotation_sync_result = await sync_orchestrator.sync_annotations_bidirectional(
+        mapping,
+        batch_size=50,
+        overwrite=True,
+        overwrite_ls=True,
+        sync_files_first=False,
+    )
+
+    total_synced = annotation_sync_result.synced_to_dm + annotation_sync_result.synced_to_ls
+    return StandardResponse(code="0", message="success", data=total_synced)
 
 @router.get("", response_model=StandardResponse[PaginatedData[DatasetMappingResponse]])
 async def list_mappings(
