@@ -415,7 +415,7 @@
       "uploadTime": "上传时间",
       "uploadedBy": "上传者",
       "filePath": "文件路径",
-      "annotation": "标注信息"
+      "metadata": "元数据"
     },
     "defaults": {
       "unknown": "未知",

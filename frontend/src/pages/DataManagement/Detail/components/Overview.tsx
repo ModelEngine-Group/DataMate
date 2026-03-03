@@ -694,11 +694,11 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
               )}
               <div>
                 <span className="text-gray-500">
-                  {t("dataManagement.labels.annotation")}：
+                  {t("dataManagement.labels.metadata")}：
                 </span>
                 <span>
                   {(() => {
-                    const raw = previewFileDetail?.tags as any;
+                    const raw = previewFileDetail?.metadata as any;
                     if (!raw) return "-";
 
                     if (typeof raw === "string") {

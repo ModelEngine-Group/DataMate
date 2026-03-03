@@ -415,7 +415,7 @@
       "uploadTime": "Upload Time",
       "uploadedBy": "Uploaded By",
       "filePath": "File Path",
-      "annotation": "Annotation"
+      "metadata": "Metadata"
     },
     "defaults": {
       "unknown": "Unknown",
