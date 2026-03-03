@@ -29,7 +29,6 @@ Internal storage format:
 
 import uuid
 from typing import List, Dict, Any, Optional
-from datetime import datetime
 
 from app.core.logging import get_logger
 from ..schema.template import TemplateConfiguration
@@ -146,7 +145,7 @@ class TagFormatConverter:
                 "type": control_type,
                 "values": {
                     control_type: values
-                }
+                },
             }
             
             full_tags.append(full_tag)
@@ -164,10 +163,10 @@ class TagFormatConverter:
         Returns:
             True if tag appears to be in simplified format
         """
-        # Simplified format has 'values' at top level and no 'type' field
+        # Simplified format has top-level 'values' and no explicit type/value wrapper
         has_values = 'values' in tag
         has_type = 'type' in tag
-        has_value = 'values' in tag
+        has_value = 'value' in tag
         
         # If it has 'values' but no 'type', it's simplified
         # If it has 'type' and nested 'value', it's already full format
