@@ -77,8 +77,17 @@ class ErrorCodes:
     # ========== RAG 模块 ==========
     RAG_CONFIG_ERROR: Final = ErrorCode("rag.0001", "RAG configuration error", 400)
     RAG_KNOWLEDGE_BASE_NOT_FOUND: Final = ErrorCode("rag.0002", "Knowledge base not found", 404)
-    RAG_MODEL_NOT_FOUND: Final = ErrorCode("rag.0003", "RAG model not found", 404)
-    RAG_QUERY_FAILED: Final = ErrorCode("rag.0004", "RAG query failed", 500)
+    RAG_KNOWLEDGE_BASE_ALREADY_EXISTS: Final = ErrorCode("rag.0003", "Knowledge base already exists", 400)
+    RAG_KNOWLEDGE_BASE_NAME_INVALID: Final = ErrorCode("rag.0004", "Knowledge base name is invalid", 400)
+    RAG_FILE_NOT_FOUND: Final = ErrorCode("rag.0005", "RAG file not found", 404)
+    RAG_FILE_PROCESS_FAILED: Final = ErrorCode("rag.0006", "File processing failed", 500)
+    RAG_FILE_PARSE_FAILED: Final = ErrorCode("rag.0007", "File parsing failed", 500)
+    RAG_CHUNK_NOT_FOUND: Final = ErrorCode("rag.0008", "Chunk not found", 404)
+    RAG_MODEL_NOT_FOUND: Final = ErrorCode("rag.0009", "RAG model not found", 404)
+    RAG_QUERY_FAILED: Final = ErrorCode("rag.0010", "RAG query failed", 500)
+    RAG_MILVUS_ERROR: Final = ErrorCode("rag.0011", "Milvus operation failed", 500)
+    RAG_COLLECTION_NOT_FOUND: Final = ErrorCode("rag.0012", "Milvus collection not found", 404)
+    RAG_EMBEDDING_FAILED: Final = ErrorCode("rag.0013", "Embedding generation failed", 500)
 
     # ========== 配比模块 ==========
     RATIO_TASK_NOT_FOUND: Final = ErrorCode("ratio.0001", "Ratio task not found", 404)

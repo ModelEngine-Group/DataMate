@@ -1,8 +1,13 @@
 import { get, post, put, del } from "@/utils/request";
 
 // 获取知识库列表
-export function queryKnowledgeBasesUsingPost(params: object) {
-  return post("/api/knowledge-base/list", params);
+export function queryKnowledgeBasesUsingPost(params: any) {
+  // 将前端的 size 参数映射为后端的 page_size
+  const { size, ...rest } = params;
+  return post("/api/knowledge-base/list", {
+    ...rest,
+    page_size: size
+  });
 }
 
 // 创建知识库
@@ -26,8 +31,22 @@ export function deleteKnowledgeBaseByIdUsingDelete(baseId: string) {
 }
 
 // 获取知识生成文件列表
-export function queryKnowledgeBaseFilesUsingGet(baseId: string, params?: Record<string, string>) {
-  return get(`/api/knowledge-base/${baseId}/files${params ? `?${new URLSearchParams(params).toString()}` : ""}`);
+export function queryKnowledgeBaseFilesUsingGet(baseId: string, params?: Record<string, any>) {
+  if (!params) {
+    return get(`/api/knowledge-base/${baseId}/files`);
+  }
+  // 将前端的 size 参数映射为后端的 page_size
+  const { size, page, ...rest } = params;
+  const queryParams = {
+    page: page || 1,
+    page_size: size || 10,
+    ...rest
+  };
+  return get(`/api/knowledge-base/${baseId}/files?${new URLSearchParams(
+    Object.entries(queryParams)
+      .filter(([_, v]) => v !== undefined && v !== null)
+      .reduce((acc, [k, v]) => ({ ...acc, [k]: String(v) }), {})
+  ).toString()}`);
 }
 
 // 添加文件到知识库
@@ -72,5 +91,5 @@ export function queryKnowledgeBaseFileDetailUsingGet(
 ) {
   const page = params.page ?? 1;
   const size = params.size ?? 20;
-  return get(`/api/knowledge-base/${knowledgeBaseId}/files/${ragFileId}?page=${page}&size=${size}`);
+  return get(`/api/knowledge-base/${knowledgeBaseId}/files/${ragFileId}?page=${page}&page_size=${size}`);
 }
