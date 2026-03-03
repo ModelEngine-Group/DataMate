@@ -27,6 +27,7 @@ import {
 import { formatBytes } from "@/utils/unit";
 import EditDataset from "../Create/EditDataset";
 import ImportConfiguration from "../Detail/components/ImportConfiguration";
+import DeleteConfirmModal from "@/components/DeleteConfirmModal";
 import { useTranslation } from "react-i18next";
 
 export default function DatasetManagementPage() {
@@ -39,6 +40,15 @@ export default function DatasetManagementPage() {
   const [editDatasetOpen, setEditDatasetOpen] = useState(false);
   const [currentDataset, setCurrentDataset] = useState<Dataset | null>(null);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
+  const [deleteModal, setDeleteModal] = useState<{
+    visible: boolean;
+    datasetId: number;
+    datasetName: string;
+  }>({
+    visible: false,
+    datasetId: 0,
+    datasetName: "",
+  });
   const [statisticsData, setStatisticsData] = useState<any>({
     count: {},
     size: {},
@@ -144,8 +154,17 @@ export default function DatasetManagementPage() {
   const handleDeleteDataset = async (id: number) => {
     if (!id) return;
     await deleteDatasetByIdUsingDelete(id);
+    setDeleteModal({ visible: false, datasetId: 0, datasetName: "" });
     fetchData({ pageOffset: 0 });
     message.success(t("dataManagement.messages.deleteSuccess"));
+  };
+
+  const showDeleteConfirm = (id: number, name: string) => {
+    setDeleteModal({ visible: true, datasetId: id, datasetName: name });
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteModal({ visible: false, datasetId: 0, datasetName: "" });
   };
 
   const handleImportData = (dataset: Dataset) => {
@@ -191,15 +210,8 @@ export default function DatasetManagementPage() {
       key: "delete",
       label: t("dataManagement.actions.delete"),
       danger: true,
-      confirm: {
-        title: t("dataManagement.confirm.deleteDatasetTitle"),
-        description: t("dataManagement.confirm.deleteDatasetDesc"),
-        okText: t("dataManagement.confirm.deleteConfirm"),
-        cancelText: t("dataManagement.confirm.deleteCancel"),
-        okType: "danger",
-      },
       icon: <DeleteOutlined />,
-      onClick: (item: Dataset) => handleDeleteDataset(item.id),
+      onClick: (item: Dataset) => showDeleteConfirm(item.id, item.name),
     },
   ];
 
@@ -280,7 +292,8 @@ export default function DatasetManagementPage() {
               <Button
                 type="text"
                 icon={op.icon}
-                onClick={() => op.onClick(record)}
+                danger={op.danger}
+                onClick={() => op.onClick && op.onClick(record)}
               />
             </Tooltip>
           ))}
@@ -392,6 +405,14 @@ export default function DatasetManagementPage() {
         }}
         prefix=""
         updateEvent="update:datasets"
+      />
+      <DeleteConfirmModal
+        visible={deleteModal.visible}
+        title={t("dataManagement.confirm.deleteDatasetTitle")}
+        message={t("dataManagement.confirm.deleteDatasetDesc")}
+        itemName={deleteModal.datasetName}
+        onConfirm={() => handleDeleteDataset(deleteModal.datasetId)}
+        onCancel={handleCancelDelete}
       />
     </div>
   );
