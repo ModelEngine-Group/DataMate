@@ -1560,9 +1560,10 @@
         "fileDeleteFailed": "文件删除失败",
         "kbDeleted": "知识库已删除"
       },
-      "recallTest": {
-        "description": "基于语义文本检索和全文检索后的加权平均结果",
-        "textSearch": "文本检索",
+        "recallTest": {
+          "description": "基于语义文本检索和全文检索后的加权平均结果",
+          "rerankEnabled": "✓ 已启用重排序模型",
+          "textSearch": "文本检索",
         "imageSearch": "图片检索",
         "uploadImage": "上传图片检索",
         "imageSearchDisabled": "当前知识库使用的嵌入模型不支持图片检索，请使用多模态嵌入模型",
@@ -1653,6 +1654,8 @@
         "chatModelLabel": "文本理解模型",
         "chatModelRequired": "请选择文本理解模型",
         "chatModelPlaceholder": "请选择文本理解模型",
+        "rerankModelLabel": "重排序模型",
+        "rerankModelPlaceholder": "请选择重排序模型（可选）",
         "entityLabel": "识别实体（可多选）",
         "entityPlaceholder": "输入实体名称并按回车添加，如 人物、组织、事件",
         "entityTooltip": "实体信息将作为图谱节点，支持多维关系追踪",

@@ -40,4 +40,9 @@ public class KnowledgeBase extends BaseEntity<String> {
      * 聊天模型
      */
     private String chatModel;
+
+    /**
+     * 重排序模型
+     */
+    private String rerankModel;
 }

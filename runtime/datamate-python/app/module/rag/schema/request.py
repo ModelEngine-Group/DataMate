@@ -42,6 +42,11 @@ class KnowledgeBaseCreateReq(BaseModel):
         alias="chatModel",
         description="聊天模型ID"
     )
+    rerank_model: Optional[str] = Field(
+        None,
+        alias="rerankModel",
+        description="重排序模型ID"
+    )
 
     class Config:
         populate_by_name = True

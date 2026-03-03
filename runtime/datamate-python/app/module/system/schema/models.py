@@ -13,6 +13,7 @@ class ModelType(str, Enum):
     CHAT = "CHAT"
     EMBEDDING = "EMBEDDING"
     MULTIMODAL_EMBEDDING = "MULTIMODAL_EMBEDDING"
+    RERANK = "RERANK"
 
 
 # --- 请求 DTO ---

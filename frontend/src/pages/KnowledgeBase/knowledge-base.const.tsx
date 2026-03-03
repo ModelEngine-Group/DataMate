@@ -12,6 +12,7 @@ import {
   XCircle,
   Share2,
   Network,
+  ArrowUpDown,
 } from "lucide-react";
 import {
   KBFile,
@@ -112,6 +113,14 @@ export function mapKnowledgeBase(
               value:
                 kb.chat?.modelName +
                   (kb.chat?.provider ? ` (${kb.chat.provider})` : "") || t("knowledgeBase.const.statistics.none"),
+            },
+            {
+              label: t("knowledgeBase.const.statistics.rerankModel"),
+              key: "rerankModel",
+              icon: <ArrowUpDown className="w-4 h-4 text-purple-500" />,
+              value:
+                kb.rerank?.modelName +
+                  (kb.rerank?.provider ? ` (${kb.rerank.provider})` : "") || t("knowledgeBase.const.statistics.none"),
             },
           ]
         : []),

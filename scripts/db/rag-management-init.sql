@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS t_rag_knowledge_base
     description     VARCHAR(512),
     embedding_model VARCHAR(255) NOT NULL,
     chat_model      VARCHAR(255),
+    rerank_model    VARCHAR(255),
     created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_by      VARCHAR(255),
@@ -24,6 +25,7 @@ COMMENT ON COLUMN t_rag_knowledge_base.type IS '知识库类型';
 COMMENT ON COLUMN t_rag_knowledge_base.description IS '知识库描述';
 COMMENT ON COLUMN t_rag_knowledge_base.embedding_model IS '嵌入模型';
 COMMENT ON COLUMN t_rag_knowledge_base.chat_model IS '聊天模型';
+COMMENT ON COLUMN t_rag_knowledge_base.rerank_model IS '重排序模型ID';
 COMMENT ON COLUMN t_rag_knowledge_base.created_at IS '创建时间';
 COMMENT ON COLUMN t_rag_knowledge_base.updated_at IS '更新时间';
 COMMENT ON COLUMN t_rag_knowledge_base.created_by IS '创建者';

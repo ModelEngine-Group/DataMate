@@ -14,6 +14,7 @@ export enum ModelType {
   CHAT = "CHAT",
   EMBEDDING = "EMBEDDING",
   MULTIMODAL_EMBEDDING = "MULTIMODAL_EMBEDDING",
+  RERANK = "RERANK",
 }
 
 export interface ModelConfig {
@@ -34,10 +35,12 @@ export interface KnowledgeBaseItem {
   updatedAt: string;
   embeddingModel: string;
   chatModel: string;
+  rerankModel?: string;
   fileCount: number;
   chunkCount: number;
   embedding?: ModelConfig;
   chat?: ModelConfig;
+  rerank?: ModelConfig;
   customEntities?: string[];
 }
 

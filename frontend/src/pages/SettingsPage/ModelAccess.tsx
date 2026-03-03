@@ -71,6 +71,7 @@ export default function ModelAccess() {
     { value: "CHAT", label: "CHAT" },
     { value: "EMBEDDING", label: "EMBEDDING" },
     { value: "MULTIMODAL_EMBEDDING", label: "MULTIMODAL_EMBEDDING" },
+    { value: "RERANK", label: "RERANK" },
   ]);
 
   const {
