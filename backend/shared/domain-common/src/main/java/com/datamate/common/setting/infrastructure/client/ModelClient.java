@@ -23,6 +23,7 @@ public class ModelClient {
             case CHAT -> modelInterface.cast(invokeChatModel(modelConfig));
             case EMBEDDING -> modelInterface.cast(invokeEmbeddingModel(modelConfig));
             case MULTIMODAL_EMBEDDING -> modelInterface.cast(invokeMultimodalEmbeddingModel(modelConfig));
+            case RERANK -> throw new UnsupportedOperationException("Rerank models are not invokable through ModelClient. Use dedicated RerankService instead.");
         };
     }
 
@@ -63,6 +64,7 @@ public class ModelClient {
                 case CHAT -> checkChatModelHealth(modelConfig);
                 case EMBEDDING -> checkEmbeddingModelHealth(modelConfig);
                 case MULTIMODAL_EMBEDDING -> checkMultimodalEmbeddingModelHealth(modelConfig);
+                case RERANK -> checkRerankModelHealth(modelConfig);
             }
         } catch (Exception e) {
             log.error("Model health check failed for modelConfig: {}", modelConfig, e);
@@ -86,6 +88,17 @@ public class ModelClient {
             client.checkHealth();
         } catch (Exception e) {
             throw new RuntimeException("Multimodal embedding health check failed", e);
+        }
+    }
+
+    private static void checkRerankModelHealth(ModelConfig modelConfig) {
+        // Rerank models health check is handled by Python runtime
+        // For now, we just validate the configuration exists
+        if (modelConfig.getBaseUrl() == null || modelConfig.getBaseUrl().isEmpty()) {
+            throw new RuntimeException("Rerank model base URL is required");
+        }
+        if (modelConfig.getModelName() == null || modelConfig.getModelName().isEmpty()) {
+            throw new RuntimeException("Rerank model name is required");
         }
     }
 }

@@ -41,6 +41,13 @@ export default function CreateKnowledgeBase({
       value: model.id,
     }));
 
+  const rerankModelOptions = models
+    .filter((model) => model.type === "RERANK")
+    .map((model) => ({
+      label: model.modelName + " (" + model.provider + ")",
+      value: model.id,
+    }));
+
   const chatModelOptions = models
     .filter((model) => model.type === "CHAT")
     .map((model) => ({
@@ -65,6 +72,7 @@ export default function CreateKnowledgeBase({
         description: data.description,
         embeddingModel: data.embeddingModel,
         chatModel: data.chatModel,
+        rerankModel: data.rerankModel,
         type: data.type ?? KBType.DOCUMENT,
         customEntities: data.customEntities ?? [],
       });
@@ -219,6 +227,30 @@ export default function CreateKnowledgeBase({
             <Select
               placeholder={t("knowledgeBase.create.form.chatModelPlaceholder")}
               options={chatModelOptions}
+              popupRender={(menu) => (
+                <>
+                  {menu}
+                  <Button
+                    block
+                    type="link"
+                    icon={<PlusOutlined />}
+                    onClick={() => dispatch(showSettings())}
+                  >
+                    {t("knowledgeBase.create.form.addModel")}
+                  </Button>
+                </>
+              )}
+            />
+          </Form.Item>
+          <Form.Item
+            label={t("knowledgeBase.create.form.rerankModelLabel")}
+            name="rerankModel"
+            rules={[{ required: false }]}
+          >
+            <Select
+              placeholder={t("knowledgeBase.create.form.rerankModelPlaceholder")}
+              options={rerankModelOptions}
+              allowClear
               popupRender={(menu) => (
                 <>
                   {menu}

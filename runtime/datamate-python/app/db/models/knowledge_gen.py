@@ -49,6 +49,7 @@ class KnowledgeBase(BaseEntity):
     )
     embedding_model = Column(String(255), nullable=False, comment="嵌入模型ID")
     chat_model = Column(String(255), nullable=True, comment="聊天模型ID")
+    rerank_model = Column(String(255), nullable=True, comment="重排序模型ID")
 
     def __repr__(self):
         return f"<KnowledgeBase(id={self.id}, name={self.name}, type={self.type})>"

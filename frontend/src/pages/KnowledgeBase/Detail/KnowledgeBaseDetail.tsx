@@ -505,7 +505,14 @@ const KnowledgeBaseDetailPage: React.FC = () => {
           />
         ) : (
           <div className="p-2">
-            <div style={{ fontSize: 14, fontWeight: 300, marginBottom: 8 }}>{t("knowledgeBase.detail.recallTest.description")}</div>
+            <div style={{ fontSize: 14, fontWeight: 300, marginBottom: 8 }}>
+              {t("knowledgeBase.detail.recallTest.description")}
+              {knowledgeBase?.rerankModel && (
+                <div style={{ fontSize: 12, color: '#52c41a', marginTop: 4 }}>
+                  {t("knowledgeBase.detail.recallTest.rerankEnabled")}
+                </div>
+              )}
+            </div>
 
             {/* 文本检索 */}
             <div className="mb-4">

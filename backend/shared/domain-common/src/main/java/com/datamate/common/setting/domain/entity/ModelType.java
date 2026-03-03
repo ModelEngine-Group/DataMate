@@ -18,5 +18,9 @@ public enum ModelType {
     /**
      * 多模态嵌入模型
      */
-    MULTIMODAL_EMBEDDING
+    MULTIMODAL_EMBEDDING,
+    /**
+     * 重排序模型
+     */
+    RERANK
 }

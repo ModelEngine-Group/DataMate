@@ -1560,9 +1560,10 @@
         "fileDeleteFailed": "Failed to delete file",
         "kbDeleted": "Knowledge base deleted"
       },
-      "recallTest": {
-        "description": "Weighted average results based on semantic text retrieval and full-text retrieval",
-        "textSearch": "Text Search",
+        "recallTest": {
+          "description": "Weighted average results from semantic text search and full-text search",
+          "rerankEnabled": "✓ Rerank model enabled",
+          "textSearch": "Text Search",
         "imageSearch": "Image Search",
         "uploadImage": "Upload Image to Search",
         "imageSearchDisabled": "The current embedding model does not support image search. Please use a multimodal embedding model.",
@@ -1653,6 +1654,8 @@
         "chatModelLabel": "Chat Model",
         "chatModelRequired": "Please select chat model",
         "chatModelPlaceholder": "Please select chat model",
+        "rerankModelLabel": "Rerank Model",
+        "rerankModelPlaceholder": "Please select rerank model (optional)",
         "entityLabel": "Recognize Entities (Multiple Selection)",
         "entityPlaceholder": "Enter entity name and press Enter to add, e.g., Person, Organization, Event",
         "entityTooltip": "Entity information will serve as graph nodes, supporting multi-dimensional relationship tracking",

@@ -16,7 +16,9 @@ from app.module.rag.infra.vectorstore.milvus_client import get_milvus_client
 from app.module.rag.repository import KnowledgeBaseRepository, RagFileRepository
 from app.module.rag.schema.request import RetrieveReq, PagingQuery
 from app.module.rag.schema.response import PagedResponse, RagChunkResp
+from app.module.rag.service.multimodal_rerank_service import MultimodalRerankService
 from app.module.system.service.common_service import get_model_by_id
+from app.module.system.service.models_service import ModelsService
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +38,8 @@ class RetrievalService:
         self.db = db
         self.kb_repo = KnowledgeBaseRepository(db)
         self.file_repo = RagFileRepository(db)
+        models_service = ModelsService(db)
+        self.multimodal_rerank_service = MultimodalRerankService(models_service)
 
     async def retrieve(self, request: RetrieveReq) -> List[dict]:
         """检索知识库内容（混合检索：向量 + BM25）
@@ -80,6 +84,16 @@ class RetrievalService:
 
         # 执行混合检索
         all_results = await self._execute_hybrid_search(knowledge_bases, query_vector, request.query, request.top_k)
+
+        # 如果配置了重排序模型，执行重排序
+        rerank_model_id = knowledge_bases[0].rerank_model
+        if rerank_model_id:
+            try:
+                all_results = await self._apply_rerank(
+                    request.query, all_results, rerank_model_id, request.top_k
+                )
+            except Exception as e:
+                logger.warning(f"重排序失败，使用原始检索结果: {str(e)}")
 
         # 按分数排序
         all_results.sort(key=lambda x: x.get("score") or x.get("distance", 0), reverse=True)
@@ -153,6 +167,47 @@ class RetrievalService:
                 continue
 
         return all_results
+
+    async def _apply_rerank(
+        self,
+        query: str,
+        results: List[dict],
+        rerank_model_id: str,
+        top_k: int,
+    ) -> List[dict]:
+        """应用重排序（支持多模态：文本、图片、视频）
+        
+        Args:
+            query: 查询文本
+            results: 检索结果
+            rerank_model_id: 重排序模型ID
+            top_k: 返回前K个结果
+            
+        Returns:
+            重排序后的结果
+        """
+        if not results:
+            return results
+
+        # 使用多模态 rerank 服务
+        rerank_response = await self.multimodal_rerank_service.rerank_multimodal(
+            query=query,
+            results=results,
+            rerank_model_id=rerank_model_id,
+            top_k=min(top_k, len(results)),
+            vision_model_id=None,  # TODO: 从知识库配置中获取视觉模型ID
+        )
+
+        # 根据重排序结果重新组织原始结果
+        reranked_results = []
+        for rerank_item in rerank_response.results:
+            original_result = results[rerank_item.index]
+            original_result["score"] = rerank_item.relevance_score
+            original_result["content_type"] = rerank_item.content_type
+            reranked_results.append(original_result)
+
+        logger.info(f"重排序完成: 原始结果数={len(results)}, 重排序后结果数={len(reranked_results)}")
+        return reranked_results
 
     def _format_results(self, all_results: List[dict]) -> List[dict]:
         """格式化检索结果"""
