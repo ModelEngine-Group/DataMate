@@ -270,7 +270,10 @@ class ImageRetrieveReq(BaseModel):
     """
 
     image_url: str = Field(
-        ..., min_length=1, alias="imageUrl", description="图片 URL 或本地文件路径"
+        ...,
+        min_length=1,
+        alias="imageUrl",
+        description="图片 URL、本地文件路径或 base64 data URL（如 data:image/png;base64,iVBORw...）",
     )
     query_text: Optional[str] = Field(
         None, alias="queryText", description="附加文本描述（可选）"
@@ -289,7 +292,7 @@ class ImageRetrieveReq(BaseModel):
         populate_by_name = True
         json_schema_extra = {
             "example": {
-                "imageUrl": "https://example.com/image.jpg",
+                "imageUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
                 "queryText": "相关描述",
                 "topK": 10,
                 "knowledgeBaseIds": ["kb-1"],
