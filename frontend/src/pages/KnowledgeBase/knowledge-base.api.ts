@@ -63,24 +63,15 @@ export function fetchKnowledgeGraph(data: { knowledge_base_id: string; query: st
   return post("/api/rag/query", data);
 }
 
-// 检索知识库内容
+// 检索知识库内容（支持文本和图片检索）
 export function retrieveKnowledgeBaseContent(data: {
-  query: string;
+  query?: string;
+  image?: string;
   topK?: number;
   threshold?: number;
   knowledgeBaseIds: string[];
 }) {
   return post("/api/knowledge-base/retrieve", data);
-}
-
-// 图片检索知识库内容（多模态）
-export function retrieveKnowledgeBaseByImage(data: {
-  imageUrl: string;
-  queryText?: string;
-  topK?: number;
-  knowledgeBaseIds: string[];
-}) {
-  return post("/api/knowledge-base/retrieve-by-image", data);
 }
 
 // 新增：获取知识库文件详情（分页的切片数据）

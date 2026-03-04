@@ -20,7 +20,6 @@ import {
   queryKnowledgeBaseByIdUsingGet,
   queryKnowledgeBaseFilesUsingGet,
   retrieveKnowledgeBaseContent,
-  retrieveKnowledgeBaseByImage,
   fetchKnowledgeGraph,
 } from "../knowledge-base.api";
 import useFetchData from "@/hooks/useFetchData";
@@ -58,8 +57,7 @@ const KnowledgeBaseDetailPage: React.FC = () => {
   const [recallLoading, setRecallLoading] = useState(false);
   const [recallResults, setRecallResults] = useState<RecallResult[]>([]);
   const [recallQuery, setRecallQuery] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
-  const [imageLoading, setImageLoading] = useState(false);
+  const [image, setImage] = useState("");
   const [imageFileList, setImageFileList] = useState<UploadFile[]>([]);
   const [graphVisible, setGraphVisible] = useState(false);
   const [graphLoading, setGraphLoading] = useState(false);
@@ -138,18 +136,27 @@ const KnowledgeBaseDetailPage: React.FC = () => {
   };
 
   const handleRecallTest = async () => {
-    if (!recallQuery.trim()) {
-      setRecallResults([]);
-      return;
-    }
-
     setRecallLoading(true);
     try {
-      const results = await retrieveKnowledgeBaseContent({
-        query: recallQuery,
+      const params: { query?: string; image?: string; topK: number; knowledgeBaseIds: string[] } = {
         topK: 10,
         knowledgeBaseIds: [id!],
-      });
+      };
+      
+      if (image) {
+        params.image = image;
+      }
+      if (recallQuery.trim()) {
+        params.query = recallQuery;
+      }
+      
+      if (!params.image && !params.query) {
+        setRecallResults([]);
+        setRecallLoading(false);
+        return;
+      }
+
+      const results = await retrieveKnowledgeBaseContent(params);
       setRecallResults(results.data || []);
     } catch (error) {
       message.error(t("knowledgeBase.detail.recallTest.error", { error: error.data?.message || error }));
@@ -158,28 +165,14 @@ const KnowledgeBaseDetailPage: React.FC = () => {
     }
   };
 
-  const handleImageRecallTest = async (file: File) => {
-    if (!file) return;
-
+  const handleImageUpload = (file: File) => {
     const reader = new FileReader();
-    reader.onload = async (e) => {
+    reader.onload = (e) => {
       const base64 = e.target?.result as string;
-      if (!base64) return;
-
-      setImageUrl(base64);
-      setImageLoading(true);
-      try {
-        const results = await retrieveKnowledgeBaseByImage({
-          imageUrl: base64,
-          topK: 10,
-          knowledgeBaseIds: [id!],
-        });
-        setRecallResults(results.data || []);
-      } catch (error) {
-        message.error(t("knowledgeBase.detail.recallTest.error", { error: error.data?.message || error }));
-      } finally {
-        setImageLoading(false);
-      };
+      if (base64) {
+        setImage(base64);
+        setRecallResults([]);
+      }
     };
     reader.readAsDataURL(file);
   };
@@ -187,7 +180,7 @@ const KnowledgeBaseDetailPage: React.FC = () => {
   const handleClearRecallTest = () => {
     setRecallQuery("");
     setRecallResults([]);
-    setImageUrl("");
+    setImage("");
     setImageFileList([]);
   };
 
@@ -514,19 +507,51 @@ const KnowledgeBaseDetailPage: React.FC = () => {
               )}
             </div>
 
-            {/* 文本检索 */}
-            <div className="mb-4">
-              <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 4 }}>{t("knowledgeBase.detail.recallTest.textSearch")}</div>
-              <Input.Search
-                value={recallQuery}
-                onChange={e => setRecallQuery(e.target.value)}
-                onSearch={handleRecallTest}
-                placeholder={t("knowledgeBase.detail.recallTest.placeholder")}
-                enterButton={t("knowledgeBase.detail.recallTest.searchButton")}
-                loading={recallLoading}
-                style={{ fontSize: 14 }}
-              />
-              {(recallQuery || imageUrl || imageFileList.length > 0) && (
+<div className="mb-4">
+              <div className="flex items-end gap-2 flex-wrap">
+                <div className="flex-1 min-w-[200px]">
+                  <Input
+                    value={recallQuery}
+                    onChange={e => setRecallQuery(e.target.value)}
+                    placeholder={t("knowledgeBase.detail.recallTest.placeholder")}
+                    style={{ fontSize: 14 }}
+                  />
+                </div>
+                {knowledgeBase?.embedding?.type === 'MULTIMODAL_EMBEDDING' && (
+                  <>
+                    <Upload
+                      accept="image/*"
+                      fileList={imageFileList}
+                      showUploadList={false}
+                      beforeUpload={(file) => {
+                        const uploadFile: UploadFile = {
+                          uid: file.uid || `${Date.now()}`,
+                          name: file.name,
+                          status: 'done',
+                          originFileObj: file,
+                        };
+                        setImageFileList([uploadFile]);
+                        handleImageUpload(file);
+                        return false;
+                      }}
+                    >
+                      <Button icon={<UploadOutlined />}>
+                        {t("knowledgeBase.detail.recallTest.uploadImage")}
+                      </Button>
+                    </Upload>
+                    {image && (
+                      <div className="flex items-center gap-1">
+                        <img src={image} alt="Uploaded" style={{ maxWidth: 80, maxHeight: 40, objectFit: 'contain', borderRadius: 4 }} />
+                        <Button onClick={() => { setImage(""); setImageFileList([]); }} icon={<CloseOutlined />} size="small" type="text" />
+                      </div>
+                    )}
+                  </>
+                )}
+                <Button type="primary" onClick={handleRecallTest} loading={recallLoading}>
+                  {t("knowledgeBase.detail.recallTest.searchButton")}
+                </Button>
+              </div>
+              {(recallQuery || image) && (
                 <div className="mt-2">
                   <Button onClick={handleClearRecallTest} icon={<CloseOutlined />} size="small">
                     {t("components.searchControls.filters.clearAll")}
@@ -535,55 +560,7 @@ const KnowledgeBaseDetailPage: React.FC = () => {
               )}
             </div>
 
-            {/* 图片检索 */}
-            <div className="mb-4">
-              <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 4 }}>{t("knowledgeBase.detail.recallTest.imageSearch")}</div>
-              {knowledgeBase?.embedding?.type === 'MULTIMODAL_EMBEDDING' ? (
-                <div className="flex items-center gap-2">
-                  <Upload
-                    accept="image/*"
-                    fileList={imageFileList}
-                    beforeUpload={(file) => {
-                      const uploadFile: UploadFile = {
-                        uid: file.uid || `${Date.now()}`,
-                        name: file.name,
-                        status: 'done',
-                        originFileObj: file,
-                      };
-                      setImageFileList([uploadFile]);
-                      handleImageRecallTest(file);
-                      return false;
-                    }}
-                    onRemove={() => {
-                      setImageFileList([]);
-                      setImageUrl("");
-                    }}
-                    maxCount={1}
-                  >
-                    <Button
-                      type="primary"
-                      icon={<UploadOutlined />}
-                      loading={imageLoading}
-                    >
-                      {t("knowledgeBase.detail.recallTest.uploadImage")}
-                    </Button>
-                  </Upload>
-                  {imageUrl && (
-                    <div className="flex items-center gap-2">
-                      <img src={imageUrl} alt="Uploaded" style={{ maxWidth: 100, maxHeight: 60, objectFit: 'contain' }} />
-                      <Button onClick={() => setImageUrl("")} icon={<CloseOutlined />} size="small" />
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div style={{ color: '#999', fontSize: 12 }}>
-                  {t("knowledgeBase.detail.recallTest.imageSearchDisabled")}
-                </div>
-              )}
-            </div>
-
-            {/* 检索结果 */}
-            {recallLoading || imageLoading ? (
+            {recallLoading ? (
               <div className="flex justify-center">
                 <Spin />
               </div>
