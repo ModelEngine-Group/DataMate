@@ -59,9 +59,14 @@ const TagsRenderer = ({ tags }: { tags?: Array<string | BadgeItem> }) => {
   const [hiddenTags, setHiddenTags] = useState<any[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
   const isInitializedRef = useRef(false);
+  const prevTagsRef = useRef<typeof tags>();
 
   useEffect(() => {
-    if (!tags || tags.length === 0) return;
+    if (!tags || tags.length === 0) {
+      setVisibleTags([]);
+      setHiddenTags([]);
+      return;
+    }
 
     const calculateVisibleTags = () => {
       if (!containerRef.current) return;
@@ -111,29 +116,25 @@ const TagsRenderer = ({ tags }: { tags?: Array<string | BadgeItem> }) => {
         }
       });
 
-      if (visibleCount !== visibleTags.length) {
-        setVisibleTags(tags.slice(0, visibleCount));
-        setHiddenTags(tags.slice(visibleCount));
-      }
+      setVisibleTags(tags.slice(0, visibleCount));
+      setHiddenTags(tags.slice(visibleCount));
     };
 
-    // 第一次渲染后，等待 DOM 稳定再计算
-    if (!isInitializedRef.current) {
-      isInitializedRef.current = true;
-      const timer = setTimeout(calculateVisibleTags, 100);
-      return () => clearTimeout(timer);
-    }
+    // 多次尝试计算，确保 DOM 渲染完成
+    const timers = [
+      setTimeout(calculateVisibleTags, 0),
+      setTimeout(calculateVisibleTags, 50),
+      setTimeout(calculateVisibleTags, 100),
+    ];
 
-    const timer = setTimeout(calculateVisibleTags, 0);
     const handleResize = () => {
-      clearTimeout(timer);
-      setTimeout(calculateVisibleTags, 100);
+      calculateVisibleTags();
     };
 
     window.addEventListener("resize", handleResize);
 
     return () => {
-      clearTimeout(timer);
+      timers.forEach(t => clearTimeout(t));
       window.removeEventListener("resize", handleResize);
     };
   }, [tags]);
@@ -254,19 +255,6 @@ function CardView<T extends BaseCardDataType>(props: CardViewProps<T>) {
                         >
                           {item?.name}
                         </h3>
-                        {(item?.tags?.length ?? 0) > 0 &&
-                          item.tags[0] &&
-                          typeof item.tags[0] !== "string" && (
-                            <Tag
-                              color={item.tags[0].color}
-                              style={{
-                                background: item.tags[0].background,
-                                color: item.tags[0].color,
-                              }}
-                            >
-                              {item.tags[0].label ? item.tags[0].label : item.tags[0].name}
-                            </Tag>
-                          )}
                         {item?.status && (
                           <Tag color={item?.status?.color}>
                             <div className="flex items-center gap-2 text-xs py-0.5">
@@ -302,25 +290,17 @@ function CardView<T extends BaseCardDataType>(props: CardViewProps<T>) {
 
                 <div className="flex-1 flex flex-col justify-end">
                   {/* Tags */}
-                  <TagsRenderer
-                    tags={
-                      Array.isArray(item?.tags)
-                        ? item.tags.filter((tag, index) =>
-                            typeof tag === "string" || index !== 0
-                          )
-                        : []
-                    }
-                  />
+                  <TagsRenderer tags={Array.isArray(item?.tags) ? item.tags : []} />
 
                   {/* Description */}
-                  <p className="text-gray-400 text-xs text-ellipsis overflow-hidden whitespace-nowrap line-clamp-2 mt-1 mb-1">
+                  <p className="text-gray-400 text-xs text-ellipsis overflow-hidden whitespace-nowrap line-clamp-2 mt-3 mb-2">
                     <Tooltip title={item?.description}>
                       {item?.description}
                     </Tooltip>
                   </p>
 
                   {/* Statistics */}
-                  <div className="grid grid-cols-2 gap-4 py-3">
+                  <div className="grid grid-cols-2 gap-4 py-2">
                     {item?.statistics?.map((stat, idx) => (
                       <div key={idx}>
                         <div className="text-sm text-gray-500 overflow-hidden whitespace-nowrap text-ellipsis w-full">
