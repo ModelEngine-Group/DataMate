@@ -277,6 +277,7 @@
     "description": "创建、导入和管理数据集",
     "actions": {
       "createDataset": "创建数据集",
+      "detail": "详情",
       "edit": "编辑",
       "import": "导入",
       "importData": "导入数据",
@@ -394,7 +395,8 @@
       "previewTitle": "文件预览：{{name}}",
       "previewEmpty": "暂无预览内容，或当前文件类型暂不支持预览。",
       "previewInfoTitle": "文件信息",
-      "editTitle": "编辑数据集 - {{name}}"
+      "editTitle": "编辑数据集 - {{name}}",
+      "datasetDetail": "数据集详细信息"
     },
     "labels": {
       "id": "ID",
