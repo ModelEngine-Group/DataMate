@@ -3,6 +3,7 @@
 
 负责文件的后台 ETL 处理：加载、分块、向量化、存储。
 使用全局 WorkerPool 实现并发控制，最多 10 个文件并行处理。
+支持文本、图片、视频文件的多模态向量化。
 """
 
 import logging
@@ -26,6 +27,12 @@ from app.module.rag.schema.request import AddFilesReq
 from app.module.system.service.common_service import get_model_by_id
 
 logger = logging.getLogger(__name__)
+
+# 支持的图片扩展名（参考 Java 版本 IMAGE_EXTENSIONS）
+IMAGE_EXTENSIONS = {"jpg", "jpeg", "png", "gif", "bmp", "webp", "svg", "tiff", "tif"}
+
+# 支持的视频扩展名（参考 Java 版本 VIDEO_EXTENSIONS）
+VIDEO_EXTENSIONS = {"mp4", "avi", "mov", "mkv", "wmv", "flv", "webm", "m4v", "3gp"}
 
 
 class FileProcessor:
@@ -134,9 +141,10 @@ class FileProcessor:
         """处理单个文件的 ETL 流程
 
         1. 验证文件
-        2. 加载并分块（progress=20%）
-        3. 向量化并存储（progress=60%）
-        4. 完成（progress=100%）
+        2. 检测文件类型（文本/图片/视频）
+        3. 根据类型选择处理方式
+        4. 向量化并存储
+        5. 完成
         """
         file_repo = RagFileRepository(db)
 
@@ -152,30 +160,226 @@ class FileProcessor:
             if not file_path:
                 return
 
-            # 加载并分块文档
-            metadata = self._build_chunk_metadata(rag_file, knowledge_base)
-            chunks = await self._load_and_split(file_path, rag_file, metadata, request)
+            # 获取文件类型
+            file_type = self._get_file_type(rag_file)
+            is_image = self._is_image_file(file_type)
+            is_video = self._is_video_file(file_type)
 
-            if not chunks:
+            # 获取嵌入模型信息
+            embedding_entity = await get_model_by_id(db, knowledge_base.embedding_model)
+            if not embedding_entity:
                 await self._mark_failed(
-                    db, file_repo, rag_file.id, "文档解析后未生成任何分块"
+                    db,
+                    file_repo,
+                    rag_file.id,
+                    f"嵌入模型不存在: {knowledge_base.embedding_model}",
                 )
                 return
 
-            logger.info(
-                "文件 %s 分块完成，共 %d 个分块", rag_file.file_name, len(chunks)
-            )
+            is_multimodal = embedding_entity.type == "MULTIMODAL_EMBEDDING"
 
-            # 向量化并存储到 Milvus
-            await self._embed_and_store(db, chunks, rag_file, knowledge_base)
-
-            # 标记完成
-            await self._mark_success(db, file_repo, rag_file.id, len(chunks))
-            logger.info("文件 %s ETL 处理完成", rag_file.file_name)
+            # 根据文件类型选择处理方式
+            if is_image and is_multimodal:
+                await self._process_image_file(
+                    db, rag_file, knowledge_base, file_path, file_type
+                )
+            elif is_video and is_multimodal:
+                await self._process_video_file(
+                    db, rag_file, knowledge_base, file_path, file_type
+                )
+            elif is_image:
+                await self._mark_failed(
+                    db, file_repo, rag_file.id, "图片文件需要多模态嵌入模型支持"
+                )
+                return
+            elif is_video:
+                await self._mark_failed(
+                    db, file_repo, rag_file.id, "视频文件需要多模态嵌入模型支持"
+                )
+                return
+            else:
+                # 文本文件处理
+                await self._process_text_file(
+                    db, rag_file, knowledge_base, request, file_path
+                )
 
         except Exception as e:
             logger.exception("文件 %s 处理失败: %s", rag_file.file_name, e)
             await self._mark_failed(db, file_repo, rag_file.id, str(e))
+
+    def _get_file_type(self, rag_file: RagFile) -> str:
+        """获取文件类型（扩展名）"""
+        file_path = self._get_file_path(rag_file) or ""
+        return Path(file_path).suffix.lower().lstrip(".")
+
+    def _is_image_file(self, file_type: str) -> bool:
+        """判断是否为图片文件"""
+        if not file_type:
+            return False
+        return file_type.lower() in IMAGE_EXTENSIONS
+
+    def _is_video_file(self, file_type: str) -> bool:
+        """判断是否为视频文件"""
+        if not file_type:
+            return False
+        return file_type.lower() in VIDEO_EXTENSIONS
+
+    async def _process_image_file(
+        self,
+        db: AsyncSession,
+        rag_file: RagFile,
+        knowledge_base: KnowledgeBase,
+        file_path: str,
+        file_type: str,
+    ) -> None:
+        """处理图片文件（多模态嵌入）
+
+        参考 Java 版本 RagEtlService.processImageFileWithMultimodal 实现
+        """
+        import asyncio
+
+        file_repo = RagFileRepository(db)
+
+        try:
+            # 获取多模态嵌入客户端
+            embedding = await self._get_embeddings(db, knowledge_base)
+
+            # 使用多模态嵌入生成向量
+            # MultimodalEmbeddingClient.embed_image 方法
+            logger.info("正在为图片 %s 生成多模态嵌入向量...", rag_file.file_name)
+            embedding_vector = await asyncio.to_thread(
+                embedding.embed_image, file_path, ""
+            )
+
+            # 创建向量存储
+            vectorstore = VectorStoreFactory.create(
+                collection_name=knowledge_base.name,
+                embedding=embedding,
+            )
+
+            # 构建元数据（参考 Java 版本）
+            from langchain_core.documents import Document
+
+            doc = Document(
+                page_content=f"[图片文件: {rag_file.file_name}]",
+                metadata={
+                    "rag_file_id": rag_file.id,
+                    "original_file_id": rag_file.file_id,
+                    "dataset_id": rag_file.file_metadata.get("dataset_id")
+                    if rag_file.file_metadata
+                    else None,
+                    "file_type": file_type,
+                    "is_image": "true",  # 关键标记，用于检索时区分
+                    "file_name": rag_file.file_name,
+                },
+            )
+
+            # 存储到 Milvus
+            doc_id = str(uuid.uuid4())
+            vectorstore.add_documents(documents=[doc], ids=[doc_id])
+
+            # 标记成功
+            await self._mark_success(db, file_repo, rag_file.id, 1)
+            logger.info("图片文件 %s 多模态向量化完成", rag_file.file_name)
+
+        except Exception as e:
+            logger.exception("图片文件 %s 处理失败: %s", rag_file.file_name, e)
+            await self._mark_failed(db, file_repo, rag_file.id, str(e))
+
+    async def _process_video_file(
+        self,
+        db: AsyncSession,
+        rag_file: RagFile,
+        knowledge_base: KnowledgeBase,
+        file_path: str,
+        file_type: str,
+    ) -> None:
+        """处理视频文件（多模态嵌入）
+
+        参考 Java 版本 RagEtlService.processVideoFileWithMultimodal 实现
+        """
+        import asyncio
+
+        file_repo = RagFileRepository(db)
+
+        try:
+            # 获取多模态嵌入客户端
+            embedding = await self._get_embeddings(db, knowledge_base)
+
+            # 使用多模态嵌入生成向量
+            logger.info("正在为视频 %s 生成多模态嵌入向量...", rag_file.file_name)
+            embedding_vector = await asyncio.to_thread(
+                embedding.embed_video, file_path, ""
+            )
+
+            # 创建向量存储
+            vectorstore = VectorStoreFactory.create(
+                collection_name=knowledge_base.name,
+                embedding=embedding,
+            )
+
+            # 构建元数据（参考 Java 版本）
+            from langchain_core.documents import Document
+
+            doc = Document(
+                page_content=f"[视频文件: {rag_file.file_name}]",
+                metadata={
+                    "rag_file_id": rag_file.id,
+                    "original_file_id": rag_file.file_id,
+                    "dataset_id": rag_file.file_metadata.get("dataset_id")
+                    if rag_file.file_metadata
+                    else None,
+                    "file_type": file_type,
+                    "is_video": "true",  # 关键标记，用于检索时区分
+                    "file_name": rag_file.file_name,
+                },
+            )
+
+            # 存储到 Milvus
+            doc_id = str(uuid.uuid4())
+            vectorstore.add_documents(documents=[doc], ids=[doc_id])
+
+            # 标记成功
+            await self._mark_success(db, file_repo, rag_file.id, 1)
+            logger.info("视频文件 %s 多模态向量化完成", rag_file.file_name)
+
+        except Exception as e:
+            logger.exception("视频文件 %s 处理失败: %s", rag_file.file_name, e)
+            await self._mark_failed(db, file_repo, rag_file.id, str(e))
+
+    async def _process_text_file(
+        self,
+        db: AsyncSession,
+        rag_file: RagFile,
+        knowledge_base: KnowledgeBase,
+        request: AddFilesReq,
+        file_path: str,
+    ) -> None:
+        """处理文本文件（原有逻辑）
+
+        1. 加载并分块
+        2. 向量化并存储
+        """
+        file_repo = RagFileRepository(db)
+
+        # 加载并分块文档
+        metadata = self._build_chunk_metadata(rag_file, knowledge_base)
+        chunks = await self._load_and_split(file_path, rag_file, metadata, request)
+
+        if not chunks:
+            await self._mark_failed(
+                db, file_repo, rag_file.id, "文档解析后未生成任何分块"
+            )
+            return
+
+        logger.info("文件 %s 分块完成，共 %d 个分块", rag_file.file_name, len(chunks))
+
+        # 向量化并存储到 Milvus
+        await self._embed_and_store(db, chunks, rag_file, knowledge_base)
+
+        # 标记完成
+        await self._mark_success(db, file_repo, rag_file.id, len(chunks))
+        logger.info("文件 %s ETL 处理完成", rag_file.file_name)
 
     async def _validate_file(
         self,
