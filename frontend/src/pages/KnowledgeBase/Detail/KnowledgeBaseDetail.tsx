@@ -58,7 +58,7 @@ const KnowledgeBaseDetailPage: React.FC = () => {
   const [recallLoading, setRecallLoading] = useState(false);
   const [recallResults, setRecallResults] = useState<RecallResult[]>([]);
   const [recallQuery, setRecallQuery] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
+  const [image, setImage] = useState("");
   const [imageLoading, setImageLoading] = useState(false);
   const [imageFileList, setImageFileList] = useState<UploadFile[]>([]);
   const [graphVisible, setGraphVisible] = useState(false);
@@ -166,11 +166,11 @@ const KnowledgeBaseDetailPage: React.FC = () => {
       const base64 = e.target?.result as string;
       if (!base64) return;
 
-      setImageUrl(base64);
+      setImage(base64);
       setImageLoading(true);
       try {
         const results = await retrieveKnowledgeBaseByImage({
-          imageUrl: base64,
+          image: base64,
           topK: 10,
           knowledgeBaseIds: [id!],
         });
@@ -187,7 +187,7 @@ const KnowledgeBaseDetailPage: React.FC = () => {
   const handleClearRecallTest = () => {
     setRecallQuery("");
     setRecallResults([]);
-    setImageUrl("");
+    setImage("");
     setImageFileList([]);
   };
 
@@ -526,7 +526,7 @@ const KnowledgeBaseDetailPage: React.FC = () => {
                 loading={recallLoading}
                 style={{ fontSize: 14 }}
               />
-              {(recallQuery || imageUrl || imageFileList.length > 0) && (
+              {(recallQuery || image || imageFileList.length > 0) && (
                 <div className="mt-2">
                   <Button onClick={handleClearRecallTest} icon={<CloseOutlined />} size="small">
                     {t("components.searchControls.filters.clearAll")}
@@ -556,7 +556,7 @@ const KnowledgeBaseDetailPage: React.FC = () => {
                     }}
                     onRemove={() => {
                       setImageFileList([]);
-                      setImageUrl("");
+                      setImage("");
                     }}
                     maxCount={1}
                   >
@@ -568,10 +568,10 @@ const KnowledgeBaseDetailPage: React.FC = () => {
                       {t("knowledgeBase.detail.recallTest.uploadImage")}
                     </Button>
                   </Upload>
-                  {imageUrl && (
+                  {image && (
                     <div className="flex items-center gap-2">
-                      <img src={imageUrl} alt="Uploaded" style={{ maxWidth: 100, maxHeight: 60, objectFit: 'contain' }} />
-                      <Button onClick={() => setImageUrl("")} icon={<CloseOutlined />} size="small" />
+                      <img src={image} alt="Uploaded" style={{ maxWidth: 100, maxHeight: 60, objectFit: 'contain' }} />
+                      <Button onClick={() => setImage("")} icon={<CloseOutlined />} size="small" />
                     </div>
                   )}
                 </div>

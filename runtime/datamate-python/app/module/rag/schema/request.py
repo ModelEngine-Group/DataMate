@@ -212,10 +212,21 @@ class RagFileReq(BaseModel):
 class RetrieveReq(BaseModel):
     """检索请求
 
+    支持文本检索和图片检索（以图搜图）：
+    - 文本检索：提供 query 参数
+    - 图片检索：提供 image 参数（base64 data URL 或图片URL）
+
     对应 Java: com.datamate.rag.indexer.interfaces.dto.RetrieveReq
     """
 
-    query: str = Field(..., min_length=1, description="检索查询文本")
+    query: Optional[str] = Field(
+        None, min_length=1, description="检索查询文本（文本检索时使用）"
+    )
+    image: Optional[str] = Field(
+        None,
+        min_length=1,
+        description="图片 URL、本地文件路径或 base64 data URL（图片检索时使用，如 data:image/png;base64,iVBORw...）",
+    )
     top_k: int = Field(
         default=5, ge=1, le=20, alias="topK", description="返回前 K 个结果"
     )

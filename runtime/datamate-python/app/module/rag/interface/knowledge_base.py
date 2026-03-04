@@ -18,7 +18,6 @@ from app.module.rag.schema.request import (
     DeleteFilesReq,
     RagFileReq,
     RetrieveReq,
-    ImageRetrieveReq,
     PagingQuery,
 )
 from app.module.rag.service.knowledge_base_service import KnowledgeBaseService
@@ -158,19 +157,4 @@ async def retrieve_knowledge_base(
     """检索知识库内容（向量 + BM25 混合检索）"""
     service = RetrievalService(db)
     results = await service.retrieve(request)
-    return SuccessResponse(data=results)
-
-
-@router.post("/retrieve-by-image", response_model=SuccessResponse)
-async def retrieve_by_image(
-    request: ImageRetrieveReq,
-    db: AsyncSession = Depends(get_db),
-):
-    """图片检索（以图搜图）
-
-    使用图片进行向量检索，需要知识库配置多模态嵌入模型。
-    对应 Java: KnowledgeBaseController.retrieveByImage
-    """
-    service = RetrievalService(db)
-    results = await service.retrieve_by_image(request)
     return SuccessResponse(data=results)
