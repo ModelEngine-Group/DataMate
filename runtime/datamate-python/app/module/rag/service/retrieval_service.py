@@ -19,7 +19,6 @@ from app.module.rag.schema.request import (
     RetrieveReq,
     PagingQuery,
     ImageRetrieveReq,
-    ImageRetrieveReq,
 )
 from app.module.rag.schema.response import PagedResponse, RagChunkResp
 from app.module.rag.service.multimodal_rerank_service import MultimodalRerankService
