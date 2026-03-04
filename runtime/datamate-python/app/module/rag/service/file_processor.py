@@ -4,6 +4,7 @@
 负责文件的后台 ETL 处理：加载、分块、向量化、存储。
 使用全局 WorkerPool 实现并发控制，最多 10 个文件并行处理。
 """
+
 import logging
 import os
 import uuid
@@ -84,10 +85,14 @@ class FileProcessor:
                     logger.info("知识库 %s 没有待处理的文件", knowledge_base_name)
                     return
 
-                logger.info("开始处理 %d 个文件，知识库: %s", len(files), knowledge_base_name)
+                logger.info(
+                    "开始处理 %d 个文件，知识库: %s", len(files), knowledge_base_name
+                )
 
                 # 并发处理文件（最多 10 个并行）
-                await self._process_files_concurrently(db, files, knowledge_base, request)
+                await self._process_files_concurrently(
+                    db, files, knowledge_base, request
+                )
 
                 logger.info("知识库 %s 文件处理完成", knowledge_base_name)
 
@@ -110,7 +115,9 @@ class FileProcessor:
             async with self.worker_pool.semaphore:
                 async with AsyncSessionLocal() as file_db:
                     try:
-                        await self._process_single_file(file_db, rag_file, knowledge_base, request)
+                        await self._process_single_file(
+                            file_db, rag_file, knowledge_base, request
+                        )
                     finally:
                         await file_db.close()
 
@@ -135,7 +142,9 @@ class FileProcessor:
 
         try:
             # 更新状态为处理中
-            await self._update_status(db, file_repo, rag_file.id, FileStatus.PROCESSING, 5)
+            await self._update_status(
+                db, file_repo, rag_file.id, FileStatus.PROCESSING, 5
+            )
             await db.commit()
 
             # 验证文件并获取路径
@@ -148,10 +157,14 @@ class FileProcessor:
             chunks = await self._load_and_split(file_path, rag_file, metadata, request)
 
             if not chunks:
-                await self._mark_failed(db, file_repo, rag_file.id, "文档解析后未生成任何分块")
+                await self._mark_failed(
+                    db, file_repo, rag_file.id, "文档解析后未生成任何分块"
+                )
                 return
 
-            logger.info("文件 %s 分块完成，共 %d 个分块", rag_file.file_name, len(chunks))
+            logger.info(
+                "文件 %s 分块完成，共 %d 个分块", rag_file.file_name, len(chunks)
+            )
 
             # 向量化并存储到 Milvus
             await self._embed_and_store(db, chunks, rag_file, knowledge_base)
@@ -187,7 +200,9 @@ class FileProcessor:
             return None
 
         if not Path(file_path).exists():
-            await self._mark_failed(db, file_repo, rag_file.id, f"文件不存在: {file_path}")
+            await self._mark_failed(
+                db, file_repo, rag_file.id, f"文件不存在: {file_path}"
+            )
             return None
 
         return file_path
@@ -220,7 +235,9 @@ class FileProcessor:
         )
 
         if chunks:
-            logger.info("文件 %s 加载分块成功，数量: %d", rag_file.file_name, len(chunks))
+            logger.info(
+                "文件 %s 加载分块成功，数量: %d", rag_file.file_name, len(chunks)
+            )
 
         return chunks
 
@@ -247,7 +264,9 @@ class FileProcessor:
             return
 
         # 创建向量存储
-        vectorstore = await self._create_vectorstore(db, knowledge_base, file_repo, rag_file)
+        vectorstore = await self._create_vectorstore(
+            db, knowledge_base, file_repo, rag_file
+        )
 
         # 添加元数据
         self._add_metadata_to_chunks(valid_chunks, rag_file, knowledge_base)
@@ -282,7 +301,7 @@ class FileProcessor:
                     "跳过无效分块: rag_file_id=%s, chunk_index=%s, 原始长度=%d",
                     rag_file.id,
                     chunk.metadata.get("chunk_index"),
-                    len(chunk.text) if chunk.text else 0
+                    len(chunk.text) if chunk.text else 0,
                 )
 
         if not valid_chunks:
@@ -293,11 +312,13 @@ class FileProcessor:
             "文件 %s 有效分块数量: %d / %d",
             rag_file.file_name,
             len(valid_chunks),
-            len(chunks)
+            len(chunks),
         )
         return valid_chunks
 
-    def _log_chunk_cleaning(self, idx: int, original_text: str, cleaned_text: str) -> None:
+    def _log_chunk_cleaning(
+        self, idx: int, original_text: str, cleaned_text: str
+    ) -> None:
         """记录分块清理日志
 
         Args:
@@ -313,14 +334,14 @@ class FileProcessor:
             idx,
             len(original_text) if original_text else 0,
             repr(original_text[:100]) if original_text else "None",
-            "..." if original_text and len(original_text) > 100 else ""
+            "..." if original_text and len(original_text) > 100 else "",
         )
         logger.debug(
             "分块 %d 清理后 (长度=%d): %.100s%s",
             idx,
             len(cleaned_text) if cleaned_text else 0,
             repr(cleaned_text[:100]) if cleaned_text else "None",
-            "..." if cleaned_text and len(cleaned_text) > 100 else ""
+            "..." if cleaned_text and len(cleaned_text) > 100 else "",
         )
 
     async def _create_vectorstore(
@@ -395,11 +416,7 @@ class FileProcessor:
             batch_chunks = chunks[batch_start:batch_end]
 
             await self._store_single_batch(
-                vectorstore,
-                batch_chunks,
-                batch_start,
-                batch_end,
-                total_chunks
+                vectorstore, batch_chunks, batch_start, batch_end, total_chunks
             )
 
         logger.info("文件 %s 向量存储完成，数量: %d", rag_file.file_name, len(chunks))
@@ -437,7 +454,7 @@ class FileProcessor:
                 batch_start + 1,
                 batch_end,
                 str(e),
-                documents[0].page_content if documents else "N/A"
+                documents[0].page_content if documents else "N/A",
             )
             raise
 
@@ -458,7 +475,7 @@ class FileProcessor:
                 batch_start + i,
                 len(chunk.text),
                 chunk.text[:50],
-                "..." if len(chunk.text) > 50 else ""
+                "..." if len(chunk.text) > 50 else "",
             )
 
     async def _get_embeddings(
@@ -483,6 +500,7 @@ class FileProcessor:
             model_name=embedding_entity.model_name,
             base_url=getattr(embedding_entity, "base_url", None),
             api_key=getattr(embedding_entity, "api_key", None),
+            model_type=embedding_entity.type,
         )
 
     def _get_file_path(self, rag_file: RagFile) -> str | None:
@@ -502,7 +520,9 @@ class FileProcessor:
             return os.path.abspath(file_path)
         return None
 
-    def _build_chunk_metadata(self, rag_file: RagFile, knowledge_base: KnowledgeBase) -> dict:
+    def _build_chunk_metadata(
+        self, rag_file: RagFile, knowledge_base: KnowledgeBase
+    ) -> dict:
         """构建分块基础元数据
 
         Args:
@@ -516,7 +536,9 @@ class FileProcessor:
         return {
             "rag_file_id": rag_file.id,
             "original_file_id": rag_file.file_id,
-            "dataset_id": rag_file.file_metadata.get("dataset_id") if rag_file.file_metadata else None,
+            "dataset_id": rag_file.file_metadata.get("dataset_id")
+            if rag_file.file_metadata
+            else None,
             "file_name": rag_file.file_name,
             "file_extension": Path(file_path).suffix,
             "knowledge_base_id": knowledge_base.id,
@@ -616,8 +638,9 @@ class FileProcessor:
             清理后的文本
         """
         import re
-        text = re.sub(r'[\x00-\x09\x0b\x0c\x0e-\x1f\x7f-\x9f]', '', text)
-        text = re.sub(r'[\u200b-\u200f\u2028-\u202f\ufeff]', '', text)
+
+        text = re.sub(r"[\x00-\x09\x0b\x0c\x0e-\x1f\x7f-\x9f]", "", text)
+        text = re.sub(r"[\u200b-\u200f\u2028-\u202f\ufeff]", "", text)
         return text
 
     def _normalize_whitespace(self, text: str) -> str:
@@ -630,9 +653,10 @@ class FileProcessor:
             规范化后的文本
         """
         import re
-        text = re.sub(r'[ \t]+', ' ', text)
-        text = '\n'.join(line.strip() for line in text.split('\n'))
-        text = re.sub(r'\n{3,}', '\n\n', text)
+
+        text = re.sub(r"[ \t]+", " ", text)
+        text = "\n".join(line.strip() for line in text.split("\n"))
+        text = re.sub(r"\n{3,}", "\n\n", text)
         return text
 
     def _remove_empty_lines(self, text: str) -> str:
@@ -644,7 +668,7 @@ class FileProcessor:
         Returns:
             移除空行后的文本
         """
-        return '\n'.join(line for line in text.split('\n') if line.strip())
+        return "\n".join(line for line in text.split("\n") if line.strip())
 
     def _has_printable_content(self, text: str) -> bool:
         """检查文本是否包含可打印内容
@@ -656,9 +680,10 @@ class FileProcessor:
             是否包含可打印字符
         """
         import re
+
         if not text or not text.strip():
             return False
-        return bool(re.search(r'[\w\u4e00-\u9fff]', text))
+        return bool(re.search(r"[\w\u4e00-\u9fff]", text))
 
     async def _mark_failed(
         self,
@@ -676,5 +701,7 @@ class FileProcessor:
             err_msg: 错误信息
         """
         logger.error("文件处理失败: %s", err_msg)
-        await file_repo.update_status(rag_file_id, FileStatus.PROCESS_FAILED, err_msg=err_msg)
+        await file_repo.update_status(
+            rag_file_id, FileStatus.PROCESS_FAILED, err_msg=err_msg
+        )
         await db.commit()

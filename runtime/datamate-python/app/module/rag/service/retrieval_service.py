@@ -3,6 +3,7 @@
 
 负责知识库内容的检索，支持向量 + BM25 混合检索。
 """
+
 import json
 import logging
 from typing import List
@@ -39,7 +40,7 @@ class RetrievalService:
         self.kb_repo = KnowledgeBaseRepository(db)
         self.file_repo = RagFileRepository(db)
         models_service = ModelsService(db)
-        self.multimodal_rerank_service = MultimodalRerankService(models_service)
+        self.rerank_service = MultimodalRerankService(models_service)
 
     async def retrieve(self, request: RetrieveReq) -> List[dict]:
         """检索知识库内容（混合检索：向量 + BM25）
@@ -64,15 +65,18 @@ class RetrievalService:
             knowledge_bases.append(kb)
 
         # 获取嵌入模型
-        embedding_entity = await get_model_by_id(self.db, knowledge_bases[0].embedding_model)
+        embedding_entity = await get_model_by_id(
+            self.db, knowledge_bases[0].embedding_model
+        )
         if not embedding_entity:
             raise BusinessError(ErrorCodes.RAG_MODEL_NOT_FOUND)
 
-        # 创建嵌入模型实例
+        # 创建嵌入模型实例（传入模型类型）
         embedding = EmbeddingFactory.create_embeddings(
             model_name=embedding_entity.model_name,
             base_url=getattr(embedding_entity, "base_url", None),
             api_key=getattr(embedding_entity, "api_key", None),
+            model_type=getattr(embedding_entity, "type", None),  # 传入模型类型
         )
 
         # 生成查询向量
@@ -80,10 +84,28 @@ class RetrievalService:
             query_vector = await asyncio.to_thread(embedding.embed_query, request.query)
         except Exception as e:
             logger.error("查询向量化失败: %s", e)
-            raise BusinessError(ErrorCodes.RAG_EMBEDDING_FAILED, f"查询向量化失败: {str(e)}") from e
+            raise BusinessError(
+                ErrorCodes.RAG_EMBEDDING_FAILED, f"查询向量化失败: {str(e)}"
+            ) from e
 
         # 执行混合检索
-        all_results = await self._execute_hybrid_search(knowledge_bases, query_vector, request.query, request.top_k)
+        try:
+            all_results = await self._execute_hybrid_search(
+                knowledge_bases, query_vector, request.query, request.top_k
+            )
+        except Exception as e:
+            logger.error(f"Milvus 检索失败: {str(e)}")
+            # 如果 Milvus 连接失败，返回空结果而不是抛出异常
+            if "Fail connecting to server" in str(
+                e
+            ) or "illegal connection params" in str(e):
+                logger.warning(
+                    "Milvus 服务不可用，请确保已启动 Milvus 服务（docker-compose --profile milvus up -d）"
+                )
+                return []
+            raise BusinessError(
+                ErrorCodes.RAG_MILVUS_ERROR, f"检索失败: {str(e)}"
+            ) from e
 
         # 如果配置了重排序模型，执行重排序
         rerank_model_id = knowledge_bases[0].rerank_model
@@ -96,11 +118,15 @@ class RetrievalService:
                 logger.warning(f"重排序失败，使用原始检索结果: {str(e)}")
 
         # 按分数排序
-        all_results.sort(key=lambda x: x.get("score") or x.get("distance", 0), reverse=True)
+        all_results.sort(
+            key=lambda x: x.get("score") or x.get("distance", 0), reverse=True
+        )
 
         # 应用阈值过滤
         if request.threshold is not None:
-            all_results = [r for r in all_results if (r.get("score") or r.get("distance", 0)) >= 0]
+            all_results = [
+                r for r in all_results if (r.get("score") or r.get("distance", 0)) >= 0
+            ]
 
         # 格式化返回结果
         return self._format_results(all_results)
@@ -144,7 +170,7 @@ class RetrievalService:
                         "reranker": "weighted",
                         "weights": [0.1, 0.9],
                         "norm_score": True,
-                    }
+                    },
                 )
                 search_results = client.hybrid_search(
                     collection_name=kb.name,
@@ -175,22 +201,21 @@ class RetrievalService:
         rerank_model_id: str,
         top_k: int,
     ) -> List[dict]:
-        """应用重排序（支持多模态：文本、图片、视频）
-        
+        """应用重排序
+
         Args:
             query: 查询文本
             results: 检索结果
             rerank_model_id: 重排序模型ID
             top_k: 返回前K个结果
-            
+
         Returns:
             重排序后的结果
         """
         if not results:
             return results
 
-        # 使用多模态 rerank 服务
-        rerank_response = await self.multimodal_rerank_service.rerank_multimodal(
+        rerank_response = await self.rerank_service.rerank(
             query=query,
             results=results,
             rerank_model_id=rerank_model_id,
@@ -206,7 +231,9 @@ class RetrievalService:
             original_result["content_type"] = rerank_item.content_type
             reranked_results.append(original_result)
 
-        logger.info(f"重排序完成: 原始结果数={len(results)}, 重排序后结果数={len(reranked_results)}")
+        logger.info(
+            f"重排序完成: 原始结果数={len(results)}, 重排序后结果数={len(reranked_results)}"
+        )
         return reranked_results
 
     def _format_results(self, all_results: List[dict]) -> List[dict]:
@@ -220,17 +247,19 @@ class RetrievalService:
             else:
                 metadata_str = metadata if metadata else "{}"
 
-            formatted.append({
-                "entity": {
-                    "metadata": metadata_str,
-                    "text": entity.get("text", ""),
+            formatted.append(
+                {
+                    "entity": {
+                        "metadata": metadata_str,
+                        "text": entity.get("text", ""),
+                        "id": entity.get("id", ""),
+                    },
+                    "score": r.get("score") or r.get("distance", 0),
                     "id": entity.get("id", ""),
-                },
-                "score": r.get("score") or r.get("distance", 0),
-                "id": entity.get("id", ""),
-                "knowledgeBaseId": r.get("knowledge_base_id", ""),
-                "knowledgeBaseName": r.get("knowledge_base_name", ""),
-            })
+                    "knowledgeBaseId": r.get("knowledge_base_id", ""),
+                    "knowledgeBaseName": r.get("knowledge_base_name", ""),
+                }
+            )
 
         logger.info("检索完成: 结果数=%d", len(formatted))
         return formatted
@@ -292,7 +321,12 @@ class RetrievalService:
                 for item in results
             ]
 
-            logger.info("查询文件分块成功: kb=%s file=%s total=%d", knowledge_base_id, rag_file_id, total)
+            logger.info(
+                "查询文件分块成功: kb=%s file=%s total=%d",
+                knowledge_base_id,
+                rag_file_id,
+                total,
+            )
 
             return PagedResponse.create(
                 content=chunks,
@@ -302,5 +336,12 @@ class RetrievalService:
             )
 
         except Exception as e:
-            logger.error("查询文件分块失败: kb=%s file=%s error=%s", knowledge_base_id, rag_file_id, e)
-            raise BusinessError(ErrorCodes.RAG_MILVUS_ERROR, f"查询文件分块失败: {str(e)}") from e
+            logger.error(
+                "查询文件分块失败: kb=%s file=%s error=%s",
+                knowledge_base_id,
+                rag_file_id,
+                e,
+            )
+            raise BusinessError(
+                ErrorCodes.RAG_MILVUS_ERROR, f"查询文件分块失败: {str(e)}"
+            ) from e

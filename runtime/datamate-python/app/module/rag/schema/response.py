@@ -4,6 +4,7 @@ RAG 模块响应 DTO
 定义所有 API 响应的数据结构
 与 Java 响应 DTO 保持字段一致
 """
+
 from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional, Any
 from datetime import datetime
@@ -15,11 +16,16 @@ class ModelConfig(BaseModel):
 
     对应 Java: com.datamate.common.setting.domain.entity.ModelConfig
     """
+
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
     id: str = Field(..., description="模型ID")
-    created_at: Optional[datetime] = Field(None, alias="createdAt", description="创建时间")
-    updated_at: Optional[datetime] = Field(None, alias="updatedAt", description="更新时间")
+    created_at: Optional[datetime] = Field(
+        None, alias="createdAt", description="创建时间"
+    )
+    updated_at: Optional[datetime] = Field(
+        None, alias="updatedAt", description="更新时间"
+    )
     created_by: Optional[str] = Field(None, alias="createdBy", description="创建人")
     updated_by: Optional[str] = Field(None, alias="updatedBy", description="更新人")
     model_name: str = Field(..., alias="modelName", description="模型名称")
@@ -37,6 +43,7 @@ class KnowledgeBaseResp(BaseModel):
 
     对应 Java: com.datamate.rag.indexer.interfaces.dto.KnowledgeBaseResp
     """
+
     model_config = ConfigDict(
         from_attributes=True,
         populate_by_name=True,
@@ -53,10 +60,10 @@ class KnowledgeBaseResp(BaseModel):
                 "embedding": {
                     "id": "model-1",
                     "modelName": "text-embedding-ada-002",
-                    "provider": "openai"
-                }
+                    "provider": "openai",
+                },
             }
-        }
+        },
     )
 
     id: str = Field(..., description="知识库ID")
@@ -65,12 +72,20 @@ class KnowledgeBaseResp(BaseModel):
     type: RagType = Field(..., description="RAG类型")
     embedding_model: str = Field(alias="embeddingModel", description="嵌入模型ID")
     chat_model: Optional[str] = Field(None, alias="chatModel", description="聊天模型ID")
+    rerank_model: Optional[str] = Field(
+        None, alias="rerankModel", description="重排序模型ID"
+    )
     file_count: Optional[int] = Field(None, alias="fileCount", description="文件数量")
     chunk_count: Optional[int] = Field(None, alias="chunkCount", description="分块数量")
     embedding: Optional[ModelConfig] = Field(None, description="嵌入模型配置")
     chat: Optional[ModelConfig] = Field(None, description="聊天模型配置")
-    created_at: Optional[datetime] = Field(None, alias="createdAt", description="创建时间")
-    updated_at: Optional[datetime] = Field(None, alias="updatedAt", description="更新时间")
+    rerank: Optional[ModelConfig] = Field(None, description="重排序模型配置")
+    created_at: Optional[datetime] = Field(
+        None, alias="createdAt", description="创建时间"
+    )
+    updated_at: Optional[datetime] = Field(
+        None, alias="updatedAt", description="更新时间"
+    )
     created_by: Optional[str] = Field(None, alias="createdBy", description="创建人")
     updated_by: Optional[str] = Field(None, alias="updatedBy", description="更新人")
 
@@ -80,6 +95,7 @@ class RagFileResp(BaseModel):
 
     对应 Java: com.datamate.rag.indexer.domain.model.RagFile
     """
+
     model_config = ConfigDict(
         from_attributes=True,
         populate_by_name=True,
@@ -93,9 +109,9 @@ class RagFileResp(BaseModel):
                 "metadata": {"size": 1024, "format": "pdf"},
                 "status": "PROCESSED",
                 "progress": 100,
-                "createdAt": "2025-01-01T00:00:00"
+                "createdAt": "2025-01-01T00:00:00",
             }
-        }
+        },
     )
 
     id: str = Field(..., description="RAG文件ID")
@@ -103,12 +119,18 @@ class RagFileResp(BaseModel):
     file_name: str = Field(alias="fileName", description="文件名")
     file_id: str = Field(alias="fileId", description="原始文件ID")
     chunk_count: Optional[int] = Field(None, alias="chunkCount", description="分块数量")
-    metadata: Optional[dict] = Field(None, validation_alias="file_metadata", description="元数据")
+    metadata: Optional[dict] = Field(
+        None, validation_alias="file_metadata", description="元数据"
+    )
     status: FileStatus = Field(..., description="处理状态")
     err_msg: Optional[str] = Field(None, alias="errMsg", description="错误信息")
     progress: int = Field(default=0, ge=0, le=100, description="处理进度(0-100)")
-    created_at: Optional[datetime] = Field(None, alias="createdAt", description="创建时间")
-    updated_at: Optional[datetime] = Field(None, alias="updatedAt", description="更新时间")
+    created_at: Optional[datetime] = Field(
+        None, alias="createdAt", description="创建时间"
+    )
+    updated_at: Optional[datetime] = Field(
+        None, alias="updatedAt", description="更新时间"
+    )
     created_by: Optional[str] = Field(None, alias="createdBy", description="创建人")
     updated_by: Optional[str] = Field(None, alias="updatedBy", description="更新人")
 
@@ -118,6 +140,7 @@ class RagChunkResp(BaseModel):
 
     对应 Milvus 查询结果
     """
+
     id: str = Field(..., description="分块ID")
     text: str = Field(..., description="分块文本")
     metadata: dict = Field(..., description="元数据")
@@ -130,11 +153,8 @@ class RagChunkResp(BaseModel):
             "example": {
                 "id": "chunk-uuid-123",
                 "text": "这是文档的一个分块内容...",
-                "metadata": {
-                    "fileName": "document.pdf",
-                    "chunkIndex": 0
-                },
-                "score": 0.95
+                "metadata": {"fileName": "document.pdf", "chunkIndex": 0},
+                "score": 0.95,
             }
         }
 
@@ -144,6 +164,7 @@ class SearchResult(BaseModel):
 
     对应 Java: io.milvus.v2.service.vector.response.SearchResp.SearchResult
     """
+
     id: str = Field(..., description="结果ID")
     score: float = Field(..., description="相似度分数")
     text: str = Field(..., description="文本内容")
@@ -155,7 +176,7 @@ class SearchResult(BaseModel):
                 "id": "chunk-uuid-123",
                 "score": 0.95,
                 "text": "相关文档内容...",
-                "metadata": {"file_name": "doc.pdf"}
+                "metadata": {"file_name": "doc.pdf"},
             }
         }
 
@@ -165,6 +186,7 @@ class PagedResponse(BaseModel):
 
     对应 Java: com.datamate.common.interfaces.PagedResponse
     """
+
     content: List[Any] = Field(..., description="数据列表")
     total_elements: int = Field(alias="totalElements", description="总记录数")
     page: int = Field(..., description="当前页码")
@@ -190,7 +212,7 @@ class PagedResponse(BaseModel):
             total_elements=total_elements,
             page=page,
             size=size,
-            total_pages=total_pages
+            total_pages=total_pages,
         )
 
     class Config:
@@ -201,6 +223,6 @@ class PagedResponse(BaseModel):
                 "totalElements": 100,
                 "page": 1,
                 "size": 10,
-                "totalPages": 10
+                "totalPages": 10,
             }
         }

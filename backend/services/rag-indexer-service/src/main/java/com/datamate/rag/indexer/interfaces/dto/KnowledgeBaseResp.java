@@ -18,4 +18,5 @@ public class KnowledgeBaseResp extends KnowledgeBase {
     private Long chunkCount;
     private ModelConfig embedding;
     private ModelConfig chat;
+    private ModelConfig rerank;
 }

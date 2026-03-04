@@ -27,17 +27,21 @@ from ...system.service.common_service import get_model_by_id
 logger = get_logger(__name__)
 
 # DOCUMENT 类型 RAG 使用 LangChain 检索链
-RAG_DOCUMENT_PROMPT = ChatPromptTemplate.from_messages([
-    ("system", "根据以下上下文回答问题。如果上下文中没有相关信息，请说明。\n\n上下文：\n{context}"),
-    ("human", "{input}"),
-])
+RAG_DOCUMENT_PROMPT = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            "根据以下上下文回答问题。如果上下文中没有相关信息，请说明。\n\n上下文：\n{context}",
+        ),
+        ("human", "{input}"),
+    ]
+)
 
 
 class RAGService:
     def __init__(
         self,
         db: AsyncSession = Depends(get_db),
-
     ):
         self.db = db
         self.background_tasks = None
@@ -66,7 +70,7 @@ class RAGService:
             multimodal_client = LLMFactory.create_multimodal_embedding(
                 embedding_model.model_name,
                 embedding_model.base_url,
-                embedding_model.api_key
+                embedding_model.api_key,
             )
             # 获取维度
             test_embedding = multimodal_client.embed_text("test")
@@ -83,12 +87,16 @@ class RAGService:
                 embedding_model.base_url,
                 embedding_model.api_key,
                 embedding_dim=LLMFactory.get_embedding_dimension(
-                    embedding_model.model_name, embedding_model.base_url, embedding_model.api_key
+                    embedding_model.model_name,
+                    embedding_model.base_url,
+                    embedding_model.api_key,
                 ),
             )
 
         kb_working_dir = os.path.join(DEFAULT_WORKING_DIR, kb.name)
-        self.rag = await initialize_rag(llm_callable, embedding_callable, kb_working_dir)
+        self.rag = await initialize_rag(
+            llm_callable, embedding_callable, kb_working_dir
+        )
 
         await self._schedule_file_processing(knowledge_base_id)
 
@@ -96,9 +104,13 @@ class RAGService:
 
     async def _schedule_file_processing(self, knowledge_base_id: str):
         if self.background_tasks is not None:
-            self.background_tasks.add_task(self._process_with_fresh_session, knowledge_base_id, self.rag)
+            self.background_tasks.add_task(
+                self._process_with_fresh_session, knowledge_base_id, self.rag
+            )
         else:
-            asyncio.create_task(self._process_with_fresh_session(knowledge_base_id, self.rag))
+            asyncio.create_task(
+                self._process_with_fresh_session(knowledge_base_id, self.rag)
+            )
 
     @staticmethod
     async def _process_with_fresh_session(knowledge_base_id: str, rag_instance):
@@ -110,7 +122,9 @@ class RAGService:
     async def _process_pending_files(self, knowledge_base_id: str):
         rag_files = await self.get_unprocessed_files(knowledge_base_id)
         if not rag_files:
-            logger.info(f"No pending files to process for knowledge base {knowledge_base_id}")
+            logger.info(
+                f"No pending files to process for knowledge base {knowledge_base_id}"
+            )
             return
 
         for rag_file in rag_files:
@@ -123,7 +137,9 @@ class RAGService:
             documents = load_documents(dataset_file.file_path)
             for doc in documents:
                 logger.info(f"Processing document {doc.page_content}")
-                await self.rag.ainsert(input=doc.page_content, file_paths=[dataset_file.file_path])
+                await self.rag.ainsert(
+                    input=doc.page_content, file_paths=[dataset_file.file_path]
+                )
         except Exception:  # noqa: BLE001
             logger.exception("Failed to process rag file %s", rag_file.id)
             await self._mark_file_status(rag_file, FileStatus.PROCESS_FAILED)
@@ -173,7 +189,9 @@ class RAGService:
 
     async def _query_document_rag(self, query: str, kb: KnowledgeBase) -> str:
         """基于 Milvus 向量存储的检索与生成（混合检索 + LLM）。"""
-        from langchain_classic.chains.combine_documents import create_stuff_documents_chain
+        from langchain_classic.chains.combine_documents import (
+            create_stuff_documents_chain,
+        )
         from langchain_classic.chains.retrieval import create_retrieval_chain
 
         embedding_entity = await self._get_models(kb.embedding_model)
@@ -181,6 +199,7 @@ class RAGService:
             model_name=embedding_entity.model_name,
             base_url=getattr(embedding_entity, "base_url", None),
             api_key=getattr(embedding_entity, "api_key", None),
+            model_type=embedding_entity.type,
         )
         vectorstore = VectorStoreFactory.create(
             collection_name=kb.name,
@@ -208,13 +227,22 @@ class RAGService:
             model_name=embedding_entity.model_name,
             base_url=getattr(embedding_entity, "base_url", None),
             api_key=getattr(embedding_entity, "api_key", None),
+            model_type=embedding_entity.type,
         )
         vectorstore = VectorStoreFactory.create(
             collection_name=kb.name,
             embedding=embedding,
         )
         from langchain_core.documents import Document
-        docs = [Document(page_content=doc.get("content", ""), metadata=doc.get("metadata", {})) for doc in documents]
+
+        docs = [
+            Document(
+                page_content=doc.get("content", ""), metadata=doc.get("metadata", {})
+            )
+            for doc in documents
+        ]
         await vectorstore.aadd_documents(docs)
-        logger.info(f"Indexed {len(documents)} documents into knowledge base {knowledge_base_id}")
+        logger.info(
+            f"Indexed {len(documents)} documents into knowledge base {knowledge_base_id}"
+        )
         return {"indexed_count": len(documents), "collection_name": kb.name}

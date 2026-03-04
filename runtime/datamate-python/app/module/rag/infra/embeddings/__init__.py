@@ -4,8 +4,10 @@ LangChain Embeddings 封装
 直接使用 LangChain 的 embeddings 功能，支持多种提供商：
 - OpenAI: langchain-openai
 - Ollama: langchain-community
+- 多模态: 自定义 MultimodalEmbeddingClient
 - 其他: 通过 LangChain 生态
 """
+
 from typing import Optional, Any
 
 from langchain_core.embeddings import Embeddings
@@ -20,6 +22,7 @@ class EmbeddingFactory:
         model_name: str,
         base_url: Optional[str] = None,
         api_key: Optional[str] = None,
+        model_type: Optional[str] = None,
         **kwargs: Any,
     ) -> Embeddings:
         """
@@ -29,11 +32,25 @@ class EmbeddingFactory:
             model_name: 模型名称（如 text-embedding-3-small）
             base_url: API 基础 URL
             api_key: API 密钥
+            model_type: 模型类型（如 CHAT, EMBEDDING, MULTIMODAL_EMBEDDING）
             **kwargs: 其他参数
 
         Returns:
             LangChain Embeddings 实例
         """
+        # 多模态嵌入模型（如 qwen3-vl-embedding）
+        if model_type == "MULTIMODAL_EMBEDDING":
+            from app.module.rag.infra.embeddings.multimodal_embedding_client import (
+                MultimodalEmbeddingClient,
+            )
+
+            return MultimodalEmbeddingClient(
+                model_name=model_name,
+                base_url=base_url or "",
+                api_key=api_key or "",
+                **kwargs,
+            )
+
         # OpenAI / OpenAI 兼容接口
         if "openai" in model_name.lower() or model_name.startswith("text-embedding"):
             return OpenAIEmbeddings(

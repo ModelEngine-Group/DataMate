@@ -126,6 +126,10 @@ public class KnowledgeBaseService {
         KnowledgeBaseResp resp = getKnowledgeBaseResp(knowledgeBase);
         resp.setEmbedding(modelConfigRepository.getById(knowledgeBase.getEmbeddingModel()));
         resp.setChat(modelConfigRepository.getById(knowledgeBase.getChatModel()));
+        // 设置 rerank 模型（如果有配置）
+        if (knowledgeBase.getRerankModel() != null && !knowledgeBase.getRerankModel().isEmpty()) {
+            resp.setRerank(modelConfigRepository.getById(knowledgeBase.getRerankModel()));
+        }
         return resp;
     }
 

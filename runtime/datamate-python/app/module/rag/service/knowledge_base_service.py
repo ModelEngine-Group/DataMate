@@ -4,6 +4,7 @@
 实现知识库的 CRUD 操作和文件管理。
 对应 Java: com.datamate.rag.indexer.application.KnowledgeBaseService
 """
+
 import logging
 import uuid
 from typing import List, Tuple, Optional
@@ -16,7 +17,11 @@ from app.core.exception import BusinessError, ErrorCodes
 from app.db.models.dataset_management import DatasetFiles
 from app.db.models.knowledge_gen import KnowledgeBase, RagFile, FileStatus
 from app.db.models.models import Models
-from app.module.rag.infra.vectorstore import drop_collection, rename_collection, delete_chunks_by_rag_file_ids
+from app.module.rag.infra.vectorstore import (
+    drop_collection,
+    rename_collection,
+    delete_chunks_by_rag_file_ids,
+)
 from app.module.rag.repository import KnowledgeBaseRepository, RagFileRepository
 from app.module.rag.schema.request import (
     KnowledgeBaseCreateReq,
@@ -26,7 +31,12 @@ from app.module.rag.schema.request import (
     DeleteFilesReq,
     RagFileReq,
 )
-from app.module.rag.schema.response import KnowledgeBaseResp, PagedResponse, RagFileResp, ModelConfig
+from app.module.rag.schema.response import (
+    KnowledgeBaseResp,
+    PagedResponse,
+    RagFileResp,
+    ModelConfig,
+)
 from app.module.rag.service.file_processor import FileProcessor
 
 logger = logging.getLogger(__name__)
@@ -77,7 +87,9 @@ class KnowledgeBaseService:
         logger.info("成功创建知识库: %s", request.name)
         return knowledge_base.id
 
-    async def update(self, knowledge_base_id: str, request: KnowledgeBaseUpdateReq) -> None:
+    async def update(
+        self, knowledge_base_id: str, request: KnowledgeBaseUpdateReq
+    ) -> None:
         """更新知识库
 
         Args:
@@ -130,15 +142,22 @@ class KnowledgeBaseService:
             raise BusinessError(ErrorCodes.RAG_KNOWLEDGE_BASE_NOT_FOUND)
 
         file_count = await self.file_repo.count_by_knowledge_base(knowledge_base_id)
-        chunk_count = await self.file_repo.count_chunks_by_knowledge_base(knowledge_base_id)
+        chunk_count = await self.file_repo.count_chunks_by_knowledge_base(
+            knowledge_base_id
+        )
 
         data = self._kb_to_dict(knowledge_base)
-        data.update({
-            "file_count": file_count,
-            "chunk_count": chunk_count,
-            "embedding": await self._get_model_config(knowledge_base.embedding_model),
-            "chat": await self._get_model_config(knowledge_base.chat_model),
-        })
+        data.update(
+            {
+                "file_count": file_count,
+                "chunk_count": chunk_count,
+                "embedding": await self._get_model_config(
+                    knowledge_base.embedding_model
+                ),
+                "chat": await self._get_model_config(knowledge_base.chat_model),
+                "rerank": await self._get_model_config(knowledge_base.rerank_model),
+            }
+        )
         return KnowledgeBaseResp(**data)
 
     def _kb_to_dict(self, kb: KnowledgeBase) -> dict:
@@ -150,6 +169,7 @@ class KnowledgeBaseService:
             "type": kb.type,
             "embedding_model": kb.embedding_model,
             "chat_model": kb.chat_model,
+            "rerank_model": kb.rerank_model,
             "created_at": kb.created_at,
             "updated_at": kb.updated_at,
             "created_by": kb.created_by,
@@ -164,7 +184,7 @@ class KnowledgeBaseService:
         result = await self.db.execute(
             select(Models).where(
                 Models.id == model_id,
-                (Models.is_deleted == False) | (Models.is_deleted.is_(None))
+                (Models.is_deleted == False) | (Models.is_deleted.is_(None)),
             )
         )
         model = result.scalar_one_or_none()
@@ -184,10 +204,12 @@ class KnowledgeBaseService:
             file_count = await self.file_repo.count_by_knowledge_base(item.id)
             chunk_count = await self.file_repo.count_chunks_by_knowledge_base(item.id)
             data = self._kb_to_dict(item)
-            data.update({
-                "file_count": file_count,
-                "chunk_count": chunk_count,
-            })
+            data.update(
+                {
+                    "file_count": file_count,
+                    "chunk_count": chunk_count,
+                }
+            )
             responses.append(KnowledgeBaseResp(**data))
 
         return PagedResponse.create(
@@ -243,7 +265,9 @@ class KnowledgeBaseService:
             "skipped_file_ids": skipped_file_ids,
         }
 
-    async def _create_rag_files(self, request: AddFilesReq) -> Tuple[List[RagFile], List[str]]:
+    async def _create_rag_files(
+        self, request: AddFilesReq
+    ) -> Tuple[List[RagFile], List[str]]:
         """创建 RAG 文件记录"""
         if not request.files:
             raise BusinessError(ErrorCodes.BAD_REQUEST, "文件列表不能为空")
@@ -287,7 +311,9 @@ class KnowledgeBaseService:
 
         return rag_files, skipped_file_ids
 
-    async def list_files(self, knowledge_base_id: str, request: RagFileReq) -> PagedResponse:
+    async def list_files(
+        self, knowledge_base_id: str, request: RagFileReq
+    ) -> PagedResponse:
         """获取知识库文件列表"""
         if not await self.kb_repo.get_by_id(knowledge_base_id):
             raise BusinessError(ErrorCodes.RAG_KNOWLEDGE_BASE_NOT_FOUND)
@@ -309,7 +335,9 @@ class KnowledgeBaseService:
             size=request.page_size,
         )
 
-    async def delete_files(self, knowledge_base_id: str, request: DeleteFilesReq) -> None:
+    async def delete_files(
+        self, knowledge_base_id: str, request: DeleteFilesReq
+    ) -> None:
         """删除知识库文件
 
         Args:
