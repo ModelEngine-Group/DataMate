@@ -18,10 +18,12 @@ export enum DatasetSubType {
 }
 
 export enum DatasetStatus {
-  ACTIVE = "ACTIVE",
-  INACTIVE = "INACTIVE",
-  PROCESSING = "PROCESSING",
   DRAFT = "DRAFT",
+  ACTIVE = "ACTIVE",
+  PROCESSING = "PROCESSING",
+  ARCHIVED = "ARCHIVED",
+  PUBLISHED = "PUBLISHED",
+  DEPRECATED = "DEPRECATED",
 }
 
 export enum DataSource {

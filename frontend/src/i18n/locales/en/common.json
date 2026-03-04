@@ -581,10 +581,12 @@
       "videoJsonl": "Dataset for large-scale video pretraining"
     },
     "datasetStatus": {
+      "draft": "Draft",
       "active": "Active",
       "processing": "Processing",
-      "inactive": "Inactive",
-      "draft": "Draft"
+      "archived": "Archived",
+      "published": "Published",
+      "deprecated": "Deprecated"
     },
     "dataSources": {
       "upload": "Local Upload",

@@ -581,10 +581,12 @@
       "videoJsonl": "用于大规模视频预训练模型的数据集"
     },
     "datasetStatus": {
+      "draft": "草稿",
       "active": "活跃",
       "processing": "处理中",
-      "inactive": "未激活",
-      "draft": "草稿"
+      "archived": "已归档",
+      "published": "已发布",
+      "deprecated": "已弃用"
     },
     "dataSources": {
       "upload": "本地上传",
