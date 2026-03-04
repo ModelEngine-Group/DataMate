@@ -55,9 +55,10 @@ interface CardViewProps<T> {
 
 // 标签渲染组件
 const TagsRenderer = ({ tags }: { tags?: Array<string | BadgeItem> }) => {
-  const [visibleTags, setVisibleTags] = useState<any[]>([]);
+  const [visibleTags, setVisibleTags] = useState<any[]>(tags || []);
   const [hiddenTags, setHiddenTags] = useState<any[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
+  const isInitializedRef = useRef(false);
 
   useEffect(() => {
     if (!tags || tags.length === 0) return;
@@ -65,62 +66,68 @@ const TagsRenderer = ({ tags }: { tags?: Array<string | BadgeItem> }) => {
     const calculateVisibleTags = () => {
       if (!containerRef.current) return;
 
-      const containerWidth = containerRef.current.offsetWidth;
-      const tempDiv = document.createElement("div");
-      tempDiv.style.visibility = "hidden";
-      tempDiv.style.position = "absolute";
-      tempDiv.style.top = "-9999px";
-      tempDiv.className = "flex flex-wrap gap-1";
-      document.body.appendChild(tempDiv);
+      const container = containerRef.current;
+      const containerRect = container.getBoundingClientRect();
 
-      let totalWidth = 0;
+      // 获取所有标签元素
+      const tagElements = Array.from(container.querySelectorAll(':scope > .ant-tag'));
+      const plusTagElement = tagElements.find(el => el.textContent?.startsWith('+'));
+      const regularTags = tagElements.filter(el => !el.textContent?.startsWith('+'));
+
+      // 动态测量 "+n" 标签宽度
+      let plusWidth = 0;
+      if (plusTagElement) {
+        plusWidth = plusTagElement.offsetWidth;
+      } else {
+        // 如果 "+n" 标签不存在，创建一个临时元素来测量
+        const tempPlus = document.createElement('span');
+        tempPlus.className = 'ant-tag ant-tag-default cursor-pointer bg-gray-100 border-gray-300 text-gray-600 hover:bg-gray-200';
+        tempPlus.textContent = '+99';
+        tempPlus.style.position = 'absolute';
+        tempPlus.style.visibility = 'hidden';
+        container.appendChild(tempPlus);
+        plusWidth = tempPlus.offsetWidth;
+        container.removeChild(tempPlus);
+      }
+
+      // 检查每个标签是否超出
       let visibleCount = 0;
-      const tagElements: HTMLElement[] = [];
+      const containerRight = containerRect.right;
+      const gap = 4; // gap-1 的宽度
 
-      // 为每个tag创建临时元素来测量宽度
-      tags.forEach((tag, index) => {
-        const tagElement = document.createElement("span");
-        tagElement.className = "ant-tag ant-tag-default";
-        tagElement.style.margin = "2px";
-        if (typeof tag === "string") {
-          tagElement.textContent = tag;
-        } else {
-          tagElement.textContent = tag.label ? tag.label : tag.name;
-        }
-        tempDiv.appendChild(tagElement);
-        tagElements.push(tagElement);
+      regularTags.forEach((tagEl, index) => {
+        const tagRect = tagEl.getBoundingClientRect();
+        const tagRight = tagRect.right;
+        const remainingTags = tags.length - index - 1;
+        const needsPlusTag = remainingTags > 0;
 
-        const tagWidth = tagElement.offsetWidth + 4; // 加上gap的宽度
+        // 精确计算：当前标签右边 + gap + (需要 "+n" 的话就加上 "+n" 宽度)
+        const totalWidthNeeded = tagRight + (needsPlusTag ? gap + plusWidth : 0);
 
-        // 如果不是最后一个标签，需要预留+n标签的空间
-        const plusTagWidth = index < tags.length - 1 ? 35 : 0; // +n标签大约35px宽度
-
-        if (totalWidth + tagWidth + plusTagWidth <= containerWidth) {
-          totalWidth += tagWidth;
+        if (totalWidthNeeded <= containerRight - 5) {
           visibleCount++;
         } else {
-          // 如果当前标签放不下，且已经有可见标签，则停止
-          if (visibleCount > 0) return;
-          // 如果是第一个标签就放不下，至少显示一个
-          if (index === 0) {
-            totalWidth += tagWidth;
-            visibleCount = 1;
-          }
+          return false;
         }
       });
 
-      document.body.removeChild(tempDiv);
-
-      setVisibleTags(tags.slice(0, visibleCount));
-      setHiddenTags(tags.slice(visibleCount));
+      if (visibleCount !== visibleTags.length) {
+        setVisibleTags(tags.slice(0, visibleCount));
+        setHiddenTags(tags.slice(visibleCount));
+      }
     };
 
-    // 延迟执行以确保DOM已渲染
-    const timer = setTimeout(calculateVisibleTags, 0);
+    // 第一次渲染后，等待 DOM 稳定再计算
+    if (!isInitializedRef.current) {
+      isInitializedRef.current = true;
+      const timer = setTimeout(calculateVisibleTags, 100);
+      return () => clearTimeout(timer);
+    }
 
-    // 监听窗口大小变化
+    const timer = setTimeout(calculateVisibleTags, 0);
     const handleResize = () => {
-      calculateVisibleTags();
+      clearTimeout(timer);
+      setTimeout(calculateVisibleTags, 100);
     };
 
     window.addEventListener("resize", handleResize);
@@ -154,7 +161,7 @@ const TagsRenderer = ({ tags }: { tags?: Array<string | BadgeItem> }) => {
   );
 
   return (
-    <div ref={containerRef} className="flex flex-wrap gap-1 w-full">
+    <div ref={containerRef} className="inline-flex gap-1" style={{ overflow: 'hidden', flexWrap: 'nowrap', maxWidth: '100%' }}>
       {visibleTags.map((tag, index) => (
         <Tag
           key={index}
@@ -164,6 +171,7 @@ const TagsRenderer = ({ tags }: { tags?: Array<string | BadgeItem> }) => {
               ? undefined
               : { background: tag.background, color: tag.color }
           }
+          className="shrink-0"
         >
           {typeof tag === "string" ? tag : (tag.label ? tag.label : tag.name)}
         </Tag>
@@ -175,7 +183,7 @@ const TagsRenderer = ({ tags }: { tags?: Array<string | BadgeItem> }) => {
           trigger="hover"
           placement="topLeft"
         >
-          <Tag className="cursor-pointer bg-gray-100 border-gray-300 text-gray-600 hover:bg-gray-200">
+          <Tag className="cursor-pointer bg-gray-100 border-gray-300 text-gray-600 hover:bg-gray-200 shrink-0">
             +{hiddenTags.length}
           </Tag>
         </Popover>

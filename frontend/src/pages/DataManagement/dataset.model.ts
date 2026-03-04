@@ -53,7 +53,7 @@ export interface Dataset {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
-  tags: string[];
+  tags: TagItem[];
   targetLocation?: string;
   distribution?: Record<string, Record<string, number>>;
 }

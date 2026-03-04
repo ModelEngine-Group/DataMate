@@ -12,7 +12,7 @@ interface Tag {
 interface AddTagPopoverProps {
   tags: Tag[];
   onFetchTags?: () => Promise<Tag[]>;
-  onAddTag?: (tag: Tag) => void;
+  onAddTag?: (tag: string) => void;
   onCreateAndTag?: (tagName: string) => void;
 }
 
@@ -39,7 +39,7 @@ export default function AddTagPopover({
   };
   useEffect(() => {
     fetchTags();
-  }, [showPopover]);
+  }, [showPopover, onFetchTags]);
 
   const availableTags = useMemo(() => {
     return allTags.filter((tag) => !tagsSet.has(tag.id));
