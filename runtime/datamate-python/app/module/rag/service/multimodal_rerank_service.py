@@ -372,26 +372,101 @@ class MultimodalRerankService:
         provider = model_config.provider.lower()
         is_dashscope = "dashscope.aliyuncs.com" in model_config.baseUrl
 
-        # DashScope 需要使用原生 API 端点,不支持 OpenAI 兼容模式
+        # DashScope 有两种不同的 rerank API:
+        # 1. qwen3-rerank: OpenAI 兼容模式 (/compatible-api/v1/reranks)
+        # 2. gte-rerank-v2 / qwen3-vl-rerank: 原生 API (/api/v1/services/rerank/text-rerank/text-rerank)
         if is_dashscope:
-            return await self._call_dashscope_rerank_api(
-                query, documents, model_config, top_k
-            )
+            model_name_lower = model_config.modelName.lower()
+            if model_name_lower == "qwen3-rerank":
+                # qwen3-rerank 使用 OpenAI 兼容端点
+                return await self._call_dashscope_compatible_rerank_api(
+                    query, documents, model_config, top_k
+                )
+            else:
+                # gte-rerank-v2 / qwen3-vl-rerank 使用原生 API
+                return await self._call_dashscope_native_rerank_api(
+                    query, documents, model_config, top_k
+                )
         else:
             return await self._call_openai_compatible_rerank_api(
                 query, documents, model_config, top_k
             )
 
-    async def _call_dashscope_rerank_api(
+    async def _call_dashscope_compatible_rerank_api(
         self,
         query: str,
         documents: List[str],
         model_config: ModelsResponse,
         top_k: int,
     ) -> RerankResponse:
-        """调用 DashScope 原生 Rerank API
+        """调用 DashScope OpenAI 兼容 Rerank API (qwen3-rerank)
 
-        DashScope 不支持 OpenAI 兼容模式,需要使用原生 API 端点。
+        qwen3-rerank 使用 OpenAI 兼容端点。
+        端点: https://dashscope.aliyuncs.com/compatible-api/v1/reranks
+        """
+        api_endpoint = "https://dashscope.aliyuncs.com/compatible-api/v1/reranks"
+
+        request_body = {
+            "model": model_config.modelName,
+            "query": query,
+            "documents": documents,
+            "top_n": top_k,  # OpenAI 兼容模式使用 top_n 而不是 top_k
+            "return_documents": True,
+        }
+
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {model_config.apiKey}",
+        }
+
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.post(
+                    api_endpoint,
+                    headers=headers,
+                    json=request_body,
+                )
+
+                if response.status_code != 200:
+                    logger.error(
+                        f"DashScope compatible rerank API failed with status: {response.status_code}, body: {response.text}"
+                    )
+                    response.raise_for_status()
+
+                data = response.json()
+
+                # Parse OpenAI-compatible response format: results[]
+                results_data = data.get("results", [])
+                results = [
+                    RerankResult(
+                        index=r["index"],
+                        relevance_score=r["relevance_score"],
+                        document=r.get("document", {}).get("text")
+                        if isinstance(r.get("document"), dict)
+                        else documents[r["index"]],
+                    )
+                    for r in results_data
+                ]
+
+                logger.info(
+                    f"DashScope compatible rerank successful, returned {len(results)} results"
+                )
+                return RerankResponse(results=results[:top_k])
+
+        except Exception as e:
+            logger.error(f"DashScope compatible rerank API call failed: {str(e)}")
+            raise
+
+    async def _call_dashscope_native_rerank_api(
+        self,
+        query: str,
+        documents: List[str],
+        model_config: ModelsResponse,
+        top_k: int,
+    ) -> RerankResponse:
+        """调用 DashScope 原生 Rerank API (gte-rerank-v2 / qwen3-vl-rerank)
+
+        gte-rerank-v2 和 qwen3-vl-rerank 使用原生 API 端点。
         端点: https://dashscope.aliyuncs.com/api/v1/services/rerank/text-rerank/text-rerank
         """
         api_endpoint = "https://dashscope.aliyuncs.com/api/v1/services/rerank/text-rerank/text-rerank"
