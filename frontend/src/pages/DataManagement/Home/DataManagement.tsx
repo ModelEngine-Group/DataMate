@@ -331,10 +331,34 @@ export default function DatasetManagementPage() {
         <div className="flex gap-2 items-center">
           {/* tasks */}
           <TagManager
-            onCreate={createDatasetTagUsingPost}
-            onDelete={(ids: string) => deleteDatasetTagUsingDelete({ ids })}
-            onUpdate={updateDatasetTagUsingPut}
-            onFetch={queryDatasetTagsUsingGet}
+            onCreate={async (tag) => {
+              const result = await createDatasetTagUsingPost(tag);
+              if (result.data) {
+                const { data } = await queryDatasetTagsUsingGet();
+                setTags(data.map((tag) => tag.name));
+              }
+              return result;
+            }}
+            onDelete={async (ids) => {
+              const result = await deleteDatasetTagUsingDelete({ ids });
+              if (result) {
+                const { data } = await queryDatasetTagsUsingGet();
+                setTags(data.map((tag) => tag.name));
+              }
+              return result;
+            }}
+            onUpdate={async (tag) => {
+              const result = await updateDatasetTagUsingPut(tag);
+              if (result.data) {
+                const { data } = await queryDatasetTagsUsingGet();
+                setTags(data.map((tag) => tag.name));
+              }
+              return result;
+            }}
+            onFetch={async () => {
+              const result = await queryDatasetTagsUsingGet();
+              return { data: result.data || [] };
+            }}
           />
           <Link to="/data/management/create">
             <Button

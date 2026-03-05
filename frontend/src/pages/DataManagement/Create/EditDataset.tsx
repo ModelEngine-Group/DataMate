@@ -37,7 +37,9 @@ export default function EditDataset({
       const updatedDataset = {
         ...newData,
         type: newData.type,
-        tags: newData.tags.map((tag) => tag.name) || [],
+        tags: (newData.tags || []).map((tag) =>
+          typeof tag === "string" ? tag : tag.name
+        ),
       };
       setNewDataset(updatedDataset);
       form.setFieldsValue(updatedDataset);
