@@ -169,22 +169,10 @@ const KnowledgeBaseDetailPage: React.FC = () => {
     const reader = new FileReader();
     reader.onload = (e) => {
       const base64 = e.target?.result as string;
-      if (!base64) return;
-
-      setImage(base64);
-      setImageLoading(true);
-      try {
-        const results = await retrieveKnowledgeBaseByImage({
-          image: base64,
-          topK: 10,
-          knowledgeBaseIds: [id!],
-        });
-        setRecallResults(results.data || []);
-      } catch (error) {
-        message.error(t("knowledgeBase.detail.recallTest.error", { error: error.data?.message || error }));
-      } finally {
-        setImageLoading(false);
-      };
+      if (base64) {
+        setImage(base64);
+        setRecallResults([]);
+      }
     };
     reader.readAsDataURL(file);
   };
