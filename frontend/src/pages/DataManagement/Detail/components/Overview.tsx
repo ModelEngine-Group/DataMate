@@ -698,9 +698,7 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
                 </span>
                 <span>
                   {(() => {
-                    const raw = (previewFileDetail?.annotation 
-                      ?? previewFileDetail?.metadata 
-                      ?? previewFileDetail?.tags) as any;
+                    const raw = previewFileDetail?.tags as any;
                     if (!raw) return "-";
 
                     if (typeof raw === "string") {

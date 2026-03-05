@@ -1,3 +1,4 @@
+import json
 import math
 import uuid
 import shutil
@@ -14,11 +15,11 @@ from app.db.models import Dataset
 from app.db.models.data_collection import CollectionTask, TaskExecution, CollectionTemplate
 from app.db.session import get_db
 from app.module.collection.client.datax_client import DataxClient
-from app.module.collection.schema.collection import CollectionTaskBase, CollectionTaskCreate, converter_to_response, \
+from app.module.collection.schema.collection import CollectionTaskBase, CollectionTaskCreate, CollectionTaskUpdate, converter_to_response, \
     convert_for_create, SyncMode
 from app.module.collection.schedule import schedule_collection_task, remove_collection_task
 from app.module.collection.service.collection import CollectionTaskService
-from app.module.shared.schema import StandardResponse, PaginatedData
+from app.module.shared.schema import StandardResponse, PaginatedData, TaskStatus
 
 router = APIRouter(
     prefix="/tasks",
@@ -67,10 +68,7 @@ async def create_task(
     if task and task.sync_mode == SyncMode.SCHEDULED.value and task.schedule_expression:
         schedule_collection_task(task.id, task.schedule_expression)
 
-    return SuccessResponse(
-        data=converter_to_response(task),
-        message="Success"
-    )
+    return SuccessResponse(data=converter_to_response(task))
 
 
 @router.get("", response_model=StandardResponse[PaginatedData[CollectionTaskBase]])
@@ -120,6 +118,120 @@ async def list_tasks(
     )
 
 
+@router.post("/{task_id}/execute", response_model=StandardResponse[str], operation_id="execute_task")
+async def execute_task(
+    task_id: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """执行归集任务"""
+    from app.module.collection.service.collection import CollectionTaskService
+
+    # 验证任务是否存在
+    task = await db.execute(select(CollectionTask).where(CollectionTask.id == task_id))
+    task = task.scalar_one_or_none()
+    if not task:
+        raise BusinessError(ErrorCodes.COLLECTION_TASK_NOT_FOUND, data={"task_id": task_id})
+
+    # 调用服务执行任务
+    await CollectionTaskService.run_async(task_id)
+
+    return SuccessResponse(
+        data=task_id
+    )
+
+
+@router.put("/{task_id}", response_model=StandardResponse[CollectionTaskBase], operation_id="update_task")
+async def update_task(
+    task_id: str,
+    request: CollectionTaskUpdate,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    更新归集任务
+
+    支持修改的字段：
+    - description: 任务描述
+    - schedule_expression: 定时表达式（仅 SCHEDULED 模式）
+    - timeout_seconds: 超时时间
+    - config: 任务配置
+
+    状态限制：
+    - DRAFT/PENDING: 可以修改所有字段
+    - RUNNING: 不允许修改
+    - FAILED: 可以修改，修改后可重新执行
+    - COMPLETED: ONCE 模式不允许修改，SCHEDULED 模式可以修改
+
+    Args:
+        task_id: 任务ID
+        request: 更新请求
+        db: 数据库会话
+
+    Returns:
+        更新后的任务信息
+    """
+    # 查询任务
+    task = await db.get(CollectionTask, task_id)
+    if not task:
+        raise BusinessError(ErrorCodes.COLLECTION_TASK_NOT_FOUND, data={"task_id": task_id})
+
+    # 检查任务状态，RUNNING 状态不允许修改
+    if task.status == TaskStatus.RUNNING.name:
+        raise BusinessError(
+            ErrorCodes.VALIDATION_ERROR,
+            data={"task_id": task_id, "current_status": task.status}
+        )
+
+    # 检查任务同步模式，ONCE 模式已完成的不允许修改
+    if task.sync_mode == SyncMode.ONCE.name and task.status == TaskStatus.COMPLETED.name:
+        raise BusinessError(
+            ErrorCodes.VALIDATION_ERROR,
+            data={"task_id": task_id, "current_status": task.status}
+        )
+
+    # 验证 schedule_expression 只能由 SCHEDULED 模式修改
+    if request.schedule_expression is not None and task.sync_mode != SyncMode.SCHEDULED.name:
+        raise BusinessError(
+            ErrorCodes.VALIDATION_ERROR,
+            data={"sync_mode": task.sync_mode}
+        )
+
+    # 应用更新
+    update_data = request.model_dump(exclude_unset=True)
+
+    if 'description' in update_data:
+        task.description = update_data['description']
+
+    if 'timeout_seconds' in update_data:
+        task.timeout_seconds = update_data['timeout_seconds']
+
+    if 'schedule_expression' in update_data:
+        old_schedule_expression = task.schedule_expression
+        task.schedule_expression = update_data['schedule_expression']
+        # 如果调度表达式发生变化，需要重新调度任务
+        if old_schedule_expression != task.schedule_expression:
+            from app.module.collection.schedule import reschedule_collection_task
+            reschedule_collection_task(task_id, task.schedule_expression)
+
+    if 'config' in update_data:
+        # 重新生成任务配置文件
+        template = await db.execute(select(CollectionTemplate).where(CollectionTemplate.id == task.template_id))
+        template = template.scalar_one_or_none()
+        if template:
+            DataxClient.generate_datx_config(request.config, template, task.target_path)
+            task.config = json.dumps(request.config.dict())
+
+    # 如果任务处于 FAILED 状态，修改后重置为 PENDING，允许重新执行
+    if task.status == TaskStatus.FAILED.name:
+        task.status = TaskStatus.PENDING.name
+
+    await db.commit()
+    await db.refresh(task)
+
+    return SuccessResponse(
+        data=converter_to_response(task)
+    )
+
+
 @router.delete("", response_model=StandardResponse[str], status_code=200)
 async def delete_collection_tasks(
     ids: list[str] = Query(..., description="List of task IDs to delete"),
@@ -162,8 +274,7 @@ async def delete_collection_tasks(
         shutil.rmtree(job_path)
 
     return SuccessResponse(
-        data="success",
-        message="Collection task deleted successfully"
+        data="success"
     )
 
 @router.get("/{task_id}", response_model=StandardResponse[CollectionTaskBase])
@@ -177,7 +288,4 @@ async def get_task(
     if not task:
         raise BusinessError(ErrorCodes.COLLECTION_TASK_NOT_FOUND, data={"task_id": task_id})
 
-    return SuccessResponse(
-        data=converter_to_response(task),
-        message="Success"
-    )
+    return SuccessResponse(data=converter_to_response(task))

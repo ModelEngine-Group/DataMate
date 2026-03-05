@@ -47,6 +47,7 @@ dependencies = [
     "pytest (>=9.0.2,<10.0.0)",
     "apscheduler (>=3.11.2,<4.0.0)",
     "msoffcrypto-tool (>=6.0.0,<7.0.0)",
+    "tzlocal (>=5.2,<6.0)",
 ]
 
 

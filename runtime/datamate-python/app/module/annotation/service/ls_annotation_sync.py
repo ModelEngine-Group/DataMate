@@ -194,7 +194,11 @@ class LSAnnotationSyncService:
 
         for r in results:
             r_type = r.get("type")
+            if isinstance(r_type, str):
+                r_type = r_type.strip().lower()
+
             from_name = r.get("from_name") or r.get("fromName")
+            to_name = r.get("to_name") or r.get("toName")
             value_obj = r.get("value") or {}
             if not isinstance(value_obj, dict):
                 continue
@@ -202,12 +206,22 @@ class LSAnnotationSyncService:
             # 将 Label Studio 的 value 映射为 values，方便前端统一解析
             values: Dict[str, Any] = {}
             for key, v in value_obj.items():
-                values[key] = v
+                normalized_key = str(key).strip().lower() if key is not None else ""
+                if normalized_key:
+                    values[normalized_key] = v
+
+            if isinstance(r_type, str) and r_type:
+                if r_type in values:
+                    values = {r_type: values[r_type]}
+                elif len(values) == 1:
+                    only_value = next(iter(values.values()))
+                    values = {r_type: only_value}
 
             tag = {
                 "id": r.get("id"),
                 "type": r_type,
                 "from_name": from_name,
+                "to_name": to_name,
                 "values": values,
             }
             normalized.append(tag)

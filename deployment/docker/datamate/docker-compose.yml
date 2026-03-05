@@ -30,6 +30,7 @@ services:
       - log_level=DEBUG
       - pgsql_password=${DB_PASSWORD:-password}
       - datamate_jwt_enable=${DATAMATE_JWT_ENABLE:-false}
+      - milvus_uri=${MILVUS_URI:-http://milvus:19530}
     volumes:
       - dataset_volume:/dataset
       - flow_volume:/flow

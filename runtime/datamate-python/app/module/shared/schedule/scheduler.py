@@ -6,20 +6,26 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
 from app.core.logging import get_logger
+import pytz
 
 logger = get_logger(__name__)
 
 
 class Scheduler:
-    def __init__(self, name: str = "scheduler") -> None:
+    def __init__(self, name: str = "scheduler", timezone: Optional[str] = None) -> None:
         self._name = name
         self._scheduler: Optional[AsyncIOScheduler] = None
+        # 使用指定的时区，如果没有指定则使用本地时区
+        self._timezone = pytz.timezone(timezone) if timezone else None
 
     def start(self) -> AsyncIOScheduler:
         if self._scheduler is None:
-            self._scheduler = AsyncIOScheduler()
+            # 配置调度器使用本地时区
+            from tzlocal import get_localzone
+            local_tz = get_localzone()
+            self._scheduler = AsyncIOScheduler(timezone=local_tz)
             self._scheduler.start()
-            logger.info(f"{self._name} started")
+            logger.info(f"{self._name} started with timezone: {local_tz}")
         return self._scheduler
 
     def shutdown(self) -> None:
@@ -38,7 +44,8 @@ class Scheduler:
         **job_kwargs: Any,
     ) -> None:
         scheduler = self._get_scheduler()
-        trigger = CronTrigger.from_crontab(cron_expression)
+        # 使用调度器的时区创建 CronTrigger
+        trigger = CronTrigger.from_crontab(cron_expression, timezone=scheduler.timezone)
         scheduler.add_job(
             func,
             trigger=trigger,

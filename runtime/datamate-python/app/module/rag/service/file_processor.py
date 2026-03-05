@@ -2,6 +2,7 @@
 文件处理器
 
 负责文件的后台 ETL 处理：加载、分块、向量化、存储。
+支持两种知识库类型：DOCUMENT（向量检索）和 GRAPH（知识图谱）。
 使用全局 WorkerPool 实现并发控制，最多 10 个文件并行处理。
 支持文本、图片、视频文件的多模态向量化。
 """
@@ -15,8 +16,7 @@ from typing import List
 from fastapi import BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exception import BusinessError, ErrorCodes
-from app.db.models.knowledge_gen import KnowledgeBase, RagFile, FileStatus
+from app.db.models.knowledge_gen import KnowledgeBase, RagFile, FileStatus, RagType
 from app.db.session import AsyncSessionLocal
 from app.module.rag.infra.document import ingest_file_to_chunks, DocumentChunk
 from app.module.rag.infra.embeddings import EmbeddingFactory
@@ -50,6 +50,7 @@ class FileProcessor:
         background_tasks: BackgroundTasks,
         knowledge_base_id: str,
         knowledge_base_name: str,
+        knowledge_base_type: str,
         request_data: dict,
     ) -> None:
         """启动后台文件处理
@@ -58,20 +59,23 @@ class FileProcessor:
             background_tasks: FastAPI BackgroundTasks
             knowledge_base_id: 知识库 ID
             knowledge_base_name: 知识库名称
+            knowledge_base_type: 知识库类型 (DOCUMENT/GRAPH)
             request_data: 添加文件请求数据
         """
         background_tasks.add_task(
             self._process_files_background,
             knowledge_base_id,
             knowledge_base_name,
+            knowledge_base_type,
             request_data,
         )
-        logger.info("已注册后台任务: 知识库=%s", knowledge_base_name)
+        logger.info("已注册后台任务: 知识库=%s, 类型=%s", knowledge_base_name, knowledge_base_type)
 
     async def _process_files_background(
         self,
         knowledge_base_id: str,
         knowledge_base_name: str,
+        knowledge_base_type: str,
         request_data: dict,
     ) -> None:
         """后台处理文件（使用新的数据库 session）"""
@@ -92,14 +96,12 @@ class FileProcessor:
                     logger.info("知识库 %s 没有待处理的文件", knowledge_base_name)
                     return
 
-                logger.info(
-                    "开始处理 %d 个文件，知识库: %s", len(files), knowledge_base_name
-                )
+                logger.info("开始处理 %d 个文件，知识库: %s, 类型: %s", len(files), knowledge_base_name, knowledge_base_type)
 
-                # 并发处理文件（最多 10 个并行）
-                await self._process_files_concurrently(
-                    db, files, knowledge_base, request
-                )
+                if knowledge_base_type == RagType.GRAPH.value:
+                    await self._process_graph_files(db, files, knowledge_base)
+                else:
+                    await self._process_document_files(db, files, knowledge_base, request)
 
                 logger.info("知识库 %s 文件处理完成", knowledge_base_name)
 
@@ -108,14 +110,14 @@ class FileProcessor:
             finally:
                 await db.close()
 
-    async def _process_files_concurrently(
+    async def _process_document_files(
         self,
         db: AsyncSession,
         files: List[RagFile],
         knowledge_base: KnowledgeBase,
         request: AddFilesReq,
     ) -> None:
-        """并发处理多个文件（最多10个并行）"""
+        """处理 DOCUMENT 类型文件（向量化）"""
         import asyncio
 
         async def process_with_semaphore(rag_file: RagFile):
@@ -130,6 +132,109 @@ class FileProcessor:
 
         tasks = [process_with_semaphore(f) for f in files]
         await asyncio.gather(*tasks, return_exceptions=True)
+
+    async def _process_graph_files(
+        self,
+        db: AsyncSession,
+        files: List[RagFile],
+        knowledge_base: KnowledgeBase,
+    ) -> None:
+        """处理 GRAPH 类型文件（知识图谱）"""
+        from app.module.shared.llm import LLMFactory
+        from app.module.shared.common.document_loaders import load_documents
+
+        try:
+            rag_instance = await self._initialize_graph_rag(db, knowledge_base, LLMFactory)
+
+            for rag_file in files:
+                await self._process_single_graph_file(db, rag_file, rag_instance, load_documents)
+
+        except Exception as e:
+            logger.exception("初始化知识图谱失败: %s", e)
+            for rag_file in files:
+                file_repo = RagFileRepository(db)
+                await self._mark_failed(db, file_repo, str(rag_file.id), f"知识图谱初始化失败: {str(e)}")  # type: ignore
+
+    async def _initialize_graph_rag(self, db: AsyncSession, knowledge_base: KnowledgeBase, LLMFactory):
+        """初始化 GraphRAG 实例"""
+        from .graph_rag import (
+            DEFAULT_WORKING_DIR,
+            build_embedding_func,
+            build_llm_model_func,
+            initialize_rag,
+        )
+
+        embedding_entity = await get_model_by_id(db, str(knowledge_base.embedding_model))  # type: ignore
+        if not embedding_entity:
+            raise ValueError(f"嵌入模型不存在: {knowledge_base.embedding_model}")
+
+        chat_entity = await get_model_by_id(db, str(knowledge_base.chat_model))  # type: ignore
+        if not chat_entity:
+            raise ValueError(f"聊天模型不存在: {knowledge_base.chat_model}")
+
+        llm_callable = await build_llm_model_func(
+            str(chat_entity.model_name), str(chat_entity.base_url), str(chat_entity.api_key)  # type: ignore
+        )
+        embedding_callable = await build_embedding_func(
+            str(embedding_entity.model_name),
+            str(embedding_entity.base_url),
+            str(embedding_entity.api_key),
+            embedding_dim=LLMFactory.get_embedding_dimension(
+                str(embedding_entity.model_name), str(embedding_entity.base_url), str(embedding_entity.api_key)  # type: ignore
+            ),
+        )
+
+        kb_working_dir = os.path.join(DEFAULT_WORKING_DIR, str(knowledge_base.name))  # type: ignore
+        return await initialize_rag(llm_callable, embedding_callable, kb_working_dir)
+
+    async def _process_single_graph_file(
+        self,
+        db: AsyncSession,
+        rag_file: RagFile,
+        rag_instance,
+        load_documents,
+    ) -> None:
+        """处理单个 GRAPH 类型文件"""
+        file_repo = RagFileRepository(db)
+
+        try:
+            await self._update_status(db, file_repo, str(rag_file.id), FileStatus.PROCESSING, 10)  # type: ignore
+            await db.commit()
+
+            dataset_file = await self._get_dataset_file(db, str(rag_file.file_id))  # type: ignore
+            if not dataset_file:
+                await self._mark_failed(db, file_repo, str(rag_file.id), "数据集文件不存在")  # type: ignore
+                return
+
+            documents = load_documents(str(dataset_file.file_path))  # type: ignore
+            if not documents:
+                await self._mark_failed(db, file_repo, str(rag_file.id), "文件解析失败，未生成文档")  # type: ignore
+                return
+
+            await self._update_progress(db, file_repo, str(rag_file.id), 30)  # type: ignore
+            await db.commit()
+
+            for idx, doc in enumerate(documents):
+                logger.info("插入文档到知识图谱: %s, 进度: %d/%d", str(rag_file.file_name), idx + 1, len(documents))  # type: ignore
+                await rag_instance.ainsert(input=doc.page_content, file_paths=[str(dataset_file.file_path)])  # type: ignore
+
+            await self._mark_success(db, file_repo, str(rag_file.id), len(documents))  # type: ignore
+            logger.info("文件 %s 知识图谱处理完成", str(rag_file.file_name))
+
+        except Exception as e:
+            logger.exception("文件 %s 知识图谱处理失败: %s", str(rag_file.file_name), e)  # type: ignore
+            await self._mark_failed(db, file_repo, str(rag_file.id), str(e))  # type: ignore
+
+    async def _get_dataset_file(self, db: AsyncSession, file_id: str):  # type: ignore
+        """获取数据集文件"""
+        from sqlalchemy import select
+        from app.db.models.dataset_management import DatasetFiles
+
+
+        result = await db.execute(
+            select(DatasetFiles).where(DatasetFiles.id == file_id)
+        )
+        return result.scalar_one_or_none()
 
     async def _process_single_file(
         self,
@@ -818,7 +923,6 @@ class FileProcessor:
         Returns:
             清理后的文本，如果无效则返回空字符串
         """
-        import re
 
         if not text or not isinstance(text, str):
             return ""

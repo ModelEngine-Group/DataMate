@@ -312,24 +312,147 @@ class Service:
                     # 继续使用原始标签格式
                     logger.warning("Continuing with original tag format")
 
-            # 获取现有标签
+            # 获取并归一化现有标签
             existing_tags: List[Dict[str, Any]] = file_record.tags or []  # type: ignore
 
-            # 创建标签ID到索引的映射
-            tag_id_map = {tag.get('id'): idx for idx, tag in enumerate(existing_tags) if tag.get('id')}
+            def _normalize_tag(raw_tag: Dict[str, Any]) -> Dict[str, Any]:
+                normalized = dict(raw_tag)
+                if "values" not in normalized and isinstance(normalized.get("value"), dict):
+                    normalized["values"] = normalized.get("value")
+                normalized.pop("value", None)
+
+                control_type = normalized.get("type")
+                if isinstance(control_type, str) and control_type.strip():
+                    normalized["type"] = control_type.strip().lower()
+
+                values_obj = normalized.get("values")
+                if isinstance(values_obj, dict):
+                    normalized_values: Dict[str, Any] = {}
+                    for value_key, value_content in values_obj.items():
+                        key_str = str(value_key).strip().lower() if value_key is not None else ""
+                        if key_str:
+                            normalized_values[key_str] = value_content
+
+                    if normalized_values:
+                        normalized["values"] = normalized_values
+                        if not normalized.get("type") and len(normalized_values) == 1:
+                            normalized["type"] = next(iter(normalized_values.keys()))
+
+                return normalized
+
+            def _extract_tag_type(tag: Dict[str, Any]) -> str:
+                control_type = tag.get("type")
+                if isinstance(control_type, str) and control_type:
+                    return control_type.strip().lower()
+                values_obj = tag.get("values")
+                if isinstance(values_obj, dict) and len(values_obj) == 1:
+                    only_key = next(iter(values_obj.keys()))
+                    if isinstance(only_key, str):
+                        return only_key.strip().lower()
+                return ""
+
+            def _extract_name_pair(tag: Dict[str, Any]) -> Optional[tuple[str, str]]:
+                from_name = tag.get("from_name") or tag.get("fromName")
+                to_name = tag.get("to_name") or tag.get("toName")
+                if not from_name or not to_name:
+                    return None
+                return str(from_name).strip(), str(to_name).strip()
+
+            def _extract_from_name(tag: Dict[str, Any]) -> Optional[str]:
+                from_name = tag.get("from_name") or tag.get("fromName")
+                if not from_name:
+                    return None
+                return str(from_name).strip()
+
+            def _extract_semantic_key(tag: Dict[str, Any]) -> Optional[tuple[str, str, str]]:
+                name_pair = _extract_name_pair(tag)
+                if not name_pair:
+                    return None
+                return name_pair[0], name_pair[1], _extract_tag_type(tag)
+
+            existing_tags = [_normalize_tag(tag) for tag in existing_tags if isinstance(tag, dict)]
+
+            tag_id_map: Dict[str, int] = {}
+            tag_key_map: Dict[tuple[str, str, str], int] = {}
+            tag_name_pair_map: Dict[tuple[str, str], int] = {}
+            tag_from_name_map: Dict[str, int] = {}
+
+            def _index_tag(idx: int, tag: Dict[str, Any]) -> None:
+                tag_id = tag.get("id")
+                if isinstance(tag_id, str) and tag_id:
+                    tag_id_map[tag_id] = idx
+
+                semantic_key = _extract_semantic_key(tag)
+                if semantic_key:
+                    tag_key_map[semantic_key] = idx
+
+                name_pair = _extract_name_pair(tag)
+                if name_pair:
+                    tag_name_pair_map[name_pair] = idx
+
+                from_name = _extract_from_name(tag)
+                if from_name:
+                    tag_from_name_map[from_name] = idx
+
+            for idx, tag in enumerate(existing_tags):
+                _index_tag(idx, tag)
 
             # 更新或追加标签
             for new_tag in processed_tags:
-                tag_id = new_tag.get('id')
-                if tag_id and tag_id in tag_id_map:
+                if not isinstance(new_tag, dict):
+                    continue
+
+                normalized_new_tag = _normalize_tag(new_tag)
+                tag_id = normalized_new_tag.get("id")
+
+                if isinstance(tag_id, str) and tag_id in tag_id_map:
                     # 更新现有标签
                     idx = tag_id_map[tag_id]
-                    existing_tags[idx] = new_tag
+                    existing_tags[idx] = normalized_new_tag
+                    _index_tag(idx, normalized_new_tag)
                     logger.debug(f"Updated existing tag with id: {tag_id}")
                 else:
-                    # 追加新标签
-                    existing_tags.append(new_tag)
-                    logger.debug(f"Added new tag with id: {tag_id}")
+                    semantic_key = _extract_semantic_key(normalized_new_tag)
+                    name_pair = _extract_name_pair(normalized_new_tag)
+
+                    matched_idx: Optional[int] = None
+
+                    if semantic_key and semantic_key in tag_key_map:
+                        matched_idx = tag_key_map[semantic_key]
+                    elif name_pair and name_pair in tag_name_pair_map:
+                        matched_idx = tag_name_pair_map[name_pair]
+                    else:
+                        from_name = _extract_from_name(normalized_new_tag)
+                        if from_name and from_name in tag_from_name_map:
+                            matched_idx = tag_from_name_map[from_name]
+
+                    if matched_idx is not None:
+                        existing_tag = existing_tags[matched_idx]
+                        existing_id = existing_tag.get("id")
+                        if not normalized_new_tag.get("id") and isinstance(existing_id, str) and existing_id:
+                            normalized_new_tag["id"] = existing_id
+
+                        if not normalized_new_tag.get("to_name") and isinstance(existing_tag.get("to_name"), str):
+                            normalized_new_tag["to_name"] = existing_tag.get("to_name")
+                        if not normalized_new_tag.get("from_name") and isinstance(existing_tag.get("from_name"), str):
+                            normalized_new_tag["from_name"] = existing_tag.get("from_name")
+                        if not normalized_new_tag.get("type") and isinstance(existing_tag.get("type"), str):
+                            normalized_new_tag["type"] = str(existing_tag.get("type")).strip().lower()
+
+                        existing_tags[matched_idx] = normalized_new_tag
+                        _index_tag(matched_idx, normalized_new_tag)
+                        logger.debug(
+                            "Updated existing tag with semantic key: from_name=%s, to_name=%s, type=%s",
+                            semantic_key[0] if semantic_key else (name_pair[0] if name_pair else ""),
+                            semantic_key[1] if semantic_key else (name_pair[1] if name_pair else ""),
+                            semantic_key[2] if semantic_key else ""
+                        )
+                    else:
+                        # 追加新标签
+                        existing_tags.append(normalized_new_tag)
+                        appended_idx = len(existing_tags) - 1
+                        _index_tag(appended_idx, normalized_new_tag)
+                        logger.debug(f"Added new tag with id: {tag_id}")
 
             # 更新数据库
             update_time = datetime.utcnow()

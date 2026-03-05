@@ -83,7 +83,7 @@ class TestTagFormatConverter:
         assert tag["from_name"] == "sentiment"
         assert tag["to_name"] == "text"
         assert tag["type"] == "choices"
-        assert tag["value"] == {"choices": ["positive"]}
+        assert tag["values"] == {"choices": ["positive"]}
         assert "id" in tag
     
     def test_convert_simplified_to_full_multiple_values(self, converter):
@@ -101,7 +101,7 @@ class TestTagFormatConverter:
         assert len(result) == 1
         tag = result[0]
         assert tag["type"] == "rectanglelabels"
-        assert tag["value"] == {"rectanglelabels": ["cat", "dog"]}
+        assert tag["values"] == {"rectanglelabels": ["cat", "dog"]}
     
     def test_convert_simplified_camelcase(self, converter):
         """Test that camelCase field names are supported"""
@@ -234,7 +234,7 @@ class TestTagFormatConverter:
         assert len(result) == 2
         # First should be converted
         assert result[0]["type"] == "choices"
-        assert result[0]["value"] == {"choices": ["positive"]}
+        assert result[0]["values"] == {"choices": ["positive"]}
         # Second should pass through unchanged
         assert result[1]["id"] == "existing-123"
         assert result[1]["type"] == "rectanglelabels"
@@ -299,7 +299,7 @@ class TestIntegrationScenarios:
         # Verify correct storage format
         assert len(internal_tags) == 1
         assert internal_tags[0]["type"] == "choices"
-        assert internal_tags[0]["value"] == {"choices": ["positive", "negative"]}
+        assert internal_tags[0]["values"] == {"choices": ["positive", "negative"]}
         assert "id" in internal_tags[0]
     
     def test_update_existing_tags(self, converter):
@@ -330,7 +330,7 @@ class TestIntegrationScenarios:
         
         # Merge logic would replace tag-001
         assert converted_update[0]["id"] == "tag-001"
-        assert converted_update[0]["value"] == {"choices": ["negative"]}
+        assert converted_update[0]["values"] == {"choices": ["negative"]}
 
 
 if __name__ == "__main__":
