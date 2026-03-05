@@ -7,14 +7,14 @@ import { useTranslation } from "react-i18next";
 
 interface CustomTagProps {
   isEditable?: boolean;
-  tag: { id: number; name: string };
-  editingTag?: string | null;
+  tag: TagItem;
+  editingTag?: TagItem | null;
   editingTagValue?: string;
-  setEditingTag?: React.Dispatch<React.SetStateAction<string | null>>;
+  setEditingTag?: React.Dispatch<React.SetStateAction<TagItem | null>>;
   setEditingTagValue?: React.Dispatch<React.SetStateAction<string>>;
-  handleEditTag?: (tag: { id: number; name: string }, value: string) => void;
-  handleCancelEdit?: (tag: { id: number; name: string }) => void;
-  handleDeleteTag?: (tag: { id: number; name: string }) => void;
+  handleEditTag?: (tag: TagItem, value: string) => void;
+  handleCancelEdit?: (tag: TagItem) => void;
+  handleDeleteTag?: (tag: TagItem) => void;
 }
 
 function CustomTag({
@@ -99,17 +99,17 @@ const TagManager: React.FC = ({
   onDelete,
   onUpdate,
 }: {
-  onFetch: () => Promise<any>;
-  onCreate: (tag: Pick<TagItem, "name">) => Promise<{ ok: boolean }>;
-  onDelete: (tagId: number) => Promise<{ ok: boolean }>;
-  onUpdate: (tag: TagItem) => Promise<{ ok: boolean }>;
+  onFetch: (params?: any) => Promise<{ data: TagItem[] }>;
+  onCreate: (tag: Pick<TagItem, "name">) => Promise<{ data: TagItem }>;
+  onDelete: (ids: string) => Promise<any>;
+  onUpdate: (tag: TagItem) => Promise<{ data: TagItem }>;
 }) => {
   const [showTagManager, setShowTagManager] = useState(false);
   const { message } = App.useApp();
   const { t } = useTranslation();
-  const [tags, setTags] = useState<{ id: number; name: string }[]>([]);
+  const [tags, setTags] = useState<TagItem[]>([]);
   const [newTag, setNewTag] = useState("");
-  const [editingTag, setEditingTag] = useState<string | null>(null);
+  const [editingTag, setEditingTag] = useState<TagItem | null>(null);
   const [editingTagValue, setEditingTagValue] = useState("");
 
   // 获取标签列表
@@ -173,7 +173,7 @@ const TagManager: React.FC = ({
     }
   };
 
-  const handleCancelEdit = (tag: string) => {
+  const handleCancelEdit = (tag: TagItem) => {
     setEditingTag(null);
     setEditingTagValue("");
   };

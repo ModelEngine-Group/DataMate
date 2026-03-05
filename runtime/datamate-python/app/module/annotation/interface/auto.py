@@ -1202,9 +1202,9 @@ async def sync_auto_task_annotations_to_database(
 
     行为：
     - 根据自动标注任务找到或创建对应的 Label Studio 项目（与 /sync-label-studio-back 相同的解析逻辑）；
-    - 遍历项目下所有 task，按 task.data.file_id 定位 t_dm_dataset_files 记录；
-    - 把 annotations + predictions 写入 annotation 字段，并抽取标签写入 tags，更新 tags_updated_at。
-    返回成功更新的文件数量。
+    - 先执行 DM -> Label Studio 的文件差异同步（确保任务文件集合最新）；
+    - 再执行双向标签同步（LS <-> DM），按时间戳保留较新标注。
+    返回同步变更数量（LS->DM + DM->LS）。
     """
 
     # 1. 获取并校验自动标注任务
@@ -1217,16 +1217,19 @@ async def sync_auto_task_annotations_to_database(
     mappings = await mapping_service.get_mappings_by_dataset_id(task.dataset_id)
 
     project_id: Optional[str] = None
+    selected_mapping = None
     for m in mappings:
         cfg = getattr(m, "configuration", None) or {}
         if isinstance(cfg, dict) and cfg.get("autoTaskId") == task.id:
             project_id = str(m.labeling_project_id)
+            selected_mapping = m
             break
 
     if project_id is None:
         for m in mappings:
             if m.name == task.name:
                 project_id = str(m.labeling_project_id)
+                selected_mapping = m
                 break
 
     if project_id is None:
@@ -1263,13 +1266,52 @@ async def sync_auto_task_annotations_to_database(
                 ),
             )
 
-    # 3. 调用通用的 LS -> DM 同步服务
+        selected_mapping = await mapping_service.get_mapping_by_labeling_project_id(project_id)
+
+    if selected_mapping is None and project_id is not None:
+        selected_mapping = await mapping_service.get_mapping_by_labeling_project_id(project_id)
+
+    if selected_mapping is None:
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to resolve mapping for auto task when syncing files to Label Studio.",
+        )
+
     ls_client = LabelStudioClient(
         base_url=settings.label_studio_base_url,
         token=settings.label_studio_user_token,
     )
-    sync_service = LSAnnotationSyncService(db, ls_client)
 
-    updated = await sync_service.sync_project_annotations_to_dm(project_id=str(project_id))
+    # 3. 先执行文件差异同步，确保 LS 工程任务集合与当前自动标注任务文件集合一致
+    dm_client = DatasetManagementService(db)
+    sync_orchestrator = SyncService(dm_client, ls_client, mapping_service)
 
-    return StandardResponse(code="0", message="success", data=updated)
+    allowed_file_ids = None
+    if task.file_ids:
+        allowed_file_ids = {str(fid) for fid in task.file_ids}
+
+    file_sync_result = await sync_orchestrator.sync_files(
+        selected_mapping,
+        batch_size=50,
+        allowed_file_ids=allowed_file_ids,
+        delete_orphans=True,
+    )
+    logger.info(
+        "Auto sync-db pre file-sync done: task_id=%s, created=%s, deleted=%s, total=%s",
+        task_id,
+        file_sync_result.get("created", 0),
+        file_sync_result.get("deleted", 0),
+        file_sync_result.get("total", 0),
+    )
+
+    # 4. 执行双向标签同步（基于时间戳决策覆盖）
+    annotation_sync_result = await sync_orchestrator.sync_annotations_bidirectional(
+        selected_mapping,
+        batch_size=50,
+        overwrite=True,
+        overwrite_ls=True,
+        sync_files_first=False,
+    )
+
+    total_synced = annotation_sync_result.synced_to_dm + annotation_sync_result.synced_to_ls
+    return StandardResponse(code="0", message="success", data=total_synced)

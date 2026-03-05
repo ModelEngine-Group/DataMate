@@ -153,8 +153,14 @@ class DataxClient:
             self.execution.error_message = f"执行异常: {e}"
             self.execution.status = TaskStatus.FAILED.name
             logger.error(f"执行异常: {e}", exc_info=True)
+
+        # 根据同步模式更新任务状态
         if self.task.sync_mode == SyncMode.ONCE:
+            # 一次性任务：使用执行结果作为最终状态
             self.task.status = self.execution.status
+        else:
+            # 定时任务：恢复为 PENDING 状态，等待下次执行
+            self.task.status = TaskStatus.PENDING.name
 
     def rename_collection_result(self):
         if self.template.target_type != "txtfilewriter":

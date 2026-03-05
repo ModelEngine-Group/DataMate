@@ -238,27 +238,24 @@ class KnowledgeBaseService:
         Returns:
             包含成功和跳过文件数量的字典
         """
-        # 1. 验证知识库存在
         knowledge_base = await self.kb_repo.get_by_id(request.knowledge_base_id)
         if not knowledge_base:
             raise BusinessError(ErrorCodes.RAG_KNOWLEDGE_BASE_NOT_FOUND)
 
-        # 2. 创建文件记录
         rag_files, skipped_file_ids = await self._create_rag_files(request)
 
-        # 3. 立即提交事务，接口返回
         await self.db.commit()
 
-        # 4. 注册后台任务（异步处理）
         if rag_files and background_tasks:
+            kb_type = knowledge_base.type if knowledge_base.type else "DOCUMENT"
             self.file_processor.start_background_processing(
                 background_tasks=background_tasks,
-                knowledge_base_id=knowledge_base.id,
-                knowledge_base_name=knowledge_base.name,
+                knowledge_base_id=str(knowledge_base.id),
+                knowledge_base_name=str(knowledge_base.name),
+                knowledge_base_type=str(kb_type),
                 request_data=request.model_dump(),
             )
 
-        # 5. 返回结果
         return {
             "success_count": len(rag_files),
             "skipped_count": len(skipped_file_ids),

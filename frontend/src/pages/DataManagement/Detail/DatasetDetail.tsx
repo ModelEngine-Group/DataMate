@@ -221,15 +221,21 @@ export default function DatasetDetail() {
           onCreateAndTag: async (tagName) => {
             const res = await createDatasetTagUsingPost({ name: tagName });
             if (res.data) {
+              const currentTags = dataset.tags.map((tag) =>
+                typeof tag === "string" ? tag : tag.name
+              );
               await updateDatasetByIdUsingPut(dataset.id, {
-                tags: [...dataset.tags.map((tag) => tag.name), res.data.name],
+                tags: [...currentTags, res.data.name],
               });
               handleRefresh();
             }
           },
-          onAddTag: async (tag) => {
+          onAddTag: async (tagName) => {
+            const currentTags = dataset.tags.map((tag) =>
+              typeof tag === "string" ? tag : tag.name
+            );
             const res = await updateDatasetByIdUsingPut(dataset.id, {
-              tags: [...dataset.tags.map((tag) => tag.name), tag],
+              tags: [...currentTags, tagName],
             });
             if (res.data) {
               handleRefresh();

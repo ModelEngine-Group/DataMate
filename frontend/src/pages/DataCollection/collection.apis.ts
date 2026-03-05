@@ -9,6 +9,10 @@ export function createTaskUsingPost(data: any) {
   return post("/api/data-collection/tasks", data);
 }
 
+export function updateTaskUsingPut(id: string, data: any) {
+  return put(`/api/data-collection/tasks/${id}`, data);
+}
+
 export function queryDataXTemplatesUsingGet(params?: any) {
   return get("/api/data-collection/templates", params);
 }
