@@ -62,6 +62,11 @@ export default function OperatorMarketPage() {
     handleKeywordChange,
   } = useFetchData(queryOperatorsUsingPost, (op) => mapOperator(op, t));
 
+  const handleReload = async () => {
+    fetchData();
+    await initCategoriesTree();
+  };
+
   const handleUploadOperator = () => {
     navigate(`/data/operator-market/create`);
   };
@@ -192,7 +197,7 @@ export default function OperatorMarketPage() {
                 viewMode={viewMode}
                 onViewModeChange={setViewMode}
                 showViewToggle={true}
-                onReload={fetchData}
+                onReload={handleReload}
               />
             </div>
           </div>
