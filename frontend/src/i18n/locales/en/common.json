@@ -1367,7 +1367,11 @@
         "destDatasetName": "Target Dataset Name",
         "destDatasetNamePlaceholder": "Enter or select target dataset name",
         "destDatasetType": "Target Dataset Type",
-        "destDatasetTypeRequired": "Please select target dataset type"
+        "destDatasetTypeRequired": "Please select target dataset type",
+        "useSourceDataset": "Use Source Dataset",
+        "useSourceDatasetHint": "When checked, target dataset will use source dataset and cannot be modified",
+        "destDatasetNameRequired": "Please enter target dataset name",
+        "cannotUseSourceDataset": "Cannot use source dataset as target. Check 'Use Source Dataset' or enter a different name"
       },
       "sections": {
         "taskInfo": "Task Info",

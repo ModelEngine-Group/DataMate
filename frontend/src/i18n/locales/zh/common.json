@@ -1367,7 +1367,11 @@
         "destDatasetName": "目标数据集名称",
         "destDatasetNamePlaceholder": "输入或选择目标数据集名称",
         "destDatasetType": "目标数据集类型",
-        "destDatasetTypeRequired": "请选择目标数据集类型"
+        "destDatasetTypeRequired": "请选择目标数据集类型",
+        "useSourceDataset": "选择源数据集",
+        "useSourceDatasetHint": "勾选后目标数据集将使用源数据集，不可修改",
+        "destDatasetNameRequired": "请输入目标数据集名称",
+        "cannotUseSourceDataset": "不能使用源数据集作为目标数据集，请勾选\"选择源数据集\"或输入其他名称"
       },
       "sections": {
         "taskInfo": "任务信息",
