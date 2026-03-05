@@ -100,7 +100,8 @@ const ParamConfig: React.FC<ParamConfigProps> = ({
           </Radio.Group>
         </Form.Item>
       );
-    case "checkbox":
+    case "checkbox": {
+      const group = Array.isArray(value) ? value: value.split(",").map(item => item.trim()).filter(Boolean);
       return (
         <Form.Item
           label={param.name}
@@ -108,12 +109,13 @@ const ParamConfig: React.FC<ParamConfigProps> = ({
           key={paramKey}
         >
           <Checkbox.Group
-            value={value}
+            value={group}
             onChange={updateValue}
             options={param.options || []}
           />
         </Form.Item>
       );
+    }
     case "slider":
       return (
         <Form.Item
