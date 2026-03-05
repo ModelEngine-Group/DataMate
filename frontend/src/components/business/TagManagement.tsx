@@ -119,7 +119,8 @@ const TagManager: React.FC = ({
       const { data } = await onFetch?.();
       setTags(data || []);
     } catch (e) {
-      message.error(t("tagManagement.messages.fetchFailed"));
+      // 错误已由全局拦截器处理，无需重复提示
+      console.error("Failed to fetch tags:", e);
     }
   };
 
@@ -133,7 +134,8 @@ const TagManager: React.FC = ({
       setNewTag("");
       message.success(t("tagManagement.messages.addSuccess"));
     } catch (error) {
-      message.error(t("tagManagement.messages.addFailed"));
+      // 错误已由全局拦截器处理，无需重复提示
+      console.error("Failed to add tag:", error);
     }
   };
 
@@ -144,7 +146,8 @@ const TagManager: React.FC = ({
       fetchTags();
       message.success(t("tagManagement.messages.deleteSuccess"));
     } catch (error) {
-      message.error(t("tagManagement.messages.deleteFailed"));
+      // 错误已由全局拦截器处理，无需重复提示
+      console.error("Failed to delete tag:", error);
     }
   };
 
@@ -154,7 +157,8 @@ const TagManager: React.FC = ({
       fetchTags();
       message.success(t("tagManagement.messages.updateSuccess"));
     } catch (error) {
-      message.error(t("tagManagement.messages.updateFailed"));
+      // 错误已由全局拦截器处理，无需重复提示
+      console.error("Failed to update tag:", error);
     }
   };
 
