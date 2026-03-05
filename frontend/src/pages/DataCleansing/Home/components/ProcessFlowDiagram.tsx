@@ -9,9 +9,9 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-// 流程图组件
 export default function ProcessFlowDiagram() {
   const { t } = useTranslation();
+
   const flowSteps = [
     {
       id: "start",

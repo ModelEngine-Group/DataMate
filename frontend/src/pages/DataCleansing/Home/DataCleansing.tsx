@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Tabs, Button } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 import TaskList from "./components/TaskList";
@@ -13,6 +14,7 @@ export default function DataProcessingPage() {
   const navigate = useNavigate();
   const urlParams = useSearchParams();
   const [currentView, setCurrentView] = useState<"task" | "template">("task");
+  const [isFlowCollapsed, setIsFlowCollapsed] = useState(false);
 
   useEffect(() => {
     if (urlParams.view) {
@@ -24,7 +26,15 @@ export default function DataProcessingPage() {
     <div className="h-full flex flex-col gap-4">
       {/* Header */}
       <div className="flex justify-between items-center">
-        <h1 className="text-xl font-bold">{t("dataCleansing.title")}</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-xl font-bold">{t("dataCleansing.title")}</h1>
+          <Button
+            type="text"
+            size="small"
+            icon={isFlowCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+            onClick={() => setIsFlowCollapsed(!isFlowCollapsed)}
+          />
+        </div>
         <div className="flex gap-2">
           <Button
             icon={<PlusOutlined />}
@@ -41,7 +51,7 @@ export default function DataProcessingPage() {
           </Button>
         </div>
       </div>
-      <ProcessFlowDiagram />
+      {!isFlowCollapsed && <ProcessFlowDiagram />}
       <Tabs
         activeKey={currentView}
         onChange={(key) => setCurrentView(key as any)}
