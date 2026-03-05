@@ -46,19 +46,19 @@ class RetrievalService:
         self.rerank_service = MultimodalRerankService(models_service)
 
     async def retrieve(self, request: RetrieveReq) -> List[dict]:
-        """检索知识库内容（支持文本、图片或组合检索）
+        """检索知识库内容（支持文本和图片检索）
 
         参考 Java: KnowledgeBaseService.retrieve()
 
         根据参数选择检索类型：
-        - 仅 query：文本检索
-        - 仅 image：图片检索（以图搜图）
-        - query + image：图文组合检索（多模态模型支持）
+        - 提供 image 参数：图片检索（以图搜图）
+        - 提供 query 参数：文本检索
 
         根据模型类型选择检索方式：
         - MULTIMODAL_EMBEDDING: 使用纯向量检索
         - 普通: 使用混合检索（向量 + BM25）
         """
+        # 判断检索类型
         is_image_query = bool(request.image)
 
         return await self._retrieve_core(
