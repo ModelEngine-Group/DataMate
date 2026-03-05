@@ -16,6 +16,8 @@ export default function CreateTaskStepOne({
   form,
   taskConfig,
   setTaskConfig,
+  useSourceDataset,
+  setUseSourceDataset,
 }: {
   form: any;
   taskConfig: {
@@ -29,10 +31,11 @@ export default function CreateTaskStepOne({
     srcDatasetName?: string;
   };
   setTaskConfig: (config: any) => void;
+  useSourceDataset: boolean;
+  setUseSourceDataset: (checked: boolean) => void;
 }) {
   const { t } = useTranslation();
   const [datasets, setDatasets] = useState<Dataset[]>([]);
-  const [useSourceDataset, setUseSourceDataset] = useState(false);
   const datasetTypes = [...Object.values(getDatasetTypeMap(t))];
 
   const fetchDatasets = async () => {

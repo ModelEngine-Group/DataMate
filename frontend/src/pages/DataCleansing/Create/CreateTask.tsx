@@ -54,15 +54,15 @@ export default function CleansingTaskCreate() {
   const canProceed = () => {
     switch (currentStep) {
       case 1: {
-        const values = form.getFieldsValue();
         const hasBasicFields = (
-          values.name &&
-          values.srcDatasetId &&
-          values.destDatasetName &&
-          values.destDatasetType
+          taskConfig.name &&
+          taskConfig.srcDatasetId &&
+          taskConfig.destDatasetName &&
+          taskConfig.destDatasetType
         );
         if (!hasBasicFields) return false;
-        if (!useSourceDataset && values.destDatasetName === taskConfig.srcDatasetName) {
+        if (useSourceDataset) return true;
+        if (taskConfig.destDatasetName === taskConfig.srcDatasetName) {
           return false;
         }
         return true;
