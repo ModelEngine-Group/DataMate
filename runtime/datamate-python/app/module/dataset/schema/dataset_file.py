@@ -1,9 +1,11 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 
 class DatasetFileResponse(BaseModel):
     """DM服务数据集文件响应模型"""
+    model_config = ConfigDict(populate_by_name=True)
+
     id: str = Field(..., description="文件ID")
     fileName: str = Field(..., description="文件名")
     fileType: str = Field(..., description="文件类型")
@@ -36,7 +38,16 @@ class DatasetFileTag(BaseModel):
     def get_tags(self) -> List[str]:
         tags = []
         # 如果 values 是字典类型，根据 type 获取对应的值
-        tag_values = self.values.get(self.type, [])
+        tag_values = []
+        if isinstance(self.values, dict):
+            normalized_values = {
+                str(key).strip().lower(): value
+                for key, value in self.values.items()
+                if key is not None
+            }
+            type_key = (self.type or "").strip().lower() if isinstance(self.type, str) else ""
+            if type_key:
+                tag_values = normalized_values.get(type_key, [])
 
         # 处理标签值
         if isinstance(tag_values, list):

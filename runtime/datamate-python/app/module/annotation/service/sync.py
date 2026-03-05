@@ -1,4 +1,5 @@
 from typing import Optional, List, Dict, Any, Tuple, Set
+import json
 import os
 
 from app.module.dataset import DatasetManagementService
@@ -50,6 +51,66 @@ class SyncService:
                 return data_type
         
         return 'image'  # 默认为图像类型
+
+    @staticmethod
+    def _normalize_ls_result_for_compare(result_items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Normalize LS result items for deterministic comparison."""
+        normalized: List[Dict[str, Any]] = []
+
+        for item in result_items or []:
+            if not isinstance(item, dict):
+                continue
+
+            from_name = item.get("from_name") or item.get("fromName") or ""
+            to_name = item.get("to_name") or item.get("toName") or ""
+            type_name = item.get("type") or ""
+            if not isinstance(from_name, str):
+                from_name = str(from_name)
+            if not isinstance(to_name, str):
+                to_name = str(to_name)
+            if not isinstance(type_name, str):
+                type_name = str(type_name)
+
+            value_obj: Dict[str, Any] = {}
+            raw_value_obj = item.get("value")
+            if isinstance(raw_value_obj, dict):
+                value_obj = raw_value_obj
+            else:
+                raw_values_obj = item.get("values")
+                if isinstance(raw_values_obj, dict):
+                    value_obj = raw_values_obj
+
+            normalized_value: Dict[str, Any] = {}
+            for value_key, value_content in value_obj.items():
+                key_str = str(value_key).strip().lower() if value_key is not None else ""
+                if key_str:
+                    normalized_value[key_str] = value_content
+
+            normalized.append(
+                {
+                    "from_name": from_name.strip(),
+                    "to_name": to_name.strip(),
+                    "type": type_name.strip().lower(),
+                    "value": normalized_value,
+                }
+            )
+
+        normalized.sort(
+            key=lambda item: (
+                item.get("from_name", ""),
+                item.get("to_name", ""),
+                item.get("type", ""),
+                json.dumps(item.get("value", {}), sort_keys=True, ensure_ascii=False),
+            )
+        )
+        return normalized
+
+    def _ls_result_payload_equal(
+        self,
+        left: List[Dict[str, Any]],
+        right: List[Dict[str, Any]],
+    ) -> bool:
+        return self._normalize_ls_result_for_compare(left) == self._normalize_ls_result_for_compare(right)
     
     def _build_task_data(self, file_info: Any, dataset_id: str) -> dict:
         """构建Label Studio任务数据"""
@@ -475,11 +536,32 @@ class SyncService:
         updated_at = annotation.get("updated_at") or annotation.get("created_at", "")
         
         for result_item in results:
+            result_type = result_item.get("type", "")
+            if isinstance(result_type, str):
+                result_type = result_type.strip().lower()
+            else:
+                result_type = str(result_type).strip().lower() if result_type is not None else ""
+
+            raw_value = result_item.get("value", {})
+            normalized_values: Dict[str, Any] = {}
+            if isinstance(raw_value, dict):
+                for value_key, value_content in raw_value.items():
+                    key_str = str(value_key).strip().lower() if value_key is not None else ""
+                    if key_str:
+                        normalized_values[key_str] = value_content
+
+                if result_type:
+                    if result_type in normalized_values:
+                        normalized_values = {result_type: normalized_values[result_type]}
+                    elif len(normalized_values) == 1:
+                        only_value = next(iter(normalized_values.values()))
+                        normalized_values = {result_type: only_value}
+
             simplified_item = {
                 "from_name": result_item.get("from_name", ""),
                 "to_name": result_item.get("to_name", ""),
-                "type": result_item.get("type", ""),
-                "values": result_item.get("value", {})
+                "type": result_type,
+                "values": normalized_values
             }
             simplified.append(simplified_item)
         
@@ -575,7 +657,8 @@ class SyncService:
         self,
         mapping: DatasetMappingResponse,
         batch_size: int = 50,
-        overwrite: bool = True
+        overwrite: bool = True,
+        sync_files_first: bool = True,
     ) -> SyncAnnotationsResponse:
         """
         从Label Studio同步标注到数据集
@@ -596,6 +679,16 @@ class SyncService:
         conflicts_resolved = 0
         
         try:
+            # 先做文件差异同步，保证 LS 任务集合与 DM 文件集合一致
+            if sync_files_first:
+                file_sync_result = await self.sync_files(mapping, batch_size)
+                logger.info(
+                    "Pre-annotation file sync done (LS->DM): created=%s, deleted=%s, total=%s",
+                    file_sync_result.get("created", 0),
+                    file_sync_result.get("deleted", 0),
+                    file_sync_result.get("total", 0),
+                )
+
             # 获取Label Studio中的所有任务
             ls_tasks_result = await self.ls_client.get_project_tasks(
                 mapping.labeling_project_id,
@@ -689,7 +782,13 @@ class SyncService:
                             dm_tags_updated_at = file_record.tags_updated_at.isoformat()  # type: ignore
                         
                         if not self._should_overwrite_dm(ls_updated_at, dm_tags_updated_at, overwrite):
-                            logger.debug(f"File {file_id}: DataMate has newer or equal annotations, skipping (overwrite={overwrite})")
+                            logger.debug(
+                                "File %s: DataMate has newer or equal annotations, skipping (overwrite=%s, ls_updated_at=%s, dm_tags_updated_at=%s)",
+                                file_id,
+                                overwrite,
+                                ls_updated_at,
+                                dm_tags_updated_at,
+                            )
                             skipped_count += 1
                             continue
                         
@@ -752,7 +851,8 @@ class SyncService:
         self,
         mapping: DatasetMappingResponse,
         batch_size: int = 50,
-        overwrite_ls: bool = True
+        overwrite_ls: bool = True,
+        sync_files_first: bool = True,
     ) -> SyncAnnotationsResponse:
         """
         从DataMate数据集同步标注到Label Studio
@@ -773,6 +873,16 @@ class SyncService:
         conflicts_resolved = 0
         
         try:
+            # 先做文件差异同步，保证 LS 任务集合与 DM 文件集合一致
+            if sync_files_first:
+                file_sync_result = await self.sync_files(mapping, batch_size)
+                logger.info(
+                    "Pre-annotation file sync done (DM->LS): created=%s, deleted=%s, total=%s",
+                    file_sync_result.get("created", 0),
+                    file_sync_result.get("deleted", 0),
+                    file_sync_result.get("total", 0),
+                )
+
             # 获取Label Studio中的文件ID到任务ID的映射
             dm_file_to_task_mapping = await self.get_existing_dm_file_mapping(mapping.labeling_project_id)
             
@@ -846,26 +956,112 @@ class SyncService:
                             ls_updated_at = latest_ls_annotation.get("updated_at") or latest_ls_annotation.get("created_at", "")
                         
                         # 检查是否应该覆盖Label Studio的标注
-                        if not self._should_overwrite_ls(dm_tags_updated_at, ls_updated_at, overwrite_ls):
-                            logger.debug(f"Task {task_id}: Label Studio has newer or equal annotations, skipping (overwrite_ls={overwrite_ls})")
-                            skipped_count += 1
-                            continue
+                        should_overwrite_ls = self._should_overwrite_ls(dm_tags_updated_at, ls_updated_at, overwrite_ls)
+
+                        if not should_overwrite_ls:
+                            forced_on_equal_ts = False
+                            if (
+                                overwrite_ls
+                                and dm_tags_updated_at
+                                and ls_updated_at
+                                and self._compare_timestamps(dm_tags_updated_at, ls_updated_at) == 0
+                                and ls_annotations
+                            ):
+                                latest_ls_result_payload = latest_ls_annotation.get("result", []) if latest_ls_annotation else []
+                                if not self._ls_result_payload_equal(ls_result, latest_ls_result_payload):
+                                    forced_on_equal_ts = True
+                                    logger.info(
+                                        "Task %s: timestamps are equal but payload differs, force syncing DM -> LS",
+                                        task_id,
+                                    )
+
+                            if not forced_on_equal_ts:
+                                logger.debug(
+                                    "Task %s: Label Studio has newer or equal annotations, skipping (overwrite_ls=%s, dm_tags_updated_at=%s, ls_updated_at=%s)",
+                                    task_id,
+                                    overwrite_ls,
+                                    dm_tags_updated_at,
+                                    ls_updated_at,
+                                )
+                                skipped_count += 1
+                                continue
                         
                         # 如果存在冲突，记录为冲突解决
                         if ls_annotations and dm_tags:
                             conflicts_resolved += 1
                             logger.debug(f"Task {task_id}: Resolved conflict, DataMate annotation is newer")
                         
-                        # 将DataMate的标注转换为Label Studio格式
+                        # 将DataMate的标注转换为Label Studio格式（兼容 value/values 与大小写差异）
                         ls_result = []
                         for tag in dm_tags:
+                            if not isinstance(tag, dict):
+                                continue
+
+                            from_name = tag.get("from_name") or tag.get("fromName") or ""
+                            to_name = tag.get("to_name") or tag.get("toName") or ""
+                            if not isinstance(from_name, str):
+                                from_name = str(from_name)
+                            if not isinstance(to_name, str):
+                                to_name = str(to_name)
+                            from_name = from_name.strip()
+                            to_name = to_name.strip()
+
+                            if not from_name or not to_name:
+                                logger.warning(
+                                    "Skip invalid DM tag for LS sync due to missing from_name/to_name: %s",
+                                    tag,
+                                )
+                                continue
+
+                            raw_type = tag.get("type", "")
+                            if not isinstance(raw_type, str):
+                                raw_type = str(raw_type) if raw_type is not None else ""
+                            normalized_type = raw_type.strip().lower()
+
+                            raw_values = tag.get("values")
+                            if not isinstance(raw_values, dict):
+                                raw_values = tag.get("value")
+
+                            normalized_value: Dict[str, Any] = {}
+
+                            if isinstance(raw_values, dict):
+                                for value_key, value_content in raw_values.items():
+                                    key_str = str(value_key).strip().lower() if value_key is not None else ""
+                                    if key_str:
+                                        normalized_value[key_str] = value_content
+
+                                if not normalized_type and len(normalized_value) == 1:
+                                    normalized_type = next(iter(normalized_value.keys()))
+
+                                if normalized_type:
+                                    if normalized_type in normalized_value:
+                                        normalized_value = {normalized_type: normalized_value[normalized_type]}
+                                    elif len(normalized_value) == 1:
+                                        only_value = next(iter(normalized_value.values()))
+                                        normalized_value = {normalized_type: only_value}
+
+                            if not normalized_type or not normalized_value:
+                                logger.warning(
+                                    "Skip invalid DM tag for LS sync: from_name=%s, to_name=%s, type=%s, values=%s",
+                                    from_name,
+                                    to_name,
+                                    raw_type,
+                                    raw_values,
+                                )
+                                continue
+
                             ls_result_item = {
-                                "from_name": tag.get("from_name", ""),
-                                "to_name": tag.get("to_name", ""),
-                                "type": tag.get("type", ""),
-                                "value": tag.get("values", {})
+                                "from_name": from_name,
+                                "to_name": to_name,
+                                "type": normalized_type,
+                                "value": normalized_value,
                             }
                             ls_result.append(ls_result_item)
+
+                        if not ls_result:
+                            logger.warning(f"Task {task_id}: no valid DM annotations after normalization, skipping")
+                            skipped_count += 1
+                            continue
                         
                         # 如果Label Studio已有标注，更新它；否则创建新标注
                         if ls_annotations:
@@ -941,7 +1137,8 @@ class SyncService:
         mapping: DatasetMappingResponse,
         batch_size: int = 50,
         overwrite: bool = True,
-        overwrite_ls: bool = True
+        overwrite_ls: bool = True,
+        sync_files_first: bool = True,
     ) -> SyncAnnotationsResponse:
         """
         双向同步标注结果
@@ -958,18 +1155,30 @@ class SyncService:
         logger.info(f"Bidirectional annotation sync: dataset={mapping.dataset_id}, project={mapping.labeling_project_id}")
         
         try:
+            # 先做文件差异同步，保证双向标注同步处理的是同一批文件
+            if sync_files_first:
+                file_sync_result = await self.sync_files(mapping, batch_size)
+                logger.info(
+                    "Pre-annotation file sync done (bidirectional): created=%s, deleted=%s, total=%s",
+                    file_sync_result.get("created", 0),
+                    file_sync_result.get("deleted", 0),
+                    file_sync_result.get("total", 0),
+                )
+
             # 先从Label Studio同步到DataMate
             ls_to_dm_result = await self.sync_annotations_from_ls_to_dm(
                 mapping,
                 batch_size,
-                overwrite
+                overwrite,
+                sync_files_first=False,
             )
             
             # 再从DataMate同步到Label Studio
             dm_to_ls_result = await self.sync_annotations_from_dm_to_ls(
                 mapping,
                 batch_size,
-                overwrite_ls
+                overwrite_ls,
+                sync_files_first=False,
             )
             
             # 合并结果

@@ -140,6 +140,8 @@ backend-python:
           key: DB_PASSWORD
     - name: datamate_jwt_enable
       value: *DATAMATE_JWT_ENABLE
+    - name: milvus_uri
+      value: "http://milvus:19530"
   volumes:
     - *datasetVolume
     - *flowVolume

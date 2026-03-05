@@ -96,6 +96,8 @@ export function SearchControls({
     } else {
       // 非受控模式：更新内部状态
       setInternalSelectedFilters(newFilters);
+      // 同时通知父组件当前的筛选值，避免依赖 useEffect 造成死循环
+      onFiltersChange?.(newFilters);
     }
   };
 
@@ -139,20 +141,6 @@ export function SearchControls({
   const hasActiveFilters = Object.values(selectedFilters).some(
     (values) => Array.isArray(values) && values.length > 0 && values[0] !== undefined
   );
-
-  // 同步外部 selectedFilters 到内部状态
-  useEffect(() => {
-    if (externalSelectedFilters !== undefined) {
-      setInternalSelectedFilters(externalSelectedFilters);
-    }
-  }, [externalSelectedFilters]);
-
-  // 非受控模式下，当内部状态变化时通知父组件
-  useEffect(() => {
-    if (externalSelectedFilters !== undefined) return; // 受控模式不需要这个 effect
-    if (Object.keys(selectedFilters).length === 0) return;
-    onFiltersChange?.(selectedFilters);
-  }, [selectedFilters, onFiltersChange, externalSelectedFilters]);
 
   return (
     <div className={className}>

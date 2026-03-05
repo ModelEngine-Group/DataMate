@@ -77,5 +77,12 @@ class Settings(BaseSettings):
 
     datamate_jwt_enable: bool = False
 
+    # Milvus 配置
+    milvus_uri: str = "http://milvus:19530"
+    milvus_token: str = ""
+
+    # 文件存储配置（共享文件系统）
+    file_storage_path: str = "/data/files"
+
 # 全局设置实例
 settings = Settings()
