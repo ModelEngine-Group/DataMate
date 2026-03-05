@@ -266,6 +266,11 @@ export default function useFetchData<T>(
     };
   }, [searchParams, fetchData]);
 
+  // 组件挂载时重置 prevSearchParamsRef，解决 StrictMode 双重挂载问题
+  useEffect(() => {
+    prevSearchParamsRef.current = "";
+  }, []);
+
   // 组件卸载时清理轮询和状态
   useEffect(() => {
     isMountedRef.current = true;
