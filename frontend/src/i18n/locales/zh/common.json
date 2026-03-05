@@ -225,7 +225,10 @@
         "jsonObjectRequired": "必须是JSON对象",
         "jsonObjectInvalid": "请输入合法的JSON对象",
         "jsonFormatError": "JSON格式错误",
-        "jsonFormatErrorWithMessage": "JSON格式错误：{{message}}"
+        "jsonFormatErrorWithMessage": "JSON格式错误：{{message}}",
+        "invalidIP": "{{label}}格式不正确，请输入有效的IP地址（如：192.168.1.1）或 IP:端口（如：192.168.1.1:3306）",
+        "invalidURL": "{{label}}格式不正确，请输入有效的HTTP/HTTPS链接（如：http://example.com 或 https://example.com）",
+        "invalidJdbcURL": "{{label}}格式不正确，请输入有效的JDBC连接字符串（如：jdbc:mysql://localhost:3306/database）"
       },
       "placeholders": {
         "enter": "请输入",

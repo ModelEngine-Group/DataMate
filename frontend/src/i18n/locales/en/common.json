@@ -225,7 +225,10 @@
         "jsonObjectRequired": "Must be a JSON object",
         "jsonObjectInvalid": "Please enter a valid JSON object",
         "jsonFormatError": "Invalid JSON format",
-        "jsonFormatErrorWithMessage": "Invalid JSON format: {{message}}"
+        "jsonFormatErrorWithMessage": "Invalid JSON format: {{message}}",
+        "invalidIP": "{{label}} format is incorrect. Please enter a valid IP address (e.g., 192.168.1.1) or IP:Port (e.g., 192.168.1.1:3306)",
+        "invalidURL": "{{label}} format is incorrect. Please enter a valid HTTP/HTTPS link (e.g., http://example.com or https://example.com)",
+        "invalidJdbcURL": "{{label}} format is incorrect. Please enter a valid JDBC connection string (e.g., jdbc:mysql://localhost:3306/database)"
       },
       "placeholders": {
         "enter": "Please enter",

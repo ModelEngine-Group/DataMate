@@ -10,6 +10,55 @@ import { useTranslation } from "react-i18next";
 
 const { TextArea } = Input;
 
+// IP 地址校验正则
+const IP_REGEX = /^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+// IP:端口 校验正则
+const IP_PORT_REGEX = /^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?):([0-9]{1,5}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$/;
+// HTTP/HTTPS URL 校验正则
+const URL_REGEX = /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&/=]*)$/i;
+// JDBC URL 校验函数
+const validateJdbcUrl = (url: string): boolean => {
+  // 基本格式检查
+  if (!url.startsWith('jdbc:')) return false;
+
+  // 检查是否包含 :// 或 :@ （Oracle格式）
+  const hasDoubleSlash = url.includes('://');
+  const hasAtSymbol = url.includes(':@');
+
+  if (!hasDoubleSlash && !hasAtSymbol) {
+    return false;
+  }
+
+  // 额外检查：不允许以 : 或 / 结尾
+  if (url.endsWith(':') || url.endsWith('/')) {
+    return false;
+  }
+
+  if (hasDoubleSlash) {
+    // 检查 // 后面的部分
+    const afterSlashMatch = url.match(/:\/\/([^/?]+)(\/|$)/);
+    if (!afterSlashMatch) return false;
+
+    const hostPort = afterSlashMatch[1];
+    if (!hostPort) return false;
+
+    // 如果有端口号，检查端口格式
+    if (hostPort.includes(':')) {
+      const parts = hostPort.split(':');
+      const host = parts[0];
+      const port = parts[1];
+
+      if (!host) return false;
+      if (!port || !/^\d{1,5}$/.test(port)) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+};
+
+
 type CollectionTemplate = {
   id: string;
   name: string;
@@ -351,6 +400,61 @@ export default function CollectionTaskCreate() {
           message: t("dataCollection.createTask.placeholders.enterWithLabel", { label }),
         });
       }
+
+      // 根据字段名判断是否需要特殊校验
+      const needsIPValidation = key === "ip";
+      const needsHTTPURLValidation = key === "endpoint" || key === "api";
+      const needsJDBCURLValidation = key === "jdbcUrl";
+
+      // 添加字段类型特定的校验
+      if (needsIPValidation) {
+        // IP 地址校验
+        rules.push({
+          validator: (_: any, value: any) => {
+            if (!value || value.trim() === "") {
+              return Promise.resolve();
+            }
+            const isValid = IP_REGEX.test(value) || IP_PORT_REGEX.test(value);
+            if (!isValid) {
+              return Promise.reject(
+                new Error(t("dataCollection.createTask.messages.invalidIP", { label }))
+              );
+            }
+            return Promise.resolve();
+          },
+        });
+      } else if (needsHTTPURLValidation) {
+        // HTTP/HTTPS URL 校验
+        rules.push({
+          validator: (_: any, value: any) => {
+            if (!value || value.trim() === "") {
+              return Promise.resolve();
+            }
+            if (!URL_REGEX.test(value)) {
+              return Promise.reject(
+                new Error(t("dataCollection.createTask.messages.invalidURL", { label }))
+              );
+            }
+            return Promise.resolve();
+          },
+        });
+      } else if (needsJDBCURLValidation) {
+        // JDBC URL 校验
+        rules.push({
+          validator: (_: any, value: any) => {
+            if (!value || value.trim() === "") {
+              return Promise.resolve();
+            }
+            if (!validateJdbcUrl(value)) {
+              return Promise.reject(
+                new Error(t("dataCollection.createTask.messages.invalidJdbcURL", { label }))
+              );
+            }
+            return Promise.resolve();
+          },
+        });
+      }
+
       if (fieldType === "jsonobject") {
         rules.push({
           validator: (_: any, value: any) => {
