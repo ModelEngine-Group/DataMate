@@ -11,6 +11,7 @@
 - vector (FloatVector, 密集向量)
 - sparse (SparseFloatVector, BM25 稀疏向量)
 """
+
 from __future__ import annotations
 
 import json
@@ -41,7 +42,9 @@ def drop_collection(collection_name: str) -> None:
             logger.info("成功删除集合: %s", collection_name)
     except Exception as e:
         logger.error("删除集合失败: %s", e)
-        raise BusinessError(ErrorCodes.RAG_MILVUS_ERROR, f"删除集合失败: {str(e)}") from e
+        raise BusinessError(
+            ErrorCodes.RAG_MILVUS_ERROR, f"删除集合失败: {str(e)}"
+        ) from e
 
 
 def rename_collection(old_name: str, new_name: str) -> None:
@@ -67,7 +70,9 @@ def rename_collection(old_name: str, new_name: str) -> None:
             logger.info("成功重命名集合: %s -> %s", old_name, new_name)
     except Exception as e:
         logger.error("重命名集合失败: %s", e)
-        raise BusinessError(ErrorCodes.RAG_MILVUS_ERROR, f"重命名集合失败: {str(e)}") from e
+        raise BusinessError(
+            ErrorCodes.RAG_MILVUS_ERROR, f"重命名集合失败: {str(e)}"
+        ) from e
 
 
 def create_collection(
@@ -127,13 +132,10 @@ def create_collection(
             field_name="sparse",
             index_type="SPARSE_INVERTED_INDEX",
             metric_type="BM25",
-            params=sparse_index_params
+            params=sparse_index_params,
         )
         index_params.add_index(
-            field_name="vector",
-            index_type="FLAT",
-            metric_type="COSINE",
-            params={}
+            field_name="vector", index_type="FLAT", metric_type="COSINE", params={}
         )
 
         client.create_collection(
@@ -147,7 +149,9 @@ def create_collection(
 
     except Exception as e:
         logger.error("创建集合失败: %s", e)
-        raise BusinessError(ErrorCodes.RAG_MILVUS_ERROR, f"创建集合失败: {str(e)}") from e
+        raise BusinessError(
+            ErrorCodes.RAG_MILVUS_ERROR, f"创建集合失败: {str(e)}"
+        ) from e
 
 
 def get_vector_dimension(
@@ -184,10 +188,14 @@ def get_vector_dimension(
 
     except Exception as e:
         logger.error("获取向量维度失败: %s", e)
-        raise BusinessError(ErrorCodes.RAG_EMBEDDING_FAILED, f"获取向量维度失败: {str(e)}") from e
+        raise BusinessError(
+            ErrorCodes.RAG_EMBEDDING_FAILED, f"获取向量维度失败: {str(e)}"
+        ) from e
 
 
-def delete_chunks_by_rag_file_ids(collection_name: str, rag_file_ids: List[str]) -> None:
+def delete_chunks_by_rag_file_ids(
+    collection_name: str, rag_file_ids: List[str]
+) -> None:
     """按 RAG 文件 ID 列表删除 Milvus 中的分块
 
     Args:
@@ -201,18 +209,34 @@ def delete_chunks_by_rag_file_ids(collection_name: str, rag_file_ids: List[str])
         client = get_milvus_client()
 
         for rid in rag_file_ids:
-            json_value = json.dumps({"rag_file_id": rid})
-            filter_expr = f'JSON_CONTAINS(metadata, \'{json_value}\')'
+            filter_expr = f'metadata["rag_file_id"] == "{rid}"'
             try:
-                client.delete(collection_name=collection_name, filter=filter_expr)
+                result = client.delete(
+                    collection_name=collection_name, filter=filter_expr
+                )
+                logger.info(
+                    "删除分块: collection=%s rag_file_id=%s, result=%s",
+                    collection_name,
+                    rid,
+                    result,
+                )
             except Exception as del_err:
-                logger.warning("删除分块时部分失败: collection=%s rag_file_id=%s: %s", collection_name, rid, del_err)
+                logger.warning(
+                    "删除分块时部分失败: collection=%s rag_file_id=%s: %s",
+                    collection_name,
+                    rid,
+                    del_err,
+                )
 
-        logger.info("已按 rag_file_id 删除集合 %s 中的分块: %s", collection_name, rag_file_ids)
+        logger.info(
+            "已按 rag_file_id 删除集合 %s 中的分块: %s", collection_name, rag_file_ids
+        )
 
     except Exception as e:
         logger.error("删除 Milvus 分块失败: %s", e)
-        raise BusinessError(ErrorCodes.RAG_MILVUS_ERROR, f"删除分块失败: {str(e)}") from e
+        raise BusinessError(
+            ErrorCodes.RAG_MILVUS_ERROR, f"删除分块失败: {str(e)}"
+        ) from e
 
 
 def chunks_to_documents(
@@ -230,6 +254,7 @@ def chunks_to_documents(
     """
     if ids is None:
         import uuid
+
         ids = [str(uuid.uuid4()) for _ in chunks]
 
     documents = []

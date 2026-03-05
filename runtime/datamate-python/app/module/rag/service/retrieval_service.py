@@ -164,16 +164,11 @@ class RetrievalService:
             entity = r.get("entity", {})
             doc_id = entity.get("id", "")
 
-            # 计算 score：优先使用已有的 score，否则转换 distance
+            # 计算 score：优先使用已有的 score，否则使用 distance
             if "score" in r and r["score"] is not None:
                 score = r["score"]
             elif "distance" in r:
-                # COSINE distance 转 similarity score
-                # distance 范围: 0-2 (0=相同, 2=相反)
-                # similarity 范围: 0-1 (1=相同, 0=相反)
-                # 公式: similarity = (2 - distance) / 2
-                distance = r["distance"]
-                score = (2 - distance) / 2
+                score = r["distance"]
             else:
                 score = 0
 
@@ -487,11 +482,26 @@ class RetrievalService:
                     output_fields=["id", "text", "metadata"],
                 )
 
+                logger.info(
+                    "Milvus向量检索返回: collection=%s, results_count=%s, first_result_keys=%s",
+                    kb.name,
+                    len(search_results[0]) if search_results else 0,
+                    list(search_results[0][0].keys())
+                    if search_results and search_results[0]
+                    else [],
+                )
+
                 if search_results and len(search_results) > 0:
                     for result in search_results[0]:
                         result["knowledge_base_id"] = kb.id
                         result["knowledge_base_name"] = kb.name
                         all_results.append(result)
+                        logger.info(
+                            "Milvus检索结果详情: id=%s, distance=%s, score=%s",
+                            result.get("id"),
+                            result.get("distance"),
+                            result.get("score"),
+                        )
 
             except Exception as e:
                 logger.error("知识库 %s 向量检索失败: %s", kb.name, e)

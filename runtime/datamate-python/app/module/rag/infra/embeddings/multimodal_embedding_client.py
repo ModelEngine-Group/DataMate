@@ -11,10 +11,28 @@ from pathlib import Path
 from typing import List, Optional, Dict, Any
 
 import httpx
+import numpy as np
 from langchain_core.embeddings import Embeddings
-from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
+
+
+def _normalize_vector(vector: List[float]) -> List[float]:
+    """L2 归一化向量
+
+    确保向量长度为 1，使 COSINE similarity 在相同向量时返回 1.0
+
+    Args:
+        vector: 原始向量
+
+    Returns:
+        归一化后的向量
+    """
+    arr = np.array(vector, dtype=np.float32)
+    norm = np.linalg.norm(arr)
+    if norm == 0:
+        return arr.tolist()
+    return (arr / norm).tolist()
 
 
 class MultimodalEmbeddingClient(Embeddings):
@@ -272,20 +290,22 @@ class MultimodalEmbeddingClient(Embeddings):
                     embeddings_array = response_json["output"].get("embeddings", [])
                     if embeddings_array and len(embeddings_array) > 0:
                         embedding = embeddings_array[0].get("embedding", [])
+                        normalized = _normalize_vector(embedding)
                         logger.info(
-                            f"Successfully extracted embedding from DashScope format, dimension: {len(embedding)}"
+                            f"Successfully extracted embedding from DashScope format, dimension: {len(embedding)}, normalized"
                         )
-                        return embedding
+                        return normalized
 
                 # 尝试通用格式: data[0].embedding
                 if "data" in response_json:
                     data_array = response_json["data"]
                     if isinstance(data_array, list) and len(data_array) > 0:
                         embedding = data_array[0].get("embedding", [])
+                        normalized = _normalize_vector(embedding)
                         logger.info(
-                            f"Successfully extracted embedding from generic format, dimension: {len(embedding)}"
+                            f"Successfully extracted embedding from generic format, dimension: {len(embedding)}, normalized"
                         )
-                        return embedding
+                        return normalized
 
                 logger.error(f"Invalid response format: {response_json}")
                 raise RuntimeError("Invalid response format: missing embedding data")
