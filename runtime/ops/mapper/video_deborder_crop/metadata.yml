@@ -1,0 +1,16 @@
+name: '视频去黑边裁剪'
+name_en: 'Video Deborder Crop'
+description: '使用 ffmpeg cropdetect 自动检测黑边并裁剪输出 deborder.mp4；也支持 force_crop 指定裁剪框。'
+description_en: 'Detect black borders via ffmpeg cropdetect and crop to output deborder.mp4; supports force_crop.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'VideoDeborderCrop'
+version: '1.0.0'
+types:
+  - 'cleaning'
+modal: 'video'
+effect:
+  before: ''
+  after: ''
+inputs: 'video'
+outputs: 'video'

@@ -1,0 +1,16 @@
+name: '视频抽取音频'
+name_en: 'Video Audio Extract'
+description: '从视频中抽取音频，默认输出 wav（16k/mono）；也可输出 aac，并生成音频信息 audio_info.json。'
+description_en: 'Extract audio from video, default wav (16k/mono); can output aac; also generates audio_info.json.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'VideoAudioExtract'
+version: '1.0.0'
+types:
+  - 'cleaning'
+modal: 'video'
+effect:
+  before: ''
+  after: ''
+inputs: 'video'
+outputs: 'audio'
