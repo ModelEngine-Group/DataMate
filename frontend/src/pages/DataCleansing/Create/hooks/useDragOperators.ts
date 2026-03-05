@@ -84,6 +84,18 @@ export function useDragOperators({
         setOperators([...operators, draggingItem]);
       }
     }
+    // 如果是算子编排区域内的重新排序，移动到末尾
+    else if (draggingSource === "sort") {
+      const draggedIndex = operators.findIndex(
+        (item) => item.id === draggingItem.id
+      );
+      if (draggedIndex !== -1 && draggedIndex !== operators.length - 1) {
+        const newItems = [...operators];
+        const [draggedItem] = newItems.splice(draggedIndex, 1);
+        newItems.push(draggedItem);
+        setOperators(newItems);
+      }
+    }
 
     resetDragState();
   };
