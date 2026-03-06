@@ -29,13 +29,7 @@ export const DocxPreview: React.FC<DocxPreviewProps> = ({
         const arrayBuffer = await blob.arrayBuffer();
         const result = await mammoth.convertToHtml({ arrayBuffer });
         setHtml(result.value);
-
-        // 显示转换消息（如果有）
-        if (result.messages && result.messages.length > 0) {
-          console.warn('DOCX conversion messages:', result.messages);
-        }
       } catch (err) {
-        console.error('Failed to convert DOCX:', err);
         setError('Failed to convert Word document');
       } finally {
         setLoading(false);
@@ -80,11 +74,6 @@ export const DocxPreview: React.FC<DocxPreviewProps> = ({
       <div
         className="docx-content prose prose-sm max-w-none"
         dangerouslySetInnerHTML={{ __html: html }}
-        style={{
-          // Word 文档样式
-          lineHeight: '1.6',
-          color: '#333',
-        }}
       />
     </div>
   );

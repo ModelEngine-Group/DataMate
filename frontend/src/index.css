@@ -229,10 +229,12 @@
 
 /* Word 文档转换内容样式 */
 .docx-content {
+  color: #333;
+  line-height: 1.6;
+
   /* 段落 */
   p {
     margin-bottom: 0.5em;
-    line-height: 1.6;
   }
 
   /* 标题 */
@@ -279,18 +281,5 @@
   pre code {
     background-color: transparent;
     padding: 0;
-  }
-}
-
-/* PDF 预览样式 */
-.pdf-preview {
-  .pdf-document {
-    canvas {
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    }
-  }
-
-  .pdf-page {
-    margin: 0 auto;
   }
 }
