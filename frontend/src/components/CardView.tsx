@@ -43,7 +43,15 @@ interface CardViewProps<T> {
         key: string;
         label: string;
         danger?: boolean;
+        disabled?: boolean;
         icon?: React.JSX.Element;
+        confirm?: {
+          title: string;
+          description?: string;
+          okText?: string;
+          cancelText?: string;
+          okType?: "default" | "primary" | "danger";
+        };
         onClick?: (item: T) => void;
       }[]
     | ((item: T) => ItemType[]);
@@ -327,11 +335,9 @@ function CardView<T extends BaseCardDataType>(props: CardViewProps<T>) {
                 {operations && (
                   <ActionDropdown
                     actions={ops(item)}
+                    item={item}
                     onAction={(key) => {
-                      const operation = ops(item).find((op) => op.key === key);
-                      if (operation?.onClick) {
-                        operation.onClick(item);
-                      }
+                      // ActionDropdown 已经处理了 onClick 调用
                     }}
                   />
                 )}

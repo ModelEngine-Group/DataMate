@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { Breadcrumb, App, Tabs } from "antd";
+import { Breadcrumb, App, Tabs, Drawer, Descriptions } from "antd";
 import {
   ReloadOutlined,
   DownloadOutlined,
   UploadOutlined,
   EditOutlined,
   DeleteOutlined,
+  InfoCircleOutlined,
 } from "@ant-design/icons";
 import DetailHeader from "@/components/DetailHeader";
 import { getDatasetTypeMap, mapDataset } from "../dataset.const";
@@ -36,6 +37,7 @@ export default function DatasetDetail() {
   const { t } = useTranslation();
   const datasetTypeMap = getDatasetTypeMap(t);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showDetailDrawer, setShowDetailDrawer] = useState(false);
 
   const [dataset, setDataset] = useState<Dataset>({} as Dataset);
   const filesOperation = useFilesOperation(dataset);
@@ -135,6 +137,14 @@ export default function DatasetDetail() {
 
   // 数据集操作列表
   const operations = [
+    {
+      key: "detail",
+      label: t("dataManagement.actions.detail"),
+      icon: <InfoCircleOutlined />,
+      onClick: () => {
+        setShowDetailDrawer(true);
+      },
+    },
     {
       key: "edit",
       label: t("dataManagement.actions.edit"),
@@ -266,6 +276,70 @@ export default function DatasetDetail() {
         onClose={() => setShowEditDialog(false)}
         onRefresh={handleRefresh}
       />
+      <Drawer
+        title={t("dataManagement.detail.datasetDetail")}
+        open={showDetailDrawer}
+        onClose={() => setShowDetailDrawer(false)}
+        width={600}
+      >
+        <Descriptions
+          layout="vertical"
+          size="small"
+          column={1}
+          items={[
+            {
+              key: "id",
+              label: t("dataManagement.labels.id"),
+              children: dataset.id,
+            },
+            {
+              key: "name",
+              label: t("dataManagement.labels.name"),
+              children: dataset.name,
+            },
+            {
+              key: "description",
+              label: t("dataManagement.labels.description"),
+              children: dataset.description || t("dataManagement.defaults.none"),
+            },
+            {
+              key: "datasetType",
+              label: t("dataManagement.labels.type"),
+              children: datasetTypeMap[dataset?.datasetType]?.label || t("dataManagement.defaults.unknown"),
+            },
+            {
+              key: "status",
+              label: t("dataManagement.labels.status"),
+              children: dataset?.status?.label || t("dataManagement.defaults.unknown"),
+            },
+            {
+              key: "createdBy",
+              label: t("dataManagement.labels.creator"),
+              children: dataset.createdBy || t("dataManagement.defaults.unknown"),
+            },
+            {
+              key: "targetLocation",
+              label: t("dataManagement.labels.storagePath"),
+              children: dataset.targetLocation || t("dataManagement.defaults.unknown"),
+            },
+            {
+              key: "pvcName",
+              label: t("dataManagement.labels.storageName"),
+              children: dataset.pvcName || t("dataManagement.defaults.unknown"),
+            },
+            {
+              key: "createdAt",
+              label: t("dataManagement.labels.createdAt"),
+              children: dataset.createdAt,
+            },
+            {
+              key: "updatedAt",
+              label: t("dataManagement.labels.updatedAt"),
+              children: dataset.updatedAt,
+            },
+          ]}
+        />
+      </Drawer>
     </div>
   );
 }

@@ -1,13 +1,29 @@
-import { App, Button, Descriptions, DescriptionsProps, Modal, Table, Input, Spin } from "antd";
+import { App, Button, Modal, Table, Input, Spin } from "antd";
 import { formatBytes, formatDateTime } from "@/utils/unit";
 import { Download, Trash2, Folder, File } from "lucide-react";
 import { getDatasetTypeMap } from "../../dataset.const";
+import DeleteConfirmModal from "@/components/DeleteConfirmModal";
 import { useTranslation } from "react-i18next";
+import { useState } from "react";
 
 export default function Overview({ dataset, filesOperation, fetchDataset }) {
   const { modal, message } = App.useApp();
   const { t } = useTranslation();
   const datasetTypeMap = getDatasetTypeMap(t);
+
+  // 删除确认弹窗状态
+  const [deleteModal, setDeleteModal] = useState<{
+    visible: boolean;
+    type: "file" | "directory";
+    fileName: string;
+    handler: () => void | Promise<void>;
+  }>({
+    visible: false,
+    type: "file",
+    fileName: "",
+    handler: () => {},
+  });
+
   const {
     fileList,
     pagination,
@@ -43,70 +59,30 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
       );
     },
   };
-  // 基本信息
-  const items: DescriptionsProps["items"] = [
-    {
-      key: "id",
-      label: t("dataManagement.labels.id"),
-      children: dataset.id,
-    },
-    {
-      key: "name",
-      label: t("dataManagement.labels.name"),
-      children: dataset.name,
-    },
-    {
-      key: "fileCount",
-      label: t("dataManagement.labels.fileCount"),
-      children: dataset.fileCount || 0,
-    },
-    {
-      key: "size",
-      label: t("dataManagement.labels.dataSize"),
-      children: dataset.size || "0 B",
-    },
 
-    {
-      key: "datasetType",
-      label: t("dataManagement.labels.type"),
-      children: datasetTypeMap[dataset?.datasetType]?.label || t("dataManagement.defaults.unknown"),
-    },
-    {
-      key: "status",
-      label: t("dataManagement.labels.status"),
-      children: dataset?.status?.label || t("dataManagement.defaults.unknown"),
-    },
-    {
-      key: "createdBy",
-      label: t("dataManagement.labels.creator"),
-      children: dataset.createdBy || t("dataManagement.defaults.unknown"),
-    },
-    {
-      key: "targetLocation",
-      label: t("dataManagement.labels.storagePath"),
-      children: dataset.targetLocation || t("dataManagement.defaults.unknown"),
-    },
-    {
-      key: "pvcName",
-      label: t("dataManagement.labels.storageName"),
-      children: dataset.pvcName || t("dataManagement.defaults.unknown"),
-    },
-    {
-      key: "createdAt",
-      label: t("dataManagement.labels.createdAt"),
-      children: dataset.createdAt,
-    },
-    {
-      key: "updatedAt",
-      label: t("dataManagement.labels.updatedAt"),
-      children: dataset.updatedAt,
-    },
-    {
-      key: "description",
-      label: t("dataManagement.labels.description"),
-      children: dataset.description || t("dataManagement.defaults.none"),
-    },
-  ];
+  // 显示删除确认弹窗
+  const showDeleteConfirm = (
+    type: "file" | "directory",
+    fileName: string,
+    handler: () => void | Promise<void>
+  ) => {
+    setDeleteModal({
+      visible: true,
+      type,
+      fileName,
+      handler,
+    });
+  };
+
+  // 执行删除操作
+  const handleConfirmDelete = async () => {
+    await deleteModal.handler();
+    setDeleteModal({ visible: false, type: "file", fileName: "", handler: () => {} });
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteModal({ visible: false, type: "file", fileName: "", handler: () => {} });
+  };
 
   // 文件列表列定义
   const columns = [
@@ -143,8 +119,19 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
                 const newPath = `${currentPath}${record.fileName}/`;
                 filesOperation.fetchFiles(newPath, 1, filesOperation.pagination.pageSize);
               }}
+              className="hover:text-blue-600 transition-colors duration-200"
+              style={{
+                padding: 0,
+                height: 'auto',
+                fontWeight: 500
+              }}
             >
-              {content}
+              <div className="flex items-center group">
+                <Folder className="mr-2 text-blue-500 group-hover:text-blue-600 transition-colors" size={iconSize} />
+                <span className="truncate underline-transparent group-hover:underline group-hover:text-blue-600 transition-all">
+                  {displayName}
+                </span>
+              </div>
             </Button>
           );
         }
@@ -153,8 +140,19 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
             <Button
               type="link"
               onClick={() => handlePreviewFile(record)}
+              className="hover:text-blue-600 transition-colors duration-200"
+              style={{
+                padding: 0,
+                height: 'auto',
+                fontWeight: 500
+              }}
             >
-              {content}
+              <div className="flex items-center group">
+                <File className="mr-2 text-black group-hover:text-blue-600 transition-colors" size={iconSize} />
+                <span className="truncate underline-transparent group-hover:underline group-hover:text-blue-600 transition-all">
+                  {displayName}
+                </span>
+              </div>
             </Button>
           );
       },
@@ -305,19 +303,16 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
               <Button
                 size="small"
                 type="link"
-                onClick={() => {
-                  modal.confirm({
-                    title: t("dataManagement.confirm.deleteFolderTitle"),
-                    content: t("dataManagement.confirm.deleteFolderDesc", { name: record.fileName }),
-                    okText: t("dataManagement.confirm.deleteConfirm"),
-                    okType: "danger",
-                    cancelText: t("dataManagement.confirm.deleteCancel"),
-                    onOk: async () => {
+                onClick={() =>
+                  showDeleteConfirm(
+                    "directory",
+                    record.fileName,
+                    async () => {
                       await handleDeleteDirectory(fullPath, record.fileName);
                       fetchDataset();
-                    },
-                  });
-                }}
+                    }
+                  )
+                }
               >
                 {t("dataManagement.actions.delete")}
               </Button>
@@ -376,11 +371,16 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
           <Button
             size="small"
             type="link"
-            onClick={async () => {
-              await handleDeleteFile(record);
-              fetchDataset()
+            onClick={() =>
+              showDeleteConfirm(
+                "file",
+                record.fileName,
+                async () => {
+                  await handleDeleteFile(record);
+                  fetchDataset();
+                }
+              )
             }
-          }
           >
             {t("dataManagement.actions.delete")}
           </Button>
@@ -392,15 +392,6 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
   return (
     <>
       <div className=" flex flex-col gap-4">
-        {/* 基本信息 */}
-        <Descriptions
-          title={t("dataManagement.detail.sectionBasicInfo")}
-          layout="vertical"
-          size="small"
-          items={items}
-          column={5}
-        />
-
         {/* 文件列表 */}
         <div className="flex items-center justify-between mt-8 mb-2">
           <h2 className="text-base font-semibold">
@@ -717,6 +708,23 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
           </div>
         </div>
       </Modal>
+      {/* 删除确认弹窗 */}
+      <DeleteConfirmModal
+        visible={deleteModal.visible}
+        title={
+          deleteModal.type === "directory"
+            ? t("dataManagement.confirm.deleteFolderTitle")
+            : t("components.deleteConfirm.title")
+        }
+        message={
+          deleteModal.type === "directory"
+            ? t("dataManagement.confirm.deleteFolderDesc", { name: deleteModal.fileName })
+            : t("components.deleteConfirm.message", { itemName: deleteModal.fileName })
+        }
+        itemName={deleteModal.fileName}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+      />
     </>
   );
 }

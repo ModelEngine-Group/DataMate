@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { Button, Card, Table, App, Badge, Popconfirm } from "antd";
+import { Button, Card, Table, App, Badge, Tooltip } from "antd";
 import { Plus } from "lucide-react";
 import { DeleteOutlined } from "@ant-design/icons";
 import type { RatioTaskItem } from "@/pages/RatioTask/ratio.model";
 import { useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 import CardView from "@/components/CardView";
+import DeleteConfirmModal from "@/components/DeleteConfirmModal";
 import { SearchControls } from "@/components/SearchControls";
 import {
   deleteRatioTasksUsingDelete,
@@ -19,6 +20,15 @@ export default function RatioTasksPage() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [viewMode, setViewMode] = useState<"card" | "list">("list");
+  const [deleteModal, setDeleteModal] = useState<{
+    visible: boolean;
+    taskId: string;
+    taskName: string;
+  }>({
+    visible: false,
+    taskId: "",
+    taskName: "",
+  });
 
   const {
     loading,
@@ -42,14 +52,23 @@ export default function RatioTasksPage() {
     fetchData();
   }, [t]);
 
-  const handleDeleteTask = async (task: RatioTaskItem) => {
+  const handleDeleteTask = async (taskId: string) => {
     try {
-      await deleteRatioTasksUsingDelete(task.id);
+      await deleteRatioTasksUsingDelete(taskId);
       message.success(t("ratioTask.home.messages.deleteSuccess"));
+      setDeleteModal({ visible: false, taskId: "", taskName: "" });
       fetchData();
     } catch (error) {
       message.error(t("ratioTask.home.messages.deleteFailed"));
     }
+  };
+
+  const showDeleteConfirm = (taskId: string, taskName: string) => {
+    setDeleteModal({ visible: true, taskId, taskName });
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteModal({ visible: false, taskId: "", taskName: "" });
   };
 
   const filters = [
@@ -132,31 +151,16 @@ export default function RatioTasksPage() {
       fixed: "right" as const,
       render: (_: any, task: RatioTaskItem) => (
         <div className="flex items-center gap-2">
-          {operations.map((op) => {
-            if (op.confirm) {
-              return (
-                <Popconfirm
-                  key={op.key}
-                  title={op.confirm.title}
-                  description={op.confirm.description}
-                  okText={op.confirm.okText}
-                  cancelText={op.confirm.cancelText}
-                  onConfirm={() => op.onClick(task)}
-                >
-                  <Button type="text" icon={op.icon} danger={op.danger} />
-                </Popconfirm>
-              );
-            }
-            return (
+          {operations.map((op) => (
+            <Tooltip key={op.key} title={op.label}>
               <Button
-                key={op.key}
                 type="text"
                 icon={op.icon}
                 danger={op.danger}
-                onClick={() => op.onClick(task)}
+                onClick={() => op.onClick && op.onClick(task)}
               />
-            );
-          })}
+            </Tooltip>
+          ))}
         </div>
       ),
     },
@@ -167,15 +171,8 @@ export default function RatioTasksPage() {
       key: "delete",
       label: t("ratioTask.home.confirm.okText"),
       danger: true,
-      confirm: {
-        title: t("ratioTask.home.confirm.deleteTitle"),
-        description: t("ratioTask.home.confirm.deleteDesc"),
-        okText: t("ratioTask.home.confirm.okText"),
-        cancelText: t("ratioTask.home.confirm.cancelText"),
-        okType: "danger",
-      },
       icon: <DeleteOutlined />,
-      onClick: handleDeleteTask,
+      onClick: (task: RatioTaskItem) => showDeleteConfirm(task.id, task.name),
     },
   ];
 
@@ -228,6 +225,14 @@ export default function RatioTasksPage() {
           />
         )}
       </>
+      <DeleteConfirmModal
+        visible={deleteModal.visible}
+        title={t("ratioTask.home.confirm.deleteTitle")}
+        message={t("ratioTask.home.confirm.deleteDesc")}
+        itemName={deleteModal.taskName}
+        onConfirm={() => handleDeleteTask(deleteModal.taskId)}
+        onCancel={handleCancelDelete}
+      />
     </div>
   );
 }

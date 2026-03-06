@@ -1,24 +1,30 @@
-import { Dropdown, Popconfirm, Button, Space } from "antd";
+import { Dropdown, Button, Space } from "antd";
 import { EllipsisOutlined } from "@ant-design/icons";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import DeleteConfirmModal from "./DeleteConfirmModal";
 
 interface ActionItem {
   key: string;
   label: string;
   icon?: React.ReactNode;
   danger?: boolean;
+  disabled?: boolean;
   confirm?: {
-    title: string;
-    description?: string;
+    title?: string;
+    message?: string;
+    itemName?: string | ((item: any) => string);
     okText?: string;
     cancelText?: string;
+    okType?: "default" | "primary" | "danger";
   };
+  onClick?: (item?: any) => void | Promise<void>;
 }
 
 interface ActionDropdownProps {
   actions?: ActionItem[];
-  onAction?: (key: string, action: ActionItem) => void;
+  onAction?: (key: string, action: ActionItem, item?: any) => void;
+  item?: any;
   placement?:
     | "bottomRight"
     | "topLeft"
@@ -33,86 +39,106 @@ interface ActionDropdownProps {
 const ActionDropdown = ({
   actions = [],
   onAction,
+  item,
   placement = "bottomRight",
 }: ActionDropdownProps) => {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
-  const handleActionClick = (action: ActionItem) => {
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    visible: boolean;
+    action: ActionItem | null;
+  }>({
+    visible: false,
+    action: null,
+  });
+
+  const handleActionClick = (action: ActionItem, e: React.MouseEvent) => {
+    e?.stopPropagation();
+
     if (action.confirm) {
-      // 如果有确认框，不立即执行，等待确认
+      // 显示删除确认弹窗
+      setDeleteConfirm({
+        visible: true,
+        action,
+      });
+      setOpen(false);
       return;
     }
+
     // 执行操作
-    onAction?.(action.key, action);
-    // 如果没有确认框，则立即关闭 Dropdown
+    if (action.onClick) {
+      action.onClick(item);
+    }
+    onAction?.(action.key, action, item);
     setOpen(false);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (deleteConfirm.action?.onClick) {
+      await deleteConfirm.action.onClick(item);
+    }
+    if (deleteConfirm.action) {
+      onAction?.(deleteConfirm.action.key, deleteConfirm.action, item);
+    }
+    setDeleteConfirm({ visible: false, action: null });
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteConfirm({ visible: false, action: null });
   };
 
   const dropdownContent = (
     <div className="bg-white p-2 rounded shadow-md">
       <Space direction="vertical" className="w-full">
-        {actions.map((action) => {
-          if (action.confirm) {
-            return (
-              <Popconfirm
-                key={action.key}
-                title={action.confirm.title}
-                description={action.confirm.description}
-                onConfirm={() => {
-                  onAction?.(action.key, action);
-                  setOpen(false);
-                }}
-                okText={action.confirm.okText || t('components.actionDropdown.confirm')}
-                cancelText={action.confirm.cancelText || t('components.actionDropdown.cancel')}
-                okType={action.danger ? "danger" : "primary"}
-                styles={{ root: { zIndex: 9999 } }}
-              >
-                <Button
-                  type="text"
-                  size="small"
-                  disabled={action.disabled || false}
-                  className="w-full text-left"
-                  danger={action.danger}
-                  icon={action.icon}
-                >
-                  {action.label}
-                </Button>
-              </Popconfirm>
-            );
-          }
-
-          return (
-            <Button
-              key={action.key}
-              className="w-full"
-              size="small"
-              type="text"
-              disabled={action.disabled || false}
-              danger={action.danger}
-              icon={action.icon}
-              onClick={() => handleActionClick(action)}
-            >
-              {action.label}
-            </Button>
-          );
-        })}
+        {actions.map((action) => (
+          <Button
+            key={action.key}
+            className="w-full"
+            size="small"
+            type="text"
+            disabled={action.disabled || false}
+            danger={action.danger}
+            icon={action.icon}
+            onClick={(e) => handleActionClick(action, e)}
+          >
+            {action.label}
+          </Button>
+        ))}
       </Space>
     </div>
   );
 
   return (
-    <Dropdown
-      overlay={dropdownContent}
-      trigger={["click"]}
-      placement={placement}
-      open={open}
-      onOpenChange={setOpen}
-    >
-      <Button
-        type="text"
-        icon={<EllipsisOutlined style={{ fontSize: 24 }} />}
-      />
-    </Dropdown>
+    <>
+      <Dropdown
+        menu={{ items: [] }}
+        dropdownRender={() => dropdownContent}
+        trigger={["click"]}
+        placement={placement}
+        open={open}
+        onOpenChange={setOpen}
+      >
+        <Button
+          type="text"
+          icon={<EllipsisOutlined style={{ fontSize: 24 }} />}
+        />
+      </Dropdown>
+
+      {deleteConfirm.action?.confirm && (
+        <DeleteConfirmModal
+          visible={deleteConfirm.visible}
+          title={deleteConfirm.action.confirm.title}
+          message={deleteConfirm.action.confirm.message}
+          itemName={
+            typeof deleteConfirm.action.confirm.itemName === 'function'
+              ? deleteConfirm.action.confirm.itemName(item)
+              : deleteConfirm.action.confirm.itemName
+          }
+          onConfirm={handleConfirmDelete}
+          onCancel={handleCancelDelete}
+        />
+      )}
+    </>
   );
 };
 
