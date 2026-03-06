@@ -2,47 +2,53 @@
 import os
 import json
 import cv2
+import shutil
+
 from ultralytics import YOLO
 
+from .._video_common.paths import make_run_dir, ensure_dir
+from .._video_common.log import get_logger
 from .._video_common.io_video import get_video_info
 from .._video_common.schema import init_tracks_schema
-from .._video_common.paths import make_run_dir
-from .._video_common.log import get_logger
+from .._video_common.model_paths import resolve_model_path
 
-def _draw_tracks(frame, objects):
-    for obj in objects:
-        x1, y1, x2, y2 = map(int, obj["bbox"])
-        tid = obj["track_id"]
-        score = obj.get("score", 0.0)
-        cls_id = obj.get("cls_id", -1)
-        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-        text = f"id={tid} cls={cls_id} {score:.2f}"
-        cv2.putText(frame, text, (x1, max(0, y1 - 5)),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
-    return frame
 
 class VideoMotTrack:
+    """多目标跟踪（YOLO + ByteTrack）
+
+    权重策略（模型仓）：
+      DATAMATE_MODEL_ROOT=/mnt/models
+      默认权重：/mnt/models/yolo/yolov8n.pt
+    params:
+      - model_root: 可选，覆盖 DATAMATE_MODEL_ROOT
+      - yolo_model: 可选，权重路径（相对/绝对均可）
+      - conf: default 0.3
+      - iou: default 0.5
+      - classes: "0,2,3" or None
+      - tracker_cfg: bytetrack yaml 路径（默认算子 configs/bytetrack.yaml）
+      - save_debug: default True
+    outputs:
+      - tracks.json
+      - debug.mp4 (optional)
     """
-    多目标追踪算子：
-    输入: sample["filePath"], sample["export_path"]
-    输出: tracks.json + debug.mp4
-    """
+
     def execute(self, sample: dict, params: dict = None):
         params = params or {}
         video_path = sample["filePath"]
-        export_path = sample["export_path"]
+        export_path = sample.get("export_path", "./outputs")
 
         out_dir = make_run_dir(export_path, "video_mot_track")
-        logger = get_logger("VideoMotTrack", log_dir=out_dir)
+        log_dir = ensure_dir(os.path.join(out_dir, "logs"))
+        art_dir = ensure_dir(os.path.join(out_dir, "artifacts"))
+        logger = get_logger("VideoMotTrack", log_dir)
 
-        # 让 ultralytics 配置可写（避免 warning）
-        os.environ.setdefault("YOLO_CONFIG_DIR", os.path.join(out_dir, ".ultralytics"))
+        # YOLO config dir（避免写到不可写目录）
+        os.environ.setdefault("YOLO_CONFIG_DIR", os.path.join(out_dir, "yolo_cfg"))
         os.makedirs(os.environ["YOLO_CONFIG_DIR"], exist_ok=True)
 
-        # 默认使用算子包内置权重（离线环境不触发下载）
-        default_weight = os.path.join(os.path.dirname(__file__), "weights", "yolov8n.pt")
-        yolo_model = params.get("yolo_model", default_weight)
-        
+        # ✅ 模型仓默认权重
+        yolo_model = resolve_model_path(params, "yolo_model", "yolo/yolov8n.pt")
+
         conf = float(params.get("conf", 0.3))
         iou = float(params.get("iou", 0.5))
         classes = params.get("classes", None)  # "0,2,3" or None
@@ -56,13 +62,15 @@ class VideoMotTrack:
         fps, W, H, _ = get_video_info(video_path)
         tracks = init_tracks_schema(video_path, fps, W, H)
 
-        debug_path = os.path.join(out_dir, "debug.mp4")
+        debug_path = os.path.join(art_dir, "debug.mp4")
         debug_writer = None
         if save_debug:
             fourcc = cv2.VideoWriter_fourcc(*"mp4v")
             debug_writer = cv2.VideoWriter(debug_path, fourcc, fps, (W, H))
 
         logger.info(f"Start tracking. video={video_path}, model={yolo_model}, conf={conf}, iou={iou}, classes={classes}")
+        if not os.path.exists(yolo_model):
+            raise RuntimeError(f"YOLO weight not found: {yolo_model}. Please download to model repo path.")
 
         model = YOLO(yolo_model)
         results_iter = model.track(
@@ -71,49 +79,46 @@ class VideoMotTrack:
             iou=iou,
             classes=cls_list,
             tracker=tracker_cfg,
-            persist=True,
-            verbose=False,
             stream=True,
+            verbose=False,
         )
 
-        for frame_id, r in enumerate(results_iter):
+        frame_idx = 0
+        for r in results_iter:
             frame = r.orig_img
             objs = []
-
             if r.boxes is not None and r.boxes.id is not None:
-                xyxy = r.boxes.xyxy.cpu().numpy()
-                confs = r.boxes.conf.cpu().numpy()
-                clss = r.boxes.cls.cpu().numpy().astype(int)
-                tids = r.boxes.id.cpu().numpy().astype(int)
-
-                for box, s, c, tid in zip(xyxy, confs, clss, tids):
-                    x1, y1, x2, y2 = box.tolist()
+                ids = r.boxes.id.cpu().numpy().tolist()
+                xyxy = r.boxes.xyxy.cpu().numpy().tolist()
+                confs = r.boxes.conf.cpu().numpy().tolist()
+                clss = r.boxes.cls.cpu().numpy().tolist()
+                for tid, bb, sc, cc in zip(ids, xyxy, confs, clss):
+                    x1, y1, x2, y2 = bb
                     objs.append({
                         "track_id": int(tid),
                         "bbox": [float(x1), float(y1), float(x2), float(y2)],
-                        "score": float(s),
-                        "cls_id": int(c),
+                        "score": float(sc),
+                        "cls_id": int(cc),
                     })
-
-            tracks["frames"].append({"frame_id": frame_id, "objects": objs})
+                    if debug_writer is not None:
+                        cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (0,255,0), 2)
+                        cv2.putText(frame, f"id={int(tid)}", (int(x1), int(y1)-5),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,255,0), 2)
+            tracks["frames"].append({"frame_idx": frame_idx, "objects": objs})
 
             if debug_writer is not None:
-                vis = frame.copy()
-                vis = _draw_tracks(vis, objs)
-                debug_writer.write(vis)
+                debug_writer.write(frame)
+            frame_idx += 1
 
         if debug_writer is not None:
             debug_writer.release()
 
-        json_path = os.path.join(out_dir, "tracks.json")
-        with open(json_path, "w", encoding="utf-8") as f:
+        tracks_path = os.path.join(art_dir, "tracks.json")
+        with open(tracks_path, "w", encoding="utf-8") as f:
             json.dump(tracks, f, ensure_ascii=False, indent=2)
 
-        logger.info(f"Done. tracks_json={json_path}, debug={debug_path if save_debug else None}")
-
-        # 返回给 runner
-        return {
-            "out_dir": out_dir,
-            "tracks_json": json_path,
-            "debug_video": debug_path if save_debug else None,
-        }
+        logger.info(f"Done. tracks_json={tracks_path}")
+        out = {"out_dir": out_dir, "tracks_json": tracks_path}
+        if save_debug:
+            out["debug_mp4"] = debug_path
+        return out

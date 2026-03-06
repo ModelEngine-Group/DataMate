@@ -6,12 +6,45 @@ import shutil
 import subprocess
 import cv2
 import numpy as np
+import inspect
 
 from .._video_common.paths import make_run_dir, ensure_dir
 from .._video_common.log import get_logger
 from .._video_common.io_video import get_video_info
+from paddleocr import PaddleOCR
+from .._video_common.model_paths import resolve_model_path
 
+def build_paddle_ocr(params, ocr_lang: str, use_angle_cls: bool):
+    """
+    默认模型目录：
+      /mnt/models/ocr/det
+      /mnt/models/ocr/rec
+      /mnt/models/ocr/cls
+    也支持 params['ocr_model_dir'] 指定（相对/绝对）。
+    """
+    ocr_root = resolve_model_path(params, "ocr_model_dir", "ocr")
+    det_dir = os.path.join(ocr_root, "det")
+    rec_dir = os.path.join(ocr_root, "rec")
+    cls_dir = os.path.join(ocr_root, "cls")
 
+    # 目录不存在就直接报错，让用户去模型仓下载到固定位置
+    for p in [det_dir, rec_dir] + ([cls_dir] if use_angle_cls else []):
+        if not os.path.exists(p):
+            raise RuntimeError(f"PaddleOCR model dir not found: {p}. Please download OCR models into model repo path.")
+
+    sig = inspect.signature(PaddleOCR.__init__)
+    kw = {"lang": ocr_lang}
+    if "use_angle_cls" in sig.parameters:
+        kw["use_angle_cls"] = use_angle_cls
+    # PaddleOCR 3.4.0 支持这些
+    if "det_model_dir" in sig.parameters:
+        kw["det_model_dir"] = det_dir
+    if "rec_model_dir" in sig.parameters:
+        kw["rec_model_dir"] = rec_dir
+    if "cls_model_dir" in sig.parameters and use_angle_cls:
+        kw["cls_model_dir"] = cls_dir
+
+    return PaddleOCR(**kw)
 def _write_srt(segments, srt_path):
     def _fmt(t):
         h = int(t // 3600)
@@ -275,7 +308,7 @@ class VideoSubtitleOCR:
 
         from paddleocr import PaddleOCR
         ocr_lang = params.get("ocr_lang", "ch")
-        ocr = PaddleOCR(use_angle_cls=True, lang=ocr_lang)
+        ocr = build_paddle_ocr(params, ocr_lang=ocr_lang, use_angle_cls=False)   
 
         fps, w, h, total = get_video_info(src_video)
         sample_fps = float(params.get("sample_fps", 1.0))
