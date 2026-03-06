@@ -29,26 +29,21 @@ export default function EditDataset({
     datasetType: DatasetType.TEXT,
     tags: [],
   });
-  const fetchDataset = async () => {
-    if (!open) return;
-    // 如果有id，说明是编辑模式
-    if (data && data.id) {
-      const { data: newData } = await queryDatasetByIdUsingGet(data.id);
+
+  // 当对话框打开时，使用传入的 data 初始化表单
+  useEffect(() => {
+    if (open && data && data.id) {
       const updatedDataset = {
-        ...newData,
-        type: newData.type,
-        tags: (newData.tags || []).map((tag) =>
+        ...data,
+        type: data.type,
+        tags: (data.tags || []).map((tag) =>
           typeof tag === "string" ? tag : tag.name
         ),
       };
       setNewDataset(updatedDataset);
       form.setFieldsValue(updatedDataset);
     }
-  };
-
-  useEffect(() => {
-    fetchDataset();
-  }, [data]);
+  }, [open, data, form]);
 
   const handleValuesChange = (_, allValues) => {
     setNewDataset({ ...newDataset, ...allValues });

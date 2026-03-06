@@ -277,6 +277,7 @@
     "description": "Create, import and manage datasets",
     "actions": {
       "createDataset": "Create Dataset",
+      "detail": "Details",
       "edit": "Edit",
       "import": "Import",
       "importData": "Import Data",
@@ -394,7 +395,8 @@
       "previewTitle": "File Preview: {{name}}",
       "previewEmpty": "No preview available or unsupported file type.",
       "previewInfoTitle": "File Info",
-      "editTitle": "Edit Dataset - {{name}}"
+      "editTitle": "Edit Dataset - {{name}}",
+      "datasetDetail": "Dataset Details"
     },
     "labels": {
       "id": "ID",
