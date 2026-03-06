@@ -51,7 +51,7 @@ export default defineConfig({
       // Python 服务: rag, synthesis, annotation, evaluation, models
       const pythonPaths = ["rag", "operators", "cleaning", "synthesis", "annotation", "knowledge-base", "data-collection", "evaluation", "models"];
       // Java 服务: data-management, knowledge-base
-      const javaPaths = ["data-management"];
+      const javaPaths = ["data-management", "sys-param"];
 
       const proxy: Record<string, object> = {};
       for (const p of pythonPaths) {
