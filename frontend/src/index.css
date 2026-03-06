@@ -116,3 +116,171 @@
     white-space: nowrap;
   }
 }
+
+/* Markdown 内容样式 */
+.markdown-content {
+  /* 标题样式 */
+  h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+    color: #1a202c;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 0.5rem;
+  }
+
+  h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-top: 1.25rem;
+    margin-bottom: 0.75rem;
+    color: #2d3748;
+  }
+
+  h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+    color: #2d3748;
+  }
+
+  h4, h5, h6 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-top: 0.75rem;
+    margin-bottom: 0.5rem;
+    color: #4a5568;
+  }
+
+  /* 段落 */
+  p {
+    margin-bottom: 1rem;
+    line-height: 1.7;
+  }
+
+  /* 列表 */
+  ul, ol {
+    margin-left: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  li {
+    margin-bottom: 0.5rem;
+  }
+
+  /* 引用块 */
+  blockquote {
+    border-left: 4px solid #3b82f6;
+    padding-left: 1rem;
+    margin: 1rem 0;
+    color: #64748b;
+    background-color: #f7fafc;
+    padding: 0.75rem 1rem;
+    border-radius: 0.375rem;
+  }
+
+  /* 代码块 */
+  code {
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.875rem;
+  }
+
+  pre {
+    background-color: #1e293b;
+    color: #e2e8f0;
+    padding: 1rem;
+    border-radius: 0.375rem;
+    overflow-x: auto;
+    margin-bottom: 1rem;
+  }
+
+  pre code {
+    background-color: transparent;
+    padding: 0;
+    color: inherit;
+  }
+
+  /* 表格 */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+  }
+
+  th, td {
+    padding: 0.5rem 1rem;
+    text-align: left;
+    border: 1px solid #e2e8f0;
+  }
+
+  th {
+    background-color: #f7fafc;
+    font-weight: 600;
+  }
+
+  /* 水平线 */
+  hr {
+    border-color: #e2e8f0;
+    margin: 2rem 0;
+  }
+}
+
+/* Word 文档转换内容样式 */
+.docx-content {
+  color: #333;
+  line-height: 1.6;
+
+  /* 段落 */
+  p {
+    margin-bottom: 0.5em;
+  }
+
+  /* 标题 */
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    margin-top: 1em;
+    margin-bottom: 0.5em;
+  }
+
+  /* 列表 */
+  ul, ol {
+    margin-left: 2em;
+    margin-bottom: 0.5em;
+  }
+
+  /* 表格 */
+  table {
+    border-collapse: collapse;
+    margin: 1em 0;
+  }
+
+  td, th {
+    border: 1px solid #dfe2e5;
+    padding: 0.375rem 0.5rem;
+  }
+
+  /* 代码 */
+  code {
+    font-family: monospace;
+    background-color: #f3f4f6;
+    padding: 0.125rem 0.25rem;
+    border-radius: 0.25rem;
+    font-size: 0.875em;
+  }
+
+  pre {
+    background-color: #1f2937;
+    color: #f9fafb;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+  }
+
+  pre code {
+    background-color: transparent;
+    padding: 0;
+  }
+}
+
