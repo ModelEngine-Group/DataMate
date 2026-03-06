@@ -82,6 +82,7 @@ export default function CreateTaskStepOne({
       form.setFieldValue("destDatasetName", srcName);
       setTaskConfig({
         ...taskConfig,
+        destDatasetId: srcDataset?.id || "",
         destDatasetName: srcName,
       });
     } else {

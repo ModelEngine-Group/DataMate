@@ -45,10 +45,15 @@ class CleaningTemplateService:
         self.validator = validator
 
     async def get_templates(
-        self, db: AsyncSession, keyword: str | None = None
-    ) -> List[CleaningTemplateDto]:
-        """Get all templates"""
-        templates = await self.template_repo.find_all_templates(db, keyword)
+        self,
+        db: AsyncSession,
+        keyword: str | None = None,
+        page: int | None = None,
+        size: int | None = None,
+    ) -> tuple[List[CleaningTemplateDto], int]:
+        """Get templates with pagination"""
+        total = await self.template_repo.count_templates(db, keyword)
+        templates = await self.template_repo.find_all_templates(db, keyword, page, size)
 
         # Collect all operator IDs
         template_instances_map = {}
@@ -100,7 +105,7 @@ class CleaningTemplateService:
 
             result.append(template_dto)
 
-        return result
+        return result, total
 
     async def get_template(
         self, db: AsyncSession, template_id: str

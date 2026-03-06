@@ -2,7 +2,6 @@ import math
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import get_logger
@@ -65,31 +64,18 @@ def _get_template_service(db: AsyncSession) -> CleaningTemplateService:
     "",
     response_model=StandardResponse[PaginatedData[CleaningTemplateDto]],
     summary="查询清洗模板列表",
-    description="分页查询清洗模板"
+    description="分页查询清洗模板",
 )
 async def get_cleaning_templates(
-    page: int = Query(1, description="页码"),
+    page: int = Query(0, description="页码"),
     size: int = Query(20, description="每页数量"),
     keyword: Optional[str] = Query(None, description="关键词搜索"),
     db: AsyncSession = Depends(get_db),
 ):
     """Query cleaning templates with pagination"""
-    from app.db.models.cleaning import CleaningTemplate
-
     template_service = _get_template_service(db)
 
-    query = select(CleaningTemplate)
-
-    if keyword:
-        keyword_pattern = f"%{keyword}%"
-        query = query.where(
-            CleaningTemplate.name.ilike(keyword_pattern) | CleaningTemplate.description.ilike(keyword_pattern)
-        )
-
-    count_query = select(func.count()).select_from(query.subquery())
-    total = (await db.execute(count_query)).scalar_one()
-
-    items = await template_service.get_templates(db, keyword)
+    items, total = await template_service.get_templates(db, keyword, page, size)
 
     total_pages = math.ceil(total / size) if total > 0 else 0
 
@@ -102,7 +88,7 @@ async def get_cleaning_templates(
             total_pages=total_pages,
             page=page,
             size=size,
-        )
+        ),
     )
 
 
@@ -110,7 +96,7 @@ async def get_cleaning_templates(
     "",
     response_model=StandardResponse[CleaningTemplateDto],
     summary="创建清洗模板",
-    description="创建新的清洗模板"
+    description="创建新的清洗模板",
 )
 async def create_cleaning_template(
     request: CreateCleaningTemplateRequest,
@@ -129,7 +115,7 @@ async def create_cleaning_template(
     "/{template_id}",
     response_model=StandardResponse[CleaningTemplateDto],
     summary="获取清洗模板详情",
-    description="根据ID获取清洗模板详细信息"
+    description="根据ID获取清洗模板详细信息",
 )
 async def get_cleaning_template(
     template_id: str,
@@ -146,7 +132,7 @@ async def get_cleaning_template(
     "/{template_id}",
     response_model=StandardResponse[CleaningTemplateDto],
     summary="更新清洗模板",
-    description="更新清洗模板信息"
+    description="更新清洗模板信息",
 )
 async def update_cleaning_template(
     template_id: str,
@@ -166,7 +152,7 @@ async def update_cleaning_template(
     "/{template_id}",
     response_model=StandardResponse[str],
     summary="删除清洗模板",
-    description="删除指定的清洗模板"
+    description="删除指定的清洗模板",
 )
 async def delete_cleaning_template(
     template_id: str,

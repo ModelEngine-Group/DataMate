@@ -49,11 +49,28 @@ export default defineConfig({
       };
 
       // Python 服务: rag, synthesis, annotation, evaluation, models
-      const pythonPaths = ["rag", "operators", "cleaning", "synthesis", "annotation", "knowledge-base", "data-collection", "evaluation", "models"];
+      const pythonPaths = ["rag", "operators", "categories", "synthesis", "annotation", "knowledge-base", "data-collection", "evaluation", "models"];
       // Java 服务: data-management, knowledge-base
       const javaPaths = ["data-management"];
 
       const proxy: Record<string, object> = {};
+      // SSE 端点需要禁用缓冲
+      proxy["/api/cleaning"] = {
+        target: "http://localhost:8080",
+        changeOrigin: true,
+        secure: false,
+        configure: (proxy: { on: (event: string, handler: (arg: unknown) => void) => void }) => {
+          proxy.on("proxyReq", (proxyReq: unknown) => {
+            (proxyReq as { removeHeader: (name: string) => void }).removeHeader("referer");
+            (proxyReq as { removeHeader: (name: string) => void }).removeHeader("origin");
+          });
+          proxy.on("proxyRes", (proxyRes: unknown) => {
+            const res = proxyRes as { headers: Record<string, unknown> };
+            delete res.headers["set-cookie"];
+            res.headers["cookies"] = "";
+          });
+        },
+      };
       for (const p of pythonPaths) {
         proxy[`/api/${p}`] = pythonProxyConfig;
       }
