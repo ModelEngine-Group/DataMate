@@ -1432,6 +1432,8 @@
         "processedFileType": "处理后文件类型",
         "beforeSize": "处理前大小",
         "afterSize": "处理后大小",
+        "result": "处理结果",
+        "resultDetail": "处理结果详情",
         "status": "状态",
         "actions": "操作",
         "searchFileName": "搜索文件名",

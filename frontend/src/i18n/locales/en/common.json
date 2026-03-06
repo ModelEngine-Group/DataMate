@@ -1432,6 +1432,8 @@
         "processedFileType": "Processed File Type",
         "beforeSize": "Before Size",
         "afterSize": "After Size",
+        "result": "Result",
+        "resultDetail": "Result Detail",
         "status": "Status",
         "actions": "Actions",
         "searchFileName": "Search file name",
