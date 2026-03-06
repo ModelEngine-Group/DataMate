@@ -21,6 +21,11 @@ export function queryCleaningTaskLogByIdUsingGet(taskId: string | number, retryC
   return get(`/api/cleaning/tasks/${taskId}/log/${retryCount}`);
 }
 
+export function streamCleaningTaskLog(taskId: string | number, retryCount: number = 0): EventSource {
+  const url = `/api/cleaning/tasks/${taskId}/log/stream?retry_count=${retryCount}`;
+  return new EventSource(url);
+}
+
 export function updateCleaningTaskByIdUsingPut(taskId: string | number, data: any) {
   return put(`/api/cleaning/tasks/${taskId}`, data);
 }

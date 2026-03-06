@@ -1446,11 +1446,12 @@
         "sizeOptimization": "File Size Optimization",
         "reduced": "Reduced by {{percent}}%"
       },
-      "logTable": {
+"logTable": {
         "selectRun": "Select Run",
         "currentDisplay": "Current Display: {{num}}th Run",
         "nthRun": "{{num}}th Run",
-        "noLogs": "No logs available for this task"
+        "noLogs": "No logs available for this task",
+        "streaming": "Streaming..."
       },
       "operatorTable": {
         "serialNumber": "Serial Number",

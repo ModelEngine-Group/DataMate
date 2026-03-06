@@ -1450,7 +1450,8 @@
         "selectRun": "选择运行轮次",
         "currentDisplay": "当前展示: 第 {{num}} 次",
         "nthRun": "第 {{num}} 次",
-        "noLogs": "当前任务无可用日志"
+        "noLogs": "当前任务无可用日志",
+        "streaming": "实时流式输出中..."
       },
       "operatorTable": {
         "serialNumber": "序号",

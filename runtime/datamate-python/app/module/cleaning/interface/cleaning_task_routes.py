@@ -1,6 +1,7 @@
 from typing import Optional
 
 from fastapi import APIRouter, Depends
+from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import get_logger
@@ -57,8 +58,7 @@ def _get_task_service(db: AsyncSession) -> CleaningTaskService:
 
     runtime_client = RuntimeClient()
     scheduler = CleaningTaskScheduler(
-        task_repo=CleaningTaskRepository(None),
-        runtime_client=runtime_client
+        task_repo=CleaningTaskRepository(None), runtime_client=runtime_client
     )
     operator_service = _get_operator_service()
     dataset_service = DatasetManagementService(db)
@@ -83,7 +83,7 @@ def _get_task_service(db: AsyncSession) -> CleaningTaskService:
     response_model=StandardResponse[PaginatedData[CleaningTaskDto]],
     summary="查询清洗任务列表",
     description="根据参数查询清洗任务列表（支持分页、状态过滤、关键词搜索）",
-    tags=['mcp']
+    tags=["mcp"],
 )
 async def get_cleaning_tasks(
     page: int = 0,
@@ -108,7 +108,7 @@ async def get_cleaning_tasks(
             total_elements=count,
             total_pages=total_pages,
             content=tasks,
-        )
+        ),
     )
 
 
@@ -117,7 +117,7 @@ async def get_cleaning_tasks(
     response_model=StandardResponse[CleaningTaskDto],
     summary="创建清洗任务",
     description="根据模板ID或算子列表创建清洗任务",
-    tags=['mcp']
+    tags=["mcp"],
 )
 async def create_cleaning_task(
     request: CreateCleaningTaskRequest,
@@ -139,7 +139,7 @@ async def create_cleaning_task(
     "/{task_id}",
     response_model=StandardResponse[CleaningTaskDto],
     summary="获取清洗任务详情",
-    description="根据ID获取清洗任务详细信息"
+    description="根据ID获取清洗任务详细信息",
 )
 async def get_cleaning_task(
     task_id: str,
@@ -155,7 +155,7 @@ async def get_cleaning_task(
     "/{task_id}",
     response_model=StandardResponse[str],
     summary="删除清洗任务",
-    description="删除指定的清洗任务"
+    description="删除指定的清洗任务",
 )
 async def delete_cleaning_task(
     task_id: str,
@@ -172,7 +172,7 @@ async def delete_cleaning_task(
     "/{task_id}/stop",
     response_model=StandardResponse[str],
     summary="停止清洗任务",
-    description="停止正在运行的清洗任务"
+    description="停止正在运行的清洗任务",
 )
 async def stop_cleaning_task(
     task_id: str,
@@ -189,7 +189,7 @@ async def stop_cleaning_task(
     "/{task_id}/execute",
     response_model=StandardResponse[str],
     summary="执行清洗任务",
-    description="重新执行清洗任务"
+    description="重新执行清洗任务",
 )
 async def execute_cleaning_task(
     task_id: str,
@@ -206,7 +206,7 @@ async def execute_cleaning_task(
     "/{task_id}/result",
     response_model=StandardResponse[list[CleaningResultDto]],
     summary="获取清洗任务结果",
-    description="获取指定清洗任务的执行结果"
+    description="获取指定清洗任务的执行结果",
 )
 async def get_cleaning_task_results(
     task_id: str,
@@ -219,10 +219,125 @@ async def get_cleaning_task_results(
 
 
 @router.get(
+    "/{task_id}/log/stream",
+    summary="流式获取清洗任务日志",
+    description="通过SSE流式获取清洗任务日志",
+)
+async def stream_cleaning_task_log(
+    task_id: str,
+    retry_count: int = 0,
+    db: AsyncSession = Depends(get_db),
+):
+    """Stream cleaning task log via SSE"""
+    import asyncio
+    import json
+    import re
+    from pathlib import Path
+
+    FLOW_PATH = "/flow"
+
+    task_service = _get_task_service(db)
+    task = await task_service.task_repo.find_task_by_id(db, task_id)
+
+    if not task:
+
+        async def error_generator():
+            yield f"data: {json.dumps({'level': 'ERROR', 'message': 'Task not found'}, ensure_ascii=False)}\n\n"
+
+        return StreamingResponse(error_generator(), media_type="text/event-stream")
+
+    log_path = Path(f"{FLOW_PATH}/{task_id}/output.log")
+    if retry_count > 0:
+        log_path = Path(f"{FLOW_PATH}/{task_id}/output.log.{retry_count}")
+
+    standard_level_pattern = re.compile(
+        r"\b(DEBUG|Debug|INFO|Info|WARN|Warn|WARNING|Warning|ERROR|Error|FATAL|Fatal)\b"
+    )
+    exception_suffix_pattern = re.compile(r"\b\w+(Warning|Error|Exception)\b")
+
+    def get_log_level(line: str, default_level: str) -> str:
+        if not line or not line.strip():
+            return default_level
+        std_match = standard_level_pattern.search(line)
+        if std_match:
+            return std_match.group(1).upper()
+        ex_match = exception_suffix_pattern.search(line)
+        if ex_match:
+            match = ex_match.group(1).upper()
+            if match == "WARNING":
+                return "WARN"
+            if match in ["ERROR", "EXCEPTION"]:
+                return "ERROR"
+        return default_level
+
+    async def log_generator():
+        last_position = 0
+        last_level = "INFO"
+        heartbeat_counter = 0
+        HEARTBEAT_INTERVAL = 10
+
+        while True:
+            try:
+                current_task = await task_service.task_repo.find_task_by_id(db, task_id)
+                is_task_finished = current_task and current_task.status in [
+                    "COMPLETED",
+                    "FAILED",
+                    "STOPPED",
+                ]
+
+                if log_path.exists():
+                    with open(log_path, "r", encoding="utf-8") as f:
+                        f.seek(last_position)
+                        new_content = f.read()
+                        if new_content:
+                            for line in new_content.splitlines(keepends=True):
+                                last_level = get_log_level(line, last_level)
+                                log_entry = json.dumps(
+                                    {"level": last_level, "message": line.rstrip()},
+                                    ensure_ascii=False,
+                                )
+                                yield f"data: {log_entry}\n\n"
+                            last_position = f.tell()
+                            heartbeat_counter = 0
+                        else:
+                            heartbeat_counter += 1
+
+                        f.seek(0, 2)
+                        current_size = f.tell()
+                        if current_size < last_position:
+                            last_position = 0
+                else:
+                    heartbeat_counter += 1
+
+                if is_task_finished:
+                    yield f"data: {json.dumps({'level': 'INFO', 'message': '[END_OF_STREAM]'}, ensure_ascii=False)}\n\n"
+                    break
+
+                if heartbeat_counter >= HEARTBEAT_INTERVAL:
+                    yield f"data: {json.dumps({'level': 'DEBUG', 'message': '[HEARTBEAT]'}, ensure_ascii=False)}\n\n"
+                    heartbeat_counter = 0
+
+                await asyncio.sleep(1)
+            except Exception as e:
+                logger.error(f"Error reading log file: {e}")
+                await asyncio.sleep(2)
+
+    return StreamingResponse(
+        log_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
+@router.get(
     "/{task_id}/log/{retry_count}",
     response_model=StandardResponse[list[CleaningTaskLog]],
     summary="获取清洗任务日志",
-    description="获取指定清洗任务的执行日志"
+    description="获取指定清洗任务的执行日志",
 )
 async def get_cleaning_task_log(
     task_id: str,
