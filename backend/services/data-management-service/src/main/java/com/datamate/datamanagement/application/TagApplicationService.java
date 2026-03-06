@@ -1,6 +1,8 @@
 package com.datamate.datamanagement.application;
 
+import com.datamate.common.infrastructure.exception.BusinessException;
 import com.datamate.datamanagement.domain.model.dataset.Tag;
+import com.datamate.datamanagement.infrastructure.exception.DataManagementErrorCode;
 import com.datamate.datamanagement.infrastructure.persistence.mapper.TagMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -30,7 +32,7 @@ public class TagApplicationService {
     public Tag createTag(String name, String color, String description) {
         // 检查名称是否已存在
         if (tagMapper.findByName(name) != null) {
-            throw new IllegalArgumentException("Tag with name '" + name + "' already exists");
+            throw BusinessException.of(DataManagementErrorCode.TAG_NAME_DUPLICATE);
         }
 
         Tag tag = new Tag(name, description, null, color);
