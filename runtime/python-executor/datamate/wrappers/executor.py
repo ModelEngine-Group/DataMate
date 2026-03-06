@@ -43,6 +43,8 @@ class RayExecutor:
             meta["sourceFileType"] = meta.get("fileType")
         if meta.get("fileSize"):
             meta["sourceFileSize"] = meta.get("fileSize")
+        else:
+            meta["sourceFileSize"] = 0
         if not meta.get("totalPageNum"):
             meta["totalPageNum"] = 0
         if not meta.get("extraFilePath"):
