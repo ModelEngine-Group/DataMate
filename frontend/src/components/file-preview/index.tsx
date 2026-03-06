@@ -4,6 +4,7 @@ import { MarkdownPreview } from './MarkdownPreview';
 import { DocxPreview } from './DocxPreview';
 import { PdfPreview } from './PdfPreview';
 import { JsonPreview } from './JsonPreview';
+import { CsvPreview } from './CsvPreview';
 import { CodePreview } from './CodePreview';
 import { TextPreview } from './TextPreview';
 
@@ -74,6 +75,11 @@ export const FilePreview: React.FC<FilePreviewProps> = ({
   // JSON 文件
   if (ext === 'json') {
     return <JsonPreview fileName={fileName} content={content} />;
+  }
+
+  // CSV 文件
+  if (ext === 'csv') {
+    return <CsvPreview fileName={fileName} content={content} />;
   }
 
   // 代码文件（JavaScript, Python, Java, 等）
