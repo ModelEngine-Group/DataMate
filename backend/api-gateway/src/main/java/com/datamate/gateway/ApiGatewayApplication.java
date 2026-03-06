@@ -42,7 +42,7 @@ public class ApiGatewayApplication {
                  .uri("http://datamate-backend-python:18000"))
 
             // 知识图谱RAG服务路由
-            .route("python-service", r -> r.path("/api/rag/**", "api/models/**")
+            .route("python-service", r -> r.path("/api/rag/**", "api/models/**", "/api/knowledge-base/**")
                  .uri("http://datamate-backend-python:18000"))
 
             // 数据评估服务路由

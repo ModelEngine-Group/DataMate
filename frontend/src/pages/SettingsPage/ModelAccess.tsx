@@ -129,6 +129,7 @@ export default function ModelAccess() {
 
   useEffect(() => {
     fetchProviderOptions();
+    fetchData(); // 组件挂载时自动调用模型列表
   }, []);
 
   const columns = [
