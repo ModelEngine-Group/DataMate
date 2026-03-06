@@ -420,3 +420,60 @@ ray-cluster:
           subPath: site-packages
         - mountPath: /usr/local/Ascend
           name: ascend
+    gpuGroup:
+      disabled: false
+      replicas: 0
+      minReplicas: 0
+      maxReplicas: 8
+      rayStartParams:
+        resources: '"{\"gpu\": 1}"'
+      containerEnv:
+        - name: RAY_DEDUP_LOGS
+          value: "0"
+        - name: RAY_TQDM_PATCH_PRINT
+          value: "0"
+        - name: PG_HOST
+          value: "datamate-database"
+        - name: PG_PORT
+          value: "5432"
+        - name: PG_USER
+          value: "postgres"
+        - name: PG_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: datamate-conf
+              key: DB_PASSWORD
+        - name: PG_DATABASE
+          value: "datamate"
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+      resources:
+        limits:
+          cpu: "8"
+          memory: "64G"
+          nvidia.com/gpu: 1
+        requests:
+          cpu: "1"
+          memory: "2G"
+          nvidia.com/gpu: 1
+      volumes:
+        - *datasetVolume
+        - *flowVolume
+        - *logVolume
+        - *operatorVolume
+      volumeMounts:
+        - mountPath: /tmp/ray
+          name: log-volume
+          subPathExpr: ray/$(POD_NAME)
+        - mountPath: /dataset
+          name: dataset-volume
+        - mountPath: /flow
+          name: flow-volume
+        - mountPath: /opt/runtime/datamate/ops/user
+          name: operator-volume
+          subPath: extract
+        - mountPath: /usr/local/lib/ops/site-packages
+          name: operator-volume
+          subPath: site-packages
