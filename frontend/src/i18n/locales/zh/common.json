@@ -95,7 +95,7 @@
         "updateFailed": "任务更新失败",
         "deleteSuccess": "任务已删除",
         "deleteConfirm": "确定要删除该任务吗？此操作不可撤销。",
-        "deleteConfirmMessage": "确定要删除任务「{{taskName}}」吗？删除后将无法恢复。",
+        "deleteConfirmMessage": "确定要删除「{{itemName}}」吗？删除后将无法恢复。",
         "confirmDelete": "删除",
         "cancel": "取消"
       },
@@ -373,7 +373,7 @@
     },
     "confirm": {
       "deleteDatasetTitle": "确认删除该数据集？",
-      "deleteDatasetDesc": "删除后该数据集将无法恢复，请谨慎操作。",
+      "deleteDatasetDesc": "确定要删除「{{itemName}}」吗？删除后将无法恢复。",
       "deleteFolderTitle": "确认删除文件夹？",
       "deleteFolderDesc": "删除文件夹 \"{{name}}\" 将同时删除其中的所有文件和子文件夹，此操作不可恢复。",
       "deleteConfirm": "删除",
@@ -584,10 +584,12 @@
       "videoJsonl": "用于大规模视频预训练模型的数据集"
     },
     "datasetStatus": {
+      "draft": "草稿",
       "active": "活跃",
       "processing": "处理中",
-      "inactive": "未激活",
-      "draft": "草稿"
+      "archived": "已归档",
+      "published": "已发布",
+      "deprecated": "已弃用"
     },
     "dataSources": {
       "upload": "本地上传",
@@ -649,7 +651,7 @@
       },
       "confirm": {
         "deleteTitle": "确认删除该任务？",
-        "deleteDesc": "删除后该任务将无法恢复，请谨慎操作。",
+        "deleteDesc": "确定要删除「{{itemName}}」吗？删除后将无法恢复。",
         "okText": "删除",
         "cancelText": "取消"
       },
@@ -2460,6 +2462,12 @@
       "title": "发生错误",
       "retry": "重试",
       "goHome": "返回首页"
+    },
+    "deleteConfirm": {
+      "title": "确认删除",
+      "message": "删除后 {{itemName}} 将无法恢复，确定要删除吗？",
+      "confirm": "删除",
+      "cancel": "取消"
     },
     "searchControls": {
       "searchPlaceholder": "搜索...",

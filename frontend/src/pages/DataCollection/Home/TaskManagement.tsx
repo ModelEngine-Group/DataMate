@@ -1,4 +1,4 @@
-import { App, Button, Card, Modal, Table, Tag, Tooltip } from "antd";
+import { App, Button, Card, Table, Tag, Tooltip } from "antd";
 import {
   DeleteOutlined,
   EditOutlined,
@@ -7,6 +7,7 @@ import {
   ProfileOutlined,
   ReloadOutlined,
 } from "@ant-design/icons";
+import DeleteConfirmModal from "@/components/DeleteConfirmModal";
 import { SearchControls } from "@/components/SearchControls";
 import {
   deleteTaskByIdUsingDelete,
@@ -344,21 +345,16 @@ export default function TaskManagement() {
       </Card>
 
       {/* 删除确认弹窗 */}
-      <Modal
+      <DeleteConfirmModal
+        visible={deleteModal.visible}
         title={t("dataCollection.taskManagement.messages.deleteConfirm")}
-        open={deleteModal.visible}
-        onOk={() => handleDeleteTask(deleteModal.taskId)}
+        message={t("dataCollection.taskManagement.messages.deleteConfirmMessage", {
+          itemName: deleteModal.taskName,
+        })}
+        itemName={deleteModal.taskName}
+        onConfirm={() => handleDeleteTask(deleteModal.taskId)}
         onCancel={handleCancelDelete}
-        okType="danger"
-        okText={t("dataCollection.taskManagement.messages.confirmDelete")}
-        cancelText={t("dataCollection.taskManagement.messages.cancel")}
-      >
-        <p>
-          {t("dataCollection.taskManagement.messages.deleteConfirmMessage", {
-            taskName: deleteModal.taskName,
-          })}
-        </p>
-      </Modal>
+      />
     </div>
   );
 }

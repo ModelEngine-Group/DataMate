@@ -2,12 +2,28 @@ import { App, Button, Descriptions, DescriptionsProps, Modal, Table, Input, Spin
 import { formatBytes, formatDateTime } from "@/utils/unit";
 import { Download, Trash2, Folder, File } from "lucide-react";
 import { getDatasetTypeMap } from "../../dataset.const";
+import DeleteConfirmModal from "@/components/DeleteConfirmModal";
 import { useTranslation } from "react-i18next";
+import { useState } from "react";
 
 export default function Overview({ dataset, filesOperation, fetchDataset }) {
   const { modal, message } = App.useApp();
   const { t } = useTranslation();
   const datasetTypeMap = getDatasetTypeMap(t);
+
+  // 删除确认弹窗状态
+  const [deleteModal, setDeleteModal] = useState<{
+    visible: boolean;
+    type: "file" | "directory";
+    fileName: string;
+    handler: () => void | Promise<void>;
+  }>({
+    visible: false,
+    type: "file",
+    fileName: "",
+    handler: () => {},
+  });
+
   const {
     fileList,
     pagination,
@@ -107,6 +123,30 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
       children: dataset.description || t("dataManagement.defaults.none"),
     },
   ];
+
+  // 显示删除确认弹窗
+  const showDeleteConfirm = (
+    type: "file" | "directory",
+    fileName: string,
+    handler: () => void | Promise<void>
+  ) => {
+    setDeleteModal({
+      visible: true,
+      type,
+      fileName,
+      handler,
+    });
+  };
+
+  // 执行删除操作
+  const handleConfirmDelete = async () => {
+    await deleteModal.handler();
+    setDeleteModal({ visible: false, type: "file", fileName: "", handler: () => {} });
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteModal({ visible: false, type: "file", fileName: "", handler: () => {} });
+  };
 
   // 文件列表列定义
   const columns = [
@@ -305,19 +345,16 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
               <Button
                 size="small"
                 type="link"
-                onClick={() => {
-                  modal.confirm({
-                    title: t("dataManagement.confirm.deleteFolderTitle"),
-                    content: t("dataManagement.confirm.deleteFolderDesc", { name: record.fileName }),
-                    okText: t("dataManagement.confirm.deleteConfirm"),
-                    okType: "danger",
-                    cancelText: t("dataManagement.confirm.deleteCancel"),
-                    onOk: async () => {
+                onClick={() =>
+                  showDeleteConfirm(
+                    "directory",
+                    record.fileName,
+                    async () => {
                       await handleDeleteDirectory(fullPath, record.fileName);
                       fetchDataset();
-                    },
-                  });
-                }}
+                    }
+                  )
+                }
               >
                 {t("dataManagement.actions.delete")}
               </Button>
@@ -376,11 +413,16 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
           <Button
             size="small"
             type="link"
-            onClick={async () => {
-              await handleDeleteFile(record);
-              fetchDataset()
+            onClick={() =>
+              showDeleteConfirm(
+                "file",
+                record.fileName,
+                async () => {
+                  await handleDeleteFile(record);
+                  fetchDataset();
+                }
+              )
             }
-          }
           >
             {t("dataManagement.actions.delete")}
           </Button>
@@ -717,6 +759,23 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
           </div>
         </div>
       </Modal>
+      {/* 删除确认弹窗 */}
+      <DeleteConfirmModal
+        visible={deleteModal.visible}
+        title={
+          deleteModal.type === "directory"
+            ? t("dataManagement.confirm.deleteFolderTitle")
+            : t("components.deleteConfirm.title")
+        }
+        message={
+          deleteModal.type === "directory"
+            ? t("dataManagement.confirm.deleteFolderDesc", { name: deleteModal.fileName })
+            : t("components.deleteConfirm.message", { itemName: deleteModal.fileName })
+        }
+        itemName={deleteModal.fileName}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+      />
     </>
   );
 }

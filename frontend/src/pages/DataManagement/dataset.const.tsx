@@ -165,6 +165,12 @@ export function getDatasetSubTypeMap(t: (key: string) => string): Record<
 
 export function getDatasetStatusMap(t: (key: string) => string) {
   return {
+    [DatasetStatus.DRAFT]: {
+      label: t("dataManagement.datasetStatus.draft"),
+      value: DatasetStatus.DRAFT,
+      color: "#a1a1a1ff",
+      icon: <FileOutlined />,
+    },
     [DatasetStatus.ACTIVE]: {
       label: t("dataManagement.datasetStatus.active"),
       value: DatasetStatus.ACTIVE,
@@ -177,17 +183,23 @@ export function getDatasetStatusMap(t: (key: string) => string) {
       color: "#2673e5",
       icon: <ClockCircleOutlined />,
     },
-    [DatasetStatus.INACTIVE]: {
-      label: t("dataManagement.datasetStatus.inactive"),
-      value: DatasetStatus.INACTIVE,
+    [DatasetStatus.ARCHIVED]: {
+      label: t("dataManagement.datasetStatus.archived"),
+      value: DatasetStatus.ARCHIVED,
       color: "#4f4444ff",
       icon: <CloseCircleOutlined />,
     },
-    [DatasetStatus.DRAFT]: {
-      label: t("dataManagement.datasetStatus.draft"),
-      value: DatasetStatus.DRAFT,
-      color: "#a1a1a1ff",
-      icon: <FileOutlined />,
+    [DatasetStatus.PUBLISHED]: {
+      label: t("dataManagement.datasetStatus.published"),
+      value: DatasetStatus.PUBLISHED,
+      color: "#1890ff",
+      icon: <CheckCircleOutlined />,
+    },
+    [DatasetStatus.DEPRECATED]: {
+      label: t("dataManagement.datasetStatus.deprecated"),
+      value: DatasetStatus.DEPRECATED,
+      color: "#ff4d4f",
+      icon: <CloseCircleOutlined />,
     },
   };
 }
