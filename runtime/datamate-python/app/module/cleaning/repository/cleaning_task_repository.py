@@ -34,7 +34,7 @@ class CleaningTaskRepository:
         query = query.order_by(self.model.created_at.desc())
 
         if page is not None and size is not None:
-            offset = max((page - 1) * size, 0)
+            offset = max(page * size, 0)
             query = query.offset(offset).limit(size)
 
         result = await db.execute(query)

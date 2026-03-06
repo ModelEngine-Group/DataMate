@@ -22,6 +22,7 @@ export default function CleansingTaskCreate() {
     destDatasetType: DatasetType.TEXT,
     type: DatasetType.TEXT,
   });
+  const [useSourceDataset, setUseSourceDataset] = useState(false);
 
   const {
     renderStepTwo,
@@ -53,13 +54,18 @@ export default function CleansingTaskCreate() {
   const canProceed = () => {
     switch (currentStep) {
       case 1: {
-        const values = form.getFieldsValue();
-        return (
-          values.name &&
-          values.srcDatasetId &&
-          values.destDatasetName &&
-          values.destDatasetType
+        const hasBasicFields = (
+          taskConfig.name &&
+          taskConfig.srcDatasetId &&
+          taskConfig.destDatasetName &&
+          taskConfig.destDatasetType
         );
+        if (!hasBasicFields) return false;
+        if (useSourceDataset) return true;
+        if (taskConfig.destDatasetName === taskConfig.srcDatasetName) {
+          return false;
+        }
+        return true;
       }
       case 2:
         return selectedOperators.length > 0;
@@ -76,6 +82,8 @@ export default function CleansingTaskCreate() {
             form={form}
             taskConfig={taskConfig}
             setTaskConfig={setTaskConfig}
+            useSourceDataset={useSourceDataset}
+            setUseSourceDataset={setUseSourceDataset}
           />
         );
       case 2:

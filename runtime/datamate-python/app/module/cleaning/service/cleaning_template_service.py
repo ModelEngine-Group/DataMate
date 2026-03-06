@@ -20,6 +20,14 @@ from app.module.cleaning.service.cleaning_task_validator import CleaningTaskVali
 
 logger = get_logger(__name__)
 
+PRESET_TEMPLATE_IDS = {
+    "550e8400-e29b-41d4-a716-446655440001",
+    "661f9500-f3ac-52e5-b827-557766550002",
+    "772a0611-a4bd-63f6-c938-668877660003",
+    "883b1722-b5ce-7407-d049-779988770004",
+    "994c2833-c6df-8518-e150-880099880005",
+}
+
 
 class CleaningTemplateService:
     """Service for managing cleaning templates"""
@@ -39,20 +47,26 @@ class CleaningTemplateService:
     async def get_templates(
         self,
         db: AsyncSession,
-        keyword: str | None = None
-    ) -> List[CleaningTemplateDto]:
-        """Get all templates"""
-        templates = await self.template_repo.find_all_templates(db, keyword)
+        keyword: str | None = None,
+        page: int | None = None,
+        size: int | None = None,
+    ) -> tuple[List[CleaningTemplateDto], int]:
+        """Get templates with pagination"""
+        total = await self.template_repo.count_templates(db, keyword)
+        templates = await self.template_repo.find_all_templates(db, keyword, page, size)
 
         # Collect all operator IDs
         template_instances_map = {}
         for template in templates:
-            instances = await self.operator_instance_repo.find_operator_by_instance_id(db, template.id)
+            instances = await self.operator_instance_repo.find_operator_by_instance_id(
+                db, template.id
+            )
             template_instances_map[template.id] = instances
 
         # Batch query all operators
-        all_operators = await self.operator_service.get_operators(db=db, page=0, size=1000, categories=[], keyword=None,
-                                                                  is_star=None)
+        all_operators = await self.operator_service.get_operators(
+            db=db, page=0, size=1000, categories=[], keyword=None, is_star=None
+        )
         operator_map = {op.id: op for op in all_operators}
 
         # Build result
@@ -84,17 +98,17 @@ class CleaningTemplateService:
                         try:
                             operator_dto.overrides = json.loads(inst.settings_override)
                         except json.JSONDecodeError as e:
-                            logger.error(f"Failed to parse settings for {inst.operator_id}: {e}")
+                            logger.error(
+                                f"Failed to parse settings for {inst.operator_id}: {e}"
+                            )
                     template_dto.instance.append(operator_dto)
 
             result.append(template_dto)
 
-        return result
+        return result, total
 
     async def get_template(
-        self,
-        db: AsyncSession,
-        template_id: str
+        self, db: AsyncSession, template_id: str
     ) -> CleaningTemplateDto:
         """Get template by ID"""
         template = await self.template_repo.find_template_by_id(db, template_id)
@@ -110,11 +124,14 @@ class CleaningTemplateService:
             updated_at=template.updated_at,
         )
 
-        instances = await self.operator_instance_repo.find_operator_by_instance_id(db, template_id)
+        instances = await self.operator_instance_repo.find_operator_by_instance_id(
+            db, template_id
+        )
 
         # Batch query operators
-        all_operators = await self.operator_service.get_operators(db=db, page=0, size=1000, categories=[], keyword=None,
-                                                                  is_star=None)
+        all_operators = await self.operator_service.get_operators(
+            db=db, page=0, size=1000, categories=[], keyword=None, is_star=None
+        )
         operator_map = {op.id: op for op in all_operators}
 
         for inst in instances:
@@ -133,15 +150,15 @@ class CleaningTemplateService:
                     try:
                         operator_dto.overrides = json.loads(inst.settings_override)
                     except json.JSONDecodeError as e:
-                        logger.error(f"Failed to parse settings for {inst.operator_id}: {e}")
+                        logger.error(
+                            f"Failed to parse settings for {inst.operator_id}: {e}"
+                        )
                 template_dto.instance.append(operator_dto)
 
         return template_dto
 
     async def create_template(
-        self,
-        db: AsyncSession,
-        request: CreateCleaningTemplateRequest
+        self, db: AsyncSession, request: CreateCleaningTemplateRequest
     ) -> CleaningTemplateDto:
         """Create new template"""
         from app.db.models.cleaning import CleaningTemplate
@@ -159,15 +176,14 @@ class CleaningTemplateService:
 
         await self.template_repo.insert_template(db, template)
 
-        await self.operator_instance_repo.insert_instance(db, template_id, request.instance)
+        await self.operator_instance_repo.insert_instance(
+            db, template_id, request.instance
+        )
 
         return await self.get_template(db, template_id)
 
     async def update_template(
-        self,
-        db: AsyncSession,
-        template_id: str,
-        request: UpdateCleaningTemplateRequest
+        self, db: AsyncSession, template_id: str, request: UpdateCleaningTemplateRequest
     ) -> CleaningTemplateDto:
         """Update template"""
 
@@ -181,26 +197,31 @@ class CleaningTemplateService:
         await self.template_repo.update_template(db, template)
         await self.operator_instance_repo.delete_by_instance_id(db, template_id)
 
-        await self.operator_instance_repo.insert_instance(db, template_id, request.instance)
+        await self.operator_instance_repo.insert_instance(
+            db, template_id, request.instance
+        )
 
         return await self.get_template(db, template_id)
 
     async def delete_template(self, db: AsyncSession, template_id: str) -> None:
         """Delete template"""
+        if template_id in PRESET_TEMPLATE_IDS:
+            raise BusinessError(ErrorCodes.CLEANING_CANNOT_DELETE_PRESET_TEMPLATE)
         await self.template_repo.delete_template(db, template_id)
         await self.operator_instance_repo.delete_by_instance_id(db, template_id)
 
     async def get_instance_by_template_id(
-        self,
-        db: AsyncSession,
-        template_id: str
+        self, db: AsyncSession, template_id: str
     ) -> List[OperatorInstanceDto]:
         """Get operator instances by template ID"""
-        instances = await self.operator_instance_repo.find_operator_by_instance_id(db, template_id)
+        instances = await self.operator_instance_repo.find_operator_by_instance_id(
+            db, template_id
+        )
 
         # Batch query operators
-        all_operators = await self.operator_service.get_operators(db=db, page=0, size=1000, categories=[], keyword=None,
-                                                                  is_star=None)
+        all_operators = await self.operator_service.get_operators(
+            db=db, page=0, size=1000, categories=[], keyword=None, is_star=None
+        )
         operator_map = {op.id: op for op in all_operators}
 
         result = []
@@ -220,7 +241,9 @@ class CleaningTemplateService:
                     try:
                         operator_dto.overrides = json.loads(inst.settings_override)
                     except json.JSONDecodeError as e:
-                        logger.error(f"Failed to parse settings for {inst.operator_id}: {e}")
+                        logger.error(
+                            f"Failed to parse settings for {inst.operator_id}: {e}"
+                        )
                 result.append(operator_dto)
 
         return result

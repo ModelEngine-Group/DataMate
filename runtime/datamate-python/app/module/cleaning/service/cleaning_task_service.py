@@ -98,35 +98,38 @@ class CleaningTaskService:
 
         await self._set_process(db, task)
 
-        instances = await self.operator_instance_repo.find_operator_by_instance_id(db, task_id)
+        instances = await self.operator_instance_repo.find_operator_by_instance_id(
+            db, task_id
+        )
 
         # Batch query operators
-        all_operators = await self.operator_service.get_operators(db=db, page=0, size=1000, categories=[], keyword=None,
-                                                                  is_star=None)
+        all_operators = await self.operator_service.get_operators(
+            db=db, page=0, size=1000, categories=[], keyword=None, is_star=None
+        )
         operator_map = {op.id: op for op in all_operators}
 
         task.instance = []
         for inst in instances:
             operator = operator_map.get(inst.operator_id)
             if operator:
-                task.instance.append(OperatorInstanceDto(
-                    id=operator.id,
-                    name=operator.name,
-                    description=operator.description,
-                    inputs=operator.inputs,
-                    outputs=operator.outputs,
-                    settings=operator.settings,
-                    categories=operator.categories,
-                ))
+                task.instance.append(
+                    OperatorInstanceDto(
+                        id=operator.id,
+                        name=operator.name,
+                        description=operator.description,
+                        inputs=operator.inputs,
+                        outputs=operator.outputs,
+                        settings=operator.settings,
+                        categories=operator.categories,
+                    )
+                )
             else:
                 task.instance.append(OperatorInstanceDto(id=inst.operator_id))
 
         return task
 
     async def create_task(
-        self,
-        db: AsyncSession,
-        request: CreateCleaningTaskRequest
+        self, db: AsyncSession, request: CreateCleaningTaskRequest
     ) -> CleaningTaskDto:
         """Create new cleaning task"""
         if request.instance and request.template_id:
@@ -143,22 +146,28 @@ class CleaningTaskService:
         dest_dataset_name = request.dest_dataset_name
 
         if not dest_dataset_id:
-            logger.info(f"Creating new dataset: {dest_dataset_name}, type: {request.dest_dataset_type}")
+            logger.info(
+                f"Creating new dataset: {dest_dataset_name}, type: {request.dest_dataset_type}"
+            )
             dest_dataset_response = await self.dataset_service.create_dataset(
                 name=dest_dataset_name,
                 dataset_type=request.dest_dataset_type,
                 description="",
-                status="ACTIVE"
+                status="ACTIVE",
             )
             dest_dataset_id = dest_dataset_response.id
             logger.info(f"Successfully created dataset: {dest_dataset_id}")
         else:
             logger.info(f"Using existing dataset: {dest_dataset_id}")
-            dest_dataset_response = await self.dataset_service.get_dataset(dest_dataset_id)
+            dest_dataset_response = await self.dataset_service.get_dataset(
+                dest_dataset_id
+            )
 
         src_dataset = await self.dataset_service.get_dataset(request.src_dataset_id)
         if not src_dataset:
-            raise BusinessError(ErrorCodes.CLEANING_DATASET_NOT_FOUND, request.src_dataset_id)
+            raise BusinessError(
+                ErrorCodes.CLEANING_DATASET_NOT_FOUND, request.src_dataset_id
+            )
 
         task_dto = CleaningTaskDto(
             id=task_id,
@@ -185,10 +194,14 @@ class CleaningTaskService:
         if operator_ids:
             await self.operator_service.increment_usage_count(operator_ids, db)
 
-        all_operators = await self.operator_service.get_operators(db=db, page=0, size=1000, categories=[], keyword=None, is_star=None)
+        all_operators = await self.operator_service.get_operators(
+            db=db, page=0, size=1000, categories=[], keyword=None, is_star=None
+        )
         operator_map = {op.id: op for op in all_operators}
 
-        await self.prepare_task(dest_dataset_id, task_id, request.instance, operator_map, executor_type)
+        await self.prepare_task(
+            dest_dataset_id, task_id, request.instance, operator_map, executor_type
+        )
 
         return await self.get_task(db, task_id)
 
@@ -261,9 +274,12 @@ class CleaningTaskService:
         config_file_path.parent.mkdir(parents=True, exist_ok=True)
 
         import yaml
+
         try:
-            with open(config_file_path, 'w', encoding='utf-8') as f:
-                yaml.dump(process_config, f, default_flow_style=False, allow_unicode=True)
+            with open(config_file_path, "w", encoding="utf-8") as f:
+                yaml.dump(
+                    process_config, f, default_flow_style=False, allow_unicode=True
+                )
         except Exception as e:
             logger.error(f"Failed to write process.yaml: {e}")
             raise BusinessError(ErrorCodes.CLEANING_FILE_SYSTEM_ERROR, str(e))
@@ -319,7 +335,7 @@ class CleaningTaskService:
         result = await db.execute(query, {"dataset_id": src_dataset_id})
         files = result.fetchall()
 
-        with open(target_file_path, 'w', encoding='utf-8') as f:
+        with open(target_file_path, "w", encoding="utf-8") as f:
             for file in files:
                 if succeed_files and file.id in succeed_files:
                     continue
@@ -333,11 +349,15 @@ class CleaningTaskService:
                 }
                 f.write(json.dumps(file_info, ensure_ascii=False) + "\n")
 
-    async def get_task_results(self, db: AsyncSession, task_id: str) -> List[CleaningResultDto]:
+    async def get_task_results(
+        self, db: AsyncSession, task_id: str
+    ) -> List[CleaningResultDto]:
         """Get task results"""
         return await self.result_repo.find_by_instance_id(db, task_id)
 
-    async def get_task_log(self, db: AsyncSession, task_id: str, retry_count: int) -> List[CleaningTaskLog]:
+    async def get_task_log(
+        self, db: AsyncSession, task_id: str, retry_count: int
+    ) -> List[CleaningTaskLog]:
         """Get task log"""
         self.validator.check_task_id(task_id)
 
@@ -356,14 +376,18 @@ class CleaningTaskService:
         )
         exception_suffix_pattern = re.compile(r"\b\w+(Warning|Error|Exception)\b")
 
-        with open(log_path, 'r', encoding='utf-8') as f:
+        with open(log_path, "r", encoding="utf-8") as f:
             for line in f:
-                last_level = self._get_log_level(line, last_level, standard_level_pattern, exception_suffix_pattern)
+                last_level = self._get_log_level(
+                    line, last_level, standard_level_pattern, exception_suffix_pattern
+                )
                 logs.append(CleaningTaskLog(level=last_level, message=line.rstrip()))
 
         return logs
 
-    def _get_log_level(self, line: str, default_level: str, std_pattern, ex_pattern) -> str:
+    def _get_log_level(
+        self, line: str, default_level: str, std_pattern, ex_pattern
+    ) -> str:
         """Extract log level from log line"""
         if not line or not line.strip():
             return default_level
@@ -406,26 +430,35 @@ class CleaningTaskService:
         if not task:
             raise BusinessError(ErrorCodes.CLEANING_TASK_NOT_FOUND, task_id)
 
+        src_dataset = await self.dataset_service.get_dataset(task.src_dataset_id)
+        if src_dataset:
+            task.before_size = src_dataset.totalSize
+            task.file_count = src_dataset.fileCount
+            await self.task_repo.update_task(db, task)
+
         await self.scan_dataset(db, task_id, task.src_dataset_id, succeed_set)
         await self.result_repo.delete_by_instance_id(db, task_id, "FAILED")
 
-        return await self.scheduler.execute_task(db, task_id, (task.retry_count or 0) + 1)
+        return await self.scheduler.execute_task(
+            db, task_id, (task.retry_count or 0) + 1
+        )
 
     async def stop_task(self, db: AsyncSession, task_id: str) -> bool:
         """Stop task"""
         return await self.scheduler.stop_task(db, task_id)
 
     async def get_instance_by_template_id(
-        self,
-        db: AsyncSession,
-        template_id: str
+        self, db: AsyncSession, template_id: str
     ) -> List[OperatorInstanceDto]:
         """Get instances by template ID (delegated to template service)"""
-        instances = await self.operator_instance_repo.find_operator_by_instance_id(db, template_id)
+        instances = await self.operator_instance_repo.find_operator_by_instance_id(
+            db, template_id
+        )
 
         # Batch query operators
-        all_operators = await self.operator_service.get_operators(db=db, page=0, size=1000, categories=[], keyword=None,
-                                                                  is_star=None)
+        all_operators = await self.operator_service.get_operators(
+            db=db, page=0, size=1000, categories=[], keyword=None, is_star=None
+        )
         operator_map = {op.id: op for op in all_operators}
 
         result = []
@@ -445,7 +478,9 @@ class CleaningTaskService:
                     try:
                         operator_dto.overrides = json.loads(inst.settings_override)
                     except json.JSONDecodeError as e:
-                        logger.error(f"Failed to parse settings for {inst.operator_id}: {e}")
+                        logger.error(
+                            f"Failed to parse settings for {inst.operator_id}: {e}"
+                        )
                 result.append(operator_dto)
 
         return result
