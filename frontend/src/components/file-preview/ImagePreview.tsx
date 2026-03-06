@@ -2,13 +2,11 @@ import React from 'react';
 
 export interface ImagePreviewProps {
   blobUrl?: string;
-  fileName?: string;
   alt?: string;
 }
 
 export const ImagePreview: React.FC<ImagePreviewProps> = ({
   blobUrl,
-  fileName = 'Preview',
   alt = 'Preview'
 }) => {
   if (!blobUrl) {
@@ -25,7 +23,6 @@ export const ImagePreview: React.FC<ImagePreviewProps> = ({
         src={blobUrl}
         alt={alt}
         className="max-w-full max-h-[600px] object-contain"
-        style={{ maxHeight: '600px' }}
       />
     </div>
   );

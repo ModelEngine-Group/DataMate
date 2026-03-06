@@ -2,8 +2,9 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { DownloadOutlined } from '@ant-design/icons';
 
-// 配置 PDF.js worker - 使用本地文件
-pdfjs.GlobalWorkerOptions.workerSrc = '/pdfjs/pdf.worker.min.mjs';
+// 配置 PDF.js worker - 使用 Vite 的 ?url 语法处理 npm 包
+import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
+pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
 
 export interface PdfPreviewProps {
   blob?: Blob;

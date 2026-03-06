@@ -2,12 +2,10 @@ import React from 'react';
 
 export interface TextPreviewProps {
   content?: string;
-  fileName?: string;
 }
 
 export const TextPreview: React.FC<TextPreviewProps> = ({
-  content = '',
-  fileName
+  content = ''
 }) => {
   if (!content) {
     return (

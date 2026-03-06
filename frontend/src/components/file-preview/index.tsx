@@ -3,6 +3,8 @@ import { ImagePreview } from './ImagePreview';
 import { MarkdownPreview } from './MarkdownPreview';
 import { DocxPreview } from './DocxPreview';
 import { PdfPreview } from './PdfPreview';
+import { JsonPreview } from './JsonPreview';
+import { CodePreview } from './CodePreview';
 import { TextPreview } from './TextPreview';
 
 export interface FilePreviewProps {
@@ -51,7 +53,7 @@ export const FilePreview: React.FC<FilePreviewProps> = ({
   // 根据文件扩展名选择预览器
   // 图片文件
   if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg'].includes(ext)) {
-    return <ImagePreview fileName={fileName} blobUrl={blobUrl} />;
+    return <ImagePreview blobUrl={blobUrl} />;
   }
 
   // Markdown 文件
@@ -69,8 +71,19 @@ export const FilePreview: React.FC<FilePreviewProps> = ({
     return <PdfPreview fileName={fileName} blob={blob} />;
   }
 
+  // JSON 文件
+  if (ext === 'json') {
+    return <JsonPreview fileName={fileName} content={content} />;
+  }
+
+  // 代码文件（JavaScript, Python, Java, 等）
+  const codeExtensions = ['js', 'jsx', 'ts', 'tsx', 'py', 'java', 'c', 'cpp', 'h', 'go', 'rs', 'php', 'rb', 'sh', 'sql', 'html', 'css', 'scss', 'xml', 'yaml', 'yml'];
+  if (codeExtensions.includes(ext)) {
+    return <CodePreview fileName={fileName} content={content} />;
+  }
+
   // 其他文件（纯文本）
-  return <TextPreview fileName={fileName} content={content} />;
+  return <TextPreview content={content} />;
 };
 
 export default FilePreview;

@@ -1,6 +1,8 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 export interface MarkdownPreviewProps {
   content?: string;
@@ -25,8 +27,8 @@ export const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           components={{
-            // 自定义代码块样式
-            code({ node, inline, className, children, ...props }) {
+            // 代码块高亮
+            code({ node, inline, className, children, ...props }: any) {
               const match = /language-(\w+)/.exec(className || '');
               const codeString = String(children).replace(/\n$/, '');
 
@@ -40,13 +42,19 @@ export const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({
 
               if (match) {
                 return (
-                  <div className="relative group">
-                    <pre className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto">
-                      <code className={`language-${match[1]} text-sm`}>
-                        {codeString}
-                      </code>
-                    </pre>
-                  </div>
+                  <SyntaxHighlighter
+                    {...props}
+                    style={vscDarkPlus}
+                    language={match[1]}
+                    PreTag="div"
+                    customStyle={{
+                      borderRadius: '0.5rem',
+                      padding: '1rem',
+                      fontSize: '0.875rem'
+                    }}
+                  >
+                    {codeString}
+                  </SyntaxHighlighter>
                 );
               }
 
@@ -58,7 +66,7 @@ export const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({
                 </pre>
               );
             },
-            // 自定义链接样式
+            // 链接
             a: ({ href, children }) => (
               <a
                 href={href}
@@ -69,7 +77,7 @@ export const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({
                 {children}
               </a>
             ),
-            // 自定义表格样式
+            // 表格
             table: ({ children }) => (
               <div className="overflow-x-auto my-4">
                 <table className="min-w-full divide-y divide-gray-200 border">
