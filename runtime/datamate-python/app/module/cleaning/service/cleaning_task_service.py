@@ -326,7 +326,7 @@ class CleaningTaskService:
         target_file_path.parent.mkdir(parents=True, exist_ok=True)
 
         query = text("""
-            SELECT id, file_name, file_path, file_type, file_size
+            SELECT id, file_name, file_path, file_type, file_size, metadata
             FROM t_dm_dataset_files
             WHERE dataset_id = :dataset_id
             ORDER BY created_at
@@ -340,12 +340,22 @@ class CleaningTaskService:
                 if succeed_files and file.id in succeed_files:
                     continue
 
+                metadata_dict = {}
+                if file.metadata:
+                    try:
+                        parsed = json.loads(file.metadata)
+                        if isinstance(parsed, dict):
+                            metadata_dict = parsed
+                    except (json.JSONDecodeError, TypeError):
+                        pass
+
                 file_info = {
                     "fileId": file.id,
                     "fileName": file.file_name,
                     "filePath": file.file_path,
                     "fileType": file.file_type,
                     "fileSize": file.file_size,
+                    "metadata": metadata_dict,
                 }
                 f.write(json.dumps(file_info, ensure_ascii=False) + "\n")
 

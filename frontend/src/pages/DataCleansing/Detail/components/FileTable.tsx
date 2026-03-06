@@ -263,6 +263,53 @@ export default function FileTable({result, fetchTaskResult}) {
       ),
     },
     {
+      title: t("dataCleansing.detail.fileTable.result"),
+      dataIndex: "result",
+      key: "result",
+      width: 200,
+      render: (text: string) => {
+        if (!text) return <span className="text-gray-400">-</span>;
+
+        try {
+          const parsed = JSON.parse(text);
+          const jsonString = JSON.stringify(parsed, null, 2);
+          const displayText = typeof parsed === 'object'
+            ? (Array.isArray(parsed) ? `[${parsed.length} items]` : '{...}')
+            : String(parsed);
+
+          return (
+            <Popover
+              content={
+                <pre className="max-w-md max-h-64 overflow-auto text-xs bg-gray-50 p-2 rounded">
+                  {jsonString}
+                </pre>
+              }
+              title={t("dataCleansing.detail.fileTable.resultDetail")}
+              trigger="click"
+            >
+              <span className="font-mono text-sm text-blue-600 cursor-pointer hover:text-blue-800">
+                {displayText}
+              </span>
+            </Popover>
+          );
+        } catch {
+          const displayText = text.length > 30 ? text.substring(0, 30) + '...' : text;
+          return (
+            <Popover
+              content={<div className="max-w-md text-sm">{text}</div>}
+              title={t("dataCleansing.detail.fileTable.resultDetail")}
+              trigger="click"
+              disabled={text.length <= 30}
+            >
+              <span className="font-mono text-sm cursor-default">
+                {displayText}
+              </span>
+            </Popover>
+          );
+        }
+      },
+    },
+    {
       title: t("dataCleansing.detail.fileTable.status"),
       dataIndex: "status",
       key: "status",
