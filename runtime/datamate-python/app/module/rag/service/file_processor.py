@@ -146,26 +146,25 @@ class FileProcessor:
                 await self._mark_failed(db, file_repo, str(rag_file.id), f"知识图谱初始化失败: {str(e)}")  # type: ignore
 
     async def _initialize_graph_rag(self, db: AsyncSession, knowledge_base: KnowledgeBase, LLMFactory):
-        """初始化 GraphRAG 实例"""
         from .graph_rag import (
             DEFAULT_WORKING_DIR,
-            build_embedding_func,
-            build_llm_model_func,
-            initialize_rag,
+            create_embedding_func,
+            create_llm_func,
+            create_rag,
         )
 
         embedding_entity = await get_model_by_id(db, str(knowledge_base.embedding_model))  # type: ignore
         if not embedding_entity:
-            raise ValueError(f"嵌入模型不存在: {knowledge_base.embedding_model}")
+            raise ValueError(f"Embedding model not found: {knowledge_base.embedding_model}")
 
         chat_entity = await get_model_by_id(db, str(knowledge_base.chat_model))  # type: ignore
         if not chat_entity:
-            raise ValueError(f"聊天模型不存在: {knowledge_base.chat_model}")
+            raise ValueError(f"Chat model not found: {knowledge_base.chat_model}")
 
-        llm_callable = await build_llm_model_func(
+        llm_func = create_llm_func(
             str(chat_entity.model_name), str(chat_entity.base_url), str(chat_entity.api_key)  # type: ignore
         )
-        embedding_callable = await build_embedding_func(
+        embedding_func = create_embedding_func(
             str(embedding_entity.model_name),
             str(embedding_entity.base_url),
             str(embedding_entity.api_key),
@@ -175,7 +174,7 @@ class FileProcessor:
         )
 
         kb_working_dir = os.path.join(DEFAULT_WORKING_DIR, str(knowledge_base.name))  # type: ignore
-        return await initialize_rag(llm_callable, embedding_callable, kb_working_dir)
+        return await create_rag(llm_func, embedding_func, kb_working_dir, workspace=str(knowledge_base.name))
 
     async def _process_single_graph_file(
         self,
