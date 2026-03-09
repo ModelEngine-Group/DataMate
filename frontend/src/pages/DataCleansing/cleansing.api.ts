@@ -26,6 +26,15 @@ export function streamCleaningTaskLog(taskId: string | number, retryCount: numbe
   return new EventSource(url);
 }
 
+export async function downloadCleaningTaskLog(taskId: string | number, retryCount: number = 0): Promise<Blob> {
+  const url = `/api/cleaning/tasks/${taskId}/log/${retryCount}/download`;
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error('Failed to download log file');
+  }
+  return response.blob();
+}
+
 export function updateCleaningTaskByIdUsingPut(taskId: string | number, data: any) {
   return put(`/api/cleaning/tasks/${taskId}`, data);
 }
@@ -62,9 +71,3 @@ export function updateCleaningTemplateByIdUsingPut(templateId: string | number, 
 export function deleteCleaningTemplateByIdUsingDelete(templateId: string | number) {
   return del(`/api/cleaning/templates/${templateId}`);
 }
-
-
-
-
-
-

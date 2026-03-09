@@ -174,6 +174,9 @@ class ErrorCodes:
     CLEANING_CANNOT_DELETE_PRESET_TEMPLATE: Final = ErrorCode(
         "cleaning.0011", "Cannot delete preset template", 400
     )
+    CLEANING_TASK_LOG_NOT_FOUND: Final = ErrorCode(
+        "cleaning.0012", "Cleaning task log file not found", 404
+    )
 
     # ========== 算子市场模块 ==========
     OPERATOR_NOT_FOUND: Final = ErrorCode("operator.0001", "Operator not found", 404)
