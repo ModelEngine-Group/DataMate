@@ -217,7 +217,7 @@ export default function CleansingTaskDetail() {
           )}
           {activeTab === "operators" && <OperatorTable task={task} />}
           {activeTab === "files" && <FileTable result={result} fetchTaskResult={fetchTaskResult} />}
-          {activeTab === "logs" && <LogsTable taskLog={taskLog} fetchTaskLog={fetchTaskLog} retryCount={task.retryCount} />}
+          {activeTab === "logs" && <LogsTable taskLog={taskLog} fetchTaskLog={fetchTaskLog} retryCount={task.retryCount} taskName={task.name} />}
         </div>
       </div>
     </>

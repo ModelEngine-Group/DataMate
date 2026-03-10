@@ -348,3 +348,56 @@ async def get_cleaning_task_log(
     task_service = _get_task_service(db)
     logs = await task_service.get_task_log(db, task_id, retry_count)
     return StandardResponse(code="0", message="success", data=logs)
+
+
+@router.get(
+    "/{task_id}/log/{retry_count}/download",
+    summary="下载清洗任务日志文件",
+    description="下载指定清洗任务的日志文件",
+)
+async def download_cleaning_task_log(
+    task_id: str,
+    retry_count: int,
+    db: AsyncSession = Depends(get_db),
+):
+    """Download cleaning task log file"""
+    from pathlib import Path
+    from fastapi.responses import FileResponse
+
+    FLOW_PATH = "/flow"
+
+    task_service = _get_task_service(db)
+    task = await task_service.task_repo.find_task_by_id(db, task_id)
+
+    if not task:
+        from app.core.exception import BusinessError, ErrorCodes
+
+        raise BusinessError(ErrorCodes.CLEANING_TASK_NOT_FOUND, task_id)
+
+    log_path = Path(f"{FLOW_PATH}/{task_id}/output.log")
+    if retry_count > 0:
+        log_path = Path(f"{FLOW_PATH}/{task_id}/output.log.{retry_count}")
+
+    if not log_path.exists():
+        from app.core.exception import BusinessError, ErrorCodes
+
+        raise BusinessError(
+            ErrorCodes.CLEANING_TASK_LOG_NOT_FOUND,
+            f"Log file not found for task {task_id}, retry {retry_count}",
+        )
+
+    # Generate filename with task name and retry count
+    import re
+
+    task_name = task.name or "未命名任务"
+    safe_task_name = re.sub(
+        r"[^\w\u4e00-\u9fff\-]", "_", task_name
+    )  # Keep alphanumeric, Chinese, and hyphens
+    run_number = retry_count + 1  # retry_count is 0-indexed, so add 1 for display
+    filename = f"{safe_task_name}_第{run_number}次运行.log"
+
+    return FileResponse(
+        path=log_path,
+        media_type="text/plain",
+        filename=filename,
+    )

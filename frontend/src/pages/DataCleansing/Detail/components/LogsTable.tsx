@@ -1,15 +1,16 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams } from "react-router";
-import { FileClock } from "lucide-react";
+import { FileClock, Download } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { streamCleaningTaskLog } from "../../cleansing.api";
+import { App } from "antd";
+import { streamCleaningTaskLog, downloadCleaningTaskLog } from "../../cleansing.api";
 
 interface LogEntry {
   level: string;
   message: string;
 }
 
-export default function LogsTable({ taskLog: initialLogs, fetchTaskLog, retryCount }: { taskLog: any[], fetchTaskLog: () => Promise<any>, retryCount: number }) {
+export default function LogsTable({ taskLog: initialLogs, fetchTaskLog, retryCount, taskName }: { taskLog: LogEntry[], fetchTaskLog: () => Promise<LogEntry[]>, retryCount: number, taskName: string }) {
   const { id = "" } = useParams();
   const { t } = useTranslation();
   const [selectedLog, setSelectedLog] = useState(retryCount + 1);
@@ -17,6 +18,7 @@ export default function LogsTable({ taskLog: initialLogs, fetchTaskLog, retryCou
   const [isStreaming, setIsStreaming] = useState(false);
   const logContainerRef = useRef<HTMLDivElement>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
+  const { message } = App.useApp();
 
   useEffect(() => {
     if (selectedLog - 1 === retryCount) {
@@ -34,7 +36,7 @@ export default function LogsTable({ taskLog: initialLogs, fetchTaskLog, retryCou
     }
   }, [streamingLogs, isStreaming]);
 
-const startStreaming = () => {
+  const startStreaming = () => {
     stopStreaming();
     setStreamingLogs([]);
     setIsStreaming(true);
@@ -78,6 +80,23 @@ const startStreaming = () => {
     setStreamingLogs([]);
   };
 
+  const handleDownload = async () => {
+    try {
+      const blob = await downloadCleaningTaskLog(id, selectedLog - 1);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${taskName}_第${selectedLog}次运行.log`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error("Failed to download log:", error);
+      message.error(t("dataCleansing.detail.logTable.downloadFailed"));
+    }
+  };
+
   return displayLogs?.length > 0 || isStreaming ? (
     <>
       <div className="flex items-center justify-between pb-3">
@@ -98,7 +117,17 @@ const startStreaming = () => {
             <span className="text-xs text-blue-400 animate-pulse">{t("dataCleansing.detail.logTable.streaming")}</span>
           )}
         </div>
-        <span className="text-s text-gray-500 px-2">{t("dataCleansing.detail.logTable.nthRun", { num: selectedLog })}</span>
+        <div className="flex items-center gap-3">
+          <span className="text-s text-gray-500 px-2">{t("dataCleansing.detail.logTable.nthRun", { num: selectedLog })}</span>
+          <button
+            onClick={handleDownload}
+            disabled={isStreaming}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm text-white bg-blue-600 hover:bg-blue-700 border border-blue-500 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+          >
+            <Download className="w-4 h-4" />
+            <span>{t("dataCleansing.detail.logTable.download")}</span>
+          </button>
+        </div>
       </div>
       <div className="text-gray-300 p-4 border border-gray-700 bg-gray-800 rounded-lg">
         <div
