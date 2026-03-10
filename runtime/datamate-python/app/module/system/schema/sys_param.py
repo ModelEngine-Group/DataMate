@@ -7,8 +7,10 @@ from typing import Optional
 from datetime import datetime
 from pydantic import BaseModel, Field
 
+from app.module.shared.schema import BaseResponseModel
 
-class SysParamDto(BaseModel):
+
+class SysParamDto(BaseResponseModel):
     """系统参数 DTO"""
 
     id: str = Field(..., description="参数ID")
@@ -30,13 +32,13 @@ class SysParamDto(BaseModel):
         from_attributes = True
 
 
-class UpdateParamValueRequest(BaseModel):
+class UpdateParamValueRequest(BaseResponseModel):
     """更新参数值请求"""
 
     param_value: str = Field(..., description="参数值")
 
 
-class CreateSysParamRequest(BaseModel):
+class CreateSysParamRequest(BaseResponseModel):
     """创建系统参数请求"""
 
     id: str = Field(..., description="参数ID")
