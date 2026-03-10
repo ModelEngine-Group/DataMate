@@ -55,6 +55,9 @@ public class ApiGatewayApplication {
             .route("data-cleaning", r -> r.path("/api/cleaning/**")
                 .uri("http://datamate-backend-python:18000"))
 
+            .route("data-setting", r -> r.path("/api/sys-param/**")
+                .uri("http://datamate-backend-python:18000"))
+
             .route("deer-flow-frontend", r -> r.path("/chat/**")
                 .uri("http://deer-flow-frontend:3000"))
 
