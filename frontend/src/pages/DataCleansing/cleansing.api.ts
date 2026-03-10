@@ -17,6 +17,16 @@ export function queryCleaningTaskResultByIdUsingGet(taskId: string | number) {
   return get(`/api/cleaning/tasks/${taskId}/result`);
 }
 
+export function downloadCleaningTaskFiles(taskId: string | number) {
+  const url = `/api/cleaning/tasks/${taskId}/result/download`;
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `task_${taskId}_files.zip`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
 export function queryCleaningTaskLogByIdUsingGet(taskId: string | number, retryCount: number) {
   return get(`/api/cleaning/tasks/${taskId}/log/${retryCount}`);
 }
