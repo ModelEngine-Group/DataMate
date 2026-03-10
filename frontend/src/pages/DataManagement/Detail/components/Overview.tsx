@@ -54,11 +54,6 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
   const rowSelection = {
     onChange: (selectedRowKeys: React.Key[], selectedRows: any[]) => {
       setSelectedFiles(selectedRowKeys as number[]);
-      console.log(
-        `selectedRowKeys: ${selectedRowKeys}`,
-        "selectedRows: ",
-        selectedRows
-      );
     },
   };
 
@@ -505,8 +500,11 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
             // rowSelection={rowSelection}
             scroll={{ x: "max-content", y: 600 }}
             pagination={{
-              ...pagination,
+              current: pagination.current,
+              pageSize: pagination.pageSize,
+              total: pagination.total,
               showTotal: (total) => t("dataManagement.detail.totalItems", { total }),
+              showSizeChanger: true,
               onChange: (page, pageSize) => {
                 filesOperation.fetchFiles(filesOperation.pagination.prefix, page, pageSize);
               }

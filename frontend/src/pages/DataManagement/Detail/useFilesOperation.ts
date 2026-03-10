@@ -232,7 +232,7 @@ export function useFilesOperation(dataset: Dataset) {
         try {
           await deleteDatasetFileUsingDelete(dataset.id, file.id, directoryPath);
         } catch (e) {
-          console.error("删除文件失败", file, e);
+          // Continue deleting other files even if one fails
         }
       }
 
@@ -247,7 +247,7 @@ export function useFilesOperation(dataset: Dataset) {
     try {
       await deleteDirectoryUsingDelete(dataset.id, directoryPath);
     } catch (e) {
-      console.error("删除目录失败", directoryPath, e);
+      // Directory deletion failed, may still have contents
     }
   };
 
@@ -305,7 +305,6 @@ export function useFilesOperation(dataset: Dataset) {
         await fetchFiles(currentPrefix, 1, pagination.pageSize);
         message.success({ content: `文件夹 ${directoryName} 已删除` });
       } catch (error) {
-        console.error("删除文件夹失败", error);
         message.error({ content: `文件夹 ${directoryName} 删除失败` });
       }
     },
