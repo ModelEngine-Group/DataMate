@@ -75,9 +75,10 @@ const TagsInline = ({ tags }: { tags: Array<{ id: number; name: string; color: s
     const plusWidth = plusTag.offsetWidth;
 
     // 总容器宽度
-    const totalWidth = 300;
-    // 预留间距和"+n"的空间
-    const availableWidth = totalWidth - plusWidth - 12;
+    const totalWidth = 450;
+    // 预留"+n"标签的完整空间（使用更保守的估计）
+    // "+n"标签的实际宽度 ≈ 35-50px，预留 60px 确保安全
+    const availableWidth = totalWidth - 60;
 
     // 先计算所有标签的总宽度
     let tagsTotalWidth = 0;
@@ -159,7 +160,7 @@ const TagsInline = ({ tags }: { tags: Array<{ id: number; name: string; color: s
   }, [tags, visibleTags, hiddenCount]);
 
   return (
-    <div ref={containerRef} className="inline-flex items-center" style={{ whiteSpace: "nowrap", maxWidth: 300 }}>
+    <div ref={containerRef} className="inline-flex items-center" style={{ whiteSpace: "nowrap", maxWidth: 450 }}>
       <div
         ref={tagsAreaRef}
         className="inline-flex items-center gap-1 flex-1"
