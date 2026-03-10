@@ -30,18 +30,18 @@ spec:
           imagePullPolicy: {{ .Values.pgbouncer.image.pullPolicy }}
           ports:
             - name: pgbouncer
-              containerPort: 6432
+              containerPort: 5432
               protocol: TCP
           env:
-            - name: DATABASES_HOST
+            - name: DB_HOST
               value: {{ .Values.env.POSTGRE_HOST | quote }}
-            - name: DATABASES_PORT
+            - name: DB_PORT
               value: {{ .Values.env.POSTGRE_PORT | quote }}
-            - name: DATABASES_NAME
+            - name: DB_NAME
               value: {{ .Values.env.POSTGRE_NAME | quote }}
-            - name: DATABASES_USER
+            - name: DB_USER
               value: {{ .Values.env.POSTGRE_USER | quote }}
-            - name: DATABASES_PASSWORD
+            - name: DB_PASSWORD
               value: {{ .Values.env.POSTGRE_PASSWORD | quote }}
             - name: POOL_MODE
               value: {{ .Values.pgbouncer.poolMode | quote }}
@@ -51,14 +51,16 @@ spec:
               value: {{ .Values.pgbouncer.defaultPoolSize | quote }}
             - name: MAX_DB_CONNECTIONS
               value: {{ .Values.pgbouncer.maxDbConnections | quote }}
+            - name: AUTH_TYPE
+              value: {{ .Values.pgbouncer.authType | quote }}
           livenessProbe:
             tcpSocket:
-              port: 6432
+              port: 5432
             initialDelaySeconds: 15
             periodSeconds: 20
           readinessProbe:
             tcpSocket:
-              port: 6432
+              port: 5432
             initialDelaySeconds: 5
             periodSeconds: 10
           resources:
