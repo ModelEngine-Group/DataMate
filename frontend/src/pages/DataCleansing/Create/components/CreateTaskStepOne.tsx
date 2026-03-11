@@ -52,7 +52,6 @@ export default function CreateTaskStepOne({
     let dataset = null;
     if (key === "srcDatasetId") {
       dataset = datasets.find((d) => d.id === value);
-      // 如果勾选了"选择源数据集"，自动更新目标数据集名称
       const newDestName = useSourceDataset ? (dataset?.name || "") : allValues.destDatasetName;
       form.setFieldValue("destDatasetName", newDestName);
       setTaskConfig({
@@ -94,7 +93,6 @@ export default function CreateTaskStepOne({
     }
   };
 
-  // 过滤掉当前选中的源数据集（当不勾选"选择源数据集"时）
   const getFilteredDatasetOptions = () => {
     const srcDatasetId = form.getFieldValue("srcDatasetId");
     if (useSourceDataset || !srcDatasetId) {
@@ -120,25 +118,47 @@ export default function CreateTaskStepOne({
       <h2 className="font-medium text-gray-900 pt-6 mb-2 text-base">
         {t("dataCleansing.task.sections.dataSourceSelection")}
       </h2>
+
       <Form.Item label={t("dataCleansing.task.form.srcDataset")} name="srcDatasetId" required>
         <Select
           placeholder={t("dataCleansing.task.form.srcDatasetPlaceholder")}
-          options={datasets.map((dataset) => {
-            return {
-              label: (
-                <div className="flex items-center justify-between gap-3 py-2">
-                  <div className="flex items-center font-sm text-gray-900">
-                    <span className="mr-2">{dataset.icon}</span>
-                    <span>{dataset.name}</span>
-                  </div>
-                  <div className="text-xs text-gray-500">{dataset.size}</div>
+          showSearch
+          labelRender={(option) => {
+            const dataset = datasets.find(d => d.id === option.value);
+            return dataset?.name || option.label;
+          }}
+          filterOption={(input, option) => {
+            const dataset = datasets.find(d => d.id === option?.value);
+            if (!dataset) return false;
+            const searchLower = input.toLowerCase();
+            return dataset.name.toLowerCase().includes(searchLower) ||
+                   (dataset.description?.toLowerCase().includes(searchLower) ?? false);
+          }}
+          options={getFilteredDatasetOptions().map((dataset) => ({
+            label: dataset.name,
+            value: dataset.id,
+          }))}
+          optionRender={(option) => {
+            const dataset = datasets.find(d => d.id === option.value);
+            if (!dataset) return null;
+            return (
+              <div className="flex items-center justify-between gap-3 py-1">
+                <div className="flex items-center text-gray-900">
+                  <span className="mr-2">{dataset.icon}</span>
+                  <span>{dataset.name}</span>
                 </div>
-              ),
-              value: dataset.id,
-            };
-          })}
+                <div className="text-xs text-gray-500">{dataset.size}</div>
+              </div>
+            );
+          }}
+          notFoundContent={
+            <div className="text-center py-4 text-gray-400">
+              {t("dataCleansing.task.form.noDatasetsFound")}
+            </div>
+          }
         />
       </Form.Item>
+      
       <div className="flex items-center gap-1 mb-1">
         <span className="text-red-500">*</span>
         <label className="text-sm text-gray-700 mr-4">{t("dataCleansing.task.form.destDatasetName")}</label>
@@ -175,20 +195,18 @@ export default function CreateTaskStepOne({
         ]}
       >
         <AutoComplete
-          options={getFilteredDatasetOptions().map((dataset) => {
-            return {
-              label: (
-                <div className="flex items-center justify-between gap-3 py-2">
-                  <div className="flex items-center font-sm text-gray-900">
-                    <span className="mr-2">{dataset.icon}</span>
-                    <span>{dataset.name}</span>
-                  </div>
-                  <div className="text-xs text-gray-500">{dataset.size}</div>
+          options={getFilteredDatasetOptions().map((dataset) => ({
+            label: (
+              <div className="flex items-center justify-between gap-3 py-2">
+                <div className="flex items-center font-sm text-gray-900">
+                  <span className="mr-2">{dataset.icon}</span>
+                  <span>{dataset.name}</span>
                 </div>
-              ),
-              value: dataset.name,
-            };
-          })}
+                <div className="text-xs text-gray-500">{dataset.size}</div>
+              </div>
+            ),
+            value: dataset.name,
+          }))}
           filterOption={(inputValue, option) => {
             return option.value.toLowerCase().startsWith(inputValue.toLowerCase());
           }}

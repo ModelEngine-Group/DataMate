@@ -107,14 +107,22 @@ const OperatorFlow: React.FC<OperatorFlowProps> = ({
           <Select
             placeholder={t("dataCleansing.operatorOrchestration.selectTemplate")}
             className="min-w-64"
+            showSearch
+            filterOption={(input, option) => {
+              const template = templates.find(t => t.id === option?.value);
+              if (!template) return false;
+              const searchLower = input.toLowerCase();
+              return template.name.toLowerCase().includes(searchLower) ||
+                     (template.description?.toLowerCase().includes(searchLower) ?? false);
+            }}
             options={templates}
-            value={currentTemplate?.value}
+            value={currentTemplate?.id}
             onChange={(value) =>
               setCurrentTemplate(
-                templates.find((t) => t.value === value) || null
+                templates.find((t) => t.id === value) || null
               )
             }
-          ></Select>
+          />
         </div>
       </div>
       {/* 编排区域 */}
