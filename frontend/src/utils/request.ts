@@ -433,17 +433,13 @@ class Request {
       // 使用fetch
       const response = await fetch(fullURL, processedConfig);
 
-      // 执行响应拦截器
-      const processedResponse = await this.executeResponseInterceptors(
-        response,
-        processedConfig
-      );
-
-      if (!processedResponse.ok) {
-        throw new Error(`HTTP error! status: ${processedResponse.status}`);
+      // 文件下载不需要执行响应拦截器（因为响应是二进制数据，不是JSON）
+      // 直接检查响应状态
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      blob = await processedResponse.blob();
+      blob = await response.blob();
       name =
         name ||
         response.headers.get("Content-Disposition")?.split("filename=")[1] ||

@@ -3,6 +3,7 @@ import { formatBytes, formatDateTime } from "@/utils/unit";
 import { Download, Trash2, Folder, File } from "lucide-react";
 import { getDatasetTypeMap } from "../../dataset.const";
 import DeleteConfirmModal from "@/components/DeleteConfirmModal";
+import FilePreview from "@/components/file-preview";
 import { useTranslation } from "react-i18next";
 import { useState } from "react";
 
@@ -33,8 +34,10 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
     previewFileName,
     previewContent,
     previewUrl,
+    previewBlob,
     previewFileDetail,
     previewLoading,
+    handlePreviewFile,
     setPreviewVisible,
     handleDeleteFile,
     handleDownloadFile,
@@ -45,18 +48,12 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
     handleDeleteDirectory,
     handleRenameFile,
     handleRenameDirectory,
-    handlePreviewFile,
   } = filesOperation;
 
   // 文件列表多选配置
   const rowSelection = {
     onChange: (selectedRowKeys: React.Key[], selectedRows: any[]) => {
       setSelectedFiles(selectedRowKeys as number[]);
-      console.log(
-        `selectedRowKeys: ${selectedRowKeys}`,
-        "selectedRows: ",
-        selectedRows
-      );
     },
   };
 
@@ -503,8 +500,11 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
             // rowSelection={rowSelection}
             scroll={{ x: "max-content", y: 600 }}
             pagination={{
-              ...pagination,
+              current: pagination.current,
+              pageSize: pagination.pageSize,
+              total: pagination.total,
               showTotal: (total) => t("dataManagement.detail.totalItems", { total }),
+              showSizeChanger: true,
               onChange: (page, pageSize) => {
                 filesOperation.fetchFiles(filesOperation.pagination.prefix, page, pageSize);
               }
@@ -518,40 +518,19 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
         open={previewVisible}
         onCancel={() => setPreviewVisible(false)}
         footer={null}
-        width={1000}
+        width={1200}
+        styles={{ body: { padding: 0 } }}
       >
-        <div className="flex gap-4" style={{ minHeight: 400 }}>
+        <div className="flex gap-4" style={{ minHeight: 600, height: 600 }}>
           {/* 左侧预览区域 */}
-          <div className="flex-1 border border-gray-200 rounded-md p-3 flex items-center justify-center overflow-auto bg-gray-50">
-            {previewLoading ? (
-              <Spin />
-            ) : previewUrl ? (
-              <img
-                src={previewUrl}
-                alt={previewFileName}
-                style={{
-                  maxWidth: "100%",
-                  maxHeight: 500,
-                  objectFit: "contain",
-                }}
-              />
-            ) : previewContent ? (
-              <pre
-                style={{
-                  whiteSpace: "pre-wrap",
-                  wordBreak: "break-all",
-                  fontSize: 14,
-                  color: "#222",
-                  maxHeight: 500,
-                }}
-              >
-                {previewContent}
-              </pre>
-            ) : (
-              <span className="text-gray-500 text-sm">
-                {t("dataManagement.detail.previewEmpty")}
-              </span>
-            )}
+          <div className="flex-1 border border-gray-200 rounded-md overflow-hidden">
+            <FilePreview
+              fileName={previewFileName}
+              content={previewContent}
+              blobUrl={previewUrl}
+              blob={previewBlob}
+              loading={previewLoading}
+            />
           </div>
 
           {/* 右侧文件信息（来自 t_dm_dataset_files） */}

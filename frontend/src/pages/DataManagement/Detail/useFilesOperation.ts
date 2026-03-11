@@ -37,13 +37,14 @@ export function useFilesOperation(dataset: Dataset) {
   const [previewContent, setPreviewContent] = useState("");
   const [previewFileName, setPreviewFileName] = useState("");
   const [previewUrl, setPreviewUrl] = useState<string | undefined>();
+  const [previewBlob, setPreviewBlob] = useState<Blob | undefined>();
   const [previewFileDetail, setPreviewFileDetail] = useState<any | undefined>();
   const [previewLoading, setPreviewLoading] = useState(false);
 
   const fetchFiles = async (prefix?: string, current?, pageSize?) => {
     // 如果明确传了 prefix（包括空字符串），使用传入的值；否则使用当前 pagination.prefix
     const targetPrefix = prefix !== undefined ? prefix : (pagination.prefix || '');
-    
+
     const params: any = {
       page: current !== undefined ? current : pagination.current,
       size: pageSize !== undefined ? pageSize : pagination.pageSize,
@@ -93,13 +94,32 @@ export function useFilesOperation(dataset: Dataset) {
     setSelectedFiles([]); // 清空选中状态
   };
 
+  const getFileExtension = (fileName?: string) => {
+    if (!fileName) return '';
+    const parts = fileName.toLowerCase().split('.');
+    return parts.length > 1 ? parts[parts.length - 1] : '';
+  };
+
   const isImageFile = (fileName?: string, fileType?: string) => {
     const lowerType = (fileType || "").toLowerCase();
     if (lowerType.includes("image")) return true;
     const name = (fileName || "").toLowerCase();
-    return [".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp"].some((ext) =>
+    return [".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".svg"].some((ext) =>
       name.endsWith(ext)
     );
+  };
+
+  const isMarkdownFile = (fileName?: string) => {
+    const ext = getFileExtension(fileName);
+    return ext === 'md' || ext === 'markdown';
+  };
+
+  const isDocxFile = (fileName?: string) => {
+    return getFileExtension(fileName) === 'docx';
+  };
+
+  const isPdfFile = (fileName?: string) => {
+    return getFileExtension(fileName) === 'pdf';
   };
 
   const handlePreviewFile = async (file: any) => {
@@ -110,7 +130,9 @@ export function useFilesOperation(dataset: Dataset) {
     setPreviewFileName(file.fileName || "");
     setPreviewContent("");
     setPreviewUrl(undefined);
+    setPreviewBlob(undefined);
     setPreviewFileDetail(undefined);
+
     try {
       // 获取文件元信息（来自 t_dm_dataset_files）
       const prefix = pagination.prefix || "";
@@ -118,12 +140,28 @@ export function useFilesOperation(dataset: Dataset) {
       const detail = detailRes?.data || detailRes;
       setPreviewFileDetail(detail);
 
-      const image = isImageFile(detail?.fileName || file.fileName, detail?.fileType);
+      const fileName = detail?.fileName || file.fileName;
       const { blob, blobUrl } = await downloadFileByIdUsingGet(datasetId, prefix, file.id, file.fileName, "preview");
 
-      if (image) {
+      // 图片文件
+      if (isImageFile(fileName, detail?.fileType)) {
         setPreviewUrl(blobUrl);
-      } else {
+      }
+      // Markdown 文件
+      else if (isMarkdownFile(fileName)) {
+        const text = await blob.text();
+        setPreviewContent(text);
+      }
+      // Word 文档
+      else if (isDocxFile(fileName)) {
+        setPreviewBlob(blob);
+      }
+      // PDF 文档
+      else if (isPdfFile(fileName)) {
+        setPreviewBlob(blob);
+      }
+      // 其他文件（纯文本）
+      else {
         const text = await blob.text();
         setPreviewContent(text);
       }
@@ -194,7 +232,7 @@ export function useFilesOperation(dataset: Dataset) {
         try {
           await deleteDatasetFileUsingDelete(dataset.id, file.id, directoryPath);
         } catch (e) {
-          console.error("删除文件失败", file, e);
+          // Continue deleting other files even if one fails
         }
       }
 
@@ -209,7 +247,7 @@ export function useFilesOperation(dataset: Dataset) {
     try {
       await deleteDirectoryUsingDelete(dataset.id, directoryPath);
     } catch (e) {
-      console.error("删除目录失败", directoryPath, e);
+      // Directory deletion failed, may still have contents
     }
   };
 
@@ -223,9 +261,10 @@ export function useFilesOperation(dataset: Dataset) {
     setPreviewVisible,
     previewContent,
     previewFileName,
-      previewUrl,
-      previewFileDetail,
-      previewLoading,
+    previewUrl,
+    previewBlob,
+    previewFileDetail,
+    previewLoading,
     setPreviewContent,
     setPreviewFileName,
     fetchFiles,
@@ -266,7 +305,6 @@ export function useFilesOperation(dataset: Dataset) {
         await fetchFiles(currentPrefix, 1, pagination.pageSize);
         message.success({ content: `文件夹 ${directoryName} 已删除` });
       } catch (error) {
-        console.error("删除文件夹失败", error);
         message.error({ content: `文件夹 ${directoryName} 删除失败` });
       }
     },
