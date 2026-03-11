@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { Breadcrumb, App, Tabs, Drawer, Descriptions } from "antd";
 import {
-  ReloadOutlined,
-  DownloadOutlined,
-  UploadOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  InfoCircleOutlined,
-} from "@ant-design/icons";
+  Info,
+  Edit,
+  Upload,
+  Download,
+  RefreshCw,
+  Trash2,
+} from "lucide-react";
 import DetailHeader from "@/components/DetailHeader";
 import { getDatasetTypeMap, mapDataset } from "../dataset.const";
 import type { Dataset } from "@/pages/DataManagement/dataset.model";
@@ -140,7 +140,7 @@ export default function DatasetDetail() {
     {
       key: "detail",
       label: t("dataManagement.actions.detail"),
-      icon: <InfoCircleOutlined />,
+      icon: <Info className="w-4 h-4" />,
       onClick: () => {
         setShowDetailDrawer(true);
       },
@@ -148,7 +148,7 @@ export default function DatasetDetail() {
     {
       key: "edit",
       label: t("dataManagement.actions.edit"),
-      icon: <EditOutlined />,
+      icon: <Edit className="w-4 h-4" />,
       onClick: () => {
         setShowEditDialog(true);
       },
@@ -157,26 +157,19 @@ export default function DatasetDetail() {
     {
       key: "upload",
       label: t("dataManagement.actions.importData"),
-      icon: <UploadOutlined />,
+      icon: <Upload className="w-4 h-4" />,
       onClick: () => setShowUploadDialog(true),
     },
     {
       key: "export",
       label: t("dataManagement.actions.export"),
-      icon: <DownloadOutlined />,
-      // isDropdown: true,
-      // items: [
-      //   { key: "alpaca", label: "Alpaca 格式", icon: <FileTextOutlined /> },
-      //   { key: "jsonl", label: "JSONL 格式", icon: <DatabaseOutlined /> },
-      //   { key: "csv", label: "CSV 格式", icon: <FileTextOutlined /> },
-      //   { key: "coco", label: "COCO 格式", icon: <FileImageOutlined /> },
-      // ],
+      icon: <Download className="w-4 h-4" />,
       onClick: () => handleDownload(),
     },
     {
       key: "refresh",
       label: t("dataManagement.actions.refresh"),
-      icon: <ReloadOutlined />,
+      icon: <RefreshCw className="w-4 h-4" />,
       onClick: handleRefresh,
     },
     {
@@ -190,7 +183,7 @@ export default function DatasetDetail() {
         cancelText: t("dataManagement.confirm.deleteCancel"),
         okType: "danger",
       },
-      icon: <DeleteOutlined />,
+      icon: <Trash2 className="w-4 h-4" />,
       onClick: handleDeleteDataset,
     },
   ];
