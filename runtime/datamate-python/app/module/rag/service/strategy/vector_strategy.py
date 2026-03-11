@@ -15,6 +15,7 @@ from app.module.rag.infra.embeddings import EmbeddingFactory
 from app.module.rag.infra.vectorstore.milvus_client import get_milvus_client
 from app.module.rag.repository import KnowledgeBaseRepository, RagFileRepository
 from app.module.rag.schema.response import PagedResponse, RagChunkResp
+from app.module.rag.service.common import TextCleaner, MetadataBuilder, BatchProcessor, get_file_path
 from app.module.system.service.common_service import get_model_by_id
 from .base import KnowledgeBaseStrategy
 
@@ -372,17 +373,8 @@ class VectorKnowledgeBaseStrategy(KnowledgeBaseStrategy):
             ) from e
     
     def _get_file_path(self, rag_file) -> Optional[str]:
-        """获取文件路径"""
-        from pathlib import Path
-        from app.core.config import settings
-        
-        if not rag_file.file_metadata:
-            return None
-        
-        file_path = rag_file.file_metadata.get("file_path")
-        if file_path:
-            return str(Path(file_path).absolute())
-        return None
+        from app.module.rag.service.common import get_file_path
+        return get_file_path(rag_file)
     
     def _filter_and_clean_chunks(self, chunks: list) -> list:
         """过滤和清理分块"""

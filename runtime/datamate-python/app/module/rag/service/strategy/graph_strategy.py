@@ -5,34 +5,70 @@
 """
 import logging
 import os
-from typing import Any, Dict, List, Optional
+from pathlib import Path
+from typing import Any, Awaitable, Callable, Dict, List, Optional
 
+import numpy as np
+from lightrag import LightRAG
+from lightrag.constants import DEFAULT_ENTITY_TYPES
+from lightrag.llm.openai import openai_complete_if_cache, openai_embed
+from lightrag.utils import EmbeddingFunc, get_env_value, setup_logger
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.config import settings
 from app.core.exception import BusinessError, ErrorCodes
 from app.db.models.knowledge_gen import KnowledgeBase
 from app.module.rag.repository import KnowledgeBaseRepository
-from app.module.rag.schema.response import UnifiedSearchResult
+from app.module.rag.service.common import get_file_path
 from app.module.system.service.common_service import get_model_by_id
 from .base import KnowledgeBaseStrategy
-from app.module.rag.service.graph_rag import (
-    DEFAULT_WORKING_DIR,
-    create_llm_func,
-    create_embedding_func,
-    create_rag,
-    get_or_create_rag
-)
 
 
+setup_logger("lightrag", level="INFO")
 logger = logging.getLogger(__name__)
 
-_rag_cache: Dict[str, Any] = {}
+DEFAULT_WORKING_DIR = str(settings.rag_storage_dir)
+
+
+def _create_llm_func(model_name: str, base_url: str, api_key: str) -> Callable[..., Awaitable[str]]:
+    async def _llm(prompt: str, system_prompt: str = None, history_messages: list = None, **kwargs) -> str:
+        return await openai_complete_if_cache(
+            model_name, prompt,
+            system_prompt=system_prompt,
+            history_messages=history_messages or [],
+            api_key=api_key, base_url=base_url, **kwargs,
+        )
+    return _llm
+
+
+def _create_embedding_func(model_name: str, base_url: str, api_key: str, embedding_dim: int) -> EmbeddingFunc:
+    async def _embed(texts: list[str]) -> np.ndarray:
+        return await openai_embed.func(texts, model=model_name, api_key=api_key, base_url=base_url)
+    return EmbeddingFunc(embedding_dim=embedding_dim, func=_embed, max_token_size=8192)
+
+
+async def _create_rag(
+    llm_func: Callable[..., Awaitable[str]],
+    embedding_func: EmbeddingFunc,
+    working_dir: str,
+    workspace: str = "",
+) -> LightRAG:
+    os.makedirs(working_dir, exist_ok=True)
+    rag = LightRAG(
+        working_dir=working_dir,
+        workspace=workspace,
+        llm_model_func=llm_func,
+        embedding_func=embedding_func,
+        addon_params={
+            "language": "Chinese",
+            "entity_types": get_env_value("ENTITY_TYPES", DEFAULT_ENTITY_TYPES, list),
+        },
+    )
+    await rag.initialize_storages()
+    return rag
 
 
 class GraphKnowledgeBaseStrategy(KnowledgeBaseStrategy):
-    """知识图谱策略实现
-
-    提供 GRAPH 类型知识库的 query、 search 和 process_file 功能。
-    """
 
     def __init__(self, db: AsyncSession):
         super().__init__(db)
@@ -44,15 +80,6 @@ class GraphKnowledgeBaseStrategy(KnowledgeBaseStrategy):
         knowledge_base_id: str,
         **kwargs
     ) -> Any:
-        """查询知识图谱数据
-
-        Args:
-            knowledge_base_id: 知识库 ID
-            **kwargs: 额外参数（如 node_label)
-
-        Returns:
-            知识图谱数据(格式由 LightRAG 定义)
-        """
         node_label = kwargs.get("node_label")
         if not node_label:
             raise BusinessError(
@@ -75,18 +102,6 @@ class GraphKnowledgeBaseStrategy(KnowledgeBaseStrategy):
         threshold: Optional[float] = None,
         **kwargs
     ) -> List[Dict[str, Any]]:
-        """基于输入文本的相似度检索(知识图谱)
-
-        Args:
-            query_text: 查询文本
-            knowledge_base_ids: 知识库 ID 列表
-            top_k: 返回结果数量
-            threshold: 相似度阈值(可选)
-            **kwargs: 额外参数
-
-        Returns:
-            统一格式的检索结果列表(UnifiedSearchResult)
-        """
         if len(knowledge_base_ids) != 1:
             raise BusinessError(
                 ErrorCodes.RAG_INVALID_REQUEST,
@@ -103,7 +118,7 @@ class GraphKnowledgeBaseStrategy(KnowledgeBaseStrategy):
             graph_results = await rag_instance.get_knowledge_graph(node_label=query_text)
 
             unified_results = self._convert_graph_results_into_unified(
-                graph_results, kb.id, kb.name
+                graph_results, str(kb.id), str(kb.name)  # type: ignore
             )
             all_results.extend(unified_results)
 
@@ -117,7 +132,6 @@ class GraphKnowledgeBaseStrategy(KnowledgeBaseStrategy):
         knowledge_base_id: str,
         knowledge_base_name: str
     ) -> List[Dict[str, Any]]:
-        """将 LightRAG 知识图谱结果转换为 UnifiedSearchResult"""
         results = []
 
         if isinstance(graph_results, dict):
@@ -165,14 +179,6 @@ class GraphKnowledgeBaseStrategy(KnowledgeBaseStrategy):
         rag_file_id: str,
         **kwargs
     ) -> None:
-        """处理单个文件(知识图谱构建)
-
-        Args:
-            knowledge_base_id: 知识库 ID
-            rag_file_id: RAG 文件 ID
-            **kwargs: 鰃杂参数
-        """
-        from pathlib import Path
         from app.module.rag.infra.document.processor import ingest_file_to_chunks
         from app.db.models.knowledge_gen import FileStatus
         from app.module.rag.repository import RagFileRepository
@@ -192,7 +198,7 @@ class GraphKnowledgeBaseStrategy(KnowledgeBaseStrategy):
             await file_repo.update_status(rag_file_id, FileStatus.PROCESSING)
             await self.db.commit()
 
-            file_path = self._get_file_path(rag_file)
+            file_path = get_file_path(rag_file)
             if not file_path or not Path(file_path).exists():
                 await file_repo.update_status(rag_file_id, FileStatus.PROCESS_FAILED)
                 await self.db.commit()
@@ -240,56 +246,42 @@ class GraphKnowledgeBaseStrategy(KnowledgeBaseStrategy):
                 f"知识图谱构建失败: {str(e)}"
             ) from e
 
-    def _get_file_path(self, rag_file) -> Optional[str]:
-        """获取文件路径"""
-        from pathlib import Path
-
-        if not rag_file.file_metadata:
-            return None
-
-        file_path = rag_file.file_metadata.get("file_path")
-        if file_path:
-            return str(Path(file_path).absolute())
-        return None
-
     async def _get_knowledge_base(self, knowledge_base_id: str) -> KnowledgeBase:
-        """获取知识库实体"""
         kb = await self.kb_repo.get_by_id(knowledge_base_id)
         if not kb:
             raise BusinessError(ErrorCodes.RAG_KNOWLEDGE_BASE_NOT_FOUND)
         return kb
 
     async def _get_or_create_graph_rag(self, kb: KnowledgeBase) -> Any:
-        """获取或创建缓存的 Graph RAG 实例"""
-        kb_name = str(kb.name)
+        kb_name = str(kb.name)  # type: ignore
         if kb_name in self._rag_cache:
             return self._rag_cache[kb_name]
 
-        chat_model = await get_model_by_id(self.db, kb.chat_model)
-        embedding_model = await get_model_by_id(self.db, kb.embedding_model)
+        chat_model = await get_model_by_id(self.db, str(kb.chat_model))  # type: ignore
+        embedding_model = await get_model_by_id(self.db, str(kb.embedding_model))  # type: ignore
 
         if not chat_model or not embedding_model:
             raise BusinessError(ErrorCodes.RAG_MODEL_NOT_FOUND)
 
-        llm_func = create_llm_func(
-            str(chat_model.model_name),
-            str(chat_model.base_url),
-            str(chat_model.api_key),
+        llm_func = _create_llm_func(
+            str(chat_model.model_name),  # type: ignore
+            str(chat_model.base_url),  # type: ignore
+            str(chat_model.api_key),  # type: ignore
         )
 
         from app.module.shared.llm import LLMFactory
-        embedding_func = create_embedding_func(
-            str(embedding_model.model_name),
-            str(embedding_model.base_url),
-            str(embedding_model.api_key),
+        embedding_func = _create_embedding_func(
+            str(embedding_model.model_name),  # type: ignore
+            str(embedding_model.base_url),  # type: ignore
+            str(embedding_model.api_key),  # type: ignore
             LLMFactory.get_embedding_dimension(
-                str(embedding_model.model_name),
-                str(embedding_model.base_url),
-                str(embedding_model.api_key),
+                str(embedding_model.model_name),  # type: ignore
+                str(embedding_model.base_url),  # type: ignore
+                str(embedding_model.api_key),  # type: ignore
             ),
         )
 
         working_dir = os.path.join(DEFAULT_WORKING_DIR, kb_name)
-        rag = await create_rag(llm_func, embedding_func, working_dir, workspace=kb_name)
+        rag = await _create_rag(llm_func, embedding_func, working_dir, workspace=kb_name)
         self._rag_cache[kb_name] = rag
         return rag
