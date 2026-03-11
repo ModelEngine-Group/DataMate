@@ -37,8 +37,25 @@ export default function FileTable({result, fetchTaskResult}) {
     setSelectedFile(file);
     setShowFileCompareDialog(true);
   };
-  const handleBatchDownload = () => {
-    // 实际下载逻辑
+  const handleDownload = async () => {
+    try {
+      const response = await fetch(`/api/cleaning/tasks/${id}/result/download`);
+      if (!response.ok) {
+        throw new Error('Download failed');
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `task_${id}_files.zip`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Download failed:', error);
+      message.error(t("dataCleansing.detail.fileTable.downloadFilesFailed"));
+    }
   };
 
   function formatFileSize(bytes: number, decimals: number = 2): string {
@@ -332,7 +349,7 @@ export default function FileTable({result, fetchTaskResult}) {
     {
       title: t("dataCleansing.detail.fileTable.actions"),
       key: "action",
-      width: 200,
+      width: 150,
       render: (_text: string, record: any) => (
         <div className="flex">
           {record.status === "COMPLETED" ? (
@@ -352,9 +369,13 @@ export default function FileTable({result, fetchTaskResult}) {
               {t("dataCleansing.actions.compare")}
             </Button>
           )}
-          <Popover content={t("dataCleansing.detail.fileTable.downloadNotAvailable")}>
-              <Button type="link" size="small" disabled>{t("dataCleansing.actions.download")}</Button>
-          </Popover>
+          <Button
+            type="link"
+            size="small"
+            onClick={() => handleDownload()}
+          >
+            {t("dataCleansing.actions.download")}
+          </Button>
         </div>
       ),
     },
@@ -363,20 +384,18 @@ export default function FileTable({result, fetchTaskResult}) {
   return (
     <>
       {selectedFileIds.length > 0 && (
-        <div className="mb-4 flex justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600">
-              {t("dataCleansing.detail.fileTable.downloadNotAvailable", {count: selectedFileIds.length})}
-            </span>
-            <Button
-              onClick={handleBatchDownload}
-              size="small"
-              type="primary"
-              icon={<Download className="w-4 h-4 mr-2" />}
-            >
-              {t("dataCleansing.actions.batchDownload")}
-            </Button>
-          </div>
+        <div className="mb-4 flex justify-between items-center">
+          <span className="text-sm text-gray-600">
+            {t("dataCleansing.detail.fileTable.selectedFilesCount", { count: selectedFileIds.length })}
+          </span>
+          <Button
+            onClick={handleDownload}
+            size="small"
+            type="primary"
+            icon={<Download className="w-4 h-4 mr-2" />}
+          >
+            {t("dataCleansing.actions.download")}
+          </Button>
         </div>
       )}
       <Table

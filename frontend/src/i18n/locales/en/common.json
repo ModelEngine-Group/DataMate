@@ -1331,6 +1331,7 @@
       "pause": "Pause",
       "compare": "Compare",
       "download": "Download",
+      "batchDownload": "Batch Download",
       "delete": "Delete",
       "batchDownload": "Batch Download",
       "edit": "Edit",
@@ -1345,6 +1346,10 @@
       "operatorOrchestration": "Operator Orchestration"
     },
     "task": {
+      "sections": {
+        "taskInfo": "Task Information",
+        "dataSourceSelection": "Data Source Selection"
+      },
       "columns": {
         "taskName": "Task Name",
         "taskId": "Task ID",
@@ -1361,35 +1366,23 @@
         "dataSizeChange": "Data Size Change",
         "actions": "Actions"
       },
-      "form": {
-        "name": "Name",
-        "namePlaceholder": "Enter task name",
-        "description": "Description",
-        "descriptionPlaceholder": "Describe the task goals and requirements",
-        "srcDataset": "Source Dataset",
-        "srcDatasetPlaceholder": "Please select source dataset",
-        "destDatasetName": "Target Dataset Name",
-        "destDatasetNamePlaceholder": "Enter or select target dataset name",
-        "destDatasetType": "Target Dataset Type",
-        "destDatasetTypeRequired": "Please select target dataset type",
-        "useSourceDataset": "Use Source Dataset",
-        "useSourceDatasetHint": "When checked, target dataset will use source dataset and cannot be modified",
-        "destDatasetNameRequired": "Please enter target dataset name",
-        "cannotUseSourceDataset": "Cannot use source dataset as target. Check 'Use Source Dataset' or enter a different name"
-      },
-      "sections": {
-        "taskInfo": "Task Info",
-        "dataSourceSelection": "Data Source Selection"
-      },
-      "messages": {
-        "taskCreated": "Task created successfully",
-        "taskStarted": "Task started successfully",
-        "taskPaused": "Task paused successfully",
-        "taskDeleted": "Task deleted successfully",
-        "taskDetailFailed": "Failed to fetch task details",
-        "fetchTaskResultFailed": "Failed to fetch task results",
-        "fetchTaskLogFailed": "Failed to fetch task logs"
-      }
+        "form": {
+          "name": "Name",
+          "namePlaceholder": "Enter task name",
+          "description": "Description",
+          "descriptionPlaceholder":  "Describe the purpose",
+          "srcDataset": "Source Dataset",
+          "srcDatasetPlaceholder":  "Select source dataset",
+          "destDatasetType": "Target Dataset Type",
+          "useSourceDataset": "Use Source Dataset",
+          "useSourceDatasetHint": "Output will be replaced in source dataset",
+          "cannotUseSourceDataset": "Cannot use source dataset as destination",
+          "destDatasetNameRequired": "Destination dataset name is required",
+          "destDatasetTypeRequired": "Target dataset type is required",
+          "allTypes": "All",
+          "showingDatasets": "Showing {{count}} datasets",
+          "noDatasetsFound": "No datasets found"
+        }
     },
     "template": {
       "columns": {
@@ -1439,8 +1432,10 @@
         "searchFileName": "Search file name",
         "searchFileType": "Search file type",
         "selectFiles": "{{count}} files selected",
+        "selectedFilesCount": "Selected {{count}} files",
         "notCompleted": "Not Completed",
         "downloadNotAvailable": "Not Available Yet",
+        "downloadFilesFailed": "Failed to download files",
         "compareDialogTitle": "File Comparison - {{fileName}}",
         "beforeProcessing": "Before Processing",
         "afterProcessing": "After Processing",

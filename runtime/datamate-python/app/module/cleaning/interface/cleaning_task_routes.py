@@ -219,6 +219,59 @@ async def get_cleaning_task_results(
 
 
 @router.get(
+    "/{task_id}/result/download",
+    summary="下载清洗任务结果文件压缩包",
+    description="下载指定清洗任务的源文件和处理后文件压缩包",
+)
+async def download_cleaning_result_files(
+    task_id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """Download cleaning task result files (both src and dest)"""
+    import zipfile
+    import io
+    from pathlib import Path
+    from fastapi.responses import StreamingResponse
+    from app.core.exception import BusinessError, ErrorCodes
+
+    task_service = _get_task_service(db)
+
+    task = await task_service.get_task(db, task_id)
+
+    results = await task_service.get_task_results(db, task_id)
+    if not results:
+        raise BusinessError(ErrorCodes.NOT_FOUND, f"Cleaning task {task_id} not found")
+
+    src_path = Path("/dataset") / task.src_dataset_id
+
+    dest_path = Path("/dataset") / task.dest_dataset_id
+
+    zip_buffer = io.BytesIO()
+
+    with zipfile.ZipFile(zip_buffer, "w") as zipf:
+        for file_record in results:
+            if file_record.src_name:
+                src_path = src_path / file_record.src_name
+                if src_path.exists():
+                    zipf.write(src_path, arcname=f"src/{file_record.src_name}")
+
+            if file_record.dest_name:
+                dest_path = dest_path / file_record.dest_name
+                if dest_path.exists():
+                    zipf.write(dest_path, arcname=f"dest/{file_record.dest_name}")
+
+    zip_buffer.seek(0)
+
+    filename = f"task_{task_id}_{file_record.src_name}.zip"
+
+    return StreamingResponse(
+        zip_buffer,
+        media_type="application/zip",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.get(
     "/{task_id}/log/stream",
     summary="流式获取清洗任务日志",
     description="通过SSE流式获取清洗任务日志",
