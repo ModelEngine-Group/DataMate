@@ -295,8 +295,13 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
                         message.warning(t("dataManagement.placeholders.folderName"));
                         return Promise.reject();
                       }
-                      await handleRenameDirectory(fullPath, record.fileName, newDirName);
-                      fetchDataset();
+                      try {
+                        await handleRenameDirectory(fullPath, record.fileName, newDirName);
+                        fetchDataset();
+                      } catch (error) {
+                        // 错误已经在 handleRenameDirectory 中处理，这里只需要阻止 modal 关闭
+                        return Promise.reject();
+                      }
                     },
                   });
                 }}
@@ -363,8 +368,13 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
                     message.warning(t("dataManagement.placeholders.fileName"));
                     return Promise.reject();
                   }
-                  await handleRenameFile(record, newBaseName);
-                  fetchDataset();
+                  try {
+                    await handleRenameFile(record, newBaseName);
+                    fetchDataset();
+                  } catch (error) {
+                    // 错误已经在 handleRenameFile 中处理，这里只需要阻止 modal 关闭
+                    return Promise.reject();
+                  }
                 },
               });
             }}

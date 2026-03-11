@@ -533,9 +533,15 @@ export function useFilesOperation(dataset: Dataset) {
         const currentPrefix = pagination.prefix || "";
         await fetchFiles(currentPrefix, 1, pagination.pageSize);
         message.success({ content: `文件 ${file.fileName} 重命名成功` });
-      } catch (error) {
-        message.error({ content: `文件 ${file.fileName} 重命名失败` });
-        throw error;
+      } catch (error: any) {
+        // 解析错误信息，提取更友好的提示
+        const errorMsg = error?.response?.data?.message || error?.message || error?.toString();
+
+        if (errorMsg?.includes("已存在") || errorMsg?.includes("already exists") || errorMsg?.includes("duplicate")) {
+          message.error({ content: `文件名 "${trimmed}" 已存在，请使用其他名称` });
+        } else {
+          message.error({ content: `文件 ${file.fileName} 重命名失败：${errorMsg}` });
+        }
       }
     },
     handleRenameDirectory: async (directoryPath: string, oldName: string, newName: string) => {
@@ -549,9 +555,15 @@ export function useFilesOperation(dataset: Dataset) {
         const currentPrefix = pagination.prefix || "";
         await fetchFiles(currentPrefix, 1, pagination.pageSize);
         message.success({ content: `文件夹 ${oldName} 重命名为 ${trimmed} 成功` });
-      } catch (error) {
-        message.error({ content: `文件夹 ${oldName} 重命名失败` });
-        throw error;
+      } catch (error: any) {
+        // 解析错误信息，提取更友好的提示
+        const errorMsg = error?.response?.data?.message || error?.message || error?.toString();
+
+        if (errorMsg?.includes("已存在") || errorMsg?.includes("already exists") || errorMsg?.includes("duplicate")) {
+          message.error({ content: `文件夹名 "${trimmed}" 已存在，请使用其他名称` });
+        } else {
+          message.error({ content: `文件夹 ${oldName} 重命名失败：${errorMsg}` });
+        }
       }
     },
   };
