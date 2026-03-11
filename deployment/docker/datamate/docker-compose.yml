@@ -47,8 +47,6 @@ services:
     image: ${REGISTRY:-}datamate-gateway:${VERSION:-latest}
     restart: on-failure
     privileged: true
-    ports:
-      - '8080:8080'
     environment:
       - JWT_SECRET=default-insecure-key-change-in-production
       - datamate.jwt.enable=${DATAMATE_JWT_ENABLE:-false}

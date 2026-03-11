@@ -18,7 +18,7 @@ import {
   queryKnowledgeBaseByIdUsingGet,
   queryKnowledgeBaseFilesUsingGet,
   retrieveKnowledgeBaseContent,
-  fetchKnowledgeGraph,
+  queryKnowledgeBase,
 } from "../knowledge-base.api";
 import useFetchData from "@/hooks/useFetchData";
 import AddDataDialog from "../components/AddDataDialog";
@@ -153,7 +153,7 @@ const KnowledgeBaseDetailPage: React.FC = () => {
     setGraphLoading(true);
     setGraphSelection(null);
     try {
-      const { data } = await fetchKnowledgeGraph({ knowledge_base_id: knowledgeBase.id, query: "*" });
+      const { data } = await queryKnowledgeBase({ knowledge_base_id: knowledgeBase.id, query: "*" });
       setGraphData({ nodes: data?.nodes ?? [], edges: data?.edges ?? [] });
     } catch {
       setGraphData({ nodes: [], edges: [] });

@@ -133,6 +133,12 @@ class ErrorCodes:
     RAG_EMBEDDING_FAILED: Final = ErrorCode(
         "rag.0013", "Embedding generation failed", 500
     )
+    RAG_UNSUPPORTED_TYPE: Final = ErrorCode(
+        "rag.0014", "Unsupported RAG type", 400
+    )
+    RAG_INVALID_REQUEST: Final = ErrorCode(
+        "rag.0015", "Invalid request", 400
+    )
 
     # ========== 配比模块 ==========
     RATIO_TASK_NOT_FOUND: Final = ErrorCode("ratio.0001", "Ratio task not found", 404)
