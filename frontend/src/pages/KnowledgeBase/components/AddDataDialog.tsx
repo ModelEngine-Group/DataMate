@@ -27,6 +27,18 @@ export default function AddDataDialog({ knowledgeBase, onDataAdded }) {
 
   const [selectedFilesMap, setSelectedFilesMap] = useState({});
 
+  const toBackendProcessType = (uiValue: string) => {
+    switch (uiValue) {
+      case "FIXED_LENGTH_CHUNK":
+        return "LENGTH_CHUNK";
+      case "CHAPTER_CHUNK":
+        // 后端暂不支持 CHAPTER_CHUNK：用段落分块策略兼容“按章节分块”的入口
+        return "PARAGRAPH_CHUNK";
+      default:
+        return uiValue;
+    }
+  };
+
   // 定义分块选项
   const sliceOptions = [
     { label: t("knowledgeBase.const.sliceMethod.default"), value: "DEFAULT_CHUNK" },
@@ -124,7 +136,7 @@ export default function AddDataDialog({ knowledgeBase, onDataAdded }) {
       // 构造符合API要求的请求数据
       const requestData = {
         files: Object.values(selectedFilesMap),
-        processType: newKB.processType,
+        processType: toBackendProcessType(newKB.processType),
         chunkSize: Number(newKB.chunkSize), // 确保是数字类型
         overlapSize: Number(newKB.overlapSize), // 确保是数字类型
         delimiter: newKB.delimiter,

@@ -71,11 +71,12 @@ async def _create_rag(
 
 
 class GraphKnowledgeBaseStrategy(KnowledgeBaseStrategy):
+    # 类级别的缓存，允许跨实例共享
+    _rag_cache: Dict[str, Any] = {}
 
     def __init__(self, db: AsyncSession):
         super().__init__(db)
         self.kb_repo = KnowledgeBaseRepository(db)
-        self._rag_cache: Dict[str, Any] = {}
 
     async def query(
         self,
@@ -122,7 +123,7 @@ class GraphKnowledgeBaseStrategy(KnowledgeBaseStrategy):
             retrieval_results = await rag_instance.aquery_data(query_text, query_param)
 
             unified_results = self._convert_retrieval_results_into_unified(
-                retrieval_results, str(kb.id), str(kb.name)  # type: ignore
+                retrieval_results, str(kb.id), str(kb.name)
             )
             all_results.extend(unified_results)
 
@@ -317,35 +318,49 @@ class GraphKnowledgeBaseStrategy(KnowledgeBaseStrategy):
         return kb
 
     async def _get_or_create_graph_rag(self, kb: KnowledgeBase) -> Any:
-        kb_name = str(kb.name)  # type: ignore
+        kb_name = str(kb.name)
         if kb_name in self._rag_cache:
             return self._rag_cache[kb_name]
 
-        chat_model = await get_model_by_id(self.db, str(kb.chat_model))  # type: ignore
-        embedding_model = await get_model_by_id(self.db, str(kb.embedding_model))  # type: ignore
+        chat_model = await get_model_by_id(self.db, str(kb.chat_model))
+        embedding_model = await get_model_by_id(self.db, str(kb.embedding_model))
 
         if not chat_model or not embedding_model:
             raise BusinessError(ErrorCodes.RAG_MODEL_NOT_FOUND)
 
         llm_func = _create_llm_func(
-            str(chat_model.model_name),  # type: ignore
-            str(chat_model.base_url),  # type: ignore
-            str(chat_model.api_key),  # type: ignore
+            str(chat_model.model_name),
+            str(chat_model.base_url),
+            str(chat_model.api_key),
         )
 
         from app.module.shared.llm import LLMFactory
         embedding_func = _create_embedding_func(
-            str(embedding_model.model_name),  # type: ignore
-            str(embedding_model.base_url),  # type: ignore
-            str(embedding_model.api_key),  # type: ignore
+            str(embedding_model.model_name),
+            str(embedding_model.base_url),
+            str(embedding_model.api_key),
             LLMFactory.get_embedding_dimension(
-                str(embedding_model.model_name),  # type: ignore
-                str(embedding_model.base_url),  # type: ignore
-                str(embedding_model.api_key),  # type: ignore
+                str(embedding_model.model_name),
+                str(embedding_model.base_url),
+                str(embedding_model.api_key),
             ),
         )
 
-        working_dir = os.path.join(DEFAULT_WORKING_DIR, kb_name)
-        rag = await _create_rag(llm_func, embedding_func, working_dir, workspace=kb_name)
+        rag = await _create_rag(llm_func, embedding_func, DEFAULT_WORKING_DIR, workspace=kb_name)
         self._rag_cache[kb_name] = rag
         return rag
+
+    @classmethod
+    def rename_workspace(cls, old_name: str, new_name: str) -> None:
+        old_path = Path(DEFAULT_WORKING_DIR) / old_name
+        new_path = Path(DEFAULT_WORKING_DIR) / new_name
+        if old_path.exists() and old_path.is_dir():
+            old_path.rename(new_path)
+            logger.info("知识图谱 workspace 重命名: %s -> %s", old_name, new_name)
+        cls.clear_cache(old_name)
+
+    @classmethod
+    def clear_cache(cls, name: str) -> None:
+        if name in cls._rag_cache:
+            del cls._rag_cache[name]
+            logger.info("已清除知识图谱缓存: %s", name)
