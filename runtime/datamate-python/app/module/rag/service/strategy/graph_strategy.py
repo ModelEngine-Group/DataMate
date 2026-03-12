@@ -71,11 +71,12 @@ async def _create_rag(
 
 
 class GraphKnowledgeBaseStrategy(KnowledgeBaseStrategy):
+    # 类级别的缓存，允许跨实例共享
+    _rag_cache: Dict[str, Any] = {}
 
     def __init__(self, db: AsyncSession):
         super().__init__(db)
         self.kb_repo = KnowledgeBaseRepository(db)
-        self._rag_cache: Dict[str, Any] = {}
 
     async def query(
         self,
@@ -348,3 +349,18 @@ class GraphKnowledgeBaseStrategy(KnowledgeBaseStrategy):
         rag = await _create_rag(llm_func, embedding_func, DEFAULT_WORKING_DIR, workspace=kb_name)
         self._rag_cache[kb_name] = rag
         return rag
+
+    @classmethod
+    def rename_workspace(cls, old_name: str, new_name: str) -> None:
+        old_path = Path(DEFAULT_WORKING_DIR) / old_name
+        new_path = Path(DEFAULT_WORKING_DIR) / new_name
+        if old_path.exists() and old_path.is_dir():
+            old_path.rename(new_path)
+            logger.info("知识图谱 workspace 重命名: %s -> %s", old_name, new_name)
+        cls.clear_cache(old_name)
+
+    @classmethod
+    def clear_cache(cls, name: str) -> None:
+        if name in cls._rag_cache:
+            del cls._rag_cache[name]
+            logger.info("已清除知识图谱缓存: %s", name)
