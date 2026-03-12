@@ -67,7 +67,7 @@ export function retrieveKnowledgeBaseContent(data: {
   threshold?: number;
   knowledgeBaseIds: string[];
 }): Promise<UnifiedSearchResult[]> {
-  return post("/api/knowledge-base/retrieve", data);
+  return post("/api/knowledge-base/v2/retrieve", data);
 }
 
 // 获取知识库文件详情（分页的切片数据）

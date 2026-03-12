@@ -44,6 +44,7 @@ interface DetailHeaderProps<T> {
   statistics: StatisticItem[];
   operations: OperationItem[];
   tagConfig?: TagConfig;
+  titleExtra?: React.ReactNode;
 }
 
 // 标签单行渲染组件
@@ -222,6 +223,7 @@ function DetailHeader<T>({
   statistics,
   operations,
   tagConfig,
+  titleExtra,
 }: DetailHeaderProps<T>): React.ReactNode {
   return (
     <Card>
@@ -244,6 +246,7 @@ function DetailHeader<T>({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-3 mb-1">
               <h1 className="text-lg font-bold text-gray-900 truncate">{(data as any)?.name}</h1>
+              {titleExtra}
               {(data as any)?.status && (
                 <Tag color={(data as any).status?.color} className="shrink-0">
                   <div className="flex items-center gap-2 text-xs">

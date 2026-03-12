@@ -159,6 +159,16 @@ async def retrieve_knowledge_base(
     results = await service.search(request)
     return SuccessResponse(data=results)
 
+@router.post("/v2/retrieve", response_model=SuccessResponse)
+async def retrieve_knowledge_base(
+    request: RetrieveReq,
+    db: AsyncSession = Depends(get_db),
+):
+    """检索知识库内容（统一检索接口）"""
+    service = UnifiedRetrievalService(db)
+    results = await service.search(request)
+    return SuccessResponse(data=results)
+
 
 @router.post("/query", response_model=SuccessResponse)
 async def query_knowledge_base(
@@ -166,7 +176,7 @@ async def query_knowledge_base(
     db: AsyncSession = Depends(get_db),
 ):
     """查询知识库（支持向量检索和知识图谱）
-    
+
     根据知识库类型自动选择查询策略：
     - DOCUMENT: 向量检索
     - GRAPH: 知识图谱查询

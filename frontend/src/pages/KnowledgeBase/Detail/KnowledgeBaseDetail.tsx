@@ -1,6 +1,6 @@
 import type React from "react";
 import { useEffect, useState } from "react";
-import { Table, Badge, Button, Breadcrumb, Tooltip, App, Card, Input, Empty, Spin } from "antd";
+import { Table, Badge, Button, Breadcrumb, Tooltip, App, Card, Input, Empty, Spin, Tag } from "antd";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
@@ -72,6 +72,7 @@ const KnowledgeBaseDetailPage: React.FC = () => {
   const [graphSelection, setGraphSelection] = useState<GraphEntitySelection | null>(null);
 
   const kbTypeMap = getKBTypeMap(t);
+  const kbTypeMeta = knowledgeBase ? kbTypeMap[knowledgeBase.type as KBType] : undefined;
 
   const detailHeaderData = knowledgeBase
     ? {
@@ -87,9 +88,10 @@ const KnowledgeBaseDetailPage: React.FC = () => {
             .map((s) => s.trim())
             .filter(Boolean);
 
-          const typeLabel = String(kbTypeMap[knowledgeBase.type as KBType]?.label ?? "").trim();
-          const all = typeLabel ? [typeLabel, ...normalized] : normalized;
-          return Array.from(new Set(all));
+          const typeLabel = String(kbTypeMeta?.tag?.label ?? "").trim();
+          const filtered = typeLabel ? normalized.filter((label) => label !== typeLabel) : normalized;
+
+          return Array.from(new Set(filtered));
         })(),
         description:
           knowledgeBase.description && knowledgeBase.description.trim().length > 0
@@ -357,6 +359,20 @@ const KnowledgeBaseDetailPage: React.FC = () => {
       </div>
       <DetailHeader
         data={detailHeaderData}
+        titleExtra={
+          kbTypeMeta?.tag?.label ? (
+            <Tag
+              className="shrink-0"
+              style={{
+                background: kbTypeMeta.tag.background,
+                color: kbTypeMeta.tag.color,
+                borderColor: kbTypeMeta.tag.background,
+              }}
+            >
+              {kbTypeMeta.tag.label}
+            </Tag>
+          ) : null
+        }
         statistics={knowledgeBase && Array.isArray((knowledgeBase as { statistics?: HeaderStatisticItem[] }).statistics)
           ? ((knowledgeBase as { statistics?: HeaderStatisticItem[] }).statistics ?? [])
           : []}
