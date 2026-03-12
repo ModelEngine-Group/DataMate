@@ -42,8 +42,8 @@ public class OmsAuthFilter extends AbstractGatewayFilterFactory<OmsAuthFilter.Co
     @Value("${oms.auth.enabled:false}")
     private Boolean omsAuthEnable;
 
-    @Value("${oms.gateway.url}")
-    private String omsGatewayUrl;
+    @Value("${oms.service.url}")
+    private String omsServiceUrl;
 
     private final ObjectMapper objectMapper;
 
@@ -73,7 +73,7 @@ public class OmsAuthFilter extends AbstractGatewayFilterFactory<OmsAuthFilter.Co
         String uri = request.getURI().getPath();
         log.info("Oms auth filter uri: {}", uri);
 
-        String fullPath = this.omsGatewayUrl + "/framework/v1/iam/roles/query-by-token";
+        String fullPath = this.omsServiceUrl + "/framework/v1/iam/roles/query-by-token";
         log.info("oms auth full path: {}", fullPath);
 
         try {
