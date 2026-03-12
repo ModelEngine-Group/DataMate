@@ -16,14 +16,17 @@ import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.OrderedGatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
+import org.springframework.http.HttpCookie;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 @Component
@@ -31,6 +34,10 @@ import java.util.List;
 public class OmsAuthFilter extends AbstractGatewayFilterFactory<OmsAuthFilter.Config> {
     private static final int OMS_AUTH_FILTER_ORDER = -1;
     private static final String USER_NAME_HEADER = "X-User-Name";
+    private static final String AUTH_TOKEN_NEW_HEADER_KEY = "X-Auth-Token";
+    private static final String CSRF_TOKEN_NEW_HEADER_KEY = "X-Csrf-Token";
+    private static final String AUTH_TOKEN_KEY = "__Host-X-Auth-Token";
+    private static final String CSRF_TOKEN_KEY = "__Host-X-Csrf-Token";
 
     @Value("${oms.auth.enabled:false}")
     private Boolean omsAuthEnable;
@@ -66,17 +73,18 @@ public class OmsAuthFilter extends AbstractGatewayFilterFactory<OmsAuthFilter.Co
         String uri = request.getURI().getPath();
         log.info("Oms auth filter uri: {}", uri);
 
-        String fullPath = omsGatewayUrl + "/framework/v1/iam/roles/query-by-token";
+        String fullPath = this.omsGatewayUrl + "/framework/v1/iam/roles/query-by-token";
         log.info("oms auth full path: {}", fullPath);
 
         try {
             HttpPost httpPost = new HttpPost(fullPath);
 
-            String authToken = request.getHeaders().getFirst("Authorization");
-            if (authToken != null && authToken.startsWith("Bearer ")) {
-                authToken = authToken.substring(7);
-            }
-            httpPost.setHeader("X-Auth-Token", authToken);
+            MultiValueMap<String, HttpCookie> cookies = request.getCookies();
+            String authToken = getToken(cookies, AUTH_TOKEN_KEY);
+            String csrfToken = getToken(cookies, CSRF_TOKEN_KEY);
+
+            httpPost.setHeader(AUTH_TOKEN_NEW_HEADER_KEY, authToken);
+            httpPost.setHeader(CSRF_TOKEN_NEW_HEADER_KEY, csrfToken);
 
             CloseableHttpResponse response = httpClient.execute(httpPost);
             String responseBody = EntityUtils.toString(response.getEntity());
@@ -102,6 +110,13 @@ public class OmsAuthFilter extends AbstractGatewayFilterFactory<OmsAuthFilter.Co
             exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
             return exchange.getResponse().setComplete();
         }
+    }
+
+    private String getToken(MultiValueMap<String, HttpCookie> cookies, String tokenKey) {
+        if (cookies.containsKey(tokenKey)) {
+            return Objects.requireNonNull(cookies.getFirst(tokenKey)).getValue();
+        }
+        return "";
     }
 
     @Data

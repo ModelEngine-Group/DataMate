@@ -13,6 +13,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
+import org.springframework.http.HttpCookie;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpResponse;
@@ -76,9 +77,7 @@ class OmsAuthFilterTest {
         omsAuthFilter.setHttpClient(httpClient);
         gatewayFilter = omsAuthFilter.apply(new OmsAuthFilter.Config());
 
-        MockServerHttpRequest request = MockServerHttpRequest.get("/api/test")
-                .header("Authorization", "Bearer valid-token")
-                .build();
+        MockServerHttpRequest request = MockServerHttpRequest.get("/api/test").build();
         ServerWebExchange exchange = MockServerWebExchange.from(request);
 
         String successResponse = "{\"code\":200,\"message\":\"success\",\"data\":[\"testuser\"]}";
@@ -103,9 +102,7 @@ class OmsAuthFilterTest {
         omsAuthFilter.setHttpClient(httpClient);
         gatewayFilter = omsAuthFilter.apply(new OmsAuthFilter.Config());
 
-        MockServerHttpRequest request = MockServerHttpRequest.get("/api/test")
-                .header("Authorization", "Bearer invalid-token")
-                .build();
+        MockServerHttpRequest request = MockServerHttpRequest.get("/api/test").build();
         ServerWebExchange exchange = MockServerWebExchange.from(request);
 
         String failureResponse = "{\"code\":403,\"message\":\"unauthorized\",\"data\":[]}";
@@ -142,36 +139,14 @@ class OmsAuthFilterTest {
     }
 
     @Test
-    void testFilter_WhenOmsAuthEnabledAndBearerTokenFormat_ShouldExtractToken() throws Exception {
+    void testFilter_WhenOmsAuthEnabledAndTokenInCookie_ShouldUseToken() throws Exception {
         setField(omsAuthFilter, "omsAuthEnable", true);
         omsAuthFilter.setHttpClient(httpClient);
         gatewayFilter = omsAuthFilter.apply(new OmsAuthFilter.Config());
 
+        HttpCookie authCookie = new HttpCookie("__Host-X-Auth-Token", "test-token");
         MockServerHttpRequest request = MockServerHttpRequest.get("/api/test")
-                .header("Authorization", "Bearer test-token")
-                .build();
-        ServerWebExchange exchange = MockServerWebExchange.from(request);
-
-        String successResponse = "{\"code\":200,\"message\":\"success\",\"data\":[\"testuser\"]}";
-        StringEntity entity = new StringEntity(successResponse, StandardCharsets.UTF_8);
-        when(httpResponse.getEntity()).thenReturn(entity);
-        when(httpClient.execute(any(HttpPost.class))).thenReturn(httpResponse);
-
-        when(chain.filter(any(ServerWebExchange.class))).thenReturn(Mono.empty());
-
-        gatewayFilter.filter(exchange, chain);
-
-        verify(chain, times(1)).filter(any(ServerWebExchange.class));
-    }
-
-    @Test
-    void testFilter_WhenOmsAuthEnabledAndNonBearerToken_ShouldProcessAsIs() throws Exception {
-        setField(omsAuthFilter, "omsAuthEnable", true);
-        omsAuthFilter.setHttpClient(httpClient);
-        gatewayFilter = omsAuthFilter.apply(new OmsAuthFilter.Config());
-
-        MockServerHttpRequest request = MockServerHttpRequest.get("/api/test")
-                .header("Authorization", "test-token")
+                .cookie(authCookie)
                 .build();
         ServerWebExchange exchange = MockServerWebExchange.from(request);
 
