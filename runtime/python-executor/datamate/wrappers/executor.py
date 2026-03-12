@@ -52,6 +52,9 @@ class RayExecutor:
         if not meta.get("extraFileType"):
             meta["extraFileType"] = None
         meta["dataset_id"] = self.cfg.dataset_id
+        for key in ["images", "audios", "videos"]:
+            # 尝试删除，如果找不到该键，就安静地返回 None，不会报错
+            meta.pop(key, None)
         return meta
 
     def run(self):

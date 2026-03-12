@@ -180,10 +180,16 @@ class BaseOp:
         if file_type == "text":
             return self.read_file(sample)
         elif file_type == "image":
+            sample["text"] = ""
+            sample["data"] = b""
             sample["images"] = [filepath]
         elif file_type == "audio":
+            sample["text"] = ""
+            sample["data"] = b""
             sample["audios"] = [filepath]
         elif file_type == "video":
+            sample["text"] = ""
+            sample["data"] = b""
             sample["videos"] = [filepath]
         return sample
 
