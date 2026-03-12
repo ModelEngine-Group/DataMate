@@ -15,7 +15,7 @@ import { useNavigate, useParams } from "react-router";
 import DetailHeader from "@/components/DetailHeader";
 import { SearchControls } from "@/components/SearchControls";
 import { KBFile, KnowledgeBaseItem, KnowledgeGraphNode, KnowledgeGraphEdge, KBType } from "../knowledge-base.model";
-import { mapFileData, mapKnowledgeBase } from "../knowledge-base.const";
+import { getKBTypeMap, mapFileData, mapKnowledgeBase } from "../knowledge-base.const";
 import {
   deleteKnowledgeBaseByIdUsingDelete,
   deleteKnowledgeBaseFileByIdUsingDelete,
@@ -30,11 +30,7 @@ import CreateKnowledgeBase from "../components/CreateKnowledgeBase";
 import KnowledgeGraphView, { GraphEntitySelection } from "../components/KnowledgeGraphView";
 import { useTranslation } from "react-i18next";
 
-interface StatisticItem {
-  icon?: React.ReactNode;
-  label: string;
-  value: string | number;
-}
+type HeaderStatisticItem = React.ComponentProps<typeof DetailHeader>["statistics"][number];
 // Use UnifiedSearchResult from model - flat structure from backend
 // Backend returns: { id, text, score, metadata, resultType, knowledgeBaseId, knowledgeBaseName }
 interface RecallResult {
@@ -74,6 +70,35 @@ const KnowledgeBaseDetailPage: React.FC = () => {
   const [graphLoading, setGraphLoading] = useState(false);
   const [graphData, setGraphData] = useState<{ nodes: KnowledgeGraphNode[]; edges: KnowledgeGraphEdge[] }>({ nodes: [], edges: [] });
   const [graphSelection, setGraphSelection] = useState<GraphEntitySelection | null>(null);
+
+  const kbTypeMap = getKBTypeMap(t);
+
+  const detailHeaderData = knowledgeBase
+    ? {
+        ...knowledgeBase,
+        tags: (() => {
+          const rawTags = Array.isArray((knowledgeBase as any)?.tags) ? ((knowledgeBase as any).tags as any[]) : [];
+          const normalized = rawTags
+            .map((tag) => {
+              if (!tag) return "";
+              if (typeof tag === "string") return tag;
+              return String(tag.label ?? tag.name ?? "");
+            })
+            .map((s) => s.trim())
+            .filter(Boolean);
+
+          const typeLabel = String(kbTypeMap[knowledgeBase.type as KBType]?.label ?? "").trim();
+          const all = typeLabel ? [typeLabel, ...normalized] : normalized;
+          return Array.from(new Set(all));
+        })(),
+        description:
+          knowledgeBase.description && knowledgeBase.description.trim().length > 0
+            ? knowledgeBase.description
+            : kbTypeMap[knowledgeBase.type as KBType]?.description ??
+              kbTypeMap[knowledgeBase.type as KBType]?.label ??
+              knowledgeBase.description,
+      }
+    : knowledgeBase;
 
   const fetchKnowledgeBaseDetails = async (id: string) => {
     const { data } = await queryKnowledgeBaseByIdUsingGet(id);
@@ -156,7 +181,8 @@ const KnowledgeBaseDetailPage: React.FC = () => {
         threshold: 0.2,
         knowledgeBaseIds: [knowledgeBase.id],
       });
-      setRecallResults(result?.data || []);
+      const data = Array.isArray(result) ? result : (result as any)?.data;
+      setRecallResults(Array.isArray(data) ? data : []);
     } catch {
       setRecallResults([]);
     }
@@ -330,9 +356,9 @@ const KnowledgeBaseDetailPage: React.FC = () => {
         </Breadcrumb>
       </div>
       <DetailHeader
-        data={knowledgeBase}
-        statistics={knowledgeBase && Array.isArray((knowledgeBase as { statistics?: StatisticItem[] }).statistics)
-          ? ((knowledgeBase as { statistics?: StatisticItem[] }).statistics ?? [])
+        data={detailHeaderData}
+        statistics={knowledgeBase && Array.isArray((knowledgeBase as { statistics?: HeaderStatisticItem[] }).statistics)
+          ? ((knowledgeBase as { statistics?: HeaderStatisticItem[] }).statistics ?? [])
           : []}
         operations={operations}
       />
@@ -457,7 +483,12 @@ const KnowledgeBaseDetailPage: React.FC = () => {
                   searchPlaceholder={t("knowledgeBase.detail.searchPlaceholder")}
                   filters={[]}
                   onFiltersChange={handleFiltersChange}
-                  onClearFilters={() => setSearchParams({ ...searchParams, filter: { type: [], status: [], tags: [] } })}
+                  onClearFilters={() =>
+                    setSearchParams({
+                      ...searchParams,
+                      filter: { type: [], status: [], tags: [], categories: [], selectedStar: false },
+                    })
+                  }
                   showViewToggle={false}
                   showReload={false}
                 />

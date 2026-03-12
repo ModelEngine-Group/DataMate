@@ -20,6 +20,14 @@ interface OperationItem {
   onMenuClick?: (key: string) => void;
   onClick?: () => void;
   danger?: boolean;
+  confirm?: {
+    title: string;
+    description?: string;
+    cancelText?: string;
+    okText?: string;
+    okType?: "default" | "primary" | "danger";
+    onConfirm?: () => void;
+  };
 }
 
 interface TagConfig {
