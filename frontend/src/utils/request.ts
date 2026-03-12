@@ -1,6 +1,10 @@
 import {message} from "antd";
 import Loading from "./loading";
 import {errorConfigStore} from "@/utils/errorConfigStore.ts";
+import i18n from "@/i18n";
+import i18n from "@/i18n";
+import i18n from "@/i18n";
+import i18n from "@/i18n";
 
 /**
  * 通用请求工具类
@@ -531,6 +535,13 @@ request.addRequestInterceptor((config) => {
       console.error('Failed to parse session data', e);
     }
   }
+  
+  const language = i18n.language || localStorage.getItem('language') || 'zh';
+  config.headers = {
+    ...config.headers,
+    'Accept-Language': language,
+  };
+  
   return config;
 });
 

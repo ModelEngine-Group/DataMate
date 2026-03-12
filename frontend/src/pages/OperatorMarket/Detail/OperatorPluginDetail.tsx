@@ -10,6 +10,7 @@ import {Clock, GitBranch} from "lucide-react";
 import DetailHeader from "@/components/DetailHeader";
 import {Link, useNavigate, useParams} from "react-router";
 import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 import Overview from "./components/Overview";
 import Requirement from "./components/Requirement";
 import Documentation from "./components/Documentation";
@@ -41,6 +42,16 @@ export default function OperatorPluginDetail() {
   useEffect(() => {
     fetchOperator();
   }, [id]);
+
+  useEffect(() => {
+    const handleLanguageChange = () => {
+      fetchOperator();
+    };
+    i18n.on('languageChanged', handleLanguageChange);
+    return () => {
+      i18n.off('languageChanged', handleLanguageChange);
+    };
+  }, [i18n, id]);
 
   if (!operator) {
     return <div>Loading...</div>;

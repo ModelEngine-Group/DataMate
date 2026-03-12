@@ -4,7 +4,7 @@ Operator API Routes
 """
 from typing import Optional
 
-from fastapi import APIRouter, Depends, UploadFile, Form, File, Body
+from fastapi import APIRouter, Depends, UploadFile, Form, File, Body, Header
 from fastapi.responses import FileResponse
 
 from app.core.logging import get_logger
@@ -95,10 +95,17 @@ async def list_operators(
 async def get_operator(
     operator_id: str,
     service: OperatorService = Depends(get_operator_service),
-    db = Depends(get_db)
+    db = Depends(get_db),
+    accept_language: Optional[str] = Header(None, alias="Accept-Language"),
 ):
     """获取算子详情"""
-    operator = await service.get_operator_by_id(operator_id, db)
+    # 解析语言参数
+    lang = None
+    if accept_language:
+        # Accept-Language: zh-CN,zh;q=0.0 -> 取 zh
+        lang = accept_language.split(",")[0].split("-")[0].strip()
+
+    operator = await service.get_operator_by_id(operator_id, db, locale=lang)
     operator.file_name = None
     return StandardResponse(code="0", message="success", data=operator)
 

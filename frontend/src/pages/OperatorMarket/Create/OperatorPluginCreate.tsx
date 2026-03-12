@@ -192,9 +192,9 @@ export default function OperatorPluginCreate() {
         </div>
         {uploadStep === "configure" && (
           <div className="flex justify-end gap-3 mt-8">
-            <Button onClick={() => setUploadStep("upload")}>重新上传</Button>
+            <Button onClick={() => setUploadStep("upload")}>{t("operatorMarket.create.actions.reupload")}</Button>
             <Button type="primary" onClick={handlePublish}>
-              {id ? "更新" : "发布"}算子
+              {id ? t("operatorMarket.create.actions.update") : t("operatorMarket.create.actions.publish")}
             </Button>
           </div>
         )}

@@ -1,7 +1,10 @@
 import { Card, Button } from "antd";
 import { Copy } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export default function Requirement({ operator }) {
+  const { t } = useTranslation();
+
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     // 这里可以添加提示消息
@@ -11,43 +14,43 @@ export default function Requirement({ operator }) {
   try {
     requirement = JSON.parse(operator.runtime || "{}");
   } catch (e) {
-    console.error("数据解析失败", e);
+    console.error(t("operatorMarket.detail.requirement.parseError"), e);
   }
 
   return (
     <div className="flex flex-col gap-4">
       {/* 系统要求 */}
       <Card>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">系统要求</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">{t("operatorMarket.detail.requirement.systemRequirements")}</h3>
         <div className="space-y-3">
           <div className="flex items-center justify-between py-2 border-b border-gray-100">
-            <span className="font-medium text-gray-700">CPU规格</span>
+            <span className="font-medium text-gray-700">{t("operatorMarket.detail.requirement.cpuSpec")}</span>
             <span className="text-gray-900">
-              {requirement?.cpu || '无限制'}
+              {requirement?.cpu || t("operatorMarket.detail.requirement.noLimit")}
             </span>
           </div>
           <div className="flex items-center justify-between py-2 border-b border-gray-100">
-            <span className="font-medium text-gray-700">内存规格</span>
+            <span className="font-medium text-gray-700">{t("operatorMarket.detail.requirement.memorySpec")}</span>
             <span className="text-gray-900">
-              {requirement?.memory || "无限制"}
+              {requirement?.memory || t("operatorMarket.detail.requirement.noLimit")}
             </span>
           </div>
           <div className="flex items-center justify-between py-2 border-b border-gray-100">
-            <span className="font-medium text-gray-700">存储空间</span>
+            <span className="font-medium text-gray-700">{t("operatorMarket.detail.requirement.storage")}</span>
             <span className="text-gray-900">
-              {requirement?.storage || "无限制"}
+              {requirement?.storage || t("operatorMarket.detail.requirement.noLimit")}
             </span>
           </div>
           <div className="flex items-center justify-between py-2 border-b border-gray-100">
-            <span className="font-medium text-gray-700">GPU 支持</span>
+            <span className="font-medium text-gray-700">{t("operatorMarket.detail.requirement.gpuSupport")}</span>
             <span className="text-gray-900">
-              {requirement?.gpu > 0 ? "是" : "否"}
+              {requirement?.gpu > 0 ? t("common.yes") : t("common.no")}
             </span>
           </div>
           <div className="flex items-center justify-between py-2">
-            <span className="font-medium text-gray-700">NPU 支持</span>
+            <span className="font-medium text-gray-700">{t("operatorMarket.detail.requirement.npuSupport")}</span>
             <span className="text-gray-900">
-              {requirement?.npu > 0 ? "是" : "否" }
+              {requirement?.npu > 0 ? t("common.yes") : t("common.no")}
             </span>
           </div>
         </div>
@@ -55,7 +58,7 @@ export default function Requirement({ operator }) {
 
       {/* 依赖项 */}
       <Card>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">依赖项</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">{t("operatorMarket.detail.requirement.dependencies")}</h3>
         <div className="space-y-2">
           {operator.requirements?.map((dep, index) => (
             <div
