@@ -94,7 +94,7 @@ public class OmsAuthFilter extends AbstractGatewayFilterFactory<OmsAuthFilter.Co
                 objectMapper.getTypeFactory().constructParametricType(ResultVo.class, List.class));
 
             if (resultVo.getData() == null || resultVo.getData().isEmpty()) {
-                exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
+                exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
                 log.error("Authentication failed: Token is null or invalid.");
                 return exchange.getResponse().setComplete();
             }
@@ -107,7 +107,7 @@ public class OmsAuthFilter extends AbstractGatewayFilterFactory<OmsAuthFilter.Co
             return chain.filter(exchange.mutate().request(newRequest).build());
         } catch (IOException | ParseException e) {
             log.error("Exception occurred during POST request: {}", e.getMessage(), e);
-            exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
+            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
         }
     }
