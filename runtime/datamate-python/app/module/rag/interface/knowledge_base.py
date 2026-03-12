@@ -4,6 +4,8 @@
 实现知识库相关的 REST API 接口。
 对应 Java: com.datamate.rag.indexer.interfaces.KnowledgeBaseController
 """
+import json
+
 from fastapi import APIRouter, Depends, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -154,13 +156,29 @@ async def retrieve_knowledge_base(
     request: RetrieveReq,
     db: AsyncSession = Depends(get_db),
 ):
-    """检索知识库内容（统一检索接口）"""
+    """检索知识库内容（统一检索接口，兼容旧版本格式）"""
     service = UnifiedRetrievalService(db)
     results = await service.search(request)
-    return SuccessResponse(data=results)
+
+    legacy_results = []
+    for item in results:
+        legacy_item = {
+            "entity": {
+                "metadata": json.dumps(item.get("metadata", {}), ensure_ascii=False),
+                "text": item.get("text", ""),
+                "id": item.get("id", ""),
+            },
+            "score": item.get("score", 0.0),
+            "id": item.get("id", ""),
+            "knowledgeBaseId": item.get("knowledgeBaseId", ""),
+            "knowledgeBaseName": item.get("knowledgeBaseName", ""),
+        }
+        legacy_results.append(legacy_item)
+
+    return SuccessResponse(data=legacy_results)
 
 @router.post("/v2/retrieve", response_model=SuccessResponse)
-async def retrieve_knowledge_base(
+async def v2_retrieve_knowledge_base(
     request: RetrieveReq,
     db: AsyncSession = Depends(get_db),
 ):
