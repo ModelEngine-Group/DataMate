@@ -35,7 +35,7 @@ datamate:
     expiration-seconds: 3600
 oms:
   auth:
-    enabled: false
+    enabled: ${OMS_AUTH_ENABLED:false}
   gateway:
     url: ${OMS_GATEWAY_URL:http://localhost:8080}
   # 服务器端口配置
