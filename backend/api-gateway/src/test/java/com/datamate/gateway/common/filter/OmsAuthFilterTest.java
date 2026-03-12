@@ -74,6 +74,7 @@ class OmsAuthFilterTest {
     void testFilter_WhenOmsAuthEnabledAndTokenValid_ShouldAddUserNameHeader() throws Exception {
         setField(omsAuthFilter, "omsAuthEnable", true);
         omsAuthFilter.setHttpClient(httpClient);
+        gatewayFilter = omsAuthFilter.apply(new OmsAuthFilter.Config());
 
         MockServerHttpRequest request = MockServerHttpRequest.get("/api/test")
                 .header("Authorization", "Bearer valid-token")
@@ -100,6 +101,7 @@ class OmsAuthFilterTest {
     void testFilter_WhenOmsAuthEnabledAndTokenInvalid_ShouldReturn403() throws Exception {
         setField(omsAuthFilter, "omsAuthEnable", true);
         omsAuthFilter.setHttpClient(httpClient);
+        gatewayFilter = omsAuthFilter.apply(new OmsAuthFilter.Config());
 
         MockServerHttpRequest request = MockServerHttpRequest.get("/api/test")
                 .header("Authorization", "Bearer invalid-token")
@@ -122,6 +124,7 @@ class OmsAuthFilterTest {
     void testFilter_WhenOmsAuthEnabledAndNoToken_ShouldReturn403() throws Exception {
         setField(omsAuthFilter, "omsAuthEnable", true);
         omsAuthFilter.setHttpClient(httpClient);
+        gatewayFilter = omsAuthFilter.apply(new OmsAuthFilter.Config());
 
         MockServerHttpRequest request = MockServerHttpRequest.get("/api/test").build();
         ServerWebExchange exchange = MockServerWebExchange.from(request);
@@ -142,6 +145,7 @@ class OmsAuthFilterTest {
     void testFilter_WhenOmsAuthEnabledAndBearerTokenFormat_ShouldExtractToken() throws Exception {
         setField(omsAuthFilter, "omsAuthEnable", true);
         omsAuthFilter.setHttpClient(httpClient);
+        gatewayFilter = omsAuthFilter.apply(new OmsAuthFilter.Config());
 
         MockServerHttpRequest request = MockServerHttpRequest.get("/api/test")
                 .header("Authorization", "Bearer test-token")
@@ -164,6 +168,7 @@ class OmsAuthFilterTest {
     void testFilter_WhenOmsAuthEnabledAndNonBearerToken_ShouldProcessAsIs() throws Exception {
         setField(omsAuthFilter, "omsAuthEnable", true);
         omsAuthFilter.setHttpClient(httpClient);
+        gatewayFilter = omsAuthFilter.apply(new OmsAuthFilter.Config());
 
         MockServerHttpRequest request = MockServerHttpRequest.get("/api/test")
                 .header("Authorization", "test-token")

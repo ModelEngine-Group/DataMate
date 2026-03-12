@@ -54,14 +54,14 @@ public class OmsAuthFilter extends AbstractGatewayFilterFactory<OmsAuthFilter.Co
 
     @Override
     public GatewayFilter apply(Config config) {
-        log.info("OmsAuthFilter is apply, omsAuthEnable: {}", omsAuthEnable);
+        log.info("OmsAuthFilter is apply, omsAuthEnable: {}", this.omsAuthEnable);
+        if (!this.omsAuthEnable) {
+            return (exchange, chain) -> chain.filter(exchange);
+        }
         return new OrderedGatewayFilter(this::filter, OMS_AUTH_FILTER_ORDER);
     }
 
     private Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        if (!omsAuthEnable) {
-            return chain.filter(exchange);
-        }
         ServerHttpRequest request = exchange.getRequest();
         String uri = request.getURI().getPath();
         log.info("Oms auth filter uri: {}", uri);
