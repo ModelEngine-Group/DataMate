@@ -11,7 +11,7 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-    - port: 6432
+    - port: 5432
       targetPort: pgbouncer
       protocol: TCP
       name: pgbouncer

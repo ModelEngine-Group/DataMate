@@ -389,6 +389,46 @@ class Request {
   }
 
   /**
+   * 从 Content-Disposition 头中解析文件名
+   */
+  parseContentDisposition(contentDisposition) {
+    if (!contentDisposition) return null;
+
+    // 匹配 filename="..." 或 filename=...
+    const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+    const matches = filenameRegex.exec(contentDisposition);
+
+    if (matches && matches[1]) {
+      let fileName = matches[1].replace(/['"]/g, '');
+      // 处理 URL 编码的文件名（如中文文件名）
+      try {
+        fileName = decodeURIComponent(fileName);
+      } catch {
+        // 如果解码失败，使用原始文件名
+      }
+      return fileName;
+    }
+
+    return null;
+  }
+
+  /**
+   * 获取当前认证 token
+   */
+  getAuthToken() {
+    const session = localStorage.getItem("session");
+    if (session) {
+      try {
+        const sessionData = JSON.parse(session);
+        return sessionData.token;
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  }
+
+  /**
    * 下载文件
    * @param {string} url - 请求URL
    * @param {object} params - 查询参数
@@ -397,89 +437,56 @@ class Request {
    * @param {object} options - 额外的fetch选项，包括showLoading, onDownloadProgress
    */
   async download(url, params = null, filename = "", action = "download", options = {}) {
-    const fullURL = this.buildURL(url, params);
+    // 对于预览，使用 fetch + blob 方式
+    if (action === "preview") {
+      const fullURL = this.buildURL(url, params);
+      const config = {
+        method: "GET",
+        ...options,
+      };
 
-    const config = {
-      method: "GET",
-      responseType: "blob",
-      ...options,
-    };
-
-    // 执行请求拦截器
-    const processedConfig = await this.executeRequestInterceptors(config);
-
-    let blob;
-    let name = filename;
-
-    // 如果需要下载进度监听，使用XMLHttpRequest
-    if (config.onDownloadProgress) {
-      const xhrResponse = await this.createXHRWithProgress(
-        fullURL,
-        { ...processedConfig, responseType: "blob" },
-        null,
-        config.onDownloadProgress
-      );
-
-      if (xhrResponse.status < 200 || xhrResponse.status >= 300) {
-        throw new Error(`HTTP error! status: ${xhrResponse.status}`);
-      }
-
-      blob = xhrResponse.xhr.response;
-      name =
-        name ||
-        xhrResponse.headers.get("Content-Disposition")?.split("filename=")[1] ||
-        "download";
-    } else {
-      // 使用fetch
+      const processedConfig = await this.executeRequestInterceptors(config);
       const response = await fetch(fullURL, processedConfig);
 
-      // 执行响应拦截器
-      const processedResponse = await this.executeResponseInterceptors(
-        response,
-        processedConfig
-      );
-
-      if (!processedResponse.ok) {
-        throw new Error(`HTTP error! status: ${processedResponse.status}`);
+      // 文件预览不需要执行响应拦截器（因为响应是二进制数据，不是JSON）
+      // 直接检查响应状态
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      blob = await processedResponse.blob();
-      name =
-        name ||
-        response.headers.get("Content-Disposition")?.split("filename=")[1] ||
-        `download_${Date.now()}`;
-    }
-
-    if (action === "download") {
-      // 创建下载链接
-      const downloadUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = downloadUrl;
-      link.download = filename ?? name;
-
-      // 添加到DOM并触发下载
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      // 清理URL对象
-      window.URL.revokeObjectURL(downloadUrl);
-    } else if (action === "preview") {
-      // 预览逻辑 - 返回Blob URL和相关信息
+      const blob = await response.blob();
       const blobUrl = window.URL.createObjectURL(blob);
+      const name = filename || this.parseContentDisposition(response.headers.get("Content-Disposition")) || `download_${Date.now()}`;
 
-      // 可以返回更多信息用于预览
       return {
         blob,
         blobUrl,
         filename: name,
         size: blob.size,
-        // 自动清理的钩子
         revoke: () => window.URL.revokeObjectURL(blobUrl)
       };
     }
 
-    return blob;
+    // 对于下载，使用原生 <a> 标签 + token 参数
+    if (action === "download") {
+      // 获取 token 并添加到 URL 参数中
+      const token = this.getAuthToken();
+      const downloadParams = token ? { ...params, token } : params;
+      const fullURL = this.buildURL(url, downloadParams);
+
+      // 创建隐藏的 <a> 标签触发下载
+      const link = document.createElement("a");
+      link.href = fullURL;
+      link.download = filename || `download_${Date.now()}`;
+      link.style.display = "none";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      return { success: true };
+    }
+
+    return {};
   }
 
   /**

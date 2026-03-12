@@ -1331,8 +1331,8 @@
       "pause": "暂停",
       "compare": "对比",
       "download": "下载",
-      "delete": "删除",
       "batchDownload": "批量下载",
+      "delete": "删除",
       "edit": "编辑",
       "selectAll": "全选",
       "search": "搜索",
@@ -1345,6 +1345,10 @@
       "operatorOrchestration": "算子编排"
     },
     "task": {
+      "sections": {
+        "taskInfo": "任务信息",
+        "dataSourceSelection": "数据源选择"
+      },
       "columns": {
         "taskName": "任务名称",
         "taskId": "任务ID",
@@ -1361,35 +1365,25 @@
         "dataSizeChange": "数据量变化",
         "actions": "操作"
       },
-      "form": {
-        "name": "名称",
-        "namePlaceholder": "输入任务名称",
-        "description": "描述",
-        "descriptionPlaceholder": "描述任务的目标和要求",
-        "srcDataset": "源数据集",
-        "srcDatasetPlaceholder": "请选择源数据集",
-        "destDatasetName": "目标数据集名称",
-        "destDatasetNamePlaceholder": "输入或选择目标数据集名称",
-        "destDatasetType": "目标数据集类型",
-        "destDatasetTypeRequired": "请选择目标数据集类型",
-        "useSourceDataset": "选择源数据集",
-        "useSourceDatasetHint": "勾选后目标数据集将使用源数据集，不可修改",
-        "destDatasetNameRequired": "请输入目标数据集名称",
-        "cannotUseSourceDataset": "不能使用源数据集作为目标数据集，请勾选\"选择源数据集\"或输入其他名称"
-      },
-      "sections": {
-        "taskInfo": "任务信息",
-        "dataSourceSelection": "数据源选择"
-      },
-      "messages": {
-        "taskCreated": "任务已创建",
-        "taskStarted": "任务已启动",
-        "taskPaused": "任务已暂停",
-        "taskDeleted": "任务已删除",
-        "taskDetailFailed": "获取任务详情失败",
-        "fetchTaskResultFailed": "获取数据处理结果失败",
-        "fetchTaskLogFailed": "获取数据处理日志失败"
-      }
+        "form": {
+          "name": "名称",
+          "namePlaceholder": "输入任务名称",
+          "description": "描述",
+          "descriptionPlaceholder":  "描述任务的目标和要求",
+          "srcDataset": "源数据集",
+          "srcDatasetPlaceholder":  "请选择源数据集",
+          "destDatasetName": "目标数据集名称",
+          "destDatasetNamePlaceholder":  "输入或选择目标数据集名称",
+          "destDatasetType": "目标数据集类型",
+          "destDatasetTypeRequired":  "请选择目标数据集类型",
+          "useSourceDataset": "选择源数据集",
+          "useSourceDatasetHint":  "勾选后目标数据集将使用源数据集，不可修改",
+          "destDatasetNameRequired":  "请输入目标数据集名称",
+          "cannotUseSourceDataset": "不能使用源数据集作为目标数据集，请勾选\"选择源数据集\"或输入其他名称",
+          "allTypes": "全部",
+          "showingDatasets": "显示 {{count}} 个数据集",
+          "noDatasetsFound": "未找到匹配的数据集"
+        }
     },
     "template": {
       "columns": {
@@ -1439,8 +1433,10 @@
         "searchFileName": "搜索文件名",
         "searchFileType": "搜索文件类型",
         "selectFiles": "已选择 {{count}} 个文件",
+        "selectedFilesCount": "已选择 {{count}} 个文件",
         "notCompleted": "未完成",
         "downloadNotAvailable": "暂未开放",
+        "downloadFilesFailed": "下载文件失败",
         "compareDialogTitle": "文件对比 - {{fileName}}",
         "beforeProcessing": "处理前",
         "afterProcessing": "处理后",
@@ -1457,7 +1453,9 @@
         "currentDisplay": "当前展示: 第 {{num}} 次",
         "nthRun": "第 {{num}} 次",
         "noLogs": "当前任务无可用日志",
-        "streaming": "实时流式输出中..."
+        "streaming": "实时流式输出中...",
+        "download": "下载日志",
+        "downloadFailed": "下载日志文件失败"
       },
       "operatorTable": {
         "serialNumber": "序号",

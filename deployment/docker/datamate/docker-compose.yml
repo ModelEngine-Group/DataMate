@@ -204,16 +204,15 @@ services:
   # ==============================
   label-studio-pgbouncer:
     container_name: label-studio-pgbouncer
-    image: pgbouncer/pgbouncer:latest
+    image: edoburu/pgbouncer:latest
     restart: on-failure
-    ports:
-      - "6432:6432"
     environment:
-      - DATABASES_HOST=datamate-database
-      - DATABASES_PORT=5432
-      - DATABASES_NAME=labelstudio
-      - DATABASES_USER=postgres
-      - DATABASES_PASSWORD=${DB_PASSWORD:-password}
+      - DB_HOST=datamate-database
+      - DB_PORT=5432
+      - DB_NAME=labelstudio
+      - DB_USER=postgres
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+      - AUTH_TYPE=scram-sha-256
       - POOL_MODE=transaction
       - MAX_CLIENT_CONN=100
       - DEFAULT_POOL_SIZE=20
@@ -241,7 +240,7 @@ services:
       - POSTGRE_NAME=labelstudio
       - POSTGRE_USER=postgres
       - POSTGRE_PASSWORD=${DB_PASSWORD:-password}
-      - POSTGRE_PORT=6432
+      - POSTGRE_PORT=5432
       - POSTGRE_HOST=label-studio-pgbouncer
       - LABEL_STUDIO_HOST=${LABEL_STUDIO_HOST:-}
       - LOCAL_FILES_SERVING_ENABLED=true

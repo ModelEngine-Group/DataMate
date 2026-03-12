@@ -2,26 +2,66 @@ import {
   FolderOpen,
   Settings,
   ArrowRight,
-  Sparkles,
   Target,
   Zap,
   Database,
   MessageSquare,
   GitBranch,
+  Sparkles,
 } from "lucide-react";
 import { features, menuItems } from "../Layout/Menu.tsx";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from "react-router";
-import { Card, Dropdown, Button } from "antd";
+import { Card, Dropdown, Button, Spin } from "antd";
 import type { MenuProps } from 'antd';
 import { Globe } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
+import { getHomePageUrl } from '@/utils/systemParam';
 
 export default function WelcomePage() {
   const navigate = useNavigate();
   const [isChecking, setIsChecking] = useState(false);
+  const [isCheckingRedirect, setIsCheckingRedirect] = useState(true);
   const { t } = useTranslation();
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const checkAndRedirect = async () => {
+      try {
+        const homePageUrl = await getHomePageUrl();
+        
+        if (!isMounted) return;
+        
+        if (homePageUrl) {
+          window.location.href = homePageUrl;
+          return;
+        }
+        
+        setIsCheckingRedirect(false);
+      } catch (error) {
+        console.error('Failed to check home page URL:', error);
+        if (isMounted) {
+          setIsCheckingRedirect(false);
+        }
+      }
+    };
+
+    checkAndRedirect();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  if (isCheckingRedirect) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <Spin size="large" />
+      </div>
+    );
+  }
 
   const languageMenuItems: MenuProps['items'] = [
     {
@@ -42,7 +82,6 @@ export default function WelcomePage() {
     }
   ];
 
-  // 检查接口连通性的函数
   const checkDeerFlowDeploy = async (): Promise<boolean> => {
     try {
       const controller = new AbortController();
@@ -59,7 +98,6 @@ export default function WelcomePage() {
       
       clearTimeout(timeoutId);
 
-      // 检查 HTTP 状态码在 200-299 范围内
       if (response.ok) {
         return true;
       }
@@ -70,7 +108,7 @@ export default function WelcomePage() {
   };
 
   const handleChatClick = async () => {
-    if (isChecking) return; // 防止重复点击
+    if (isChecking) return;
 
     setIsChecking(true);
 
@@ -78,14 +116,11 @@ export default function WelcomePage() {
       const isDeerFlowDeploy = await checkDeerFlowDeploy();
 
       if (isDeerFlowDeploy) {
-        // 接口正常，执行原有逻辑
         window.location.href = "/chat";
       } else {
-        // 接口异常，使用 navigate 跳转
         navigate("/chat");
       }
     } catch (error) {
-      // 发生错误时也使用 navigate 跳转
       console.error('检查过程中发生错误:', error);
       navigate("/chat");
     } finally {
