@@ -3,6 +3,7 @@
 
 实现 GRAPH 类型知识库的检索和处理逻辑。
 """
+import json
 import logging
 import os
 from pathlib import Path
@@ -10,6 +11,7 @@ from typing import Any, Awaitable, Callable, Dict, List, Optional
 
 import numpy as np
 from lightrag import LightRAG
+from lightrag.base import QueryParam
 from lightrag.constants import DEFAULT_ENTITY_TYPES
 from lightrag.llm.openai import openai_complete_if_cache, openai_embed
 from lightrag.utils import EmbeddingFunc, get_env_value, setup_logger
@@ -115,10 +117,12 @@ class GraphKnowledgeBaseStrategy(KnowledgeBaseStrategy):
                 raise BusinessError(ErrorCodes.RAG_KNOWLEDGE_BASE_NOT_FOUND)
 
             rag_instance = await self._get_or_create_graph_rag(kb)
-            graph_results = await rag_instance.get_knowledge_graph(node_label=query_text)
+            # Use aquery_data for content retrieval (not get_knowledge_graph)
+            query_param = QueryParam(mode="mix", top_k=top_k, only_need_context=True)
+            retrieval_results = await rag_instance.aquery_data(query_text, query_param)
 
-            unified_results = self._convert_graph_results_into_unified(
-                graph_results, str(kb.id), str(kb.name)  # type: ignore
+            unified_results = self._convert_retrieval_results_into_unified(
+                retrieval_results, str(kb.id), str(kb.name)  # type: ignore
             )
             all_results.extend(unified_results)
 
@@ -127,51 +131,111 @@ class GraphKnowledgeBaseStrategy(KnowledgeBaseStrategy):
         return all_results
 
     @staticmethod
-    def _convert_graph_results_into_unified(
-        graph_results: Any,
+    def _convert_retrieval_results_into_unified(
+        retrieval_results: Dict[str, Any],
         knowledge_base_id: str,
         knowledge_base_name: str
     ) -> List[Dict[str, Any]]:
-        results = []
+        if not isinstance(retrieval_results, dict):
+            return []
 
-        if isinstance(graph_results, dict):
-            nodes = graph_results.get("nodes", [])
-            edges = graph_results.get("edges", [])
+        data = retrieval_results.get("data", retrieval_results)
+        entities = data.get("entities", [])
+        relationships = data.get("relationships", [])
+        chunks = data.get("chunks", [])
 
-            for node in nodes:
-                results.append({
-                    "id": node.get("id", ""),
-                    "text": node.get("label", "") or node.get("description", ""),
-                    "score": 1.0,
-                    "metadata": node.get("metadata", {}),
-                    "resultType": "graph",
-                    "knowledgeBaseId": knowledge_base_id,
-                    "knowledgeBaseName": knowledge_base_name,
-                })
+        if not entities and not relationships and not chunks:
+            return []
 
-            for edge in edges:
-                results.append({
-                    "id": edge.get("id", ""),
-                    "text": edge.get("label", "") or edge.get("description", ""),
-                    "score": 1.0,
-                    "metadata": edge.get("metadata", {}),
-                    "resultType": "graph",
-                    "knowledgeBaseId": knowledge_base_id,
-                    "knowledgeBaseName": knowledge_base_name,
-                })
-        elif isinstance(graph_results, list):
-            for item in graph_results:
-                results.append({
-                    "id": item.get("id", ""),
-                    "text": item.get("label", "") or str(item),
-                    "score": 1.0,
-                    "metadata": item.get("metadata", {}),
-                    "resultType": "graph",
-                    "knowledgeBaseId": knowledge_base_id,
-                    "knowledgeBaseName": knowledge_base_name,
-                })
+        reference_files: Dict[str, str] = {}
+        ref_counter = 1
 
-        return results
+        for chunk in chunks:
+            file_path = chunk.get("file_path", "")
+            if file_path and file_path not in reference_files:
+                reference_files[file_path] = str(ref_counter)
+                ref_counter += 1
+
+        for entity in entities:
+            file_path = entity.get("file_path", "")
+            if file_path and file_path not in reference_files:
+                reference_files[file_path] = str(ref_counter)
+                ref_counter += 1
+
+        for rel in relationships:
+            file_path = rel.get("file_path", "")
+            if file_path and file_path not in reference_files:
+                reference_files[file_path] = str(ref_counter)
+                ref_counter += 1
+
+        text_parts = []
+
+        if entities:
+            text_parts.append("\nKnowledge Graph Data (Entity):\n")
+            text_parts.append("\n```json")
+            for entity in entities:
+                entity_data = {
+                    "entity": entity.get("entity_name", ""),
+                    "type": entity.get("entity_type", ""),
+                    "description": entity.get("description", ""),
+                }
+                text_parts.append(f"\n{json.dumps(entity_data, ensure_ascii=False)}")
+            text_parts.append("\n```")
+
+        if relationships:
+            text_parts.append("\n\nKnowledge Graph Data (Relationship):\n")
+            text_parts.append("\n```json")
+            for rel in relationships:
+                rel_data = {
+                    "entity1": rel.get("src_id", ""),
+                    "entity2": rel.get("tgt_id", ""),
+                    "description": rel.get("description", ""),
+                }
+                text_parts.append(f"\n{json.dumps(rel_data, ensure_ascii=False)}")
+            text_parts.append("\n```")
+
+        if chunks:
+            text_parts.append(
+                "\n\nDocument Chunks (Each entry has a reference_id refer to the `Reference Document List`):\n"
+            )
+            text_parts.append("\n```json")
+            for chunk in chunks:
+                file_path = chunk.get("file_path", "")
+                ref_id = reference_files.get(file_path, "")
+                chunk_data = {
+                    "reference_id": ref_id,
+                    "content": chunk.get("content", ""),
+                }
+                text_parts.append(f"\n{json.dumps(chunk_data, ensure_ascii=False)}")
+            text_parts.append("\n```")
+
+        if reference_files:
+            text_parts.append(
+                "\n\nReference Document List (Each entry starts with a [reference_id] "
+                "that corresponds to entries in the Document Chunks):\n"
+            )
+            text_parts.append("\n```")
+            for file_path, ref_id in reference_files.items():
+                file_name = Path(file_path).name if file_path else ""
+                text_parts.append(f"\n[{ref_id}] {file_name}")
+            text_parts.append("\n```")
+
+        formatted_text = "".join(text_parts)
+
+        return [{
+            "id": knowledge_base_id,
+            "text": formatted_text,
+            "score": 1.0,
+            "metadata": {
+                "entity_count": len(entities),
+                "relationship_count": len(relationships),
+                "chunk_count": len(chunks),
+                "reference_files": {v: k for k, v in reference_files.items()},
+            },
+            "resultType": "graph_retrieval",
+            "knowledgeBaseId": knowledge_base_id,
+            "knowledgeBaseName": knowledge_base_name,
+        }]
 
     async def process_file(
         self,

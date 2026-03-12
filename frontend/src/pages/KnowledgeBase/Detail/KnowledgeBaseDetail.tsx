@@ -32,16 +32,16 @@ interface StatisticItem {
   label: string;
   value: string | number;
 }
-interface RagChunk {
+// Use UnifiedSearchResult from model - flat structure from backend
+// Backend returns: { id, text, score, metadata, resultType, knowledgeBaseId, knowledgeBaseName }
+interface RecallResult {
   id: string;
   text: string;
-  metadata: string;
-}
-interface RecallResult {
   score: number;
-  entity: RagChunk;
-  id?: string | object;
-  primaryKey?: string;
+  metadata: Record<string, any>;
+  resultType?: string;
+  knowledgeBaseId?: string;
+  knowledgeBaseName?: string;
 }
 
 const KnowledgeBaseDetailPage: React.FC = () => {
@@ -482,12 +482,12 @@ const KnowledgeBaseDetailPage: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {recallResults.map((item, idx) => (
                   <Card key={idx} title={`${t("knowledgeBase.detail.recallTest.scoreLabel")}${item.score?.toFixed(4) ?? "-"}`}
-                    extra={<span style={{ fontSize: 12 }}>ID: {item.entity?.id ?? "-"}</span>}
+                    extra={<span style={{ fontSize: 12 }}>ID: {item.id ?? "-"}</span>}
                     style={{ wordBreak: "break-all" }}
                   >
-                    <div style={{ marginBottom: 8, fontWeight: 500 }}>{item.entity?.text ?? ""}</div>
+                    <div style={{ marginBottom: 8, fontWeight: 500 }}>{item.text ?? ""}</div>
                     <div style={{ fontSize: 12, color: '#888' }}>
-                      {t("knowledgeBase.detail.recallTest.metadataLabel")} <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all', margin: 0 }}>{item.entity?.metadata}</pre>
+                      {t("knowledgeBase.detail.recallTest.metadataLabel")} <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all', margin: 0 }}>{JSON.stringify(item.metadata, null, 2)}</pre>
                     </div>
                   </Card>
                 ))}
