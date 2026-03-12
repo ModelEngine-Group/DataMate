@@ -99,6 +99,14 @@ export function deleteDirectoryUsingDelete(
   return del(`/api/data-management/datasets/${id}/files/directories?prefix=${encodeURIComponent(directoryPath)}`);
 }
 
+// 批量删除文件
+export function batchDeleteFilesUsingDelete(
+  id: string | number,
+  data: { fileIds: string[]; prefix?: string }
+) {
+  return del(`/api/data-management/datasets/${id}/files/batch`, data);
+}
+
 // 重命名文件夹
 export function renameDirectoryUsingPut(
   id: string | number,

@@ -197,47 +197,84 @@ export default function ImportConfiguration({
   const handleUpload = async (dataset: Dataset) => {
     console.log('[ImportConfiguration] Uploading with currentPrefix:', currentPrefix);
 
-    // 在上传文件前，确保按文件路径在数据集中创建对应的目录结构（支持多级目录）
+    // 在上传文件前，确保按文件路径在数据集中创建对应的目录结构（支持多级嵌套目录）
+    let failedDirs: string[] = [];
     try {
       const basePrefix = currentPrefix || "";
-      const dirSet = new Set<string>();
+      const dirMap = new Map<string, { parentPrefix: string | undefined; directoryName: string }>();
 
+      // 收集所有需要创建的目录（去重）
       fileSliceList.forEach((file) => {
         const path = file.name || "";
         const parts = path.split("/").filter(Boolean);
-        if (parts.length <= 1) return; // 没有目录
+        if (parts.length <= 1) return; // 没有目录层级
 
-        let accumulated = "";
+        // 为每个目录层级创建记录
+        let accumulatedPath = "";
         for (let i = 0; i < parts.length - 1; i++) {
-          accumulated += parts[i] + "/";
-          dirSet.add(basePrefix + accumulated);
+          accumulatedPath += parts[i] + "/";
+          const fullDirPath = basePrefix + accumulatedPath;
+
+          // 如果这个目录还没有被记录，添加到 map 中
+          if (!dirMap.has(fullDirPath)) {
+            // 提取父目录前缀和当前目录名
+            const pathSegments = accumulatedPath.split("/").filter(Boolean);
+            const directoryName = pathSegments[pathSegments.length - 1];
+
+            let parentPrefix: string | undefined;
+            if (pathSegments.length > 1) {
+              // 有父目录，计算父目录前缀
+              const parentPathSegments = pathSegments.slice(0, -1);
+              parentPrefix = basePrefix + parentPathSegments.join("/") + "/";
+            } else {
+              // 顶级目录，父目录前缀是 basePrefix（如果为空则为 undefined）
+              parentPrefix = basePrefix || undefined;
+            }
+
+            dirMap.set(fullDirPath, { parentPrefix, directoryName });
+          }
         }
       });
 
-      const dirList = Array.from(dirSet).sort((a, b) => a.length - b.length);
+      // 按路径深度排序，确保从父目录到子目录的顺序创建
+      const sortedDirs = Array.from(dirMap.entries()).sort((a, b) => a[0].length - b[0].length);
 
-      for (const fullPrefix of dirList) {
-        const relative = fullPrefix.slice((basePrefix || "").length);
-        const segments = relative.split("/").filter(Boolean);
-        if (!segments.length) continue;
-        const directoryName = segments[segments.length - 1];
-        const parentPrefix =
-          segments.length > 1
-            ? basePrefix + segments.slice(0, -1).join("/") + "/"
-            : basePrefix || undefined;
+      console.log('[ImportConfiguration] Creating directories:', sortedDirs.length);
 
+      // 逐个创建目录
+      for (const [fullPath, { parentPrefix, directoryName }] of sortedDirs) {
         try {
+          // 验证参数合法性（确保不包含非法字符）
+          if (directoryName.includes('/') || directoryName.includes('\\') || directoryName.includes('..')) {
+            console.error(`[ImportConfiguration] Invalid directory name: "${directoryName}", fullPath: ${fullPath}`);
+            failedDirs.push(fullPath);
+            continue;
+          }
+          if (parentPrefix && (parentPrefix.includes('..'))) {
+            console.error(`[ImportConfiguration] Invalid parentPrefix: "${parentPrefix}", fullPath: ${fullPath}`);
+            failedDirs.push(fullPath);
+            continue;
+          }
+
           await createDatasetDirectoryUsingPost(dataset.id, {
-            parentPrefix,
+            parentPrefix: parentPrefix || undefined, // 确保空字符串转为 undefined
             directoryName,
           });
-        } catch (e) {
-          // 目录已存在等错误不阻断整个上传流程
-          console.warn("createDirectory failed for", fullPrefix, e);
+          console.log('[ImportConfiguration] Created directory:', fullPath, 'parentPrefix:', parentPrefix, 'directoryName:', directoryName);
+        } catch (e: any) {
+          // 记录失败的目录
+          failedDirs.push(fullPath);
+          const errorMsg = e?.response?.data?.message || e?.message || String(e);
+          console.warn(`[ImportConfiguration] Failed to create directory ${fullPath}:`, errorMsg);
         }
       }
     } catch (e) {
-      console.warn("ensure directories before upload failed", e);
+      console.error('[ImportConfiguration] Directory creation error:', e);
+    }
+
+    // 如果有目录创建失败，给出提示（但不阻断上传，因为后端会自动创建父目录）
+    if (failedDirs.length > 0) {
+      message.warning(`部分目录创建失败（${failedDirs.length}个），文件上传时会自动创建`);
     }
 
     window.dispatchEvent(

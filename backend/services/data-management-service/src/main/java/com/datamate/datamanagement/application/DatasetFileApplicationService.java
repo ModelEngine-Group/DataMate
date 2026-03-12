@@ -24,6 +24,7 @@ import com.datamate.datamanagement.infrastructure.persistence.repository.Dataset
 import com.datamate.datamanagement.infrastructure.persistence.repository.DatasetRepository;
 import com.datamate.datamanagement.interfaces.converter.DatasetConverter;
 import com.datamate.datamanagement.interfaces.dto.AddFilesRequest;
+import com.datamate.datamanagement.interfaces.dto.BatchDeleteFilesRequest;
 import com.datamate.datamanagement.interfaces.dto.CreateDirectoryRequest;
 import com.datamate.datamanagement.interfaces.dto.UploadFileRequest;
 import com.datamate.datamanagement.interfaces.dto.UploadFilesPreRequest;
@@ -244,6 +245,65 @@ public class DatasetFileApplicationService {
             } catch (IOException ex) {
                 throw BusinessException.of(SystemErrorCode.FILE_SYSTEM_ERROR);
             }
+        }
+    }
+
+    /**
+     * 批量删除文件
+     */
+    @Transactional
+    public void batchDeleteFiles(String datasetId, BatchDeleteFilesRequest request) {
+        Dataset dataset = datasetRepository.getById(datasetId);
+        if (dataset == null) {
+            throw BusinessException.of(DataManagementErrorCode.DATASET_NOT_FOUND);
+        }
+
+        List<String> fileIds = request.getFileIds();
+        if (fileIds == null || fileIds.isEmpty()) {
+            throw BusinessException.of(CommonErrorCode.PARAM_ERROR);
+        }
+
+        List<DatasetFile> filesToDelete = new ArrayList<>();
+        List<String> failedFileIds = new ArrayList<>();
+
+        for (String fileId : fileIds) {
+            try {
+                DatasetFile file = getDatasetFile(dataset, fileId, request.getPrefix());
+                filesToDelete.add(file);
+                datasetFileRepository.removeById(fileId);
+            } catch (Exception e) {
+                log.error("Failed to delete file with id: {}", fileId, e);
+                failedFileIds.add(fileId);
+            }
+        }
+
+        // 更新数据集（避免 ConcurrentModificationException）
+        List<DatasetFile> datasetFiles = dataset.getFiles();
+        if (datasetFiles != null) {
+            // 创建一个新的列表来存储要保留的文件
+            List<DatasetFile> remainingFiles = new ArrayList<>(datasetFiles);
+            // 移除要删除的文件
+            remainingFiles.removeAll(filesToDelete);
+            dataset.setFiles(remainingFiles);
+        }
+        datasetRepository.updateById(dataset);
+
+        // 删除文件系统中的文件
+        for (DatasetFile file : filesToDelete) {
+            // 上传到数据集中的文件会同时删除数据库中的记录和文件系统中的文件，归集过来的文件仅删除数据库中的记录
+            if (file.getFilePath().startsWith(dataset.getPath())) {
+                try {
+                    Path filePath = Paths.get(file.getFilePath());
+                    Files.deleteIfExists(filePath);
+                } catch (IOException ex) {
+                    log.error("Failed to delete file from filesystem: {}", file.getFilePath(), ex);
+                }
+            }
+        }
+
+        // 如果有失败的文件，记录日志但不抛出异常
+        if (!failedFileIds.isEmpty()) {
+            log.warn("Failed to delete {} files out of {}", failedFileIds.size(), fileIds.size());
         }
     }
 
@@ -637,10 +697,14 @@ public class DatasetFileApplicationService {
             throw BusinessException.of(SystemErrorCode.FILE_SYSTEM_ERROR);
         }
 
-        // 更新数据集
-        dataset.setFiles(filesToDelete);
-        for (DatasetFile file : filesToDelete) {
-            dataset.removeFile(file);
+        // 更新数据集（避免 ConcurrentModificationException，先获取文件列表再删除）
+        List<DatasetFile> datasetFiles = dataset.getFiles();
+        if (datasetFiles != null) {
+            // 创建一个新的列表来存储要保留的文件
+            List<DatasetFile> remainingFiles = new ArrayList<>(datasetFiles);
+            // 移除要删除的文件
+            remainingFiles.removeAll(filesToDelete);
+            dataset.setFiles(remainingFiles);
         }
         datasetRepository.updateById(dataset);
     }

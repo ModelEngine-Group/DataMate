@@ -15,6 +15,7 @@ import {
   renameDatasetFileUsingPut,
   renameDirectoryUsingPut,
   getDatasetFileByIdUsingGet,
+  batchDeleteFilesUsingDelete,
 } from "../dataset.api";
 import { useParams } from "react-router";
 
@@ -111,38 +112,34 @@ export function useFilesOperation(dataset: Dataset) {
 
       // 分类：文件和目录
       const directories: any[] = [];
-      const files: any[] = [];
+      const fileIds: string[] = [];
 
       selectedFiles.forEach((fileId) => {
         const file = selectedFilesMap.get(fileId);
-        if (!file) return; // 文件不在当前页，跳过（实际应该都存在）
+        if (!file) return;
 
         if (typeof fileId === "string" && fileId.startsWith("directory-")) {
           directories.push(file);
         } else {
-          files.push(file);
+          fileIds.push(file.id);
         }
       });
 
-      // 并发删除文件（限制并发数为 5）
-      const deleteFile = async (file: any) => {
+      // 批量删除文件（一次性删除所有文件）
+      if (fileIds.length > 0) {
         try {
-          await deleteDatasetFileUsingDelete(dataset.id, file.id, prefix);
-          successCount++;
-        } catch (error) {
-          console.error(`删除文件失败: ${file.fileName}`, error);
-          failCount++;
+          await batchDeleteFilesUsingDelete(dataset.id, { fileIds, prefix });
+          successCount += fileIds.length;
+        } catch (error: any) {
+          // 部分文件可能删除失败，后端会返回详细信息
+          console.error("批量删除文件失败", error);
+          const failedCount = error?.response?.data?.failedCount || fileIds.length;
+          failCount += failedCount;
+          successCount += (fileIds.length - failedCount);
         }
-      };
-
-      const CONCURRENT_LIMIT = 5;
-      for (let i = 0; i < files.length; i += CONCURRENT_LIMIT) {
-        await Promise.all(
-          files.slice(i, i + CONCURRENT_LIMIT).map(deleteFile)
-        );
       }
 
-      // 直接调用后端递归删除目录 API
+      // 并发删除目录（目录使用单独的递归删除接口）
       const deleteDirectory = async (dir: any) => {
         try {
           const dirPath = `${prefix}${dir.fileName}/`;
@@ -154,7 +151,6 @@ export function useFilesOperation(dataset: Dataset) {
         }
       };
 
-      // 目录删除也要并发，但数量通常较少
       await Promise.all(directories.map(deleteDirectory));
 
       // 刷新文件列表
