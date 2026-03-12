@@ -2,7 +2,7 @@ import { queryDatasetsUsingGet } from "@/pages/DataManagement/dataset.api";
 import { mapDataset } from "@/pages/DataManagement/dataset.const";
 import { Button, Form, Input, Modal, Select, message, Tabs, Slider, Checkbox } from "antd";
 import TextArea from "antd/es/input/TextArea";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   createAnnotationTaskUsingPost,
   queryAnnotationTemplatesUsingGet,
@@ -123,6 +123,22 @@ export default function CreateAnnotationTask({
   const [imageFileCount, setImageFileCount] = useState(0);
   const [manualDatasetTypeFilter, setManualDatasetTypeFilter] = useState<DatasetType | undefined>(undefined);
   const [manualAllowedExtensions, setManualAllowedExtensions] = useState<string[] | undefined>(undefined);
+  const [shouldResetOnOpen, setShouldResetOnOpen] = useState(false); // 创建成功后标记需要重置
+
+  // 防止重复提示相同的警告
+  const lastWarningRef = useRef<{ type: string; timestamp: number } | null>(null);
+  const showWarningOnce = (type: string, msg: string) => {
+    const now = Date.now();
+    const lastWarning = lastWarningRef.current;
+
+    // 如果3秒内提示过相同的警告，就不再提示
+    if (lastWarning && lastWarning.type === type && now - lastWarning.timestamp < 3000) {
+      return;
+    }
+
+    lastWarningRef.current = { type, timestamp: now };
+    message.warning(msg);
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -158,19 +174,26 @@ export default function CreateAnnotationTask({
     fetchData();
   }, [open]);
 
-  // Reset form and manual-edit flag when modal opens
+  // Reset form when modal opens after successful creation
   useEffect(() => {
     if (open) {
-      manualForm.resetFields();
-      autoForm.resetFields();
-      setNameManuallyEdited(false);
-      setActiveMode("manual");
-      setSelectAllClasses(true);
-      setSelectedFilesMap({});
-      setSelectedDataset(null);
-      setImageFileCount(0);
+      if (shouldResetOnOpen) {
+        // 创建成功后重新打开，清空所有状态
+        manualForm.resetFields();
+        autoForm.resetFields();
+        setNameManuallyEdited(false);
+        setActiveMode("manual");
+        setSelectAllClasses(true);
+        setSelectedFilesMap({});
+        setSelectedDataset(null);
+        setImageFileCount(0);
+        setManualDatasetTypeFilter(undefined);
+        setManualAllowedExtensions(undefined);
+        setShouldResetOnOpen(false);
+      }
+      // 取消后重新打开，保留之前的状态，不做任何操作
     }
-  }, [open, manualForm, autoForm]);
+  }, [open, shouldResetOnOpen]);
 
   useEffect(() => {
     const imageExtensions = [".jpg", ".jpeg", ".png", ".bmp", ".gif", ".tiff", ".webp"];
@@ -294,6 +317,7 @@ export default function CreateAnnotationTask({
 
       await createAnnotationTaskUsingPost(requestData);
       message?.success?.(t('dataAnnotation.create.messages.createSuccess'));
+      setShouldResetOnOpen(true); // 标记下次打开时需要重置
       onClose();
       onRefresh();
     } catch (err: any) {
@@ -352,6 +376,7 @@ export default function CreateAnnotationTask({
 
       await createAutoAnnotationTaskUsingPost(payload);
       message.success(t('dataAnnotation.create.messages.autoCreateSuccess'));
+      setShouldResetOnOpen(true); // 标记下次打开时需要重置
       // 触发上层刷新自动标注任务列表
       (onRefresh as any)?.("auto");
       onClose();
@@ -440,18 +465,11 @@ export default function CreateAnnotationTask({
                     showSearch
                     optionFilterProp="label"
                     notFoundContent={templates.length === 0 ? t('dataAnnotation.create.form.noTemplatesFound') : t('dataAnnotation.create.form.noTemplatesAvailable')}
-                    options={templates
-                      .filter((template) => {
-                        const tplType = mapTemplateDataTypeToDatasetType(template.dataType);
-                        if (!selectedDataset || !selectedDataset.datasetType) return true;
-                        if (!tplType) return true;
-                        return tplType === selectedDataset.datasetType;
-                      })
-                      .map((template) => ({
-                        label: template.name,
-                        value: template.id,
-                        title: template.description,
-                      }))}
+                    options={templates.map((template) => ({
+                      label: template.name,
+                      value: template.id,
+                      title: template.description,
+                    }))}
                     onChange={(value) => {
                       manualForm.setFieldsValue({ templateId: value });
 
@@ -467,8 +485,9 @@ export default function CreateAnnotationTask({
                         setSelectedDataset(null);
                         setSelectedFilesMap({});
                         manualForm.setFieldsValue({ datasetId: "" });
-                        message.warning(t('dataAnnotation.create.messages.datasetTypeFiltered'));
+                        showWarningOnce('datasetTypeFiltered', t('dataAnnotation.create.messages.datasetTypeFiltered'));
                       }
+                      // 注意：不要清空 selectedFilesMap，因为文件扩展名过滤变化后，之前选择的文件可能仍然有效
                     }}
                     optionRender={(option) => (
                       <div>
@@ -483,7 +502,7 @@ export default function CreateAnnotationTask({
                   />
                 </Form.Item>
 
-                {/* 选择数据集和文件（仅允许单一数据集，多文件），需先选模板再操作 */}
+                {/* 选择数据集和文件（仅允许单一数据集，多文件），先选数据集，再选模板 */}
                 <Form.Item label={t('dataAnnotation.create.form.selectDatasetAndFiles')} required>
                   <DatasetFileTransfer
                     open
@@ -506,7 +525,6 @@ export default function CreateAnnotationTask({
                     datasetTypeFilter={manualDatasetTypeFilter}
                     allowedFileExtensions={manualAllowedExtensions}
                     singleDatasetOnly
-                    disabled={!manualForm.getFieldValue("templateId")}
                   />
                   {selectedDataset && (
                     <div className="mt-2 p-2 bg-blue-50 rounded border border-blue-200 text-xs">
