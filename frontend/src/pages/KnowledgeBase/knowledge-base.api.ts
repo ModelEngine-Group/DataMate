@@ -1,4 +1,5 @@
 import { get, post, put, del } from "@/utils/request";
+import type { UnifiedSearchResult } from "./knowledge-base.model";
 
 // 获取知识库列表
 export function queryKnowledgeBasesUsingPost(params: any) {
@@ -59,21 +60,17 @@ export function deleteKnowledgeBaseFileByIdUsingDelete(baseId: string, data: obj
   return (del as unknown as (url: string, data?: object | null) => Promise<unknown>)(`/api/knowledge-base/${baseId}/files`, data ?? null);
 }
 
-export function fetchKnowledgeGraph(data: { knowledge_base_id: string; query: string }) {
-  return post("/api/rag/query", data);
-}
-
-// 检索知识库内容
+// 检索知识库内容（统一检索接口）
 export function retrieveKnowledgeBaseContent(data: {
   query: string;
   topK?: number;
   threshold?: number;
   knowledgeBaseIds: string[];
-}) {
+}): Promise<UnifiedSearchResult[]> {
   return post("/api/knowledge-base/retrieve", data);
 }
 
-// 新增：获取知识库文件详情（分页的切片数据）
+// 获取知识库文件详情（分页的切片数据）
 export function queryKnowledgeBaseFileDetailUsingGet(
   knowledgeBaseId: string,
   ragFileId: string,
@@ -82,4 +79,11 @@ export function queryKnowledgeBaseFileDetailUsingGet(
   const page = params.page ?? 1;
   const size = params.size ?? 20;
   return get(`/api/knowledge-base/${knowledgeBaseId}/files/${ragFileId}?page=${page}&page_size=${size}`);
+}
+
+export function queryKnowledgeBase(data: {
+  knowledge_base_id: string;
+  query: string;
+}) {
+  return post("/api/knowledge-base/query", data);
 }
