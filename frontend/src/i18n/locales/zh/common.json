@@ -599,6 +599,10 @@
     }
   },
   "common": {
+    "yes": "是",
+    "no": "否",
+    "cancel": "取消",
+    "refresh": "刷新",
     "settings": {
       "title": "设置"
     },
@@ -1872,6 +1876,52 @@
         "latestVersion": "最新版本",
         "noReleases": "暂无版本发布信息",
         "initialize": "点击初始化"
+      },
+      "examples": {
+        "copyCode": "复制代码"
+      },
+      "service": {
+        "notSupported": "暂不支持部署",
+        "confirmUninstall": "确认卸载服务？",
+        "uninstallConfirm": "卸载后服务将停止运行，是否继续？",
+        "uninstall": "卸载",
+        "status": {
+          "running": "运行中",
+          "failed": "失败",
+          "standby": "待机",
+          "stopped": "已停止"
+        },
+        "notDeployed": "未部署",
+        "clickToDeploy": "点击部署",
+        "deploy": "部署",
+        "notSupportedHint": "当前算子不支持部署功能",
+        "deploymentInfo": "部署信息",
+        "deployedAt": "部署时间",
+        "version": "版本",
+        "replicas": "副本数",
+        "uninstallService": "卸载服务",
+        "podMonitor": "Pod 监控",
+        "noPods": "暂无 Pod",
+        "createdAt": "创建时间",
+        "cpuUsage": "CPU 使用率",
+        "memoryUsage": "内存使用率",
+        "restartCount": "重启次数",
+        "viewLogs": "查看日志",
+        "deploying": "部署中",
+        "logs": "日志",
+        "copyLogs": "复制日志",
+        "close": "关闭"
+      },
+      "requirement": {
+        "systemRequirements": "系统规格",
+        "cpuSpec": "CPU 规格",
+        "noLimit": "无限制",
+        "memorySpec": "内存规格",
+        "storage": "存储",
+        "gpuSupport": "GPU 支持",
+        "npuSupport": "NPU 支持",
+        "dependencies": "依赖项",
+        "parseError": "数据解析失败"
       }
     },
     "create": {

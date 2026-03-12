@@ -11,6 +11,7 @@ import {
   Switch,
 } from "antd";
 import { ConfigI, OperatorI } from "@/pages/OperatorMarket/operator.model";
+import { useTranslation } from "react-i18next";
 
 interface ParamConfigProps {
   operator: OperatorI;
@@ -25,6 +26,7 @@ const ParamConfig: React.FC<ParamConfigProps> = ({
   param,
   onParamChange,
 }) => {
+  const { t } = useTranslation();
   if (!param) return null;
   let defaultVal: any = operator.overrides?.[paramKey] ?? param.defaultVal;
   if (param.type === "range") {
@@ -53,7 +55,7 @@ const ParamConfig: React.FC<ParamConfigProps> = ({
           <Input
             value={value}
             onChange={(e) => updateValue(e.target.value)}
-            placeholder={`请输入${param.name}`}
+            placeholder={t("dataCleansing.paramConfig.enterValue", { name: param.name })}
             className="w-full"
           />
         </Form.Item>
@@ -202,7 +204,7 @@ const ParamConfig: React.FC<ParamConfigProps> = ({
           <InputNumber
             value={value}
             onChange={(val) => updateValue(val)}
-            placeholder={`请输入${param.name}`}
+            placeholder={t("dataCleansing.paramConfig.enterValue", { name: param.name })}
             className="w-full"
             min={param.min}
             max={param.max}

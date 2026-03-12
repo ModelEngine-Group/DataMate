@@ -2,6 +2,7 @@ import type React from "react"
 import { useState } from "react"
 import { Card, Button, Modal, Empty, Spin, Progress } from "antd"
 import { Cloud, Power, Trash2, AlertCircle, CheckCircle, Clock, Terminal, Copy, RefreshCw } from "lucide-react"
+import { useTranslation } from "react-i18next"
 
 interface Pod {
   id: string
@@ -30,6 +31,7 @@ export default function OperatorServiceMonitor({
                                                  operatorName,
                                                  supportsService = true,
                                                }: OperatorServiceMonitorProps) {
+  const { t } = useTranslation();
   const [serviceDeployment, setServiceDeployment] = useState<ServiceDeployment>({
     status: "not_deployed",
     replicas: 0,
@@ -44,7 +46,7 @@ export default function OperatorServiceMonitor({
   // 模拟部署
   const handleDeploy = async () => {
     if (!supportsService) {
-      setDeploymentError(`${operatorName} 算子不支持服务部署`)
+      setDeploymentError(t("operatorMarket.detail.service.notSupported", { name: operatorName }))
       return
     }
 
@@ -95,11 +97,11 @@ export default function OperatorServiceMonitor({
   // 模拟卸载
   const handleUndeploy = () => {
     Modal.confirm({
-      title: "确认卸载服务",
-      content: `确定要卸载 ${operatorName} 的服务吗？这将停止所有运行中的Pod实例。`,
-      okText: "卸载",
+      title: t("operatorMarket.detail.service.confirmUninstall"),
+      content: t("operatorMarket.detail.service.uninstallConfirm", { name: operatorName }),
+      okText: t("operatorMarket.detail.service.uninstall"),
       okType: "danger",
-      cancelText: "取消",
+      cancelText: t("common.cancel"),
       onOk() {
         setServiceDeployment({
           status: "not_deployed",
@@ -116,22 +118,22 @@ export default function OperatorServiceMonitor({
       running: {
         color: "bg-green-100 text-green-800 border-green-200",
         icon: <CheckCircle className="w-4 h-4" />,
-        label: "运行中",
+        label: t("operatorMarket.detail.service.status.running"),
       },
-      pending: {
+      pending:{
         color: "bg-yellow-100 text-yellow-800 border-yellow-200",
         icon: <Clock className="w-4 h-4" />,
-        label: "待机中",
+        label: t("operatorMarket.detail.service.status.standby"),
       },
       failed: {
         color: "bg-red-100 text-red-800 border-red-200",
         icon: <AlertCircle className="w-4 h-4" />,
-        label: "失败",
+        label: t("operatorMarket.detail.service.status.failed"),
       },
       terminated: {
         color: "bg-gray-100 text-gray-800 border-gray-200",
         icon: <Power className="w-4 h-4" />,
-        label: "已停止",
+        label: t("operatorMarket.detail.service.status.stopped"),
       },
     }
     return config[status] || config.pending
@@ -140,16 +142,16 @@ export default function OperatorServiceMonitor({
   const renderNotDeployed = () => (
     <div className="text-center py-12">
       <Cloud className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-      <h3 className="text-lg font-medium text-gray-900 mb-2">服务未部署</h3>
-      <p className="text-gray-600 mb-6">点击下方按钮部署 {operatorName} 服务</p>
+      <h3 className="text-lg font-medium text-gray-900 mb-2">{t("operatorMarket.detail.service.notDeployed")}</h3>
+      <p className="text-gray-600 mb-6">{t("operatorMarket.detail.service.clickToDeploy", { name: operatorName })}</p>
       <Button type="primary" size="large" loading={isDeploying} onClick={handleDeploy} disabled={!supportsService}>
         <Power className="w-4 h-4 mr-2" />
-        部署服务
+        {t("operatorMarket.detail.service.deploy")}
       </Button>
       {!supportsService && (
         <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
           <AlertCircle className="w-4 h-4 inline mr-2" />
-          该算子不支持服务部署
+          {t("operatorMarket.detail.service.notSupportedHint")}
         </div>
       )}
     </div>
@@ -161,16 +163,16 @@ export default function OperatorServiceMonitor({
       <Card>
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">部署信息</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">{t("operatorMarket.detail.service.deploymentInfo")}</h3>
             <div className="space-y-1 text-sm text-gray-600">
-              <div>部署时间: {new Date(serviceDeployment.deployedAt!).toLocaleString("zh-CN")}</div>
-              <div>版本: {serviceDeployment.version}</div>
-              <div>副本数: {serviceDeployment.replicas}</div>
+              <div>{t("operatorMarket.detail.service.deployedAt")}: {new Date(serviceDeployment.deployedAt!).toLocaleString("zh-CN")}</div>
+              <div>{t("operatorMarket.detail.service.version")}: {serviceDeployment.version}</div>
+              <div>{t("operatorMarket.detail.service.replicas")}: {serviceDeployment.replicas}</div>
             </div>
           </div>
           <Button danger onClick={handleUndeploy}>
             <Trash2 className="w-4 h-4 mr-2" />
-            卸载服务
+            {t("operatorMarket.detail.service.uninstallService")}
           </Button>
         </div>
       </Card>
@@ -178,15 +180,15 @@ export default function OperatorServiceMonitor({
       {/* Pod 监控 */}
       <Card>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-medium text-gray-900">Pod 实例监控</h3>
+          <h3 className="text-lg font-medium text-gray-900">{t("operatorMarket.detail.service.podMonitor")}</h3>
           <Button type="text" size="small">
             <RefreshCw className="w-4 h-4" />
-            刷新
+            {t("common.refresh")}
           </Button>
         </div>
 
         {serviceDeployment.pods.length === 0 ? (
-          <Empty description="暂无Pod实例" />
+          <Empty description={t("operatorMarket.detail.service.noPods")} />
         ) : (
           <div className="space-y-3">
             {serviceDeployment.pods.map((pod) => {
@@ -200,7 +202,7 @@ export default function OperatorServiceMonitor({
                         <div className="flex-1">
                           <div className="font-medium text-gray-900">{pod.name}</div>
                           <div className="text-xs text-gray-500">
-                            创建时间: {new Date(pod.createdAt).toLocaleString("zh-CN")}
+                            {t("operatorMarket.detail.service.createdAt")}: {new Date(pod.createdAt).toLocaleString("zh-CN")}
                           </div>
                         </div>
                       </div>
@@ -215,7 +217,7 @@ export default function OperatorServiceMonitor({
                     {/* 资源使用情况 */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <div>
-                        <div className="text-xs text-gray-600 mb-1">CPU 使用率</div>
+                        <div className="text-xs text-gray-600 mb-1">{t("operatorMarket.detail.service.cpuUsage")}</div>
                         <div className="flex items-center gap-2">
                           <Progress
                             type="circle"
@@ -227,7 +229,7 @@ export default function OperatorServiceMonitor({
                         </div>
                       </div>
                       <div>
-                        <div className="text-xs text-gray-600 mb-1">内存使用率</div>
+                        <div className="text-xs text-gray-600 mb-1">{t("operatorMarket.detail.service.memoryUsage")}</div>
                         <div className="flex items-center gap-2">
                           <Progress
                             type="circle"
@@ -240,7 +242,7 @@ export default function OperatorServiceMonitor({
                       </div>
                       <div className="flex items-center gap-2">
                         <div className="text-center">
-                          <div className="text-xs text-gray-600">重启次数</div>
+                          <div className="text-xs text-gray-600">{t("operatorMarket.detail.service.restartCount")}</div>
                           <div className="text-lg font-semibold text-gray-900">{pod.restarts}</div>
                         </div>
                       </div>
@@ -254,7 +256,7 @@ export default function OperatorServiceMonitor({
                           }}
                         >
                           <Terminal className="w-4 h-4 mr-1" />
-                          查看日志
+                          {t("operatorMarket.detail.service.viewLogs")}
                         </Button>
                       </div>
                     </div>
@@ -282,7 +284,7 @@ export default function OperatorServiceMonitor({
       {isDeploying ? (
         <Card className="text-center py-12">
           <Spin size="large" />
-          <p className="mt-4 text-gray-600">正在部署服务...</p>
+          <p className="mt-4 text-gray-600">{t("operatorMarket.detail.service.deploying")}</p>
         </Card>
       ) : serviceDeployment.status === "not_deployed" ? (
         <Card>{renderNotDeployed()}</Card>
@@ -292,13 +294,13 @@ export default function OperatorServiceMonitor({
 
       {/* Pod 日志模态框 */}
       <Modal
-        title={`${selectedPod?.name} - 日志`}
+        title={`${selectedPod?.name} - ${t("operatorMarket.detail.service.logs")}`}
         open={showLogModal}
         onCancel={() => setShowLogModal(false)}
         width={800}
         footer={[
           <Button key="close" onClick={() => setShowLogModal(false)}>
-            关闭
+            {t("operatorMarket.detail.service.close")}
           </Button>,
           <Button
             key="copy"
@@ -316,7 +318,7 @@ export default function OperatorServiceMonitor({
             }}
           >
             <Copy className="w-4 h-4 mr-2" />
-            复制日志
+            {t("operatorMarket.detail.service.copyLogs")}
           </Button>,
         ]}
       >

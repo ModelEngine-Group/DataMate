@@ -86,7 +86,7 @@ export default function LogsTable({ taskLog: initialLogs, fetchTaskLog, retryCou
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${taskName}_第${selectedLog}次运行.log`;
+      a.download = `${taskName}_${t("dataCleansing.logTable.nthRun", { num: selectedLog })}.log`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);

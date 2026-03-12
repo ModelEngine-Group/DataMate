@@ -1,7 +1,10 @@
 import { Card } from "antd";
 import { Star } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export default function Reviews({ operator }) {
+  const { t } = useTranslation();
+
   return (
     <div className="flex flex-col gap-4">
       {/* 评分统计 */}
@@ -18,7 +21,7 @@ export default function Reviews({ operator }) {
               ))}
             </div>
             <div className="text-sm text-gray-600 mt-1">
-              基于 {operator.reviews.length} 个评价
+              {t("operatorMarket.detail.reviews.basedOn", { count: operator.reviews.length })}
             </div>
           </div>
           <div className="flex-1">
@@ -31,7 +34,7 @@ export default function Reviews({ operator }) {
                 return (
                   <div key={rating} className="flex items-center gap-2">
                     <span className="text-sm text-gray-600 w-8">
-                      {rating}星
+                      {t("operatorMarket.detail.reviews.stars", { rating })}
                     </span>
                     <div className="flex-1 bg-gray-200 rounded-full h-2">
                       <div

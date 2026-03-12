@@ -599,6 +599,10 @@
     }
   },
   "common": {
+    "yes": "Yes",
+    "no": "No",
+    "cancel": "Cancel",
+    "refresh": "Refresh",
     "settings": {
       "title": "Settings"
     },
@@ -1373,6 +1377,8 @@
           "descriptionPlaceholder":  "Describe the purpose",
           "srcDataset": "Source Dataset",
           "srcDatasetPlaceholder":  "Select source dataset",
+          "destDatasetName": "Target Dataset Name",
+          "destDatasetNamePlaceholder": "Enter or select target dataset name",
           "destDatasetType": "Target Dataset Type",
           "useSourceDataset": "Use Source Dataset",
           "useSourceDatasetHint": "Output will be replaced in source dataset",
@@ -1871,6 +1877,52 @@
         "latestVersion": "Latest Version",
         "noReleases": "No version release information",
         "initialize": "Click to initialize"
+      },
+      "examples": {
+        "copyCode": "Copy Code"
+      },
+      "service": {
+        "notSupported": "Deployment not supported",
+        "confirmUninstall": "Confirm uninstall service?",
+        "uninstallConfirm": "The service will stop running after uninstallation. Continue?",
+        "uninstall": "Uninstall",
+        "status": {
+          "running": "Running",
+          "failed": "Failed",
+          "standby": "Standby",
+          "stopped": "Stopped"
+        },
+        "notDeployed": "Not deployed",
+        "clickToDeploy": "Click to deploy",
+        "deploy": "Deploy",
+        "notSupportedHint": "This operator does not support deployment",
+        "deploymentInfo": "Deployment Info",
+        "deployedAt": "Deployed At",
+        "version": "Version",
+        "replicas": "Replicas",
+        "uninstallService": "Uninstall Service",
+        "podMonitor": "Pod Monitor",
+        "noPods": "No Pods",
+        "createdAt": "Created At",
+        "cpuUsage": "CPU Usage",
+        "memoryUsage": "Memory Usage",
+        "restartCount": "Restart Count",
+        "viewLogs": "View Logs",
+        "deploying": "Deploying",
+        "logs": "Logs",
+        "copyLogs": "Copy Logs",
+        "close": "Close"
+      },
+      "requirement": {
+        "systemRequirements": "System Requirements",
+        "cpuSpec": "CPU Spec",
+        "noLimit": "No Limit",
+        "memorySpec": "Memory Spec",
+        "storage": "Storage",
+        "gpuSupport": "GPU Support",
+        "npuSupport": "NPU Support",
+        "dependencies": "Dependencies",
+        "parseError": "Failed to parse data"
       }
     },
     "create": {
