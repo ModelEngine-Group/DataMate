@@ -144,7 +144,8 @@ SELECT
     o.created_by,
     o.updated_by,
     toc.id AS category_id,
-    toc.name AS category_name
+    toc.name AS category_name,
+    toc.name_en AS category_name_en
 FROM t_operator_category_relation tocr
 LEFT JOIN t_operator o ON tocr.operator_id = o.id
 LEFT JOIN t_operator_category toc ON tocr.category_id = toc.id;
