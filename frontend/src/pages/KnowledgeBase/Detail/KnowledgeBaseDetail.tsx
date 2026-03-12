@@ -502,17 +502,11 @@ const KnowledgeBaseDetailPage: React.FC = () => {
                   return (
                     <div className="border border-gray-200 rounded-lg bg-white overflow-hidden">
                       <div className="flex items-center justify-between px-5 py-3 bg-gradient-to-r from-slate-50 to-gray-50 border-b border-gray-200">
-                        <div className="flex items-center gap-2">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700">
-                            {t("knowledgeBase.detail.recallTest.scoreLabel")}{item.score?.toFixed(4) ?? "-"}
-                          </span>
-                        </div>
-                        <span className="text-xs text-gray-400 font-mono truncate max-w-[200px]" title={item.id}>
+                        <div className="text-xs text-gray-500 font-mono break-all">
                           ID: {item.id ?? "-"}
-                        </span>
+                        </div>
                       </div>
-                       <div className="p-5 max-h-[calc(100vh-28rem)] overflow-auto">
-                        <div className="whitespace-nowrap overflow-x-auto">
+                       <div className="p-5">
                         <div className="prose prose-slate prose-sm max-w-none
                           prose-headings:text-slate-800 prose-headings:font-semibold
                           prose-p:text-gray-700 prose-p:leading-relaxed prose-p:m-0
@@ -624,7 +618,6 @@ const KnowledgeBaseDetailPage: React.FC = () => {
                           >
                             {squashSoftLineBreaksOutsideFences(item.text ?? "")}
                           </ReactMarkdown>
-                        </div>
                         </div>
                       </div>
                     </div>
