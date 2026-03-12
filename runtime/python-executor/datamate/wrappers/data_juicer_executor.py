@@ -102,7 +102,7 @@ class DataJuicerExecutor(RayExecutor):
             dataset = self.load_dataset()
 
         logger.info('Read data...')
-        dataset = dataset.map(FileExporter().read_file, num_cpus=0.05)
+        dataset = dataset.map(FileExporter().convert_to_dj, num_cpus=0.05)
 
         # 保存原始数据文件ID集合，用于后续过滤数据检测
         original_file_ids = set(dataset.unique("fileId"))

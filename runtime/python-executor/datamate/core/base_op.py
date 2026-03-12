@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import json
+import mimetypes
 import os
 import time
 import traceback
@@ -169,6 +170,22 @@ class BaseOp:
     def read_file_first(self, sample):
         if self.is_first_op:
             self.read_file(sample)
+
+    def convert_to_dj(self, sample):
+        filepath = sample[self.filepath_key]
+        mime_type, _ = mimetypes.guess_type(filepath)
+        file_type = None
+        if mime_type:
+            file_type = mime_type.split('/')[0]
+        if file_type == "text":
+            return self.read_file(sample)
+        elif file_type == "image":
+            sample["images"] = [filepath]
+        elif file_type == "audio":
+            sample["audios"] = [filepath]
+        elif file_type == "video":
+            sample["videos"] = [filepath]
+        return sample
 
     @staticmethod
     def save_file_and_db(sample):
