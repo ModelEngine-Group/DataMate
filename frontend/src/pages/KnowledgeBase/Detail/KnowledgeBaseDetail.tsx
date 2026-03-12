@@ -1,6 +1,10 @@
 import type React from "react";
 import { useEffect, useState } from "react";
 import { Table, Badge, Button, Breadcrumb, Tooltip, App, Card, Input, Empty, Spin } from "antd";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import {
   DeleteOutlined,
   EditOutlined,
@@ -42,6 +46,18 @@ interface RecallResult {
   resultType?: string;
   knowledgeBaseId?: string;
   knowledgeBaseName?: string;
+}
+
+function squashSoftLineBreaksOutsideFences(markdown: string): string {
+  if (!markdown) return "";
+  const parts = markdown.split(/(```[\s\S]*?```)/g);
+  return parts
+    .map((part) => {
+      if (part.startsWith("```")) return part;
+      // keep paragraph breaks (\n\n), but squash single newlines into spaces
+      return part.replace(/([^\n])\n(?!\n)/g, "$1 ");
+    })
+    .join("");
 }
 
 const KnowledgeBaseDetailPage: React.FC = () => {
@@ -478,6 +494,143 @@ const KnowledgeBaseDetailPage: React.FC = () => {
               <Spin className="mt-8" />
             ) : recallResults.length === 0 ? (
               <Empty description={t("knowledgeBase.detail.recallTest.noResult")} />
+            ) : knowledgeBase?.type === KBType.GRAPH ? (
+              <div className="w-full">
+                {(() => {
+                  const item = recallResults[0];
+                  if (!item) return null;
+                  return (
+                    <div className="border border-gray-200 rounded-lg bg-white overflow-hidden">
+                      <div className="flex items-center justify-between px-5 py-3 bg-gradient-to-r from-slate-50 to-gray-50 border-b border-gray-200">
+                        <div className="flex items-center gap-2">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700">
+                            {t("knowledgeBase.detail.recallTest.scoreLabel")}{item.score?.toFixed(4) ?? "-"}
+                          </span>
+                        </div>
+                        <span className="text-xs text-gray-400 font-mono truncate max-w-[200px]" title={item.id}>
+                          ID: {item.id ?? "-"}
+                        </span>
+                      </div>
+                       <div className="p-5 max-h-[calc(100vh-28rem)] overflow-auto">
+                        <div className="whitespace-nowrap overflow-x-auto">
+                        <div className="prose prose-slate prose-sm max-w-none
+                          prose-headings:text-slate-800 prose-headings:font-semibold
+                          prose-p:text-gray-700 prose-p:leading-relaxed prose-p:m-0
+                          prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline
+                          prose-strong:text-slate-800 prose-em:text-slate-600
+                          prose-li:text-gray-700
+                          prose-code:before:content-none prose-code:after:content-none
+                          prose-code:bg-slate-100 prose-code:text-rose-600 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:font-medium prose-code:whitespace-nowrap
+                          prose-pre:bg-slate-900 prose-pre:shadow-lg
+                          prose-blockquote:border-l-blue-400 prose-blockquote:bg-slate-50 prose-blockquote:py-1 prose-blockquote:not-italic
+                          prose-table:border-collapse prose-th:bg-slate-100 prose-th:border prose-th:border-slate-300 prose-th:px-3 prose-th:py-2
+                          prose-td:border prose-td:border-slate-200 prose-td:px-3 prose-td:py-2
+                          prose-img:rounded-lg prose-img:shadow-md
+                          prose-hr:border-slate-200">
+                          <ReactMarkdown
+                            remarkPlugins={[remarkGfm]}
+                            components={{
+                              code({ node, inline, className, children, ...props }: any) {
+                                const match = /language-(\w+)/.exec(className || '');
+                                const codeString = String(children).replace(/\n$/, '');
+                                const shouldRenderInline = inline ?? (!match && !codeString.includes("\n"));
+
+                                if (shouldRenderInline) {
+                                  return (
+                                    <code className="text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded text-sm font-mono inline" {...props}>
+                                      {children}
+                                    </code>
+                                  );
+                                }
+
+                                // 有指定语言的代码块才高亮
+                                if (match) {
+                                  return (
+                                    <SyntaxHighlighter
+                                      {...props}
+                                      style={vscDarkPlus}
+                                      language={match[1]}
+                                      PreTag="div"
+                                      customStyle={{
+                                        borderRadius: '0.5rem',
+                                        padding: '1rem',
+                                        fontSize: '0.8rem',
+                                        margin: '0.5rem 0',
+                                        overflow: 'auto',
+                                        maxWidth: '100%'
+                                      }}
+                                    >
+                                      {codeString}
+                                    </SyntaxHighlighter>
+                                  );
+                                }
+
+                                // 无语言标记的代码块，以普通文本显示（不高亮）
+                                return (
+                                  <pre className="bg-transparent text-slate-700 p-0 overflow-x-auto text-sm whitespace-pre font-sans leading-relaxed">
+                                    {codeString}
+                                  </pre>
+                                );
+                              },
+                              p: ({ children }) => (
+                                <p className="text-gray-700 leading-relaxed m-0 inline-block !whitespace-nowrap">
+                                  {children}
+                                </p>
+                              ),
+                              ul: ({ children }) => (
+                                <ul className="my-2 pl-5 list-disc overflow-x-auto !whitespace-nowrap">
+                                  {children}
+                                </ul>
+                              ),
+                              ol: ({ children }) => (
+                                <ol className="my-2 pl-5 list-decimal overflow-x-auto !whitespace-nowrap">
+                                  {children}
+                                </ol>
+                              ),
+                              li: ({ children }) => (
+                                <li className="!whitespace-nowrap">
+                                  {children}
+                                </li>
+                              ),
+                              br: () => <span> </span>,
+                              a: ({ href, children }) => (
+                                <a
+                                  href={href}
+                                  className="text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                >
+                                  {children}
+                                </a>
+                              ),
+                              table: ({ children }) => (
+                                <div className="overflow-x-auto my-4 rounded border border-slate-200">
+                                  <table className="min-w-full">{children}</table>
+                                </div>
+                              ),
+                              thead: ({ children }) => (
+                                <thead className="bg-slate-50">{children}</thead>
+                              ),
+                              th: ({ children }) => (
+                                <th className="px-4 py-2 text-left text-sm font-semibold text-slate-700 border-b border-slate-200">{children}</th>
+                              ),
+                              td: ({ children }) => (
+                                <td className="px-4 py-2 text-sm text-slate-600 border-b border-slate-100">{children}</td>
+                              ),
+                              blockquote: ({ children }) => (
+                                <blockquote className="border-l-4 border-blue-400 bg-slate-50 pl-4 py-2 my-4 text-slate-600 italic rounded-r">{children}</blockquote>
+                              ),
+                            }}
+                          >
+                            {squashSoftLineBreaksOutsideFences(item.text ?? "")}
+                          </ReactMarkdown>
+                        </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {recallResults.map((item, idx) => (
