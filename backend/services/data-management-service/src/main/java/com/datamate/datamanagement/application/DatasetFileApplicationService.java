@@ -240,7 +240,7 @@ public class DatasetFileApplicationService {
         // 删除文件时，上传到数据集中的文件会同时删除数据库中的记录和文件系统中的文件，归集过来的文件仅删除数据库中的记录
         if (file.getFilePath().startsWith(dataset.getPath())) {
             try {
-                Path filePath = Paths.get(file.getFilePath());
+                Path filePath = validateAndResolvePath(file.getFilePath(), dataset.getPath());
                 Files.deleteIfExists(filePath);
             } catch (IOException ex) {
                 throw BusinessException.of(SystemErrorCode.FILE_SYSTEM_ERROR);
@@ -293,8 +293,10 @@ public class DatasetFileApplicationService {
             // 上传到数据集中的文件会同时删除数据库中的记录和文件系统中的文件，归集过来的文件仅删除数据库中的记录
             if (file.getFilePath().startsWith(dataset.getPath())) {
                 try {
-                    Path filePath = Paths.get(file.getFilePath());
+                    Path filePath = validateAndResolvePath(file.getFilePath(), dataset.getPath());
                     Files.deleteIfExists(filePath);
+                } catch (IllegalArgumentException ex) {
+                    log.warn("Invalid file path detected, skipping deletion: {}", file.getFilePath());
                 } catch (IOException ex) {
                     log.error("Failed to delete file from filesystem: {}", file.getFilePath(), ex);
                 }
@@ -313,7 +315,14 @@ public class DatasetFileApplicationService {
     @Transactional(readOnly = true)
     public Resource downloadFile(DatasetFile file) {
         try {
-            Path filePath = Paths.get(file.getFilePath()).normalize();
+            // 获取对应的数据集以验证路径安全性
+            Dataset dataset = datasetRepository.getById(file.getDatasetId());
+            if (dataset == null) {
+                throw new RuntimeException("Dataset not found for file: " + file.getFileName());
+            }
+
+            // 验证路径安全性，防止路径遍历攻击
+            Path filePath = validateAndResolvePath(file.getFilePath(), dataset.getPath());
             log.info("start download file {}", file.getFilePath());
             Resource resource = new UrlResource(filePath.toUri());
             if (resource.exists()) {
@@ -931,8 +940,24 @@ public class DatasetFileApplicationService {
         if (StringUtils.isBlank(sourPath) || StringUtils.isBlank(targetPath)) {
             return;
         }
-        Path source = Paths.get(sourPath).normalize();
-        Path target = Paths.get(targetPath).normalize();
+
+        // 规范化并验证源文件路径
+        Path source;
+        try {
+            source = Paths.get(sourPath).normalize();
+        } catch (Exception e) {
+            log.warn("Invalid source file path: {}", sourPath);
+            throw BusinessException.of(SystemErrorCode.FILE_SYSTEM_ERROR);
+        }
+
+        // 规范化并验证目标文件路径
+        Path target;
+        try {
+            target = Paths.get(targetPath).normalize();
+        } catch (Exception e) {
+            log.warn("Invalid target file path: {}", targetPath);
+            throw BusinessException.of(SystemErrorCode.FILE_SYSTEM_ERROR);
+        }
 
         // 检查源文件是否存在且为普通文件
         if (!Files.exists(source) || !Files.isRegularFile(source)) {
@@ -989,5 +1014,31 @@ public class DatasetFileApplicationService {
                 .lastAccessTime(currentTime)
                 .metadata(objectMapper.writeValueAsString(file.getMetadata()))
                 .build();
+    }
+
+    /**
+     * 安全地验证并获取文件路径，防止路径遍历攻击
+     *
+     * @param filePath 用户提供的文件路径
+     * @param basePath 允许的基础路径（数据集路径）
+     * @return 规范化后的绝对路径
+     * @throws IllegalArgumentException 如果路径不在基础路径内
+     */
+    private Path validateAndResolvePath(String filePath, String basePath) {
+        if (StringUtils.isEmpty(filePath)) {
+            throw new IllegalArgumentException("File path cannot be empty");
+        }
+
+        Path normalizedPath = Paths.get(filePath).normalize();
+        Path normalizedBasePath = Paths.get(basePath).normalize();
+
+        // 验证规范化后的路径是否在基础路径内
+        if (!normalizedPath.startsWith(normalizedBasePath)) {
+            throw new IllegalArgumentException(
+                "File path is outside the allowed directory: " + filePath
+            );
+        }
+
+        return normalizedPath;
     }
 }
