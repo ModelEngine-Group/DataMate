@@ -28,7 +28,6 @@ import useFetchData from "@/hooks/useFetchData";
 import AddDataDialog from "../components/AddDataDialog";
 import CreateKnowledgeBase from "../components/CreateKnowledgeBase";
 import KnowledgeGraphView, { GraphEntitySelection } from "../components/KnowledgeGraphView";
-import { Network } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 interface StatisticItem {
@@ -195,15 +194,6 @@ const KnowledgeBaseDetailPage: React.FC = () => {
   };
 
   type DetailOperation = NonNullable<React.ComponentProps<typeof DetailHeader>["operations"][number]>;
-  const graphOperation: DetailOperation | null = knowledgeBase?.type === KBType.GRAPH
-    ? {
-        key: "graph",
-        label: t("knowledgeBase.detail.graph.title"),
-        icon: <Network />,
-        onClick: handleOpenGraph,
-      }
-    : null;
-
   const baseOperations: DetailOperation[] = [
     {
       key: "edit",
@@ -237,7 +227,7 @@ const KnowledgeBaseDetailPage: React.FC = () => {
     },
   ];
 
-  const operations: DetailOperation[] = [graphOperation, ...baseOperations].filter(Boolean) as DetailOperation[];
+  const operations: DetailOperation[] = baseOperations;
 
   const fileOps = [
     {
@@ -258,7 +248,17 @@ const KnowledgeBaseDetailPage: React.FC = () => {
       ellipsis: true,
       fixed: "left" as const,
       render: (_: unknown, file: KBFile) => (
-        <a onClick={() => navigate(`/data/knowledge-base/file-detail/${file.id}?knowledgeBaseId=${knowledgeBase?.id || ''}&fileName=${encodeURIComponent(file.name || file.fileName || '')}`)}>
+        <a
+          onClick={() => {
+            if (knowledgeBase?.type === KBType.GRAPH) {
+              handleOpenGraph();
+              return;
+            }
+            navigate(
+              `/data/knowledge-base/file-detail/${file.id}?knowledgeBaseId=${knowledgeBase?.id || ""}&fileName=${encodeURIComponent(file.name || file.fileName || "")}`
+            );
+          }}
+        >
           {file.name}
         </a>
       )
