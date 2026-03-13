@@ -228,7 +228,7 @@ export default function RatioTasksPage() {
       <DeleteConfirmModal
         visible={deleteModal.visible}
         title={t("ratioTask.home.confirm.deleteTitle")}
-        message={t("ratioTask.home.confirm.deleteDesc")}
+        message={t("ratioTask.home.confirm.deleteDesc", { itemName: deleteModal.taskName })}
         itemName={deleteModal.taskName}
         onConfirm={() => handleDeleteTask(deleteModal.taskId)}
         onCancel={handleCancelDelete}

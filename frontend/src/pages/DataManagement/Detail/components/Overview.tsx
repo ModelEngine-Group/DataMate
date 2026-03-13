@@ -756,12 +756,12 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
         title={
           deleteModal.type === "directory"
             ? t("dataManagement.confirm.deleteFolderTitle")
-            : t("components.deleteConfirm.title")
+            : t("dataManagement.confirm.deleteFileTitle")
         }
         message={
           deleteModal.type === "directory"
-            ? t("dataManagement.confirm.deleteFolderDesc", { name: deleteModal.fileName })
-            : t("components.deleteConfirm.message", { itemName: deleteModal.fileName })
+            ? t("dataManagement.confirm.deleteFolderDesc", { itemName: deleteModal.fileName })
+            : t("dataManagement.confirm.deleteFileDesc", { itemName: deleteModal.fileName })
         }
         itemName={deleteModal.fileName}
         onConfirm={handleConfirmDelete}

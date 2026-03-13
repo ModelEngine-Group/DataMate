@@ -113,9 +113,9 @@ export default function RatioTaskDetail() {
       danger: true,
       confirm: {
         title: t("ratioTask.detail.confirm.deleteTitle"),
-        description: t("ratioTask.detail.confirm.deleteDesc"),
-        okText: t("ratioTask.detail.confirm.okText"),
-        cancelText: t("ratioTask.detail.confirm.cancelText"),
+        description: t("ratioTask.detail.confirm.deleteDesc", { itemName: task.name }),
+        okText: t("dataManagement.confirm.deleteConfirm"),
+        cancelText: t("dataManagement.confirm.deleteCancel"),
         okType: "danger",
       },
       icon: <DeleteOutlined />,

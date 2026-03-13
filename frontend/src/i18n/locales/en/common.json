@@ -94,8 +94,8 @@
         "updateSuccess": "Task updated successfully",
         "updateFailed": "Failed to update task",
         "deleteSuccess": "Task deleted",
-        "deleteConfirm": "Are you sure you want to delete this task? This action cannot be undone.",
-        "deleteConfirmMessage": "Are you sure you want to delete \"{{itemName}}\"? This action cannot be undone.",
+        "deleteTitle": "Confirm delete collection task",
+        "deleteDesc": "Are you sure you want to delete \"{{itemName}}\"? This action cannot be undone.",
         "confirmDelete": "Delete",
         "cancel": "Cancel"
       },
@@ -375,12 +375,14 @@
       "fileDownloadSuccess": "File downloaded successfully"
     },
     "confirm": {
-      "deleteDatasetTitle": "Confirm delete this dataset?",
+      "deleteDatasetTitle": "Confirm delete dataset",
       "deleteDatasetDesc": "Are you sure you want to delete \"{{itemName}}\"? This action cannot be undone.",
-      "deleteFolderTitle": "Confirm delete folder?",
-      "deleteFolderDesc": "Deleting folder \"{{name}}\" will remove all files and subfolders. This action cannot be undone.",
-      "batchDeleteTitle": "Confirm batch delete files?",
-      "batchDeleteDesc": "Are you sure you want to delete the selected {{count}} file(s)/folder(s)? This action cannot be undone.",
+      "deleteFileTitle": "Confirm delete file",
+      "deleteFileDesc": "Are you sure you want to delete \"{{itemName}}\"? This action cannot be undone.",
+      "deleteFolderTitle": "Confirm delete folder",
+      "deleteFolderDesc": "Are you sure you want to delete \"{{itemName}}\" and all its contents? This action cannot be undone.",
+      "batchDeleteTitle": "Confirm batch delete",
+      "batchDeleteDesc": "Are you sure you want to delete the selected {{count}} item(s)? This action cannot be undone.",
       "deleteConfirm": "Delete",
       "deleteCancel": "Cancel"
     },
@@ -666,7 +668,7 @@
         "deleteFailed": "Task deletion failed, please try again later"
       },
       "confirm": {
-        "deleteTitle": "Confirm delete this task?",
+        "deleteTitle": "Confirm delete ratio task",
         "deleteDesc": "Are you sure you want to delete \"{{itemName}}\"? This action cannot be undone.",
         "okText": "Delete",
         "cancelText": "Cancel"
@@ -752,8 +754,8 @@
         "delete": "Delete"
       },
       "confirm": {
-        "deleteTitle": "Confirm delete this ratio task?",
-        "deleteDesc": "This task cannot be recovered after deletion. Please proceed with caution.",
+        "deleteTitle": "Confirm delete ratio task",
+        "deleteDesc": "Are you sure you want to delete \"{{itemName}}\"? This action cannot be undone.",
         "okText": "Delete",
         "cancelText": "Cancel"
       },
@@ -1448,7 +1450,12 @@
         "taskDeleted": "Task deleted successfully",
         "taskDetailFailed": "Failed to fetch task details",
         "taskPaused": "Task paused",
-        "taskStarted": "Task started"
+        "taskStarted": "Task started",
+        "deleteFailed": "Failed to delete task, please try again later"
+      },
+      "confirm": {
+        "deleteTitle": "Confirm delete data processing task",
+        "deleteDesc": "Are you sure you want to delete \"{{itemName}}\"? This action cannot be undone."
       }
     },
     "template": {
@@ -2272,8 +2279,8 @@
         "cot": "Chain of Thought Generation"
       },
       "confirm": {
-        "deleteTitle": "Confirm delete this task?",
-        "deleteContent": "Task name: {{name}}",
+        "deleteTitle": "Confirm delete synthesis task",
+        "deleteDesc": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
         "archiveTitle": "Confirm archive this synthesis task?",
         "archiveContent": "Task name: {{name}}"
       },
@@ -2569,9 +2576,9 @@
         "delete": "Delete Task"
       },
       "confirm": {
-        "deleteTitle": "Confirm delete this synthesis task?",
-        "deleteDescription": "This task cannot be recovered after deletion, please proceed with caution.",
-        "okText": "Confirm Delete",
+        "deleteTitle": "Confirm delete synthesis task",
+        "deleteDescription": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
+        "okText": "Delete",
         "cancelText": "Cancel"
       },
       "messages": {

@@ -347,8 +347,8 @@ export default function TaskManagement() {
       {/* 删除确认弹窗 */}
       <DeleteConfirmModal
         visible={deleteModal.visible}
-        title={t("dataCollection.taskManagement.messages.deleteConfirm")}
-        message={t("dataCollection.taskManagement.messages.deleteConfirmMessage", {
+        title={t("dataCollection.taskManagement.messages.deleteTitle")}
+        message={t("dataCollection.taskManagement.messages.deleteDesc", {
           itemName: deleteModal.taskName,
         })}
         itemName={deleteModal.taskName}
