@@ -109,7 +109,8 @@ export default function CreateKnowledgeBase({
       setOpen(false);
       onUpdate();
     } catch (error) {
-      message.error(t("knowledgeBase.create.messages.operationFailed") + error.data.message);
+      // 错误已由全局拦截器统一处理，此处不再重复提示
+      console.error("知识库操作失败:", error);
     }
   };
 

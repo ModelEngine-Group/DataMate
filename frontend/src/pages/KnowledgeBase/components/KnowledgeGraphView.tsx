@@ -1,6 +1,6 @@
-import React, {useMemo, useRef, useEffect} from "react";
+import React, { useMemo, useRef, useEffect, useState } from "react";
 import ForceGraph2D from "react-force-graph-2d";
-import type {KnowledgeGraphEdge, KnowledgeGraphNode} from "../knowledge-base.model";
+import type { KnowledgeGraphEdge, KnowledgeGraphNode } from "../knowledge-base.model";
 
 export type GraphEntitySelection =
   | { type: "node"; data: KnowledgeGraphNode }
@@ -16,19 +16,45 @@ interface KnowledgeGraphViewProps {
 const COLOR_PALETTE = ["#60a5fa", "#f87171", "#fbbf24", "#34d399", "#a78bfa", "#fb7185", "#22d3ee", "#818cf8", "#fb923c", "#4ade80"];
 
 const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
-                                                                 nodes,
-                                                                 edges,
-                                                                 height = 520,
-                                                                 onSelectEntity,
-                                                               }) => {
+  nodes,
+  edges,
+  height = 520,
+  onSelectEntity,
+}) => {
   const graphRef = useRef<any>();
+  // 新增：用于监听尺寸的容器引用
+  const containerRef = useRef<HTMLDivElement>(null);
+  // 新增：保存当前实际宽高的状态
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+
+  // --- 核心修复：监听容器大小变化 ---
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        setDimensions({ width, height });
+
+        // 强制通知 force-graph 组件更新内部 canvas 尺寸
+        if (graphRef.current) {
+          graphRef.current.width(width);
+          graphRef.current.height(height);
+          // 可选：如果希望尺寸变化后图谱自动居中，取消下行注释
+          // graphRef.current.zoomToFit(400);
+        }
+      }
+    });
+
+    resizeObserver.observe(containerRef.current);
+    return () => resizeObserver.disconnect();
+  }, []);
 
   useEffect(() => {
     if (graphRef.current) {
-      // 1. 调整力导向平衡：减小斥力让独立图块靠近，增加向心力防止飘散
-      graphRef.current.d3Force("charge").strength(-250); // 斥力适中
-      graphRef.current.d3Force("link").distance(120);    // 边长适中
-      graphRef.current.d3Force("center").strength(0.8);  // 增强向心力，让孤立集群往中间靠
+      graphRef.current.d3Force("charge").strength(-250);
+      graphRef.current.d3Force("link").distance(120);
+      graphRef.current.d3Force("center").strength(0.8);
     }
   }, [nodes]);
 
@@ -43,7 +69,7 @@ const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
     nodes: nodes.map((node) => ({
       ...node,
       color: typeColorMap.get(node.properties?.entity_type || (node.labels && node.labels[0]) || 'default'),
-      val: 8 // 统一基础大小，使视觉更整洁
+      val: 8
     })),
     links: edges.map((edge) => ({
       ...edge,
@@ -53,9 +79,15 @@ const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
   }), [nodes, edges, typeColorMap]);
 
   return (
-    <div style={{width: "100%", height, background: "#01030f"}}>
+    <div
+      ref={containerRef}
+      style={{ width: "100%", height, background: "#01030f", overflow: "hidden" }}
+    >
       <ForceGraph2D
         ref={graphRef}
+        // 传入动态计算的宽高
+        width={dimensions.width}
+        height={dimensions.height}
         graphData={graphData}
         backgroundColor="#01030f"
 
@@ -67,8 +99,8 @@ const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
         linkCurvature={0.1}
 
         // --- 节点绘制 ---
-        nodeCanvasObject={(node: any, ctx, globalScale) => {
-          const {x, y, val: radius, color, id} = node;
+        nodeCanvasObject={(node: never, ctx, globalScale) => {
+          const { x, y, val: radius, color, id } = node;
           if (!Number.isFinite(x) || !Number.isFinite(y)) return;
 
           ctx.save();
@@ -79,7 +111,6 @@ const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
           ctx.shadowColor = color;
           ctx.fill();
 
-          // 节点名称
           if (globalScale > 0.4) {
             const fontSize = 12 / globalScale;
             ctx.font = `${fontSize}px Sans-Serif`;
@@ -95,82 +126,57 @@ const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
         linkPointerAreaPaint={(link: any, color, ctx, globalScale) => {
           const label = link.keywords;
           if (!label || globalScale < 1.1) return;
-
           const start = link.source;
           const end = link.target;
           if (typeof start !== 'object' || typeof end !== 'object') return;
-
           const fontSize = 9 / globalScale;
-          const textPos = {x: start.x + (end.x - start.x) * 0.5, y: start.y + (end.y - start.y) * 0.5};
+          const textPos = { x: start.x + (end.x - start.x) * 0.5, y: start.y + (end.y - start.y) * 0.5 };
           const angle = Math.atan2(end.y - start.y, end.x - start.x);
           const bRotate = angle > Math.PI / 2 || angle < -Math.PI / 2;
-
           ctx.save();
           ctx.translate(textPos.x, textPos.y);
           ctx.rotate(bRotate ? angle + Math.PI : angle);
-
           ctx.font = `${fontSize}px Sans-Serif`;
           const textWidth = ctx.measureText(label).width;
-
-          // 绘制一个与文字大小相同的透明矩形，颜色必须使用参数中的 'color'
-          // 这是 react-force-graph 识别点击对象的关键（Color-picking 技术）
           ctx.fillStyle = color;
           ctx.fillRect(-textWidth / 2 - 2, -fontSize / 2 - 2, textWidth + 4, fontSize + 4);
           ctx.restore();
         }}
 
-        // --- 边文字绘制：优化大小、位置和翻转逻辑 ---
         linkCanvasObjectMode={() => 'after'}
         linkCanvasObject={(link: any, ctx, globalScale) => {
           const MAX_DISPLAY_SCALE = 1.1;
           if (globalScale < MAX_DISPLAY_SCALE) return;
-
           const label = link.keywords;
           const start = link.source;
           const end = link.target;
           if (typeof start !== 'object' || typeof end !== 'object') return;
-
-          // 边文字比节点文字小一点点（节点12，边11）
           const fontSize = 11 / globalScale;
-
-          const textPos = {
-            x: start.x + (end.x - start.x) * 0.5,
-            y: start.y + (end.y - start.y) * 0.5
-          };
-
+          const textPos = { x: start.x + (end.x - start.x) * 0.5, y: start.y + (end.y - start.y) * 0.5 };
           let angle = Math.atan2(end.y - start.y, end.x - start.x);
-
-          // --- 核心修复：防止文字倒挂 ---
-          // 如果角度在 90度 到 270度 之间，旋转180度让文字保持正向
           const bRotate = angle > Math.PI / 2 || angle < -Math.PI / 2;
-
           ctx.save();
           ctx.translate(textPos.x, textPos.y);
           ctx.rotate(bRotate ? angle + Math.PI : angle);
-
           ctx.font = `${fontSize}px Sans-Serif`;
           const textWidth = ctx.measureText(label).width;
-
-          // 绘制极小的背景遮罩，紧贴文字
           ctx.fillStyle = 'rgba(1, 3, 15, 0.7)';
           ctx.fillRect(-textWidth / 2 - 1, -fontSize / 2, textWidth + 2, fontSize);
-
           ctx.fillStyle = '#94e2d5';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          // y轴偏移设为0，使其紧贴线条中心
           ctx.fillText(label, 0, 0);
           ctx.restore();
         }}
 
-        onNodeClick={(node: any) => onSelectEntity?.({type: "node", data: node})}
+        onNodeClick={(node: any) => onSelectEntity?.({ type: "node", data: node })}
         onLinkClick={(link: any) => {
           const originalData = link.__originalEdge || link;
-          onSelectEntity?.({type: "edge", data: originalData});
+          onSelectEntity?.({ type: "edge", data: originalData });
         }}
         onBackgroundClick={() => onSelectEntity?.(null)}
         cooldownTicks={120}
-        d3VelocityDecay={0.4} // 增加阻力，使布局更快稳定
+        d3VelocityDecay={0.4}
       />
     </div>
   );
