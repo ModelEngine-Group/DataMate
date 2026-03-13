@@ -10,6 +10,16 @@ export enum KBType {
   GRAPH = "GRAPH",
 }
 
+export interface UnifiedSearchResult {
+  id: string;
+  text: string;
+  score: number;
+  metadata: Record<string, any>;
+  resultType: "vector" | "graph";
+  knowledgeBaseId: string;
+  knowledgeBaseName: string;
+}
+
 export interface KnowledgeBaseItem {
   id: string;
   name: string;

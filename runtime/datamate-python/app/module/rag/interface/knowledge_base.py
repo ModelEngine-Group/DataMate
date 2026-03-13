@@ -4,6 +4,8 @@
 实现知识库相关的 REST API 接口。
 对应 Java: com.datamate.rag.indexer.interfaces.KnowledgeBaseController
 """
+import json
+
 from fastapi import APIRouter, Depends, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -18,9 +20,10 @@ from app.module.rag.schema.request import (
     RagFileReq,
     RetrieveReq,
     PagingQuery,
+    QueryRequest,
 )
 from app.module.rag.service.knowledge_base_service import KnowledgeBaseService
-from app.module.rag.service.retrieval_service import RetrievalService
+from app.module.rag.service.unified_retrieval_service import UnifiedRetrievalService
 
 router = APIRouter(prefix="/knowledge-base", tags=["知识库管理"])
 
@@ -143,7 +146,7 @@ async def get_file_chunks(
     db: AsyncSession = Depends(get_db),
 ):
     """获取指定 RAG 文件的分块列表"""
-    service = RetrievalService(db)
+    service = UnifiedRetrievalService(db)
     result = await service.get_chunks(knowledge_base_id, rag_file_id, paging_query)
     return SuccessResponse(data=result)
 
@@ -153,7 +156,52 @@ async def retrieve_knowledge_base(
     request: RetrieveReq,
     db: AsyncSession = Depends(get_db),
 ):
-    """检索知识库内容（向量 + BM25 混合检索）"""
-    service = RetrievalService(db)
-    results = await service.retrieve(request)
+    """检索知识库内容（统一检索接口，兼容旧版本格式）"""
+    service = UnifiedRetrievalService(db)
+    results = await service.search(request)
+
+    legacy_results = []
+    for item in results:
+        legacy_item = {
+            "entity": {
+                "metadata": json.dumps(item.get("metadata", {}), ensure_ascii=False),
+                "text": item.get("text", ""),
+                "id": item.get("id", ""),
+            },
+            "score": item.get("score", 0.0),
+            "id": item.get("id", ""),
+            "knowledgeBaseId": item.get("knowledgeBaseId", ""),
+            "knowledgeBaseName": item.get("knowledgeBaseName", ""),
+        }
+        legacy_results.append(legacy_item)
+
+    return SuccessResponse(data=legacy_results)
+
+@router.post("/v2/retrieve", response_model=SuccessResponse)
+async def v2_retrieve_knowledge_base(
+    request: RetrieveReq,
+    db: AsyncSession = Depends(get_db),
+):
+    """检索知识库内容（统一检索接口）"""
+    service = UnifiedRetrievalService(db)
+    results = await service.search(request)
     return SuccessResponse(data=results)
+
+
+@router.post("/query", response_model=SuccessResponse)
+async def query_knowledge_base(
+    payload: QueryRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """查询知识库（支持向量检索和知识图谱）
+
+    根据知识库类型自动选择查询策略：
+    - DOCUMENT: 向量检索
+    - GRAPH: 知识图谱查询
+    """
+    service = UnifiedRetrievalService(db)
+    result = await service.query(
+        knowledge_base_id=payload.knowledge_base_id,
+        node_label=payload.query,
+    )
+    return SuccessResponse(data=result)

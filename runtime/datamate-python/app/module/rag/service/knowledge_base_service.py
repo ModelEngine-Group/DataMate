@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exception import BusinessError, ErrorCodes
 from app.db.models.dataset_management import DatasetFiles
-from app.db.models.knowledge_gen import KnowledgeBase, RagFile, FileStatus
+from app.db.models.knowledge_gen import KnowledgeBase, RagFile, FileStatus, RagType
 from app.db.models.models import Models
 from app.module.rag.infra.vectorstore import drop_collection, rename_collection, delete_chunks_by_rag_file_ids
 from app.module.rag.repository import KnowledgeBaseRepository, RagFileRepository
@@ -88,15 +88,23 @@ class KnowledgeBaseService:
         if not knowledge_base:
             raise BusinessError(ErrorCodes.RAG_KNOWLEDGE_BASE_NOT_FOUND)
 
-        old_name = knowledge_base.name
+        old_name = str(knowledge_base.name)
+        new_name = request.name
+        kb_type = knowledge_base.type
+
         knowledge_base.name = request.name
         knowledge_base.description = request.description
 
         await self.kb_repo.update(knowledge_base)
 
-        if old_name != request.name:
+        if old_name != new_name:
             try:
-                rename_collection(old_name, request.name)
+                if kb_type == RagType.DOCUMENT.value:
+                    rename_collection(old_name, new_name)
+                elif kb_type == RagType.GRAPH.value:
+                    from app.module.rag.service.strategy.graph_strategy import GraphKnowledgeBaseStrategy
+                    GraphKnowledgeBaseStrategy.rename_workspace(old_name, new_name)
+                    GraphKnowledgeBaseStrategy.clear_cache(old_name)
             except BusinessError:
                 await self.db.rollback()
                 raise
@@ -113,13 +121,30 @@ class KnowledgeBaseService:
         if not knowledge_base:
             raise BusinessError(ErrorCodes.RAG_KNOWLEDGE_BASE_NOT_FOUND)
 
+        kb_name = str(knowledge_base.name)
+        kb_type = knowledge_base.type
+
         await self.file_repo.delete_by_knowledge_base(knowledge_base_id)
         await self.kb_repo.delete(knowledge_base_id)
 
-        try:
-            drop_collection(knowledge_base.name)
-        except Exception as e:
-            logger.error("删除 Milvus 集合失败: %s", e)
+        if kb_type == RagType.DOCUMENT.value:
+            try:
+                drop_collection(kb_name)
+            except Exception as e:
+                logger.error("删除 Milvus 集合失败: %s", e)
+        elif kb_type == RagType.GRAPH.value:
+            try:
+                from app.module.rag.service.strategy.graph_strategy import GraphKnowledgeBaseStrategy
+                import shutil
+                from pathlib import Path
+                from app.core.config import settings
+                workspace_path = Path(settings.rag_storage_dir) / kb_name
+                if workspace_path.exists():
+                    shutil.rmtree(workspace_path)
+                    logger.info("已删除知识图谱 workspace: %s", kb_name)
+                GraphKnowledgeBaseStrategy.clear_cache(kb_name)
+            except Exception as e:
+                logger.error("删除知识图谱 workspace 失败: %s", e)
 
         await self.db.commit()
 
@@ -141,7 +166,8 @@ class KnowledgeBaseService:
         })
         return KnowledgeBaseResp(**data)
 
-    def _kb_to_dict(self, kb: KnowledgeBase) -> dict:
+    @staticmethod
+    def _kb_to_dict(kb: KnowledgeBase) -> dict:
         """知识库实体转字典"""
         return {
             "id": kb.id,

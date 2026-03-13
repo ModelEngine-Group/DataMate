@@ -103,7 +103,8 @@ export default function Overview({ operator }) {
       )}
 
       {/* 输入输出格式 */}
-      {operator.categories?.includes('系统预置') && (
+
+      {['系统预置', 'System Preset'].some(cat => operator.categories?.includes(cat)) && (
       <Card>
         <h3 className="text-lg font-semibold text-gray-900 mb-4">{t("operatorMarket.detail.overview.supportedFormats")}</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -160,6 +160,35 @@ class SearchResult(BaseModel):
         }
 
 
+class UnifiedSearchResult(BaseModel):
+    """统一检索结果
+
+    所有知识库类型（向量、知识图谱）的检索接口必须返回此格式
+    """
+    model_config = ConfigDict(
+        populate_by_name=True,
+        json_schema_extra={
+            "example": {
+                "id": "result-uuid-123",
+                "text": "相关文档内容...",
+                "score": 0.95,
+                "metadata": {"fileName": "document.pdf", "chunkIndex": 0},
+                "resultType": "vector",
+                "knowledgeBaseId": "kb-uuid-123",
+                "knowledgeBaseName": "my_knowledge_base"
+            }
+        }
+    )
+
+    id: str = Field(..., description="结果ID")
+    text: str = Field(..., description="文本内容")
+    score: float = Field(..., description="相似度分数")
+    metadata: dict = Field(default_factory=dict, description="元数据")
+    result_type: str = Field(alias="resultType", description="结果类型（vector/graph）")
+    knowledge_base_id: str = Field(alias="knowledgeBaseId", description="知识库ID")
+    knowledge_base_name: str = Field(alias="knowledgeBaseName", description="知识库名称")
+
+
 class PagedResponse(BaseModel):
     """分页响应
 

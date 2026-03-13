@@ -301,11 +301,15 @@ function CardView<T extends BaseCardDataType>(props: CardViewProps<T>) {
                   <TagsRenderer tags={Array.isArray(item?.tags) ? item.tags : []} />
 
                   {/* Description */}
-                  <p className="text-gray-400 text-xs text-ellipsis overflow-hidden whitespace-nowrap line-clamp-2 mt-3 mb-2">
-                    <Tooltip title={item?.description}>
+                  <Tooltip
+                    title={item?.description}
+                    placement="topLeft"
+                    getPopupContainer={(triggerNode) => triggerNode.parentElement || document.body}
+                  >
+                    <p className="text-gray-400 text-xs text-ellipsis overflow-hidden whitespace-nowrap line-clamp-2 mt-3 mb-2">
                       {item?.description}
-                    </Tooltip>
-                  </p>
+                    </p>
+                  </Tooltip>
 
                   {/* Statistics */}
                   <div className="grid grid-cols-2 gap-4 py-2">

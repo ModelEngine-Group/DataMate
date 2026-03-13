@@ -7,6 +7,7 @@ import {
   queryOperatorsUsingPost,
 } from "@/pages/OperatorMarket/operator.api";
 import {useParams} from "react-router";
+import i18n from "@/i18n";
 
 export function useOperatorOperations() {
   const { id = "" } = useParams();
@@ -96,6 +97,16 @@ export function useOperatorOperations() {
     initTemplates();
     initOperators();
   }, []);
+
+  useEffect(() => {
+    const handleLanguageChange = () => {
+      initOperators();
+    };
+    i18n.on('languageChanged', handleLanguageChange);
+    return () => {
+      i18n.off('languageChanged', handleLanguageChange);
+    };
+  }, [i18n]);
 
   const toggleOperator = (operator: OperatorI) => {
     const exist = selectedOperators.find((op) => op.id === operator.id);

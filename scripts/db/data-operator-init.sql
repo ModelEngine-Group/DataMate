@@ -61,6 +61,7 @@ CREATE TABLE IF NOT EXISTS t_operator_category
 (
     id        VARCHAR(64) PRIMARY KEY,
     name      VARCHAR(64) UNIQUE,
+    name_en   VARCHAR(64),
     value     VARCHAR(64) UNIQUE,
     type      VARCHAR(64),
     parent_id VARCHAR(64),
@@ -143,32 +144,33 @@ SELECT
     o.created_by,
     o.updated_by,
     toc.id AS category_id,
-    toc.name AS category_name
+    toc.name AS category_name,
+    toc.name_en AS category_name_en
 FROM t_operator_category_relation tocr
 LEFT JOIN t_operator o ON tocr.operator_id = o.id
 LEFT JOIN t_operator_category toc ON tocr.category_id = toc.id;
 
 COMMENT ON VIEW v_operator IS '算子视图';
 
-INSERT INTO t_operator_category(id, name, value, type, parent_id)
-VALUES ('64465bec-b46b-11f0-8291-00155d0e4808', '模态', 'modal',  'predefined', '0'),
-       ('873000a2-65b3-474b-8ccc-4813c08c76fb', '语言', 'language', 'predefined', '0'),
-       ('4857cc9e-7b72-429e-b2a8-ddd1c48c4483', '功能', 'function', 'predefined', '0'),
-       ('d8a5df7a-52a9-42c2-83c4-01062e60f597', '文本', 'text', 'predefined', '64465bec-b46b-11f0-8291-00155d0e4808'),
-       ('de36b61c-9e8a-4422-8c31-d30585c7100f', '图片', 'image', 'predefined', '64465bec-b46b-11f0-8291-00155d0e4808'),
-       ('42dd9392-73e4-458c-81ff-41751ada47b5', '音频', 'audio', 'predefined', '64465bec-b46b-11f0-8291-00155d0e4808'),
-       ('a233d584-73c8-4188-ad5d-8f7c8dda9c27', '视频', 'video', 'predefined', '64465bec-b46b-11f0-8291-00155d0e4808'),
-       ('4d7dbd77-0a92-44f3-9056-2cd62d4a71e4', '多模态', 'multimodal', 'predefined', '64465bec-b46b-11f0-8291-00155d0e4808'),
-       ('9eda9d5d-072b-499b-916c-797a0a8750e1', 'Python', 'python', 'predefined', '873000a2-65b3-474b-8ccc-4813c08c76fb'),
-       ('8c09476a-a922-418f-a908-733f8a0de521', '清洗', 'cleaning', 'predefined', '4857cc9e-7b72-429e-b2a8-ddd1c48c4483'),
-       ('cfa9d8e2-5b5f-4f1e-9f12-1234567890ab', '标注', 'annotation', 'predefined', '4857cc9e-7b72-429e-b2a8-ddd1c48c4483'),
-       ('16e2d99e-eafb-44fc-acd0-f35a2bad28f8', '来源', 'origin', 'predefined', '0'),
-       ('96a3b07a-3439-4557-a835-525faad60ca3', '系统预置', 'predefined', 'predefined', '16e2d99e-eafb-44fc-acd0-f35a2bad28f8'),
-       ('ec2cdd17-8b93-4a81-88c4-ac9e98d10757', '用户上传', 'customized', 'predefined', '16e2d99e-eafb-44fc-acd0-f35a2bad28f8'),
-       ('0ed75eea-e20b-11f0-88e6-00155d5c9528', '归属', 'vendor',  'predefined', '0'),
-       ('431e7798-5426-4e1a-aae6-b9905a836b34', 'DataMate', 'datamate',  'predefined', '0ed75eea-e20b-11f0-88e6-00155d5c9528'),
-       ('79b385b4-fde8-4617-bcba-02a176938996', 'DataJuicer', 'data-juicer',  'predefined', '0ed75eea-e20b-11f0-88e6-00155d5c9528'),
-       ('f00eaa3e-96c1-4de4-96cd-9848ef5429ec', '其他', 'others',  'predefined', '0ed75eea-e20b-11f0-88e6-00155d5c9528')
+INSERT INTO t_operator_category(id, name, name_en, value, type, parent_id)
+VALUES ('64465bec-b46b-11f0-8291-00155d0e4808', '模态', 'Modal', 'modal',  'predefined', '0'),
+       ('873000a2-65b3-474b-8ccc-4813c08c76fb', '语言', 'Language', 'language', 'predefined', '0'),
+       ('4857cc9e-7b72-429e-b2a8-ddd1c48c4483', '功能', 'Function', 'function', 'predefined', '0'),
+       ('d8a5df7a-52a9-42c2-83c4-01062e60f597', '文本', 'Text', 'text', 'predefined', '64465bec-b46b-11f0-8291-00155d0e4808'),
+       ('de36b61c-9e8a-4422-8c31-d30585c7100f', '图片', 'Image', 'image', 'predefined', '64465bec-b46b-11f0-8291-00155d0e4808'),
+       ('42dd9392-73e4-458c-81ff-41751ada47b5', '音频', 'Audio', 'audio', 'predefined', '64465bec-b46b-11f0-8291-00155d0e4808'),
+       ('a233d584-73c8-4188-ad5d-8f7c8dda9c27', '视频', 'Video', 'video', 'predefined', '64465bec-b46b-11f0-8291-00155d0e4808'),
+       ('4d7dbd77-0a92-44f3-9056-2cd62d4a71e4', '多模态', 'Multimodal', 'multimodal', 'predefined', '64465bec-b46b-11f0-8291-00155d0e4808'),
+       ('9eda9d5d-072b-499b-916c-797a0a8750e1', 'Python', 'Python', 'python', 'predefined', '873000a2-65b3-474b-8ccc-4813c08c76fb'),
+       ('8c09476a-a922-418f-a908-733f8a0de521', '清洗', 'Cleaning', 'cleaning', 'predefined', '4857cc9e-7b72-429e-b2a8-ddd1c48c4483'),
+       ('cfa9d8e2-5b5f-4f1e-9f12-1234567890ab', '标注', 'Annotation', 'annotation', 'predefined', '4857cc9e-7b72-429e-b2a8-ddd1c48c4483'),
+       ('16e2d99e-eafb-44fc-acd0-f35a2bad28f8', '来源', 'Origin', 'origin', 'predefined', '0'),
+       ('96a3b07a-3439-4557-a835-525faad60ca3', '系统预置', 'System Preset', 'predefined', 'predefined', '16e2d99e-eafb-44fc-acd0-f35a2bad28f8'),
+       ('ec2cdd17-8b93-4a81-88c4-ac9e98d10757', '用户上传', 'User Upload', 'customized', 'predefined', '16e2d99e-eafb-44fc-acd0-f35a2bad28f8'),
+       ('0ed75eea-e20b-11f0-88e6-00155d5c9528', '归属', 'Vendor', 'vendor',  'predefined', '0'),
+       ('431e7798-5426-4e1a-aae6-b9905a836b34', 'DataMate', 'DataMate', 'datamate',  'predefined', '0ed75eea-e20b-11f0-88e6-00155d5c9528'),
+       ('79b385b4-fde8-4617-bcba-02a176938996', 'DataJuicer', 'DataJuicer', 'data-juicer',  'predefined', '0ed75eea-e20b-11f0-88e6-00155d5c9528'),
+       ('f00eaa3e-96c1-4de4-96cd-9848ef5429ec', '其他', 'Others', 'others',  'predefined', '0ed75eea-e20b-11f0-88e6-00155d5c9528')
 ON CONFLICT DO NOTHING;
 
 INSERT INTO t_operator

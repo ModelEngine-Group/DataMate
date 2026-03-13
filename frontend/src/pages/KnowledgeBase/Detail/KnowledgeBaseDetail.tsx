@@ -1,6 +1,10 @@
 import type React from "react";
 import { useEffect, useState } from "react";
-import { Table, Badge, Button, Breadcrumb, Tooltip, App, Card, Input, Empty, Spin } from "antd";
+import { Table, Badge, Button, Breadcrumb, Tooltip, App, Card, Input, Empty, Spin, Tag } from "antd";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import {
   DeleteOutlined,
   EditOutlined,
@@ -11,37 +15,44 @@ import { useNavigate, useParams } from "react-router";
 import DetailHeader from "@/components/DetailHeader";
 import { SearchControls } from "@/components/SearchControls";
 import { KBFile, KnowledgeBaseItem, KnowledgeGraphNode, KnowledgeGraphEdge, KBType } from "../knowledge-base.model";
-import { mapFileData, mapKnowledgeBase } from "../knowledge-base.const";
+import { getKBTypeMap, mapFileData, mapKnowledgeBase } from "../knowledge-base.const";
 import {
   deleteKnowledgeBaseByIdUsingDelete,
   deleteKnowledgeBaseFileByIdUsingDelete,
   queryKnowledgeBaseByIdUsingGet,
   queryKnowledgeBaseFilesUsingGet,
   retrieveKnowledgeBaseContent,
-  fetchKnowledgeGraph,
+  queryKnowledgeBase,
 } from "../knowledge-base.api";
 import useFetchData from "@/hooks/useFetchData";
 import AddDataDialog from "../components/AddDataDialog";
 import CreateKnowledgeBase from "../components/CreateKnowledgeBase";
 import KnowledgeGraphView, { GraphEntitySelection } from "../components/KnowledgeGraphView";
-import { Network } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-interface StatisticItem {
-  icon?: React.ReactNode;
-  label: string;
-  value: string | number;
-}
-interface RagChunk {
+type HeaderStatisticItem = React.ComponentProps<typeof DetailHeader>["statistics"][number];
+// Use UnifiedSearchResult from model - flat structure from backend
+// Backend returns: { id, text, score, metadata, resultType, knowledgeBaseId, knowledgeBaseName }
+interface RecallResult {
   id: string;
   text: string;
-  metadata: string;
-}
-interface RecallResult {
   score: number;
-  entity: RagChunk;
-  id?: string | object;
-  primaryKey?: string;
+  metadata: Record<string, any>;
+  resultType?: string;
+  knowledgeBaseId?: string;
+  knowledgeBaseName?: string;
+}
+
+function squashSoftLineBreaksOutsideFences(markdown: string): string {
+  if (!markdown) return "";
+  const parts = markdown.split(/(```[\s\S]*?```)/g);
+  return parts
+    .map((part) => {
+      if (part.startsWith("```")) return part;
+      // keep paragraph breaks (\n\n), but squash single newlines into spaces
+      return part.replace(/([^\n])\n(?!\n)/g, "$1 ");
+    })
+    .join("");
 }
 
 const KnowledgeBaseDetailPage: React.FC = () => {
@@ -59,6 +70,37 @@ const KnowledgeBaseDetailPage: React.FC = () => {
   const [graphLoading, setGraphLoading] = useState(false);
   const [graphData, setGraphData] = useState<{ nodes: KnowledgeGraphNode[]; edges: KnowledgeGraphEdge[] }>({ nodes: [], edges: [] });
   const [graphSelection, setGraphSelection] = useState<GraphEntitySelection | null>(null);
+
+  const kbTypeMap = getKBTypeMap(t);
+  const kbTypeMeta = knowledgeBase ? kbTypeMap[knowledgeBase.type as KBType] : undefined;
+
+  const detailHeaderData = knowledgeBase
+    ? {
+        ...knowledgeBase,
+        tags: (() => {
+          const rawTags = Array.isArray((knowledgeBase as any)?.tags) ? ((knowledgeBase as any).tags as any[]) : [];
+          const normalized = rawTags
+            .map((tag) => {
+              if (!tag) return "";
+              if (typeof tag === "string") return tag;
+              return String(tag.label ?? tag.name ?? "");
+            })
+            .map((s) => s.trim())
+            .filter(Boolean);
+
+          const typeLabel = String(kbTypeMeta?.tag?.label ?? "").trim();
+          const filtered = typeLabel ? normalized.filter((label) => label !== typeLabel) : normalized;
+
+          return Array.from(new Set(filtered));
+        })(),
+        description:
+          knowledgeBase.description && knowledgeBase.description.trim().length > 0
+            ? knowledgeBase.description
+            : kbTypeMap[knowledgeBase.type as KBType]?.description ??
+              kbTypeMap[knowledgeBase.type as KBType]?.label ??
+              knowledgeBase.description,
+      }
+    : knowledgeBase;
 
   const fetchKnowledgeBaseDetails = async (id: string) => {
     const { data } = await queryKnowledgeBaseByIdUsingGet(id);
@@ -141,7 +183,8 @@ const KnowledgeBaseDetailPage: React.FC = () => {
         threshold: 0.2,
         knowledgeBaseIds: [knowledgeBase.id],
       });
-      setRecallResults(result?.data || []);
+      const data = Array.isArray(result) ? result : (result as any)?.data;
+      setRecallResults(Array.isArray(data) ? data : []);
     } catch {
       setRecallResults([]);
     }
@@ -153,7 +196,7 @@ const KnowledgeBaseDetailPage: React.FC = () => {
     setGraphLoading(true);
     setGraphSelection(null);
     try {
-      const { data } = await fetchKnowledgeGraph({ knowledge_base_id: knowledgeBase.id, query: "*" });
+      const { data } = await queryKnowledgeBase({ knowledge_base_id: knowledgeBase.id, query: "*" });
       setGraphData({ nodes: data?.nodes ?? [], edges: data?.edges ?? [] });
     } catch {
       setGraphData({ nodes: [], edges: [] });
@@ -179,15 +222,6 @@ const KnowledgeBaseDetailPage: React.FC = () => {
   };
 
   type DetailOperation = NonNullable<React.ComponentProps<typeof DetailHeader>["operations"][number]>;
-  const graphOperation: DetailOperation | null = knowledgeBase?.type === KBType.GRAPH
-    ? {
-        key: "graph",
-        label: t("knowledgeBase.detail.graph.title"),
-        icon: <Network />,
-        onClick: handleOpenGraph,
-      }
-    : null;
-
   const baseOperations: DetailOperation[] = [
     {
       key: "edit",
@@ -221,7 +255,7 @@ const KnowledgeBaseDetailPage: React.FC = () => {
     },
   ];
 
-  const operations: DetailOperation[] = [graphOperation, ...baseOperations].filter(Boolean) as DetailOperation[];
+  const operations: DetailOperation[] = baseOperations;
 
   const fileOps = [
     {
@@ -242,7 +276,17 @@ const KnowledgeBaseDetailPage: React.FC = () => {
       ellipsis: true,
       fixed: "left" as const,
       render: (_: unknown, file: KBFile) => (
-        <a onClick={() => navigate(`/data/knowledge-base/file-detail/${file.id}?knowledgeBaseId=${knowledgeBase?.id || ''}&fileName=${encodeURIComponent(file.name || file.fileName || '')}`)}>
+        <a
+          onClick={() => {
+            if (knowledgeBase?.type === KBType.GRAPH) {
+              handleOpenGraph();
+              return;
+            }
+            navigate(
+              `/data/knowledge-base/file-detail/${file.id}?knowledgeBaseId=${knowledgeBase?.id || ""}&fileName=${encodeURIComponent(file.name || file.fileName || "")}`
+            );
+          }}
+        >
           {file.name}
         </a>
       )
@@ -314,9 +358,23 @@ const KnowledgeBaseDetailPage: React.FC = () => {
         </Breadcrumb>
       </div>
       <DetailHeader
-        data={knowledgeBase}
-        statistics={knowledgeBase && Array.isArray((knowledgeBase as { statistics?: StatisticItem[] }).statistics)
-          ? ((knowledgeBase as { statistics?: StatisticItem[] }).statistics ?? [])
+        data={detailHeaderData}
+        titleExtra={
+          kbTypeMeta?.tag?.label ? (
+            <Tag
+              className="shrink-0"
+              style={{
+                background: kbTypeMeta.tag.background,
+                color: kbTypeMeta.tag.color,
+                borderColor: kbTypeMeta.tag.background,
+              }}
+            >
+              {kbTypeMeta.tag.label}
+            </Tag>
+          ) : null
+        }
+        statistics={knowledgeBase && Array.isArray((knowledgeBase as { statistics?: HeaderStatisticItem[] }).statistics)
+          ? ((knowledgeBase as { statistics?: HeaderStatisticItem[] }).statistics ?? [])
           : []}
         operations={operations}
       />
@@ -441,7 +499,12 @@ const KnowledgeBaseDetailPage: React.FC = () => {
                   searchPlaceholder={t("knowledgeBase.detail.searchPlaceholder")}
                   filters={[]}
                   onFiltersChange={handleFiltersChange}
-                  onClearFilters={() => setSearchParams({ ...searchParams, filter: { type: [], status: [], tags: [] } })}
+                  onClearFilters={() =>
+                    setSearchParams({
+                      ...searchParams,
+                      filter: { type: [], status: [], tags: [], categories: [], selectedStar: false },
+                    })
+                  }
                   showViewToggle={false}
                   showReload={false}
                 />
@@ -478,16 +541,146 @@ const KnowledgeBaseDetailPage: React.FC = () => {
               <Spin className="mt-8" />
             ) : recallResults.length === 0 ? (
               <Empty description={t("knowledgeBase.detail.recallTest.noResult")} />
+            ) : knowledgeBase?.type === KBType.GRAPH ? (
+              <div className="w-full">
+                {(() => {
+                  const item = recallResults[0];
+                  if (!item) return null;
+                  return (
+                    <div className="border border-gray-200 rounded-lg bg-white overflow-hidden">
+                      <div className="flex items-center justify-between px-5 py-3 bg-gradient-to-r from-slate-50 to-gray-50 border-b border-gray-200">
+                        <div className="text-xs text-gray-500 font-mono break-all">
+                          ID: {item.id ?? "-"}
+                        </div>
+                      </div>
+                       <div className="p-5">
+                        <div className="prose prose-slate prose-sm max-w-none
+                          prose-headings:text-slate-800 prose-headings:font-semibold
+                          prose-p:text-gray-700 prose-p:leading-relaxed prose-p:m-0
+                          prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline
+                          prose-strong:text-slate-800 prose-em:text-slate-600
+                          prose-li:text-gray-700
+                          prose-code:before:content-none prose-code:after:content-none
+                          prose-code:bg-slate-100 prose-code:text-rose-600 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:font-medium prose-code:whitespace-nowrap
+                          prose-pre:bg-slate-900 prose-pre:shadow-lg
+                          prose-blockquote:border-l-blue-400 prose-blockquote:bg-slate-50 prose-blockquote:py-1 prose-blockquote:not-italic
+                          prose-table:border-collapse prose-th:bg-slate-100 prose-th:border prose-th:border-slate-300 prose-th:px-3 prose-th:py-2
+                          prose-td:border prose-td:border-slate-200 prose-td:px-3 prose-td:py-2
+                          prose-img:rounded-lg prose-img:shadow-md
+                          prose-hr:border-slate-200">
+                          <ReactMarkdown
+                            remarkPlugins={[remarkGfm]}
+                            components={{
+                              code({ node, inline, className, children, ...props }: any) {
+                                const match = /language-(\w+)/.exec(className || '');
+                                const codeString = String(children).replace(/\n$/, '');
+                                const shouldRenderInline = inline ?? (!match && !codeString.includes("\n"));
+
+                                if (shouldRenderInline) {
+                                  return (
+                                    <code className="text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded text-sm font-mono inline" {...props}>
+                                      {children}
+                                    </code>
+                                  );
+                                }
+
+                                // 有指定语言的代码块才高亮
+                                if (match) {
+                                  return (
+                                    <SyntaxHighlighter
+                                      {...props}
+                                      style={vscDarkPlus}
+                                      language={match[1]}
+                                      PreTag="div"
+                                      customStyle={{
+                                        borderRadius: '0.5rem',
+                                        padding: '1rem',
+                                        fontSize: '0.8rem',
+                                        margin: '0.5rem 0',
+                                        overflow: 'auto',
+                                        maxWidth: '100%'
+                                      }}
+                                    >
+                                      {codeString}
+                                    </SyntaxHighlighter>
+                                  );
+                                }
+
+                                // 无语言标记的代码块，以普通文本显示（不高亮）
+                                return (
+                                  <pre className="bg-transparent text-slate-700 p-0 overflow-x-auto text-sm whitespace-pre font-sans leading-relaxed">
+                                    {codeString}
+                                  </pre>
+                                );
+                              },
+                              p: ({ children }) => (
+                                <p className="text-gray-700 leading-relaxed m-0 inline-block !whitespace-nowrap">
+                                  {children}
+                                </p>
+                              ),
+                              ul: ({ children }) => (
+                                <ul className="my-2 pl-5 list-disc overflow-x-auto !whitespace-nowrap">
+                                  {children}
+                                </ul>
+                              ),
+                              ol: ({ children }) => (
+                                <ol className="my-2 pl-5 list-decimal overflow-x-auto !whitespace-nowrap">
+                                  {children}
+                                </ol>
+                              ),
+                              li: ({ children }) => (
+                                <li className="!whitespace-nowrap">
+                                  {children}
+                                </li>
+                              ),
+                              br: () => <span> </span>,
+                              a: ({ href, children }) => (
+                                <a
+                                  href={href}
+                                  className="text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                >
+                                  {children}
+                                </a>
+                              ),
+                              table: ({ children }) => (
+                                <div className="overflow-x-auto my-4 rounded border border-slate-200">
+                                  <table className="min-w-full">{children}</table>
+                                </div>
+                              ),
+                              thead: ({ children }) => (
+                                <thead className="bg-slate-50">{children}</thead>
+                              ),
+                              th: ({ children }) => (
+                                <th className="px-4 py-2 text-left text-sm font-semibold text-slate-700 border-b border-slate-200">{children}</th>
+                              ),
+                              td: ({ children }) => (
+                                <td className="px-4 py-2 text-sm text-slate-600 border-b border-slate-100">{children}</td>
+                              ),
+                              blockquote: ({ children }) => (
+                                <blockquote className="border-l-4 border-blue-400 bg-slate-50 pl-4 py-2 my-4 text-slate-600 italic rounded-r">{children}</blockquote>
+                              ),
+                            }}
+                          >
+                            {squashSoftLineBreaksOutsideFences(item.text ?? "")}
+                          </ReactMarkdown>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {recallResults.map((item, idx) => (
                   <Card key={idx} title={`${t("knowledgeBase.detail.recallTest.scoreLabel")}${item.score?.toFixed(4) ?? "-"}`}
-                    extra={<span style={{ fontSize: 12 }}>ID: {item.entity?.id ?? "-"}</span>}
+                    extra={<span style={{ fontSize: 12 }}>ID: {item.id ?? "-"}</span>}
                     style={{ wordBreak: "break-all" }}
                   >
-                    <div style={{ marginBottom: 8, fontWeight: 500 }}>{item.entity?.text ?? ""}</div>
+                    <div style={{ marginBottom: 8, fontWeight: 500 }}>{item.text ?? ""}</div>
                     <div style={{ fontSize: 12, color: '#888' }}>
-                      {t("knowledgeBase.detail.recallTest.metadataLabel")} <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all', margin: 0 }}>{item.entity?.metadata}</pre>
+                      {t("knowledgeBase.detail.recallTest.metadataLabel")} <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all', margin: 0 }}>{JSON.stringify(item.metadata, null, 2)}</pre>
                     </div>
                   </Card>
                 ))}

@@ -30,6 +30,7 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
     pagination,
     selectedFiles,
     setSelectedFiles,
+    clearSelection,
     previewVisible,
     previewFileName,
     previewContent,
@@ -43,6 +44,7 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
     handleDownloadFile,
     handleBatchDeleteFiles,
     handleBatchExport,
+    handleSelectionChange,
     handleCreateDirectory,
     handleDownloadDirectory,
     handleDeleteDirectory,
@@ -50,11 +52,15 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
     handleRenameDirectory,
   } = filesOperation;
 
-  // 文件列表多选配置
+  // 文件列表多选配置（支持跨页选择）
   const rowSelection = {
-    onChange: (selectedRowKeys: React.Key[], selectedRows: any[]) => {
-      setSelectedFiles(selectedRowKeys as number[]);
-    },
+    selectedRowKeys: selectedFiles,
+    onChange: handleSelectionChange,
+    preserveSelectedRowKeys: true, // 关键：跨页时保持选中状态
+    getCheckboxProps: (record: any) => ({
+      // 目录和文件都可以选择
+      name: record.fileName,
+    }),
   };
 
   // 显示删除确认弹窗
@@ -289,8 +295,13 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
                         message.warning(t("dataManagement.placeholders.folderName"));
                         return Promise.reject();
                       }
-                      await handleRenameDirectory(fullPath, record.fileName, newDirName);
-                      fetchDataset();
+                      try {
+                        await handleRenameDirectory(fullPath, record.fileName, newDirName);
+                        fetchDataset();
+                      } catch (error) {
+                        // 错误已经在 handleRenameDirectory 中处理，这里只需要阻止 modal 关闭
+                        return Promise.reject();
+                      }
                     },
                   });
                 }}
@@ -357,8 +368,13 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
                     message.warning(t("dataManagement.placeholders.fileName"));
                     return Promise.reject();
                   }
-                  await handleRenameFile(record, newBaseName);
-                  fetchDataset();
+                  try {
+                    await handleRenameFile(record, newBaseName);
+                    fetchDataset();
+                  } catch (error) {
+                    // 错误已经在 handleRenameFile 中处理，这里只需要阻止 modal 关闭
+                    return Promise.reject();
+                  }
                 },
               });
             }}
@@ -428,18 +444,36 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
         {selectedFiles.length > 0 && (
           <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
             <span className="text-sm text-blue-700 font-medium">
-              {t("dataManagement.detail.selectedFiles", { count: selectedFiles.length })}
+              已选择 {selectedFiles.length} 项
+              {(() => {
+                const dirCount = selectedFiles.filter(id => typeof id === 'string' && id.startsWith('directory-')).length;
+                const fileCount = selectedFiles.length - dirCount;
+                if (dirCount > 0 && fileCount > 0) {
+                  return ` (${fileCount} 个文件, ${dirCount} 个文件夹)`;
+                } else if (dirCount > 0) {
+                  return ` (${dirCount} 个文件夹)`;
+                } else if (fileCount > 0) {
+                  return ` (${fileCount} 个文件)`;
+                }
+                return '';
+              })()}
             </span>
             <Button
+              onClick={clearSelection}
+              className="ml-auto"
+            >
+              取消选择
+            </Button>
+            <Button
               onClick={handleBatchExport}
-              className="ml-auto bg-transparent"
+              className="bg-white"
             >
               <Download className="w-4 h-4 mr-2" />
               {t("dataManagement.actions.batchExport")}
             </Button>
             <Button
               onClick={handleBatchDeleteFiles}
-              className="text-red-600 hover:text-red-700 hover:bg-red-50 bg-transparent"
+              danger
             >
               <Trash2 className="w-4 h-4 mr-2" />
               {t("dataManagement.actions.batchDelete")}
@@ -497,14 +531,15 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
             rowKey="id"
             columns={columns}
             dataSource={fileList}
-            // rowSelection={rowSelection}
-            scroll={{ x: "max-content", y: 600 }}
+            rowSelection={rowSelection}
+            scroll={{ x: "max-content" }}
             pagination={{
               current: pagination.current,
               pageSize: pagination.pageSize,
               total: pagination.total,
               showTotal: (total) => t("dataManagement.detail.totalItems", { total }),
               showSizeChanger: true,
+              pageSizeOptions: [10, 20, 50, 100],
               onChange: (page, pageSize) => {
                 filesOperation.fetchFiles(filesOperation.pagination.prefix, page, pageSize);
               }
