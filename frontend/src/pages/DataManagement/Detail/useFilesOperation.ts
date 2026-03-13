@@ -15,6 +15,7 @@ import {
   renameDatasetFileUsingPut,
   renameDirectoryUsingPut,
   getDatasetFileByIdUsingGet,
+  batchDeleteFilesUsingDelete,
 } from "../dataset.api";
 import { useParams } from "react-router";
 
@@ -111,42 +112,38 @@ export function useFilesOperation(dataset: Dataset) {
 
       // 分类：文件和目录
       const directories: any[] = [];
-      const files: any[] = [];
+      const fileIds: string[] = [];
 
       selectedFiles.forEach((fileId) => {
         const file = selectedFilesMap.get(fileId);
-        if (!file) return; // 文件不在当前页，跳过（实际应该都存在）
+        if (!file) return;
 
         if (typeof fileId === "string" && fileId.startsWith("directory-")) {
           directories.push(file);
         } else {
-          files.push(file);
+          fileIds.push(file.id);
         }
       });
 
-      // 并发删除文件（限制并发数为 5）
-      const deleteFile = async (file: any) => {
+      // 批量删除文件（一次性删除所有文件）
+      if (fileIds.length > 0) {
         try {
-          await deleteDatasetFileUsingDelete(dataset.id, file.id, prefix);
-          successCount++;
-        } catch (error) {
-          console.error(`删除文件失败: ${file.fileName}`, error);
-          failCount++;
+          await batchDeleteFilesUsingDelete(dataset.id, { fileIds, prefix });
+          successCount += fileIds.length;
+        } catch (error: any) {
+          // 部分文件可能删除失败，后端会返回详细信息
+          console.error("批量删除文件失败", error);
+          const failedCount = error?.response?.data?.failedCount || fileIds.length;
+          failCount += failedCount;
+          successCount += (fileIds.length - failedCount);
         }
-      };
-
-      const CONCURRENT_LIMIT = 5;
-      for (let i = 0; i < files.length; i += CONCURRENT_LIMIT) {
-        await Promise.all(
-          files.slice(i, i + CONCURRENT_LIMIT).map(deleteFile)
-        );
       }
 
-      // 递归删除目录
+      // 并发删除目录（目录使用单独的递归删除接口）
       const deleteDirectory = async (dir: any) => {
         try {
           const dirPath = `${prefix}${dir.fileName}/`;
-          await deleteDirectoryRecursively(dirPath);
+          await deleteDirectoryUsingDelete(dataset.id, dirPath);
           successCount++;
         } catch (error) {
           console.error(`删除目录失败: ${dir.fileName}`, error);
@@ -154,7 +151,6 @@ export function useFilesOperation(dataset: Dataset) {
         }
       };
 
-      // 目录删除也要并发，但数量通常较少
       await Promise.all(directories.map(deleteDirectory));
 
       // 刷新文件列表
@@ -415,53 +411,6 @@ export function useFilesOperation(dataset: Dataset) {
     }
   };
 
-  const deleteDirectoryRecursively = async (directoryPath: string) => {
-    // 递归删除指定目录下的所有文件和子目录，然后再删除目录本身
-    const pageSize = 1000;
-
-    while (true) {
-      const { data } = await queryDatasetFilesUsingGet(id!, {
-        page: 0,
-        size: pageSize,
-        isWithDirectory: true,
-        prefix: directoryPath,
-      });
-
-      const content = data?.content || [];
-      if (!content.length) {
-        break;
-      }
-
-      const directories = content.filter(
-        (item: any) => typeof item.id === "string" && item.id.startsWith("directory-")
-      );
-      const files = content.filter(
-        (item: any) => !(typeof item.id === "string" && item.id.startsWith("directory-"))
-      );
-
-      // 先删除文件
-      for (const file of files) {
-        try {
-          await deleteDatasetFileUsingDelete(dataset.id, file.id, directoryPath);
-        } catch (e) {
-          // Continue deleting other files even if one fails
-        }
-      }
-
-      // 再递归删除子目录
-      for (const dir of directories) {
-        const childPath = `${directoryPath}${dir.fileName}/`;
-        await deleteDirectoryRecursively(childPath);
-      }
-    }
-
-    // 最后尝试删除当前目录本身（若后端目录为空即可删除）
-    try {
-      await deleteDirectoryUsingDelete(dataset.id, directoryPath);
-    } catch (e) {
-      // Directory deletion failed, may still have contents
-    }
-  };
 
   return {
     fileList,
@@ -513,7 +462,8 @@ export function useFilesOperation(dataset: Dataset) {
     },
     handleDeleteDirectory: async (directoryPath: string, directoryName: string) => {
       try {
-        await deleteDirectoryRecursively(directoryPath);
+        // 直接调用后端递归删除目录 API，后端会一次性删除整个目录树
+        await deleteDirectoryUsingDelete(dataset.id, directoryPath);
         // 删除成功后刷新当前目录
         const currentPrefix = pagination.prefix || "";
         await fetchFiles(currentPrefix, 1, pagination.pageSize);

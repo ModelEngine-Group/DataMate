@@ -11,6 +11,7 @@ import com.datamate.datamanagement.domain.model.dataset.Dataset;
 import com.datamate.datamanagement.domain.model.dataset.DatasetFile;
 import com.datamate.datamanagement.interfaces.converter.DatasetConverter;
 import com.datamate.datamanagement.interfaces.dto.AddFilesRequest;
+import com.datamate.datamanagement.interfaces.dto.BatchDeleteFilesRequest;
 import com.datamate.datamanagement.interfaces.dto.CopyFilesRequest;
 import com.datamate.datamanagement.interfaces.dto.CreateDirectoryRequest;
 import com.datamate.datamanagement.interfaces.dto.DatasetFileResponse;
@@ -82,6 +83,21 @@ public class DatasetFileController {
             @RequestParam(value = "prefix", required = false, defaultValue = "") String prefix) {
         try {
             datasetFileApplicationService.deleteDatasetFile(datasetId, fileId, prefix);
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Response.error(SystemErrorCode.UNKNOWN_ERROR, null));
+        }
+    }
+
+    /**
+     * 批量删除文件
+     */
+    @DeleteMapping("/batch")
+    public ResponseEntity<Response<Void>> batchDeleteFiles(
+            @PathVariable("datasetId") String datasetId,
+            @RequestBody @Valid BatchDeleteFilesRequest request) {
+        try {
+            datasetFileApplicationService.batchDeleteFiles(datasetId, request);
             return ResponseEntity.ok().build();
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Response.error(SystemErrorCode.UNKNOWN_ERROR, null));

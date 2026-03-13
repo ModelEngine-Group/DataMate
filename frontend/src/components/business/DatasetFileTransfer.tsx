@@ -183,53 +183,122 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
       options?: Partial<{ page: number; pageSize: number; keyword: string }>
     ) => {
       if (!selectedDataset) return;
-      const page = options?.page ?? filesPagination.current;
-      const pageSize = options?.pageSize ?? filesPagination.pageSize;
+      const page = options?.page ?? 1;
+      const pageSize = 10;
       const keyword = options?.keyword ?? filesSearch;
+      const hasExtensionFilter = allowedFileExtensions && allowedFileExtensions.length > 0;
 
-      const { data } = await queryDatasetFilesUsingGet(selectedDataset.id, {
-        page,
-        size: pageSize,
-        keyword,
-      });
-      const mapped = (data.content || []).map((item: DatasetFile) => ({
-        ...item,
-        id: item.id,
-        key: String(item.id), // rowKey 使用字符串，确保与 selectedRowKeys 类型一致
-        // 记录所属数据集，方便后续在“全不选”时只清空当前数据集的选择
-        // DatasetFile 接口是后端模型，这里在前端扩展 datasetId 字段
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        datasetId: selectedDataset.id,
-        datasetName: selectedDataset.name,
-      }));
+      console.log('[fetchFiles] 调用:', { datasetId: selectedDataset.id, page, pageSize, keyword, hasExtensionFilter });
 
-      const filtered =
-        allowedFileExtensions && allowedFileExtensions.length > 0
-          ? mapped.filter((file) => {
-              const ext =
-                file.fileName?.toLowerCase().match(/\.[^.]+$/)?.[0] || "";
-              return allowedFileExtensions.includes(ext);
-            })
-          : mapped;
+      if (hasExtensionFilter) {
+        // 有扩展名过滤：获取所有文件并在前端分页
+        const fetchPageSize = 100;
+        let allFiles: DatasetFile[] = [];
+        let currentPage = 1;
+        let hasMore = true;
 
-      setFiles(filtered);
-      setFilesPagination((prev) => ({
-        ...prev,
-        current: page,
-        pageSize,
-        total: data.totalElements,
-      }));
+        console.log('[fetchFiles] 开始获取所有文件...');
+
+        while (hasMore) {
+          const { data } = await queryDatasetFilesUsingGet(selectedDataset.id, {
+            page: currentPage,
+            size: fetchPageSize,
+            keyword,
+          });
+
+          const mapped = (data.content || []).map((item: DatasetFile) => ({
+            ...item,
+            id: item.id,
+            key: String(item.id),
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            datasetId: selectedDataset.id,
+            datasetName: selectedDataset.name,
+          }));
+
+          allFiles = [...allFiles, ...mapped];
+          console.log(`[fetchFiles] 第 ${currentPage} 页: 获取 ${mapped.length} 个，累计 ${allFiles.length} 个`);
+
+          // 如果返回的数据少于 pageSize，说明最后一页
+          if (mapped.length < fetchPageSize) {
+            hasMore = false;
+          } else {
+            currentPage++;
+          }
+        }
+
+        console.log('[fetchFiles] 共获取:', allFiles.length, '个文件');
+
+        // 在前端过滤
+        const filtered = allFiles.filter((file) => {
+          const ext = file.fileName?.toLowerCase().match(/\.[^.]+$/)?.[0] || "";
+          return allowedFileExtensions.includes(ext);
+        });
+
+        console.log('[fetchFiles] 前端过滤:', {
+          totalFiles: allFiles.length,
+          filtered: filtered.length,
+          extensions: allowedFileExtensions
+        });
+
+        // 前端分页
+        const startIndex = (page - 1) * pageSize;
+        const endIndex = startIndex + pageSize;
+        const paginatedFiles = filtered.slice(startIndex, endIndex);
+
+        console.log('[fetchFiles] 前端分页:', {
+          page,
+          startIndex,
+          endIndex,
+          display: paginatedFiles.length,
+          total: filtered.length
+        });
+
+        setFiles(paginatedFiles);
+        setFilesPagination({
+          current: page,
+          pageSize: pageSize,
+          total: filtered.length,
+        });
+      } else {
+        // 无扩展名过滤：使用后端分页
+        const { data } = await queryDatasetFilesUsingGet(selectedDataset.id, {
+          page,
+          size: pageSize,
+          keyword,
+        });
+
+        const mapped = (data.content || []).map((item: DatasetFile) => ({
+          ...item,
+          id: item.id,
+          key: String(item.id),
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
+          datasetId: selectedDataset.id,
+          datasetName: selectedDataset.name,
+        }));
+
+        console.log('[fetchFiles] 后端分页:', {
+          totalElements: data.totalElements,
+          contentLength: mapped.length
+        });
+
+        setFiles(mapped);
+        setFilesPagination({
+          current: page,
+          pageSize: pageSize,
+          total: data.totalElements,
+        });
+      }
     },
-    [selectedDataset, filesPagination.current, filesPagination.pageSize, filesSearch, allowedFileExtensions]
+    [selectedDataset, filesSearch, allowedFileExtensions]
   );
 
   useEffect(() => {
-    // 当数据集变化时，重置文件分页并拉取第一页文件，避免额外的循环请求
+    // 当数据集变化时，重置文件分页并拉取第一页文件
     if (selectedDataset) {
       setFilesPagination({ current: 1, pageSize: 10, total: 0 });
-      // 与其它页面保持一致，后端使用 1-based page 参数，这里传 1 获取第一页
-      fetchFiles({ page: 1, pageSize: 10 }).catch(() => {});
+      fetchFiles({ page: 1 }).catch(() => {});
     } else {
       setFiles([]);
       setFilesPagination({ current: 1, pageSize: 10, total: 0 });
@@ -241,6 +310,24 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
   useEffect(() => {
     onDatasetSelect?.(selectedDataset);
   }, [selectedDataset, onDatasetSelect]);
+
+  // 当搜索关键词变化时，重新拉取
+  useEffect(() => {
+    if (selectedDataset) {
+      setFilesPagination({ current: 1, pageSize: 10, total: 0 });
+      fetchFiles({ page: 1 }).catch(() => {});
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filesSearch]);
+
+  // 当扩展名过滤变化时，重新拉取
+  useEffect(() => {
+    if (selectedDataset) {
+      setFilesPagination({ current: 1, pageSize: 10, total: 0 });
+      fetchFiles({ page: 1 }).catch(() => {});
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allowedFileExtensions]);
 
   // 在 fixedDatasetId 场景下，数据集列表加载完成后自动选中该数据集
   useEffect(() => {
@@ -537,17 +624,17 @@ const DatasetFileTransfer: React.FC<DatasetFileTransferProps> = ({
             dataSource={files}
             columns={fileCols.slice(1, fileCols.length)}
             pagination={{
-              ...filesPagination,
-              onChange: (page, pageSize) => {
-                  if (disabled) return;
-                const nextPageSize = pageSize || filesPagination.pageSize;
+              current: filesPagination.current,
+              pageSize: 10,
+              total: filesPagination.total,
+              showSizeChanger: false,
+              onChange: (page) => {
+                if (disabled) return;
                 setFilesPagination((prev) => ({
                   ...prev,
                   current: page,
-                  pageSize: nextPageSize,
                 }));
-                // 前端分页与后端统一使用 1-based page 参数
-                fetchFiles({ page, pageSize: nextPageSize }).catch(() => {});
+                fetchFiles({ page }).catch(() => {});
               },
             }}
             onRow={(record: DatasetFile) => ({
