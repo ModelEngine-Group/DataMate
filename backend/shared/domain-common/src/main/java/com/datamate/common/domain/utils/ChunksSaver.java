@@ -49,9 +49,24 @@ public class ChunksSaver {
         }
 
         File finalFile = new File(preUploadReq.getUploadPath(), fileUploadRequest.getFileName());
+        // 确保父目录存在（处理嵌套文件夹上传的情况）
+        File parentDir = finalFile.getParentFile();
+        if (parentDir != null && !parentDir.exists()) {
+            try {
+                boolean created = parentDir.mkdirs();
+                if (!created && !parentDir.exists()) {
+                    // mkdirs 返回 false 且目录仍不存在，才是真正的失败
+                    log.error("failed to create parent directory for file:{}, req Id:{}", finalFile.getPath(), fileUploadRequest.getReqId());
+                    throw BusinessException.of(SystemErrorCode.FILE_SYSTEM_ERROR);
+                }
+            } catch (Exception e) {
+                log.error("failed to create parent directory for file:{}, req Id:{}, error:{}", finalFile.getPath(), fileUploadRequest.getReqId(), e.getMessage(), e);
+                throw BusinessException.of(SystemErrorCode.FILE_SYSTEM_ERROR);
+            }
+        }
         if (!targetFile.renameTo(finalFile)) {
             log.error("failed to mv file:{}, req Id:{}", targetFile.getName(), fileUploadRequest.getReqId());
-            throw new IllegalArgumentException("failed to move file to target dir");
+            throw BusinessException.of(SystemErrorCode.FILE_SYSTEM_ERROR);
         }
         log.debug("save chunk {} cost {}", fileUploadRequest.getChunkNo(),
             ChronoUnit.MILLIS.between(startTime, LocalDateTime.now()));
@@ -76,6 +91,21 @@ public class ChunksSaver {
     public static File saveFile(ChunkUploadRequest fileUploadRequest, ChunkUploadPreRequest preUploadReq) {
         // 保存文件
         File targetFile = new File(preUploadReq.getUploadPath(), fileUploadRequest.getFileName());
+        // 确保父目录存在（处理嵌套文件夹上传的情况）
+        File parentDir = targetFile.getParentFile();
+        if (parentDir != null && !parentDir.exists()) {
+            try {
+                boolean created = parentDir.mkdirs();
+                if (!created && !parentDir.exists()) {
+                    // mkdirs 返回 false 且目录仍不存在，才是真正的失败
+                    log.error("failed to create parent directory for file:{}", targetFile.getPath());
+                    throw BusinessException.of(SystemErrorCode.FILE_SYSTEM_ERROR);
+                }
+            } catch (Exception e) {
+                log.error("failed to create parent directory for file:{}, error:{}", targetFile.getPath(), e.getMessage(), e);
+                throw BusinessException.of(SystemErrorCode.FILE_SYSTEM_ERROR);
+            }
+        }
         try {
             log.info("file path {}, file size {}", targetFile.toPath(), targetFile.getTotalSpace());
             FileUtils.copyInputStreamToFile(getFileInputStream(fileUploadRequest.getFile()), targetFile);

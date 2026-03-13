@@ -1,6 +1,6 @@
 package com.datamate.datamanagement.interfaces.dto;
 
-import com.datamate.datamanagement.interfaces.validation.ValidFileName;
+import com.datamate.datamanagement.interfaces.validation.ValidFilePath;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -25,9 +25,9 @@ public class UploadFileRequest {
     @Min(value = 0, message = "文件编号必须为非负整数")
     private int fileNo;
 
-    /** 文件名称 */
+    /** 文件名称（支持相对路径，用于文件夹上传） */
     @NotBlank(message = "文件名称不能为空")
-    @ValidFileName
+    @ValidFilePath
     @Size(max = 255, message = "文件名称长度不能超过255个字符")
     private String fileName;
 
