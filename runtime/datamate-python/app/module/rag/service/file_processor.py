@@ -161,9 +161,10 @@ class FileProcessor:
             await self._update_progress(db, file_repo, str(rag_file.id), 30)  # type: ignore
             await db.commit()
 
-            for idx, doc in enumerate(documents):
-                logger.info("插入文档到知识图谱: %s, 进度: %d/%d", str(rag_file.file_name), idx + 1, len(documents))  # type: ignore
-                await rag_instance.ainsert(input=doc.page_content, file_paths=[file_path])
+            all_content = "\n\n".join(doc.page_content for doc in documents)
+            doc_id = str(rag_file.id)
+            logger.info("插入文档到知识图谱: %s, doc_id=%s, 文档数=%d", str(rag_file.file_name), doc_id, len(documents))  # type: ignore
+            await rag_instance.ainsert(input=all_content, file_paths=[file_path], ids=doc_id)
 
             await self._mark_success(db, file_repo, str(rag_file.id), len(documents))  # type: ignore
             logger.info("文件 %s 知识图谱处理完成", str(rag_file.file_name))

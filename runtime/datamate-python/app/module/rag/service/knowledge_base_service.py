@@ -346,24 +346,36 @@ class KnowledgeBaseService:
         if not request.file_ids:
             raise BusinessError(ErrorCodes.BAD_REQUEST, "文件ID列表不能为空")
 
-        # 获取文件列表
+        kb_type = knowledge_base.type
+        kb_name = str(knowledge_base.name)
+
         rag_files = []
         for file_id in request.file_ids:
             rag_file = await self.file_repo.get_by_id(file_id)
             if rag_file:
                 rag_files.append(rag_file)
 
-        # 删除 Milvus 数据
         if rag_files:
-            try:
-                delete_chunks_by_rag_file_ids(
-                    knowledge_base.name,
-                    [r.id for r in rag_files],
-                )
-            except Exception as e:
-                logger.error("删除 Milvus 数据失败: %s", e)
+            if kb_type == RagType.DOCUMENT.value:
+                try:
+                    delete_chunks_by_rag_file_ids(
+                        kb_name,
+                        [r.id for r in rag_files],
+                    )
+                except Exception as e:
+                    logger.error("删除 Milvus 数据失败: %s", e)
+            elif kb_type == RagType.GRAPH.value:
+                try:
+                    from app.module.rag.service.strategy.graph_strategy import GraphKnowledgeBaseStrategy
+                    strategy = GraphKnowledgeBaseStrategy(self.db)
+                    rag_instance = await strategy._get_or_create_graph_rag(knowledge_base)
+                    for rag_file in rag_files:
+                        doc_id = str(rag_file.id)
+                        await rag_instance.adelete_by_doc_id(doc_id)
+                        logger.info("已从知识图谱删除文件: %s, doc_id=%s", rag_file.file_name, doc_id)
+                except Exception as e:
+                    logger.error("删除知识图谱数据失败: %s", e)
 
-        # 删除数据库记录
         for file_id in request.file_ids:
             try:
                 await self.file_repo.delete(file_id)
