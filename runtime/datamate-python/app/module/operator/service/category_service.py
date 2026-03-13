@@ -2,7 +2,8 @@
 Category Service
 分类服务层
 """
-from typing import List
+
+from typing import List, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -33,10 +34,21 @@ class CategoryService:
         self.operator_repo = operator_repo
 
     async def get_all_categories(
-        self,
-        db: AsyncSession
+        self, db: AsyncSession, locale: Optional[str] = None
     ) -> CategoryTreePagedResponse:
-        """获取所有分类（树状结构）"""
+        """获取所有分类（树状结构）
+
+        Args:
+            db: 数据库会话
+            locale: 语言代码 (zh/en)，None 时返回中文
+        """
+
+        # Helper function to get localized name
+        def get_localized_name(cat) -> str:
+            if locale == "en" and getattr(cat, "name_en", None):
+                return cat.name_en
+            return cat.name
+
         # Get all categories
         all_categories = await self.category_repo.find_all(db)
         category_map = {c.id: c for c in all_categories}
@@ -58,10 +70,7 @@ class CategoryService:
                 grouped_by_parent[cat.parent_id].append(cat)
 
         # Build category trees
-        parent_ids = sorted(
-            grouped_by_parent.keys(),
-            key=lambda pid: pid
-        )
+        parent_ids = sorted(grouped_by_parent.keys(), key=lambda pid: pid)
 
         category_trees = []
         for parent_id in parent_ids:
@@ -74,7 +83,7 @@ class CategoryService:
             for cat in sorted(group, key=lambda c: c.created_at or 0):
                 cat_dto = CategoryDto(
                     id=cat.id,
-                    name=cat.name,
+                    name=get_localized_name(cat),
                     value=cat.value,
                     type=cat.type,
                     parent_id=cat.parent_id,
@@ -86,7 +95,7 @@ class CategoryService:
 
             tree = CategoryTreeResponse(
                 id=parent_id,
-                name=parent_category.name,
+                name=get_localized_name(parent_category),
                 count=total_count,
                 categories=child_dtos,
             )

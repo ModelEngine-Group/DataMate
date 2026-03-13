@@ -2,7 +2,18 @@
 Operator Market Data Models
 算子市场数据模型
 """
-from sqlalchemy import Column, String, Integer, Boolean, BigInteger, Text, JSON, TIMESTAMP, Index
+
+from sqlalchemy import (
+    Column,
+    String,
+    Integer,
+    Boolean,
+    BigInteger,
+    Text,
+    JSON,
+    TIMESTAMP,
+    Index,
+)
 from sqlalchemy.sql import func
 
 from app.db.models.base_entity import Base, BaseEntity
@@ -10,6 +21,7 @@ from app.db.models.base_entity import Base, BaseEntity
 
 class Operator(BaseEntity):
     """算子实体"""
+
     __tablename__ = "t_operator"
 
     id = Column(String(36), primary_key=True, index=True, comment="算子ID")
@@ -26,17 +38,17 @@ class Operator(BaseEntity):
     usage_count = Column(Integer, default=0, nullable=False, comment="使用次数")
     is_star = Column(Boolean, default=False, nullable=False, comment="是否收藏")
 
-    __table_args__ = (
-        Index("idx_is_star", "is_star"),
-    )
+    __table_args__ = (Index("idx_is_star", "is_star"),)
 
 
 class Category(BaseEntity):
     """算子分类实体"""
+
     __tablename__ = "t_operator_category"
 
     id = Column(String(36), primary_key=True, index=True, comment="分类ID")
-    name = Column(String(255), nullable=False, comment="分类名称")
+    name = Column(String(255), nullable=False, comment="分类名称(中文)")
+    name_en = Column(String(255), nullable=True, comment="分类名称(英文)")
     value = Column(String(255), nullable=True, comment="分类值")
     type = Column(String(50), nullable=True, comment="分类类型")
     parent_id = Column(String(36), nullable=False, default="0", comment="父分类ID")
@@ -44,6 +56,7 @@ class Category(BaseEntity):
 
 class CategoryRelation(BaseEntity):
     """算子分类关系实体"""
+
     __tablename__ = "t_operator_category_relation"
 
     category_id = Column(String(36), primary_key=True, comment="分类ID")
@@ -57,11 +70,14 @@ class CategoryRelation(BaseEntity):
 
 class OperatorRelease(BaseEntity):
     """算子发布版本实体"""
+
     __tablename__ = "t_operator_release"
 
     id = Column(String(36), primary_key=True, comment="算子ID")
     version = Column(String(50), primary_key=True, comment="版本号")
-    release_date = Column(TIMESTAMP, nullable=False, default=func.now(), comment="发布时间")
+    release_date = Column(
+        TIMESTAMP, nullable=False, default=func.now(), comment="发布时间"
+    )
     changelog = Column(JSON, nullable=True, comment="更新日志列表")
 
 

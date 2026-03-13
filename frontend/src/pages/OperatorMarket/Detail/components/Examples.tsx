@@ -1,8 +1,11 @@
 import { copyToClipboard } from "@/utils/unit";
 import { Card, Button } from "antd";
 import { Copy } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export default function Examples({ operator }) {
+  const { t } = useTranslation();
+
   return (
     <div className="flex flex-col gap-4">
       {operator.examples.map((example, index) => (
@@ -13,7 +16,7 @@ export default function Examples({ operator }) {
             </h3>
             <Button size="small" onClick={() => copyToClipboard(example.code)}>
               <Copy className="w-4 h-4 mr-2" />
-              复制代码
+              {t("operatorMarket.detail.examples.copyCode")}
             </Button>
           </div>
           <div className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto">

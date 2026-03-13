@@ -230,16 +230,21 @@ class OperatorService:
     async def get_operator_by_id(
         self,
         operator_id: str,
-        db: AsyncSession
+        db: AsyncSession,
+        locale: Optional[str] = None
     ) -> OperatorDto:
         """根据 ID 获取算子详情"""
+        attr = "category_name"
+        if locale == "en":
+            attr = "category_name_en"
+
         result = await db.execute(
-            text("""
+            text(f"""
                 SELECT
                     operator_id, operator_name, description, version, inputs, outputs, runtime,
                     settings, is_star, file_name, file_size, usage_count, metrics,
                     created_at, updated_at, created_by, updated_by,
-                    string_agg(category_name, ',' ORDER BY created_at DESC) AS categories
+                    string_agg({attr}, ',' ORDER BY created_at DESC) AS categories
                 FROM v_operator
                 WHERE operator_id = :operator_id
                 GROUP BY operator_id, operator_name, description, version, inputs, outputs, runtime,
