@@ -1157,7 +1157,8 @@
         "createFailed": "Failed to create annotation task, please try again",
         "autoCreateSuccess": "Auto annotation task created successfully",
         "autoCreateFailed": "Failed to create auto annotation task",
-        "datasetTypeFiltered": "Datasets have been filtered by template type, please re-select dataset and files"
+        "datasetTypeFiltered": "Datasets have been filtered by template type, please re-select dataset and files",
+        "datasetTypeMismatch": "Template type does not match dataset type, please select a matching template or dataset"
       }
     },
     "template": {

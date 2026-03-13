@@ -1157,7 +1157,8 @@
         "createFailed": "创建失败，请稍后重试",
         "autoCreateSuccess": "自动标注任务创建成功",
         "autoCreateFailed": "创建自动标注任务失败",
-        "datasetTypeFiltered": "已根据模板类型筛选数据集，请重新选择数据集和文件"
+        "datasetTypeFiltered": "已根据模板类型筛选数据集，请重新选择数据集和文件",
+        "datasetTypeMismatch": "模板类型与数据集类型不匹配，请选择匹配的模板或数据集"
       }
     },
     "template": {
