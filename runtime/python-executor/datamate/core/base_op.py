@@ -480,6 +480,8 @@ class FileExporter(BaseOp):
                 return False
 
             if sample[self.text_key] == '' and sample[self.data_key] == b'':
+                if sample.get("executor") == "datajuicer":
+                    return True
                 sample[self.filesize_key] = "0"
                 return False
 
@@ -590,7 +592,7 @@ class FileExporter(BaseOp):
         return sample
 
     def _get_from_text_or_data(self, sample: Dict[str, Any]) -> Dict[str, Any]:
-        if sample[self.data_key] is not None and sample[self.data_key] != b'' and sample[self.data_key] != "":
+        if sample.get(self.data_key) is not None and sample[self.data_key] != b'' and sample[self.data_key] != "":
             return self._get_from_data(sample)
         else:
             return self._get_from_text(sample)

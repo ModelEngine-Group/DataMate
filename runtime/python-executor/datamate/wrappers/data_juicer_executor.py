@@ -118,7 +118,7 @@ class DataJuicerExecutor(RayExecutor):
             dj_config = self.client.init_config(self.dataset_path, self.export_path, self.cfg.process)
             result_path = self.client.execute_config(dj_config)
 
-            processed_dataset = self.load_dataset(result_path)
+            processed_dataset = self.load_dj_dataset(result_path)
             processed_dataset = processed_dataset.map_batches(self.add_column, num_cpus=0.05)
             processed_dataset = processed_dataset.map(FileExporter().save_file_and_db, num_cpus=0.05)
             for _ in processed_dataset.iter_batches():
