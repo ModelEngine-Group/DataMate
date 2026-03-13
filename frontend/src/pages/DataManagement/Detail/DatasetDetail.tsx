@@ -40,7 +40,14 @@ export default function DatasetDetail() {
   const [showDetailDrawer, setShowDetailDrawer] = useState(false);
 
   const [dataset, setDataset] = useState<Dataset>({} as Dataset);
-  const filesOperation = useFilesOperation(dataset);
+
+  // 定义 fetchDataset，必须在 useFilesOperation 之前定义
+  const fetchDataset = async () => {
+    const { data } = await queryDatasetByIdUsingGet(id as unknown as number);
+    setDataset(mapDataset(data, t));
+  };
+
+  const filesOperation = useFilesOperation(dataset, fetchDataset);
 
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const navigateItems = useMemo(
@@ -54,10 +61,6 @@ export default function DatasetDetail() {
     ],
     [dataset, t]
   );
-  const fetchDataset = async () => {
-    const { data } = await queryDatasetByIdUsingGet(id as unknown as number);
-    setDataset(mapDataset(data, t));
-  };
 
   useEffect(() => {
     fetchDataset();

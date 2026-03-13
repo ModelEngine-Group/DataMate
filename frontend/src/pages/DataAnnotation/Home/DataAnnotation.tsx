@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router";
 import { Card, Button, Table, message, Modal, Tabs, Tag, Progress, Tooltip, Dropdown } from "antd";
 import {
   PlusOutlined,
@@ -38,6 +39,7 @@ import { useTranslation } from "react-i18next";
 
 export default function DataAnnotation() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   // return <DevelopmentInProgress showTime="2025.10.30" />;
   const [activeTab, setActiveTab] = useState("tasks");
   const [viewMode, setViewMode] = useState<"list" | "card">("list");
@@ -564,6 +566,24 @@ export default function DataAnnotation() {
       dataIndex: "datasetName",
       key: "datasetName",
       width: 180,
+      render: (text: string, record: any) => {
+        if (!text || text === "-") return "-";
+        const datasetId = record.datasetId || record.dataset_id;
+        if (!datasetId) return text;
+
+        return (
+          <a
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              navigate(`/data/management/detail/${datasetId}`);
+            }}
+            style={{ cursor: 'pointer', color: '#1890ff' }}
+          >
+            {text}
+          </a>
+        );
+      },
     },
     {
       title: t('dataAnnotation.home.columns.model'),
