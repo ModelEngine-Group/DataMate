@@ -470,16 +470,17 @@ class FileExporter(BaseOp):
 
         try:
             start = time.time()
+            save_path = ""
             if file_type in self.text_support_ext:
                 sample, save_path = self.get_textfile_handler(sample)
             elif file_type in self.data_support_ext:
                 sample, save_path = self.get_datafile_handler(sample)
             elif file_type in self.medical_support_ext:
                 sample, save_path = self.get_medicalfile_handler(sample)
-            else:
-                return False
 
             if sample[self.text_key] == '' and sample[self.data_key] == b'':
+                if sample.get("executor") == "datajuicer":
+                    return True
                 sample[self.filesize_key] = "0"
                 return False
 
@@ -590,7 +591,7 @@ class FileExporter(BaseOp):
         return sample
 
     def _get_from_text_or_data(self, sample: Dict[str, Any]) -> Dict[str, Any]:
-        if sample[self.data_key] is not None and sample[self.data_key] != b'' and sample[self.data_key] != "":
+        if sample.get(self.data_key) is not None and sample[self.data_key] != b'' and sample[self.data_key] != "":
             return self._get_from_data(sample)
         else:
             return self._get_from_text(sample)

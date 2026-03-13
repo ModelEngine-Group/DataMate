@@ -1,5 +1,8 @@
 import json
+import os
+import shutil
 import time
+from pathlib import Path
 from typing import Dict
 
 from datamate.common.utils.file_scanner import FileScanner
@@ -52,10 +55,36 @@ class RayExecutor:
         if not meta.get("extraFileType"):
             meta["extraFileType"] = None
         meta["dataset_id"] = self.cfg.dataset_id
-        for key in ["images", "audios", "videos"]:
-            # 尝试删除，如果找不到该键，就安静地返回 None，不会报错
-            meta.pop(key, None)
         return meta
+
+    def load_dj_meta(self, line):
+        meta = json.loads(line)
+        filepath = ""
+        file = ""
+        if meta.get("images"):
+            if isinstance(meta["images"], list):
+                filepath = meta["images"][0]
+                file = Path(filepath)
+                del meta["images"]
+        elif meta.get("audios"):
+            if isinstance(meta["audios"], list):
+                filepath = meta["audios"][0]
+                file = Path(filepath)
+                del meta["audios"]
+        elif meta.get("videos"):
+            if isinstance(meta["videos"], list):
+                filepath = meta["videos"][0]
+                file = Path(filepath)
+                del meta["videos"]
+        if filepath and file:
+            filename = f"{Path(meta['fileName']).stem}.{file.suffix}"
+            meta["fileName"] = filename
+            meta["filePath"] = filepath
+            meta["fileType"] = file.suffix
+            meta["fileSize"] = file.stat().st_size
+            os.makedirs(f"/dataset/{self.cfg.dataset_id}", exist_ok=True)
+            shutil.move(filepath, f"/dataset/{self.cfg.dataset_id}/{filename}")
+        return {k: v for k, v in meta.items() if not (isinstance(k, str) and k.startswith('_'))}
 
     def run(self):
         pass
@@ -70,6 +99,27 @@ class RayExecutor:
                 with open(jsonl_file_path, "r", encoding='utf-8') as meta:
                     lines = meta.readlines()
                     dataset = ray.data.from_items([self.load_meta(line) for line in lines])
+                    break
+            if retry < 5:
+                retry += 1
+                time.sleep(retry)
+                continue
+            else:
+                logger.error(f"can not load dataset from dataset_path")
+                raise RuntimeError(f"Load dataset Failed!, dataset_path: {self.cfg.dataset_path}.")
+
+        return dataset
+
+    def load_dj_dataset(self, jsonl_file_path = None):
+        retry = 0
+        dataset = None
+        if jsonl_file_path is None:
+            jsonl_file_path = self.cfg.dataset_path
+        while True:
+            if check_valid_path(jsonl_file_path):
+                with open(jsonl_file_path, "r", encoding='utf-8') as meta:
+                    lines = meta.readlines()
+                    dataset = ray.data.from_items([self.load_dj_meta(line) for line in lines])
                     break
             if retry < 5:
                 retry += 1
