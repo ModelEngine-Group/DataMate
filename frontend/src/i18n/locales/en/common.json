@@ -290,7 +290,9 @@
       "rename": "Rename",
       "createFolder": "New Folder",
       "cancel": "Cancel",
-      "confirm": "Confirm"
+      "confirm": "Confirm",
+      "renameFile": "Rename File",
+      "renameFolder": "Rename Folder"
     },
     "stats": {
       "totalDatasets": "Total Datasets",
@@ -518,7 +520,9 @@
         "statisticsSummary": "{{categoryCount}} categories, {{totalLabels}} label samples",
         "detailsCardTitle": "Label Distribution Details",
         "totalLabels": "Total: {{count}} labels",
-        "moreLabels": "And {{count}} more labels..."
+        "moreLabels": "And {{count}} more labels...",
+        "paginationTotal": "Total {{total}} items",
+        "uncategorized": "Uncategorized"
       }
     },
     "import": {
@@ -628,6 +632,10 @@
         "pending": "Ready",
         "paused": "Paused"
       }
+    },
+    "loading": "Loading...",
+    "table": {
+      "file": "File"
     }
   },
   "ratioTask": {
@@ -1231,8 +1239,28 @@
       },
       "messages": {
         "deleteSuccess": "Auto annotation task deleted successfully",
-        "deleteFailed": "Deletion failed, please try again later"
-      }
+        "deleteFailed": "Deletion failed, please try again later",
+        "cannotJumpNoBase": "Cannot jump to Label Studio: Label Studio base URL not configured",
+        "downloadFailed": "Download failed",
+        "downloadPreparing": "Preparing download...",
+        "downloadStarted": "Download started",
+        "fetchTasksFailed": "Failed to fetch tasks",
+        "noDatasetBound": "This auto annotation task is not bound to a dataset",
+        "noProjectFound": "No corresponding annotation project found",
+        "outputPath": "Output Path",
+        "processedImages": "Processed Images",
+        "resultPathTitle": "Result Path",
+        "syncFailed": "Sync failed",
+        "syncLoading": "Syncing...",
+        "syncSuccess": "Sync successful",
+        "syncToDbTitle": "Confirm sync annotation results to database?",
+        "syncToDbContent1": "This operation will override current file tags and annotation information based on task data in Label Studio",
+        "syncToDbContent2": "After sync, you can view latest tags and annotations in dataset file details"
+      },
+      "downloadResult": "Download Result",
+      "viewResult": "View Result",
+      "refresh": "Refresh",
+      "more": "More"
     },
     "annotate": {
       "title": "Annotation Workspace",
@@ -1259,12 +1287,32 @@
         "import": "Import",
         "loading": "Importing...",
         "success": "Import successful",
-        "failed": "Import failed, please try again later"
+        "failed": "Import failed, please try again later",
+        "exportFormat": "Export Format",
+        "exportFormatRequired": "Please select export format",
+        "fileNameLabel": "File Name",
+        "fileNamePlaceholder": "Please enter file name",
+        "taskLabel": "Annotation Task",
+        "taskLabelAuto": "Auto Annotation Task"
       },
       "syncToDb": {
         "loading": "Syncing annotations from Label Studio to database...",
         "success": "Sync completed",
         "fail": "Sync failed, please try again later"
+      },
+      "customTemplate": {
+        "title": "Custom Template",
+        "nameLabel": "Template Name",
+        "namePlaceholder": "Please enter template name",
+        "nameRequired": "Please enter template name",
+        "descriptionLabel": "Template Description",
+        "descriptionPlaceholder": "Please enter template description",
+        "codeLabel": "Template Code",
+        "codePlaceholder": "Please enter template code",
+        "codeRequired": "Please enter template code",
+        "previewLabel": "Preview",
+        "okText": "OK",
+        "saveSuccess": "Saved successfully"
       }
     },
     "const": {
@@ -1304,7 +1352,8 @@
         "averageTime": "Average Time",
         "reviewCount": "Pending Review"
       }
-    }
+    },
+    "title": "Data Annotation"
   },
   "dataCleansing": {
     "title": "Data Processing",
@@ -1337,13 +1386,13 @@
       "download": "Download",
       "batchDownload": "Batch Download",
       "delete": "Delete",
-      "batchDownload": "Batch Download",
       "edit": "Edit",
       "selectAll": "Select All",
       "search": "Search",
       "reset": "Reset",
       "config": "Parameter Configuration",
-      "selectOperatorConfig": "Please select an operator for parameter configuration"
+      "selectOperatorConfig": "Please select an operator for parameter configuration",
+      "actions": "Actions"
     },
     "steps": {
       "basicInfo": "Basic Info",
@@ -1370,25 +1419,34 @@
         "dataSizeChange": "Data Size Change",
         "actions": "Actions"
       },
-        "form": {
-          "name": "Name",
-          "namePlaceholder": "Enter task name",
-          "description": "Description",
-          "descriptionPlaceholder":  "Describe the purpose",
-          "srcDataset": "Source Dataset",
-          "srcDatasetPlaceholder":  "Select source dataset",
-          "destDatasetName": "Target Dataset Name",
-          "destDatasetNamePlaceholder": "Enter or select target dataset name",
-          "destDatasetType": "Target Dataset Type",
-          "useSourceDataset": "Use Source Dataset",
-          "useSourceDatasetHint": "Output will be replaced in source dataset",
-          "cannotUseSourceDataset": "Cannot use source dataset as destination",
-          "destDatasetNameRequired": "Destination dataset name is required",
-          "destDatasetTypeRequired": "Target dataset type is required",
-          "allTypes": "All",
-          "showingDatasets": "Showing {{count}} datasets",
-          "noDatasetsFound": "No datasets found"
-        }
+      "form": {
+        "name": "Name",
+        "namePlaceholder": "Enter task name",
+        "description": "Description",
+        "descriptionPlaceholder": "Describe the purpose",
+        "srcDataset": "Source Dataset",
+        "srcDatasetPlaceholder": "Select source dataset",
+        "destDatasetName": "Target Dataset Name",
+        "destDatasetNamePlaceholder": "Enter or select target dataset name",
+        "destDatasetType": "Target Dataset Type",
+        "useSourceDataset": "Use Source Dataset",
+        "useSourceDatasetHint": "Output will be replaced in source dataset",
+        "cannotUseSourceDataset": "Cannot use source dataset as destination",
+        "destDatasetNameRequired": "Destination dataset name is required",
+        "destDatasetTypeRequired": "Target dataset type is required",
+        "allTypes": "All",
+        "showingDatasets": "Showing {{count}} datasets",
+        "noDatasetsFound": "No datasets found"
+      },
+      "messages": {
+        "fetchTaskLogFailed": "Failed to fetch task log",
+        "fetchTaskResultFailed": "Failed to fetch task result",
+        "taskCreated": "Task created successfully",
+        "taskDeleted": "Task deleted successfully",
+        "taskDetailFailed": "Failed to fetch task details",
+        "taskPaused": "Task paused",
+        "taskStarted": "Task started"
+      }
     },
     "template": {
       "columns": {
@@ -1530,6 +1588,12 @@
       "running": "Running",
       "pending": "Pending",
       "stopped": "Stopped"
+    },
+    "logTable": {
+      "nthRun": "Run #{{n}}"
+    },
+    "paramConfig": {
+      "enterValue": "Enter value"
     }
   },
   "knowledgeBase": {
@@ -1923,6 +1987,10 @@
         "npuSupport": "NPU Support",
         "dependencies": "Dependencies",
         "parseError": "Failed to parse data"
+      },
+      "reviews": {
+        "basedOn": "Based on {{count}} reviews",
+        "stars": "{{rating}} stars"
       }
     },
     "create": {
@@ -2209,7 +2277,11 @@
       "modal": {
         "evalTitle": "Create Evaluation Task",
         "evalName": "Evaluation Task Name",
-        "evalMethod": "Evaluation Method",
+        "evalMethod": {
+          "auto": "Auto Evaluation",
+          "cot": "CoT Evaluation",
+          "qa": "QA Evaluation"
+        },
         "evalModel": "Evaluation Model",
         "evalSource": "Source: Synthesis Task (SYNTHESIS)",
         "sourceName": "Source Name: {{name}}",
@@ -2226,7 +2298,10 @@
           "grammarErrorDesc": "The question is interrogative, the answer is declarative...",
           "answerRelevance": "Answer Relevance",
           "answerRelevanceDesc": "The answer should provide a direct, positive response..."
-        }
+        },
+        "evalMethodRequired": "Please select evaluation method",
+        "evalNameRequired": "Please enter evaluation name",
+        "taskType": "Task Type"
       },
       "archive": {
         "success": "Archive successful",
@@ -2369,6 +2444,9 @@
         "all": "All Types",
         "preset": "Preset",
         "custom": "Custom"
+      },
+      "actions": {
+        "createTemplate": "Create Template"
       }
     },
     "createTemplate": {
@@ -2513,13 +2591,18 @@
       "evaluationCreated": "Evaluation task created successfully",
       "evaluationCreateFailed": "Failed to create evaluation task",
       "fetchModelsFailed": "Failed to fetch model list"
+    },
+    "common": {
+      "id": "ID"
     }
   },
   "components": {
     "errorBoundary": {
       "title": "An error occurred",
       "retry": "Retry",
-      "goHome": "Go Home"
+      "goHome": "Go Home",
+      "componentStack": "Component Stack",
+      "errorMessage": "Error Message"
     },
     "deleteConfirm": {
       "title": "Confirm Delete",

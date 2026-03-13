@@ -290,7 +290,9 @@
       "rename": "重命名",
       "createFolder": "新建文件夹",
       "cancel": "取消",
-      "confirm": "确定"
+      "confirm": "确定",
+      "renameFile": "重命名文件",
+      "renameFolder": "重命名文件夹"
     },
     "stats": {
       "totalDatasets": "数据集总数",
@@ -518,7 +520,9 @@
         "statisticsSummary": "共 {{categoryCount}} 个类别，{{totalLabels}} 个标签样本",
         "detailsCardTitle": "标签分布明细",
         "totalLabels": "总计: {{count}} 个标签",
-        "moreLabels": "还有 {{count}} 个标签..."
+        "moreLabels": "还有 {{count}} 个标签...",
+        "paginationTotal": "共 {{total}} 条",
+        "uncategorized": "未分类"
       }
     },
     "import": {
@@ -628,6 +632,10 @@
         "pending": "就绪",
         "paused": "已暂停"
       }
+    },
+    "loading": "加载中...",
+    "table": {
+      "file": "文件"
     }
   },
   "ratioTask": {
@@ -1231,8 +1239,28 @@
       },
       "messages": {
         "deleteSuccess": "自动标注任务删除成功",
-        "deleteFailed": "删除失败，请稍后重试"
-      }
+        "deleteFailed": "删除失败，请稍后重试",
+        "cannotJumpNoBase": "无法跳转到 Label Studio：未配置 Label Studio 基础 URL",
+        "downloadFailed": "下载失败",
+        "downloadPreparing": "正在准备下载...",
+        "downloadStarted": "下载已开始",
+        "fetchTasksFailed": "获取任务失败",
+        "noDatasetBound": "该自动标注任务未绑定数据集",
+        "noProjectFound": "未找到对应的标注工程",
+        "outputPath": "输出路径",
+        "processedImages": "已处理图片",
+        "resultPathTitle": "结果路径",
+        "syncFailed": "同步失败",
+        "syncLoading": "正在同步...",
+        "syncSuccess": "同步成功",
+        "syncToDbTitle": "确认将标注结果同步到数据库？",
+        "syncToDbContent1": "此操作会根据 Label Studio 中的任务数据覆盖当前文件标签与标注信息",
+        "syncToDbContent2": "同步完成后，可在数据管理的文件详情中查看最新标签与标注"
+      },
+      "downloadResult": "下载结果",
+      "viewResult": "查看结果",
+      "refresh": "刷新",
+      "more": "更多"
     },
     "annotate": {
       "title": "标注工作台",
@@ -1259,12 +1287,32 @@
         "import": "导入",
         "loading": "导入中...",
         "success": "导入成功",
-        "failed": "导入失败，请稍后重试"
+        "failed": "导入失败，请稍后重试",
+        "exportFormat": "导出格式",
+        "exportFormatRequired": "请选择导出格式",
+        "fileNameLabel": "文件名",
+        "fileNamePlaceholder": "请输入文件名",
+        "taskLabel": "标注任务",
+        "taskLabelAuto": "自动标注任务"
       },
       "syncToDb": {
         "loading": "正在从 Label Studio 同步标注到数据库...",
         "success": "同步完成",
         "fail": "同步失败，请稍后重试"
+      },
+      "customTemplate": {
+        "title": "自定义模板",
+        "nameLabel": "模板名称",
+        "namePlaceholder": "请输入模板名称",
+        "nameRequired": "请输入模板名称",
+        "descriptionLabel": "模板描述",
+        "descriptionPlaceholder": "请输入模板描述",
+        "codeLabel": "模板代码",
+        "codePlaceholder": "请输入模板代码",
+        "codeRequired": "请输入模板代码",
+        "previewLabel": "预览",
+        "okText": "确定",
+        "saveSuccess": "保存成功"
       }
     },
     "const": {
@@ -1304,7 +1352,8 @@
         "averageTime": "平均时长",
         "reviewCount": "待复核"
       }
-    }
+    },
+    "title": "数据标注"
   },
   "dataCleansing": {
     "title": "数据处理",
@@ -1342,7 +1391,8 @@
       "search": "搜索",
       "reset": "重置",
       "config": "参数配置",
-      "selectOperatorConfig": "请选择一个算子进行参数配置"
+      "selectOperatorConfig": "请选择一个算子进行参数配置",
+      "actions": "操作"
     },
     "steps": {
       "basicInfo": "基本信息",
@@ -1369,25 +1419,34 @@
         "dataSizeChange": "数据量变化",
         "actions": "操作"
       },
-        "form": {
-          "name": "名称",
-          "namePlaceholder": "输入任务名称",
-          "description": "描述",
-          "descriptionPlaceholder":  "描述任务的目标和要求",
-          "srcDataset": "源数据集",
-          "srcDatasetPlaceholder":  "请选择源数据集",
-          "destDatasetName": "目标数据集名称",
-          "destDatasetNamePlaceholder":  "输入或选择目标数据集名称",
-          "destDatasetType": "目标数据集类型",
-          "destDatasetTypeRequired":  "请选择目标数据集类型",
-          "useSourceDataset": "选择源数据集",
-          "useSourceDatasetHint":  "勾选后目标数据集将使用源数据集，不可修改",
-          "destDatasetNameRequired":  "请输入目标数据集名称",
-          "cannotUseSourceDataset": "不能使用源数据集作为目标数据集，请勾选\"选择源数据集\"或输入其他名称",
-          "allTypes": "全部",
-          "showingDatasets": "显示 {{count}} 个数据集",
-          "noDatasetsFound": "未找到匹配的数据集"
-        }
+      "form": {
+        "name": "名称",
+        "namePlaceholder": "输入任务名称",
+        "description": "描述",
+        "descriptionPlaceholder": "描述任务的目标和要求",
+        "srcDataset": "源数据集",
+        "srcDatasetPlaceholder": "请选择源数据集",
+        "destDatasetName": "目标数据集名称",
+        "destDatasetNamePlaceholder": "输入或选择目标数据集名称",
+        "destDatasetType": "目标数据集类型",
+        "destDatasetTypeRequired": "请选择目标数据集类型",
+        "useSourceDataset": "选择源数据集",
+        "useSourceDatasetHint": "勾选后目标数据集将使用源数据集，不可修改",
+        "destDatasetNameRequired": "请输入目标数据集名称",
+        "cannotUseSourceDataset": "不能使用源数据集作为目标数据集，请勾选\"选择源数据集\"或输入其他名称",
+        "allTypes": "全部",
+        "showingDatasets": "显示 {{count}} 个数据集",
+        "noDatasetsFound": "未找到匹配的数据集"
+      },
+      "messages": {
+        "fetchTaskLogFailed": "获取任务日志失败",
+        "fetchTaskResultFailed": "获取任务结果失败",
+        "taskCreated": "任务创建成功",
+        "taskDeleted": "任务删除成功",
+        "taskDetailFailed": "获取任务详情失败",
+        "taskPaused": "任务已暂停",
+        "taskStarted": "任务已启动"
+      }
     },
     "template": {
       "columns": {
@@ -1529,6 +1588,12 @@
       "running": "运行中",
       "pending": "等待中",
       "stopped": "已停止"
+    },
+    "logTable": {
+      "nthRun": "第{{n}}次运行"
+    },
+    "paramConfig": {
+      "enterValue": "请输入值"
     }
   },
   "knowledgeBase": {
@@ -1922,6 +1987,10 @@
         "npuSupport": "NPU 支持",
         "dependencies": "依赖项",
         "parseError": "数据解析失败"
+      },
+      "reviews": {
+        "basedOn": "基于 {{count}} 条评价",
+        "stars": "{{rating}} 星"
       }
     },
     "create": {
@@ -2208,7 +2277,11 @@
       "modal": {
         "evalTitle": "创建评估任务",
         "evalName": "评估任务名称",
-        "evalMethod": "评估方式",
+        "evalMethod": {
+          "auto": "自动评估",
+          "cot": "CoT 评估",
+          "qa": "QA 评估"
+        },
         "evalModel": "评估模型",
         "evalSource": "来源：合成任务（SYNTHESIS）",
         "sourceName": "源名称：{{name}}",
@@ -2225,7 +2298,10 @@
           "grammarErrorDesc": "问题为疑问句，答案为陈述句；不存在词语搭配不当的情况；连接词和标点符号不存在错用情况；逻辑混乱的情况不存在；语法结构都正确且完整。",
           "answerRelevance": "回答是否有针对性",
           "answerRelevanceDesc": "回答应对问题中的所有疑问点提供正面、直接的回答，不应引起疑惑。同时，答案不应有任何内容的遗漏，需构成一个完整的陈述。"
-        }
+        },
+        "evalMethodRequired": "请选择评估方式",
+        "evalNameRequired": "请输入评估名称",
+        "taskType": "任务类型"
       },
       "archive": {
         "success": "归档成功",
@@ -2368,6 +2444,9 @@
         "all": "全部类型",
         "preset": "预置",
         "custom": "自定义"
+      },
+      "actions": {
+        "createTemplate": "创建模板"
       }
     },
     "createTemplate": {
@@ -2512,13 +2591,18 @@
       "evaluationCreated": "评估任务创建成功",
       "evaluationCreateFailed": "评估任务创建失败",
       "fetchModelsFailed": "获取模型列表失败"
+    },
+    "common": {
+      "id": "ID"
     }
   },
   "components": {
     "errorBoundary": {
       "title": "发生错误",
       "retry": "重试",
-      "goHome": "返回首页"
+      "goHome": "返回首页",
+      "componentStack": "组件堆栈",
+      "errorMessage": "错误信息"
     },
     "deleteConfirm": {
       "title": "确认删除",
