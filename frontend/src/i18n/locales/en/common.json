@@ -379,6 +379,8 @@
       "deleteDatasetDesc": "Are you sure you want to delete \"{{itemName}}\"? This action cannot be undone.",
       "deleteFolderTitle": "Confirm delete folder?",
       "deleteFolderDesc": "Deleting folder \"{{name}}\" will remove all files and subfolders. This action cannot be undone.",
+      "batchDeleteTitle": "Confirm batch delete files?",
+      "batchDeleteDesc": "Are you sure you want to delete the selected {{count}} file(s)/folder(s)? This action cannot be undone.",
       "deleteConfirm": "Delete",
       "deleteCancel": "Cancel"
     },

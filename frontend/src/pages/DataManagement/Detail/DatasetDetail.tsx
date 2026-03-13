@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Breadcrumb, App, Tabs, Drawer, Descriptions } from "antd";
+import { Breadcrumb, App, Tabs, Drawer, Descriptions, Modal } from "antd";
 import {
   Info,
   Edit,
@@ -38,6 +38,7 @@ export default function DatasetDetail() {
   const datasetTypeMap = getDatasetTypeMap(t);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDetailDrawer, setShowDetailDrawer] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const [dataset, setDataset] = useState<Dataset>({} as Dataset);
 
@@ -179,15 +180,8 @@ export default function DatasetDetail() {
       key: "delete",
       label: t("dataManagement.actions.delete"),
       danger: true,
-      confirm: {
-        title: t("dataManagement.confirm.deleteDatasetTitle"),
-        description: t("dataManagement.confirm.deleteDatasetDesc"),
-        okText: t("dataManagement.confirm.deleteConfirm"),
-        cancelText: t("dataManagement.confirm.deleteCancel"),
-        okType: "danger",
-      },
       icon: <Trash2 className="w-4 h-4" />,
-      onClick: handleDeleteDataset,
+      onClick: () => setShowDeleteModal(true),
     },
   ];
 
@@ -336,6 +330,22 @@ export default function DatasetDetail() {
           ]}
         />
       </Drawer>
+
+      {/* 删除数据集确认弹窗 */}
+      <Modal
+        title={t("dataManagement.confirm.deleteDatasetTitle")}
+        open={showDeleteModal}
+        onOk={async () => {
+          setShowDeleteModal(false);
+          await handleDeleteDataset();
+        }}
+        onCancel={() => setShowDeleteModal(false)}
+        okText={t("dataManagement.confirm.deleteConfirm")}
+        cancelText={t("dataManagement.confirm.deleteCancel")}
+        okButtonProps={{ danger: true }}
+      >
+        <p>{t("dataManagement.confirm.deleteDatasetDesc", { itemName: dataset.name || t("dataManagement.detail.title") })}</p>
+      </Modal>
     </div>
   );
 }

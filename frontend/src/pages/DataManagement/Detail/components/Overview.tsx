@@ -15,14 +15,24 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
   // 删除确认弹窗状态
   const [deleteModal, setDeleteModal] = useState<{
     visible: boolean;
-    type: "file" | "directory";
+    type: "file" | "directory" | "batch";
     fileName: string;
+    count?: number;
     handler: () => void | Promise<void>;
   }>({
     visible: false,
     type: "file",
     fileName: "",
     handler: () => {},
+  });
+
+  // 批量删除确认弹窗状态
+  const [batchDeleteModal, setBatchDeleteModal] = useState<{
+    visible: boolean;
+    count: number;
+  }>({
+    visible: false,
+    count: 0,
   });
 
   const {
@@ -85,6 +95,24 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
 
   const handleCancelDelete = () => {
     setDeleteModal({ visible: false, type: "file", fileName: "", handler: () => {} });
+  };
+
+  // 显示批量删除确认弹窗
+  const showBatchDeleteConfirm = () => {
+    if (selectedFiles.length === 0) {
+      message.warning({ content: "请先选择要删除的文件" });
+      return;
+    }
+    setBatchDeleteModal({
+      visible: true,
+      count: selectedFiles.length,
+    });
+  };
+
+  // 执行批量删除
+  const handleConfirmBatchDelete = async () => {
+    setBatchDeleteModal({ visible: false, count: 0 });
+    await handleBatchDeleteFiles();
   };
 
   // 文件列表列定义
@@ -472,7 +500,7 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
               {t("dataManagement.actions.batchExport")}
             </Button>
             <Button
-              onClick={handleBatchDeleteFiles}
+              onClick={showBatchDeleteConfirm}
               danger
             >
               <Trash2 className="w-4 h-4 mr-2" />
@@ -739,6 +767,23 @@ export default function Overview({ dataset, filesOperation, fetchDataset }) {
         onConfirm={handleConfirmDelete}
         onCancel={handleCancelDelete}
       />
+
+      {/* 批量删除确认弹窗 */}
+      <Modal
+        title={t("dataManagement.confirm.batchDeleteTitle")}
+        open={batchDeleteModal.visible}
+        onOk={handleConfirmBatchDelete}
+        onCancel={() => setBatchDeleteModal({ visible: false, count: 0 })}
+        okText={t("dataManagement.confirm.deleteConfirm")}
+        cancelText={t("dataManagement.confirm.deleteCancel")}
+        okButtonProps={{ danger: true }}
+      >
+        <p>
+          {t("dataManagement.confirm.batchDeleteDesc", {
+            count: batchDeleteModal.count,
+          })}
+        </p>
+      </Modal>
     </>
   );
 }

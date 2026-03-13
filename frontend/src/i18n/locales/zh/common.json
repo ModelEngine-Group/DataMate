@@ -379,6 +379,8 @@
       "deleteDatasetDesc": "确定要删除「{{itemName}}」吗？删除后将无法恢复。",
       "deleteFolderTitle": "确认删除文件夹？",
       "deleteFolderDesc": "删除文件夹 \"{{name}}\" 将同时删除其中的所有文件和子文件夹，此操作不可恢复。",
+      "batchDeleteTitle": "确认批量删除文件？",
+      "batchDeleteDesc": "确定要删除选中的 {{count}} 个文件/文件夹吗？删除后将无法恢复。",
       "deleteConfirm": "删除",
       "deleteCancel": "取消"
     },

@@ -250,7 +250,7 @@ public class DatasetFileApplicationService {
 
         // 重新计算文件统计信息（确保数据准确）
         List<DatasetFile> remainingFiles = datasetFileRepository.findAllByDatasetId(datasetId);
-        dataset.setFileCount(remainingFiles.size());
+        dataset.setFileCount((long) remainingFiles.size());
         dataset.setSizeBytes(remainingFiles.stream()
             .mapToLong(f -> f.getFileSize() != null ? f.getFileSize().longValue() : 0L)
             .sum());
@@ -310,7 +310,7 @@ public class DatasetFileApplicationService {
 
         // 重新计算文件统计信息（确保数据准确）
         List<DatasetFile> remainingFiles = datasetFileRepository.findAllByDatasetId(datasetId);
-        dataset.setFileCount(remainingFiles.size());
+        dataset.setFileCount((long) remainingFiles.size());
         dataset.setSizeBytes(remainingFiles.stream()
             .mapToLong(f -> f.getFileSize() != null ? f.getFileSize().longValue() : 0L)
             .sum());
@@ -731,7 +731,7 @@ public class DatasetFileApplicationService {
 
         // 重新计算文件统计信息（确保数据准确）
         List<DatasetFile> remainingFiles = datasetFileRepository.findAllByDatasetId(datasetId);
-        dataset.setFileCount(remainingFiles.size());
+        dataset.setFileCount((long) remainingFiles.size());
         dataset.setSizeBytes(remainingFiles.stream()
             .mapToLong(f -> f.getFileSize() != null ? f.getFileSize().longValue() : 0L)
             .sum());
