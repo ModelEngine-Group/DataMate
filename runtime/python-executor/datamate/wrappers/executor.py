@@ -77,10 +77,10 @@ class RayExecutor:
                 file = Path(filepath)
                 del meta["videos"]
         if filepath and file:
-            filename = f"{Path(meta['fileName']).stem}.{file.suffix}"
+            filename = f"{Path(meta['fileName']).stem}{file.suffix}"
             meta["fileName"] = filename
-            meta["filePath"] = filepath
-            meta["fileType"] = file.suffix
+            meta["filePath"] = f"/dataset/{self.cfg.dataset_id}/{filename}"
+            meta["fileType"] = file.suffix[1:]
             meta["fileSize"] = file.stat().st_size
             os.makedirs(f"/dataset/{self.cfg.dataset_id}", exist_ok=True)
             shutil.move(filepath, f"/dataset/{self.cfg.dataset_id}/{filename}")
