@@ -92,6 +92,10 @@ class KnowledgeBaseService:
         new_name = request.name
         kb_type = knowledge_base.type
 
+        if new_name and new_name != old_name:
+            if await self.kb_repo.exists_by_name(new_name, exclude_id=knowledge_base_id):
+                raise BusinessError(ErrorCodes.RAG_KNOWLEDGE_BASE_ALREADY_EXISTS, data={"name": new_name})
+
         knowledge_base.name = request.name
         knowledge_base.description = request.description
 
