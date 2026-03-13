@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import json
+import mimetypes
 import os
 import time
 import traceback
@@ -169,6 +170,28 @@ class BaseOp:
     def read_file_first(self, sample):
         if self.is_first_op:
             self.read_file(sample)
+
+    def convert_to_dj(self, sample):
+        filepath = sample[self.filepath_key]
+        mime_type, _ = mimetypes.guess_type(filepath)
+        file_type = None
+        if mime_type:
+            file_type = mime_type.split('/')[0]
+        if file_type == "text":
+            return self.read_file(sample)
+        elif file_type == "image":
+            sample["text"] = ""
+            sample["data"] = b""
+            sample["images"] = [filepath]
+        elif file_type == "audio":
+            sample["text"] = ""
+            sample["data"] = b""
+            sample["audios"] = [filepath]
+        elif file_type == "video":
+            sample["text"] = ""
+            sample["data"] = b""
+            sample["videos"] = [filepath]
+        return sample
 
     @staticmethod
     def save_file_and_db(sample):
@@ -447,16 +470,17 @@ class FileExporter(BaseOp):
 
         try:
             start = time.time()
+            save_path = ""
             if file_type in self.text_support_ext:
                 sample, save_path = self.get_textfile_handler(sample)
             elif file_type in self.data_support_ext:
                 sample, save_path = self.get_datafile_handler(sample)
             elif file_type in self.medical_support_ext:
                 sample, save_path = self.get_medicalfile_handler(sample)
-            else:
-                return False
 
             if sample[self.text_key] == '' and sample[self.data_key] == b'':
+                if sample.get("executor") == "datajuicer":
+                    return True
                 sample[self.filesize_key] = "0"
                 return False
 
@@ -567,7 +591,7 @@ class FileExporter(BaseOp):
         return sample
 
     def _get_from_text_or_data(self, sample: Dict[str, Any]) -> Dict[str, Any]:
-        if sample[self.data_key] is not None and sample[self.data_key] != b'' and sample[self.data_key] != "":
+        if sample.get(self.data_key) is not None and sample[self.data_key] != b'' and sample[self.data_key] != "":
             return self._get_from_data(sample)
         else:
             return self._get_from_text(sample)

@@ -86,6 +86,7 @@ class DataJuicerExecutor(RayExecutor):
     def add_column(self, batch):
         batch_size = len(batch["filePath"])
         batch["execute_status"] = [SUCCESS_STATUS] * batch_size
+        batch["executor"] = ["datajuicer"] * batch_size
         batch[Fields.instance_id] = [self.cfg.instance_id] * batch_size
         batch[Fields.export_path] = [self.cfg.export_path] * batch_size
         return batch
@@ -102,7 +103,7 @@ class DataJuicerExecutor(RayExecutor):
             dataset = self.load_dataset()
 
         logger.info('Read data...')
-        dataset = dataset.map(FileExporter().read_file, num_cpus=0.05)
+        dataset = dataset.map(FileExporter().convert_to_dj, num_cpus=0.05)
 
         # 保存原始数据文件ID集合，用于后续过滤数据检测
         original_file_ids = set(dataset.unique("fileId"))
@@ -118,11 +119,11 @@ class DataJuicerExecutor(RayExecutor):
             dj_config = self.client.init_config(self.dataset_path, self.export_path, self.cfg.process)
             result_path = self.client.execute_config(dj_config)
 
-            processed_dataset = self.load_dataset(result_path)
+            processed_dataset = self.load_dj_dataset(result_path)
             processed_dataset = processed_dataset.map_batches(self.add_column, num_cpus=0.05)
             processed_dataset = processed_dataset.map(FileExporter().save_file_and_db, num_cpus=0.05)
-            for _ in processed_dataset.iter_batches():
-                pass
+
+            processed_dataset = processed_dataset.materialize()
 
             # 特殊处理：识别被过滤的数据
             if processed_dataset.count() == 0:
