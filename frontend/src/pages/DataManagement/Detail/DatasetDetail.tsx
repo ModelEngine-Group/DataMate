@@ -178,7 +178,7 @@ export default function DatasetDetail() {
       danger: true,
       confirm: {
         title: t("dataManagement.confirm.deleteDatasetTitle"),
-        description: t("dataManagement.confirm.deleteDatasetDesc"),
+        description: t("dataManagement.confirm.deleteDatasetDesc", { itemName: dataset.name }),
         okText: t("dataManagement.confirm.deleteConfirm"),
         cancelText: t("dataManagement.confirm.deleteCancel"),
         okType: "danger",
