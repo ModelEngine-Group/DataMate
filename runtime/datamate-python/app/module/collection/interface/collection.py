@@ -3,6 +3,7 @@ import math
 import uuid
 import shutil
 import os
+import asyncio
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Query
@@ -11,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exception import ErrorCodes, BusinessError, SuccessResponse, transaction
 from app.core.logging import get_logger
-from app.db.models import Dataset
+from app.db.models import Dataset, DatasetFiles
 from app.db.models.data_collection import CollectionTask, TaskExecution, CollectionTemplate
 from app.db.session import get_db
 from app.module.collection.client.datax_client import DataxClient
@@ -26,6 +27,92 @@ router = APIRouter(
     tags=["data-collection/tasks"],
 )
 logger = get_logger(__name__)
+
+
+async def is_hard_link(file_path: str) -> bool:
+    """检查文件是否是硬链接"""
+    try:
+        stat_info = await asyncio.to_thread(os.stat, file_path)
+        # 如果链接数大于1，说明是硬链接
+        return stat_info.st_nlink > 1
+    except OSError:
+        return False
+
+
+async def convert_hardlink_to_real_file(file_path: str) -> bool:
+    """
+    将硬链接转换为实体文件
+    通过读取并重新写入文件内容，创建一个独立的副本
+    """
+    try:
+        # 创建临时文件
+        temp_path = f"{file_path}.tmp"
+        # 使用 shutil.copy2 创建副本（保留元数据）
+        await asyncio.to_thread(shutil.copy2, file_path, temp_path)
+        # 删除原文件（硬链接）
+        await asyncio.to_thread(os.unlink, file_path)
+        # 重命名临时文件为原文件名
+        await asyncio.to_thread(os.replace, temp_path, file_path)
+        return True
+    except OSError as e:
+        logger.warning(f"Failed to convert hard link to real file {file_path}: {e}")
+        # 清理临时文件（如果存在）
+        if os.path.exists(f"{file_path}.tmp"):
+            try:
+                await asyncio.to_thread(os.remove, f"{file_path}.tmp")
+            except OSError:
+                pass
+        return False
+
+
+async def convert_dataset_hardlinks_before_delete(task_id: str, db: AsyncSession) -> int:
+    """
+    删除归集任务前，将数据集中的硬链接文件转换为实体文件
+
+    Args:
+        task_id: 归集任务ID
+        db: 数据库会话
+
+    Returns:
+        转换成功的文件数量
+    """
+    try:
+        # 查找所有数据集文件（通过文件路径匹配任务ID）
+        # 注意：归集任务的源文件路径是 tmp/dataset/{task_id}/
+        # 我们需要找到数据集中所有以这个路径为源的文件
+        source_prefix = f"tmp/dataset/{task_id}/"
+
+        # 查询所有可能相关的数据集文件
+        result = await db.execute(
+            select(DatasetFiles).where(
+                DatasetFiles.file_path.like(f"%/dataset/%"),
+                DatasetFiles.status == "ACTIVE"
+            )
+        )
+        dataset_files = result.scalars().all()
+
+        converted_count = 0
+        for dataset_file in dataset_files:
+            file_path = dataset_file.file_path
+            if not file_path:
+                continue
+
+            # 检查文件是否是硬链接
+            if await is_hard_link(file_path):
+                logger.info(f"Converting hard link to real file: {file_path}")
+                success = await convert_hardlink_to_real_file(file_path)
+                if success:
+                    converted_count += 1
+                else:
+                    logger.warning(f"Failed to convert hard link: {file_path}")
+
+        if converted_count > 0:
+            logger.info(f"Converted {converted_count} hard link(s) to real file(s) for task {task_id}")
+
+        return converted_count
+    except Exception as e:
+        logger.error(f"Error converting hard links for task {task_id}: {e}", exc_info=True)
+        return 0
 
 
 @router.post("", response_model=StandardResponse[CollectionTaskBase], operation_id="create_collect_task", tags=["mcp"])
@@ -263,7 +350,10 @@ async def delete_collection_tasks(
         # 删除任务
         await db.delete(task)
 
-    # 事务提交后，删除文件系统和调度
+    # 事务提交后，先转换硬链接，再删除文件系统和调度
+    logger.info(f"Converting hard links before deleting task {task_id}")
+    await convert_dataset_hardlinks_before_delete(task_id, db)
+
     remove_collection_task(task_id)
 
     target_path = f"/dataset/local/{task_id}"

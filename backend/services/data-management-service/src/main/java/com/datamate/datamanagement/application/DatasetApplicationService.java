@@ -285,7 +285,10 @@ public class DatasetApplicationService {
             if (CollectionUtils.isEmpty(filePaths)) {
                 return;
             }
-            datasetFileApplicationService.addFilesToDataset(datasetId, new AddFilesRequest(filePaths));
+            // 创建请求并启用硬链接（softAdd=true）
+            AddFilesRequest addFilesRequest = new AddFilesRequest(filePaths);
+            addFilesRequest.setSoftAdd(true);
+            datasetFileApplicationService.addFilesToDataset(datasetId, addFilesRequest);
             log.info("Success file scan, total files: {}", filePaths.size());
         } catch (Exception e) {
             log.error("处理数据源文件扫描失败，数据集ID: {}, 数据源ID: {}", datasetId, dataSourceId, e);
