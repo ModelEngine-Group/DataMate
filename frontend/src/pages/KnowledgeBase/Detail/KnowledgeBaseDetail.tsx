@@ -1,6 +1,7 @@
 import type React from "react";
 import { useEffect, useState } from "react";
-import { Table, Badge, Button, Breadcrumb, Tooltip, App, Card, Input, Empty, Spin, Tag } from "antd";
+import { Table, Badge, Button, Breadcrumb, Tooltip, App, Card, Input, Empty, Spin, Tag, Modal } from "antd";
+import { ExclamationCircleOutlined } from "@ant-design/icons";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
@@ -264,7 +265,17 @@ const KnowledgeBaseDetailPage: React.FC = () => {
       label: t("knowledgeBase.detail.actions.deleteFile"),
       icon: <DeleteOutlined className="w-4 h-4" />,
       danger: true,
-      onClick: handleDeleteFile,
+      onClick: (file: KBFile) => {
+        Modal.confirm({
+          title: t("knowledgeBase.detail.confirm.deleteFileTitle"),
+          content: t("knowledgeBase.detail.confirm.deleteFileDescription", { name: file.name }),
+          okText: t("knowledgeBase.detail.confirm.okText"),
+          okType: "danger",
+          cancelText: t("knowledgeBase.detail.confirm.cancelText"),
+          centered: true,
+          onOk: () => handleDeleteFile(file),
+        });
+      },
     },
   ];
 

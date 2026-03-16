@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import {Eye, Edit, Trash2, FileBox, ChevronLeft, ChevronRight, Code, CheckCircle, AlertCircle, Wand2} from "lucide-react";
 import { Card, Button, Badge, Input, Tabs, Modal, Breadcrumb, Tag, Spin, Empty, Alert, message, Tooltip } from "antd";
+import { ExclamationCircleOutlined } from "@ant-design/icons";
 import { queryKnowledgeBaseFileDetailUsingGet, updateKnowledgeBaseChunk, deleteKnowledgeBaseChunk } from "@/pages/KnowledgeBase/knowledge-base.api";
 import { Link, useParams } from "react-router";
 import DetailHeader from "@/components/DetailHeader";
@@ -402,6 +403,7 @@ const KnowledgeBaseFileDetail: React.FC = () => {
         okText={t("knowledgeBase.fileDetail.actions.confirm")}
         cancelText={t("knowledgeBase.fileDetail.actions.cancel")}
         okButtonProps={{ danger: true, loading: deleting }}
+        centered
       >
         <p>{t("knowledgeBase.fileDetail.modal.deleteConfirmMessage")}</p>
       </Modal>

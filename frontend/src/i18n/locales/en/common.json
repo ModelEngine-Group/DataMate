@@ -1646,6 +1646,8 @@
       "confirm": {
         "deleteTitle": "Confirm deletion of this knowledge base?",
         "deleteDescription": "It cannot be recovered after deletion. Please operate with caution.",
+        "deleteFileTitle": "Confirm deletion of this file?",
+        "deleteFileDescription": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
         "okText": "Delete",
         "cancelText": "Cancel"
       },

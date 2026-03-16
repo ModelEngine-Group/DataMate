@@ -1646,6 +1646,8 @@
       "confirm": {
         "deleteTitle": "确认删除该知识库吗？",
         "deleteDescription": "删除后将无法恢复，请谨慎操作。",
+        "deleteFileTitle": "确认删除该文件吗？",
+        "deleteFileDescription": "确定要删除文件「{{name}}」吗？删除后将无法恢复。",
         "okText": "删除",
         "cancelText": "取消"
       },
