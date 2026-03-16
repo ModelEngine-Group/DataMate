@@ -13,7 +13,6 @@
 """
 from __future__ import annotations
 
-import json
 import logging
 from typing import List, Optional
 
@@ -26,6 +25,47 @@ from app.module.rag.infra.embeddings import EmbeddingFactory
 from app.module.rag.infra.vectorstore.milvus_client import get_milvus_client
 
 logger = logging.getLogger(__name__)
+
+BATCH_DELETE_SIZE = 100
+
+
+def _delete_chunks_by_rag_file_id_batched(client, collection_name: str, rag_file_id: str) -> int:
+    """分批删除指定 rag_file_id 的所有 chunks
+
+    Args:
+        client: Milvus 客户端
+        collection_name: 集合名称
+        rag_file_id: RAG 文件 ID
+
+    Returns:
+        删除的总数量
+    """
+    filter_expr = f'metadata["rag_file_id"] == "{rag_file_id}"'
+    total_deleted = 0
+
+    while True:
+        try:
+            results = client.query(
+                collection_name=collection_name,
+                filter=filter_expr,
+                output_fields=["id"],
+                limit=BATCH_DELETE_SIZE,
+            )
+            if not results:
+                break
+
+            chunk_ids = [r["id"] for r in results]
+            id_filter = ' || '.join([f'id == "{cid}"' for cid in chunk_ids])
+            client.delete(collection_name=collection_name, filter=f"({id_filter})")
+            total_deleted += len(chunk_ids)
+
+            if len(chunk_ids) < BATCH_DELETE_SIZE:
+                break
+        except Exception as e:
+            logger.warning("分批删除失败: collection=%s rag_file_id=%s error=%s", collection_name, rag_file_id, e)
+            break
+
+    return total_deleted
 
 
 def drop_collection(collection_name: str) -> None:
@@ -201,12 +241,8 @@ def delete_chunks_by_rag_file_ids(collection_name: str, rag_file_ids: List[str])
         client = get_milvus_client()
 
         for rid in rag_file_ids:
-            json_value = json.dumps({"rag_file_id": rid})
-            filter_expr = f'JSON_CONTAINS(metadata, \'{json_value}\')'
-            try:
-                client.delete(collection_name=collection_name, filter=filter_expr)
-            except Exception as del_err:
-                logger.warning("删除分块时部分失败: collection=%s rag_file_id=%s: %s", collection_name, rid, del_err)
+            deleted = _delete_chunks_by_rag_file_id_batched(client, collection_name, rid)
+            logger.info("删除文件分块: collection=%s rag_file_id=%s deleted=%d", collection_name, rid, deleted)
 
         logger.info("已按 rag_file_id 删除集合 %s 中的分块: %s", collection_name, rag_file_ids)
 
@@ -258,14 +294,14 @@ def update_chunk_by_id(
     """
     try:
         client = get_milvus_client()
-        
+
         filter_expr = f'id == "{chunk_id}"'
         existing = client.query(
             collection_name=collection_name,
             filter=filter_expr,
             output_fields=["metadata"],
         )
-        
+
         if not existing:
             raise BusinessError(
                 ErrorCodes.RAG_CHUNK_NOT_FOUND,
@@ -280,17 +316,17 @@ def update_chunk_by_id(
             # 确保保留原有的 rag_file_id 字段，防止用户修改时丢失
             if "rag_file_id" in existing_metadata and "rag_file_id" not in metadata:
                 metadata = {**metadata, "rag_file_id": existing_metadata["rag_file_id"]}
-        
+
         if embedding_instance:
             embedding = embedding_instance
         else:
             from app.module.rag.infra.embeddings import EmbeddingFactory
             embedding = EmbeddingFactory.create_embeddings()
-        
+
         vector = embedding.embed_query(text)
-        
+
         client.delete(collection_name=collection_name, filter=filter_expr)
-        
+
         client.insert(
             collection_name=collection_name,
             data=[{
@@ -300,9 +336,9 @@ def update_chunk_by_id(
                 "vector": vector,
             }]
         )
-        
+
         logger.info("成功更新分块: collection=%s chunk_id=%s", collection_name, chunk_id)
-        
+
     except BusinessError:
         raise
     except Exception as e:
@@ -322,27 +358,27 @@ def delete_chunk_by_id(collection_name: str, chunk_id: str) -> Optional[str]:
     """
     try:
         client = get_milvus_client()
-        
+
         filter_expr = f'id == "{chunk_id}"'
-        
+
         # 先查询 chunk 的 metadata 获取 rag_file_id
         existing = client.query(
             collection_name=collection_name,
             filter=filter_expr,
             output_fields=["metadata"],
         )
-        
+
         rag_file_id = None
         if existing:
             metadata = existing[0].get("metadata", {})
             rag_file_id = metadata.get("rag_file_id")
-        
+
         client.delete(collection_name=collection_name, filter=filter_expr)
-        
+
         logger.info("成功删除分块: collection=%s chunk_id=%s rag_file_id=%s", collection_name, chunk_id, rag_file_id)
-        
+
         return rag_file_id
-        
+
     except Exception as e:
         logger.error("删除分块失败: %s", e)
         raise BusinessError(ErrorCodes.RAG_MILVUS_ERROR, f"删除分块失败: {str(e)}") from e
