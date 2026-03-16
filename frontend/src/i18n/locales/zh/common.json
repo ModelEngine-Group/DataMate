@@ -1689,7 +1689,8 @@
       "actions": {
         "download": "下载",
         "save": "保存",
-        "cancel": "取消"
+        "cancel": "取消",
+        "confirm": "确认"
       },
       "messages": {
         "noChunks": "暂无分块数据",
@@ -1700,7 +1701,16 @@
         "previousPage": "上一页",
         "nextPage": "下一页",
         "chunkLabel": "分块",
-        "loadFailed": "加载失败"
+        "loadFailed": "加载失败",
+        "updateSuccess": "分块更新成功",
+        "updateFailed": "分块更新失败",
+        "deleteSuccess": "分块删除成功",
+        "deleteFailed": "分块删除失败",
+        "invalidMetadata": "元数据JSON格式无效"
+      },
+      "placeholders": {
+        "chunkContent": "请输入分块内容",
+        "metadata": "请输入元数据（JSON格式）"
       },
       "modal": {
         "sliceTraceTitle": "知识切片回溯",
@@ -1715,7 +1725,9 @@
         "position": "位置",
         "tokenCount": "Token数量",
         "pageNumber": "页码",
-        "chapter": "章节"
+        "chapter": "章节",
+        "deleteConfirmTitle": "确认删除分块",
+        "deleteConfirmMessage": "确定要删除这个分块吗？此操作将同时删除Milvus中的向量数据，且无法恢复。"
       },
       "breadcrumb": {
         "kbList": "知识库",

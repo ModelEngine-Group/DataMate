@@ -238,3 +238,87 @@ def chunks_to_documents(
         documents.append(doc)
 
     return documents, ids
+
+
+def update_chunk_by_id(
+    collection_name: str,
+    chunk_id: str,
+    text: str,
+    metadata: Optional[dict] = None,
+    embedding_instance=None,
+) -> None:
+    """更新指定 ID 的分块
+
+    Args:
+        collection_name: 集合名称
+        chunk_id: 分块 ID
+        text: 新的文本内容
+        metadata: 新的元数据（可选）
+        embedding_instance: Embeddings 实例
+    """
+    try:
+        client = get_milvus_client()
+        
+        filter_expr = f'id == "{chunk_id}"'
+        existing = client.query(
+            collection_name=collection_name,
+            filter=filter_expr,
+            output_fields=["metadata"],
+        )
+        
+        if not existing:
+            raise BusinessError(
+                ErrorCodes.RAG_CHUNK_NOT_FOUND,
+                f"Chunk not found: {chunk_id}"
+            )
+        
+        if metadata is None:
+            metadata = existing[0].get("metadata", {})
+        
+        if embedding_instance:
+            embedding = embedding_instance
+        else:
+            from app.module.rag.infra.embeddings import EmbeddingFactory
+            embedding = EmbeddingFactory.create_embeddings()
+        
+        vector = embedding.embed_query(text)
+        
+        client.delete(collection_name=collection_name, filter=filter_expr)
+        
+        client.insert(
+            collection_name=collection_name,
+            data=[{
+                "id": chunk_id,
+                "text": text,
+                "metadata": metadata,
+                "vector": vector,
+            }]
+        )
+        
+        logger.info("成功更新分块: collection=%s chunk_id=%s", collection_name, chunk_id)
+        
+    except BusinessError:
+        raise
+    except Exception as e:
+        logger.error("更新分块失败: %s", e)
+        raise BusinessError(ErrorCodes.RAG_MILVUS_ERROR, f"更新分块失败: {str(e)}") from e
+
+
+def delete_chunk_by_id(collection_name: str, chunk_id: str) -> None:
+    """删除指定 ID 的分块
+
+    Args:
+        collection_name: 集合名称
+        chunk_id: 分块 ID
+    """
+    try:
+        client = get_milvus_client()
+        
+        filter_expr = f'id == "{chunk_id}"'
+        client.delete(collection_name=collection_name, filter=filter_expr)
+        
+        logger.info("成功删除分块: collection=%s chunk_id=%s", collection_name, chunk_id)
+        
+    except Exception as e:
+        logger.error("删除分块失败: %s", e)
+        raise BusinessError(ErrorCodes.RAG_MILVUS_ERROR, f"删除分块失败: {str(e)}") from e

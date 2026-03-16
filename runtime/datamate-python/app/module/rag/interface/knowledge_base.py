@@ -21,6 +21,7 @@ from app.module.rag.schema.request import (
     RetrieveReq,
     PagingQuery,
     QueryRequest,
+    ChunkUpdateReq,
 )
 from app.module.rag.service.knowledge_base_service import KnowledgeBaseService
 from app.module.rag.service.unified_retrieval_service import UnifiedRetrievalService
@@ -149,6 +150,39 @@ async def get_file_chunks(
     service = UnifiedRetrievalService(db)
     result = await service.get_chunks(knowledge_base_id, rag_file_id, paging_query)
     return SuccessResponse(data=result)
+
+
+@router.put("/{knowledge_base_id}/chunks/{chunk_id}", response_model=SuccessResponse)
+async def update_chunk(
+    knowledge_base_id: str,
+    chunk_id: str,
+    request: ChunkUpdateReq,
+    db: AsyncSession = Depends(get_db),
+):
+    """更新指定分块的文本和元数据"""
+    service = KnowledgeBaseService(db)
+    await service.update_chunk(
+        knowledge_base_id=knowledge_base_id,
+        chunk_id=chunk_id,
+        text=request.text,
+        metadata=request.metadata,
+    )
+    return SuccessResponse(message="分块更新成功")
+
+
+@router.delete("/{knowledge_base_id}/chunks/{chunk_id}", response_model=SuccessResponse)
+async def delete_chunk(
+    knowledge_base_id: str,
+    chunk_id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """删除指定分块"""
+    service = KnowledgeBaseService(db)
+    await service.delete_chunk(
+        knowledge_base_id=knowledge_base_id,
+        chunk_id=chunk_id,
+    )
+    return SuccessResponse(message="分块删除成功")
 
 
 @router.post("/retrieve", response_model=SuccessResponse)

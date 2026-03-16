@@ -342,3 +342,21 @@ class QueryRequest(BaseModel):
                 "query": "什么是机器学习？"
             }
         }
+
+
+class ChunkUpdateReq(BaseModel):
+    """Chunk更新请求"""
+    text: str = Field(..., min_length=1, description="分块文本内容")
+    metadata: Optional[dict] = Field(default=None, description="元数据")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "text": "这是修改后的分块内容...",
+                "metadata": {
+                    "fileName": "document.pdf",
+                    "chunkIndex": 0,
+                    "customField": "custom value"
+                }
+            }
+        }

@@ -12,6 +12,8 @@ from app.module.rag.infra.vectorstore.store import (
     drop_collection,
     get_vector_dimension,
     rename_collection,
+    update_chunk_by_id,
+    delete_chunk_by_id,
 )
 
 __all__ = [
@@ -23,4 +25,6 @@ __all__ = [
     "get_vector_dimension",
     "delete_chunks_by_rag_file_ids",
     "chunks_to_documents",
+    "update_chunk_by_id",
+    "delete_chunk_by_id",
 ]

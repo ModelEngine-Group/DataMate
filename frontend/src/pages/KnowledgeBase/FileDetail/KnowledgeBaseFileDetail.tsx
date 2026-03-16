@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import {Eye, Edit, Trash2, FileBox, ChevronLeft, ChevronRight} from "lucide-react";
-import { Card, Button, Badge, Input, Tabs, Modal, Breadcrumb, Tag, Spin, Empty, Alert } from "antd";
-import { queryKnowledgeBaseFileDetailUsingGet } from "@/pages/KnowledgeBase/knowledge-base.api";
+import { Card, Button, Badge, Input, Tabs, Modal, Breadcrumb, Tag, Spin, Empty, Alert, message } from "antd";
+import { queryKnowledgeBaseFileDetailUsingGet, updateKnowledgeBaseChunk, deleteKnowledgeBaseChunk } from "@/pages/KnowledgeBase/knowledge-base.api";
 import { Link, useParams } from "react-router";
 import DetailHeader from "@/components/DetailHeader";
 import { useTranslation } from "react-i18next";
@@ -11,20 +11,20 @@ import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 interface RagChunk {
   id: string;
   text: string;
-  metadata: unknown; // may be string or object
+  metadata: unknown;
 }
+
+const { TextArea } = Input;
 
 const KnowledgeBaseFileDetail: React.FC = () => {
   const { t } = useTranslation();
   const { id } = useParams();
-  // id 为路由中的 ragFileId，knowledgeBaseId 通过上一级 detail 路由或 query 传入
   const search = new URLSearchParams(window.location.search);
   const knowledgeBaseId = search.get("knowledgeBaseId") || "";
   const fileName = search.get("fileName") || "";
   const ragFileId = id || "";
   const kbLink = knowledgeBaseId ? `/data/knowledge-base/detail/${knowledgeBaseId}` : "/data/knowledge-base";
 
-  // 远程数据状态
   const [paged, setPaged] = useState<{
     page: number;
     size: number;
@@ -35,11 +35,14 @@ const KnowledgeBaseFileDetail: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // 本地 UI 状态
   const [editingChunk, setEditingChunk] = useState<string | null>(null);
   const [editChunkContent, setEditChunkContent] = useState("");
+  const [editChunkMetadata, setEditChunkMetadata] = useState("");
   const [chunkDetailModal, setChunkDetailModal] = useState<string | null>(null);
   const [showSliceTraceDialog, setShowSliceTraceDialog] = useState<string | null>(null);
+  const [deleteConfirmModal, setDeleteConfirmModal] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const pageSize = 10;
   const [currentPage, setCurrentPage] = useState(1);
@@ -49,7 +52,7 @@ const KnowledgeBaseFileDetail: React.FC = () => {
       try {
         return JSON.parse(meta);
       } catch {
-        return meta; // 保持原样
+        return meta;
       }
     }
     return meta;
@@ -61,7 +64,6 @@ const KnowledgeBaseFileDetail: React.FC = () => {
     setError(null);
     try {
       const res = await queryKnowledgeBaseFileDetailUsingGet(knowledgeBaseId, ragFileId, { page, size: pageSize });
-      // 兼容返回结构 ResponsePagedResponseRagChunk -> { code, message, data }
       const raw = (res?.data ?? res) as {
         page: number;
         size: number;
@@ -87,28 +89,67 @@ const KnowledgeBaseFileDetail: React.FC = () => {
 
   useEffect(() => {
     fetchChunks(currentPage);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [knowledgeBaseId, ragFileId, currentPage, t]);
 
   const totalElements = paged?.totalElements ?? 0;
   const totalPages = paged?.totalPages ?? 0;
   const currentChunks = paged?.content ?? [];
 
-  const handleEditChunk = (chunkId: string, content: string) => {
+  const handleEditChunk = (chunkId: string, content: string, metadata: unknown) => {
     setEditingChunk(chunkId);
     setEditChunkContent(content);
+    setEditChunkMetadata(JSON.stringify(metadata ?? {}, null, 2));
   };
 
-  const handleSaveChunk = (chunkId: string) => {
-    // TODO: 保存到后端（暂不实现）
-    setEditingChunk(null);
-    setEditChunkContent("");
+  const handleSaveChunk = async (chunkId: string) => {
+    if (!knowledgeBaseId) return;
+    
+    let parsedMetadata = {};
+    try {
+      parsedMetadata = editChunkMetadata ? JSON.parse(editChunkMetadata) : {};
+    } catch {
+      message.error(t("knowledgeBase.fileDetail.messages.invalidMetadata"));
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await updateKnowledgeBaseChunk(knowledgeBaseId, chunkId, {
+        text: editChunkContent,
+        metadata: parsedMetadata,
+      });
+      message.success(t("knowledgeBase.fileDetail.messages.updateSuccess"));
+      setEditingChunk(null);
+      setEditChunkContent("");
+      setEditChunkMetadata("");
+      fetchChunks(currentPage);
+    } catch (err: unknown) {
+      const msg = typeof err === "object" && err !== null && "message" in err 
+        ? String((err as { message?: string }).message) 
+        : t("knowledgeBase.fileDetail.messages.updateFailed");
+      message.error(msg);
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleDeleteChunk = (chunkId: string) => {
-    // TODO: 删除后端分块（暂不实现）
-    setEditingChunk(null);
-    setEditChunkContent("");
+  const handleDeleteChunk = async (chunkId: string) => {
+    if (!knowledgeBaseId) return;
+
+    setDeleting(true);
+    try {
+      await deleteKnowledgeBaseChunk(knowledgeBaseId, chunkId);
+      message.success(t("knowledgeBase.fileDetail.messages.deleteSuccess"));
+      setDeleteConfirmModal(null);
+      fetchChunks(currentPage);
+    } catch (err: unknown) {
+      const msg = typeof err === "object" && err !== null && "message" in err 
+        ? String((err as { message?: string }).message) 
+        : t("knowledgeBase.fileDetail.messages.deleteFailed");
+      message.error(msg);
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const handleViewChunkDetail = (chunkId: string) => {
@@ -162,6 +203,7 @@ const KnowledgeBaseFileDetail: React.FC = () => {
                       type="primary"
                       size="small"
                       onClick={() => handleSaveChunk(chunk.id)}
+                      loading={saving}
                     >
                       {t("knowledgeBase.fileDetail.actions.save")}
                     </Button>
@@ -170,6 +212,7 @@ const KnowledgeBaseFileDetail: React.FC = () => {
                       onClick={() => {
                         setEditingChunk(null);
                         setEditChunkContent("");
+                        setEditChunkMetadata("");
                       }}
                     >
                       {t("knowledgeBase.fileDetail.actions.cancel")}
@@ -180,10 +223,10 @@ const KnowledgeBaseFileDetail: React.FC = () => {
                     <Button size="small" type="text" onClick={() => handleViewChunkDetail(chunk.id)}>
                       <Eye className="w-4 h-4" />
                     </Button>
-                    <Button size="small" type="text" onClick={() => handleEditChunk(chunk.id, chunk.text)}>
+                    <Button size="small" type="text" onClick={() => handleEditChunk(chunk.id, chunk.text, chunk.metadata)}>
                       <Edit className="w-4 h-4" />
                     </Button>
-                    <Button size="small" type="text" danger onClick={() => handleDeleteChunk(chunk.id)}>
+                    <Button size="small" type="text" danger onClick={() => setDeleteConfirmModal(chunk.id)}>
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </>
@@ -194,18 +237,32 @@ const KnowledgeBaseFileDetail: React.FC = () => {
           >
             <div style={{ marginBottom: 8, fontWeight: 500 }}>
               {editingChunk === chunk.id ? (
-                <Input.TextArea
-                  value={editChunkContent}
-                  onChange={(e) => setEditChunkContent(e.target.value)}
-                  rows={3}
-                />
+                <>
+                  <TextArea
+                    value={editChunkContent}
+                    onChange={(e) => setEditChunkContent(e.target.value)}
+                    rows={3}
+                    placeholder={t("knowledgeBase.fileDetail.placeholders.chunkContent")}
+                  />
+                  <div style={{ marginTop: 8 }}>
+                    <div style={{ fontSize: 12, color: '#888', marginBottom: 4 }}>metadata</div>
+                    <TextArea
+                      value={editChunkMetadata}
+                      onChange={(e) => setEditChunkMetadata(e.target.value)}
+                      rows={4}
+                      placeholder={t("knowledgeBase.fileDetail.placeholders.metadata")}
+                    />
+                  </div>
+                </>
               ) : (
                 chunk.text
               )}
             </div>
-            <div style={{ fontSize: 12, color: '#888' }}>
-              metadata <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all', margin: 0 }}>{typeof chunk.metadata === "string" ? chunk.metadata : JSON.stringify(chunk.metadata ?? {}, null, 2)}</pre>
-            </div>
+            {editingChunk !== chunk.id && (
+              <div style={{ fontSize: 12, color: '#888' }}>
+                metadata <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all', margin: 0 }}>{typeof chunk.metadata === "string" ? chunk.metadata : JSON.stringify(chunk.metadata ?? {}, null, 2)}</pre>
+              </div>
+            )}
           </Card>
         ))}
         {!loading && currentChunks.length === 0 && (
@@ -226,7 +283,6 @@ const KnowledgeBaseFileDetail: React.FC = () => {
           { title: fileName || `文件 ${ragFileId}` },
         ]}
       />
-      {/* 头部统计使用最简占位，后续可扩展 */}
       <DetailHeader
         data={{
           id: ragFileId,
@@ -244,7 +300,6 @@ const KnowledgeBaseFileDetail: React.FC = () => {
         {loading ? <div className="flex items-center justify-center py-8"><Spin /></div> : renderChunks()}
       </Card>
 
-      {/* Slice Trace Modal */}
       <Modal
         open={!!showSliceTraceDialog}
         onCancel={() => setShowSliceTraceDialog(null)}
@@ -253,7 +308,6 @@ const KnowledgeBaseFileDetail: React.FC = () => {
         width={800}
         destroyOnClose
       >
-        {/* 简化为内容占位，真实数据待后端提供更多字段 */}
         <div className="space-y-4">
           <div className="bg-gray-50 rounded-lg p-4">
             <h4 className="font-medium mb-3">{t("knowledgeBase.fileDetail.modal.sliceProcessTitle")}</h4>
@@ -273,7 +327,6 @@ const KnowledgeBaseFileDetail: React.FC = () => {
         </div>
       </Modal>
 
-      {/* Chunk Detail Modal */}
       <Modal
         open={!!chunkDetailModal}
         onCancel={() => setChunkDetailModal(null)}
@@ -328,6 +381,18 @@ const KnowledgeBaseFileDetail: React.FC = () => {
             },
           ]}
         />
+      </Modal>
+
+      <Modal
+        open={!!deleteConfirmModal}
+        onCancel={() => setDeleteConfirmModal(null)}
+        onOk={() => handleDeleteChunk(deleteConfirmModal!)}
+        title={t("knowledgeBase.fileDetail.modal.deleteConfirmTitle")}
+        okText={t("knowledgeBase.fileDetail.actions.confirm")}
+        cancelText={t("knowledgeBase.fileDetail.actions.cancel")}
+        okButtonProps={{ danger: true, loading: deleting }}
+      >
+        <p>{t("knowledgeBase.fileDetail.modal.deleteConfirmMessage")}</p>
       </Modal>
     </div>
   );

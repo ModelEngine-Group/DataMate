@@ -395,3 +395,78 @@ class VectorKnowledgeBaseStrategy(KnowledgeBaseStrategy):
         
         logger.info("有效分块数量: %d / %d", len(valid_chunks), len(chunks))
         return valid_chunks
+    
+    async def update_chunk(
+        self,
+        knowledge_base_id: str,
+        chunk_id: str,
+        text: str,
+        metadata: Optional[dict] = None,
+    ) -> None:
+        """更新指定分块的文本和元数据
+        
+        Args:
+            knowledge_base_id: 知识库 ID
+            chunk_id: 分块 ID
+            text: 新的文本内容
+            metadata: 新的元数据（可选）
+        """
+        from app.module.rag.infra.vectorstore import update_chunk_by_id
+        
+        kb_repo = KnowledgeBaseRepository(self.db)
+        kb = await kb_repo.get_by_id(knowledge_base_id)
+        if not kb:
+            raise BusinessError(ErrorCodes.RAG_KNOWLEDGE_BASE_NOT_FOUND)
+        
+        embedding_entity = await get_model_by_id(self.db, kb.embedding_model)
+        if not embedding_entity:
+            raise BusinessError(ErrorCodes.RAG_MODEL_NOT_FOUND)
+        
+        embedding = EmbeddingFactory.create_embeddings(
+            model_name=str(embedding_entity.model_name),
+            base_url=getattr(embedding_entity, "base_url", None),
+            api_key=getattr(embedding_entity, "api_key", None),
+        )
+        
+        await asyncio.to_thread(
+            update_chunk_by_id,
+            collection_name=str(kb.name),
+            chunk_id=chunk_id,
+            text=text,
+            metadata=metadata,
+            embedding_instance=embedding,
+        )
+        
+        logger.info(
+            "成功更新分块: kb=%s chunk_id=%s",
+            knowledge_base_id, chunk_id
+        )
+    
+    async def delete_chunk(
+        self,
+        knowledge_base_id: str,
+        chunk_id: str,
+    ) -> None:
+        """删除指定分块
+        
+        Args:
+            knowledge_base_id: 知识库 ID
+            chunk_id: 分块 ID
+        """
+        from app.module.rag.infra.vectorstore import delete_chunk_by_id
+        
+        kb_repo = KnowledgeBaseRepository(self.db)
+        kb = await kb_repo.get_by_id(knowledge_base_id)
+        if not kb:
+            raise BusinessError(ErrorCodes.RAG_KNOWLEDGE_BASE_NOT_FOUND)
+        
+        await asyncio.to_thread(
+            delete_chunk_by_id,
+            collection_name=str(kb.name),
+            chunk_id=chunk_id,
+        )
+        
+        logger.info(
+            "成功删除分块: kb=%s chunk_id=%s",
+            knowledge_base_id, chunk_id
+        )

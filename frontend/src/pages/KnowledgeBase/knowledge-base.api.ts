@@ -87,3 +87,21 @@ export function queryKnowledgeBase(data: {
 }) {
   return post("/api/knowledge-base/query", data);
 }
+
+export function updateKnowledgeBaseChunk(
+  knowledgeBaseId: string,
+  chunkId: string,
+  data: { text: string; metadata?: Record<string, any> }
+) {
+  return (put as unknown as (url: string, data?: object) => Promise<unknown>)(
+    `/api/knowledge-base/${knowledgeBaseId}/chunks/${chunkId}`,
+    data
+  );
+}
+
+export function deleteKnowledgeBaseChunk(
+  knowledgeBaseId: string,
+  chunkId: string
+) {
+  return del(`/api/knowledge-base/${knowledgeBaseId}/chunks/${chunkId}`);
+}

@@ -1689,7 +1689,8 @@
       "actions": {
         "download": "Download",
         "save": "Save",
-        "cancel": "Cancel"
+        "cancel": "Cancel",
+        "confirm": "Confirm"
       },
       "messages": {
         "noChunks": "No chunk data",
@@ -1700,7 +1701,16 @@
         "previousPage": "Previous Page",
         "nextPage": "Next Page",
         "chunkLabel": "Chunk",
-        "loadFailed": "Load failed"
+        "loadFailed": "Load failed",
+        "updateSuccess": "Chunk updated successfully",
+        "updateFailed": "Failed to update chunk",
+        "deleteSuccess": "Chunk deleted successfully",
+        "deleteFailed": "Failed to delete chunk",
+        "invalidMetadata": "Invalid metadata JSON format"
+      },
+      "placeholders": {
+        "chunkContent": "Enter chunk content",
+        "metadata": "Enter metadata (JSON format)"
       },
       "modal": {
         "sliceTraceTitle": "Knowledge Slice Trace",
@@ -1715,7 +1725,9 @@
         "position": "Position",
         "tokenCount": "Token Count",
         "pageNumber": "Page Number",
-        "chapter": "Chapter"
+        "chapter": "Chapter",
+        "deleteConfirmTitle": "Confirm Delete Chunk",
+        "deleteConfirmMessage": "Are you sure you want to delete this chunk? This will also delete the vector data in Milvus and cannot be undone."
       },
       "breadcrumb": {
         "kbList": "Knowledge Bases",
