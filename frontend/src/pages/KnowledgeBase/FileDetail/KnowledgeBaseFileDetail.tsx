@@ -118,8 +118,7 @@ const KnowledgeBaseFileDetail: React.FC = () => {
       {error && <Alert type="error" message={error} showIcon />}
       <div className="flex items-center justify-between">
         <div className="text-sm text-gray-600">
-          共 {totalElements} 个分块，当前显示第 {totalElements === 0 ? 0 : (currentPage - 1) * pageSize + 1}-
-          {totalElements === 0 ? 0 : Math.min(currentPage * pageSize, totalElements)} 个
+          {t("knowledgeBase.fileDetail.messages.totalChunks", { count: totalElements })}，{t("knowledgeBase.fileDetail.messages.showingRange", { start: totalElements === 0 ? 0 : (currentPage - 1) * pageSize + 1, end: totalElements === 0 ? 0 : Math.min(currentPage * pageSize, totalElements) })}
         </div>
         <div className="flex items-center gap-2">
           <Button

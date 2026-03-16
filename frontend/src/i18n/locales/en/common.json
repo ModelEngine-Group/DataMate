@@ -1694,6 +1694,8 @@
       "messages": {
         "noChunks": "No chunk data",
         "chunkCount": "chunks",
+        "totalChunks": "Total {{count}} chunks",
+        "showingRange": "showing {{start}}-{{end}}",
         "ready": "Ready",
         "previousPage": "Previous Page",
         "nextPage": "Next Page",

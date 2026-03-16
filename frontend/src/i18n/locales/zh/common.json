@@ -1694,6 +1694,8 @@
       "messages": {
         "noChunks": "暂无分块数据",
         "chunkCount": "个分块",
+        "totalChunks": "共 {{count}} 个分块",
+        "showingRange": "当前显示第 {{start}}-{{end}} 个",
         "ready": "就绪",
         "previousPage": "上一页",
         "nextPage": "下一页",
