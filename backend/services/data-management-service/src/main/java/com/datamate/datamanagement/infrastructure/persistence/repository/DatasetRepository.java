@@ -19,6 +19,11 @@ import java.util.List;
 public interface DatasetRepository extends IRepository<Dataset> {
     Dataset findByName(String name);
 
+    /**
+     * 使用悲观锁获取数据集（用于更新操作，防止并发冲突）
+     */
+    Dataset getByIdWithLock(String id);
+
     List<Dataset> findByCriteria(String type, String status, String keyword, List<String> tagList, RowBounds bounds);
 
     long countByCriteria(String type, String status, String keyword, List<String> tagList);

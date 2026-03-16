@@ -32,6 +32,11 @@ public class DatasetRepositoryImpl extends CrudRepository<DatasetMapper, Dataset
     }
 
     @Override
+    public Dataset getByIdWithLock(String id) {
+        return datasetMapper.findByIdWithLock(id);
+    }
+
+    @Override
     public List<Dataset> findByCriteria(String type, String status, String keyword, List<String> tagList,
                                         RowBounds bounds) {
         return datasetMapper.findByCriteria(type, status, keyword, tagList, bounds);
