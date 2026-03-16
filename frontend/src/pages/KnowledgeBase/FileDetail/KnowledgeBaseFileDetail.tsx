@@ -5,6 +5,8 @@ import { queryKnowledgeBaseFileDetailUsingGet } from "@/pages/KnowledgeBase/know
 import { Link, useParams } from "react-router";
 import DetailHeader from "@/components/DetailHeader";
 import { useTranslation } from "react-i18next";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 
 interface RagChunk {
   id: string;
@@ -302,23 +304,25 @@ const KnowledgeBaseFileDetail: React.FC = () => {
               key: "metadata",
               label: t("knowledgeBase.fileDetail.modal.metadata"),
               children: (
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <div className="font-medium mb-1">{t("knowledgeBase.fileDetail.modal.position")}</div>
-                    <Input value={currentChunks.find((c) => c.id === chunkDetailModal)?.metadata?.position || ""} readOnly />
-                  </div>
-                  <div>
-                    <div className="font-medium mb-1">{t("knowledgeBase.fileDetail.modal.tokenCount")}</div>
-                    <Input value={currentChunks.find((c) => c.id === chunkDetailModal)?.metadata?.tokens || ""} readOnly />
-                  </div>
-                  <div>
-                    <div className="font-medium mb-1">{t("knowledgeBase.fileDetail.modal.pageNumber")}</div>
-                    <Input value={currentChunks.find((c) => c.id === chunkDetailModal)?.metadata?.page || ""} readOnly />
-                  </div>
-                  <div>
-                    <div className="font-medium mb-1">{t("knowledgeBase.fileDetail.modal.chapter")}</div>
-                    <Input value={currentChunks.find((c) => c.id === chunkDetailModal)?.metadata?.section || ""} readOnly />
-                  </div>
+                <div>
+                  <SyntaxHighlighter
+                    language="json"
+                    style={vscDarkPlus}
+                    showLineNumbers
+                    customStyle={{
+                      margin: 0,
+                      borderRadius: "0.5rem",
+                      fontSize: "0.875rem",
+                      maxHeight: "400px",
+                      overflow: "auto",
+                    }}
+                  >
+                    {JSON.stringify(
+                      currentChunks.find((c) => c.id === chunkDetailModal)?.metadata || {},
+                      null,
+                      2
+                    ) || "{}"}
+                  </SyntaxHighlighter>
                 </div>
               ),
             },
