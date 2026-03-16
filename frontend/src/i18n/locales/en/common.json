@@ -1690,7 +1690,8 @@
         "download": "Download",
         "save": "Save",
         "cancel": "Cancel",
-        "confirm": "Confirm"
+        "confirm": "Confirm",
+        "formatJson": "Format"
       },
       "messages": {
         "noChunks": "No chunk data",
@@ -1706,7 +1707,11 @@
         "updateFailed": "Failed to update chunk",
         "deleteSuccess": "Chunk deleted successfully",
         "deleteFailed": "Failed to delete chunk",
-        "invalidMetadata": "Invalid metadata JSON format"
+        "invalidMetadata": "Invalid metadata JSON format",
+        "invalidMetadataFormat": "Metadata is not valid JSON format",
+        "textRequired": "Chunk content cannot be empty",
+        "formatSuccess": "JSON formatted successfully",
+        "metadataHint": "Please enter valid JSON format. Click 'Format' button to auto-format."
       },
       "placeholders": {
         "chunkContent": "Enter chunk content",
@@ -1727,7 +1732,8 @@
         "pageNumber": "Page Number",
         "chapter": "Chapter",
         "deleteConfirmTitle": "Confirm Delete Chunk",
-        "deleteConfirmMessage": "Are you sure you want to delete this chunk? This will also delete the vector data in Milvus and cannot be undone."
+        "deleteConfirmMessage": "Are you sure you want to delete this chunk? This will also delete the vector data in Milvus and cannot be undone.",
+        "editChunkTitle": "Edit Chunk"
       },
       "breadcrumb": {
         "kbList": "Knowledge Bases",

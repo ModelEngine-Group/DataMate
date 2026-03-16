@@ -271,9 +271,15 @@ def update_chunk_by_id(
                 ErrorCodes.RAG_CHUNK_NOT_FOUND,
                 f"Chunk not found: {chunk_id}"
             )
-        
+
+        existing_metadata = existing[0].get("metadata", {})
+
         if metadata is None:
-            metadata = existing[0].get("metadata", {})
+            metadata = existing_metadata
+        else:
+            # 确保保留原有的 rag_file_id 字段，防止用户修改时丢失
+            if "rag_file_id" in existing_metadata and "rag_file_id" not in metadata:
+                metadata = {**metadata, "rag_file_id": existing_metadata["rag_file_id"]}
         
         if embedding_instance:
             embedding = embedding_instance
