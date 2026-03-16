@@ -153,7 +153,7 @@ class FileProcessor:
                 await self._mark_failed(db, file_repo, str(rag_file.id), "文件不存在")
                 return
 
-            documents = load_documents(file_path)
+            documents = await asyncio.to_thread(load_documents, file_path)
             if not documents:
                 await self._mark_failed(db, file_repo, str(rag_file.id), "文件解析失败，未生成文档")
                 return

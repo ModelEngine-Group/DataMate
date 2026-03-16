@@ -80,7 +80,8 @@ class BatchProcessor:
         documents, doc_ids = chunks_to_documents(batch_chunks, ids=ids)
         
         try:
-            vectorstore.add_documents(documents=documents, ids=doc_ids)
+            # 使用异步方法避免阻塞事件循环
+            await vectorstore.aadd_documents(documents=documents, ids=doc_ids)
             logger.info("批次 %d-%d 存储成功", batch_start + 1, batch_end)
         except Exception as e:
             logger.error(
