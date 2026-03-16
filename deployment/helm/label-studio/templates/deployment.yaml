@@ -38,7 +38,7 @@ spec:
             - name: POSTGRE_PASSWORD
               value: {{ .Values.env.POSTGRE_PASSWORD | quote }}
             - name: POSTGRE_PORT
-              value: 5432
+              value: "5432"
             - name: POSTGRE_HOST
               value: {{ if .Values.pgbouncer.enabled }}{{ printf "%s-pgbouncer" (include "label-studio.fullname" .) | quote }}{{ else }}{{ .Values.env.POSTGRE_HOST | quote }}{{ end }}
             - name: LABEL_STUDIO_HOST
