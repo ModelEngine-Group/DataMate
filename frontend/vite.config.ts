@@ -49,9 +49,9 @@ export default defineConfig({
       };
 
       // Python 服务: rag, synthesis, annotation, evaluation, models
-      const pythonPaths = ["rag", "operators", "categories", "synthesis", "annotation", "knowledge-base", "data-collection", "evaluation", "models"];
+      const pythonPaths = ["rag", "cleaning", "operators", "categories", "synthesis", "annotation", "knowledge-base", "data-collection", "evaluation", "models", "sys-param"];
       // Java 服务: data-management, knowledge-base
-      const javaPaths = ["data-management", "sys-param"];
+      const javaPaths = ["data-management"];
 
       const proxy: Record<string, object> = {};
       // SSE 端点需要禁用缓冲

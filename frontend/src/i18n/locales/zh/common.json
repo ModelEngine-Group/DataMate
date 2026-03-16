@@ -1731,6 +1731,8 @@
         "nameLabel": "知识库名称",
         "namePlaceholder": "请输入知识库名称",
         "nameRequired": "请输入知识库名称",
+        "nameMaxLength": "知识库名称长度不能超过255个字符",
+        "namePattern": "知识库名称必须以字母开头，只能包含字母、数字和下划线",
         "descriptionLabel": "描述",
         "descriptionPlaceholder": "请输入知识库描述（可选）",
         "embeddingModelLabel": "索引模型",
