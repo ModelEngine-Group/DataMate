@@ -154,6 +154,7 @@ const KnowledgeBaseDetailPage: React.FC = () => {
       });
       message.success(t("knowledgeBase.detail.messages.fileDeleted"));
       fetchFiles();
+      fetchKnowledgeBaseDetails(knowledgeBase!.id);
     } catch {
       message.error(t("knowledgeBase.detail.messages.fileDeleteFailed"));
     }

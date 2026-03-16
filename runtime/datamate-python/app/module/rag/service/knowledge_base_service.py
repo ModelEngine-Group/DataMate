@@ -16,6 +16,7 @@ from app.core.exception import BusinessError, ErrorCodes
 from app.db.models.dataset_management import DatasetFiles
 from app.db.models.knowledge_gen import KnowledgeBase, RagFile, FileStatus, RagType
 from app.db.models.models import Models
+from app.module.rag.infra.embeddings import EmbeddingFactory
 from app.module.rag.infra.vectorstore import (
     drop_collection,
     rename_collection,
@@ -23,7 +24,6 @@ from app.module.rag.infra.vectorstore import (
     update_chunk_by_id,
     delete_chunk_by_id,
 )
-from app.module.rag.infra.embeddings import EmbeddingFactory
 from app.module.rag.repository import KnowledgeBaseRepository, RagFileRepository
 from app.module.rag.schema.request import (
     KnowledgeBaseCreateReq,
@@ -404,7 +404,7 @@ class KnowledgeBaseService:
         metadata: dict = None,
     ) -> None:
         """更新指定分块的文本和元数据
-        
+
         Args:
             knowledge_base_id: 知识库 ID
             chunk_id: 分块 ID
@@ -414,27 +414,26 @@ class KnowledgeBaseService:
         knowledge_base = await self.kb_repo.get_by_id(knowledge_base_id)
         if not knowledge_base:
             raise BusinessError(ErrorCodes.RAG_KNOWLEDGE_BASE_NOT_FOUND)
-        
+
         if knowledge_base.type != RagType.DOCUMENT.value:
             raise BusinessError(
                 ErrorCodes.RAG_INVALID_REQUEST,
                 f"知识库类型 {knowledge_base.type} 不支持分块更新"
             )
-        
-        from app.module.rag.service.strategy.vector_strategy import VectorKnowledgeBaseStrategy
+
         from app.module.system.service.common_service import get_model_by_id
         import asyncio
-        
+
         embedding_entity = await get_model_by_id(self.db, knowledge_base.embedding_model)
         if not embedding_entity:
             raise BusinessError(ErrorCodes.RAG_MODEL_NOT_FOUND)
-        
+
         embedding = EmbeddingFactory.create_embeddings(
             model_name=str(embedding_entity.model_name),
             base_url=getattr(embedding_entity, "base_url", None),
             api_key=getattr(embedding_entity, "api_key", None),
         )
-        
+
         await asyncio.to_thread(
             update_chunk_by_id,
             collection_name=str(knowledge_base.name),
@@ -443,19 +442,19 @@ class KnowledgeBaseService:
             metadata=metadata,
             embedding_instance=embedding,
         )
-        
+
         logger.info(
             "成功更新分块: kb=%s chunk_id=%s",
             knowledge_base_id, chunk_id
         )
-    
+
     async def delete_chunk(
         self,
         knowledge_base_id: str,
         chunk_id: str,
     ) -> None:
         """删除指定分块
-        
+
         Args:
             knowledge_base_id: 知识库 ID
             chunk_id: 分块 ID
@@ -463,20 +462,26 @@ class KnowledgeBaseService:
         knowledge_base = await self.kb_repo.get_by_id(knowledge_base_id)
         if not knowledge_base:
             raise BusinessError(ErrorCodes.RAG_KNOWLEDGE_BASE_NOT_FOUND)
-        
+
         if knowledge_base.type != RagType.DOCUMENT.value:
             raise BusinessError(
                 ErrorCodes.RAG_INVALID_REQUEST,
                 f"知识库类型 {knowledge_base.type} 不支持分块删除"
             )
-        
+
         import asyncio
-        await asyncio.to_thread(
+        rag_file_id = await asyncio.to_thread(
             delete_chunk_by_id,
             collection_name=str(knowledge_base.name),
             chunk_id=chunk_id,
         )
-        
+
+        if rag_file_id:
+            rag_file = await self.file_repo.get_by_id(rag_file_id)
+            if rag_file and rag_file.chunk_count and rag_file.chunk_count > 0:
+                rag_file.chunk_count = rag_file.chunk_count - 1
+                await self.db.commit()
+
         logger.info(
             "成功删除分块: kb=%s chunk_id=%s",
             knowledge_base_id, chunk_id

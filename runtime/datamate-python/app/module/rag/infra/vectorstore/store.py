@@ -310,20 +310,38 @@ def update_chunk_by_id(
         raise BusinessError(ErrorCodes.RAG_MILVUS_ERROR, f"更新分块失败: {str(e)}") from e
 
 
-def delete_chunk_by_id(collection_name: str, chunk_id: str) -> None:
+def delete_chunk_by_id(collection_name: str, chunk_id: str) -> Optional[str]:
     """删除指定 ID 的分块
 
     Args:
         collection_name: 集合名称
         chunk_id: 分块 ID
+
+    Returns:
+        被删除分块对应的 rag_file_id（如果存在），否则返回 None
     """
     try:
         client = get_milvus_client()
         
         filter_expr = f'id == "{chunk_id}"'
+        
+        # 先查询 chunk 的 metadata 获取 rag_file_id
+        existing = client.query(
+            collection_name=collection_name,
+            filter=filter_expr,
+            output_fields=["metadata"],
+        )
+        
+        rag_file_id = None
+        if existing:
+            metadata = existing[0].get("metadata", {})
+            rag_file_id = metadata.get("rag_file_id")
+        
         client.delete(collection_name=collection_name, filter=filter_expr)
         
-        logger.info("成功删除分块: collection=%s chunk_id=%s", collection_name, chunk_id)
+        logger.info("成功删除分块: collection=%s chunk_id=%s rag_file_id=%s", collection_name, chunk_id, rag_file_id)
+        
+        return rag_file_id
         
     except Exception as e:
         logger.error("删除分块失败: %s", e)
