@@ -1,19 +1,20 @@
 import React, { useEffect, useState } from "react";
 import {Eye, Edit, Trash2, FileBox, ChevronLeft, ChevronRight} from "lucide-react";
-import { Card, Button, Tabs, Modal, Breadcrumb, Tag, Spin, Empty, Alert, Badge, Input, message } from "antd";
-import { queryKnowledgeBaseFileDetailUsingGet, deleteKnowledgeBaseChunk } from "@/pages/KnowledgeBase/knowledge-base.api";
+import { Card, Button, Badge, Input, Tabs, Modal, Breadcrumb, Tag, Spin, Empty, Alert, message } from "antd";
+import { queryKnowledgeBaseFileDetailUsingGet, updateKnowledgeBaseChunk, deleteKnowledgeBaseChunk } from "@/pages/KnowledgeBase/knowledge-base.api";
 import { Link, useParams } from "react-router";
 import DetailHeader from "@/components/DetailHeader";
 import { useTranslation } from "react-i18next";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
-import EditChunkModal from "./EditChunkModal";
 
 interface RagChunk {
   id: string;
   text: string;
   metadata: unknown;
 }
+
+const { TextArea } = Input;
 
 const KnowledgeBaseFileDetail: React.FC = () => {
   const { t } = useTranslation();
@@ -34,10 +35,13 @@ const KnowledgeBaseFileDetail: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [editingChunk, setEditingChunk] = useState<RagChunk | null>(null);
+  const [editingChunk, setEditingChunk] = useState<string | null>(null);
+  const [editChunkContent, setEditChunkContent] = useState("");
+  const [editChunkMetadata, setEditChunkMetadata] = useState("");
   const [chunkDetailModal, setChunkDetailModal] = useState<string | null>(null);
   const [showSliceTraceDialog, setShowSliceTraceDialog] = useState<string | null>(null);
   const [deleteConfirmModal, setDeleteConfirmModal] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   const pageSize = 10;
@@ -91,13 +95,42 @@ const KnowledgeBaseFileDetail: React.FC = () => {
   const totalPages = paged?.totalPages ?? 0;
   const currentChunks = paged?.content ?? [];
 
-  const handleEditChunk = (chunk: RagChunk) => {
-    setEditingChunk(chunk);
+  const handleEditChunk = (chunkId: string, content: string, metadata: unknown) => {
+    setEditingChunk(chunkId);
+    setEditChunkContent(content);
+    setEditChunkMetadata(JSON.stringify(metadata ?? {}, null, 2));
   };
 
-  const handleEditSuccess = () => {
-    setEditingChunk(null);
-    fetchChunks(currentPage);
+  const handleSaveChunk = async (chunkId: string) => {
+    if (!knowledgeBaseId) return;
+    
+    let parsedMetadata = {};
+    try {
+      parsedMetadata = editChunkMetadata ? JSON.parse(editChunkMetadata) : {};
+    } catch {
+      message.error(t("knowledgeBase.fileDetail.messages.invalidMetadata"));
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await updateKnowledgeBaseChunk(knowledgeBaseId, chunkId, {
+        text: editChunkContent,
+        metadata: parsedMetadata,
+      });
+      message.success(t("knowledgeBase.fileDetail.messages.updateSuccess"));
+      setEditingChunk(null);
+      setEditChunkContent("");
+      setEditChunkMetadata("");
+      fetchChunks(currentPage);
+    } catch (err: unknown) {
+      const msg = typeof err === "object" && err !== null && "message" in err 
+        ? String((err as { message?: string }).message) 
+        : t("knowledgeBase.fileDetail.messages.updateFailed");
+      message.error(msg);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleDeleteChunk = async (chunkId: string) => {
@@ -164,25 +197,72 @@ const KnowledgeBaseFileDetail: React.FC = () => {
             }
             extra={
               <div className="flex items-center gap-1">
-                <Button size="small" type="text" onClick={() => handleViewChunkDetail(chunk.id)}>
-                  <Eye className="w-4 h-4" />
-                </Button>
-                <Button size="small" type="text" onClick={() => handleEditChunk(chunk)}>
-                  <Edit className="w-4 h-4" />
-                </Button>
-                <Button size="small" type="text" danger onClick={() => setDeleteConfirmModal(chunk.id)}>
-                  <Trash2 className="w-4 h-4" />
-                </Button>
+                {editingChunk === chunk.id ? (
+                  <>
+                    <Button
+                      type="primary"
+                      size="small"
+                      onClick={() => handleSaveChunk(chunk.id)}
+                      loading={saving}
+                    >
+                      {t("knowledgeBase.fileDetail.actions.save")}
+                    </Button>
+                    <Button
+                      size="small"
+                      onClick={() => {
+                        setEditingChunk(null);
+                        setEditChunkContent("");
+                        setEditChunkMetadata("");
+                      }}
+                    >
+                      {t("knowledgeBase.fileDetail.actions.cancel")}
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button size="small" type="text" onClick={() => handleViewChunkDetail(chunk.id)}>
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                    <Button size="small" type="text" onClick={() => handleEditChunk(chunk.id, chunk.text, chunk.metadata)}>
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                    <Button size="small" type="text" danger onClick={() => setDeleteConfirmModal(chunk.id)}>
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </>
+                )}
               </div>
             }
             style={{ wordBreak: "break-all" }}
           >
             <div style={{ marginBottom: 8, fontWeight: 500 }}>
-              {chunk.text}
+              {editingChunk === chunk.id ? (
+                <>
+                  <TextArea
+                    value={editChunkContent}
+                    onChange={(e) => setEditChunkContent(e.target.value)}
+                    rows={3}
+                    placeholder={t("knowledgeBase.fileDetail.placeholders.chunkContent")}
+                  />
+                  <div style={{ marginTop: 8 }}>
+                    <div style={{ fontSize: 12, color: '#888', marginBottom: 4 }}>metadata</div>
+                    <TextArea
+                      value={editChunkMetadata}
+                      onChange={(e) => setEditChunkMetadata(e.target.value)}
+                      rows={4}
+                      placeholder={t("knowledgeBase.fileDetail.placeholders.metadata")}
+                    />
+                  </div>
+                </>
+              ) : (
+                chunk.text
+              )}
             </div>
-            <div style={{ fontSize: 12, color: '#888' }}>
-              metadata <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all', margin: 0 }}>{typeof chunk.metadata === "string" ? chunk.metadata : JSON.stringify(chunk.metadata ?? {}, null, 2)}</pre>
-            </div>
+            {editingChunk !== chunk.id && (
+              <div style={{ fontSize: 12, color: '#888' }}>
+                metadata <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all', margin: 0 }}>{typeof chunk.metadata === "string" ? chunk.metadata : JSON.stringify(chunk.metadata ?? {}, null, 2)}</pre>
+              </div>
+            )}
           </Card>
         ))}
         {!loading && currentChunks.length === 0 && (
@@ -314,16 +394,6 @@ const KnowledgeBaseFileDetail: React.FC = () => {
       >
         <p>{t("knowledgeBase.fileDetail.modal.deleteConfirmMessage")}</p>
       </Modal>
-
-      <EditChunkModal
-        open={!!editingChunk}
-        chunkId={editingChunk?.id ?? null}
-        knowledgeBaseId={knowledgeBaseId}
-        initialText={editingChunk?.text ?? ""}
-        initialMetadata={editingChunk?.metadata ?? {}}
-        onCancel={() => setEditingChunk(null)}
-        onSuccess={handleEditSuccess}
-      />
     </div>
   );
 };
