@@ -1,28 +1,31 @@
-import React, { useEffect, useState } from "react";
-import {Eye, Edit, Trash2, FileText, Download, FileType2, FileBox} from "lucide-react";
-import { Card, Button, Badge, Input, Tabs, Modal, Breadcrumb, Tag, Spin, Empty, Alert } from "antd";
-import { queryKnowledgeBaseFileDetailUsingGet } from "@/pages/KnowledgeBase/knowledge-base.api";
+import React, { useEffect, useState, useCallback } from "react";
+import {Eye, Edit, Trash2, FileBox, ChevronLeft, ChevronRight, Code, CheckCircle, AlertCircle, Wand2} from "lucide-react";
+import { Card, Button, Badge, Input, Tabs, Modal, Breadcrumb, Tag, Spin, Empty, Alert, message, Tooltip } from "antd";
+import { ExclamationCircleOutlined } from "@ant-design/icons";
+import { queryKnowledgeBaseFileDetailUsingGet, updateKnowledgeBaseChunk, deleteKnowledgeBaseChunk } from "@/pages/KnowledgeBase/knowledge-base.api";
 import { Link, useParams } from "react-router";
 import DetailHeader from "@/components/DetailHeader";
 import { useTranslation } from "react-i18next";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 
 interface RagChunk {
   id: string;
   text: string;
-  metadata: unknown; // may be string or object
+  metadata: unknown;
 }
+
+const { TextArea } = Input;
 
 const KnowledgeBaseFileDetail: React.FC = () => {
   const { t } = useTranslation();
   const { id } = useParams();
-  // id 为路由中的 ragFileId，knowledgeBaseId 通过上一级 detail 路由或 query 传入
   const search = new URLSearchParams(window.location.search);
   const knowledgeBaseId = search.get("knowledgeBaseId") || "";
   const fileName = search.get("fileName") || "";
   const ragFileId = id || "";
   const kbLink = knowledgeBaseId ? `/data/knowledge-base/detail/${knowledgeBaseId}` : "/data/knowledge-base";
 
-  // 远程数据状态
   const [paged, setPaged] = useState<{
     page: number;
     size: number;
@@ -33,13 +36,18 @@ const KnowledgeBaseFileDetail: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // 本地 UI 状态
   const [editingChunk, setEditingChunk] = useState<string | null>(null);
   const [editChunkContent, setEditChunkContent] = useState("");
+  const [editChunkMetadata, setEditChunkMetadata] = useState("");
+  const [metadataValid, setMetadataValid] = useState(true);
+  const [metadataError, setMetadataError] = useState<string | null>(null);
   const [chunkDetailModal, setChunkDetailModal] = useState<string | null>(null);
   const [showSliceTraceDialog, setShowSliceTraceDialog] = useState<string | null>(null);
+  const [deleteConfirmModal, setDeleteConfirmModal] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
-  const pageSize = 20;
+  const pageSize = 10;
   const [currentPage, setCurrentPage] = useState(1);
 
   const safeParse = (meta: unknown): unknown => {
@@ -47,7 +55,7 @@ const KnowledgeBaseFileDetail: React.FC = () => {
       try {
         return JSON.parse(meta);
       } catch {
-        return meta; // 保持原样
+        return meta;
       }
     }
     return meta;
@@ -59,7 +67,6 @@ const KnowledgeBaseFileDetail: React.FC = () => {
     setError(null);
     try {
       const res = await queryKnowledgeBaseFileDetailUsingGet(knowledgeBaseId, ragFileId, { page, size: pageSize });
-      // 兼容返回结构 ResponsePagedResponseRagChunk -> { code, message, data }
       const raw = (res?.data ?? res) as {
         page: number;
         size: number;
@@ -85,28 +92,114 @@ const KnowledgeBaseFileDetail: React.FC = () => {
 
   useEffect(() => {
     fetchChunks(currentPage);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [knowledgeBaseId, ragFileId, currentPage, t]);
 
   const totalElements = paged?.totalElements ?? 0;
   const totalPages = paged?.totalPages ?? 0;
   const currentChunks = paged?.content ?? [];
 
-  const handleEditChunk = (chunkId: string, content: string) => {
+  const handleEditChunk = (chunkId: string, content: string, metadata: unknown) => {
     setEditingChunk(chunkId);
     setEditChunkContent(content);
+    setEditChunkMetadata(JSON.stringify(metadata ?? {}, null, 2));
+    setMetadataValid(true);
+    setMetadataError(null);
   };
 
-  const handleSaveChunk = (chunkId: string) => {
-    // TODO: 保存到后端（暂不实现）
-    setEditingChunk(null);
-    setEditChunkContent("");
+  const validateJson = useCallback((value: string): { valid: boolean; error: string | null } => {
+    if (!value || value.trim() === "") {
+      return { valid: true, error: null };
+    }
+    try {
+      JSON.parse(value);
+      return { valid: true, error: null };
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : t("knowledgeBase.fileDetail.messages.invalidMetadataFormat");
+      return { valid: false, error: errorMessage };
+    }
+  }, [t]);
+
+  const handleMetadataChange = useCallback((value: string) => {
+    setEditChunkMetadata(value);
+    const { valid, error } = validateJson(value);
+    setMetadataValid(valid);
+    setMetadataError(error);
+  }, [validateJson]);
+
+  const formatJson = useCallback(() => {
+    try {
+      const parsed = JSON.parse(editChunkMetadata || "{}");
+      const formatted = JSON.stringify(parsed, null, 2);
+      setEditChunkMetadata(formatted);
+      setMetadataValid(true);
+      setMetadataError(null);
+      message.success(t("knowledgeBase.fileDetail.messages.formatSuccess"));
+    } catch {
+      message.error(t("knowledgeBase.fileDetail.messages.invalidMetadataFormat"));
+    }
+  }, [editChunkMetadata, t]);
+
+  const handleSaveChunk = async (chunkId: string) => {
+    if (!knowledgeBaseId) return;
+
+    if (!editChunkContent.trim()) {
+      message.error(t("knowledgeBase.fileDetail.messages.textRequired"));
+      return;
+    }
+
+    if (!metadataValid) {
+      message.error(t("knowledgeBase.fileDetail.messages.invalidMetadata"));
+      return;
+    }
+
+    let parsedMetadata = {};
+    try {
+      parsedMetadata = editChunkMetadata ? JSON.parse(editChunkMetadata) : {};
+    } catch {
+      message.error(t("knowledgeBase.fileDetail.messages.invalidMetadata"));
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await updateKnowledgeBaseChunk(knowledgeBaseId, chunkId, {
+        text: editChunkContent,
+        metadata: parsedMetadata,
+      });
+      message.success(t("knowledgeBase.fileDetail.messages.updateSuccess"));
+      setEditingChunk(null);
+      setEditChunkContent("");
+      setEditChunkMetadata("");
+      setMetadataValid(true);
+      setMetadataError(null);
+      fetchChunks(currentPage);
+    } catch (err: unknown) {
+      const msg = typeof err === "object" && err !== null && "message" in err
+        ? String((err as { message?: string }).message)
+        : t("knowledgeBase.fileDetail.messages.updateFailed");
+      message.error(msg);
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleDeleteChunk = (chunkId: string) => {
-    // TODO: 删除后端分块（暂不实现）
-    setEditingChunk(null);
-    setEditChunkContent("");
+  const handleDeleteChunk = async (chunkId: string) => {
+    if (!knowledgeBaseId) return;
+
+    setDeleting(true);
+    try {
+      await deleteKnowledgeBaseChunk(knowledgeBaseId, chunkId);
+      message.success(t("knowledgeBase.fileDetail.messages.deleteSuccess"));
+      setDeleteConfirmModal(null);
+      fetchChunks(currentPage);
+    } catch (err: unknown) {
+      const msg = typeof err === "object" && err !== null && "message" in err 
+        ? String((err as { message?: string }).message) 
+        : t("knowledgeBase.fileDetail.messages.deleteFailed");
+      message.error(msg);
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const handleViewChunkDetail = (chunkId: string) => {
@@ -118,112 +211,76 @@ const KnowledgeBaseFileDetail: React.FC = () => {
       {error && <Alert type="error" message={error} showIcon />}
       <div className="flex items-center justify-between">
         <div className="text-sm text-gray-600">
-          {t("knowledgeBase.fileDetail.messages.chunkCount", { count: totalElements })}，第 {totalElements === 0 ? 0 : (currentPage - 1) * pageSize + 1}-
-          {Math.min(currentPage * pageSize, totalElements)} 个
+          {t("knowledgeBase.fileDetail.messages.totalChunks", { count: totalElements })}，{t("knowledgeBase.fileDetail.messages.showingRange", { start: totalElements === 0 ? 0 : (currentPage - 1) * pageSize + 1, end: totalElements === 0 ? 0 : Math.min(currentPage * pageSize, totalElements) })}
         </div>
         <div className="flex items-center gap-2">
           <Button
             size="small"
+            icon={<ChevronLeft className="w-4 h-4" />}
             onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
             disabled={currentPage <= 1}
-          >
-            {t("knowledgeBase.fileDetail.messages.previousPage")}
-          </Button>
+          />
           <span className="text-sm text-gray-600">
             {totalPages === 0 ? 0 : currentPage} / {totalPages}
           </span>
           <Button
             size="small"
-            onClick={() => setCurrentPage(Math.min(totalPages ||1, currentPage + 1))}
+            icon={<ChevronRight className="w-4 h-4" />}
+            onClick={() => setCurrentPage(Math.min(totalPages || 1, currentPage + 1))}
             disabled={currentPage >= (totalPages || 1)}
-          >
-            {t("knowledgeBase.fileDetail.messages.nextPage")}
-          </Button>
+          />
         </div>
       </div>
-      <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {currentChunks.map((chunk) => (
-          <Card key={chunk.id} className="p-4">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="flex-1 flex items-center gap-2">
-                    <h4 className="text-sm font-semibold">{t("knowledgeBase.fileDetail.messages.chunkLabel")} {chunk.id}</h4>
-                    {/* 算子名：从 metadata.sliceOperator 显示 */}
-                    {chunk.metadata?.sliceOperator && (
-                      <Tag className="text-xs">
-                        {chunk.metadata.sliceOperator}
-                      </Tag>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 ml-4">
-                    {editingChunk === chunk.id ? (
-                      <>
-                        <Button
-                          type="primary"
-                          size="small"
-                          onClick={() => handleSaveChunk(chunk.id)}
-                        >
-                          {t("knowledgeBase.fileDetail.actions.save")}
-                        </Button>
-                        <Button
-                          size="small"
-                          onClick={() => {
-                            setEditingChunk(null);
-                            setEditChunkContent("");
-                          }}
-                        >
-                          {t("knowledgeBase.fileDetail.actions.cancel")}
-                        </Button>
-                      </>
-                    ) : (
-                      <>
-                        <Button size="small" onClick={() => handleViewChunkDetail(chunk.id)}>
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                        <Button size="small" onClick={() => handleEditChunk(chunk.id, chunk.text)}>
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button size="small" danger onClick={() => handleDeleteChunk(chunk.id)}>
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                </div>
-                <div className="text-sm leading-relaxed text-gray-700">
-                  {editingChunk === chunk.id ? (
-                    <Input.TextArea
-                      value={editChunkContent}
-                      onChange={(e) => setEditChunkContent(e.target.value)}
-                      rows={3}
-                    />
-                  ) : (
-                    chunk.text
-                  )}
-                </div>
-                {/* 元数据展示，保持和召回结果风格一致 */}
-                <div className="mt-2 text-xs text-gray-600">
-                  <div className="font-medium">{t("knowledgeBase.fileDetail.modal.metadata")}:</div>
-                  <pre className="whitespace-pre-wrap break-all m-0">
-                    {typeof chunk.metadata === "string"
-                      ? chunk.metadata
-                      : JSON.stringify(chunk.metadata ?? {}, null, 2)}
-                  </pre>
-                </div>
-                {/* 结构化元数据的快捷标签（若可用） */}
-                <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
-                  {chunk?.metadata?.position && <span>{t("knowledgeBase.fileDetail.columns.position")}: {chunk.metadata.position}</span>}
-                  {chunk?.metadata?.tokens && <span>Token: {chunk.metadata.tokens}</span>}
-                  {chunk?.metadata?.page && <span>{t("knowledgeBase.fileDetail.columns.page")}: {chunk.metadata.page}</span>}
-                  {chunk?.metadata?.section && <span>{t("knowledgeBase.fileDetail.columns.section")}: {chunk.metadata.section}</span>}
-                </div>
+          <Card
+            key={chunk.id}
+            title={
+              <div className="flex items-center gap-2">
+                <span>{t("knowledgeBase.fileDetail.messages.chunkLabel")} {chunk.id}</span>
+                {chunk.metadata?.sliceOperator && (
+                  <Tag className="text-xs">
+                    {chunk.metadata.sliceOperator}
+                  </Tag>
+                )}
               </div>
+            }
+            extra={
+              <div className="flex items-center gap-1">
+                <Tooltip title={t("knowledgeBase.fileDetail.actions.view")}>
+                  <Button size="small" type="text" onClick={() => handleViewChunkDetail(chunk.id)}>
+                    <Eye className="w-4 h-4" />
+                  </Button>
+                </Tooltip>
+                <Tooltip title={t("knowledgeBase.fileDetail.actions.edit")}>
+                  <Button size="small" type="text" onClick={() => handleEditChunk(chunk.id, chunk.text, chunk.metadata)}>
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                </Tooltip>
+                <Tooltip title={t("knowledgeBase.fileDetail.actions.delete")}>
+                  <Button size="small" type="text" danger onClick={() => setDeleteConfirmModal(chunk.id)}>
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </Tooltip>
+              </div>
+            }
+            style={{ wordBreak: "break-all" }}
+          >
+            <div style={{ marginBottom: 8, fontWeight: 500 }}>
+              {chunk.text}
+            </div>
+            <div style={{ fontSize: 12, color: '#888' }}>
+              metadata
+              <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all', margin: 0, marginTop: 4 }}>
+                {typeof chunk.metadata === "string" ? chunk.metadata : JSON.stringify(chunk.metadata ?? {}, null, 2)}
+              </pre>
             </div>
           </Card>
         ))}
         {!loading && currentChunks.length === 0 && (
-          <Empty description={t("knowledgeBase.fileDetail.messages.noChunks")} />
+          <div className="col-span-2">
+            <Empty description={t("knowledgeBase.fileDetail.messages.noChunks")} />
+          </div>
         )}
       </div>
     </div>
@@ -235,29 +292,26 @@ const KnowledgeBaseFileDetail: React.FC = () => {
         items={[
           { title: <Link to="/data/knowledge-base">{t("knowledgeBase.fileDetail.breadcrumb.kbList")}</Link> },
           { title: (<Link to={kbLink}>{t("knowledgeBase.fileDetail.breadcrumb.kbDetail")}</Link>) },
-          { title: fileName || `文件 ${ragFileId}` },
+          { title: fileName || t("knowledgeBase.fileDetail.defaultFileName", { id: ragFileId }) },
         ]}
       />
-      {/* 头部统计使用最简占位，后续可扩展 */}
       <DetailHeader
         data={{
           id: ragFileId,
           icon: <FileBox className="w-full h-full" />,
           iconColor: "#a27e7e",
-          status: { label: t("knowledgeBase.fileDetail.messages.ready"), color: "default" },
-          name: fileName || `文件 ${ragFileId}`,
+          name: fileName || t("knowledgeBase.fileDetail.defaultFileName", { id: ragFileId }),
           description: `${totalElements} ${t("knowledgeBase.fileDetail.messages.chunkCount", { count: 0 })}`,
           createdAt: "",
           lastUpdated: "",
         }}
         statistics={[]}
-        operations={[{ key: "download", label: t("knowledgeBase.fileDetail.actions.download"), icon: <Download className="w-4 h-4" />, onClick: () => {} }]}
+        operations={[]}
       />
       <Card>
         {loading ? <div className="flex items-center justify-center py-8"><Spin /></div> : renderChunks()}
       </Card>
 
-      {/* Slice Trace Modal */}
       <Modal
         open={!!showSliceTraceDialog}
         onCancel={() => setShowSliceTraceDialog(null)}
@@ -266,7 +320,6 @@ const KnowledgeBaseFileDetail: React.FC = () => {
         width={800}
         destroyOnClose
       >
-        {/* 简化为内容占位，真实数据待后端提供更多字段 */}
         <div className="space-y-4">
           <div className="bg-gray-50 rounded-lg p-4">
             <h4 className="font-medium mb-3">{t("knowledgeBase.fileDetail.modal.sliceProcessTitle")}</h4>
@@ -286,7 +339,6 @@ const KnowledgeBaseFileDetail: React.FC = () => {
         </div>
       </Modal>
 
-      {/* Chunk Detail Modal */}
       <Modal
         open={!!chunkDetailModal}
         onCancel={() => setChunkDetailModal(null)}
@@ -317,28 +369,159 @@ const KnowledgeBaseFileDetail: React.FC = () => {
               key: "metadata",
               label: t("knowledgeBase.fileDetail.modal.metadata"),
               children: (
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <div className="font-medium mb-1">{t("knowledgeBase.fileDetail.modal.position")}</div>
-                    <Input value={currentChunks.find((c) => c.id === chunkDetailModal)?.metadata?.position || ""} readOnly />
-                  </div>
-                  <div>
-                    <div className="font-medium mb-1">{t("knowledgeBase.fileDetail.modal.tokenCount")}</div>
-                    <Input value={currentChunks.find((c) => c.id === chunkDetailModal)?.metadata?.tokens || ""} readOnly />
-                  </div>
-                  <div>
-                    <div className="font-medium mb-1">{t("knowledgeBase.fileDetail.modal.pageNumber")}</div>
-                    <Input value={currentChunks.find((c) => c.id === chunkDetailModal)?.metadata?.page || ""} readOnly />
-                  </div>
-                  <div>
-                    <div className="font-medium mb-1">{t("knowledgeBase.fileDetail.modal.chapter")}</div>
-                    <Input value={currentChunks.find((c) => c.id === chunkDetailModal)?.metadata?.section || ""} readOnly />
-                  </div>
+                <div>
+                  <SyntaxHighlighter
+                    language="json"
+                    style={vscDarkPlus}
+                    showLineNumbers
+                    customStyle={{
+                      margin: 0,
+                      borderRadius: "0.5rem",
+                      fontSize: "0.875rem",
+                      maxHeight: "400px",
+                      overflow: "auto",
+                    }}
+                  >
+                    {JSON.stringify(
+                      currentChunks.find((c) => c.id === chunkDetailModal)?.metadata || {},
+                      null,
+                      2
+                    ) || "{}"}
+                  </SyntaxHighlighter>
                 </div>
               ),
             },
           ]}
         />
+      </Modal>
+
+      <Modal
+        open={!!deleteConfirmModal}
+        onCancel={() => setDeleteConfirmModal(null)}
+        onOk={() => handleDeleteChunk(deleteConfirmModal!)}
+        title={t("knowledgeBase.fileDetail.modal.deleteConfirmTitle")}
+        okText={t("knowledgeBase.fileDetail.actions.confirm")}
+        cancelText={t("knowledgeBase.fileDetail.actions.cancel")}
+        okButtonProps={{ danger: true, loading: deleting }}
+        centered
+      >
+        <p>{t("knowledgeBase.fileDetail.modal.deleteConfirmMessage")}</p>
+      </Modal>
+
+      <Modal
+        open={!!editingChunk}
+        onCancel={() => {
+          setEditingChunk(null);
+          setEditChunkContent("");
+          setEditChunkMetadata("");
+          setMetadataValid(true);
+          setMetadataError(null);
+        }}
+        footer={null}
+        title={
+          <div className="flex items-center gap-2">
+            <Edit className="w-5 h-5 text-blue-500" />
+            <span>{t("knowledgeBase.fileDetail.modal.editChunkTitle")} - {editingChunk}</span>
+          </div>
+        }
+        width={900}
+        destroyOnClose
+      >
+        <div className="space-y-6">
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="font-medium text-gray-700">
+                {t("knowledgeBase.fileDetail.modal.chunkContent")}
+              </label>
+            </div>
+            <Input.TextArea
+              value={editChunkContent}
+              onChange={(e) => setEditChunkContent(e.target.value)}
+              rows={6}
+              placeholder={t("knowledgeBase.fileDetail.placeholders.chunkContent")}
+              className="font-mono"
+              style={{
+                fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace',
+              }}
+            />
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="font-medium text-gray-700 flex items-center gap-2">
+                <Code className="w-4 h-4" />
+                {t("knowledgeBase.fileDetail.modal.metadata")}
+              </label>
+              <div className="flex items-center gap-2">
+                {metadataValid ? (
+                  <span className="flex items-center gap-1 text-green-600 text-sm">
+                    <CheckCircle className="w-4 h-4" />
+                    {t("knowledgeBase.fileDetail.messages.jsonValid")}
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1 text-red-500 text-sm">
+                    <AlertCircle className="w-4 h-4" />
+                    {t("knowledgeBase.fileDetail.messages.jsonInvalid")}
+                  </span>
+                )}
+                <Button
+                  size="small"
+                  icon={<Wand2 className="w-4 h-4" />}
+                  onClick={formatJson}
+                  type="default"
+                >
+                  {t("knowledgeBase.fileDetail.actions.formatJson")}
+                </Button>
+              </div>
+            </div>
+            <div className="relative">
+              <Input.TextArea
+                value={editChunkMetadata}
+                onChange={(e) => handleMetadataChange(e.target.value)}
+                rows={10}
+                placeholder={t("knowledgeBase.fileDetail.placeholders.metadata")}
+                className="font-mono"
+                style={{
+                  fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace',
+                  borderColor: metadataValid ? '#d9d9d9' : '#ff4d4f',
+                }}
+                status={metadataValid ? undefined : 'error'}
+              />
+              {metadataError && (
+                <div className="mt-2 text-red-500 text-xs flex items-start gap-1">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                  <span className="break-all">{metadataError}</span>
+                </div>
+              )}
+              <div className="mt-2 text-gray-400 text-xs">
+                {t("knowledgeBase.fileDetail.messages.metadataHint")}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-4 border-t border-gray-100">
+            <Button
+              onClick={() => {
+                setEditingChunk(null);
+                setEditChunkContent("");
+                setEditChunkMetadata("");
+                setMetadataValid(true);
+                setMetadataError(null);
+              }}
+            >
+              {t("knowledgeBase.fileDetail.actions.cancel")}
+            </Button>
+            <Button
+              type="primary"
+              onClick={() => editingChunk && handleSaveChunk(editingChunk)}
+              loading={saving}
+              disabled={!metadataValid || !editChunkContent.trim()}
+              icon={<CheckCircle className="w-4 h-4" />}
+            >
+              {t("knowledgeBase.fileDetail.actions.save")}
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

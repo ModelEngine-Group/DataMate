@@ -1655,6 +1655,8 @@
       "confirm": {
         "deleteTitle": "确认删除该知识库吗？",
         "deleteDescription": "删除后将无法恢复，请谨慎操作。",
+        "deleteFileTitle": "确认删除该文件吗？",
+        "deleteFileDescription": "确定要删除文件「{{name}}」吗？删除后将无法恢复。",
         "okText": "删除",
         "cancelText": "取消"
       },
@@ -1698,16 +1700,38 @@
       "actions": {
         "download": "下载",
         "save": "保存",
-        "cancel": "取消"
+        "cancel": "取消",
+        "confirm": "确认",
+        "formatJson": "格式化",
+        "view": "查看",
+        "edit": "编辑",
+        "delete": "删除"
       },
       "messages": {
         "noChunks": "暂无分块数据",
         "chunkCount": "个分块",
+        "totalChunks": "共 {{count}} 个分块",
+        "showingRange": "当前显示第 {{start}}-{{end}} 个",
         "ready": "就绪",
         "previousPage": "上一页",
         "nextPage": "下一页",
         "chunkLabel": "分块",
-        "loadFailed": "加载失败"
+        "loadFailed": "加载失败",
+        "updateSuccess": "分块更新成功",
+        "updateFailed": "分块更新失败",
+        "deleteSuccess": "分块删除成功",
+        "deleteFailed": "分块删除失败",
+        "invalidMetadata": "元数据JSON格式无效",
+        "invalidMetadataFormat": "元数据不是有效的JSON格式",
+        "textRequired": "分块内容不能为空",
+        "formatSuccess": "JSON格式化成功",
+        "metadataHint": "请输入有效的JSON格式数据，点击\"格式化\"按钮可自动整理格式",
+        "jsonValid": "JSON格式正确",
+        "jsonInvalid": "JSON格式错误"
+      },
+      "placeholders": {
+        "chunkContent": "请输入分块内容",
+        "metadata": "请输入元数据（JSON格式）"
       },
       "modal": {
         "sliceTraceTitle": "知识切片回溯",
@@ -1722,12 +1746,16 @@
         "position": "位置",
         "tokenCount": "Token数量",
         "pageNumber": "页码",
-        "chapter": "章节"
+        "chapter": "章节",
+        "deleteConfirmTitle": "确认删除分块",
+        "deleteConfirmMessage": "确定要删除这个分块吗？此操作将同时删除Milvus中的向量数据，且无法恢复。",
+        "editChunkTitle": "编辑分块"
       },
       "breadcrumb": {
         "kbList": "知识库",
         "kbDetail": "知识库详情"
-      }
+      },
+      "defaultFileName": "文件 {{id}}"
     },
     "create": {
       "title": "创建知识库",
@@ -1740,6 +1768,8 @@
         "nameLabel": "知识库名称",
         "namePlaceholder": "请输入知识库名称",
         "nameRequired": "请输入知识库名称",
+        "nameMaxLength": "知识库名称长度不能超过255个字符",
+        "namePattern": "知识库名称必须以字母开头，只能包含字母、数字和下划线",
         "descriptionLabel": "描述",
         "descriptionPlaceholder": "请输入知识库描述（可选）",
         "embeddingModelLabel": "索引模型",

@@ -343,6 +343,7 @@ export default function DatasetDetail() {
         okText={t("dataManagement.confirm.deleteConfirm")}
         cancelText={t("dataManagement.confirm.deleteCancel")}
         okButtonProps={{ danger: true }}
+        centered
       >
         <p>{t("dataManagement.confirm.deleteDatasetDesc", { itemName: dataset.name || t("dataManagement.detail.title") })}</p>
       </Modal>

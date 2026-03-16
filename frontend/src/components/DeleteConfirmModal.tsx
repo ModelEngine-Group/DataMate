@@ -57,6 +57,7 @@ export default function DeleteConfirmModal({
       okType="danger"
       okText={t("components.deleteConfirm.confirm")}
       cancelText={t("components.deleteConfirm.cancel")}
+      centered
     >
       <p>{defaultMessage}</p>
     </Modal>

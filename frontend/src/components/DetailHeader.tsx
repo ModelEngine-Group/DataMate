@@ -1,6 +1,6 @@
 import React, { useLayoutEffect, useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { Database } from "lucide-react";
-import { Card, Button, Tag, Tooltip, Popconfirm, Popover } from "antd";
+import { Card, Button, Tag, Tooltip, Modal } from "antd";
 import type { ItemType } from "antd/es/menu/interface";
 import AddTagPopover from "./AddTagPopover";
 import ActionDropdown from "./ActionDropdown";
@@ -291,23 +291,30 @@ function DetailHeader<T>({
               );
             }
             if (op.confirm) {
+              const showConfirmModal = () => {
+                Modal.confirm({
+                  title: op.confirm?.title,
+                  content: op.confirm?.description,
+                  okText: op.confirm?.okText,
+                  okType: op.danger ? "danger" : "primary",
+                  cancelText: op.confirm?.cancelText,
+                  centered: true,
+                  onOk: () => {
+                    if (op.onClick) {
+                      op.onClick();
+                    } else {
+                      op?.confirm?.onConfirm?.();
+                    }
+                  },
+                });
+              };
               return (
                 <Tooltip key={op.key} title={op.label}>
-                  <Popconfirm
-                    key={op.key}
-                    {...op.confirm}
-                    onConfirm={() => {
-                      if (op.onClick) {
-                        op.onClick()
-                      } else {
-                        op?.confirm?.onConfirm?.();
-                      }
-                    }}
-                    okType={op.danger ? "danger" : "primary"}
-                    overlayStyle={{ zIndex: 9999 }}
-                  >
-                    <Button icon={op.icon} danger={op.danger} />
-                  </Popconfirm>
+                  <Button
+                    icon={op.icon}
+                    danger={op.danger}
+                    onClick={showConfirmModal}
+                  />
                 </Tooltip>
               );
             }

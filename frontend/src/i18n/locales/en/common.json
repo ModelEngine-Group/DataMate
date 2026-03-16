@@ -1655,6 +1655,8 @@
       "confirm": {
         "deleteTitle": "Confirm deletion of this knowledge base?",
         "deleteDescription": "It cannot be recovered after deletion. Please operate with caution.",
+        "deleteFileTitle": "Confirm deletion of this file?",
+        "deleteFileDescription": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
         "okText": "Delete",
         "cancelText": "Cancel"
       },
@@ -1684,7 +1686,8 @@
         "noProperties": "No properties"
       },
       "breadcrumb": {
-        "kbList": "Knowledge Bases"
+        "kbList": "Knowledge Bases",
+        "kbDetail": "Knowledge Base Detail"
       },
       "searchPlaceholder": "Search file name..."
     },
@@ -1698,16 +1701,38 @@
       "actions": {
         "download": "Download",
         "save": "Save",
-        "cancel": "Cancel"
+        "cancel": "Cancel",
+        "confirm": "Confirm",
+        "formatJson": "Format",
+        "view": "View",
+        "edit": "Edit",
+        "delete": "Delete"
       },
       "messages": {
         "noChunks": "No chunk data",
         "chunkCount": "chunks",
+        "totalChunks": "Total {{count}} chunks",
+        "showingRange": "showing {{start}}-{{end}}",
         "ready": "Ready",
         "previousPage": "Previous Page",
         "nextPage": "Next Page",
         "chunkLabel": "Chunk",
-        "loadFailed": "Load failed"
+        "loadFailed": "Load failed",
+        "updateSuccess": "Chunk updated successfully",
+        "updateFailed": "Failed to update chunk",
+        "deleteSuccess": "Chunk deleted successfully",
+        "deleteFailed": "Failed to delete chunk",
+        "invalidMetadata": "Invalid metadata JSON format",
+        "invalidMetadataFormat": "Metadata is not valid JSON format",
+        "textRequired": "Chunk content cannot be empty",
+        "formatSuccess": "JSON formatted successfully",
+        "metadataHint": "Please enter valid JSON format. Click 'Format' button to auto-format.",
+        "jsonValid": "Valid JSON",
+        "jsonInvalid": "Invalid JSON"
+      },
+      "placeholders": {
+        "chunkContent": "Enter chunk content",
+        "metadata": "Enter metadata (JSON format)"
       },
       "modal": {
         "sliceTraceTitle": "Knowledge Slice Trace",
@@ -1722,12 +1747,16 @@
         "position": "Position",
         "tokenCount": "Token Count",
         "pageNumber": "Page Number",
-        "chapter": "Chapter"
+        "chapter": "Chapter",
+        "deleteConfirmTitle": "Confirm Delete Chunk",
+        "deleteConfirmMessage": "Are you sure you want to delete this chunk? This will also delete the vector data in Milvus and cannot be undone.",
+        "editChunkTitle": "Edit Chunk"
       },
       "breadcrumb": {
         "kbList": "Knowledge Bases",
         "kbDetail": "Knowledge Base Detail"
-      }
+      },
+      "defaultFileName": "File {{id}}"
     },
     "create": {
       "title": "Create Knowledge Base",
@@ -1740,6 +1769,8 @@
         "nameLabel": "Knowledge Base Name",
         "namePlaceholder": "Please enter knowledge base name",
         "nameRequired": "Please enter knowledge base name",
+        "nameMaxLength": "Knowledge base name cannot exceed 255 characters",
+        "namePattern": "Knowledge base name must start with a letter and can only contain letters, numbers, and underscores",
         "descriptionLabel": "Description",
         "descriptionPlaceholder": "Please enter knowledge base description (optional)",
         "embeddingModelLabel": "Embedding Model",

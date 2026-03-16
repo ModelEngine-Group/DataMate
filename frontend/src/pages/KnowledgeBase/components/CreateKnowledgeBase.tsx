@@ -177,7 +177,14 @@ export default function CreateKnowledgeBase({
           <Form.Item
             label={t("knowledgeBase.create.form.nameLabel")}
             name="name"
-            rules={[{ required: true, message: t("knowledgeBase.create.form.nameRequired") }]}
+            rules={[
+              { required: true, message: t("knowledgeBase.create.form.nameRequired") },
+              { max: 255, message: t("knowledgeBase.create.form.nameMaxLength") },
+              {
+                pattern: /^[a-zA-Z][a-zA-Z0-9_]*$/,
+                message: t("knowledgeBase.create.form.namePattern"),
+              },
+            ]}
           >
             <Input placeholder={t("knowledgeBase.create.form.namePlaceholder")} />
           </Form.Item>
