@@ -582,11 +582,19 @@ class Service:
                         dataset.updated_at = datetime.now()
                         dataset.status = 'ACTIVE'
 
-                    # 复制物理文件到目标路径
-                    logger.info(f"copy file {source_path} to {target_path}")
+                    # 创建硬链接（如果跨设备则回退到符号链接）
+                    logger.info(f"creating hard link from {source_path} to {target_path}")
                     dst_dir = os.path.dirname(target_path)
                     await asyncio.to_thread(os.makedirs, dst_dir, exist_ok=True)
-                    await asyncio.to_thread(shutil.copy2, source_path, target_path)
+                    try:
+                        # Try to create hard link first
+                        await asyncio.to_thread(os.link, source_path, target_path)
+                        logger.info(f"hard link created successfully")
+                    except OSError as e:
+                        # Hard link may fail due to cross-device link error, fall back to symbolic link
+                        logger.warning(f"failed to create hard link from {source_path} to {target_path}: {e}, falling back to symbolic link")
+                        await asyncio.to_thread(os.symlink, source_path, target_path)
+                        logger.info(f"symbolic link created successfully")
 
                     await self.db.commit()
 
@@ -621,11 +629,19 @@ class Service:
             dataset.size_bytes = dataset.size_bytes + file_record.file_size
             dataset.updated_at = datetime.now()
             dataset.status = 'ACTIVE'
-        # Copy file
-        logger.info(f"copy file {source_path} to {target_path}")
+        # Create hard link (fallback to symbolic link if cross-device)
+        logger.info(f"creating hard link from {source_path} to {target_path}")
         dst_dir = os.path.dirname(target_path)
         await asyncio.to_thread(os.makedirs, dst_dir, exist_ok=True)
-        await asyncio.to_thread(shutil.copy2, source_path, target_path)
+        try:
+            # Try to create hard link first
+            await asyncio.to_thread(os.link, source_path, target_path)
+            logger.info(f"hard link created successfully")
+        except OSError as e:
+            # Hard link may fail due to cross-device link error, fall back to symbolic link
+            logger.warning(f"failed to create hard link from {source_path} to {target_path}: {e}, falling back to symbolic link")
+            await asyncio.to_thread(os.symlink, source_path, target_path)
+            logger.info(f"symbolic link created successfully")
         await self.db.commit()
 
     @staticmethod
