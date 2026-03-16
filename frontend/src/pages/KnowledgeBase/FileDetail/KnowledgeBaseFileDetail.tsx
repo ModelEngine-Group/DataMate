@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {Eye, Edit, Trash2, FileBox} from "lucide-react";
+import {Eye, Edit, Trash2, FileBox, ChevronLeft, ChevronRight} from "lucide-react";
 import { Card, Button, Badge, Input, Tabs, Modal, Breadcrumb, Tag, Spin, Empty, Alert } from "antd";
 import { queryKnowledgeBaseFileDetailUsingGet } from "@/pages/KnowledgeBase/knowledge-base.api";
 import { Link, useParams } from "react-router";
@@ -117,113 +117,100 @@ const KnowledgeBaseFileDetail: React.FC = () => {
     <div className="space-y-4">
       {error && <Alert type="error" message={error} showIcon />}
       <div className="flex items-center justify-between">
-<div className="text-sm text-gray-600">
-  {t("knowledgeBase.fileDetail.messages.chunkCount", { count: totalElements })}，第 {totalElements === 0 ? 0 : (currentPage - 1) * pageSize + 1}-
-  {totalElements === 0 ? 0 : Math.min(currentPage * pageSize, totalElements)} 个
-</div>
+        <div className="text-sm text-gray-600">
+          共 {totalElements} 个分块，当前显示第 {totalElements === 0 ? 0 : (currentPage - 1) * pageSize + 1}-
+          {totalElements === 0 ? 0 : Math.min(currentPage * pageSize, totalElements)} 个
+        </div>
         <div className="flex items-center gap-2">
           <Button
             size="small"
+            icon={<ChevronLeft className="w-4 h-4" />}
             onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
             disabled={currentPage <= 1}
-          >
-            {t("knowledgeBase.fileDetail.messages.previousPage")}
-          </Button>
+          />
           <span className="text-sm text-gray-600">
             {totalPages === 0 ? 0 : currentPage} / {totalPages}
           </span>
           <Button
             size="small"
-            onClick={() => setCurrentPage(Math.min(totalPages ||1, currentPage + 1))}
+            icon={<ChevronRight className="w-4 h-4" />}
+            onClick={() => setCurrentPage(Math.min(totalPages || 1, currentPage + 1))}
             disabled={currentPage >= (totalPages || 1)}
-          >
-            {t("knowledgeBase.fileDetail.messages.nextPage")}
-          </Button>
+          />
         </div>
       </div>
-      <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {currentChunks.map((chunk) => (
-          <Card key={chunk.id} className="p-4">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="flex-1 flex items-center gap-2">
-                    <h4 className="text-sm font-semibold">{t("knowledgeBase.fileDetail.messages.chunkLabel")} {chunk.id}</h4>
-                    {/* 算子名：从 metadata.sliceOperator 显示 */}
-                    {chunk.metadata?.sliceOperator && (
-                      <Tag className="text-xs">
-                        {chunk.metadata.sliceOperator}
-                      </Tag>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 ml-4">
-                    {editingChunk === chunk.id ? (
-                      <>
-                        <Button
-                          type="primary"
-                          size="small"
-                          onClick={() => handleSaveChunk(chunk.id)}
-                        >
-                          {t("knowledgeBase.fileDetail.actions.save")}
-                        </Button>
-                        <Button
-                          size="small"
-                          onClick={() => {
-                            setEditingChunk(null);
-                            setEditChunkContent("");
-                          }}
-                        >
-                          {t("knowledgeBase.fileDetail.actions.cancel")}
-                        </Button>
-                      </>
-                    ) : (
-                      <>
-                        <Button size="small" onClick={() => handleViewChunkDetail(chunk.id)}>
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                        <Button size="small" onClick={() => handleEditChunk(chunk.id, chunk.text)}>
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button size="small" danger onClick={() => handleDeleteChunk(chunk.id)}>
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                </div>
-                <div className="text-sm leading-relaxed text-gray-700">
-                  {editingChunk === chunk.id ? (
-                    <Input.TextArea
-                      value={editChunkContent}
-                      onChange={(e) => setEditChunkContent(e.target.value)}
-                      rows={3}
-                    />
-                  ) : (
-                    chunk.text
-                  )}
-                </div>
-                {/* 元数据展示，保持和召回结果风格一致 */}
-                <div className="mt-2 text-xs text-gray-600">
-                  <div className="font-medium">{t("knowledgeBase.fileDetail.modal.metadata")}:</div>
-                  <pre className="whitespace-pre-wrap break-all m-0">
-                    {typeof chunk.metadata === "string"
-                      ? chunk.metadata
-                      : JSON.stringify(chunk.metadata ?? {}, null, 2)}
-                  </pre>
-                </div>
-                {/* 结构化元数据的快捷标签（若可用） */}
-                <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
-                  {chunk?.metadata?.position && <span>{t("knowledgeBase.fileDetail.columns.position")}: {chunk.metadata.position}</span>}
-                  {chunk?.metadata?.tokens && <span>Token: {chunk.metadata.tokens}</span>}
-                  {chunk?.metadata?.page && <span>{t("knowledgeBase.fileDetail.columns.page")}: {chunk.metadata.page}</span>}
-                  {chunk?.metadata?.section && <span>{t("knowledgeBase.fileDetail.columns.section")}: {chunk.metadata.section}</span>}
-                </div>
+          <Card
+            key={chunk.id}
+            title={
+              <div className="flex items-center gap-2">
+                <span>{t("knowledgeBase.fileDetail.messages.chunkLabel")} {chunk.id}</span>
+                {chunk.metadata?.sliceOperator && (
+                  <Tag className="text-xs">
+                    {chunk.metadata.sliceOperator}
+                  </Tag>
+                )}
               </div>
+            }
+            extra={
+              <div className="flex items-center gap-1">
+                {editingChunk === chunk.id ? (
+                  <>
+                    <Button
+                      type="primary"
+                      size="small"
+                      onClick={() => handleSaveChunk(chunk.id)}
+                    >
+                      {t("knowledgeBase.fileDetail.actions.save")}
+                    </Button>
+                    <Button
+                      size="small"
+                      onClick={() => {
+                        setEditingChunk(null);
+                        setEditChunkContent("");
+                      }}
+                    >
+                      {t("knowledgeBase.fileDetail.actions.cancel")}
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button size="small" type="text" onClick={() => handleViewChunkDetail(chunk.id)}>
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                    <Button size="small" type="text" onClick={() => handleEditChunk(chunk.id, chunk.text)}>
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                    <Button size="small" type="text" danger onClick={() => handleDeleteChunk(chunk.id)}>
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </>
+                )}
+              </div>
+            }
+            style={{ wordBreak: "break-all" }}
+          >
+            <div style={{ marginBottom: 8, fontWeight: 500 }}>
+              {editingChunk === chunk.id ? (
+                <Input.TextArea
+                  value={editChunkContent}
+                  onChange={(e) => setEditChunkContent(e.target.value)}
+                  rows={3}
+                />
+              ) : (
+                chunk.text
+              )}
+            </div>
+            <div style={{ fontSize: 12, color: '#888' }}>
+              metadata <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all', margin: 0 }}>{typeof chunk.metadata === "string" ? chunk.metadata : JSON.stringify(chunk.metadata ?? {}, null, 2)}</pre>
             </div>
           </Card>
         ))}
         {!loading && currentChunks.length === 0 && (
-          <Empty description={t("knowledgeBase.fileDetail.messages.noChunks")} />
+          <div className="col-span-2">
+            <Empty description={t("knowledgeBase.fileDetail.messages.noChunks")} />
+          </div>
         )}
       </div>
     </div>
