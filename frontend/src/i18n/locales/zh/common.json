@@ -94,8 +94,8 @@
         "updateSuccess": "任务更新成功",
         "updateFailed": "任务更新失败",
         "deleteSuccess": "任务已删除",
-        "deleteConfirm": "确定要删除该任务吗？此操作不可撤销。",
-        "deleteConfirmMessage": "确定要删除「{{itemName}}」吗？删除后将无法恢复。",
+        "deleteTitle": "确认删除归集任务",
+        "deleteDesc": "删除「{{itemName}}」后将无法恢复，确定要执行此操作吗？",
         "confirmDelete": "删除",
         "cancel": "取消"
       },
@@ -375,10 +375,14 @@
       "fileDownloadSuccess": "文件下载成功"
     },
     "confirm": {
-      "deleteDatasetTitle": "确认删除该数据集？",
-      "deleteDatasetDesc": "确定要删除「{{itemName}}」吗？删除后将无法恢复。",
-      "deleteFolderTitle": "确认删除文件夹？",
-      "deleteFolderDesc": "删除文件夹 \"{{name}}\" 将同时删除其中的所有文件和子文件夹，此操作不可恢复。",
+      "deleteDatasetTitle": "确认删除数据集",
+      "deleteDatasetDesc": "删除「{{itemName}}」后将无法恢复，确定要执行此操作吗？",
+      "deleteFileTitle": "确认删除文件",
+      "deleteFileDesc": "删除「{{itemName}}」后将无法恢复，确定要执行此操作吗？",
+      "deleteFolderTitle": "确认删除文件夹",
+      "deleteFolderDesc": "删除「{{itemName}}」及其所有内容后将无法恢复，确定要执行此操作吗？",
+      "batchDeleteTitle": "确认批量删除",
+      "batchDeleteDesc": "删除选中的 {{count}} 个项目后将无法恢复，确定要执行此操作吗？",
       "deleteConfirm": "删除",
       "deleteCancel": "取消"
     },
@@ -664,8 +668,8 @@
         "deleteFailed": "任务删除失败，请稍后重试"
       },
       "confirm": {
-        "deleteTitle": "确认删除该任务？",
-        "deleteDesc": "确定要删除「{{itemName}}」吗？删除后将无法恢复。",
+        "deleteTitle": "确认删除配比任务",
+        "deleteDesc": "删除「{{itemName}}」后将无法恢复，确定要执行此操作吗？",
         "okText": "删除",
         "cancelText": "取消"
       },
@@ -750,8 +754,8 @@
         "delete": "删除"
       },
       "confirm": {
-        "deleteTitle": "确认删除该配比任务？",
-        "deleteDesc": "删除后该任务将无法恢复，请谨慎操作。",
+        "deleteTitle": "确认删除配比任务",
+        "deleteDesc": "删除「{{itemName}}」后将无法恢复，确定要执行此操作吗？",
         "okText": "删除",
         "cancelText": "取消"
       },
@@ -1446,7 +1450,12 @@
         "taskDeleted": "任务删除成功",
         "taskDetailFailed": "获取任务详情失败",
         "taskPaused": "任务已暂停",
-        "taskStarted": "任务已启动"
+        "taskStarted": "任务已启动",
+        "deleteFailed": "任务删除失败，请稍后重试"
+      },
+      "confirm": {
+        "deleteTitle": "确认删除数据处理任务",
+        "deleteDesc": "删除「{{itemName}}」后将无法恢复，确定要执行此操作吗？"
       }
     },
     "template": {
@@ -2270,8 +2279,8 @@
         "cot": "链式推理生成"
       },
       "confirm": {
-        "deleteTitle": "确认删除任务?",
-        "deleteContent": "任务名：{{name}}",
+        "deleteTitle": "确认删除合成任务",
+        "deleteDesc": "删除「{{name}}」后将无法恢复，确定要执行此操作吗？",
         "archiveTitle": "确认归档该合成任务?",
         "archiveContent": "任务名：{{name}}"
       },
@@ -2567,9 +2576,9 @@
         "delete": "删除任务"
       },
       "confirm": {
-        "deleteTitle": "确认删除该合成任务？",
-        "deleteDescription": "删除后将无法恢复，请谨慎操作。",
-        "okText": "确认删除",
+        "deleteTitle": "确认删除合成任务",
+        "deleteDescription": "删除「{{name}}」后将无法恢复，确定要执行此操作吗？",
+        "okText": "删除",
         "cancelText": "取消"
       },
       "messages": {

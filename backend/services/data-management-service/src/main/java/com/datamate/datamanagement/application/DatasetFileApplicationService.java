@@ -226,34 +226,50 @@ public class DatasetFileApplicationService {
 
     /**
      * 删除文件
+     * 使用悲观锁防止并发删除导致 fileCount 计算不准确
      */
     @Transactional
     public void deleteDatasetFile(String datasetId, String fileId, String prefix) {
-        Dataset dataset = datasetRepository.getById(datasetId);
+        // 使用悲观锁获取 dataset，确保并发安全
+        Dataset dataset = datasetRepository.getByIdWithLock(datasetId);
         DatasetFile file = getDatasetFile(dataset, fileId, prefix);
-        dataset.setFiles(new ArrayList<>(Collections.singleton(file)));
+
+        // 先删除数据库记录
         datasetFileRepository.removeById(fileId);
-        if (CommonUtils.isUUID(fileId)) {
-            dataset.removeFile(file);
-        }
-        datasetRepository.updateById(dataset);
-        // 删除文件时，上传到数据集中的文件会同时删除数据库中的记录和文件系统中的文件，归集过来的文件仅删除数据库中的记录
+
+        // 删除物理文件（仅删除在数据集路径下的文件）
         if (file.getFilePath().startsWith(dataset.getPath())) {
             try {
                 Path filePath = validateAndResolvePath(file.getFilePath(), dataset.getPath());
                 Files.deleteIfExists(filePath);
             } catch (IOException ex) {
+                log.error("删除物理文件失败: {}", file.getFilePath(), ex);
                 throw BusinessException.of(SystemErrorCode.FILE_SYSTEM_ERROR);
             }
         }
+
+        // 重新计算文件统计信息（确保数据准确）
+        List<DatasetFile> remainingFiles = datasetFileRepository.findAllByDatasetId(datasetId);
+        dataset.setFileCount((long) remainingFiles.size());
+        dataset.setSizeBytes(remainingFiles.stream()
+            .mapToLong(f -> f.getFileSize() != null ? f.getFileSize().longValue() : 0L)
+            .sum());
+        dataset.setUpdatedAt(LocalDateTime.now());
+
+        datasetRepository.updateById(dataset);
+
+        log.info("删除文件成功 - datasetId: {}, fileId: {}, fileName: {}, fileCount: {}, sizeBytes: {}",
+            datasetId, fileId, file.getFileName(), dataset.getFileCount(), dataset.getSizeBytes());
     }
 
     /**
      * 批量删除文件
+     * 使用悲观锁防止并发删除导致 fileCount 计算不准确
      */
     @Transactional
     public void batchDeleteFiles(String datasetId, BatchDeleteFilesRequest request) {
-        Dataset dataset = datasetRepository.getById(datasetId);
+        // 使用悲观锁获取 dataset，确保并发安全
+        Dataset dataset = datasetRepository.getByIdWithLock(datasetId);
         if (dataset == null) {
             throw BusinessException.of(DataManagementErrorCode.DATASET_NOT_FOUND);
         }
@@ -266,6 +282,7 @@ public class DatasetFileApplicationService {
         List<DatasetFile> filesToDelete = new ArrayList<>();
         List<String> failedFileIds = new ArrayList<>();
 
+        // 先删除数据库记录
         for (String fileId : fileIds) {
             try {
                 DatasetFile file = getDatasetFile(dataset, fileId, request.getPrefix());
@@ -277,20 +294,8 @@ public class DatasetFileApplicationService {
             }
         }
 
-        // 更新数据集（避免 ConcurrentModificationException）
-        List<DatasetFile> datasetFiles = dataset.getFiles();
-        if (datasetFiles != null) {
-            // 创建一个新的列表来存储要保留的文件
-            List<DatasetFile> remainingFiles = new ArrayList<>(datasetFiles);
-            // 移除要删除的文件
-            remainingFiles.removeAll(filesToDelete);
-            dataset.setFiles(remainingFiles);
-        }
-        datasetRepository.updateById(dataset);
-
-        // 删除文件系统中的文件
+        // 删除物理文件（仅删除在数据集路径下的文件）
         for (DatasetFile file : filesToDelete) {
-            // 上传到数据集中的文件会同时删除数据库中的记录和文件系统中的文件，归集过来的文件仅删除数据库中的记录
             if (file.getFilePath().startsWith(dataset.getPath())) {
                 try {
                     Path filePath = validateAndResolvePath(file.getFilePath(), dataset.getPath());
@@ -302,6 +307,19 @@ public class DatasetFileApplicationService {
                 }
             }
         }
+
+        // 重新计算文件统计信息（确保数据准确）
+        List<DatasetFile> remainingFiles = datasetFileRepository.findAllByDatasetId(datasetId);
+        dataset.setFileCount((long) remainingFiles.size());
+        dataset.setSizeBytes(remainingFiles.stream()
+            .mapToLong(f -> f.getFileSize() != null ? f.getFileSize().longValue() : 0L)
+            .sum());
+        dataset.setUpdatedAt(LocalDateTime.now());
+
+        datasetRepository.updateById(dataset);
+
+        log.info("批量删除文件成功 - datasetId: {}, successCount: {}, failedCount: {}, fileCount: {}, sizeBytes: {}",
+            datasetId, filesToDelete.size(), failedFileIds.size(), dataset.getFileCount(), dataset.getSizeBytes());
 
         // 如果有失败的文件，记录日志但不抛出异常
         if (!failedFileIds.isEmpty()) {
@@ -643,7 +661,8 @@ public class DatasetFileApplicationService {
      */
     @Transactional
     public void deleteDirectory(String datasetId, String prefix) {
-        Dataset dataset = datasetRepository.getById(datasetId);
+        // 使用悲观锁获取 dataset，防止并发删除导致 fileCount 不准确
+        Dataset dataset = datasetRepository.getByIdWithLock(datasetId);
         if (dataset == null) {
             throw BusinessException.of(DataManagementErrorCode.DATASET_NOT_FOUND);
         }
@@ -694,6 +713,10 @@ public class DatasetFileApplicationService {
             })
             .collect(Collectors.toList());
 
+        log.info("删除目录开始 - datasetId: {}, prefix: {}, fileCount: {}, filesToDelete: {}",
+            datasetId, prefix, dataset.getFileCount(), filesToDelete.size());
+
+        // 删除数据库记录
         for (DatasetFile file : filesToDelete) {
             datasetFileRepository.removeById(file.getId());
         }
@@ -702,20 +725,22 @@ public class DatasetFileApplicationService {
         try {
             deleteDirectoryRecursively(normalized);
         } catch (IOException e) {
-            log.error("Failed to delete directory {} for dataset {}", normalized, datasetId, e);
+            log.error("删除目录失败: datasetId={}, prefix={}", datasetId, prefix, e);
             throw BusinessException.of(SystemErrorCode.FILE_SYSTEM_ERROR);
         }
 
-        // 更新数据集（避免 ConcurrentModificationException，先获取文件列表再删除）
-        List<DatasetFile> datasetFiles = dataset.getFiles();
-        if (datasetFiles != null) {
-            // 创建一个新的列表来存储要保留的文件
-            List<DatasetFile> remainingFiles = new ArrayList<>(datasetFiles);
-            // 移除要删除的文件
-            remainingFiles.removeAll(filesToDelete);
-            dataset.setFiles(remainingFiles);
-        }
+        // 重新计算文件统计信息（确保数据准确）
+        List<DatasetFile> remainingFiles = datasetFileRepository.findAllByDatasetId(datasetId);
+        dataset.setFileCount((long) remainingFiles.size());
+        dataset.setSizeBytes(remainingFiles.stream()
+            .mapToLong(f -> f.getFileSize() != null ? f.getFileSize().longValue() : 0L)
+            .sum());
+        dataset.setUpdatedAt(LocalDateTime.now());
+
         datasetRepository.updateById(dataset);
+
+        log.info("删除目录成功 - datasetId: {}, prefix: {}, deletedCount: {}, fileCount: {}, sizeBytes: {}",
+            datasetId, prefix, filesToDelete.size(), dataset.getFileCount(), dataset.getSizeBytes());
     }
 
     /**

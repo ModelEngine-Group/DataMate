@@ -19,7 +19,7 @@ import {
 } from "../dataset.api";
 import { useParams } from "react-router";
 
-export function useFilesOperation(dataset: Dataset) {
+export function useFilesOperation(dataset: Dataset, onDatasetUpdate?: () => Promise<void>) {
   const { message } = App.useApp();
   const { id } = useParams(); // 获取动态路由参数
 
@@ -125,7 +125,7 @@ export function useFilesOperation(dataset: Dataset) {
         }
       });
 
-      // 批量删除文件（一次性删除所有文件）
+      // 批量删除文件（一次性删除所有文件，后端使用悲观锁保证并发安全）
       if (fileIds.length > 0) {
         try {
           await batchDeleteFilesUsingDelete(dataset.id, { fileIds, prefix });
@@ -139,7 +139,7 @@ export function useFilesOperation(dataset: Dataset) {
         }
       }
 
-      // 并发删除目录（目录使用单独的递归删除接口）
+      // 删除目录（后端会递归删除所有内容）
       const deleteDirectory = async (dir: any) => {
         try {
           const dirPath = `${prefix}${dir.fileName}/`;
@@ -153,10 +153,18 @@ export function useFilesOperation(dataset: Dataset) {
 
       await Promise.all(directories.map(deleteDirectory));
 
-      // 刷新文件列表
+      // 刷新文件列表和数据集信息
       await fetchFiles(prefix, 1, pagination.pageSize);
       setSelectedFiles([]);
       setSelectedFilesMap(new Map());
+
+      if (onDatasetUpdate) {
+        try {
+          await onDatasetUpdate();
+        } catch (error) {
+          console.error("Failed to refresh dataset info after deletion:", error);
+        }
+      }
 
       hide();
 
@@ -411,7 +419,6 @@ export function useFilesOperation(dataset: Dataset) {
     }
   };
 
-
   return {
     fileList,
     selectedFiles,
@@ -462,11 +469,21 @@ export function useFilesOperation(dataset: Dataset) {
     },
     handleDeleteDirectory: async (directoryPath: string, directoryName: string) => {
       try {
-        // 直接调用后端递归删除目录 API，后端会一次性删除整个目录树
+        // 直接调用后端API删除目录（后端会递归删除所有内容）
         await deleteDirectoryUsingDelete(dataset.id, directoryPath);
         // 删除成功后刷新当前目录
         const currentPrefix = pagination.prefix || "";
         await fetchFiles(currentPrefix, 1, pagination.pageSize);
+
+        // 刷新数据集信息（更新 fileCount 和 totalSize）
+        if (onDatasetUpdate) {
+          try {
+            await onDatasetUpdate();
+          } catch (error) {
+            console.error("Failed to refresh dataset info after directory deletion:", error);
+          }
+        }
+
         message.success({ content: `文件夹 ${directoryName} 已删除` });
       } catch (error) {
         message.error({ content: `文件夹 ${directoryName} 删除失败` });

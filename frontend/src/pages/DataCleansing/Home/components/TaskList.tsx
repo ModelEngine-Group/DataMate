@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Table, Progress, Badge, Button, Tooltip, Card, App } from "antd";
+import { Table, Progress, Badge, Button, Tooltip, Card, App, Modal } from "antd";
 import {
   PlayCircleOutlined,
   PauseCircleOutlined,
@@ -27,6 +27,18 @@ export default function TaskList() {
   const navigate = useNavigate();
   const { message } = App.useApp();
   const [viewMode, setViewMode] = useState<"card" | "list">("card");
+
+  // 删除确认弹窗状态
+  const [deleteModal, setDeleteModal] = useState<{
+    visible: boolean;
+    taskId: string;
+    taskName: string;
+  }>({
+    visible: false,
+    taskId: "",
+    taskName: "",
+  });
+
   const filterOptions = [
     {
       key: "status",
@@ -59,9 +71,26 @@ export default function TaskList() {
   };
 
   const deleteTask = async (item: CleansingTask) => {
-    await deleteCleaningTaskByIdUsingDelete(item.id);
-    message.success(t("dataCleansing.task.messages.taskDeleted"));
-    fetchData();
+    setDeleteModal({
+      visible: true,
+      taskId: item.id,
+      taskName: item.name,
+    });
+  };
+
+  const handleConfirmDelete = async () => {
+    try {
+      await deleteCleaningTaskByIdUsingDelete(deleteModal.taskId);
+      message.success(t("dataCleansing.task.messages.taskDeleted"));
+      setDeleteModal({ visible: false, taskId: "", taskName: "" });
+      fetchData();
+    } catch (error) {
+      message.error(t("dataCleansing.task.messages.deleteFailed"));
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteModal({ visible: false, taskId: "", taskName: "" });
   };
 
   useEffect(() => {
@@ -311,6 +340,19 @@ export default function TaskList() {
           />
         </Card>
       )}
+
+      {/* 删除确认弹窗 */}
+      <Modal
+        title={t("dataCleansing.task.confirm.deleteTitle")}
+        open={deleteModal.visible}
+        onOk={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+        okText={t("dataManagement.confirm.deleteConfirm")}
+        cancelText={t("dataManagement.confirm.deleteCancel")}
+        okButtonProps={{ danger: true }}
+      >
+        <p>{t("dataCleansing.task.confirm.deleteDesc", { itemName: deleteModal.taskName })}</p>
+      </Modal>
     </>
   );
 }

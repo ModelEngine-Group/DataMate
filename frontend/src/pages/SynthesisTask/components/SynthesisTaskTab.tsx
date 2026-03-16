@@ -254,10 +254,10 @@ export default function SynthesisTaskTab() {
               onClick={() => {
                 Modal.confirm({
                   title: t('synthesisTask.home.confirm.deleteTitle'),
-                  content: t('synthesisTask.home.confirm.deleteContent', { name: task.name }),
-                  okText: t('synthesisTask.actions.delete'),
+                  content: t('synthesisTask.home.confirm.deleteDesc', { name: task.name }),
+                  okText: t('dataManagement.confirm.deleteConfirm'),
                   okType: "danger",
-                  cancelText: t('synthesisTask.actions.cancel'),
+                  cancelText: t('dataManagement.confirm.deleteCancel'),
                   onOk: async () => {
                     try {
                       await deleteSynthesisTaskByIdUsingDelete(task.id);
