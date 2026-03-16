@@ -1692,7 +1692,10 @@
         "save": "Save",
         "cancel": "Cancel",
         "confirm": "Confirm",
-        "formatJson": "Format"
+        "formatJson": "Format",
+        "view": "View",
+        "edit": "Edit",
+        "delete": "Delete"
       },
       "messages": {
         "noChunks": "No chunk data",
@@ -1712,7 +1715,9 @@
         "invalidMetadataFormat": "Metadata is not valid JSON format",
         "textRequired": "Chunk content cannot be empty",
         "formatSuccess": "JSON formatted successfully",
-        "metadataHint": "Please enter valid JSON format. Click 'Format' button to auto-format."
+        "metadataHint": "Please enter valid JSON format. Click 'Format' button to auto-format.",
+        "jsonValid": "Valid JSON",
+        "jsonInvalid": "Invalid JSON"
       },
       "placeholders": {
         "chunkContent": "Enter chunk content",

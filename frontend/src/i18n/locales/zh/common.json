@@ -1691,7 +1691,10 @@
         "save": "保存",
         "cancel": "取消",
         "confirm": "确认",
-        "formatJson": "格式化"
+        "formatJson": "格式化",
+        "view": "查看",
+        "edit": "编辑",
+        "delete": "删除"
       },
       "messages": {
         "noChunks": "暂无分块数据",
@@ -1711,7 +1714,9 @@
         "invalidMetadataFormat": "元数据不是有效的JSON格式",
         "textRequired": "分块内容不能为空",
         "formatSuccess": "JSON格式化成功",
-        "metadataHint": "请输入有效的JSON格式数据，点击\"格式化\"按钮可自动整理格式"
+        "metadataHint": "请输入有效的JSON格式数据，点击\"格式化\"按钮可自动整理格式",
+        "jsonValid": "JSON格式正确",
+        "jsonInvalid": "JSON格式错误"
       },
       "placeholders": {
         "chunkContent": "请输入分块内容",
