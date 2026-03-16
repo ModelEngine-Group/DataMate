@@ -1713,25 +1713,6 @@
         "formatSuccess": "JSON格式化成功",
         "metadataHint": "请输入有效的JSON格式数据，点击\"格式化\"按钮可自动整理格式"
       },
-      "messages": {
-        "noChunks": "暂无分块数据",
-        "chunkCount": "个分块",
-        "totalChunks": "共 {{count}} 个分块",
-        "showingRange": "当前显示第 {{start}}-{{end}} 个",
-        "ready": "就绪",
-        "previousPage": "上一页",
-        "nextPage": "下一页",
-        "chunkLabel": "分块",
-        "loadFailed": "加载失败",
-        "updateSuccess": "分块更新成功",
-        "updateFailed": "分块更新失败",
-        "deleteSuccess": "分块删除成功",
-        "deleteFailed": "分块删除失败",
-        "invalidMetadata": "元数据JSON格式无效",
-        "textRequired": "分块内容不能为空",
-        "formatSuccess": "JSON格式化成功",
-        "metadataHint": "请输入有效的JSON格式数据，点击\"格式化\"按钮可自动整理格式"
-      },
       "placeholders": {
         "chunkContent": "请输入分块内容",
         "metadata": "请输入元数据（JSON格式）"
@@ -1757,7 +1738,8 @@
       "breadcrumb": {
         "kbList": "知识库",
         "kbDetail": "知识库详情"
-      }
+      },
+      "defaultFileName": "文件 {{id}}"
     },
     "create": {
       "title": "创建知识库",

@@ -200,7 +200,7 @@ const KnowledgeBaseFileDetail: React.FC = () => {
         items={[
           { title: <Link to="/data/knowledge-base">{t("knowledgeBase.fileDetail.breadcrumb.kbList")}</Link> },
           { title: (<Link to={kbLink}>{t("knowledgeBase.fileDetail.breadcrumb.kbDetail")}</Link>) },
-          { title: fileName || `文件 ${ragFileId}` },
+          { title: fileName || t("knowledgeBase.fileDetail.defaultFileName", { id: ragFileId }) },
         ]}
       />
       <DetailHeader
@@ -208,7 +208,7 @@ const KnowledgeBaseFileDetail: React.FC = () => {
           id: ragFileId,
           icon: <FileBox className="w-full h-full" />,
           iconColor: "#a27e7e",
-          name: fileName || `文件 ${ragFileId}`,
+          name: fileName || t("knowledgeBase.fileDetail.defaultFileName", { id: ragFileId }),
           description: `${totalElements} ${t("knowledgeBase.fileDetail.messages.chunkCount", { count: 0 })}`,
           createdAt: "",
           lastUpdated: "",
