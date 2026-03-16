@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {Eye, Edit, Trash2, FileText, Download, FileType2, FileBox} from "lucide-react";
+import {Eye, Edit, Trash2, FileBox} from "lucide-react";
 import { Card, Button, Badge, Input, Tabs, Modal, Breadcrumb, Tag, Spin, Empty, Alert } from "antd";
 import { queryKnowledgeBaseFileDetailUsingGet } from "@/pages/KnowledgeBase/knowledge-base.api";
 import { Link, useParams } from "react-router";
@@ -39,7 +39,7 @@ const KnowledgeBaseFileDetail: React.FC = () => {
   const [chunkDetailModal, setChunkDetailModal] = useState<string | null>(null);
   const [showSliceTraceDialog, setShowSliceTraceDialog] = useState<string | null>(null);
 
-  const pageSize = 20;
+  const pageSize = 10;
   const [currentPage, setCurrentPage] = useState(1);
 
   const safeParse = (meta: unknown): unknown => {
@@ -117,10 +117,10 @@ const KnowledgeBaseFileDetail: React.FC = () => {
     <div className="space-y-4">
       {error && <Alert type="error" message={error} showIcon />}
       <div className="flex items-center justify-between">
-        <div className="text-sm text-gray-600">
-          {t("knowledgeBase.fileDetail.messages.chunkCount", { count: totalElements })}，第 {totalElements === 0 ? 0 : (currentPage - 1) * pageSize + 1}-
-          {Math.min(currentPage * pageSize, totalElements)} 个
-        </div>
+<div className="text-sm text-gray-600">
+  {t("knowledgeBase.fileDetail.messages.chunkCount", { count: totalElements })}，第 {totalElements === 0 ? 0 : (currentPage - 1) * pageSize + 1}-
+  {totalElements === 0 ? 0 : Math.min(currentPage * pageSize, totalElements)} 个
+</div>
         <div className="flex items-center gap-2">
           <Button
             size="small"
@@ -244,14 +244,13 @@ const KnowledgeBaseFileDetail: React.FC = () => {
           id: ragFileId,
           icon: <FileBox className="w-full h-full" />,
           iconColor: "#a27e7e",
-          status: { label: t("knowledgeBase.fileDetail.messages.ready"), color: "default" },
           name: fileName || `文件 ${ragFileId}`,
           description: `${totalElements} ${t("knowledgeBase.fileDetail.messages.chunkCount", { count: 0 })}`,
           createdAt: "",
           lastUpdated: "",
         }}
         statistics={[]}
-        operations={[{ key: "download", label: t("knowledgeBase.fileDetail.actions.download"), icon: <Download className="w-4 h-4" />, onClick: () => {} }]}
+        operations={[]}
       />
       <Card>
         {loading ? <div className="flex items-center justify-center py-8"><Spin /></div> : renderChunks()}
