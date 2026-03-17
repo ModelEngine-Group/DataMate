@@ -4,7 +4,7 @@ import com.datamate.gateway.common.config.SslIgnoreHttpClientFactory;
 import com.datamate.gateway.infrastructure.client.OmsService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import lombok.Getter;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
@@ -28,7 +28,7 @@ import java.util.List;
 public class OmsServiceImpl implements OmsService {
     private static final String AUTH_TOKEN_NEW_HEADER_KEY = "X-Auth-Token";
     private static final String CSRF_TOKEN_NEW_HEADER_KEY = "X-Csrf-Token";
-    private static final String REAL_IP_HEADER_KEY = "X-Real-Ip";
+    private static final String REAL_IP_HEADER_KEY = "X-Real-IP";
 
     @Value("${oms.service.url}")
     private final String omsServiceUrl;
@@ -87,8 +87,8 @@ public class OmsServiceImpl implements OmsService {
      * 
      * @param <T> the type of data
      */
-    @Getter
-    public class ResultVo<T> {
+    @Data
+    public static class ResultVo<T> {
         private Integer code;
         private String msg;
         private T data;

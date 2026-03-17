@@ -102,9 +102,9 @@ public class OmsAuthFilter implements GlobalFilter {
      * @return the real IP address
      */
     private String getRealIp(ServerHttpRequest request) {
-        String ip = request.getHeaders().getFirst("X-Forwarded-For");
+        String ip = request.getHeaders().getFirst("X-Real-IP");
         if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeaders().getFirst("X-Real-IP");
+            ip = request.getHeaders().getFirst("X-Forwarded-For");
         }
         if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
             ip = request.getHeaders().getFirst("Proxy-Client-IP");
