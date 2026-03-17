@@ -36,6 +36,7 @@ public class OmsAuthFilter implements GlobalFilter {
     private static final String USER_NAME_HEADER = "X-User-Name";
     private static final String AUTH_TOKEN_NEW_HEADER_KEY = "X-Auth-Token";
     private static final String CSRF_TOKEN_NEW_HEADER_KEY = "X-Csrf-Token";
+    private static final String REAL_IP_HEADER_KEY = "X-Real-Ip";
     private static final String AUTH_TOKEN_KEY = "__Host-X-Auth-Token";
     private static final String CSRF_TOKEN_KEY = "__Host-X-Csrf-Token";
 
@@ -104,9 +105,11 @@ public class OmsAuthFilter implements GlobalFilter {
         MultiValueMap<String, HttpCookie> cookies = request.getCookies();
         String authToken = getToken(cookies, AUTH_TOKEN_KEY);
         String csrfToken = getToken(cookies, CSRF_TOKEN_KEY);
+        String realIp = getRealIp(request);
 
         httpPost.setHeader(AUTH_TOKEN_NEW_HEADER_KEY, authToken);
         httpPost.setHeader(CSRF_TOKEN_NEW_HEADER_KEY, csrfToken);
+        httpPost.setHeader(REAL_IP_HEADER_KEY, realIp);
 
         CloseableHttpResponse response = httpClient.execute(httpPost);
         String responseBody = EntityUtils.toString(response.getEntity());
@@ -120,6 +123,26 @@ public class OmsAuthFilter implements GlobalFilter {
         }
 
         return resultVo.getData().get(0);
+    }
+
+    private String getRealIp(ServerHttpRequest request) {
+        String ip = request.getHeaders().getFirst("X-Forwarded-For");
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeaders().getFirst("X-Real-IP");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeaders().getFirst("Proxy-Client-IP");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeaders().getFirst("WL-Proxy-Client-IP");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getRemoteAddress() != null ? request.getRemoteAddress().getAddress().getHostAddress() : "";
+        }
+        if (ip != null && ip.contains(",")) {
+            ip = ip.split(",")[0].trim();
+        }
+        return ip != null ? ip : "";
     }
 
     private String getToken(MultiValueMap<String, HttpCookie> cookies, String tokenKey) {
