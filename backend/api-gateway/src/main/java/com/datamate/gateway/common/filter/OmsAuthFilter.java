@@ -53,6 +53,7 @@ public class OmsAuthFilter implements GlobalFilter {
             @Value("${oms.auth.enabled:false}") Boolean omsAuthEnable,
             @Value("${oms.service.url}") String omsServiceUrl,
             SslIgnoreHttpClientFactory sslIgnoreHttpClientFactory) {
+        log.info("OmsAuthFilter is apply, omsAuthEnable: {}", omsAuthEnable);
         this.omsAuthEnable = omsAuthEnable;
         this.omsServiceUrl = omsServiceUrl;
         this.sslIgnoreHttpClientFactory = sslIgnoreHttpClientFactory;
@@ -69,7 +70,6 @@ public class OmsAuthFilter implements GlobalFilter {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        log.info("OmsAuthFilter is apply, omsAuthEnable: {}", this.omsAuthEnable);
         if (!this.omsAuthEnable) {
             return chain.filter(exchange);
         }
@@ -77,32 +77,13 @@ public class OmsAuthFilter implements GlobalFilter {
         String uri = request.getURI().getPath();
         log.info("Oms auth filter uri: {}", uri);
 
-        String fullPath = this.omsServiceUrl + "/framework/v1/iam/roles/query-by-token";
-
         try {
-            HttpPost httpPost = new HttpPost(fullPath);
-
-            MultiValueMap<String, HttpCookie> cookies = request.getCookies();
-            String authToken = getToken(cookies, AUTH_TOKEN_KEY);
-            String csrfToken = getToken(cookies, CSRF_TOKEN_KEY);
-
-            httpPost.setHeader(AUTH_TOKEN_NEW_HEADER_KEY, authToken);
-            httpPost.setHeader(CSRF_TOKEN_NEW_HEADER_KEY, csrfToken);
-
-            CloseableHttpResponse response = httpClient.execute(httpPost);
-            String responseBody = EntityUtils.toString(response.getEntity());
-            log.info("response code: {}, response body: {}", response.getCode(), responseBody);
-
-            ResultVo<List<String>> resultVo = objectMapper.readValue(responseBody, 
-                objectMapper.getTypeFactory().constructParametricType(ResultVo.class, List.class));
-
-            if (resultVo.getData() == null || resultVo.getData().isEmpty()) {
+            String userName = this.getUserNameFromOms(request);
+            if (userName == null) {
                 exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
                 log.error("Authentication failed: Token is null or invalid.");
                 return exchange.getResponse().setComplete();
             }
-
-            String userName = resultVo.getData().get(0);
             ServerHttpRequest newRequest = request.mutate()
                     .header(USER_NAME_HEADER, userName)
                     .build();
@@ -113,6 +94,32 @@ public class OmsAuthFilter implements GlobalFilter {
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
         }
+    }
+
+    private String getUserNameFromOms(ServerHttpRequest request) throws IOException, ParseException {
+        String fullPath = this.omsServiceUrl + "/framework/v1/iam/roles/query-by-token";
+
+        HttpPost httpPost = new HttpPost(fullPath);
+
+        MultiValueMap<String, HttpCookie> cookies = request.getCookies();
+        String authToken = getToken(cookies, AUTH_TOKEN_KEY);
+        String csrfToken = getToken(cookies, CSRF_TOKEN_KEY);
+
+        httpPost.setHeader(AUTH_TOKEN_NEW_HEADER_KEY, authToken);
+        httpPost.setHeader(CSRF_TOKEN_NEW_HEADER_KEY, csrfToken);
+
+        CloseableHttpResponse response = httpClient.execute(httpPost);
+        String responseBody = EntityUtils.toString(response.getEntity());
+        log.info("response code: {}, response body: {}", response.getCode(), responseBody);
+
+        ResultVo<List<String>> resultVo = objectMapper.readValue(responseBody, 
+            objectMapper.getTypeFactory().constructParametricType(ResultVo.class, List.class));
+
+        if (resultVo.getData() == null || resultVo.getData().isEmpty()) {
+            return null;
+        }
+
+        return resultVo.getData().get(0);
     }
 
     private String getToken(MultiValueMap<String, HttpCookie> cookies, String tokenKey) {
