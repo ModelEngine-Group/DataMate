@@ -1,10 +1,5 @@
 package com.datamate.gateway.common.filter;
 
-import com.datamate.gateway.common.config.SslIgnoreHttpClientFactory;
-import org.apache.hc.client5.http.classic.methods.HttpPost;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
-import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,9 +13,11 @@ import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.mock.http.server.reactive.MockServerHttpRequest;
 import org.springframework.mock.web.server.MockServerWebExchange;
 import org.springframework.web.server.ServerWebExchange;
+
+import com.datamate.gateway.infrastructure.client.OmsService;
+
 import reactor.core.publisher.Mono;
 
-import java.nio.charset.StandardCharsets;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -38,23 +35,16 @@ class OmsAuthFilterTest {
     private GatewayFilterChain chain;
 
     @Mock
-    private CloseableHttpClient httpClient;
-
-    @Mock
-    private CloseableHttpResponse httpResponse;
-
-    @Mock
-    private SslIgnoreHttpClientFactory sslIgnoreHttpClientFactory;
+    private OmsService omsService;
 
     private OmsAuthFilter omsAuthFilter;
 
     @BeforeEach
     void setUp() throws Exception {
-        when(sslIgnoreHttpClientFactory.getHttpClient()).thenReturn(httpClient);
     }
 
     private OmsAuthFilter createOmsAuthFilter(Boolean omsAuthEnable) {
-        return new OmsAuthFilter(omsAuthEnable, "http://localhost:8080", sslIgnoreHttpClientFactory);
+        return new OmsAuthFilter(omsAuthEnable, omsService);
     }
 
     @Test
@@ -78,10 +68,7 @@ class OmsAuthFilterTest {
         MockServerHttpRequest request = MockServerHttpRequest.get("/api/test").build();
         ServerWebExchange exchange = MockServerWebExchange.from(request);
 
-        String successResponse = "{\"code\":200,\"msg\":\"success\",\"data\":[\"testuser\"]}";
-        StringEntity entity = new StringEntity(successResponse, StandardCharsets.UTF_8);
-        when(httpResponse.getEntity()).thenReturn(entity);
-        when(httpClient.execute(any(HttpPost.class))).thenReturn(httpResponse);
+        when(omsService.getUserNameFromOms(anyString(), anyString(), anyString())).thenReturn("testuser");
 
         when(chain.filter(any(ServerWebExchange.class))).thenReturn(Mono.empty());
 
@@ -101,10 +88,7 @@ class OmsAuthFilterTest {
         MockServerHttpRequest request = MockServerHttpRequest.get("/api/test").build();
         ServerWebExchange exchange = MockServerWebExchange.from(request);
 
-        String failureResponse = "{\"code\":403,\"msg\":\"unauthorized\",\"data\":[]}";
-        StringEntity entity = new StringEntity(failureResponse, StandardCharsets.UTF_8);
-        when(httpResponse.getEntity()).thenReturn(entity);
-        when(httpClient.execute(any(HttpPost.class))).thenReturn(httpResponse);
+        when(omsService.getUserNameFromOms(anyString(), anyString(), anyString())).thenReturn(null);
 
         omsAuthFilter.filter(exchange, chain);
 
@@ -120,10 +104,7 @@ class OmsAuthFilterTest {
         MockServerHttpRequest request = MockServerHttpRequest.get("/api/test").build();
         ServerWebExchange exchange = MockServerWebExchange.from(request);
 
-        String failureResponse = "{\"code\":401,\"msg\":\"unauthorized\",\"data\":[]}";
-        StringEntity entity = new StringEntity(failureResponse, StandardCharsets.UTF_8);
-        when(httpResponse.getEntity()).thenReturn(entity);
-        when(httpClient.execute(any(HttpPost.class))).thenReturn(httpResponse);
+        when(omsService.getUserNameFromOms(anyString(), anyString(), anyString())).thenReturn(null);
 
         omsAuthFilter.filter(exchange, chain);
 
@@ -142,10 +123,7 @@ class OmsAuthFilterTest {
                 .build();
         ServerWebExchange exchange = MockServerWebExchange.from(request);
 
-        String successResponse = "{\"code\":200,\"msg\":\"success\",\"data\":[\"testuser\"]}";
-        StringEntity entity = new StringEntity(successResponse, StandardCharsets.UTF_8);
-        when(httpResponse.getEntity()).thenReturn(entity);
-        when(httpClient.execute(any(HttpPost.class))).thenReturn(httpResponse);
+        when(omsService.getUserNameFromOms(anyString(), anyString(), anyString())).thenReturn("testuser");
 
         when(chain.filter(any(ServerWebExchange.class))).thenReturn(Mono.empty());
 

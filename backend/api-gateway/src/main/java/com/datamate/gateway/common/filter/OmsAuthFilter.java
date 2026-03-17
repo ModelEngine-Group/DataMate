@@ -1,14 +1,7 @@
 package com.datamate.gateway.common.filter;
 
-import com.datamate.gateway.common.config.SslIgnoreHttpClientFactory;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hc.client5.http.classic.methods.HttpPost;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
-import org.apache.hc.core5.http.ParseException;
-import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
@@ -18,10 +11,11 @@ import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.server.ServerWebExchange;
+
+import com.datamate.gateway.infrastructure.client.OmsService;
+
 import reactor.core.publisher.Mono;
 
-import java.io.IOException;
-import java.util.List;
 import java.util.Objects;
 
 /**
@@ -34,39 +28,18 @@ import java.util.Objects;
 @Component
 public class OmsAuthFilter implements GlobalFilter {
     private static final String USER_NAME_HEADER = "X-User-Name";
-    private static final String AUTH_TOKEN_NEW_HEADER_KEY = "X-Auth-Token";
-    private static final String CSRF_TOKEN_NEW_HEADER_KEY = "X-Csrf-Token";
-    private static final String REAL_IP_HEADER_KEY = "X-Real-Ip";
     private static final String AUTH_TOKEN_KEY = "__Host-X-Auth-Token";
     private static final String CSRF_TOKEN_KEY = "__Host-X-Csrf-Token";
 
     private final Boolean omsAuthEnable;
-
-    private final String omsServiceUrl;
-
-    private final ObjectMapper objectMapper = new ObjectMapper();
-
-    private final SslIgnoreHttpClientFactory sslIgnoreHttpClientFactory;
-
-    private CloseableHttpClient httpClient;
+    private final OmsService omsService;
 
     public OmsAuthFilter(
             @Value("${oms.auth.enabled:false}") Boolean omsAuthEnable,
-            @Value("${oms.service.url}") String omsServiceUrl,
-            SslIgnoreHttpClientFactory sslIgnoreHttpClientFactory) {
+            OmsService omsService) {
         log.info("OmsAuthFilter is apply, omsAuthEnable: {}", omsAuthEnable);
         this.omsAuthEnable = omsAuthEnable;
-        this.omsServiceUrl = omsServiceUrl;
-        this.sslIgnoreHttpClientFactory = sslIgnoreHttpClientFactory;
-        try {
-            this.httpClient = this.sslIgnoreHttpClientFactory.getHttpClient();
-        } catch (Exception e) {
-            log.error("Failed to create SSL ignore HTTP client", e);
-        }
-    }
-
-    public void setHttpClient(CloseableHttpClient httpClient) {
-        this.httpClient = httpClient;
+        this.omsService = omsService;
     }
 
     @Override
@@ -79,7 +52,12 @@ public class OmsAuthFilter implements GlobalFilter {
         log.info("Oms auth filter uri: {}", uri);
 
         try {
-            String userName = this.getUserNameFromOms(request);
+            MultiValueMap<String, HttpCookie> cookies = request.getCookies();
+            String authToken = getToken(cookies, AUTH_TOKEN_KEY);
+            String csrfToken = getToken(cookies, CSRF_TOKEN_KEY);
+            String realIp = getRealIp(request);
+
+            String userName = this.omsService.getUserNameFromOms(authToken, csrfToken, realIp);
             if (userName == null) {
                 exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
                 log.error("Authentication failed: Token is null or invalid.");
@@ -90,39 +68,11 @@ public class OmsAuthFilter implements GlobalFilter {
                     .build();
 
             return chain.filter(exchange.mutate().request(newRequest).build());
-        } catch (IOException | ParseException e) {
+        } catch (Exception e) {
             log.error("Exception occurred during POST request: {}", e.getMessage(), e);
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
         }
-    }
-
-    private String getUserNameFromOms(ServerHttpRequest request) throws IOException, ParseException {
-        String fullPath = this.omsServiceUrl + "/framework/v1/iam/roles/query-by-token";
-
-        HttpPost httpPost = new HttpPost(fullPath);
-
-        MultiValueMap<String, HttpCookie> cookies = request.getCookies();
-        String authToken = getToken(cookies, AUTH_TOKEN_KEY);
-        String csrfToken = getToken(cookies, CSRF_TOKEN_KEY);
-        String realIp = getRealIp(request);
-
-        httpPost.setHeader(AUTH_TOKEN_NEW_HEADER_KEY, authToken);
-        httpPost.setHeader(CSRF_TOKEN_NEW_HEADER_KEY, csrfToken);
-        httpPost.setHeader(REAL_IP_HEADER_KEY, realIp);
-
-        CloseableHttpResponse response = httpClient.execute(httpPost);
-        String responseBody = EntityUtils.toString(response.getEntity());
-        log.info("response code: {}, response body: {}", response.getCode(), responseBody);
-
-        ResultVo<List<String>> resultVo = objectMapper.readValue(responseBody, 
-            objectMapper.getTypeFactory().constructParametricType(ResultVo.class, List.class));
-
-        if (resultVo.getData() == null || resultVo.getData().isEmpty()) {
-            return null;
-        }
-
-        return resultVo.getData().get(0);
     }
 
     private String getRealIp(ServerHttpRequest request) {
