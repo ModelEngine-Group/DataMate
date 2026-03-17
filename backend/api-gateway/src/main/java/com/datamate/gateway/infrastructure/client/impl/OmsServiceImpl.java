@@ -4,7 +4,7 @@ import com.datamate.gateway.common.config.SslIgnoreHttpClientFactory;
 import com.datamate.gateway.infrastructure.client.OmsService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import lombok.Data;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
@@ -82,7 +82,12 @@ public class OmsServiceImpl implements OmsService {
         }
     }
 
-    @Data
+    /**
+     * ResultVo is a generic result wrapper.
+     * 
+     * @param <T> the type of data
+     */
+    @Getter
     public class ResultVo<T> {
         private Integer code;
         private String msg;

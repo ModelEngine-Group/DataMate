@@ -1,6 +1,5 @@
 package com.datamate.gateway.common.filter;
 
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
@@ -134,12 +133,5 @@ public class OmsAuthFilter implements GlobalFilter {
             return Objects.requireNonNull(cookies.getFirst(tokenKey)).getValue();
         }
         return "";
-    }
-
-    @Data
-    public static class ResultVo<T> {
-        private Integer code;
-        private String msg;
-        private T data;
     }
 }
