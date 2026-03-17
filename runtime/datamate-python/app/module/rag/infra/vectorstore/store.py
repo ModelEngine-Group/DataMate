@@ -26,7 +26,7 @@ from app.module.rag.infra.vectorstore.milvus_client import get_milvus_client
 
 logger = logging.getLogger(__name__)
 
-BATCH_DELETE_SIZE = 100
+BATCH_DELETE_SIZE = 500
 
 
 def _delete_chunks_by_rag_file_id_batched(client, collection_name: str, rag_file_id: str) -> int:
