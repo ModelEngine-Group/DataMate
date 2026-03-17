@@ -14,6 +14,7 @@ import org.springframework.mock.http.server.reactive.MockServerHttpRequest;
 import org.springframework.mock.web.server.MockServerWebExchange;
 import org.springframework.web.server.ServerWebExchange;
 
+import com.datamate.gateway.infrastructure.client.OmsExtensionService;
 import com.datamate.gateway.infrastructure.client.OmsService;
 
 import reactor.core.publisher.Mono;
@@ -37,6 +38,9 @@ class OmsAuthFilterTest {
     @Mock
     private OmsService omsService;
 
+    @Mock
+    private OmsExtensionService omsExtensionService;
+
     private OmsAuthFilter omsAuthFilter;
 
     @BeforeEach
@@ -44,7 +48,7 @@ class OmsAuthFilterTest {
     }
 
     private OmsAuthFilter createOmsAuthFilter(Boolean omsAuthEnable) {
-        return new OmsAuthFilter(omsAuthEnable, omsService);
+        return new OmsAuthFilter(omsAuthEnable, omsService, omsExtensionService);
     }
 
     @Test
@@ -69,6 +73,7 @@ class OmsAuthFilterTest {
         ServerWebExchange exchange = MockServerWebExchange.from(request);
 
         when(omsService.getUserNameFromOms(anyString(), anyString(), anyString())).thenReturn("testuser");
+        when(omsExtensionService.getUserGroupId("testuser")).thenReturn("testuser");
 
         when(chain.filter(any(ServerWebExchange.class))).thenReturn(Mono.empty());
 
@@ -77,7 +82,9 @@ class OmsAuthFilterTest {
         verify(chain, times(1)).filter(argThat(ex -> {
             HttpHeaders headers = ex.getRequest().getHeaders();
             return headers.containsKey("X-User-Name") && 
-                   "testuser".equals(headers.getFirst("X-User-Name"));
+                   "testuser".equals(headers.getFirst("X-User-Name")) &&
+                   headers.containsKey("X-User-Group-Id") &&
+                   "testuser".equals(headers.getFirst("X-User-Group-Id"));
         }));
     }
 

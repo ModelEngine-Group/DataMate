@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.server.ServerWebExchange;
 
+import com.datamate.gateway.infrastructure.client.OmsExtensionService;
 import com.datamate.gateway.infrastructure.client.OmsService;
 
 import reactor.core.publisher.Mono;
@@ -28,20 +29,38 @@ import java.util.Objects;
 @Component
 public class OmsAuthFilter implements GlobalFilter {
     private static final String USER_NAME_HEADER = "X-User-Name";
+    private static final String USER_GROUP_ID_HEADER = "X-User-Group-Id";
     private static final String AUTH_TOKEN_KEY = "__Host-X-Auth-Token";
     private static final String CSRF_TOKEN_KEY = "__Host-X-Csrf-Token";
 
     private final Boolean omsAuthEnable;
     private final OmsService omsService;
+    private final OmsExtensionService omsExtensionService;
 
+    /**
+     * OmsAuthFilter constructor.
+     * 
+     * @param omsAuthEnable       whether OMS authentication is enabled
+     * @param omsService          OMS service client
+     * @param omsExtensionService OMS extension service client
+     */
     public OmsAuthFilter(
             @Value("${oms.auth.enabled:false}") Boolean omsAuthEnable,
-            OmsService omsService) {
+            OmsService omsService,
+            OmsExtensionService omsExtensionService) {
         log.info("OmsAuthFilter is apply, omsAuthEnable: {}", omsAuthEnable);
         this.omsAuthEnable = omsAuthEnable;
         this.omsService = omsService;
+        this.omsExtensionService = omsExtensionService;
     }
 
+    /**
+     * filter processes the request and adds authentication headers.
+     * 
+     * @param exchange the server web exchange
+     * @param chain    the gateway filter chain
+     * @return Mono<Void> completion signal
+     */
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         if (!this.omsAuthEnable) {
@@ -63,8 +82,10 @@ public class OmsAuthFilter implements GlobalFilter {
                 log.error("Authentication failed: Token is null or invalid.");
                 return exchange.getResponse().setComplete();
             }
+            String userGroupId = this.omsExtensionService.getUserGroupId(userName);
             ServerHttpRequest newRequest = request.mutate()
                     .header(USER_NAME_HEADER, userName)
+                    .header(USER_GROUP_ID_HEADER, userGroupId)
                     .build();
 
             return chain.filter(exchange.mutate().request(newRequest).build());
@@ -75,6 +96,12 @@ public class OmsAuthFilter implements GlobalFilter {
         }
     }
 
+    /**
+     * getRealIp gets the real IP address from the request.
+     * 
+     * @param request the HTTP request
+     * @return the real IP address
+     */
     private String getRealIp(ServerHttpRequest request) {
         String ip = request.getHeaders().getFirst("X-Forwarded-For");
         if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
@@ -95,6 +122,13 @@ public class OmsAuthFilter implements GlobalFilter {
         return ip != null ? ip : "";
     }
 
+    /**
+     * getToken gets the token value from cookies.
+     * 
+     * @param cookies  the cookies map
+     * @param tokenKey the token key
+     * @return the token value
+     */
     private String getToken(MultiValueMap<String, HttpCookie> cookies, String tokenKey) {
         if (cookies.containsKey(tokenKey)) {
             return Objects.requireNonNull(cookies.getFirst(tokenKey)).getValue();
