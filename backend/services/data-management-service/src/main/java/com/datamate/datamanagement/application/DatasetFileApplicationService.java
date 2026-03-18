@@ -550,13 +550,33 @@ public class DatasetFileApplicationService {
                         relativePath = relativePath.substring(1);
                     }
 
-                    // 构建目标路径：数据集根目录 + 相对路径
-                    String targetPath = datasetBasePath + File.separator + datasetId;
-                    if (!relativePath.isEmpty()) {
-                        targetPath = targetPath + File.separator + relativePath;
+                    // 构建安全的目标路径：防止目录遍历攻击
+                    // 校验 datasetId，防止目录遍历或非法路径片段
+                    if (datasetId.contains("..") || datasetId.contains("/") || datasetId.contains("\\")) {
+                        throw BusinessException.of(CommonErrorCode.PARAM_ERROR, "Invalid datasetId: " + datasetId);
                     }
 
-                    File targetFile = new File(targetPath);
+                    // 校验相对路径，防止目录遍历
+                    if (relativePath.contains("..")) {
+                        throw BusinessException.of(CommonErrorCode.PARAM_ERROR, "Invalid relative path: " + relativePath);
+                    }
+
+                    // 使用 Path API 安全地构建路径
+                    Path datasetBaseDirPath = Paths.get(datasetBasePath).resolve(datasetId).normalize();
+                    Path targetPath;
+                    if (!relativePath.isEmpty()) {
+                        targetPath = datasetBaseDirPath.resolve(relativePath).normalize();
+                    } else {
+                        targetPath = datasetBaseDirPath;
+                    }
+
+                    // 确保目标路径仍然位于数据集根目录之下
+                    if (!targetPath.startsWith(datasetBaseDirPath)) {
+                        throw BusinessException.of(CommonErrorCode.PARAM_ERROR,
+                            "Path traversal detected: " + relativePath);
+                    }
+
+                    File targetFile = targetPath.toFile();
                     // 创建父目录
                     FileUtils.createParentDirectories(targetFile);
 
