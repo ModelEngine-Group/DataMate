@@ -36,6 +36,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,6 +54,7 @@ import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -364,18 +366,18 @@ public class DatasetFileApplicationService {
         }
         String datasetPath = dataset.getPath();
         Path downloadPath = Paths.get(datasetPath).normalize();
-        
+
         // 检查路径是否存在
         if (!Files.exists(downloadPath) || !Files.isDirectory(downloadPath)) {
             throw BusinessException.of(DataManagementErrorCode.DATASET_NOT_FOUND);
         }
-        
+
         response.setContentType("application/zip");
         String zipName = String.format("dataset_%s_%s.zip",
                 dataset.getName() != null ? dataset.getName().replaceAll("[^a-zA-Z0-9_-]", "_") : "dataset",
                 LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
         response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + zipName + "\"");
-        
+
         try (ZipArchiveOutputStream zos = new ZipArchiveOutputStream(response.getOutputStream())) {
             try (Stream<Path> pathStream = Files.walk(downloadPath)) {
                 pathStream
@@ -442,19 +444,25 @@ public class DatasetFileApplicationService {
         if (Objects.isNull(datasetRepository.getById(datasetId))) {
             throw BusinessException.of(DataManagementErrorCode.DATASET_NOT_FOUND);
         }
-        
+
         // 构建上传路径，如果有 prefix 则追加到路径中
         String prefix = Optional.ofNullable(chunkUploadRequest.getPrefix()).orElse("").trim();
         prefix = prefix.replace("\\", "/");
         while (prefix.startsWith("/")) {
             prefix = prefix.substring(1);
         }
-        
-        String uploadPath = datasetBasePath + File.separator + datasetId;
-        if (!prefix.isEmpty()) {
-            uploadPath = uploadPath + File.separator + prefix.replace("/", File.separator);
+
+        String uploadPath;
+        // 如果需要解压，上传到全局临时目录以避免覆盖数据集中的同名文件
+        if (chunkUploadRequest.isHasArchive()) {
+            uploadPath = datasetBasePath + File.separator + ".temp_upload_" + System.currentTimeMillis();
+        } else {
+            uploadPath = datasetBasePath + File.separator + datasetId;
+            if (!prefix.isEmpty()) {
+                uploadPath = uploadPath + File.separator + prefix.replace("/", File.separator);
+            }
         }
-        
+
         ChunkUploadPreRequest request = ChunkUploadPreRequest.builder().build();
         request.setUploadPath(uploadPath);
         request.setTotalFileNum(chunkUploadRequest.getTotalFileNum());
@@ -512,8 +520,81 @@ public class DatasetFileApplicationService {
     private void addFileToDataset(String datasetId, List<FileUploadResult> unpacked) {
         Dataset dataset = datasetRepository.getById(datasetId);
         dataset.setFiles(datasetFileRepository.findAllByDatasetId(datasetId));
+
+        // 收集所有临时目录，在文件处理完后统一删除
+        Set<String> tempDirsToDelete = new HashSet<>();
+
         for (FileUploadResult file : unpacked) {
             File savedFile = file.getSavedFile();
+            String filePath = savedFile.getPath();
+
+            // 如果文件在临时目录（从解压的上传来），移动到数据集目录
+            if (filePath.contains(".temp_upload_")) {
+                try {
+                    // 提取临时目录之后的部分（保持相对路径结构）
+                    int tempIndex = filePath.indexOf(".temp_upload_");
+
+                    // 找到 .temp_upload_{timestamp}/ 之后的内容
+                    // 临时目录格式: /dataset/.temp_upload_{timestamp}/
+                    int afterTimestamp = filePath.indexOf(File.separator, tempIndex + ".temp_upload_".length());
+                    if (afterTimestamp == -1) {
+                        // 没有分隔符，说明文件就在临时目录根下
+                        afterTimestamp = filePath.length();
+                    }
+
+                    String tempDir = filePath.substring(0, afterTimestamp);
+                    String relativePath = filePath.substring(afterTimestamp);
+
+                    // 去掉相对路径开头的分隔符
+                    if (relativePath.startsWith(File.separator)) {
+                        relativePath = relativePath.substring(1);
+                    }
+
+                    // 构建安全的目标路径：防止目录遍历攻击
+                    // 校验 datasetId，防止目录遍历或非法路径片段
+                    if (datasetId.contains("..") || datasetId.contains("/") || datasetId.contains("\\")) {
+                        throw BusinessException.of(CommonErrorCode.PARAM_ERROR, "Invalid datasetId: " + datasetId);
+                    }
+
+                    // 校验相对路径，防止目录遍历
+                    if (relativePath.contains("..")) {
+                        throw BusinessException.of(CommonErrorCode.PARAM_ERROR, "Invalid relative path: " + relativePath);
+                    }
+
+                    // 使用 Path API 安全地构建路径
+                    Path datasetBaseDirPath = Paths.get(datasetBasePath).resolve(datasetId).normalize();
+                    Path targetPath;
+                    if (!relativePath.isEmpty()) {
+                        targetPath = datasetBaseDirPath.resolve(relativePath).normalize();
+                    } else {
+                        targetPath = datasetBaseDirPath;
+                    }
+
+                    // 确保目标路径仍然位于数据集根目录之下
+                    if (!targetPath.startsWith(datasetBaseDirPath)) {
+                        throw BusinessException.of(CommonErrorCode.PARAM_ERROR,
+                            "Path traversal detected: " + relativePath);
+                    }
+
+                    File targetFile = targetPath.toFile();
+                    // 创建父目录
+                    FileUtils.createParentDirectories(targetFile);
+
+                    // 移动文件（覆盖已存在的文件）
+                    Files.move(savedFile.toPath(), targetFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                    log.info("Moved file from temp dir: {} -> {}", savedFile.getPath(), targetPath);
+
+                    // 收集临时目录，稍后删除
+                    tempDirsToDelete.add(tempDir);
+
+                    // 更新文件引用
+                    savedFile = targetFile;
+                } catch (IOException e) {
+                    log.error("Failed to move file from temp directory: {}", filePath, e);
+                    continue; // 跳过此文件
+                }
+            }
+
             LocalDateTime currentTime = LocalDateTime.now();
             // 统一 fileName：无论是否通过文件夹/压缩包上传，都只保留纯文件名
             String originalFileName = file.getFileName();
@@ -539,6 +620,20 @@ public class DatasetFileApplicationService {
             datasetFileRepository.saveOrUpdate(datasetFile);
             dataset.addFile(datasetFile);
         }
+
+        // 递归删除所有临时目录
+        for (String tempDir : tempDirsToDelete) {
+            try {
+                File tempDirFile = new File(tempDir);
+                if (tempDirFile.exists() && tempDirFile.isDirectory()) {
+                    org.apache.commons.io.FileUtils.deleteDirectory(tempDirFile);
+                    log.info("Deleted temp directory: {}", tempDir);
+                }
+            } catch (IOException e) {
+                log.warn("Failed to delete temp directory: {}", tempDir, e);
+            }
+        }
+
         dataset.active();
         datasetRepository.updateById(dataset);
     }
@@ -623,7 +718,7 @@ public class DatasetFileApplicationService {
         try {
             response.setContentType("application/zip");
             response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + zipFileName + "\"");
-            
+
             try (ZipArchiveOutputStream zipOut = new ZipArchiveOutputStream(response.getOutputStream())) {
                 zipDirectory(normalized, normalized, zipOut);
                 zipOut.finish();

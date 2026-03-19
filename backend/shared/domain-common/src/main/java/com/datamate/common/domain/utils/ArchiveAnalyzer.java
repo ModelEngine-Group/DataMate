@@ -143,7 +143,23 @@ public class ArchiveAnalyzer {
     private static Optional<FileUploadResult> extractEntity(ArchiveInputStream<?> archiveInputStream, ArchiveEntry archiveEntry, Path archivePath)
         throws IOException {
         byte[] buffer = new byte[DEFAULT_BUFFER_SIZE];
-        Path path = Paths.get(archivePath.getParent().toString(), archiveEntry.getName());
+
+        // 防止 Zip Slip 攻击：验证归档条目名称
+        String entryName = archiveEntry.getName();
+        if (entryName.contains("..")) {
+            log.warn("Path traversal attempt detected in archive entry: {}", entryName);
+            return Optional.empty();
+        }
+
+        Path parentDir = archivePath.getParent();
+        Path path = parentDir.resolve(entryName).normalize();
+
+        // 确保解析后的路径仍然位于父目录内
+        if (!path.startsWith(parentDir)) {
+            log.warn("Zip Slip attempt detected: entry {} resolves outside parent directory", entryName);
+            return Optional.empty();
+        }
+
         File file = path.toFile();
         long fileSize = 0L;
         FileUtils.createParentDirectories(file);
