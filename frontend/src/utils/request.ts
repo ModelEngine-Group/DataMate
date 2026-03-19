@@ -526,29 +526,31 @@ request.addRequestInterceptor((config) => {
     try {
       const sessionData = JSON.parse(session);
       if (sessionData.token) {
+        // 后端使用 "User" 请求头而不是 "Authorization"
+        // 可以直接发送 token 或 username
         config.headers = {
           ...config.headers,
-          Authorization: `Bearer ${sessionData.token}`,
+          'User': sessionData.token,  // 使用 User 请求头
         };
       }
     } catch (e) {
       console.error('Failed to parse session data', e);
     }
   }
-  
+
   const language = i18n.language || localStorage.getItem('language') || 'zh';
   config.headers = {
     ...config.headers,
     'Accept-Language': language,
   };
-  
+
   return config;
 });
 
 // --- 常量配置 ---
 const DEFAULT_ERROR_MSG = '系统繁忙，请稍后重试';
 // 需要触发重新登录的 Code 集合 (包含 HTTP 401 和 业务 Token 过期码)
-const AUTH_ERR_CODES = [401, '401'];
+const AUTH_ERR_CODES = [401, '401', 'common.401'];
 
 // --- 辅助函数：防抖处理登录失效 ---
 let isRelogging = false;
