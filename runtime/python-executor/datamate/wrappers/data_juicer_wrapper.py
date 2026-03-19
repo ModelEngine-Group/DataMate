@@ -1,11 +1,15 @@
 # -*- coding: utf-8 -*-
 import os
 
-from datamate.scheduler import cmd_scheduler
+from datamate.scheduler import ray_job_scheduler
 
 
 async def submit(task_id, config_path):
     current_dir = os.path.dirname(__file__)
+    script_path = os.path.join(current_dir, "data_juicer_executor.py")
 
-    await cmd_scheduler.submit(task_id, f"python {os.path.join(current_dir, 'data_juicer_executor.py')} "
-                                        f"--config_path={config_path}")
+    await ray_job_scheduler.submit(task_id, script_path, f"--config_path={config_path}")
+
+
+def cancel(task_id):
+    return ray_job_scheduler.cancel_task(task_id)
