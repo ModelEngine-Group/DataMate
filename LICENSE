@@ -7,7 +7,7 @@ DataMate is licensed under the MIT License, with the following additional condit
 DataMate is permitted to be used commercially, including as a backend service for other applications or as an application development platform for enterprises. However, when the following conditions are met, you must contact the producer to obtain a commercial license:
 
 a. Multi-tenant SaaS service: Unless explicitly authorized by DataMate in writing, you may not use the DataMate source code to operate a multi-tenant SaaS service.
-b. LOGO and copyright information: In the process of using DataMate's frontend, you may not remove or modify the LOGO or copyright information in the DataMate console or applications. This restriction is inapplicable to uses of Nexent that do not involve its frontend.
+b. LOGO and copyright information: In the process of using DataMate's frontend, you may not remove or modify the LOGO or copyright information in the DataMate console or applications. This restriction is inapplicable to uses of DataMate that do not involve its frontend.
 
 Please contact zhangyafeng2@huawei.com by email to inquire about licensing matters.
 
