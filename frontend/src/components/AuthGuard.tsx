@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { message } from "antd";
 import { LoginDialog } from "@/pages/Layout/LoginDialog";
 import { SignupDialog } from "@/pages/Layout/SignupDialog";
-import { post, get } from "@/utils/request";
+import { post } from "@/utils/request";
 import { useTranslation } from "react-i18next";
 
 function loginUsingPost(data: { username: string; password: string }) {
@@ -38,13 +38,6 @@ export function AuthGuard() {
       window.removeEventListener("show-login", openLoginDialog);
     };
   }, [openLoginDialog]);
-
-  useEffect(() => {
-    const session = localStorage.getItem("session");
-    if (!session) {
-      get("/api/sys-param/sys.home.page.url").catch(() => {});
-    }
-  }, []);
 
   const handleLogin = async (values: { username: string; password: string }) => {
     try {

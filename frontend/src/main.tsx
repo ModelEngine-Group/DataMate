@@ -12,23 +12,6 @@ import theme from "./theme";
 import {errorConfigStore} from "@/utils/errorConfigStore.ts";
 import "@/i18n";
 
-async function checkHomePageRedirect(): Promise<string | null> {
-  try {
-    const response = await fetch('/api/sys-param/sys.home.page.url', {
-      cache: 'no-store'
-    });
-    
-    if (response.ok) {
-      const result = await response.json();
-      return result.data?.paramValue?.trim() || null;
-    }
-  } catch (error) {
-    console.error('Failed to fetch home page URL:', error);
-  }
-
-  return null;
-}
-
 function showLoadingUI() {
   const container = document.getElementById("root");
   if (!container) return;
@@ -67,21 +50,7 @@ async function bootstrap() {
   showLoadingUI();
 
   try {
-    const [, homePageUrl] = await Promise.all([
-      errorConfigStore.loadConfig(),
-      checkHomePageRedirect()
-    ]);
-
-    if (homePageUrl) {
-      const currentPath = window.location.pathname;
-      const targetPath = new URL(homePageUrl, window.location.origin).pathname;
-      
-      if (currentPath === '/' && currentPath !== targetPath) {
-        window.location.href = homePageUrl;
-        return;
-      }
-    }
-
+    await errorConfigStore.loadConfig();
   } catch (e) {
     console.error('Config load failed:', e);
   }
