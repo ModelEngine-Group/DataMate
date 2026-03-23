@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import {Eye, Edit, Trash2, FileBox, ChevronLeft, ChevronRight, Code, CheckCircle, AlertCircle, Wand2, Filter, X} from "lucide-react";
+import {Eye, Edit, Trash2, FileBox, ChevronLeft, ChevronRight, Code, CheckCircle, AlertCircle, Wand2, X} from "lucide-react";
 import { Card, Button, Badge, Input, Tabs, Modal, Breadcrumb, Tag, Spin, Empty, Alert, message, Tooltip, Select } from "antd";
 import { ExclamationCircleOutlined } from "@ant-design/icons";
 import { queryKnowledgeBaseFileDetailUsingGet, updateKnowledgeBaseChunk, deleteKnowledgeBaseChunk } from "@/pages/KnowledgeBase/knowledge-base.api";
@@ -259,7 +259,7 @@ const KnowledgeBaseFileDetail: React.FC = () => {
             key={chunk.id}
             title={
               <div className="flex items-center gap-2">
-                <span>{t("knowledgeBase.fileDetail.messages.chunkLabel")} {chunk.id}</span>
+                <span className="text-slate-400 text-xs mr-1">ID</span><span className="font-mono text-sm">{chunk.id}</span>
                 {chunk.metadata?.sliceOperator && (
                   <Tag className="text-xs">
                     {chunk.metadata.sliceOperator}
@@ -330,67 +330,49 @@ const KnowledgeBaseFileDetail: React.FC = () => {
           </p>
         </div>
       </div>
-      <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden mb-4">
-        <div className="px-5 py-3 bg-gradient-to-r from-slate-50/80 to-white border-b border-slate-100">
-          <div className="flex items-center gap-2">
-            <div className="w-1.5 h-5 bg-gradient-to-b from-blue-500 to-indigo-500 rounded-full" />
-            <Filter className="w-4 h-4 text-slate-500" />
-            <span className="text-sm font-medium text-slate-700">{t("knowledgeBase.fileDetail.filter.title")}</span>
-          </div>
+      <div className="flex items-center gap-3 bg-white rounded-lg border border-slate-200/80 px-4 py-3 mb-4">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-slate-500">ID</span>
+          <Select
+            value={idOperator || undefined}
+            onChange={setIdOperator}
+            placeholder={t("knowledgeBase.fileDetail.filter.idOperator")}
+            allowClear
+            className="w-16"
+            options={[
+              { value: ">", label: ">" },
+              { value: "<", label: "<" },
+              { value: "==", label: "==" },
+            ]}
+          />
+          <Input
+            value={idValue}
+            onChange={(e) => setIdValue(e.target.value)}
+            placeholder={t("knowledgeBase.fileDetail.filter.idValue")}
+            className="w-28"
+          />
         </div>
-        <div className="p-4">
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-400 font-medium uppercase tracking-wide">ID</span>
-              <Select
-                value={idOperator || undefined}
-                onChange={setIdOperator}
-                placeholder={t("knowledgeBase.fileDetail.filter.idOperator")}
-                allowClear
-                className="w-20"
-                options={[
-                  { value: ">", label: ">" },
-                  { value: "<", label: "<" },
-                  { value: "==", label: "==" },
-                ]}
-              />
-              <Input
-                value={idValue}
-                onChange={(e) => setIdValue(e.target.value)}
-                placeholder={t("knowledgeBase.fileDetail.filter.idValue")}
-                className="w-32"
-              />
-            </div>
-            <div className="h-6 w-px bg-slate-200 hidden sm:block" />
-            <div className="flex items-center gap-2 flex-1 min-w-[200px]">
-              <span className="text-xs text-slate-400 font-medium uppercase tracking-wide">{t("knowledgeBase.fileDetail.filter.textKeyword")}</span>
-              <Input.Search
-                value={textKeyword}
-                onChange={(e) => setTextKeyword(e.target.value)}
-                placeholder={t("knowledgeBase.fileDetail.filter.textKeyword")}
-                className="max-w-xs flex-1"
-                allowClear
-              />
-            </div>
-            <div className="flex items-center gap-2 ml-auto">
-              <Button
-                type="primary"
-                onClick={() => { setCurrentPage(1); fetchChunks(1); }}
-                className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 border-0 shadow-sm"
-              >
-                {t("knowledgeBase.fileDetail.filter.apply")}
-              </Button>
-              {(idOperator || idValue || textKeyword) && (
-                <Button
-                  onClick={handleClearFilter}
-                  className="text-slate-500 hover:text-slate-700 border-slate-200"
-                >
-                  <X className="w-4 h-4 mr-1" />
-                  {t("knowledgeBase.fileDetail.filter.clear")}
-                </Button>
-              )}
-            </div>
-          </div>
+        <div className="h-5 w-px bg-slate-200" />
+        <Input.Search
+          value={textKeyword}
+          onChange={(e) => setTextKeyword(e.target.value)}
+          placeholder={t("knowledgeBase.fileDetail.filter.textKeyword")}
+          className="w-48"
+          allowClear
+        />
+        <div className="flex items-center gap-2 ml-auto">
+          <Button
+            type="primary"
+            size="small"
+            onClick={() => { setCurrentPage(1); fetchChunks(1); }}
+          >
+            {t("knowledgeBase.fileDetail.filter.apply")}
+          </Button>
+          {(idOperator || idValue || textKeyword) && (
+            <Button size="small" onClick={handleClearFilter}>
+              <X className="w-4 h-4" />
+            </Button>
+          )}
         </div>
       </div>
       <Card>
