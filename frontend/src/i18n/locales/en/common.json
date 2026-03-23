@@ -1756,7 +1756,15 @@
         "kbList": "Knowledge Bases",
         "kbDetail": "Knowledge Base Detail"
       },
-      "defaultFileName": "File {{id}}"
+      "defaultFileName": "File {{id}}",
+      "filter": {
+        "title": "Filter",
+        "idOperator": "ID Operator",
+        "idValue": "ID Value",
+        "textKeyword": "Text Keyword",
+        "apply": "Apply",
+        "clear": "Clear"
+      }
     },
     "create": {
       "title": "Create Knowledge Base",

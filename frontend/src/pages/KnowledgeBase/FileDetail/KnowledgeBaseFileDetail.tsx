@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
-import {Eye, Edit, Trash2, FileBox, ChevronLeft, ChevronRight, Code, CheckCircle, AlertCircle, Wand2} from "lucide-react";
-import { Card, Button, Badge, Input, Tabs, Modal, Breadcrumb, Tag, Spin, Empty, Alert, message, Tooltip } from "antd";
+import {Eye, Edit, Trash2, FileBox, ChevronLeft, ChevronRight, Code, CheckCircle, AlertCircle, Wand2, Filter, X} from "lucide-react";
+import { Card, Button, Badge, Input, Tabs, Modal, Breadcrumb, Tag, Spin, Empty, Alert, message, Tooltip, Select } from "antd";
 import { ExclamationCircleOutlined } from "@ant-design/icons";
 import { queryKnowledgeBaseFileDetailUsingGet, updateKnowledgeBaseChunk, deleteKnowledgeBaseChunk } from "@/pages/KnowledgeBase/knowledge-base.api";
 import { Link, useParams } from "react-router";
@@ -50,6 +50,28 @@ const KnowledgeBaseFileDetail: React.FC = () => {
   const pageSize = 10;
   const [currentPage, setCurrentPage] = useState(1);
 
+  const [idOperator, setIdOperator] = useState<string>("");
+  const [idValue, setIdValue] = useState<string>("");
+  const [textKeyword, setTextKeyword] = useState<string>("");
+
+  const buildFilterExpr = useCallback((op: string, val: string, keyword: string): string => {
+    const parts: string[] = [];
+    if (op && val) {
+      parts.push(`id ${op} "${val}"`);
+    }
+    if (keyword) {
+      parts.push(`text like "%${keyword}%"`);
+    }
+    return parts.join(" && ");
+  }, []);
+
+  const handleClearFilter = useCallback(() => {
+    setIdOperator("");
+    setIdValue("");
+    setTextKeyword("");
+    setCurrentPage(1);
+  }, []);
+
   const safeParse = (meta: unknown): unknown => {
     if (typeof meta === "string") {
       try {
@@ -66,7 +88,8 @@ const KnowledgeBaseFileDetail: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await queryKnowledgeBaseFileDetailUsingGet(knowledgeBaseId, ragFileId, { page, size: pageSize });
+      const expr = buildFilterExpr(idOperator, idValue, textKeyword);
+      const res = await queryKnowledgeBaseFileDetailUsingGet(knowledgeBaseId, ragFileId, { page, size: pageSize, expr: expr || undefined });
       const raw = (res?.data ?? res) as {
         page: number;
         size: number;
@@ -92,7 +115,7 @@ const KnowledgeBaseFileDetail: React.FC = () => {
 
   useEffect(() => {
     fetchChunks(currentPage);
-  }, [knowledgeBaseId, ragFileId, currentPage, t]);
+  }, [knowledgeBaseId, ragFileId, currentPage, idOperator, idValue, textKeyword, t]);
 
   const totalElements = paged?.totalElements ?? 0;
   const totalPages = paged?.totalPages ?? 0;
@@ -308,6 +331,52 @@ const KnowledgeBaseFileDetail: React.FC = () => {
         statistics={[]}
         operations={[]}
       />
+      <Card className="mb-4">
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="flex items-center gap-2">
+            <Filter className="w-4 h-4 text-gray-500" />
+            <span className="text-sm font-medium text-gray-700">{t("knowledgeBase.fileDetail.filter.title")}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Select
+              value={idOperator || undefined}
+              onChange={setIdOperator}
+              placeholder={t("knowledgeBase.fileDetail.filter.idOperator")}
+              allowClear
+              style={{ width: 80 }}
+              options={[
+                { value: ">", label: ">" },
+                { value: "<", label: "<" },
+                { value: "==", label: "==" },
+              ]}
+            />
+            <Input
+              value={idValue}
+              onChange={(e) => setIdValue(e.target.value)}
+              placeholder={t("knowledgeBase.fileDetail.filter.idValue")}
+              style={{ width: 150 }}
+            />
+          </div>
+          <Input.Search
+            value={textKeyword}
+            onChange={(e) => setTextKeyword(e.target.value)}
+            placeholder={t("knowledgeBase.fileDetail.filter.textKeyword")}
+            style={{ width: 200 }}
+            allowClear
+          />
+          <div className="flex items-center gap-2">
+            <Button type="primary" onClick={() => { setCurrentPage(1); fetchChunks(1); }}>
+              {t("knowledgeBase.fileDetail.filter.apply")}
+            </Button>
+            {(idOperator || idValue || textKeyword) && (
+              <Button onClick={handleClearFilter}>
+                <X className="w-4 h-4 mr-1" />
+                {t("knowledgeBase.fileDetail.filter.clear")}
+              </Button>
+            )}
+          </div>
+        </div>
+      </Card>
       <Card>
         {loading ? <div className="flex items-center justify-center py-8"><Spin /></div> : renderChunks()}
       </Card>

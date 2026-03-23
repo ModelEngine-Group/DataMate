@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.exception import BusinessError, ErrorCodes
 from app.db.models.knowledge_gen import KnowledgeBase
 from app.module.rag.repository import KnowledgeBaseRepository
-from app.module.rag.schema.request import PagingQuery, RetrieveReq
+from app.module.rag.schema.request import PagingQuery, ChunkFilterQuery, RetrieveReq
 from app.module.rag.schema.response import PagedResponse
 from .strategy import KnowledgeBaseStrategyFactory
 
@@ -86,14 +86,14 @@ class UnifiedRetrievalService:
         self,
         knowledge_base_id: str,
         rag_file_id: str,
-        paging_query: PagingQuery,
+        query: ChunkFilterQuery,
     ) -> PagedResponse:
         """获取指定 RAG 文件的分块列表(仅向量知识库)
 
         Args:
             knowledge_base_id: 知识库 ID
             rag_file_id: RAG 文件 ID
-            paging_query: 分页参数
+            query: 分页和过滤参数
 
         Returns:
             分块列表(分页)
@@ -101,7 +101,7 @@ class UnifiedRetrievalService:
         return await self.query(
             knowledge_base_id,
             rag_file_id=rag_file_id,
-            paging_query=paging_query,
+            chunk_filter_query=query,
         )
 
     async def _get_knowledge_base(self, knowledge_base_id: str) -> KnowledgeBase:

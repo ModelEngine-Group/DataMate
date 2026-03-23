@@ -74,11 +74,15 @@ export function retrieveKnowledgeBaseContent(data: {
 export function queryKnowledgeBaseFileDetailUsingGet(
   knowledgeBaseId: string,
   ragFileId: string,
-  params: { page?: number; size?: number } = { page: 1, size: 20 }
+  params: { page?: number; size?: number; expr?: string } = { page: 1, size: 20 }
 ) {
   const page = params.page ?? 1;
   const size = params.size ?? 20;
-  return get(`/api/knowledge-base/${knowledgeBaseId}/files/${ragFileId}?page=${page}&page_size=${size}`);
+  const queryParams = [`page=${page}`, `page_size=${size}`];
+  if (params.expr) {
+    queryParams.push(`expr=${encodeURIComponent(params.expr)}`);
+  }
+  return get(`/api/knowledge-base/${knowledgeBaseId}/files/${ragFileId}?${queryParams.join('&')}`);
 }
 
 export function queryKnowledgeBase(data: {
