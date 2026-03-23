@@ -526,11 +526,9 @@ request.addRequestInterceptor((config) => {
     try {
       const sessionData = JSON.parse(session);
       if (sessionData.token) {
-        // 后端使用 "User" 请求头而不是 "Authorization"
-        // 可以直接发送 token 或 username
         config.headers = {
           ...config.headers,
-          'User': sessionData.token,  // 使用 User 请求头
+          'Authorization': `Bearer ${sessionData.token}`,
         };
       }
     } catch (e) {
