@@ -552,6 +552,7 @@ const AUTH_ERR_CODES = [401, '401', 'common.401'];
 
 // --- 辅助函数：防抖处理登录失效 ---
 let isRelogging = false;
+
 const handleLoginRedirect = () => {
   if (isRelogging) return;
   isRelogging = true;
@@ -559,9 +560,8 @@ const handleLoginRedirect = () => {
   // 1. 清除 Session / Token
   localStorage.removeItem('session');
 
-  // 2. 触发登录弹窗事件 (根据你的架构，这里可以是 dispatch event 或 router 跳转)
-  const loginEvent = new CustomEvent('show-login');
-  window.dispatchEvent(loginEvent);
+  // 2. 跳转到登录页面
+  window.location.href = '/login';
 
   // 3. 重置标志位 (3秒后才允许再次触发)
   setTimeout(() => {
