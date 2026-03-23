@@ -15,6 +15,7 @@ from app.module.rag.infra.embeddings import EmbeddingFactory
 from app.module.rag.infra.vectorstore.milvus_client import get_milvus_client
 from app.module.rag.repository import KnowledgeBaseRepository, RagFileRepository
 from app.module.rag.schema.response import PagedResponse, RagChunkResp
+from app.module.rag.schema.request import ChunkFilterQuery
 from app.module.rag.service.common import TextCleaner, MetadataBuilder, BatchProcessor, get_file_path
 from app.module.system.service.common_service import get_model_by_id
 from .base import KnowledgeBaseStrategy
@@ -39,18 +40,18 @@ class VectorKnowledgeBaseStrategy(KnowledgeBaseStrategy):
             knowledge_base_id: 知识库 ID
             **kwargs: 额外参数，必须包含:
                 - rag_file_id: RAG 文件 ID
-                - paging_query: 分页参数
+                - chunk_filter_query: 分页和过滤参数
 
         Returns:
             分页分块列表
         """
         rag_file_id = kwargs.get("rag_file_id")
-        paging_query = kwargs.get("paging_query")
+        chunk_filter_query: ChunkFilterQuery = kwargs.get("chunk_filter_query")
 
-        if not rag_file_id or not paging_query:
+        if not rag_file_id or not chunk_filter_query:
             raise BusinessError(
                 ErrorCodes.RAG_INVALID_REQUEST,
-                "Missing rag_file_id or paging_query parameters"
+                "Missing rag_file_id or chunk_filter_query parameters"
             )
 
         kb_repo = KnowledgeBaseRepository(self.db)
@@ -67,20 +68,22 @@ class VectorKnowledgeBaseStrategy(KnowledgeBaseStrategy):
         client = get_milvus_client()
 
         try:
-            count_filter = f'metadata["rag_file_id"] == "{rag_file_id}"'
+            base_filter = f'metadata["rag_file_id"] == "{rag_file_id}"'
+            combined_filter = self._build_combined_filter(base_filter, chunk_filter_query.expr)
+
             count_res = client.query(
                 collection_name=knowledge_base.name,
-                filter=count_filter,
+                filter=combined_filter,
                 output_fields=["id"],
             )
             total = len(count_res)
 
-            offset = (paging_query.page - 1) * paging_query.size
+            offset = (chunk_filter_query.page - 1) * chunk_filter_query.size
             results = client.query(
                 collection_name=knowledge_base.name,
-                filter=count_filter,
+                filter=combined_filter,
                 output_fields=["id", "text", "metadata"],
-                limit=paging_query.size,
+                limit=chunk_filter_query.size,
                 offset=offset,
             )
 
@@ -103,8 +106,8 @@ class VectorKnowledgeBaseStrategy(KnowledgeBaseStrategy):
             return PagedResponse.create(
                 content=chunks,
                 total_elements=total,
-                page=paging_query.page,
-                size=paging_query.size,
+                page=chunk_filter_query.page,
+                size=chunk_filter_query.size,
             )
 
         except Exception as e:
@@ -116,6 +119,12 @@ class VectorKnowledgeBaseStrategy(KnowledgeBaseStrategy):
                 ErrorCodes.RAG_MILVUS_ERROR,
                 f"查询文件分块失败: {str(e)}"
             ) from e
+
+    @staticmethod
+    def _build_combined_filter(base_filter: str, user_expr: Optional[str]) -> str:
+        if not user_expr:
+            return base_filter
+        return f"{base_filter} && {user_expr}"
 
     async def search(
         self,

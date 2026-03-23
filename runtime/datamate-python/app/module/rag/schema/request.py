@@ -330,6 +330,37 @@ class PagingQuery(BaseModel):
         }
 
 
+class ChunkFilterQuery(BaseModel):
+    """分块过滤查询请求
+
+    支持分页和 Milvus 表达式过滤
+    """
+    page: int = Field(
+        default=1,
+        ge=1,
+        description="页码（从 1 开始）"
+    )
+    size: int = Field(
+        default=10,
+        ge=1,
+        le=100,
+        description="每页数量"
+    )
+    expr: Optional[str] = Field(
+        None,
+        description="Milvus 过滤表达式（如 id > \"1\" && text like \"%keyword%\"）"
+    )
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "page": 1,
+                "size": 10,
+                "expr": "id > \"1\""
+            }
+        }
+
+
 class QueryRequest(BaseModel):
     """知识图谱查询请求"""
     knowledge_base_id: str = Field(..., description="知识库ID")

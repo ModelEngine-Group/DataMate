@@ -1755,7 +1755,15 @@
         "kbList": "知识库",
         "kbDetail": "知识库详情"
       },
-      "defaultFileName": "文件 {{id}}"
+      "defaultFileName": "文件 {{id}}",
+      "filter": {
+        "title": "过滤",
+        "idOperator": "ID操作符",
+        "idValue": "ID值",
+        "textKeyword": "文本关键词",
+        "apply": "应用",
+        "clear": "清除"
+      }
     },
     "create": {
       "title": "创建知识库",

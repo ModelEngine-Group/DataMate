@@ -20,6 +20,7 @@ from app.module.rag.schema.request import (
     RagFileReq,
     RetrieveReq,
     PagingQuery,
+    ChunkFilterQuery,
     QueryRequest,
     ChunkUpdateReq,
 )
@@ -143,12 +144,12 @@ async def delete_knowledge_base_files(
 async def get_file_chunks(
     knowledge_base_id: str,
     rag_file_id: str,
-    paging_query: PagingQuery = Depends(),
+    query: ChunkFilterQuery = Depends(),
     db: AsyncSession = Depends(get_db),
 ):
     """获取指定 RAG 文件的分块列表"""
     service = UnifiedRetrievalService(db)
-    result = await service.get_chunks(knowledge_base_id, rag_file_id, paging_query)
+    result = await service.get_chunks(knowledge_base_id, rag_file_id, query)
     return SuccessResponse(data=result)
 
 
