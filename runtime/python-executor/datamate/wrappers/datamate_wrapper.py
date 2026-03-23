@@ -4,11 +4,19 @@ import os
 from datamate.scheduler import ray_job_scheduler
 
 
-async def submit(task_id, config_path):
+async def submit(task_id, config_path, retry_count: int = 0):
     current_dir = os.path.dirname(__file__)
     script_path = os.path.join(current_dir, "datamate_executor.py")
 
-    await ray_job_scheduler.submit(task_id, script_path, f"--config_path={config_path}")
+    # 根据 retry_count 设置日志路径
+    if retry_count > 0:
+        log_path = f"/flow/{task_id}/output.log.{retry_count}"
+    else:
+        log_path = f"/flow/{task_id}/output.log"
+
+    await ray_job_scheduler.submit(
+        task_id, script_path, f"--config_path={config_path}", log_path=log_path
+    )
 
 
 def cancel(task_id):

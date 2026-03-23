@@ -72,6 +72,7 @@ class RayJobTask(Task):
             # 轮询 Job 状态
             poll_interval = 2  # 2 秒轮询一次
             elapsed_time = 0
+            last_log_position = 0  # 记录已写入的日志位置
 
             while True:
                 if self._cancelled:
@@ -85,6 +86,10 @@ class RayJobTask(Task):
                 try:
                     info = client.get_job_info(self.job_id)
                     job_status = info.status
+
+                    # 获取并写入日志
+                    await self._fetch_and_write_logs(client, last_log_position)
+                    last_log_position = os.path.getsize(self.log_path) if os.path.exists(self.log_path) else 0
 
                     if job_status == "SUCCEEDED":
                         self.status = TaskStatus.COMPLETED
@@ -135,6 +140,22 @@ class RayJobTask(Task):
 
         finally:
             self.completed_at = datetime.now()
+
+    async def _fetch_and_write_logs(self, client, last_position: int = 0):
+        """获取 Ray Job 日志并追加写入日志文件"""
+        try:
+            logs = client.get_job_logs(self.job_id)
+            if logs:
+                log_content = logs if isinstance(logs, str) else str(logs)
+                # 只追加新日志
+                if len(log_content) > last_position:
+                    new_logs = log_content[last_position:]
+                    with open(self.log_path, "a", encoding="utf-8") as f:
+                        f.write(new_logs)
+                        if not new_logs.endswith("\n"):
+                            f.write("\n")
+        except Exception as e:
+            logger.warning(f"Failed to fetch logs for job {self.job_id}: {e}")
 
     def _stop_job(self, client):
         """停止 Ray Job"""
