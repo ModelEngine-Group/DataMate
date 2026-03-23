@@ -20,16 +20,21 @@ export function AuthGuard() {
   const [loading, setLoading] = useState(false);
 
   const openLoginDialog = useCallback(() => {
+    console.log('[AuthGuard] openLoginDialog called, setting loginOpen to true');
     setLoginOpen(true);
   }, []);
 
   const openSignupDialog = useCallback(() => {
+    console.log('[AuthGuard] openSignupDialog called');
     setSignupOpen(true);
   }, []);
 
   useEffect(() => {
+    console.log('[AuthGuard] Registering show-login event listener');
     window.addEventListener("show-login", openLoginDialog);
+    
     return () => {
+      console.log('[AuthGuard] Removing show-login event listener');
       window.removeEventListener("show-login", openLoginDialog);
     };
   }, [openLoginDialog]);

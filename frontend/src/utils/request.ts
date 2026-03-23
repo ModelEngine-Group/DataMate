@@ -2,9 +2,6 @@ import {message} from "antd";
 import Loading from "./loading";
 import {errorConfigStore} from "@/utils/errorConfigStore.ts";
 import i18n from "@/i18n";
-import i18n from "@/i18n";
-import i18n from "@/i18n";
-import i18n from "@/i18n";
 
 /**
  * 通用请求工具类
@@ -548,24 +545,29 @@ request.addRequestInterceptor((config) => {
 // --- 常量配置 ---
 const DEFAULT_ERROR_MSG = '系统繁忙，请稍后重试';
 // 需要触发重新登录的 Code 集合 (包含 HTTP 401 和 业务 Token 过期码)
-const AUTH_ERR_CODES = [401, '401', 'common.401'];
+// 注意：后端返回的是 "common.0401"（有前导零）
+const AUTH_ERR_CODES = [401, '401', 'common.401', 'common.0401'];
 
 // --- 辅助函数：防抖处理登录失效 ---
 let isRelogging = false;
 
 const handleLoginRedirect = () => {
-  if (isRelogging) return;
+  console.log('[Auth] handleLoginRedirect called, isRelogging:', isRelogging);
+
+  if (isRelogging) {
+    console.log('[Auth] Skipping - already relogging');
+    return;
+  }
   isRelogging = true;
 
-  // 1. 清除 Session / Token
   localStorage.removeItem('session');
 
-  // 2. 跳转到登录页面
-  window.location.href = '/login';
+  console.log('[Auth] Dispatching show-login event');
+  window.dispatchEvent(new CustomEvent('show-login'));
 
-  // 3. 重置标志位 (3秒后才允许再次触发)
   setTimeout(() => {
     isRelogging = false;
+    console.log('[Auth] Reset isRelogging flag');
   }, 3000);
 };
 
@@ -576,6 +578,7 @@ request.addResponseInterceptor(async (response, config) => {
   }
 
   const { status } = response;
+  console.log('[API Interceptor] Response status:', status, 'URL:', config?.url);
 
   // ------------------ 修改重点开始 ------------------
 
@@ -586,10 +589,11 @@ request.addResponseInterceptor(async (response, config) => {
     // 关键点 2: 必须用 .clone()，因为流只能读一次。读了克隆的，原版 response 还能留给外面用
     // 关键点 3: 必须 await，因为读取流是异步的
     resData = await response.clone().json();
+    console.log('[API Interceptor] Response data:', resData);
   } catch (e) {
     // 如果后端返回的不是 JSON (比如 404 HTML 页面，或者空字符串)，json() 会报错
     // 这里捕获异常，保证 resData 至少是个空对象，不会导致后面取值 crash
-    console.warn('响应体不是有效的JSON:', e);
+    console.warn('[API Interceptor] 响应体不是有效的JSON:', e);
     resData = {};
   }
 
@@ -597,6 +601,7 @@ request.addResponseInterceptor(async (response, config) => {
   // 优先取后端 body 里的 business code，没有则取 HTTP status
   const code = resData.code ?? status;
   const codeStr = String(code);
+  console.log('[API Interceptor] Extracted code:', code, 'codeStr:', codeStr);
 
   // 3. 判断成功 (根据你的后端约定：200/0 为成功)
   // 如果是成功状态，直接返回 response，不拦截
@@ -621,7 +626,9 @@ request.addResponseInterceptor(async (response, config) => {
   }
 
   // 7. 处理 Token 过期 / 未登录
-  if (AUTH_ERR_CODES.includes(code) || AUTH_ERR_CODES.includes(codeStr)) {
+  const isAuthError = AUTH_ERR_CODES.includes(code) || AUTH_ERR_CODES.includes(codeStr);
+  console.log('[API Interceptor] Is auth error?', isAuthError, 'AUTH_ERR_CODES:', AUTH_ERR_CODES);
+  if (isAuthError) {
     handleLoginRedirect();
   }
 
