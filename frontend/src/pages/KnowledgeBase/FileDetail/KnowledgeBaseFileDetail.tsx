@@ -4,7 +4,6 @@ import { Card, Button, Badge, Input, Tabs, Modal, Breadcrumb, Tag, Spin, Empty, 
 import { ExclamationCircleOutlined } from "@ant-design/icons";
 import { queryKnowledgeBaseFileDetailUsingGet, updateKnowledgeBaseChunk, deleteKnowledgeBaseChunk } from "@/pages/KnowledgeBase/knowledge-base.api";
 import { Link, useParams } from "react-router";
-import DetailHeader from "@/components/DetailHeader";
 import { useTranslation } from "react-i18next";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
@@ -318,65 +317,82 @@ const KnowledgeBaseFileDetail: React.FC = () => {
           { title: fileName || t("knowledgeBase.fileDetail.defaultFileName", { id: ragFileId }) },
         ]}
       />
-      <DetailHeader
-        data={{
-          id: ragFileId,
-          icon: <FileBox className="w-full h-full" />,
-          iconColor: "#a27e7e",
-          name: fileName || t("knowledgeBase.fileDetail.defaultFileName", { id: ragFileId }),
-          description: `${totalElements} ${t("knowledgeBase.fileDetail.messages.chunkCount", { count: 0 })}`,
-          createdAt: "",
-          lastUpdated: "",
-        }}
-        statistics={[]}
-        operations={[]}
-      />
-      <Card className="mb-4">
-        <div className="flex flex-wrap items-end gap-3">
+      <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-slate-50 to-slate-100/50 rounded-xl border border-slate-200/60">
+        <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center shadow-sm">
+          <FileBox className="w-5 h-5 text-amber-600" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h1 className="text-base font-semibold text-slate-800 truncate">
+            {fileName || t("knowledgeBase.fileDetail.defaultFileName", { id: ragFileId })}
+          </h1>
+          <p className="text-sm text-slate-500">
+            {totalElements} {t("knowledgeBase.fileDetail.messages.chunkCount", { count: 0 })}
+          </p>
+        </div>
+      </div>
+      <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden mb-4">
+        <div className="px-5 py-3 bg-gradient-to-r from-slate-50/80 to-white border-b border-slate-100">
           <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-gray-500" />
-            <span className="text-sm font-medium text-gray-700">{t("knowledgeBase.fileDetail.filter.title")}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Select
-              value={idOperator || undefined}
-              onChange={setIdOperator}
-              placeholder={t("knowledgeBase.fileDetail.filter.idOperator")}
-              allowClear
-              style={{ width: 80 }}
-              options={[
-                { value: ">", label: ">" },
-                { value: "<", label: "<" },
-                { value: "==", label: "==" },
-              ]}
-            />
-            <Input
-              value={idValue}
-              onChange={(e) => setIdValue(e.target.value)}
-              placeholder={t("knowledgeBase.fileDetail.filter.idValue")}
-              style={{ width: 150 }}
-            />
-          </div>
-          <Input.Search
-            value={textKeyword}
-            onChange={(e) => setTextKeyword(e.target.value)}
-            placeholder={t("knowledgeBase.fileDetail.filter.textKeyword")}
-            style={{ width: 200 }}
-            allowClear
-          />
-          <div className="flex items-center gap-2">
-            <Button type="primary" onClick={() => { setCurrentPage(1); fetchChunks(1); }}>
-              {t("knowledgeBase.fileDetail.filter.apply")}
-            </Button>
-            {(idOperator || idValue || textKeyword) && (
-              <Button onClick={handleClearFilter}>
-                <X className="w-4 h-4 mr-1" />
-                {t("knowledgeBase.fileDetail.filter.clear")}
-              </Button>
-            )}
+            <div className="w-1.5 h-5 bg-gradient-to-b from-blue-500 to-indigo-500 rounded-full" />
+            <Filter className="w-4 h-4 text-slate-500" />
+            <span className="text-sm font-medium text-slate-700">{t("knowledgeBase.fileDetail.filter.title")}</span>
           </div>
         </div>
-      </Card>
+        <div className="p-4">
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-400 font-medium uppercase tracking-wide">ID</span>
+              <Select
+                value={idOperator || undefined}
+                onChange={setIdOperator}
+                placeholder={t("knowledgeBase.fileDetail.filter.idOperator")}
+                allowClear
+                className="w-20"
+                options={[
+                  { value: ">", label: ">" },
+                  { value: "<", label: "<" },
+                  { value: "==", label: "==" },
+                ]}
+              />
+              <Input
+                value={idValue}
+                onChange={(e) => setIdValue(e.target.value)}
+                placeholder={t("knowledgeBase.fileDetail.filter.idValue")}
+                className="w-32"
+              />
+            </div>
+            <div className="h-6 w-px bg-slate-200 hidden sm:block" />
+            <div className="flex items-center gap-2 flex-1 min-w-[200px]">
+              <span className="text-xs text-slate-400 font-medium uppercase tracking-wide">{t("knowledgeBase.fileDetail.filter.textKeyword")}</span>
+              <Input.Search
+                value={textKeyword}
+                onChange={(e) => setTextKeyword(e.target.value)}
+                placeholder={t("knowledgeBase.fileDetail.filter.textKeyword")}
+                className="max-w-xs flex-1"
+                allowClear
+              />
+            </div>
+            <div className="flex items-center gap-2 ml-auto">
+              <Button
+                type="primary"
+                onClick={() => { setCurrentPage(1); fetchChunks(1); }}
+                className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 border-0 shadow-sm"
+              >
+                {t("knowledgeBase.fileDetail.filter.apply")}
+              </Button>
+              {(idOperator || idValue || textKeyword) && (
+                <Button
+                  onClick={handleClearFilter}
+                  className="text-slate-500 hover:text-slate-700 border-slate-200"
+                >
+                  <X className="w-4 h-4 mr-1" />
+                  {t("knowledgeBase.fileDetail.filter.clear")}
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
       <Card>
         {loading ? <div className="flex items-center justify-center py-8"><Spin /></div> : renderChunks()}
       </Card>
