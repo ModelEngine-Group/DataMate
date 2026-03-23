@@ -89,7 +89,7 @@ export function AuthGuard() {
       />
       <SignupDialog
         open={signupOpen}
-        onOpenChange={setSignupDialog}
+        onOpenChange={setSignupOpen}
         onSignup={handleSignup}
         loading={loading}
         onLoginClick={openLoginDialog}
