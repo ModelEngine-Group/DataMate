@@ -5,6 +5,7 @@ import router from "./routes/routes";
 import { App as AntdApp, Spin, ConfigProvider } from "antd";
 import "./index.css";
 import TopLoadingBar from "./components/TopLoadingBar";
+import AuthGuard from "./components/AuthGuard";
 import { store } from "./store";
 import { Provider } from "react-redux";
 import theme from "./theme";
@@ -94,6 +95,7 @@ async function bootstrap() {
           <AntdApp>
             <Suspense fallback={<Spin />}>
               <TopLoadingBar />
+              <AuthGuard />
               <RouterProvider router={router} />
             </Suspense>
           </AntdApp>
