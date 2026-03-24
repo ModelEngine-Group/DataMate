@@ -73,7 +73,7 @@ pgbouncer:
 
   image:
     repository: edoburu/pgbouncer
-    tag: "latest"
+    tag: "v1.25.1-p0"
     pullPolicy: IfNotPresent
 
   # Connection pool settings
