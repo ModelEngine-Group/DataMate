@@ -4,6 +4,7 @@ import com.datamate.gateway.common.config.SslIgnoreHttpClientFactory;
 import com.datamate.gateway.infrastructure.client.OmsExtensionService;
 import com.datamate.gateway.infrastructure.client.dto.ResourceGroup;
 import com.datamate.gateway.infrastructure.client.dto.Resp;
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.slf4j.Slf4j;
@@ -61,8 +62,12 @@ public class OmsExtensionServiceImpl implements OmsExtensionService {
             String responseBody = EntityUtils.toString(response.getEntity());
             log.info("response code: {}, response body: {}", response.getCode(), responseBody);
 
+            JavaType listType = objectMapper.getTypeFactory()
+                .constructParametricType(List.class, ResourceGroup.class);
+            JavaType respType = objectMapper.getTypeFactory()
+                .constructParametricType(Resp.class, listType);
             Resp<List<ResourceGroup>> resp = objectMapper.readValue(responseBody,
-                objectMapper.getTypeFactory().constructParametricType(Resp.class, List.class, ResourceGroup.class));
+                objectMapper.getTypeFactory().constructParametricType(Resp.class, respType));
 
             if (resp.data() == null || resp.data().isEmpty()) {
                 return null;
