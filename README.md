@@ -113,10 +113,34 @@ make uninstall
 
 When running make uninstall, the installer will prompt once whether to delete volumes; that single choice is applied to all components. The uninstall order is: milvus -> label-studio -> datamate, which ensures the datamate network is removed cleanly after services that use it have stopped.
 
+## 📚 Documentation
+
+### Core Documentation
+- **[ARCHITECTURE.md](./ARCHITECTURE.md)** - System architecture, microservices communication, data flow
+- **[DEVELOPMENT.md](./DEVELOPMENT.md)** - Local development environment setup and workflow
+- **[AGENTS.md](./AGENTS.md)** - AI assistant guidelines and code style
+
+### Backend Documentation
+- **[backend/README.md](./backend/README.md)** - Backend architecture, services, and technology stack
+- **[backend/api-gateway/README.md](./backend/api-gateway/README.md)** - API Gateway configuration and routing
+- **[backend/services/main-application/README.md](./backend/services/main-application/README.md)** - Main application modules
+- **[backend/shared/README.md](./backend/shared/README.md)** - Shared libraries (domain-common, security-common)
+
+### Runtime Documentation
+- **[runtime/README.md](./runtime/README.md)** - Runtime architecture and components
+- **[runtime/datamate-python/README.md](./runtime/datamate-python/README.md)** - FastAPI backend service
+- **[runtime/python-executor/README.md](./runtime/python-executor/README.md)** - Ray executor framework
+- **[runtime/ops/README.md](./runtime/ops/README.md)** - Operator ecosystem
+- **[runtime/datax/README.md](./runtime/datax/README.md)** - DataX data framework
+- **[runtime/deer-flow/README.md](./runtime/deer-flow/README.md)** - DeerFlow LLM service
+
+### Frontend Documentation
+- **[frontend/README.md](./frontend/README.md)** - React frontend application
+
 ## 🤝 Contribution Guidelines
 
 Thank you for your interest in this project! We warmly welcome contributions from the community. Whether it's submitting
-bug reports, suggesting new features, or directly participating in code development, all forms of help make the project
+bug reports, suggesting new features, or directly participating in code development, all forms of help make a project
 better.
 
 • 📮 [GitHub Issues](../../issues): Submit bugs or feature suggestions.
