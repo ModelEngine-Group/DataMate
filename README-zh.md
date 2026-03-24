@@ -118,21 +118,21 @@ make uninstall
 - **[AGENTS.md](./AGENTS.md)** - AI 助手指南和代码规范
 
 ### 后端文档
-- **[backend/README.md](./backend/README.md)** - 后端架构、服务和技术栈
-- **[backend/api-gateway/README.md](./backend/api-gateway/README.md)** - API Gateway 配置和路由
-- **[backend/services/main-application/README.md](./backend/services/main-application/README.md)** - 主应用模块
-- **[backend/shared/README.md](./backend/shared/README.md)** - 共享库（domain-common, security-common）
+- **[backend/README-zh.md](./backend/README-zh.md)** - 后端架构、服务和技术栈
+- **[backend/api-gateway/README-zh.md](./backend/api-gateway/README-zh.md)** - API Gateway 配置和路由
+- **[backend/services/main-application/README-zh.md](./backend/services/main-application/README-zh.md)** - 主应用模块
+- **[backend/shared/README-zh.md](./backend/shared/README-zh.md)** - 共享库（domain-common, security-common）
 
 ### 运行时文档
-- **[runtime/README.md](./runtime/README.md)** - 运行时架构和组件
-- **[runtime/datamate-python/README.md](./runtime/datamate-python/README.md)** - FastAPI 后端服务
-- **[runtime/python-executor/README.md](./runtime/python-executor/README.md)** - Ray 执行器框架
+- **[runtime/README-zh.md](./runtime/README-zh.md)** - 运行时架构和组件
+- **[runtime/datamate-python/README-zh.md](./runtime/datamate-python/README-zh.md)** - FastAPI 后端服务
+- **[runtime/python-executor/README-zh.md](./runtime/python-executor/README-zh.md)** - Ray 执行器框架
 - **[runtime/ops/README.md](./runtime/ops/README.md)** - 算子生态
-- **[runtime/datax/README.md](./runtime/datax/README.md)** - DataX 数据框架
-- **[runtime/deer-flow/README.md](./runtime/deer-flow/README.md)** - DeerFlow LLM 服务
+- **[runtime/datax/README-zh.md](./runtime/datax/README-zh.md)** - DataX 数据框架
+- **[runtime/deer-flow/README-zh.md](./runtime/deer-flow/README-zh.md)** - DeerFlow LLM 服务
 
 ### 前端文档
-- **[frontend/README.md](./frontend/README.md)** - React 前端应用
+- **[frontend/README-zh.md](./frontend/README-zh.md)** - React 前端应用
 
 ## 🤝 贡献指南
 
