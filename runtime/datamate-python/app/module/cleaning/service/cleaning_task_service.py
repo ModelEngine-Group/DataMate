@@ -76,9 +76,12 @@ class CleaningTaskService:
         return tasks
 
     async def _set_process(self, db: AsyncSession, task: CleaningTaskDto) -> None:
-        """Set task progress"""
+        """Set task progress using actual results from database"""
         completed, failed = await self.result_repo.count_by_instance_id(db, task.id)
-        task.progress = CleaningProcess.of(task.file_count or 0, completed, failed)
+        # Use actual total from database (t_clean_result table), fallback to task.file_count
+        actual_total = await self.result_repo.count_total_by_instance_id(db, task.id)
+        total = max(actual_total, task.file_count or 0)
+        task.progress = CleaningProcess.of(total, completed, failed)
 
     async def count_tasks(
         self,

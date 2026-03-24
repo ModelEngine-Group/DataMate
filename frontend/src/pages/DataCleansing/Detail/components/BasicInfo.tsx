@@ -83,7 +83,7 @@ export default function BasicInfo({ task }: { task: CleansingTask }) {
           <div className="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-lg">
             <CheckCircle className="w-8 h-8 text-green-500 mb-2 mx-auto" />
             <div className="text-xl font-bold text-green-500">
-              {task?.progress?.succeedFileNum || "0"}
+              {task?.progress?.succeedFileNum ?? 0}
             </div>
             <div className="text-sm text-gray-600">{t("dataCleansing.detail.statistics.successFiles")}</div>
           </div>
@@ -91,8 +91,8 @@ export default function BasicInfo({ task }: { task: CleansingTask }) {
             <AlertCircle className="w-8 h-8 text-red-500 mb-2 mx-auto" />
             <div className="text-xl font-bold text-red-500">
               {(task?.status.value === TaskStatus.RUNNING || task?.status.value === TaskStatus.PENDING)  ?
-                task?.progress.failedFileNum :
-                task?.progress?.totalFileNum - task?.progress.succeedFileNum}
+                (task?.progress?.failedFileNum ?? 0) :
+                Math.max(0, (task?.progress?.totalFileNum ?? 0) - (task?.progress?.succeedFileNum ?? 0))}
             </div>
             <div className="text-sm text-gray-600">{t("dataCleansing.detail.statistics.failedFiles")}</div>
           </div>
@@ -113,33 +113,35 @@ export default function BasicInfo({ task }: { task: CleansingTask }) {
             column={2}
             bordered={false}
             size="middle"
-            labelStyle={{ fontWeight: 500, color: "#555" }}
-            contentStyle={{ fontSize: 14 }}
+            styles={{ label: { fontWeight: 500, color: "#555" }, content: { fontSize: 14 } }}
             items={descriptionItems}
           ></Descriptions>
         </div>
         {/* 处理进度 */}
         <div>
           <h3 className="text-lg font-semibold text-gray-900 mb-4">{t("dataCleansing.detail.basicInfo.processingProgress")}</h3>
-          { task?.status?.value === TaskStatus.FAILED ?
+          { task?.status?.value === TaskStatus.FAILED ? (
             <Progress percent={task?.progress?.process} size="small" status="exception" />
-            : <Progress percent={task?.progress?.process} size="small"/>
-          }
+          ) : task?.status?.value === TaskStatus.PARTIAL_SUCCESS ? (
+            <Progress percent={task?.progress?.process} size="small" strokeColor="#f59e0b" />
+          ) : (
+            <Progress percent={task?.progress?.process} size="small"/>
+          )}
           <div className="grid grid-cols-2 gap-4 text-sm mt-4">
             <div className="flex items-center gap-2">
               <span className="w-3 h-3 bg-green-500 rounded-full inline-block" />
-              <span>{t("dataCleansing.detail.basicInfo.completed", { count: task?.progress?.succeedFileNum || "0" })}</span>
+              <span>{t("dataCleansing.detail.basicInfo.completed", { count: task?.progress?.succeedFileNum ?? 0 })}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-3 h-3 bg-blue-500 rounded-full inline-block" />
               <span>{t("dataCleansing.detail.basicInfo.processing", { count: (task?.status.value === TaskStatus.RUNNING || task?.status.value === TaskStatus.PENDING)  ?
-                  task?.progress?.totalFileNum - task?.progress.succeedFileNum : 0 })}</span>
+                  Math.max(0, (task?.progress?.totalFileNum ?? 0) - (task?.progress?.succeedFileNum ?? 0)) : 0 })}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-3 h-3 bg-red-500 rounded-full inline-block" />
               <span>{t("dataCleansing.detail.basicInfo.failed", { count: (task?.status.value === TaskStatus.RUNNING || task?.status.value === TaskStatus.PENDING)  ?
-                  task?.progress.failedFileNum :
-                  task?.progress?.totalFileNum - task?.progress.succeedFileNum })}</span>
+                  (task?.progress?.failedFileNum ?? 0) :
+                  Math.max(0, (task?.progress?.totalFileNum ?? 0) - (task?.progress?.succeedFileNum ?? 0)) })}</span>
             </div>
           </div>
         </div>

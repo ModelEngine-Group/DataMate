@@ -8,6 +8,7 @@ class CleaningTaskStatus:
     PENDING = "PENDING"
     RUNNING = "RUNNING"
     COMPLETED = "COMPLETED"
+    PARTIAL_SUCCESS = "PARTIAL_SUCCESS"
     STOPPED = "STOPPED"
     FAILED = "FAILED"
 
@@ -25,28 +26,37 @@ class OperatorInstanceDto(BaseResponseModel):
 
 
 class CleaningProcess(BaseResponseModel):
-    """Task progress information (matches Java version)"""
-    process: float = Field(..., description="Progress percentage")
+    """Task progress information"""
+    process: float = Field(..., description="Progress percentage (based on successful files)")
     successRate: float = Field(..., description="Success rate percentage")
     totalFileNum: int = Field(..., description="Total file count")
     succeedFileNum: int = Field(..., description="Succeeded file count")
     failedFileNum: int = Field(..., description="Failed file count")
-    finishedFileNum: int = Field(..., description="Finished file count")
+    finishedFileNum: int = Field(..., description="Successfully processed file count (excludes failed)")
 
     @classmethod
     def of(cls, total: int, succeed: int, failed: int) -> 'CleaningProcess':
-        """Create progress info (matches Java version logic)"""
-        finished_file_num = succeed + failed
+        """Create progress info
+        
+        - finishedFileNum: only counts successfully processed files (excludes failed)
+        - process: progress percentage based on successful files only
+        - successRate: percentage of finished files that succeeded
+        """
+        # finished_file_num only counts successfully processed files
+        finished_file_num = succeed
 
         if total == 0:
             process = 0.0
         else:
-            process = round(finished_file_num * 100.0 / total, 2)
+            # Progress only counts successful files
+            process = round(succeed * 100.0 / total, 2)
 
-        if finished_file_num == 0:
+        # Calculate total processed (succeed + failed) for success rate
+        total_processed = succeed + failed
+        if total_processed == 0:
             success_rate = 0.0
         else:
-            success_rate = round(succeed * 100.0 / finished_file_num, 2)
+            success_rate = round(succeed * 100.0 / total_processed, 2)
 
         return cls(
             process=process,

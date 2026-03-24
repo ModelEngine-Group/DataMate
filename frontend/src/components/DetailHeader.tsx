@@ -271,8 +271,8 @@ function DetailHeader<T>({
             </div>
             <p className="text-gray-700 mb-4 line-clamp-2">{(data as any)?.description}</p>
             <div className="flex items-center gap-6 text-sm">
-              {statistics.map((stat: any) => (
-                <div key={stat.key} className="flex items-center gap-1 shrink-0">
+              {statistics.map((stat: StatisticItem, index: number) => (
+                <div key={stat.label || index} className="flex items-center gap-1 shrink-0">
                   {stat.icon}
                   <span>{stat.value}</span>
                 </div>
@@ -281,10 +281,11 @@ function DetailHeader<T>({
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {operations.map((op: any) => {
+          {operations.map((op: OperationItem) => {
             if (op.isDropdown) {
               return (
                 <ActionDropdown
+                  key={op.key}
                   actions={op?.items}
                   onAction={op?.onMenuClick}
                 />

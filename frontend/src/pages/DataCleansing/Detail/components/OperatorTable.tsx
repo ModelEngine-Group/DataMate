@@ -114,18 +114,24 @@ export default function OperatorTable({ task }: { task: any }) {
             <CardDescription>{t("dataCleansing.detail.operatorTable.description")}</CardDescription>
           </CardHeader>
           <CardContent>
-            <Table columns={operatorColumns} dataSource={Object.values(task?.instance).map((item) => ({
-              id: item?.id,
-              name: item?.name,
-              startTime: new Date(task?.startedAt).toLocaleTimeString(),
-              endTime: task?.finishedAt
-                ? new Date(task.finishedAt).toLocaleTimeString()
-                : '-',
-              duration: task.duration,
-              status: task.status.label,
-              processedFiles: task.progress.finishedFileNum,
-              successRate: task?.progress.successRate,
-            }))} pagination={false} size="middle" />
+            <Table
+              columns={operatorColumns}
+              dataSource={Object.values(task?.instance).map((item) => ({
+                id: item?.id,
+                name: item?.name,
+                startTime: new Date(task?.startedAt).toLocaleTimeString(),
+                endTime: task?.finishedAt
+                  ? new Date(task.finishedAt).toLocaleTimeString()
+                  : '-',
+                duration: task.duration,
+                status: task.status.label,
+                processedFiles: task.progress.finishedFileNum,
+                successRate: task?.progress.successRate,
+              }))}
+              rowKey="id"
+              pagination={false}
+              size="middle"
+            />
           </CardContent>
         </Card>
     </>

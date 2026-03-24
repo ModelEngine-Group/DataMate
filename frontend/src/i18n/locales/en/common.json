@@ -1594,6 +1594,7 @@
     },
     "status": {
       "completed": "Completed",
+      "partialSuccess": "Partial Success",
       "failed": "Failed",
       "running": "Running",
       "pending": "Pending",
@@ -2600,6 +2601,7 @@
         "unknown": "Unknown",
         "processing": "Processing",
         "completed": "Completed",
+        "partialSuccess": "Partial Success",
         "failed": "Failed"
       },
       "operations": {

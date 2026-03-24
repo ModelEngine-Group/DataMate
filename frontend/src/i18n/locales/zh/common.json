@@ -1594,6 +1594,7 @@
     },
     "status": {
       "completed": "已完成",
+      "partialSuccess": "部分成功",
       "failed": "失败",
       "running": "运行中",
       "pending": "等待中",

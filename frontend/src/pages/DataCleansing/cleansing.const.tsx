@@ -14,6 +14,7 @@ import {
   CheckCircleOutlined,
   AlertOutlined,
   PauseCircleOutlined,
+  WarningOutlined,
 } from "@ant-design/icons";
 import { BrushCleaning, Layout } from "lucide-react";
 
@@ -36,6 +37,12 @@ export function getTaskStatusMap(t: (key: string) => string) {
       value: TaskStatus.COMPLETED,
       color: "green",
       icon: <CheckCircleOutlined />,
+    },
+    [TaskStatus.PARTIAL_SUCCESS]: {
+      label: t("dataCleansing.status.partialSuccess"),
+      value: TaskStatus.PARTIAL_SUCCESS,
+      color: "yellow",
+      icon: <WarningOutlined />,
     },
     [TaskStatus.FAILED]: {
       label: t("dataCleansing.status.failed"),

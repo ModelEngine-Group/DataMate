@@ -1,6 +1,6 @@
 from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, func
 from app.db.models.cleaning import CleaningResult
 from app.module.cleaning.schema import CleaningResultDto
 
@@ -58,6 +58,18 @@ class CleaningResultRepository:
         failed = len((await db.execute(failed_query)).scalars().all())
 
         return (completed, failed)
+
+    async def count_total_by_instance_id(
+        self,
+        db: AsyncSession,
+        instance_id: str
+    ) -> int:
+        """Count total results by instance ID using efficient SQL COUNT"""
+        query = select(func.count()).select_from(self.model).where(
+            self.model.instance_id == instance_id
+        )
+        result = await db.scalar(query)
+        return result or 0
 
     async def delete_by_instance_id(
         self,
