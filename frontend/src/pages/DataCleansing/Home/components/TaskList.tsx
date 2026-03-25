@@ -101,37 +101,32 @@ export default function TaskList() {
     const isRunning = record.status?.value === TaskStatus.RUNNING;
     const showStart = [
       TaskStatus.PENDING,
+      TaskStatus.PARTIAL_SUCCESS,
       TaskStatus.FAILED,
       TaskStatus.STOPPED,
     ].includes(record.status?.value);
-    const isComplete = record.status?.value === TaskStatus.COMPLETED;
     const pauseBtn = {
       key: "pause",
       label: t("dataCleansing.actions.pause"),
-      icon: isRunning ? <PauseCircleOutlined /> : <PlayCircleOutlined />,
-      onClick: pauseTask, // implement pause/play logic
+      icon: <PauseCircleOutlined />,
+      onClick: pauseTask,
     };
 
     const startBtn = {
       key: "start",
       label: t("dataCleansing.actions.start"),
-      icon: isRunning ? <PauseCircleOutlined /> : <PlayCircleOutlined />,
-      disabled: isComplete,
-      onClick: startTask, // implement pause/play logic
+      icon: <PlayCircleOutlined />,
+      onClick: startTask,
     };
     return [
-      ...(isRunning
-        ? [ pauseBtn ]
-        : []),
-      ...(showStart || isComplete
-        ? [ startBtn ]
-        : []),
+      ...(isRunning ? [pauseBtn] : []),
+      ...(showStart ? [startBtn] : []),
       {
         key: "delete",
         label: t("dataCleansing.actions.delete"),
         danger: true,
         icon: <DeleteOutlined />,
-        onClick: deleteTask, // implement delete logic
+        onClick: deleteTask,
       },
     ];
   };

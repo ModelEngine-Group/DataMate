@@ -134,7 +134,7 @@ export default function CleansingTaskDetail() {
   ];
 
   const operations = [
-    ...(task?.status === TaskStatus.RUNNING
+    ...(task?.status?.value === TaskStatus.RUNNING
       ? [
           {
             key: "pause",
@@ -148,7 +148,7 @@ export default function CleansingTaskDetail() {
       ? [
           {
             key: "start",
-            label: t("dataCleansing.actions.retryTask"),
+            label: t("dataCleansing.actions.start"),
             icon: <Play className="w-4 h-4" />,
             onClick: startTask,
           },
