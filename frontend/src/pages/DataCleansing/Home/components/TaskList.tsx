@@ -118,16 +118,20 @@ export default function TaskList() {
       icon: <PlayCircleOutlined />,
       onClick: startTask,
     };
+
+    const deleteBtn = {
+      key: "delete",
+      label: t("dataCleansing.actions.delete"),
+      icon: <DeleteOutlined />,
+      danger: true,
+      disabled: isRunning, // 运行中的任务禁用删除按钮
+      onClick: deleteTask,
+    };
+
     return [
       ...(isRunning ? [pauseBtn] : []),
       ...(showStart ? [startBtn] : []),
-      {
-        key: "delete",
-        label: t("dataCleansing.actions.delete"),
-        danger: true,
-        icon: <DeleteOutlined />,
-        onClick: deleteTask,
-      },
+      deleteBtn,
     ];
   };
 

@@ -423,10 +423,22 @@ class CleaningTaskService:
         """Delete task"""
         self.validator.check_task_id(task_id)
 
+        task = await self.task_repo.find_task_by_id(db, task_id)
+        if not task:
+            raise BusinessError(ErrorCodes.CLEANING_TASK_NOT_FOUND, task_id)
+
+        # 运行中的任务无法删除
+        if task.status == CleaningTaskStatus.RUNNING:
+            raise BusinessError(
+                ErrorCodes.CLEANING_TASK_STATUS_INVALID,
+                "Task is running, cannot be deleted. Please stop the task first."
+            )
+
         await self.task_repo.delete_task_by_id(db, task_id)
         await self.operator_instance_repo.delete_by_instance_id(db, task_id)
         await self.result_repo.delete_by_instance_id(db, task_id)
 
+        # 删除任务相关文件
         task_path = Path(f"{FLOW_PATH}/{task_id}")
         if task_path.exists():
             try:
