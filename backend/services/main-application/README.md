@@ -2,7 +2,7 @@
 
 ## Overview
 
-Main Application 是 DataMate 的核心 Spring Boot 服务，包含数据管理、数据清洗、算子市场、数据收集等主要功能模块。
+The Main Application is DataMate's core Spring Boot service, containing major functional modules including data management, data cleaning, operator marketplace, and data collection.
 
 ## Architecture
 
@@ -30,28 +30,16 @@ backend/services/main-application/
 ## Modules
 
 ### 1. Data Management
-- 数据集 CRUD 操作
-- 文件上传/下载
-- 标签管理
-- 数据集版本控制
+- Dataset CRUD operations
+- File upload/download
+- Tag management
+- Dataset versioning
 
-### 2. Data Cleaning
-- 数据清洗管道
-- 数据质量检查
-- 数据去重
-- 数据格式转换
-
-### 3. Operator Market
-- 算子上传/下载
-- 算子版本管理
-- 算子分类和搜索
-- 算子执行配置
-
-### 4. Data Collection
-- 数据源配置
-- 定时数据收集任务
-- 数据同步
-- 数据导入/导出
+### 2. Data Collection
+- Data source configuration
+- Scheduled data collection tasks
+- Data synchronization
+- Data import/export
 
 ## Configuration
 
@@ -69,12 +57,6 @@ server:
 datamate:
   data-management:
     base-path: /dataset
-  operator-market:
-    repository-path: ./runtime/operators
-    max-upload-size: 50MB
-  ray:
-    enabled: false
-    address: ray://localhost:10001
 ```
 
 ## Quick Start
@@ -99,30 +81,22 @@ mvn spring-boot:run
 
 ## Development
 
-### 添加新模块
-1. 在 `domain/model/` 创建实体类
-2. 在 `domain/repository/` 创建 repository 接口
-3. 在 `infrastructure/persistence/` 实现 repository
-4. 在 `application/` 创建 application service
-5. 在 `interfaces/rest/` 创建 controller
-
-### 集成 Ray Executor
-```yaml
-datamate:
-  ray:
-    enabled: true
-    address: ray://localhost:10001
-```
+### Adding a New Module
+1. Create entity class in `domain/model/`
+2. Create repository interface in `domain/repository/`
+3. Implement repository in `infrastructure/persistence/`
+4. Create application service in `application/`
+5. Create controller in `interfaces/rest/`
 
 ## Testing
 
-### 运行测试
+### Run Tests
 ```bash
 cd backend/services/main-application
 mvn test
 ```
 
-### 运行特定测试
+### Run Specific Test
 ```bash
 mvn test -Dtest=DatasetControllerTest
 ```

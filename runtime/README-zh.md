@@ -137,7 +137,6 @@ poetry run pytest
 ## 文档
 
 - **API 文档**: http://localhost:18000/redoc
-- **AGENTS.md**: 见 `runtime/datamate-python/app/AGENTS.md` 获取详细模块文档
 - **算子指南**: 见 `runtime/ops/README.md` 获取算子开发
 
 ## 相关链接

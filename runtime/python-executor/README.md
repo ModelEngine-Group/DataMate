@@ -2,7 +2,7 @@
 
 ## Overview
 
-Ray Executor 是基于 Ray 的分布式执行框架，负责执行数据处理算子、任务调度和分布式计算。
+Ray Executor is a Ray-based distributed execution framework responsible for executing data processing operators, task scheduling, and distributed computing.
 
 ## Architecture
 
@@ -11,17 +11,17 @@ runtime/python-executor/
 └── datamate/
     ├── core/
     │   ├── base_op.py      # BaseOp, Mapper, Filter, Slicer, LLM
-    │   ├── dataset.py      # Dataset 处理
-    │   └── constant.py     # 常量定义
+    │   ├── dataset.py      # Dataset processing
+    │   └── constant.py     # Constant definitions
     ├── scheduler/
     │   ├── scheduler.py    # TaskScheduler, Task, TaskStatus
-    │   ├── func_task_scheduler.py   # 函数任务调度
-    │   └── cmd_task_scheduler.py    # 命令任务调度
+    │   ├── func_task_scheduler.py   # Function task scheduling
+    │   └── cmd_task_scheduler.py    # Command task scheduling
     ├── wrappers/
-    │   ├── executor.py     # Ray 执行器入口
-    │   ├── datamate_wrapper.py      # DataMate 任务包装
-    │   └── data_juicer_wrapper.py   # DataJuicer 集成
-    └── common/utils/       # 工具函数
+    │   ├── executor.py     # Ray executor entry point
+    │   ├── datamate_wrapper.py      # DataMate task wrapper
+    │   └── data_juicer_wrapper.py   # DataJuicer integration
+    └── common/utils/       # Utility functions
         ├── bytes_transform.py
         ├── file_scanner.py
         ├── lazy_loader.py
@@ -33,51 +33,51 @@ runtime/python-executor/
 ### 1. Base Classes
 
 #### BaseOp
-所有算子的基类：
+Base class for all operators:
 
 ```python
-class Base:Op:
+class BaseOp:
     def __init__(self, *args, **kwargs):
         self.accelerator = kwargs.get('accelerator', "cpu")
         self.text_key = kwargs.get('text_key', "text")
-        # ... 其他配置
+        # ... other configuration
     
     def execute(self, sample):
         raise NotImplementedError
 ```
 
 #### Mapper
-数据转换算子基类（1:1）：
+Base class for data transformation operators (1:1):
 
 ```python
 class Mapper(BaseOp):
     def execute(self, sample: Dict) -> Dict:
-        # 转换逻辑
+        # Transformation logic
         return processed_sample
 ```
 
 #### Filter
-数据过滤算子基类（返回 bool）：
+Base class for data filtering operators (returns bool):
 
 ```python
 class Filter(BaseOp):
     def execute(self, sample: Dict) -> bool:
-        # 过滤逻辑
-        return True  # 保留或过滤
+        # Filtering logic
+        return True  # Keep or filter out
 ```
 
 #### Slicer
-数据切片算子基类（1:N）：
+Base class for data slicing operators (1:N):
 
 ```python
 class Slicer(BaseOp):
     def execute(self, sample: Dict) -> List[Dict]:
-        # 切片逻辑
+        # Slicing logic
         return [sample1, sample2, ...]
 ```
 
 #### LLM
-LLM 算子基类：
+Base class for LLM operators:
 
 ```python
 class LLM(Mapper):
@@ -91,7 +91,7 @@ class LLM(Mapper):
 
 ### 2. Task Scheduler
 
-异步任务调度器：
+Async task scheduler:
 
 ```python
 class TaskScheduler:
@@ -100,21 +100,21 @@ class TaskScheduler:
         self.semaphore = asyncio.Semaphore(max_concurrent)
     
     async def submit(self, task_id, task, *args, **kwargs):
-        # 提交任务
+        # Submit task
         pass
     
     def get_task_status(self, task_id: str) -> Optional[TaskResult]:
-        # 获取任务状态
+        # Get task status
         pass
     
     def cancel_task(self, task_id: str) -> bool:
-        # 取消任务
+        # Cancel task
         pass
 ```
 
 ### 3. Operator Execution
 
-#### 算子注册
+#### Operator Registration
 ```python
 from datamate.core.base_op import OPERATORS
 
@@ -124,7 +124,7 @@ OPERATORS.register_module(
 )
 ```
 
-#### 执行算子
+#### Execute Operator
 ```python
 from datamate.core.base_op import Mapper
 
@@ -143,39 +143,39 @@ class MyMapper(Mapper):
 - Ray 2.7.0+
 - Poetry
 
-### 安装
+### Installation
 ```bash
 cd runtime/python-executor
 poetry install
 ```
 
-### 启动 Ray Head
+### Start Ray Head
 ```bash
 ray start --head
 ```
 
-### 启动 Ray Worker
+### Start Ray Worker
 ```bash
 ray start --head-address=<head-ip>:6379
 ```
 
 ## Usage
 
-### 提交任务到 Ray
+### Submit Task to Ray
 ```python
 from ray import remote
 
 @remote
 def execute_operator(sample, operator_config):
-    # 执行算子逻辑
+    # Execute operator logic
     return result
 
-# 提交任务
+# Submit task
 result_ref = execute_operator.remote(sample, config)
 result = ray.get(result_ref)
 ```
 
-### 使用 Task Scheduler
+### Use Task Scheduler
 ```python
 from datamate.scheduler.scheduler import TaskScheduler
 
@@ -187,32 +187,32 @@ status = scheduler.get_task_status(task_id)
 
 ## Development
 
-### 添加新算子
-1. 在 `runtime/ops/` 创建算子目录
-2. 实现 `process.py` 和 `__init__.py`
-3. 在 `__init__.py` 注册算子
-4. 测试算子
+### Adding a New Operator
+1. Create operator directory in `runtime/ops/`
+2. Implement `process.py` and `__init__.py`
+3. Register operator in `__init__.py`
+4. Test the operator
 
-### 调试算子
+### Debugging Operators
 ```bash
-# 本地测试
+# Local test
 python -c "from ops.user.operator_package.process import YourOperatorName; op = YourOperatorName(); print(op.execute({'text': 'test'}))"
 ```
 
 ## Performance
 
-### 并行执行
-Ray 自动处理并行执行和资源分配。
+### Parallel Execution
+Ray automatically handles parallel execution and resource allocation.
 
-### 容错
-Ray 提供自动任务重试和故障转移。
+### Fault Tolerance
+Ray provides automatic task retry and failover.
 
-### 资源管理
-Ray 动态分配 CPU、GPU、内存资源。
+### Resource Management
+Ray dynamically allocates CPU, GPU, and memory resources.
 
 ## Documentation
 
-- [Ray 文档](https://docs.ray.io/)
+- [Ray Documentation](https://docs.ray.io/)
 - [AGENTS.md](./AGENTS.md)
 
 ## Related Links

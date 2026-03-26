@@ -76,57 +76,6 @@ BASIC_MODEL:
   api_key: your_gemini_api_key
 ```
 
-#### 华为云
-```yaml
-BASIC_MODEL:
-  base_url: https://ark.cn-beijing.volces.com/api/v3
-  model: "doubao-1.5-pro-32k-250115"
-  api_key: your_api_key
-```
-
-## 快速开始
-
-### 前置条件
-- Python 3.8+
-- LLM API Key 或本地 LLM
-
-### 配置
-1. 复制 `conf.yaml.example` 为 `conf.yaml`
-2. 配置 LLM 提供商和 API Key
-3. （可选）配置推理模型和搜索引擎
-
-### 运行
-```bash
-cd runtime/deer-flow
-python -m deerflow
-```
-
-## 使用
-
-### 基本规划
-```python
-from deerflow import DeerFlow
-
-flow = DeerFlow()
-result = flow.plan(
-    task="设计一个数据处理流程",
-    context="需要处理CSV文件，进行数据清洗和转换"
-)
-print(result)
-```
-
-### 推理任务
-```python
-from deerflow import DeerFlow
-
-flow = DeerFlow()
-result = flow.reason(
-    task="分析数据质量",
-    context="数据包含缺失了值和异常值"
-)
-print(result)
-```
-
 ## 开发
 
 ### 添加新的 LLM 提供商

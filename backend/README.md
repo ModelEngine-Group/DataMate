@@ -2,28 +2,28 @@
 
 ## Overview
 
-DataMate Backend 是基于 Spring Boot 3.5 + Java 21 的微服务架构，提供数据管理、RAG 索引、API 网关等核心功能。
+DataMate Backend is a microservices architecture based on Spring Boot 3.5 + Java 21, providing core functions such as data management, RAG indexing, and API gateway.
 
 ## Architecture
 
 ```
 backend/
-├── api-gateway/          # API Gateway + 认证
+├── api-gateway/          # API Gateway + Authentication
 ├── services/
-│   ├── data-management-service/  # 数据集管理
-│   ├── rag-indexer-service/      # RAG 索引
-│   └── main-application/         # 主应用入口
+│   ├── data-management-service/  # Dataset management
+│   ├── rag-indexer-service/      # RAG indexing
+│   └── main-application/         # Main application entry
 └── shared/
-    ├── domain-common/    # DDD 构建块、异常处理
-    └── security-common/  # JWT 工具
+    ├── domain-common/    # DDD building blocks, exception handling
+    └── security-common/  # JWT utilities
 ```
 
 ## Services
 
 | Service | Port | Description |
 |---------|-------|-------------|
-| **main-application** | 8080 | 主应用，包含数据管理、数据清洗、算子市场等模块 |
-| **api-gateway** | 8080 | API Gateway，路由转发和认证 |
+| **main-application** | 8080 | Main application, includes data management, data cleaning, operator marketplace modules |
+| **api-gateway** | 8080 | API Gateway, route forwarding and authentication |
 
 ## Technology Stack
 
@@ -40,11 +40,11 @@ backend/
 ### External Services
 - **PostgreSQL**: `datamate-database:5432`
 - **Redis**: `datamate-redis:6379`
-- **Milvus**: 向量数据库（RAG 索引）
+- **Milvus**: Vector database (RAG indexing)
 
 ### Shared Libraries
-- **domain-common**: 业务异常、系统参数、领域实体基类
-- **security-common**: JWT 工具、认证辅助
+- **domain-common**: Business exceptions, system parameters, domain entity base classes
+- **security-common**: JWT utilities, auth helpers
 
 ## Quick Start
 
@@ -127,7 +127,7 @@ mvn -pl services/data-management-service -am test
 ## Documentation
 
 - **API Docs**: http://localhost:8080/api/swagger-ui.html
-- **AGENTS.md**: See `backend/shared/AGENTS.md` for shared libraries
+- **AGENTS.md**: See `backend/shared/AGENTS.md` for shared libraries documentation
 - **Service Docs**: See individual service READMEs
 
 ## Related Links

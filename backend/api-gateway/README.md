@@ -2,7 +2,7 @@
 
 ## Overview
 
-API Gateway 是 DataMate 的统一入口，基于 Spring Cloud Gateway 实现，负责路由转发、JWT 认证和限流。
+API Gateway is DataMate's unified entry point, built on Spring Cloud Gateway, responsible for route forwarding, JWT authentication, and rate limiting.
 
 ## Architecture
 
@@ -12,7 +12,7 @@ backend/api-gateway/
 │   ├── config/         # Gateway configuration
 │   ├── filter/         # JWT authentication filter
 │   └── route/          # Route definitions
-└免 src/main/resources/
+└── src/main/resources/
     └── application.yml   # Gateway configuration
 ```
 
@@ -43,25 +43,25 @@ datamate:
 ## Features
 
 ### 1. Route Forwarding
-- 将前端请求转发到对应的后端服务
-- 支持负载均衡
-- 路径重写
+- Forward frontend requests to corresponding backend services
+- Support for load balancing
+- Path rewriting
 
 ### 2. JWT Authentication
-- 基于 JWT Token 的认证
-- Token 验证和过期检查
-- 用户上下文传递
+- JWT Token-based authentication
+- Token validation and expiration checking
+- User context propagation
 
 ### 3. Rate Limiting
-- (如果配置）请求频率限制
-- 防止 API 滥用
+- Request rate limiting (if configured)
+- Prevent API abuse
 
 ## Quick Start
 
 ### Prerequisites
 - JDK 21+
 - Maven 3.8+
-- Nacos 服务（如果使用服务发现）
+- Nacos service (if using service discovery)
 
 ### Build
 ```bash
@@ -77,8 +77,8 @@ mvn spring-boot:run
 
 ## Development
 
-### 添加新路由
-在 `application.yml` 或通过 Nacos 配置路由规则：
+### Adding New Routes
+Configure route rules in `application.yml` or via Nacos:
 
 ```yaml
 spring:
@@ -93,8 +93,8 @@ spring:
             - StripPrefix=3
 ```
 
-### 添加自定义过滤器
-创建 `GlobalFilter` 或 `GatewayFilter`：
+### Adding Custom Filters
+Create a `GlobalFilter` or `GatewayFilter`:
 
 ```java
 @Component
@@ -109,12 +109,12 @@ public class AuthFilter implements GlobalFilter {
 
 ## Testing
 
-### 测试路由转发
+### Test Route Forwarding
 ```bash
 curl http://localhost:8080/api/data-management/datasets
 ```
 
-### 测试 JWT 认证
+### Test JWT Authentication
 ```bash
 curl -H "Authorization: Bearer <token>" http://localhost:8080/api/protected-endpoint
 ```

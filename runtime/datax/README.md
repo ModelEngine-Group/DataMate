@@ -2,15 +2,15 @@
 
 ## Overview
 
-DataX 是一个数据传输框架，支持多种数据源和数据目标之间的数据传输，用于数据收集和同步。
+DataX is a data transfer framework that supports data transmission between various data sources and targets, used for data collection and synchronization.
 
 ## Architecture
 
 ```
 runtime/datax/
-├── core/           # DataX 核心组件
-├── transformer/     # 数据转换器
-├── readers/        # 数据读取器
+├── core/           # DataX core components
+├── transformer/     # Data transformers
+├── readers/        # Data readers
 │   ├── mysqlreader/
 │   ├── postgresqlreader/
 │   ├── oracleReader/
@@ -20,7 +20,7 @@ runtime/datax/
 │   ├── nfsreader/
 │   ├── glusterfsreader/
 │   └── apireader/
-└── writers/        # 数据写入器
+└── writers/        # Data writers
     ├── mysqlwriter/
     ├── postgresqlwriter/
     ├── oraclewriter/
@@ -34,7 +34,7 @@ runtime/datax/
 
 ## Supported Data Sources
 
-### 关系型数据库
+### Relational Databases
 - MySQL
 - PostgreSQL
 - Oracle
@@ -43,22 +43,22 @@ runtime/datax/
 - KingbaseES
 - GaussDB
 
-### NoSQL 数据库
+### NoSQL Databases
 - MongoDB
 - Elasticsearch
 - Cassandra
 - HBase
 - Redis
 
-### 文件系统
+### File Systems
 - HDFS
-- S3 (AWS S3, MinIO, 阿里云 OSS)
+- S3 (AWS S3, MinIO, Alibaba Cloud OSS)
 - NFS
 - GlusterFS
-- 本地文件系统
+- Local file system
 
-### 其他
-- API 接口
+### Others
+- API interfaces
 - Kafka
 - Pulsar
 - DataHub
@@ -66,7 +66,7 @@ runtime/datax/
 
 ## Usage
 
-### 基本配置
+### Basic Configuration
 ```json
 {
   "job": {
@@ -100,13 +100,13 @@ runtime/datax/
 }
 ```
 
-### 运行 DataX
+### Run DataX
 ```bash
-# 构建 DataX
+# Build DataX
 cd runtime/datax
 mvn clean package
 
-# 运行
+# Run
 python datax.py -j job.json
 ```
 
@@ -117,34 +117,34 @@ python datax.py -j job.json
 - Maven 3.8+
 - Python 3.6+
 
-### 构建
+### Build
 ```bash
 cd runtime/datax
 mvn clean package
 ```
 
-### 运行示例
+### Run Example
 ```bash
 python datax.py -j examples/mysql2text.json
 ```
 
 ## Development
 
-### 添加新的 Reader
-1. 在 `readers/` 创建新模块
-2. 实现 Reader 接口
-3. 配置 reader 参数
-4. 添加到 package.xml
+### Adding a New Reader
+1. Create new module in `readers/`
+2. Implement Reader interface
+3. Configure reader parameters
+4. Add to package.xml
 
-### 添加新的 Writer
-1. 在 `writers/` 创建新模块
-2. 实现 Writer 接口
-3. 配置 writer 参数
-4. 添加到 package.xml
+### Adding a New Writer
+1. Create new module in `writers/`
+2. Implement Writer interface
+3. Configure writer parameters
+4. Add to package.xml
 
 ## Documentation
 
-- [DataX 官方文档](https://github.com/alibaba/DataX)
+- [DataX Official Documentation](https://github.com/alibaba/DataX)
 
 ## Related Links
 

@@ -116,7 +116,6 @@ When running make uninstall, the installer will prompt once whether to delete vo
 ## 📚 Documentation
 
 ### Core Documentation
-- **[ARCHITECTURE.md](./ARCHITECTURE.md)** - System architecture, microservices communication, data flow
 - **[DEVELOPMENT.md](./DEVELOPMENT.md)** - Local development environment setup and workflow
 - **[AGENTS.md](./AGENTS.md)** - AI assistant guidelines and code style
 

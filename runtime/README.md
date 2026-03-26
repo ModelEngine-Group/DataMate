@@ -2,17 +2,17 @@
 
 ## Overview
 
-DataMate Runtime 提供数据处理、算子执行、数据收集等核心功能，基于 Python 3.12+ 和 FastAPI 框架。
+DataMate Runtime provides core functionality for data processing, operator execution, and data collection, built on Python 3.12+ and the FastAPI framework.
 
 ## Architecture
 
 ```
 runtime/
-├── datamate-python/      # FastAPI 后端服务（port 18000）
-├── python-executor/      # Ray 分布式执行器
-├── ops/                 # 算子生态
-├── datax/               # DataX 数据读写框架
-└── deer-flow/            # DeerFlow 服务
+├── datamate-python/      # FastAPI backend service (port 18000)
+├── python-executor/      # Ray distributed executor
+├── ops/                 # Operator ecosystem
+├── datax/               # DataX data read/write framework
+└── deer-flow/            # DeerFlow service
 ```
 
 ## Components
@@ -20,14 +20,14 @@ runtime/
 ### 1. datamate-python (FastAPI Backend)
 **Port**: 18000
 
-核心 Python 服务，提供以下功能：
-- **数据合成**: QA 生成、文档处理
-- **数据标注**: Label Studio 集成、自动标注
-- **数据评估**: 模型评估、质量检查
-- **数据清洗**: 数据清洗管道
-- **算子市场**: 算子管理、上传
-- **RAG 索引**: 向量索引、知识库管理
-- **数据收集**: 定时任务、数据源集成
+Core Python service providing:
+- **Data Synthesis**: QA generation, document processing
+- **Data Annotation**: Label Studio integration, auto-annotation
+- **Data Evaluation**: Model evaluation, quality checks
+- **Data Cleaning**: Data cleaning pipelines
+- **Operator Marketplace**: Operator management, upload
+- **RAG Indexing**: Vector indexing, knowledge base management
+- **Data Collection**: Scheduled tasks, data source integration
 
 **Technology Stack**:
 - FastAPI 0.124+
@@ -35,39 +35,39 @@ runtime/
 - Pydantic 2.12+
 - PostgreSQL (via asyncpg)
 - Milvus (via pymilvus)
-- APScheduler (定时任务)
+- APScheduler (scheduled tasks)
 
 ### 2. python-executor (Ray Executor)
-Ray 分布式执行框架，负责：
-- **算子执行**: 执行数据处理算子
-- **任务调度**: 异步任务管理
-- **分布式计算**: 多节点并行处理
+Ray distributed execution framework responsible for:
+- **Operator Execution**: Execute data processing operators
+- **Task Scheduling**: Async task management
+- **Distributed Computing**: Multi-node parallel processing
 
 **Technology Stack**:
 - Ray 2.7.0
-- FastAPI (执行器 API)
-- Data-Juicer (数据处理)
+- FastAPI (executor API)
+- Data-Juicer (data processing)
 
 ### 3. ops (Operator Ecosystem)
-算子生态，包含：
-- **filter**: 数据过滤（去重、敏感内容、质量过滤）
-- **mapper**: 数据转换（清洗、归一化）
-- **slicer**: 数据切片（文本分割、幻灯片提取）
-- **formatter**: 格式转换（PDF → text, slide → JSON）
-- **llms**: LLM 算子（质量评估、条件检查）
-- **annotation**: 标注算子（目标检测、分割）
+Operator ecosystem including:
+- **filter**: Data filtering (deduplication, sensitive content, quality filtering)
+- **mapper**: Data transformation (cleaning, normalization)
+- **slicer**: Data slicing (text splitting, slide extraction)
+- **formatter**: Format conversion (PDF → text, slide → JSON)
+- **llms**: LLM operators (quality evaluation, condition checking)
+- **annotation**: Annotation operators (object detection, segmentation)
 
-**See**: `runtime/ops/README.md` for operator development guide.
+**See**: `runtime/ops/README.md` for operator development guide
 
 ### 4. datax (DataX Framework)
-DataX 数据读写框架，支持多种数据源：
-- **Readers**: MySQL, PostgreSQL, Oracle, MongoDB, Elasticsearch, HDFS, S3, NFS, GlusterFS, API, 等
-- **Writers**: 同上，支持写入目标
+DataX data read/write framework supporting multiple data sources:
+- **Readers**: MySQL, PostgreSQL, Oracle, MongoDB, Elasticsearch, HDFS, S3, NFS, GlusterFS, API, etc.
+- **Writers**: Same as above, supports writing to targets
 
-**Technology Stack**: Java (Maven 构建)
+**Technology Stack**: Java (Maven build)
 
 ### 5. deer-flow (DeerFlow Service)
-DeerFlowService（配置见 `conf.yaml`）。
+DeerFlow service (see `conf.yaml` for configuration).
 
 ## Quick Start
 
@@ -114,9 +114,9 @@ app/
 
 ### Code Conventions
 - **Routes**: `APIRouter` in `interface/*.py`
-- **DI**: `Depends(get_db)` for session
-- **Error**: `raise BusinessError(ErrorCodes.XXX, context)`
-- **Transaction**: `async with transaction(db):`
+- **Dependency Injection**: `Depends(get_db)` for session
+- **Error Handling**: `raise BusinessError(ErrorCodes.XXX, context)`
+- **Transactions**: `async with transaction(db):`
 - **Models**: Extend `BaseEntity` (audit fields auto-filled)
 
 ## Testing
@@ -137,7 +137,6 @@ poetry run pytest
 ## Documentation
 
 - **API Docs**: http://localhost:18000/redoc
-- **AGENTS.md**: See `runtime/datamate-python/app/AGENTS.md` for detailed module docs
 - **Operator Guide**: See `runtime/ops/README.md` for operator development
 
 ## Related Links

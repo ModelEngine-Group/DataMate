@@ -113,7 +113,6 @@ make uninstall
 ## 📚 文档
 
 ### 核心文档
-- **[ARCHITECTURE.md](./ARCHITECTURE.md)** - 系统架构、微服务通信、数据流
 - **[DEVELOPMENT.md](./DEVELOPMENT.md)** - 本地开发环境搭建和工作流程
 - **[AGENTS.md](./AGENTS.md)** - AI 助手指南和代码规范
 

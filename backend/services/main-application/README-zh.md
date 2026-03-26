@@ -35,19 +35,7 @@ backend/services/main-application/
 - 标签管理
 - 数据集版本控制
 
-### 2. 数据清洗
-- 数据清洗管道
-- 数据质量检查
-- 数据去重
-- 数据格式转换
-
-### 3. 算子市场
-- 算子上传/下载
-- 算子版本管理
-- 算子分类和搜索
-- 算子执行配置
-
-### 4. 数据收集
+### 2. 数据收集
 - 数据源配置
 - 定时数据收集任务
 - 数据同步
@@ -69,12 +57,6 @@ server:
 datamate:
   data-management:
     base-path: /dataset
-  operator-market:
-    repository-path: ./runtime/operators
-    max-upload-size: 50MB
-  ray:
-    enabled: false
-    address: ray://localhost:10001
 ```
 
 ## 快速开始
@@ -105,14 +87,6 @@ mvn spring-boot:run
 3. 在 `infrastructure/persistence/` 实现 repository
 4. 在 `application/` 创建 application service
 5. 在 `interfaces/rest/` 创建 controller
-
-### 集成 Ray 执行器
-```yaml
-datamate:
-  ray:
-    enabled: true
-    address: ray://localhost:10001
-```
 
 ## 测试
 

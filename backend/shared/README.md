@@ -2,18 +2,18 @@
 
 ## Overview
 
-Shared Libraries 包含所有后端服务共用的代码和工具，包括领域构建块、异常处理、JWT 工具等。
+Shared Libraries contain code and utilities shared across all backend services, including domain building blocks, exception handling, JWT utilities, and more.
 
 ## Architecture
 
 ```
 backend/shared/
-├── domain-common/          # DDD 构建块、异常处理
+├── domain-common/          # DDD building blocks, exception handling
 │   └── src/main/java/com/datamate/common/
 │       ├── infrastructure/exception/  # BusinessException, ErrorCode
 │       ├── setting/                   # System params, model configs
 │       └── domain/                    # Base entities, repositories
-└── security-common/        # JWT 工具、认证辅助
+└── security-common/        # JWT utilities, auth helpers
     └── src/main/java/com/datamate/security/
 ```
 
@@ -22,21 +22,21 @@ backend/shared/
 ### 1. domain-common
 
 #### BusinessException
-统一的业务异常处理机制：
+Unified business exception handling mechanism:
 
 ```java
-// 抛出业务异常
+// Throw business exception
 throw BusinessException.of(ErrorCode.DATASET_NOT_FOUND)
     .withDetail("dataset_id", datasetId);
 
-// 带上下文的异常
+// Exception with context
 throw BusinessException.of(ErrorCode.VALIDATION_FAILED)
     .withDetail("field", "email")
     .withDetail("reason", "Invalid format");
 ```
 
 #### ErrorCode
-错误码枚举接口：
+Error code enumeration interface:
 
 ```java
 public interface ErrorCode {
@@ -45,7 +45,7 @@ public interface ErrorCode {
     HttpStatus getHttpStatus();
 }
 
-// 示例
+// Example
 public enum CommonErrorCode implements ErrorCode {
     SUCCESS("0000", "Success", HttpStatus.OK),
     DATABASE_NOT_FOUND("4001", "Database not found", HttpStatus.NOT_FOUND);
@@ -53,7 +53,7 @@ public enum CommonErrorCode implements ErrorCode {
 ```
 
 #### BaseEntity
-所有实体的基类，包含审计字段：
+Base class for all entities, including audit fields:
 
 ```java
 @Data
@@ -79,22 +79,22 @@ public class BaseEntity<T> implements Serializable {
 ### 2. security-common
 
 #### JWT Utilities
-JWT Token 生成和验证：
+JWT Token generation and validation:
 
 ```java
-// 生成 Token
+// Generate Token
 String token = JwtUtil.generateToken(userId, secret, expiration);
 
-// 验证 Token
+// Validate Token
 Claims claims = JwtUtil.validateToken(token, secret);
 String userId = claims.getSubject();
 ```
 
 ## Usage
 
-### 在服务中使用共享库
+### Using Shared Libraries in Services
 
-#### Maven 依赖
+#### Maven Dependencies
 ```xml
 <dependency>
     <groupId>com.datamate</groupId>
@@ -108,7 +108,7 @@ String userId = claims.getSubject();
 </dependency>
 ```
 
-#### 使用 BusinessException
+#### Using BusinessException
 ```java
 @RestController
 @RequiredArgsConstructor
@@ -126,14 +126,14 @@ public class DatasetController {
 
 ## Quick Start
 
-### 构建共享库
+### Build Shared Libraries
 ```bash
 cd backend
 mvn clean install
 ```
 
-### 在服务中使用
-共享库会自动被所有后端服务继承。
+### Use in Services
+Shared libraries are automatically inherited by all backend services.
 
 ## Documentation
 
