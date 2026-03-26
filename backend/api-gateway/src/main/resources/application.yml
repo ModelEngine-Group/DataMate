@@ -33,6 +33,11 @@ datamate:
   jwt:
     secret: ${JWT_SECRET}
     expiration-seconds: 3600
+oms:
+  auth:
+    enabled: ${OMS_AUTH_ENABLED:false}
+  service:
+    url: ${OMS_SERVICE_URL:https://omsservice:18082}
   # 服务器端口配置
 server:
   port: 8080  # 必须有这个配置

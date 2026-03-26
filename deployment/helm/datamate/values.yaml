@@ -191,6 +191,8 @@ frontend:
         secretKeyRef:
           name: datamate-conf
           key: DOMAIN
+    - name: REAL_IP_MODE
+      value: "off"
   volumes:
     - *logVolume
     - name: cert-volume
