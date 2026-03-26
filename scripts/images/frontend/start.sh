@@ -6,10 +6,10 @@ function set_proxy_protocol() {
         return 0
     fi
     sed -i 's/listen       3000;/listen       3000 proxy_protocol;/' /opt/frontend/http_backend.conf
-    sed -i 's/listen       3000;/listen       3000 proxy_protocol;/' /opt/frontend/https_backend.conf
+    sed -i 's/listen       3000 ssl;/listen       3000 ssl proxy_protocol;/' /opt/frontend/https_backend.conf
     sed -i '/access_log.*main/a\    set_real_ip_from 0.0.0.0/0;' /opt/frontend/nginx.conf
     sed -i '/access_log.*main/a\    real_ip_header proxy_protocol;' /opt/frontend/nginx.conf
-    echo "ginx configuration file updated."
+    echo "Nginx configuration file updated."
 }
 
 if [ -f "/cert/server.pem" ]; then
