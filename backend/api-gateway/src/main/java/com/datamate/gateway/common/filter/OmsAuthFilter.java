@@ -81,10 +81,9 @@ public class OmsAuthFilter implements GlobalFilter {
                 log.error("Authentication failed: Token is null or invalid.");
                 return exchange.getResponse().setComplete();
             }
-            String userGroupId = this.omsExtensionService.getUserGroupId(userName);
+            log.info("Current oms username is: {}", userName);
             ServerHttpRequest newRequest = request.mutate()
                     .header(USER_NAME_HEADER, userName)
-                    .header(USER_GROUP_ID_HEADER, userGroupId)
                     .build();
 
             return chain.filter(exchange.mutate().request(newRequest).build());
