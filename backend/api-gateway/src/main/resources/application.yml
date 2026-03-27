@@ -1,6 +1,7 @@
 spring:
   main:
     allow-circular-references: true
+    allow-bean-definition-overriding: true
   application:
     name: datamate-gateway  # 必须设置应用名
 
