@@ -93,10 +93,6 @@ export default function TaskList() {
     setDeleteModal({ visible: false, taskId: "", taskName: "" });
   };
 
-  useEffect(() => {
-    fetchData();
-  }, [t]);
-
   const taskOperations = (record: CleansingTask) => {
     const isRunning = record.status?.value === TaskStatus.RUNNING;
     const showStart = [

@@ -1526,7 +1526,7 @@
         "currentDisplay": "当前展示: 第 {{num}} 次",
         "nthRun": "第 {{num}} 次",
         "noLogs": "当前任务无可用日志",
-        "streaming": "实时流式输出中...",
+        "streaming": "实时输出中...",
         "download": "下载日志",
         "downloadFailed": "下载日志文件失败"
       },
