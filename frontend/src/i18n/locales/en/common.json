@@ -1458,6 +1458,9 @@
         "deleteDesc": "Are you sure you want to delete \"{{itemName}}\"? This action cannot be undone."
       }
     },
+    "create": {
+      "typeMismatch": "Type mismatch: previous operator outputs \"{{from}}\", but current operator requires \"{{to}}\""
+    },
     "template": {
       "columns": {
         "templateName": "Template Name",

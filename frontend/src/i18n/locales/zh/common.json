@@ -1458,6 +1458,9 @@
         "deleteDesc": "删除「{{itemName}}」后将无法恢复，确定要执行此操作吗？"
       }
     },
+    "create": {
+      "typeMismatch": "类型不兼容：上一个算子输出类型为「{{from}}」，当前算子输入类型为「{{to}}」"
+    },
     "template": {
       "columns": {
         "templateName": "模板名称",
