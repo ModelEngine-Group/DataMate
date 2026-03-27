@@ -11,6 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
+import org.springframework.core.Ordered;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -29,7 +30,7 @@ import java.nio.charset.StandardCharsets;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class AuthFilter implements GlobalFilter {
+public class AuthFilter implements GlobalFilter, Ordered {
     private static final String AUTH_HEADER = "Authorization";
 
     private static final String TOKEN_PREFIX = "Bearer ";
@@ -94,5 +95,15 @@ public class AuthFilter implements GlobalFilter {
         }
         DataBuffer buffer = response.bufferFactory().wrap(bytes);
         return response.writeWith(Mono.just(buffer));
+    }
+
+    /**
+     * JWT 认证优先级低于 SSO
+     *
+     * @return order value (2 = lower priority than SSO filter)
+     */
+    @Override
+    public int getOrder() {
+        return 2;
     }
 }
