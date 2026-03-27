@@ -212,8 +212,11 @@ export default function TaskList() {
       key: "process",
       width: 150,
       render: (_, record: CleansingTask) => {
-          if (record?.status?.value == TaskStatus.FAILED) {
+          if (record?.status?.value === TaskStatus.FAILED) {
               return <Progress percent={record?.progress?.process} size="small" status="exception" />;
+          }
+          if (record?.status?.value === TaskStatus.PARTIAL_SUCCESS) {
+              return <Progress percent={record?.progress?.process} size="small" strokeColor="#f59e0b" />;
           }
           return <Progress percent={record?.progress?.process} size="small"/>;
       },

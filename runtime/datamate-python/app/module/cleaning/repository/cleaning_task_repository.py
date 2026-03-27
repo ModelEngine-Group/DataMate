@@ -133,6 +133,27 @@ class CleaningTaskRepository:
         await db.execute(query)
         await db.flush()
 
+    async def count_tasks(
+        self,
+        db: AsyncSession,
+        status: Optional[str] = None,
+        keyword: Optional[str] = None
+    ) -> int:
+        """Count cleaning tasks using SQL COUNT"""
+        query = select(func.count()).select_from(self.model)
+
+        if status:
+            query = query.where(self.model.status == status)
+
+        if keyword:
+            keyword_pattern = f"%{keyword}%"
+            query = query.where(
+                self.model.name.ilike(keyword_pattern) | self.model.description.ilike(keyword_pattern)
+            )
+
+        result = await db.scalar(query)
+        return result or 0
+
     async def is_name_exist(self, db: AsyncSession, name: str) -> bool:
         """Check if task name exists"""
         query = select(func.count()).select_from(self.model).where(self.model.name == name)

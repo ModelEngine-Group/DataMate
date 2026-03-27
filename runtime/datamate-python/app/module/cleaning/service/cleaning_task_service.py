@@ -70,8 +70,17 @@ class CleaningTaskService:
         """Get cleaning tasks"""
         tasks = await self.task_repo.find_tasks(db, status, keyword, page, size)
 
+        if not tasks:
+            return tasks
+
+        # Batch query progress for all tasks in a single SQL (avoids N+1)
+        task_ids = [task.id for task in tasks]
+        progress_map = await self.result_repo.batch_count_by_instance_ids(db, task_ids)
+
         for task in tasks:
-            await self._set_process(db, task)
+            completed, failed, actual_total = progress_map.get(task.id, (0, 0, 0))
+            total = max(actual_total, task.file_count or 0)
+            task.progress = CleaningProcess.of(total, completed, failed)
 
         return tasks
 
@@ -89,9 +98,8 @@ class CleaningTaskService:
         status: str | None = None,
         keyword: str | None = None,
     ) -> int:
-        """Count cleaning tasks"""
-        tasks = await self.task_repo.find_tasks(db, status, keyword, None, None)
-        return len(tasks)
+        """Count cleaning tasks using SQL COUNT"""
+        return await self.task_repo.count_tasks(db, status, keyword)
 
     async def get_task(self, db: AsyncSession, task_id: str) -> CleaningTaskDto:
         """Get task by ID"""
