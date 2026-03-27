@@ -2,6 +2,7 @@
 import json
 import os
 import re
+
 from flask import Flask, request, jsonify
 
 import torch
@@ -10,10 +11,12 @@ from PIL import Image
 from transformers import AutoTokenizer
 from transformers import Qwen2VLImageProcessor, Qwen2_5_VLForConditionalGeneration
 
-# 允许通过环境变量覆盖
-DEFAULT_MODEL_DIR = "/mnt/nvme0n1/home/gtx/Video_Analysis_System/models/qwen/Qwen/Qwen2.5-VL-7B-Instruct"
+DEFAULT_MODEL_DIR = "/mnt/models/qwen/Qwen/Qwen2.5-VL-7B-Instruct"
 MODEL_DIR = os.environ.get("QWEN_MODEL_DIR", DEFAULT_MODEL_DIR)
 PREPROCESSOR_CFG = os.path.join(MODEL_DIR, "preprocessor_config.json")
+
+SERVER_HOST = os.environ.get("QWEN_SERVER_HOST", "127.0.0.1")
+SERVER_PORT = int(os.environ.get("QWEN_SERVER_PORT", "18080"))
 
 app = Flask(__name__)
 
@@ -28,11 +31,9 @@ model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
     torch_dtype=torch.float16
 ).to("npu").eval()
 
-# ---------- Sensitive labels ----------
 SENSITIVE_VALID = ["porn", "violence", "blood", "explosion", "politics", "none"]
 SENSITIVE_SET = set(SENSITIVE_VALID)
 
-# ---------- Classify 25 ----------
 CLASS25 = [
     "日常生活", "影视剧集", "音乐舞蹈", "幽默搞笑", "游戏电竞",
     "动漫二次元", "新闻时事", "教育教学", "科技数码", "财经商业",
@@ -41,9 +42,8 @@ CLASS25 = [
     "广告营销", "才艺展示", "军事国防", "情感心理", "其他"
 ]
 
-# ================= Prompt builders =================
+
 def label_only_prompt() -> str:
-    # 越短越好，避免模型复述规则
     return "只输出一个词：porn|violence|blood|explosion|politics|none。不要解释。"
 
 
@@ -64,7 +64,6 @@ def summary_prompt(language: str = "zh", style: str = "normal") -> str:
         if style == "detail":
             return "Summarize the video in 3-5 sentences based on the image, including objects, actions, and scene. No extra text."
         return "Summarize the video based on the image. Be concise. No extra text."
-    # zh
     if style == "short":
         return "用一句话概括这段视频内容。不要解释。"
     if style == "detail":
@@ -76,9 +75,7 @@ def event_tag_prompt() -> str:
     return "根据图片判断正在发生的事件，用短语输出事件名称（不超过10个字）。不要解释。"
 
 
-# ================= Common helpers =================
 def build_prompt_with_image_tokens(user_text: str, num_image_tokens: int) -> str:
-    # 用 chat_template 插入视觉 token，然后展开 <|image_pad|>
     messages = [{"role": "user", "content": [{"type": "image"}, {"type": "text", "text": user_text}]}]
     prompt = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
     prompt = prompt.replace("<|image_pad|>", "<|image_pad|>" * num_image_tokens)
@@ -86,43 +83,31 @@ def build_prompt_with_image_tokens(user_text: str, num_image_tokens: int) -> str
 
 
 def extract_assistant_answer(raw_text: str) -> str:
-    """提取模型真正的回答，避免 prompt 回显导致误判：
-    - 截取最后一个 'assistant' 之后的内容
-    - 取最后一行
-    - 清理多余字符
-    """
     if not raw_text:
         return ""
-
     t = raw_text
     idx = t.rfind("assistant")
     if idx != -1:
         t = t[idx + len("assistant"):]
-
     t = t.strip().splitlines()[-1].strip()
     return t
 
 
 def extract_assistant_answer_sensitive(raw_text: str) -> str:
-    """敏感检测专用：只保留英文/分隔符，降低回显污染风险。"""
     t = extract_assistant_answer(raw_text)
     t = re.sub(r"[^a-zA-Z|]+", " ", t).strip().lower()
     return t
 
 
 def normalize_sensitive_label(raw_text: str) -> str:
-    """严格匹配：只接受模型最终回答等于某个标签，否则返回 none。"""
     ans = extract_assistant_answer_sensitive(raw_text)
-
     if "|" in ans:
         parts = [p.strip() for p in ans.split("|") if p.strip()]
         if parts and parts[-1] in SENSITIVE_SET:
             return parts[-1]
         return "none"
-
     if ans in SENSITIVE_SET:
         return ans
-
     return "none"
 
 
@@ -138,11 +123,10 @@ def normalize_class25(raw_text: str) -> dict:
 
 
 def infer_raw_text(image_path: str, user_text: str, max_new_tokens: int = 64) -> str:
-    """返回模型原始输出文本（可能包含回显）。"""
     image = Image.open(image_path).convert("RGB")
 
     img_inputs = image_processor(images=image, return_tensors="pt")
-    grid = img_inputs["image_grid_thw"][0]  # [t,h,w]
+    grid = img_inputs["image_grid_thw"][0]
     num_patches = int(grid.prod().item())
     num_image_tokens = num_patches // (MERGE_SIZE * MERGE_SIZE)
 
@@ -165,7 +149,7 @@ def infer_raw_text(image_path: str, user_text: str, max_new_tokens: int = 64) ->
 
 @app.route("/health", methods=["GET"])
 def health():
-    return jsonify({"ok": True, "model_dir": MODEL_DIR})
+    return jsonify({"ok": True, "model_dir": MODEL_DIR, "host": SERVER_HOST, "port": SERVER_PORT})
 
 
 @app.route("/infer", methods=["POST"])
@@ -174,7 +158,6 @@ def infer_api():
     image_path = data["image_path"]
     task = data.get("task", "sensitive")
 
-    # 通用可控项
     max_new_tokens = int(data.get("max_new_tokens", 64))
     language = data.get("language", "zh")
     style = data.get("style", "normal")
@@ -223,9 +206,8 @@ def infer_api():
         return jsonify({"task": task, "error": "unknown_task"}), 200
 
     except Exception as e:
-        # 即使服务端异常也返回 JSON，避免客户端解析失败
         return jsonify({"task": task, "error": "server_error", "reason": str(e)[:200]}), 200
 
 
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=18080, debug=False)
+    app.run(host=SERVER_HOST, port=SERVER_PORT, debug=False)
