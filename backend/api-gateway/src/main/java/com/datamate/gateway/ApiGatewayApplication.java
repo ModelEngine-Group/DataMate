@@ -7,6 +7,8 @@ import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
+import org.springframework.context.annotation.ComponentScan.Filter;
 
 /**
  * API Gateway & Auth Service Application
@@ -14,7 +16,13 @@ import org.springframework.context.annotation.ComponentScan;
  * 提供路由、鉴权、限流等功能
  */
 @SpringBootApplication
-@ComponentScan(basePackages = {"com.datamate"})
+@ComponentScan(
+    basePackages = {"com.datamate"},
+    excludeFilters = @Filter(
+        type = FilterType.REGEX,
+        pattern = "com\\.datamate\\.common\\.infrastructure\\.config\\..*"
+    )
+)
 @MapperScan(basePackages = {"com.datamate.**.mapper"})
 public class ApiGatewayApplication {
 
