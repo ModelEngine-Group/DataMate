@@ -280,6 +280,8 @@ class Request {
 
     const config = {
       method: "GET",
+      credentials: "include",
+      mode: "cors",
       headers: {
         ...this.defaultHeaders,
         ...options.headers,
@@ -299,6 +301,8 @@ class Request {
   async post(url, data = {}, options = {}) {
     let config = {
       method: "POST",
+      credentials: "include",
+      mode: "cors",
       headers: {
         ...this.defaultHeaders,
         ...options.headers,
@@ -311,6 +315,8 @@ class Request {
     if (isFormData) {
       config = {
         method: "POST",
+        credentials: "include",
+        mode: "cors",
         headers: {
           ...options.headers, // FormData不需要Content-Type
         },
@@ -330,6 +336,8 @@ class Request {
   async put(url, data = null, options = {}) {
     const config = {
       method: "PUT",
+      credentials: "include",
+      mode: "cors",
       headers: {
         ...this.defaultHeaders,
         ...options.headers,
