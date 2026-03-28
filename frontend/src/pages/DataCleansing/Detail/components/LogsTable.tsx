@@ -45,7 +45,10 @@ export default function LogsTable({
       startStreaming();
     } else {
       stopStreaming();
-      fetchTaskLog(selectedLog - 1);
+      fetchTaskLog(selectedLog - 1).then(() => {
+        // Static logs loaded, safe to clear streaming logs now
+        setStreamingLogs([]);
+      });
     }
     return () => stopStreaming();
   }, [id, selectedLog, retryCount, shouldStream]);
@@ -63,7 +66,11 @@ export default function LogsTable({
         const logEntry: LogEntry = JSON.parse(event.data);
         if (logEntry.message === "[END_OF_STREAM]" || logEntry.message === "[HEARTBEAT]") {
           if (logEntry.message === "[END_OF_STREAM]") {
-            stopStreaming();
+            // Don't clear streamingLogs immediately - keep them visible
+            // while the static fetch completes
+            eventSourceRef.current?.close();
+            eventSourceRef.current = null;
+            setIsStreaming(false);
           }
           return;
         }
@@ -88,7 +95,10 @@ export default function LogsTable({
   };
 
   // Use streaming logs only when actively streaming, otherwise use initial logs
-  const displayLogs = isStreaming ? streamingLogs : initialLogs;
+  // Keep streamingLogs visible until initialLogs are populated (avoids blank flash)
+  const displayLogs = isStreaming || streamingLogs.length > 0
+    ? (streamingLogs.length > 0 ? streamingLogs : initialLogs)
+    : initialLogs;
 
   // Add index to logs for virtual list key
   const logsWithIndex: LogEntryWithIndex[] = useMemo(() => {
