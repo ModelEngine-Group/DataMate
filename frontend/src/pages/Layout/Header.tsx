@@ -216,15 +216,18 @@ export function Header() {
           label: currentUser.email,
           disabled: true,
         },
-        {
-          type: 'divider',
-        },
-        {
-          key: 'logout',
-          label: t('user.actions.logout'),
-          icon: <LogIn className="h-4 w-4" />,
-          onClick: handleLogout,
-        },
+        // 只有 JWT 模式才显示退出登录按钮
+        ...(authMode !== 'SSO' ? [
+          {
+            type: 'divider',
+          },
+          {
+            key: 'logout',
+            label: t('user.actions.logout'),
+            icon: <LogIn className="h-4 w-4" />,
+            onClick: handleLogout,
+          },
+        ] : []),
       ]
     : [
       {
