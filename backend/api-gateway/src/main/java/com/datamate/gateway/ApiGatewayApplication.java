@@ -76,6 +76,10 @@ public class ApiGatewayApplication {
                 .filters(f -> f.stripPrefix(1).prefixPath("/api"))
                 .uri("http://deer-flow-backend:8000"))
 
+            // 网关服务（用户）
+            .route("gateway", r -> r.path("/api/user/**")
+                .uri("http://localhost:8080"))
+
             // 其他后端服务
             .route("default", r -> r.path("/api/**")
                         .uri("http://datamate-backend:8080"))
