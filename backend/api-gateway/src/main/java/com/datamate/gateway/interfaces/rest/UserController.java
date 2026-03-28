@@ -9,13 +9,13 @@ import com.datamate.gateway.interfaces.dto.LoginRequest;
 import com.datamate.gateway.interfaces.dto.LoginResponse;
 import com.datamate.gateway.interfaces.dto.RegisterRequest;
 import com.datamate.gateway.interfaces.dto.UserResponse;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -66,10 +66,10 @@ public class UserController {
      * @return 用户信息（包含认证模式）
      */
     @GetMapping("/me")
-    public Response<UserResponse> getCurrentUser(HttpServletRequest request) {
+    public Response<UserResponse> getCurrentUser(ServerHttpRequest request) {
         // 优先检查 SSO 模式（OMS 请求头）
-        String ssoUsername = request.getHeader("X-User-Name");
-        String ssoGroupId = request.getHeader("X-User-Group-Id");
+        String ssoUsername = request.getHeaders().getFirst("X-User-Name");
+        String ssoGroupId = request.getHeaders().getFirst("X-User-Group-Id");
 
         if (StringUtils.isNotBlank(ssoUsername)) {
             log.info("SSO mode: user={}, groupId={}", ssoUsername, ssoGroupId);
@@ -82,7 +82,7 @@ public class UserController {
         }
 
         // 检查独立登录模式（JWT Token）
-        String authHeader = request.getHeader("Authorization");
+        String authHeader = request.getHeaders().getFirst("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
             String username = userService.validateToken(token);
