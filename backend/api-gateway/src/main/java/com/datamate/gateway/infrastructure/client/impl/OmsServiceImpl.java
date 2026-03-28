@@ -21,7 +21,7 @@ import java.io.IOException;
 
 /**
  * OmsServiceImpl is a service that interacts with the OMS service.
- * 
+ *
  * @author songyongtan
  * @date 2026-03-16
  */
@@ -66,7 +66,6 @@ public class OmsServiceImpl implements OmsService {
 
             CloseableHttpResponse response = httpClient.execute(httpPost);
             String responseBody = EntityUtils.toString(response.getEntity());
-            log.info("response code: {}", response.getCode());
 
             try {
                 JSONObject jsonObject = JSON.parseObject(responseBody);

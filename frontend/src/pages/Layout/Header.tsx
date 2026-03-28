@@ -89,8 +89,20 @@ export function Header() {
 
   const handleLogout = () => {
     if (authMode === 'SSO') {
-      // SSO 模式：跳转到 OMS 登出
-      window.location.href = `${OMS_LOGOUT_URL}?redirect=${encodeURIComponent(window.location.href)}`;
+      // SSO 模式：检查是否配置了有效的登出 URL
+      const logoutUrl = OMS_LOGOUT_URL;
+
+      // 如果配置的是默认值（内部 service 名称），只清除本地状态
+      if (logoutUrl.includes('oms-service') || logoutUrl.includes('localhost')) {
+        console.warn('OMS logout URL not configured or using internal address, skipping redirect');
+        setCurrentUser(null);
+        setAuthMode('NONE');
+        message.success(t('user.messages.logoutSuccess'));
+        window.location.reload();
+      } else {
+        // 使用配置的登出 URL
+        window.location.href = `${logoutUrl}?redirect=${encodeURIComponent(window.location.href)}`;
+      }
     } else {
       // JWT 模式：清除本地 session
       localStorage.removeItem('session');
