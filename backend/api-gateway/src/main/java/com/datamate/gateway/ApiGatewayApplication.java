@@ -79,7 +79,7 @@ public class ApiGatewayApplication {
             // 网关内部服务（用户）
             // 使用 no-op 触发 GlobalFilter 执行，然后由本地 Controller 处理
             .route("gateway", r -> r.path("/api/user/**")
-                .uri("no-op"))
+                .uri("http://localhost:8080"))
 
             // 其他后端服务
             .route("default", r -> r.path("/api/**")
