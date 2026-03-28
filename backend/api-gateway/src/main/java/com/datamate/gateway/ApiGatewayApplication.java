@@ -76,9 +76,10 @@ public class ApiGatewayApplication {
                 .filters(f -> f.stripPrefix(1).prefixPath("/api"))
                 .uri("http://deer-flow-backend:8000"))
 
-            // 网关服务（用户）
+            // 网关内部服务（用户）
+            // 使用 no-op 触发 GlobalFilter 执行，然后由本地 Controller 处理
             .route("gateway", r -> r.path("/api/user/**")
-                .uri("http://localhost:8080"))
+                .uri("no-op"))
 
             // 其他后端服务
             .route("default", r -> r.path("/api/**")
