@@ -110,6 +110,29 @@ make uninstall
 
 在运行 `make uninstall` 时，卸载流程会只询问一次是否删除卷（数据），该选择会应用到所有组件。卸载顺序为：milvus -> label-studio -> datamate，确保在移除 datamate 网络前，所有使用该网络的服务已先停止。
 
+## 📚 文档
+
+### 核心文档
+- **[DEVELOPMENT.md](./DEVELOPMENT.md)** - 本地开发环境搭建和工作流程
+- **[AGENTS.md](./AGENTS.md)** - AI 助手指南和代码规范
+
+### 后端文档
+- **[backend/README-zh.md](./backend/README-zh.md)** - 后端架构、服务和技术栈
+- **[backend/api-gateway/README-zh.md](./backend/api-gateway/README-zh.md)** - API Gateway 配置和路由
+- **[backend/services/main-application/README-zh.md](./backend/services/main-application/README-zh.md)** - 主应用模块
+- **[backend/shared/README-zh.md](./backend/shared/README-zh.md)** - 共享库（domain-common, security-common）
+
+### 运行时文档
+- **[runtime/README-zh.md](./runtime/README-zh.md)** - 运行时架构和组件
+- **[runtime/datamate-python/README-zh.md](./runtime/datamate-python/README-zh.md)** - FastAPI 后端服务
+- **[runtime/python-executor/README-zh.md](./runtime/python-executor/README-zh.md)** - Ray 执行器框架
+- **[runtime/ops/README.md](./runtime/ops/README.md)** - 算子生态
+- **[runtime/datax/README-zh.md](./runtime/datax/README-zh.md)** - DataX 数据框架
+- **[runtime/deer-flow/README-zh.md](./runtime/deer-flow/README-zh.md)** - DeerFlow LLM 服务
+
+### 前端文档
+- **[frontend/README-zh.md](./frontend/README-zh.md)** - React 前端应用
+
 ## 🤝 贡献指南
 
 感谢您对本项目的关注！我们非常欢迎社区的贡献，无论是提交 Bug 报告、提出功能建议，还是直接参与代码开发，都能帮助项目变得更好。
