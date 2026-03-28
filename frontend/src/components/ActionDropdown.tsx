@@ -112,7 +112,7 @@ const ActionDropdown = ({
     <>
       <Dropdown
         menu={{ items: [] }}
-        dropdownRender={() => dropdownContent}
+        popupRender={() => dropdownContent}
         trigger={["click"]}
         placement={placement}
         open={open}

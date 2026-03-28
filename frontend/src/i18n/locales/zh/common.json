@@ -1458,6 +1458,9 @@
         "deleteDesc": "删除「{{itemName}}」后将无法恢复，确定要执行此操作吗？"
       }
     },
+    "create": {
+      "typeMismatch": "类型不兼容：上一个算子输出类型为「{{from}}」，当前算子输入类型为「{{to}}」"
+    },
     "template": {
       "columns": {
         "templateName": "模板名称",
@@ -1526,7 +1529,7 @@
         "currentDisplay": "当前展示: 第 {{num}} 次",
         "nthRun": "第 {{num}} 次",
         "noLogs": "当前任务无可用日志",
-        "streaming": "实时流式输出中...",
+        "streaming": "实时输出中...",
         "download": "下载日志",
         "downloadFailed": "下载日志文件失败"
       },
@@ -1594,6 +1597,7 @@
     },
     "status": {
       "completed": "已完成",
+      "partialSuccess": "部分成功",
       "failed": "失败",
       "running": "运行中",
       "pending": "等待中",

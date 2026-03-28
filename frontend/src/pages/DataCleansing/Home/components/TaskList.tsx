@@ -93,46 +93,41 @@ export default function TaskList() {
     setDeleteModal({ visible: false, taskId: "", taskName: "" });
   };
 
-  useEffect(() => {
-    fetchData();
-  }, [t]);
-
   const taskOperations = (record: CleansingTask) => {
     const isRunning = record.status?.value === TaskStatus.RUNNING;
     const showStart = [
       TaskStatus.PENDING,
+      TaskStatus.PARTIAL_SUCCESS,
       TaskStatus.FAILED,
       TaskStatus.STOPPED,
     ].includes(record.status?.value);
-    const isComplete = record.status?.value === TaskStatus.COMPLETED;
     const pauseBtn = {
       key: "pause",
       label: t("dataCleansing.actions.pause"),
-      icon: isRunning ? <PauseCircleOutlined /> : <PlayCircleOutlined />,
-      onClick: pauseTask, // implement pause/play logic
+      icon: <PauseCircleOutlined />,
+      onClick: pauseTask,
     };
 
     const startBtn = {
       key: "start",
       label: t("dataCleansing.actions.start"),
-      icon: isRunning ? <PauseCircleOutlined /> : <PlayCircleOutlined />,
-      disabled: isComplete,
-      onClick: startTask, // implement pause/play logic
+      icon: <PlayCircleOutlined />,
+      onClick: startTask,
     };
+
+    const deleteBtn = {
+      key: "delete",
+      label: t("dataCleansing.actions.delete"),
+      icon: <DeleteOutlined />,
+      danger: true,
+      disabled: isRunning, // 运行中的任务禁用删除按钮
+      onClick: deleteTask,
+    };
+
     return [
-      ...(isRunning
-        ? [ pauseBtn ]
-        : []),
-      ...(showStart || isComplete
-        ? [ startBtn ]
-        : []),
-      {
-        key: "delete",
-        label: t("dataCleansing.actions.delete"),
-        danger: true,
-        icon: <DeleteOutlined />,
-        onClick: deleteTask, // implement delete logic
-      },
+      ...(isRunning ? [pauseBtn] : []),
+      ...(showStart ? [startBtn] : []),
+      deleteBtn,
     ];
   };
 
@@ -217,8 +212,11 @@ export default function TaskList() {
       key: "process",
       width: 150,
       render: (_, record: CleansingTask) => {
-          if (record?.status?.value == TaskStatus.FAILED) {
+          if (record?.status?.value === TaskStatus.FAILED) {
               return <Progress percent={record?.progress?.process} size="small" status="exception" />;
+          }
+          if (record?.status?.value === TaskStatus.PARTIAL_SUCCESS) {
+              return <Progress percent={record?.progress?.process} size="small" strokeColor="#f59e0b" />;
           }
           return <Progress percent={record?.progress?.process} size="small"/>;
       },

@@ -28,7 +28,13 @@ class CleaningTaskValidator:
 
     @staticmethod
     def check_input_and_output(instances: list[OperatorInstanceDto]) -> None:
-        """Validate that operator input/output types are compatible"""
+        """Validate that operator input/output types are compatible.
+
+        Rules:
+        - multimodal is compatible with any type (acts as wildcard)
+        - for other types (text, image, audio, video), upstream outputs
+          must match downstream inputs exactly
+        """
         if not instances:
             return
 
@@ -48,14 +54,19 @@ class CleaningTaskValidator:
                     f"Operator {next_op.id} has no inputs defined"
                 )
 
-            current_outputs = set(current.outputs.split(','))
-            next_inputs = set(next_op.inputs.split(','))
+            current_outputs = current.outputs.lower().strip()
+            next_inputs = next_op.inputs.lower().strip()
 
-            if not current_outputs.intersection(next_inputs):
+            # multimodal is compatible with everything
+            if "multimodal" in current_outputs or "multimodal" in next_inputs:
+                continue
+
+            # non-multimodal: types must match exactly
+            if current_outputs != next_inputs:
                 raise BusinessError(
                     ErrorCodes.CLEANING_INVALID_OPERATOR_INPUT,
-                    f"Operator {current.id} outputs {current.outputs} "
-                    f"but operator {next_op.id} requires {next_op.inputs}"
+                    f"Operator '{current.id}' outputs '{current.outputs}', "
+                    f"but operator '{next_op.id}' requires '{next_op.inputs}'"
                 )
 
     @staticmethod

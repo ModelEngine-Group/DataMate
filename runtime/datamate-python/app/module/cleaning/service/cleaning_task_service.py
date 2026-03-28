@@ -70,15 +70,27 @@ class CleaningTaskService:
         """Get cleaning tasks"""
         tasks = await self.task_repo.find_tasks(db, status, keyword, page, size)
 
+        if not tasks:
+            return tasks
+
+        # Batch query progress for all tasks in a single SQL (avoids N+1)
+        task_ids = [task.id for task in tasks]
+        progress_map = await self.result_repo.batch_count_by_instance_ids(db, task_ids)
+
         for task in tasks:
-            await self._set_process(db, task)
+            completed, failed, actual_total = progress_map.get(task.id, (0, 0, 0))
+            total = max(actual_total, task.file_count or 0)
+            task.progress = CleaningProcess.of(total, completed, failed)
 
         return tasks
 
     async def _set_process(self, db: AsyncSession, task: CleaningTaskDto) -> None:
-        """Set task progress"""
+        """Set task progress using actual results from database"""
         completed, failed = await self.result_repo.count_by_instance_id(db, task.id)
-        task.progress = CleaningProcess.of(task.file_count or 0, completed, failed)
+        # Use actual total from database (t_clean_result table), fallback to task.file_count
+        actual_total = await self.result_repo.count_total_by_instance_id(db, task.id)
+        total = max(actual_total, task.file_count or 0)
+        task.progress = CleaningProcess.of(total, completed, failed)
 
     async def count_tasks(
         self,
@@ -86,9 +98,8 @@ class CleaningTaskService:
         status: str | None = None,
         keyword: str | None = None,
     ) -> int:
-        """Count cleaning tasks"""
-        tasks = await self.task_repo.find_tasks(db, status, keyword, None, None)
-        return len(tasks)
+        """Count cleaning tasks using SQL COUNT"""
+        return await self.task_repo.count_tasks(db, status, keyword)
 
     async def get_task(self, db: AsyncSession, task_id: str) -> CleaningTaskDto:
         """Get task by ID"""
@@ -420,10 +431,22 @@ class CleaningTaskService:
         """Delete task"""
         self.validator.check_task_id(task_id)
 
+        task = await self.task_repo.find_task_by_id(db, task_id)
+        if not task:
+            raise BusinessError(ErrorCodes.CLEANING_TASK_NOT_FOUND, task_id)
+
+        # 运行中的任务无法删除
+        if task.status == CleaningTaskStatus.RUNNING:
+            raise BusinessError(
+                ErrorCodes.CLEANING_TASK_STATUS_INVALID,
+                "Task is running, cannot be deleted. Please stop the task first."
+            )
+
         await self.task_repo.delete_task_by_id(db, task_id)
         await self.operator_instance_repo.delete_by_instance_id(db, task_id)
         await self.result_repo.delete_by_instance_id(db, task_id)
 
+        # 删除任务相关文件
         task_path = Path(f"{FLOW_PATH}/{task_id}")
         if task_path.exists():
             try:

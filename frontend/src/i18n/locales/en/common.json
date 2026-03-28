@@ -1458,6 +1458,9 @@
         "deleteDesc": "Are you sure you want to delete \"{{itemName}}\"? This action cannot be undone."
       }
     },
+    "create": {
+      "typeMismatch": "Type mismatch: previous operator outputs \"{{from}}\", but current operator requires \"{{to}}\""
+    },
     "template": {
       "columns": {
         "templateName": "Template Name",
@@ -1594,6 +1597,7 @@
     },
     "status": {
       "completed": "Completed",
+      "partialSuccess": "Partial Success",
       "failed": "Failed",
       "running": "Running",
       "pending": "Pending",
@@ -2608,6 +2612,7 @@
         "unknown": "Unknown",
         "processing": "Processing",
         "completed": "Completed",
+        "partialSuccess": "Partial Success",
         "failed": "Failed"
       },
       "operations": {

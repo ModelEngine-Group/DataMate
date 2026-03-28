@@ -1,10 +1,19 @@
-import { Alert, Input, Form } from "antd";
+import { Alert, Input, Form, Select } from "antd";
 import TextArea from "antd/es/input/TextArea";
 import React, { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import ParamConfig from "@/pages/DataCleansing/Create/components/ParamConfig.tsx";
 import { ChevronRight, Plus, Trash2 } from "lucide-react";
 import { MetricI } from "@/pages/OperatorMarket/operator.model.ts";
+import type { MediaType } from "@/pages/OperatorMarket/operator.const.tsx";
+
+const MEDIA_TYPE_OPTIONS: { label: string; value: MediaType }[] = [
+  { label: "Text", value: "text" },
+  { label: "Image", value: "image" },
+  { label: "Audio", value: "audio" },
+  { label: "Video", value: "video" },
+  { label: "Multimodal", value: "multimodal" },
+];
 
 export default function ConfigureStep({
   parsedInfo,
@@ -127,14 +136,22 @@ export default function ConfigureStep({
             name="inputs"
             rules={[{ required: true }]}
           >
-            <Input value={parsedInfo.inputs} />
+            <Select
+              value={parsedInfo.inputs}
+              options={MEDIA_TYPE_OPTIONS}
+              onChange={(value) => setParsedInfo({ ...parsedInfo, inputs: value })}
+            />
           </Form.Item>
           <Form.Item
             label={t("operatorMarket.create.configure.labels.outputs")}
             name="outputs"
             rules={[{ required: true }]}
           >
-            <Input value={parsedInfo.outputs} />
+            <Select
+              value={parsedInfo.outputs}
+              options={MEDIA_TYPE_OPTIONS}
+              onChange={(value) => setParsedInfo({ ...parsedInfo, outputs: value })}
+            />
           </Form.Item>
 
           <>

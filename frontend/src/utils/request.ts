@@ -215,13 +215,21 @@ class Request {
    * 处理XHR响应
    */
   async handleXHRResponse(xhrResponse, config) {
-    // 模拟fetch响应格式用于拦截器
+    // 模拟fetch响应格式用于拦截器（添加 clone/json 方法）
     const mockResponse = {
       ok: xhrResponse.status >= 200 && xhrResponse.status < 300,
       status: xhrResponse.status,
       statusText: xhrResponse.statusText,
       headers: {
         get: (key) => xhrResponse.xhr.getResponseHeader(key),
+      },
+      data: xhrResponse.data,
+      clone: () => mockResponse,
+      json: async () => {
+        if (typeof xhrResponse.data === "string") {
+          return JSON.parse(xhrResponse.data);
+        }
+        return xhrResponse.data;
       },
     };
 

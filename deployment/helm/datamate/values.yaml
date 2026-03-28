@@ -339,6 +339,10 @@ ray-cluster:
             key: DB_PASSWORD
       - name: PG_DATABASE
         value: "datamate"
+      - name: POD_NAME
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.name
     resources:
       limits:
         cpu: "8"
@@ -354,7 +358,7 @@ ray-cluster:
     volumeMounts:
       - mountPath: /tmp/ray
         name: log-volume
-        subPath: ray/worker
+        subPath: ray/$(POD_NAME)
       - mountPath: /dataset
         name: dataset-volume
       - mountPath: /flow

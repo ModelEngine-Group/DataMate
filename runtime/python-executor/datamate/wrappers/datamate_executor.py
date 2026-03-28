@@ -44,8 +44,7 @@ class DataMateExecutor(RayExecutor):
         tend = time.time()
         logger.info(f'All Ops are done in {tend - tstart:.3f}s.')
 
-        for _ in dataset.data.iter_batches():
-            pass
+        dataset.data.materialize()
 
         self.scan_files()
 

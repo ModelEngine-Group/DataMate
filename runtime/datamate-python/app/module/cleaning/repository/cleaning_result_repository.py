@@ -1,6 +1,6 @@
 from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, func, Integer
 from app.db.models.cleaning import CleaningResult
 from app.module.cleaning.schema import CleaningResultDto
 
@@ -48,16 +48,51 @@ class CleaningResultRepository:
         db: AsyncSession,
         instance_id: str
     ) -> tuple[int, int]:
-        """Count results by instance ID (completed, failed)"""
-        total_query = select(self.model).where(self.model.instance_id == instance_id)
-        completed_query = total_query.where(self.model.status == "COMPLETED")
-        failed_query = total_query.where(self.model.status == "FAILED")
+        """Count results by instance ID (completed, failed) using single SQL"""
+        query = select(
+            func.sum(func.cast(self.model.status == "COMPLETED", Integer)).label("completed"),
+            func.sum(func.cast(self.model.status == "FAILED", Integer)).label("failed"),
+        ).where(self.model.instance_id == instance_id)
+        result = await db.execute(query)
+        row = result.one()
+        return (row.completed or 0, row.failed or 0)
 
-        total = len((await db.execute(total_query)).scalars().all())
-        completed = len((await db.execute(completed_query)).scalars().all())
-        failed = len((await db.execute(failed_query)).scalars().all())
+    async def count_total_by_instance_id(
+        self,
+        db: AsyncSession,
+        instance_id: str
+    ) -> int:
+        """Count total results by instance ID using efficient SQL COUNT"""
+        query = select(func.count()).select_from(self.model).where(
+            self.model.instance_id == instance_id
+        )
+        result = await db.scalar(query)
+        return result or 0
 
-        return (completed, failed)
+    async def batch_count_by_instance_ids(
+        self,
+        db: AsyncSession,
+        instance_ids: list[str]
+    ) -> dict[str, tuple[int, int, int]]:
+        """Batch count completed/failed/total for multiple instance IDs using single SQL.
+
+        Returns dict: {instance_id: (completed, failed, total)}
+        """
+        if not instance_ids:
+            return {}
+
+        query = select(
+            self.model.instance_id,
+            func.sum(func.cast(self.model.status == "COMPLETED", Integer)).label("completed"),
+            func.sum(func.cast(self.model.status == "FAILED", Integer)).label("failed"),
+            func.count().label("total"),
+        ).where(self.model.instance_id.in_(instance_ids)).group_by(self.model.instance_id)
+
+        result = await db.execute(query)
+        return {
+            row.instance_id: (row.completed or 0, row.failed or 0, row.total or 0)
+            for row in result.all()
+        }
 
     async def delete_by_instance_id(
         self,

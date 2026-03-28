@@ -25,7 +25,7 @@ class CleaningTaskScheduler:
         task.retry_count = retry_count
 
         await self.task_repo.update_task(db, task)
-        return await self.runtime_client.submit_task(task_id)
+        return await self.runtime_client.submit_task(task_id, retry_count)
 
     async def stop_task(self, db: AsyncSession, task_id: str) -> bool:
         """Stop cleaning task"""

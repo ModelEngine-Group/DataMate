@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { OperatorI } from "@/pages/OperatorMarket/operator.model";
 import { CleansingTemplate } from "../../cleansing.model";
 import {queryCleaningTemplateByIdUsingGet, queryCleaningTemplatesUsingGet} from "../../cleansing.api";
@@ -8,9 +8,22 @@ import {
 } from "@/pages/OperatorMarket/operator.api";
 import {useParams} from "react-router";
 import i18n from "@/i18n";
+import { App } from "antd";
+
+function checkTypeCompatible(
+  prevOutputs: string | undefined,
+  nextInputs: string | undefined
+): boolean {
+  if (!prevOutputs || !nextInputs) return true;
+  const outputs = prevOutputs.toLowerCase().trim();
+  const inputs = nextInputs.toLowerCase().trim();
+  if (outputs === "multimodal" || inputs === "multimodal") return true;
+  return outputs === inputs;
+}
 
 export function useOperatorOperations() {
   const { id = "" } = useParams();
+  const { message } = App.useApp();
   const [currentStep, setCurrentStep] = useState(1);
 
   const [operators, setOperators] = useState<OperatorI[]>([]);
@@ -115,6 +128,19 @@ export function useOperatorOperations() {
         selectedOperators.filter((op) => op.id !== operator.id)
       );
     } else {
+      // Validate type compatibility with the last selected operator
+      if (selectedOperators.length > 0) {
+        const lastOp = selectedOperators[selectedOperators.length - 1];
+        if (!checkTypeCompatible(lastOp.outputs, operator.inputs)) {
+          message.warning(
+            i18n.t("dataCleansing.create.typeMismatch", {
+              from: lastOp.outputs,
+              to: operator.inputs,
+            })
+          );
+          return;
+        }
+      }
       setSelectedOperators([...selectedOperators, { ...operator }]);
     }
   };
