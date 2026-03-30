@@ -1,0 +1,7 @@
+numpy>=1.21.0
+opencv-python-headless>=4.5.0
+Pillow>=8.0.0
+openslide-python>=1.1.0
+torchstain>=1.0.0
+pyvips>=2.0.0
+wsidicom>=0.1.0
