@@ -1,0 +1,43 @@
+name: 'GTCRN 智能降噪'
+name_en: 'GTCRN Denoise'
+description: '调用 audio_preprocessor 的 GTCRN ONNX 降噪工具对音频降噪，输出写入 export_path 并更新 filePath。'
+description_en: 'Run GTCRN ONNX denoiser from audio_preprocessor, write output to export_path and update filePath.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'AudioGtcrnDenoise'
+version: '1.0.0'
+types:
+  - 'cleanse'
+modal: 'audio'
+inputs: 'audio'
+outputs: 'audio'
+settings:
+  modelPath:
+    name: 'GTCRN 模型路径'
+    description: 'GTCRN ONNX 模型绝对路径（.onnx）。若留空则使用 audio_preprocessor 默认路径（若存在）。'
+    type: 'input'
+    defaultVal: ''
+    required: false
+  outFormat:
+    name: '输出格式'
+    description: '输出扩展名（建议 wav；GTCRN 默认输出 wav）。'
+    type: 'select'
+    defaultVal: 'wav'
+    required: true
+    options:
+      - label: 'wav'
+        value: 'wav'
+  overwrite:
+    name: '覆盖输出'
+    description: '若 export_path 下已存在同名文件，是否覆盖。'
+    type: 'switch'
+    defaultVal: 'false'
+    required: false
+    checkedLabel: '覆盖'
+    unCheckedLabel: '不覆盖'
+runtime:
+  memory: 2147483648
+  cpu: 0.5
+  gpu: 0
+  npu: 0
+

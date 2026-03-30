@@ -1,0 +1,61 @@
+name: '快速语言识别（中英）'
+name_en: 'Fast Language ID (zh/en)'
+description: '调用 audio_preprocessor 的 SpeechBrain LID，输出 zh/en，并写入 ext_params.audio_lid.lang。'
+description_en: 'Run SpeechBrain LID from audio_preprocessor and output zh/en; writes result to ext_params.audio_lid.lang.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'AudioFastLangId'
+version: '1.0.0'
+types:
+  - 'cleanse'
+modal: 'audio'
+inputs: 'audio'
+outputs: 'audio'
+settings:
+  modelSource:
+    name: '模型源'
+    description: 'SpeechBrain LID 模型 source：可为本地目录或 HuggingFace repo。建议用本地目录（离线）。'
+    type: 'input'
+    defaultVal: ''
+    required: false
+  modelSavedir:
+    name: '模型缓存目录'
+    description: 'SpeechBrain 模型缓存目录（可选）。留空则使用 audio_preprocessor 默认缓存目录。'
+    type: 'input'
+    defaultVal: ''
+    required: false
+  device:
+    name: '设备'
+    description: 'cpu/cuda/npu 等（取决于 torch 环境）。'
+    type: 'select'
+    defaultVal: 'cpu'
+    required: true
+    options:
+      - label: 'cpu'
+        value: 'cpu'
+      - label: 'cuda'
+        value: 'cuda'
+      - label: 'npu'
+        value: 'npu'
+  batchSize:
+    name: '批大小'
+    type: 'inputNumber'
+    description: '批大小（单文件时意义不大）。'
+    defaultVal: 1
+    min: 1
+    max: 64
+    step: 1
+  maxSeconds:
+    name: '截断秒数'
+    type: 'inputNumber'
+    description: '只取前 N 秒做判断，0=全长。'
+    defaultVal: 3.0
+    min: 0
+    max: 60
+    step: 0.5
+runtime:
+  memory: 2147483648
+  cpu: 0.5
+  gpu: 0
+  npu: 0
+

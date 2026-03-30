@@ -58,6 +58,10 @@ def _import_operators():
     from . import audio_rms_loudness_normalize
     from . import audio_hum_notch
     from . import audio_telephony_bandpass
+    from . import audio_gtcrn_denoise
+    from . import audio_quantize_encode
+    from . import audio_fast_lang_id
+    from . import audio_asr_pipeline
 
 
 _import_operators()
