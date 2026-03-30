@@ -1,0 +1,58 @@
+name: '工频陷波'
+name_en: 'Hum Notch Filter'
+description: '50/60Hz 工频陷波抑制。需要 scipy.signal；写出处理后的 wav 到 export_path 并更新 filePath。'
+description_en: 'Notch filter for 50/60Hz hum suppression. Requires scipy.signal; writes processed wav to export_path and updates filePath.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'AudioHumNotch'
+version: '1.0.0'
+types:
+  - 'cleanse'
+modal: 'audio'
+inputs: 'audio'
+outputs: 'audio'
+settings:
+  freqHz:
+    name: '中心频率(Hz)'
+    type: 'select'
+    description: '工频中心频率。'
+    defaultVal: '50'
+    required: true
+    options:
+      - label: '50Hz'
+        value: '50'
+      - label: '60Hz'
+        value: '60'
+  q:
+    name: 'Q'
+    type: 'slider'
+    description: '陷波品质因数，越大越窄。'
+    defaultVal: 30
+    min: 1
+    max: 200
+    step: 1
+  outFormat:
+    name: '输出格式'
+    type: 'select'
+    description: '输出扩展名（建议 wav）。'
+    defaultVal: 'wav'
+    required: true
+    options:
+      - label: 'wav'
+        value: 'wav'
+      - label: 'flac'
+        value: 'flac'
+  overwrite:
+    name: '覆盖输出'
+    type: 'switch'
+    description: '若 export_path 下已存在同名文件，是否覆盖。'
+    defaultVal: 'false'
+    required: false
+    checkedLabel: '覆盖'
+    unCheckedLabel: '不覆盖'
+runtime:
+  memory: 104857600
+  cpu: 0.2
+  gpu: 0
+  npu: 0
+

@@ -1,0 +1,63 @@
+name: '音频格式转换与重采样'
+name_en: 'Audio Format Convert & Resample'
+description: '将常见音频格式互相转换，并可选重采样、声道转换。输出文件写入 export_path，并更新 sample 的 filePath/fileType/fileName。'
+description_en: 'Convert between common audio formats with optional resampling and channel conversion. Writes output to export_path and updates filePath/fileType/fileName.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'AudioFormatConvert'
+version: '1.0.0'
+types:
+  - 'cleanse'
+modal: 'audio'
+inputs: 'audio'
+outputs: 'audio'
+settings:
+  targetFormat:
+    name: '目标格式'
+    description: '输出音频格式（扩展名），如 wav/flac/mp3/aac/m4a/ogg。'
+    type: 'select'
+    defaultVal: 'wav'
+    required: true
+    options:
+      - label: 'wav'
+        value: 'wav'
+      - label: 'flac'
+        value: 'flac'
+      - label: 'mp3'
+        value: 'mp3'
+      - label: 'aac'
+        value: 'aac'
+      - label: 'm4a'
+        value: 'm4a'
+      - label: 'ogg'
+        value: 'ogg'
+  sampleRate:
+    name: '采样率'
+    description: '目标采样率（Hz）。0 表示保持原采样率。'
+    type: 'inputNumber'
+    defaultVal: 16000
+    min: 0
+    max: 192000
+    step: 1
+  channels:
+    name: '声道数'
+    description: '目标声道数：1=单声道，2=双声道，0=保持原声道。'
+    type: 'inputNumber'
+    defaultVal: 1
+    min: 0
+    max: 2
+    step: 1
+  overwrite:
+    name: '覆盖输出'
+    description: '若 export_path 下已存在同名文件，是否覆盖。'
+    type: 'switch'
+    defaultVal: 'false'
+    required: false
+    checkedLabel: '覆盖'
+    unCheckedLabel: '不覆盖'
+runtime:
+  memory: 104857600
+  cpu: 0.2
+  gpu: 0
+  npu: 0
+

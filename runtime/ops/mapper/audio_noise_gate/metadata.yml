@@ -1,0 +1,71 @@
+name: '噪声门'
+name_en: 'Noise Gate'
+description: '短时 RMS 低于阈值时按 floor_ratio 衰减（相对全段峰值 dB）。写出处理后的 wav 到 export_path 并更新 filePath。'
+description_en: 'Attenuate frames whose RMS below threshold (dB relative to peak) by floor_ratio. Writes processed wav to export_path and updates filePath.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'AudioNoiseGate'
+version: '1.0.0'
+types:
+  - 'cleanse'
+modal: 'audio'
+inputs: 'audio'
+outputs: 'audio'
+settings:
+  thresholdDb:
+    name: '门限(dB)'
+    type: 'slider'
+    description: '相对全段峰值的门限（dB），越小越“宽松”。'
+    defaultVal: -45
+    min: -80
+    max: 0
+    step: 1
+  frameMs:
+    name: '帧长(ms)'
+    type: 'inputNumber'
+    description: '分析帧长。'
+    defaultVal: 20
+    min: 5
+    max: 200
+    step: 1
+  hopMs:
+    name: '帧移(ms)'
+    type: 'inputNumber'
+    description: '帧移。'
+    defaultVal: 10
+    min: 1
+    max: 200
+    step: 1
+  floorRatio:
+    name: '衰减比例'
+    type: 'slider'
+    description: '门控时保留能量比例（0~1）。'
+    defaultVal: 0.05
+    min: 0
+    max: 1
+    step: 0.01
+  outFormat:
+    name: '输出格式'
+    type: 'select'
+    description: '输出扩展名（建议 wav）。'
+    defaultVal: 'wav'
+    required: true
+    options:
+      - label: 'wav'
+        value: 'wav'
+      - label: 'flac'
+        value: 'flac'
+  overwrite:
+    name: '覆盖输出'
+    type: 'switch'
+    description: '若 export_path 下已存在同名文件，是否覆盖。'
+    defaultVal: 'false'
+    required: false
+    checkedLabel: '覆盖'
+    unCheckedLabel: '不覆盖'
+runtime:
+  memory: 104857600
+  cpu: 0.15
+  gpu: 0
+  npu: 0
+

@@ -1,0 +1,63 @@
+name: '电话带通'
+name_en: 'Telephony Bandpass'
+description: '模拟窄带话机频带（默认 300–3400Hz）。需要 scipy.signal；写出处理后的 wav 到 export_path 并更新 filePath。'
+description_en: 'Simulate telephony bandpass (default 300–3400Hz). Requires scipy.signal; writes processed wav to export_path and updates filePath.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'AudioTelephonyBandpass'
+version: '1.0.0'
+types:
+  - 'cleanse'
+modal: 'audio'
+inputs: 'audio'
+outputs: 'audio'
+settings:
+  lowHz:
+    name: '下截止(Hz)'
+    type: 'inputNumber'
+    description: '带通下截止频率。'
+    defaultVal: 300
+    min: 1
+    max: 20000
+    step: 1
+  highHz:
+    name: '上截止(Hz)'
+    type: 'inputNumber'
+    description: '带通上截止频率。'
+    defaultVal: 3400
+    min: 1
+    max: 20000
+    step: 1
+  order:
+    name: '阶数'
+    type: 'inputNumber'
+    description: 'Butterworth 阶数（建议 2~6）。'
+    defaultVal: 4
+    min: 1
+    max: 12
+    step: 1
+  outFormat:
+    name: '输出格式'
+    type: 'select'
+    description: '输出扩展名（建议 wav）。'
+    defaultVal: 'wav'
+    required: true
+    options:
+      - label: 'wav'
+        value: 'wav'
+      - label: 'flac'
+        value: 'flac'
+  overwrite:
+    name: '覆盖输出'
+    type: 'switch'
+    description: '若 export_path 下已存在同名文件，是否覆盖。'
+    defaultVal: 'false'
+    required: false
+    checkedLabel: '覆盖'
+    unCheckedLabel: '不覆盖'
+runtime:
+  memory: 104857600
+  cpu: 0.2
+  gpu: 0
+  npu: 0
+

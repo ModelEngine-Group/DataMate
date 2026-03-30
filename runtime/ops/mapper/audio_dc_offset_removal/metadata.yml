@@ -1,0 +1,39 @@
+name: '去直流分量'
+name_en: 'DC Offset Removal'
+description: '去除音频直流分量（减均值），写出处理后的 wav 到 export_path 并更新 filePath。'
+description_en: 'Remove DC offset (subtract mean). Writes processed wav to export_path and updates filePath.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'AudioDcOffsetRemoval'
+version: '1.0.0'
+types:
+  - 'cleanse'
+modal: 'audio'
+inputs: 'audio'
+outputs: 'audio'
+settings:
+  outFormat:
+    name: '输出格式'
+    description: '输出扩展名（建议 wav）。'
+    type: 'select'
+    defaultVal: 'wav'
+    required: true
+    options:
+      - label: 'wav'
+        value: 'wav'
+      - label: 'flac'
+        value: 'flac'
+  overwrite:
+    name: '覆盖输出'
+    type: 'switch'
+    description: '若 export_path 下已存在同名文件，是否覆盖。'
+    defaultVal: 'false'
+    required: false
+    checkedLabel: '覆盖'
+    unCheckedLabel: '不覆盖'
+runtime:
+  memory: 104857600
+  cpu: 0.1
+  gpu: 0
+  npu: 0
+
