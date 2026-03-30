@@ -24,8 +24,19 @@ import reactor.core.publisher.Mono;
 import java.nio.charset.StandardCharsets;
 
 /**
- * 鉴权过滤器
+ * 用户数据隔离过滤器
  *
+ * 支持两种认证模式：
+ * 1. SSO 模式：从 OmsAuthFilter 添加的 X-User-Name header 中提取用户信息
+ * 2. JWT 模式：从 Authorization Bearer Token 中提取用户信息
+ *
+ * 无论哪种模式，最终都会添加 User header 供下游服务隔离用户数据
+ *
+ * 优先级：SSO > JWT
+ * Order: 2 (低于 OmsAuthFilter 的 Order=1)
+ *
+ * @author songyongtan
+ * @date 2026-03-30
  */
 @Slf4j
 @Component
@@ -49,34 +60,55 @@ public class AuthFilter implements GlobalFilter, Ordered {
         if (path.equals("/api/user/login") || path.equals("/api/user/signup")) {
             return chain.filter(exchange);
         }
+
         try {
+            // 优先检查 SSO 模式（OmsAuthFilter 已添加的 header）
+            String ssoUser = request.getHeaders().getFirst("X-User-Name");
+            if (StringUtils.isNotBlank(ssoUser)) {
+                log.info("SSO mode detected, adding User header: {}", ssoUser);
+                ServerHttpRequest mutatedRequest = request.mutate()
+                        .headers(httpHeaders -> {
+                            httpHeaders.add(USER_HEADER, ssoUser);
+                        })
+                        .build();
+                ServerWebExchange mutatedExchange = exchange.mutate()
+                        .request(mutatedRequest)
+                        .build();
+                return chain.filter(mutatedExchange);
+            }
+
+            // 检查 JWT 模式
             if (!jwtEnable) {
+                log.debug("JWT is disabled, passing request without user header");
                 return chain.filter(exchange);
             }
-            // Get token from Authorization header
+
+            // JWT 模式：验证 Token
             String authHeader = request.getHeaders().getFirst(AUTH_HEADER);
             if (authHeader == null || !authHeader.startsWith(TOKEN_PREFIX)) {
+                log.warn("JWT enabled but no valid Authorization header found");
                 return sendUnauthorizedResponse(exchange);
             }
+
             String token = authHeader.substring(TOKEN_PREFIX.length());
             String user = userService.validateToken(token);
             if (StringUtils.isBlank(user)) {
+                log.warn("JWT token validation failed");
                 return sendUnauthorizedResponse(exchange);
             }
-            // 4. 创建新的请求
+
+            log.info("JWT mode authenticated, adding User header: {}", user);
             ServerHttpRequest mutatedRequest = request.mutate()
                     .headers(httpHeaders -> {
-                        // 或者直接操作headers
                         httpHeaders.add(USER_HEADER, user);
                     })
                     .build();
-            // 5. 使用新的请求创建新的exchange
             ServerWebExchange mutatedExchange = exchange.mutate()
                     .request(mutatedRequest)
                     .build();
             return chain.filter(mutatedExchange);
         } catch (Exception e) {
-            log.error("get current user info error", e);
+            log.error("Error in AuthFilter", e);
             return sendUnauthorizedResponse(exchange);
         }
     }
@@ -98,9 +130,12 @@ public class AuthFilter implements GlobalFilter, Ordered {
     }
 
     /**
-     * JWT 认证优先级低于 SSO
+     * 用户数据隔离过滤器优先级
      *
-     * @return order value (2 = lower priority than SSO filter)
+     * Order = 2，在 OmsAuthFilter (Order=1) 之后执行
+     * 确保先执行 SSO 认证，再执行用户数据隔离
+     *
+     * @return order value (2 = after SSO authentication)
      */
     @Override
     public int getOrder() {

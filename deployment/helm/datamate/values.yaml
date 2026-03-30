@@ -121,7 +121,7 @@ backend:
     - name: datamate.rag.milvus-uri
       value: "http://milvus:19530"
     - name: datamate.jwt.enable
-      value: &DATAMATE_JWT_ENABLE 'false'
+      value: &DATAMATE_JWT_ENABLE 'true'
   volumes:
     - *datasetVolume
     - *flowVolume
