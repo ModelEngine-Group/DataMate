@@ -43,9 +43,43 @@ function showLoadingUI() {
   `;
 }
 
+/**
+ * 自定义首页URL重定向
+ * 在任何渲染之前检查系统参数 sys.home.page.url，若已配置则立即跳转，确保无闪烁。
+ * 使用原始 fetch 避免触发 antd message 等尚未初始化的 UI 组件。
+ */
+async function checkHomePageRedirect(): Promise<boolean> {
+  if (window.location.pathname !== '/') {
+    return false;
+  }
+  try {
+    const response = await fetch('/api/sys-param/sys.home.page.url', {
+      method: 'GET',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (response.ok) {
+      const result = await response.json();
+      const url = result?.data?.paramValue?.trim();
+      if (url) {
+        window.location.replace(url);
+        return true;
+      }
+    }
+  } catch {
+    // 忽略错误，继续正常启动
+  }
+  return false;
+}
+
 async function bootstrap() {
   const container = document.getElementById("root");
   if (!container) return;
+
+  // 在任何 UI 渲染之前检查自定义首页重定向
+  if (await checkHomePageRedirect()) {
+    return;
+  }
 
   showLoadingUI();
 

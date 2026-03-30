@@ -1,11 +1,12 @@
 import { User, Globe, LogIn, UserPlus, Sparkles, Shield } from "lucide-react"
-import { memo, useState, useEffect } from "react";
+import { memo, useState, useEffect, useCallback, useRef } from "react";
 import { NavLink } from "react-router";
 import { Button, Dropdown, message } from "antd"
 import type { MenuProps } from 'antd'
 import { LoginDialog } from "./LoginDialog"
 import { SignupDialog } from "./SignupDialog"
 import { post, get } from "@/utils/request.ts";
+import { getHomePageUrl } from "@/utils/systemParam";
 import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
 
@@ -41,6 +42,7 @@ export function Header() {
   const [currentUser, setCurrentUser] = useState<UserResponse | null>(null);
   const [authMode, setAuthMode] = useState<'SSO' | 'JWT' | 'NONE'>('NONE');
   const [userLoading, setUserLoading] = useState(true);
+  const [homePageUrl, setHomePageUrl] = useState<string | null>(null);
 
   const handleLogin = async (values: { username: string; password: string }) => {
     try {
@@ -120,6 +122,18 @@ export function Header() {
   const openSignupDialog = () => {
     setSignupOpen(true);
   };
+
+  const handleHomeClick = useCallback((e: React.MouseEvent) => {
+    if (homePageUrl) {
+      e.preventDefault();
+      window.location.href = homePageUrl;
+    }
+  }, [homePageUrl]);
+
+  // 获取自定义首页URL
+  useEffect(() => {
+    getHomePageUrl().then(setHomePageUrl);
+  }, []);
 
   // 检测是否在 ME 环境
   const isSSOAvailable = () => {
@@ -269,7 +283,7 @@ export function Header() {
         <div className="flex h-14 items-center justify-between px-6">
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-2">
-              <NavLink to="/" className="flex items-center gap-2 cursor-pointer">
+              <NavLink to="/" onClick={handleHomeClick} className="flex items-center gap-2 cursor-pointer">
                 <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
                   <Sparkles className="w-5 h-5 text-white" />
                 </div>
