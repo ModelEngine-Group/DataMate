@@ -360,7 +360,7 @@ ray-cluster:
     volumeMounts:
       - mountPath: /tmp/ray
         name: log-volume
-        subPath: ray/$(POD_NAME)
+        subPathExpr: ray/$(POD_NAME)
       - mountPath: /dataset
         name: dataset-volume
       - mountPath: /flow
