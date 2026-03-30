@@ -1,3 +1,68 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mineru-entrypoint
+  labels:
+    app: datamate
+    tier: mineru
+data:
+  start.sh: |
+    #!/bin/bash
+    set -e
+
+    NUM_INSTANCES=${NUM_INSTANCES:-2}
+    BASE_PORT=${BASE_PORT:-8000}
+
+    echo "[$(date)] Starting ${NUM_INSTANCES} MineRU instances on ports ${BASE_PORT}-$((BASE_PORT + NUM_INSTANCES - 1))"
+
+    PIDS=()
+    for i in $(seq 0 $((NUM_INSTANCES - 1))); do
+      PORT=$((BASE_PORT + i))
+      echo "[$(date)] Starting instance ${i} on port ${PORT}"
+      mineru-openai-server \
+        --engine vllm \
+        --host 0.0.0.0 \
+        --port "${PORT}" &
+      PIDS+=($!)
+    done
+
+    echo "[$(date)] All instances started. PIDs: ${PIDS[*]}"
+
+    # Wait for any process to exit — if one dies the container restarts
+    wait -n "${PIDS[@]}"
+    EXIT_CODE=$?
+    echo "[$(date)] A process exited with code ${EXIT_CODE}, shutting down all instances"
+    kill "${PIDS[@]}" 2>/dev/null || true
+    exit ${EXIT_CODE}
+  nginx.conf: |
+    worker_processes auto;
+    events {
+      worker_connections 1024;
+    }
+    http {
+      upstream mineru_backend {
+        least_conn;
+        server 127.0.0.1:8000;
+        server 127.0.0.1:8001;
+        server 127.0.0.1:8002;
+      }
+
+      server {
+        listen 9000;
+
+        location / {
+          proxy_pass http://mineru_backend;
+          proxy_set_header Host $host;
+          proxy_set_header X-Real-IP $remote_addr;
+          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+          proxy_connect_timeout 60s;
+          proxy_read_timeout 300s;
+          proxy_send_timeout 60s;
+        }
+      }
+    }
+
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -17,20 +82,27 @@ spec:
         app: datamate
         tier: mineru
     spec:
+      volumes:
+        - name: entrypoint
+          configMap:
+            name: mineru-entrypoint
+            defaultMode: 0755
+        - name: nginx-config
+          configMap:
+            name: mineru-entrypoint
+            items:
+              - key: nginx.conf
+                path: nginx.conf
       containers:
         - name: mineru
           image: datamate-mineru
           imagePullPolicy: IfNotPresent
-          command:
-            - mineru-openai-server
-          args:
-            - --engine
-            - vllm
-            - --host
-            - 0.0.0.0
-            - --port
-            - "8000"
+          command: ["/scripts/start.sh"]
           env:
+            - name: NUM_INSTANCES
+              value: "3"
+            - name: BASE_PORT
+              value: "8000"
             - name: MINERU_MODEL_SOURCE
               value: local
             - name: MINERU_DEVICE_MODE
@@ -38,16 +110,38 @@ spec:
             - name: VLLM_WORKER_MULTIPROC_METHOD
               value: spawn
           ports:
-            - containerPort: 8000
+            - name: mineru-0
+              containerPort: 8000
+            - name: mineru-1
+              containerPort: 8001
+            - name: mineru-2
+              containerPort: 8002
           resources:
             limits:
-              cpu: 8
-              memory: 32Gi
               huawei.com/Ascend910: 1
             requests:
               cpu: 100m
               memory: 100Mi
               huawei.com/Ascend910: 1
+          volumeMounts:
+            - name: entrypoint
+              mountPath: /scripts
+        - name: nginx
+          image: datamate-frontend:1.0.0
+          ports:
+            - name: http
+              containerPort: 9000
+          volumeMounts:
+            - name: nginx-config
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+          resources:
+            limits:
+              cpu: 500m
+              memory: 128Mi
+            requests:
+              cpu: 50m
+              memory: 32Mi
 
 ---
 apiVersion: v1
@@ -60,8 +154,9 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-    - port: 8000
-      targetPort: 8000
+    - name: http
+      port: 8000
+      targetPort: 9000
       protocol: TCP
   selector:
     app: datamate
