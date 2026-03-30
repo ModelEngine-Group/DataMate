@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
+import org.springframework.core.Ordered;
 import org.springframework.http.HttpCookie;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
@@ -20,13 +21,13 @@ import java.util.Objects;
 
 /**
  * OmsAuthFilter is a global filter that authenticates requests to the OMS service.
- * 
+ *
  * @author songyongtan
  * @date 2026-03-16
  */
 @Slf4j
 @Component
-public class OmsAuthFilter implements GlobalFilter {
+public class OmsAuthFilter implements GlobalFilter, Ordered {
     private static final String USER_NAME_HEADER = "X-User-Name";
     private static final String USER_GROUP_ID_HEADER = "X-User-Group-Id";
     private static final String AUTH_TOKEN_KEY = "__Host-X-Auth-Token";
@@ -122,7 +123,7 @@ public class OmsAuthFilter implements GlobalFilter {
 
     /**
      * getToken gets the token value from cookies.
-     * 
+     *
      * @param cookies  the cookies map
      * @param tokenKey the token key
      * @return the token value
@@ -132,5 +133,15 @@ public class OmsAuthFilter implements GlobalFilter {
             return Objects.requireNonNull(cookies.getFirst(tokenKey)).getValue();
         }
         return "";
+    }
+
+    /**
+     * SSO 认证优先级最高
+     *
+     * @return order value (1 = highest priority for auth filters)
+     */
+    @Override
+    public int getOrder() {
+        return 1;
     }
 }

@@ -7,15 +7,22 @@
     "actions": {
       "login": "Login",
       "register": "Register",
-      "logout": "Logout"
+      "logout": "Logout",
+      "gotoLogin": "Go to Login"
     },
+    "authMode": {
+      "sso": "SSO Login",
+      "jwt": "JWT Login"
+    },
+    "group": "Group",
     "messages": {
       "loginSuccess": "Login successful",
       "loginFailed": "Login failed, please try again later",
       "signupSuccess": "Registration successful, auto-login",
       "signupFailed": "Registration failed, please try again later",
       "logoutSuccess": "Logged out successfully",
-      "passwordMismatch": "Passwords do not match"
+      "passwordMismatch": "Passwords do not match",
+      "useSSO": "Please use ModelEngine single sign-on to register"
     },
     "loginDialog": {
       "title": "Login",

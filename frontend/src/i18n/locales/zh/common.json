@@ -7,15 +7,22 @@
     "actions": {
       "login": "登录",
       "register": "注册",
-      "logout": "退出登录"
+      "logout": "退出登录",
+      "gotoLogin": "前往登录"
     },
+    "authMode": {
+      "sso": "单点登录",
+      "jwt": "令牌登录"
+    },
+    "group": "用户组",
     "messages": {
       "loginSuccess": "登录成功",
       "loginFailed": "登录失败，请稍后重试",
       "signupSuccess": "注册成功，已自动登录",
       "signupFailed": "注册失败，请稍后重试",
       "logoutSuccess": "已退出登录",
-      "passwordMismatch": "两次输入的密码不一致"
+      "passwordMismatch": "两次输入的密码不一致",
+      "useSSO": "请使用 ModelEngine 单点登录进行注册"
     },
     "loginDialog": {
       "title": "登录",

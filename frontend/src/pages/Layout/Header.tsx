@@ -1,13 +1,21 @@
-import { User, Globe, LogIn, UserPlus, Sparkles } from "lucide-react"
+import { User, Globe, LogIn, UserPlus, Sparkles, Shield } from "lucide-react"
 import { memo, useState, useEffect } from "react";
 import { NavLink } from "react-router";
 import { Button, Dropdown, message } from "antd"
 import type { MenuProps } from 'antd'
 import { LoginDialog } from "./LoginDialog"
 import { SignupDialog } from "./SignupDialog"
-import { post} from "@/utils/request.ts";
+import { post, get } from "@/utils/request.ts";
 import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
+
+interface UserResponse {
+  username: string;
+  email?: string;
+  groupId?: string;
+  authenticated: boolean;
+  authMode: 'SSO' | 'JWT' | 'NONE';
+}
 
 function loginUsingPost(data: any) {
   return post("/api/user/login", data);
@@ -17,11 +25,22 @@ function signupUsingPost(data: any) {
   return post("/api/user/signup", data);
 }
 
+function getCurrentUser() {
+  return get<UserResponse>("/api/user/me");
+}
+
+// ME 登录 URL（根据实际环境修改）
+const ME_LOGIN_URL = process.env.VITE_ME_LOGIN_URL || 'https://modelengine.com/login';
+const OMS_LOGOUT_URL = process.env.VITE_OMS_LOGOUT_URL || 'https://oms-service/logout';
+
 export function Header() {
   const { t } = useTranslation();
   const [loginOpen, setLoginOpen] = useState(false)
   const [signupOpen, setSignupOpen] = useState(false)
   const [loading, setLoading] = useState(false);
+  const [currentUser, setCurrentUser] = useState<UserResponse | null>(null);
+  const [authMode, setAuthMode] = useState<'SSO' | 'JWT' | 'NONE'>('NONE');
+  const [userLoading, setUserLoading] = useState(true);
 
   const handleLogin = async (values: { username: string; password: string }) => {
     try {
@@ -69,10 +88,29 @@ export function Header() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('session');
-    message.success(t('user.messages.logoutSuccess'));
-    // Refresh the page after logout
-    window.location.reload();
+    if (authMode === 'SSO') {
+      // SSO 模式：检查是否配置了有效的登出 URL
+      const logoutUrl = OMS_LOGOUT_URL;
+
+      // 如果配置的是默认值（内部 service 名称），只清除本地状态
+      if (logoutUrl.includes('oms-service') || logoutUrl.includes('localhost')) {
+        console.warn('OMS logout URL not configured or using internal address, skipping redirect');
+        setCurrentUser(null);
+        setAuthMode('NONE');
+        message.success(t('user.messages.logoutSuccess'));
+        window.location.reload();
+      } else {
+        // 使用配置的登出 URL
+        window.location.href = `${logoutUrl}?redirect=${encodeURIComponent(window.location.href)}`;
+      }
+    } else {
+      // JWT 模式：清除本地 session
+      localStorage.removeItem('session');
+      setCurrentUser(null);
+      setAuthMode('NONE');
+      message.success(t('user.messages.logoutSuccess'));
+      window.location.reload();
+    }
   };
 
   const openLoginDialog = () => {
@@ -83,12 +121,47 @@ export function Header() {
     setSignupOpen(true);
   };
 
-  useEffect(() => {
-    window.addEventListener('show-login', openLoginDialog);
+  // 检测是否在 ME 环境
+  const isSSOAvailable = () => {
+    const hostname = window.location.hostname;
+    // 通过域名或注入的全局变量判断
+    return hostname.includes('modelengine') ||
+           hostname.includes('me-platform') ||
+           (window as any).__ME_ENV__ === true;
+  };
 
-    return () => {
-      window.removeEventListener('show-login', openLoginDialog);
+  // 获取当前用户信息（支持双模式）
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const response = await getCurrentUser();
+        if (response.data) {
+          setCurrentUser(response.data);
+          setAuthMode(response.data.authMode);
+
+          // 如果未登录，根据模式处理
+          if (!response.data.authenticated) {
+            if (isSSOAvailable()) {
+              // SSO 模式：自动跳转到 ME 登录
+              console.log('SSO mode detected, redirecting to ME login...');
+              // 不自动跳转，等待用户点击登录按钮
+            } else {
+              // JWT 模式：保持未登录状态
+              console.log('JWT mode, waiting for user to login');
+            }
+          } else {
+            console.log(`User authenticated via ${response.data.authMode}:`, response.data.username);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch current user:', error);
+        // 请求失败时，保持未登录状态
+      } finally {
+        setUserLoading(false);
+      }
     };
+
+    fetchCurrentUser();
   }, []);
 
   const languageMenuItems: MenuProps['items'] = [
@@ -110,28 +183,68 @@ export function Header() {
     }
   ]
 
-  const userDropdownItems: MenuProps['items'] = localStorage.getItem("session")
+  const userDropdownItems: MenuProps['items'] = currentUser?.authenticated
     ? [
-      {
-        key: 'profile',
-        label: JSON.parse(localStorage.getItem("session") as string).email,
-      },
-      {
-        type: 'divider',
-      },
-      {
-        key: 'logout',
-        label: t('user.actions.logout'),
-        icon: <LogIn className="h-4 w-4" />,
-        onClick: handleLogout,
-      },
-    ]
+        {
+          key: 'profile',
+          label: (
+            <div className="flex flex-col">
+              <span className="font-medium">{currentUser.username}</span>
+              <span className="text-xs text-gray-500">
+                {authMode === 'SSO' ? (
+                  <span className="flex items-center gap-1">
+                    <Shield className="h-3 w-3" />
+                    {t('user.authMode.sso')}
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1">
+                    <Sparkles className="h-3 w-3" />
+                    {t('user.authMode.jwt')}
+                  </span>
+                )}
+              </span>
+            </div>
+          ),
+        },
+        currentUser.groupId && {
+          key: 'groupId',
+          label: `${t('user.group')}: ${currentUser.groupId}`,
+          disabled: true,
+        },
+        currentUser.email && {
+          key: 'email',
+          label: currentUser.email,
+          disabled: true,
+        },
+        // 只有 JWT 模式才显示退出登录按钮
+        ...(authMode !== 'SSO' ? [
+          {
+            type: 'divider',
+          },
+          {
+            key: 'logout',
+            label: t('user.actions.logout'),
+            icon: <LogIn className="h-4 w-4" />,
+            onClick: handleLogout,
+          },
+        ] : []),
+      ]
     : [
       {
         key: 'login',
-        label: t('user.actions.login'),
+        label: authMode === 'SSO' || isSSOAvailable()
+          ? t('user.actions.gotoLogin')
+          : t('user.actions.login'),
         icon: <LogIn className="h-4 w-4" />,
-        onClick: () => setLoginOpen(true),
+        onClick: () => {
+          if (authMode === 'SSO' || isSSOAvailable()) {
+            // SSO 模式：跳转到 ME 登录
+            window.location.href = `${ME_LOGIN_URL}?redirect=${encodeURIComponent(window.location.href)}`;
+          } else {
+            // JWT 模式：显示登录对话框
+            setLoginOpen(true);
+          }
+        },
       },
       {
         type: 'divider',
@@ -140,7 +253,13 @@ export function Header() {
         key: 'register',
         label: t('user.actions.register'),
         icon: <UserPlus className="h-4 w-4" />,
-        onClick: () => setSignupOpen(true),
+        onClick: () => {
+          if (authMode === 'SSO' || isSSOAvailable()) {
+            message.info(t('user.messages.useSSO'));
+          } else {
+            setSignupOpen(true);
+          }
+        },
       },
     ];
 
@@ -175,10 +294,10 @@ export function Header() {
               placement="bottomRight"
               overlayClassName="w-40"
             >
-              <Button type="text" icon={<User className="h-4 w-4" />}>
-                {localStorage.getItem("session") ? (
-                  <span className="ml-1">{JSON.parse(localStorage.getItem("session") as string).username}</span>
-                ) : null}
+              <Button type="text" icon={<User className="h-4 w-4" />} loading={userLoading}>
+                {currentUser?.authenticated && !userLoading && (
+                  <span className="ml-1">{currentUser.username}</span>
+                )}
               </Button>
             </Dropdown>
           </div>
