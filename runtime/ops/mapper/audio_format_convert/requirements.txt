@@ -1,0 +1,4 @@
+pydub
+soundfile
+numpy
+torch

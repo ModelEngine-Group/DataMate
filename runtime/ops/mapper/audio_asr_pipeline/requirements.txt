@@ -1,0 +1,7 @@
+torch
+torchaudio
+speechbrain
+pydub
+soundfile
+onnxruntime
+numpy
