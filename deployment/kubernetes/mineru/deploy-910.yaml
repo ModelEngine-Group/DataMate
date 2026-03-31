@@ -13,14 +13,13 @@ data:
     NUM_INSTANCES=${NUM_INSTANCES:-2}
     BASE_PORT=${BASE_PORT:-8000}
 
-    echo "[$(date)] Starting ${NUM_INSTANCES} MineRU instances on ports ${BASE_PORT}-$((BASE_PORT + NUM_INSTANCES - 1))"
+    echo "[$(date)] Starting ${NUM_INSTANCES} MinerU Pipeline instances on ports ${BASE_PORT}-$((BASE_PORT + NUM_INSTANCES - 1))"
 
     PIDS=()
     for i in $(seq 0 $((NUM_INSTANCES - 1))); do
       PORT=$((BASE_PORT + i))
       echo "[$(date)] Starting instance ${i} on port ${PORT}"
-      mineru-openai-server \
-        --engine vllm \
+      mineru-api \
         --host 0.0.0.0 \
         --port "${PORT}" &
       PIDS+=($!)
@@ -28,7 +27,6 @@ data:
 
     echo "[$(date)] All instances started. PIDs: ${PIDS[*]}"
 
-    # Wait for any process to exit — if one dies the container restarts
     wait -n "${PIDS[@]}"
     EXIT_CODE=$?
     echo "[$(date)] A process exited with code ${EXIT_CODE}, shutting down all instances"
@@ -93,6 +91,9 @@ spec:
             items:
               - key: nginx.conf
                 path: nginx.conf
+        - name: dataset-volume
+          persistentVolumeClaim:
+            claimName: datamate-dataset-pvc
       containers:
         - name: mineru
           image: datamate-mineru
@@ -107,8 +108,8 @@ spec:
               value: local
             - name: MINERU_DEVICE_MODE
               value: npu
-            - name: VLLM_WORKER_MULTIPROC_METHOD
-              value: spawn
+            - name: MINERU_API_OUTPUT_ROOT
+              value: /dataset/outputs/mineru
           ports:
             - name: mineru-0
               containerPort: 8000
@@ -126,6 +127,8 @@ spec:
           volumeMounts:
             - name: entrypoint
               mountPath: /scripts
+            - name: dataset-volume
+              mountPath: /dataset
         - name: nginx
           image: datamate-frontend:1.0.0
           ports:
