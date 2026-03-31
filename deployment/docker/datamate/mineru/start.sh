@@ -1,27 +1,32 @@
 #!/bin/bash
 set -e
 
-NUM_INSTANCES=${NUM_INSTANCES:-3}
+INSTANCES_PER_DEVICE=${INSTANCES_PER_DEVICE:-3}
 BASE_PORT=${BASE_PORT:-8000}
 DEVICE_IDS=${DEVICE_IDS:-0}
 
 IFS=',' read -ra DEVICES <<< "$DEVICE_IDS"
+NUM_DEVICES=${#DEVICES[@]}
+TOTAL_INSTANCES=$((NUM_DEVICES * INSTANCES_PER_DEVICE))
 
-echo "[$(date)] Starting ${NUM_INSTANCES} MinerU Pipeline instances, devices: [${DEVICE_IDS}]"
+echo "[$(date)] Starting ${NUM_DEVICES} devices × ${INSTANCES_PER_DEVICE} instances = ${TOTAL_INSTANCES} total"
 
 PIDS=()
-for i in $(seq 0 $((NUM_INSTANCES - 1))); do
-  PORT=$((BASE_PORT + i))
-  DEVICE=${DEVICES[$((i % ${#DEVICES[@]}))]}
-  echo "[$(date)] Starting instance ${i} on port ${PORT}, device ${DEVICE}"
-  ASCEND_RT_VISIBLE_DEVICES=${DEVICE} \
-    mineru-api \
-      --host 0.0.0.0 \
-      --port "${PORT}" &
-  PIDS+=($!)
+for d in $(seq 0 $((NUM_DEVICES - 1))); do
+  DEVICE=${DEVICES[$d]}
+  for p in $(seq 0 $((INSTANCES_PER_DEVICE - 1))); do
+    IDX=$((d * INSTANCES_PER_DEVICE + p))
+    PORT=$((BASE_PORT + IDX))
+    echo "[$(date)] Starting instance ${IDX} on port ${PORT}, device ${DEVICE}"
+    ASCEND_RT_VISIBLE_DEVICES=${DEVICE} \
+      mineru-api \
+        --host 0.0.0.0 \
+        --port "${PORT}" &
+    PIDS+=($!)
+  done
 done
 
-echo "[$(date)] All instances started. PIDs: ${PIDS[*]}"
+echo "[$(date)] All ${TOTAL_INSTANCES} instances started. PIDs: ${PIDS[*]}"
 
 wait -n "${PIDS[@]}"
 EXIT_CODE=$?

@@ -115,7 +115,7 @@ services:
     image: datamate-mineru
     restart: on-failure
     environment:
-      NUM_INSTANCES: "3"
+      INSTANCES_PER_DEVICE: "3"
       BASE_PORT: "8000"
       DEVICE_IDS: "0,1,2"
       MINERU_MODEL_SOURCE: local
