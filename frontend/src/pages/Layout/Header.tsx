@@ -1,11 +1,13 @@
 import { User, Globe, LogIn, UserPlus, Sparkles, Shield } from "lucide-react"
-import { memo, useState, useEffect } from "react";
+import { memo, useState, useEffect, useCallback } from "react";
 import { NavLink } from "react-router";
 import { Button, Dropdown, message } from "antd"
 import type { MenuProps } from 'antd'
 import { LoginDialog } from "./LoginDialog"
 import { SignupDialog } from "./SignupDialog"
 import { post, get } from "@/utils/request.ts";
+import { getCachedHomePageUrl, setCachedHomePageUrl } from "@/utils/systemParam";
+import { getHomePageUrl } from "@/utils/systemParam";
 import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
 
@@ -120,6 +122,19 @@ export function Header() {
   const openSignupDialog = () => {
     setSignupOpen(true);
   };
+
+  const handleHomeClick = useCallback((e: React.MouseEvent) => {
+    const homeUrl = getCachedHomePageUrl();
+    if (homeUrl) {
+      e.preventDefault();
+      window.location.href = homeUrl;
+    }
+  }, []);
+
+  // 已登录时后台刷新缓存，保持与后端同步
+  useEffect(() => {
+    getHomePageUrl().then(url => setCachedHomePageUrl(url)).catch(() => {});
+  }, []);
 
   // 检测是否在 ME 环境
   const isSSOAvailable = () => {
@@ -269,7 +284,7 @@ export function Header() {
         <div className="flex h-14 items-center justify-between px-6">
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-2">
-              <NavLink to="/" className="flex items-center gap-2 cursor-pointer">
+              <NavLink to="/" onClick={handleHomeClick} className="flex items-center gap-2 cursor-pointer">
                 <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
                   <Sparkles className="w-5 h-5 text-white" />
                 </div>
