@@ -56,15 +56,13 @@ class MineruFormatter(Mapper):
 
         for attempt in range(self.max_retries):
             try:
-                resp = httpx.post(
-                    f"{self.server_url}/file_parse",
-                    data={
-                        "file_path": filepath,
-                        "lang": "ch",
-                        "return_md": "true",
-                    },
-                    timeout=300,
-                )
+                with open(filepath, "rb") as f:
+                    resp = httpx.post(
+                        f"{self.server_url}/file_parse",
+                        files=[("files", (filename, f))],
+                        data={"return_md": "true"},
+                        timeout=300,
+                    )
                 resp.raise_for_status()
                 break
             except Exception as e:
@@ -81,12 +79,7 @@ class MineruFormatter(Mapper):
                     raise
 
         result = resp.json()
-        md_url = result.get("md_url", "")
-        if md_url:
-            content = self._fetch_result_content(md_url)
-        else:
-            content = result.get("markdown", "")
-
+        content = result.get("markdown", "")
         output_dir = result.get("output_dir", "")
         if output_dir:
             self.save_images(
@@ -96,11 +89,6 @@ class MineruFormatter(Mapper):
             )
 
         return content
-
-    def _fetch_result_content(self, url):
-        resp = httpx.get(url, timeout=60)
-        resp.raise_for_status()
-        return resp.text
 
     def save_images(self, parse_dir, dataset_id, export_path):
         images_dir = os.path.join(parse_dir, "images")
