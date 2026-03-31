@@ -1,7 +1,27 @@
 /**
- * System Parameter API
  * 系统参数 API 接口
  */
+
+// localStorage 缓存 key
+const HOME_PAGE_URL_CACHE_KEY = 'datamate:homePageUrl';
+
+/**
+ * 将首页URL写入缓存
+ */
+export function setCachedHomePageUrl(url: string | null) {
+  if (url) {
+    localStorage.setItem(HOME_PAGE_URL_CACHE_KEY, url);
+  } else {
+    localStorage.removeItem(HOME_PAGE_URL_CACHE_KEY);
+  }
+}
+
+/**
+ * 同步读取缓存的首页URL
+ */
+export function getCachedHomePageUrl(): string | null {
+  return localStorage.getItem(HOME_PAGE_URL_CACHE_KEY);
+}
 import { get } from '@/utils/request';
 
 export interface SysParam {

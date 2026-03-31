@@ -1,11 +1,12 @@
 import { User, Globe, LogIn, UserPlus, Sparkles, Shield } from "lucide-react"
-import { memo, useState, useEffect, useCallback, useRef } from "react";
+import { memo, useState, useEffect, useCallback } from "react";
 import { NavLink } from "react-router";
 import { Button, Dropdown, message } from "antd"
 import type { MenuProps } from 'antd'
 import { LoginDialog } from "./LoginDialog"
 import { SignupDialog } from "./SignupDialog"
 import { post, get } from "@/utils/request.ts";
+import { getCachedHomePageUrl, setCachedHomePageUrl } from "@/utils/systemParam";
 import { getHomePageUrl } from "@/utils/systemParam";
 import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
@@ -42,7 +43,6 @@ export function Header() {
   const [currentUser, setCurrentUser] = useState<UserResponse | null>(null);
   const [authMode, setAuthMode] = useState<'SSO' | 'JWT' | 'NONE'>('NONE');
   const [userLoading, setUserLoading] = useState(true);
-  const [homePageUrl, setHomePageUrl] = useState<string | null>(null);
 
   const handleLogin = async (values: { username: string; password: string }) => {
     try {
@@ -124,15 +124,16 @@ export function Header() {
   };
 
   const handleHomeClick = useCallback((e: React.MouseEvent) => {
-    if (homePageUrl) {
+    const homeUrl = getCachedHomePageUrl();
+    if (homeUrl) {
       e.preventDefault();
-      window.location.href = homePageUrl;
+      window.location.href = homeUrl;
     }
-  }, [homePageUrl]);
+  }, []);
 
-  // 获取自定义首页URL
+  // 已登录时后台刷新缓存，保持与后端同步
   useEffect(() => {
-    getHomePageUrl().then(setHomePageUrl);
+    getHomePageUrl().then(url => setCachedHomePageUrl(url)).catch(() => {});
   }, []);
 
   // 检测是否在 ME 环境
