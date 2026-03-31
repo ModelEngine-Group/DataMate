@@ -1,3 +1,4 @@
+import os
 import uuid
 from typing import cast
 
@@ -30,6 +31,7 @@ from app.module.generation.schema.generation import (
     BatchDeleteSynthesisDataRequest,
 )
 from app.module.generation.service.export_service import SynthesisDatasetExporter, SynthesisExportError
+from app.module.generation.service.data_exporter import DataExporter, get_supported_formats
 from app.module.generation.service.generation_service import GenerationService
 from app.module.generation.service.prompt import get_prompt
 from app.module.shared.schema import StandardResponse
@@ -574,3 +576,85 @@ async def update_synthesis_data_field(
             chunk_instance_id=record.chunk_instance_id,
         ),
     )
+
+
+@router.get("/export-formats", response_model=StandardResponse)
+async def get_export_formats():
+    """获取支持的导出格式列表"""
+    formats = get_supported_formats()
+    return SuccessResponse(data=formats)
+
+
+@router.post("/task/{task_id}/export", response_model=StandardResponse)
+async def export_synthesis_data(
+    task_id: str,
+    format: str = "alpaca",
+    file_instance_ids: list[str] | None = None,
+    output_path: str | None = None,
+    db: AsyncSession = Depends(get_db),
+):
+    """导出合成数据到指定格式的文件
+
+    Args:
+        task_id: 合成任务ID
+        format: 导出格式 (alpaca/sharegpt/raw)
+        file_instance_ids: 文件实例ID列表，为空则导出全部文件
+        output_path: 输出路径，为空则使用默认路径
+    """
+    from app.module.generation.service.data_exporter import export_synthesis_data_to_file
+
+    task = await db.get(DataSynthInstance, task_id)
+    if not task:
+        raise BusinessError(ErrorCodes.GENERATION_TASK_NOT_FOUND, data={"task_id": task_id})
+
+    # 获取文件实例列表
+    query = select(DataSynthesisFileInstance).where(
+        DataSynthesisFileInstance.synthesis_instance_id == task_id
+    )
+    if file_instance_ids:
+        query = query.where(DataSynthesisFileInstance.id.in_(file_instance_ids))
+
+    result = await db.execute(query)
+    file_instances = result.scalars().all()
+
+    if not file_instances:
+        raise BusinessError(ErrorCodes.GENERATION_FILE_NOT_FOUND, data={"task_id": task_id})
+
+    # 确定输出目录
+    if not output_path:
+        from app.module.dataset.service.dataset_service import get_dataset_storage_path
+        output_path = await get_dataset_storage_path(db)
+
+    os.makedirs(output_path, exist_ok=True)
+
+    # 导出每个文件的数据
+    exported_files = []
+    total_records = 0
+
+    for file_instance in file_instances:
+        # 查询该文件的所有合成数据
+        data_result = await db.execute(
+            select(SynthesisData).where(
+                SynthesisData.synthesis_file_instance_id == file_instance.id
+            )
+        )
+        synthesis_data_list = data_result.scalars().all()
+
+        if not synthesis_data_list:
+            continue
+
+        # 导出数据
+        file_path, count = await export_synthesis_data_to_file(
+            file_instance=file_instance,
+            synthesis_data_list=synthesis_data_list,
+            output_dir=output_path,
+            format_type=format,
+        )
+        exported_files.append(file_path)
+        total_records += count
+
+    return SuccessResponse(data={
+        "file_paths": exported_files,
+        "total_records": total_records,
+        "format": format,
+    })

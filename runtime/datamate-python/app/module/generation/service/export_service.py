@@ -141,6 +141,13 @@ class SynthesisDatasetExporter:
 
     @staticmethod
     def _write_jsonl(path: str, records: Iterable[dict]) -> None:
+        """写入JSONL文件
+
+        Args:
+            path: 输出文件路径
+            records: 数据记录迭代器
+        """
+        os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, "w", encoding="utf-8") as f:
             for record in records:
                 f.write(json.dumps(record, ensure_ascii=False))

@@ -175,3 +175,25 @@ class SynthesisDataPatchItem(BaseModel):
     synthesis_file_instance_id: str
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ExportFormat(str, Enum):
+    """导出格式枚举"""
+    ALPACA = "alpaca"
+    SHAREGPT = "sharegpt"
+    RAW = "raw"
+
+
+class ExportSynthesisDataRequest(BaseModel):
+    """导出合成数据请求"""
+    task_id: str = Field(..., description="合成任务ID")
+    file_instance_ids: Optional[List[str]] = Field(None, description="文件实例ID列表，为空则导出全部")
+    format: ExportFormat = Field(ExportFormat.ALPACA, description="导出格式")
+    output_path: Optional[str] = Field(None, description="输出路径，为空则使用默认路径")
+
+
+class ExportSynthesisDataResponse(BaseModel):
+    """导出合成数据响应"""
+    file_paths: List[str] = Field(..., description="导出文件路径列表")
+    total_records: int = Field(..., description="总记录数")
+    format: str = Field(..., description="导出格式")

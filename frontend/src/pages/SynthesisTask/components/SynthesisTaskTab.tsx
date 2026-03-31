@@ -5,6 +5,7 @@ import {
   ArrowUp,
   ArrowDown,
   Sparkles,
+  Download,
 } from "lucide-react";
 import { FolderOpenOutlined, DeleteOutlined, EyeOutlined, ExperimentOutlined } from "@ant-design/icons";
 import { Link, useNavigate } from "react-router";
@@ -15,6 +16,8 @@ import {
   querySynthesisTasksUsingGet,
   deleteSynthesisTaskByIdUsingDelete,
   archiveSynthesisTaskToDatasetUsingPost,
+  getExportFormatsUsingGet,
+  exportSynthesisDataUsingPost,
 } from "@/pages/SynthesisTask/synthesis-api";
 import { createDatasetUsingPost } from "@/pages/DataManagement/dataset.api";
 import { createEvaluationTaskUsingPost } from "@/pages/DataEvaluation/evaluation.api";
@@ -68,8 +71,13 @@ export default function SynthesisTaskTab() {
   const [evalLoading, setEvalLoading] = useState(false);
   const [models, setModels] = useState<ModelI[]>([]);
   const [modelLoading, setModelLoading] = useState(false);
+  const [exportModalVisible, setExportModalVisible] = useState(false);
+  const [currentExportTask, setCurrentExportTask] = useState<SynthesisTask | null>(null);
+  const [exportFormats, setExportFormats] = useState<{type: string; name: string; extension: string}[]>([]);
+  const [exportLoading, setExportLoading] = useState(false);
 
   const [evalForm] = Form.useForm();
+  const [exportForm] = Form.useForm();
 
   // 获取任务列表
   const loadTasks = async () => {
@@ -102,6 +110,24 @@ export default function SynthesisTaskTab() {
     loadTasks();
     // eslint-disable-next-line
   }, [searchQuery, filterStatus, page, pageSize]);
+
+  // 加载导出格式列表
+  useEffect(() => {
+    const loadExportFormats = async () => {
+      try {
+        const res = await getExportFormatsUsingGet();
+        setExportFormats(res?.data?.data || []);
+      } catch (e) {
+        console.error("Failed to load export formats", e);
+        setExportFormats([
+          { type: "alpaca", name: "Alpaca", extension: ".jsonl" },
+          { type: "sharegpt", name: "ShareGPT", extension: ".jsonl" },
+          { type: "raw", name: "原始格式", extension: ".jsonl" },
+        ]);
+      }
+    };
+    loadExportFormats();
+  }, []);
 
   // 类型映射
   const typeMap: Record<string, string> = {
@@ -210,7 +236,7 @@ export default function SynthesisTaskTab() {
       title: t('synthesisTask.home.columns.actions'),
       key: "actions",
       fixed: "right" as const,
-      width: 120,
+      width: 160,
       render: (_: unknown, task: SynthesisTask) => (
         <div className="flex items-center justify-start gap-1">
           <Tooltip title={t('synthesisTask.actions.viewDetail')}>
@@ -219,6 +245,14 @@ export default function SynthesisTaskTab() {
               className="hover:bg-blue-50 p-1 h-7 w-7 flex items-center justify-center"
               type="text"
               icon={<EyeOutlined />}
+            />
+          </Tooltip>
+          <Tooltip title={t('synthesisTask.actions.export')}>
+            <Button
+              type="text"
+              className="hover:bg-blue-50 p-1 h-7 w-7 flex items-center justify-center text-blue-600"
+              icon={<Download />}
+              onClick={() => openExportModal(task)}
             />
           </Tooltip>
           <Tooltip title={t('synthesisTask.actions.evaluate')}>
@@ -338,6 +372,47 @@ export default function SynthesisTaskTab() {
       message.error(t('synthesisTask.messages.fetchModelsFailed'));
     } finally {
       setModelLoading(false);
+    }
+  };
+
+  const openExportModal = (task: SynthesisTask) => {
+    setCurrentExportTask(task);
+    setExportModalVisible(true);
+    exportForm.setFieldsValue({
+      format: "alpaca",
+    });
+  };
+
+  const handleExport = async () => {
+    if (!currentExportTask) return;
+    try {
+      const values = await exportForm.validateFields();
+      setExportLoading(true);
+
+      const res = await exportSynthesisDataUsingPost(currentExportTask.id, {
+        format: values.format,
+      });
+
+      const result = res?.data?.data || res?.data;
+      if (result?.file_paths?.length > 0) {
+        message.success(
+          t('synthesisTask.messages.exportSuccess', {
+            count: result.total_records,
+            format: values.format,
+          })
+        );
+      } else {
+        message.warning(t('synthesisTask.messages.exportNoData'));
+      }
+      setExportModalVisible(false);
+      setCurrentExportTask(null);
+      exportForm.resetFields();
+    } catch (error) {
+      const err = error as { errorFields?: unknown; response?: { data?: { message?: string } } };
+      if (err?.errorFields) return;
+      message.error(err?.response?.data?.message || t('synthesisTask.messages.exportFailed'));
+    } finally {
+      setExportLoading(false);
     }
   };
 
@@ -537,6 +612,40 @@ export default function SynthesisTaskTab() {
               <div className="text-xs text-gray-500">
                 源类型：合成任务（SYNTHESIS）<br />
                 源名称：{currentEvalTask.name}
+              </div>
+            </Form.Item>
+          )}
+        </Form>
+      </Modal>
+
+      <Modal
+        title={t('synthesisTask.home.modal.exportTitle')}
+        open={exportModalVisible}
+        onCancel={() => {
+          setExportModalVisible(false);
+          setCurrentExportTask(null);
+          exportForm.resetFields();
+        }}
+        onOk={handleExport}
+        confirmLoading={exportLoading}
+        okText={t('synthesisTask.home.modal.export')}
+        cancelText={t('synthesisTask.actions.cancel')}
+      >
+        <Form form={exportForm} layout="vertical">
+          <Form.Item label="导出格式" name="format" rules={[{ required: true }]}>
+            <Select
+              placeholder="请选择导出格式"
+              options={exportFormats.map(f => ({
+                label: `${f.name} (${f.extension})`,
+                value: f.type,
+              }))}
+            />
+          </Form.Item>
+          {currentExportTask && (
+            <Form.Item label="导出对象">
+              <div className="text-xs text-gray-500">
+                任务名称：{currentExportTask.name}<br />
+                任务ID：{currentExportTask.id}
               </div>
             </Form.Item>
           )}

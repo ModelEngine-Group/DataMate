@@ -90,3 +90,25 @@ export function batchDeleteSynthesisDataUsingDelete(body: { ids: string[] }) {
 export function updateSynthesisDataUsingPatch(dataId: string, body: { data: Record<string, unknown> }) {
   return post(`/api/synthesis/gen/data/${dataId}`, body, { method: "PATCH" });
 }
+
+// 获取支持的导出格式列表
+export function getExportFormatsUsingGet() {
+  return get("/api/synthesis/gen/export-formats");
+}
+
+// 导出合成数据到指定格式的文件
+export function exportSynthesisDataUsingPost(
+  taskId: string,
+  params: {
+    format?: string;
+    file_instance_ids?: string[];
+    output_path?: string;
+  }
+) {
+  const searchParams = new URLSearchParams();
+  if (params.format) searchParams.append("format", params.format);
+  if (params.file_instance_ids) searchParams.append("file_instance_ids", JSON.stringify(params.file_instance_ids));
+  if (params.output_path) searchParams.append("output_path", params.output_path);
+  const qs = searchParams.toString();
+  return post(`/api/synthesis/gen/task/${taskId}/export${qs ? `?${qs}` : ""}`);
+}
