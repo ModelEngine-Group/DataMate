@@ -102,11 +102,20 @@ class GenerationService:
 
             # 逐个文件处理
             processed_count = 0
+            total_task_chunks = 0
+            processed_task_chunks = 0
             for file_id in file_ids:
                 try:
+                    file_task = await self._get_or_create_file_instance(
+                        session, str(synth_task.id), file_id
+                    )
                     success = await self._process_single_file(
                         session, synth_task, file_id, max_qa_pairs=max_qa_pairs
                     )
+                    # 累加任务级别的切片统计
+                    if file_task:
+                        total_task_chunks += file_task.total_chunks or 0
+                        processed_task_chunks += file_task.processed_chunks or 0
                 except Exception as e:
                     logger.exception(
                         f"Unexpected error when processing file {file_id} for task {task_id}: {e}"
@@ -119,6 +128,9 @@ class GenerationService:
                 if success:
                     processed_count += 1
                     synth_task.processed_files = processed_count
+                    # 更新任务级别的切片统计
+                    synth_task.total_chunks = total_task_chunks
+                    synth_task.processed_chunks = processed_task_chunks
                     await session.commit()
 
             # 更新最终任务状态
@@ -126,6 +138,10 @@ class GenerationService:
                 synth_task.status = "completed"
             else:
                 synth_task.status = "partially_completed"
+            # 确保任务完成时切片统计准确
+            if synth_task.status in ("completed", "partially_completed"):
+                synth_task.total_chunks = total_task_chunks
+                synth_task.processed_chunks = processed_task_chunks
             await session.commit()
 
             logger.info(f"Finished processing synthesis task {synth_task.id}")
