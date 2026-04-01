@@ -11,10 +11,12 @@ import os
 import shutil
 import time
 import uuid
+from io import BytesIO
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, List, Tuple
 
 import httpx
+from pypdf import PdfReader, PdfWriter
 
 from datamate.core.base_op import Mapper, FileExporter
 from datamate.sql_manager.persistence_atction import TaskInfoPersistence
@@ -50,19 +52,49 @@ class MineruFormatter(Mapper):
             raise
         return sample
 
+    def _split_pdf_pages(
+        self, filepath: str, filename: str
+    ) -> list[tuple[str, tuple[str, BytesIO]]] | list[tuple[str, BytesIO]]:
+        """将多页PDF拆分为单页，返回 [(filename, BytesIO), ...] 列表"""
+        reader = PdfReader(filepath)
+        num_pages = len(reader.pages)
+
+        if num_pages <= 1:
+            with open(filepath, "rb") as f:
+                return [("files", (filename, BytesIO(f.read())))]
+
+        base_name, ext = os.path.splitext(filename)
+        pages: List[Tuple[str, Tuple[str, BytesIO]]] = []
+        for i, page in enumerate(reader.pages):
+            writer = PdfWriter()
+            writer.add_page(page)
+            buf = BytesIO()
+            writer.write(buf)
+            buf.seek(0)
+            page_filename = f"{base_name}_page{i + 1}{ext}"
+            pages.append(("files", (page_filename, buf)))
+
+        logger.info(f"Split PDF {filename} into {len(pages)} pages")
+        return pages
+
     def process_file(self, sample):
         filepath = sample[self.filepath_key]
         filename = sample[self.filename_key]
 
+        if filename.lower().endswith(".pdf"):
+            file_entries = self._split_pdf_pages(filepath, filename)
+        else:
+            with open(filepath, "rb") as f:
+                file_entries = [("files", (filename, BytesIO(f.read())))]
+
         for attempt in range(self.max_retries):
             try:
-                with open(filepath, "rb") as f:
-                    resp = httpx.post(
-                        f"{self.server_url}/file_parse",
-                        files=[("files", (filename, f))],
-                        data={"return_md": "true"},
-                        timeout=300,
-                    )
+                resp = httpx.post(
+                    f"{self.server_url}/file_parse",
+                    files=file_entries,
+                    data={"return_md": "true"},
+                    timeout=300,
+                )
                 resp.raise_for_status()
                 break
             except Exception as e:
