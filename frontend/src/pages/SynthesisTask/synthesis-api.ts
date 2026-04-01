@@ -1,4 +1,4 @@
-import { get, post, del } from "@/utils/request";
+import { get, post, del, patch } from "@/utils/request";
 
 // 创建数据合成任务
 export function createSynthesisTaskUsingPost(data: Record<string, unknown>) {
@@ -65,28 +65,25 @@ export function getPromptByTypeUsingGet(synthType: string) {
 }
 
 // 将合成任务数据归档到已存在的数据集中
-export function archiveSynthesisTaskToDatasetUsingPost(taskId: string, datasetId: string) {
-  return post(`/api/synthesis/gen/task/${taskId}/export-dataset/${datasetId}`);
+export function archiveSynthesisTaskToDatasetUsingPost(
+  taskId: string,
+  datasetId: string,
+  format: string = "alpaca"
+) {
+  return post(`/api/synthesis/gen/task/${taskId}/export-dataset/${datasetId}?format=${format}`);
 }
 
-// ---------------- 数据记录级别：chunk 与 synthesis data ----------------
-
-// 根据 chunkId 删除单个 chunk 及其下所有合成数据
+// 删除 chunk 及其关联的合成数据
 export function deleteChunkWithDataUsingDelete(chunkId: string) {
   return del(`/api/synthesis/gen/chunk/${chunkId}`);
 }
 
-// 删除某个 chunk 下的所有合成数据，返回删除条数
-export function deleteSynthesisDataByChunkUsingDelete(chunkId: string) {
-  return del(`/api/synthesis/gen/chunk/${chunkId}/data`);
+// 批量删除合成数据
+export function batchDeleteSynthesisDataUsingDelete(data: { ids: string[] }) {
+  return del("/api/synthesis/gen/data/batch", data as unknown as Record<string, never>);
 }
 
-// 批量删除合成数据记录
-export function batchDeleteSynthesisDataUsingDelete(body: { ids: string[] }) {
-  return del(`/api/synthesis/gen/data/batch`, null, { body: JSON.stringify(body) });
-}
-
-// 更新单条合成数据的完整 JSON 内容
-export function updateSynthesisDataUsingPatch(dataId: string, body: { data: Record<string, unknown> }) {
-  return post(`/api/synthesis/gen/data/${dataId}`, body, { method: "PATCH" });
+// 更新合成数据
+export function updateSynthesisDataUsingPatch(dataId: string, data: { data: Record<string, unknown> }) {
+  return patch(`/api/synthesis/gen/data/${dataId}`, data as unknown as Record<string, never>);
 }

@@ -25,6 +25,7 @@ from app.module.collection.schedule import (
     set_collection_scheduler,
 )
 from app.module.shared.schedule import Scheduler
+from app.module.generation.service.task_executor import init_executor, shutdown_executor
 
 setup_logging()
 logger = get_logger(__name__)
@@ -68,10 +69,15 @@ async def lifespan(app: FastAPI):
     set_collection_scheduler(collection_scheduler)
     await load_scheduled_collection_tasks()
 
+    # Initialize generation task executor
+    init_executor(max_workers=10, max_concurrent_tasks=5)
+    logger.info("Generation task executor initialized")
+
     yield
 
     # @shutdown
     collection_scheduler.shutdown()
+    shutdown_executor()
     logger.info("DataMate Python Backend shutting down ...\n\n")
 
 

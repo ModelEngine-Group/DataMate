@@ -406,6 +406,28 @@ class Request {
   }
 
   /**
+   * PATCH请求
+   * @param {string} url - 请求URL
+   * @param {object} data - 请求体数据
+   * @param {object} options - 额外的fetch选项，包括showLoading, onUploadProgress, onDownloadProgress
+   */
+  async patch(url, data = null, options = {}) {
+    const config = {
+      method: "PATCH",
+      credentials: "include",
+      mode: "cors",
+      headers: {
+        ...this.defaultHeaders,
+        ...options.headers,
+      },
+      body: data ? JSON.stringify(data) : undefined,
+      ...options,
+    };
+
+    return this.request(this.baseURL + url, config);
+  }
+
+  /**
    * 从 Content-Disposition 头中解析文件名
    */
   parseContentDisposition(contentDisposition) {
@@ -661,6 +683,7 @@ export const get = request.get.bind(request);
 export const post = request.post.bind(request);
 export const put = request.put.bind(request);
 export const del = request.delete.bind(request);
+export const patch = request.patch.bind(request);
 export const download = request.download.bind(request);
 export const upload = request.upload.bind(request);
 

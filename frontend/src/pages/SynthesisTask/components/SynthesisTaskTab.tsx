@@ -68,6 +68,9 @@ export default function SynthesisTaskTab() {
   const [evalLoading, setEvalLoading] = useState(false);
   const [models, setModels] = useState<ModelI[]>([]);
   const [modelLoading, setModelLoading] = useState(false);
+  const [archiveModalVisible, setArchiveModalVisible] = useState(false);
+  const [currentArchiveTask, setCurrentArchiveTask] = useState<SynthesisTask | null>(null);
+  const [archiveFormat, setArchiveFormat] = useState<string>("alpaca");
 
   const [evalForm] = Form.useForm();
 
@@ -210,7 +213,7 @@ export default function SynthesisTaskTab() {
       title: t('synthesisTask.home.columns.actions'),
       key: "actions",
       fixed: "right" as const,
-      width: 120,
+      width: 160,
       render: (_: unknown, task: SynthesisTask) => (
         <div className="flex items-center justify-start gap-1">
           <Tooltip title={t('synthesisTask.actions.viewDetail')}>
@@ -234,15 +237,7 @@ export default function SynthesisTaskTab() {
               type="text"
               className="hover:bg-green-50 p-1 h-7 w-7 flex items-center justify-center text-green-600"
               icon={<FolderOpenOutlined />}
-              onClick={() => {
-                Modal.confirm({
-                  title: t('synthesisTask.home.confirm.archiveTitle'),
-                  content: t('synthesisTask.home.confirm.archiveContent', { name: task.name }),
-                  okText: t('synthesisTask.actions.archive'),
-                  cancelText: t('synthesisTask.actions.cancel'),
-                  onOk: () => handleArchiveTask(task),
-                });
-              }}
+              onClick={() => openArchiveModal(task)}
             />
           </Tooltip>
           <Tooltip title={t('synthesisTask.actions.delete')}>
@@ -276,9 +271,8 @@ export default function SynthesisTaskTab() {
     },
   ];
 
-  const handleArchiveTask = async (task: SynthesisTask) => {
+  const handleArchiveTask = async (task: SynthesisTask, format: string = "alpaca") => {
     try {
-      // 1. 创建目标数据集（使用简单的默认命名 + 随机后缀，可后续扩展为弹窗自定义）
       const randomSuffix = Math.random().toString(36).slice(2, 8);
       const datasetReq: {
         name: string;
@@ -302,16 +296,26 @@ export default function SynthesisTaskTab() {
         return;
       }
 
-      // 2. 调用后端归档接口，将合成数据写入该数据集
-      await archiveSynthesisTaskToDatasetUsingPost(task.id, datasetId);
+      await archiveSynthesisTaskToDatasetUsingPost(task.id, datasetId, format);
 
       message.success(t('synthesisTask.home.archive.success'));
-      // 3. 可选：跳转到数据集详情页
       navigate(`/data/management/detail/${datasetId}`);
     } catch (e) {
       console.error(e);
       message.error(t('synthesisTask.home.archive.failed'));
     }
+  };
+
+  const openArchiveModal = (task: SynthesisTask) => {
+    setCurrentArchiveTask(task);
+    setArchiveFormat("alpaca");
+    setArchiveModalVisible(true);
+  };
+
+  const handleArchiveConfirm = async () => {
+    if (!currentArchiveTask) return;
+    setArchiveModalVisible(false);
+    await handleArchiveTask(currentArchiveTask, archiveFormat);
   };
 
   const openEvalModal = (task: SynthesisTask) => {
@@ -463,6 +467,37 @@ export default function SynthesisTaskTab() {
           }}
         />
       </Card>
+
+      <Modal
+        title={t('synthesisTask.home.confirm.archiveTitle')}
+        open={archiveModalVisible}
+        onCancel={() => {
+          setArchiveModalVisible(false);
+          setCurrentArchiveTask(null);
+        }}
+        onOk={handleArchiveConfirm}
+        okText={t('synthesisTask.actions.archive')}
+        cancelText={t('synthesisTask.actions.cancel')}
+      >
+        <div>
+          <p>{t('synthesisTask.home.confirm.archiveContent', { name: currentArchiveTask?.name })}</p>
+          <div style={{ marginTop: 16 }}>
+            <span style={{ marginRight: 8 }}>导出格式：</span>
+            <Select
+              value={archiveFormat}
+              style={{ width: 120 }}
+              options={[
+                { label: "Alpaca", value: "alpaca" },
+                { label: "ShareGPT", value: "sharegpt" },
+                { label: "原始格式", value: "raw" },
+              ]}
+              onChange={(value) => {
+                setArchiveFormat(value);
+              }}
+            />
+          </div>
+        </div>
+      </Modal>
 
       <Modal
         title={t('synthesisTask.home.modal.evalTitle')}

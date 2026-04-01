@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from typing import List, Optional, Dict, Any
+from typing import Any, List, Optional, Dict
 
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 
@@ -68,7 +68,52 @@ class DataSynthesisTaskItem(BaseModel):
     created_by: Optional[str] = None
     updated_by: Optional[str] = None
 
+    # 扩展字段（带默认值，用于列表查询等复杂场景）
+    model_id: str = ""
+    progress: int = 0
+    result_data_location: Optional[str] = None
+    text_split_config: Optional[Dict[str, Any]] = None
+    synthesis_config: Optional[Dict[str, Any]] = None
+    source_file_id: List[str] = []
+    processed_files: int = 0
+    total_chunks: int = 0
+    processed_chunks: int = 0
+    total_synthesis_data: int = 0
+
     model_config = ConfigDict(from_attributes=True)
+
+    @classmethod
+    def from_orm_with_config(cls, task: Any) -> "DataSynthesisTaskItem":
+        """从 ORM 对象转换，包含完整配置（用于列表查询）"""
+        synth_cfg = getattr(task, "synth_config", {}) or {}
+        text_split_cfg = synth_cfg.get("text_split_config") or {}
+        synthesis_cfg = synth_cfg.get("synthesis_config") or {}
+        source_file_ids = synth_cfg.get("source_file_id") or []
+        model_id = synth_cfg.get("model_id", "")
+        result_location = synth_cfg.get("result_data_location")
+
+        return cls(
+            id=str(task.id),
+            name=str(task.name),
+            description=task.description,
+            status=task.status,
+            synthesis_type=str(task.synth_type),
+            model_id=model_id or "",
+            progress=int(task.progress or 0),
+            result_data_location=result_location,
+            text_split_config=text_split_cfg,
+            synthesis_config=synthesis_cfg,
+            source_file_id=list(source_file_ids),
+            total_files=int(task.total_files or 0),
+            processed_files=int(task.processed_files or 0),
+            total_chunks=int(task.total_chunks or 0),
+            processed_chunks=int(task.processed_chunks or 0),
+            total_synthesis_data=int(task.total_synth_data or 0),
+            created_at=task.created_at,
+            updated_at=task.updated_at,
+            created_by=task.created_by,
+            updated_by=task.updated_by,
+        )
 
 
 class PagedDataSynthesisTaskResponse(BaseModel):
@@ -175,3 +220,25 @@ class SynthesisDataPatchItem(BaseModel):
     synthesis_file_instance_id: str
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ExportFormat(str, Enum):
+    """导出格式枚举"""
+    ALPACA = "alpaca"
+    SHAREGPT = "sharegpt"
+    RAW = "raw"
+
+
+class ExportSynthesisDataRequest(BaseModel):
+    """导出合成数据请求"""
+    task_id: str = Field(..., description="合成任务ID")
+    file_instance_ids: Optional[List[str]] = Field(None, description="文件实例ID列表，为空则导出全部")
+    format: ExportFormat = Field(ExportFormat.ALPACA, description="导出格式")
+    output_path: Optional[str] = Field(None, description="输出路径，为空则使用默认路径")
+
+
+class ExportSynthesisDataResponse(BaseModel):
+    """导出合成数据响应"""
+    file_paths: List[str] = Field(..., description="导出文件路径列表")
+    total_records: int = Field(..., description="总记录数")
+    format: str = Field(..., description="导出格式")
