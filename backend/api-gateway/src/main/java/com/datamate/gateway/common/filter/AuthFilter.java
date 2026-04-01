@@ -26,14 +26,18 @@ import java.nio.charset.StandardCharsets;
 /**
  * 用户数据隔离过滤器
  *
- * 支持两种认证模式：
- * 1. SSO 模式：从 OmsAuthFilter 添加的 X-User-Name header 中提取用户信息
- * 2. JWT 模式：从 Authorization Bearer Token 中提取用户信息
- *
- * 无论哪种模式，最终都会添加 User header 供下游服务隔离用户数据
+ * 支持两种场景：
+ * 1. 商业场景（SSO）：OmsAuthFilter 已添加 X-User-Name header，直接使用
+ * 2. 独立场景（可选登录）：
+ *    - DATAMATE_JWT_ENABLED=true：必须登录，验证 JWT token 并添加 User header
+ *    - DATAMATE_JWT_ENABLED=false：允许匿名访问，不添加 User header
  *
  * 优先级：SSO > JWT
  * Order: 2 (低于 OmsAuthFilter 的 Order=1)
+ *
+ * 环境变量：
+ * - OMS_AUTH_ENABLED：是否启用 OmsAuthFilter（商业场景）
+ * - DATAMATE_JWT_ENABLE：独立场景下是否要求用户登录
  *
  * @author songyongtan
  * @date 2026-03-30
@@ -57,7 +61,14 @@ public class AuthFilter implements GlobalFilter, Ordered {
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         ServerHttpRequest request = exchange.getRequest();
         String path = request.getURI().getPath();
+
+        // 公开接口：直接放行
         if (path.equals("/api/user/login") || path.equals("/api/user/signup")) {
+            return chain.filter(exchange);
+        }
+
+        // 内部接口：/api/user/me 内部会自行验证 SSO 或 JWT，直接放行
+        if (path.equals("/api/user/me")) {
             return chain.filter(exchange);
         }
 
@@ -77,16 +88,16 @@ public class AuthFilter implements GlobalFilter, Ordered {
                 return chain.filter(mutatedExchange);
             }
 
-            // 检查 JWT 模式
+            // 独立场景：根据 DATAMATE_JWT_ENABLE 决定是否要求登录
             if (!jwtEnable) {
-                log.debug("JWT is disabled, passing request without user header");
+                log.debug("JWT authentication is not required, passing request without user header");
                 return chain.filter(exchange);
             }
 
-            // JWT 模式：验证 Token
+            // JWT 模式：必须登录，验证 Token
             String authHeader = request.getHeaders().getFirst(AUTH_HEADER);
             if (authHeader == null || !authHeader.startsWith(TOKEN_PREFIX)) {
-                log.warn("JWT enabled but no valid Authorization header found");
+                log.warn("JWT authentication is required but no valid Authorization header found");
                 return sendUnauthorizedResponse(exchange);
             }
 

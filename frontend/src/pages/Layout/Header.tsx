@@ -17,6 +17,7 @@ interface UserResponse {
   groupId?: string;
   authenticated: boolean;
   authMode: 'SSO' | 'JWT' | 'NONE';
+  requireLogin?: boolean;  // 是否强制要求登录（由 DATAMATE_JWT_ENABLE 控制）
 }
 
 function loginUsingPost(data: any) {
@@ -32,8 +33,8 @@ function getCurrentUser() {
 }
 
 // ME 登录 URL（根据实际环境修改）
-const ME_LOGIN_URL = process.env.VITE_ME_LOGIN_URL || 'https://modelengine.com/login';
-const OMS_LOGOUT_URL = process.env.VITE_OMS_LOGOUT_URL || 'https://oms-service/logout';
+const ME_LOGIN_URL = import.meta.env.VITE_ME_LOGIN_URL || 'https://modelengine.com/login';
+const OMS_LOGOUT_URL = import.meta.env.VITE_OMS_LOGOUT_URL || 'https://oms-service/logout';
 
 export function Header() {
   const { t } = useTranslation();
@@ -154,18 +155,13 @@ export function Header() {
           setCurrentUser(response.data);
           setAuthMode(response.data.authMode);
 
-          // 如果未登录，根据模式处理
+          // 如果未登录，根据 requireLogin 决定是否弹出登录框
           if (!response.data.authenticated) {
-            if (isSSOAvailable()) {
-              // SSO 模式：自动跳转到 ME 登录
-              console.log('SSO mode detected, redirecting to ME login...');
-              // 不自动跳转，等待用户点击登录按钮
-            } else {
-              // JWT 模式：保持未登录状态
-              console.log('JWT mode, waiting for user to login');
+            if (response.data.requireLogin) {
+              // 强制要求登录：弹出登录框
+              window.dispatchEvent(new CustomEvent('show-login'));
             }
-          } else {
-            console.log(`User authenticated via ${response.data.authMode}:`, response.data.username);
+            // 不强制登录：允许匿名访问
           }
         }
       } catch (error) {

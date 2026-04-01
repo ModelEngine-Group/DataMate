@@ -566,24 +566,30 @@ const AUTH_ERR_CODES = [401, '401', 'common.401', 'common.0401'];
 
 // --- 辅助函数：防抖处理登录失效 ---
 let isRelogging = false;
+// 全局标记：是否需要登录（从 /api/user/me 获取）
+let requireLoginMode = false;
+
+// 设置是否需要登录
+export function setRequireLoginMode(value: boolean) {
+  requireLoginMode = value;
+}
 
 const handleLoginRedirect = () => {
-  console.log('[Auth] handleLoginRedirect called, isRelogging:', isRelogging);
+  // 如果不需要登录，直接返回
+  if (!requireLoginMode) {
+    return;
+  }
 
   if (isRelogging) {
-    console.log('[Auth] Skipping - already relogging');
     return;
   }
   isRelogging = true;
 
   localStorage.removeItem('session');
-
-  console.log('[Auth] Dispatching show-login event');
   window.dispatchEvent(new CustomEvent('show-login'));
 
   setTimeout(() => {
     isRelogging = false;
-    console.log('[Auth] Reset isRelogging flag');
   }, 3000);
 };
 
@@ -594,9 +600,6 @@ request.addResponseInterceptor(async (response, config) => {
   }
 
   const { status } = response;
-  console.log('[API Interceptor] Response status:', status, 'URL:', config?.url);
-
-  // ------------------ 修改重点开始 ------------------
 
   let resData: {};
 
@@ -605,11 +608,9 @@ request.addResponseInterceptor(async (response, config) => {
     // 关键点 2: 必须用 .clone()，因为流只能读一次。读了克隆的，原版 response 还能留给外面用
     // 关键点 3: 必须 await，因为读取流是异步的
     resData = await response.clone().json();
-    console.log('[API Interceptor] Response data:', resData);
   } catch (e) {
     // 如果后端返回的不是 JSON (比如 404 HTML 页面，或者空字符串)，json() 会报错
     // 这里捕获异常，保证 resData 至少是个空对象，不会导致后面取值 crash
-    console.warn('[API Interceptor] 响应体不是有效的JSON:', e);
     resData = {};
   }
 
@@ -617,7 +618,6 @@ request.addResponseInterceptor(async (response, config) => {
   // 优先取后端 body 里的 business code，没有则取 HTTP status
   const code = resData.code ?? status;
   const codeStr = String(code);
-  console.log('[API Interceptor] Extracted code:', code, 'codeStr:', codeStr);
 
   // 3. 判断成功 (根据你的后端约定：200/0 为成功)
   // 如果是成功状态，直接返回 response，不拦截
@@ -643,7 +643,6 @@ request.addResponseInterceptor(async (response, config) => {
 
   // 7. 处理 Token 过期 / 未登录
   const isAuthError = AUTH_ERR_CODES.includes(code) || AUTH_ERR_CODES.includes(codeStr);
-  console.log('[API Interceptor] Is auth error?', isAuthError, 'AUTH_ERR_CODES:', AUTH_ERR_CODES);
   if (isAuthError) {
     handleLoginRedirect();
   }
