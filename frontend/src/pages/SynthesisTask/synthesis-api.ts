@@ -72,3 +72,18 @@ export function archiveSynthesisTaskToDatasetUsingPost(
 ) {
   return post(`/api/synthesis/gen/task/${taskId}/export-dataset/${datasetId}?format=${format}`);
 }
+
+// 删除 chunk 及其关联的合成数据
+export function deleteChunkWithDataUsingDelete(chunkId: string) {
+  return del(`/api/synthesis/gen/chunk/${chunkId}`);
+}
+
+// 批量删除合成数据
+export function batchDeleteSynthesisDataUsingDelete(data: { ids: string[] }) {
+  return del("/api/synthesis/gen/data/batch", data as unknown as Record<string, never>);
+}
+
+// 更新合成数据
+export function updateSynthesisDataUsingPatch(dataId: string, data: { data: Record<string, unknown> }) {
+  return post(`/api/synthesis/gen/data/${dataId}`, data as unknown as Record<string, never>);
+}
