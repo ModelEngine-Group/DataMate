@@ -38,6 +38,7 @@ from app.module.generation.service.synthesis_data_query_service import Synthesis
 from app.module.generation.service.task_create_service import TaskCreateService
 from app.module.generation.service.task_delete_service import TaskDeleteService
 from app.module.generation.service.task_query_service import TaskQueryService
+from app.module.generation.service.task_executor import execute_generation_task
 from app.module.shared.schema import StandardResponse
 
 router = APIRouter(
@@ -59,6 +60,9 @@ async def create_synthesis_task(
     """
     创建数据合成任务
 
+    使用改进的后台任务执行器，将任务提交到独立的线程池中执行，
+    避免阻塞主事件循环，确保前端接口的响应性。
+
     Args:
         request: 创建任务请求
         background_tasks: 后台任务
@@ -70,8 +74,17 @@ async def create_synthesis_task(
     create_service = TaskCreateService(db)
     task = await create_service.create(request)
 
-    generation_service = GenerationService(db)
-    background_tasks.add_task(generation_service.process_task, task.id)
+    # 使用新的执行器提交任务到线程池
+    # 这样可以真正隔离后台任务，避免阻塞主事件循环
+    async def run_task_in_executor(task_id: str):
+        """在线程池中执行任务"""
+        await execute_generation_task(
+            task_id,
+            lambda tid: GenerationService(db).process_task(tid)
+        )
+
+    background_tasks.add_task(run_task_in_executor, task.id)
+    logger.info(f"Submitted generation task {task.id} to background executor")
 
     return SuccessResponse(data=DataSynthesisTaskItem.from_orm_with_config(task))
 
