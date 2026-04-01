@@ -29,10 +29,15 @@ class SynthesisDatasetExporter:
     - Dimension: original file (DatasetFiles)
     - One JSONL file per original file
     - JSONL file name is exactly the same as the original file name
+    - Support format conversion: alpaca, sharegpt, raw
     """
 
-    def __init__(self, db: AsyncSession):
+    SUPPORTED_FORMATS = ["alpaca", "sharegpt", "raw"]
+    DEFAULT_FORMAT = "alpaca"
+
+    def __init__(self, db: AsyncSession, format: str = "alpaca"):
         self._db = db
+        self._format = format if format in self.SUPPORTED_FORMATS else self.DEFAULT_FORMAT
 
     async def export_task_to_dataset(
         self,
@@ -73,7 +78,7 @@ class SynthesisDatasetExporter:
 
             file_path = os.path.join(base_path, archived_file_name)
             os.makedirs(os.path.dirname(file_path), exist_ok=True)
-            self._write_jsonl(file_path, records)
+            self._write_jsonl(file_path, records, self._format)
 
             # 计算文件大小
             try:
@@ -139,19 +144,84 @@ class SynthesisDatasetExporter:
             records.append(payload)
         return records
 
-    @staticmethod
-    def _write_jsonl(path: str, records: Iterable[dict]) -> None:
+    def _write_jsonl(self, path: str, records: Iterable[dict], format: str | None = None) -> None:
         """写入JSONL文件
 
         Args:
             path: 输出文件路径
             records: 数据记录迭代器
+            format: 导出格式 (alpaca/sharegpt/raw)
         """
+        fmt = format or self._format
         os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, "w", encoding="utf-8") as f:
             for record in records:
-                f.write(json.dumps(record, ensure_ascii=False))
+                formatted = self._format_record(record, fmt)
+                f.write(json.dumps(formatted, ensure_ascii=False))
                 f.write("\n")
+
+    def _format_record(self, record: dict, format: str) -> dict:
+        """根据格式转换记录
+
+        Args:
+            record: 原始记录
+            format: 目标格式
+
+        Returns:
+            格式化后的记录
+        """
+        if format == "alpaca":
+            return self._format_as_alpaca(record)
+        elif format == "sharegpt":
+            return self._format_as_sharegpt(record)
+        else:
+            return self._format_as_raw(record)
+
+    def _format_as_alpaca(self, record: dict) -> dict:
+        """转换为Alpaca格式
+
+        Alpaca格式：
+        {
+            "instruction": "指令",
+            "input": "输入",
+            "output": "输出"
+        }
+        """
+        return {
+            "instruction": record.get("instruction", ""),
+            "output": record.get("output", ""),
+        }
+
+    def _format_as_sharegpt(self, record: dict) -> dict:
+        """转换为ShareGPT格式
+
+        ShareGPT格式：
+        {
+            "conversations": [
+                {"from": "human", "value": "用户消息"},
+                {"from": "gpt", "value": "模型回复"}
+            ]
+        }
+        """
+        instruction = record.get("instruction", "")
+        output = record.get("output", "")
+        input_text = record.get("input", "")
+
+        conversations = [
+            {"from": "human", "value": instruction},
+            {"from": "gpt", "value": output},
+        ]
+
+        result = {"conversations": conversations}
+
+        if input_text:
+            result["context"] = input_text
+
+        return result
+
+    def _format_as_raw(self, record: dict) -> dict:
+        """原始格式 - 直接输出"""
+        return record
 
     @staticmethod
     def _ensure_dataset_path(dataset: Dataset) -> str:

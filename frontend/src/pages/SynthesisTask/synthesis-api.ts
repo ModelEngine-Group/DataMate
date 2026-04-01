@@ -65,50 +65,10 @@ export function getPromptByTypeUsingGet(synthType: string) {
 }
 
 // 将合成任务数据归档到已存在的数据集中
-export function archiveSynthesisTaskToDatasetUsingPost(taskId: string, datasetId: string) {
-  return post(`/api/synthesis/gen/task/${taskId}/export-dataset/${datasetId}`);
-}
-
-// ---------------- 数据记录级别：chunk 与 synthesis data ----------------
-
-// 根据 chunkId 删除单个 chunk 及其下所有合成数据
-export function deleteChunkWithDataUsingDelete(chunkId: string) {
-  return del(`/api/synthesis/gen/chunk/${chunkId}`);
-}
-
-// 删除某个 chunk 下的所有合成数据，返回删除条数
-export function deleteSynthesisDataByChunkUsingDelete(chunkId: string) {
-  return del(`/api/synthesis/gen/chunk/${chunkId}/data`);
-}
-
-// 批量删除合成数据记录
-export function batchDeleteSynthesisDataUsingDelete(body: { ids: string[] }) {
-  return del(`/api/synthesis/gen/data/batch`, null, { body: JSON.stringify(body) });
-}
-
-// 更新单条合成数据的完整 JSON 内容
-export function updateSynthesisDataUsingPatch(dataId: string, body: { data: Record<string, unknown> }) {
-  return post(`/api/synthesis/gen/data/${dataId}`, body, { method: "PATCH" });
-}
-
-// 获取支持的导出格式列表
-export function getExportFormatsUsingGet() {
-  return get("/api/synthesis/gen/export-formats");
-}
-
-// 导出合成数据到指定格式的文件
-export function exportSynthesisDataUsingPost(
+export function archiveSynthesisTaskToDatasetUsingPost(
   taskId: string,
-  params: {
-    format?: string;
-    file_instance_ids?: string[];
-    output_path?: string;
-  }
+  datasetId: string,
+  format: string = "alpaca"
 ) {
-  const searchParams = new URLSearchParams();
-  if (params.format) searchParams.append("format", params.format);
-  if (params.file_instance_ids) searchParams.append("file_instance_ids", JSON.stringify(params.file_instance_ids));
-  if (params.output_path) searchParams.append("output_path", params.output_path);
-  const qs = searchParams.toString();
-  return post(`/api/synthesis/gen/task/${taskId}/export${qs ? `?${qs}` : ""}`);
+  return post(`/api/synthesis/gen/task/${taskId}/export-dataset/${datasetId}?format=${format}`);
 }
