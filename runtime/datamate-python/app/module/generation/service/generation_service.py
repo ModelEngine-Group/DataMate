@@ -33,11 +33,11 @@ from app.module.shared.schema import NodeType, EdgeType
 
 def _filter_docs(split_docs, chunk_size):
     """
-    过滤文档，移除长度小于 chunk_size 的文档
+    过滤文档，移除长度小于 chunk_size 一半的文档
     """
     filtered_docs = []
     for doc in split_docs:
-        if len(doc.page_content) >= chunk_size * 0.7:
+        if len(doc.page_content) >= chunk_size * 0.5:
             filtered_docs.append(doc)
     return filtered_docs
 

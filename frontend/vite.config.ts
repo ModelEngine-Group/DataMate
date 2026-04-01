@@ -15,7 +15,7 @@ export default defineConfig({
     host: "0.0.0.0",
     proxy: (() => {
       const pythonProxyConfig = {
-        target: "http://localhost:32033",
+        target: "http://localhost:18000",
         changeOrigin: true,
         secure: false,
         configure: (proxy: { on: (event: string, handler: (arg: unknown) => void) => void }) => {
@@ -32,7 +32,7 @@ export default defineConfig({
       };
 
       const javaProxyConfig = {
-        target: "http://localhost:32033",
+        target: "http://localhost:8080",
         changeOrigin: true,
         secure: false,
         configure: (proxy: { on: (event: string, handler: (arg: unknown) => void) => void }) => {

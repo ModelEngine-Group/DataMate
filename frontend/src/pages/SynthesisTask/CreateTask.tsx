@@ -53,8 +53,8 @@ export default function SynthesisTaskCreate() {
       | "PARAGRAPH_CHUNK"
       | "FIXED_LENGTH_CHUNK"
       | "CUSTOM_SEPARATOR_CHUNK",
-    chunkSize: 3000,
-    overlapSize: 100,
+    chunkSize: 500,
+    overlapSize: 50,
     delimiter: "",
   });
 
