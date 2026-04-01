@@ -45,6 +45,7 @@ data:
     http {
       client_max_body_size 200M;
       upstream mineru_backend {
+        zone mineru_zone 64k; 
         least_conn;
         server 127.0.0.1:8000;
         server 127.0.0.1:8001;

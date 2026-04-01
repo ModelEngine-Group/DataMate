@@ -92,7 +92,7 @@ class MineruFormatter(Mapper):
                 resp = httpx.post(
                     f"{self.server_url}/file_parse",
                     files=file_entries,
-                    data={"return_md": "true"},
+                    data={"return_md": "true", "backend": "pipeline"},
                     timeout=300,
                 )
                 resp.raise_for_status()
