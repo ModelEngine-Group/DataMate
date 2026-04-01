@@ -68,6 +68,9 @@ export default function SynthesisTaskTab() {
   const [evalLoading, setEvalLoading] = useState(false);
   const [models, setModels] = useState<ModelI[]>([]);
   const [modelLoading, setModelLoading] = useState(false);
+  const [archiveModalVisible, setArchiveModalVisible] = useState(false);
+  const [currentArchiveTask, setCurrentArchiveTask] = useState<SynthesisTask | null>(null);
+  const [archiveFormat, setArchiveFormat] = useState<string>("alpaca");
 
   const [evalForm] = Form.useForm();
 
@@ -304,35 +307,15 @@ export default function SynthesisTaskTab() {
   };
 
   const openArchiveModal = (task: SynthesisTask) => {
-    Modal.confirm({
-      title: t('synthesisTask.home.confirm.archiveTitle'),
-      content: (
-        <div>
-          <p>{t('synthesisTask.home.confirm.archiveContent', { name: task.name })}</p>
-          <div style={{ marginTop: 16 }}>
-            <span style={{ marginRight: 8 }}>导出格式：</span>
-            <Select
-              defaultValue="alpaca"
-              style={{ width: 120 }}
-              options={[
-                { label: "Alpaca", value: "alpaca" },
-                { label: "ShareGPT", value: "sharegpt" },
-                { label: "原始格式", value: "raw" },
-              ]}
-              onChange={(value) => {
-                (window as unknown as { __archiveFormat?: string }).__archiveFormat = value;
-              }}
-            />
-          </div>
-        </div>
-      ),
-      okText: t('synthesisTask.actions.archive'),
-      cancelText: t('synthesisTask.actions.cancel'),
-      onOk: () => {
-        const format = (window as unknown as { __archiveFormat?: string }).__archiveFormat || "alpaca";
-        handleArchiveTask(task, format);
-      },
-    });
+    setCurrentArchiveTask(task);
+    setArchiveFormat("alpaca");
+    setArchiveModalVisible(true);
+  };
+
+  const handleArchiveConfirm = async () => {
+    if (!currentArchiveTask) return;
+    setArchiveModalVisible(false);
+    await handleArchiveTask(currentArchiveTask, archiveFormat);
   };
 
   const openEvalModal = (task: SynthesisTask) => {
@@ -484,6 +467,37 @@ export default function SynthesisTaskTab() {
           }}
         />
       </Card>
+
+      <Modal
+        title={t('synthesisTask.home.confirm.archiveTitle')}
+        open={archiveModalVisible}
+        onCancel={() => {
+          setArchiveModalVisible(false);
+          setCurrentArchiveTask(null);
+        }}
+        onOk={handleArchiveConfirm}
+        okText={t('synthesisTask.actions.archive')}
+        cancelText={t('synthesisTask.actions.cancel')}
+      >
+        <div>
+          <p>{t('synthesisTask.home.confirm.archiveContent', { name: currentArchiveTask?.name })}</p>
+          <div style={{ marginTop: 16 }}>
+            <span style={{ marginRight: 8 }}>导出格式：</span>
+            <Select
+              value={archiveFormat}
+              style={{ width: 120 }}
+              options={[
+                { label: "Alpaca", value: "alpaca" },
+                { label: "ShareGPT", value: "sharegpt" },
+                { label: "原始格式", value: "raw" },
+              ]}
+              onChange={(value) => {
+                setArchiveFormat(value);
+              }}
+            />
+          </div>
+        </div>
+      </Modal>
 
       <Modal
         title={t('synthesisTask.home.modal.evalTitle')}
