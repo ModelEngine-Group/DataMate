@@ -53,7 +53,7 @@ class QuestionGenerator:
 
     def __init__(self, db: AsyncSession, semaphore: asyncio.Semaphore | None = None):
         self.db = db
-        self.semaphore = semaphore or asyncio.Semaphore(20)
+        self.semaphore = semaphore or asyncio.Semaphore(10)
 
     async def generate_questions(
         self,
@@ -134,7 +134,7 @@ class AnswerGenerator:
 
     def __init__(self, db: AsyncSession, semaphore: asyncio.Semaphore | None = None):
         self.db = db
-        self.semaphore = semaphore or asyncio.Semaphore(100)
+        self.semaphore = semaphore or asyncio.Semaphore(10)
 
     async def generate_answers_for_chunk(
         self,
@@ -260,8 +260,8 @@ class QAGenerator:
 
     def __init__(self, db: AsyncSession):
         self.db = db
-        self.question_semaphore = asyncio.Semaphore(20)
-        self.answer_semaphore = asyncio.Semaphore(100)
+        self.question_semaphore = asyncio.Semaphore(10)
+        self.answer_semaphore = asyncio.Semaphore(10)
         self.question_generator = QuestionGenerator(db, self.question_semaphore)
         self.answer_generator = AnswerGenerator(db, self.answer_semaphore)
 
