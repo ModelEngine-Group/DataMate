@@ -1,4 +1,4 @@
-import { get, post, del } from "@/utils/request";
+import { get, post, del, patch } from "@/utils/request";
 
 // 创建数据合成任务
 export function createSynthesisTaskUsingPost(data: Record<string, unknown>) {
@@ -85,5 +85,5 @@ export function batchDeleteSynthesisDataUsingDelete(data: { ids: string[] }) {
 
 // 更新合成数据
 export function updateSynthesisDataUsingPatch(dataId: string, data: { data: Record<string, unknown> }) {
-  return post(`/api/synthesis/gen/data/${dataId}`, data as unknown as Record<string, never>);
+  return patch(`/api/synthesis/gen/data/${dataId}`, data as unknown as Record<string, never>);
 }
