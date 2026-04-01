@@ -25,8 +25,11 @@ export function useFileSliceUpload(
     const { dataset } = detail;
     const title = `${t('hooks.sliceUpload.uploadDataset')}: ${dataset.name} `;
     const controller = new AbortController();
+    // 使用 dataset.id + 时间戳 + 随机数确保每个上传任务有唯一的 key
+    const uniqueKey = `${dataset.id}_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
     const task: TaskItem = {
-      key: dataset.id,
+      key: uniqueKey,
+      datasetId: dataset.id, // 保存原始 datasetId 用于 API 调用
       title,
       percent: 0,
       reqId: -1,
@@ -92,7 +95,7 @@ export function useFileSliceUpload(
     if (!task) {
       return;
     }
-    const { reqId, key } = task;
+    const { reqId, key, datasetId } = task;
     const { loaded, i, j, files, totalSize } = fileInfo;
     const formData = await buildFormData({
       file: files[i],
@@ -102,7 +105,8 @@ export function useFileSliceUpload(
     });
 
     let newTask = { ...task };
-    await uploadChunk(key, formData, {
+    // 使用 datasetId 调用 API，key 用于唯一标识任务
+    await uploadChunk(datasetId || key, formData, {
       onUploadProgress: (e) => {
         const loadedSize = loaded + e.loaded;
         const curPercent = Number((loadedSize / totalSize) * 100).toFixed(2);
@@ -120,10 +124,10 @@ export function useFileSliceUpload(
 
   async function uploadFile({ task, files, totalSize }) {
     console.log('[useSliceUpload] Calling preUpload with prefix:', task.prefix);
-    const { data: reqId } = await preUpload(task.key, {
+    const { data: reqId } = await preUpload(task.datasetId || task.key, {
       totalFileNum: files.length,
       totalSize,
-      datasetId: task.key,
+      datasetId: task.datasetId || task.key,
       hasArchive: task.hasArchive,
       prefix: task.prefix,
     });
