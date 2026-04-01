@@ -42,4 +42,9 @@ public class UserResponse {
      * 认证模式
      */
     private String authMode;  // "SSO" | "JWT" | "NONE"
+
+    /**
+     * 是否强制要求登录（由 datamate.jwt.enable 控制）
+     */
+    private Boolean requireLogin;
 }
