@@ -70,7 +70,7 @@ async def lifespan(app: FastAPI):
     await load_scheduled_collection_tasks()
 
     # Initialize generation task executor
-    init_executor(max_workers=4, max_concurrent_tasks=2)
+    init_executor(max_workers=10, max_concurrent_tasks=5)
     logger.info("Generation task executor initialized")
 
     yield

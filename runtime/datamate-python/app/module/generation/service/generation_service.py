@@ -324,7 +324,7 @@ class GenerationService:
             # 顺序处理每个切片，避免并发过高
             for chunk in chunk_batch:
                 try:
-                    await self._process_single_chunk(
+                    success = await self._process_single_chunk(
                         session=session,
                         file_task=file_task,
                         chunk=chunk,
@@ -336,12 +336,22 @@ class GenerationService:
                         max_qa_pairs=max_qa_pairs,
                         qa_generator=qa_generator,
                     )
+                    if success:
+                        # 更新已处理的切片计数
+                        file_task.processed_chunks = (file_task.processed_chunks or 0) + 1
+                        # 实时刷新进度到数据库
+                        await session.commit()
+                        await session.refresh(file_task)
+                        logger.info(f"File {file_task.id} progress: {file_task.processed_chunks}/{file_task.total_chunks} chunks processed")
                 except Exception as e:
                     logger.error(f"Error processing chunk {chunk.id}: {e}")
+                    # 即使处理失败，也要更新进度
+                    file_task.processed_chunks = (file_task.processed_chunks or 0) + 1
+                    await session.commit()
+                    await session.refresh(file_task)
 
-                # 每处理完一个切片，提交一次并短暂释放控制权
-                await session.commit()
-                await asyncio.sleep(0)  # 让出事件循环，处理其他请求
+                # 短暂释放控制权，让出事件循环，处理其他请求
+                await asyncio.sleep(0)
 
             current_index = end_index + 1
 

@@ -22,8 +22,8 @@ _task_semaphore: asyncio.Semaphore | None = None
 
 
 def init_executor(
-    max_workers: int = 4,
-    max_concurrent_tasks: int = 2,
+    max_workers: int = 10,
+    max_concurrent_tasks: int = 5,
 ):
     """
     初始化执行器

@@ -78,10 +78,15 @@ async def create_synthesis_task(
     # 这样可以真正隔离后台任务，避免阻塞主事件循环
     async def run_task_in_executor(task_id: str):
         """在线程池中执行任务"""
-        await execute_generation_task(
-            task_id,
-            lambda tid: GenerationService(db).process_task(tid)
-        )
+        # 定义一个包装函数来正确调用process_task
+        async def process_task_wrapper(tid: str):
+            # 创建新的GenerationService实例，使用独立的会话
+            from app.db.session import AsyncSessionLocal
+            async with AsyncSessionLocal() as session:
+                service = GenerationService(session)
+                await service.process_task(tid)
+
+        await execute_generation_task(task_id, process_task_wrapper)
 
     background_tasks.add_task(run_task_in_executor, task.id)
     logger.info(f"Submitted generation task {task.id} to background executor")
