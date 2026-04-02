@@ -10,27 +10,28 @@ data:
     #!/bin/bash
     set -e
 
-    NUM_INSTANCES=${NUM_INSTANCES:-3}
+    INSTANCES_PER_CARD=${INSTANCES_PER_CARD:-3}
     BASE_PORT=${BASE_PORT:-8000}
     DEVICE_IDS=${DEVICE_IDS:-0}
 
     IFS=',' read -ra DEVICES <<< "$DEVICE_IDS"
 
-    echo "[$(date)] Starting ${NUM_INSTANCES} MinerU Pipeline instances, devices: [${DEVICE_IDS}]"
-
     PIDS=()
-    for i in $(seq 0 $((NUM_INSTANCES - 1))); do
-      PORT=$((BASE_PORT + i))
-      DEVICE=${DEVICES[$((i % ${#DEVICES[@]}))]}
-      echo "[$(date)] Starting instance ${i} on port ${PORT}, device ${DEVICE}"
-      ASCEND_RT_VISIBLE_DEVICES=${DEVICE} \
-        mineru-api \
-          --host 0.0.0.0 \
-          --port "${PORT}" &
-      PIDS+=($!)
+    PORT=${BASE_PORT}
+
+    for DEVICE in "${DEVICES[@]}"; do
+      for i in $(seq 1 "${INSTANCES_PER_CARD}"); do
+        echo "[$(date)] Starting instance on port ${PORT}, device ${DEVICE}"
+        ASCEND_RT_VISIBLE_DEVICES=${DEVICE} \
+          mineru-api \
+            --host 0.0.0.0 \
+            --port "${PORT}" &
+        PIDS+=($!)
+        PORT=$((PORT + 1))
+      done
     done
 
-    echo "[$(date)] All instances started. PIDs: ${PIDS[*]}"
+    echo "[$(date)] All ${#PIDS[@]} instances started. PIDs: ${PIDS[*]}"
 
     wait -n "${PIDS[@]}"
     EXIT_CODE=$?
@@ -107,10 +108,12 @@ spec:
           imagePullPolicy: IfNotPresent
           command: ["/scripts/start.sh"]
           env:
-            - name: NUM_INSTANCES
+            - name: INSTANCES_PER_CARD
               value: "3"
             - name: BASE_PORT
               value: "8000"
+            - name: DEVICE_IDS
+              value: "0"
             - name: MINERU_MODEL_SOURCE
               value: local
             - name: MINERU_DEVICE_MODE
