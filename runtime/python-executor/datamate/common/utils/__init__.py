@@ -57,3 +57,7 @@ def decrypt(enc_pass):
     dec_pass = K.API().decrypt(0)
     os.environ['KMC_PYTHON_ENCRYPT_DATA'] = ""
     return dec_pass
+
+
+def is_k8s():
+    return "KUBERNETES_SERVICE_HOST" in os.environ
