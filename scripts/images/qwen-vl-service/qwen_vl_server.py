@@ -20,7 +20,6 @@ SERVER_PORT = int(os.environ.get("QWEN_SERVER_PORT", "18080"))
 
 app = Flask(__name__)
 
-# ===== Load once =====
 cfg = json.load(open(PREPROCESSOR_CFG, "r", encoding="utf-8"))
 MERGE_SIZE = int(cfg.get("merge_size", 1))
 
@@ -34,13 +33,15 @@ model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
 SENSITIVE_VALID = ["porn", "violence", "blood", "explosion", "politics", "none"]
 SENSITIVE_SET = set(SENSITIVE_VALID)
 
-CLASS25 = [
-    "日常生活", "影视剧集", "音乐舞蹈", "幽默搞笑", "游戏电竞",
-    "动漫二次元", "新闻时事", "教育教学", "科技数码", "财经商业",
-    "纪录片", "体育竞技", "美食烹饪", "时尚美妆", "汽车交通",
-    "萌宠动物", "健康健身", "自然风光", "三农", "监控安防",
-    "广告营销", "才艺展示", "军事国防", "情感心理", "其他"
+CLASS_NAMES = [
+    "影视剧情类", "新闻资讯类", "教育知识类", "美食饮品类", "自然风光类",
+    "时尚美妆类", "亲子育儿类", "宠物日常类", "游戏电竞类", "音乐舞蹈类",
+    "动漫二次元类", "数码产品类", "汽车交通类", "财经商业类", "文化艺术类",
+    "乐器演奏类", "国防军事类", "体育竞技类", "野生动物类", "农业类",
+    "航空航天类", "其他类"
 ]
+DEFAULT_CLASS_ID = len(CLASS_NAMES)
+DEFAULT_CLASS_NAME = CLASS_NAMES[-1]
 
 
 def label_only_prompt() -> str:
@@ -48,12 +49,13 @@ def label_only_prompt() -> str:
 
 
 def classify25_prompt() -> str:
-    items = "\n".join([f"{i+1}. {c}" for i, c in enumerate(CLASS25)])
+    items = "\n".join([f"{i+1}. {c}" for i, c in enumerate(CLASS_NAMES)])
     return (
         "你是视频分类器。根据图片判断视频类别。\n"
-        "只输出一个数字编号（1-25），不要解释、不要输出其它内容。\n"
+        f"只输出一个数字编号（1-{len(CLASS_NAMES)}），不要解释、不要输出其它内容。\n"
         f"类别列表：\n{items}\n"
-        "输出示例：8"
+        "如果无法明确归入前面的类别，请输出最后一个编号。\n"
+        f"输出示例：{len(CLASS_NAMES)}"
     )
 
 
@@ -115,16 +117,15 @@ def normalize_class25(raw_text: str) -> dict:
     ans = extract_assistant_answer(raw_text).strip()
     nums = re.findall(r"\d+", ans)
     if not nums:
-        return {"id": 25, "label": "其他", "raw": ans}
+        return {"id": DEFAULT_CLASS_ID, "label": DEFAULT_CLASS_NAME, "raw": ans}
     idx = int(nums[-1])
-    if idx < 1 or idx > 25:
-        idx = 25
-    return {"id": idx, "label": CLASS25[idx - 1], "raw": ans}
+    if idx < 1 or idx > len(CLASS_NAMES):
+        idx = DEFAULT_CLASS_ID
+    return {"id": idx, "label": CLASS_NAMES[idx - 1], "raw": ans}
 
 
 def infer_raw_text(image_path: str, user_text: str, max_new_tokens: int = 64) -> str:
     image = Image.open(image_path).convert("RGB")
-
     img_inputs = image_processor(images=image, return_tensors="pt")
     grid = img_inputs["image_grid_thw"][0]
     num_patches = int(grid.prod().item())
@@ -149,7 +150,14 @@ def infer_raw_text(image_path: str, user_text: str, max_new_tokens: int = 64) ->
 
 @app.route("/health", methods=["GET"])
 def health():
-    return jsonify({"ok": True, "model_dir": MODEL_DIR, "host": SERVER_HOST, "port": SERVER_PORT})
+    return jsonify({
+        "ok": True,
+        "model_dir": MODEL_DIR,
+        "host": SERVER_HOST,
+        "port": SERVER_PORT,
+        "num_classes": len(CLASS_NAMES),
+        "classes": CLASS_NAMES
+    })
 
 
 @app.route("/infer", methods=["POST"])
@@ -157,7 +165,6 @@ def infer_api():
     data = request.get_json(force=True)
     image_path = data["image_path"]
     task = data.get("task", "sensitive")
-
     max_new_tokens = int(data.get("max_new_tokens", 64))
     language = data.get("language", "zh")
     style = data.get("style", "normal")
@@ -167,10 +174,8 @@ def infer_api():
             raw = infer_raw_text(image_path, label_only_prompt(), max_new_tokens=8)
             label = normalize_sensitive_label(raw)
             answer = extract_assistant_answer_sensitive(raw)
-
             is_sensitive = (label != "none")
             score = 0.90 if is_sensitive else 0.05
-
             return jsonify({
                 "task": task,
                 "is_sensitive": is_sensitive,
@@ -190,7 +195,11 @@ def infer_api():
             })
 
         if task == "summary":
-            raw = infer_raw_text(image_path, summary_prompt(language=language, style=style), max_new_tokens=max_new_tokens)
+            raw = infer_raw_text(
+                image_path,
+                summary_prompt(language=language, style=style),
+                max_new_tokens=max_new_tokens
+            )
             return jsonify({
                 "task": task,
                 "summary": extract_assistant_answer(raw).strip()

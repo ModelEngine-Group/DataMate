@@ -1,7 +1,5 @@
 # QwenVL service image for DataMate video operators
 #
-# This image definition targets the standalone QwenVL HTTP service.
-#
 # Notes:
 # 1. The actual deployment environment uses Ascend / NPU with torch_npu and CANN.
 # 2. Replace BASE_IMAGE with the actual Ascend-compatible runtime image in your environment.
@@ -34,8 +32,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN python -m pip install --upgrade pip setuptools wheel
 
 # Python packages aligned to the observed service environment.
-# If the actual deployment base image already includes these packages,
-# this section can be adjusted accordingly.
 RUN pip install \
     Flask==3.1.3 \
     requests==2.32.5 \

@@ -4,47 +4,15 @@ import json
 import re
 import shutil
 import subprocess
+from difflib import SequenceMatcher
 import cv2
 import numpy as np
-import inspect
 
 from .._video_common.paths import make_run_dir, ensure_dir
 from .._video_common.log import get_logger
 from .._video_common.io_video import get_video_info
-from paddleocr import PaddleOCR
-from .._video_common.model_paths import resolve_model_path
 
-def build_paddle_ocr(params, ocr_lang: str, use_angle_cls: bool):
-    """
-    默认模型目录：
-      /mnt/models/ocr/det
-      /mnt/models/ocr/rec
-      /mnt/models/ocr/cls
-    也支持 params['ocr_model_dir'] 指定（相对/绝对）。
-    """
-    ocr_root = resolve_model_path(params, "ocr_model_dir", "ocr")
-    det_dir = os.path.join(ocr_root, "det")
-    rec_dir = os.path.join(ocr_root, "rec")
-    cls_dir = os.path.join(ocr_root, "cls")
 
-    # 目录不存在就直接报错，让用户去模型仓下载到固定位置
-    for p in [det_dir, rec_dir] + ([cls_dir] if use_angle_cls else []):
-        if not os.path.exists(p):
-            raise RuntimeError(f"PaddleOCR model dir not found: {p}. Please download OCR models into model repo path.")
-
-    sig = inspect.signature(PaddleOCR.__init__)
-    kw = {"lang": ocr_lang}
-    if "use_angle_cls" in sig.parameters:
-        kw["use_angle_cls"] = use_angle_cls
-    # PaddleOCR 3.4.0 支持这些
-    if "det_model_dir" in sig.parameters:
-        kw["det_model_dir"] = det_dir
-    if "rec_model_dir" in sig.parameters:
-        kw["rec_model_dir"] = rec_dir
-    if "cls_model_dir" in sig.parameters and use_angle_cls:
-        kw["cls_model_dir"] = cls_dir
-
-    return PaddleOCR(**kw)
 def _write_srt(segments, srt_path):
     def _fmt(t):
         h = int(t // 3600)
@@ -83,41 +51,138 @@ def _fix_english_spacing(text: str) -> str:
         return text
 
     t = text
-
-    # 小写后接大写：ThisIs -> This Is
     t = re.sub(r"([a-z])([A-Z])", r"\1 \2", t)
-
-    # 字母数字边界：A1 / 1A
     t = re.sub(r"([A-Za-z])(\d)", r"\1 \2", t)
     t = re.sub(r"(\d)([A-Za-z])", r"\1 \2", t)
-
-    # 标点前去空格，标点后若紧跟字母则补空格（保守）
     t = re.sub(r"\s+([,.;:?!])", r"\1", t)
     t = re.sub(r"([,.;:?!])([A-Za-z])", r"\1 \2", t)
-
-    # 多空格压缩
     t = re.sub(r"\s+", " ", t).strip()
     return t
 
 
 def _norm_sub_key(text: str) -> str:
-    """用于合并的规范化 key：空格归一、末尾标点归一、英文小写化"""
+    """原始 key：保守，仅用于展示/回溯"""
     if not text:
         return ""
     t = text.strip()
     t = re.sub(r"\s+", " ", t)
-    # 去掉末尾重复标点（中英文都考虑）
     t = re.sub(r"[.。!?！？]+$", "", t).strip()
-
-    # 英文占比高则统一小写，便于合并
     if _english_ratio(t) > 0.40:
         t = t.lower()
-
     return t
 
 
+def _merge_norm_text(text: str) -> str:
+    """用于合并判断的更强规范化。
+    英文：小写、去大部分标点、压缩空格，额外生成 nospace 判断。
+    中文：保留汉字和数字，去尾部标点的影响。
+    """
+    if not text:
+        return ""
+    t = text.strip().lower()
+    t = t.replace("’", "'").replace("‘", "'").replace("“", '"').replace("”", '"')
+    # 去掉中英文尾标点影响
+    t = re.sub(r"[.。,，!！?？:：;；~～_\-]+$", "", t).strip()
+    # 中间的特殊符号尽量弱化
+    t = re.sub(r"[^0-9a-z\u4e00-\u9fff\s]", " ", t)
+    t = re.sub(r"\s+", " ", t).strip()
+    return t
+
+
+def _merge_nospace_text(text: str) -> str:
+    t = _merge_norm_text(text)
+    t = re.sub(r"\s+", "", t)
+    return t
+
+
+def _text_sim(a: str, b: str) -> float:
+    a1 = _merge_nospace_text(a)
+    b1 = _merge_nospace_text(b)
+    if not a1 or not b1:
+        return 0.0
+    if a1 == b1:
+        return 1.0
+    return SequenceMatcher(None, a1, b1).ratio()
+
+
+def _choose_better_text(a: str, b: str) -> str:
+    """相似字幕合并时，保留更像完整句子的版本。"""
+    if not a:
+        return b
+    if not b:
+        return a
+    a_score = len(_merge_nospace_text(a))
+    b_score = len(_merge_nospace_text(b))
+    # 有明显结束标点的稍微加分
+    if re.search(r"[.。!?！？]$", a.strip()):
+        a_score += 2
+    if re.search(r"[.。!?！？]$", b.strip()):
+        b_score += 2
+    return b if b_score > a_score else a
+
+
+def _should_merge_hit(last_seg, hit, gap_merge: float, sim_thr: float = 0.90) -> bool:
+    dt = hit["t"] - last_seg["end"]
+    if dt > gap_merge:
+        return False
+
+    # 1) 原始 key 一样
+    if hit["key"] == last_seg["key"]:
+        return True
+
+    # 2) 更强的规范化后完全一致（尤其适合英文空格/标点变化）
+    if _merge_nospace_text(hit["text"]) == _merge_nospace_text(last_seg["text"]):
+        return True
+
+    # 3) 一方是另一方的子串，且时间很近
+    a = _merge_nospace_text(last_seg["text"])
+    b = _merge_nospace_text(hit["text"])
+    if a and b and (a in b or b in a) and dt <= max(2.0, gap_merge):
+        return True
+
+    # 4) 文本相似度高，则认为是同一句的 OCR 波动
+    sim = _text_sim(last_seg["text"], hit["text"])
+    if sim >= sim_thr:
+        return True
+
+    return False
+
+
+def _post_merge_segments(segments, gap_merge: float):
+    """第二轮后处理：处理 A, A', A'' 这类连续波动；必要时删除极短重复段。"""
+    if not segments:
+        return segments
+
+    merged = [segments[0]]
+    for seg in segments[1:]:
+        last = merged[-1]
+        if _should_merge_hit(last, {"t": seg["start"], "text": seg["text"], "key": seg.get("key", "")}, gap_merge=max(gap_merge, 2.0), sim_thr=0.86):
+            last["end"] = max(last["end"], seg["end"])
+            last["text"] = _choose_better_text(last["text"], seg["text"])
+            last["key"] = _norm_sub_key(last["text"])
+            last.setdefault("evidence", []).extend(seg.get("evidence", []))
+        else:
+            merged.append(seg)
+
+    # 删除明显的短抖动重复：前后两段极近且文本高度相似，保留更优那一段
+    cleaned = []
+    for seg in merged:
+        if not cleaned:
+            cleaned.append(seg)
+            continue
+        last = cleaned[-1]
+        sim = _text_sim(last["text"], seg["text"])
+        if sim >= 0.92 and (seg["start"] - last["end"] <= max(2.0, gap_merge)):
+            last["end"] = max(last["end"], seg["end"])
+            last["text"] = _choose_better_text(last["text"], seg["text"])
+            last["key"] = _norm_sub_key(last["text"])
+            last.setdefault("evidence", []).extend(seg.get("evidence", []))
+        else:
+            cleaned.append(seg)
+    return cleaned
+
+
 def _roi_changed(cur_roi, last_roi, diff_thr=4.0):
-    """diff_thr 调低一点更敏感，避免跳过字幕变化"""
     if last_roi is None:
         return True
     a = cv2.cvtColor(cur_roi, cv2.COLOR_BGR2GRAY)
@@ -179,15 +244,7 @@ def _deborder_ffmpeg(ffmpeg_path: str, in_video: str, out_video: str, logger):
 
 
 def _extract_texts_from_any(res):
-    """
-    兼容 PaddleOCR 多种返回：
-    - 传统：res = [ [ [box,(text,score)], ... ] ]
-    - 新 pipeline/dict：res 可能是 dict/对象，里头有 'rec_texts'/'rec_scores' 或 'texts'/'scores'
-    返回: list[(text,score)]
-    """
     out = []
-
-    # dict 风格
     if isinstance(res, dict):
         keys_text = ["rec_texts", "texts", "text"]
         keys_score = ["rec_scores", "scores", "score"]
@@ -201,7 +258,6 @@ def _extract_texts_from_any(res):
             if ks in res:
                 scores = res[ks]
                 break
-
         if texts is not None:
             if isinstance(texts, str):
                 out.append((texts, float(scores) if scores is not None else 0.0))
@@ -218,20 +274,16 @@ def _extract_texts_from_any(res):
                         for t in texts:
                             out.append((str(t), float(scores) if scores is not None else 0.0))
                 return out
-
         if "result" in res:
             return _extract_texts_from_any(res["result"])
 
-    # list 风格（传统）
     if isinstance(res, list):
         if len(res) == 0:
             return out
-
         if isinstance(res[0], dict):
             for item in res:
                 out.extend(_extract_texts_from_any(item))
             return out
-
         lines = res[0] if isinstance(res[0], list) else res
         for line in lines:
             try:
@@ -245,7 +297,6 @@ def _extract_texts_from_any(res):
                 continue
         return out
 
-    # 兜底
     try:
         s = str(res)
         if s:
@@ -256,25 +307,7 @@ def _extract_texts_from_any(res):
 
 
 class VideoSubtitleOCR:
-    """字幕 OCR（自动去黑边 + 固定下30% + 英文空格修复 + 去重合并）
-
-    params:
-      - preprocess_deborder: bool, default True
-      - sample_fps: float, default 1.0
-      - max_frames: int, default 240
-      - subtitle_ratio: float, default 0.30
-      - ocr_lang: ch|en, default ch
-      - min_score: float, default 0.0
-      - roi_diff_thr: float, default 4.0
-      - gap_merge_sec: float, default 1.2     # ✅ 更容易合并跨帧字幕
-      - fix_english_space: bool, default True # ✅ 英文空格修复开关
-
-    outputs:
-      - artifacts/subtitles.json
-      - artifacts/subtitles.srt
-      - artifacts/frames/subtitle_*.jpg
-      - artifacts/deborder.mp4 (if preprocess_deborder=True)
-    """
+    """字幕 OCR（增强版相邻重复合并）"""
 
     @staticmethod
     def execute(sample, params):
@@ -293,7 +326,6 @@ class VideoSubtitleOCR:
         if not ffmpeg_path:
             raise RuntimeError("ffmpeg not found")
 
-        # ✅ 默认自动去黑边
         if params.get("preprocess_deborder", True):
             deborder_mp4 = os.path.join(art_dir, "deborder.mp4")
             crop = _deborder_ffmpeg(ffmpeg_path, in_video, deborder_mp4, logger)
@@ -308,7 +340,7 @@ class VideoSubtitleOCR:
 
         from paddleocr import PaddleOCR
         ocr_lang = params.get("ocr_lang", "ch")
-        ocr = build_paddle_ocr(params, ocr_lang=ocr_lang, use_angle_cls=False)   
+        ocr = PaddleOCR(use_angle_cls=True, lang=ocr_lang)
 
         fps, w, h, total = get_video_info(src_video)
         sample_fps = float(params.get("sample_fps", 1.0))
@@ -316,7 +348,7 @@ class VideoSubtitleOCR:
         subtitle_ratio = float(params.get("subtitle_ratio", 0.30))
         min_score = float(params.get("min_score", 0.0))
         roi_diff_thr = float(params.get("roi_diff_thr", 4.0))
-        gap_merge = float(params.get("gap_merge_sec", 1.2))
+        gap_merge = float(params.get("gap_merge_sec", 2.0))
         fix_en_space = bool(params.get("fix_english_space", True))
 
         step = max(1, int(round(fps / max(sample_fps, 0.0001))))
@@ -358,14 +390,19 @@ class VideoSubtitleOCR:
                 text = _fix_english_spacing(text)
 
             if text:
-                raw_hits.append({"t": t, "text": text, "key": _norm_sub_key(text), "frame_id": int(fi), "jpg": jpg_path})
+                raw_hits.append({
+                    "t": t,
+                    "text": text,
+                    "key": _norm_sub_key(text),
+                    "frame_id": int(fi),
+                    "jpg": jpg_path
+                })
 
             if (k + 1) % 20 == 0 or k == len(idxs) - 1:
                 logger.info(f"[{k+1}/{len(idxs)}] frame={fi} hit={1 if text else 0} len={len(text)}")
 
         cap.release()
 
-        # ✅ 合并相邻相同字幕（按规范化 key 合并）
         segments = []
         for hit in raw_hits:
             if not segments:
@@ -379,8 +416,10 @@ class VideoSubtitleOCR:
                 continue
 
             last = segments[-1]
-            if hit["key"] == last["key"] and (hit["t"] - last["end"] <= gap_merge):
+            if _should_merge_hit(last, hit, gap_merge=gap_merge, sim_thr=0.90):
                 last["end"] = hit["t"]
+                last["text"] = _choose_better_text(last["text"], hit["text"])
+                last["key"] = _norm_sub_key(last["text"])
                 last["evidence"].append({"t": hit["t"], "frame_id": hit["frame_id"], "jpg": hit["jpg"]})
             else:
                 segments.append({
@@ -391,11 +430,11 @@ class VideoSubtitleOCR:
                     "evidence": [{"t": hit["t"], "frame_id": hit["frame_id"], "jpg": hit["jpg"]}],
                 })
 
-        # end 往后延一点，srt 更自然
+        segments = _post_merge_segments(segments, gap_merge=gap_merge)
+
         for seg in segments:
             seg["end"] = float(seg["end"] + max(0.4, 1.0 / max(sample_fps, 0.1)))
 
-        # 输出时不需要 key（但保留也无所谓；你想更干净就删掉）
         json_path = os.path.join(art_dir, "subtitles.json")
         srt_path = os.path.join(art_dir, "subtitles.srt")
         with open(json_path, "w", encoding="utf-8") as f:
@@ -403,4 +442,9 @@ class VideoSubtitleOCR:
         _write_srt(segments, srt_path)
 
         logger.info(f"Done. subtitles={len(segments)} srt={srt_path}")
-        return {"out_dir": out_dir, "subtitles_json": json_path, "subtitles_srt": srt_path, "count": len(segments)}
+        return {
+            "out_dir": out_dir,
+            "subtitles_json": json_path,
+            "subtitles_srt": srt_path,
+            "count": len(segments)
+        }
