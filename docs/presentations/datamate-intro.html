@@ -1411,24 +1411,12 @@ class QualityEvaluatorOp(BaseOp):
             }
         });
         
-        // Mouse wheel snap
-        let wheelTimeout;
-        document.addEventListener('wheel', e => {
-            clearTimeout(wheelTimeout);
-            wheelTimeout = setTimeout(() => {
-                const direction = e.deltaY > 0 ? 1 : -1;
-                goToPage(currentPage + direction);
-            }, 50);
-        }, { passive: true });
-        
-        // Code highlighting (可选，失败不影响页码)
+        // Code highlighting
         try {
             document.querySelectorAll('pre code').forEach(block => {
                 hljs.highlightElement(block);
             });
-        } catch(e) {
-            console.log('Code highlighting skipped');
-        }
+        } catch(e) {}
     </script>
 </body>
 </html>
