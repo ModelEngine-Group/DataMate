@@ -500,7 +500,7 @@
     <div class="page-indicator">
         <span class="number" id="pageNum">01</span>
         <span class="muted">/</span>
-        <span class="muted" id="pageTotal">32</span>
+        <span class="muted" id="pageTotal">31</span>
         <span class="hint">↑↓</span>
     </div>
 
@@ -1357,17 +1357,13 @@ class QualityEvaluatorOp(BaseOp):
     </section>
 
     <script>
-        // Code highlighting
-        document.querySelectorAll('pre code').forEach(block => {
-            hljs.highlightElement(block);
-        });
-        
-        // Page navigation
+        // Page navigation (必须先执行)
         const pages = document.querySelectorAll('.page');
         const progressFill = document.getElementById('progressFill');
         const pageNum = document.getElementById('pageNum');
         const pageTotal = document.getElementById('pageTotal');
         
+        // 设置总页数
         pageTotal.textContent = pages.length;
         
         let currentPage = 0;
@@ -1396,7 +1392,7 @@ class QualityEvaluatorOp(BaseOp):
         }
         
         window.addEventListener('scroll', updateProgress, { passive: true });
-        updateProgress();
+        updateProgress(); // 初始化
         
         // Keyboard navigation
         document.addEventListener('keydown', e => {
@@ -1424,6 +1420,15 @@ class QualityEvaluatorOp(BaseOp):
                 goToPage(currentPage + direction);
             }, 50);
         }, { passive: true });
+        
+        // Code highlighting (可选，失败不影响页码)
+        try {
+            document.querySelectorAll('pre code').forEach(block => {
+                hljs.highlightElement(block);
+            });
+        } catch(e) {
+            console.log('Code highlighting skipped');
+        }
     </script>
 </body>
 </html>
