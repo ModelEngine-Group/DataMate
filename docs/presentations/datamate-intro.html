@@ -5,14 +5,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DataMate - 一站式数据工作平台</title>
     
-    <!-- Highlight.js for code -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css">
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Highlight.js -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/atom-one-dark.min.css">
     <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/core.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/python.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/yaml.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/plaintext.min.js"></script>
     
     <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-card: rgba(255, 255, 255, 0.03);
+            --bg-card-hover: rgba(255, 255, 255, 0.06);
+            --text-primary: #ffffff;
+            --text-secondary: #8888a0;
+            --text-muted: #555570;
+            --accent-primary: #6366f1;
+            --accent-secondary: #8b5cf6;
+            --accent-glow: rgba(99, 102, 241, 0.4);
+            --gradient-1: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #d946ef 100%);
+            --gradient-2: linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%);
+            --border: rgba(255, 255, 255, 0.08);
+            --radius: 16px;
+            --radius-sm: 8px;
+        }
+        
         * {
             margin: 0;
             padding: 0;
@@ -21,782 +43,1127 @@
         
         html {
             scroll-snap-type: y mandatory;
-            overflow-y: scroll;
+            scroll-behavior: smooth;
+            background: var(--bg-primary);
         }
         
         body {
-            font-family: 'Source Han Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-            font-size: 24px;
-            line-height: 1.6;
-            color: #333;
-            background: #fff;
+            font-family: 'Noto Sans SC', 'Space Grotesk', sans-serif;
+            font-size: 18px;
+            line-height: 1.7;
+            color: var(--text-primary);
+            overflow-x: hidden;
         }
         
+        /* Background Effects */
+        .bg-grid {
+            position: fixed;
+            inset: 0;
+            background-image: 
+                linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        .bg-glow {
+            position: fixed;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+            filter: blur(80px);
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.5;
+            transition: transform 0.8s ease-out;
+        }
+        
+        /* Page Structure */
         .page {
             min-height: 100vh;
             height: 100vh;
-            padding: 60px 80px;
-            max-width: 1200px;
-            margin: 0 auto;
             scroll-snap-align: start;
             scroll-snap-stop: always;
             display: flex;
             flex-direction: column;
-            overflow-y: auto;
+            justify-content: center;
+            align-items: center;
+            padding: 60px;
+            position: relative;
+            z-index: 1;
         }
         
-        .page:last-child {
-            border-bottom: none;
+        .page-content {
+            width: 100%;
+            max-width: 1000px;
+            opacity: 0;
+            transform: translateY(40px);
+            animation: fadeInUp 0.8s ease forwards;
+            animation-delay: 0.1s;
         }
         
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Typography */
         h1 {
-            font-size: 3em;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: clamp(3em, 8vw, 6em);
             font-weight: 700;
+            line-height: 1.1;
             margin-bottom: 0.5em;
-            color: #1a1a1a;
+            letter-spacing: -0.02em;
+        }
+        
+        h1.gradient {
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
         
         h2 {
-            font-size: 2em;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: clamp(1.8em, 4vw, 2.5em);
             font-weight: 600;
-            margin-bottom: 1em;
-            color: #1a1a1a;
+            margin-bottom: 1.5em;
+            letter-spacing: -0.01em;
         }
         
         h3 {
-            font-size: 1.4em;
+            font-size: 1.3em;
             font-weight: 600;
-            margin-bottom: 0.8em;
-            color: #333;
+            margin-bottom: 1em;
+            color: var(--text-secondary);
         }
         
         h4 {
-            font-size: 1.2em;
-            font-weight: 600;
-            margin: 1em 0 0.5em 0;
-            color: #333;
+            font-size: 1.1em;
+            font-weight: 500;
+            margin: 1.2em 0 0.6em 0;
+            color: var(--accent-primary);
         }
         
         p {
-            margin-bottom: 0.8em;
+            margin-bottom: 1em;
+            color: var(--text-secondary);
         }
         
+        p.large {
+            font-size: 1.4em;
+            color: var(--text-primary);
+        }
+        
+        .muted {
+            color: var(--text-muted);
+            font-size: 0.9em;
+        }
+        
+        /* Lists */
         ul, ol {
-            margin-left: 1.5em;
-            margin-bottom: 1em;
+            margin-left: 0;
+            margin-bottom: 1.5em;
+            list-style: none;
         }
         
         li {
-            margin-bottom: 0.5em;
+            position: relative;
+            padding-left: 1.8em;
+            margin-bottom: 0.8em;
+            color: var(--text-secondary);
+        }
+        
+        li::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0.6em;
+            width: 8px;
+            height: 8px;
+            background: var(--gradient-1);
+            border-radius: 50%;
         }
         
         li ul {
-            margin-top: 0.3em;
-            font-size: 0.9em;
+            margin-top: 0.5em;
+            padding-left: 0;
+        }
+        
+        li ul li::before {
+            width: 4px;
+            height: 4px;
+            background: var(--accent-primary);
+        }
+        
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.5em 2em;
+            margin-bottom: 1em;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .card:hover {
+            background: var(--bg-card-hover);
+            border-color: rgba(99, 102, 241, 0.2);
+            transform: translateX(8px);
+        }
+        
+        .card-icon {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            background: var(--gradient-1);
+            border-radius: 10px;
+            margin-right: 1em;
+            line-height: 40px;
+            text-align: center;
+            font-size: 1.2em;
+        }
+        
+        /* Tables */
+        .table-wrapper {
+            overflow: hidden;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
         }
         
         table {
             width: 100%;
             border-collapse: collapse;
-            margin: 1em 0;
-            font-size: 0.85em;
-        }
-        
-        table th, table td {
-            border: 1px solid #ddd;
-            padding: 12px 16px;
-            text-align: left;
-        }
-        
-        table th {
-            background: #f5f5f5;
-            font-weight: 600;
-        }
-        
-        table tr:nth-child(even) td {
-            background: #fafafa;
-        }
-        
-        pre {
-            background: #f6f8fa;
-            border-radius: 8px;
-            padding: 20px;
-            overflow-x: auto;
-            margin: 1em 0;
-            font-size: 0.8em;
-        }
-        
-        code {
-            font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
-        }
-        
-        .highlight-box {
-            background: #f0f7ff;
-            border-left: 4px solid #0066cc;
-            padding: 16px 20px;
-            margin: 1em 0;
-        }
-        
-        .title-page {
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-        
-        .section-title-page {
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-        
-        .section-title-page h2 {
-            font-size: 2.5em;
-        }
-        
-        .two-columns {
-            display: flex;
-            gap: 40px;
-            margin-top: 1em;
-        }
-        
-        .two-columns > div {
-            flex: 1;
-        }
-        
-        .accent {
-            color: #0066cc;
-            font-weight: 600;
-        }
-        
-        .muted {
-            color: #666;
             font-size: 0.9em;
         }
         
-        .large-text {
-            font-size: 1.3em;
-            color: #0066cc;
+        table th {
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--text-primary);
             font-weight: 600;
+            padding: 14px 20px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
         }
         
-        .page-number {
-            position: fixed;
-            bottom: 20px;
-            right: 30px;
-            font-size: 0.8em;
-            color: #999;
-            background: rgba(255,255,255,0.9);
-            padding: 8px 12px;
-            border-radius: 4px;
+        table td {
+            padding: 12px 20px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border);
         }
         
-        .page-nav-hint {
-            position: fixed;
-            bottom: 20px;
-            left: 30px;
-            font-size: 0.7em;
-            color: #999;
-            background: rgba(255,255,255,0.9);
-            padding: 8px 12px;
-            border-radius: 4px;
+        table tr:last-child td {
+            border-bottom: none;
         }
         
-        .nav-progress {
+        table tr:hover td {
+            background: rgba(99, 102, 241, 0.05);
+        }
+        
+        /* Code Blocks */
+        pre {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.5em;
+            overflow-x: auto;
+            margin: 1.5em 0;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85em;
+        }
+        
+        /* Layout Utilities */
+        .two-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3em;
+            margin-top: 1.5em;
+        }
+        
+        .three-columns {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2em;
+        }
+        
+        .flex-center {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 2em;
+        }
+        
+        /* Section Divider */
+        .section-divider {
+            width: 100%;
+            max-width: 600px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent-primary), transparent);
+            margin: 2em auto;
+            opacity: 0.5;
+        }
+        
+        /* Feature Grid */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5em;
+            margin-top: 2em;
+        }
+        
+        .feature-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.5em;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .feature-item:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-primary);
+            box-shadow: 0 20px 40px rgba(99, 102, 241, 0.1);
+        }
+        
+        .feature-icon {
+            font-size: 2em;
+            margin-bottom: 0.8em;
+        }
+        
+        .feature-title {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        /* Tags */
+        .tag {
+            display: inline-block;
+            padding: 0.4em 1em;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 20px;
+            font-size: 0.85em;
+            color: var(--accent-primary);
+            margin: 0.3em;
+        }
+        
+        /* Progress Indicator */
+        .progress-bar {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
-            height: 4px;
-            background: #eee;
-            z-index: 100;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.1);
+            z-index: 1000;
         }
         
-        .nav-progress-bar {
+        .progress-fill {
             height: 100%;
-            background: #0066cc;
+            background: var(--gradient-1);
             width: 0%;
-            transition: width 0.1s;
+            transition: width 0.15s ease;
+        }
+        
+        .page-indicator {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            align-items: center;
+            gap: 1em;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid var(--border);
+            padding: 10px 20px;
+            border-radius: 30px;
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+        }
+        
+        .page-indicator .number {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .page-indicator .hint {
+            color: var(--text-muted);
+            font-size: 0.85em;
+        }
+        
+        /* Cover Page Special */
+        .cover-page h1 {
+            animation: glowPulse 3s ease-in-out infinite;
+        }
+        
+        @keyframes glowPulse {
+            0%, 100% { filter: drop-shadow(0 0 20px rgba(99, 102, 241, 0.5)); }
+            50% { filter: drop-shadow(0 0 40px rgba(139, 92, 246, 0.8)); }
+        }
+        
+        .cover-page .subtitle {
+            font-size: 1.5em;
+            color: var(--text-secondary);
+            margin-top: 1em;
+        }
+        
+        .cover-page .logo-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5em;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            padding: 0.8em 1.5em;
+            border-radius: 30px;
+            margin-top: 2em;
+            color: var(--text-secondary);
+            font-size: 0.9em;
+        }
+        
+        /* Section Title Pages */
+        .section-page {
+            text-align: center;
+        }
+        
+        .section-page .section-number {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 8em;
+            font-weight: 700;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            opacity: 0.3;
+            line-height: 1;
+        }
+        
+        .section-page .section-title {
+            font-size: 3em;
+            margin-top: -1em;
+        }
+        
+        /* Floating Elements */
+        .float-element {
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+            filter: blur(60px);
+            pointer-events: none;
+            animation: float 8s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0); }
+            33% { transform: translate(30px, -30px); }
+            66% { transform: translate(-20px, 20px); }
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .page {
+                padding: 40px 30px;
+            }
+            
+            .two-columns, .three-columns {
+                grid-template-columns: 1fr;
+            }
+            
+            .feature-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
         }
     </style>
 </head>
 <body>
-    <div class="nav-progress">
-        <div class="nav-progress-bar" id="progressBar"></div>
+    <!-- Background Effects -->
+    <div class="bg-grid"></div>
+    <div class="bg-glow" style="top: -200px; left: -200px;"></div>
+    <div class="bg-glow" style="bottom: -200px; right: -200px;"></div>
+    
+    <!-- Progress -->
+    <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
     </div>
     
-    <div class="page-number" id="pageNumber"></div>
-    <div class="page-nav-hint">↑↓ 翻页 | Space 下一页</div>
+    <!-- Page Indicator -->
+    <div class="page-indicator">
+        <span class="number" id="pageNum">01</span>
+        <span class="muted">/</span>
+        <span class="muted" id="pageTotal">32</span>
+        <span class="hint">↑↓</span>
+    </div>
 
-    <!-- 封面 -->
-    <section class="page title-page">
-        <h1>DataMate</h1>
-        <h2>一站式数据工作平台</h2>
-        <p>面向模型微调与RAG检索的企业级数据处理平台</p>
-        <p class="muted" style="margin-top: 2em;">
-            开源项目：github.com/ModelEngine-Group/DataMate
-        </p>
-    </section>
-
-    <!-- 第一部分标题 -->
-    <section class="page section-title-page">
-        <h2>第一部分</h2>
-        <h1 style="font-size: 2.5em;">背景引入</h1>
-    </section>
-
-    <!-- 数据处理演进 -->
-    <section class="page">
-        <h2>数据处理的发展历程</h2>
-        <div class="two-columns">
-            <div>
-                <ul>
-                    <li><strong>手工时代</strong>：Excel、脚本处理</li>
-                    <li><strong>数据仓库时代</strong>：ETL工具、Hadoop生态</li>
-                    <li><strong>机器学习时代</strong>：特征工程、标注工具</li>
-                    <li><strong>大模型时代</strong>：高质量数据、RAG检索</li>
-                </ul>
-            </div>
-            <div>
-                <p class="muted">
-                    数据处理需求随着AI发展不断演进<br>
-                    从"数量"转向"质量"<br>
-                    从"结构化"转向"多模态"
-                </p>
+    <!-- ===== COVER ===== -->
+    <section class="page cover-page">
+        <div class="page-content" style="text-align: center;">
+            <h1 class="gradient">DataMate</h1>
+            <p class="subtitle">一站式数据工作平台</p>
+            <p style="color: var(--text-muted); margin-top: 1em;">
+                面向模型微调与 RAG 检索的企业级数据处理平台
+            </p>
+            <div class="logo-badge">
+                <span>⭐</span>
+                <span>github.com/ModelEngine-Group/DataMate</span>
             </div>
         </div>
+        <div class="float-element" style="top: 20%; left: 10%;"></div>
+        <div class="float-element" style="bottom: 20%; right: 10%;"></div>
     </section>
 
-    <!-- 数据挑战 -->
-    <section class="page">
-        <h2>大模型时代面临的数据挑战</h2>
-        <ul>
-            <li><strong>数据质量决定模型效果</strong> — "垃圾进，垃圾出"</li>
-            <li><strong>数据准备周期漫长</strong> — 从采集到可用往往需要数周</li>
-            <li><strong>多模态数据复杂</strong> — 文本、图像、PDF、视频</li>
-            <li><strong>高质量数据匮乏</strong> — RAG检索需要高质量知识库</li>
-            <li><strong>标注成本高昂</strong> — 人工标注效率低、费用高</li>
-            <li><strong>私域数据安全风险</strong> — 企业内部数据需安全可控</li>
-        </ul>
-    </section>
-
-    <!-- 现有方案局限 -->
-    <section class="page">
-        <h2>现有数据处理方案的问题</h2>
-        <div class="highlight-box">
-            <p><strong>工具碎片化</strong>：不同阶段使用不同工具，难以统一管理</p>
-        </div>
-        <div class="highlight-box">
-            <p><strong>流程不连贯</strong>：数据流转需要人工干预，效率低下</p>
-        </div>
-        <div class="highlight-box">
-            <p><strong>缺乏可扩展性</strong>：难以定制处理流程，无法满足特殊需求</p>
-        </div>
-        <div class="highlight-box">
-            <p><strong>协作效率低</strong>：团队协作不便，版本管理混乱</p>
+    <!-- ===== PART 1: BACKGROUND ===== -->
+    <section class="page section-page">
+        <div class="page-content">
+            <div class="section-number">01</div>
+            <h2 class="section-title gradient">背景引入</h2>
+            <div class="section-divider"></div>
         </div>
     </section>
 
-    <!-- DataMate定位 -->
     <section class="page">
-        <h2>DataMate：一站式数据工作平台</h2>
-        <div class="two-columns">
-            <div>
-                <ul>
-                    <li><strong>定位</strong>：面向模型微调与RAG检索的企业级数据平台</li>
-                    <li><strong>一站式</strong>：覆盖数据全生命周期</li>
-                    <li><strong>可扩展</strong>：丰富的算子生态</li>
-                    <li><strong>开源</strong>：MIT协议，社区友好</li>
-                </ul>
-            </div>
-            <div>
-                <p class="large-text">
-                    让数据处理<br>
-                    从"碎片化"走向"一体化"<br>
-                    从"人工"走向"自动化"
-                </p>
+        <div class="page-content">
+            <h2>数据处理的发展历程</h2>
+            <div class="two-columns">
+                <div>
+                    <ul>
+                        <li><strong>手工时代</strong> — Excel、脚本处理</li>
+                        <li><strong>数据仓库时代</strong> — ETL工具、Hadoop生态</li>
+                        <li><strong>机器学习时代</strong> — 特征工程、标注工具</li>
+                        <li><strong>大模型时代</strong> — 高质量数据、RAG检索</li>
+                    </ul>
+                </div>
+                <div style="display: flex; flex-direction: column; justify-content: center;">
+                    <div class="card" style="text-align: center;">
+                        <p class="large" style="color: var(--accent-primary);">
+                            从"数量"转向"质量"<br>
+                            从"结构化"转向"多模态"
+                        </p>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
 
-    <!-- 第二部分标题 -->
-    <section class="page section-title-page">
-        <h2>第二部分</h2>
-        <h1 style="font-size: 2.5em;">项目概览</h1>
-    </section>
-
-    <!-- 整体架构 -->
     <section class="page">
-        <h2>DataMate整体架构</h2>
-        <p class="muted">三层架构设计</p>
-        <table>
-            <tr>
-                <th>层级</th>
-                <th>组件</th>
-                <th>技术栈</th>
-            </tr>
-            <tr>
-                <td>前端层</td>
-                <td>Console + Annotation Studio</td>
-                <td>React 18 + TypeScript + Vite</td>
-            </tr>
-            <tr>
-                <td>后端层</td>
-                <td>API Gateway + Data Services</td>
-                <td>Spring Boot 3.5 + Java 21</td>
-            </tr>
-            <tr>
-                <td>运行时层</td>
-                <td>Python Services + Ray Executor</td>
-                <td>FastAPI + Ray</td>
-            </tr>
-        </table>
-        <p class="muted">数据流向：采集 → 管理 → 清洗 → 标注 → 知识库</p>
-    </section>
-
-    <!-- 技术栈 -->
-    <section class="page">
-        <h2>技术栈一览</h2>
-        <table>
-            <tr>
-                <th>层级</th>
-                <th>技术栈</th>
-            </tr>
-            <tr>
-                <td>前端</td>
-                <td>React 18 + TypeScript + Vite + TailwindCSS + Ant Design</td>
-            </tr>
-            <tr>
-                <td>后端（Java）</td>
-                <td>Spring Boot 3.5 + Java 21 + MyBatis-Plus + PostgreSQL</td>
-            </tr>
-            <tr>
-                <td>后端（Python）</td>
-                <td>FastAPI + SQLAlchemy + Pydantic + Milvus</td>
-            </tr>
-            <tr>
-                <td>执行引擎</td>
-                <td>Ray 分布式计算框架</td>
-            </tr>
-            <tr>
-                <td>向量数据库</td>
-                <td>Milvus（RAG检索）</td>
-            </tr>
-            <tr>
-                <td>部署</td>
-                <td>Docker Compose / Kubernetes Helm</td>
-            </tr>
-        </table>
-    </section>
-
-    <!-- 核心模块 -->
-    <section class="page">
-        <h2>八大核心模块</h2>
-        <div class="two-columns">
-            <div>
-                <ul>
-                    <li>📊 数据采集</li>
-                    <li>📁 数据管理</li>
-                    <li>🧹 数据清洗</li>
-                    <li>✨ 数据合成</li>
-                </ul>
+        <div class="page-content">
+            <h2>大模型时代的数据挑战</h2>
+            <div class="card">
+                <p><strong style="color: var(--text-primary);">数据质量决定模型效果</strong> — "垃圾进，垃圾出"</p>
             </div>
-            <div>
-                <ul>
-                    <li>📝 数据标注</li>
-                    <li>📈 数据评估</li>
-                    <li>🧠 知识生成（RAG）</li>
-                    <li>🔧 算子市场</li>
-                </ul>
+            <div class="card">
+                <p><strong style="color: var(--text-primary);">数据准备周期漫长</strong> — 从采集到可用往往需要数周</p>
+            </div>
+            <div class="card">
+                <p><strong style="color: var(--text-primary);">高质量数据匮乏</strong> — RAG检索需要高质量知识库</p>
+            </div>
+            <div class="card">
+                <p><strong style="color: var(--text-primary);">私域数据安全风险</strong> — 企业内部数据需安全可控</p>
             </div>
         </div>
-        <p style="text-align: center; margin-top: 1em;">覆盖数据全生命周期，从采集到知识库</p>
     </section>
 
-    <!-- 开源生态 -->
     <section class="page">
-        <h2>开源生态</h2>
-        <ul>
-            <li><strong>MIT开源协议</strong> — 自由使用、修改、分发</li>
-            <li><strong>GitHub仓库</strong> — ModelEngine-Group/DataMate</li>
-            <li><strong>CI/CD自动化</strong> — GitHub Actions多架构构建</li>
-            <li><strong>文档完善</strong> — 中英文双语文档</li>
-            <li><strong>社区友好</strong> — Issues讨论、PR贡献指南</li>
-        </ul>
+        <div class="page-content">
+            <h2>现有方案的局限</h2>
+            <div class="three-columns" style="margin-top: 2em;">
+                <div class="feature-item">
+                    <div class="feature-icon">🧩</div>
+                    <div class="feature-title">工具碎片化</div>
+                    <p class="muted" style="font-size: 0.85em; margin-top: 0.5em;">不同阶段使用不同工具</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🔗</div>
+                    <div class="feature-title">流程不连贯</div>
+                    <p class="muted" style="font-size: 0.85em; margin-top: 0.5em;">数据流转需人工干预</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🔧</div>
+                    <div class="feature-title">缺乏扩展性</div>
+                    <p class="muted" style="font-size: 0.85em; margin-top: 0.5em;">难以定制处理流程</p>
+                </div>
+            </div>
+        </div>
     </section>
 
-    <!-- 第三部分标题 -->
-    <section class="page section-title-page">
-        <h2>第三部分</h2>
-        <h1 style="font-size: 2.5em;">架构详解</h1>
-    </section>
-
-    <!-- 前后端分离 -->
     <section class="page">
-        <h2>前后端分离设计</h2>
-        <ul>
-            <li><strong>前端</strong>：React SPA，多应用入口
-                <ul>
-                    <li>Console — 数据工作台与运营控制台</li>
-                    <li>Annotation Studio — 标注工作台（可分离部署）</li>
-                </ul>
-            </li>
-            <li><strong>后端</strong>：API Gateway统一入口
-                <ul>
-                    <li>路由转发</li>
-                    <li>JWT认证</li>
-                    <li>请求限流</li>
-                </ul>
-            </li>
-            <li><strong>通信</strong>：RESTful API + WebSocket（实时状态）</li>
-        </ul>
+        <div class="page-content">
+            <h2 class="gradient">DataMate：一站式解决方案</h2>
+            <div class="two-columns">
+                <div>
+                    <ul>
+                        <li><strong style="color: var(--text-primary);">一站式</strong> — 覆盖数据全生命周期</li>
+                        <li><strong style="color: var(--text-primary);">可扩展</strong> — 丰富的算子生态</li>
+                        <li><strong style="color: var(--text-primary);">开源</strong> — MIT协议，社区友好</li>
+                        <li><strong style="color: var(--text-primary);">企业级</strong> — 支持大规模数据处理</li>
+                    </ul>
+                </div>
+                <div style="display: flex; flex-direction: column; justify-content: center; text-align: center;">
+                    <p class="large" style="background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                        碎片化 → 一体化<br>
+                        人工 → 自动化
+                    </p>
+                </div>
+            </div>
+        </div>
     </section>
 
-    <!-- Java微服务 -->
+    <!-- ===== PART 2: OVERVIEW ===== -->
+    <section class="page section-page">
+        <div class="page-content">
+            <div class="section-number">02</div>
+            <h2 class="section-title gradient">项目概览</h2>
+            <div class="section-divider"></div>
+        </div>
+    </section>
+
     <section class="page">
-        <h2>后端微服务架构</h2>
-        <table>
-            <tr>
-                <th>服务</th>
-                <th>端口</th>
-                <th>职责</th>
-            </tr>
-            <tr>
-                <td>API Gateway</td>
-                <td>8080</td>
-                <td>认证、路由、限流</td>
-            </tr>
-            <tr>
-                <td>Main Application</td>
-                <td>8080</td>
-                <td>数据管理、清洗、算子市场</td>
-            </tr>
-        </table>
-        <h3>DDD分层结构</h3>
-        <pre><code class="language-plaintext">
-interfaces → application → domain → infrastructure
+        <div class="page-content">
+            <h2>整体架构</h2>
+            <div class="table-wrapper">
+                <table>
+                    <tr>
+                        <th>层级</th>
+                        <th>组件</th>
+                        <th>技术栈</th>
+                    </tr>
+                    <tr>
+                        <td><span class="tag">前端层</span></td>
+                        <td>Console + Annotation Studio</td>
+                        <td>React 18 + TypeScript + Vite</td>
+                    </tr>
+                    <tr>
+                        <td><span class="tag">后端层</span></td>
+                        <td>API Gateway + Data Services</td>
+                        <td>Spring Boot 3.5 + Java 21</td>
+                    </tr>
+                    <tr>
+                        <td><span class="tag">运行时</span></td>
+                        <td>Python Services + Ray Executor</td>
+                        <td>FastAPI + Ray</td>
+                    </tr>
+                </table>
+            </div>
+            <div class="flex-center" style="margin-top: 1.5em;">
+                <span class="tag">采集</span>
+                <span style="color: var(--text-muted);">→</span>
+                <span class="tag">管理</span>
+                <span style="color: var(--text-muted);">→</span>
+                <span class="tag">清洗</span>
+                <span style="color: var(--text-muted);">→</span>
+                <span class="tag">标注</span>
+                <span style="color: var(--text-muted);">→</span>
+                <span class="tag">知识库</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="page">
+        <div class="page-content">
+            <h2>技术栈一览</h2>
+            <div class="table-wrapper">
+                <table>
+                    <tr><th>层级</th><th>技术栈</th></tr>
+                    <tr><td>前端</td><td>React 18 + TypeScript + Vite + TailwindCSS + Ant Design</td></tr>
+                    <tr><td>后端 (Java)</td><td>Spring Boot 3.5 + Java 21 + MyBatis-Plus + PostgreSQL</td></tr>
+                    <tr><td>后端 (Python)</td><td>FastAPI + SQLAlchemy + Pydantic + Milvus</td></tr>
+                    <tr><td>执行引擎</td><td>Ray 分布式计算框架</td></tr>
+                    <tr><td>向量数据库</td><td>Milvus（RAG检索）</td></tr>
+                    <tr><td>部署</td><td>Docker Compose / Kubernetes Helm</td></tr>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <section class="page">
+        <div class="page-content">
+            <h2>八大核心模块</h2>
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <div class="feature-icon">📊</div>
+                    <div class="feature-title">数据采集</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">📁</div>
+                    <div class="feature-title">数据管理</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🧹</div>
+                    <div class="feature-title">数据清洗</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">✨</div>
+                    <div class="feature-title">数据合成</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">📝</div>
+                    <div class="feature-title">数据标注</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">📈</div>
+                    <div class="feature-title">数据评估</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🧠</div>
+                    <div class="feature-title">知识生成</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🔧</div>
+                    <div class="feature-title">算子市场</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="page">
+        <div class="page-content">
+            <h2>开源生态</h2>
+            <div class="two-columns">
+                <div>
+                    <ul>
+                        <li><strong style="color: var(--text-primary);">MIT开源协议</strong> — 自由使用、修改、分发</li>
+                        <li><strong style="color: var(--text-primary);">GitHub仓库</strong> — ModelEngine-Group/DataMate</li>
+                        <li><strong style="color: var(--text-primary);">CI/CD自动化</strong> — GitHub Actions多架构构建</li>
+                        <li><strong style="color: var(--text-primary);">文档完善</strong> — 中英文双语文档</li>
+                    </ul>
+                </div>
+                <div style="display: flex; flex-direction: column; justify-content: center; text-align: center;">
+                    <div class="card" style="padding: 2em;">
+                        <p style="font-size: 2em; font-weight: 700; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">MIT</p>
+                        <p class="muted" style="margin-top: 0.5em;">开源协议</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== PART 3: ARCHITECTURE ===== -->
+    <section class="page section-page">
+        <div class="page-content">
+            <div class="section-number">03</div>
+            <h2 class="section-title gradient">架构详解</h2>
+            <div class="section-divider"></div>
+        </div>
+    </section>
+
+    <section class="page">
+        <div class="page-content">
+            <h2>前后端分离设计</h2>
+            <div class="two-columns">
+                <div>
+                    <h4>前端</h4>
+                    <ul>
+                        <li>Console — 数据工作台</li>
+                        <li>Annotation Studio — 标注工作台</li>
+                    </ul>
+                    <h4>通信</h4>
+                    <ul>
+                        <li>RESTful API</li>
+                        <li>WebSocket 实时状态</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4>后端</h4>
+                    <ul>
+                        <li>API Gateway 统一入口</li>
+                        <li>路由转发 + JWT认证</li>
+                        <li>请求限流</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="page">
+        <div class="page-content">
+            <h2>后端微服务架构</h2>
+            <div class="table-wrapper">
+                <table>
+                    <tr><th>服务</th><th>端口</th><th>职责</th></tr>
+                    <tr><td>API Gateway</td><td>8080</td><td>认证、路由、限流</td></tr>
+                    <tr><td>Main Application</td><td>8080</td><td>数据管理、清洗、算子市场</td></tr>
+                </table>
+            </div>
+            <pre><code class="plaintext">interfaces → application → domain → infrastructure
     ↓           ↓           ↓           ↓
- Controllers  Services    Entities    Repositories
-        </code></pre>
+ Controllers  Services    Entities    Repositories</code></pre>
+        </div>
     </section>
 
-    <!-- Python运行时 -->
     <section class="page">
-        <h2>Python运行时架构</h2>
-        <table>
-            <tr>
-                <th>组件</th>
-                <th>端口</th>
-                <th>职责</th>
-            </tr>
-            <tr>
-                <td>datamate-python</td>
-                <td>18000</td>
-                <td>核心业务服务（清洗、合成、标注、评估、RAG）</td>
-            </tr>
-            <tr>
-                <td>python-executor</td>
-                <td>Ray集群</td>
-                <td>分布式算子执行</td>
-            </tr>
-            <tr>
-                <td>ops</td>
-                <td>算子库</td>
-                <td>可扩展数据处理算子</td>
-            </tr>
-            <tr>
-                <td>datax</td>
-                <td>数据框架</td>
-                <td>多源数据读写</td>
-            </tr>
-            <tr>
-                <td>deer-flow</td>
-                <td>LLM服务</td>
-                <td>大语言模型调用</td>
-            </tr>
-        </table>
-    </section>
-
-    <!-- Ray概述 -->
-    <section class="page">
-        <h2>Ray分布式执行引擎</h2>
-        <h3>为什么需要分布式？</h3>
-        <ul>
-            <li>数据量大（TB级）</li>
-            <li>算子计算密集（LLM调用、图像处理）</li>
-            <li>多任务并行需求</li>
-        </ul>
-        <h3>Ray框架优势</h3>
-        <ul>
-            <li>分布式Python原生支持</li>
-            <li>Actor模式 + Task模式</li>
-            <li>GPU资源智能调度</li>
-            <li>弹性伸缩能力</li>
-        </ul>
-    </section>
-
-    <!-- Ray技术细节 -->
-    <section class="page">
-        <h2>Ray执行机制详解</h2>
-        <div class="two-columns">
-            <div>
-                <h4>任务调度</h4>
-                <ul>
-                    <li>异步任务队列</li>
-                    <li>优先级管理</li>
-                    <li>失败重试机制</li>
-                </ul>
-                <h4>分布式计算</h4>
-                <ul>
-                    <li>Remote Function调用</li>
-                    <li>Actor状态管理</li>
-                    <li>多节点负载均衡</li>
-                </ul>
-            </div>
-            <div>
-                <h4>资源管理</h4>
-                <ul>
-                    <li>GPU/CPU动态分配</li>
-                    <li>内存限制控制</li>
-                    <li>任务超时处理</li>
-                </ul>
-                <h4>算子执行</h4>
-                <ul>
-                    <li>Python算子远程调用</li>
-                    <li>执行结果回传</li>
-                    <li>日志实时收集</li>
-                </ul>
+        <div class="page-content">
+            <h2>Python运行时架构</h2>
+            <div class="table-wrapper">
+                <table>
+                    <tr><th>组件</th><th>端口</th><th>职责</th></tr>
+                    <tr><td>datamate-python</td><td>18000</td><td>核心业务服务</td></tr>
+                    <tr><td>python-executor</td><td>Ray集群</td><td>分布式算子执行</td></tr>
+                    <tr><td>ops</td><td>算子库</td><td>可扩展数据处理算子</td></tr>
+                    <tr><td>datax</td><td>数据框架</td><td>多源数据读写</td></tr>
+                    <tr><td>deer-flow</td><td>LLM服务</td><td>大语言模型调用</td></tr>
+                </table>
             </div>
         </div>
     </section>
 
-    <!-- 数据流转 -->
     <section class="page">
-        <h2>数据处理完整流程</h2>
-        <pre><code class="language-plaintext">
-数据采集 → 数据管理 → 数据清洗 → 数据合成 → 数据标注 → 数据评估 → 知识库
+        <div class="page-content">
+            <h2 class="gradient">Ray分布式执行引擎</h2>
+            <h3>为什么需要分布式？</h3>
+            <div class="three-columns">
+                <div class="feature-item">
+                    <div class="feature-title">数据量大</div>
+                    <p class="muted">TB级数据处理</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-title">计算密集</div>
+                    <p class="muted">LLM调用、图像处理</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-title">并行需求</div>
+                    <p class="muted">多任务同时执行</p>
+                </div>
+            </div>
+            <h3 style="margin-top: 2em;">Ray框架优势</h3>
+            <ul>
+                <li>分布式Python原生支持</li>
+                <li>Actor模式 + Task模式</li>
+                <li>GPU资源智能调度</li>
+                <li>弹性伸缩能力</li>
+            </ul>
+        </div>
+    </section>
+
+    <section class="page">
+        <div class="page-content">
+            <h2>Ray执行机制详解</h2>
+            <div class="two-columns">
+                <div>
+                    <div class="card">
+                        <h4>任务调度</h4>
+                        <ul style="margin-bottom: 0;">
+                            <li>异步任务队列</li>
+                            <li>优先级管理</li>
+                            <li>失败重试机制</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>分布式计算</h4>
+                        <ul style="margin-bottom: 0;">
+                            <li>Remote Function调用</li>
+                            <li>Actor状态管理</li>
+                            <li>多节点负载均衡</li>
+                        </ul>
+                    </div>
+                </div>
+                <div>
+                    <div class="card">
+                        <h4>资源管理</h4>
+                        <ul style="margin-bottom: 0;">
+                            <li>GPU/CPU动态分配</li>
+                            <li>内存限制控制</li>
+                            <li>任务超时处理</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>算子执行</h4>
+                        <ul style="margin-bottom: 0;">
+                            <li>Python算子远程调用</li>
+                            <li>执行结果回传</li>
+                            <li>日志实时收集</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="page">
+        <div class="page-content">
+            <h2>数据处理完整流程</h2>
+            <pre><code class="plaintext">数据采集 → 数据管理 → 数据清洗 → 数据合成 → 数据标注 → 数据评估 → 知识库
     ↓          ↓          ↓          ↓          ↓          ↓         ↓
- 多源接入   版本管理   Pipeline编排  QA生成   Label Studio  质量评分  Milvus存储
-        </code></pre>
-        <p>
-            ✅ 每阶段可配置算子Pipeline<br>
-            ✅ 可视化编排：拖拽式流程设计<br>
-            ✅ 执行状态实时监控
-        </p>
+ 多源接入   版本管理   Pipeline编排  QA生成   Label Studio  质量评分  Milvus存储</code></pre>
+            <div class="flex-center" style="margin-top: 1.5em;">
+                <span class="tag">✓ Pipeline编排</span>
+                <span class="tag">✓ 拖拽式设计</span>
+                <span class="tag">✓ 实时监控</span>
+            </div>
+        </div>
     </section>
 
-    <!-- RAG架构 -->
     <section class="page">
-        <h2>RAG知识库架构</h2>
-        <ul>
-            <li><strong>Milvus向量数据库</strong> — 高性能向量检索</li>
-            <li><strong>文档切片</strong> → <strong>Embedding</strong> → <strong>向量存储</strong></li>
-            <li><strong>语义检索</strong> — 支持相似度搜索</li>
-            <li><strong>多知识库管理</strong> — 灵活创建与管理</li>
-        </ul>
-        <pre><code class="language-plaintext">
-原始文档 → 文档切片 → Embedding生成 → Milvus存储 → 语义检索
-        </code></pre>
+        <div class="page-content">
+            <h2>RAG知识库架构</h2>
+            <div class="three-columns">
+                <div class="feature-item">
+                    <div class="feature-icon">📄</div>
+                    <div class="feature-title">文档切片</div>
+                    <p class="muted">智能分片策略</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🔮</div>
+                    <div class="feature-title">Embedding</div>
+                    <p class="muted">向量生成</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🔍</div>
+                    <div class="feature-title">语义检索</div>
+                    <p class="muted">相似度搜索</p>
+                </div>
+            </div>
+            <pre style="margin-top: 1.5em;"><code class="plaintext">原始文档 → 文档切片 → Embedding生成 → Milvus存储 → 语义检索</code></pre>
+        </div>
     </section>
 
-    <!-- 安全机制 -->
     <section class="page">
-        <h2>安全机制</h2>
-        <ul>
-            <li><strong>JWT认证</strong> — 标准Token认证</li>
-            <li><strong>OAuth可选</strong> — 支持第三方认证集成</li>
-            <li><strong>API Gateway鉴权</strong> — 统一入口验证</li>
-            <li><strong>租户隔离</strong> — 多租户数据隔离</li>
-            <li><strong>数据权限控制</strong> — 细粒度权限管理</li>
-        </ul>
+        <div class="page-content">
+            <h2>安全机制</h2>
+            <div class="two-columns">
+                <div>
+                    <div class="card"><p><strong>JWT认证</strong> — 标准Token认证</p></div>
+                    <div class="card"><p><strong>OAuth可选</strong> — 第三方认证集成</p></div>
+                </div>
+                <div>
+                    <div class="card"><p><strong>租户隔离</strong> — 多租户数据隔离</p></div>
+                    <div class="card"><p><strong>权限控制</strong> — 细粒度权限管理</p></div>
+                </div>
+            </div>
+        </div>
     </section>
 
-    <!-- 第四部分标题 -->
-    <section class="page section-title-page">
-        <h2>第四部分</h2>
-        <h1 style="font-size: 2.5em;">功能演示</h1>
+    <!-- ===== PART 4: FEATURES ===== -->
+    <section class="page section-page">
+        <div class="page-content">
+            <div class="section-number">04</div>
+            <h2 class="section-title gradient">功能演示</h2>
+            <div class="section-divider"></div>
+        </div>
     </section>
 
-    <!-- 数据采集 -->
     <section class="page">
-        <h2>数据采集模块</h2>
-        <ul>
-            <li><strong>多数据源支持</strong>
-                <ul>
-                    <li>MySQL、PostgreSQL、MongoDB</li>
-                    <li>Elasticsearch、HDFS、S3</li>
-                    <li>API接口、文件上传</li>
-                </ul>
-            </li>
-            <li><strong>定时采集任务</strong> — APScheduler调度</li>
-            <li><strong>数据源配置管理</strong> — 连接信息加密存储</li>
-            <li><strong>采集状态监控</strong> — 实时查看采集进度</li>
-        </ul>
+        <div class="page-content">
+            <h2>数据采集模块</h2>
+            <div class="three-columns">
+                <div class="feature-item">
+                    <div class="feature-title">多数据源</div>
+                    <p class="muted">MySQL / PostgreSQL / MongoDB</p>
+                    <p class="muted">HDFS / S3 / API</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-title">定时采集</div>
+                    <p class="muted">APcheduler调度</p>
+                    <p class="muted">任务周期管理</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-title">状态监控</div>
+                    <p class="muted">实时进度查看</p>
+                    <p class="muted">异常告警</p>
+                </div>
+            </div>
+        </div>
     </section>
 
-    <!-- 数据管理 -->
     <section class="page">
-        <h2>数据管理模块</h2>
-        <ul>
-            <li><strong>数据集管理</strong> — 创建、删除、版本控制</li>
-            <li><strong>数据元信息</strong> — 格式、大小、标签、来源</li>
-            <li><strong>数据预览</strong> — 表格、JSON、文本多种视图</li>
-            <li><strong>导入导出</strong> — 支持CSV、JSON、Excel等格式</li>
-            <li><strong>数据血缘</strong> — 追踪数据来源与处理历史</li>
-        </ul>
+        <div class="page-content">
+            <h2>数据管理模块</h2>
+            <div class="two-columns">
+                <div>
+                    <ul>
+                        <li><strong>数据集管理</strong> — 创建、删除、版本控制</li>
+                        <li><strong>数据元信息</strong> — 格式、大小、标签、来源</li>
+                        <li><strong>数据预览</strong> — 表格、JSON、文本视图</li>
+                        <li><strong>导入导出</strong> — CSV、JSON、Excel等格式</li>
+                    </ul>
+                </div>
+                <div>
+                    <ul>
+                        <li><strong>数据血缘</strong> — 追踪数据来源与处理历史</li>
+                        <li><strong>版本管理</strong> — 数据版本追踪</li>
+                        <li><strong>权限控制</strong> — 数据访问权限</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
     </section>
 
-    <!-- 数据清洗 -->
     <section class="page">
-        <h2>数据清洗模块</h2>
-        <ul>
-            <li><strong>算子Pipeline编排</strong> — 灵活组合处理流程</li>
-            <li><strong>可视化流程设计</strong> — 拖拽式算子连接</li>
-            <li><strong>内置清洗算子</strong>
-                <ul>
-                    <li>去重算子</li>
-                    <li>敏感内容过滤</li>
-                    <li>质量筛选</li>
-                    <li>格式标准化</li>
-                </ul>
-            </li>
-            <li><strong>执行状态监控</strong> — 实时进度、日志查看</li>
-        </ul>
+        <div class="page-content">
+            <h2>数据清洗模块</h2>
+            <div class="three-columns">
+                <div class="feature-item">
+                    <div class="feature-title">Pipeline编排</div>
+                    <p class="muted">灵活组合处理流程</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-title">可视化设计</div>
+                    <p class="muted">拖拽式算子连接</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-title">内置算子</div>
+                    <p class="muted">去重 / 过滤 / 标准化</p>
+                </div>
+            </div>
+        </div>
     </section>
 
-    <!-- 数据合成 -->
     <section class="page">
-        <h2>数据合成模块</h2>
-        <ul>
-            <li><strong>QA问答生成</strong> — LLM驱动的问答对生成</li>
-            <li><strong>文档处理</strong> — PDF解析、文本提取、格式转换</li>
-            <li><strong>合成任务管理</strong> — 批量任务调度</li>
-            <li><strong>质量控制</strong> — 生成的问答质量评估</li>
-        </ul>
-        <p class="muted">使用大语言模型自动生成训练数据，降低标注成本</p>
+        <div class="page-content">
+            <h2>数据合成模块</h2>
+            <div class="card">
+                <p><strong style="color: var(--text-primary);">QA问答生成</strong> — LLM驱动的问答对自动生成</p>
+            </div>
+            <div class="card">
+                <p><strong style="color: var(--text-primary);">文档处理</strong> — PDF解析、文本提取、格式转换</p>
+            </div>
+            <div class="card">
+                <p><strong style="color: var(--text-primary);">质量控制</strong> — 生成的问答质量自动评估</p>
+            </div>
+        </div>
     </section>
 
-    <!-- 数据标注 -->
     <section class="page">
-        <h2>数据标注模块</h2>
-        <ul>
-            <li><strong>Label Studio集成</strong> — 专业标注工具</li>
-            <li><strong>多标注类型</strong>
-                <ul>
-                    <li>文本分类</li>
-                    <li>图像标注（目标检测、分割）</li>
-                    <li>实体识别</li>
-                    <li>关系抽取</li>
-                </ul>
-            </li>
-            <li><strong>协作标注</strong> — 团队协作、任务分配</li>
-            <li><strong>标注质量控制</strong> — 审核机制、一致性检查</li>
-        </ul>
+        <div class="page-content">
+            <h2>数据标注模块</h2>
+            <div class="two-columns">
+                <div>
+                    <div class="card">
+                        <h4>Label Studio集成</h4>
+                        <p class="muted">专业标注工具，支持多种标注类型</p>
+                    </div>
+                    <ul>
+                        <li>文本分类</li>
+                        <li>图像标注（目标检测、分割）</li>
+                        <li>实体识别</li>
+                        <li>关系抽取</li>
+                    </ul>
+                </div>
+                <div>
+                    <div class="card">
+                        <h4>协作标注</h4>
+                        <p class="muted">团队协作、任务分配</p>
+                    </div>
+                    <div class="card">
+                        <h4>质量控制</h4>
+                        <p class="muted">审核机制、一致性检查</p>
+                    </div>
+                </div>
+            </div>
+        </div>
     </section>
 
-    <!-- 数据评估 -->
     <section class="page">
-        <h2>数据评估模块</h2>
-        <ul>
-            <li><strong>模型评估</strong> — 数据质量评分</li>
-            <li><strong>评估指标</strong>
-                <ul>
-                    <li>准确率、召回率</li>
-                    <li>覆盖率、多样性</li>
-                    <li>一致性得分</li>
-                </ul>
-            </li>
-            <li><strong>评估报告</strong> — 自动生成分析报告</li>
-            <li><strong>问题数据定位</strong> — 快速发现质量问题</li>
-        </ul>
+        <div class="page-content">
+            <h2>数据评估模块</h2>
+            <div class="table-wrapper">
+                <table>
+                    <tr><th>功能</th><th>说明</th></tr>
+                    <tr><td>模型评估</td><td>数据质量评分</td></tr>
+                    <tr><td>评估指标</td><td>准确率、召回率、覆盖率、多样性</td></tr>
+                    <tr><td>评估报告</td><td>自动生成分析报告</td></tr>
+                    <tr><td>问题定位</td><td>快速发现质量问题</td></tr>
+                </table>
+            </div>
+        </div>
     </section>
 
-    <!-- 知识库 -->
     <section class="page">
-        <h2>知识生成与RAG</h2>
-        <ul>
-            <li><strong>文档切片</strong> — 智能分片策略（按段落、语义）</li>
-            <li><strong>向量化</strong> — Embedding模型生成向量</li>
-            <li><strong>Milvus存储</strong> — 高性能向量数据库</li>
-            <li><strong>知识库管理</strong>
-                <ul>
-                    <li>多知识库创建</li>
-                    <li>知识库检索测试</li>
-                    <li>知识更新与删除</li>
-                </ul>
-            </li>
-        </ul>
+        <div class="page-content">
+            <h2>知识生成与RAG</h2>
+            <div class="three-columns">
+                <div class="feature-item">
+                    <div class="feature-icon">📄</div>
+                    <div class="feature-title">文档切片</div>
+                    <p class="muted">智能分片策略</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">⚡</div>
+                    <div class="feature-title">向量存储</div>
+                    <p class="muted">Milvus高性能检索</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🎯</div>
+                    <div class="feature-title">知识管理</div>
+                    <p class="muted">多知识库创建管理</p>
+                </div>
+            </div>
+        </div>
     </section>
 
-    <!-- 第五部分标题 -->
-    <section class="page section-title-page">
-        <h2>第五部分</h2>
-        <h1 style="font-size: 2.5em;">算子开发实操</h1>
+    <!-- ===== PART 5: OPERATOR DEV ===== -->
+    <section class="page section-page">
+        <div class="page-content">
+            <div class="section-number">05</div>
+            <h2 class="section-title gradient">算子开发实操</h2>
+            <div class="section-divider"></div>
+        </div>
     </section>
 
-    <!-- 算子概念 -->
     <section class="page">
-        <h2>什么是算子？</h2>
-        <p><strong>定义</strong>：数据处理的可复用单元</p>
-        <table>
-            <tr>
-                <th>类型</th>
-                <th>功能</th>
-                <th>示例</th>
-            </tr>
-            <tr>
-                <td>filter</td>
-                <td>数据过滤</td>
-                <td>去重、敏感内容过滤、质量筛选</td>
-            </tr>
-            <tr>
-                <td>mapper</td>
-                <td>数据转换</td>
-                <td>清洗、格式化、标准化</td>
-            </tr>
-            <tr>
-                <td>slicer</td>
-                <td>数据切片</td>
-                <td>文本分割、PDF切分</td>
-            </tr>
-            <tr>
-                <td>formatter</td>
-                <td>格式转换</td>
-                <td>PDF→Text、JSON→CSV</td>
-            </tr>
-            <tr>
-                <td>llms</td>
-                <td>LLM算子</td>
-                <td>质量评估、条件判断、摘要生成</td>
-            </tr>
-            <tr>
-                <td>annotation</td>
-                <td>标注算子</td>
-                <td>目标检测、图像分割</td>
-            </tr>
-        </table>
-        <p>🔗 算子市场：上传、下载、分享算子</p>
+        <div class="page-content">
+            <h2>什么是算子？</h2>
+            <p class="large"><strong>数据处理的可复用单元</strong></p>
+            <div class="table-wrapper" style="margin-top: 1.5em;">
+                <table>
+                    <tr><th>类型</th><th>功能</th><th>示例</th></tr>
+                    <tr><td><span class="tag">filter</span></td><td>数据过滤</td><td>去重、敏感内容过滤</td></tr>
+                    <tr><td><span class="tag">mapper</span></td><td>数据转换</td><td>清洗、格式化、标准化</td></tr>
+                    <tr><td><span class="tag">slicer</span></td><td>数据切片</td><td>文本分割、PDF切分</td></tr>
+                    <tr><td><span class="tag">formatter</span></td><td>格式转换</td><td>PDF→Text、JSON→CSV</td></tr>
+                    <tr><td><span class="tag">llms</span></td><td>LLM算子</td><td>质量评估、摘要生成</td></tr>
+                    <tr><td><span class="tag">annotation</span></td><td>标注算子</td><td>目标检测、图像分割</td></tr>
+                </table>
+            </div>
+        </div>
     </section>
 
-    <!-- 开发流程 -->
     <section class="page">
-        <h2>算子开发流程</h2>
-        <ol>
-            <li><strong>环境准备</strong>：Python 3.12+、Poetry依赖管理</li>
-            <li><strong>继承BaseOp类</strong>：实现算子基类</li>
-            <li><strong>实现execute方法</strong>：核心处理逻辑</li>
-            <li><strong>编写配置参数</strong>：参数定义与验证</li>
-            <li><strong>测试验证</strong>：单元测试 + 集成测试</li>
-            <li><strong>上传算子市场</strong>：分享给社区</li>
-        </ol>
+        <div class="page-content">
+            <h2>算子开发流程</h2>
+            <div class="three-columns">
+                <div class="feature-item">
+                    <div class="feature-title">1. 环境准备</div>
+                    <p class="muted">Python 3.12+ / Poetry</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-title">2. 继承BaseOp</div>
+                    <p class="muted">实现算子基类</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-title">3. 实现execute</div>
+                    <p class="muted">核心处理逻辑</p>
+                </div>
+            </div>
+            <div class="three-columns" style="margin-top: 1em;">
+                <div class="feature-item">
+                    <div class="feature-title">4. 配置参数</div>
+                    <p class="muted">参数定义与验证</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-title">5. 测试验证</div>
+                    <p class="muted">单元测试 + 集成测试</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-title">6. 上传分享</div>
+                    <p class="muted">上传算子市场</p>
+                </div>
+            </div>
+        </div>
     </section>
 
-    <!-- 代码示例一 -->
     <section class="page">
-        <h2>算子开发示例 — 简单过滤算子</h2>
-        <pre><code class="language-python">from ops.base_op import BaseOp
+        <div class="page-content">
+            <h2>代码示例 — 过滤算子</h2>
+            <pre><code class="language-python">from ops.base_op import BaseOp
 
 class LengthFilterOp(BaseOp):
     """过滤文本长度低于阈值的文档"""
@@ -807,17 +1174,18 @@ class LengthFilterOp(BaseOp):
             d for d in data 
             if len(d.get("text", "")) >= min_length
         ]</code></pre>
-        <p>
-            ✅ 继承 BaseOp<br>
-            ✅ 实现 execute 方法<br>
-            ✅ 从 config 获取参数
-        </p>
+            <div class="flex-center" style="margin-top: 1em;">
+                <span class="tag">继承 BaseOp</span>
+                <span class="tag">实现 execute</span>
+                <span class="tag">config 获取参数</span>
+            </div>
+        </div>
     </section>
 
-    <!-- 代码示例二 -->
     <section class="page">
-        <h2>算子开发示例 — LLM算子</h2>
-        <pre><code class="language-python">from ops.base_op import BaseOp
+        <div class="page-content">
+            <h2>代码示例 — LLM算子</h2>
+            <pre><code class="language-python">from ops.base_op import BaseOp
 from ops.llms import LLMClient
 
 class QualityEvaluatorOp(BaseOp):
@@ -831,17 +1199,18 @@ class QualityEvaluatorOp(BaseOp):
             doc["quality_score"] = score
             results.append(doc)
         return results</code></pre>
-        <p>
-            ✅ LLMClient 集成<br>
-            ✅ 批量处理数据<br>
-            ✅ 输出包含新增字段
-        </p>
+            <div class="flex-center" style="margin-top: 1em;">
+                <span class="tag">LLMClient集成</span>
+                <span class="tag">批量处理</span>
+                <span class="tag">新增字段输出</span>
+            </div>
+        </div>
     </section>
 
-    <!-- 配置设计 -->
     <section class="page">
-        <h2>算子配置设计</h2>
-        <pre><code class="language-yaml">op_config:
+        <div class="page-content">
+            <h2>算子配置设计</h2>
+            <pre><code class="language-yaml">op_config:
   name: "length_filter"
   type: "filter"
   params:
@@ -849,156 +1218,194 @@ class QualityEvaluatorOp(BaseOp):
       type: int
       default: 100
       description: "最小文本长度阈值"</code></pre>
-        <ul>
-            <li><strong>配置验证</strong>：Pydantic模型验证参数类型</li>
-            <li><strong>参数传递</strong>：execute方法通过config获取</li>
-            <li><strong>文档规范</strong>：每个参数需有description</li>
-        </ul>
+            <ul style="margin-top: 1em;">
+                <li><strong>Pydantic验证</strong> — 参数类型自动校验</li>
+                <li><strong>参数传递</strong> — 通过 self.config 获取</li>
+                <li><strong>文档规范</strong> — 每个参数需有 description</li>
+            </ul>
+        </div>
     </section>
 
-    <!-- 最佳实践 -->
     <section class="page">
-        <h2>算子开发最佳实践</h2>
-        <ul>
-            <li><strong>性能优化</strong>
-                <ul>
-                    <li>批量处理而非逐条处理</li>
-                    <li>异步调用（asyncio）</li>
-                    <li>缓存重复计算结果</li>
-                </ul>
-            </li>
-            <li><strong>错误处理</strong>
-                <ul>
-                    <li>try-catch捕获异常</li>
-                    <li>日志记录（logging）</li>
-                    <li>优雅降级处理</li>
-                </ul>
-            </li>
-            <li><strong>资源管理</strong>
-                <ul>
-                    <li>内存限制设置</li>
-                    <li>超时时间配置</li>
-                    <li>GPU资源申请</li>
-                </ul>
-            </li>
-            <li><strong>测试覆盖</strong>
-                <ul>
-                    <li>单元测试覆盖核心逻辑</li>
-                    <li>集成测试验证Pipeline</li>
-                </ul>
-            </li>
-        </ul>
-    </section>
-
-    <!-- 第六部分标题 -->
-    <section class="page section-title-page">
-        <h2>第六部分</h2>
-        <h1 style="font-size: 2.5em;">总结与展望</h1>
-    </section>
-
-    <!-- 开源贡献 -->
-    <section class="page">
-        <h2>如何参与开源贡献</h2>
-        <p><strong>GitHub</strong>：github.com/ModelEngine-Group/DataMate</p>
-        <ul>
-            <li><strong>提交Issue</strong> — Bug报告、功能建议</li>
-            <li><strong>Pull Request</strong> — 代码贡献、文档完善</li>
-            <li><strong>翻译文档</strong> — 多语言支持</li>
-            <li><strong>分享使用经验</strong> — Discussions讨论</li>
-        </ul>
-        <p class="muted">开发环境搭建指南：DEVELOPMENT.md</p>
-    </section>
-
-    <!-- 未来规划 -->
-    <section class="page">
-        <h2>DataMate未来规划</h2>
-        <div class="two-columns">
-            <div>
-                <h4>近期计划</h4>
-                <ul>
-                    <li>更多算子类型支持</li>
-                    <li>多语言SDK（Python/Java）</li>
-                    <li>性能优化</li>
-                    <li>文档完善</li>
-                </ul>
-            </div>
-            <div>
-                <h4>中期规划</h4>
-                <ul>
-                    <li>Agent编排能力</li>
-                    <li>多模态数据处理增强</li>
-                    <li>企业版特性</li>
-                    <li>云服务版本</li>
-                </ul>
+        <div class="page-content">
+            <h2>最佳实践</h2>
+            <div class="two-columns">
+                <div>
+                    <div class="card">
+                        <h4>性能优化</h4>
+                        <ul style="margin-bottom: 0;">
+                            <li>批量处理而非逐条</li>
+                            <li>异步调用 (asyncio)</li>
+                            <li>缓存重复计算</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>错误处理</h4>
+                        <ul style="margin-bottom: 0;">
+                            <li>try-catch捕获异常</li>
+                            <li>日志记录</li>
+                            <li>优雅降级</li>
+                        </ul>
+                    </div>
+                </div>
+                <div>
+                    <div class="card">
+                        <h4>资源管理</h4>
+                        <ul style="margin-bottom: 0;">
+                            <li>内存限制设置</li>
+                            <li>超时时间配置</li>
+                            <li>GPU资源申请</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>测试覆盖</h4>
+                        <ul style="margin-bottom: 0;">
+                            <li>单元测试覆盖核心</li>
+                            <li>集成测试验证Pipeline</li>
+                        </ul>
+                    </div>
+                </div>
             </div>
         </div>
-        <p class="accent" style="text-align: center; margin-top: 1em;">长期愿景：成为AI数据处理的标准平台</p>
     </section>
 
-    <!-- 感谢 -->
-    <section class="page title-page">
-        <h1>感谢聆听</h1>
-        <p style="margin-top: 1em;">
-            <strong>项目地址</strong>：github.com/ModelEngine-Group/DataMate<br>
-            <strong>文档地址</strong>：项目README.md<br>
-            <strong>社区入口</strong>：GitHub Discussions
-        </p>
-        <p class="large-text" style="margin-top: 2em;">
-            欢迎加入DataMate开源社区！
-        </p>
-        <p style="margin-top: 1em;">
-            Star ⭐️ 支持 | Issue 反馈 | PR 贡献
-        </p>
+    <!-- ===== PART 6: SUMMARY ===== -->
+    <section class="page section-page">
+        <div class="page-content">
+            <div class="section-number">06</div>
+            <h2 class="section-title gradient">总结与展望</h2>
+            <div class="section-divider"></div>
+        </div>
+    </section>
+
+    <section class="page">
+        <div class="page-content">
+            <h2>开源贡献</h2>
+            <p class="large" style="background: var(--gradient-2); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                github.com/ModelEngine-Group/DataMate
+            </p>
+            <div class="three-columns" style="margin-top: 2em;">
+                <div class="feature-item">
+                    <div class="feature-title">提交Issue</div>
+                    <p class="muted">Bug报告 / 功能建议</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-title">Pull Request</div>
+                    <p class="muted">代码贡献 / 文档完善</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-title">分享经验</div>
+                    <p class="muted">Discussions讨论</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="page">
+        <div class="page-content">
+            <h2>未来规划</h2>
+            <div class="two-columns">
+                <div>
+                    <div class="card">
+                        <h4>近期计划</h4>
+                        <ul style="margin-bottom: 0;">
+                            <li>更多算子类型支持</li>
+                            <li>多语言SDK</li>
+                            <li>性能优化</li>
+                            <li>文档完善</li>
+                        </ul>
+                    </div>
+                </div>
+                <div>
+                    <div class="card">
+                        <h4>中期规划</h4>
+                        <ul style="margin-bottom: 0;">
+                            <li>Agent编排能力</li>
+                            <li>多模态数据增强</li>
+                            <li>企业版特性</li>
+                            <li>云服务版本</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="section-divider"></div>
+            <p class="large" style="text-align: center; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                长期愿景：成为AI数据处理的标准平台
+            </p>
+        </div>
+    </section>
+
+    <section class="page cover-page">
+        <div class="page-content" style="text-align: center;">
+            <h1 class="gradient">感谢聆听</h1>
+            <p style="margin-top: 1.5em; font-size: 1.2em;">
+                <strong>项目地址</strong>：github.com/ModelEngine-Group/DataMate<br>
+                <strong>文档地址</strong>：项目 README.md<br>
+                <strong>社区入口</strong>：GitHub Discussions
+            </p>
+            <p class="large" style="margin-top: 2em; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                欢迎加入 DataMate 开源社区！
+            </p>
+            <div class="flex-center" style="margin-top: 1.5em;">
+                <span class="tag">⭐ Star 支持</span>
+                <span class="tag">💬 Issue 反馈</span>
+                <span class="tag">🤝 PR 贡献</span>
+            </div>
+        </div>
+        <div class="float-element" style="top: 30%; left: 5%;"></div>
+        <div class="float-element" style="bottom: 30%; right: 5%;"></div>
     </section>
 
     <script>
-        // 初始化代码高亮
-        hljs.registerLanguage('plaintext', function() { return { contains: [] }; });
-        document.querySelectorAll('pre code').forEach((block) => {
+        // Code highlighting
+        document.querySelectorAll('pre code').forEach(block => {
             hljs.highlightElement(block);
         });
         
-        // 滚动进度条
-        const progressBar = document.getElementById('progressBar');
-        const pageNumber = document.getElementById('pageNumber');
+        // Page navigation
         const pages = document.querySelectorAll('.page');
+        const progressFill = document.getElementById('progressFill');
+        const pageNum = document.getElementById('pageNum');
+        const pageTotal = document.getElementById('pageTotal');
         
-        function updateProgress() {
-            const scrollTop = window.scrollY;
-            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-            const progress = (scrollTop / docHeight) * 100;
-            progressBar.style.width = progress + '%';
-            
-            // 计算当前页
-            let current = 1;
-            for (let i = 0; i < pages.length; i++) {
-                if (pages[i].offsetTop <= scrollTop + window.innerHeight / 2) {
-                    current = i + 1;
-                }
-            }
-            pageNumber.textContent = `${current} / ${pages.length}`;
-        }
+        pageTotal.textContent = pages.length;
         
-        window.addEventListener('scroll', updateProgress);
-        updateProgress();
-        
-        // 键盘翻页支持
-        let currentPageIndex = 0;
+        let currentPage = 0;
         
         function goToPage(index) {
             if (index >= 0 && index < pages.length) {
                 pages[index].scrollIntoView({ behavior: 'smooth' });
-                currentPageIndex = index;
+                currentPage = index;
             }
         }
         
-        document.addEventListener('keydown', (e) => {
+        function updateProgress() {
+            const scrollTop = window.scrollY;
+            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const progress = Math.min((scrollTop / docHeight) * 100, 100);
+            progressFill.style.width = progress + '%';
+            
+            // Find current page
+            for (let i = 0; i < pages.length; i++) {
+                const rect = pages[i].getBoundingClientRect();
+                if (rect.top <= window.innerHeight / 2 && rect.bottom >= window.innerHeight / 2) {
+                    currentPage = i;
+                    pageNum.textContent = String(i + 1).padStart(2, '0');
+                }
+            }
+        }
+        
+        window.addEventListener('scroll', updateProgress, { passive: true });
+        updateProgress();
+        
+        // Keyboard navigation
+        document.addEventListener('keydown', e => {
             if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') {
                 e.preventDefault();
-                goToPage(currentPageIndex + 1);
+                goToPage(currentPage + 1);
             } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
                 e.preventDefault();
-                goToPage(currentPageIndex - 1);
+                goToPage(currentPage - 1);
             } else if (e.key === 'Home') {
                 e.preventDefault();
                 goToPage(0);
@@ -1008,15 +1415,15 @@ class QualityEvaluatorOp(BaseOp):
             }
         });
         
-        // 更新当前页索引
-        window.addEventListener('scroll', () => {
-            const scrollTop = window.scrollY;
-            for (let i = 0; i < pages.length; i++) {
-                if (pages[i].offsetTop <= scrollTop + 50) {
-                    currentPageIndex = i;
-                }
-            }
-        });
+        // Mouse wheel snap
+        let wheelTimeout;
+        document.addEventListener('wheel', e => {
+            clearTimeout(wheelTimeout);
+            wheelTimeout = setTimeout(() => {
+                const direction = e.deltaY > 0 ? 1 : -1;
+                goToPage(currentPage + direction);
+            }, 50);
+        }, { passive: true });
     </script>
 </body>
 </html>
