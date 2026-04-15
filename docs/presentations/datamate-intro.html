@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataMate - 一站式数据工作平台</title>
+    
+    <!-- Highlight.js for code -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/core.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/python.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/yaml.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/plaintext.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html {
+            scroll-snap-type: y mandatory;
+            overflow-y: scroll;
+        }
+        
+        body {
+            font-family: 'Source Han Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            font-size: 24px;
+            line-height: 1.6;
+            color: #333;
+            background: #fff;
+        }
+        
+        .page {
+            min-height: 100vh;
+            height: 100vh;
+            padding: 60px 80px;
+            max-width: 1200px;
+            margin: 0 auto;
+            scroll-snap-align: start;
+            scroll-snap-stop: always;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+        
+        .page:last-child {
+            border-bottom: none;
+        }
+        
+        h1 {
+            font-size: 3em;
+            font-weight: 700;
+            margin-bottom: 0.5em;
+            color: #1a1a1a;
+        }
+        
+        h2 {
+            font-size: 2em;
+            font-weight: 600;
+            margin-bottom: 1em;
+            color: #1a1a1a;
+        }
+        
+        h3 {
+            font-size: 1.4em;
+            font-weight: 600;
+            margin-bottom: 0.8em;
+            color: #333;
+        }
+        
+        h4 {
+            font-size: 1.2em;
+            font-weight: 600;
+            margin: 1em 0 0.5em 0;
+            color: #333;
+        }
+        
+        p {
+            margin-bottom: 0.8em;
+        }
+        
+        ul, ol {
+            margin-left: 1.5em;
+            margin-bottom: 1em;
+        }
+        
+        li {
+            margin-bottom: 0.5em;
+        }
+        
+        li ul {
+            margin-top: 0.3em;
+            font-size: 0.9em;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1em 0;
+            font-size: 0.85em;
+        }
+        
+        table th, table td {
+            border: 1px solid #ddd;
+            padding: 12px 16px;
+            text-align: left;
+        }
+        
+        table th {
+            background: #f5f5f5;
+            font-weight: 600;
+        }
+        
+        table tr:nth-child(even) td {
+            background: #fafafa;
+        }
+        
+        pre {
+            background: #f6f8fa;
+            border-radius: 8px;
+            padding: 20px;
+            overflow-x: auto;
+            margin: 1em 0;
+            font-size: 0.8em;
+        }
+        
+        code {
+            font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+        }
+        
+        .highlight-box {
+            background: #f0f7ff;
+            border-left: 4px solid #0066cc;
+            padding: 16px 20px;
+            margin: 1em 0;
+        }
+        
+        .title-page {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .section-title-page {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .section-title-page h2 {
+            font-size: 2.5em;
+        }
+        
+        .two-columns {
+            display: flex;
+            gap: 40px;
+            margin-top: 1em;
+        }
+        
+        .two-columns > div {
+            flex: 1;
+        }
+        
+        .accent {
+            color: #0066cc;
+            font-weight: 600;
+        }
+        
+        .muted {
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .large-text {
+            font-size: 1.3em;
+            color: #0066cc;
+            font-weight: 600;
+        }
+        
+        .page-number {
+            position: fixed;
+            bottom: 20px;
+            right: 30px;
+            font-size: 0.8em;
+            color: #999;
+            background: rgba(255,255,255,0.9);
+            padding: 8px 12px;
+            border-radius: 4px;
+        }
+        
+        .page-nav-hint {
+            position: fixed;
+            bottom: 20px;
+            left: 30px;
+            font-size: 0.7em;
+            color: #999;
+            background: rgba(255,255,255,0.9);
+            padding: 8px 12px;
+            border-radius: 4px;
+        }
+        
+        .nav-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: #eee;
+            z-index: 100;
+        }
+        
+        .nav-progress-bar {
+            height: 100%;
+            background: #0066cc;
+            width: 0%;
+            transition: width 0.1s;
+        }
+    </style>
+</head>
+<body>
+    <div class="nav-progress">
+        <div class="nav-progress-bar" id="progressBar"></div>
+    </div>
+    
+    <div class="page-number" id="pageNumber"></div>
+    <div class="page-nav-hint">↑↓ 翻页 | Space 下一页</div>
+
+    <!-- 封面 -->
+    <section class="page title-page">
+        <h1>DataMate</h1>
+        <h2>一站式数据工作平台</h2>
+        <p>面向模型微调与RAG检索的企业级数据处理平台</p>
+        <p class="muted" style="margin-top: 2em;">
+            开源项目：github.com/ModelEngine-Group/DataMate
+        </p>
+    </section>
+
+    <!-- 第一部分标题 -->
+    <section class="page section-title-page">
+        <h2>第一部分</h2>
+        <h1 style="font-size: 2.5em;">背景引入</h1>
+    </section>
+
+    <!-- 数据处理演进 -->
+    <section class="page">
+        <h2>数据处理的发展历程</h2>
+        <div class="two-columns">
+            <div>
+                <ul>
+                    <li><strong>手工时代</strong>：Excel、脚本处理</li>
+                    <li><strong>数据仓库时代</strong>：ETL工具、Hadoop生态</li>
+                    <li><strong>机器学习时代</strong>：特征工程、标注工具</li>
+                    <li><strong>大模型时代</strong>：高质量数据、RAG检索</li>
+                </ul>
+            </div>
+            <div>
+                <p class="muted">
+                    数据处理需求随着AI发展不断演进<br>
+                    从"数量"转向"质量"<br>
+                    从"结构化"转向"多模态"
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 数据挑战 -->
+    <section class="page">
+        <h2>大模型时代面临的数据挑战</h2>
+        <ul>
+            <li><strong>数据质量决定模型效果</strong> — "垃圾进，垃圾出"</li>
+            <li><strong>数据准备周期漫长</strong> — 从采集到可用往往需要数周</li>
+            <li><strong>多模态数据复杂</strong> — 文本、图像、PDF、视频</li>
+            <li><strong>高质量数据匮乏</strong> — RAG检索需要高质量知识库</li>
+            <li><strong>标注成本高昂</strong> — 人工标注效率低、费用高</li>
+            <li><strong>私域数据安全风险</strong> — 企业内部数据需安全可控</li>
+        </ul>
+    </section>
+
+    <!-- 现有方案局限 -->
+    <section class="page">
+        <h2>现有数据处理方案的问题</h2>
+        <div class="highlight-box">
+            <p><strong>工具碎片化</strong>：不同阶段使用不同工具，难以统一管理</p>
+        </div>
+        <div class="highlight-box">
+            <p><strong>流程不连贯</strong>：数据流转需要人工干预，效率低下</p>
+        </div>
+        <div class="highlight-box">
+            <p><strong>缺乏可扩展性</strong>：难以定制处理流程，无法满足特殊需求</p>
+        </div>
+        <div class="highlight-box">
+            <p><strong>协作效率低</strong>：团队协作不便，版本管理混乱</p>
+        </div>
+    </section>
+
+    <!-- DataMate定位 -->
+    <section class="page">
+        <h2>DataMate：一站式数据工作平台</h2>
+        <div class="two-columns">
+            <div>
+                <ul>
+                    <li><strong>定位</strong>：面向模型微调与RAG检索的企业级数据平台</li>
+                    <li><strong>一站式</strong>：覆盖数据全生命周期</li>
+                    <li><strong>可扩展</strong>：丰富的算子生态</li>
+                    <li><strong>开源</strong>：MIT协议，社区友好</li>
+                </ul>
+            </div>
+            <div>
+                <p class="large-text">
+                    让数据处理<br>
+                    从"碎片化"走向"一体化"<br>
+                    从"人工"走向"自动化"
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 第二部分标题 -->
+    <section class="page section-title-page">
+        <h2>第二部分</h2>
+        <h1 style="font-size: 2.5em;">项目概览</h1>
+    </section>
+
+    <!-- 整体架构 -->
+    <section class="page">
+        <h2>DataMate整体架构</h2>
+        <p class="muted">三层架构设计</p>
+        <table>
+            <tr>
+                <th>层级</th>
+                <th>组件</th>
+                <th>技术栈</th>
+            </tr>
+            <tr>
+                <td>前端层</td>
+                <td>Console + Annotation Studio</td>
+                <td>React 18 + TypeScript + Vite</td>
+            </tr>
+            <tr>
+                <td>后端层</td>
+                <td>API Gateway + Data Services</td>
+                <td>Spring Boot 3.5 + Java 21</td>
+            </tr>
+            <tr>
+                <td>运行时层</td>
+                <td>Python Services + Ray Executor</td>
+                <td>FastAPI + Ray</td>
+            </tr>
+        </table>
+        <p class="muted">数据流向：采集 → 管理 → 清洗 → 标注 → 知识库</p>
+    </section>
+
+    <!-- 技术栈 -->
+    <section class="page">
+        <h2>技术栈一览</h2>
+        <table>
+            <tr>
+                <th>层级</th>
+                <th>技术栈</th>
+            </tr>
+            <tr>
+                <td>前端</td>
+                <td>React 18 + TypeScript + Vite + TailwindCSS + Ant Design</td>
+            </tr>
+            <tr>
+                <td>后端（Java）</td>
+                <td>Spring Boot 3.5 + Java 21 + MyBatis-Plus + PostgreSQL</td>
+            </tr>
+            <tr>
+                <td>后端（Python）</td>
+                <td>FastAPI + SQLAlchemy + Pydantic + Milvus</td>
+            </tr>
+            <tr>
+                <td>执行引擎</td>
+                <td>Ray 分布式计算框架</td>
+            </tr>
+            <tr>
+                <td>向量数据库</td>
+                <td>Milvus（RAG检索）</td>
+            </tr>
+            <tr>
+                <td>部署</td>
+                <td>Docker Compose / Kubernetes Helm</td>
+            </tr>
+        </table>
+    </section>
+
+    <!-- 核心模块 -->
+    <section class="page">
+        <h2>八大核心模块</h2>
+        <div class="two-columns">
+            <div>
+                <ul>
+                    <li>📊 数据采集</li>
+                    <li>📁 数据管理</li>
+                    <li>🧹 数据清洗</li>
+                    <li>✨ 数据合成</li>
+                </ul>
+            </div>
+            <div>
+                <ul>
+                    <li>📝 数据标注</li>
+                    <li>📈 数据评估</li>
+                    <li>🧠 知识生成（RAG）</li>
+                    <li>🔧 算子市场</li>
+                </ul>
+            </div>
+        </div>
+        <p style="text-align: center; margin-top: 1em;">覆盖数据全生命周期，从采集到知识库</p>
+    </section>
+
+    <!-- 开源生态 -->
+    <section class="page">
+        <h2>开源生态</h2>
+        <ul>
+            <li><strong>MIT开源协议</strong> — 自由使用、修改、分发</li>
+            <li><strong>GitHub仓库</strong> — ModelEngine-Group/DataMate</li>
+            <li><strong>CI/CD自动化</strong> — GitHub Actions多架构构建</li>
+            <li><strong>文档完善</strong> — 中英文双语文档</li>
+            <li><strong>社区友好</strong> — Issues讨论、PR贡献指南</li>
+        </ul>
+    </section>
+
+    <!-- 第三部分标题 -->
+    <section class="page section-title-page">
+        <h2>第三部分</h2>
+        <h1 style="font-size: 2.5em;">架构详解</h1>
+    </section>
+
+    <!-- 前后端分离 -->
+    <section class="page">
+        <h2>前后端分离设计</h2>
+        <ul>
+            <li><strong>前端</strong>：React SPA，多应用入口
+                <ul>
+                    <li>Console — 数据工作台与运营控制台</li>
+                    <li>Annotation Studio — 标注工作台（可分离部署）</li>
+                </ul>
+            </li>
+            <li><strong>后端</strong>：API Gateway统一入口
+                <ul>
+                    <li>路由转发</li>
+                    <li>JWT认证</li>
+                    <li>请求限流</li>
+                </ul>
+            </li>
+            <li><strong>通信</strong>：RESTful API + WebSocket（实时状态）</li>
+        </ul>
+    </section>
+
+    <!-- Java微服务 -->
+    <section class="page">
+        <h2>后端微服务架构</h2>
+        <table>
+            <tr>
+                <th>服务</th>
+                <th>端口</th>
+                <th>职责</th>
+            </tr>
+            <tr>
+                <td>API Gateway</td>
+                <td>8080</td>
+                <td>认证、路由、限流</td>
+            </tr>
+            <tr>
+                <td>Main Application</td>
+                <td>8080</td>
+                <td>数据管理、清洗、算子市场</td>
+            </tr>
+        </table>
+        <h3>DDD分层结构</h3>
+        <pre><code class="language-plaintext">
+interfaces → application → domain → infrastructure
+    ↓           ↓           ↓           ↓
+ Controllers  Services    Entities    Repositories
+        </code></pre>
+    </section>
+
+    <!-- Python运行时 -->
+    <section class="page">
+        <h2>Python运行时架构</h2>
+        <table>
+            <tr>
+                <th>组件</th>
+                <th>端口</th>
+                <th>职责</th>
+            </tr>
+            <tr>
+                <td>datamate-python</td>
+                <td>18000</td>
+                <td>核心业务服务（清洗、合成、标注、评估、RAG）</td>
+            </tr>
+            <tr>
+                <td>python-executor</td>
+                <td>Ray集群</td>
+                <td>分布式算子执行</td>
+            </tr>
+            <tr>
+                <td>ops</td>
+                <td>算子库</td>
+                <td>可扩展数据处理算子</td>
+            </tr>
+            <tr>
+                <td>datax</td>
+                <td>数据框架</td>
+                <td>多源数据读写</td>
+            </tr>
+            <tr>
+                <td>deer-flow</td>
+                <td>LLM服务</td>
+                <td>大语言模型调用</td>
+            </tr>
+        </table>
+    </section>
+
+    <!-- Ray概述 -->
+    <section class="page">
+        <h2>Ray分布式执行引擎</h2>
+        <h3>为什么需要分布式？</h3>
+        <ul>
+            <li>数据量大（TB级）</li>
+            <li>算子计算密集（LLM调用、图像处理）</li>
+            <li>多任务并行需求</li>
+        </ul>
+        <h3>Ray框架优势</h3>
+        <ul>
+            <li>分布式Python原生支持</li>
+            <li>Actor模式 + Task模式</li>
+            <li>GPU资源智能调度</li>
+            <li>弹性伸缩能力</li>
+        </ul>
+    </section>
+
+    <!-- Ray技术细节 -->
+    <section class="page">
+        <h2>Ray执行机制详解</h2>
+        <div class="two-columns">
+            <div>
+                <h4>任务调度</h4>
+                <ul>
+                    <li>异步任务队列</li>
+                    <li>优先级管理</li>
+                    <li>失败重试机制</li>
+                </ul>
+                <h4>分布式计算</h4>
+                <ul>
+                    <li>Remote Function调用</li>
+                    <li>Actor状态管理</li>
+                    <li>多节点负载均衡</li>
+                </ul>
+            </div>
+            <div>
+                <h4>资源管理</h4>
+                <ul>
+                    <li>GPU/CPU动态分配</li>
+                    <li>内存限制控制</li>
+                    <li>任务超时处理</li>
+                </ul>
+                <h4>算子执行</h4>
+                <ul>
+                    <li>Python算子远程调用</li>
+                    <li>执行结果回传</li>
+                    <li>日志实时收集</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- 数据流转 -->
+    <section class="page">
+        <h2>数据处理完整流程</h2>
+        <pre><code class="language-plaintext">
+数据采集 → 数据管理 → 数据清洗 → 数据合成 → 数据标注 → 数据评估 → 知识库
+    ↓          ↓          ↓          ↓          ↓          ↓         ↓
+ 多源接入   版本管理   Pipeline编排  QA生成   Label Studio  质量评分  Milvus存储
+        </code></pre>
+        <p>
+            ✅ 每阶段可配置算子Pipeline<br>
+            ✅ 可视化编排：拖拽式流程设计<br>
+            ✅ 执行状态实时监控
+        </p>
+    </section>
+
+    <!-- RAG架构 -->
+    <section class="page">
+        <h2>RAG知识库架构</h2>
+        <ul>
+            <li><strong>Milvus向量数据库</strong> — 高性能向量检索</li>
+            <li><strong>文档切片</strong> → <strong>Embedding</strong> → <strong>向量存储</strong></li>
+            <li><strong>语义检索</strong> — 支持相似度搜索</li>
+            <li><strong>多知识库管理</strong> — 灵活创建与管理</li>
+        </ul>
+        <pre><code class="language-plaintext">
+原始文档 → 文档切片 → Embedding生成 → Milvus存储 → 语义检索
+        </code></pre>
+    </section>
+
+    <!-- 安全机制 -->
+    <section class="page">
+        <h2>安全机制</h2>
+        <ul>
+            <li><strong>JWT认证</strong> — 标准Token认证</li>
+            <li><strong>OAuth可选</strong> — 支持第三方认证集成</li>
+            <li><strong>API Gateway鉴权</strong> — 统一入口验证</li>
+            <li><strong>租户隔离</strong> — 多租户数据隔离</li>
+            <li><strong>数据权限控制</strong> — 细粒度权限管理</li>
+        </ul>
+    </section>
+
+    <!-- 第四部分标题 -->
+    <section class="page section-title-page">
+        <h2>第四部分</h2>
+        <h1 style="font-size: 2.5em;">功能演示</h1>
+    </section>
+
+    <!-- 数据采集 -->
+    <section class="page">
+        <h2>数据采集模块</h2>
+        <ul>
+            <li><strong>多数据源支持</strong>
+                <ul>
+                    <li>MySQL、PostgreSQL、MongoDB</li>
+                    <li>Elasticsearch、HDFS、S3</li>
+                    <li>API接口、文件上传</li>
+                </ul>
+            </li>
+            <li><strong>定时采集任务</strong> — APScheduler调度</li>
+            <li><strong>数据源配置管理</strong> — 连接信息加密存储</li>
+            <li><strong>采集状态监控</strong> — 实时查看采集进度</li>
+        </ul>
+    </section>
+
+    <!-- 数据管理 -->
+    <section class="page">
+        <h2>数据管理模块</h2>
+        <ul>
+            <li><strong>数据集管理</strong> — 创建、删除、版本控制</li>
+            <li><strong>数据元信息</strong> — 格式、大小、标签、来源</li>
+            <li><strong>数据预览</strong> — 表格、JSON、文本多种视图</li>
+            <li><strong>导入导出</strong> — 支持CSV、JSON、Excel等格式</li>
+            <li><strong>数据血缘</strong> — 追踪数据来源与处理历史</li>
+        </ul>
+    </section>
+
+    <!-- 数据清洗 -->
+    <section class="page">
+        <h2>数据清洗模块</h2>
+        <ul>
+            <li><strong>算子Pipeline编排</strong> — 灵活组合处理流程</li>
+            <li><strong>可视化流程设计</strong> — 拖拽式算子连接</li>
+            <li><strong>内置清洗算子</strong>
+                <ul>
+                    <li>去重算子</li>
+                    <li>敏感内容过滤</li>
+                    <li>质量筛选</li>
+                    <li>格式标准化</li>
+                </ul>
+            </li>
+            <li><strong>执行状态监控</strong> — 实时进度、日志查看</li>
+        </ul>
+    </section>
+
+    <!-- 数据合成 -->
+    <section class="page">
+        <h2>数据合成模块</h2>
+        <ul>
+            <li><strong>QA问答生成</strong> — LLM驱动的问答对生成</li>
+            <li><strong>文档处理</strong> — PDF解析、文本提取、格式转换</li>
+            <li><strong>合成任务管理</strong> — 批量任务调度</li>
+            <li><strong>质量控制</strong> — 生成的问答质量评估</li>
+        </ul>
+        <p class="muted">使用大语言模型自动生成训练数据，降低标注成本</p>
+    </section>
+
+    <!-- 数据标注 -->
+    <section class="page">
+        <h2>数据标注模块</h2>
+        <ul>
+            <li><strong>Label Studio集成</strong> — 专业标注工具</li>
+            <li><strong>多标注类型</strong>
+                <ul>
+                    <li>文本分类</li>
+                    <li>图像标注（目标检测、分割）</li>
+                    <li>实体识别</li>
+                    <li>关系抽取</li>
+                </ul>
+            </li>
+            <li><strong>协作标注</strong> — 团队协作、任务分配</li>
+            <li><strong>标注质量控制</strong> — 审核机制、一致性检查</li>
+        </ul>
+    </section>
+
+    <!-- 数据评估 -->
+    <section class="page">
+        <h2>数据评估模块</h2>
+        <ul>
+            <li><strong>模型评估</strong> — 数据质量评分</li>
+            <li><strong>评估指标</strong>
+                <ul>
+                    <li>准确率、召回率</li>
+                    <li>覆盖率、多样性</li>
+                    <li>一致性得分</li>
+                </ul>
+            </li>
+            <li><strong>评估报告</strong> — 自动生成分析报告</li>
+            <li><strong>问题数据定位</strong> — 快速发现质量问题</li>
+        </ul>
+    </section>
+
+    <!-- 知识库 -->
+    <section class="page">
+        <h2>知识生成与RAG</h2>
+        <ul>
+            <li><strong>文档切片</strong> — 智能分片策略（按段落、语义）</li>
+            <li><strong>向量化</strong> — Embedding模型生成向量</li>
+            <li><strong>Milvus存储</strong> — 高性能向量数据库</li>
+            <li><strong>知识库管理</strong>
+                <ul>
+                    <li>多知识库创建</li>
+                    <li>知识库检索测试</li>
+                    <li>知识更新与删除</li>
+                </ul>
+            </li>
+        </ul>
+    </section>
+
+    <!-- 第五部分标题 -->
+    <section class="page section-title-page">
+        <h2>第五部分</h2>
+        <h1 style="font-size: 2.5em;">算子开发实操</h1>
+    </section>
+
+    <!-- 算子概念 -->
+    <section class="page">
+        <h2>什么是算子？</h2>
+        <p><strong>定义</strong>：数据处理的可复用单元</p>
+        <table>
+            <tr>
+                <th>类型</th>
+                <th>功能</th>
+                <th>示例</th>
+            </tr>
+            <tr>
+                <td>filter</td>
+                <td>数据过滤</td>
+                <td>去重、敏感内容过滤、质量筛选</td>
+            </tr>
+            <tr>
+                <td>mapper</td>
+                <td>数据转换</td>
+                <td>清洗、格式化、标准化</td>
+            </tr>
+            <tr>
+                <td>slicer</td>
+                <td>数据切片</td>
+                <td>文本分割、PDF切分</td>
+            </tr>
+            <tr>
+                <td>formatter</td>
+                <td>格式转换</td>
+                <td>PDF→Text、JSON→CSV</td>
+            </tr>
+            <tr>
+                <td>llms</td>
+                <td>LLM算子</td>
+                <td>质量评估、条件判断、摘要生成</td>
+            </tr>
+            <tr>
+                <td>annotation</td>
+                <td>标注算子</td>
+                <td>目标检测、图像分割</td>
+            </tr>
+        </table>
+        <p>🔗 算子市场：上传、下载、分享算子</p>
+    </section>
+
+    <!-- 开发流程 -->
+    <section class="page">
+        <h2>算子开发流程</h2>
+        <ol>
+            <li><strong>环境准备</strong>：Python 3.12+、Poetry依赖管理</li>
+            <li><strong>继承BaseOp类</strong>：实现算子基类</li>
+            <li><strong>实现execute方法</strong>：核心处理逻辑</li>
+            <li><strong>编写配置参数</strong>：参数定义与验证</li>
+            <li><strong>测试验证</strong>：单元测试 + 集成测试</li>
+            <li><strong>上传算子市场</strong>：分享给社区</li>
+        </ol>
+    </section>
+
+    <!-- 代码示例一 -->
+    <section class="page">
+        <h2>算子开发示例 — 简单过滤算子</h2>
+        <pre><code class="language-python">from ops.base_op import BaseOp
+
+class LengthFilterOp(BaseOp):
+    """过滤文本长度低于阈值的文档"""
+    
+    def execute(self, data: list[dict]) -> list[dict]:
+        min_length = self.config.get("min_length", 100)
+        return [
+            d for d in data 
+            if len(d.get("text", "")) >= min_length
+        ]</code></pre>
+        <p>
+            ✅ 继承 BaseOp<br>
+            ✅ 实现 execute 方法<br>
+            ✅ 从 config 获取参数
+        </p>
+    </section>
+
+    <!-- 代码示例二 -->
+    <section class="page">
+        <h2>算子开发示例 — LLM算子</h2>
+        <pre><code class="language-python">from ops.base_op import BaseOp
+from ops.llms import LLMClient
+
+class QualityEvaluatorOp(BaseOp):
+    """使用LLM评估文档质量"""
+    
+    def execute(self, data: list[dict]) -> list[dict]:
+        client = LLMClient(self.config.get("model"))
+        results = []
+        for doc in data:
+            score = client.evaluate(doc["text"])
+            doc["quality_score"] = score
+            results.append(doc)
+        return results</code></pre>
+        <p>
+            ✅ LLMClient 集成<br>
+            ✅ 批量处理数据<br>
+            ✅ 输出包含新增字段
+        </p>
+    </section>
+
+    <!-- 配置设计 -->
+    <section class="page">
+        <h2>算子配置设计</h2>
+        <pre><code class="language-yaml">op_config:
+  name: "length_filter"
+  type: "filter"
+  params:
+    min_length:
+      type: int
+      default: 100
+      description: "最小文本长度阈值"</code></pre>
+        <ul>
+            <li><strong>配置验证</strong>：Pydantic模型验证参数类型</li>
+            <li><strong>参数传递</strong>：execute方法通过config获取</li>
+            <li><strong>文档规范</strong>：每个参数需有description</li>
+        </ul>
+    </section>
+
+    <!-- 最佳实践 -->
+    <section class="page">
+        <h2>算子开发最佳实践</h2>
+        <ul>
+            <li><strong>性能优化</strong>
+                <ul>
+                    <li>批量处理而非逐条处理</li>
+                    <li>异步调用（asyncio）</li>
+                    <li>缓存重复计算结果</li>
+                </ul>
+            </li>
+            <li><strong>错误处理</strong>
+                <ul>
+                    <li>try-catch捕获异常</li>
+                    <li>日志记录（logging）</li>
+                    <li>优雅降级处理</li>
+                </ul>
+            </li>
+            <li><strong>资源管理</strong>
+                <ul>
+                    <li>内存限制设置</li>
+                    <li>超时时间配置</li>
+                    <li>GPU资源申请</li>
+                </ul>
+            </li>
+            <li><strong>测试覆盖</strong>
+                <ul>
+                    <li>单元测试覆盖核心逻辑</li>
+                    <li>集成测试验证Pipeline</li>
+                </ul>
+            </li>
+        </ul>
+    </section>
+
+    <!-- 第六部分标题 -->
+    <section class="page section-title-page">
+        <h2>第六部分</h2>
+        <h1 style="font-size: 2.5em;">总结与展望</h1>
+    </section>
+
+    <!-- 开源贡献 -->
+    <section class="page">
+        <h2>如何参与开源贡献</h2>
+        <p><strong>GitHub</strong>：github.com/ModelEngine-Group/DataMate</p>
+        <ul>
+            <li><strong>提交Issue</strong> — Bug报告、功能建议</li>
+            <li><strong>Pull Request</strong> — 代码贡献、文档完善</li>
+            <li><strong>翻译文档</strong> — 多语言支持</li>
+            <li><strong>分享使用经验</strong> — Discussions讨论</li>
+        </ul>
+        <p class="muted">开发环境搭建指南：DEVELOPMENT.md</p>
+    </section>
+
+    <!-- 未来规划 -->
+    <section class="page">
+        <h2>DataMate未来规划</h2>
+        <div class="two-columns">
+            <div>
+                <h4>近期计划</h4>
+                <ul>
+                    <li>更多算子类型支持</li>
+                    <li>多语言SDK（Python/Java）</li>
+                    <li>性能优化</li>
+                    <li>文档完善</li>
+                </ul>
+            </div>
+            <div>
+                <h4>中期规划</h4>
+                <ul>
+                    <li>Agent编排能力</li>
+                    <li>多模态数据处理增强</li>
+                    <li>企业版特性</li>
+                    <li>云服务版本</li>
+                </ul>
+            </div>
+        </div>
+        <p class="accent" style="text-align: center; margin-top: 1em;">长期愿景：成为AI数据处理的标准平台</p>
+    </section>
+
+    <!-- 感谢 -->
+    <section class="page title-page">
+        <h1>感谢聆听</h1>
+        <p style="margin-top: 1em;">
+            <strong>项目地址</strong>：github.com/ModelEngine-Group/DataMate<br>
+            <strong>文档地址</strong>：项目README.md<br>
+            <strong>社区入口</strong>：GitHub Discussions
+        </p>
+        <p class="large-text" style="margin-top: 2em;">
+            欢迎加入DataMate开源社区！
+        </p>
+        <p style="margin-top: 1em;">
+            Star ⭐️ 支持 | Issue 反馈 | PR 贡献
+        </p>
+    </section>
+
+    <script>
+        // 初始化代码高亮
+        hljs.registerLanguage('plaintext', function() { return { contains: [] }; });
+        document.querySelectorAll('pre code').forEach((block) => {
+            hljs.highlightElement(block);
+        });
+        
+        // 滚动进度条
+        const progressBar = document.getElementById('progressBar');
+        const pageNumber = document.getElementById('pageNumber');
+        const pages = document.querySelectorAll('.page');
+        
+        function updateProgress() {
+            const scrollTop = window.scrollY;
+            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const progress = (scrollTop / docHeight) * 100;
+            progressBar.style.width = progress + '%';
+            
+            // 计算当前页
+            let current = 1;
+            for (let i = 0; i < pages.length; i++) {
+                if (pages[i].offsetTop <= scrollTop + window.innerHeight / 2) {
+                    current = i + 1;
+                }
+            }
+            pageNumber.textContent = `${current} / ${pages.length}`;
+        }
+        
+        window.addEventListener('scroll', updateProgress);
+        updateProgress();
+        
+        // 键盘翻页支持
+        let currentPageIndex = 0;
+        
+        function goToPage(index) {
+            if (index >= 0 && index < pages.length) {
+                pages[index].scrollIntoView({ behavior: 'smooth' });
+                currentPageIndex = index;
+            }
+        }
+        
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') {
+                e.preventDefault();
+                goToPage(currentPageIndex + 1);
+            } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+                e.preventDefault();
+                goToPage(currentPageIndex - 1);
+            } else if (e.key === 'Home') {
+                e.preventDefault();
+                goToPage(0);
+            } else if (e.key === 'End') {
+                e.preventDefault();
+                goToPage(pages.length - 1);
+            }
+        });
+        
+        // 更新当前页索引
+        window.addEventListener('scroll', () => {
+            const scrollTop = window.scrollY;
+            for (let i = 0; i < pages.length; i++) {
+                if (pages[i].offsetTop <= scrollTop + 50) {
+                    currentPageIndex = i;
+                }
+            }
+        });
+    </script>
+</body>
+</html>
