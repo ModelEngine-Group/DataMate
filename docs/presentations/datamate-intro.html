@@ -648,30 +648,35 @@
 
     <section class="page">
         <div class="page-content">
-            <h2>整体架构</h2>
-            <div class="table-wrapper">
-                <table>
-                    <tr>
-                        <th>层级</th>
-                        <th>组件</th>
-                        <th>技术栈</th>
-                    </tr>
-                    <tr>
-                        <td><span class="tag">前端层</span></td>
-                        <td>Console + Annotation Studio</td>
-                        <td>React 18 + TypeScript + Vite</td>
-                    </tr>
-                    <tr>
-                        <td><span class="tag">后端层</span></td>
-                        <td>API Gateway + Data Services</td>
-                        <td>Spring Boot 3.5 + Java 21</td>
-                    </tr>
-                    <tr>
-                        <td><span class="tag">运行时</span></td>
-                        <td>Python Services + Ray Executor</td>
-                        <td>FastAPI + Ray</td>
-                    </tr>
-                </table>
+            <h2>功能架构</h2>
+            <div class="two-columns">
+                <div>
+                    <h4>用户交互层</h4>
+                    <ul>
+                        <li>数据工作台 — 数据集管理、任务编排</li>
+                        <li>标注工作台 — 专业标注工具集成</li>
+                        <li>算子市场 — 算子浏览、下载、上传</li>
+                    </ul>
+                    <h4>业务服务层</h4>
+                    <ul>
+                        <li>统一入口 — 认证、路由、权限控制</li>
+                        <li>业务逻辑 — 数据管理、任务调度</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4>数据处理层</h4>
+                    <ul>
+                        <li>算子执行引擎 — 分布式任务处理</li>
+                        <li>数据读写框架 — 多源数据接入</li>
+                        <li>LLM服务 — 大模型能力调用</li>
+                    </ul>
+                    <h4>存储层</h4>
+                    <ul>
+                        <li>关系数据库 — 元数据、业务数据</li>
+                        <li>向量数据库 — RAG知识检索</li>
+                        <li>对象存储 — 文件、模型存储</li>
+                    </ul>
+                </div>
             </div>
             <div class="flex-center" style="margin-top: 1.5em;">
                 <span class="tag">采集</span>
@@ -787,66 +792,6 @@
 
     <section class="page">
         <div class="page-content">
-            <h2>前后端分离设计</h2>
-            <div class="two-columns">
-                <div>
-                    <h4>前端</h4>
-                    <ul>
-                        <li>Console — 数据工作台</li>
-                        <li>Annotation Studio — 标注工作台</li>
-                    </ul>
-                    <h4>通信</h4>
-                    <ul>
-                        <li>RESTful API</li>
-                        <li>WebSocket 实时状态</li>
-                    </ul>
-                </div>
-                <div>
-                    <h4>后端</h4>
-                    <ul>
-                        <li>API Gateway 统一入口</li>
-                        <li>路由转发 + JWT认证</li>
-                        <li>请求限流</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="page">
-        <div class="page-content">
-            <h2>后端微服务架构</h2>
-            <div class="table-wrapper">
-                <table>
-                    <tr><th>服务</th><th>端口</th><th>职责</th></tr>
-                    <tr><td>API Gateway</td><td>8080</td><td>认证、路由、限流</td></tr>
-                    <tr><td>Main Application</td><td>8080</td><td>数据管理、清洗、算子市场</td></tr>
-                </table>
-            </div>
-            <pre><code class="plaintext">interfaces → application → domain → infrastructure
-    ↓           ↓           ↓           ↓
- Controllers  Services    Entities    Repositories</code></pre>
-        </div>
-    </section>
-
-    <section class="page">
-        <div class="page-content">
-            <h2>Python运行时架构</h2>
-            <div class="table-wrapper">
-                <table>
-                    <tr><th>组件</th><th>端口</th><th>职责</th></tr>
-                    <tr><td>datamate-python</td><td>18000</td><td>核心业务服务</td></tr>
-                    <tr><td>python-executor</td><td>Ray集群</td><td>分布式算子执行</td></tr>
-                    <tr><td>ops</td><td>算子库</td><td>可扩展数据处理算子</td></tr>
-                    <tr><td>datax</td><td>数据框架</td><td>多源数据读写</td></tr>
-                    <tr><td>deer-flow</td><td>LLM服务</td><td>大语言模型调用</td></tr>
-                </table>
-            </div>
-        </div>
-    </section>
-
-    <section class="page">
-        <div class="page-content">
             <h2 class="gradient">Ray分布式执行引擎</h2>
             <h3>为什么需要分布式？</h3>
             <div class="three-columns">
@@ -955,22 +900,6 @@
         </div>
     </section>
 
-    <section class="page">
-        <div class="page-content">
-            <h2>安全机制</h2>
-            <div class="two-columns">
-                <div>
-                    <div class="card"><p><strong>JWT认证</strong> — 标准Token认证</p></div>
-                    <div class="card"><p><strong>OAuth可选</strong> — 第三方认证集成</p></div>
-                </div>
-                <div>
-                    <div class="card"><p><strong>租户隔离</strong> — 多租户数据隔离</p></div>
-                    <div class="card"><p><strong>权限控制</strong> — 细粒度权限管理</p></div>
-                </div>
-            </div>
-        </div>
-    </section>
-
     <!-- ===== PART 4: FEATURES ===== -->
     <section class="page section-page">
         <div class="page-content">
@@ -999,7 +928,7 @@
                 <div class="feature-item">
                     <div class="feature-title">采集状态监控</div>
                     <p class="muted" style="font-size: 0.8em;">实时进度可视化展示</p>
-                    <p class="muted" style="font-size: 0.8em;">异常自动告警通知</p>
+                    <p class="muted" style="font-size: 0.8em;">错误信息前台展示</p>
                     <p class="muted" style="font-size: 0.8em;">采集日志完整记录</p>
                 </div>
             </div>
@@ -1178,13 +1107,11 @@
             <p class="muted" style="margin-top: 0.5em;">算子是DataMate的核心概念，每个算子封装一个数据处理功能，可自由组合构建复杂处理流程</p>
             <div class="table-wrapper" style="margin-top: 1.5em;">
                 <table>
-                    <tr><th>类型</th><th>功能说明</th><th>典型应用场景</th></tr>
-                    <tr><td><span class="tag">filter</span></td><td>数据过滤筛选</td><td>去重、敏感内容过滤、质量筛选、语言过滤</td></tr>
-                    <tr><td><span class="tag">mapper</span></td><td>数据转换映射</td><td>字段清洗、格式标准化、内容替换、编码转换</td></tr>
-                    <tr><td><span class="tag">slicer</span></td><td>数据切分分割</td><td>文本按段落切分、PDF页面提取、长文本分块</td></tr>
-                    <tr><td><span class="tag">formatter</span></td><td>格式转换处理</td><td>PDF→Text、JSON→CSV、HTML清洗、Markdown转换</td></tr>
-                    <tr><td><span class="tag">llms</span></td><td>大模型算子</td><td>质量评估打分、内容摘要生成、条件判断过滤</td></tr>
-                    <tr><td><span class="tag">annotation</span></td><td>标注辅助算子</td><td>目标检测预标注、图像分割辅助、实体预识别</td></tr>
+                    <tr><th>类型</th><th>基类</th><th>功能说明</th><th>典型应用场景</th></tr>
+                    <tr><td><span class="tag">filter</span></td><td>Filter</td><td>数据过滤筛选</td><td>去重、敏感内容过滤、质量筛选</td></tr>
+                    <tr><td><span class="tag">mapper</span></td><td>Mapper</td><td>数据转换映射</td><td>字段清洗、格式标准化、内容替换</td></tr>
+                    <tr><td><span class="tag">formatter</span></td><td>Formatter</td><td>格式转换处理</td><td>PDF→Text、JSON→CSV、HTML清洗</td></tr>
+                    <tr><td><span class="tag">annotation</span></td><td>Annotation</td><td>标注辅助算子</td><td>目标检测预标注、图像分割辅助</td></tr>
                 </table>
             </div>
             <p style="margin-top: 1em;"><strong style="color: var(--text-primary);">算子市场</strong>：丰富的内置算子库 + 社区贡献算子 + 自定义开发上传，满足各类数据处理需求</p>
@@ -1194,45 +1121,43 @@
     <section class="page">
         <div class="page-content">
             <h2>算子开发流程</h2>
-            <p class="muted">只需6步，即可完成一个自定义算子的开发和发布</p>
-            <div class="three-columns" style="margin-top: 1.5em;">
-                <div class="feature-item">
-                    <div class="feature-title">1. 环境准备</div>
-                    <p class="muted" style="font-size: 0.8em;">Python 3.12+</p>
-                    <p class="muted" style="font-size: 0.8em;">Poetry依赖管理</p>
-                    <p class="muted" style="font-size: 0.8em;">克隆ops仓库</p>
+            <p class="muted">按以下步骤开发自定义算子</p>
+            <div class="two-columns" style="margin-top: 1.5em;">
+                <div>
+                    <div class="card">
+                        <h4>1. 创建目录结构</h4>
+                        <ul style="margin-bottom: 0; font-size: 0.9em;">
+                            <li>__init__.py — 算子注册入口</li>
+                            <li>metadata.yml — 元数据配置</li>
+                            <li>process.py — 核心处理逻辑</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>2. 编写process.py</h4>
+                        <ul style="margin-bottom: 0; font-size: 0.9em;">
+                            <li>继承 Mapper 或 Filter 基类</li>
+                            <li>类名与 metadata.yml 中 raw_id 一致</li>
+                            <li>实现 execute(sample) 方法</li>
+                        </ul>
+                    </div>
                 </div>
-                <div class="feature-item">
-                    <div class="feature-title">2. 继承BaseOp</div>
-                    <p class="muted" style="font-size: 0.8em;">继承算子基类</p>
-                    <p class="muted" style="font-size: 0.8em;">定义算子类型</p>
-                    <p class="muted" style="font-size: 0.8em;">编写算子文档</p>
-                </div>
-                <div class="feature-item">
-                    <div class="feature-title">3. 实现execute</div>
-                    <p class="muted" style="font-size: 0.8em;">核心处理逻辑</p>
-                    <p class="muted" style="font-size: 0.8em;">输入输出定义</p>
-                    <p class="muted" style="font-size: 0.8em;">异常处理</p>
-                </div>
-            </div>
-            <div class="three-columns" style="margin-top: 1em;">
-                <div class="feature-item">
-                    <div class="feature-title">4. 配置参数</div>
-                    <p class="muted" style="font-size: 0.8em;">YAML参数定义</p>
-                    <p class="muted" style="font-size: 0.8em;">Pydantic校验</p>
-                    <p class="muted" style="font-size: 0.8em;">参数文档说明</p>
-                </div>
-                <div class="feature-item">
-                    <div class="feature-title">5. 测试验证</div>
-                    <p class="muted" style="font-size: 0.8em;">单元测试覆盖</p>
-                    <p class="muted" style="font-size: 0.8em;">集成测试验证</p>
-                    <p class="muted" style="font-size: 0.8em;">边界测试</p>
-                </div>
-                <div class="feature-item">
-                    <div class="feature-title">6. 上传分享</div>
-                    <p class="muted" style="font-size: 0.8em;">打包上传市场</p>
-                    <p class="muted" style="font-size: 0.8em;">添加使用说明</p>
-                    <p class="muted" style="font-size: 0.8em;">版本管理</p>
+                <div>
+                    <div class="card">
+                        <h4>3. 配置 metadata.yml</h4>
+                        <ul style="margin-bottom: 0; font-size: 0.9em;">
+                            <li>定义算子名称、描述、版本</li>
+                            <li>配置前端UI参数组件</li>
+                            <li>设置运行时资源限制</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>4. 注册与上传</h4>
+                        <ul style="margin-bottom: 0; font-size: 0.9em;">
+                            <li>__init__.py 中注册算子</li>
+                            <li>打包为 .zip/.tar 文件</li>
+                            <li>上传到算子市场</li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1240,76 +1165,56 @@
 
     <section class="page">
         <div class="page-content">
-            <h2>代码示例 — 简单过滤算子</h2>
-            <pre><code class="language-python">from ops.base_op import BaseOp
+            <h2>代码示例 — Mapper算子</h2>
+            <pre><code class="language-python">from typing import Dict, Any
+from datamate.core.base_op import Mapper
 
-class LengthFilterOp(BaseOp):
-    """过滤文本长度低于阈值的文档
+class TextCleaner(Mapper):
+    """文本清洗算子 - 清除多余空白字符"""
     
-    用途：清洗数据时过滤过短的无效文档
-    参数：min_length - 最小文本长度阈值（默认100字符）
-    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.remove_extra_spaces = kwargs.get('removeExtraSpaces', True)
     
-    def execute(self, data: list[dict]) -> list[dict]:
-        min_length = self.config.get("min_length", 100)
-        return [
-            d for d in data 
-            if len(d.get("text", "")) >= min_length
-        ]</code></pre>
+    def execute(self, sample: Dict[str, Any]) -> Dict[str, Any]:
+        text = sample.get('text', '')
+        if self.remove_extra_spaces:
+            # 清除多余空白字符
+            text = ' '.join(text.split())
+        sample['text'] = text
+        return sample</code></pre>
             <div class="flex-center" style="margin-top: 1em;">
-                <span class="tag">继承 BaseOp</span>
-                <span class="tag">实现 execute 方法</span>
-                <span class="tag">从 config 获取参数</span>
+                <span class="tag">继承 Mapper</span>
+                <span class="tag">__init__获取参数</span>
+                <span class="tag">execute处理单条数据</span>
             </div>
-            <p class="muted" style="margin-top: 1em;">只需10行代码，即可实现一个功能完整的过滤算子，开发门槛极低</p>
+            <p class="muted" style="margin-top: 1em;">继承Mapper基类，实现execute方法，输入输出均为单条数据样本(Dict)</p>
         </div>
     </section>
 
     <section class="page">
         <div class="page-content">
-            <h2>代码示例 — LLM增强算子</h2>
-            <pre><code class="language-python">from ops.base_op import BaseOp
-from ops.llms import LLMClient
-
-class QualityEvaluatorOp(BaseOp):
-    """使用LLM评估文档质量
-    
-    用途：自动评估训练数据质量，过滤低质量内容
-    参数：model - 使用的LLM模型名称
-    """
-    
-    def execute(self, data: list[dict]) -> list[dict]:
-        client = LLMClient(self.config.get("model"))
-        results = []
-        for doc in data:
-            score = client.evaluate(doc["text"])
-            doc["quality_score"] = score
-            results.append(doc)
-        return results</code></pre>
-            <div class="flex-center" style="margin-top: 1em;">
-                <span class="tag">集成LLMClient</span>
-                <span class="tag">批量处理数据</span>
-                <span class="tag">新增质量分数字段</span>
-            </div>
-            <p class="muted" style="margin-top: 1em;">LLM算子可调用大模型能力，实现智能化数据处理，大幅提升处理质量</p>
-        </div>
-    </section>
-
-    <section class="page">
-        <div class="page-content">
-            <h2>算子配置设计</h2>
-            <pre><code class="language-yaml">op_config:
-  name: "length_filter"
-  type: "filter"
-  params:
-    min_length:
-      type: int
-      default: 100
-      description: "最小文本长度阈值"</code></pre>
+            <h2>算子配置文件 (metadata.yml)</h2>
+            <pre><code class="language-yaml">name: '文本清洗算子'
+description: '清除文本中的多余空白字符'
+language: 'python'
+raw_id: 'TextCleaner'      # 必须与类名一致
+version: '1.0.0'
+modal: 'text'
+inputs: 'text'
+outputs: 'text'
+types:
+  - 'cleaning'
+settings:
+  removeExtraSpaces:       # 参数名，process.py中通过kwargs获取
+    name: '清除多余空格'
+    description: '是否清除多余空格'
+    type: 'switch'
+    defaultVal: 'true'</code></pre>
             <ul style="margin-top: 1em;">
-                <li><strong>Pydantic验证</strong> — 参数类型自动校验</li>
-                <li><strong>参数传递</strong> — 通过 self.config 获取</li>
-                <li><strong>文档规范</strong> — 每个参数需有 description</li>
+                <li><strong>raw_id</strong> — 必须与process.py中的类名完全一致</li>
+                <li><strong>settings</strong> — 定义前端UI参数组件</li>
+                <li><strong>types</strong> — 算子功能分类（cleaning/annotation）</li>
             </ul>
         </div>
     </section>
@@ -1317,15 +1222,6 @@ class QualityEvaluatorOp(BaseOp):
     <section class="page">
         <div class="page-content">
             <h2>算子开发最佳实践</h2>
-            <div class="card">
-                <h4>性能优化策略</h4>
-                <ul style="margin-bottom: 0;">
-                    <li><strong style="color: var(--text-primary);">批量处理优先</strong> — 避免逐条处理，使用批量操作减少I/O开销，提升处理效率10倍以上</li>
-                    <li><strong style="color: var(--text-primary);">异步并发执行</strong> — 使用 asyncio 处理I/O密集型任务，充分利用Ray分布式能力</li>
-                    <li><strong style="color: var(--text-primary);">缓存中间结果</strong> — 对于重复计算（如Embedding生成），使用本地缓存避免重复调用</li>
-                    <li><strong style="color: var(--text-primary);">分块处理大数据</strong> — 超大数据集分块加载，避免内存溢出</li>
-                </ul>
-            </div>
             <div class="card">
                 <h4>错误处理规范</h4>
                 <ul style="margin-bottom: 0;">
@@ -1348,18 +1244,18 @@ class QualityEvaluatorOp(BaseOp):
                         <h4>资源管理要点</h4>
                         <ul style="margin-bottom: 0;">
                             <li>内存限制设置 — Ray资源配额控制</li>
-                            <li>GPU资源申请 — num_gpus参数指定</li>
+                            <li>CPU资源申请 — cpu参数指定</li>
+                            <li>GPU资源申请 — gpu参数指定</li>
                             <li>并发度控制 — 避免资源竞争</li>
-                            <li>任务优先级 — 重要任务优先调度</li>
                         </ul>
                     </div>
                     <div class="card">
-                        <h4>测试覆盖要求</h4>
+                        <h4>打包上传规范</h4>
                         <ul style="margin-bottom: 0;">
-                            <li>单元测试 — 覆盖核心逻辑</li>
-                            <li>边界测试 — 空数据、异常输入</li>
-                            <li>集成测试 — Pipeline流程验证</li>
-                            <li>性能测试 — 大数据量压测</li>
+                            <li>文件完整性 — 必须包含必要文件</li>
+                            <li>命名一致性 — 包名与注册路径一致</li>
+                            <li>版本管理 — 语义化版本号</li>
+                            <li>依赖声明 — requirements.txt列出依赖</li>
                         </ul>
                     </div>
                 </div>
@@ -1374,12 +1270,12 @@ class QualityEvaluatorOp(BaseOp):
                         </ul>
                     </div>
                     <div class="card">
-                        <h4>安全注意事项</h4>
+                        <h4>异常处理建议</h4>
                         <ul style="margin-bottom: 0;">
-                            <li>输入验证 — 防止恶意数据</li>
-                            <li>敏感信息处理 — 不记录密钥等</li>
-                            <li>权限检查 — 确保数据访问合规</li>
-                            <li>审计日志 — 记录关键操作</li>
+                            <li>try-catch捕获异常</li>
+                            <li>部分失败不影响整体</li>
+                            <li>记录失败数据供后续处理</li>
+                            <li>设置合理超时时间</li>
                         </ul>
                     </div>
                 </div>
@@ -1460,39 +1356,6 @@ class QualityEvaluatorOp(BaseOp):
             <div class="card" style="margin-top: 1em;">
                 <p><strong style="color: var(--text-primary);">加入社区的方式</strong></p>
                 <p class="muted">⭐ Star项目支持 | 💬 GitHub Discussions讨论 | 📧 关注项目动态 | 🤝 参与代码贡献</p>
-            </div>
-        </div>
-    </section>
-
-    <section class="page">
-        <div class="page-content">
-            <h2 class="gradient">长期愿景与目标</h2>
-            <p class="large" style="text-align: center; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-                成为AI数据处理领域的标准平台
-            </p>
-            <div class="three-columns" style="margin-top: 1.5em;">
-                <div class="feature-item">
-                    <div class="feature-title">生态目标</div>
-                    <p class="muted" style="font-size: 0.8em;">构建最大的算子生态</p>
-                    <p class="muted" style="font-size: 0.8em;">社区算子数量突破1000+</p>
-                    <p class="muted" style="font-size: 0.8em;">覆盖100+数据处理场景</p>
-                </div>
-                <div class="feature-item">
-                    <div class="feature-title">用户目标</div>
-                    <p class="muted" style="font-size: 0.8em;">服务10000+企业用户</p>
-                    <p class="muted" style="font-size: 0.8em;">支持500+高校研究</p>
-                    <p class="muted" style="font-size: 0.8em;">成为行业首选工具</p>
-                </div>
-                <div class="feature-item">
-                    <div class="feature-title">技术目标</div>
-                    <p class="muted" style="font-size: 0.8em;">处理效率行业领先</p>
-                    <p class="muted" style="font-size: 0.8em;">易用性持续提升</p>
-                    <p class="muted" style="font-size: 0.8em;">技术架构持续演进</p>
-                </div>
-            </div>
-            <div class="card" style="margin-top: 1.5em;">
-                <p style="text-align: center;"><strong style="color: var(--text-primary);">我们相信</strong></p>
-                <p class="muted" style="text-align: center;">高质量数据是AI成功的基石，DataMate致力于让数据准备变得简单、高效、可靠</p>
             </div>
         </div>
     </section>
