@@ -1057,9 +1057,6 @@ public class DatasetFileApplicationService {
      */
     @Transactional
     public List<DatasetFile> addFilesToDataset(String datasetId, AddFilesRequest req) {
-        if (!req.isValidPrefix()) {
-            throw BusinessException.of(DataManagementErrorCode.DIRECTORY_NOT_FOUND);
-        }
         Dataset dataset = datasetRepository.getById(datasetId);
         BusinessAssert.notNull(dataset, SystemErrorCode.RESOURCE_NOT_FOUND);
         List<DatasetFile> addedFiles = new ArrayList<>();
@@ -1161,7 +1158,7 @@ public class DatasetFileApplicationService {
                 .fileName(fileName)
                 .fileType(AnalyzerUtils.getExtension(fileName))
                 .fileSize(sourceFile.length())
-                .filePath(Paths.get(dataset.getPath(), req.getPrefix(), fileName).toString())
+                .filePath(Paths.get(dataset.getPath(), req.getEffectivePrefix(file), fileName).toString())
                 .uploadTime(currentTime)
                 .lastAccessTime(currentTime)
                 .metadata(objectMapper.writeValueAsString(file.getMetadata()))

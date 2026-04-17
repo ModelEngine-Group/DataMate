@@ -812,7 +812,7 @@
             <ul>
                 <li>分布式Python原生支持</li>
                 <li>Actor模式 + Task模式</li>
-                <li>GPU资源智能调度</li>
+                <li>NPU资源智能调度</li>
                 <li>弹性伸缩能力</li>
             </ul>
         </div>
@@ -827,7 +827,7 @@
                         <h4>任务调度</h4>
                         <ul style="margin-bottom: 0;">
                             <li>异步任务队列</li>
-                            <li>优先级管理</li>
+                            <li>多任务并行</li>
                             <li>失败重试机制</li>
                         </ul>
                     </div>
@@ -844,7 +844,7 @@
                     <div class="card">
                         <h4>资源管理</h4>
                         <ul style="margin-bottom: 0;">
-                            <li>GPU/CPU动态分配</li>
+                            <li>NPU/CPU动态分配</li>
                             <li>内存限制控制</li>
                             <li>任务超时处理</li>
                         </ul>
@@ -865,9 +865,10 @@
     <section class="page">
         <div class="page-content">
             <h2>数据处理完整流程</h2>
-            <pre><code class="plaintext">数据采集 → 数据管理 → 数据清洗 → 数据合成 → 数据标注 → 数据评估 → 知识库
-    ↓          ↓          ↓          ↓          ↓          ↓         ↓
- 多源接入   版本管理   Pipeline编排  QA生成   Label Studio  质量评分  Milvus存储</code></pre>
+            <pre><code class="plaintext">
+ 数据采集  →  数据管理  →  数据清洗  →  数据合成  →  数据标注  →  数据评估  →  知识库
+    ↓           ↓          ↓          ↓           ↓           ↓          ↓
+ 多源接入     版本管理   Pipeline编排  QA生成     Label Studio  质量评分   Milvus存储</code></pre>
             <div class="flex-center" style="margin-top: 1.5em;">
                 <span class="tag">✓ Pipeline编排</span>
                 <span class="tag">✓ 拖拽式设计</span>
@@ -915,8 +916,8 @@
             <div class="three-columns">
                 <div class="feature-item">
                     <div class="feature-title">多数据源支持</div>
-                    <p class="muted" style="font-size: 0.8em;">MySQL / PostgreSQL / MongoDB</p>
-                    <p class="muted" style="font-size: 0.8em;">Elasticsearch / HDFS / S3 / API接口</p>
+                    <p class="muted" style="font-size: 0.8em;">MySQL / PostgreSQL / sqlserver</p>
+                    <p class="muted" style="font-size: 0.8em;">StarRocks / S3 / API接口</p>
                     <p class="muted" style="font-size: 0.8em;">支持文件上传和批量导入</p>
                 </div>
                 <div class="feature-item">
@@ -943,21 +944,19 @@
                 <div>
                     <ul>
                         <li><strong style="color: var(--text-primary);">数据集管理</strong></p>
-                        <p class="muted">创建、删除、版本控制，支持数据集分组管理</p>
+                        <p class="muted">创建、删除，支持数据集分组管理</p>
                         <li><strong style="color: var(--text-primary);">数据元信息</strong></p>
                         <p class="muted">记录数据格式、大小、标签、来源等元数据</p>
                         <li><strong style="color: var(--text-primary);">数据预览</strong></p>
                         <p class="muted">表格、JSON、文本多种视图，支持字段筛选</p>
-                        <li><strong style="color: var(--text-primary);">导入导出</strong></p>
-                        <p class="muted">支持CSV、JSON、Excel等常见格式互转</p>
                     </ul>
                 </div>
                 <div>
                     <ul>
                         <li><strong style="color: var(--text-primary);">数据血缘追踪</strong></p>
                         <p class="muted">完整记录数据来源和处理历史，可追溯每个数据的处理链路</p>
-                        <li><strong style="color: var(--text-primary);">版本管理</strong></p>
-                        <p class="muted">数据版本追踪，支持版本回滚和对比</p>
+                        <li><strong style="color: var(--text-primary);">文件管理</strong></p>
+                        <p class="muted">类文件管理系统，在线查看后台文件</p>
                         <li><strong style="color: var(--text-primary);">权限控制</strong></p>
                         <p class="muted">细粒度数据访问权限，支持角色级控制</p>
                     </ul>
@@ -1001,14 +1000,14 @@
                 <p class="muted">基于LLM大模型，根据文档内容自动生成问答对，大幅降低人工标注成本，提升数据准备效率</p>
             </div>
             <div class="card">
-                <p><strong style="color: var(--text-primary);">智能文档处理</strong></p>
-                <p class="muted">PDF解析、OCR文字识别、文本提取、格式转换，支持多格式文档自动处理</p>
+                <p><strong style="color: var(--text-primary);">COT思维链合成</strong></p>
+                <p class="muted">生成包含完整推理路径的思维链数据，输出结构化JSON（chain_of_thought + output），适合大模型推理能力微调训练</p>
             </div>
             <div class="card">
                 <p><strong style="color: var(--text-primary);">合成质量控制</strong></p>
-                <p class="muted">自动评估生成的问答质量，过滤低质量数据，确保训练数据有效性</p>
+                <p class="muted">自动评估生成的数据质量，过滤低质量数据，确保训练数据有效性</p>
             </div>
-            <p class="muted" style="margin-top: 1em;">通过AI自动化替代人工劳动，将数据合成成本降低90%以上</p>
+            <p class="muted" style="margin-top: 1em;">支持QA问答、COT思维链等多种合成类型，满足不同训练场景需求</p>
         </div>
     </section>
 
