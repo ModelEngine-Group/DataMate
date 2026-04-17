@@ -124,7 +124,7 @@ public class DatasetFileApplicationService {
         }
 
         // 使用 Path API 安全地构建路径
-        Path basePath = Paths.get(datasetPath).normalize();
+        Path basePath = Paths.get(datasetPath);
         Path queryPath = prefix.isEmpty() ? basePath : basePath.resolve(prefix).normalize();
 
         // 确保查询路径在数据集路径下（防止路径遍历）
@@ -149,7 +149,7 @@ public class DatasetFileApplicationService {
 
         try (Stream<Path> pathStream = Files.list(queryPath)) {
             List<Path> allFiles = pathStream
-                .filter(path -> path.normalize().startsWith(basePath))
+                .filter(path -> path.toString().startsWith(datasetPath))
                 .sorted(Comparator
                     .comparing((Path path) -> !Files.isDirectory(path))
                     .thenComparing(path -> path.getFileName().toString()))
@@ -694,7 +694,7 @@ public class DatasetFileApplicationService {
             throw BusinessException.of(CommonErrorCode.PARAM_ERROR);
         }
 
-        Path basePath = Paths.get(datasetPath).normalize();
+        Path basePath = Paths.get(datasetPath);
         Path targetPath = parentPrefix.isEmpty()
             ? basePath.resolve(directoryName)
             : basePath.resolve(parentPrefix).resolve(directoryName);
@@ -1149,21 +1149,11 @@ public class DatasetFileApplicationService {
 
     private static DatasetFile getDatasetFileForAdd(AddFilesRequest req, AddFilesRequest.FileRequest file,
                                                     Dataset dataset, ObjectMapper objectMapper) throws JsonProcessingException {
-        Path sourcePath = Paths.get(file.getFilePath()).normalize();
+        Path sourcePath = Paths.get(file.getFilePath());
         File sourceFile = sourcePath.toFile();
         file.getMetadata().put("softAdd", req.isSoftAdd());
         LocalDateTime currentTime = LocalDateTime.now();
         String fileName = sourcePath.getFileName().toString();
-
-        Path datasetPath = Paths.get(dataset.getPath()).normalize();
-        String filePath;
-        if (sourcePath.startsWith(datasetPath)) {
-            // 源文件已在数据集目录内，直接使用源文件路径，不复制
-            filePath = sourcePath.toString();
-        } else {
-            // 源文件在数据集目录外，构造目标路径
-            filePath = Paths.get(dataset.getPath(), req.getPrefix(), fileName).toString();
-        }
 
         return DatasetFile.builder()
                 .id(UUID.randomUUID().toString())
@@ -1171,7 +1161,7 @@ public class DatasetFileApplicationService {
                 .fileName(fileName)
                 .fileType(AnalyzerUtils.getExtension(fileName))
                 .fileSize(sourceFile.length())
-                .filePath(filePath)
+                .filePath(Paths.get(dataset.getPath(), req.getPrefix(), fileName).toString())
                 .uploadTime(currentTime)
                 .lastAccessTime(currentTime)
                 .metadata(objectMapper.writeValueAsString(file.getMetadata()))
