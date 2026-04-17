@@ -1,10 +1,13 @@
 # QwenVL service image for DataMate video operators
 #
+# This Dockerfile provides the image build entry for the standalone QwenVL service.
+#
 # Notes:
 # 1. The actual deployment environment uses Ascend / NPU with torch_npu and CANN.
 # 2. Replace BASE_IMAGE with the actual Ascend-compatible runtime image in your environment.
 # 3. Model weights are mounted from host storage and are not copied into the image.
 # 4. The model path is configured by QWEN_MODEL_DIR and should be adjusted at deployment time.
+# 5. The default BASE_IMAGE is only a generic placeholder for repository delivery.
 
 ARG BASE_IMAGE=python:3.10-slim
 FROM ${BASE_IMAGE}
