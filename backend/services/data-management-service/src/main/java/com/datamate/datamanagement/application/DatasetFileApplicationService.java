@@ -1158,7 +1158,7 @@ public class DatasetFileApplicationService {
                 .fileName(fileName)
                 .fileType(AnalyzerUtils.getExtension(fileName))
                 .fileSize(sourceFile.length())
-                .filePath(Paths.get(dataset.getPath(), file.getPrefix(), fileName).toString())
+                .filePath(Paths.get(dataset.getPath(), req.getEffectivePrefix(file), fileName).toString())
                 .uploadTime(currentTime)
                 .lastAccessTime(currentTime)
                 .metadata(objectMapper.writeValueAsString(file.getMetadata()))
