@@ -26,20 +26,8 @@ logger.add(
     enqueue=True
 )
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    try:
-        logger.info("Initializing background worker...")
-        start_auto_annotation_worker()
-        logger.info("Auto-annotation worker started successfully.")
-    except Exception as e:
-        logger.error("Failed to start auto-annotation worker: {}", e)
 
-    yield
-
-    logger.info("Shutting down background worker...")
-
-app = FastAPI(lifespan=lifespan)
+app = FastAPI()
 
 
 class APIException(Exception):

@@ -509,37 +509,38 @@ export default function DataAnnotation() {
     return !name.endsWith(" - 自动标注");
   });
 
+  // 自动标注功能已屏蔽：仅显示手动标注任务
   const mergedTableData = [
     // 手动标注任务（过滤掉自动生成的映射任务）
     ...manualVisibleTasks.map((task) => ({
       ...task,
       _kind: "manual" as const,
     })),
-    // 自动标注任务
-    ...autoTasks.map((task: any) => {
-      const sourceList = Array.isArray(task.sourceDatasets)
-        ? task.sourceDatasets
-        : task.datasetName
-        ? [task.datasetName]
-        : [];
-      const datasetName = sourceList.length > 0 ? sourceList.join("，") : "-";
-
-      return {
-        id: task.id,
-        name: task.name,
-        datasetId: task.datasetId || task.dataset_id,
-        datasetName,
-        createdAt: task.createdAt || "-",
-        updatedAt: task.updatedAt || "-",
-        _kind: "auto" as const,
-        autoStatus: task.status,
-        autoProgress: task.progress,
-        autoProcessedImages: task.processedImages,
-        autoTotalImages: task.totalImages,
-        autoDetectedObjects: task.detectedObjects,
-        autoConfig: task.config || {},
-      };
-    }),
+    // 自动标注任务已屏蔽（代码保留在下方注释中，需要恢复时可取消注释）
+    // ...autoTasks.map((task: any) => {
+    //   const sourceList = Array.isArray(task.sourceDatasets)
+    //     ? task.sourceDatasets
+    //     : task.datasetName
+    //     ? [task.datasetName]
+    //     : [];
+    //   const datasetName = sourceList.length > 0 ? sourceList.join("，") : "-";
+    // 
+    //   return {
+    //     id: task.id,
+    //     name: task.name,
+    //     datasetId: task.datasetId || task.dataset_id,
+    //     datasetName,
+    //     createdAt: task.createdAt || "-",
+    //     updatedAt: task.updatedAt || "-",
+    //     _kind: "auto" as const,
+    //     autoStatus: task.status,
+    //     autoProgress: task.progress,
+    //     autoProcessedImages: task.processedImages,
+    //     autoTotalImages: task.totalImages,
+    //     autoDetectedObjects: task.detectedObjects,
+    //     autoConfig: task.config || {},
+    //   };
+    // }),
   ];
 
   const columns: ColumnType<any>[] = [
@@ -585,88 +586,89 @@ export default function DataAnnotation() {
         );
       },
     },
-    {
-      title: t('dataAnnotation.home.columns.model'),
-      key: "modelSize",
-      width: 160,
-      render: (_: any, record: any) => {
-        if (record._kind !== "auto") return "-";
-        const size = record.autoConfig?.modelSize;
-        return t(`dataAnnotation.home.autoModelSizeLabels.${size}`) || size || "-";
-      },
-    },
-    {
-      title: t('dataAnnotation.home.columns.confidence'),
-      key: "confThreshold",
-      width: 120,
-      render: (_: any, record: any) => {
-        if (record._kind !== "auto") return "-";
-        const threshold = record.autoConfig?.confThreshold;
-        if (typeof threshold !== "number") return "-";
-        return `${(threshold * 100).toFixed(0)}%`;
-      },
-    },
-    {
-      title: t('dataAnnotation.home.columns.targetClasses'),
-      key: "targetClasses",
-      width: 160,
-      render: (_: any, record: any) => {
-        if (record._kind !== "auto") return "-";
-        const classes: number[] = record.autoConfig?.targetClasses || [];
-        if (!classes.length) return t('dataAnnotation.home.allCategories');
-        const text = classes.join(", ");
-        return (
-          <Tooltip title={text}>
-            <span>{t('dataAnnotation.home.categoriesCount', { count: classes.length })}</span>
-          </Tooltip>
-        );
-      },
-    },
-    {
-      title: t('dataAnnotation.home.columns.autoStatus'),
-      key: "autoStatus",
-      width: 130,
-      render: (_: any, record: any) => {
-        if (record._kind !== "auto") return "-";
-        const status = record.autoStatus as string;
-        const label = t(`dataAnnotation.home.autoStatusLabels.${status}`) || status || "-";
-        return <Tag>{label}</Tag>;
-      },
-    },
-    {
-      title: t('dataAnnotation.home.columns.autoProgress'),
-      key: "autoProgress",
-      width: 200,
-      render: (_: any, record: any) => {
-        if (record._kind !== "auto") return "-";
-        const progress = typeof record.autoProgress === "number" ? record.autoProgress : 0;
-        const processed = record.autoProcessedImages ?? 0;
-        const total = record.autoTotalImages ?? 0;
-        return (
-          <div>
-            <Progress percent={progress} size="small" />
-            <div style={{ fontSize: 12, color: "#999" }}>
-              {processed} / {total}
-            </div>
-          </div>
-        );
-      },
-    },
-    {
-      title: t('dataAnnotation.home.columns.detectedObjects'),
-      key: "detectedObjects",
-      width: 120,
-      render: (_: any, record: any) => {
-        if (record._kind !== "auto") return "-";
-        const count = record.autoDetectedObjects;
-        if (typeof count !== "number") return "-";
-        try {
-          return count.toLocaleString();
-        } catch {
-          return String(count);
-        }
-      },
-    },
+    // 自动标注相关列已屏蔽（保留代码在注释中）
+    // {
+    //   title: t('dataAnnotation.home.columns.model'),
+    //   key: "modelSize",
+    //   width: 160,
+    //   render: (_: any, record: any) => {
+    //     if (record._kind !== "auto") return "-";
+    //     const size = record.autoConfig?.modelSize;
+    //     return t(`dataAnnotation.home.autoModelSizeLabels.${size}`) || size || "-";
+    //   },
+    // },
+    // {
+    //   title: t('dataAnnotation.home.columns.confidence'),
+    //   key: "confThreshold",
+    //   width: 120,
+    //   render: (_: any, record: any) => {
+    //     if (record._kind !== "auto") return "-";
+    //     const threshold = record.autoConfig?.confThreshold;
+    //     if (typeof threshold !== "number") return "-";
+    //     return `${(threshold * 100).toFixed(0)}%`;
+    //   },
+    // },
+    // {
+    //   title: t('dataAnnotation.home.columns.targetClasses'),
+    //   key: "targetClasses",
+    //   width: 160,
+    //   render: (_: any, record: any) => {
+    //     if (record._kind !== "auto") return "-";
+    //     const classes: number[] = record.autoConfig?.targetClasses || [];
+    //     if (!classes.length) return t('dataAnnotation.home.allCategories');
+    //     const text = classes.join(", ");
+    //     return (
+    //       <Tooltip title={text}>
+    //         <span>{t('dataAnnotation.home.categoriesCount', { count: classes.length })}</span>
+    //       </Tooltip>
+    //     );
+    //   },
+    // },
+    // {
+    //   title: t('dataAnnotation.home.columns.autoStatus'),
+    //   key: "autoStatus",
+    //   width: 130,
+    //   render: (_: any, record: any) => {
+    //     if (record._kind !== "auto") return "-";
+    //     const status = record.autoStatus as string;
+    //     const label = t(`dataAnnotation.home.autoStatusLabels.${status}`) || status || "-";
+    //     return <Tag>{label}</Tag>;
+    //   },
+    // },
+    // {
+    //   title: t('dataAnnotation.home.columns.autoProgress'),
+    //   key: "autoProgress",
+    //   width: 200,
+    //   render: (_: any, record: any) => {
+    //     if (record._kind !== "auto") return "-";
+    //     const progress = typeof record.autoProgress === "number" ? record.autoProgress : 0;
+    //     const processed = record.autoProcessedImages ?? 0;
+    //     const total = record.autoTotalImages ?? 0;
+    //     return (
+    //       <div>
+    //         <Progress percent={progress} size="small" />
+    //         <div style={{ fontSize: 12, color: "#999" }}>
+    //           {processed} / {total}
+    //         </div>
+    //       </div>
+    //     );
+    //   },
+    // },
+    // {
+    //   title: t('dataAnnotation.home.columns.detectedObjects'),
+    //   key: "detectedObjects",
+    //   width: 120,
+    //   render: (_: any, record: any) => {
+    //     if (record._kind !== "auto") return "-";
+    //     const count = record.autoDetectedObjects;
+    //     if (typeof count !== "number") return "-";
+    //     try {
+    //       return count.toLocaleString();
+    //     } catch {
+    //       return String(count);
+    //     }
+    //   },
+    // },
     {
       title: t('dataAnnotation.home.columns.createdAt'),
       dataIndex: "createdAt",
@@ -736,7 +738,8 @@ export default function DataAnnotation() {
               </Dropdown>
             </>
           )}
-          {task._kind === "auto" && (
+          {/* 自动标注任务操作按钮已屏蔽（保留代码在注释中） */}
+          {/* {task._kind === "auto" && (
             <>
               <Button
                 type="text"
@@ -756,7 +759,6 @@ export default function DataAnnotation() {
                 {t('dataAnnotation.home.actions.syncToDb')}
               </Button>
 
-              {/* 二级功能：编辑任务数据集 + 删除任务（折叠菜单） */}
               <Dropdown
                 menu={{
                   items: [
@@ -790,7 +792,7 @@ export default function DataAnnotation() {
                 />
               </Dropdown>
             </>
-          )}
+          )} */}
         </div>
       ),
     },
@@ -906,7 +908,8 @@ export default function DataAnnotation() {
         ]}
       />
 
-      {editingAutoTask && (
+      {/* 自动标注对话框已屏蔽（保留代码在注释中） */}
+      {/* {editingAutoTask && (
         <EditAutoAnnotationDatasetDialog
           visible={showEditAutoDatasetDialog}
           task={editingAutoTask}
@@ -920,7 +923,7 @@ export default function DataAnnotation() {
             refreshAutoTasks();
           }}
         />
-      )}
+      )} */}
 
       {editingManualTask && (
         <EditManualAnnotationDatasetDialog
@@ -952,10 +955,10 @@ export default function DataAnnotation() {
         />
       )}
 
-      {importingAutoTask && (
+      {/* 自动标注导入对话框已屏蔽（保留代码在注释中） */}
+      {/* {importingAutoTask && (
         <ImportFromLabelStudioDialog
           visible={showImportAutoDialog}
-          // 这里直接透传自动标注任务结构（与 AutoAnnotation 页面保持一致字段）
           task={importingAutoTask as any}
           onCancel={() => {
             setShowImportAutoDialog(false);
@@ -966,7 +969,7 @@ export default function DataAnnotation() {
             setImportingAutoTask(null);
           }}
         />
-      )}
+      )} */}
     </div>
   );
 }

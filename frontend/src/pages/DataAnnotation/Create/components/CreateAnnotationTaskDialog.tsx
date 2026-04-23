@@ -417,6 +417,7 @@ export default function CreateAnnotationTask({
       }
       width={800}
     >
+      {/* 自动标注功能已屏蔽 - Tabs 结构保留但仅显示手动标注 */}
       <Tabs
         activeKey={activeMode}
         onChange={(key) => setActiveMode(key as "manual" | "auto")}
@@ -548,102 +549,103 @@ export default function CreateAnnotationTask({
               </Form>
             ),
           },
-          {
-            key: "auto",
-            label: t('dataAnnotation.create.auto'),
-            children: (
-              <Form form={autoForm} layout="vertical" preserve={false}>
-                {/* 自动标注：任务名称仍然放在第一行，必填 */}
-                <Form.Item
-                  name="name"
-                  label={t('dataAnnotation.create.form.name')}
-                  rules={[
-                    { required: true, message: t('dataAnnotation.create.form.nameRequired') },
-                    { max: 100, message: t('dataAnnotation.create.form.nameMaxLength') },
-                  ]}
-                >
-                  <Input placeholder={t('dataAnnotation.create.form.namePlaceholder')} />
-                </Form.Item>
-
-                <Form.Item label={t('dataAnnotation.create.form.selectDatasetAndFiles')} required>
-                  <DatasetFileTransfer
-                    open
-                    selectedFilesMap={selectedFilesMap}
-                    onSelectedFilesChange={setSelectedFilesMap}
-                    onDatasetSelect={(dataset) => {
-                      setSelectedDataset(dataset as Dataset | null);
-                      autoForm.setFieldsValue({ datasetId: dataset?.id ?? "" });
-                    }}
-                    datasetTypeFilter={DatasetType.IMAGE}
-                    allowedFileExtensions={IMAGE_EXTENSIONS}
-                    singleDatasetOnly
-                  />
-                  {selectedDataset && (
-                    <div className="mt-2 p-2 bg-blue-50 rounded border border-blue-200 text-xs">
-                      {t('dataAnnotation.create.form.currentDataset', { name: selectedDataset.name, count: imageFileCount })}
-                    </div>
-                  )}
-                </Form.Item>
-
-                <Form.Item
-                  hidden
-                  name="datasetId"
-                  rules={[{ required: true, message: t('dataAnnotation.create.form.datasetRequired') }]}
-                >
-                  <Input type="hidden" />
-                </Form.Item>
-
-                <Form.Item
-                  name="modelSize"
-                  label={t('dataAnnotation.create.form.modelSize')}
-                  rules={[{ required: true, message: t('dataAnnotation.create.form.modelSizeRequired') }]}
-                  initialValue="l"
-                >
-                  <Select>
-                    <Option value="n">{t('dataAnnotation.home.autoModelSizeLabels.n')}</Option>
-                    <Option value="s">{t('dataAnnotation.home.autoModelSizeLabels.s')}</Option>
-                    <Option value="m">{t('dataAnnotation.home.autoModelSizeLabels.m')}</Option>
-                    <Option value="l">{t('dataAnnotation.home.autoModelSizeLabels.l')}</Option>
-                    <Option value="x">{t('dataAnnotation.home.autoModelSizeLabels.x')}</Option>
-                  </Select>
-                </Form.Item>
-
-                <Form.Item
-                  name="confThreshold"
-                  label={t('dataAnnotation.create.form.confThreshold')}
-                  rules={[{ required: true, message: t('dataAnnotation.create.form.confThresholdRequired') }]}
-                  initialValue={0.7}
-                >
-                  <Slider
-                    min={0.1}
-                    max={0.9}
-                    step={0.05}
-                    tooltip={{ formatter: (v) => `${(v || 0) * 100}%` }}
-                  />
-                </Form.Item>
-
-                <Form.Item label={t('dataAnnotation.create.form.targetClasses')}>
-                  <Checkbox
-                    checked={selectAllClasses}
-                    onChange={(e) => handleClassSelectionChange(e.target.checked)}
-                  >
-                    {t('dataAnnotation.create.form.selectAllClasses')}
-                  </Checkbox>
-                  {!selectAllClasses && (
-                    <Form.Item name="targetClasses" noStyle>
-                      <Select mode="multiple" placeholder={t('dataAnnotation.create.form.selectTargetClasses')} style={{ marginTop: 8 }}>
-                        {COCO_CLASSES.map((cls) => (
-                          <Option key={cls.id} value={cls.id}>
-                            {cls.label} ({cls.name})
-                          </Option>
-                        ))}
-                      </Select>
-                    </Form.Item>
-                  )}
-                </Form.Item>
-              </Form>
-            ),
-          },
+          // 自动标注 Tab 已屏蔽（代码保留在下方注释中，需要恢复时可取消注释）
+          // {
+          //   key: "auto",
+          //   label: t('dataAnnotation.create.auto'),
+          //   children: (
+          //     <Form form={autoForm} layout="vertical" preserve={false}>
+          //       {/* 自动标注：任务名称仍然放在第一行，必填 */}
+          //       <Form.Item
+          //         name="name"
+          //         label={t('dataAnnotation.create.form.name')}
+          //         rules={[
+          //           { required: true, message: t('dataAnnotation.create.form.nameRequired') },
+          //           { max: 100, message: t('dataAnnotation.create.form.nameMaxLength') },
+          //         ]}
+          //       >
+          //         <Input placeholder={t('dataAnnotation.create.form.namePlaceholder')} />
+          //       </Form.Item>
+          // 
+          //       <Form.Item label={t('dataAnnotation.create.form.selectDatasetAndFiles')} required>
+          //         <DatasetFileTransfer
+          //           open
+          //           selectedFilesMap={selectedFilesMap}
+          //           onSelectedFilesChange={setSelectedFilesMap}
+          //           onDatasetSelect={(dataset) => {
+          //             setSelectedDataset(dataset as Dataset | null);
+          //             autoForm.setFieldsValue({ datasetId: dataset?.id ?? "" });
+          //           }}
+          //           datasetTypeFilter={DatasetType.IMAGE}
+          //           allowedFileExtensions={IMAGE_EXTENSIONS}
+          //           singleDatasetOnly
+          //         />
+          //         {selectedDataset && (
+          //           <div className="mt-2 p-2 bg-blue-50 rounded border border-blue-200 text-xs">
+          //             {t('dataAnnotation.create.form.currentDataset', { name: selectedDataset.name, count: imageFileCount })}
+          //           </div>
+          //         )}
+          //       </Form.Item>
+          // 
+          //       <Form.Item
+          //         hidden
+          //         name="datasetId"
+          //         rules={[{ required: true, message: t('dataAnnotation.create.form.datasetRequired') }]}
+          //       >
+          //         <Input type="hidden" />
+          //       </Form.Item>
+          // 
+          //       <Form.Item
+          //         name="modelSize"
+          //         label={t('dataAnnotation.create.form.modelSize')}
+          //         rules={[{ required: true, message: t('dataAnnotation.create.form.modelSizeRequired') }]}
+          //         initialValue="l"
+          //       >
+          //         <Select>
+          //           <Option value="n">{t('dataAnnotation.home.autoModelSizeLabels.n')}</Option>
+          //           <Option value="s">{t('dataAnnotation.home.autoModelSizeLabels.s')}</Option>
+          //           <Option value="m">{t('dataAnnotation.home.autoModelSizeLabels.m')}</Option>
+          //           <Option value="l">{t('dataAnnotation.home.autoModelSizeLabels.l')}</Option>
+          //           <Option value="x">{t('dataAnnotation.home.autoModelSizeLabels.x')}</Option>
+          //         </Select>
+          //       </Form.Item>
+          // 
+          //       <Form.Item
+          //         name="confThreshold"
+          //         label={t('dataAnnotation.create.form.confThreshold')}
+          //         rules={[{ required: true, message: t('dataAnnotation.create.form.confThresholdRequired') }]}
+          //         initialValue={0.7}
+          //       >
+          //         <Slider
+          //           min={0.1}
+          //           max={0.9}
+          //           step={0.05}
+          //           tooltip={{ formatter: (v) => `${(v || 0) * 100}%` }}
+          //         />
+          //       </Form.Item>
+          // 
+          //       <Form.Item label={t('dataAnnotation.create.form.targetClasses')}>
+          //         <Checkbox
+          //           checked={selectAllClasses}
+          //           onChange={(e) => handleClassSelectionChange(e.target.checked)}
+          //         >
+          //           {t('dataAnnotation.create.form.selectAllClasses')}
+          //         </Checkbox>
+          //         {!selectAllClasses && (
+          //           <Form.Item name="targetClasses" noStyle>
+          //             <Select mode="multiple" placeholder={t('dataAnnotation.create.form.selectTargetClasses')} style={{ marginTop: 8 }}>
+          //               {COCO_CLASSES.map((cls) => (
+          //                 <Option key={cls.id} value={cls.id}>
+          //                   {cls.label} ({cls.name})
+          //                 </Option>
+          //               ))}
+          //             </Select>
+          //           </Form.Item>
+          //         )}
+          //       </Form.Item>
+          //     </Form>
+          //   ),
+          // },
         ]}
       />
     </Modal>
