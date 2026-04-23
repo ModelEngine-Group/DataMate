@@ -16,7 +16,6 @@ dependencies = [
     "python-multipart>=0.0.20",
     "opencv-contrib-python-headless>=4.12.0.88",
     "opencv-python-headless>=4.12.0.88",
-    "openslide-python>=1.4.3",
     "paddleocr==3.3.0",
     "paddlepaddle==3.2.2",
     "pandas>=2.2.3,<3.0.0",
@@ -30,5 +29,4 @@ dependencies = [
     "sqlalchemy>=2.0.44",
     "xmltodict>=1.0.2",
     "zhconv>=1.4.3",
-    "ultralytics>=8.0.0",
 ]

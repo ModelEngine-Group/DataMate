@@ -14,7 +14,6 @@ from datamate.common.error_code import ErrorCode
 from datamate.scheduler import cmd_scheduler
 from datamate.scheduler import func_scheduler
 from datamate.wrappers import WRAPPERS
-from datamate.auto_annotation_worker import start_auto_annotation_worker
 
 # 日志配置
 LOG_DIR = "/var/log/datamate/runtime"
@@ -26,20 +25,8 @@ logger.add(
     enqueue=True
 )
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    try:
-        logger.info("Initializing background worker...")
-        start_auto_annotation_worker()
-        logger.info("Auto-annotation worker started successfully.")
-    except Exception as e:
-        logger.error("Failed to start auto-annotation worker: {}", e)
 
-    yield
-
-    logger.info("Shutting down background worker...")
-
-app = FastAPI(lifespan=lifespan)
+app = FastAPI()
 
 
 class APIException(Exception):
