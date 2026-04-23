@@ -14,7 +14,6 @@ from datamate.common.error_code import ErrorCode
 from datamate.scheduler import cmd_scheduler
 from datamate.scheduler import func_scheduler
 from datamate.wrappers import WRAPPERS
-from datamate.auto_annotation_worker import start_auto_annotation_worker
 
 # 日志配置
 LOG_DIR = "/var/log/datamate/runtime"
