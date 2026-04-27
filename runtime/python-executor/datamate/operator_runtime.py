@@ -14,7 +14,6 @@ from datamate.common.error_code import ErrorCode
 from datamate.scheduler import cmd_scheduler
 from datamate.scheduler import func_scheduler
 from datamate.wrappers import WRAPPERS
-from datamate.auto_annotation_worker import start_auto_annotation_worker
 
 # 日志配置
 LOG_DIR = "/var/log/datamate/runtime"
@@ -26,20 +25,8 @@ logger.add(
     enqueue=True
 )
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    try:
-        logger.info("Initializing background worker...")
-        start_auto_annotation_worker()
-        logger.info("Auto-annotation worker started successfully.")
-    except Exception as e:
-        logger.error("Failed to start auto-annotation worker: {}", e)
 
-    yield
-
-    logger.info("Shutting down background worker...")
-
-app = FastAPI(lifespan=lifespan)
+app = FastAPI()
 
 
 class APIException(Exception):
@@ -84,10 +71,15 @@ async def query_task_info(request: QueryTaskRequest):
         raise APIException(ErrorCode.UNKNOWN_ERROR)
 
 
+class SubmitTaskRequest(BaseModel):
+    retry_count: int = 0
+
+
 @app.post("/api/task/{task_id}/submit")
-async def submit_task(task_id):
+async def submit_task(task_id, request: SubmitTaskRequest = None):
+    retry_count = request.retry_count if request else 0
     config_path = f"/flow/{task_id}/process.yaml"
-    logger.info("Start submitting job...")
+    logger.info(f"Start submitting job with retry_count={retry_count}...")
 
     dataset_path = get_from_cfg(task_id, "dataset_path")
     if not check_valid_path(dataset_path):
@@ -96,7 +88,7 @@ async def submit_task(task_id):
 
     try:
         executor_type = get_from_cfg(task_id, "executor_type")
-        await WRAPPERS.get(executor_type).submit(task_id, config_path)
+        await WRAPPERS.get(executor_type).submit(task_id, config_path, retry_count)
 
     except Exception as e:
         logger.error(f"Error happens during submitting task. Error Info following: {e}")

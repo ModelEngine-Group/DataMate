@@ -112,9 +112,41 @@ public class DatasetFileApplicationService {
             return PagedResponse.of(new Page<>(page, size));
         }
         String datasetPath = dataset.getPath();
-        Path queryPath = Path.of(dataset.getPath() + File.separator + prefix);
+
+        // 规范化 prefix：去掉首尾斜杠，处理空字符串
+        prefix = Optional.ofNullable(prefix).orElse("").trim();
+        prefix = prefix.replace("\\", "/");
+        while (prefix.startsWith("/")) {
+            prefix = prefix.substring(1);
+        }
+        while (prefix.endsWith("/")) {
+            prefix = prefix.substring(0, prefix.length() - 1);
+        }
+
+        // 使用 Path API 安全地构建路径
+        Path basePath = Paths.get(datasetPath);
+        Path queryPath = prefix.isEmpty() ? basePath : basePath.resolve(prefix).normalize();
+
+        // 确保查询路径在数据集路径下（防止路径遍历）
+        if (!queryPath.startsWith(basePath)) {
+            log.warn("Invalid prefix path: datasetId={}, prefix={}, queryPath={}", datasetId, prefix, queryPath);
+            return PagedResponse.of(new Page<>(page, size));
+        }
+
         Map<String, DatasetFile> datasetFilesMap = datasetFileRepository.findAllByDatasetId(datasetId)
             .stream().collect(Collectors.toMap(DatasetFile::getFilePath, Function.identity()));
+
+        // 检查路径是否存在
+        if (!Files.exists(queryPath)) {
+            log.warn("Dataset path does not exist: datasetId={}, path={}, queryPath={}", datasetId, datasetPath, queryPath);
+            return PagedResponse.of(new Page<>(page, size));
+        }
+
+        if (!Files.isDirectory(queryPath)) {
+            log.warn("Dataset path is not a directory: datasetId={}, queryPath={}", datasetId, queryPath);
+            return PagedResponse.of(new Page<>(page, size));
+        }
+
         try (Stream<Path> pathStream = Files.list(queryPath)) {
             List<Path> allFiles = pathStream
                 .filter(path -> path.toString().startsWith(datasetPath))
@@ -140,7 +172,7 @@ public class DatasetFileApplicationService {
 
             return PagedResponse.of(page, size, total, totalPages, datasetFiles);
         } catch (IOException e) {
-            log.warn("list dataset path error");
+            log.error("Failed to list dataset files: datasetId={}, queryPath={}", datasetId, queryPath, e);
             return PagedResponse.of(new Page<>(page, size));
         }
     }
@@ -1025,9 +1057,6 @@ public class DatasetFileApplicationService {
      */
     @Transactional
     public List<DatasetFile> addFilesToDataset(String datasetId, AddFilesRequest req) {
-        if (!req.isValidPrefix()) {
-            throw BusinessException.of(DataManagementErrorCode.DIRECTORY_NOT_FOUND);
-        }
         Dataset dataset = datasetRepository.getById(datasetId);
         BusinessAssert.notNull(dataset, SystemErrorCode.RESOURCE_NOT_FOUND);
         List<DatasetFile> addedFiles = new ArrayList<>();
@@ -1129,7 +1158,7 @@ public class DatasetFileApplicationService {
                 .fileName(fileName)
                 .fileType(AnalyzerUtils.getExtension(fileName))
                 .fileSize(sourceFile.length())
-                .filePath(Paths.get(dataset.getPath(), req.getPrefix(), fileName).toString())
+                .filePath(Paths.get(dataset.getPath(), req.getEffectivePrefix(file), fileName).toString())
                 .uploadTime(currentTime)
                 .lastAccessTime(currentTime)
                 .metadata(objectMapper.writeValueAsString(file.getMetadata()))

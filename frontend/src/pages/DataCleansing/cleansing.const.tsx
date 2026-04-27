@@ -8,13 +8,7 @@ import {
   formatDateTime,
   formatExecutionDuration,
 } from "@/utils/unit";
-import {
-  ClockCircleOutlined,
-  PlayCircleOutlined,
-  CheckCircleOutlined,
-  AlertOutlined,
-  PauseCircleOutlined,
-} from "@ant-design/icons";
+
 import { BrushCleaning, Layout } from "lucide-react";
 
 export function getTaskStatusMap(t: (key: string) => string) {
@@ -22,32 +16,32 @@ export function getTaskStatusMap(t: (key: string) => string) {
     [TaskStatus.PENDING]: {
       label: t("dataCleansing.status.pending"),
       value: TaskStatus.PENDING,
-      color: "gray",
-      icon: <ClockCircleOutlined />,
+      color: "default",
     },
     [TaskStatus.RUNNING]: {
       label: t("dataCleansing.status.running"),
       value: TaskStatus.RUNNING,
-      color: "blue",
-      icon: <PlayCircleOutlined />,
+      color: "processing",
     },
     [TaskStatus.COMPLETED]: {
       label: t("dataCleansing.status.completed"),
       value: TaskStatus.COMPLETED,
-      color: "green",
-      icon: <CheckCircleOutlined />,
+      color: "success",
+    },
+    [TaskStatus.PARTIAL_SUCCESS]: {
+      label: t("dataCleansing.status.partialSuccess"),
+      value: TaskStatus.PARTIAL_SUCCESS,
+      color: "warning",
     },
     [TaskStatus.FAILED]: {
       label: t("dataCleansing.status.failed"),
       value: TaskStatus.FAILED,
-      color: "red",
-      icon: <AlertOutlined />,
+      color: "error",
     },
     [TaskStatus.STOPPED]: {
       label: t("dataCleansing.status.stopped"),
       value: TaskStatus.STOPPED,
-      color: "orange",
-      icon: <PauseCircleOutlined />,
+      color: "default",
     },
   };
 }

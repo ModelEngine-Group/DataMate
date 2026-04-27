@@ -2,9 +2,6 @@ import {message} from "antd";
 import Loading from "./loading";
 import {errorConfigStore} from "@/utils/errorConfigStore.ts";
 import i18n from "@/i18n";
-import i18n from "@/i18n";
-import i18n from "@/i18n";
-import i18n from "@/i18n";
 
 /**
  * 通用请求工具类
@@ -218,13 +215,21 @@ class Request {
    * 处理XHR响应
    */
   async handleXHRResponse(xhrResponse, config) {
-    // 模拟fetch响应格式用于拦截器
+    // 模拟fetch响应格式用于拦截器（添加 clone/json 方法）
     const mockResponse = {
       ok: xhrResponse.status >= 200 && xhrResponse.status < 300,
       status: xhrResponse.status,
       statusText: xhrResponse.statusText,
       headers: {
         get: (key) => xhrResponse.xhr.getResponseHeader(key),
+      },
+      data: xhrResponse.data,
+      clone: () => mockResponse,
+      json: async () => {
+        if (typeof xhrResponse.data === "string") {
+          return JSON.parse(xhrResponse.data);
+        }
+        return xhrResponse.data;
       },
     };
 
@@ -283,6 +288,8 @@ class Request {
 
     const config = {
       method: "GET",
+      credentials: "include",
+      mode: "cors",
       headers: {
         ...this.defaultHeaders,
         ...options.headers,
@@ -302,6 +309,8 @@ class Request {
   async post(url, data = {}, options = {}) {
     let config = {
       method: "POST",
+      credentials: "include",
+      mode: "cors",
       headers: {
         ...this.defaultHeaders,
         ...options.headers,
@@ -314,6 +323,8 @@ class Request {
     if (isFormData) {
       config = {
         method: "POST",
+        credentials: "include",
+        mode: "cors",
         headers: {
           ...options.headers, // FormData不需要Content-Type
         },
@@ -333,6 +344,8 @@ class Request {
   async put(url, data = null, options = {}) {
     const config = {
       method: "PUT",
+      credentials: "include",
+      mode: "cors",
       headers: {
         ...this.defaultHeaders,
         ...options.headers,
@@ -390,6 +403,28 @@ class Request {
     }
 
     return this.request(fullURL, config);
+  }
+
+  /**
+   * PATCH请求
+   * @param {string} url - 请求URL
+   * @param {object} data - 请求体数据
+   * @param {object} options - 额外的fetch选项，包括showLoading, onUploadProgress, onDownloadProgress
+   */
+  async patch(url, data = null, options = {}) {
+    const config = {
+      method: "PATCH",
+      credentials: "include",
+      mode: "cors",
+      headers: {
+        ...this.defaultHeaders,
+        ...options.headers,
+      },
+      body: data ? JSON.stringify(data) : undefined,
+      ...options,
+    };
+
+    return this.request(this.baseURL + url, config);
   }
 
   /**
@@ -526,11 +561,9 @@ request.addRequestInterceptor((config) => {
     try {
       const sessionData = JSON.parse(session);
       if (sessionData.token) {
-        // 后端使用 "User" 请求头而不是 "Authorization"
-        // 可以直接发送 token 或 username
         config.headers = {
           ...config.headers,
-          'User': sessionData.token,  // 使用 User 请求头
+          'Authorization': `Bearer ${sessionData.token}`,
         };
       }
     } catch (e) {
@@ -550,22 +583,33 @@ request.addRequestInterceptor((config) => {
 // --- 常量配置 ---
 const DEFAULT_ERROR_MSG = '系统繁忙，请稍后重试';
 // 需要触发重新登录的 Code 集合 (包含 HTTP 401 和 业务 Token 过期码)
-const AUTH_ERR_CODES = [401, '401', 'common.401'];
+// 注意：后端返回的是 "common.0401"（有前导零）
+const AUTH_ERR_CODES = [401, '401', 'common.401', 'common.0401'];
 
 // --- 辅助函数：防抖处理登录失效 ---
 let isRelogging = false;
+// 全局标记：是否需要登录（从 /api/user/me 获取）
+let requireLoginMode = false;
+
+// 设置是否需要登录
+export function setRequireLoginMode(value: boolean) {
+  requireLoginMode = value;
+}
+
 const handleLoginRedirect = () => {
-  if (isRelogging) return;
+  // 如果不需要登录，直接返回
+  if (!requireLoginMode) {
+    return;
+  }
+
+  if (isRelogging) {
+    return;
+  }
   isRelogging = true;
 
-  // 1. 清除 Session / Token
   localStorage.removeItem('session');
+  window.dispatchEvent(new CustomEvent('show-login'));
 
-  // 2. 触发登录弹窗事件 (根据你的架构，这里可以是 dispatch event 或 router 跳转)
-  const loginEvent = new CustomEvent('show-login');
-  window.dispatchEvent(loginEvent);
-
-  // 3. 重置标志位 (3秒后才允许再次触发)
   setTimeout(() => {
     isRelogging = false;
   }, 3000);
@@ -579,8 +623,6 @@ request.addResponseInterceptor(async (response, config) => {
 
   const { status } = response;
 
-  // ------------------ 修改重点开始 ------------------
-
   let resData: {};
 
   try {
@@ -591,7 +633,6 @@ request.addResponseInterceptor(async (response, config) => {
   } catch (e) {
     // 如果后端返回的不是 JSON (比如 404 HTML 页面，或者空字符串)，json() 会报错
     // 这里捕获异常，保证 resData 至少是个空对象，不会导致后面取值 crash
-    console.warn('响应体不是有效的JSON:', e);
     resData = {};
   }
 
@@ -623,7 +664,8 @@ request.addResponseInterceptor(async (response, config) => {
   }
 
   // 7. 处理 Token 过期 / 未登录
-  if (AUTH_ERR_CODES.includes(code) || AUTH_ERR_CODES.includes(codeStr)) {
+  const isAuthError = AUTH_ERR_CODES.includes(code) || AUTH_ERR_CODES.includes(codeStr);
+  if (isAuthError) {
     handleLoginRedirect();
   }
 
@@ -641,6 +683,7 @@ export const get = request.get.bind(request);
 export const post = request.post.bind(request);
 export const put = request.put.bind(request);
 export const del = request.delete.bind(request);
+export const patch = request.patch.bind(request);
 export const download = request.download.bind(request);
 export const upload = request.upload.bind(request);
 

@@ -63,7 +63,7 @@ export default class ErrorBoundary extends Component<
     this.logErrorToService(error, errorInfo);
 
     // 开发环境下在控制台显示详细错误
-    if (process.env.NODE_ENV === "development") {
+    if (import.meta.env.DEV) {
       console.error("ErrorBoundary 捕获到错误:", error);
       console.error("错误详情:", errorInfo);
     }
@@ -187,7 +187,7 @@ export function withErrorBoundary(
   Component: React.ComponentType
 ): React.ComponentType {
   return (props) => (
-    <ErrorBoundary showDetails={process.env.NODE_ENV === "development"}>
+    <ErrorBoundary showDetails={import.meta.env.DEV}>
       <Component {...props} />
     </ErrorBoundary>
   );

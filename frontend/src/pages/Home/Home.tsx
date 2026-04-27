@@ -10,58 +10,18 @@ import {
   Sparkles,
 } from "lucide-react";
 import { features, menuItems } from "../Layout/Menu.tsx";
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from "react-router";
-import { Card, Dropdown, Button, Spin } from "antd";
+import { Card, Dropdown, Button } from "antd";
 import type { MenuProps } from 'antd';
 import { Globe } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
-import { getHomePageUrl } from '@/utils/systemParam';
 
 export default function WelcomePage() {
   const navigate = useNavigate();
   const [isChecking, setIsChecking] = useState(false);
-  const [isCheckingRedirect, setIsCheckingRedirect] = useState(true);
   const { t } = useTranslation();
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const checkAndRedirect = async () => {
-      try {
-        const homePageUrl = await getHomePageUrl();
-        
-        if (!isMounted) return;
-        
-        if (homePageUrl) {
-          window.location.href = homePageUrl;
-          return;
-        }
-        
-        setIsCheckingRedirect(false);
-      } catch (error) {
-        console.error('Failed to check home page URL:', error);
-        if (isMounted) {
-          setIsCheckingRedirect(false);
-        }
-      }
-    };
-
-    checkAndRedirect();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  if (isCheckingRedirect) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-        <Spin size="large" />
-      </div>
-    );
-  }
 
   const languageMenuItems: MenuProps['items'] = [
     {

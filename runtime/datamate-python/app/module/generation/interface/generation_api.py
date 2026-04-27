@@ -1,37 +1,44 @@
-import uuid
-from typing import cast
+"""
+数据合成模块 API 接口层
+
+该模块提供数据合成任务的 RESTful API 接口。
+每个接口负责：参数解析 → 调用服务 → 返回响应
+"""
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, BackgroundTasks
-from sqlalchemy import select, func, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exception import ErrorCodes, BusinessError, SuccessResponse, transaction
+from app.core.exception import BusinessError, ErrorCodes, SuccessResponse
 from app.core.logging import get_logger
-from app.db.models.data_synthesis import (
-    save_synthesis_task,
-    DataSynthInstance,
-    DataSynthesisFileInstance,
-    DataSynthesisChunkInstance,
-    SynthesisData,
-)
-from app.db.models.dataset_management import DatasetFiles
 from app.db.session import get_db
 from app.module.generation.schema.generation import (
     CreateSynthesisTaskRequest,
     DataSynthesisTaskItem,
     PagedDataSynthesisTaskResponse,
     SynthesisType,
-    DataSynthesisFileTaskItem,
     PagedDataSynthesisFileTaskResponse,
-    DataSynthesisChunkItem,
     PagedDataSynthesisChunkResponse,
     SynthesisDataItem,
     SynthesisDataUpdateRequest,
     BatchDeleteSynthesisDataRequest,
+    BatchDeleteChunkInstancesRequest,
+    BatchDeleteChunkInstancesByFileRequest,
+    BatchDeleteChunkInstancesByTaskRequest,
+    SynthesisDataPatchItem,
+    ExportSynthesisDataRequest,
+    ExportSynthesisDataResponse,
 )
+from app.module.generation.service.chunk_query_service import ChunkQueryService
 from app.module.generation.service.export_service import SynthesisDatasetExporter, SynthesisExportError
+from app.module.generation.service.file_query_service import FileQueryService
 from app.module.generation.service.generation_service import GenerationService
 from app.module.generation.service.prompt import get_prompt
+from app.module.generation.service.synthesis_data_query_service import SynthesisDataQueryService
+from app.module.generation.service.task_create_service import TaskCreateService
+from app.module.generation.service.task_delete_service import TaskDeleteService
+from app.module.generation.service.task_query_service import TaskQueryService
+from app.module.generation.service.task_executor import execute_generation_task
 from app.module.shared.schema import StandardResponse
 
 router = APIRouter(
@@ -41,96 +48,72 @@ router = APIRouter(
 
 logger = get_logger(__name__)
 
+
+# ==================== 任务接口 ====================
+
 @router.post("/task", response_model=StandardResponse[DataSynthesisTaskItem])
 async def create_synthesis_task(
     request: CreateSynthesisTaskRequest,
     background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
 ):
-    """创建数据合成任务"""
-    # 先根据 source_file_id 在 DatasetFiles 中查出已有文件信息
-    file_ids = request.source_file_id or []
-    dataset_files = []
-    if file_ids:
-        ds_result = await db.execute(
-            select(DatasetFiles).where(DatasetFiles.id.in_(file_ids))
-        )
-        dataset_files = ds_result.scalars().all()
+    """
+    创建数据合成任务
 
-    # 保存任务到数据库（在事务中）
-    request.source_file_id = [str(f.id) for f in dataset_files]
+    使用改进的后台任务执行器，将任务提交到独立的线程池中执行，
+    避免阻塞主事件循环，确保前端接口的响应性。
 
-    async with transaction(db):
-        synthesis_task = await save_synthesis_task(db, request)
+    Args:
+        request: 创建任务请求
+        background_tasks: 后台任务
+        db: 数据库会话
 
-        # 将已有的 DatasetFiles 记录保存到 t_data_synthesis_file_instances
-        synth_files = []
-        for f in dataset_files:
-            file_instance = DataSynthesisFileInstance(
-                id=str(uuid.uuid4()),  # 使用新的 UUID 作为文件任务记录的主键，避免与 DatasetFiles 主键冲突
-                synthesis_instance_id=synthesis_task.id,
-                file_name=f.file_name,
-                source_file_id=str(f.id),
-                status="pending",
-                total_chunks=0,
-                processed_chunks=0,
-                created_by="system",
-                updated_by="system",
-            )
-            synth_files.append(file_instance)
+    Returns:
+        创建的任务
+    """
+    create_service = TaskCreateService(db)
+    task = await create_service.create(request)
 
-        if dataset_files:
-            db.add_all(synth_files)
+    # 使用新的执行器提交任务到线程池
+    # 这样可以真正隔离后台任务，避免阻塞主事件循环
+    async def run_task_in_executor(task_id: str):
+        """在线程池中执行任务"""
+        # 定义一个包装函数来正确调用process_task
+        async def process_task_wrapper(tid: str):
+            # 创建新的GenerationService实例，使用独立的会话
+            from app.db.session import AsyncSessionLocal
+            async with AsyncSessionLocal() as session:
+                service = GenerationService(session)
+                await service.process_task(tid)
 
-    # 事务已提交，启动后台任务
-    generation_service = GenerationService(db)
-    # 异步处理任务：只传任务 ID，后台任务中使用新的 DB 会话重新加载任务对象
-    background_tasks.add_task(generation_service.process_task, synthesis_task.id)
+        await execute_generation_task(task_id, process_task_wrapper)
 
-    # 将 ORM 对象包装成 DataSynthesisTaskItem，兼容新字段从 synth_config 还原
+    background_tasks.add_task(run_task_in_executor, task.id)
+    logger.info(f"Submitted generation task {task.id} to background executor")
 
-    task_item = DataSynthesisTaskItem(
-        id=synthesis_task.id,
-        name=synthesis_task.name,
-        description=synthesis_task.description,
-        status=synthesis_task.status,
-        synthesis_type=synthesis_task.synth_type,
-        total_files=synthesis_task.total_files,
-        created_at=synthesis_task.created_at,
-        updated_at=synthesis_task.updated_at,
-        created_by=synthesis_task.created_by,
-        updated_by=synthesis_task.updated_by,
-    )
-
-    return SuccessResponse(data=task_item)
+    return SuccessResponse(data=DataSynthesisTaskItem.from_orm_with_config(task))
 
 
 @router.get("/task/{task_id}", response_model=StandardResponse[DataSynthesisTaskItem])
-async def get_synthesis_task(
-    task_id: str,
-    db: AsyncSession = Depends(get_db)
-):
-    """获取数据合成任务详情"""
-    synthesis_task = await db.get(DataSynthInstance, task_id)
-    if not synthesis_task:
+async def get_synthesis_task(task_id: str, db: AsyncSession = Depends(get_db)):
+    """
+    获取数据合成任务详情
+
+    Args:
+        task_id: 任务 ID
+        db: 数据库会话
+
+    Returns:
+        任务详情
+    """
+    query_service = TaskQueryService(db)
+    task = await query_service.get_task(task_id)
+    if not task:
         raise BusinessError(ErrorCodes.GENERATION_TASK_NOT_FOUND, data={"task_id": task_id})
-
-    task_item = DataSynthesisTaskItem(
-        id=synthesis_task.id,
-        name=synthesis_task.name,
-        description=synthesis_task.description,
-        status=synthesis_task.status,
-        synthesis_type=synthesis_task.synth_type,
-        total_files=synthesis_task.total_files,
-        created_at=synthesis_task.created_at,
-        updated_at=synthesis_task.updated_at,
-        created_by=synthesis_task.created_by,
-        updated_by=synthesis_task.updated_by,
-    )
-    return SuccessResponse(data=task_item)
+    return SuccessResponse(data=DataSynthesisTaskItem.from_orm_with_config(task))
 
 
-@router.get("/tasks", response_model=StandardResponse[PagedDataSynthesisTaskResponse], status_code=200)
+@router.get("/tasks", response_model=StandardResponse[PagedDataSynthesisTaskResponse])
 async def list_synthesis_tasks(
     page: int = 1,
     page_size: int = 10,
@@ -139,116 +122,42 @@ async def list_synthesis_tasks(
     name: str | None = None,
     db: AsyncSession = Depends(get_db)
 ):
-    """分页列出所有数据合成任务，默认按创建时间倒序"""
-    query = select(DataSynthInstance)
-    if synthesis_type:
-        query = query.filter(DataSynthInstance.synth_type == synthesis_type)
-    if status:
-        query = query.filter(DataSynthInstance.status == status)
-    if name:
-        query = query.filter(DataSynthInstance.name.like(f"%{name}%"))
+    """
+    分页列出所有数据合成任务
 
-    # 默认按创建时间倒序排列
-    query = query.order_by(DataSynthInstance.created_at.desc())
+    Args:
+        page: 页码
+        page_size: 每页数量
+        synthesis_type: 合成类型过滤
+        status: 状态过滤
+        name: 名称模糊搜索
+        db: 数据库会话
 
-    count_q = select(func.count()).select_from(query.subquery())
-    total = (await db.execute(count_q)).scalar_one()
-
-    if page < 1:
-        page = 1
-    if page_size < 1:
-        page_size = 10
-
-    result = await db.execute(query.offset((page - 1) * page_size).limit(page_size))
-    rows = result.scalars().all()
-
-    task_items: list[DataSynthesisTaskItem] = []
-    for row in rows:
-        synth_cfg = getattr(row, "synth_config", {}) or {}
-        text_split_cfg = synth_cfg.get("text_split_config") or {}
-        synthesis_cfg = synth_cfg.get("synthesis_config") or {}
-        source_file_ids = synth_cfg.get("source_file_id") or []
-        model_id = synth_cfg.get("model_id")
-        result_location = synth_cfg.get("result_data_location")
-
-        task_items.append(
-            DataSynthesisTaskItem(
-                id=str(row.id),
-                name=str(row.name),
-                description=cast(str | None, row.description),
-                status=cast(str | None, row.status),
-                synthesis_type=str(row.synth_type),
-                model_id=model_id or "",
-                progress=int(cast(int, row.progress)),
-                result_data_location=result_location,
-                text_split_config=text_split_cfg,
-                synthesis_config=synthesis_cfg,
-                source_file_id=list(source_file_ids),
-                total_files=int(cast(int, row.total_files)),
-                processed_files=int(cast(int, row.processed_files)),
-                total_chunks=int(cast(int, row.total_chunks)),
-                processed_chunks=int(cast(int, row.processed_chunks)),
-                total_synthesis_data=int(cast(int, row.total_synth_data)),
-                created_at=row.created_at,
-                updated_at=row.updated_at,
-                created_by=row.created_by,
-                updated_by=row.updated_by,
-            )
-        )
-
-    paged = PagedDataSynthesisTaskResponse(
-        content=task_items,
-        totalElements=total,
-        totalPages=(total + page_size - 1) // page_size,
+    Returns:
+        分页任务列表
+    """
+    query_service = TaskQueryService(db)
+    result = await query_service.list_tasks(
         page=page,
-        size=page_size,
+        page_size=page_size,
+        synthesis_type=synthesis_type,
+        status=status,
+        name=name,
     )
-
-    return SuccessResponse(data=paged)
+    return SuccessResponse(data=result)
 
 
 @router.delete("/task/{task_id}", response_model=StandardResponse)
-async def delete_synthesis_task(
-    task_id: str,
-    db: AsyncSession = Depends(get_db)
-):
-    """删除数据合成任务"""
-    task = await db.get(DataSynthInstance, task_id)
-    if not task:
-        raise BusinessError(ErrorCodes.GENERATION_TASK_NOT_FOUND, data={"task_id": task_id})
+async def delete_synthesis_task(task_id: str, db: AsyncSession = Depends(get_db)):
+    """
+    删除数据合成任务
 
-    # 1. 删除与该任务相关的 SynthesisData、Chunk、File 记录
-    # 先查出所有文件任务 ID
-    file_result = await db.execute(
-        select(DataSynthesisFileInstance.id).where(
-            DataSynthesisFileInstance.synthesis_instance_id == task_id
-        )
-    )
-    file_ids = [row[0] for row in file_result.all()]
-
-    if file_ids:
-        # 删除 SynthesisData（根据文件任务ID）
-        await db.execute(delete(SynthesisData).where(
-                SynthesisData.synthesis_file_instance_id.in_(file_ids)
-            )
-        )
-
-        # 删除 Chunk 记录
-        await db.execute(delete(DataSynthesisChunkInstance).where(
-                DataSynthesisChunkInstance.synthesis_file_instance_id.in_(file_ids)
-            )
-        )
-
-        # 删除文件任务记录
-        await db.execute(delete(DataSynthesisFileInstance).where(
-                DataSynthesisFileInstance.id.in_(file_ids)
-            )
-        )
-
-    # 2. 删除任务本身
-    await db.delete(task)
-    await db.commit()
-
+    Args:
+        task_id: 任务 ID
+        db: 数据库会话
+    """
+    delete_service = TaskDeleteService(db)
+    await delete_service.delete_task(task_id)
     return SuccessResponse(data=None)
 
 
@@ -258,211 +167,168 @@ async def delete_synthesis_file_task(
     file_id: str,
     db: AsyncSession = Depends(get_db)
 ):
-    """删除数据合成任务中的文件任务，同时刷新任务表中的文件/切片数量"""
-    # 先获取任务和文件任务记录
-    task = await db.get(DataSynthInstance, task_id)
-    if not task:
-        raise BusinessError(ErrorCodes.GENERATION_TASK_NOT_FOUND, data={"task_id": task_id})
+    """
+    删除数据合成任务中的文件任务
 
-    file_task = await db.get(DataSynthesisFileInstance, file_id)
-    if not file_task:
-        raise BusinessError(ErrorCodes.GENERATION_FILE_NOT_FOUND, data={"file_id": file_id})
-
-    # 删除 SynthesisData（根据文件任务ID）
-    await db.execute(
-        delete(SynthesisData).where(
-            SynthesisData.synthesis_file_instance_id == file_id
-        )
-    )
-
-    # 删除 Chunk 记录
-    await db.execute(delete(DataSynthesisChunkInstance).where(
-            DataSynthesisChunkInstance.synthesis_file_instance_id == file_id
-        )
-    )
-
-    # 删除文件任务记录
-    await db.execute(
-        delete(DataSynthesisFileInstance).where(
-            DataSynthesisFileInstance.id == file_id
-        )
-    )
-
-    # 刷新任务级别统计字段：总文件数、总文本块数、已处理文本块数
-    if task.total_files and task.total_files > 0:
-        task.total_files -= 1
-        if task.total_files < 0:
-            task.total_files = 0
-
-    await db.commit()
-    await db.refresh(task)
-
+    Args:
+        task_id: 任务 ID
+        file_id: 文件任务 ID
+        db: 数据库会话
+    """
+    delete_service = TaskDeleteService(db)
+    await delete_service.delete_file_task(task_id, file_id)
     return SuccessResponse(data=None)
 
 
+# ==================== 提示词接口 ====================
+
 @router.get("/prompt", response_model=StandardResponse[str])
-async def get_prompt_by_type(
-    synth_type: SynthesisType,
-):
+async def get_prompt_by_type(synth_type: SynthesisType):
+    """
+    获取提示词
+
+    Args:
+        synth_type: 合成类型
+
+    Returns:
+        提示词内容
+    """
     prompt = get_prompt(synth_type)
     return SuccessResponse(data=prompt)
 
 
-@router.get("/task/{task_id}/files", response_model=StandardResponse[PagedDataSynthesisFileTaskResponse])
+# ==================== 文件任务接口 ====================
+
+@router.get(
+    "/task/{task_id}/files",
+    response_model=StandardResponse[PagedDataSynthesisFileTaskResponse]
+)
 async def list_synthesis_file_tasks(
     task_id: str,
     page: int = 1,
     page_size: int = 10,
     db: AsyncSession = Depends(get_db),
 ):
-    """分页获取某个数据合成任务下的文件任务列表"""
-    # 先校验任务是否存在
-    task = await db.get(DataSynthInstance, task_id)
+    """
+    分页获取任务下的文件任务列表
+
+    Args:
+        task_id: 任务 ID
+        page: 页码
+        page_size: 每页数量
+        db: 数据库会话
+
+    Returns:
+        分页文件任务列表
+    """
+    query_service = TaskQueryService(db)
+    task = await query_service.get_task(task_id)
     if not task:
         raise BusinessError(ErrorCodes.GENERATION_TASK_NOT_FOUND, data={"task_id": task_id})
 
-    base_query = select(DataSynthesisFileInstance).where(
-        DataSynthesisFileInstance.synthesis_instance_id == task_id
-    )
+    file_query = FileQueryService(db)
+    items, total = await file_query.list_by_task(task_id, page, page_size)
 
-    count_q = select(func.count()).select_from(base_query.subquery())
-    total = (await db.execute(count_q)).scalar_one()
-
-    if page < 1:
-        page = 1
-    if page_size < 1:
-        page_size = 10
-
-    result = await db.execute(
-        base_query.offset((page - 1) * page_size).limit(page_size)
-    )
-    rows = result.scalars().all()
-
-    file_items = [
-        DataSynthesisFileTaskItem(
-            id=row.id,
-            synthesis_instance_id=row.synthesis_instance_id,
-            file_name=row.file_name,
-            source_file_id=row.source_file_id,
-            status=row.status,
-            total_chunks=row.total_chunks,
-            processed_chunks=row.processed_chunks,
-            created_at=row.created_at,
-            updated_at=row.updated_at,
-            created_by=row.created_by,
-            updated_by=row.updated_by,
-        )
-        for row in rows
-    ]
-
-    paged = PagedDataSynthesisFileTaskResponse(
-        content=file_items,
+    return SuccessResponse(data=PagedDataSynthesisFileTaskResponse(
+        content=items,
         totalElements=total,
         totalPages=(total + page_size - 1) // page_size,
         page=page,
         size=page_size,
-    )
-
-    return SuccessResponse(data=paged)
+    ))
 
 
-@router.get("/file/{file_id}/chunks", response_model=StandardResponse[PagedDataSynthesisChunkResponse])
+# ==================== 切片接口 ====================
+
+@router.get(
+    "/file/{file_id}/chunks",
+    response_model=StandardResponse[PagedDataSynthesisChunkResponse]
+)
 async def list_chunks_by_file(
     file_id: str,
     page: int = 1,
     page_size: int = 10,
     db: AsyncSession = Depends(get_db),
 ):
-    """根据文件任务 ID 分页查询 chunk 记录"""
-    # 校验文件任务是否存在
-    file_task = await db.get(DataSynthesisFileInstance, file_id)
+    """
+    根据文件任务 ID 分页查询切片列表
+
+    Args:
+        file_id: 文件任务 ID
+        page: 页码
+        page_size: 每页数量
+        db: 数据库会话
+
+    Returns:
+        分页切片列表
+    """
+    file_query = FileQueryService(db)
+    file_task = await file_query.get_by_id(file_id)
     if not file_task:
         raise BusinessError(ErrorCodes.GENERATION_FILE_NOT_FOUND, data={"file_id": file_id})
 
-    base_query = select(DataSynthesisChunkInstance).where(
-        DataSynthesisChunkInstance.synthesis_file_instance_id == file_id
-    )
+    chunk_query = ChunkQueryService(db)
+    items, total = await chunk_query.list_by_file(file_id, page, page_size)
 
-    count_q = select(func.count()).select_from(base_query.subquery())
-    total = (await db.execute(count_q)).scalar_one()
-
-    if page < 1:
-        page = 1
-    if page_size < 1:
-        page_size = 10
-
-    result = await db.execute(
-        base_query.order_by(DataSynthesisChunkInstance.chunk_index.asc())
-        .offset((page - 1) * page_size)
-        .limit(page_size)
-    )
-    rows = result.scalars().all()
-
-    chunk_items = [
-        DataSynthesisChunkItem(
-            id=row.id,
-            synthesis_file_instance_id=row.synthesis_file_instance_id,
-            chunk_index=row.chunk_index,
-            chunk_content=row.chunk_content,
-            chunk_metadata=getattr(row, "chunk_metadata", None),
-        )
-        for row in rows
-    ]
-
-    paged = PagedDataSynthesisChunkResponse(
-        content=chunk_items,
+    return SuccessResponse(data=PagedDataSynthesisChunkResponse(
+        content=items,
         totalElements=total,
         totalPages=(total + page_size - 1) // page_size,
         page=page,
         size=page_size,
-    )
-
-    return SuccessResponse(data=paged)
+    ))
 
 
-@router.get("/chunk/{chunk_id}/data", response_model=StandardResponse[list[SynthesisDataItem]])
-async def list_synthesis_data_by_chunk(
-    chunk_id: str,
-    db: AsyncSession = Depends(get_db),
-):
-    """根据 chunk ID 查询所有合成结果数据"""
-    # 可选：校验 chunk 是否存在
-    chunk = await db.get(DataSynthesisChunkInstance, chunk_id)
+@router.get(
+    "/chunk/{chunk_id}/data",
+    response_model=StandardResponse[List[SynthesisDataItem]]
+)
+async def list_synthesis_data_by_chunk(chunk_id: str, db: AsyncSession = Depends(get_db)):
+    """
+    根据切片 ID 查询所有合成结果数据
+
+    Args:
+        chunk_id: 切片 ID
+        db: 数据库会话
+
+    Returns:
+        合成数据列表
+    """
+    chunk_query = ChunkQueryService(db)
+    chunk = await chunk_query.get_by_id(chunk_id)
     if not chunk:
         raise BusinessError(ErrorCodes.GENERATION_CHUNK_NOT_FOUND, data={"chunk_id": chunk_id})
 
-    result = await db.execute(
-        select(SynthesisData).where(SynthesisData.chunk_instance_id == chunk_id)
-    )
-    rows = result.scalars().all()
-
-    items = [
-        SynthesisDataItem(
-            id=row.id,
-            data=row.data,
-            synthesis_file_instance_id=row.synthesis_file_instance_id,
-            chunk_instance_id=row.chunk_instance_id,
-        )
-        for row in rows
-    ]
-
+    data_query = SynthesisDataQueryService(db)
+    items = await data_query.list_by_chunk(chunk_id)
     return SuccessResponse(data=items)
 
 
-@router.post("/task/{task_id}/export-dataset/{dataset_id}", response_model=StandardResponse[str])
+# ==================== 导出接口 ====================
+
+@router.post(
+    "/task/{task_id}/export-dataset/{dataset_id}",
+    response_model=StandardResponse[str]
+)
 async def export_synthesis_task_to_dataset(
     task_id: str,
     dataset_id: str,
+    format: str = "alpaca",
     db: AsyncSession = Depends(get_db),
 ):
-    """将指定合成任务的全部合成数据归档到已有数据集中。
-
-    规则：
-    - 以原始文件为维度，每个原始文件生成一个 JSONL 文件；
-    - JSONL 文件名称与原始文件名称完全一致；
-    - 仅写入文件，不再创建数据集。
     """
-    exporter = SynthesisDatasetExporter(db)
+    将合成任务的数据归档到已有数据集
+
+    Args:
+        task_id: 任务 ID
+        dataset_id: 目标数据集 ID
+        format: 导出格式
+        db: 数据库会话
+
+    Returns:
+        数据集 ID
+    """
+    exporter = SynthesisDatasetExporter(db, format=format)
     generation = GenerationService(db)
     try:
         dataset = await exporter.export_task_to_dataset(task_id, dataset_id)
@@ -470,59 +336,73 @@ async def export_synthesis_task_to_dataset(
     except SynthesisExportError as e:
         logger.error(
             "Failed to export synthesis task %s to dataset %s: %s",
-            task_id,
-            dataset_id,
-            e,
+            task_id, dataset_id, e
         )
         raise BusinessError(ErrorCodes.OPERATION_FAILED, data={"error": str(e)})
 
     return SuccessResponse(data=dataset.id)
 
 
-@router.delete("/chunk/{chunk_id}", response_model=StandardResponse)
-async def delete_chunk_with_data(
-    chunk_id: str,
+@router.post(
+    "/data/export",
+    response_model=StandardResponse[ExportSynthesisDataResponse],
+)
+async def export_synthesis_data(
+    request: ExportSynthesisDataRequest,
     db: AsyncSession = Depends(get_db),
 ):
-    """删除单条 t_data_synthesis_chunk_instances 记录及其关联的所有 t_data_synthesis_data"""
-    chunk = await db.get(DataSynthesisChunkInstance, chunk_id)
-    if not chunk:
-        raise BusinessError(ErrorCodes.GENERATION_CHUNK_NOT_FOUND, data={"chunk_id": chunk_id})
+    """
+    将合成数据导出为指定格式的 JSONL 文件
 
-    # 先删除与该 chunk 关联的合成数据
-    await db.execute(
-        delete(SynthesisData).where(SynthesisData.chunk_instance_id == chunk_id)
+    Args:
+        request: 导出请求
+        db: 数据库会话
+
+    Returns:
+        导出结果
+    """
+    exporter = SynthesisDatasetExporter(
+        db,
+        format=request.format.value,
+        output_path=request.output_path,
     )
-
-    # 再删除 chunk 本身
-    await db.execute(
-        delete(DataSynthesisChunkInstance).where(
-            DataSynthesisChunkInstance.id == chunk_id
-        )
+    result = await exporter.export_data(
+        task_id=request.task_id,
+        file_instance_ids=request.file_instance_ids,
     )
+    return SuccessResponse(data=result)
 
-    await db.commit()
 
+# ==================== 删除接口 ====================
+
+@router.delete("/chunk/{chunk_id}", response_model=StandardResponse)
+async def delete_chunk_with_data(chunk_id: str, db: AsyncSession = Depends(get_db)):
+    """
+    删除切片及其关联的合成数据
+
+    Args:
+        chunk_id: 切片 ID
+        db: 数据库会话
+    """
+    delete_service = TaskDeleteService(db)
+    await delete_service.delete_chunk(chunk_id)
     return SuccessResponse(data=None)
 
 
 @router.delete("/chunk/{chunk_id}/data", response_model=StandardResponse)
-async def delete_synthesis_data_by_chunk(
-    chunk_id: str,
-    db: AsyncSession = Depends(get_db),
-):
-    """仅删除指定 chunk 下的全部 t_data_synthesis_data 记录，返回删除条数"""
-    chunk = await db.get(DataSynthesisChunkInstance, chunk_id)
-    if not chunk:
-        raise BusinessError(ErrorCodes.GENERATION_CHUNK_NOT_FOUND, data={"chunk_id": chunk_id})
+async def delete_synthesis_data_by_chunk(chunk_id: str, db: AsyncSession = Depends(get_db)):
+    """
+    删除切片下的所有合成数据
 
-    result = await db.execute(
-        delete(SynthesisData).where(SynthesisData.chunk_instance_id == chunk_id)
-    )
-    deleted = int(getattr(result, "rowcount", 0) or 0)
+    Args:
+        chunk_id: 切片 ID
+        db: 数据库会话
 
-    await db.commit()
-
+    Returns:
+        删除的记录数
+    """
+    delete_service = TaskDeleteService(db)
+    deleted = await delete_service.delete_synthesis_data_by_chunk(chunk_id)
     return SuccessResponse(data=deleted)
 
 
@@ -531,16 +411,18 @@ async def batch_delete_synthesis_data(
     request: BatchDeleteSynthesisDataRequest,
     db: AsyncSession = Depends(get_db),
 ):
-    """批量删除 t_data_synthesis_data 记录"""
-    if not request.ids:
-        return SuccessResponse(data=0)
+    """
+    批量删除合成数据
 
-    result = await db.execute(
-        delete(SynthesisData).where(SynthesisData.id.in_(request.ids))
-    )
-    deleted = int(getattr(result, "rowcount", 0) or 0)
-    await db.commit()
+    Args:
+        request: 批量删除请求
+        db: 数据库会话
 
+    Returns:
+        删除的记录数
+    """
+    delete_service = TaskDeleteService(db)
+    deleted = await delete_service.batch_delete_synthesis_data(request.ids)
     return SuccessResponse(data=deleted)
 
 
@@ -550,27 +432,138 @@ async def update_synthesis_data_field(
     body: SynthesisDataUpdateRequest,
     db: AsyncSession = Depends(get_db),
 ):
-    """修改单条 t_data_synthesis_data.data 的完整 JSON
-
-    前端传入完整 JSON，后端直接覆盖原有 data 字段，不做局部 merge。
     """
-    record = await db.get(SynthesisData, data_id)
+    修改合成数据
+
+    Args:
+        data_id: 数据 ID
+        body: 更新请求
+        db: 数据库会话
+
+    Returns:
+        更新后的数据
+    """
+    data_query = SynthesisDataQueryService(db)
+    record = await data_query.update(data_id, body.data)
     if not record:
         raise BusinessError(ErrorCodes.GENERATION_DATA_NOT_FOUND, data={"data_id": data_id})
+    return SuccessResponse(data=record)
 
-    # 直接整体覆盖 data 字段
-    record.data = body.data
 
-    await db.commit()
-    await db.refresh(record)
+@router.post(
+    "/batch-delete/chunks",
+    response_model=StandardResponse,
+)
+async def batch_delete_chunk_instances(
+    request: BatchDeleteChunkInstancesRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    批量删除切片
 
-    return StandardResponse(
-        code="0",
-        message="success",
-        data=SynthesisDataItem(
-            id=record.id,
-            data=record.data,
-            synthesis_file_instance_id=record.synthesis_file_instance_id,
-            chunk_instance_id=record.chunk_instance_id,
-        ),
-    )
+    Args:
+        request: 批量删除请求
+        db: 数据库会话
+    """
+    delete_service = TaskDeleteService(db)
+    await delete_service.batch_delete_chunks(request.chunk_ids)
+    return SuccessResponse(data=None)
+
+
+@router.post(
+    "/batch-delete/chunks-by-file",
+    response_model=StandardResponse,
+)
+async def batch_delete_chunk_instances_by_file(
+    request: BatchDeleteChunkInstancesByFileRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    按文件任务维度删除切片
+
+    Args:
+        request: 删除请求
+        db: 数据库会话
+    """
+    file_query = FileQueryService(db)
+    file_task = await file_query.get_by_id(request.file_id)
+    if not file_task:
+        raise BusinessError(ErrorCodes.GENERATION_FILE_NOT_FOUND)
+
+    delete_service = TaskDeleteService(db)
+    await delete_service.delete_chunks_by_file(request.file_id)
+    return SuccessResponse(data=None)
+
+
+@router.post(
+    "/batch-delete/chunks-by-task",
+    response_model=StandardResponse,
+)
+async def batch_delete_chunk_instances_by_task(
+    request: BatchDeleteChunkInstancesByTaskRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    按任务维度删除切片
+
+    Args:
+        request: 删除请求
+        db: 数据库会话
+    """
+    query_service = TaskQueryService(db)
+    task = await query_service.get_task(request.task_id)
+    if not task:
+        raise BusinessError(ErrorCodes.GENERATION_TASK_NOT_FOUND)
+
+    delete_service = TaskDeleteService(db)
+    await delete_service.delete_chunks_by_task(request.task_id)
+    return SuccessResponse(data=None)
+
+
+# ==================== 批量查询接口 ====================
+
+@router.post(
+    "/data/patch",
+    response_model=StandardResponse[List[SynthesisDataPatchItem]],
+)
+async def get_synthesis_data_patch(
+    task_id: Optional[str] = None,
+    file_instance_id: Optional[str] = None,
+    chunk_instance_id: Optional[str] = None,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    批量查询合成数据
+
+    Args:
+        task_id: 任务 ID
+        file_instance_id: 文件任务 ID
+        chunk_instance_id: 切片 ID
+        db: 数据库会话
+
+    Returns:
+        合成数据列表
+    """
+    data_query = SynthesisDataQueryService(db)
+
+    if chunk_instance_id:
+        items = await data_query.list_by_chunk(chunk_instance_id)
+        return SuccessResponse(data=[SynthesisDataPatchItem.model_validate(item) for item in items])
+
+    if file_instance_id:
+        file_query = FileQueryService(db)
+        file_task = await file_query.get_by_id(file_instance_id)
+        if not file_task:
+            raise BusinessError(ErrorCodes.GENERATION_FILE_NOT_FOUND)
+        items = await data_query.list_by_file(file_instance_id)
+        return SuccessResponse(data=items)
+
+    if task_id:
+        query_service = TaskQueryService(db)
+        task = await query_service.get_task(task_id)
+        if not task:
+            raise BusinessError(ErrorCodes.GENERATION_TASK_NOT_FOUND)
+        items = await data_query.list_by_task(task_id)
+        return SuccessResponse(data=items)
+
+    return SuccessResponse(data=[])

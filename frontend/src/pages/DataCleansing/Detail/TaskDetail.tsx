@@ -119,24 +119,22 @@ export default function CleansingTaskDetail() {
     {
       icon: <CheckCircle className="w-4 h-4 text-green-500" />,
       label: t("dataCleansing.detail.statistics.successFiles"),
-      value: task?.progress?.succeedFileNum || "0",
+      value: task?.progress?.succeedFileNum || 0,
     },
     {
       icon: <AlertCircle className="w-4 h-4 text-red-500" />,
       label: t("dataCleansing.detail.statistics.failedFiles"),
-      value: (task?.status.value === TaskStatus.RUNNING || task?.status.value === TaskStatus.PENDING)  ?
-        task?.progress.failedFileNum :
-        task?.progress?.totalFileNum - task?.progress.succeedFileNum,
+      value: task?.progress?.failedFileNum || 0,
     },
     {
       icon: <Activity className="w-4 h-4 text-purple-500" />,
       label: t("dataCleansing.detail.statistics.successRate"),
-      value: task?.progress?.successRate ? task?.progress?.successRate + "%" : "--",
+      value: task?.progress?.process ? task?.progress?.process + "%" : "--",
     },
   ];
 
   const operations = [
-    ...(task?.status === TaskStatus.RUNNING
+    ...(task?.status?.value === TaskStatus.RUNNING
       ? [
           {
             key: "pause",
@@ -146,11 +144,11 @@ export default function CleansingTaskDetail() {
           },
         ]
       : []),
-    ...([TaskStatus.PENDING, TaskStatus.STOPPED, TaskStatus.FAILED].includes(task?.status?.value)
+    ...([TaskStatus.PENDING, TaskStatus.STOPPED, TaskStatus.FAILED, TaskStatus.PARTIAL_SUCCESS].includes(task?.status?.value)
       ? [
           {
             key: "start",
-            label: t("dataCleansing.actions.updateTask"),
+            label: t("dataCleansing.actions.start"),
             icon: <Play className="w-4 h-4" />,
             onClick: startTask,
           },
@@ -217,7 +215,7 @@ export default function CleansingTaskDetail() {
           )}
           {activeTab === "operators" && <OperatorTable task={task} />}
           {activeTab === "files" && <FileTable result={result} fetchTaskResult={fetchTaskResult} />}
-          {activeTab === "logs" && <LogsTable taskLog={taskLog} fetchTaskLog={fetchTaskLog} retryCount={task.retryCount} taskName={task.name} />}
+          {activeTab === "logs" && <LogsTable taskLog={taskLog} fetchTaskLog={fetchTaskLog} retryCount={task.retryCount} taskName={task.name} taskStatus={task?.status?.value} />}
         </div>
       </div>
     </>

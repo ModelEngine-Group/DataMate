@@ -56,7 +56,7 @@ export default defineConfig({
       const proxy: Record<string, object> = {};
       // SSE 端点需要禁用缓冲
       proxy["/api/cleaning"] = {
-        target: "http://localhost:8080",
+        target: "http://localhost:32033",
         changeOrigin: true,
         secure: false,
         configure: (proxy: { on: (event: string, handler: (arg: unknown) => void) => void }) => {

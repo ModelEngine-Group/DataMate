@@ -168,7 +168,7 @@ const AsiderAndHeaderLayout = () => {
         height="100%"
         open={settingVisible}
         onClose={() => dispatch(hideSettings())}
-        bodyStyle={{ padding: 0 }}
+        styles={{ body: { padding: 0 } }}
         destroyOnHidden={true}
       >
         <SettingsPage></SettingsPage>

@@ -12,13 +12,13 @@ class RuntimeClient:
         self.base_url = base_url
         self.client = httpx.AsyncClient(timeout=60.0)
 
-    async def submit_task(self, task_id: str) -> bool:
+    async def submit_task(self, task_id: str, retry_count: int = 0) -> bool:
         """Submit cleaning task to runtime executor"""
         try:
             url = f"{self.base_url}/api/task/{task_id}/submit"
-            response = await self.client.post(url)
+            response = await self.client.post(url, json={"retry_count": retry_count})
             response.raise_for_status()
-            logger.info(f"Task {task_id} submitted successfully")
+            logger.info(f"Task {task_id} submitted successfully with retry_count={retry_count}")
             return True
         except httpx.HTTPError as e:
             logger.error(f"Failed to submit task {task_id}: {e}")

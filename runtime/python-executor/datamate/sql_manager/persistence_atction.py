@@ -39,7 +39,7 @@ class TaskInfoPersistence:
         file_name = str(sample.get("fileName"))
 
         status = str(sample.get("execute_status"))
-        failed_reason = str(sample.get("failed_reason"))
+        failed_reason = json.dumps(sample.get("failed_reason"), ensure_ascii=False)
         result_data = {
             "instance_id": instance_id,
             "src_file_id": src_file_id,
@@ -154,14 +154,57 @@ class TaskInfoPersistence:
         update_dataset_sql = str(self.sql_dict.get("update_dataset_sql"))
         self.insert_result(dataset_data, update_dataset_sql)
 
+        # Determine final status based on file results
+        final_status = self._determine_task_status(instance_id, status)
+
         task_data = {
             "task_id": instance_id,
-            "status": status,
+            "status": final_status,
             "total_size": total_size,
             "finished_time": datetime.now()
         }
         update_task_sql = str(self.sql_dict.get("update_task_sql"))
         self.insert_result(task_data, update_task_sql)
+
+    def _determine_task_status(self, instance_id: str, executor_status: str) -> str:
+        """Determine final task status based on file processing results"""
+        if executor_status == "FAILED":
+            return "FAILED"
+
+        # Query file results to determine status
+        try:
+            with SQLManager.create_connect() as conn:
+                # Count completed and failed files from t_clean_result (same table as progress calculation)
+                query = text("""
+                    SELECT
+                        COUNT(CASE WHEN status = 'COMPLETED' THEN 1 END) as completed,
+                        COUNT(CASE WHEN status = 'FAILED' THEN 1 END) as failed
+                    FROM t_clean_result
+                    WHERE instance_id = :instance_id
+                """)
+                result = conn.execute(query, {"instance_id": instance_id})
+                row = result.fetchone()
+
+                if row:
+                    completed = row[0] or 0
+                    failed = row[1] or 0
+
+                    logger.info(f"Task {instance_id} file results: completed={completed}, failed={failed}")
+
+                    # Determine status based on file results
+                    if completed > 0 and failed > 0:
+                        final_status = "PARTIAL_SUCCESS"
+                    elif completed > 0:
+                        final_status = "COMPLETED"
+                    else:
+                        final_status = "FAILED"
+
+                    logger.info(f"Task {instance_id} final status: {final_status}")
+                    return final_status
+        except Exception as e:
+            logger.warning(f"Failed to determine task status for {instance_id}: {e}")
+
+        return executor_status
 
     def query_task_info(self, instance_ids: list[str]):
         result = {}

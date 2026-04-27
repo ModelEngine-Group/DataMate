@@ -169,6 +169,8 @@ gateway:
       value: "default-insecure-key-change-in-production"
     - name: datamate.jwt.enable
       value: *DATAMATE_JWT_ENABLE
+    - name: OMS_AUTH_ENABLED
+      value: "false"
   volumes:
     - *logVolume
   volumeMounts:
@@ -191,6 +193,8 @@ frontend:
         secretKeyRef:
           name: datamate-conf
           key: DOMAIN
+    - name: REAL_IP_MODE
+      value: "off"
   volumes:
     - *logVolume
     - name: cert-volume
@@ -337,6 +341,10 @@ ray-cluster:
             key: DB_PASSWORD
       - name: PG_DATABASE
         value: "datamate"
+      - name: POD_NAME
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.name
     resources:
       limits:
         cpu: "8"
@@ -352,7 +360,7 @@ ray-cluster:
     volumeMounts:
       - mountPath: /tmp/ray
         name: log-volume
-        subPath: ray/worker
+        subPathExpr: ray/$(POD_NAME)
       - mountPath: /dataset
         name: dataset-volume
       - mountPath: /flow

@@ -7,6 +7,8 @@ import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
+import org.springframework.context.annotation.ComponentScan.Filter;
 
 /**
  * API Gateway & Auth Service Application
@@ -14,7 +16,13 @@ import org.springframework.context.annotation.ComponentScan;
  * 提供路由、鉴权、限流等功能
  */
 @SpringBootApplication
-@ComponentScan(basePackages = {"com.datamate"})
+@ComponentScan(
+    basePackages = {"com.datamate"},
+    excludeFilters = @Filter(
+        type = FilterType.REGEX,
+        pattern = "com\\.datamate\\.common\\.infrastructure\\.config\\..*"
+    )
+)
 @MapperScan(basePackages = {"com.datamate.**.mapper"})
 public class ApiGatewayApplication {
 
@@ -68,9 +76,10 @@ public class ApiGatewayApplication {
                 .filters(f -> f.stripPrefix(1).prefixPath("/api"))
                 .uri("http://deer-flow-backend:8000"))
 
-            // 网关服务（用户）
+            // 网关内部服务（用户）
+            // 使用 no-op 触发 GlobalFilter 执行，然后由本地 Controller 处理
             .route("gateway", r -> r.path("/api/user/**")
-                    .uri("http://localhost:8080"))
+                .uri("http://localhost:8080"))
 
             // 其他后端服务
             .route("default", r -> r.path("/api/**")

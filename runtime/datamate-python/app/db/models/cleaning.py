@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, BigInteger, Integer, TIMESTAMP
+from sqlalchemy import Column, String, BigInteger, Integer, TIMESTAMP, Index
 from app.db.models.base_entity import BaseEntity, Base
 
 
@@ -20,6 +20,11 @@ class CleaningTask(BaseEntity):
     retry_count = Column(Integer, default=0, nullable=False, comment="Retry count")
     started_at = Column(TIMESTAMP, nullable=True, comment="Task start time")
     finished_at = Column(TIMESTAMP, nullable=True, comment="Task finish time")
+
+    __table_args__ = (
+        Index("ix_clean_task_status", "status"),
+        Index("ix_clean_task_created_at", "created_at"),
+    )
 
 
 class CleaningTemplate(BaseEntity):
@@ -46,6 +51,11 @@ class CleaningResult(Base):
     dest_size = Column(BigInteger, nullable=True, comment="Destination file size")
     status = Column(String(50), nullable=True, comment="Cleaning status: COMPLETED, FAILED, etc.")
     result = Column(String(1024), nullable=True, comment="Cleaning result message")
+
+    __table_args__ = (
+        Index("ix_clean_result_instance_id", "instance_id"),
+        Index("ix_clean_result_instance_status", "instance_id", "status"),
+    )
 
 
 class OperatorInstance(Base):

@@ -6,6 +6,72 @@ import {TaskStatus} from "@/pages/DataCleansing/cleansing.model.ts";
 import {getTaskStatusMap} from "@/pages/DataCleansing/cleansing.const.tsx";
 import { useTranslation } from "react-i18next";
 
+// 渲染 JSON 值的辅助组件
+function JsonValue({ value, depth = 0 }: { value: any; depth?: number }) {
+  if (value === null) {
+    return <span className="text-gray-500">null</span>;
+  }
+  if (value === undefined) {
+    return <span className="text-gray-500">undefined</span>;
+  }
+  if (typeof value === 'boolean') {
+    return <span className="text-purple-600">{value.toString()}</span>;
+  }
+  if (typeof value === 'number') {
+    return <span className="text-blue-600">{value}</span>;
+  }
+  if (typeof value === 'string') {
+    // 处理换行符，保留空白格式
+    const lines = value.split('\n');
+    if (lines.length > 1) {
+      return (
+        <span className="text-green-700">
+          {lines.map((line, i) => (
+            <span key={i}>
+              {line}
+              {i < lines.length - 1 && <br />}
+            </span>
+          ))}
+        </span>
+      );
+    }
+    return <span className="text-green-700">{value}</span>;
+  }
+  if (Array.isArray(value)) {
+    if (value.length === 0) {
+      return <span className="text-gray-500">[]</span>;
+    }
+    return (
+      <div className="pl-3 border-l-2 border-gray-200">
+        {value.map((item, i) => (
+          <div key={i} className="py-0.5">
+            <span className="text-gray-400 mr-1">[{i}]</span>
+            <JsonValue value={item} depth={depth + 1} />
+          </div>
+        ))}
+      </div>
+    );
+  }
+  if (typeof value === 'object') {
+    const keys = Object.keys(value);
+    if (keys.length === 0) {
+      return <span className="text-gray-500">{"{}"}</span>;
+    }
+    return (
+      <div className="pl-3 border-l-2 border-gray-200">
+        {keys.map((key) => (
+          <div key={key} className="py-0.5">
+            <span className="text-blue-800 font-medium">{key}</span>
+            <span className="text-gray-500 mx-1">:</span>
+            <JsonValue value={value[key]} depth={depth + 1} />
+          </div>
+        ))}
+      </div>
+    );
+  }
+  return <span>{String(value)}</span>;
+}
+
 // 模拟文件列表数据
 export default function FileTable({result, fetchTaskResult}) {
   const { id = "" } = useParams();
@@ -20,7 +86,7 @@ export default function FileTable({result, fetchTaskResult}) {
 
   const handleSelectAllFiles = (checked: boolean) => {
     if (checked) {
-      setSelectedFileIds(result.map((file) => file.instanceId));
+      setSelectedFileIds(result.map((file) => file.srcFileId));
     } else {
       setSelectedFileIds([]);
     }
@@ -87,8 +153,8 @@ export default function FileTable({result, fetchTaskResult}) {
       render: (_text: string, record: any) => (
         <input
           type="checkbox"
-          checked={selectedFileIds.includes(record.id)}
-          onChange={(e) => handleSelectFile(record.id, e.target.checked)}
+          checked={selectedFileIds.includes(record.srcFileId)}
+          onChange={(e) => handleSelectFile(record.srcFileId, e.target.checked)}
           className="w-4 h-4"
         />
       ),
@@ -283,48 +349,85 @@ export default function FileTable({result, fetchTaskResult}) {
       title: t("dataCleansing.detail.fileTable.result"),
       dataIndex: "result",
       key: "result",
-      width: 200,
-      render: (text: string) => {
-        if (!text) return <span className="text-gray-400">-</span>;
+      width: 120,
+      render: (text: string, record: any) => {
+        // 如果结果为空或特殊值，则不展示
+        if (!text || text === '' || text === '{}' || text === '[]' ||
+            text === 'null' || text === 'undefined' || text.trim() === '') {
+          return <span className="text-gray-400">-</span>;
+        }
 
+        // 尝试解析JSON
         try {
           const parsed = JSON.parse(text);
-          const jsonString = JSON.stringify(parsed, null, 2);
-          const displayText = typeof parsed === 'object'
-            ? (Array.isArray(parsed) ? `[${parsed.length} items]` : '{...}')
-            : String(parsed);
 
+          // 如果是空对象或空数组则不展示
+          if (Array.isArray(parsed) && parsed.length === 0) {
+            return <span className="text-gray-400">-</span>;
+          }
+          if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed) && Object.keys(parsed).length === 0) {
+            return <span className="text-gray-400">-</span>;
+          }
+
+          // 检查 reason 字段：如果只有 reason 且为 null/空，则不展示
+          if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+
+            const keys = Object.keys(parsed);
+            // 如果只有 reason 字段且为空
+            if (keys.length > 0 && keys.includes('reason')) {
+              const reason = parsed['reason'];
+              if (reason === null || reason === undefined || reason === '' ||
+                  (typeof reason === 'string' && reason.trim() === '')) {
+                return <span className="text-gray-400">-</span>;
+              }
+            }
+          }
+
+          // 有内容需要展示，显示 {...} 点击查看详情
           return (
             <Popover
               content={
-                <pre className="max-w-md max-h-64 overflow-auto text-xs bg-gray-50 p-2 rounded">
-                  {jsonString}
-                </pre>
+                <div className="max-w-md max-h-64 overflow-auto text-sm bg-gray-50 p-3 rounded">
+                  <JsonValue value={parsed} />
+                </div>
               }
               title={t("dataCleansing.detail.fileTable.resultDetail")}
               trigger="click"
             >
-              <span className="font-mono text-sm text-blue-600 cursor-pointer hover:text-blue-800">
-                {displayText}
+              <span className="font-mono text-sm text-blue-600 cursor-pointer hover:text-blue-800 underline">
+                {"{...}"}
               </span>
             </Popover>
           );
         } catch {
-          const displayText = text.length > 30 ? text.substring(0, 30) + '...' : text;
+          // 普通字符串：如果为空则不展示
+          if (text.trim() === '') {
+            return <span className="text-gray-400">-</span>;
+          }
+          // 有内容的普通字符串，点击查看详情（支持换行）
+          const lines = text.split('\n');
           return (
             <Popover
-              content={<div className="max-w-md text-sm">{text}</div>}
+              content={
+                <div className="max-w-md max-h-64 overflow-auto text-sm bg-gray-50 p-3 rounded whitespace-pre-wrap">
+                  {lines.map((line, i) => (
+                    <span key={i}>
+                      {line}
+                      {i < lines.length - 1 && <br />}
+                    </span>
+                  ))}
+                </div>
+              }
               title={t("dataCleansing.detail.fileTable.resultDetail")}
               trigger="click"
-              disabled={text.length <= 30}
             >
-              <span className="font-mono text-sm cursor-default">
-                {displayText}
+              <span className="font-mono text-sm text-blue-600 cursor-pointer hover:text-blue-800 underline">
+                {"{...}"}
               </span>
             </Popover>
           );
         }
-      },
+      }
     },
     {
       title: t("dataCleansing.detail.fileTable.status"),
@@ -403,7 +506,7 @@ export default function FileTable({result, fetchTaskResult}) {
         dataSource={result}
         pagination={{ pageSize: 10, showSizeChanger: true }}
         size="middle"
-        rowKey="id"
+        rowKey={(record) => record.srcFileId || record.instanceId}
       />
 
       {/* 文件对比弹窗 */}

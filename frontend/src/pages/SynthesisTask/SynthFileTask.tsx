@@ -290,7 +290,7 @@ export default function SynthFileTask() {
       danger: true,
       confirm: {
         title: t('synthesisTask.fileTask.confirm.deleteTitle'),
-        description: t('synthesisTask.fileTask.confirm.deleteDescription', { name: synthesisTask?.name || '' }),
+        description: t('synthesisTask.fileTask.confirm.deleteDescription', { name: taskInfo?.name || '' }),
         okText: t('dataManagement.confirm.deleteConfirm'),
         cancelText: t('dataManagement.confirm.deleteCancel'),
         onConfirm: handleDelete,

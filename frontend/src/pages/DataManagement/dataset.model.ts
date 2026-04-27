@@ -95,6 +95,7 @@ export interface DatasetTask {
 
 export interface TaskItem {
   key: string;
+  datasetId?: string; // 数据集 ID（用于 API 调用）
   title: string;
   percent: number;
   reqId: number;
@@ -104,4 +105,5 @@ export interface TaskItem {
   updateEvent?: string;
   size?: number;
   hasArchive?: boolean;
+  prefix?: string; // 当前路径前缀
 }

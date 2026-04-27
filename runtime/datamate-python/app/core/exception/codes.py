@@ -183,6 +183,9 @@ class ErrorCodes:
     CLEANING_TASK_LOG_NOT_FOUND: Final = ErrorCode(
         "cleaning.0012", "Cleaning task log file not found", 404
     )
+    CLEANING_TASK_STATUS_INVALID: Final = ErrorCode(
+        "cleaning.0013", "Cleaning task status is invalid for this operation", 400
+    )
 
     # ========== 算子市场模块 ==========
     OPERATOR_NOT_FOUND: Final = ErrorCode("operator.0001", "Operator not found", 404)

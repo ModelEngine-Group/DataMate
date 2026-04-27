@@ -3,6 +3,7 @@ import {useNavigate} from "react-router";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/Card"
 import { GitBranch } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { TaskStatus } from "@/pages/DataCleansing/cleansing.model";
 
 export default function OperatorTable({ task }: { task: any }) {
   const navigate = useNavigate();
@@ -83,23 +84,27 @@ export default function OperatorTable({ task }: { task: any }) {
       dataIndex: "status",
       key: "status",
       filters: [
-        { text: t("dataCleansing.detail.operatorTable.completed"), value: t("dataCleansing.detail.operatorTable.completed") },
-        { text: t("dataCleansing.detail.operatorTable.failed"), value: t("dataCleansing.detail.operatorTable.failed") },
-        { text: t("dataCleansing.detail.operatorTable.running"), value: t("dataCleansing.detail.operatorTable.running") },
+        { text: t("dataCleansing.detail.operatorTable.completed"), value: "completed" },
+        { text: t("dataCleansing.detail.operatorTable.failed"), value: "failed" },
+        { text: t("dataCleansing.detail.operatorTable.running"), value: "running" },
+        { text: t("dataCleansing.detail.operatorTable.partialSuccess"), value: "partialSuccess" },
       ],
-      onFilter: (value: string, record: any) => record.status === value,
-      render: (status: string) => (
-        <Badge
-          status={
-            status === t("dataCleansing.detail.operatorTable.completed")
-              ? "success"
-              : status === t("dataCleansing.detail.operatorTable.running")
-              ? "processing"
-              : "error"
-          }
-          text={status}
-        />
-      ),
+      onFilter: (value: string, record: any) => record.statusValue === value,
+      render: (statusObj: { label: string; value: TaskStatus }) => {
+        let badgeStatus: "default" | "processing" | "success" | "error" | "warning" = "default";
+        
+        if (statusObj?.value === TaskStatus.COMPLETED) {
+          badgeStatus = "success";
+        } else if (statusObj?.value === TaskStatus.RUNNING) {
+          badgeStatus = "processing";
+        } else if (statusObj?.value === TaskStatus.PARTIAL_SUCCESS) {
+          badgeStatus = "warning";
+        } else if (statusObj?.value === TaskStatus.FAILED) {
+          badgeStatus = "error";
+        }
+        
+        return <Badge status={badgeStatus} text={statusObj?.label} />;
+      },
     },
   ]
 
@@ -114,18 +119,25 @@ export default function OperatorTable({ task }: { task: any }) {
             <CardDescription>{t("dataCleansing.detail.operatorTable.description")}</CardDescription>
           </CardHeader>
           <CardContent>
-            <Table columns={operatorColumns} dataSource={Object.values(task?.instance).map((item) => ({
-              id: item?.id,
-              name: item?.name,
-              startTime: new Date(task?.startedAt).toLocaleTimeString(),
-              endTime: task?.finishedAt
-                ? new Date(task.finishedAt).toLocaleTimeString()
-                : '-',
-              duration: task.duration,
-              status: task.status.label,
-              processedFiles: task.progress.finishedFileNum,
-              successRate: task?.progress.successRate,
-            }))} pagination={false} size="middle" />
+             <Table
+              columns={operatorColumns}
+              dataSource={Object.values(task?.instance).map((item) => ({
+                id: item?.id,
+                name: item?.name,
+                startTime: new Date(task?.startedAt).toLocaleTimeString(),
+                endTime: task?.finishedAt
+                  ? new Date(task.finishedAt).toLocaleTimeString()
+                  : '-',
+                duration: task.duration,
+                status: task.status,
+                statusValue: task.status.value,
+                processedFiles: task.progress.finishedFileNum,
+                successRate: task?.progress.successRate,
+              }))}
+              rowKey="id"
+              pagination={false}
+              size="middle"
+            />
           </CardContent>
         </Card>
     </>
