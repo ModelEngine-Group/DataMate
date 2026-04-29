@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Tuple
 import random
 import json
 import os
@@ -10,6 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import get_logger
+from app.core.config import settings
 from app.db.models.base_entity import LineageNode, LineageEdge
 from app.db.models.ratio_task import RatioInstance, RatioRelation
 from app.db.models import Dataset, DatasetFiles
@@ -18,6 +19,7 @@ from app.module.dataset.schema.dataset_file import DatasetFileTag
 from app.module.shared.common.lineage import LineageService
 from app.module.shared.schema import TaskStatus, NodeType, EdgeType
 from app.module.ratio.schema.ratio_task import FilterCondition
+from app.module.shared.util.resource_utils import get_concurrent_for_ratio_copy, get_system_resource_info
 
 logger = get_logger(__name__)
 
@@ -78,37 +80,24 @@ class RatioTaskService:
 
     @staticmethod
     async def execute_dataset_ratio_task(instance_id: str) -> None:
-        """Execute a ratio task in background.
-
-        Supported ratio_method:
-        - DATASET: randomly select counts files from each source dataset
-        - TAG: randomly select counts files matching relation.filter_conditions tags
-
-        Steps:
-        - Mark instance RUNNING
-        - For each relation: fetch ACTIVE files, optionally filter by tags
-        - Copy selected files into target dataset
-        - Update dataset statistics and mark instance SUCCESS/FAILED
-        """
-        async with AsyncSessionLocal() as session:  # type: AsyncSession
+        async with AsyncSessionLocal() as session:
             try:
-                # Load instance and relations
                 inst_res = await session.execute(select(RatioInstance).where(RatioInstance.id == instance_id))
                 instance: Optional[RatioInstance] = inst_res.scalar_one_or_none()
                 if not instance:
                     logger.error(f"Ratio instance not found: {instance_id}")
                     return
-                logger.info(f"start execute ratio task: {instance_id}")
+                    
+                logger.info(f"Starting ratio task {instance_id}")
+                logger.info(f"System resources: {get_system_resource_info()}")
 
                 rel_res = await session.execute(
                     select(RatioRelation).where(RatioRelation.ratio_instance_id == instance_id)
                 )
                 relations: List[RatioRelation] = list(rel_res.scalars().all())
 
-                # Mark running
                 instance.status = TaskStatus.RUNNING.name
 
-                # Load target dataset
                 ds_res = await session.execute(select(Dataset).where(Dataset.id == instance.target_dataset_id))
                 target_ds: Optional[Dataset] = ds_res.scalar_one_or_none()
                 if not target_ds:
@@ -116,18 +105,21 @@ class RatioTaskService:
                     instance.status = TaskStatus.FAILED.name
                     return
 
-                added_count, added_size = await RatioTaskService.handle_ratio_relations(relations,session, target_ds)
+                max_concurrent = get_concurrent_for_ratio_copy(settings)
+                logger.info(f"Using {max_concurrent} concurrent workers for ratio task {instance_id}")
 
-                # Update target dataset statistics
-                target_ds.file_count = (target_ds.file_count or 0) + added_count  # type: ignore
-                target_ds.size_bytes = (target_ds.size_bytes or 0) + added_size  # type: ignore
-                # If target dataset has files, mark it ACTIVE
-                if (target_ds.file_count or 0) > 0:  # type: ignore
+                added_count, added_size = await RatioTaskService.handle_ratio_relations_parallel(
+                    relations, session, target_ds, max_concurrent
+                )
+
+                target_ds.file_count = (target_ds.file_count or 0) + added_count
+                target_ds.size_bytes = (target_ds.size_bytes or 0) + added_size
+                if (target_ds.file_count or 0) > 0:
                     target_ds.status = "ACTIVE"
 
-                # Done
                 instance.status = TaskStatus.COMPLETED.name
-                logger.info(f"Dataset ratio execution completed: instance={instance_id}, files={added_count}, size={added_size}, {instance.status}")
+                logger.info(f"Ratio task completed: {instance_id}, files={added_count}, size={added_size}")
+                
                 await RatioTaskService._add_task_to_graph(
                     session=session,
                     src_relations=relations,
@@ -135,9 +127,8 @@ class RatioTaskService:
                     dst_dataset=target_ds,
                 )
             except Exception as e:
-                logger.exception(f"Dataset ratio execution failed for {instance_id}: {e}")
+                logger.exception(f"Ratio task failed for {instance_id}: {e}")
                 try:
-                    # Try mark failed
                     inst_res = await session.execute(select(RatioInstance).where(RatioInstance.id == instance_id))
                     instance = inst_res.scalar_one_or_none()
                     if instance:
@@ -146,6 +137,116 @@ class RatioTaskService:
                     pass
             finally:
                 await session.commit()
+
+    @staticmethod
+    async def handle_ratio_relations_parallel(
+        relations: list[RatioRelation],
+        session: AsyncSession,
+        target_ds: Dataset,
+        max_concurrent: int = 10
+    ) -> Tuple[int, int]:
+        existing_path_rows = await session.execute(
+            select(DatasetFiles.file_path).where(DatasetFiles.dataset_id == target_ds.id)
+        )
+        existing_paths = set(p for p in existing_path_rows.scalars().all() if p)
+        source_paths = set()
+
+        all_copy_tasks: List[Tuple[DatasetFiles, str, str]] = []
+
+        for rel in relations:
+            if not rel.source_dataset_id or not rel.counts or rel.counts <= 0:
+                continue
+
+            files = await RatioTaskService.get_files(rel, session)
+            if not files:
+                continue
+
+            pick_n = min(rel.counts or 0, len(files))
+            chosen = random.sample(files, pick_n) if pick_n < len(files) else files
+
+            for file in chosen:
+                if file.file_path in source_paths:
+                    continue
+
+                dst_prefix = f"/dataset/{target_ds.id}/"
+                file_name = RatioTaskService.get_new_file_name(dst_prefix, existing_paths, file)
+                new_path = dst_prefix + file_name
+
+                file_record = DatasetFiles(
+                    dataset_id=target_ds.id,
+                    file_name=file_name,
+                    file_path=new_path,
+                    file_type=file.file_type,
+                    file_size=file.file_size,
+                    check_sum=file.check_sum,
+                    tags=file.tags,
+                    tags_updated_at=datetime.now(),
+                    dataset_filemetadata=file.dataset_filemetadata,
+                    status="ACTIVE",
+                )
+
+                all_copy_tasks.append((file_record, file.file_path, new_path))
+                existing_paths.add(new_path)
+                source_paths.add(file.file_path)
+
+        if not all_copy_tasks:
+            return 0, 0
+
+        dst_dir = f"/dataset/{target_ds.id}/"
+        await asyncio.to_thread(os.makedirs, dst_dir, exist_ok=True)
+
+        semaphore = asyncio.Semaphore(max_concurrent)
+        successful_records: List[DatasetFiles] = []
+        added_count = 0
+        added_size = 0
+
+        async def copy_with_semaphore(
+            file_record: DatasetFiles,
+            src_path: str,
+            dst_path: str
+        ) -> Tuple[bool, DatasetFiles]:
+            async with semaphore:
+                try:
+                    file_dst_dir = os.path.dirname(dst_path)
+                    if file_dst_dir != dst_dir:
+                        await asyncio.to_thread(os.makedirs, file_dst_dir, exist_ok=True)
+
+                    try:
+                        await asyncio.to_thread(os.link, src_path, dst_path)
+                    except OSError:
+                        try:
+                            await asyncio.to_thread(os.symlink, src_path, dst_path)
+                        except OSError:
+                            await asyncio.to_thread(shutil.copy2, src_path, dst_path)
+
+                    return True, file_record
+                except Exception as e:
+                    logger.error(f"Copy failed: {src_path} -> {dst_path}: {e}")
+                    return False, file_record
+
+        tasks = [copy_with_semaphore(rec, src, dst) for rec, src, dst in all_copy_tasks]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        for i, result in enumerate(results):
+            if isinstance(result, Exception):
+                logger.error(f"Copy task {i} raised exception: {result}")
+                continue
+            success, file_record = result
+            if success:
+                added_count += 1
+                added_size += int(file_record.file_size or 0)
+                successful_records.append(file_record)
+
+        if successful_records:
+            session.add_all(successful_records)
+            await session.flush()
+
+        logger.info(
+            f"Parallel copy completed: {added_count}/{len(all_copy_tasks)} files, "
+            f"{added_size} bytes, {len(results) - added_count} failures"
+        )
+
+        return added_count, added_size
 
     @staticmethod
     async def handle_ratio_relations(relations: list[RatioRelation], session, target_ds: Dataset) -> tuple[int, int]:
