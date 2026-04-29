@@ -18,6 +18,7 @@ COPY scripts/images/runtime/start.sh /opt/runtime/start.sh
 ENV PYTHONPATH=/opt/runtime/datamate/
 ENV UV_EXTRA_INDEX_URL="https://download.pytorch.org/whl/cpu"
 ENV UV_INDEX_STRATEGY=unsafe-best-match
+ENV TORCH_DEVICE_BACKEND_AUTOLOAD=0
 
 WORKDIR /opt/runtime
 
