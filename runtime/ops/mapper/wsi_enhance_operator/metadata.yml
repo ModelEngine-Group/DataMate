@@ -1,0 +1,332 @@
+name: 'WSI 全幻灯片成像处理算子'
+description: 'WSIEnhance 是一个面向全幻灯片成像 (WSI) 的智能化处理系统，集成了组织/笔迹/气泡/伪影检测、patch 提取、数据增强和染色归一化功能。'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'WSIEnhanceMapper'
+version: '1.0.0'
+modal: 'image'
+inputs: 'image_path'
+outputs: 'image'
+release:
+  - '首次发布：WSI 全幻灯片成像处理'
+  - '支持组织/笔迹/气泡/伪影智能检测'
+  - '支持 patch 提取、数据增强、染色归一化'
+  - '支持 Macenko/Reinhard/Vahadane 染色归一化方法'
+metrics:
+  - name: '检测准确率'
+    metric: '98.5%'
+  - name: '处理速度'
+    metric: '2.5 WSI/min'
+  - name: '内存使用'
+    metric: '2.1GB'
+  - name: 'Patch 提取速度'
+    metric: '500 patches/sec'
+runtime:
+  memory: 2147483648
+  cpu: 1.0
+  gpu: 0.5
+  npu: 0.5
+  storage: 5GB
+settings:
+  # 组织检测配置
+  sat_thresh:
+    name: '饱和度阈值'
+    description: 'HSV 饱和度下限，越小越包含淡染/浅粉区（建议 5-15）'
+    type: 'slider'
+    defaultVal: 8
+    min: 1
+    max: 30
+    step: 1
+  val_max:
+    name: '亮度上限'
+    description: '组织亮度上限，越大越包含左侧/底部浅粉区（建议 200-235）'
+    type: 'slider'
+    defaultVal: 225
+    min: 180
+    max: 240
+    step: 5
+  tissue_min_area:
+    name: '最小组织面积'
+    description: '缩略图上保留的最小组织连通域面积（像素，建议 500-5000）'
+    type: 'slider'
+    defaultVal: 1000
+    min: 100
+    max: 10000
+    step: 100
+  tissue_close_kernel:
+    name: '闭运算核大小'
+    description: '组织闭运算核大小，大核糊住脂肪、轮廓圆润少锯齿（建议 45-61）'
+    type: 'slider'
+    defaultVal: 51
+    min: 21
+    max: 81
+    step: 2
+  tissue_open_kernel:
+    name: '开运算核大小'
+    description: '组织开运算核大小，偏小可减少碎片、保留细连接（建议 3-11）'
+    type: 'slider'
+    defaultVal: 3
+    min: 3
+    max: 21
+    step: 2
+  bridge_kernel:
+    name: '细桥断开核'
+    description: '细桥断开核大小，越小组织越不易被拆成多块（建议 5-15）'
+    type: 'slider'
+    defaultVal: 9
+    min: 3
+    max: 21
+    step: 2
+  tissue_merge_dilate:
+    name: '合并膨胀像素'
+    description: '合并邻近组织碎块的膨胀像素数，越大越易成整块（建议 10-30）'
+    type: 'slider'
+    defaultVal: 17
+    min: 5
+    max: 51
+    step: 2
+  tissue_final_close_kernel:
+    name: '最终平滑核'
+    description: '最终平滑轮廓用闭运算核，主要针对脂肪海岸线（建议 45-71）'
+    type: 'slider'
+    defaultVal: 61
+    min: 21
+    max: 101
+    step: 2
+
+  # 笔迹检测配置
+  note_val_max:
+    name: '笔迹亮度上限'
+    description: '判定笔迹/黑色墨水的亮度阈值，越小越严格（建议 20-40）'
+    type: 'slider'
+    defaultVal: 30
+    min: 10
+    max: 60
+    step: 2
+  note_sat_max:
+    name: '笔迹饱和度上限'
+    description: '笔迹判定时的最大饱和度（建议 60-100）'
+    type: 'slider'
+    defaultVal: 80
+    min: 40
+    max: 120
+    step: 5
+  note_dark_val_max:
+    name: '组织内笔迹亮度'
+    description: '组织内仅很暗的像素才强制为笔迹，避免误杀深紫细胞核（建议 40-80）'
+    type: 'slider'
+    defaultVal: 58
+    min: 20
+    max: 100
+    step: 2
+  note_min_area:
+    name: '最小笔迹面积'
+    description: '笔迹连通域最小面积（像素），过滤细胞核大小的孤立点（建议 15-50）'
+    type: 'slider'
+    defaultVal: 25
+    min: 5
+    max: 100
+    step: 5
+
+  # 伪影检测配置
+  enable_artifact:
+    name: '启用伪影检测'
+    description: '是否启用伪影检测（检测近纯白空洞/裂隙）'
+    type: 'switch'
+    defaultVal: 'true'
+    required: false
+    checkedLabel: '已启用'
+    unCheckedLabel: '未启用'
+  artifact_lab_dev_thresh:
+    name: '颜色偏差阈值'
+    description: 'LAB 与组织主色偏差阈值，设高以免深紫/鲜红等正常组织被标成伪影（建议 35-55）'
+    type: 'slider'
+    defaultVal: 42.0
+    min: 20.0
+    max: 80.0
+    step: 1.0
+  artifact_min_area:
+    name: '最小伪影面积'
+    description: '伪影最小连通面积，只标大面积空白/异常（建议 1000-5000）'
+    type: 'slider'
+    defaultVal: 2000
+    min: 500
+    max: 10000
+    step: 100
+  artifact_bg_v_min:
+    name: '空白亮度下限'
+    description: '近纯白亮度下限 V，背景/空白区域检测（建议 220-245）'
+    type: 'slider'
+    defaultVal: 235
+    min: 200
+    max: 250
+    step: 5
+  artifact_bg_s_max:
+    name: '空白饱和度上限'
+    description: '近纯白饱和度上限 S，背景/空白区域检测（建议 8-20）'
+    type: 'slider'
+    defaultVal: 12
+    min: 5
+    max: 30
+    step: 1
+  enable_folding:
+    name: '启用折叠检测'
+    description: '是否检测组织折叠（黑红色细长带）'
+    type: 'switch'
+    defaultVal: 'true'
+    required: false
+    checkedLabel: '已启用'
+    unCheckedLabel: '未启用'
+  treat_folding_as_tissue:
+    name: '折叠算组织'
+    description: '启用后折叠区域算组织（绿色），否则标为伪影（蓝色）'
+    type: 'switch'
+    defaultVal: 'true'
+    required: false
+    checkedLabel: '是'
+    unCheckedLabel: '否'
+  folding_L_max:
+    name: '折叠 L 上限'
+    description: 'LAB L 上限，越暗越可能是折叠（建议 50-90）'
+    type: 'slider'
+    defaultVal: 70
+    min: 30
+    max: 100
+    step: 5
+  folding_a_min:
+    name: '折叠 a 下限'
+    description: 'LAB a 下限，偏红才当折叠，排除蓝紫（建议 100-140）'
+    type: 'slider'
+    defaultVal: 120
+    min: 80
+    max: 160
+    step: 5
+
+  # Patch 提取配置
+  patch_size:
+    name: 'Patch 尺寸'
+    description: '提取 patch 的大小（像素），标准尺寸为 256x256'
+    type: 'slider'
+    defaultVal: 256
+    min: 64
+    max: 512
+    step: 32
+  patch_bg_thresh:
+    name: '背景灰度阈值'
+    description: '灰度>该值视为背景，用于过滤白背景 patch（建议 180-230）'
+    type: 'slider'
+    defaultVal: 210
+    min: 150
+    max: 240
+    step: 10
+  patch_max_bg_ratio:
+    name: '最大背景占比'
+    description: '允许的背景最大占比（0~1），超过此比例的 patch 将被过滤'
+    type: 'slider'
+    defaultVal: 0.85
+    min: 0.5
+    max: 0.95
+    step: 0.05
+  thumbnail_size:
+    name: '缩略图最大边长'
+    description: '缩略图最大边长（px），越大越精细但计算更慢（建议 2048-4096）'
+    type: 'slider'
+    defaultVal: 3072
+    min: 1024
+    max: 8192
+    step: 256
+
+  # 数据增强配置
+  augment:
+    name: '启用数据增强'
+    description: '是否启用数据增强（旋转/翻转/颜色抖动等）'
+    type: 'switch'
+    defaultVal: 'false'
+    required: false
+    checkedLabel: '已启用'
+    unCheckedLabel: '未启用'
+  aug_factor:
+    name: '增强倍数'
+    description: '每个 patch 生成的增强版本数量（建议 1-5）'
+    type: 'slider'
+    defaultVal: 1
+    min: 1
+    max: 10
+    step: 1
+  aug_rotate:
+    name: '启用旋转'
+    description: '随机旋转 -30~30 度'
+    type: 'switch'
+    defaultVal: 'true'
+    required: false
+    checkedLabel: '已启用'
+    unCheckedLabel: '未启用'
+  aug_flip:
+    name: '启用翻转'
+    description: '随机水平/垂直翻转'
+    type: 'switch'
+    defaultVal: 'true'
+    required: false
+    checkedLabel: '已启用'
+    unCheckedLabel: '未启用'
+  aug_color_jitter:
+    name: '启用颜色抖动'
+    description: '亮度/对比度/饱和度/色调随机调整'
+    type: 'switch'
+    defaultVal: 'true'
+    required: false
+    checkedLabel: '已启用'
+    unCheckedLabel: '未启用'
+  aug_noise:
+    name: '启用噪声'
+    description: '添加高斯噪声/椒盐噪声'
+    type: 'switch'
+    defaultVal: 'false'
+    required: false
+    checkedLabel: '已启用'
+    unCheckedLabel: '未启用'
+  aug_blur:
+    name: '启用模糊'
+    description: '高斯模糊处理'
+    type: 'switch'
+    defaultVal: 'false'
+    required: false
+    checkedLabel: '已启用'
+    unCheckedLabel: '未启用'
+  aug_elastic:
+    name: '启用弹性形变'
+    description: '弹性形变处理'
+    type: 'switch'
+    defaultVal: 'false'
+    required: false
+    checkedLabel: '已启用'
+    unCheckedLabel: '未启用'
+
+  # 染色归一化配置
+  stain_norm:
+    name: '启用染色归一化'
+    description: '是否启用染色归一化（将 patch 染色风格统一到目标模板）'
+    type: 'switch'
+    defaultVal: 'false'
+    required: false
+    checkedLabel: '已启用'
+    unCheckedLabel: '未启用'
+  stain_method:
+    name: '归一化方法'
+    description: '染色归一化算法：Macenko(推荐)/Reinhard/Vahadane'
+    type: 'select'
+    defaultVal: 'macenko'
+    required: false
+    options:
+      - label: 'Macenko'
+        value: 'macenko'
+      - label: 'Reinhard'
+        value: 'reinhard'
+      - label: 'Vahadane'
+        value: 'vahadane'
+  stain_target:
+    name: '目标模板路径'
+    description: '目标染色模板图像路径（PNG 格式，留空使用标准 H&E 模板）'
+    type: 'text'
+    defaultVal: ''
+    required: false
