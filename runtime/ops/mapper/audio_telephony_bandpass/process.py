@@ -1,0 +1,103 @@
+# -- encoding: utf-8 --
+
+import os
+import time
+from pathlib import Path
+from typing import Dict, Any, Tuple
+
+from loguru import logger
+
+from datamate.core.base_op import Mapper
+
+
+def _as_bool(v: object) -> bool:
+    if isinstance(v, bool):
+        return v
+    s = str(v).strip().lower()
+    return s in {"1", "true", "yes", "y", "on"}
+
+
+def _load_audio(path: Path) -> Tuple["object", int]:
+    try:
+        import soundfile as sf  # type: ignore
+
+        data, sr = sf.read(str(path), always_2d=False)
+        return data, int(sr)
+    except Exception as e:
+        raise RuntimeError(f"读取音频失败（需要 soundfile）: {path}, error={e}") from e
+
+
+def _save_audio(path: Path, data: "object", sr: int, fmt: str) -> None:
+    try:
+        import soundfile as sf  # type: ignore
+
+        path.parent.mkdir(parents=True, exist_ok=True)
+        sf.write(str(path), data, int(sr), format=fmt.upper() if fmt else None)
+    except Exception as e:
+        raise RuntimeError(f"写入音频失败（需要 soundfile）: {path}, error={e}") from e
+
+
+class AudioTelephonyBandpass(Mapper):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.low_hz = float(kwargs.get("lowHz", 300))
+        self.high_hz = float(kwargs.get("highHz", 3400))
+        self.order = int(float(kwargs.get("order", 4)))
+        self.out_format = str(kwargs.get("outFormat", "wav")).strip().lower().lstrip(".")
+        self.overwrite = _as_bool(kwargs.get("overwrite", False))
+
+    def execute(self, sample: Dict[str, Any]) -> Dict[str, Any]:
+        start = time.time()
+        in_path = Path(sample.get(self.filepath_key, "")).resolve()
+        if not in_path.exists():
+            raise FileNotFoundError(f"输入音频不存在: {in_path}")
+
+        data, sr = _load_audio(in_path)
+        try:
+            import numpy as np
+            from scipy.signal import butter, lfilter  # type: ignore
+
+            x = np.asarray(data, dtype=np.float32)
+            if x.ndim > 1:
+                x = x.mean(axis=1)
+            if x.size == 0:
+                y = x
+            else:
+                nyq = float(sr) / 2.0
+                low = max(1.0, float(self.low_hz)) / nyq
+                high = min(nyq - 1.0, float(self.high_hz)) / nyq
+                if not (0.0 < low < high < 1.0):
+                    raise ValueError(f"非法带通范围: low={self.low_hz}, high={self.high_hz}, sr={sr}")
+                b, a = butter(max(1, int(self.order)), [low, high], btype="bandpass")
+                y = lfilter(b, a, x).astype(np.float32)
+                y = np.clip(y, -1.0, 1.0)
+        except ImportError as e:
+            raise RuntimeError("AudioTelephonyBandpass 需要 scipy.signal（butter/lfilter）") from e
+        except Exception as e:
+            raise RuntimeError(f"处理失败: {e}") from e
+
+        export_dir = Path(os.path.abspath(str(sample.get(self.export_path_key, "."))))
+        export_dir.mkdir(parents=True, exist_ok=True)
+        stem = Path(str(sample.get(self.filename_key, in_path.name))).stem
+        out_path = export_dir / f"{stem}.{self.out_format}"
+        if out_path.exists() and not self.overwrite:
+            raise FileExistsError(f"输出文件已存在且未启用覆盖: {out_path}")
+
+        _save_audio(out_path, y, sr, self.out_format)
+
+        sample[self.filepath_key] = str(out_path.resolve())
+        sample[self.filetype_key] = self.out_format
+        sample[self.filename_key] = out_path.name
+        try:
+            sample[self.filesize_key] = str(out_path.stat().st_size)
+        except Exception:
+            pass
+        sample[self.data_key] = b""
+        if not sample.get(self.text_key):
+            sample[self.text_key] = "processed"
+
+        logger.info(
+            f"fileName: {sample.get(self.filename_key)}, method: AudioTelephonyBandpass costs {time.time() - start:6f} s"
+        )
+        return sample
+

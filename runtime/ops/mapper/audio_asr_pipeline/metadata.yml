@@ -1,0 +1,115 @@
+name: '音频预处理与中英ASR（流水线）'
+name_en: 'Audio Preprocess & ASR Pipeline'
+description: '调用 audio_preprocessor 的 normalization→(可选)GTCRN→(可选)异常过滤→LID→切分→ASR→合并，输出 merged_text 写入 sample.text，并在 ext_params 中记录中间产物路径。'
+description_en: 'Run audio_preprocessor pipeline: normalization→(optional)GTCRN→(optional)anomaly filter→LID→split→ASR→merge. Writes merged_text into sample.text and records artifacts in ext_params.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'AudioAsrPipeline'
+version: '1.0.0'
+types:
+  - 'annotation'
+modal: 'audio'
+inputs: 'audio'
+outputs: 'text'
+settings:
+  doDenoise:
+    name: '启用降噪'
+    type: 'switch'
+    description: '是否启用 GTCRN 降噪。'
+    defaultVal: 'false'
+    required: false
+    checkedLabel: '开启'
+    unCheckedLabel: '关闭'
+  denoiseModelPath:
+    name: '降噪模型路径'
+    type: 'input'
+    description: 'GTCRN ONNX 模型绝对路径（启用降噪时必填）。'
+    defaultVal: ''
+    required: false
+  doAnomalyFilter:
+    name: '启用异常过滤'
+    type: 'switch'
+    description: '是否启用异常语音检测与过滤（时长/静音比例）。'
+    defaultVal: 'true'
+    required: false
+    checkedLabel: '开启'
+    unCheckedLabel: '关闭'
+  minDur:
+    name: '最小时长(秒)'
+    type: 'inputNumber'
+    defaultVal: 1.0
+    min: 0
+    max: 36000
+    step: 0.1
+  maxDur:
+    name: '最大时长(秒)'
+    type: 'inputNumber'
+    defaultVal: 20000.0
+    min: 0
+    max: 360000
+    step: 1
+  silenceRatioTh:
+    name: '静音帧比例阈值'
+    type: 'slider'
+    defaultVal: 0.8
+    min: 0
+    max: 1
+    step: 0.01
+  silenceRmsRatioTh:
+    name: '静音判定比例'
+    type: 'slider'
+    defaultVal: 0.05
+    min: 0
+    max: 1
+    step: 0.01
+  lidModelSource:
+    name: 'LID 模型源'
+    type: 'input'
+    description: 'SpeechBrain LID 模型 source（本地目录或 HF repo）。留空则用 audio_preprocessor 默认值。'
+    defaultVal: ''
+    required: false
+  lidDevice:
+    name: 'LID 设备'
+    type: 'select'
+    defaultVal: 'cpu'
+    required: true
+    options:
+      - label: 'cpu'
+        value: 'cpu'
+      - label: 'cuda'
+        value: 'cuda'
+      - label: 'npu'
+        value: 'npu'
+  lidMaxSeconds:
+    name: 'LID 截断秒数'
+    type: 'inputNumber'
+    defaultVal: 3.0
+    min: 0
+    max: 60
+    step: 0.5
+  maxSegmentSeconds:
+    name: '切分最大秒数'
+    type: 'inputNumber'
+    defaultVal: 120
+    min: 5
+    max: 3600
+    step: 1
+  asrDevice:
+    name: 'ASR 设备'
+    type: 'select'
+    description: '传给 recognize_monitor 的 device 参数（auto/npu/cpu）。'
+    defaultVal: 'auto'
+    required: true
+    options:
+      - label: 'auto'
+        value: 'auto'
+      - label: 'cpu'
+        value: 'cpu'
+      - label: 'npu'
+        value: 'npu'
+runtime:
+  memory: 4294967296
+  cpu: 1.0
+  gpu: 0
+  npu: 0
+

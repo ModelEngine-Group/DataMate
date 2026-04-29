@@ -1,0 +1,47 @@
+name: '预加重'
+name_en: 'Pre-Emphasis'
+description: '一阶预加重滤波 \(y[n]=x[n]-coef*x[n-1]\)。写出处理后的 wav 到 export_path 并更新 filePath。'
+description_en: 'First-order pre-emphasis \(y[n]=x[n]-coef*x[n-1]\). Writes processed wav to export_path and updates filePath.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'AudioPreEmphasis'
+version: '1.0.0'
+types:
+  - 'cleanse'
+modal: 'audio'
+inputs: 'audio'
+outputs: 'audio'
+settings:
+  coef:
+    name: '预加重系数'
+    type: 'slider'
+    description: '常用范围 0.9~0.99。'
+    defaultVal: 0.97
+    min: 0
+    max: 0.999
+    step: 0.001
+  outFormat:
+    name: '输出格式'
+    type: 'select'
+    description: '输出扩展名（建议 wav）。'
+    defaultVal: 'wav'
+    required: true
+    options:
+      - label: 'wav'
+        value: 'wav'
+      - label: 'flac'
+        value: 'flac'
+  overwrite:
+    name: '覆盖输出'
+    type: 'switch'
+    description: '若 export_path 下已存在同名文件，是否覆盖。'
+    defaultVal: 'false'
+    required: false
+    checkedLabel: '覆盖'
+    unCheckedLabel: '不覆盖'
+runtime:
+  memory: 104857600
+  cpu: 0.1
+  gpu: 0
+  npu: 0
+

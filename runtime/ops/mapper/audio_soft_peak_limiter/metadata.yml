@@ -1,0 +1,55 @@
+name: '软限幅'
+name_en: 'Soft Peak Limiter'
+description: '软饱和限制峰值（tanh 近似），减轻硬削波。写出处理后的 wav 到 export_path 并更新 filePath。'
+description_en: 'Soft limiting using tanh-like saturation to reduce clipping. Writes processed wav to export_path and updates filePath.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'AudioSoftPeakLimiter'
+version: '1.0.0'
+types:
+  - 'cleanse'
+modal: 'audio'
+inputs: 'audio'
+outputs: 'audio'
+settings:
+  threshold:
+    name: '阈值'
+    type: 'slider'
+    description: '线性区阈值（0~1）。'
+    defaultVal: 0.92
+    min: 0.1
+    max: 1
+    step: 0.01
+  knee:
+    name: 'knee'
+    type: 'slider'
+    description: '过渡宽度（0~1），越大越柔和。'
+    defaultVal: 0.08
+    min: 0
+    max: 1
+    step: 0.01
+  outFormat:
+    name: '输出格式'
+    type: 'select'
+    description: '输出扩展名（建议 wav）。'
+    defaultVal: 'wav'
+    required: true
+    options:
+      - label: 'wav'
+        value: 'wav'
+      - label: 'flac'
+        value: 'flac'
+  overwrite:
+    name: '覆盖输出'
+    type: 'switch'
+    description: '若 export_path 下已存在同名文件，是否覆盖。'
+    defaultVal: 'false'
+    required: false
+    checkedLabel: '覆盖'
+    unCheckedLabel: '不覆盖'
+runtime:
+  memory: 104857600
+  cpu: 0.12
+  gpu: 0
+  npu: 0
+

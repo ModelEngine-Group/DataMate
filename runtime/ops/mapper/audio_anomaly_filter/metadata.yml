@@ -1,0 +1,60 @@
+name: '异常语音检测与过滤'
+name_en: 'Audio Anomaly Detect & Filter'
+description: '对音频做快速异常检测：时长范围与静音帧比例。若判定为异常，将清空 sample 的 text/data 以便后续过滤，并在 ext_params 中写入报告字段。'
+description_en: 'Fast audio anomaly detection (duration and silence ratio). If invalid, clears text/data so downstream can filter, and writes report to ext_params.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'AudioAnomalyFilter'
+version: '1.0.0'
+types:
+  - 'cleanse'
+modal: 'audio'
+inputs: 'audio'
+outputs: 'audio'
+settings:
+  minDur:
+    name: '最小时长(秒)'
+    type: 'inputNumber'
+    description: '小于该值视为异常。'
+    defaultVal: 1.0
+    min: 0
+    max: 36000
+    step: 0.1
+  maxDur:
+    name: '最大时长(秒)'
+    type: 'inputNumber'
+    description: '大于该值视为异常。'
+    defaultVal: 20000.0
+    min: 0
+    max: 360000
+    step: 1
+  silenceRatioTh:
+    name: '静音帧比例阈值'
+    type: 'slider'
+    description: '静音帧比例 >= 阈值 时视为异常。'
+    defaultVal: 0.8
+    min: 0
+    max: 1
+    step: 0.01
+  silenceRmsRatioTh:
+    name: '静音判定比例'
+    type: 'slider'
+    description: '静音判定阈值 = global_rms * 该比例。'
+    defaultVal: 0.05
+    min: 0
+    max: 1
+    step: 0.01
+  keepInvalid:
+    name: '保留异常文件'
+    description: '开启后不清空 text/data，仅打标 quality_flag=invalid。'
+    type: 'switch'
+    defaultVal: 'false'
+    required: false
+    checkedLabel: '保留'
+    unCheckedLabel: '过滤'
+runtime:
+  memory: 104857600
+  cpu: 0.2
+  gpu: 0
+  npu: 0
+

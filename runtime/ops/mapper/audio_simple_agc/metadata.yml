@@ -1,0 +1,71 @@
+name: '分段RMS自动增益'
+name_en: 'Simple AGC (RMS)'
+description: '按帧估计 RMS，将电平拉向目标并限制最大增益。写出处理后的 wav 到 export_path 并更新 filePath。'
+description_en: 'Frame-wise RMS AGC towards target RMS with max gain limit. Writes processed wav to export_path and updates filePath.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'AudioSimpleAgc'
+version: '1.0.0'
+types:
+  - 'cleanse'
+modal: 'audio'
+inputs: 'audio'
+outputs: 'audio'
+settings:
+  targetRms:
+    name: '目标RMS'
+    type: 'slider'
+    description: '线性 RMS，越大越响。'
+    defaultVal: 0.05
+    min: 0.001
+    max: 0.5
+    step: 0.001
+  frameMs:
+    name: '帧长(ms)'
+    type: 'inputNumber'
+    description: '分析帧长。'
+    defaultVal: 50
+    min: 5
+    max: 500
+    step: 1
+  hopMs:
+    name: '帧移(ms)'
+    type: 'inputNumber'
+    description: '帧移。'
+    defaultVal: 25
+    min: 1
+    max: 500
+    step: 1
+  maxGain:
+    name: '最大增益(线性)'
+    type: 'slider'
+    description: '限制增益，避免过度放大噪声。'
+    defaultVal: 10
+    min: 1
+    max: 50
+    step: 0.5
+  outFormat:
+    name: '输出格式'
+    type: 'select'
+    description: '输出扩展名（建议 wav）。'
+    defaultVal: 'wav'
+    required: true
+    options:
+      - label: 'wav'
+        value: 'wav'
+      - label: 'flac'
+        value: 'flac'
+  overwrite:
+    name: '覆盖输出'
+    type: 'switch'
+    description: '若 export_path 下已存在同名文件，是否覆盖。'
+    defaultVal: 'false'
+    required: false
+    checkedLabel: '覆盖'
+    unCheckedLabel: '不覆盖'
+runtime:
+  memory: 104857600
+  cpu: 0.15
+  gpu: 0
+  npu: 0
+
