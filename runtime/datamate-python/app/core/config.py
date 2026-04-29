@@ -84,5 +84,29 @@ class Settings(BaseSettings):
     # 文件存储配置（共享文件系统）
     file_storage_path: str = "/data/files"
 
+    # ==================== 配比任务并行复制配置 ====================
+    # 动态并发计算参数（全闪存储高性能场景默认值）
+    
+    # 并发下限（最少并发数）
+    ratio_copy_min_concurrent: int = 8
+    
+    # 并发上限（最多并发数，防止资源耗尽）
+    ratio_copy_max_concurrent: int = 128
+    
+    # CPU核心系数（每个核心贡献的并发数，全闪存储建议4.0）
+    ratio_copy_cpu_factor: float = 4.0
+    
+    # 每并发任务预估内存占用（MB）
+    ratio_copy_memory_per_task_mb: int = 32
+    
+    # 内存安全保留比例（保留给其他进程）
+    ratio_copy_memory_reserve_ratio: float = 0.2
+    
+    # 是否启用动态计算（False则使用固定值）
+    ratio_copy_dynamic_concurrent: bool = True
+    
+    # 固定并发数（当 dynamic_concurrent=False 时使用）
+    ratio_copy_fixed_concurrent: int = 10
+
 # 全局设置实例
 settings = Settings()
