@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 interface Tag {
-  id: number;
+  id: string;
   name: string;
   color: string;
 }

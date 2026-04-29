@@ -32,9 +32,9 @@ interface OperationItem {
 
 interface TagConfig {
   showAdd: boolean;
-  tags: Array<{ id: number; name: string; color: string } | string>;
+  tags: Array<{ id: string; name: string; color: string } | string>;
   onFetchTags?: () => Promise<{
-    data: { id: number; name: string; color: string }[];
+    data: { id: string; name: string; color: string }[];
   }>;
   onAddTag?: (tag: string) => void;
   onCreateAndTag?: (tagName: string) => void;
@@ -48,7 +48,7 @@ interface DetailHeaderProps<T> {
 }
 
 // 标签单行渲染组件
-const TagsInline = ({ tags }: { tags: Array<{ id: number; name: string; color: string } | string> }) => {
+const TagsInline = ({ tags }: { tags: Array<{ id: string; name: string; color: string } | string> }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const tagsAreaRef = useRef<HTMLDivElement>(null);
   const [visibleTags, setVisibleTags] = useState<typeof tags>([]);
