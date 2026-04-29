@@ -1,0 +1,16 @@
+name: '视频敏感裁剪'
+name_en: 'Video Sensitive Crop'
+description: '根据敏感片段 JSON 裁剪/清洗输出 cleaned.mp4，并生成 crop_result.json。'
+description_en: 'Crop/clean video based on sensitive segments JSON; outputs cleaned.mp4 and crop_result.json.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'VideoSensitiveCrop'
+version: '1.0.0'
+types:
+  - 'cleaning'
+modal: 'video'
+effect:
+  before: ''
+  after: ''
+inputs: 'video'
+outputs: 'video'

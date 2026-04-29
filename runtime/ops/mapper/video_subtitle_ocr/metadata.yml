@@ -1,0 +1,16 @@
+name: '视频字幕OCR提取'
+name_en: 'Video Subtitle OCR'
+description: '对视频底部字幕区域进行OCR识别，输出 subtitles.json 与 subtitles.srt；可选自动去黑边、抽帧、跳过相似帧、字幕去重合并、英文空格修复。'
+description_en: 'OCR for bottom subtitles, outputs subtitles.json and subtitles.srt; optional deborder, sampling, frame skipping, merge, English spacing fix.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'VideoSubtitleOCR'
+version: '1.0.0'
+types:
+  - 'annotation'
+modal: 'video'
+effect:
+  before: ''
+  after: ''
+inputs: 'video'
+outputs: 'text'
