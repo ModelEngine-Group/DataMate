@@ -1,0 +1,16 @@
+name: '视频格式转换'
+name_en: 'Video Format Convert'
+description: '仅做容器格式转换（stream copy，不重编码）；输出 converted.xxx 与 convert_result.json。'
+description_en: 'Container remux via ffmpeg stream copy (no re-encode); outputs converted.xxx and convert_result.json.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'VideoFormatConvert'
+version: '1.0.0'
+types:
+  - 'cleaning'
+modal: 'video'
+effect:
+  before: ''
+  after: ''
+inputs: 'video'
+outputs: 'video'
