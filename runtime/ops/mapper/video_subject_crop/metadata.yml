@@ -1,0 +1,16 @@
+name: '主体跟踪裁剪'
+name_en: 'Video Subject Crop'
+description: '根据 tracks.json 选择 Top1 主体轨迹并裁剪输出 subject.mp4，用于单主体验收链路。'
+description_en: 'Select the top subject track from tracks.json and crop to output subject.mp4.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'VideoSubjectCrop'
+version: '1.0.0'
+types:
+  - 'cleaning'
+modal: 'video'
+effect:
+  before: ''
+  after: ''
+inputs: 'video'
+outputs: 'video'

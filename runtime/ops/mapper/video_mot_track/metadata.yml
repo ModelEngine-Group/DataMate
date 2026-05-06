@@ -1,0 +1,16 @@
+name: '多目标跟踪'
+name_en: 'Video MOT Track'
+description: '基于检测+跟踪生成轨迹文件 tracks.json，并输出 debug.mp4 用于可视化验收。'
+description_en: 'Run detection+tracking to generate tracks.json and debug.mp4 for visualization.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'VideoMotTrack'
+version: '1.0.0'
+types:
+  - 'annotation'
+modal: 'video'
+effect:
+  before: ''
+  after: ''
+inputs: 'video'
+outputs: 'text'

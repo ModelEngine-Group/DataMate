@@ -1,0 +1,16 @@
+name: '语音识别ASR'
+name_en: 'Video Speech ASR'
+description: '从视频抽取音频并进行语音识别，输出 asr.json（可含时间戳）；支持指定语言/模型规模等参数。'
+description_en: 'Extract audio and run ASR, outputs asr.json (with timestamps); supports language/model options.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'VideoSpeechASR'
+version: '1.0.0'
+types:
+  - 'annotation'
+modal: 'video'
+effect:
+  before: ''
+  after: ''
+inputs: 'video'
+outputs: 'text'

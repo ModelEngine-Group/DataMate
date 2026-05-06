@@ -1,0 +1,16 @@
+name: '视频分类（QwenVL）'
+name_en: 'Video Classify (QwenVL)'
+description: '抽帧调用 QwenVL classify25，多帧投票输出分类结果 classification.json。'
+description_en: 'Sample frames and call QwenVL classify25; vote to output classification.json.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'VideoClassifyQwenVL'
+version: '1.0.0'
+types:
+  - 'annotation'
+modal: 'video'
+effect:
+  before: ''
+  after: ''
+inputs: 'video'
+outputs: 'text'

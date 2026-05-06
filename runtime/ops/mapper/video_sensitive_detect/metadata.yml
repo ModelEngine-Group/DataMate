@@ -1,0 +1,16 @@
+name: '视频敏感检测'
+name_en: 'Video Sensitive Detect'
+description: '抽帧+Qwen判定生成敏感片段 sensitive_segments.json（需要提供 qwen_module/qwen_func）。'
+description_en: 'Sample frames and call Qwen inference to generate sensitive_segments.json (requires qwen_module/qwen_func).'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'VideoSensitiveDetect'
+version: '1.0.0'
+types:
+  - 'annotation'
+modal: 'video'
+effect:
+  before: ''
+  after: ''
+inputs: 'video'
+outputs: 'text'

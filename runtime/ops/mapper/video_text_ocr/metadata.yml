@@ -1,0 +1,16 @@
+name: '视频显著文字OCR提取'
+name_en: 'Video Text OCR'
+description: '对视频上方/主要区域显著文字进行OCR识别，输出 text_ocr.json；可选自动去黑边、抽帧、跳过相似帧。'
+description_en: 'OCR for salient texts on main/top region, outputs text_ocr.json; optional deborder, sampling, frame skipping.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'VideoTextOCR'
+version: '1.0.0'
+types:
+  - 'annotation'
+modal: 'video'
+effect:
+  before: ''
+  after: ''
+inputs: 'video'
+outputs: 'text'

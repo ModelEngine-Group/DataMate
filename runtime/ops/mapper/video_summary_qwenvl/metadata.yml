@@ -1,0 +1,16 @@
+name: '视频摘要（QwenVL）'
+name_en: 'Video Summary (QwenVL)'
+description: '抽多帧拼 montage，只调用一次 QwenVL summary，输出 summary.json（含 montage.jpg 与证据帧）。'
+description_en: 'Build montage from sampled frames, call QwenVL summary once; outputs summary.json with montage and evidence.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'VideoSummaryQwenVL'
+version: '1.0.0'
+types:
+  - 'annotation'
+modal: 'video'
+effect:
+  before: ''
+  after: ''
+inputs: 'video'
+outputs: 'text'
