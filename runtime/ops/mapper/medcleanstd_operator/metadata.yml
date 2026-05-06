@@ -1,0 +1,142 @@
+name: '医疗文本清洗标准化算子'
+description: 'MedCleanStd 是一个面向医疗文本的智能化清洗与标准化处理系统，集成了文档解析、文本纠错、命名实体识别（NER）和医学术语标准化四大核心功能。'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'MedCleanStdMapper'
+version: '1.0.0'
+modal: 'text'
+inputs: 'text'
+outputs: 'text'
+release:
+  - '首次发布：医疗文本清洗与标准化处理'
+  - '支持文档解析、文本纠错、NER 实体识别、术语标准化'
+  - '支持 NPU/GPU/CPU 多硬件平台自适应'
+metrics:
+  - name: '准确率'
+    metric: '95.0%'
+  - name: '处理速度'
+    metric: '300 ms/doc'
+  - name: '内存使用'
+    metric: '512MB'
+  - name: '吞吐量'
+    metric: '3 docs/sec'
+runtime:
+  memory: 536870912
+  cpu: 0.5
+  gpu: 0.1
+  npu: 0.1
+  storage: 1GB
+settings:
+  # 纠错配置
+  use_proper_corrector:
+    name: '启用拼音纠错'
+    description: '是否启用 ProperCorrector 进行拼音和错别字纠正（开启后精度更高但速度较慢，约 600ms/次）'
+    type: 'switch'
+    defaultVal: 'false'
+    required: false
+    checkedLabel: '已启用'
+    unCheckedLabel: '未启用'
+  proper_segment_length:
+    name: '纠错分段长度'
+    description: 'ProperCorrector 分段处理长度阈值（超过此值将分段处理）'
+    type: 'slider'
+    defaultVal: 100
+    min: 50
+    max: 300
+    step: 10
+  proper_max_text_length:
+    name: '纠错最大文本长度'
+    description: '超过此长度将自动禁用 ProperCorrector（以提升速度）'
+    type: 'slider'
+    defaultVal: 200
+    min: 100
+    max: 500
+    step: 50
+  # NER 配置
+  ner_schema:
+    name: 'NER 抽取目标'
+    description: '选择需要抽取的实体类型'
+    type: 'checkbox'
+    defaultVal: '疾病，症状'
+    required: true
+    options:
+      - label: '疾病'
+        value: '疾病'
+      - label: '症状'
+        value: '症状'
+      - label: '药品'
+        value: '药品'
+      - label: '手术'
+        value: '手术'
+      - label: '检查'
+        value: '检查'
+      - label: '检验'
+        value: '检验'
+  ner_inference_batch_size:
+    name: 'NER 推理批大小'
+    description: 'NER 模型推理时的批量大小（NPU 设备可调大）'
+    type: 'slider'
+    defaultVal: 64
+    min: 16
+    max: 128
+    step: 16
+  # 分句配置
+  max_sentences:
+    name: '分句块大小'
+    description: '每个处理 chunk 包含的最大句子数（影响处理粒度和内存占用）'
+    type: 'slider'
+    defaultVal: 80
+    min: 5
+    max: 160
+    step: 5
+  # 标准化配置
+  use_l1_cache:
+    name: '启用 L1 缓存'
+    description: '是否启用高频术语 L1 缓存（开启后高频词处理速度提升至<1ms）'
+    type: 'switch'
+    defaultVal: 'true'
+    required: false
+    checkedLabel: '已启用'
+    unCheckedLabel: '未启用'
+  normalizer_batch_size:
+    name: '标准化批大小'
+    description: '术语标准化时的向量编码批处理大小（NPU 设备可调大）'
+    type: 'slider'
+    defaultVal: 64
+    min: 8
+    max: 128
+    step: 8
+  normalizer_search_batch_size:
+    name: '标准化检索批大小'
+    description: 'Faiss 向量检索时的批处理大小'
+    type: 'slider'
+    defaultVal: 2000
+    min: 500
+    max: 5000
+    step: 500
+  normalizer_similarity_threshold:
+    name: '标准化相似度阈值'
+    description: '向量检索的最低相似度阈值（低于此值认为无匹配）'
+    type: 'slider'
+    defaultVal: 0.75
+    min: 0.5
+    max: 0.95
+    step: 0.05
+  # 实体过滤配置
+  max_entity_length:
+    name: '最大实体长度'
+    description: '超过此长度的实体将被过滤（避免输出过长实体）'
+    type: 'slider'
+    defaultVal: 50
+    min: 20
+    max: 200
+    step: 5
+  # 性能优化配置
+  use_pipeline_mode:
+    name: '启用流水线模式'
+    description: '启用后 NER 和标准化将并行处理（提升吞吐量）'
+    type: 'switch'
+    defaultVal: 'true'
+    required: false
+    checkedLabel: '已启用'
+    unCheckedLabel: '未启用'
