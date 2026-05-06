@@ -351,6 +351,9 @@ async def replace_file_tags(
     """
     service = DatasetManagementService(db)
 
+    from sqlalchemy.future import select
+    from app.db.models import DatasetFiles
+
     result = await db.execute(
         select(DatasetFiles).where(DatasetFiles.id == file_id)
     )
