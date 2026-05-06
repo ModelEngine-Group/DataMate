@@ -47,6 +47,21 @@ def _import_operators():
     from . import remove_duplicate_sentences
     from . import knowledge_relation_slice
     from . import pii_ner_detection
-
+        # ===== Video operators (PR1-PR5) =====
+    from . import _video_common
+    from . import video_format_convert
+    from . import video_sensitive_detect
+    from . import video_sensitive_crop
+    from . import video_mot_track
+    from . import video_subject_crop
+    from . import video_classify_qwenvl
+    from . import video_summary_qwenvl
+    from . import video_event_tag_qwenvl
+    from . import video_keyframe_extract
+    from . import video_deborder_crop
+    from . import video_audio_extract
+    from . import video_speech_asr
+    from . import video_subtitle_ocr
+    from . import video_text_ocr
 
 _import_operators()

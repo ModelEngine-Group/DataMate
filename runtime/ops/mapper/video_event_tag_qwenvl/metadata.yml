@@ -1,0 +1,16 @@
+name: '事件标注（QwenVL）'
+name_en: 'Video Event Tag (QwenVL)'
+description: '自适应分段取每段中点帧调用 QwenVL event_tag，输出 events.json。'
+description_en: 'Adaptive segmentation; call QwenVL event_tag on mid-frame of each segment; outputs events.json.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'VideoEventTagQwenVL'
+version: '1.0.0'
+types:
+  - 'annotation'
+modal: 'video'
+effect:
+  before: ''
+  after: ''
+inputs: 'video'
+outputs: 'text'

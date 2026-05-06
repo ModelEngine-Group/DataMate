@@ -1,0 +1,16 @@
+name: '关键帧提取'
+name_en: 'Video Keyframe Extract'
+description: '基于 ffmpeg scene detect 提取关键帧，并可补封面帧（t=0），输出 keyframes.json 与关键帧图片。'
+description_en: 'Extract keyframes via ffmpeg scene detect and optional cover frame (t=0); outputs keyframes.json and images.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'VideoKeyframeExtract'
+version: '1.0.0'
+types:
+  - 'annotation'
+modal: 'video'
+effect:
+  before: ''
+  after: ''
+inputs: 'video'
+outputs: 'image'
