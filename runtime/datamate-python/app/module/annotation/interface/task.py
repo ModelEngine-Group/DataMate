@@ -321,3 +321,81 @@ async def update_file_tags(
         message="标签更新成功",
         data=response_data
     )
+
+
+@router.put(
+    "/{file_id}/replace",
+    response_model=StandardResponse[UpdateFileTagsResponse],
+)
+async def replace_file_tags(
+    request: UpdateFileTagsRequest,
+    file_id: str = Path(..., description="文件ID"),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Replace File Tags (Full Replacement with Auto Format Conversion)
+
+    完全替换文件的标签列表。与部分更新不同，此方法会：
+    - 空列表会清空所有标签
+    - 新标签列表完全替换原有标签（不合并）
+
+    支持两种标签格式：
+    1. 简化格式:
+       [{"from_name": "label", "to_name": "image", "values": ["cat", "dog"]}]
+
+    2. 完整格式:
+       [{"id": "...", "from_name": "label", "to_name": "image", "type": "choices",
+         "value": {"choices": ["cat", "dog"]}}]
+
+    系统会自动根据数据集关联的模板将简化格式转换为完整格式。
+    """
+    service = DatasetManagementService(db)
+
+    result = await db.execute(
+        select(DatasetFiles).where(DatasetFiles.id == file_id)
+    )
+    file_record = result.scalar_one_or_none()
+
+    if not file_record:
+        raise HTTPException(status_code=404, detail=f"File not found: {file_id}")
+
+    dataset_id = str(file_record.dataset_id)
+
+    mapping_service = DatasetMappingService(db)
+    template_id = await mapping_service.get_template_id_by_dataset_id(dataset_id)
+
+    if template_id:
+        logger.info(f"Found template {template_id} for dataset {dataset_id}, will auto-convert tag format")
+    else:
+        logger.warning(f"No template found for dataset {dataset_id}, tags must be in full format")
+
+    success, error_msg, updated_at = await service.replace_file_tags(
+        file_id=file_id,
+        new_tags=request.tags,
+        template_id=template_id
+    )
+
+    if not success:
+        if "not found" in (error_msg or "").lower():
+            raise HTTPException(status_code=404, detail=error_msg)
+        raise HTTPException(status_code=500, detail=error_msg or "替换标签失败")
+
+    result = await db.execute(
+        select(DatasetFiles).where(DatasetFiles.id == file_id)
+    )
+    file_record = result.scalar_one_or_none()
+
+    if not file_record:
+        raise HTTPException(status_code=404, detail=f"File not found: {file_id}")
+
+    response_data = UpdateFileTagsResponse(
+        fileId=file_id,
+        tags=file_record.tags or [],
+        tagsUpdatedAt=updated_at or datetime.now()
+    )
+
+    return StandardResponse(
+        code="0",
+        message="标签替换成功",
+        data=response_data
+    )
