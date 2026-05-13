@@ -1,7 +1,7 @@
-name: '主体跟踪裁剪'
+name: '视频主体裁剪'
 name_en: 'Video Subject Crop'
-description: '根据 tracks.json 选择 Top1 主体轨迹并裁剪输出 subject.mp4，用于单主体验收链路。'
-description_en: 'Select the top subject track from tracks.json and crop to output subject.mp4.'
+description: '根据 tracks.json 选择主目标并裁剪输出 subject.mp4；未提供 tracks.json 时会先执行 MOT。'
+description_en: 'Crop the main tracked subject from tracks.json, or run MOT first if needed.'
 language: 'python'
 vendor: 'huawei'
 raw_id: 'VideoSubjectCrop'
@@ -14,3 +14,98 @@ effect:
   after: ''
 inputs: 'video'
 outputs: 'video'
+settings:
+  tracks_json:
+    name: '轨迹 JSON'
+    description: '可选，直接指定 tracks.json。留空时会先执行多目标跟踪。'
+    type: 'input'
+    defaultVal: ''
+    required: false
+  crop_size:
+    name: '输出边长'
+    description: '主体裁剪输出为正方形，该值为边长像素。'
+    type: 'slider'
+    defaultVal: 512
+    required: false
+    min: 128
+    max: 1024
+    step: 32
+  margin:
+    name: '边框扩展比例'
+    description: '对主体框向外扩展的比例。'
+    type: 'slider'
+    defaultVal: 0.15
+    required: false
+    min: 0.0
+    max: 0.5
+    step: 0.05
+  smooth_alpha:
+    name: '平滑系数'
+    description: 'EMA 平滑系数，越大越平滑。'
+    type: 'slider'
+    defaultVal: 0.8
+    required: false
+    min: 0.0
+    max: 0.95
+    step: 0.05
+  min_frames:
+    name: '最少跟踪帧数'
+    description: '低于该帧数的轨迹不会被选为主体。'
+    type: 'slider'
+    defaultVal: 10
+    required: false
+    min: 1
+    max: 100
+    step: 1
+  fill_missing:
+    name: '补齐缺失帧'
+    description: '目标短暂丢失时，是否用上一帧框补齐。'
+    type: 'switch'
+    defaultVal: 'false'
+    required: false
+    checkedLabel: '开启'
+    unCheckedLabel: '关闭'
+  model_root:
+    name: 'MOT 模型根目录'
+    description: '未提供 tracks.json 时，先做 MOT 用到的模型根目录。'
+    type: 'input'
+    defaultVal: ''
+    required: false
+  yolo_model:
+    name: 'MOT 权重路径'
+    description: '未提供 tracks.json 时，先做 MOT 用到的 YOLO 权重路径。'
+    type: 'input'
+    defaultVal: 'yolo/yolov8n.pt'
+    required: false
+  conf:
+    name: 'MOT 检测阈值'
+    description: '未提供 tracks.json 时，先做 MOT 用到的检测阈值。'
+    type: 'slider'
+    defaultVal: 0.3
+    required: false
+    min: 0.05
+    max: 0.9
+    step: 0.05
+  iou:
+    name: 'MOT IOU 阈值'
+    description: '未提供 tracks.json 时，先做 MOT 用到的 IOU 阈值。'
+    type: 'slider'
+    defaultVal: 0.5
+    required: false
+    min: 0.1
+    max: 0.9
+    step: 0.05
+  classes:
+    name: 'MOT 类别过滤'
+    description: '未提供 tracks.json 时可选填写，格式如 0,2,3。'
+    type: 'input'
+    defaultVal: ''
+    required: false
+  save_debug:
+    name: '输出 MOT 调试视频'
+    description: '未提供 tracks.json 时，是否保留 MOT 的 debug.mp4。'
+    type: 'switch'
+    defaultVal: 'true'
+    required: false
+    checkedLabel: '输出'
+    unCheckedLabel: '不输出'

@@ -1,7 +1,7 @@
-name: '视频敏感裁剪'
+name: '视频敏感片段裁剪'
 name_en: 'Video Sensitive Crop'
-description: '根据敏感片段 JSON 裁剪/清洗输出 cleaned.mp4，并生成 crop_result.json。'
-description_en: 'Crop/clean video based on sensitive segments JSON; outputs cleaned.mp4 and crop_result.json.'
+description: '根据 sensitive_segments.json 保留或删除敏感片段，输出清洗后视频。'
+description_en: 'Keep or remove sensitive segments based on sensitive_segments.json.'
 language: 'python'
 vendor: 'huawei'
 raw_id: 'VideoSensitiveCrop'
@@ -14,3 +14,78 @@ effect:
   after: ''
 inputs: 'video'
 outputs: 'video'
+settings:
+  segments_json:
+    name: '敏感片段 JSON'
+    description: '可选，直接指定敏感检测结果文件。留空时会先调用敏感检测。'
+    type: 'input'
+    defaultVal: ''
+    required: false
+  keep_mode:
+    name: '裁剪模式'
+    description: 'remove 表示删除敏感段，keep 表示只保留敏感段。'
+    type: 'select'
+    defaultVal: 'remove'
+    required: false
+    options:
+      - label: '删除敏感段'
+        value: 'remove'
+      - label: '仅保留敏感段'
+        value: 'keep'
+  out_name:
+    name: '输出文件名'
+    description: '默认 cleaned.mp4。'
+    type: 'input'
+    defaultVal: 'cleaned.mp4'
+    required: false
+  sample_fps:
+    name: '检测抽帧频率'
+    description: '未提供 segments_json 时，先做敏感检测用到的抽帧频率。'
+    type: 'slider'
+    defaultVal: 1.0
+    required: false
+    min: 0.5
+    max: 4.0
+    step: 0.5
+  threshold:
+    name: '敏感阈值'
+    description: '未提供 segments_json 时，敏感检测采用的阈值。'
+    type: 'slider'
+    defaultVal: 0.5
+    required: false
+    min: 0.1
+    max: 1.0
+    step: 0.05
+  merge_gap:
+    name: '合并间隔秒数'
+    description: '未提供 segments_json 时，邻近敏感命中的合并间隔。'
+    type: 'slider'
+    defaultVal: 1.5
+    required: false
+    min: 0.0
+    max: 10.0
+    step: 0.5
+  pad_sec:
+    name: '前后扩展秒数'
+    description: '未提供 segments_json 时，每段前后扩展时长。'
+    type: 'slider'
+    defaultVal: 0.5
+    required: false
+    min: 0.0
+    max: 5.0
+    step: 0.5
+  timeout_sec:
+    name: '检测超时秒数'
+    description: '未提供 segments_json 时，单帧调用 QwenVL 的超时时间。'
+    type: 'slider'
+    defaultVal: 180
+    required: false
+    min: 30
+    max: 600
+    step: 30
+  service_url:
+    name: 'Qwen 服务地址'
+    description: '未提供 segments_json 时使用的 Qwen 服务地址。'
+    type: 'input'
+    defaultVal: 'http://qwen-vl-service:18080'
+    required: false

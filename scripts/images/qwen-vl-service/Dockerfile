@@ -18,7 +18,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     APP_HOME=/workspace/datamate \
     QWEN_SERVER_HOST=0.0.0.0 \
     QWEN_SERVER_PORT=18080 \
-    QWEN_MODEL_DIR=/mnt/models/qwen/Qwen/Qwen2.5-VL-7B-Instruct
+    QWEN_MODEL_DIR=/models/VideoOps/qwen/Qwen2.5-VL-7B-Instruct
 
 WORKDIR ${APP_HOME}
 
