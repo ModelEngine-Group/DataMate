@@ -4,10 +4,15 @@ import json
 import math
 import cv2
 
+from datamate.core.base_op import Mapper
 from .._video_common.paths import make_run_dir, ensure_dir
 from .._video_common.log import get_logger
 from .._video_common.io_video import get_video_info
-from .._video_common.qwen_http_client import qwenvl_infer_by_image_path, save_frame_to_jpg
+from .._video_common.qwen_http_client import (
+    qwenvl_infer_by_image_path,
+    resolve_qwenvl_service_url,
+    save_frame_to_jpg,
+)
 
 
 def _sample_frame_indices(total_frames: int, fps: float, sample_fps: float, max_frames: int):
@@ -37,13 +42,13 @@ def _make_montage(frames, cell_w=384, cell_h=216, max_cols=4):
     return canvas
 
 
-class VideoSummaryQwenVL:
+class VideoSummaryQwenVL(Mapper):
     """
     抽多帧拼 montage → QwenVL HTTP 生成摘要（对齐服务端 task=summary）：
       返回: {summary}
 
     params:
-      - service_url: 默认 http://127.0.0.1:18080
+      - service_url: 默认 http://qwen-vl-service:18080
       - timeout_sec: 默认 180
       - sample_fps: 默认 1.0
       - max_frames: 默认 12
@@ -59,8 +64,12 @@ class VideoSummaryQwenVL:
       - artifacts/frames/*.jpg
     """
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.params = dict(kwargs)
+
     def execute(self, sample, params=None):
-        params = params or {}
+        params = params or self.params
         video_path = sample["filePath"]
         export_path = sample.get("export_path", "./outputs")
 
@@ -70,7 +79,7 @@ class VideoSummaryQwenVL:
         frames_dir = ensure_dir(os.path.join(art_dir, "frames"))
         logger = get_logger("VideoSummaryQwenVL", log_dir)
 
-        service_url = params.get("service_url", "http://127.0.0.1:18080")
+        service_url = resolve_qwenvl_service_url(params.get("service_url"))
         timeout_sec = int(params.get("timeout_sec", 180))
 
         sample_fps = float(params.get("sample_fps", 1.0))
@@ -141,5 +150,7 @@ class VideoSummaryQwenVL:
                 indent=2,
             )
 
+        result = {"out_dir": out_dir, "summary_json": out_json, "montage_jpg": montage_path}
+        sample.update(result)
         logger.info(f"Done. summary_json={out_json}")
-        return {"out_dir": out_dir, "summary_json": out_json, "montage_jpg": montage_path}
+        return sample

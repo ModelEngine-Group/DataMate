@@ -4,16 +4,16 @@ import json
 import cv2
 import shutil
 
-from ultralytics import YOLO
-
+from datamate.core.base_op import Mapper
 from .._video_common.paths import make_run_dir, ensure_dir
 from .._video_common.log import get_logger
 from .._video_common.io_video import get_video_info
+from .._video_common.params import parse_bool
 from .._video_common.schema import init_tracks_schema
 from .._video_common.model_paths import resolve_model_path
 
 
-class VideoMotTrack:
+class VideoMotTrack(Mapper):
     """多目标跟踪（YOLO + ByteTrack）
 
     权重策略（模型仓）：
@@ -32,8 +32,12 @@ class VideoMotTrack:
       - debug.mp4 (optional)
     """
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.params = dict(kwargs)
+
     def execute(self, sample: dict, params: dict = None):
-        params = params or {}
+        params = params or self.params
         video_path = sample["filePath"]
         export_path = sample.get("export_path", "./outputs")
 
@@ -52,8 +56,8 @@ class VideoMotTrack:
         conf = float(params.get("conf", 0.3))
         iou = float(params.get("iou", 0.5))
         classes = params.get("classes", None)  # "0,2,3" or None
-        tracker_cfg = params.get("tracker_cfg", os.path.join(os.path.dirname(__file__), "configs/bytetrack.yaml"))
-        save_debug = bool(params.get("save_debug", True))
+        tracker_cfg = params.get("tracker_cfg") or os.path.join(os.path.dirname(__file__), "configs/bytetrack.yaml")
+        save_debug = parse_bool(params.get("save_debug", True), default=True)
 
         cls_list = None
         if classes:
@@ -71,6 +75,11 @@ class VideoMotTrack:
         logger.info(f"Start tracking. video={video_path}, model={yolo_model}, conf={conf}, iou={iou}, classes={classes}")
         if not os.path.exists(yolo_model):
             raise RuntimeError(f"YOLO weight not found: {yolo_model}. Please download to model repo path.")
+
+        try:
+            from ultralytics import YOLO
+        except Exception as e:
+            raise RuntimeError("ultralytics is not installed. Please rebuild the runtime image with runtime/ops dependencies.") from e
 
         model = YOLO(yolo_model)
         results_iter = model.track(
@@ -121,4 +130,5 @@ class VideoMotTrack:
         out = {"out_dir": out_dir, "tracks_json": tracks_path}
         if save_debug:
             out["debug_mp4"] = debug_path
-        return out
+        sample.update(out)
+        return sample

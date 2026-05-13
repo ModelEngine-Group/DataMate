@@ -1,7 +1,7 @@
-name: '事件标注（QwenVL）'
+name: '视频事件标注（QwenVL）'
 name_en: 'Video Event Tag (QwenVL)'
-description: '自适应分段取每段中点帧调用 QwenVL event_tag，输出 events.json。'
-description_en: 'Adaptive segmentation; call QwenVL event_tag on mid-frame of each segment; outputs events.json.'
+description: '按时间分段抽取中间帧，调用 QwenVL 生成事件标注，输出 events.json。'
+description_en: 'Split video into segments, sample middle frames, call QwenVL event tagging, and output events.json.'
 language: 'python'
 vendor: 'huawei'
 raw_id: 'VideoEventTagQwenVL'
@@ -14,3 +14,81 @@ effect:
   after: ''
 inputs: 'video'
 outputs: 'text'
+settings:
+  adaptive_segment:
+    name: '自适应分段'
+    description: '打开后按视频时长自适应调整分段长度。'
+    type: 'switch'
+    defaultVal: 'true'
+    required: false
+    checkedLabel: '开启'
+    unCheckedLabel: '关闭'
+  target_segments:
+    name: '目标分段数'
+    description: '自适应分段模式下的目标分段数量。'
+    type: 'slider'
+    defaultVal: 12
+    required: false
+    min: 4
+    max: 30
+    step: 1
+  segment_seconds:
+    name: '固定分段时长'
+    description: '关闭自适应分段后，每段使用的秒数。'
+    type: 'slider'
+    defaultVal: 5.0
+    required: false
+    min: 2.0
+    max: 20.0
+    step: 1.0
+  min_segment_seconds:
+    name: '最小时长'
+    description: '自适应分段时允许的最小分段秒数。'
+    type: 'slider'
+    defaultVal: 2.0
+    required: false
+    min: 1.0
+    max: 10.0
+    step: 1.0
+  max_segment_seconds:
+    name: '最大时长'
+    description: '自适应分段时允许的最大分段秒数。'
+    type: 'slider'
+    defaultVal: 60.0
+    required: false
+    min: 10.0
+    max: 120.0
+    step: 10.0
+  max_segments:
+    name: '最大分段数'
+    description: '限制最多处理多少段。'
+    type: 'slider'
+    defaultVal: 60
+    required: false
+    min: 10
+    max: 120
+    step: 5
+  max_new_tokens:
+    name: '最大生成长度'
+    description: 'QwenVL 单次返回的最大 token 数。'
+    type: 'slider'
+    defaultVal: 32
+    required: false
+    min: 8
+    max: 128
+    step: 8
+  timeout_sec:
+    name: '超时秒数'
+    description: '单次调用 QwenVL 的超时时间。'
+    type: 'slider'
+    defaultVal: 180
+    required: false
+    min: 30
+    max: 600
+    step: 30
+  service_url:
+    name: 'Qwen 服务地址'
+    description: '留空时读取环境变量，否则使用这里填写的地址。'
+    type: 'input'
+    defaultVal: 'http://qwen-vl-service:18080'
+    required: false
