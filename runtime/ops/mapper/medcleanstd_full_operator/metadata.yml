@@ -1,0 +1,119 @@
+name: 'MedCleanStd 全流程算子'
+description: '将文档解析、文本纠错、医学实体识别和术语标准化整合到一个算子中，并将最终结果落盘为 JSON 文件。'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'MedCleanStdFullMapper'
+version: '1.0.0'
+modal: 'text'
+inputs: 'text'
+outputs: 'text'
+types:
+  - 'cleaning'
+  - 'annotation'
+release:
+  - 'MedCleanStd 全流程一体化算子。'
+runtime:
+  memory: 2147483648
+  cpu: 1.0
+  gpu: 0.1
+  npu: 0.2
+settings:
+  parse_overwrite_text:
+    name: '解析结果回写 text'
+    description: '启用后将解析得到的文本回写到 sample.text，供后续阶段直接复用。'
+    type: 'switch'
+    defaultVal: 'true'
+    required: false
+    checkedLabel: '是'
+    unCheckedLabel: '否'
+  use_proper_corrector:
+    name: '启用拼音纠错'
+    description: '在混淆词纠错之后，继续启用 ProperCorrector 做拼音和错别字纠错。'
+    type: 'switch'
+    defaultVal: 'false'
+    required: false
+    checkedLabel: '是'
+    unCheckedLabel: '否'
+  segment_length:
+    name: '纠错分段长度'
+    description: '当启用 ProperCorrector 时，较长文本会按该长度分段处理。'
+    type: 'slider'
+    defaultVal: 100
+    min: 50
+    max: 300
+    step: 10
+  max_text_length:
+    name: '纠错最大文本长度'
+    description: '当文本长度超过该阈值时，自动跳过 ProperCorrector 以提升速度。'
+    type: 'slider'
+    defaultVal: 200
+    min: 100
+    max: 600
+    step: 20
+  correct_overwrite_text:
+    name: '纠错结果回写 text'
+    description: '启用后将纠错后的文本回写到 sample.text，供 NER 直接使用。'
+    type: 'switch'
+    defaultVal: 'true'
+    required: false
+    checkedLabel: '是'
+    unCheckedLabel: '否'
+  ner_schema:
+    name: 'NER 抽取目标'
+    description: '选择需要抽取的医学实体类型。'
+    type: 'checkbox'
+    defaultVal: '疾病,症状'
+    required: true
+    options:
+      - label: '疾病'
+        value: '疾病'
+      - label: '症状'
+        value: '症状'
+      - label: '药品'
+        value: '药品'
+      - label: '手术'
+        value: '手术'
+      - label: '检查'
+        value: '检查'
+      - label: '检验'
+        value: '检验'
+  inference_batch_size:
+    name: 'NER 推理批大小'
+    description: 'SiameseUIE 实体识别时使用的批处理大小。'
+    type: 'slider'
+    defaultVal: 64
+    min: 8
+    max: 128
+    step: 8
+  max_sentences:
+    name: 'NER 分句块大小'
+    description: '每个 NER 文本块中允许包含的最大句子数。'
+    type: 'slider'
+    defaultVal: 80
+    min: 10
+    max: 160
+    step: 10
+  use_l1_cache:
+    name: '启用 L1 缓存'
+    description: '在向量标准化前优先使用高频术语精确匹配缓存。'
+    type: 'switch'
+    defaultVal: 'true'
+    required: false
+    checkedLabel: '是'
+    unCheckedLabel: '否'
+  batch_size:
+    name: '标准化批大小'
+    description: '术语向量编码与标准化时使用的批处理大小。'
+    type: 'slider'
+    defaultVal: 24
+    min: 4
+    max: 128
+    step: 4
+  max_entity_length:
+    name: '最大实体长度'
+    description: '超过该长度的实体将不进入最终标准化输出。'
+    type: 'slider'
+    defaultVal: 50
+    min: 10
+    max: 200
+    step: 5
