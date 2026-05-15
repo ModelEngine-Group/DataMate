@@ -63,5 +63,6 @@ def _import_operators():
     from . import video_speech_asr
     from . import video_subtitle_ocr
     from . import video_text_ocr
+    from . import medcleanstd_full_operator
 
 _import_operators()
