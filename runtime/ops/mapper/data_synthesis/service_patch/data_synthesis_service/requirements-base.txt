@@ -1,0 +1,7 @@
+# HTTP service base dependencies for smoke tests without model inference.
+# Versions are aligned with 910b-jss huizhi:test-v018.
+fastapi==0.123.10
+uvicorn==0.42.0
+pydantic==2.12.5
+Jinja2==3.1.6
+requests==2.33.1

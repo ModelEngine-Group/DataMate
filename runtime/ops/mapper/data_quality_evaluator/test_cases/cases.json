@@ -1,0 +1,25 @@
+[
+  {
+    "id": "mixed_quality_medical_records",
+    "operator": "data_quality_evaluator",
+    "dataset_basis": [
+      "cMedQA2",
+      "PubMedQA"
+    ],
+    "input_file": "example_input/public_eval_cases.json",
+    "source_urls": [
+      "https://github.com/zhangsheng93/cMedQA2",
+      "https://huggingface.co/datasets/fzkuji/cMedQA2",
+      "https://github.com/pubmedqa/pubmedqa",
+      "https://huggingface.co/datasets/qiaojin/PubMedQA",
+      "https://arxiv.org/abs/1909.06146"
+    ],
+    "purpose": "验证评估算子对好坏样本的区分能力，以及 QA/CoT/Preference 三类结构的兼容性",
+    "checks": [
+      "record_count 与输入记录数一致",
+      "results 中每条记录含 5 个维度分数",
+      "明显错误答案至少在准确性或安全性上判 0",
+      "summary.task_type_counts 正确"
+    ]
+  }
+]

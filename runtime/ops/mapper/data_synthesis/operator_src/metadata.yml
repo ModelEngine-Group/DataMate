@@ -1,0 +1,48 @@
+name: 'data_synthesis'
+description: 'Call the standalone data_synthesis HTTP service and export one JSON result file.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'DataSynthesisMapper'
+version: '1.0.0'
+modal: 'text'
+inputs: 'text'
+outputs: 'text'
+types:
+  - 'annotation'
+release:
+  - 'Initial standalone-service wrapper for acceptance platform.'
+metrics:
+  - name: 'Output'
+    metric: '1 JSON file per input text file'
+runtime:
+  memory: 1073741824
+  cpu: 0.5
+  gpu: 0
+  npu: 0
+settings:
+  serviceUrl:
+    name: 'Service URL'
+    description: 'HTTP endpoint of the standalone data_synthesis service.'
+    type: 'input'
+    defaultVal: 'http://data-synthesis-service:18080'
+    required: true
+  taskTypes:
+    name: 'Task Types'
+    description: 'Comma-separated task types. Supported values: QA, CoT, Preference.'
+    type: 'input'
+    defaultVal: 'QA,CoT,Preference'
+    required: true
+  includeMetrics:
+    name: 'Include Metrics'
+    description: 'Whether to include evaluator and requirement metrics in the JSON response.'
+    type: 'switch'
+    defaultVal: 'true'
+    required: false
+    checkedLabel: 'true'
+    unCheckedLabel: 'false'
+  timeoutSec:
+    name: 'Timeout'
+    description: 'HTTP request timeout in seconds.'
+    type: 'input'
+    defaultVal: '300'
+    required: true
