@@ -1,0 +1,43 @@
+# data\_synthesis\_service 服务补丁
+
+本目录归档独立 HTTP 服务中与数据质量评估相关的代码。
+
+## 接口
+
+-   `GET /health`
+-   `POST /synthesize-file`
+-   `POST /evaluate-file`
+
+## 本地启动示例
+
+```bash
+python -m uvicorn data_synthesis_service.app:app --host 0.0.0.0 --port 18080
+```
+
+## 依赖
+
+-   `requirements.txt` 是独立服务生产依赖。
+-   基础镜像为 `quay.io/ascend/vllm-ascend:v0.18.0rc1`，对应 Python `3.11.14`、CANN `8.5.1`。
+-   关键版本包括 `vllm==0.18.0+empty`、`vllm_ascend==0.18.0rc1`、`torch==2.9.0+cpu`、`torch_npu==2.9.0.post1+gitee7ba04`。
+-   `requirements-base.txt` 只用于无模型接口冒烟测试。
+-   DataMate 算子本体依赖在 `operator_src/requirements.txt`。
+
+正式 NPU 构建示例：
+
+```bash
+docker build -t data-synthesis-service:latest \
+  -f data_synthesis_service/Dockerfile .
+```
+
+不传构建参数时默认使用基础镜像并安装 `requirements.txt`。无模型接口冒烟测试可显式增加 `--build-arg REQUIREMENTS_FILE=requirements-base.txt`。
+
+Dockerfile 使用 `pip install --no-deps`。这是为了保留 `quay.io/ascend/vllm-ascend:v0.18.0rc1` 中已经验证的 vLLM-Ascend 依赖闭包，避免 pip 重新解析传递依赖导致版本漂移。
+
+## 模型路径
+
+启动服务前通过环境变量指定容器内模型路径：
+
+-   `DATA_SYNTHESIS_MODEL_PATH`
+-   `DATA_EVALUATOR_MODEL_PATH`
+
+默认模型挂载点为容器内 `/model`。

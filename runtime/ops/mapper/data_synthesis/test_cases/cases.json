@@ -1,0 +1,42 @@
+[
+  {
+    "id": "cn_medical_consultation_cmedqa2",
+    "operator": "data_synthesis",
+    "dataset": "cMedQA2",
+    "input_file": "example_input/cmedqa2_style_case_cn.txt",
+    "source_urls": [
+      "https://github.com/zhangsheng93/cMedQA2",
+      "https://huggingface.co/datasets/fzkuji/cMedQA2"
+    ],
+    "purpose": "验证中文医疗咨询文本生成 QA、CoT、Preference 三类结果",
+    "run_parameters": {
+      "taskTypes": "QA,CoT,Preference"
+    },
+    "checks": [
+      "results.QA 非空",
+      "results.CoT 非空",
+      "results.Preference 非空",
+      "每类结果字段完整"
+    ]
+  },
+  {
+    "id": "biomedical_research_pubmedqa",
+    "operator": "data_synthesis",
+    "dataset": "PubMedQA",
+    "input_file": "example_input/pubmedqa_style_case_en.txt",
+    "source_urls": [
+      "https://github.com/pubmedqa/pubmedqa",
+      "https://huggingface.co/datasets/qiaojin/PubMedQA",
+      "https://arxiv.org/abs/1909.06146"
+    ],
+    "purpose": "验证科研医学文本也能生成结构化 QA 与 CoT",
+    "run_parameters": {
+      "taskTypes": "QA,CoT,Preference"
+    },
+    "checks": [
+      "输出 JSON 非空",
+      "QA 与 CoT 结果可读",
+      "Preference 不为空"
+    ]
+  }
+]

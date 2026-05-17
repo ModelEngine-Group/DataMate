@@ -1,0 +1,60 @@
+name: 'data_quality_evaluator'
+description: 'Call the standalone data_synthesis HTTP service to evaluate generated data quality and export one JSON result file.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'DataQualityEvaluatorMapper'
+version: '1.0.0'
+modal: 'text'
+inputs: 'text'
+outputs: 'text'
+types:
+  - 'annotation'
+release:
+  - 'Initial standalone-service wrapper for data quality evaluation.'
+metrics:
+  - name: 'Output'
+    metric: '1 JSON evaluation file per input text file'
+runtime:
+  memory: 1073741824
+  cpu: 0.5
+  gpu: 0
+  npu: 0
+settings:
+  serviceUrl:
+    name: 'Service URL'
+    description: 'HTTP endpoint of the standalone data_synthesis service.'
+    type: 'input'
+    defaultVal: 'http://data-synthesis-service:18080'
+    required: true
+  targetDimensions:
+    name: 'Target Dimensions'
+    description: 'Comma-separated evaluation dimensions. Supported values: accuracy,relevance,safety,diversity,completeness.'
+    type: 'input'
+    defaultVal: 'accuracy,relevance,safety,diversity,completeness'
+    required: true
+  evaluatorModelPath:
+    name: 'Evaluator Model Path'
+    description: 'Dedicated model path for evaluation. Default uses Qwen2.5-7B-Instruct and does not affect data_synthesis generation model.'
+    type: 'input'
+    defaultVal: '/model/Qwen/Qwen2.5-7B-Instruct'
+    required: true
+  evaluatorBackend:
+    name: 'Evaluator Backend'
+    description: 'Evaluation backend. Use vllm for Qwen2.5-7B-Instruct on the standalone NPU service; rule is only for lightweight local diagnostics.'
+    type: 'input'
+    defaultVal: 'vllm'
+    required: true
+  includeSummary:
+    name: 'Include Summary'
+    description: 'Whether to include aggregate evaluation summary in the JSON response.'
+    type: 'switch'
+    defaultVal: 'true'
+    required: false
+    checkedLabel: 'true'
+    unCheckedLabel: 'false'
+  timeoutSec:
+    name: 'Timeout'
+    description: 'HTTP request timeout in seconds.'
+    type: 'input'
+    defaultVal: '600'
+    required: true
