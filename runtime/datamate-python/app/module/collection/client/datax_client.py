@@ -1,4 +1,5 @@
 import json
+import re
 import threading
 import subprocess
 from datetime import datetime
@@ -11,6 +12,56 @@ from app.module.collection.schema.collection import CollectionConfig, SyncMode
 from app.module.shared.schema import TaskStatus
 
 logger = get_logger(__name__)
+
+# Sensitive fields that need to be masked in logs
+SENSITIVE_FIELDS = [
+    "secretKey",
+    "accessKey", 
+    "password",
+    "passwd",
+    "pwd",
+    "secret",
+    "token",
+    "apiKey",
+    "api_key",
+]
+
+MASK_PATTERN = "**********"
+
+def mask_sensitive_info(text: str) -> str:
+    """
+    Mask sensitive information in text by replacing values with **********
+    
+    Args:
+        text: Original text that may contain sensitive information
+        
+    Returns:
+        Text with sensitive values masked
+    """
+    masked_text = text
+    
+    for field in SENSITIVE_FIELDS:
+        # Match patterns like: "secretKey": "actual_value" or secretKey=actual_value
+        patterns = [
+            # JSON format: "field": "value"
+            rf'"{field}"\s*:\s*"[^"]*"',
+            rf'"{field}"\s*:\s*"[^"]*"',
+            # Key-value format: field=value
+            rf'{field}\s*=\s*[^\s,\]]+',
+            # Quoted format: 'field': 'value'
+            rf"'{field}'\s*:\s*'[^']*'",
+        ]
+        
+        for pattern in patterns:
+            # Replace the value part while keeping the field name
+            if '"' in pattern:
+                masked_text = re.sub(pattern, f'"{field}": "{MASK_PATTERN}"', masked_text)
+            elif "'" in pattern:
+                masked_text = re.sub(pattern, f"'{field}': '{MASK_PATTERN}'", masked_text)
+            else:
+                masked_text = re.sub(pattern, f'{field}={MASK_PATTERN}', masked_text)
+    
+    return masked_text
 
 class DataxClient:
     def __init__(self, task: CollectionTask, execution: TaskExecution, template: CollectionTemplate):
@@ -229,10 +280,12 @@ class DataxClient:
 
     @staticmethod
     def read_stream(stream, log_f):
-        """读取输出流"""
+        """读取输出流并屏蔽敏感信息"""
         for line in stream:
             line = line.rstrip('\n')
             if line:
+                # Mask sensitive information before writing to log
+                masked_line = mask_sensitive_info(line)
                 # 写入日志文件
-                log_f.write(f"{line}\n")
+                log_f.write(f"{masked_line}\n")
                 log_f.flush()
