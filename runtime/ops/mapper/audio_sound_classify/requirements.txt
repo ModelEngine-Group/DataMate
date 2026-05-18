@@ -1,0 +1,8 @@
+torch
+torchlibrosa
+timm
+librosa
+numpy
+soundfile
+scipy
+loguru

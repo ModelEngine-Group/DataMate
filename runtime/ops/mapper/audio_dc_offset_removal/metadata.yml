@@ -1,0 +1,26 @@
+name: 'audioUtils-去直流分量'
+name_en: 'audioUtils-DC Offset Removal'
+description: '去除音频直流分量（减均值），处理音频并由 DataMate 统一导出结果。'
+description_en: 'Remove DC offset (subtract mean). Process audio and let DataMate export the result.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'AudioDcOffsetRemoval'
+version: '1.0.0'
+types:
+  - 'cleaning'
+modal: 'audio'
+inputs: 'audio'
+outputs: 'audio'
+settings: {}
+runtime:
+  memory: 104857600
+  cpu: 0.1
+  gpu: 0
+  npu: 0
+  storage: 10MB
+
+metrics:
+  - name: '处理耗时'
+    metric: '依输入音频长度与运行环境而定'
+release:
+  - '首次发布'

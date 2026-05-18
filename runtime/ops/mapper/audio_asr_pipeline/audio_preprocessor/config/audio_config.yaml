@@ -1,0 +1,8 @@
+audio_config:
+  # audio_config.yaml - 音频格式化配置
+  output_format: "wav"
+  channels: 1
+  sample_rate: 16000
+  sample_width: 2
+  encoding: "pcm_s16le"
+  input_format: ["mp3", "wav", "aac", "m4a", "flac"]  

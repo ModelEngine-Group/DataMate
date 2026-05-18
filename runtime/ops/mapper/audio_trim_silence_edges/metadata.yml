@@ -1,0 +1,58 @@
+name: 'audioUtils-首尾静音裁剪'
+name_en: 'audioUtils-Trim Silence Edges'
+description: '从首尾向内裁剪静音，保留可选 padding。处理音频并由 DataMate 统一导出结果。'
+description_en: 'Trim leading/trailing silence with optional padding. Process audio and let DataMate export the result.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'AudioTrimSilenceEdges'
+version: '1.0.0'
+types:
+  - 'cleaning'
+modal: 'audio'
+inputs: 'audio'
+outputs: 'audio'
+settings:
+  frameMs:
+    name: '帧长(ms)'
+    type: 'inputNumber'
+    description: '分析帧长。'
+    defaultVal: 30
+    min: 5
+    max: 500
+    step: 1
+  hopMs:
+    name: '帧移(ms)'
+    type: 'inputNumber'
+    description: '帧移。'
+    defaultVal: 10
+    min: 1
+    max: 500
+    step: 1
+  threshDb:
+    name: '能量阈值(dB)'
+    type: 'slider'
+    description: '相对全段峰值的帧能量阈值（dB）。'
+    defaultVal: -50
+    min: -80
+    max: 0
+    step: 1
+  padMs:
+    name: '保留静音(ms)'
+    type: 'inputNumber'
+    description: '裁剪后两端各保留的 padding（毫秒）。'
+    defaultVal: 50
+    min: 0
+    max: 5000
+    step: 1
+runtime:
+  memory: 104857600
+  cpu: 0.15
+  gpu: 0
+  npu: 0
+  storage: 10MB
+
+metrics:
+  - name: '处理耗时'
+    metric: '依输入音频长度与运行环境而定'
+release:
+  - '首次发布'

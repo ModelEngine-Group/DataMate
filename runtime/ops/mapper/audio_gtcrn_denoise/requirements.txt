@@ -1,0 +1,4 @@
+onnxruntime
+soundfile
+numpy
+torch

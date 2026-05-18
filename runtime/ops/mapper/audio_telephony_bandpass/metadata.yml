@@ -1,0 +1,50 @@
+name: 'audioUtils-电话带通'
+name_en: 'audioUtils-Telephony Bandpass'
+description: '模拟窄带话机频带（默认 300–3400Hz）。需要 scipy.signal；处理音频并由 DataMate 统一导出结果。'
+description_en: 'Simulate telephony bandpass (default 300–3400Hz). Requires scipy.signal; process audio and let DataMate export the result.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'AudioTelephonyBandpass'
+version: '1.0.0'
+types:
+  - 'cleaning'
+modal: 'audio'
+inputs: 'audio'
+outputs: 'audio'
+settings:
+  lowHz:
+    name: '下截止(Hz)'
+    type: 'inputNumber'
+    description: '带通下截止频率。'
+    defaultVal: 300
+    min: 1
+    max: 20000
+    step: 1
+  highHz:
+    name: '上截止(Hz)'
+    type: 'inputNumber'
+    description: '带通上截止频率。'
+    defaultVal: 3400
+    min: 1
+    max: 20000
+    step: 1
+  order:
+    name: '阶数'
+    type: 'inputNumber'
+    description: 'Butterworth 阶数（建议 2~6）。'
+    defaultVal: 4
+    min: 1
+    max: 12
+    step: 1
+runtime:
+  memory: 104857600
+  cpu: 0.2
+  gpu: 0
+  npu: 0
+  storage: 10MB
+
+metrics:
+  - name: '处理耗时'
+    metric: '依输入音频长度与运行环境而定'
+release:
+  - '首次发布'

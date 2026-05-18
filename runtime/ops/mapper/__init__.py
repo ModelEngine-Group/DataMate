@@ -47,7 +47,30 @@ def _import_operators():
     from . import remove_duplicate_sentences
     from . import knowledge_relation_slice
     from . import pii_ner_detection
-        # ===== Video operators (PR1-PR5) =====
+
+    # ===== Audio operators =====
+    from . import audio_anomaly_filter
+    from . import audio_asr_pipeline
+    from . import audio_asr_transcribe
+    from . import audio_dc_offset_removal
+    from . import audio_emotion_recognize
+    from . import audio_fast_lang_id
+    from . import audio_fast_lang_id_text
+    from . import audio_format_convert
+    from . import audio_gtcrn_denoise
+    from . import audio_hum_notch
+    from . import audio_noise_gate
+    from . import audio_pre_emphasis
+    from . import audio_quantize_encode
+    from . import audio_rms_loudness_normalize
+    from . import audio_simple_agc
+    from . import audio_soft_peak_limiter
+    from . import audio_sound_classify
+    from . import audio_telephony_bandpass
+    from . import audio_text_summarize
+    from . import audio_trim_silence_edges
+
+    # ===== Video operators (PR1-PR5) =====
     from . import _video_common
     from . import video_format_convert
     from . import video_sensitive_detect

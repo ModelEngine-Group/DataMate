@@ -1,0 +1,138 @@
+name: 'audioOps-音频场景分类'
+name_en: 'audioOps-Audio Sound Classification'
+description: '调用 AST/PANNs AudioSet 预训练模型识别当前音频的声音类别；标注写入 ext_params.audio_sound_classify，并保持音频作为输出。'
+description_en: 'Classify one audio sample with an AST/PANNs AudioSet model; write ext_params.audio_sound_classify and keep the audio as output.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'AudioSoundClassify'
+version: '1.0.0'
+types:
+  - 'annotation'
+modal: 'audio'
+inputs: 'audio'
+outputs: 'audio'
+settings:
+  backend:
+    name: '分类后端'
+    description: 'ast 为当前标准实现；panns 为旧版兼容实现。'
+    type: 'select'
+    defaultVal: 'ast'
+    required: true
+    options:
+      - label: 'AST'
+        value: 'ast'
+      - label: 'PANNs'
+        value: 'panns'
+  checkpoint:
+    name: '兼容模型路径'
+    description: '兼容旧参数。backend=ast 时建议使用 astCheckpoint；backend=panns 时建议使用 pannsCheckpoint。'
+    type: 'input'
+    defaultVal: '/models/AudioOperations/recog/audioset_10_10_0.4593.pth'
+    required: false
+  astCheckpoint:
+    name: 'AST 模型路径'
+    description: 'AST AudioSet checkpoint 路径。'
+    type: 'input'
+    defaultVal: '/models/AudioOperations/recog/audioset_10_10_0.4593.pth'
+    required: false
+  pannsCheckpoint:
+    name: 'PANNs 模型路径'
+    description: 'PANNs Cnn14_16k checkpoint 路径。'
+    type: 'input'
+    defaultVal: '/models/AudioOperations/panns/Cnn14_16k_mAP=0.438.pth'
+    required: false
+  macroMap:
+    name: 'PANNs 大类映射表'
+    description: 'PANNs 后端使用的 AudioSet label 到业务大类 TSV；留空使用算子内置映射。'
+    type: 'input'
+    defaultVal: ''
+    required: false
+  astMacroMap:
+    name: 'AST 大类映射表'
+    description: 'AST 后端使用的粗类映射 JSON；留空使用算子内置映射。'
+    type: 'input'
+    defaultVal: ''
+    required: false
+  labelsCsv:
+    name: 'AudioSet 标签表'
+    description: 'AST 后端使用的 class_labels_indices.csv；留空使用算子内置标签表。'
+    type: 'input'
+    defaultVal: ''
+    required: false
+  device:
+    name: '设备'
+    description: '推理设备。'
+    type: 'select'
+    defaultVal: 'auto'
+    required: true
+    options:
+      - label: 'auto'
+        value: 'auto'
+      - label: 'cpu'
+        value: 'cpu'
+      - label: 'npu'
+        value: 'npu'
+      - label: 'cuda'
+        value: 'cuda'
+  topK:
+    name: '细类 TopK'
+    type: 'inputNumber'
+    description: '输出 AudioSet 细类数量。'
+    defaultVal: 10
+    min: 1
+    max: 50
+    step: 1
+  humanSpeechThreshold:
+    name: '人声优先阈值'
+    type: 'slider'
+    description: 'top-k 聚合后 HumanSpeech 分数超过该阈值时优先判为人声。'
+    defaultVal: 0.2
+    min: 0
+    max: 1
+    step: 0.01
+  segmentSeconds:
+    name: 'AST 分段秒数'
+    type: 'inputNumber'
+    description: 'AST 后端滑窗分段长度。'
+    defaultVal: 10.24
+    min: 1
+    max: 120
+    step: 0.01
+  hopSeconds:
+    name: 'AST 步长秒数'
+    type: 'inputNumber'
+    description: 'AST 后端滑窗步长。'
+    defaultVal: 5.12
+    min: 0.1
+    max: 120
+    step: 0.01
+  macroAgg:
+    name: 'AST 大类聚合'
+    description: 'AST 后端将细类聚合成大类的策略。'
+    type: 'select'
+    defaultVal: 'max'
+    required: true
+    options:
+      - label: 'max'
+        value: 'max'
+      - label: 'sum'
+        value: 'sum'
+  keepAudio:
+    name: '中间节点保留音频'
+    type: 'switch'
+    description: '作为中间节点时是否保留音频字节给下游算子。'
+    defaultVal: 'true'
+    required: false
+    checkedLabel: '保留'
+    unCheckedLabel: '不保留'
+runtime:
+  memory: 4294967296
+  cpu: 1.0
+  gpu: 0
+  npu: 0
+  storage: 20MB
+metrics:
+  - name: '分类类别'
+    metric: 'AST 默认 12 个业务大类；PANNs 兼容模式 15 个业务大类；均支持 AudioSet 527 细类 top-k'
+release:
+  - '首次发布，支持 AST 标准分类与 PANNs 兼容分类'

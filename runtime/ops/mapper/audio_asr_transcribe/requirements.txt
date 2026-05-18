@@ -1,0 +1,6 @@
+torch
+torchaudio
+numpy
+pyyaml
+sentencepiece
+loguru
