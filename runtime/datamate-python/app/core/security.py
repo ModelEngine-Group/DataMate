@@ -69,14 +69,18 @@ def preserve_sensitive_values(
             original_nested = original_config.get(key, {})
             preserved_config[key] = preserve_sensitive_values(new_value, original_nested)
         elif isinstance(new_value, list):
-            # Process list items (preserve original if matching structure)
             original_list = original_config.get(key, [])
-            preserved_config[key] = [
-                preserve_sensitive_values(new_item, orig_item) 
-                if isinstance(new_item, dict) and isinstance(orig_item, dict)
-                else new_item
-                for new_item, orig_item in zip(new_value, original_list)
-            ] if len(new_value) == len(original_list) else new_value
+            preserved_list = []
+            for i, new_item in enumerate(new_value):
+                if i < len(original_list):
+                    orig_item = original_list[i]
+                    if isinstance(new_item, dict) and isinstance(orig_item, dict):
+                        preserved_list.append(preserve_sensitive_values(new_item, orig_item))
+                    else:
+                        preserved_list.append(new_item)
+                else:
+                    preserved_list.append(new_item)
+            preserved_config[key] = preserved_list
         else:
             # Keep non-sensitive/non-masked values
             preserved_config[key] = new_value
@@ -140,17 +144,16 @@ def mask_sensitive_info(text: str) -> str:
     for field in SENSITIVE_FIELDS:
         patterns = [
             rf'"{field}"\s*:\s*"[^"]*"',
-            rf'"{field}"\s*:\s*"[^"]*"',
             rf'{field}\s*=\s*[^\s,\]]+',
             rf"'{field}'\s*:\s*'[^']*'",
         ]
         
         for pattern in patterns:
             if '"' in pattern:
-                masked_text = re.sub(pattern, f'"{field}": "{MASK_PATTERN}"', masked_text)
+                masked_text = re.sub(pattern, f'"{field}": "{MASK_PATTERN}"', masked_text, flags=re.IGNORECASE)
             elif "'" in pattern:
-                masked_text = re.sub(pattern, f"'{field}': '{MASK_PATTERN}'", masked_text)
+                masked_text = re.sub(pattern, f"'{field}': '{MASK_PATTERN}'", masked_text, flags=re.IGNORECASE)
             else:
-                masked_text = re.sub(pattern, f'{field}={MASK_PATTERN}', masked_text)
+                masked_text = re.sub(pattern, f'{field}={MASK_PATTERN}', masked_text, flags=re.IGNORECASE)
     
     return masked_text

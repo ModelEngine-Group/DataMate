@@ -315,13 +315,14 @@ async def update_task(
         template = template.scalar_one_or_none()
         if template:
             # Use preserved config to generate DataX config
+            config_obj = CollectionConfig(**preserved_config)
             DataxClient.generate_datx_config(
-                CollectionConfig(**preserved_config), 
+                config_obj, 
                 template, 
                 task.target_path
             )
-            # Save preserved config to database
-            task.config = json.dumps(preserved_config)
+            # Save the modified config (with regenerated job) to database
+            task.config = json.dumps(config_obj.model_dump())
 
     # 如果任务处于 FAILED 状态，修改后重置为 PENDING，允许重新执行
     if task.status == TaskStatus.FAILED.name:
