@@ -12,11 +12,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exception import ErrorCodes, BusinessError, SuccessResponse, transaction
 from app.core.logging import get_logger
+from app.core.security import preserve_sensitive_values
 from app.db.models import Dataset, DatasetFiles
 from app.db.models.data_collection import CollectionTask, TaskExecution, CollectionTemplate
 from app.db.session import get_db
 from app.module.collection.client.datax_client import DataxClient
-from app.module.collection.schema.collection import CollectionTaskBase, CollectionTaskCreate, CollectionTaskUpdate, converter_to_response, \
+from app.module.collection.schema.collection import CollectionTaskBase, CollectionTaskCreate, CollectionTaskUpdate, CollectionConfig, converter_to_response, \
     convert_for_create, SyncMode
 from app.module.collection.schedule import schedule_collection_task, remove_collection_task
 from app.module.collection.service.collection import CollectionTaskService
@@ -300,12 +301,27 @@ async def update_task(
             reschedule_collection_task(task_id, task.schedule_expression)
 
     if 'config' in update_data:
-        # 重新生成任务配置文件
+        # Get original config from database
+        original_config = json.loads(task.config) if task.config else {}
+        
+        # Preserve sensitive values if masked pattern detected
+        preserved_config = preserve_sensitive_values(
+            request.config.dict(), 
+            original_config
+        )
+        
+        # Regenerate task config file with preserved sensitive values
         template = await db.execute(select(CollectionTemplate).where(CollectionTemplate.id == task.template_id))
         template = template.scalar_one_or_none()
         if template:
-            DataxClient.generate_datx_config(request.config, template, task.target_path)
-            task.config = json.dumps(request.config.dict())
+            # Use preserved config to generate DataX config
+            DataxClient.generate_datx_config(
+                CollectionConfig(**preserved_config), 
+                template, 
+                task.target_path
+            )
+            # Save preserved config to database
+            task.config = json.dumps(preserved_config)
 
     # 如果任务处于 FAILED 状态，修改后重置为 PENDING，允许重新执行
     if task.status == TaskStatus.FAILED.name:
