@@ -119,25 +119,19 @@ class DataxClient:
         Returns:
             执行结果字典
         """
-        # 创建配置文件
-        self.create__config_file()
+        if not self.execution.started_at:
+            self.execution.started_at = datetime.now()
+        
         try:
-            # 构建命令
+            self.create__config_file()
             cmd = [self.python_path, str(self.datax_main), str(self.config_file_path)]
             cmd_str = ' '.join(cmd)
             logger.info(f"执行命令: {cmd_str}")
-            if not self.execution.started_at:
-                self.execution.started_at = datetime.now()
-            # 执行命令并写入日志
             with open(self.execution.log_path, 'w', encoding='utf-8') as log_f:
-                # 写入头信息
                 self.write_header_log(cmd_str, log_f)
-                # 启动datax进程
                 exit_code = self._run_process(cmd, log_f)
-                # 记录结束时间
                 self.execution.completed_at = datetime.now()
                 self.execution.duration_seconds = (self.execution.completed_at - self.execution.started_at).total_seconds()
-                # 写入结束信息
                 self.write_tail_log(exit_code, log_f)
             if exit_code == 0:
                 logger.info(f"DataX 任务执行成功: {self.execution.id}")
@@ -150,17 +144,17 @@ class DataxClient:
                 logger.error(self.execution.error_message)
         except Exception as e:
             self.execution.completed_at = datetime.now()
-            self.execution.duration_seconds = (self.execution.completed_at - self.execution.started_at).total_seconds()
+            if self.execution.started_at:
+                self.execution.duration_seconds = (self.execution.completed_at - self.execution.started_at).total_seconds()
             self.execution.error_message = f"执行异常: {e}"
             self.execution.status = TaskStatus.FAILED.name
             logger.error(f"执行异常: {e}", exc_info=True)
+            with open(self.execution.log_path, 'w', encoding='utf-8') as log_f:
+                log_f.write(f"任务执行失败: {e}\n")
 
-        # 根据同步模式更新任务状态
         if self.task.sync_mode == SyncMode.ONCE:
-            # 一次性任务：使用执行结果作为最终状态
             self.task.status = self.execution.status
         else:
-            # 定时任务：恢复为 PENDING 状态，等待下次执行
             self.task.status = TaskStatus.PENDING.name
 
     def rename_collection_result(self):
