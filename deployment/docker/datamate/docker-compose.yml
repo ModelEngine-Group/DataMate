@@ -36,6 +36,7 @@ services:
       - pgsql_password=${DB_PASSWORD:?DB_PASSWORD is required. Set in .env file}
       - datamate_jwt_enable=${DATAMATE_JWT_ENABLE:-false}
       - milvus_uri=${MILVUS_URI:-http://milvus:19530}
+      - LABEL_STUDIO_USERNAME=${LABEL_STUDIO_USERNAME:-admin@demo.com}
       - LABEL_STUDIO_USER_TOKEN=${LABEL_STUDIO_USER_TOKEN:-}
       - LABEL_STUDIO_PASSWORD=${LABEL_STUDIO_PASSWORD:-}
     volumes:
