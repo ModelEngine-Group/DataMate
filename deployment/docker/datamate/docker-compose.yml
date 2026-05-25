@@ -31,6 +31,8 @@ services:
       - "18000:18000"
     environment:
       - log_level=DEBUG
+      - PGSQL_HOST=datamate-database
+      - PGSQL_PORT=5432
       - pgsql_password=${DB_PASSWORD:?DB_PASSWORD is required. Set in .env file}
       - datamate_jwt_enable=${DATAMATE_JWT_ENABLE:-false}
       - milvus_uri=${MILVUS_URI:-http://milvus:19530}

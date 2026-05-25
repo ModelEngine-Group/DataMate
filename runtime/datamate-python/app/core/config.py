@@ -33,14 +33,14 @@ class Settings(BaseSettings):
     pgsql_host: str = "datamate-database"
     pgsql_port: int = 5432
     pgsql_user: str = "postgres"
-    pgsql_password: str = "password"
+    pgsql_password: str = ""
     pgsql_database: str = "datamate"
 
     # Database
     mysql_host: str = "datamate-database"
     mysql_port: int = 3306
     mysql_user: str = "root"
-    mysql_password: str = "password"
+    mysql_password: str = ""
     mysql_database: str = "datamate"
 
     database_url: str = ""  # Will be overridden by build_database_url() if not provided
@@ -63,9 +63,9 @@ class Settings(BaseSettings):
 
     # Label Studio
     label_studio_base_url: str = "http://label-studio:8000"
-    label_studio_username: Optional[str] = "admin@demo.com"
-    label_studio_password: Optional[str] = "demoadmin"
-    label_studio_user_token: Optional[str] = "abc123abc123"  # Legacy Token
+    label_studio_username: Optional[str] = None
+    label_studio_password: Optional[str] = None
+    label_studio_user_token: Optional[str] = None  # Legacy Token
 
     label_studio_local_document_root: str = "/label-studio/local"  # Label Studio local file storage path
     label_studio_file_path_prefix: str = "/data/local-files/?d="  # Label Studio local file serving URL prefix

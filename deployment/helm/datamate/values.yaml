@@ -144,6 +144,10 @@ backend:
 
 backend-python:
   env:
+    - name: PGSQL_HOST
+      value: "datamate-database"
+    - name: PGSQL_PORT
+      value: "5432"
     - name: pgsql_password
       valueFrom:
         secretKeyRef:
