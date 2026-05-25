@@ -246,13 +246,13 @@ WHERE c.id IN ('de36b61c-9e8a-4422-8c31-d30585c7100f', '9eda9d5d-072b-499b-916c-
 ON CONFLICT DO NOTHING;
 
 -- 图像目标检测与预标注算子：功能归类为「标注」而非「清洗」
-INSERT INTO t_operator_category_relation(category_id, operator_id)
-SELECT c.id, o.id
-FROM t_operator_category c
-    CROSS JOIN t_operator o
-WHERE c.id IN ('de36b61c-9e8a-4422-8c31-d30585c7100f', 'cfa9d8e2-5b5f-4f1e-9f12-1234567890ab', '96a3b07a-3439-4557-a835-525faad60ca3', '431e7798-5426-4e1a-aae6-b9905a836b34','9eda9d5d-072b-499b-916c-797a0a8750e1')
-    AND o.id IN ('ObjectDetectionRectangle')
-ON CONFLICT DO NOTHING;
+-- INSERT INTO t_operator_category_relation(category_id, operator_id)
+-- SELECT c.id, o.id
+-- FROM t_operator_category c
+--     CROSS JOIN t_operator o
+-- WHERE c.id IN ('de36b61c-9e8a-4422-8c31-d30585c7100f', 'cfa9d8e2-5b5f-4f1e-9f12-1234567890ab', '96a3b07a-3439-4557-a835-525faad60ca3', '431e7798-5426-4e1a-aae6-b9905a836b34','9eda9d5d-072b-499b-916c-797a0a8750e1')
+--     AND o.id IN ('ObjectDetectionRectangle')
+-- ON CONFLICT DO NOTHING;
 
 
 INSERT INTO t_operator

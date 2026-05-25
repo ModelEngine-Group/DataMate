@@ -19,19 +19,21 @@ import {
   deleteAnnotationTaskByIdUsingDelete,
   queryAnnotationTasksUsingGet,
   syncAnnotationTaskUsingPost,
-  queryAutoAnnotationTasksUsingGet,
-  deleteAutoAnnotationTaskByIdUsingDelete,
-  getAutoAnnotationLabelStudioProjectUsingGet,
+  // 自动标注API已屏蔽（保留代码在注释中）
+  // queryAutoAnnotationTasksUsingGet,
+  // deleteAutoAnnotationTaskByIdUsingDelete,
+  // getAutoAnnotationLabelStudioProjectUsingGet,
   loginAnnotationUsingGet,
   syncManualAnnotationToDatabaseUsingPost,
-  syncAutoAnnotationToDatabaseUsingPost,
+  // syncAutoAnnotationToDatabaseUsingPost,
 } from "../annotation.api";
 import { mapAnnotationTask } from "../annotation.const";
 import CreateAnnotationTask from "../Create/components/CreateAnnotationTaskDialog";
 import { ColumnType } from "antd/es/table";
 import { TemplateList } from "../Template";
-import EditAutoAnnotationDatasetDialog from "../AutoAnnotation/components/EditAutoAnnotationDatasetDialog";
-import ImportFromLabelStudioDialog from "../AutoAnnotation/components/ImportFromLabelStudioDialog";
+// 自动标注组件导入已屏蔽（保留代码在注释中）
+// import EditAutoAnnotationDatasetDialog from "../AutoAnnotation/components/EditAutoAnnotationDatasetDialog";
+// import ImportFromLabelStudioDialog from "../AutoAnnotation/components/ImportFromLabelStudioDialog";
 import ManualImportFromLabelStudioDialog from "../ManualImportFromLabelStudioDialog";
 import EditManualAnnotationDatasetDialog from "../EditManualAnnotationDatasetDialog";
 import { useTranslation } from "react-i18next";
@@ -44,7 +46,8 @@ export default function DataAnnotation() {
   const [activeTab, setActiveTab] = useState("tasks");
   const [viewMode, setViewMode] = useState<"list" | "card">("list");
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [autoTasks, setAutoTasks] = useState<any[]>([]);
+  // 自动标注任务state已屏蔽（保留代码在注释中）
+  // const [autoTasks, setAutoTasks] = useState<any[]>([]);
 
   const {
     loading,
@@ -60,30 +63,32 @@ export default function DataAnnotation() {
   const [selectedRowKeys, setSelectedRowKeys] = useState<(string | number)[]>([]);
   const [selectedRows, setSelectedRows] = useState<any[]>([]);
   const [datasetProjectMap, setDatasetProjectMap] = useState<Record<string, string>>({});
-  const [editingAutoTask, setEditingAutoTask] = useState<any | null>(null);
-  const [showEditAutoDatasetDialog, setShowEditAutoDatasetDialog] = useState(false);
+  // 自动标注相关state已屏蔽（保留代码在注释中）
+  // const [editingAutoTask, setEditingAutoTask] = useState<any | null>(null);
+  // const [showEditAutoDatasetDialog, setShowEditAutoDatasetDialog] = useState(false);
   const [editingManualTask, setEditingManualTask] = useState<AnnotationTask | null>(null);
   const [showEditManualDatasetDialog, setShowEditManualDatasetDialog] = useState(false);
-  const [importingAutoTask, setImportingAutoTask] = useState<any | null>(null);
-  const [showImportAutoDialog, setShowImportAutoDialog] = useState(false);
+  // 自动标注相关state已屏蔽（保留代码在注释中）
+  // const [importingAutoTask, setImportingAutoTask] = useState<any | null>(null);
+  // const [showImportAutoDialog, setShowImportAutoDialog] = useState(false);
   const [importingManualTask, setImportingManualTask] = useState<AnnotationTask | null>(null);
   const [showImportManualDialog, setShowImportManualDialog] = useState(false);
 
-  // 拉取自动标注任务（供轮询和创建成功后立即刷新复用）
-  const refreshAutoTasks = async (silent = false) => {
-    try {
-      const response = await queryAutoAnnotationTasksUsingGet();
-      const tasks = (response as any)?.data || response || [];
-      if (Array.isArray(tasks)) {
-        setAutoTasks(tasks);
-      }
-    } catch (error) {
-      console.error("Failed to fetch auto annotation tasks:", error);
-      if (!silent) {
-        message.error(t('dataAnnotation.home.messages.fetchAutoTasksFailed'));
-      }
-    }
-  };
+  // 自动标注任务拉取函数已屏蔽（保留代码在注释中）
+  // const refreshAutoTasks = async (silent = false) => {
+  //   try {
+  //     const response = await queryAutoAnnotationTasksUsingGet();
+  //     const tasks = (response as any)?.data || response || [];
+  //     if (Array.isArray(tasks)) {
+  //       setAutoTasks(tasks);
+  //     }
+  //   } catch (error) {
+  //     console.error("Failed to fetch auto annotation tasks:", error);
+  //     if (!silent) {
+  //       message.error(t('dataAnnotation.home.messages.fetchAutoTasksFailed'));
+  //     }
+  //   }
+  // };
 
   // prefetch config on mount so clicking annotate is fast and we know whether base URL exists
   // useEffect ensures this runs once
@@ -115,15 +120,14 @@ export default function DataAnnotation() {
     setDatasetProjectMap(map);
   }, [tableData]);
 
-  // 自动标注任务轮询（用于在同一表格中展示处理进度）
-  useEffect(() => {
-    refreshAutoTasks();
-    const timer = setInterval(() => refreshAutoTasks(true), 3000);
-
-    return () => {
-      clearInterval(timer);
-    };
-  }, []);
+  // 自动标注任务轮询已屏蔽（保留代码在注释中）
+  // useEffect(() => {
+  //   refreshAutoTasks();
+  //   const timer = setInterval(() => refreshAutoTasks(true), 3000);
+  //   return () => {
+  //     clearInterval(timer);
+  //   };
+  // }, []);
 
   const handleAnnotate = (task: AnnotationTask) => {
     // Open Label Studio project page in a new tab
@@ -192,45 +196,43 @@ export default function DataAnnotation() {
     });
   };
 
-  const handleDeleteAuto = (task: any) => {
-    Modal.confirm({
-      title: t('dataAnnotation.home.confirm.deleteAutoTaskTitle', { name: task.name }),
-      content: <div>{t('dataAnnotation.home.confirm.deleteAutoTaskContent')}</div>,
-      okText: t('dataAnnotation.home.confirm.deleteOkText'),
-      okType: "danger",
-      cancelText: t('dataAnnotation.home.confirm.deleteCancelText'),
-      onOk: async () => {
-        try {
-          await deleteAutoAnnotationTaskByIdUsingDelete(task.id);
-          message.success(t('dataAnnotation.home.messages.autoTaskDeleteSuccess'));
-          // 重新拉取自动标注任务
-          setAutoTasks((prev) => prev.filter((t: any) => t.id !== task.id));
-          // 清理选中
-          setSelectedRowKeys((keys) => keys.filter((k) => k !== task.id));
-          setSelectedRows((rows) => rows.filter((r) => r.id !== task.id));
-        } catch (e) {
-          console.error(e);
-          message.error(t('dataAnnotation.home.messages.deleteFailed'));
-        }
-      },
-    });
-  };
+  // 自动标注删除函数已屏蔽（保留代码在注释中）
+  // const handleDeleteAuto = (task: any) => {
+  //   Modal.confirm({
+  //     title: t('dataAnnotation.home.confirm.deleteAutoTaskTitle', { name: task.name }),
+  //     content: <div>{t('dataAnnotation.home.confirm.deleteAutoTaskContent')}</div>,
+  //     okText: t('dataAnnotation.home.confirm.deleteOkText'),
+  //     okType: "danger",
+  //     cancelText: t('dataAnnotation.home.confirm.deleteCancelText'),
+  //     onOk: async () => {
+  //       try {
+  //         await deleteAutoAnnotationTaskByIdUsingDelete(task.id);
+  //         message.success(t('dataAnnotation.home.messages.autoTaskDeleteSuccess'));
+  //         setAutoTasks((prev) => prev.filter((t: any) => t.id !== task.id));
+  //         setSelectedRowKeys((keys) => keys.filter((k) => k !== task.id));
+  //         setSelectedRows((rows) => rows.filter((r) => r.id !== task.id));
+  //       } catch (e) {
+  //         console.error(e);
+  //         message.error(t('dataAnnotation.home.messages.deleteFailed'));
+  //       }
+  //     },
+  //   });
+  // };
 
-  const handleEditAutoTaskDataset = (row: any) => {
-    if (!row?.id) {
-      message.error(t('dataAnnotation.home.messages.autoTaskNotFound'));
-      return;
-    }
-
-    const full = autoTasks.find((t: any) => t.id === row.id);
-    if (!full) {
-      message.error(t('dataAnnotation.home.messages.autoTaskNotFound') + t('dataAnnotation.home.messages.deleteFailed').split('，')[1]);
-      return;
-    }
-
-    setEditingAutoTask(full);
-    setShowEditAutoDatasetDialog(true);
-  };
+  // 自动标注编辑数据集函数已屏蔽（保留代码在注释中）
+  // const handleEditAutoTaskDataset = (row: any) => {
+  //   if (!row?.id) {
+  //     message.error(t('dataAnnotation.home.messages.autoTaskNotFound'));
+  //     return;
+  //   }
+  //   const full = autoTasks.find((t: any) => t.id === row.id);
+  //   if (!full) {
+  //     message.error(t('dataAnnotation.home.messages.autoTaskNotFound') + t('dataAnnotation.home.messages.deleteFailed').split('，')[1]);
+  //     return;
+  //   }
+  //   setEditingAutoTask(full);
+  //   setShowEditAutoDatasetDialog(true);
+  // };
 
   const handleEditManualTaskDataset = (task: AnnotationTask) => {
     if (!task?.id) {
@@ -282,95 +284,88 @@ export default function DataAnnotation() {
     });
   };
 
-  const handleImportAutoFromLabelStudio = (row: any) => {
-    if (!row?.id) {
-      message.error(t('dataAnnotation.home.messages.autoTaskNotFound'));
-      return;
-    }
+  // 自动标注导入函数已屏蔽（保留代码在注释中）
+  // const handleImportAutoFromLabelStudio = (row: any) => {
+  //   if (!row?.id) {
+  //     message.error(t('dataAnnotation.home.messages.autoTaskNotFound'));
+  //     return;
+  //   }
+  //   const full = autoTasks.find((t: any) => t.id === row.id);
+  //   if (!full) {
+  //     message.error(t('dataAnnotation.home.messages.autoTaskNotFound') + t('dataAnnotation.home.messages.deleteFailed').split('，')[1]);
+  //     return;
+  //   }
+  //   setImportingAutoTask(full);
+  //   setShowImportAutoDialog(true);
+  // };
 
-    const full = autoTasks.find((t: any) => t.id === row.id);
-    if (!full) {
-      message.error(t('dataAnnotation.home.messages.autoTaskNotFound') + t('dataAnnotation.home.messages.deleteFailed').split('，')[1]);
-      return;
-    }
+  // 自动标注同步到数据库函数已屏蔽（保留代码在注释中）
+  // const handleSyncAutoToDatabase = (row: any) => {
+  //   if (!row?.id) {
+  //     message.error(t('dataAnnotation.home.messages.autoTaskNotFound'));
+  //     return;
+  //   }
+  //   Modal.confirm({
+  //     title: t('dataAnnotation.home.messages.syncToDbTitle', { name: row.name }),
+  //     content: (
+  //       <div>
+  //         <div>{t('dataAnnotation.home.messages.syncToDbContent1')}</div>
+  //         <div>{t('dataAnnotation.home.messages.syncToDbContent2')}</div>
+  //       </div>
+  //     ),
+  //     okText: t('dataAnnotation.home.actions.syncToDb'),
+  //     cancelText: t('dataAnnotation.home.confirm.deleteCancelText'),
+  //     onOk: async () => {
+  //       const hide = message.loading(t('dataAnnotation.dialogs.syncToDb.loading'), 0);
+  //       try {
+  //         await syncAutoAnnotationToDatabaseUsingPost(row.id);
+  //         hide();
+  //         message.success(t('dataAnnotation.dialogs.syncToDb.success'));
+  //       } catch (e) {
+  //         console.error(e);
+  //         hide();
+  //         message.error(t('dataAnnotation.dialogs.syncToDb.fail'));
+  //       }
+  //     },
+  //   });
+  // };
 
-    setImportingAutoTask(full);
-    setShowImportAutoDialog(true);
-  };
-
-  const handleSyncAutoToDatabase = (row: any) => {
-    if (!row?.id) {
-      message.error(t('dataAnnotation.home.messages.autoTaskNotFound'));
-      return;
-    }
-
-    Modal.confirm({
-      title: t('dataAnnotation.home.messages.syncToDbTitle', { name: row.name }),
-      content: (
-        <div>
-          <div>{t('dataAnnotation.home.messages.syncToDbContent1')}</div>
-          <div>{t('dataAnnotation.home.messages.syncToDbContent2')}</div>
-        </div>
-      ),
-      okText: t('dataAnnotation.home.actions.syncToDb'),
-      cancelText: t('dataAnnotation.home.confirm.deleteCancelText'),
-      onOk: async () => {
-        const hide = message.loading(t('dataAnnotation.dialogs.syncToDb.loading'), 0);
-        try {
-          await syncAutoAnnotationToDatabaseUsingPost(row.id);
-          hide();
-          message.success(t('dataAnnotation.dialogs.syncToDb.success'));
-        } catch (e) {
-          console.error(e);
-          hide();
-          message.error(t('dataAnnotation.dialogs.syncToDb.fail'));
-        }
-      },
-    });
-  };
-
-  const handleAnnotateAuto = (task: any) => {
-    (async () => {
-      try {
-        if (!labelStudioBase) {
-          message.error(t('dataAnnotation.home.messages.cannotJumpNoBase'));
-          return;
-        }
-
-        let projId: string | undefined;
-
-        try {
-          const resp = await getAutoAnnotationLabelStudioProjectUsingGet(task.id);
-          const data = (resp as any)?.data ?? resp;
-          projId = data?.projectId || data?.labeling_project_id;
-        } catch (e) {
-          console.error("Failed to resolve LS project for auto task", e);
-        }
-
-        // 兼容旧逻辑：若后端未能找到专属项目，则回退到按数据集映射跳转
-        if (!projId) {
-          const datasetId = task.datasetId;
-          if (!datasetId) {
-            message.error(t('dataAnnotation.home.messages.cannotJumpAutoNoDataset'));
-            return;
-          }
-
-          projId = datasetProjectMap[String(datasetId)];
-        }
-
-        if (!projId) {
-          message.error(t('dataAnnotation.home.messages.cannotJumpAutoNoProject'));
-          return;
-        }
-
-        const target = `${labelStudioBase}/projects/${projId}/data`;
-        window.open(target, "_blank");
-      } catch (error) {
-        console.error(error);
-        message.error(t('dataAnnotation.home.messages.cannotJumpError'));
-      }
-    })();
-  };
+  // 自动标注跳转标注函数已屏蔽（保留代码在注释中）
+  // const handleAnnotateAuto = (task: any) => {
+  //   (async () => {
+  //     try {
+  //       if (!labelStudioBase) {
+  //         message.error(t('dataAnnotation.home.messages.cannotJumpNoBase'));
+  //         return;
+  //       }
+  //       let projId: string | undefined;
+  //       try {
+  //         const resp = await getAutoAnnotationLabelStudioProjectUsingGet(task.id);
+  //         const data = (resp as any)?.data ?? resp;
+  //         projId = data?.projectId || data?.labeling_project_id;
+  //       } catch (e) {
+  //         console.error("Failed to resolve LS project for auto task", e);
+  //       }
+  //       if (!projId) {
+  //         const datasetId = task.datasetId;
+  //         if (!datasetId) {
+  //           message.error(t('dataAnnotation.home.messages.cannotJumpAutoNoDataset'));
+  //           return;
+  //         }
+  //         projId = datasetProjectMap[String(datasetId)];
+  //       }
+  //       if (!projId) {
+  //         message.error(t('dataAnnotation.home.messages.cannotJumpAutoNoProject'));
+  //         return;
+  //       }
+  //       const target = `${labelStudioBase}/projects/${projId}/data`;
+  //       window.open(target, "_blank");
+  //     } catch (error) {
+  //       console.error(error);
+  //       message.error(t('dataAnnotation.home.messages.cannotJumpError'));
+  //     }
+  //   })();
+  // };
 
   const handleSync = (task: AnnotationTask, batchSize: number = 50) => {
     Modal.confirm({
@@ -437,7 +432,8 @@ export default function DataAnnotation() {
   const handleBatchDelete = () => {
     if (!selectedRows || selectedRows.length === 0) return;
     const manualRows = selectedRows.filter((r) => r._kind !== "auto");
-    const autoRows = selectedRows.filter((r) => r._kind === "auto");
+    // 自动标注批量删除已屏蔽
+    // const autoRows = selectedRows.filter((r) => r._kind === "auto");
     Modal.confirm({
       title: t('dataAnnotation.home.confirm.batchDeleteTitle', { count: selectedRows.length }),
       content: (
@@ -454,7 +450,8 @@ export default function DataAnnotation() {
           await Promise.all(
             [
               ...manualRows.map((r) => deleteAnnotationTaskByIdUsingDelete(r.id)),
-              ...autoRows.map((r) => deleteAutoAnnotationTaskByIdUsingDelete(r.id)),
+              // 自动标注批量删除已屏蔽
+              // ...autoRows.map((r) => deleteAutoAnnotationTaskByIdUsingDelete(r.id)),
             ]
           );
           message.success(t('dataAnnotation.home.messages.batchDeleteSuccess'));
@@ -509,38 +506,36 @@ export default function DataAnnotation() {
     return !name.endsWith(" - 自动标注");
   });
 
-  const mergedTableData = [
-    // 手动标注任务（过滤掉自动生成的映射任务）
-    ...manualVisibleTasks.map((task) => ({
+  // 自动标注功能已屏蔽：仅显示手动标注任务
+  // 自动标注任务合并逻辑已屏蔽（保留代码在注释中，需要恢复时可取消注释）
+  // ...autoTasks.map((task: any) => {
+  //   const sourceList = Array.isArray(task.sourceDatasets)
+  //     ? task.sourceDatasets
+  //     : task.datasetName
+  //     ? [task.datasetName]
+  //     : [];
+  //   const datasetName = sourceList.length > 0 ? sourceList.join("，") : "-";
+  //   return {
+  //     id: task.id,
+  //     name: task.name,
+  //     datasetId: task.datasetId || task.dataset_id,
+  //     datasetName,
+  //     createdAt: task.createdAt || "-",
+  //     updatedAt: task.updatedAt || "-",
+  //     _kind: "auto" as const,
+  //     autoStatus: task.status,
+  //     autoProgress: task.progress,
+  //     autoProcessedImages: task.processedImages,
+  //     autoTotalImages: task.totalImages,
+  //     autoDetectedObjects: task.detectedObjects,
+  //     autoConfig: task.config || {},
+  //   };
+  // }),
+
+  const mergedTableData: any[] = manualVisibleTasks.map((task: any) => ({
       ...task,
       _kind: "manual" as const,
-    })),
-    // 自动标注任务
-    ...autoTasks.map((task: any) => {
-      const sourceList = Array.isArray(task.sourceDatasets)
-        ? task.sourceDatasets
-        : task.datasetName
-        ? [task.datasetName]
-        : [];
-      const datasetName = sourceList.length > 0 ? sourceList.join("，") : "-";
-
-      return {
-        id: task.id,
-        name: task.name,
-        datasetId: task.datasetId || task.dataset_id,
-        datasetName,
-        createdAt: task.createdAt || "-",
-        updatedAt: task.updatedAt || "-",
-        _kind: "auto" as const,
-        autoStatus: task.status,
-        autoProgress: task.progress,
-        autoProcessedImages: task.processedImages,
-        autoTotalImages: task.totalImages,
-        autoDetectedObjects: task.detectedObjects,
-        autoConfig: task.config || {},
-      };
-    }),
-  ];
+    }));
 
   const columns: ColumnType<any>[] = [
     {
@@ -585,88 +580,89 @@ export default function DataAnnotation() {
         );
       },
     },
-    {
-      title: t('dataAnnotation.home.columns.model'),
-      key: "modelSize",
-      width: 160,
-      render: (_: any, record: any) => {
-        if (record._kind !== "auto") return "-";
-        const size = record.autoConfig?.modelSize;
-        return t(`dataAnnotation.home.autoModelSizeLabels.${size}`) || size || "-";
-      },
-    },
-    {
-      title: t('dataAnnotation.home.columns.confidence'),
-      key: "confThreshold",
-      width: 120,
-      render: (_: any, record: any) => {
-        if (record._kind !== "auto") return "-";
-        const threshold = record.autoConfig?.confThreshold;
-        if (typeof threshold !== "number") return "-";
-        return `${(threshold * 100).toFixed(0)}%`;
-      },
-    },
-    {
-      title: t('dataAnnotation.home.columns.targetClasses'),
-      key: "targetClasses",
-      width: 160,
-      render: (_: any, record: any) => {
-        if (record._kind !== "auto") return "-";
-        const classes: number[] = record.autoConfig?.targetClasses || [];
-        if (!classes.length) return t('dataAnnotation.home.allCategories');
-        const text = classes.join(", ");
-        return (
-          <Tooltip title={text}>
-            <span>{t('dataAnnotation.home.categoriesCount', { count: classes.length })}</span>
-          </Tooltip>
-        );
-      },
-    },
-    {
-      title: t('dataAnnotation.home.columns.autoStatus'),
-      key: "autoStatus",
-      width: 130,
-      render: (_: any, record: any) => {
-        if (record._kind !== "auto") return "-";
-        const status = record.autoStatus as string;
-        const label = t(`dataAnnotation.home.autoStatusLabels.${status}`) || status || "-";
-        return <Tag>{label}</Tag>;
-      },
-    },
-    {
-      title: t('dataAnnotation.home.columns.autoProgress'),
-      key: "autoProgress",
-      width: 200,
-      render: (_: any, record: any) => {
-        if (record._kind !== "auto") return "-";
-        const progress = typeof record.autoProgress === "number" ? record.autoProgress : 0;
-        const processed = record.autoProcessedImages ?? 0;
-        const total = record.autoTotalImages ?? 0;
-        return (
-          <div>
-            <Progress percent={progress} size="small" />
-            <div style={{ fontSize: 12, color: "#999" }}>
-              {processed} / {total}
-            </div>
-          </div>
-        );
-      },
-    },
-    {
-      title: t('dataAnnotation.home.columns.detectedObjects'),
-      key: "detectedObjects",
-      width: 120,
-      render: (_: any, record: any) => {
-        if (record._kind !== "auto") return "-";
-        const count = record.autoDetectedObjects;
-        if (typeof count !== "number") return "-";
-        try {
-          return count.toLocaleString();
-        } catch {
-          return String(count);
-        }
-      },
-    },
+    // 自动标注相关列已屏蔽（保留代码在注释中）
+    // {
+    //   title: t('dataAnnotation.home.columns.model'),
+    //   key: "modelSize",
+    //   width: 160,
+    //   render: (_: any, record: any) => {
+    //     if (record._kind !== "auto") return "-";
+    //     const size = record.autoConfig?.modelSize;
+    //     return t(`dataAnnotation.home.autoModelSizeLabels.${size}`) || size || "-";
+    //   },
+    // },
+    // {
+    //   title: t('dataAnnotation.home.columns.confidence'),
+    //   key: "confThreshold",
+    //   width: 120,
+    //   render: (_: any, record: any) => {
+    //     if (record._kind !== "auto") return "-";
+    //     const threshold = record.autoConfig?.confThreshold;
+    //     if (typeof threshold !== "number") return "-";
+    //     return `${(threshold * 100).toFixed(0)}%`;
+    //   },
+    // },
+    // {
+    //   title: t('dataAnnotation.home.columns.targetClasses'),
+    //   key: "targetClasses",
+    //   width: 160,
+    //   render: (_: any, record: any) => {
+    //     if (record._kind !== "auto") return "-";
+    //     const classes: number[] = record.autoConfig?.targetClasses || [];
+    //     if (!classes.length) return t('dataAnnotation.home.allCategories');
+    //     const text = classes.join(", ");
+    //     return (
+    //       <Tooltip title={text}>
+    //         <span>{t('dataAnnotation.home.categoriesCount', { count: classes.length })}</span>
+    //       </Tooltip>
+    //     );
+    //   },
+    // },
+    // {
+    //   title: t('dataAnnotation.home.columns.autoStatus'),
+    //   key: "autoStatus",
+    //   width: 130,
+    //   render: (_: any, record: any) => {
+    //     if (record._kind !== "auto") return "-";
+    //     const status = record.autoStatus as string;
+    //     const label = t(`dataAnnotation.home.autoStatusLabels.${status}`) || status || "-";
+    //     return <Tag>{label}</Tag>;
+    //   },
+    // },
+    // {
+    //   title: t('dataAnnotation.home.columns.autoProgress'),
+    //   key: "autoProgress",
+    //   width: 200,
+    //   render: (_: any, record: any) => {
+    //     if (record._kind !== "auto") return "-";
+    //     const progress = typeof record.autoProgress === "number" ? record.autoProgress : 0;
+    //     const processed = record.autoProcessedImages ?? 0;
+    //     const total = record.autoTotalImages ?? 0;
+    //     return (
+    //       <div>
+    //         <Progress percent={progress} size="small" />
+    //         <div style={{ fontSize: 12, color: "#999" }}>
+    //           {processed} / {total}
+    //         </div>
+    //       </div>
+    //     );
+    //   },
+    // },
+    // {
+    //   title: t('dataAnnotation.home.columns.detectedObjects'),
+    //   key: "detectedObjects",
+    //   width: 120,
+    //   render: (_: any, record: any) => {
+    //     if (record._kind !== "auto") return "-";
+    //     const count = record.autoDetectedObjects;
+    //     if (typeof count !== "number") return "-";
+    //     try {
+    //       return count.toLocaleString();
+    //     } catch {
+    //       return String(count);
+    //     }
+    //   },
+    // },
     {
       title: t('dataAnnotation.home.columns.createdAt'),
       dataIndex: "createdAt",
@@ -736,7 +732,8 @@ export default function DataAnnotation() {
               </Dropdown>
             </>
           )}
-          {task._kind === "auto" && (
+          {/* 自动标注任务操作按钮已屏蔽（保留代码在注释中） */}
+          {/* {task._kind === "auto" && (
             <>
               <Button
                 type="text"
@@ -756,7 +753,6 @@ export default function DataAnnotation() {
                 {t('dataAnnotation.home.actions.syncToDb')}
               </Button>
 
-              {/* 二级功能：编辑任务数据集 + 删除任务（折叠菜单） */}
               <Dropdown
                 menu={{
                   items: [
@@ -790,7 +786,7 @@ export default function DataAnnotation() {
                 />
               </Dropdown>
             </>
-          )}
+          )} */}
         </div>
       ),
     },
@@ -876,7 +872,7 @@ export default function DataAnnotation() {
                   </Card>
                 ) : (
                   <CardView
-                    data={tableData}
+                    data={tableData as any[]}
                     operations={operations as any}
                     pagination={pagination}
                     loading={loading}
@@ -886,13 +882,13 @@ export default function DataAnnotation() {
                 <CreateAnnotationTask
                   open={showCreateDialog}
                   onClose={() => setShowCreateDialog(false)}
-                  onRefresh={(mode?: any) => {
+                  onRefresh={() => {
                     // 手动标注创建成功后刷新标注任务列表
                     fetchData();
-                    // 自动标注创建成功后立即刷新自动标注任务列表
-                    if (mode === "auto") {
-                      refreshAutoTasks(true);
-                    }
+                    // 自动标注创建成功后刷新已屏蔽
+                    // if (mode === "auto") {
+                    //   refreshAutoTasks(true);
+                    // }
                   }}
                 />
               </div>
@@ -906,7 +902,7 @@ export default function DataAnnotation() {
         ]}
       />
 
-      {editingAutoTask && (
+      {/* {editingAutoTask && (
         <EditAutoAnnotationDatasetDialog
           visible={showEditAutoDatasetDialog}
           task={editingAutoTask}
@@ -917,10 +913,10 @@ export default function DataAnnotation() {
           onSuccess={() => {
             setShowEditAutoDatasetDialog(false);
             setEditingAutoTask(null);
-            refreshAutoTasks();
+            // refreshAutoTasks();
           }}
         />
-      )}
+      )} */}
 
       {editingManualTask && (
         <EditManualAnnotationDatasetDialog
@@ -952,10 +948,10 @@ export default function DataAnnotation() {
         />
       )}
 
-      {importingAutoTask && (
+      {/* 自动标注导入对话框已屏蔽（保留代码在注释中） */}
+      {/* {importingAutoTask && (
         <ImportFromLabelStudioDialog
           visible={showImportAutoDialog}
-          // 这里直接透传自动标注任务结构（与 AutoAnnotation 页面保持一致字段）
           task={importingAutoTask as any}
           onCancel={() => {
             setShowImportAutoDialog(false);
@@ -966,7 +962,7 @@ export default function DataAnnotation() {
             setImportingAutoTask(null);
           }}
         />
-      )}
+      )} */}
     </div>
   );
 }

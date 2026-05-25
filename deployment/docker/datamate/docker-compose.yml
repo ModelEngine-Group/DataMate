@@ -26,6 +26,8 @@ services:
     image: ${REGISTRY:-}datamate-backend-python:${VERSION:-latest}
     restart: on-failure
     privileged: true
+    ports:
+      - "18000:18000"
     environment:
       - log_level=DEBUG
       - pgsql_password=${DB_PASSWORD:-password}
