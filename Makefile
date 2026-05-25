@@ -333,19 +333,19 @@ VALID_K8S_TARGETS := datamate deer-flow milvus label-studio data-juicer mineru m
 		exit 1; \
 	fi
 	@if [ "$*" = "label-studio" ]; then \
-     	SOPS_AGE_KEY_FILE="$${SOPS_AGE_KEY_FILE:-$$PWD/.sops-keys/key.txt}" helm secrets upgrade label-studio deployment/helm/label-studio/ -n $(NAMESPACE) --install -f deployment/helm/label-studio/secrets.yaml; \
+     	bash scripts/secrets.sh helm-upgrade label-studio $(NAMESPACE); \
     elif [ "$*" = "mineru" ] || [ "$*" = "mineru-910B" ] || [ "$*" = "mineru-910C" ]; then \
 		kubectl apply -f deployment/kubernetes/mineru/deploy-910.yaml -n $(NAMESPACE); \
 	elif [ "$*" = "mineru-310P" ]; then \
 		kubectl apply -f deployment/kubernetes/mineru/deploy-310.yaml -n $(NAMESPACE); \
 	elif [ "$*" = "datamate" ]; then \
-		SOPS_AGE_KEY_FILE="$${SOPS_AGE_KEY_FILE:-$$PWD/.sops-keys/key.txt}" helm secrets upgrade datamate deployment/helm/datamate/ -n $(NAMESPACE) --install --set global.image.repository=$(REGISTRY) -f deployment/helm/datamate/secrets.yaml; \
+		bash scripts/secrets.sh helm-upgrade datamate $(NAMESPACE) --set global.image.repository=$(REGISTRY); \
 	elif [ "$*" = "deer-flow" ]; then \
 		cp runtime/deer-flow/.env deployment/helm/deer-flow/charts/public/.env; \
 		cp runtime/deer-flow/conf.yaml deployment/helm/deer-flow/charts/public/conf.yaml; \
 		helm upgrade deer-flow deployment/helm/deer-flow -n $(NAMESPACE) --install --set global.image.repository=$(REGISTRY); \
 	elif [ "$*" = "milvus" ]; then \
-		SOPS_AGE_KEY_FILE="$${SOPS_AGE_KEY_FILE:-$$PWD/.sops-keys/key.txt}" helm secrets upgrade milvus deployment/helm/milvus -n $(NAMESPACE) --install -f deployment/helm/milvus/secrets.yaml; \
+		bash scripts/secrets.sh helm-upgrade milvus $(NAMESPACE); \
 	elif [ "$*" = "data-juicer" ] || [ "$*" = "dj" ]; then \
 		kubectl apply -f deployment/kubernetes/data-juicer/deploy.yaml -n $(NAMESPACE); \
 	fi
