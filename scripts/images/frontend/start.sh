@@ -18,14 +18,17 @@ if [ -f "/cert/server.pem" ]; then
 fi
 
 if [ -f "/cert/server.key" ]; then
-    # Check if key is encrypted and decrypt if needed
-    # Supports RSA, EC (Elliptic Curve), PKCS#8, and DSA keys
+    # Private key MUST be encrypted. Plaintext keys are not accepted.
     if grep -q "ENCRYPTED" /cert/server.key 2>/dev/null; then
-        # Key is encrypted, decrypt using generic pkey command (supports all key types)
+        if [ -z "$CERT_PASS" ]; then
+            echo "ERROR: CERT_PASS is required to decrypt the private key"
+            exit 1
+        fi
         echo "$CERT_PASS" | openssl pkey -in /cert/server.key -out /etc/nginx/cert/server.key -passin stdin
+        chmod 600 /etc/nginx/cert/server.key
     else
-        # Key is not encrypted, copy directly
-        cp /cert/server.key /etc/nginx/cert/server.key
+        echo "ERROR: /cert/server.key is not encrypted. Please encrypt it before deployment."
+        exit 1
     fi
     chown nginx:nginx /etc/nginx/cert/server.key
 fi
