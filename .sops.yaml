@@ -1,0 +1,3 @@
+creation_rules:
+  - path_regex: deployment/helm/.*\.yaml$
+    age: age19lksug4t4qtjkak824m0d48d75nyx26p5mgv83yetnupu3w2fq3sx8kxdm

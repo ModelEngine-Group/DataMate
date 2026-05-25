@@ -39,8 +39,8 @@ public:
       operator: 1Gi
   secrets:
     data:
-      DB_PASSWORD: "password"
-      CERT_PASS: ""
+      DB_PASSWORD: ""  # Set via secrets.yaml or --set
+      CERT_PASS: ""    # Set via secrets.yaml for encrypted SSL keys
       DOMAIN: ""
       HOME_PAGE_URL: ""
 
@@ -166,7 +166,7 @@ backend-python:
 gateway:
   env:
     - name: JWT_SECRET
-      value: "default-insecure-key-change-in-production"
+      value: ""  # Set via secrets.yaml or --set for production
     - name: datamate.jwt.enable
       value: *DATAMATE_JWT_ENABLE
     - name: OMS_AUTH_ENABLED
