@@ -254,6 +254,13 @@ VALID_SERVICE_TARGETS := datamate backend frontend runtime backend-python databa
 		done; \
 		exit 1; \
 	fi
+	@if [ ! -f deployment/docker/datamate/.env ]; then \
+		echo "ERROR: deployment/docker/datamate/.env not found."; \
+		echo "Create it from the template:"; \
+		echo "  cp deployment/docker/datamate/.env.example deployment/docker/datamate/.env"; \
+		echo "Then edit it with your actual passwords."; \
+		exit 1; \
+	fi
 	@if [ "$*" = "label-studio" ]; then \
 		REGISTRY=$(REGISTRY) docker compose -f deployment/docker/datamate/docker-compose.yml --profile label-studio up -d; \
 	elif [ "$*" = "datamate" ]; then \
@@ -326,19 +333,19 @@ VALID_K8S_TARGETS := datamate deer-flow milvus label-studio data-juicer mineru m
 		exit 1; \
 	fi
 	@if [ "$*" = "label-studio" ]; then \
-     	helm upgrade label-studio deployment/helm/label-studio/ -n $(NAMESPACE) --install; \
+     	SOPS_AGE_KEY_FILE="$${SOPS_AGE_KEY_FILE:-$$PWD/.sops-keys/key.txt}" helm secrets upgrade label-studio deployment/helm/label-studio/ -n $(NAMESPACE) --install -f deployment/helm/label-studio/secrets.yaml; \
     elif [ "$*" = "mineru" ] || [ "$*" = "mineru-910B" ] || [ "$*" = "mineru-910C" ]; then \
 		kubectl apply -f deployment/kubernetes/mineru/deploy-910.yaml -n $(NAMESPACE); \
 	elif [ "$*" = "mineru-310P" ]; then \
 		kubectl apply -f deployment/kubernetes/mineru/deploy-310.yaml -n $(NAMESPACE); \
 	elif [ "$*" = "datamate" ]; then \
-		helm upgrade datamate deployment/helm/datamate/ -n $(NAMESPACE) --install --set global.image.repository=$(REGISTRY); \
+		SOPS_AGE_KEY_FILE="$${SOPS_AGE_KEY_FILE:-$$PWD/.sops-keys/key.txt}" helm secrets upgrade datamate deployment/helm/datamate/ -n $(NAMESPACE) --install --set global.image.repository=$(REGISTRY) -f deployment/helm/datamate/secrets.yaml; \
 	elif [ "$*" = "deer-flow" ]; then \
 		cp runtime/deer-flow/.env deployment/helm/deer-flow/charts/public/.env; \
 		cp runtime/deer-flow/conf.yaml deployment/helm/deer-flow/charts/public/conf.yaml; \
 		helm upgrade deer-flow deployment/helm/deer-flow -n $(NAMESPACE) --install --set global.image.repository=$(REGISTRY); \
 	elif [ "$*" = "milvus" ]; then \
-		helm upgrade milvus deployment/helm/milvus -n $(NAMESPACE) --install; \
+		SOPS_AGE_KEY_FILE="$${SOPS_AGE_KEY_FILE:-$$PWD/.sops-keys/key.txt}" helm secrets upgrade milvus deployment/helm/milvus -n $(NAMESPACE) --install -f deployment/helm/milvus/secrets.yaml; \
 	elif [ "$*" = "data-juicer" ] || [ "$*" = "dj" ]; then \
 		kubectl apply -f deployment/kubernetes/data-juicer/deploy.yaml -n $(NAMESPACE); \
 	fi
