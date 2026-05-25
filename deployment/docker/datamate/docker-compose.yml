@@ -10,6 +10,7 @@ services:
     privileged: true
     environment:
       - DB_PASSWORD=${DB_PASSWORD:?DB_PASSWORD is required. Set in .env file}
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET is required. Set in .env file}
       - datamate.jwt.enable=${DATAMATE_JWT_ENABLE:-false}
     volumes:
       - dataset_volume:/dataset

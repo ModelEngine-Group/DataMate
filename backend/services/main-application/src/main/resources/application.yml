@@ -14,7 +14,7 @@ spring:
     driver-class-name: org.postgresql.Driver
     url: jdbc:postgresql://datamate-database:5432/datamate?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
     username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:password}
+    password: ${DB_PASSWORD}
     hikari:
       maximum-pool-size: 20
       minimum-idle: 5
@@ -59,7 +59,7 @@ spring:
       host: datamate-redis
       port: 6379
       timeout: 2000
-      password: ${REDIS_PASSWORD:password}
+      password: ${REDIS_PASSWORD}
       lettuce:
         pool:
           max-active: 20
@@ -131,6 +131,10 @@ management:
 
 # 平台配置
 datamate:
+  # JWT配置
+  jwt:
+    secret: ${JWT_SECRET}
+
   # 通用配置
 
 

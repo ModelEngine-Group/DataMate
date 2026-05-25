@@ -118,6 +118,11 @@ backend:
         secretKeyRef:
           name: datamate-conf
           key: DB_PASSWORD
+    - name: JWT_SECRET
+      valueFrom:
+        secretKeyRef:
+          name: datamate-conf
+          key: JWT_SECRET
     - name: datamate.rag.milvus-uri
       value: "http://milvus:19530"
     - name: datamate.jwt.enable
