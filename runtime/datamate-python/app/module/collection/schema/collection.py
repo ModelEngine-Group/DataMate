@@ -2,11 +2,12 @@ import json
 import uuid
 from datetime import datetime
 from enum import Enum
-from typing import Optional
+from typing import Optional, Dict, Any
 
-from pydantic import BaseModel, Field, validator, ConfigDict, field_validator
+from pydantic import BaseModel, Field, validator, ConfigDict, field_validator, field_serializer
 from pydantic.alias_generators import to_camel
 
+from app.core.security import mask_sensitive_dict
 from app.db.models.data_collection import CollectionTask, TaskExecution, CollectionTemplate
 from app.module.dataset.schema import DatasetTypeResponse
 from app.module.dataset.schema.dataset import DatasetType
@@ -22,6 +23,13 @@ class CollectionConfig(BaseModel):
     reader: Optional[dict] = Field(None, description="reader参数")
     writer: Optional[dict] = Field(None, description="writer参数")
     job: Optional[dict] = Field(None, description="任务配置")
+
+    @field_serializer('parameter', 'reader', 'writer', 'job', when_used='json')
+    def mask_sensitive_fields(self, value: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+        """Mask sensitive fields when serializing to JSON"""
+        if value is None:
+            return value
+        return mask_sensitive_dict(value)
 
 class CollectionTaskBase(BaseModel):
     id: str = Field(..., description="任务id")
@@ -93,6 +101,7 @@ class CollectionTaskUpdate(BaseModel):
     )
 
 def converter_to_response(task: CollectionTask) -> CollectionTaskBase:
+    config_dict = json.loads(task.config)
     return CollectionTaskBase(
         id=task.id,
         name=task.name,
@@ -101,7 +110,7 @@ def converter_to_response(task: CollectionTask) -> CollectionTaskBase:
         template_id=task.template_id,
         template_name=task.template_name,
         target_path=task.target_path,
-        config=json.loads(task.config),
+        config=CollectionConfig(**config_dict),
         schedule_expression=task.schedule_expression,
         status=task.status,
         retry_count=task.retry_count,
