@@ -36,7 +36,14 @@ spec:
             - name: POSTGRE_USER
               value: {{ .Values.env.POSTGRE_USER | quote }}
             - name: POSTGRE_PASSWORD
+            {{- if .Values.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.existingSecret | quote }}
+                  key: POSTGRE_PASSWORD
+            {{- else }}
               value: {{ .Values.env.POSTGRE_PASSWORD | quote }}
+            {{- end }}
             - name: POSTGRE_PORT
               value: "5432"
             - name: POSTGRE_HOST
@@ -52,11 +59,25 @@ spec:
             - name: LABEL_STUDIO_USERNAME
               value: {{ .Values.env.LABEL_STUDIO_USERNAME | quote }}
             - name: LABEL_STUDIO_PASSWORD
+            {{- if .Values.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.existingSecret | quote }}
+                  key: LABEL_STUDIO_PASSWORD
+            {{- else }}
               value: {{ .Values.env.LABEL_STUDIO_PASSWORD | quote }}
+            {{- end }}
             - name: LABEL_STUDIO_ENABLE_LEGACY_API_TOKEN
               value: {{ .Values.env.LABEL_STUDIO_ENABLE_LEGACY_API_TOKEN | quote }}
             - name: LABEL_STUDIO_USER_TOKEN
+            {{- if .Values.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.existingSecret | quote }}
+                  key: LABEL_STUDIO_USER_TOKEN
+            {{- else }}
               value: {{ .Values.env.LABEL_STUDIO_USER_TOKEN | quote }}
+            {{- end }}
             - name: LOG_LEVEL
               value: {{ .Values.env.LOG_LEVEL | quote }}
           ports:

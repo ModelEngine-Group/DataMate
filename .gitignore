@@ -192,10 +192,6 @@ Thumbs.db
 **/volumes/
 
 **/rag_storage/
-# SOPS encryption keys
-.sops-keys/
-
-# Environment files - ignore local .env, but allow templates and encrypted files
+# Environment files - ignore local .env, but allow templates
 .env
 !.env.example
-!.env.enc

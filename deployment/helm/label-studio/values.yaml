@@ -54,6 +54,10 @@ env:
   LABEL_STUDIO_USER_TOKEN: ""  # Set via secrets.yaml or --set
   LOG_LEVEL: "DEBUG"
 
+# Use an existing K8s Secret instead of creating one from values.
+# Set to "label-studio-env" to use the SealedSecret-managed secret.
+existingSecret: "label-studio-env"
+
 persistence:
   enabled: true
   existingClaim: "" # if you already have PVC that maps to external datamate-dataset-volume
