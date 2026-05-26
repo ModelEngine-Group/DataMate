@@ -162,6 +162,8 @@ backend-python:
         secretKeyRef:
           name: datamate-conf
           key: LABEL_STUDIO_USER_TOKEN
+    - name: LABEL_STUDIO_USERNAME
+      value: "admin@demo.com"
     - name: LABEL_STUDIO_PASSWORD
       valueFrom:
         secretKeyRef:
