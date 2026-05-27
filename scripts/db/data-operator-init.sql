@@ -521,3 +521,6 @@ WHERE c.id IN ('4d7dbd77-0a92-44f3-9056-2cd62d4a71e4', '9eda9d5d-072b-499b-916c-
                'video_captioning_from_video_mapper', 'video_captioning_from_vlm_mapper', 'video_extract_frames_mapper',
                'video_split_by_duration_mapper', 'video_split_by_key_frame_mapper', 'video_split_by_scene_mapper')
 ON CONFLICT DO NOTHING;
+
+-- Ensure all operator categories have created_by/updated_by set for data scope filtering
+UPDATE t_operator_category SET created_by = 'system', updated_by = 'system' WHERE created_by IS NULL OR created_by = '';

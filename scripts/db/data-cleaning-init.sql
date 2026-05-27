@@ -128,14 +128,17 @@ CREATE TRIGGER update_clean_template_updated_at
     EXECUTE FUNCTION update_updated_at_column();
 
 -- 插入初始数据 - 清洗模板
-INSERT INTO t_clean_template (id, name, description)
+INSERT INTO t_clean_template (id, name, description, created_by, updated_by)
 VALUES
-    ('550e8400-e29b-41d4-a716-446655440001', '安全与隐私合规处理模板', '针对敏感数据进行严格清洗，移除PII（个人身份信息）、政治敏感、暴力色情内容，适用于模型对外发布前的安全合规检查。'),
-    ('661f9500-f3ac-52e5-b827-557766550002', 'LLM SFT高质量文本清洗模板', '旨在生成高质量、低噪声的训练数据。包含去除乱码、重复内容、繁简转换、全角转半角以及格式标准化处理。'),
-    ('772a0611-a4bd-63f6-c938-668877660003', 'RAG知识库构建预处理模板', '专为RAG场景设计。重点去除目录、图注、XML/HTML标签等对向量检索无意义的噪声，并进行段落级去重以优化切片质量。'),
-    ('883b1722-b5ce-7407-d049-779988770004', '原始Web爬虫数据清洗模板', '针对互联网爬取的脏数据进行清洗。重点去除Emoji表情、URL链接、HTML标签以及不可见字符。'),
-    ('994c2833-c6df-8518-e150-880099880005', '多模态/CV模型训练预处理模板', '针对图像数据集处理。包含去除模糊/重复/相似图片，图片方向校正，目标检测预标注，以及尺寸和格式的统一化。')
+    ('550e8400-e29b-41d4-a716-446655440001', '安全与隐私合规处理模板', '针对敏感数据进行严格清洗，移除PII（个人身份信息）、政治敏感、暴力色情内容，适用于模型对外发布前的安全合规检查。', 'system', 'system'),
+    ('661f9500-f3ac-52e5-b827-557766550002', 'LLM SFT高质量文本清洗模板', '旨在生成高质量、低噪声的训练数据。包含去除乱码、重复内容、繁简转换、全角转半角以及格式标准化处理。', 'system', 'system'),
+    ('772a0611-a4bd-63f6-c938-668877660003', 'RAG知识库构建预处理模板', '专为RAG场景设计。重点去除目录、图注、XML/HTML标签等对向量检索无意义的噪声，并进行段落级去重以优化切片质量。', 'system', 'system'),
+    ('883b1722-b5ce-7407-d049-779988770004', '原始Web爬虫数据清洗模板', '针对互联网爬取的脏数据进行清洗。重点去除Emoji表情、URL链接、HTML标签以及不可见字符。', 'system', 'system'),
+    ('994c2833-c6df-8518-e150-880099880005', '多模态/CV模型训练预处理模板', '针对图像数据集处理。包含去除模糊/重复/相似图片，图片方向校正，目标检测预标注，以及尺寸和格式的统一化。', 'system', 'system')
 ON CONFLICT (id) DO NOTHING;
+
+-- Also update existing templates that may have empty created_by
+UPDATE t_clean_template SET created_by = 'system', updated_by = 'system' WHERE created_by IS NULL OR created_by = '';
 
 INSERT INTO t_operator_instance (instance_id, operator_id, op_index, settings_override)
 VALUES

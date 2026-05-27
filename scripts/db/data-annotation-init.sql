@@ -443,4 +443,9 @@ VALUES ('tpl-image-classification-001', '图像分类', '简单的多标签图�
     category = EXCLUDED.category,
     built_in = EXCLUDED.built_in,
     version = EXCLUDED.version,
+    created_by = COALESCE(EXCLUDED.created_by, 'system'),
+    updated_by = COALESCE(EXCLUDED.updated_by, 'system'),
     updated_at = CURRENT_TIMESTAMP;
+
+-- Ensure all annotation templates have created_by/updated_by set for data scope filtering
+UPDATE t_dm_annotation_templates SET created_by = 'system', updated_by = 'system' WHERE created_by IS NULL OR created_by = '';
