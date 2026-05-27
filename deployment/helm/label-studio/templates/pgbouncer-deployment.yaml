@@ -42,7 +42,14 @@ spec:
             - name: DB_USER
               value: {{ .Values.env.POSTGRE_USER | quote }}
             - name: DB_PASSWORD
+            {{- if .Values.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.existingSecret | quote }}
+                  key: POSTGRE_PASSWORD
+            {{- else }}
               value: {{ .Values.env.POSTGRE_PASSWORD | quote }}
+            {{- end }}
             - name: POOL_MODE
               value: {{ .Values.pgbouncer.poolMode | quote }}
             - name: MAX_CLIENT_CONN
