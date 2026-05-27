@@ -38,7 +38,7 @@ public:
       database: 1Gi
       operator: 1Gi
   secrets:
-    create: false  # Managed by SealedSecret (deployment/kubernetes/sealed-secrets/datamate.yaml)
+    create: false  # Managed by SealedSecret (deployment/kubernetes/sealed-secrets/)
     data:
       DB_PASSWORD: ""  # Set via secrets.yaml or --set
       CERT_PASS: ""    # Set via secrets.yaml for encrypted SSL keys
@@ -188,10 +188,7 @@ backend-python:
 gateway:
   env:
     - name: JWT_SECRET
-      valueFrom:
-        secretKeyRef:
-          name: datamate-conf
-          key: JWT_SECRET
+      value: ""  # Set via secrets.yaml or --set for production
     - name: datamate.jwt.enable
       value: *DATAMATE_JWT_ENABLE
     - name: OMS_AUTH_ENABLED
