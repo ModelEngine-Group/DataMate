@@ -188,7 +188,10 @@ backend-python:
 gateway:
   env:
     - name: JWT_SECRET
-      value: ""  # Set via secrets.yaml or --set for production
+      valueFrom:
+        secretKeyRef:
+          name: datamate-conf
+          key: JWT_SECRET
     - name: datamate.jwt.enable
       value: *DATAMATE_JWT_ENABLE
     - name: OMS_AUTH_ENABLED
