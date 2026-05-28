@@ -634,8 +634,8 @@ minio:
   image:
     tag: "RELEASE.2024-12-18T13-15-44Z"
     pullPolicy: IfNotPresent
-  accessKey: minioadmin
-  secretKey: minioadmin
+  accessKey: ""  # Set via secrets.yaml or --set
+  secretKey: ""  # Set via secrets.yaml or --set
   existingSecret: ""
   bucketName: "milvus-bucket"
   rootPath: file

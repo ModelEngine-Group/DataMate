@@ -192,3 +192,6 @@ Thumbs.db
 **/volumes/
 
 **/rag_storage/
+# Environment files - ignore local .env, but allow templates
+.env
+!.env.example

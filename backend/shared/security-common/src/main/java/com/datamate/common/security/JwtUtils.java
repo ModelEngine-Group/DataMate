@@ -16,7 +16,7 @@ import java.util.Map;
 @Component
 public class JwtUtils {
 
-    @Value("${jwt.secret:datamate-secret-key-for-jwt-token-generation}")
+    @Value("${datamate.jwt.secret}")
     private String secret;
 
     @Value("${jwt.expiration:86400}") // 24小时

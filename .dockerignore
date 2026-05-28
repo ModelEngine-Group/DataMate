@@ -1,0 +1,22 @@
+# Environment files (local dev only, never in images)
+**/.env
+!.env.example
+
+# Python
+**/__pycache__/
+**/*.pyc
+**/.venv/
+**/venv/
+
+# Logs
+**/logs/
+**/*.log
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Git
+.git/
+.gitignore

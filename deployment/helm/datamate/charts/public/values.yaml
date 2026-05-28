@@ -23,3 +23,6 @@ persistentVolumeClaim:
     log: 1Gi
     database: 1Gi
     operator: 1Gi
+
+secrets:
+  create: true  # Set to false when using Sealed Secrets

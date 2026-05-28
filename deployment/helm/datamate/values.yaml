@@ -38,9 +38,10 @@ public:
       database: 1Gi
       operator: 1Gi
   secrets:
+    create: false  # Managed by SealedSecret (deployment/kubernetes/sealed-secrets/)
     data:
-      DB_PASSWORD: "password"
-      CERT_PASS: ""
+      DB_PASSWORD: ""  # Set via secrets.yaml or --set
+      CERT_PASS: ""    # Set via secrets.yaml for encrypted SSL keys
       DOMAIN: ""
       HOME_PAGE_URL: ""
 
@@ -118,6 +119,11 @@ backend:
         secretKeyRef:
           name: datamate-conf
           key: DB_PASSWORD
+    - name: JWT_SECRET
+      valueFrom:
+        secretKeyRef:
+          name: datamate-conf
+          key: JWT_SECRET
     - name: datamate.rag.milvus-uri
       value: "http://milvus:19530"
     - name: datamate.jwt.enable
@@ -139,6 +145,10 @@ backend:
 
 backend-python:
   env:
+    - name: PGSQL_HOST
+      value: "datamate-database"
+    - name: PGSQL_PORT
+      value: "5432"
     - name: pgsql_password
       valueFrom:
         secretKeyRef:
@@ -148,6 +158,18 @@ backend-python:
       value: *DATAMATE_JWT_ENABLE
     - name: milvus_uri
       value: "http://milvus:19530"
+    - name: LABEL_STUDIO_USER_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: datamate-conf
+          key: LABEL_STUDIO_USER_TOKEN
+    - name: LABEL_STUDIO_USERNAME
+      value: "admin@demo.com"
+    - name: LABEL_STUDIO_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: datamate-conf
+          key: LABEL_STUDIO_PASSWORD
   volumes:
     - *datasetVolume
     - *flowVolume
@@ -166,7 +188,10 @@ backend-python:
 gateway:
   env:
     - name: JWT_SECRET
-      value: "default-insecure-key-change-in-production"
+      valueFrom:
+        secretKeyRef:
+          name: datamate-conf
+          key: JWT_SECRET
     - name: datamate.jwt.enable
       value: *DATAMATE_JWT_ENABLE
     - name: OMS_AUTH_ENABLED

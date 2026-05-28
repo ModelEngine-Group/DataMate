@@ -46,6 +46,7 @@ help:
 	@echo "  make install                        Install datamate + milvus (prompts for method)"
 	@echo "  make install INSTALLER=docker       Install using Docker Compose"
 	@echo "  make install INSTALLER=k8s          Install using Kubernetes/Helm"
+	@echo "  make install INSTALLER=k8s          (requires Sealed Secrets Controller)"
 	@echo "  make install-<component>            Install specific component (prompts)"
 	@echo "  make <component>-docker-install     Install component via Docker"
 	@echo "  make <component>-k8s-install        Install component via Kubernetes"
@@ -69,6 +70,7 @@ help:
 	@echo "  make download VERSION=<version>     Pull all images with specific version"
 	@echo "  make download REGISTRY=<registry>   Pull images from specific registry"
 	@echo "  make load-images                    Load all downloaded images from dist/"
+	@echo "  make download-sealed-secrets        Download Sealed Secrets image (for offline)"
 	@echo ""
 	@echo "Utility Commands:"
 	@echo "  make create-namespace          Create Kubernetes namespace"
@@ -254,6 +256,13 @@ VALID_SERVICE_TARGETS := datamate backend frontend runtime backend-python databa
 		done; \
 		exit 1; \
 	fi
+	@if [ ! -f deployment/docker/datamate/.env ]; then \
+		echo "ERROR: deployment/docker/datamate/.env not found."; \
+		echo "Create it from the template:"; \
+		echo "  cp deployment/docker/datamate/.env.example deployment/docker/datamate/.env"; \
+		echo "Then edit it with your actual passwords."; \
+		exit 1; \
+	fi
 	@if [ "$*" = "label-studio" ]; then \
 		REGISTRY=$(REGISTRY) docker compose -f deployment/docker/datamate/docker-compose.yml --profile label-studio up -d; \
 	elif [ "$*" = "datamate" ]; then \
@@ -326,18 +335,21 @@ VALID_K8S_TARGETS := datamate deer-flow milvus label-studio data-juicer mineru m
 		exit 1; \
 	fi
 	@if [ "$*" = "label-studio" ]; then \
+     	kubectl apply -f deployment/kubernetes/sealed-secrets/label-studio.yaml; \
      	helm upgrade label-studio deployment/helm/label-studio/ -n $(NAMESPACE) --install; \
     elif [ "$*" = "mineru" ] || [ "$*" = "mineru-910B" ] || [ "$*" = "mineru-910C" ]; then \
 		kubectl apply -f deployment/kubernetes/mineru/deploy-910.yaml -n $(NAMESPACE); \
 	elif [ "$*" = "mineru-310P" ]; then \
 		kubectl apply -f deployment/kubernetes/mineru/deploy-310.yaml -n $(NAMESPACE); \
 	elif [ "$*" = "datamate" ]; then \
-		helm upgrade datamate deployment/helm/datamate/ -n $(NAMESPACE) --install --set global.image.repository=$(REGISTRY); \
+		kubectl apply -f deployment/kubernetes/sealed-secrets/datamate.yaml; \
+		helm upgrade datamate deployment/helm/datamate/ -n $(NAMESPACE) --install --set global.image.repository=$(REGISTRY) --set public.secrets.create=false; \
 	elif [ "$*" = "deer-flow" ]; then \
 		cp runtime/deer-flow/.env deployment/helm/deer-flow/charts/public/.env; \
 		cp runtime/deer-flow/conf.yaml deployment/helm/deer-flow/charts/public/conf.yaml; \
 		helm upgrade deer-flow deployment/helm/deer-flow -n $(NAMESPACE) --install --set global.image.repository=$(REGISTRY); \
 	elif [ "$*" = "milvus" ]; then \
+		kubectl apply -f deployment/kubernetes/sealed-secrets/milvus.yaml; \
 		helm upgrade milvus deployment/helm/milvus -n $(NAMESPACE) --install; \
 	elif [ "$*" = "data-juicer" ] || [ "$*" = "dj" ]; then \
 		kubectl apply -f deployment/kubernetes/data-juicer/deploy.yaml -n $(NAMESPACE); \
@@ -470,6 +482,17 @@ DEER_FLOW_IMAGES := \
 .PHONY: download-deer-flow
 download-deer-flow:
 	$(MAKE) download DOWNLOAD_IMAGES="$(DEER_FLOW_IMAGES)"
+
+# Download Sealed Secrets controller image for offline/air-gapped environments
+SEALED_SECRETS_IMAGE := bitnami/sealed-secrets-controller:latest
+.PHONY: download-sealed-secrets
+download-sealed-secrets:
+	@echo "Pulling Sealed Secrets controller image..."
+	@mkdir -p dist
+	docker pull $(SEALED_SECRETS_IMAGE)
+	docker save $(SEALED_SECRETS_IMAGE) -o dist/sealed-secrets-controller.tar
+	@echo "✅ Saved to dist/sealed-secrets-controller.tar"
+	@echo "Transfer to offline environment and load with: docker load -i dist/sealed-secrets-controller.tar"
 
 # Load all downloaded images from dist/ directory
 .PHONY: load-images

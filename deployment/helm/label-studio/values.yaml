@@ -41,7 +41,7 @@ env:
   DJANGO_DB: "default"
   POSTGRE_NAME: "labelstudio"
   POSTGRE_USER: "postgres"
-  POSTGRE_PASSWORD: "password"
+  POSTGRE_PASSWORD: ""  # Set via secrets.yaml or --set
   POSTGRE_PORT: 5432
   POSTGRE_HOST: "datamate-database"
   LABEL_STUDIO_HOST: "" # can be overridden
@@ -49,10 +49,14 @@ env:
   LOCAL_FILES_DOCUMENT_ROOT: "/label-studio/local"
   USE_USERNAME_FOR_LOGIN: "true"
   LABEL_STUDIO_USERNAME: "admin@demo.com"
-  LABEL_STUDIO_PASSWORD: "demoadmin"
+  LABEL_STUDIO_PASSWORD: ""  # Set via secrets.yaml or --set
   LABEL_STUDIO_ENABLE_LEGACY_API_TOKEN: "true"
-  LABEL_STUDIO_USER_TOKEN: "abc123abc123"
+  LABEL_STUDIO_USER_TOKEN: ""  # Set via secrets.yaml or --set
   LOG_LEVEL: "DEBUG"
+
+# Use an existing K8s Secret instead of creating one from values.
+# Set to "label-studio-env" to use the SealedSecret-managed secret.
+existingSecret: "label-studio-env"
 
 persistence:
   enabled: true

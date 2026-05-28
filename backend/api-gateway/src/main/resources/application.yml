@@ -22,7 +22,7 @@ spring:
     driver-class-name: org.postgresql.Driver
     url: jdbc:postgresql://datamate-database:5432/datamate?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
     username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:password}
+    password: ${DB_PASSWORD}
     hikari:
       maximum-pool-size: 20
       minimum-idle: 5
