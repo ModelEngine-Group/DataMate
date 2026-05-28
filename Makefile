@@ -46,6 +46,7 @@ help:
 	@echo "  make install                        Install datamate + milvus (prompts for method)"
 	@echo "  make install INSTALLER=docker       Install using Docker Compose"
 	@echo "  make install INSTALLER=k8s          Install using Kubernetes/Helm"
+	@echo "  make install INSTALLER=k8s          (requires Sealed Secrets Controller)"
 	@echo "  make install-<component>            Install specific component (prompts)"
 	@echo "  make <component>-docker-install     Install component via Docker"
 	@echo "  make <component>-k8s-install        Install component via Kubernetes"
@@ -69,6 +70,7 @@ help:
 	@echo "  make download VERSION=<version>     Pull all images with specific version"
 	@echo "  make download REGISTRY=<registry>   Pull images from specific registry"
 	@echo "  make load-images                    Load all downloaded images from dist/"
+	@echo "  make download-sealed-secrets        Download Sealed Secrets image (for offline)"
 	@echo ""
 	@echo "Utility Commands:"
 	@echo "  make create-namespace          Create Kubernetes namespace"
@@ -480,6 +482,17 @@ DEER_FLOW_IMAGES := \
 .PHONY: download-deer-flow
 download-deer-flow:
 	$(MAKE) download DOWNLOAD_IMAGES="$(DEER_FLOW_IMAGES)"
+
+# Download Sealed Secrets controller image for offline/air-gapped environments
+SEALED_SECRETS_IMAGE := bitnami/sealed-secrets-controller:latest
+.PHONY: download-sealed-secrets
+download-sealed-secrets:
+	@echo "Pulling Sealed Secrets controller image..."
+	@mkdir -p dist
+	docker pull $(SEALED_SECRETS_IMAGE)
+	docker save $(SEALED_SECRETS_IMAGE) -o dist/sealed-secrets-controller.tar
+	@echo "✅ Saved to dist/sealed-secrets-controller.tar"
+	@echo "Transfer to offline environment and load with: docker load -i dist/sealed-secrets-controller.tar"
 
 # Load all downloaded images from dist/ directory
 .PHONY: load-images
