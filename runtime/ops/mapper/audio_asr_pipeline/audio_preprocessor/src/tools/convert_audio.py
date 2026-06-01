@@ -24,13 +24,6 @@ else:
 # 项目根目录：向上两级到 audio_preprocessor
 PROJECT_ROOT = CURRENT_DIR.parent.parent
 
-# 添加本地pydub库路径
-LOCAL_PYDUB_PATH = PROJECT_ROOT / "local_libs" / "pydub"
-if LOCAL_PYDUB_PATH.exists():
-    sys.path.insert(0, str(LOCAL_PYDUB_PATH))
-else:
-    print(f"[WARNING] 本地pydub库不存在: {LOCAL_PYDUB_PATH}", file=sys.stderr)
-
 # 导入颜色工具
 COLOR_UTILS_PATH = PROJECT_ROOT / "src" / "utils" / "color_utils.py"
 if COLOR_UTILS_PATH.exists():

@@ -10,10 +10,6 @@ from pathlib import Path
 from typing import List
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-_LOCAL_PYDUB = _PROJECT_ROOT / "local_libs" / "pydub"
-if _LOCAL_PYDUB.exists():
-    sys.path.insert(0, str(_LOCAL_PYDUB))
-
 try:
     from pydub import AudioSegment  # type: ignore
 except ImportError:
@@ -28,7 +24,7 @@ def split_one(
 ) -> int:
     """将单个文件切分，返回生成的片段数。"""
     if AudioSegment is None:
-        raise RuntimeError("请安装 pydub 或确保 local_libs/pydub 存在")
+        raise RuntimeError("请在 DataMate 运行环境安装 pydub")
     audio = AudioSegment.from_file(str(wav_path))
     duration_ms = len(audio)
     segment_ms = max(1, max_seconds) * 1000

@@ -1,7 +1,6 @@
 # -- encoding: utf-8 --
 
 import io
-import os
 import time
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
@@ -15,37 +14,11 @@ except ImportError:
     from audio_skip import invalid_quality_reason, is_audio_sample, mark_skipped_sample
 
 
-def _bundled_ffmpeg() -> Optional[str]:
-    package_root = Path(__file__).resolve().parent
-    ffmpeg_path = package_root / "bin" / "ffmpeg"
-    lib_path = package_root / "lib"
-    if not ffmpeg_path.exists():
-        return None
-    if lib_path.exists():
-        current = os.environ.get("LD_LIBRARY_PATH", "")
-        paths = [str(lib_path)]
-        if current:
-            paths.append(current)
-        os.environ["LD_LIBRARY_PATH"] = os.pathsep.join(paths)
-    try:
-        ffmpeg_path.chmod(0o755)
-    except Exception:
-        pass
-    return str(ffmpeg_path)
-
-
 def _load_audio_backend() -> Tuple[Optional[object], Optional[object]]:
     audiosegment = None
     sf = None
     try:
         from pydub import AudioSegment  # type: ignore
-
-        bundled = _bundled_ffmpeg()
-        if bundled:
-            AudioSegment.converter = bundled
-            AudioSegment.ffmpeg = bundled
-            os.environ["FFMPEG_BINARY"] = bundled
-
         audiosegment = AudioSegment
     except Exception:
         audiosegment = None

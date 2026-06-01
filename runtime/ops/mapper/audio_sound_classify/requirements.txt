@@ -1,8 +1,9 @@
-torch
-torchlibrosa
-timm
-librosa
-numpy
-soundfile
-scipy
-loguru
+torch==2.8.0
+torchlibrosa==0.0.4
+timm==1.0.26
+librosa==0.10.2.post1
+numpy==2.2.6
+soundfile==0.12.1
+scipy==1.13.1
+loguru==0.7.3
+panns-inference==0.1.1

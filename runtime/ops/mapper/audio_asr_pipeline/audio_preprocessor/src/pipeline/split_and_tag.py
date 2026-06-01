@@ -38,11 +38,6 @@ try:
 except Exception:
     parse_args_with_yaml_config = None  # type: ignore[assignment]
 
-# pydub
-_LOCAL_PYDUB = _PROJECT_ROOT / "local_libs" / "pydub"
-if _LOCAL_PYDUB.exists():
-    sys.path.insert(0, str(_LOCAL_PYDUB))
-
 DEFAULT_INPUT_DIR = _PROJECT_ROOT / "output_data" / "denoise"
 DEFAULT_OUTPUT_DIR = _PROJECT_ROOT / "output_data" / "split"
 DEFAULT_LIST_PATH = _PROJECT_ROOT / "output_data" / "lid" / "item_with_lang.list"
@@ -76,7 +71,7 @@ def _import_pydub():
         from pydub import AudioSegment  # type: ignore
         return AudioSegment
     except Exception as e:
-        raise RuntimeError(f"无法导入 pydub，请确认已安装或 local_libs/pydub 存在: {e}") from e
+        raise RuntimeError(f"无法导入 pydub，请在 DataMate 运行环境安装 pydub: {e}") from e
 
 
 def split_audio_to_segments(

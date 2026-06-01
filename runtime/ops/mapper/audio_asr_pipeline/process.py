@@ -208,7 +208,6 @@ class AudioAsrPipeline(Mapper):
             out_validation = work / "output_data" / "validation"
             models_link = work / "models"
             src_link = work / "src"
-            local_libs_link = work / "local_libs"
 
             input_dir.mkdir(parents=True, exist_ok=True)
             out_norm.mkdir(parents=True, exist_ok=True)
@@ -221,8 +220,6 @@ class AudioAsrPipeline(Mapper):
                 models_link.symlink_to(asr_model_root.parent, target_is_directory=True)
             if not src_link.exists():
                 src_link.symlink_to(ap_root / "src", target_is_directory=True)
-            if not local_libs_link.exists():
-                local_libs_link.symlink_to(ap_root / "local_libs", target_is_directory=True)
 
             # 复制输入音频到 pipeline 输入目录
             src_name = in_path.name

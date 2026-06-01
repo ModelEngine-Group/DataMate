@@ -3,7 +3,7 @@
 超快速中英语言识别（LID）
 
 读取 generate_audio_list.py 生成的 item.list(jsonl) 或直接扫描目录中的音频文件，
-使用 local_libs/speechbrain 的预训练 LID 模型做语言识别，并输出带 lang 字段的 jsonl。
+使用 DataMate 运行环境中的 SpeechBrain 预训练 LID 模型做语言识别，并输出带 lang 字段的 jsonl。
 
 设计目标：
 - 极快：默认只取音频前几秒做判断
@@ -85,12 +85,8 @@ def _project_root() -> Path:
 
 
 def _ensure_speechbrain_on_path() -> None:
-    """确保优先使用 local_libs 下的 speechbrain，而不是系统安装版本（若存在）。"""
-    local_speechbrain_root = _project_root() / "local_libs" / "speechbrain"
-    if local_speechbrain_root.exists():
-        p = str(local_speechbrain_root)
-        if p not in sys.path:
-            sys.path.insert(0, p)
+    """SpeechBrain is provided by the DataMate runtime environment."""
+    return None
 
 
 def _patch_yaml_loader_max_depth() -> None:

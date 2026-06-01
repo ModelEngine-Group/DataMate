@@ -261,13 +261,6 @@ import sys
 from pathlib import Path
 
 def main():
-    project_root = Path(__file__).parent.parent.parent
-    wenet_root = project_root / "local_libs" / "wenet"
-    if str(wenet_root) not in sys.path:
-        sys.path.insert(0, str(wenet_root))
-    wenet_module_path = wenet_root / "wenet"
-    if str(wenet_module_path) not in sys.path:
-        sys.path.insert(0, str(wenet_module_path))
     try:
         from wenet.bin.recognize import main as wenet_main
         wenet_main()

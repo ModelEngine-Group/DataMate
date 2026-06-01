@@ -5,7 +5,6 @@ from __future__ import annotations
 import csv
 import json
 import re
-import sys
 import tempfile
 import time
 from collections import defaultdict
@@ -188,11 +187,6 @@ def _load_tagger(checkpoint_path: Path, device: str):
     if cache_key in _MODEL_CACHE:
         return _MODEL_CACHE[cache_key]
 
-    package_root = _package_root()
-    panns_root = package_root / "local_libs" / "panns_inference"
-    if str(panns_root) not in sys.path:
-        sys.path.insert(0, str(panns_root))
-
     from panns_inference import AudioTagging  # type: ignore
     from panns_inference.config import classes_num  # type: ignore
     from panns_inference.models import Cnn14  # type: ignore
@@ -323,11 +317,10 @@ def _load_ast_model(checkpoint_path: Path, labels_count: int, device):
     cache_key = (str(checkpoint_path), str(device))
     if cache_key in _AST_MODEL_CACHE:
         return _AST_MODEL_CACHE[cache_key]
-    package_root = _package_root()
-    ast_root = package_root / "local_libs"
-    if str(ast_root) not in sys.path:
-        sys.path.insert(0, str(ast_root))
-    from ast_vendor import ASTConfig, load_ast_from_pth  # type: ignore
+    try:
+        from .ast_vendor import ASTConfig, load_ast_from_pth  # type: ignore
+    except ImportError:
+        from ast_vendor import ASTConfig, load_ast_from_pth  # type: ignore
 
     cfg = ASTConfig(label_dim=int(labels_count), input_fdim=128, input_tdim=1024, fstride=10, tstride=10, model_size="base384")
     model = load_ast_from_pth(checkpoint_path=str(checkpoint_path), device=device, cfg=cfg)
@@ -467,7 +460,7 @@ class AudioSoundClassify(Mapper):
                 checkpoint_path = _resolve_path(self.ast_checkpoint, Path(DEFAULT_AST_CHECKPOINT))
                 labels_csv = _resolve_path(
                     self.labels_csv,
-                    package_root / "local_libs" / "audioset_tagging_cnn" / "metadata" / "class_labels_indices.csv",
+                    package_root / "models" / "recog" / "class_labels_indices.csv",
                 )
                 macro_map_path = _resolve_path(
                     self.ast_macro_map,

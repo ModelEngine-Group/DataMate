@@ -79,26 +79,12 @@ class ConvertSpec:
             raise ValueError(f"采样位宽必须是1-4字节，当前: {self.sample_width_bytes}")
 
 
-def _repo_root() -> Path:
-    # audio_preprocessor/audio_convert/cli.py -> audio_preprocessor/
-    return Path(__file__).resolve().parents[1]
-
-
-def _import_local_pydub():
-    """
-    Prefer the repo-local pydub clone at audio_preprocessor/pydub over any site-packages install.
-    """
-    root = _repo_root()
-    local_pydub = root.parent / "local_libs" / "pydub"
-    if local_pydub.is_dir():
-        sys.path.insert(0, str(local_pydub))
+def _import_pydub():
+    """Import pydub from the DataMate runtime environment."""
     try:
         from pydub import AudioSegment  # type: ignore
     except Exception as e:  # pragma: no cover
-        raise RuntimeError(
-            "无法导入 pydub。请确认本地目录存在："
-            f"{local_pydub}，或已安装 pydub。原始错误：{e}"
-        ) from e
+        raise RuntimeError(f"无法导入 pydub，请在 DataMate 运行环境安装 pydub。原始错误：{e}") from e
     return AudioSegment
 
 
@@ -348,7 +334,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 print(info("用户取消操作，程序结束"))
                 return 0
 
-    AudioSegment = _import_local_pydub()
+    AudioSegment = _import_pydub()
     spec = ConvertSpec(args.config)
     
     success_count = 0

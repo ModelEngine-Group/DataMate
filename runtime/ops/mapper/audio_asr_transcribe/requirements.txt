@@ -1,6 +1,6 @@
-torch
-torchaudio
-numpy
-pyyaml
-sentencepiece
-loguru
+torch==2.8.0
+torchaudio==2.8.0
+numpy==2.2.6
+PyYAML==6.0.2
+sentencepiece==0.2.1
+loguru==0.7.3

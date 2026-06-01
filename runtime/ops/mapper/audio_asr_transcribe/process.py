@@ -324,12 +324,8 @@ class AudioAsrTranscribe(Mapper):
 
         helper_root = _helper_root()
         run_wenet = helper_root / "src" / "utils" / "run_wenet.py"
-        wenet_root = helper_root / "local_libs" / "wenet"
         if not run_wenet.exists():
             raise FileNotFoundError(f"WeNet 包装器不存在: {run_wenet}")
-        if not (wenet_root / "wenet").exists():
-            raise FileNotFoundError(f"WeNet Python 包不存在: {wenet_root / 'wenet'}")
-
         actual_language = _resolve_language(self.language, sample, self.ext_params_key)
         model_dir = _model_dir(actual_language, self.zh_model_dir, self.en_model_dir)
         config_path = model_dir / "train.yaml"
@@ -392,11 +388,10 @@ class AudioAsrTranscribe(Mapper):
                 str(result_dir),
             ]
             env = dict(**os.environ)
-            env["PYTHONPATH"] = str(wenet_root) + (":" + env["PYTHONPATH"] if env.get("PYTHONPATH") else "")
             proc = subprocess.run(
                 cmd,
                 cwd=str(wenet_cwd),
-                env=env,
+                env=dict(**os.environ),
                 text=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,

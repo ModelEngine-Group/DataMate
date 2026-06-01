@@ -22,12 +22,8 @@ from typing import Iterable, List, Optional, Tuple
 import numpy as np
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-GTCRN_ROOT = PROJECT_ROOT / "local_libs" / "gtcrn"
-GTCRN_STREAM_ROOT = GTCRN_ROOT / "stream"
 
 sys.path.insert(0, str(PROJECT_ROOT / "src" / "utils"))
-sys.path.insert(0, str(GTCRN_STREAM_ROOT))
-sys.path.insert(0, str(GTCRN_ROOT))
 
 try:
     from color_utils import info, warning, error, ok, success, header  # type: ignore
@@ -215,60 +211,8 @@ def _resolve_model(model: Path, export_dir: Optional[Path] = None) -> Path:
     if model.suffix.lower() == ".onnx":
         return model
     if model.suffix.lower() in {".tar", ".pt", ".pth"}:
-        if export_dir is None:
-            raise RuntimeError(
-                "当前给的是 PyTorch 权重，但未指定 ONNX 导出目录。"
-                "请先把模型导出为 onnx，或传入 --export_dir。"
-            )
-        export_dir.mkdir(parents=True, exist_ok=True)
-        export_path = export_dir / "gtcrn.onnx"
-        if export_path.exists():
-            return export_path
-        _export_onnx_from_torch(model, export_path)
-        return export_path
+        raise RuntimeError("算子不再打包 GTCRN 源码，请预先导出 ONNX 并把 --model 指向 .onnx 文件。")
     raise ValueError(f"不支持的模型格式: {model.suffix}")
-
-
-def _export_onnx_from_torch(weight_path: Path, export_path: Path) -> None:
-    """
-    从本地 torch 权重导出 GTCRN ONNX。
-    依赖 local_libs/gtcrn 的 GTCRN/StreamGTCRN 和 convert_to_stream。
-    """
-    try:
-        import torch  # type: ignore
-    except Exception as e:
-        raise RuntimeError("导出 ONNX 需要 PyTorch") from e
-
-    # 动态导入 GTCRN 实现
-    from gtcrn import GTCRN  # type: ignore
-    from stream.gtcrn import StreamGTCRN  # type: ignore
-    from stream.modules.convert import convert_to_stream  # type: ignore
-
-    device = torch.device("cpu")
-    model = GTCRN().to(device).eval()
-    ckpt = torch.load(str(weight_path), map_location=device)
-    state = ckpt["model"] if isinstance(ckpt, dict) and "model" in ckpt else ckpt
-    model.load_state_dict(state, strict=False)
-
-    stream_model = StreamGTCRN().to(device).eval()
-    convert_to_stream(stream_model, model)
-
-    input_spec = torch.randn(1, 257, 1, 2, device=device)
-    conv_cache = torch.zeros(2, 1, 16, 16, 33, device=device)
-    tra_cache = torch.zeros(2, 3, 1, 1, 16, device=device)
-    inter_cache = torch.zeros(2, 1, 33, 16, device=device)
-
-    print_info(f"导出 ONNX: {export_path}")
-    torch.onnx.export(
-        stream_model,
-        (input_spec, conv_cache, tra_cache, inter_cache),
-        str(export_path),
-        input_names=["mix", "conv_cache", "tra_cache", "inter_cache"],
-        output_names=["enh", "conv_cache_out", "tra_cache_out", "inter_cache_out"],
-        opset_version=11,
-        verbose=False,
-    )
-    print_ok(f"ONNX 导出完成: {export_path}")
 
 
 def process_one(input_file: Path, output_file: Path, denoiser: OnnxGtcrnDenoiser) -> None:
@@ -346,4 +290,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
