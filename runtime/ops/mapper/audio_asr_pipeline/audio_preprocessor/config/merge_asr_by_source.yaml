@@ -1,0 +1,6 @@
+merge_asr_by_source:
+  list_file: "output_data/split/item_with_lang.list"
+  zh_text: "output_data/asr/zh/ctc_greedy_search/text"
+  en_text: "output_data/asr/en/ctc_greedy_search/text"
+  output: "output_data/asr/merged_text.txt"
+

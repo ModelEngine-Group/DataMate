@@ -1,0 +1,42 @@
+name: 'audioUtils-整段RMS归一 + 峰值顶限'
+name_en: 'audioUtils-RMS Loudness Normalize'
+description: '将整段 RMS 对齐到目标，再按峰值顶限缩放。处理音频并由 DataMate 统一导出结果。'
+description_en: 'Normalize full-utterance RMS to target and apply peak ceiling. Process audio and let DataMate export the result.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'AudioRmsLoudnessNormalize'
+version: '1.0.0'
+types:
+  - 'cleaning'
+modal: 'audio'
+inputs: 'audio'
+outputs: 'audio'
+settings:
+  targetRms:
+    name: '目标RMS'
+    type: 'slider'
+    description: '线性 RMS（0~1），越大越响。'
+    defaultVal: 0.08
+    min: 0.001
+    max: 0.5
+    step: 0.001
+  peakCeiling:
+    name: '峰值顶限'
+    type: 'slider'
+    description: '峰值限制（0~1）。'
+    defaultVal: 0.99
+    min: 0.1
+    max: 1
+    step: 0.01
+runtime:
+  memory: 104857600
+  cpu: 0.12
+  gpu: 0
+  npu: 0
+  storage: 10MB
+
+metrics:
+  - name: '处理耗时'
+    metric: '依输入音频长度与运行环境而定'
+release:
+  - '首次发布'

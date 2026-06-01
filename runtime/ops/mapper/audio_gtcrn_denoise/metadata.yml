@@ -1,0 +1,32 @@
+name: 'audioOps-GTCRN 智能降噪'
+name_en: 'audioOps-GTCRN Denoise'
+description: '调用 audio_preprocessor 的 GTCRN ONNX 降噪工具对音频降噪；由 DataMate 统一导出结果。'
+description_en: 'Run GTCRN ONNX denoiser from audio_preprocessor; DataMate exports the result.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'AudioGtcrnDenoise'
+version: '1.0.0'
+types:
+  - 'cleaning'
+modal: 'audio'
+inputs: 'audio'
+outputs: 'audio'
+settings:
+  modelPath:
+    name: 'GTCRN 模型路径'
+    description: 'GTCRN ONNX 模型绝对路径（.onnx）。默认使用固定部署路径 /models/AudioOperations/gtcrn/gtcrn.onnx。'
+    type: 'input'
+    defaultVal: '/models/AudioOperations/gtcrn/gtcrn.onnx'
+    required: false
+runtime:
+  memory: 2147483648
+  cpu: 0.5
+  gpu: 0
+  npu: 0
+  storage: 10MB
+
+metrics:
+  - name: '处理耗时'
+    metric: '依输入音频长度与运行环境而定'
+release:
+  - '首次发布'

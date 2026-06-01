@@ -1,0 +1,133 @@
+{
+  "HumanSpeech": [
+    "Speech",
+    "Male speech, man speaking",
+    "Female speech, woman speaking",
+    "Child speech, kid speaking",
+    "Conversation",
+    "Narration, monologue",
+    "Whispering",
+    "Shout",
+    "Yell",
+    "Screaming",
+    "Laughter",
+    "Crying, sobbing",
+    "Singing",
+    "Rapping",
+    "Humming",
+    "Breathing",
+    "Cough",
+    "Sneeze"
+  ],
+  "Music": [
+    "Music",
+    "Musical instrument",
+    "Vocal music",
+    "Song",
+    "Background music",
+    "Electronic music",
+    "Rock music",
+    "Classical music",
+    "Jazz",
+    "Hip hop music",
+    "Techno",
+    "House music",
+    "Dance music"
+  ],
+  "Animal": [
+    "Animal",
+    "Domestic animals, pets",
+    "Dog",
+    "Cat",
+    "Bird",
+    "Insect",
+    "Livestock, farm animals, working animals"
+  ],
+  "Vehicle": [
+    "Vehicle",
+    "Car",
+    "Truck",
+    "Bus",
+    "Train",
+    "Aircraft",
+    "Motorcycle",
+    "Traffic noise, roadway noise",
+    "Vehicle horn, car horn, honking"
+  ],
+  "EngineMachinery": [
+    "Engine",
+    "Idling",
+    "Accelerating, revving, vroom",
+    "Medium engine (mid frequency)",
+    "Heavy engine (low frequency)",
+    "Mechanical fan",
+    "Air conditioning",
+    "Vacuum cleaner",
+    "Tools",
+    "Power tool",
+    "Drill",
+    "Jackhammer"
+  ],
+  "AlarmSiren": [
+    "Siren",
+    "Buzzer",
+    "Alarm",
+    "Car alarm",
+    "Fire alarm",
+    "Smoke detector, smoke alarm",
+    "Telephone bell ringing",
+    "Ringtone"
+  ],
+  "ImpactClatter": [
+    "Clang",
+    "Clatter",
+    "Chink, clink",
+    "Ding",
+    "Bang",
+    "Smash, crash",
+    "Breaking",
+    "Door",
+    "Doorbell",
+    "Knock",
+    "Tap"
+  ],
+  "GunshotExplosion": [
+    "Explosion",
+    "Gunshot, gunfire",
+    "Machine gun",
+    "Fireworks",
+    "Firecracker"
+  ],
+  "Crowd": [
+    "Crowd",
+    "Chatter",
+    "Cheering",
+    "Applause",
+    "Hubbub, speech noise, speech babble",
+    "Cacophony"
+  ],
+  "WindWater": [
+    "Wind",
+    "Wind noise (microphone)",
+    "Thunderstorm",
+    "Thunder",
+    "Water",
+    "Rain",
+    "Waves, surf",
+    "Stream",
+    "Waterfall"
+  ],
+  "Silence": [
+    "Silence"
+  ],
+  "Noise": [
+    "Noise",
+    "Environmental noise",
+    "Static",
+    "Mains hum",
+    "White noise",
+    "Pink noise",
+    "Distortion"
+  ]
+}
+

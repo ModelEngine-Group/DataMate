@@ -1,0 +1,119 @@
+name: 'audioOps-ASR文本概括'
+name_en: 'audioOps-ASR Text Summarization'
+description: '对 ASR 转写文本做高保真抽取式概括，保留原文关键信息；可选使用本地 ONNX embedding 模型辅助选片。'
+description_en: 'Summarize ASR transcript text with a high-fidelity extractive method; optionally use a local ONNX embedding model for span selection.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'AudioTextSummarize'
+version: '1.0.0'
+types:
+  - 'annotation'
+modal: 'text'
+inputs: 'text'
+outputs: 'text'
+settings:
+  method:
+    name: '概括方法'
+    description: 'extractive 为轻量抽取式；bert_onnx 使用本地 ONNX embedding 模型选择代表片段。'
+    type: 'select'
+    defaultVal: 'extractive'
+    required: true
+    options:
+      - label: 'extractive'
+        value: 'extractive'
+      - label: 'bert_onnx'
+        value: 'bert_onnx'
+  maxSummaryCharsZh:
+    name: '中文最大字数'
+    type: 'inputNumber'
+    description: '中文摘要最大字符数，0 表示不限制。'
+    defaultVal: 40
+    min: 0
+    max: 500
+    step: 1
+  maxSummaryWordsEn:
+    name: '英文最大词数'
+    type: 'inputNumber'
+    description: '英文摘要最大词数，0 表示不限制。'
+    defaultVal: 18
+    min: 0
+    max: 200
+    step: 1
+  minSummaryWordsEn:
+    name: '英文最小词数'
+    type: 'inputNumber'
+    description: '抽取式英文滑窗搜索的最小词数。'
+    defaultVal: 8
+    min: 1
+    max: 200
+    step: 1
+  lineMode:
+    name: '行解析模式'
+    description: 'single 将全文当作一条；tab 解析 key<TAB>text；space 解析 key text；auto 仅在每行含 TAB 时解析。'
+    type: 'select'
+    defaultVal: 'single'
+    required: true
+    options:
+      - label: 'single'
+        value: 'single'
+      - label: 'auto'
+        value: 'auto'
+      - label: 'tab'
+        value: 'tab'
+      - label: 'space'
+        value: 'space'
+  preserveKeys:
+    name: '保留 key'
+    type: 'switch'
+    description: '解析多行 key 文本时，输出是否保留 key。'
+    defaultVal: 'true'
+    required: false
+    checkedLabel: '保留'
+    unCheckedLabel: '不保留'
+  onnxModelDir:
+    name: 'ONNX 模型目录'
+    description: 'bert_onnx 方法使用，目录需包含 model.onnx 与 tokenizer 文件。'
+    type: 'input'
+    defaultVal: '/models/AudioOperations/summary/summary-model'
+    required: false
+  providersPriority:
+    name: 'ONNX Provider 优先级'
+    description: '逗号分隔，例如 CANNExecutionProvider,CPUExecutionProvider。'
+    type: 'input'
+    defaultVal: 'CANNExecutionProvider,CPUExecutionProvider'
+    required: false
+  cpuThreads:
+    name: 'CPU 线程数'
+    type: 'inputNumber'
+    description: '限制 jieba/BLAS/onnxruntime 线程数。'
+    defaultVal: 4
+    min: 1
+    max: 64
+    step: 1
+  maxWindows:
+    name: '最大候选片段数'
+    type: 'inputNumber'
+    description: 'bert_onnx 方法最多编码的候选片段数。'
+    defaultVal: 96
+    min: 1
+    max: 512
+    step: 1
+  keepOriginalInExt:
+    name: 'ext 保留原文'
+    type: 'switch'
+    description: '是否在 ext_params 明细中保留原始文本。'
+    defaultVal: 'false'
+    required: false
+    checkedLabel: '保留'
+    unCheckedLabel: '不保留'
+runtime:
+  memory: 2147483648
+  cpu: 0.5
+  gpu: 0
+  npu: 0
+  storage: 10MB
+metrics:
+  - name: '摘要方式'
+    metric: '抽取式概括，优先保留原文连续片段'
+release:
+  - '首次发布，支持 ASR 文本单条/多行概括'

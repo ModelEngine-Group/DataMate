@@ -1,0 +1,6 @@
+eval_wer:
+  zh_ref: "input_data/validation/zh_transcript.txt"
+  en_ref: "input_data/validation/en_transcript.txt"
+  hyp: "output_data/asr/merged_text.txt"
+  work_dir: "output_data/validation"
+

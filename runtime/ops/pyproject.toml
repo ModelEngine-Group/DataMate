@@ -135,6 +135,7 @@ dependencies = [
     "paddlepaddle==3.2.2",
     "paddlex==3.3.6",
     "pandas==2.3.3",
+    "panns-inference==0.1.1",
     "pdf2image==1.17.0",
     "pdfminer.six==20251230",
     "pdfplumber==0.11.9",
