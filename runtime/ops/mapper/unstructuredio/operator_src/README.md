@@ -39,11 +39,7 @@
 
 ## 验证
 
-本地单测：
-
-```bash
-python -m pytest operator_src/tests -q
-```
+本目录不随交付提交开发期单测代码；验收测试样例保留在上一级 `test_cases/` 目录。
 
 验收环境自检：
 
