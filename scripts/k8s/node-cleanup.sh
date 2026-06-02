@@ -17,6 +17,7 @@ NC='\033[0m' # No Color
 
 # Default values
 DRY_RUN=false
+NAMESPACE="datamate"
 SELECTED_NODES_FILE="/tmp/datamate-selected-nodes.txt"
 LABEL_KEY="node-role.kubernetes.io/datamate"
 LABEL_VALUE="true"
@@ -26,6 +27,10 @@ TAINT_APPLIED=false
 # Parse arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
+        --namespace)
+            NAMESPACE="$2"
+            shift 2
+            ;;
         --dry-run)
             DRY_RUN=true
             shift
