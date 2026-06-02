@@ -245,8 +245,13 @@ read_key() {
         key="${key}${key2}"
     fi
 
-    # Restore terminal settings
+    # Restore terminal settings BEFORE processing
     stty "$old_stty" 2>/dev/null || true
+    
+    # In raw mode, Enter produces \r (carriage return), convert to \n for easier matching
+    if [ "$key" = $'\x0d' ]; then
+        key=$'\x0a'
+    fi
 
     echo "$key"
 }
