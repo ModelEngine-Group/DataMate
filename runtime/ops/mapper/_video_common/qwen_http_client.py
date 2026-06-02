@@ -4,10 +4,18 @@ import json
 import cv2
 import requests
 
+
+DEFAULT_QWEN_VL_ENDPOINT = "http://qwen-vl-service:18080"
+
+
+def resolve_qwenvl_service_url(service_url: str | None = None) -> str:
+    return (service_url or os.getenv("QWEN_VL_ENDPOINT") or DEFAULT_QWEN_VL_ENDPOINT).rstrip("/")
+
+
 def qwenvl_infer_by_image_path(
     image_path: str,
     task: str,
-    service_url: str = "http://127.0.0.1:18080",
+    service_url: str | None = None,
     max_new_tokens: int = 64,
     language: str = "zh",
     style: str = "normal",
@@ -30,9 +38,40 @@ def qwenvl_infer_by_image_path(
         "language": language,
         "style": style,
     }
-    r = sess.post(service_url.rstrip("/") + "/infer", json=payload, timeout=timeout)
+    service_url = resolve_qwenvl_service_url(service_url)
+    r = sess.post(service_url + "/infer", json=payload, timeout=timeout)
     r.raise_for_status()
-    return r.json()
+    data = r.json()
+    if data.get("error"):
+        reason = str(data.get("reason", data["error"]))
+        raise RuntimeError(f"QwenVL infer failed for task={task}: {reason}")
+    return data
+
+
+def qwenvl_correct_subtitle_srt(
+    srt_text: str,
+    service_url: str | None = None,
+    language: str = "auto",
+    max_new_tokens: int = 1024,
+    timeout: int = 180,
+):
+    sess = requests.Session()
+    sess.trust_env = False
+
+    payload = {
+        "task": "subtitle_correct",
+        "srt_text": str(srt_text or ""),
+        "language": language,
+        "max_new_tokens": int(max_new_tokens),
+    }
+    service_url = resolve_qwenvl_service_url(service_url)
+    r = sess.post(service_url + "/text", json=payload, timeout=timeout)
+    r.raise_for_status()
+    data = r.json()
+    if data.get("error"):
+        reason = str(data.get("reason", data["error"]))
+        raise RuntimeError(f"QwenVL subtitle correction failed: {reason}")
+    return data
 
 def save_frame_to_jpg(frame_bgr, out_path: str):
     os.makedirs(os.path.dirname(out_path), exist_ok=True)

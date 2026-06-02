@@ -8,7 +8,24 @@ def get_model_root(params=None) -> str:
       3) 默认 /mnt/models
     """
     params = params or {}
-    return params.get("model_root") or os.environ.get("DATAMATE_MODEL_ROOT") or "/mnt/models"
+    if params.get("model_root"):
+        return params["model_root"]
+
+    env_root = os.environ.get("DATAMATE_MODEL_ROOT")
+    if env_root:
+        return env_root
+
+    for candidate in (
+        "/models/VideoOps",
+        "/model/VideoOps",
+        "/models",
+        "/model",
+        "/mnt/models",
+    ):
+        if os.path.exists(candidate):
+            return candidate
+
+    return "/mnt/models"
 
 
 def resolve_model_path(params, param_key: str, default_rel: str) -> str:

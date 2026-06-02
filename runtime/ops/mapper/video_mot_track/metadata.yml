@@ -1,7 +1,7 @@
-name: '多目标跟踪'
+name: '视频多目标跟踪'
 name_en: 'Video MOT Track'
-description: '基于检测+跟踪生成轨迹文件 tracks.json，并输出 debug.mp4 用于可视化验收。'
-description_en: 'Run detection+tracking to generate tracks.json and debug.mp4 for visualization.'
+description: '使用 YOLO + ByteTrack 生成 tracks.json，并可输出可视化 debug.mp4。'
+description_en: 'Run YOLO + ByteTrack to generate tracks.json and optional debug.mp4.'
 language: 'python'
 vendor: 'huawei'
 raw_id: 'VideoMotTrack'
@@ -14,3 +14,54 @@ effect:
   after: ''
 inputs: 'video'
 outputs: 'text'
+settings:
+  model_root:
+    name: '模型根目录'
+    description: '可选，覆盖容器中的 DATAMATE_MODEL_ROOT。'
+    type: 'input'
+    defaultVal: ''
+    required: false
+  yolo_model:
+    name: 'YOLO 权重路径'
+    description: '相对 model_root 或绝对路径。'
+    type: 'input'
+    defaultVal: 'yolo/yolov8n.pt'
+    required: false
+  conf:
+    name: '检测阈值'
+    description: 'YOLO 检测置信度阈值。'
+    type: 'slider'
+    defaultVal: 0.3
+    required: false
+    min: 0.05
+    max: 0.9
+    step: 0.05
+  iou:
+    name: 'IOU 阈值'
+    description: 'YOLO NMS IOU 阈值。'
+    type: 'slider'
+    defaultVal: 0.5
+    required: false
+    min: 0.1
+    max: 0.9
+    step: 0.05
+  classes:
+    name: '类别过滤'
+    description: '可选，逗号分隔类别 id，如 0,2,3。'
+    type: 'input'
+    defaultVal: ''
+    required: false
+  save_debug:
+    name: '输出调试视频'
+    description: '是否输出带框的 debug.mp4。'
+    type: 'switch'
+    defaultVal: 'true'
+    required: false
+    checkedLabel: '输出'
+    unCheckedLabel: '不输出'
+  tracker_cfg:
+    name: 'Tracker 配置路径'
+    description: '可选，自定义 bytetrack 配置文件路径。'
+    type: 'input'
+    defaultVal: ''
+    required: false
