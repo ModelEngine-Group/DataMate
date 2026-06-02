@@ -1,3 +1,7 @@
+# Independent service production dependencies aligned with 910b-jss huizhi:test-v018.
+# Base image: quay.io/ascend/vllm-ascend:v0.18.0rc1
+# Python: 3.11.14, CANN: 8.5.1
+# Do not put these into the DataMate operator_src/requirements.txt.
 fastapi==0.123.10
 uvicorn==0.42.0
 pydantic==2.12.5

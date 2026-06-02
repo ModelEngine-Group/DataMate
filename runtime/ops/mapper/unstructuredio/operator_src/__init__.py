@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
 
-from datamate.core.base_op import OPERATORS
+try:
+    from datamate.core.base_op import OPERATORS
+except ImportError:
+    OPERATORS = None
 
-OPERATORS.register_module(
-    module_name="UnstructuredIOMapper",
-    module_path="ops.user.unstructuredio.process",
-)
+if OPERATORS is not None:
+    OPERATORS.register_module(
+        module_name="UnstructuredIOMapper",
+        module_path="ops.user.unstructuredio.process",
+    )
