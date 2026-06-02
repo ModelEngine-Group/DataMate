@@ -74,6 +74,8 @@ help:
 	@echo ""
 	@echo "Utility Commands:"
 	@echo "  make create-namespace          Create Kubernetes namespace"
+	@echo "  make node-setup               Configure dedicated nodes interactively"
+	@echo "  make node-cleanup             Remove node labels and taints"
 	@echo "  make help                      Show this help message"
 	@echo ""
 	@echo "Examples:"
@@ -193,6 +195,26 @@ build: database-docker-build gateway-docker-build backend-docker-build frontend-
 .PHONY: create-namespace
 create-namespace:
 	kubectl get namespace $(NAMESPACE) > /dev/null 2>&1 || kubectl create namespace $(NAMESPACE)
+
+# ========== Node Setup/Cleanup Targets ==========
+
+.PHONY: node-setup
+node-setup:
+	@echo "Configure dedicated nodes for DataMate deployment?"
+	@echo "This will apply labels and optional taints to selected nodes."
+	@echo "1. Yes - Configure nodes interactively"
+	@echo "2. No - Use default scheduling"
+	@echo -n "Enter choice (default: 2): "
+	@read NODE_SETUP_CHOICE; \
+	if [ "$$NODE_SETUP_CHOICE" = "1" ]; then \
+		chmod +x scripts/k8s/node-setup.sh; \
+		./scripts/k8s/node-setup.sh --namespace $(NAMESPACE); \
+	fi
+
+.PHONY: node-cleanup
+node-cleanup:
+	@chmod +x scripts/k8s/node-cleanup.sh
+	@./scripts/k8s/node-cleanup.sh --namespace $(NAMESPACE)
 
 # ========== Generic Install/Uninstall Targets (Redirect to prompt-installer) ==========
 
@@ -342,8 +364,18 @@ VALID_K8S_TARGETS := datamate deer-flow milvus label-studio data-juicer mineru m
 	elif [ "$*" = "mineru-310P" ]; then \
 		kubectl apply -f deployment/kubernetes/mineru/deploy-310.yaml -n $(NAMESPACE); \
 	elif [ "$*" = "datamate" ]; then \
+		echo ""; \
+		chmod +x scripts/k8s/node-setup.sh; \
+		./scripts/k8s/node-setup.sh --namespace $(NAMESPACE); \
+		if [ -f /tmp/datamate-helm-args.sh ]; then \
+			source /tmp/datamate-helm-args.sh; \
+		fi; \
 		kubectl apply -f deployment/kubernetes/sealed-secrets/datamate.yaml; \
-		helm upgrade datamate deployment/helm/datamate/ -n $(NAMESPACE) --install --set global.image.repository=$(REGISTRY) --set public.secrets.create=false; \
+		if [ -n "$$HELM_NODE_SELECTOR_ARGS" ] || [ -n "$$HELM_TOLERATIONS_ARGS" ]; then \
+			helm upgrade datamate deployment/helm/datamate/ -n $(NAMESPACE) --install --set global.image.repository=$(REGISTRY) --set public.secrets.create=false $$HELM_NODE_SELECTOR_ARGS $$HELM_TOLERATIONS_ARGS; \
+		else \
+			helm upgrade datamate deployment/helm/datamate/ -n $(NAMESPACE) --install --set global.image.repository=$(REGISTRY) --set public.secrets.create=false; \
+		fi; \
 	elif [ "$*" = "deer-flow" ]; then \
 		cp runtime/deer-flow/.env deployment/helm/deer-flow/charts/public/.env; \
 		cp runtime/deer-flow/conf.yaml deployment/helm/deer-flow/charts/public/conf.yaml; \
@@ -371,6 +403,12 @@ VALID_K8S_TARGETS := datamate deer-flow milvus label-studio data-juicer mineru m
 	elif [ "$*" = "mineru-310P" ]; then \
 		kubectl delete -f deployment/kubernetes/mineru/deploy-310.yaml -n $(NAMESPACE); \
 	elif [ "$*" = "datamate" ]; then \
+		echo ""; \
+		echo "Remove node configuration (labels/taints)? (y/n) [n]"; \
+		read -p "> " CLEANUP_NODES; \
+		if [ "$$CLEANUP_NODES" = "y" ] || [ "$$CLEANUP_NODES" = "Y" ]; then \
+			$(MAKE) node-cleanup; \
+		fi; \
 		helm uninstall datamate -n $(NAMESPACE) --ignore-not-found; \
 	elif [ "$*" = "deer-flow" ]; then \
 		helm uninstall deer-flow -n $(NAMESPACE) --ignore-not-found; \

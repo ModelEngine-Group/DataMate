@@ -4,6 +4,18 @@
 
 global:
   namespace: datamate
+  # Default nodeSelector for all pods in datamate namespace
+  # Override in subchart values.yaml if needed for specific services
+  nodeSelector: {}
+    # Example: To schedule pods on nodes with specific labels
+    # node-role.kubernetes.io/datamate: "true"
+  # Default tolerations for all pods (used when nodes have taints)
+  tolerations: []
+    # Example: To tolerate taints on dedicated nodes
+    # - key: "node-role.kubernetes.io/datamate"
+    #   operator: "Equal"
+    #   value: "true"
+    #   effect: "NoSchedule"
   image:
     repository: "ghcr.io/modelengine-group/"
     pullPolicy: "IfNotPresent"
@@ -71,6 +83,8 @@ operatorVolume: &operatorVolume
     claimName: datamate-operator-pvc
 
 database:
+  nodeSelector: {}
+  tolerations: []
   initContainers:
     - name: init-chown
       imagePullPolicy: IfNotPresent
@@ -109,6 +123,8 @@ database:
       subPath: database
 
 backend:
+  nodeSelector: {}
+  tolerations: []
   securityContext:
     capabilities:
       add:
@@ -144,6 +160,8 @@ backend:
       mountPath: /operators
 
 backend-python:
+  nodeSelector: {}
+  tolerations: []
   env:
     - name: PGSQL_HOST
       value: "datamate-database"
@@ -186,6 +204,8 @@ backend-python:
       mountPath: /operators
 
 gateway:
+  nodeSelector: {}
+  tolerations: []
   env:
     - name: JWT_SECRET
       valueFrom:
@@ -204,6 +224,8 @@ gateway:
       subPath: gateway
 
 frontend:
+  nodeSelector: {}
+  tolerations: []
   service:
     type: NodePort
     nodePort: 30000
@@ -234,6 +256,8 @@ frontend:
       mountPath: /cert
 
 runtime:
+  nodeSelector: {}
+  tolerations: []
   enabled: false
   args: &runtimeArgs
     - python
@@ -279,6 +303,8 @@ runtime:
 ray-cluster:
   enabled: true
   head:
+    nodeSelector: {}
+    tolerations: []
     enableInTreeAutoscaling: true
     autoscalerOptions:
       upscalingMode: Default
@@ -348,6 +374,8 @@ ray-cluster:
           - containerPort: 8081
         volumeMounts: *runtimeVolumeMounts
   worker:
+    nodeSelector: {}
+    tolerations: []
     containerEnv:
       - name: RAY_DEDUP_LOGS
         value: "0"
@@ -398,6 +426,8 @@ ray-cluster:
         subPath: site-packages
   additionalWorkerGroups:
     npuGroup:
+      nodeSelector: {}
+      tolerations: []
       disabled: false
       replicas: 0
       minReplicas: 0
@@ -460,6 +490,8 @@ ray-cluster:
         - mountPath: /usr/local/Ascend
           name: ascend
     gpuGroup:
+      nodeSelector: {}
+      tolerations: []
       disabled: false
       replicas: 0
       minReplicas: 0

@@ -24,6 +24,8 @@ version: 0.0.1
 appVersion: "0.0.1"
 
 dependencies:
+  - name: public
+    version: 0.0.1
   - name: backend
     version: 0.0.1
   - name: gateway
