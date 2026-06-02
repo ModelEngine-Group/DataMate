@@ -195,3 +195,10 @@ Thumbs.db
 # Environment files - ignore local .env, but allow templates
 .env
 !.env.example
+
+# AI tools/agent
+.agents/
+.claude/
+data/
+openspec/
+devspace.yaml
