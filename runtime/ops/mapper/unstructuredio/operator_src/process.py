@@ -40,7 +40,6 @@ def _configure_nltk_import_environment() -> None:
         os.getenv("UNSTRUCTUREDIO_NLTK_DATA", ""),
         "/models/unstructuredio/nltk_data",
         "/model/unstructuredio/nltk_data",
-        "/home/o_pengjunjie/huizhi/unstructuredio_models/nltk_data",
     ]
     for preferred in preferred_paths:
         if preferred and Path(preferred).exists() and not _nltk_path_has_bad_zip(preferred):

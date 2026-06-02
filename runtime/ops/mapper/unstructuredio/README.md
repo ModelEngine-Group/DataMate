@@ -37,6 +37,14 @@
 - `UNSTRUCTUREDIO_OCR_CLS_MODEL_DIR=/models/unstructuredio/paddleocr/ch_ppocr_mobile_v2.0_cls_infer`
 - `UNSTRUCTUREDIO_TABLE_MODEL_PATH=/models/unstructuredio/table-transformer-structure-recognition`
 
+路径说明：
+
+- `operator_src/`、`test_cases/` 等仓库内目录均使用相对路径说明，迁移到其他机器后保持目录结构即可。
+- `/models`、`/model` 是容器内模型挂载点，不是主机固定路径。验收方可把主机任意模型目录挂载到该容器内路径，或通过上述环境变量改成其他容器内路径。
+- `/tmp` 仅用于运行时临时文件和 Paddle CPU 隔离目录，不承载交付数据；如运行环境限制 `/tmp`，可通过 `TMPDIR` 或 `OCR_ADAPTER_CPU_CUSTOM_DEVICE_ROOT` 调整。
+- `/usr/local/Ascend/...` 是 Ascend 驱动、CANN、NNAL 的容器内标准库路径；如镜像路径不同，应先通过容器挂载或 `LD_LIBRARY_PATH` 提供等价路径。
+- `HF_ENDPOINT` 默认指向 `https://hf-mirror.com`，只用于拦截/镜像 HuggingFace 请求；正式验收建议本地预置模型，避免运行时访问外网。
+
 表格结构模型不存在时，算子会关闭 `infer_table_structure`，避免运行时访问远程模型；PDF 表格标题仍会做轻量补强和合并。
 
 ## NPU 运行依赖

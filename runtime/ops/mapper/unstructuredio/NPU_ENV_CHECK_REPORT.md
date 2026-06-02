@@ -4,15 +4,15 @@
 
 - 服务器：910b-jss
 - 测试容器：huizhi
-- 测试目录：/home/o_pengjunjie/huizhi
+- 测试目录：临时工作目录，非交付固定路径。
 - NPU 选择：ASCEND_RT_VISIBLE_DEVICES=6
 
 ## 已验证通过
 
 - Torch-NPU 可用：`torch_npu==2.7.1` 可正常 import。
 - Torch NPU 设备可用：`torch.npu.is_available()` 返回 True。
-- YOLOX PT 版面模型文件存在：`/home/o_pengjunjie/huizhi/unstructuredio_models/yolox_l.pt`。
-- YOLOX 源码目录存在：`/home/o_pengjunjie/huizhi/unstructuredio_models/YOLOX-main`。
+- YOLOX PT 版面模型文件已按 README 约定挂载，并可通过 `UNSTRUCTUREDIO_YOLOX_MODEL_PATH` 覆盖。
+- YOLOX 源码目录已按 README 约定挂载，并可通过 `UNSTRUCTUREDIO_YOLOX_SRC_PATH` 覆盖。
 - PaddleOCR 本地模型目录存在：det、rec、cls 三类模型均已放置。
 - `check_npu_runtime.py` 已采用子进程隔离检查 Torch-NPU 与 Paddle-NPU，并注入 Ascend/NNAL 动态库路径，避免同进程冲突和库路径误判。`process.py` 主进程和 `ocr_npu_adapter.py` worker 也已统一注入 Ascend/NNAL 动态库路径。
 

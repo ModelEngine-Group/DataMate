@@ -60,6 +60,14 @@ docker run -d --name data-synthesis-service \
 - 上例对标 910b-jss 第 6 号 NPU；如使用其他 NPU，需要同步调整 `--device /dev/davinciX`、`ASCEND_VISIBLE_DEVICES` 和 `ASCEND_RT_VISIBLE_DEVICES`。
 - Ascend driver、`npu-smi`、`dcmi` 挂载项对标 910b-jss 的已验证启动方式，正式 NPU 推理不要省略。
 
+路径说明：
+
+- 本目录下的 Dockerfile、README 均使用相对构建上下文，迁移机器后保持 `service_patch/` 与 `service_image/` 的目录结构即可。
+- `/model` 是服务容器内模型挂载点，不是主机固定路径；主机模型目录由 `-v <host-model-dir>:/model:ro` 指定。
+- `/usr/local/Ascend/...`、`/usr/local/bin/npu-smi`、`/usr/local/dcmi` 是宿主机 Ascend 驱动组件路径；如果验收机器安装路径不同，需要按实际位置调整挂载参数。
+- `/tmp/requirements*.txt` 只在镜像构建阶段临时使用，不是运行时数据路径。
+- DataMate 算子访问服务时默认使用 Docker 网络名 `http://data-synthesis-service:18080`；实际服务名或端口不同时，通过算子参数 `serviceUrl` 覆盖。
+
 ## 健康检查
 
 ```bash

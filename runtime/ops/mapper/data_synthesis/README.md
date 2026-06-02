@@ -74,6 +74,14 @@ docker run -d --name data-synthesis-service \
 -   `/model` 是容器内模型挂载点，不是主机固定路径。
 -   NPU 启动参数默认第 6 号 NPU。使用其他 NPU 时，同步替换 `--device /dev/davinciX`、`ASCEND_VISIBLE_DEVICES` 和 `ASCEND_RT_VISIBLE_DEVICES`。
 
+路径说明：
+
+- 仓库内 `operator_src/`、`service_patch/`、`service_image/`、`test_cases/` 均按相对路径组织，迁移到其他机器后保持目录结构即可。
+- `serviceUrl` 默认值 `http://data-synthesis-service:18080` 是 Docker 网络服务名，不是固定主机地址；可在 DataMate 算子参数中改为实际可访问地址。
+- `/model` 是独立服务容器内模型挂载点，实际主机模型目录用 `-v <host-model-dir>:/model:ro` 指定；模型具体位置由 `DATA_SYNTHESIS_MODEL_PATH` 覆盖。
+- `/usr/local/Ascend/...`、`/usr/local/bin/npu-smi`、`/usr/local/dcmi` 是 Ascend NPU 宿主机组件挂载路径；如果验收机器路径不同，需要按实际驱动安装位置调整 `docker run -v` 参数。
+- Dockerfile 中的 `/tmp/requirements*.txt` 只是镜像构建阶段临时文件，不是运行时输入输出路径。
+
 检查服务：
 
 ```bash

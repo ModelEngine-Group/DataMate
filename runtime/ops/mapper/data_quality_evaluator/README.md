@@ -36,6 +36,13 @@ DATA_EVALUATOR_BACKEND=vllm
 
 使用 `service_patch/data_synthesis_service/Dockerfile` 构建正式 NPU 服务时，默认已经使用 910b-jss 对标基础镜像和 `requirements.txt`。如要覆盖基础镜像，必须保证新镜像与 `quay.io/ascend/vllm-ascend:v0.18.0rc1` 的 CANN/Python/vLLM 版本一致。
 
+路径说明：
+
+- 仓库内 `operator_src/`、`service_patch/`、`test_cases/` 均按相对路径组织，迁移到其他机器后保持目录结构即可。
+- `serviceUrl` 默认值与数据合成一致，为 `http://data-synthesis-service:18080`，表示 Docker 网络服务名；可在 DataMate 算子参数中改为实际可访问地址。
+- `/model` 是独立服务容器内模型挂载点，不是主机固定路径；评估模型具体位置由 `DATA_EVALUATOR_MODEL_PATH` 或平台参数 `evaluatorModelPath` 覆盖。
+- Dockerfile 中的 `/tmp/requirements*.txt` 只是镜像构建阶段临时文件，不是运行时输入输出路径。
+
 ## 如何生成 DataMate 上传包
 
 压缩 `operator_src/` 目录中的全部文件，生成 `data_quality_evaluator.zip` 后上传 DataMate。

@@ -35,6 +35,13 @@
 - `UNSTRUCTUREDIO_OCR_CLS_MODEL_DIR`：默认 `/models/unstructuredio/paddleocr/ch_ppocr_mobile_v2.0_cls_infer`。
 - `UNSTRUCTUREDIO_TABLE_MODEL_PATH`：默认 `/models/unstructuredio/table-transformer-structure-recognition`。
 
+路径说明：
+
+- 默认模型路径均为容器内路径，不绑定任何主机目录；迁移机器时只需要把主机模型目录挂载到容器内 `/models` 或 `/model`，或通过环境变量覆盖。
+- `adapters/YOLOX-main` 和 `operator_src/YOLOX-main` 是算子内相对候选路径；如果不随算子携带 YOLOX 源码，应设置 `UNSTRUCTUREDIO_YOLOX_SRC_PATH`。
+- `/tmp` 仅用于临时 JSON、临时输出和 Paddle CPU 隔离目录；可通过系统 `TMPDIR` 或 `OCR_ADAPTER_CPU_CUSTOM_DEVICE_ROOT` 覆盖。
+- Ascend 相关 `/usr/local/Ascend/...` 是容器内标准库路径；非标准镜像需要通过挂载或 `LD_LIBRARY_PATH` 提供等价路径。
+
 表格结构模型不存在时会关闭 `infer_table_structure`，避免访问远程模型。
 
 ## 验证
