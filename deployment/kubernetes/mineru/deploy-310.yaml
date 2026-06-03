@@ -17,6 +17,13 @@ spec:
         app: datamate
         tier: mineru
     spec:
+      nodeSelector: {}
+        # Example: node-role.kubernetes.io/datamate: "true"
+      tolerations: []
+        # Example: - key: "node-role.kubernetes.io/datamate"
+        #             operator: "Equal"
+        #             value: "true"
+        #             effect: "NoSchedule"
       containers:
         - name: mineru
           image: datamate-mineru
