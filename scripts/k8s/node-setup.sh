@@ -402,10 +402,6 @@ generate_helm_args() {
         HELM_TOLERATIONS_ARGS=""
     fi
 
-    echo ""
-    echo -e "${BLUE}Helm installation arguments:${NC}"
-    echo ""
-
     # Write Helm args to temp file for Makefile to source
     HELM_ARGS_FILE="/tmp/datamate-helm-args.sh"
     cat > "$HELM_ARGS_FILE" <<EOF
@@ -455,7 +451,6 @@ main() {
 export HELM_NODE_SELECTOR_ARGS=""
 export HELM_TOLERATIONS_ARGS=""
 EOF
-        echo -e "${GREEN}Helm arguments written to $HELM_ARGS_FILE${NC}"
         exit 0
     fi
 
