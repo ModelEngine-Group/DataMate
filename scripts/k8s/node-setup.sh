@@ -346,56 +346,58 @@ apply_labels_and_taints() {
 # ============================================================================
 
 generate_helm_args() {
-    # Escape label key for Helm --set
+    # Escape dots in label key for Helm (dots are interpreted as nested keys)
     LABEL_KEY_ESCAPED=$(echo "$LABEL_KEY" | sed 's/\./\\./g')
-
-    # Node selector args - use quotes to ensure string type (not boolean)
-    HELM_NODE_SELECTOR_ARGS="--set global.nodeSelector.${LABEL_KEY_ESCAPED}=\"${LABEL_VALUE}\""
+    
+    # Use --set-string to force string type (avoids boolean interpretation)
+    
+    # Node selector args
+    HELM_NODE_SELECTOR_ARGS="--set-string global.nodeSelector.${LABEL_KEY_ESCAPED}=${LABEL_VALUE}"
 
     SERVICES="backend backend-python database frontend gateway runtime"
     for SERVICE in $SERVICES; do
-        HELM_NODE_SELECTOR_ARGS="$HELM_NODE_SELECTOR_ARGS --set ${SERVICE}.nodeSelector.${LABEL_KEY_ESCAPED}=\"${LABEL_VALUE}\""
+        HELM_NODE_SELECTOR_ARGS="$HELM_NODE_SELECTOR_ARGS --set-string ${SERVICE}.nodeSelector.${LABEL_KEY_ESCAPED}=${LABEL_VALUE}"
     done
 
-    # Tolerations args (if taint applied) - use quotes for all string values
+    # Tolerations args (if taint applied)
     if [ "$SKIP_TAINT" = false ]; then
-        HELM_TOLERATIONS_ARGS="--set global.tolerations[0].key=\"${LABEL_KEY}\""
-        HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set global.tolerations[0].operator=\"Equal\""
-        HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set global.tolerations[0].value=\"${LABEL_VALUE}\""
-        HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set global.tolerations[0].effect=\"${TAINT_EFFECT}\""
+        HELM_TOLERATIONS_ARGS="--set-string global.tolerations[0].key=${LABEL_KEY}"
+        HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set-string global.tolerations[0].operator=Equal"
+        HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set-string global.tolerations[0].value=${LABEL_VALUE}"
+        HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set-string global.tolerations[0].effect=${TAINT_EFFECT}"
 
         for SERVICE in $SERVICES; do
-            HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set ${SERVICE}.tolerations[0].key=\"${LABEL_KEY}\""
-            HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set ${SERVICE}.tolerations[0].operator=\"Equal\""
-            HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set ${SERVICE}.tolerations[0].value=\"${LABEL_VALUE}\""
-            HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set ${SERVICE}.tolerations[0].effect=\"${TAINT_EFFECT}\""
+            HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set-string ${SERVICE}.tolerations[0].key=${LABEL_KEY}"
+            HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set-string ${SERVICE}.tolerations[0].operator=Equal"
+            HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set-string ${SERVICE}.tolerations[0].value=${LABEL_VALUE}"
+            HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set-string ${SERVICE}.tolerations[0].effect=${TAINT_EFFECT}"
         done
 
         # Ray cluster
-        HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set ray-cluster.head.tolerations[0].key=\"${LABEL_KEY}\""
-        HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set ray-cluster.head.tolerations[0].operator=\"Equal\""
-        HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set ray-cluster.head.tolerations[0].value=\"${LABEL_VALUE}\""
-        HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set ray-cluster.head.tolerations[0].effect=\"${TAINT_EFFECT}\""
+        HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set-string ray-cluster.head.tolerations[0].key=${LABEL_KEY}"
+        HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set-string ray-cluster.head.tolerations[0].operator=Equal"
+        HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set-string ray-cluster.head.tolerations[0].value=${LABEL_VALUE}"
+        HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set-string ray-cluster.head.tolerations[0].effect=${TAINT_EFFECT}"
 
-        HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set ray-cluster.worker.tolerations[0].key=\"${LABEL_KEY}\""
-        HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set ray-cluster.worker.tolerations[0].operator=\"Equal\""
-        HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set ray-cluster.worker.tolerations[0].value=\"${LABEL_VALUE}\""
-        HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set ray-cluster.worker.tolerations[0].effect=\"${TAINT_EFFECT}\""
+        HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set-string ray-cluster.worker.tolerations[0].key=${LABEL_KEY}"
+        HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set-string ray-cluster.worker.tolerations[0].operator=Equal"
+        HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set-string ray-cluster.worker.tolerations[0].value=${LABEL_VALUE}"
+        HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set-string ray-cluster.worker.tolerations[0].effect=${TAINT_EFFECT}"
 
-        HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set ray-cluster.additionalWorkerGroups.npuGroup.tolerations[0].key=\"${LABEL_KEY}\""
-        HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set ray-cluster.additionalWorkerGroups.npuGroup.tolerations[0].operator=\"Equal\""
-        HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set ray-cluster.additionalWorkerGroups.npuGroup.tolerations[0].value=\"${LABEL_VALUE}\""
-        HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set ray-cluster.additionalWorkerGroups.npuGroup.tolerations[0].effect=\"${TAINT_EFFECT}\""
+        HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set-string ray-cluster.additionalWorkerGroups.npuGroup.tolerations[0].key=${LABEL_KEY}"
+        HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set-string ray-cluster.additionalWorkerGroups.npuGroup.tolerations[0].operator=Equal"
+        HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set-string ray-cluster.additionalWorkerGroups.npuGroup.tolerations[0].value=${LABEL_VALUE}"
+        HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set-string ray-cluster.additionalWorkerGroups.npuGroup.tolerations[0].effect=${TAINT_EFFECT}"
 
-        HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set ray-cluster.additionalWorkerGroups.gpuGroup.tolerations[0].key=\"${LABEL_KEY}\""
-        HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set ray-cluster.additionalWorkerGroups.gpuGroup.tolerations[0].operator=\"Equal\""
-        HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set ray-cluster.additionalWorkerGroups.gpuGroup.tolerations[0].value=\"${LABEL_VALUE}\""
-        HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set ray-cluster.additionalWorkerGroups.gpuGroup.tolerations[0].effect=\"${TAINT_EFFECT}\""
+        HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set-string ray-cluster.additionalWorkerGroups.gpuGroup.tolerations[0].key=${LABEL_KEY}"
+        HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set-string ray-cluster.additionalWorkerGroups.gpuGroup.tolerations[0].operator=Equal"
+        HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set-string ray-cluster.additionalWorkerGroups.gpuGroup.tolerations[0].value=${LABEL_VALUE}"
+        HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set-string ray-cluster.additionalWorkerGroups.gpuGroup.tolerations[0].effect=${TAINT_EFFECT}"
 
-        HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set kuberay-operator.tolerations[0].key=\"${LABEL_KEY}\""
-        HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set kuberay-operator.tolerations[0].operator=\"Equal\""
-        HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set kuberay-operator.tolerations[0].value=\"${LABEL_VALUE}\""
-        HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set kuberay-operator.tolerations[0].effect=\"${TAINT_EFFECT}\""
+        HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set-string kuberay-operator.tolerations[0].key=${LABEL_KEY}"
+        HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set-string kuberay-operator.tolerations[0].operator=Equal"
+        HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set-string kuberay-operator.tolerations[0].value=${LABEL_VALUE}"
+        HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set-string kuberay-operator.tolerations[0].effect=${TAINT_EFFECT}"
     else
         HELM_TOLERATIONS_ARGS=""
     fi
