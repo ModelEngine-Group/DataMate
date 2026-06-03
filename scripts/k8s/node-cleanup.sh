@@ -18,11 +18,9 @@ NC='\033[0m' # No Color
 # Default values
 DRY_RUN=false
 NAMESPACE="datamate"
-SELECTED_NODES_FILE="/tmp/datamate-selected-nodes.txt"
 LABEL_KEY="node-role.kubernetes.io/datamate"
 LABEL_VALUE="true"
 TAINT_EFFECT="NoSchedule"
-TAINT_APPLIED=false
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -72,25 +70,22 @@ if [ "$PROVIDED_NODES" != "" ]; then
     # Use provided nodes
     IFS=',' read -ra SELECTED_NODES <<< "$PROVIDED_NODES"
 else
-    # Try to read from saved file
-    if [ -f "$SELECTED_NODES_FILE" ]; then
-        echo -e "${YELLOW}Reading saved configuration from $SELECTED_NODES_FILE${NC}"
-        source "$SELECTED_NODES_FILE"
-        SELECTED_NODES_STR=$(head -n 1 "$SELECTED_NODES_FILE")
-        IFS=' ' read -ra SELECTED_NODES <<< "$SELECTED_NODES_STR"
-    else
-        # Find nodes with the datamate label
-        echo -e "${YELLOW}Finding nodes with $LABEL_KEY label...${NC}"
-        NODES=$(kubectl get nodes -l "$LABEL_KEY=$LABEL_VALUE" -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}')
-        if [ "$NODES" = "" ]; then
-            echo -e "${YELLOW}No nodes found with $LABEL_KEY label.${NC}"
-            exit 0
-        fi
-        SELECTED_NODES=()
-        for NODE in $NODES; do
-            SELECTED_NODES+=("$NODE")
-        done
+    # Find nodes with the datamate label directly from Kubernetes
+    echo -e "${YELLOW}Finding nodes with $LABEL_KEY=$LABEL_VALUE label...${NC}"
+    NODES=$(kubectl get nodes -l "$LABEL_KEY=$LABEL_VALUE" -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}')
+
+    if [ -z "$NODES" ]; then
+        echo -e "${GREEN}No nodes found with $LABEL_KEY=$LABEL_VALUE label.${NC}"
+        echo -e "${YELLOW}Cleanup not needed - no nodes were labeled.${NC}"
+        exit 0
     fi
+
+    SELECTED_NODES=()
+    while IFS= read -r NODE; do
+        if [ -n "$NODE" ]; then
+            SELECTED_NODES+=("$NODE")
+        fi
+    done <<< "$NODES"
 fi
 
 if [ ${#SELECTED_NODES[@]} -eq 0 ]; then
@@ -106,7 +101,18 @@ done
 echo ""
 echo -e "${BLUE}Summary:${NC}"
 echo "  Label to remove: $LABEL_KEY"
-if [ "$TAINT_APPLIED" = true ]; then
+
+# Check if any node has the taint
+HAS_TAINTS=false
+for NODE in "${SELECTED_NODES[@]}"; do
+    TAINT_COUNT=$(kubectl get node "$NODE" -o jsonpath='{range .spec.taints[*]}{.key}{"\n"}{end}' | grep -c "^${LABEL_KEY}$" || echo "0")
+    if [ "$TAINT_COUNT" -gt 0 ]; then
+        HAS_TAINTS=true
+        break
+    fi
+done
+
+if [ "$HAS_TAINTS" = true ]; then
     echo "  Taint to remove: $LABEL_KEY=$LABEL_VALUE:$TAINT_EFFECT"
 fi
 echo ""
@@ -132,25 +138,30 @@ for NODE in "${SELECTED_NODES[@]}"; do
     fi
 done
 
-# Remove taints if they were applied
-if [ "$TAINT_APPLIED" = true ] || [ "$PROVIDED_NODES" != "" ]; then
-    for NODE in "${SELECTED_NODES[@]}"; do
+# Remove taints (check if node has the taint)
+for NODE in "${SELECTED_NODES[@]}"; do
+    # Check if node has the taint
+    HAS_TAINT=$(kubectl get node "$NODE" -o jsonpath='{range .spec.taints[*]}{.key}{"\n"}{end}' | grep -c "^${LABEL_KEY}$" || echo "0")
+
+    if [ "$HAS_TAINT" -gt 0 ]; then
         if [ "$DRY_RUN" = true ]; then
             echo "[DRY-RUN] kubectl taint node $NODE $LABEL_KEY=$LABEL_VALUE:$TAINT_EFFECT-"
         else
             kubectl taint node "$NODE" "$LABEL_KEY=$LABEL_VALUE:$TAINT_EFFECT-" --overwrite || true
             echo -e "  ${GREEN}✓${NC} Removed taint from $NODE"
         fi
-    done
-fi
+    else
+        echo -e "  ${YELLOW}○${NC} No taint to remove from $NODE"
+    fi
+done
 
 echo ""
 echo -e "${GREEN}Cleanup complete!${NC}"
 
-# Remove the saved file
-if [ -f "$SELECTED_NODES_FILE" ]; then
-    rm "$SELECTED_NODES_FILE"
-    echo -e "${GREEN}Removed $SELECTED_NODES_FILE${NC}"
+# Clean up Helm args temp file if it exists
+if [ -f /tmp/datamate-helm-args.sh ]; then
+    rm /tmp/datamate-helm-args.sh
+    echo -e "${GREEN}Removed /tmp/datamate-helm-args.sh${NC}"
 fi
 
 exit 0

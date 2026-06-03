@@ -247,7 +247,7 @@ read_key() {
 
     # Restore terminal settings BEFORE processing
     stty "$old_stty" 2>/dev/null || true
-    
+
     # In raw mode, Enter produces \r (carriage return), convert to \n for easier matching
     if [ "$key" = $'\x0d' ]; then
         key=$'\x0a'
@@ -348,9 +348,9 @@ apply_labels_and_taints() {
 generate_helm_args() {
     # Escape dots in label key for Helm (dots are interpreted as nested keys)
     LABEL_KEY_ESCAPED=$(echo "$LABEL_KEY" | sed 's/\./\\./g')
-    
+
     # Use --set-string to force string type (avoids boolean interpretation)
-    
+
     # Node selector args
     HELM_NODE_SELECTOR_ARGS="--set-string global.nodeSelector.${LABEL_KEY_ESCAPED}=${LABEL_VALUE}"
 
@@ -412,38 +412,6 @@ generate_helm_args() {
 export HELM_NODE_SELECTOR_ARGS="$HELM_NODE_SELECTOR_ARGS"
 export HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS"
 EOF
-
-    echo -e "${GREEN}Helm arguments written to $HELM_ARGS_FILE${NC}"
-    echo ""
-    echo "To use these arguments, run:"
-    echo "  source $HELM_ARGS_FILE"
-    echo ""
-    echo "Then install with:"
-    echo "  helm upgrade datamate deployment/helm/datamate/ -n $NAMESPACE --install \\"
-    echo "    --set global.image.repository=<REGISTRY> \\"
-    echo '    $$HELM_NODE_SELECTOR_ARGS $$HELM_TOLERATIONS_ARGS'
-    echo ""
-}
-
-# ============================================================================
-# Save State for Cleanup
-# ============================================================================
-
-save_state() {
-    SELECTED_NODES_FILE="/tmp/datamate-selected-nodes.txt"
-    if [ "$DRY_RUN" = false ]; then
-        echo "${SELECTED_NODES[*]}" > "$SELECTED_NODES_FILE"
-        echo "LABEL_KEY=$LABEL_KEY" >> "$SELECTED_NODES_FILE"
-        echo "LABEL_VALUE=$LABEL_VALUE" >> "$SELECTED_NODES_FILE"
-        if [ "$SKIP_TAINT" = false ]; then
-            echo "TAINT_APPLIED=true" >> "$SELECTED_NODES_FILE"
-            echo "TAINT_EFFECT=$TAINT_EFFECT" >> "$SELECTED_NODES_FILE"
-        else
-            echo "TAINT_APPLIED=false" >> "$SELECTED_NODES_FILE"
-        fi
-        echo "NAMESPACE=$NAMESPACE" >> "$SELECTED_NODES_FILE"
-        echo -e "${GREEN}Node selection saved to $SELECTED_NODES_FILE${NC}"
-    fi
 }
 
 # ============================================================================
@@ -498,7 +466,6 @@ EOF
     interactive_selection
     apply_labels_and_taints
     generate_helm_args
-    save_state
 
     exit 0
 }

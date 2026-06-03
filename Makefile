@@ -371,11 +371,12 @@ VALID_K8S_TARGETS := datamate deer-flow milvus label-studio data-juicer mineru m
 			source /tmp/datamate-helm-args.sh; \
 		fi; \
 		kubectl apply -f deployment/kubernetes/sealed-secrets/datamate.yaml; \
-		if [ -n "$$HELM_NODE_SELECTOR_ARGS" ] || [ -n "$$HELM_TOLERATIONS_ARGS" ]; then \
+		if [ -n "$$HELM_NODE_SELECTOR_ARGS" ] || [ -n "$$$HELM_TOLERATIONS_ARGS" ]; then \
 			helm upgrade datamate deployment/helm/datamate/ -n $(NAMESPACE) --install --set global.image.repository=$(REGISTRY) --set public.secrets.create=false $$HELM_NODE_SELECTOR_ARGS $$HELM_TOLERATIONS_ARGS; \
 		else \
 			helm upgrade datamate deployment/helm/datamate/ -n $(NAMESPACE) --install --set global.image.repository=$(REGISTRY) --set public.secrets.create=false; \
 		fi; \
+		rm -f /tmp/datamate-helm-args.sh; \
 	elif [ "$*" = "deer-flow" ]; then \
 		cp runtime/deer-flow/.env deployment/helm/deer-flow/charts/public/.env; \
 		cp runtime/deer-flow/conf.yaml deployment/helm/deer-flow/charts/public/conf.yaml; \
