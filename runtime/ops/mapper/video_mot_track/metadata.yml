@@ -22,11 +22,22 @@ settings:
     defaultVal: ''
     required: false
   yolo_model:
-    name: 'YOLO 权重路径'
-    description: '相对 model_root 或绝对路径。'
-    type: 'input'
+    name: 'YOLOv8 模型'
+    description: '选择 YOLOv8 系列模型，请确保对应权重已放到模型挂载目录中。'
+    type: 'select'
     defaultVal: 'yolo/yolov8n.pt'
     required: false
+    options:
+      - label: 'YOLOv8n'
+        value: 'yolo/yolov8n.pt'
+      - label: 'YOLOv8s'
+        value: 'yolo/yolov8s.pt'
+      - label: 'YOLOv8m'
+        value: 'yolo/yolov8m.pt'
+      - label: 'YOLOv8l'
+        value: 'yolo/yolov8l.pt'
+      - label: 'YOLOv8x'
+        value: 'yolo/yolov8x.pt'
   conf:
     name: '检测阈值'
     description: 'YOLO 检测置信度阈值。'
