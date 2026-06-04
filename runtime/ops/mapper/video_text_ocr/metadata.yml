@@ -1,7 +1,7 @@
 name: '视频显著文字 OCR'
 name_en: 'Video Text OCR'
-description: '识别视频上方或主体区域的显著文字，输出 text_ocr.json。'
-description_en: 'Recognize salient text in video and output text_ocr.json.'
+description: '识别视频上方区域中的显著文字，输出 text_ocr.json。'
+description_en: 'Recognize salient text in the upper region of the video and output text_ocr.json.'
 language: 'python'
 vendor: 'huawei'
 raw_id: 'VideoTextOCR'
@@ -43,7 +43,7 @@ settings:
     step: 20
   top_ratio:
     name: '上方区域比例'
-    description: '从顶部截取多少比例作为文字 ROI。'
+    description: '从顶部截取多少比例作为显著文字 ROI。'
     type: 'slider'
     defaultVal: 0.70
     required: false

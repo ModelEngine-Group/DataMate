@@ -1,16 +1,8 @@
 # -*- coding: utf-8 -*-
-"""Video subtitle OCR operator based on RapidOCR CPU.
+"""Video subtitle OCR with optional LLM backend and optional postprocessing."""
 
-This file replaces the previous PaddleOCR implementation.
-Main goals:
-  1) Avoid Paddle/PaddleX C++ inference crashes in merged environments.
-  2) Keep the original subtitle pipeline: optional deborder, bottom ROI, frame sampling,
-     adjacent subtitle merging, JSON + SRT outputs.
-  3) Only apply conservative English cleanup rules to avoid over-correction.
-"""
-
-import os
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -21,19 +13,15 @@ import cv2
 import numpy as np
 
 from datamate.core.base_op import Mapper
-from .._video_common.params import parse_bool
-from .._video_common.paths import make_run_dir, ensure_dir
-from .._video_common.log import get_logger
 from .._video_common.io_video import get_video_info
+from .._video_common.log import get_logger
+from .._video_common.params import parse_bool
+from .._video_common.paths import ensure_dir, make_run_dir
 from .._video_common.qwen_http_client import (
-    qwenvl_correct_subtitle_srt,
+    qwenvl_read_subtitle_by_image_path,
     resolve_qwenvl_service_url,
 )
 
-
-# -----------------------------
-# SRT / text helpers
-# -----------------------------
 
 def _write_srt(segments, srt_path):
     def _fmt(t):
@@ -51,69 +39,16 @@ def _write_srt(segments, srt_path):
             text = (seg.get("text") or "").strip()
             if not text:
                 continue
-            f.write(str(i) + "\n")
+            f.write(f"{i}\n")
             f.write(f"{_fmt(float(seg['start']))} --> {_fmt(float(seg['end']))}\n")
             f.write(text + "\n\n")
 
 
-def _segments_to_srt_text(segments) -> str:
-    def _fmt(t):
-        h = int(t // 3600)
-        m = int((t % 3600) // 60)
-        s = int(t % 60)
-        ms = int(round((t - int(t)) * 1000))
-        if ms >= 1000:
-            s += 1
-            ms -= 1000
-        return f"{h:02d}:{m:02d}:{s:02d},{ms:03d}"
-
-    lines = []
-    for i, seg in enumerate(segments, 1):
-        text = (seg.get("text") or "").strip()
-        if not text:
-            continue
-        lines.append(str(i))
-        lines.append(f"{_fmt(float(seg['start']))} --> {_fmt(float(seg['end']))}")
-        lines.append(text)
-        lines.append("")
-    return "\n".join(lines).strip() + ("\n" if lines else "")
-
-
-def _apply_corrected_texts(segments, corrected_items):
-    if not isinstance(corrected_items, list):
-        return segments, False
-
-    corrected_by_index = {}
-    for item in corrected_items:
-        if not isinstance(item, dict):
-            continue
-        idx = item.get("index")
-        text = item.get("text")
-        if isinstance(idx, int) and isinstance(text, str):
-            corrected_by_index[idx] = _clean_text(text)
-
-    if not corrected_by_index:
-        return segments, False
-
-    new_segments = []
-    changed = False
-    for i, seg in enumerate(segments, 1):
-        new_seg = dict(seg)
-        if i in corrected_by_index and corrected_by_index[i]:
-            if corrected_by_index[i] != (seg.get("text") or ""):
-                changed = True
-            new_seg["text"] = corrected_by_index[i]
-            new_seg["key"] = _norm_sub_key(new_seg["text"])
-        new_segments.append(new_seg)
-    return new_segments, changed
-
-
-def _clean_text(t: str) -> str:
-    if not t:
+def _clean_text(text: str) -> str:
+    if not text:
         return ""
-    t = str(t).strip()
-    t = re.sub(r"\s+", " ", t)
-    return t
+    text = str(text).strip().replace("\r", " ").replace("\n", " ")
+    return re.sub(r"\s+", " ", text)
 
 
 def _english_ratio(text: str) -> float:
@@ -124,76 +59,58 @@ def _english_ratio(text: str) -> float:
 
 
 def _fix_english_spacing_basic(text: str) -> str:
-    """Light English spacing cleanup. Conservative; does not use word segmentation.
-
-    Handles only safe cases:
-      - lower + Upper: helloWorld -> hello World
-      - letter + digit / digit + letter
-      - punctuation followed by a letter
-    """
-    if not text:
-        return ""
-    if _english_ratio(text) < 0.40:
+    if not text or _english_ratio(text) < 0.40:
         return text
-
-    t = text
-    t = re.sub(r"([a-z])([A-Z])", r"\1 \2", t)
-    t = re.sub(r"([A-Za-z])(\d)", r"\1 \2", t)
-    t = re.sub(r"(\d)([A-Za-z])", r"\1 \2", t)
-    t = re.sub(r"\s+([,.;:?!])", r"\1", t)
-    t = re.sub(r"([,.;:?!])([A-Za-z])", r"\1 \2", t)
-    t = re.sub(r"\s+", " ", t).strip()
-    return t
+    text = re.sub(r"([a-z])([A-Z])", r"\1 \2", text)
+    text = re.sub(r"([A-Za-z])(\d)", r"\1 \2", text)
+    text = re.sub(r"(\d)([A-Za-z])", r"\1 \2", text)
+    text = re.sub(r"\s+([,.;:?!])", r"\1", text)
+    text = re.sub(r"([,.;:?!])([A-Za-z])", r"\1 \2", text)
+    return re.sub(r"\s+", " ", text).strip()
 
 
 def _fix_english_ocr_artifacts(text: str) -> str:
-    """Conservative RapidOCR English subtitle artifact cleanup.
-
-    Only fixes the high-confidence noise patterns observed in subtitles:
-      - isolated single-letter subtitle: J -> removed
-      - repeated leading letter before same-initial word: g gashes -> gashes
-      - very common glued noise: lyou / Iyou -> you
-
-    Avoids broad dictionary-based correction to prevent accidental deletion.
-    """
     if not text:
         return ""
-
-    t = _clean_text(text)
-    if not t:
+    text = _clean_text(text)
+    if not text:
         return ""
-
-    # Whole subtitle is a single isolated English letter: almost always noise.
-    if re.fullmatch(r"[A-Za-z]", t):
+    if re.fullmatch(r"[A-Za-z]", text):
         return ""
-
-    # Remove "single letter + same-initial word" OCR echo noise.
-    # Examples: "g gashes" -> "gashes", "s strength" -> "strength", "f for" -> "for".
-    t = re.sub(r"\b([A-Za-z])\s+(\1[A-Za-z]{2,})\b", r"\2", t, flags=re.IGNORECASE)
-
-    # Common single-letter glue noise observed in subtitles.
-    t = re.sub(r"\b[lI]you\b", "you", t)
-    t = re.sub(r"\b[lI]your\b", "your", t)
-
-    t = re.sub(r"\s+", " ", t).strip()
-    return t
+    text = re.sub(r"\b([A-Za-z])\s+(\1[A-Za-z]{2,})\b", r"\2", text, flags=re.IGNORECASE)
+    text = re.sub(r"\b[lI]you\b", "you", text)
+    text = re.sub(r"\b[lI]your\b", "your", text)
+    text = re.sub(r"\byouf(?:re|r)\b", "you're", text, flags=re.IGNORECASE)
+    return re.sub(r"\s+", " ", text).strip()
 
 
 def _is_noise_subtitle(text: str) -> bool:
     if not text:
         return True
-    t = text.strip()
-    if not t:
+    text = text.strip()
+    if not text:
         return True
 
-    # Remove punctuation/spaces before length check.
-    # Requirement: if one subtitle has fewer than 3 effective characters, drop it.
-    effective = re.sub(r"[^A-Za-z0-9\u4e00-\u9fff]", "", t)
-    if len(effective) < 3:
+    effective = re.sub(r"[^A-Za-z0-9\u4e00-\u9fff]", "", text)
+    if len(effective) < 2:
         return True
 
-    # Symbol-only output.
-    if re.fullmatch(r"[^A-Za-z0-9\u4e00-\u9fff]+", t):
+    if re.fullmatch(r"[^A-Za-z0-9\u4e00-\u9fff]+", text):
+        return True
+
+    explanation_patterns = [
+        r"\bi'?m sorry\b",
+        r"\bthere is no subtitle\b",
+        r"\bno subtitle present\b",
+        r"\bno readable subtitle\b",
+        r"\bthe image you provided\b",
+        r"\bno text\b",
+    ]
+    for pattern in explanation_patterns:
+        if re.search(pattern, text, flags=re.IGNORECASE):
+            return True
+
+    if re.search(r"\b(?:poog|poag|youcans)\b", text, flags=re.IGNORECASE):
         return True
     return False
 
@@ -201,12 +118,9 @@ def _is_noise_subtitle(text: str) -> bool:
 def _merge_norm_text(text: str) -> str:
     if not text:
         return ""
-    t = text.strip().lower()
-    t = t.replace("’", "'").replace("‘", "'").replace("“", '"').replace("”", '"')
-    t = re.sub(r"[.。,，!！?？:：;；~～_\-]+$", "", t).strip()
-    t = re.sub(r"[^0-9a-z\u4e00-\u9fff\s]", " ", t)
-    t = re.sub(r"\s+", " ", t).strip()
-    return t
+    text = text.strip().lower()
+    text = re.sub(r"[^0-9a-z\u4e00-\u9fff\s]", " ", text)
+    return re.sub(r"\s+", " ", text).strip()
 
 
 def _merge_nospace_text(text: str) -> str:
@@ -227,19 +141,39 @@ def _text_sim(a: str, b: str) -> float:
     return SequenceMatcher(None, a1, b1).ratio()
 
 
+def _subtitle_quality_score(text: str) -> float:
+    text = _clean_text(text)
+    if not text:
+        return -999.0
+
+    effective = re.sub(r"[^A-Za-z0-9\u4e00-\u9fff]", "", text)
+    score = float(len(effective))
+
+    if re.search(r"[.。!?？！'\"]$", text):
+        score += 1.5
+
+    if re.search(r"\b(?:poog|poag|youcans)\b", text, flags=re.IGNORECASE):
+        score -= 6.0
+
+    for pattern in (
+        r"\bi'?m sorry\b",
+        r"\bthere is no subtitle\b",
+        r"\bno subtitle present\b",
+        r"\bno readable subtitle\b",
+        r"\bthe image you provided\b",
+        r"\bno text\b",
+    ):
+        if re.search(pattern, text, flags=re.IGNORECASE):
+            score -= 10.0
+    return score
+
+
 def _choose_better_text(a: str, b: str) -> str:
     if not a:
         return b
     if not b:
         return a
-    a_score = len(_merge_nospace_text(a))
-    b_score = len(_merge_nospace_text(b))
-    # Very small preference for sentence-like ending punctuation.
-    if re.search(r"[.。!?！？]$", a.strip()):
-        a_score += 2
-    if re.search(r"[.。!?！？]$", b.strip()):
-        b_score += 2
-    return b if b_score > a_score else a
+    return b if _subtitle_quality_score(b) > _subtitle_quality_score(a) else a
 
 
 def _should_merge_hit(last_seg, hit, gap_merge: float, sim_thr: float = 0.88) -> bool:
@@ -255,10 +189,8 @@ def _should_merge_hit(last_seg, hit, gap_merge: float, sim_thr: float = 0.88) ->
     if a and b:
         if a == b:
             return True
-        # One is contained in the other; usually OCR fluctuation of the same subtitle.
         if (a in b or b in a) and dt <= max(1.5, gap_merge):
             return True
-
     return _text_sim(last_seg.get("text", ""), hit.get("text", "")) >= sim_thr
 
 
@@ -270,23 +202,18 @@ def _post_merge_segments(segments, gap_merge: float):
     for seg in segments[1:]:
         last = merged[-1]
         hit_like = {"t": seg["start"], "text": seg["text"], "key": seg.get("key", "")}
-        if _should_merge_hit(last, hit_like, gap_merge=max(gap_merge, 1.5), sim_thr=0.86):
+        if _should_merge_hit(last, hit_like, gap_merge=max(gap_merge, 1.5), sim_thr=0.84):
             last["end"] = max(float(last["end"]), float(seg["end"]))
             last["text"] = _choose_better_text(last["text"], seg["text"])
             last["key"] = _norm_sub_key(last["text"])
             last.setdefault("evidence", []).extend(seg.get("evidence", []))
         else:
             merged.append(seg)
-
     return merged
 
 
-# -----------------------------
-# Video / ROI helpers
-# -----------------------------
-
 def _roi_changed(cur_roi, last_roi, diff_thr=3.0):
-    if last_roi is None:
+    if last_roi is None or diff_thr <= 0:
         return True
     a = cv2.cvtColor(cur_roi, cv2.COLOR_BGR2GRAY)
     b = cv2.cvtColor(last_roi, cv2.COLOR_BGR2GRAY)
@@ -294,6 +221,21 @@ def _roi_changed(cur_roi, last_roi, diff_thr=3.0):
         b = cv2.resize(b, (a.shape[1], a.shape[0]), interpolation=cv2.INTER_AREA)
     diff = np.mean(np.abs(a.astype(np.float32) - b.astype(np.float32)))
     return diff >= diff_thr
+
+
+def _prepare_roi_image(roi, upscale=1.0, sharpen=False, contrast=1.0, brightness=0.0):
+    out = roi
+    if upscale and abs(float(upscale) - 1.0) > 1e-6:
+        h, w = out.shape[:2]
+        out = cv2.resize(out, (int(w * upscale), int(h * upscale)), interpolation=cv2.INTER_CUBIC)
+    if contrast and abs(float(contrast) - 1.0) > 1e-6:
+        out = cv2.convertScaleAbs(out, alpha=float(contrast), beta=0)
+    if brightness and abs(float(brightness)) > 1e-6:
+        out = cv2.convertScaleAbs(out, alpha=1.0, beta=float(brightness))
+    if sharpen:
+        kernel = np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]], dtype=np.float32)
+        out = cv2.filter2D(out, -1, kernel)
+    return out
 
 
 def _even(x: int) -> int:
@@ -339,69 +281,24 @@ def _deborder_ffmpeg(ffmpeg_path: str, in_video: str, out_video: str, logger):
         "-c:a", "copy",
         out_video,
     ]
-    logger.info("crop cmd: " + " ".join(cmd2))
+    logger.info("crop apply cmd: " + " ".join(cmd2))
     p2 = subprocess.run(cmd2, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     if p2.returncode != 0:
         raise RuntimeError(f"ffmpeg crop failed.\n{p2.stderr}")
     return {"w": w, "h": h, "x": x, "y": y}
 
 
-def _safe_remove(path: str):
-    try:
-        if path and os.path.isfile(path):
-            os.remove(path)
-    except Exception:
-        pass
-
-
-def _safe_rmtree(path: str):
-    try:
-        if path and os.path.isdir(path):
-            shutil.rmtree(path, ignore_errors=True)
-    except Exception:
-        pass
-
-
-def _prepare_roi_for_ocr(roi, upscale=1.5, sharpen=True, contrast=1.15, brightness=3):
-    """Light preprocessing for subtitle ROI.
-
-    Defaults are intentionally moderate to avoid creating duplicate-letter artifacts.
-    """
-    out = roi
-    try:
-        if upscale and float(upscale) > 1.0:
-            scale = float(upscale)
-            out = cv2.resize(out, None, fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC)
-
-        if sharpen:
-            blur = cv2.GaussianBlur(out, (0, 0), 1.0)
-            out = cv2.addWeighted(out, 1.35, blur, -0.35, 0)
-
-        if contrast != 1.0 or brightness != 0:
-            out = cv2.convertScaleAbs(out, alpha=float(contrast), beta=float(brightness))
-    except Exception:
-        # If preprocessing fails, fall back to original ROI.
-        out = roi
-    return out
-
-
-# -----------------------------
-# RapidOCR helpers
-# -----------------------------
-
-def _build_rapid_ocr():
+def _build_rapidocr():
     try:
         from rapidocr_onnxruntime import RapidOCR
     except Exception as e:
         raise RuntimeError(
-            "rapidocr_onnxruntime is not installed. Please install it first: "
-            "python -m uv pip install rapidocr-onnxruntime==1.4.4"
+            "rapidocr_onnxruntime is not installed. Please install it to use subtitle OCR without the LLM."
         ) from e
     return RapidOCR()
 
 
 def _rapidocr_pairs(result):
-    """Return [(text, score)] from RapidOCR result."""
     pairs = []
     if not result:
         return pairs
@@ -411,7 +308,6 @@ def _rapidocr_pairs(result):
                 text = item.get("text") or item.get("rec_text") or ""
                 score = item.get("score") or item.get("rec_score") or 0.0
             elif isinstance(item, (list, tuple)) and len(item) >= 3:
-                # Common RapidOCR format: [box, text, score]
                 text = item[1]
                 score = item[2]
             elif isinstance(item, (list, tuple)) and len(item) >= 2:
@@ -427,24 +323,21 @@ def _rapidocr_pairs(result):
     return pairs
 
 
-class VideoSubtitleOCR(Mapper):
-    """Subtitle OCR operator using RapidOCR CPU.
+def _safe_remove(path: str | None):
+    if path and os.path.exists(path):
+        try:
+            os.remove(path)
+        except Exception:
+            pass
 
-    Params:
-      - preprocess_deborder: bool, default True
-      - sample_fps: float, default 3.33  # about one frame every 0.3 sec
-      - max_frames: int, default 220
-      - subtitle_ratio: float, default 0.30
-      - min_score: float, default 0.15
-      - roi_diff_thr: float, default 3.0
-      - gap_merge_sec: float, default 1.5
-      - fix_english_space: bool, default True
-      - ocr_upscale: float, default 1.5
-      - ocr_sharpen: bool, default True
-      - ocr_contrast: float, default 1.15
-      - ocr_brightness: int/float, default 3
-      - enable_llm_correction: bool, default False
-    """
+
+def _safe_rmtree(path: str | None):
+    if path and os.path.isdir(path):
+        shutil.rmtree(path, ignore_errors=True)
+
+
+class VideoSubtitleOCR(Mapper):
+    """Subtitle OCR with selectable recognition backend."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -467,8 +360,9 @@ class VideoSubtitleOCR(Mapper):
         ffmpeg_path = params.get("ffmpeg_path") or shutil.which("ffmpeg")
         if not ffmpeg_path:
             raise RuntimeError("ffmpeg not found. Please install ffmpeg or pass ffmpeg_path.")
+
         try:
-            if parse_bool(params.get("preprocess_deborder", True), default=True):
+            if parse_bool(params.get("preprocess_deborder", False), default=False):
                 deborder_mp4 = os.path.join(temp_root, "deborder.mp4")
                 crop = _deborder_ffmpeg(ffmpeg_path, in_video, deborder_mp4, logger)
                 with open(os.path.join(art_dir, "deborder_crop.json"), "w", encoding="utf-8") as f:
@@ -477,35 +371,30 @@ class VideoSubtitleOCR(Mapper):
             else:
                 src_video = in_video
 
-            logger.info(f"video={src_video}")
-            logger.info(f"out_dir={out_dir}")
-            logger.info("OCR backend=RapidOCR CPU")
-
-            ocr = _build_rapid_ocr()
-
             fps, w, h, total = get_video_info(src_video)
-            sample_fps = float(params.get("sample_fps", 3.33))
+            sample_fps = float(params.get("sample_fps", 2.0))
             max_frames = int(params.get("max_frames", 220))
             subtitle_ratio = float(params.get("subtitle_ratio", 0.30))
-            enable_min_score = parse_bool(params.get("enable_min_score", False), default=False)
-            min_score = float(params.get("min_score", 0.15)) if enable_min_score else 0.0
             enable_roi_diff = parse_bool(params.get("enable_roi_diff_thr", False), default=False)
             roi_diff_thr = float(params.get("roi_diff_thr", 3.0)) if enable_roi_diff else 0.0
-            gap_merge = float(params.get("gap_merge_sec", 1.5))
-            fix_en_space = parse_bool(params.get("fix_english_space", True), default=True)
 
             enable_ocr_upscale = parse_bool(params.get("enable_ocr_upscale", False), default=False)
             ocr_upscale = float(params.get("ocr_upscale", 1.5)) if enable_ocr_upscale else 1.0
-            ocr_sharpen = parse_bool(params.get("ocr_sharpen", True), default=True)
+            ocr_sharpen = parse_bool(params.get("ocr_sharpen", False), default=False)
             enable_ocr_contrast = parse_bool(params.get("enable_ocr_contrast", False), default=False)
             ocr_contrast = float(params.get("ocr_contrast", 1.15)) if enable_ocr_contrast else 1.0
             enable_ocr_brightness = parse_bool(params.get("enable_ocr_brightness", False), default=False)
             ocr_brightness = float(params.get("ocr_brightness", 3)) if enable_ocr_brightness else 0.0
-            enable_llm_correction = parse_bool(params.get("enable_llm_correction", False), default=False)
+
+            enable_llm = parse_bool(params.get("enable_llm", False), default=False)
             llm_service_url = resolve_qwenvl_service_url(params.get("llm_service_url"))
             llm_language = str(params.get("llm_language", "auto") or "auto")
             llm_timeout_sec = int(params.get("llm_timeout_sec", 180))
-            llm_max_new_tokens = int(params.get("llm_max_new_tokens", 1024))
+            llm_max_new_tokens = int(params.get("llm_max_new_tokens", 96))
+
+            enable_postprocess = parse_bool(params.get("enable_postprocess", True), default=True)
+            min_score = float(params.get("min_score", 0.15))
+            gap_merge = float(params.get("gap_merge_sec", 1.5))
 
             step = max(1, int(round(fps / max(sample_fps, 0.0001))))
             idxs = list(range(0, total, step))
@@ -513,10 +402,15 @@ class VideoSubtitleOCR(Mapper):
                 n = max_frames
                 idxs = [idxs[int(i * (len(idxs) - 1) / max(1, n - 1))] for i in range(n)]
 
+            logger.info(f"video={src_video}")
+            logger.info(f"out_dir={out_dir}")
+            logger.info(f"subtitle_backend={'qwen_vl' if enable_llm else 'rapidocr'}")
             logger.info(
                 f"fps={fps}, total={total}, size={w}x{h}, "
                 f"sample_fps={sample_fps}, frames_to_check={len(idxs)}"
             )
+
+            ocr = None if enable_llm else _build_rapidocr()
 
             cap = cv2.VideoCapture(src_video)
             if not cap.isOpened():
@@ -539,124 +433,129 @@ class VideoSubtitleOCR(Mapper):
                     continue
                 last_roi = roi
 
-                ocr_roi = _prepare_roi_for_ocr(
+                roi_img = _prepare_roi_image(
                     roi,
                     upscale=ocr_upscale,
                     sharpen=ocr_sharpen,
                     contrast=ocr_contrast,
                     brightness=ocr_brightness,
                 )
-
                 jpg_path = os.path.join(frames_dir, f"subtitle_{int(fi):06d}.jpg")
-                cv2.imwrite(jpg_path, ocr_roi)
+                cv2.imwrite(jpg_path, roi_img)
 
+                backend_meta = {}
+                text = ""
                 try:
-                    result, elapse = ocr(jpg_path)
+                    if enable_llm:
+                        llm_resp = qwenvl_read_subtitle_by_image_path(
+                            image_path=jpg_path,
+                            service_url=llm_service_url,
+                            max_new_tokens=llm_max_new_tokens,
+                            language=llm_language,
+                            timeout=llm_timeout_sec,
+                        )
+                        backend_meta = {"llm": llm_resp}
+                        text = _clean_text(llm_resp.get("text", ""))
+                    else:
+                        result, _ = ocr(jpg_path)
+                        pairs = _rapidocr_pairs(result)
+                        texts = [txt for (txt, score) in pairs if txt and float(score) >= min_score]
+                        backend_meta = {
+                            "ocr_pairs": [{"text": txt, "score": float(score)} for (txt, score) in pairs]
+                        }
+                        text = _clean_text(" ".join(texts))
                 except Exception as e:
-                    logger.warning(f"OCR failed frame={fi}: {repr(e)}")
-                    result = None
-                pairs = _rapidocr_pairs(result)
-                texts = [txt for (txt, sc) in pairs if txt and float(sc) >= min_score]
+                    logger.warning(f"subtitle read failed frame={fi}: {repr(e)}")
+                    backend_meta = {"error": repr(e)}
+                    text = ""
+                finally:
+                    _safe_remove(jpg_path)
 
-                text = _clean_text(" ".join(texts))
-                if fix_en_space:
+                if enable_postprocess and text:
                     text = _fix_english_spacing_basic(text)
                     text = _fix_english_ocr_artifacts(text)
 
-                if text and not _is_noise_subtitle(text):
-                    raw_hits.append({
-                        "t": t,
-                        "text": text,
-                        "key": _norm_sub_key(text),
-                        "frame_id": int(fi),
-                        "scores": [float(sc) for (_, sc) in pairs],
-                    })
+                if not text:
+                    continue
+                if enable_postprocess and _is_noise_subtitle(text):
+                    continue
 
-                _safe_remove(jpg_path)
+                raw_hits.append({
+                    "t": t,
+                    "text": text,
+                    "key": _norm_sub_key(text) if enable_postprocess else text,
+                    "frame_id": int(fi),
+                    "backend": "qwen_vl" if enable_llm else "rapidocr",
+                    **backend_meta,
+                })
 
                 if (k + 1) % 20 == 0 or k == len(idxs) - 1:
-                    logger.info(f"[{k + 1}/{len(idxs)}] frame={fi} hit={1 if text else 0} len={len(text)}")
+                    logger.info(
+                        f"[{k + 1}/{len(idxs)}] frame={fi} backend={'llm' if enable_llm else 'ocr'} "
+                        f"hit={1 if text else 0} len={len(text)}"
+                    )
 
             cap.release()
 
-            segments = []
-            for hit in raw_hits:
-                if not segments:
-                    segments.append({
-                        "start": hit["t"],
-                        "end": hit["t"],
-                        "text": hit["text"],
-                        "key": hit["key"],
-                        "evidence": [{"t": hit["t"], "frame_id": hit["frame_id"]}],
-                    })
-                    continue
-
-                last = segments[-1]
-                if _should_merge_hit(last, hit, gap_merge=gap_merge, sim_thr=0.88):
-                    last["end"] = hit["t"]
-                    last["text"] = _choose_better_text(last["text"], hit["text"])
-                    last["text"] = _fix_english_ocr_artifacts(_fix_english_spacing_basic(last["text"])) if fix_en_space else last["text"]
-                    last["key"] = _norm_sub_key(last["text"])
-                    last["evidence"].append({"t": hit["t"], "frame_id": hit["frame_id"]})
-                else:
-                    segments.append({
-                        "start": hit["t"],
-                        "end": hit["t"],
-                        "text": hit["text"],
-                        "key": hit["key"],
-                        "evidence": [{"t": hit["t"], "frame_id": hit["frame_id"]}],
-                    })
-
-            segments = _post_merge_segments(segments, gap_merge=gap_merge)
-
             min_dur = max(0.4, 1.0 / max(sample_fps, 0.1))
-            for seg in segments:
-                seg["end"] = float(seg["end"] + min_dur)
-                seg["text"] = _clean_text(seg.get("text", ""))
 
-            segments = [seg for seg in segments if seg.get("text") and not _is_noise_subtitle(seg.get("text", ""))]
+            if enable_postprocess:
+                segments = []
+                for hit in raw_hits:
+                    if not segments:
+                        segments.append({
+                            "start": hit["t"],
+                            "end": hit["t"],
+                            "text": hit["text"],
+                            "key": hit["key"],
+                            "evidence": [{"t": hit["t"], "frame_id": hit["frame_id"]}],
+                        })
+                        continue
 
-            llm_correction_applied = False
-            corrected_srt_path = None
-            llm_correction_raw_path = None
-            if enable_llm_correction and segments:
-                try:
-                    srt_text = _segments_to_srt_text(segments)
-                    llm_resp = qwenvl_correct_subtitle_srt(
-                        srt_text=srt_text,
-                        service_url=llm_service_url,
-                        language=llm_language,
-                        max_new_tokens=llm_max_new_tokens,
-                        timeout=llm_timeout_sec,
-                    )
-                    corrected_segments, llm_correction_applied = _apply_corrected_texts(
-                        segments,
-                        llm_resp.get("items", []),
-                    )
-                    if llm_correction_applied:
-                        segments = corrected_segments
-                    llm_correction_raw_path = os.path.join(art_dir, "llm_subtitle_correction.json")
-                    with open(llm_correction_raw_path, "w", encoding="utf-8") as f:
-                        json.dump(llm_resp, f, ensure_ascii=False, indent=2)
-                    logger.info(
-                        f"LLM subtitle correction done. applied={llm_correction_applied}, service_url={llm_service_url}"
-                    )
-                except Exception as e:
-                    logger.warning(f"LLM subtitle correction failed, keep OCR result. reason={repr(e)}")
+                    last = segments[-1]
+                    if _should_merge_hit(last, hit, gap_merge=gap_merge, sim_thr=0.88):
+                        last["end"] = hit["t"]
+                        last["text"] = _choose_better_text(last["text"], hit["text"])
+                        last["text"] = _fix_english_ocr_artifacts(_fix_english_spacing_basic(last["text"]))
+                        last["key"] = _norm_sub_key(last["text"])
+                        last["evidence"].append({"t": hit["t"], "frame_id": hit["frame_id"]})
+                    else:
+                        segments.append({
+                            "start": hit["t"],
+                            "end": hit["t"],
+                            "text": hit["text"],
+                            "key": hit["key"],
+                            "evidence": [{"t": hit["t"], "frame_id": hit["frame_id"]}],
+                        })
+
+                segments = _post_merge_segments(segments, gap_merge=gap_merge)
+                for seg in segments:
+                    seg["end"] = float(seg["end"] + min_dur)
+                    seg["text"] = _clean_text(seg.get("text", ""))
+                segments = [
+                    seg for seg in segments
+                    if seg.get("text") and not _is_noise_subtitle(seg.get("text", ""))
+                ]
+            else:
+                segments = []
+                for hit in raw_hits:
+                    segments.append({
+                        "start": hit["t"],
+                        "end": float(hit["t"] + min_dur),
+                        "text": _clean_text(hit["text"]),
+                        "key": hit.get("key", hit["text"]),
+                        "evidence": [{"t": hit["t"], "frame_id": hit["frame_id"]}],
+                    })
 
             json_path = os.path.join(art_dir, "subtitles.json")
             raw_path = os.path.join(art_dir, "raw_hits.json")
             srt_path = os.path.join(art_dir, "subtitles.srt")
-            if enable_llm_correction:
-                corrected_srt_path = os.path.join(art_dir, "subtitles_corrected.srt")
 
             with open(json_path, "w", encoding="utf-8") as f:
                 json.dump({"segments": segments}, f, ensure_ascii=False, indent=2)
             with open(raw_path, "w", encoding="utf-8") as f:
                 json.dump({"raw_hits": raw_hits}, f, ensure_ascii=False, indent=2)
             _write_srt(segments, srt_path)
-            if corrected_srt_path:
-                _write_srt(segments, corrected_srt_path)
 
             result = {
                 "out_dir": out_dir,
@@ -664,12 +563,9 @@ class VideoSubtitleOCR(Mapper):
                 "subtitles_srt": srt_path,
                 "raw_hits_json": raw_path,
                 "count": len(segments),
-                "llm_correction_applied": llm_correction_applied,
+                "subtitle_backend": "qwen_vl" if enable_llm else "rapidocr",
+                "postprocess_enabled": bool(enable_postprocess),
             }
-            if corrected_srt_path:
-                result["subtitles_corrected_srt"] = corrected_srt_path
-            if llm_correction_raw_path:
-                result["llm_correction_json"] = llm_correction_raw_path
             sample.update(result)
             logger.info(f"Done. subtitles={len(segments)} srt={srt_path}")
             return sample

@@ -94,6 +94,28 @@ def event_tag_prompt() -> str:
     return "根据图片判断正在发生的事件，用短语输出事件名称（不超过10个字）。不要解释。"
 
 
+def subtitle_ocr_prompt(language: str = "auto") -> str:
+    lang_hint = (
+        "The subtitle may be in English or Chinese. Keep the original language."
+        if (language or "auto").lower() == "auto"
+        else f"The subtitle language is {language}. Keep that language."
+    )
+    return (
+        "You are extracting subtitle text from a cropped subtitle image.\n"
+        "Output rules:\n"
+        "1. Output only the subtitle text.\n"
+        "2. Do not describe the image.\n"
+        "3. Do not explain.\n"
+        "4. Do not apologize.\n"
+        "5. Do not say things like 'there is no subtitle', 'no subtitle present', 'no text', or 'the image you provided'.\n"
+        "6. If no readable subtitle text is present, return an empty string.\n"
+        "7. If the text is uncertain, prefer an empty string over a guessed sentence.\n"
+        "8. Output plain text only, with no prefix, no label, and no quotation marks.\n"
+        f"{lang_hint}\n"
+        "Return one single subtitle line only."
+    )
+
+
 def subtitle_correct_prompt(srt_text: str, language: str = "auto") -> str:
     lang_hint = (
         "Keep the original language of each subtitle line."
@@ -280,6 +302,15 @@ def infer_api():
                 max_new_tokens=max_new_tokens,
             )
             return jsonify({"task": task, "summary": extract_assistant_answer(raw).strip()})
+
+        if task == "subtitle_ocr":
+            raw = infer_raw_text(
+                image_path,
+                subtitle_ocr_prompt(language=language),
+                max_new_tokens=max_new_tokens,
+            )
+            text = extract_assistant_answer(raw).strip()
+            return jsonify({"task": task, "text": text, "raw": text})
 
         if task == "event_tag":
             raw = infer_raw_text(image_path, event_tag_prompt(), max_new_tokens=max_new_tokens)

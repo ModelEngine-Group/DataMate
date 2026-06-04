@@ -1,7 +1,7 @@
 name: '视频字幕 OCR'
 name_en: 'Video Subtitle OCR'
-description: '识别视频底部字幕区域，输出 subtitles.json 与 subtitles.srt，并支持可选大模型纠错。'
-description_en: 'Recognize bottom subtitles, output subtitles.json and subtitles.srt, with optional LLM correction.'
+description: '从视频画面中截取底部字幕区域，按设定频率抽帧识别字幕文本；可在前端选择使用本地 OCR 或多模态大模型识别，并可选择是否启用后处理来清洗噪声、修正文案和合并重复片段。'
+description_en: 'Extract the subtitle region at the bottom of a video, sample frames at the configured rate, and recognize subtitle text. You can choose either local OCR or a multimodal LLM in the frontend, and optionally enable postprocessing to clean noise, refine text, and merge repeated segments.'
 language: 'python'
 vendor: 'huawei'
 raw_id: 'VideoSubtitleOCR'
@@ -15,26 +15,42 @@ effect:
 inputs: 'video'
 outputs: 'text'
 settings:
-  preprocess_deborder:
-    name: '先去黑边'
-    description: '是否在 OCR 前先做黑边裁切。'
+  enable_llm:
+    name: '使用大模型识别'
+    description: '开启后使用多模态大模型直接识别字幕；关闭后使用本地 OCR。'
+    type: 'switch'
+    defaultVal: 'false'
+    required: false
+    checkedLabel: '开启'
+    unCheckedLabel: '关闭'
+  enable_postprocess:
+    name: '启用后处理'
+    description: '开启后对识别结果执行清洗噪声、英文空格修复和重复字幕合并；关闭后尽量保留原始识别结果。'
     type: 'switch'
     defaultVal: 'true'
     required: false
     checkedLabel: '开启'
     unCheckedLabel: '关闭'
+  preprocess_deborder:
+    name: '先去黑边'
+    description: '是否在识别前先裁掉视频黑边。'
+    type: 'switch'
+    defaultVal: 'false'
+    required: false
+    checkedLabel: '开启'
+    unCheckedLabel: '关闭'
   sample_fps:
     name: '抽帧频率'
-    description: '每秒抽取多少帧用于字幕 OCR。'
+    description: '每秒抽取多少帧用于字幕识别。'
     type: 'slider'
-    defaultVal: 3.33
+    defaultVal: 2.0
     required: false
     min: 0.5
     max: 10.0
     step: 0.5
   max_frames:
     name: '最大抽帧数'
-    description: '限制最多参与 OCR 的帧数。'
+    description: '限制最多参与识别的帧数。'
     type: 'slider'
     defaultVal: 220
     required: false
@@ -43,33 +59,16 @@ settings:
     step: 20
   subtitle_ratio:
     name: '字幕区域比例'
-    description: '从底部截取多少比例作为字幕 ROI。'
+    description: '从画面底部截取多少比例作为字幕区域。'
     type: 'slider'
     defaultVal: 0.30
     required: false
     min: 0.1
     max: 0.5
     step: 0.05
-  enable_min_score:
-    name: '启用最小 OCR 分数'
-    description: '关闭时不过滤低分 OCR 结果。'
-    type: 'switch'
-    defaultVal: 'false'
-    required: false
-    checkedLabel: '开启'
-    unCheckedLabel: '关闭'
-  min_score:
-    name: '最小 OCR 分数'
-    description: '低于该分数的 OCR 结果会被过滤。'
-    type: 'slider'
-    defaultVal: 0.15
-    required: false
-    min: 0.0
-    max: 1.0
-    step: 0.05
   enable_roi_diff_thr:
     name: '启用 ROI 差异阈值'
-    description: '关闭时不按 ROI 变化过滤重复帧。'
+    description: '开启后，当相邻帧字幕区域变化很小时跳过识别。'
     type: 'switch'
     defaultVal: 'false'
     required: false
@@ -77,41 +76,42 @@ settings:
     unCheckedLabel: '关闭'
   roi_diff_thr:
     name: 'ROI 差异阈值'
-    description: '相邻帧 ROI 变化低于该值时会跳过 OCR。'
+    description: '相邻帧字幕区域变化低于该值时跳过识别。'
     type: 'slider'
     defaultVal: 3.0
     required: false
     min: 0.0
     max: 20.0
     step: 0.5
+  min_score:
+    name: '最小 OCR 分数'
+    description: '本地 OCR 模式下，低于该分数的文本不会被保留。'
+    type: 'slider'
+    defaultVal: 0.15
+    required: false
+    min: 0.0
+    max: 1.0
+    step: 0.05
   gap_merge_sec:
     name: '合并间隔秒数'
-    description: '相邻字幕片段的最大合并时间间隔。'
+    description: '启用后处理时，相邻字幕片段允许合并的最大时间间隔。'
     type: 'slider'
     defaultVal: 1.5
     required: false
     min: 0.0
     max: 5.0
     step: 0.5
-  fix_english_space:
-    name: '修复英文空格'
-    description: '是否做英文字幕空格修复。'
-    type: 'switch'
-    defaultVal: 'true'
-    required: false
-    checkedLabel: '开启'
-    unCheckedLabel: '关闭'
   enable_ocr_upscale:
-    name: '启用 OCR 放大'
-    description: '关闭时不做 OCR 放大。'
+    name: '启用图像放大'
+    description: '开启后先放大字幕区域，再做识别。'
     type: 'switch'
     defaultVal: 'false'
     required: false
     checkedLabel: '开启'
     unCheckedLabel: '关闭'
   ocr_upscale:
-    name: 'OCR 放大倍数'
-    description: 'OCR 前对 ROI 的放大倍数。'
+    name: '图像放大倍数'
+    description: '字幕区域的放大倍数。'
     type: 'slider'
     defaultVal: 1.5
     required: false
@@ -119,24 +119,24 @@ settings:
     max: 3.0
     step: 0.1
   ocr_sharpen:
-    name: 'OCR 锐化'
-    description: '是否在 OCR 前进行锐化。'
+    name: '图像锐化'
+    description: '是否在识别前对字幕区域做锐化。'
     type: 'switch'
-    defaultVal: 'true'
+    defaultVal: 'false'
     required: false
     checkedLabel: '开启'
     unCheckedLabel: '关闭'
   enable_ocr_contrast:
-    name: '启用 OCR 对比度'
-    description: '关闭时不做额外对比度增强。'
+    name: '启用对比度增强'
+    description: '开启后在识别前增强字幕区域对比度。'
     type: 'switch'
     defaultVal: 'false'
     required: false
     checkedLabel: '开启'
     unCheckedLabel: '关闭'
   ocr_contrast:
-    name: 'OCR 对比度'
-    description: 'OCR 预处理时的对比度系数。'
+    name: '对比度系数'
+    description: '字幕区域预处理时使用的对比度系数。'
     type: 'slider'
     defaultVal: 1.15
     required: false
@@ -144,38 +144,30 @@ settings:
     max: 2.0
     step: 0.05
   enable_ocr_brightness:
-    name: '启用 OCR 亮度增量'
-    description: '关闭时不做额外亮度增强。'
+    name: '启用亮度增强'
+    description: '开启后在识别前提高字幕区域亮度。'
     type: 'switch'
     defaultVal: 'false'
     required: false
     checkedLabel: '开启'
     unCheckedLabel: '关闭'
   ocr_brightness:
-    name: 'OCR 亮度增量'
-    description: 'OCR 预处理时的亮度增量。'
+    name: '亮度增量'
+    description: '字幕区域预处理时使用的亮度增量。'
     type: 'slider'
     defaultVal: 3
     required: false
     min: 0
     max: 20
     step: 1
-  enable_llm_correction:
-    name: '启用大模型修正'
-    description: '对 OCR 生成的字幕文本做一次大模型纠错，只修正文本，不改时间轴。'
-    type: 'switch'
-    defaultVal: 'false'
-    required: false
-    checkedLabel: '开启'
-    unCheckedLabel: '关闭'
   llm_service_url:
     name: '大模型服务地址'
-    description: '留空时读取 QWEN_VL_ENDPOINT，否则使用这里填写的地址。'
+    description: '使用大模型识别时调用的服务地址。留空时读取 QWEN_VL_ENDPOINT。'
     type: 'input'
     defaultVal: 'http://qwen-vl-service:18080'
     required: false
   llm_language:
-    name: '纠错语言'
+    name: '大模型识别语言'
     description: 'auto 自动判断，zh 中文，en 英文。'
     type: 'select'
     defaultVal: 'auto'
@@ -189,7 +181,7 @@ settings:
         value: 'en'
   llm_timeout_sec:
     name: '大模型超时秒数'
-    description: '调用字幕纠错服务的超时时间。'
+    description: '使用大模型识别时的超时时间。'
     type: 'slider'
     defaultVal: 180
     required: false
@@ -198,13 +190,13 @@ settings:
     step: 30
   llm_max_new_tokens:
     name: '大模型最大生成长度'
-    description: '字幕纠错时允许的最大生成 token 数。'
+    description: '使用大模型识别时允许的最大生成 token 数。'
     type: 'slider'
-    defaultVal: 1024
+    defaultVal: 96
     required: false
-    min: 128
-    max: 2048
-    step: 128
+    min: 32
+    max: 512
+    step: 32
   ffmpeg_path:
     name: 'FFmpeg 路径'
     description: '留空时自动使用环境中的 ffmpeg。'

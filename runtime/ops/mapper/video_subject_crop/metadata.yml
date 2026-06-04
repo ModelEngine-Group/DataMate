@@ -1,7 +1,7 @@
 name: '视频主体裁剪'
 name_en: 'Video Subject Crop'
 description: '根据 tracks.json 选择主目标并裁剪输出 subject.mp4；未提供 tracks.json 时会先执行 MOT。'
-description_en: 'Crop the main tracked subject from tracks.json, or run MOT first if needed.'
+description_en: 'Crop the main tracked subject from tracks.json and output subject.mp4, or run MOT first if needed.'
 language: 'python'
 vendor: 'huawei'
 raw_id: 'VideoSubjectCrop'
@@ -109,3 +109,9 @@ settings:
     required: false
     checkedLabel: '输出'
     unCheckedLabel: '不输出'
+  tracker_cfg:
+    name: 'MOT Tracker 配置'
+    description: '未提供 tracks.json 时可选填写，作为前置 MOT 使用的 tracker 配置文件路径。'
+    type: 'input'
+    defaultVal: ''
+    required: false

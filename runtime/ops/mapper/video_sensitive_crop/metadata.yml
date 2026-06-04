@@ -1,7 +1,7 @@
 name: '视频敏感片段裁剪'
 name_en: 'Video Sensitive Crop'
-description: '根据 sensitive_segments.json 保留或删除敏感片段，输出清洗后视频。'
-description_en: 'Keep or remove sensitive segments based on sensitive_segments.json.'
+description: '根据 sensitive_segments.json 保留或删除敏感片段，输出裁剪后视频；未提供 segments_json 时会先执行敏感检测。'
+description_en: 'Keep or remove sensitive segments based on sensitive_segments.json, or run sensitive detection first when segments_json is not provided.'
 language: 'python'
 vendor: 'huawei'
 raw_id: 'VideoSensitiveCrop'
@@ -40,7 +40,7 @@ settings:
     required: false
   sample_fps:
     name: '检测抽帧频率'
-    description: '未提供 segments_json 时，先做敏感检测用到的抽帧频率。'
+    description: '仅在未提供 segments_json 时生效，作为前置敏感检测的抽帧频率。'
     type: 'slider'
     defaultVal: 1.0
     required: false
@@ -49,7 +49,7 @@ settings:
     step: 0.5
   threshold:
     name: '敏感阈值'
-    description: '未提供 segments_json 时，敏感检测采用的阈值。'
+    description: '仅在未提供 segments_json 时生效，作为前置敏感检测的判定阈值。'
     type: 'slider'
     defaultVal: 0.5
     required: false
@@ -58,7 +58,7 @@ settings:
     step: 0.05
   merge_gap:
     name: '合并间隔秒数'
-    description: '未提供 segments_json 时，邻近敏感命中的合并间隔。'
+    description: '仅在未提供 segments_json 时生效，作为前置敏感检测中邻近命中的合并间隔。'
     type: 'slider'
     defaultVal: 1.5
     required: false
@@ -67,7 +67,7 @@ settings:
     step: 0.5
   pad_sec:
     name: '前后扩展秒数'
-    description: '未提供 segments_json 时，每段前后扩展时长。'
+    description: '仅在未提供 segments_json 时生效，作为前置敏感检测中每段前后扩展的时长。'
     type: 'slider'
     defaultVal: 0.5
     required: false
@@ -76,7 +76,7 @@ settings:
     step: 0.5
   timeout_sec:
     name: '检测超时秒数'
-    description: '未提供 segments_json 时，单帧调用 QwenVL 的超时时间。'
+    description: '仅在未提供 segments_json 时生效，作为前置敏感检测中单帧调用 QwenVL 的超时时间。'
     type: 'slider'
     defaultVal: 180
     required: false
@@ -85,7 +85,7 @@ settings:
     step: 30
   service_url:
     name: 'Qwen 服务地址'
-    description: '未提供 segments_json 时使用的 Qwen 服务地址。'
+    description: '仅在未提供 segments_json 时生效，作为前置敏感检测使用的 Qwen 服务地址。'
     type: 'input'
     defaultVal: 'http://qwen-vl-service:18080'
     required: false
