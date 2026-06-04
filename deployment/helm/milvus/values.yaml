@@ -4,6 +4,14 @@ nameOverride: ""
 ## Default fully qualified app name
 fullnameOverride: ""
 
+## Define toleration for node isolation
+## This anchor can be referenced throughout the configuration
+nodeIsolationTolerations: &nodeIsolationTolerations
+  - key: "node-role.kubernetes.io/datamate"
+    operator: "Equal"
+    value: "true"
+    effect: "NoSchedule"
+
 ## Enable or disable Milvus Cluster mode
 cluster:
   enabled: false
@@ -31,7 +39,7 @@ nodeSelector: {}
 # Global tolerations
 # If set, this will apply to all milvus components
 # Individual components can be set to a different tolerations
-tolerations: []
+tolerations: *nodeIsolationTolerations
 
 # Global affinity
 # If set, this will apply to all milvus components
@@ -234,7 +242,7 @@ standalone:
   #     ephemeral-storage: 100Gi
   nodeSelector: {}
   affinity: {}
-  tolerations: []
+  tolerations: *nodeIsolationTolerations
   securityContext: {}
   containerSecurityContext: {}
   topologySpreadConstraints: []  # Component specific topologySpreadConstraints
@@ -653,6 +661,10 @@ minio:
     type: ClusterIP
     port: 9000
 
+  nodeSelector: {}
+  tolerations: *nodeIsolationTolerations
+  affinity: {}
+
   persistence:
     enabled: true
     existingClaim: ""
@@ -721,6 +733,10 @@ etcd:
     size: 10Gi
     storagePath:
     storageNode:
+
+  nodeSelector: {}
+  tolerations: *nodeIsolationTolerations
+  affinity: {}
 
   ## Change default timeout periods to mitigate zoobie probe process
   livenessProbe:
