@@ -9,7 +9,7 @@ It includes:
 - operator registration entry
 - operator metadata and UI settings
 - main pipeline implementation
-- WSI reading helpers
+- a bundled OpenSlide runtime library for WSI reading
 - slide segmentation helpers
 - patch extraction helpers
 - stain normalization helpers
@@ -19,30 +19,32 @@ It includes:
 
 ```text
 wsi_enhance_operator/
-├── __init__.py
-├── metadata.yml
-├── process.py
-├── README.md
-├── requirements.txt
-├── augmentations/
-│   ├── __init__.py
-│   └── augmentations.py
-├── slidesegmenter/
-│   ├── __init__.py
-│   ├── _model_utils.py
-│   ├── slidesegmenter.py
-│   └── model_files/
-│       └── __init__.py
-├── stain_normalization/
-│   ├── __init__.py
-│   └── stain_normalization.py
-├── wsi_processor/
-│   ├── __init__.py
-│   └── wsi_processor.py
-└── wsi_reader/
-    ├── __init__.py
-    ├── wsi_reader.py
-    └── wsi_types.py
+|-- __init__.py
+|-- metadata.yml
+|-- openslide/
+|   `-- libopenslide.so.1
+|-- process.py
+|-- README.md
+|-- requirements.txt
+|-- augmentations/
+|   |-- __init__.py
+|   `-- augmentations.py
+|-- slidesegmenter/
+|   |-- __init__.py
+|   |-- _model_utils.py
+|   |-- slidesegmenter.py
+|   `-- model_files/
+|       `-- __init__.py
+|-- stain_normalization/
+|   |-- __init__.py
+|   `-- stain_normalization.py
+|-- wsi_processor/
+|   |-- __init__.py
+|   `-- wsi_processor.py
+`-- wsi_reader/
+    |-- __init__.py
+    |-- wsi_reader.py
+    `-- wsi_types.py
 ```
 
 ## File Responsibilities
@@ -50,6 +52,7 @@ wsi_enhance_operator/
 - `__init__.py`: registers `WSIEnhanceMapper` into DataMate operator registry
 - `metadata.yml`: defines operator identity, category, runtime resources, and frontend settings
 - `process.py`: main mapper entry, parameter parsing, segmentation, patch extraction, and artifact export
+- `openslide/`: bundled OpenSlide shared library loaded directly from the mapper package
 - `augmentations/`: patch augmentation utilities
 - `slidesegmenter/`: segmentation model loading and inference helpers
 - `stain_normalization/`: stain normalization logic
@@ -130,7 +133,7 @@ The operator writes result paths and summary fields back into `sample`. Common o
 
 1. Place the operator directory under `runtime/ops/mapper/wsi_enhance_operator`.
 2. Ensure `metadata.yml`, `process.py`, and `__init__.py` are present.
-3. Ensure required WSI runtime dependencies are installed, including OpenSlide-related dependencies.
+3. Ensure `openslide/libopenslide.so.1` is packaged with the mapper directory.
 4. Ensure model files are mounted under `/models/WSIEnhance/<model_folder>`.
 5. Import the operator package from `runtime/ops/mapper/__init__.py`.
 6. Configure parameters from the DataMate frontend or task definition.

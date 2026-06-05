@@ -6,9 +6,12 @@ from typing import Tuple
 
 import numpy as np
 
+_THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+_OPERATOR_ROOT = os.path.dirname(_THIS_DIR)
+
 OPENSLIDE_LIBRARY_CANDIDATES = [
-    "/models/WSIEnhance/openslide/libopenslide.so.1",
-    "/models/WSIEnhance/openslide/libopenslide.so",
+    os.path.join(_OPERATOR_ROOT, "openslide", "libopenslide.so.1"),
+    os.path.join(_OPERATOR_ROOT, "openslide", "libopenslide.so"),
 ]
 
 
