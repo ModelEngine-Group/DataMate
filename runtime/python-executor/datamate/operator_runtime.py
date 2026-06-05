@@ -1,4 +1,5 @@
 import os
+import re
 from typing import Optional, Dict, Any, List
 
 import uvicorn
@@ -64,6 +65,18 @@ class QueryTaskRequest(BaseModel):
     task_ids: List[str]
 
 
+# UUID pattern for task_id validation (prevents path traversal)
+_TASK_ID_PATTERN = re.compile(
+    r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
+)
+
+
+def _validate_task_id(task_id: str) -> None:
+    """Validate task_id is a proper UUID to prevent path traversal (CodeQL)."""
+    if not _TASK_ID_PATTERN.match(task_id):
+        raise APIException(ErrorCode.PARAM_ERROR, detail=f"Invalid task_id format: {task_id}")
+
+
 @app.post("/api/task/list")
 async def query_task_info(request: QueryTaskRequest):
     try:
@@ -78,6 +91,7 @@ class SubmitTaskRequest(BaseModel):
 
 @app.post("/api/task/{task_id}/submit")
 async def submit_task(task_id, request: SubmitTaskRequest = None):
+    _validate_task_id(task_id)
     retry_count = request.retry_count if request else 0
     config_path = f"/flow/{task_id}/process.yaml"
     logger.info(f"Start submitting job with retry_count={retry_count}...")
@@ -106,6 +120,7 @@ async def submit_task(task_id, request: SubmitTaskRequest = None):
 @app.get("/api/task/{task_id}/status")
 async def get_task_status(task_id):
     """Get task execution status from the scheduler"""
+    _validate_task_id(task_id)
     try:
         executor_type = get_from_cfg(task_id, "executor_type", default="datamate")
         if executor_type == "ray" or executor_type == "datamate":
@@ -137,6 +152,7 @@ async def get_task_status(task_id):
 
 @app.post("/api/task/{task_id}/stop")
 async def stop_task(task_id):
+    _validate_task_id(task_id)
     logger.info("Start stopping ray job...")
     success_json_info = JSONResponse(
         content={"status": "Success", "message": f"{task_id} has been stopped"},
@@ -162,6 +178,10 @@ def check_valid_path(file_path):
 
 
 def get_from_cfg(task_id, key, default=None):
+    # Defense-in-depth: reject path traversal in task_id (CodeQL)
+    if ".." in task_id or "/" in task_id or "\\" in task_id:
+        raise APIException(ErrorCode.PARAM_ERROR, detail=f"Invalid task_id: {task_id}")
+
     config_path = f"/flow/{task_id}/process.yaml"
     if not check_valid_path(config_path):
         logger.error(f"config_path is not existed! please check this path.")

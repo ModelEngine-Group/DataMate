@@ -93,6 +93,7 @@ class ErrorCode(Enum):
     # 通用错误
     SUCCESS = (0, "Success")
     UNKNOWN_ERROR = (1, "Unknown error")
+    PARAM_ERROR = (2, "Invalid parameter")
     FILE_NOT_FOUND_ERROR = (1000, "File not found!")
     SUBMIT_TASK_ERROR = (1001, "Task submitted Failed!")
     CANCEL_TASK_ERROR = (1002, "Task canceled Failed!")
