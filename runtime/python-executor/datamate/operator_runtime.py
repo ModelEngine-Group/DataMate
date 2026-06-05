@@ -178,11 +178,12 @@ def check_valid_path(file_path):
 
 
 def get_from_cfg(task_id, key, default=None):
-    # Defense-in-depth: reject path traversal in task_id (CodeQL)
-    if ".." in task_id or "/" in task_id or "\\" in task_id:
+    # Build path, then resolve ".." and verify it stays within /flow (CodeQL)
+    config_path = os.path.join("/flow", task_id, "process.yaml")
+    config_path = os.path.normpath(config_path)
+    if not config_path.startswith("/flow/"):
         raise APIException(ErrorCode.PARAM_ERROR, detail=f"Invalid task_id: {task_id}")
 
-    config_path = f"/flow/{task_id}/process.yaml"
     if not check_valid_path(config_path):
         logger.error(f"config_path is not existed! please check this path.")
         raise APIException(ErrorCode.FILE_NOT_FOUND_ERROR)
