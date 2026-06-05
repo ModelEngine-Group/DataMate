@@ -382,8 +382,20 @@ VALID_K8S_TARGETS := datamate deer-flow milvus label-studio data-juicer mineru m
 		cp runtime/deer-flow/conf.yaml deployment/helm/deer-flow/charts/public/conf.yaml; \
 		helm upgrade deer-flow deployment/helm/deer-flow -n $(NAMESPACE) --install --set global.image.repository=$(REGISTRY); \
 	elif [ "$*" = "milvus" ]; then \
-		kubectl apply -f deployment/kubernetes/sealed-secrets/milvus.yaml; \
-		helm upgrade milvus deployment/helm/milvus -n $(NAMESPACE) --install; \
+		kubectl apply -f deployment/kubernetes/sealed-secrets/milvus.yaml 2>/dev/null || true; \
+		ACCESSKEY=$$(kubectl get secret milvus-minio-secret -n $(NAMESPACE) -o jsonpath='{.data.accessKey}' 2>/dev/null | base64 -d 2>/dev/null || echo ""); \
+		SECRETKEY=$$(kubectl get secret milvus-minio-secret -n $(NAMESPACE) -o jsonpath='{.data.secretKey}' 2>/dev/null | base64 -d 2>/dev/null || echo ""); \
+		if [ -n "$$ACCESSKEY" ] && [ -n "$$SECRETKEY" ]; then \
+			helm upgrade milvus deployment/helm/milvus -n $(NAMESPACE) --install \
+				--set minio.accessKey=$$ACCESSKEY \
+				--set minio.secretKey=$$SECRETKEY; \
+		else \
+			echo "[ERROR] milvus-minio-secret not found or empty in namespace $(NAMESPACE)"; \
+			echo "  Please ensure Sealed Secrets Controller is running and the secret was decrypted."; \
+			echo "  For local dev: kubectl create secret generic milvus-minio-secret \\"; \
+			echo "    --from-literal=accessKey=<key> --from-literal=secretKey=<key> -n $(NAMESPACE)"; \
+			exit 1; \
+		fi; \
 	elif [ "$*" = "data-juicer" ] || [ "$*" = "dj" ]; then \
 		kubectl apply -f deployment/kubernetes/data-juicer/deploy.yaml -n $(NAMESPACE); \
 	fi
