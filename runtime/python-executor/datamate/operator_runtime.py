@@ -1,4 +1,5 @@
 import os
+import re
 from typing import Optional, Dict, Any, List
 
 import uvicorn
@@ -13,6 +14,7 @@ from pydantic import BaseModel
 from datamate.common.error_code import ErrorCode
 from datamate.scheduler import cmd_scheduler
 from datamate.scheduler import func_scheduler
+from datamate.scheduler import ray_job_scheduler
 from datamate.wrappers import WRAPPERS
 
 # 日志配置
@@ -63,6 +65,18 @@ class QueryTaskRequest(BaseModel):
     task_ids: List[str]
 
 
+# UUID pattern for task_id validation (prevents path traversal)
+_TASK_ID_PATTERN = re.compile(
+    r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
+)
+
+
+def _validate_task_id(task_id: str) -> None:
+    """Validate task_id is a proper UUID to prevent path traversal (CodeQL)."""
+    if not _TASK_ID_PATTERN.match(task_id):
+        raise APIException(ErrorCode.PARAM_ERROR, detail=f"Invalid task_id format: {task_id}")
+
+
 @app.post("/api/task/list")
 async def query_task_info(request: QueryTaskRequest):
     try:
@@ -77,6 +91,7 @@ class SubmitTaskRequest(BaseModel):
 
 @app.post("/api/task/{task_id}/submit")
 async def submit_task(task_id, request: SubmitTaskRequest = None):
+    _validate_task_id(task_id)
     retry_count = request.retry_count if request else 0
     config_path = f"/flow/{task_id}/process.yaml"
     logger.info(f"Start submitting job with retry_count={retry_count}...")
@@ -102,8 +117,42 @@ async def submit_task(task_id, request: SubmitTaskRequest = None):
     return success_json_info
 
 
+@app.get("/api/task/{task_id}/status")
+async def get_task_status(task_id):
+    """Get task execution status from the scheduler"""
+    _validate_task_id(task_id)
+    try:
+        executor_type = get_from_cfg(task_id, "executor_type", default="datamate")
+        if executor_type == "ray" or executor_type == "datamate":
+            result = ray_job_scheduler.get_task_status(task_id)
+        else:
+            result = cmd_scheduler.get_task_status(task_id)
+        
+        if result is None:
+            return JSONResponse(
+                content={"status": "NOT_FOUND", "message": f"Task {task_id} not found"},
+                status_code=200
+            )
+        
+        return JSONResponse(
+            content={
+                "task_id": result.task_id,
+                "status": result.status.value,
+                "error": result.error,
+                "created_at": result.created_at.isoformat() if result.created_at else None,
+                "started_at": result.started_at.isoformat() if result.started_at else None,
+                "completed_at": result.completed_at.isoformat() if result.completed_at else None,
+            },
+            status_code=200
+        )
+    except Exception as e:
+        logger.error(f"Error getting task status {task_id}: {e}")
+        raise APIException(ErrorCode.UNKNOWN_ERROR)
+
+
 @app.post("/api/task/{task_id}/stop")
 async def stop_task(task_id):
+    _validate_task_id(task_id)
     logger.info("Start stopping ray job...")
     success_json_info = JSONResponse(
         content={"status": "Success", "message": f"{task_id} has been stopped"},
@@ -128,8 +177,13 @@ def check_valid_path(file_path):
     return os.path.exists(full_path)
 
 
-def get_from_cfg(task_id, key):
-    config_path = f"/flow/{task_id}/process.yaml"
+def get_from_cfg(task_id, key, default=None):
+    # Build path, then resolve ".." and verify it stays within /flow (CodeQL)
+    config_path = os.path.join("/flow", task_id, "process.yaml")
+    config_path = os.path.normpath(config_path)
+    if not config_path.startswith("/flow/"):
+        raise APIException(ErrorCode.PARAM_ERROR, detail=f"Invalid task_id: {task_id}")
+
     if not check_valid_path(config_path):
         logger.error(f"config_path is not existed! please check this path.")
         raise APIException(ErrorCode.FILE_NOT_FOUND_ERROR)
@@ -137,7 +191,7 @@ def get_from_cfg(task_id, key):
     with open(config_path, "r", encoding='utf-8') as f:
         content = f.read()
         cfg = yaml.safe_load(content)
-    return cfg[key]
+    return cfg.get(key, default)
 
 
 def parse_args():

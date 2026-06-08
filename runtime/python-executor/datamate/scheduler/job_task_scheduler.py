@@ -73,6 +73,14 @@ class RayJobTask(Task):
             poll_interval = 2  # 2 秒轮询一次
             elapsed_time = 0
             last_log_position = 0  # 记录已写入的日志位置
+            connection_failure_count = 0  # 连接失败计数器
+            max_connection_failures = 5  # 最大连接失败次数阈值
+            
+            # 任务无进展超时：如果 job 一直是 RUNNING 但日志/进度没有任何变化，
+            # 说明 workers 可能已全部丢失，判定为失败
+            stall_timeout = int(os.getenv("RAY_JOB_STALL_TIMEOUT", "120"))  # 默认 120 秒
+            last_log_size = 0
+            last_active_time = datetime.now()
 
             while True:
                 if self._cancelled:
@@ -86,10 +94,28 @@ class RayJobTask(Task):
                 try:
                     info = client.get_job_info(self.job_id)
                     job_status = info.status
+                    
+                    # 连接成功，重置失败计数器
+                    connection_failure_count = 0
 
                     # 获取并写入日志
                     await self._fetch_and_write_logs(client, last_log_position)
-                    last_log_position = os.path.getsize(self.log_path) if os.path.exists(self.log_path) else 0
+                    current_log_size = os.path.getsize(self.log_path) if os.path.exists(self.log_path) else 0
+                    last_log_position = current_log_size
+
+                    # 检测任务是否停滞（workers 全部丢失但 head 仍返回 RUNNING）
+                    if current_log_size > last_log_size:
+                        last_active_time = datetime.now()
+                        last_log_size = current_log_size
+                    elif (datetime.now() - last_active_time).total_seconds() > stall_timeout:
+                        logger.error(
+                            f"Ray Job {self.job_id} stalled for {stall_timeout}s "
+                            f"(no log progress), marking as FAILED"
+                        )
+                        self._stop_job(client)
+                        self.status = TaskStatus.FAILED
+                        self.error = f"Job stalled: no progress for {stall_timeout} seconds (workers may be lost)"
+                        break
 
                     if job_status == "SUCCEEDED":
                         self.status = TaskStatus.COMPLETED
@@ -119,7 +145,21 @@ class RayJobTask(Task):
                         self.error = f"Job timed out after {self.timeout} seconds"
                         break
 
+                except (ConnectionError, ConnectionRefusedError, ConnectionResetError, OSError) as e:
+                    # 连接类异常：Ray 集群可能已下线
+                    connection_failure_count += 1
+                    logger.error(
+                        f"Connection to Ray cluster failed (attempt {connection_failure_count}/{max_connection_failures}): {e}"
+                    )
+                    
+                    if connection_failure_count >= max_connection_failures:
+                        self.status = TaskStatus.FAILED
+                        self.error = f"Lost connection to Ray cluster after {max_connection_failures} attempts: {str(e)}"
+                        logger.error(f"Task {self.task_id} failed: {self.error}")
+                        break
+                        
                 except Exception as e:
+                    # 其他异常：记录警告但继续重试
                     logger.warning(f"Error checking job status: {e}")
 
                 await asyncio.sleep(poll_interval)
