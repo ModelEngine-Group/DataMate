@@ -47,19 +47,16 @@ def _get_task_service(db: AsyncSession) -> CleaningTaskService:
         CleaningTaskScheduler,
         CleaningTaskValidator,
     )
+    from app.module.cleaning.service.cleaning_task_scheduler import get_scheduler
     from app.module.cleaning.repository import (
         CleaningTaskRepository,
         CleaningResultRepository,
         OperatorInstanceRepository,
     )
-    from app.module.cleaning.runtime_client import RuntimeClient
     from app.module.dataset.service import DatasetManagementService
     from app.module.shared.common.lineage import LineageService
 
-    runtime_client = RuntimeClient()
-    scheduler = CleaningTaskScheduler(
-        task_repo=CleaningTaskRepository(None), runtime_client=runtime_client
-    )
+    scheduler = get_scheduler()  # 使用全局单例，保持轮询状态跨请求共享
     operator_service = _get_operator_service()
     dataset_service = DatasetManagementService(db)
     lineage_service = LineageService(db)

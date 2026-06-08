@@ -75,10 +75,10 @@ class RayJobTask(Task):
             last_log_position = 0  # 记录已写入的日志位置
             connection_failure_count = 0  # 连接失败计数器
             max_connection_failures = 5  # 最大连接失败次数阈值
-            
+
             # 任务无进展超时：如果 job 一直是 RUNNING 但日志/进度没有任何变化，
             # 说明 workers 可能已全部丢失，判定为失败
-            stall_timeout = int(os.getenv("RAY_JOB_STALL_TIMEOUT", "120"))  # 默认 120 秒
+            stall_timeout = int(os.getenv("RAY_JOB_STALL_TIMEOUT", "3600"))  # 默认 120 秒
             last_log_size = 0
             last_active_time = datetime.now()
 
@@ -94,7 +94,7 @@ class RayJobTask(Task):
                 try:
                     info = client.get_job_info(self.job_id)
                     job_status = info.status
-                    
+
                     # 连接成功，重置失败计数器
                     connection_failure_count = 0
 
@@ -151,13 +151,13 @@ class RayJobTask(Task):
                     logger.error(
                         f"Connection to Ray cluster failed (attempt {connection_failure_count}/{max_connection_failures}): {e}"
                     )
-                    
+
                     if connection_failure_count >= max_connection_failures:
                         self.status = TaskStatus.FAILED
                         self.error = f"Lost connection to Ray cluster after {max_connection_failures} attempts: {str(e)}"
                         logger.error(f"Task {self.task_id} failed: {self.error}")
                         break
-                        
+
                 except Exception as e:
                     # 其他异常：记录警告但继续重试
                     logger.warning(f"Error checking job status: {e}")
