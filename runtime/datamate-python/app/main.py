@@ -73,6 +73,12 @@ async def lifespan(app: FastAPI):
     init_executor(max_workers=10, max_concurrent_tasks=5)
     logger.info("Generation task executor initialized")
 
+    # 恢复未完成任务的轮询 + 启动全局状态轮询协程
+    from app.module.cleaning.service.cleaning_task_scheduler import get_scheduler
+    scheduler = get_scheduler()
+    await scheduler.startup()
+    logger.info("Cleaning task status polling started")
+
     yield
 
     # @shutdown
