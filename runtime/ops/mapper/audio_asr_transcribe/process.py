@@ -2,16 +2,17 @@
 
 from __future__ import annotations
 
+import contextlib
+import fcntl
 import json
 import os
 import re
-import shutil
 import subprocess
 import sys
 import tempfile
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, Iterable, List, Tuple
 
 from loguru import logger
 
@@ -24,13 +25,12 @@ except ImportError:
 
 DEFAULT_ZH_MODEL_DIR = "/models/AudioOperations/asr/aishell"
 DEFAULT_EN_MODEL_DIR = "/models/AudioOperations/asr/librispeech"
+DEFAULT_LANGUAGE_FILE_PATH = "/dataset/{dataset_id}/references/language.jsonl"
+DEFAULT_MAX_CONCURRENT_FILES = 1
+FIXED_DECODE_MODE = "ctc_greedy_search"
 LID_MARKER_RE = re.compile(r"(?:^|__)lid_(zh|en)(?:__|$)")
-
-
-def _as_bool(v: object) -> bool:
-    if isinstance(v, bool):
-        return v
-    return str(v).strip().lower() in {"1", "true", "yes", "y", "on"}
+LANGUAGE_FILE_NAMES = ("language.jsonl", "language.txt", "language.tsv")
+ASR_LOCK_PATH = "/tmp/datamate_audio_asr_transcribe.lock"
 
 
 def _package_root() -> Path:
@@ -41,19 +41,19 @@ def _helper_root() -> Path:
     return _package_root() / "audio_preprocessor"
 
 
-def _resolve_device(device_arg: str) -> str:
-    if device_arg == "auto":
-        try:
-            import torch_npu  # type: ignore  # noqa: F401
+@contextlib.contextmanager
+def _asr_runtime_lock(max_concurrent_files: int):
+    if max_concurrent_files > 1:
+        yield
+        return
 
-            return "npu"
-        except Exception:
-            if list(Path("/dev").glob("davinci*")):
-                return "npu"
-            return "cpu"
-    if device_arg in {"cpu", "npu", "cuda"}:
-        return device_arg
-    raise ValueError(f"不支持的 ASR 设备: {device_arg}")
+    Path(ASR_LOCK_PATH).parent.mkdir(parents=True, exist_ok=True)
+    with open(ASR_LOCK_PATH, "w", encoding="utf-8") as lock_file:
+        fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
 
 
 def _model_dir(language: str, zh_model_dir: str, en_model_dir: str) -> Path:
@@ -64,24 +64,295 @@ def _model_dir(language: str, zh_model_dir: str, en_model_dir: str) -> Path:
     raise ValueError(f"不支持的语言: {language}")
 
 
-def _resolve_language(language: str, sample: Dict[str, Any], ext_params_key: str) -> str:
-    if language in {"zh", "en"}:
-        return language
-    if language != "auto":
+def _normalize_language(value: object) -> str:
+    lang = str(value or "").strip().lower()
+    if lang in {"zh", "cn", "cmn", "chinese", "中文", "汉语"}:
+        return "zh"
+    if lang in {"en", "eng", "english", "英文", "英语"}:
+        return "en"
+    return ""
+
+
+def _normalize_lookup_key(value: object) -> str:
+    raw = str(value or "").strip()
+    if not raw:
+        return ""
+    stem = Path(raw).stem
+    stem = LID_MARKER_RE.sub("", stem).rstrip("_")
+    return stem.lower()
+
+
+def _expand_dataset_placeholders(path_value: str, sample: Dict[str, Any]) -> str:
+    value = str(path_value or "").strip()
+    dataset_id = str(sample.get("dataset_id") or sample.get("datasetId") or "").strip()
+    if dataset_id:
+        value = value.replace("{dataset_id}", dataset_id).replace("${dataset_id}", dataset_id)
+        value = value.replace("{datasetId}", dataset_id).replace("${datasetId}", dataset_id)
+    return value
+
+
+def _resolve_optional_path(path_value: str, sample: Dict[str, Any]) -> Path:
+    value = _expand_dataset_placeholders(path_value, sample)
+    if "{dataset_id}" in value or "${dataset_id}" in value or "{datasetId}" in value or "${datasetId}" in value:
+        return Path()
+    if not value:
+        return Path()
+    p = Path(value).expanduser()
+    if not p.is_absolute():
+        p = (_package_root() / p).resolve()
+    return p
+
+
+def _append_language_candidates_from_root(candidates: List[Path], root: Path) -> None:
+    candidates.append(root / "references" / "language.jsonl")
+    candidates.append(root / "references" / "language.txt")
+    candidates.append(root / "references" / "language.tsv")
+    candidates.append(root / "reference" / "language.jsonl")
+    candidates.append(root / "reference" / "language.txt")
+    candidates.append(root / "reference" / "language.tsv")
+    candidates.append(root / "language.jsonl")
+    candidates.append(root / "language.txt")
+
+
+def _append_recursive_language_candidates(candidates: List[Path], root: Path) -> None:
+    if not root.exists() or not root.is_dir():
+        return
+    for name in LANGUAGE_FILE_NAMES:
+        try:
+            candidates.extend(sorted(p for p in root.rglob(name) if p.is_file()))
+        except Exception:
+            continue
+
+
+def _iter_flow_dataset_jsonl(sample: Dict[str, Any]) -> Iterable[Path]:
+    task_ids = []
+    for key in ("instance_id", "instanceId", "task_id", "taskId"):
+        value = str(sample.get(key) or "").strip()
+        if value and value not in task_ids:
+            task_ids.append(value)
+
+    for task_id in task_ids:
+        for name in ("dataset.jsonl", "dataset_on_dj.jsonl"):
+            path = Path("/flow") / task_id / name
+            if path.exists() and path.is_file():
+                yield path
+
+
+def _append_language_candidates_from_flow(candidates: List[Path], sample: Dict[str, Any]) -> None:
+    for dataset_jsonl in _iter_flow_dataset_jsonl(sample):
+        try:
+            rows = dataset_jsonl.read_text(encoding="utf-8", errors="ignore").splitlines()
+        except Exception as exc:
+            logger.warning(f"AudioAsrTranscribe failed to read flow dataset index: {dataset_jsonl}, error={exc}")
+            continue
+
+        source_roots: List[Path] = []
+        for line in rows:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                row = json.loads(line)
+            except Exception:
+                continue
+            if not isinstance(row, dict):
+                continue
+
+            file_name = str(row.get("fileName") or row.get("filename") or "").strip()
+            file_path = str(row.get("filePath") or row.get("path") or "").strip()
+            if not file_path:
+                continue
+            path = Path(file_path).expanduser()
+            if path.name in LANGUAGE_FILE_NAMES or file_name in LANGUAGE_FILE_NAMES:
+                candidates.append(path)
+
+            root = _dataset_root_from_audio_path(file_path)
+            if str(root) not in {"", "."} and root not in source_roots:
+                source_roots.append(root)
+
+        for root in source_roots:
+            _append_language_candidates_from_root(candidates, root)
+
+
+def _dataset_root_from_audio_path(path_value: str) -> Path:
+    if not path_value:
+        return Path()
+    p = Path(path_value).expanduser()
+    parts = p.parts
+    for idx, part in enumerate(parts):
+        if part == "dataset" and idx + 1 < len(parts):
+            return Path(*parts[: idx + 2])
+    return p.parent
+
+
+def _language_file_candidates(language_file_path: str, sample: Dict[str, Any]) -> List[Path]:
+    candidates: List[Path] = []
+    configured = _resolve_optional_path(language_file_path or DEFAULT_LANGUAGE_FILE_PATH, sample)
+    if str(configured) not in {"", "."}:
+        candidates.append(configured)
+
+    recursive_roots: List[Path] = []
+
+    _append_language_candidates_from_flow(candidates, sample)
+
+    dataset_id = str(sample.get("dataset_id") or sample.get("datasetId") or "").strip()
+    if dataset_id:
+        dataset_root = Path("/dataset") / dataset_id
+        _append_language_candidates_from_root(candidates, dataset_root)
+        recursive_roots.append(dataset_root)
+        # Some deployments mount dataset files under /datasets.
+        datasets_root = Path("/datasets") / dataset_id
+        _append_language_candidates_from_root(candidates, datasets_root)
+        recursive_roots.append(datasets_root)
+
+    sample_file_value = str(sample.get("filePath") or "")
+    dataset_root = _dataset_root_from_audio_path(sample_file_value)
+    if str(dataset_root) not in {"", "."}:
+        _append_language_candidates_from_root(candidates, dataset_root)
+        recursive_roots.append(dataset_root)
+
+    export_root = Path(str(sample.get("export_path") or "")).expanduser()
+    if str(export_root) not in {"", "."}:
+        _append_language_candidates_from_root(candidates, export_root)
+        recursive_roots.append(export_root)
+
+    sample_file = Path(sample_file_value).expanduser()
+    if str(sample_file) not in {"", "."}:
+        for parent in [sample_file.parent, *sample_file.parents]:
+            _append_language_candidates_from_root(candidates, parent)
+
+    for root in recursive_roots:
+        _append_recursive_language_candidates(candidates, root)
+
+    # Last-resort sidecar scan. DataMate treats reference files as independent
+    # samples and filters them from the audio flow, so the audio sample may not
+    # carry a direct pointer to language.jsonl. The file still exists on disk
+    # under /dataset in normal deployments.
+    for root in (Path("/dataset"), Path("/datasets")):
+        _append_recursive_language_candidates(candidates, root)
+
+    seen = set()
+    unique: List[Path] = []
+    for candidate in candidates:
+        try:
+            resolved = candidate.resolve()
+        except Exception:
+            resolved = candidate
+        if resolved not in seen:
+            seen.add(resolved)
+            unique.append(resolved)
+    return unique
+
+
+def _parse_language_mapping_line(line: str) -> Tuple[str, str]:
+    text = line.strip()
+    if not text or text.startswith("#"):
+        return "", ""
+
+    if text.startswith("{") and text.endswith("}"):
+        try:
+            row = json.loads(text)
+        except Exception:
+            row = {}
+        if isinstance(row, dict):
+            key = (
+                row.get("key")
+                or row.get("file")
+                or row.get("filename")
+                or row.get("fileName")
+                or row.get("wav")
+                or row.get("audio")
+                or row.get("path")
+            )
+            lang = _normalize_language(row.get("lang") or row.get("language"))
+            return _normalize_lookup_key(key), lang
+
+    parts = re.split(r"[\t, ]+", text, maxsplit=1)
+    if len(parts) < 2:
+        return "", ""
+
+    first, second = parts[0].strip(), parts[1].strip()
+    first_lang = _normalize_language(first)
+    second_lang = _normalize_language(second)
+    if second_lang:
+        return _normalize_lookup_key(first), second_lang
+    if first_lang:
+        return _normalize_lookup_key(second), first_lang
+    return "", ""
+
+
+def _load_language_mapping(path: Path) -> Dict[str, str]:
+    mapping: Dict[str, str] = {}
+    for line in path.read_text(encoding="utf-8", errors="ignore").splitlines():
+        key, lang = _parse_language_mapping_line(line)
+        if key and lang:
+            mapping[key] = lang
+    return mapping
+
+
+def _read_language_from_mapping(
+    language_file_path: str,
+    sample: Dict[str, Any],
+    lookup_keys: List[str],
+    cache: Dict[str, Dict[str, str]],
+) -> Tuple[str, str, str]:
+    lookup = {_normalize_lookup_key(k) for k in lookup_keys if _normalize_lookup_key(k)}
+    if not lookup:
+        return "", "", ""
+
+    existing_candidates: List[str] = []
+    for candidate in _language_file_candidates(language_file_path, sample):
+        if not candidate.exists() or not candidate.is_file():
+            continue
+        candidate_s = str(candidate)
+        existing_candidates.append(candidate_s)
+        if candidate_s not in cache:
+            cache[candidate_s] = _load_language_mapping(candidate)
+            logger.info(
+                f"AudioAsrTranscribe loaded language file: file={candidate}, rows={len(cache[candidate_s])}"
+            )
+        mapping = cache[candidate_s]
+        for key in lookup:
+            lang = mapping.get(key, "")
+            if key and lang and key in lookup:
+                logger.info(
+                    f"AudioAsrTranscribe language lookup matched: lang={lang}, key={key}, file={candidate}"
+                )
+                return lang, str(candidate), key
+    candidate_preview = []
+    for candidate in _language_file_candidates(language_file_path, sample):
+        candidate_s = str(candidate)
+        if candidate_s not in candidate_preview:
+            candidate_preview.append(candidate_s)
+        if len(candidate_preview) >= 12:
+            break
+    logger.warning(
+        "AudioAsrTranscribe language lookup not matched; "
+        f"lookup_keys={sorted(lookup)}, existing_language_files={existing_candidates[:10]}, "
+        f"candidate_preview={candidate_preview}"
+    )
+    return "", "", ""
+
+
+def _resolve_language(
+    language: str,
+    sample: Dict[str, Any],
+    language_file_path: str,
+    lookup_keys: List[str],
+    language_cache: Dict[str, Dict[str, str]],
+) -> Tuple[str, str, str, str]:
+    requested_language = _normalize_language(language) or str(language or "").strip().lower()
+
+    lang, source, matched_key = _read_language_from_mapping(language_file_path, sample, lookup_keys, language_cache)
+    if lang:
+        return lang, "language_file", source, matched_key
+
+    if requested_language in {"zh", "en"}:
+        return requested_language, "param", "", ""
+    if requested_language != "auto":
         raise ValueError(f"不支持的语言: {language}")
-    ext = sample.get(ext_params_key, {})
-    if isinstance(ext, dict):
-        lid = ext.get("audio_lid", {})
-        if isinstance(lid, dict):
-            lang = str(lid.get("lang", "")).strip().lower()
-            if lang in {"zh", "en"}:
-                return lang
-    for key in ("fileName", "sourceFileName", "filePath"):
-        value = str(sample.get(key) or "").strip().lower()
-        match = LID_MARKER_RE.search(Path(value).stem)
-        if match:
-            return match.group(1)
-    return "zh"
+
+    return "zh", "default_zh", "", ""
 
 
 def _audio_ext(sample: Dict[str, Any], default_ext: str = "wav") -> str:
@@ -107,70 +378,6 @@ def _read_raw_result(path: Path) -> str:
     if not path.exists():
         return ""
     return path.read_text(encoding="utf-8", errors="ignore").strip()
-
-
-def _read_reference_text(path: Path, key: str) -> str:
-    if not path.exists() or not path.is_file():
-        return ""
-    for line in path.read_text(encoding="utf-8", errors="ignore").splitlines():
-        line = line.strip()
-        if not line:
-            continue
-        parts = line.split(maxsplit=1)
-        if len(parts) > 1 and parts[0] == key and parts[1].strip():
-            return parts[1].strip()
-    return ""
-
-
-def _reference_candidates(audio_path: Path, model_dir: Path, explicit_path: str) -> List[Path]:
-    candidates: List[Path] = []
-    if explicit_path:
-        candidates.append(Path(explicit_path).expanduser())
-
-    for parent in [audio_path.parent, *audio_path.parents]:
-        candidates.append(parent / "transcripts.tsv")
-        candidates.append(parent / "transcripts.txt")
-        candidates.append(parent / "text")
-
-    for name in ("ctc_greedy_search", "attention_rescoring", "ctc_prefix_beam_search", "attention"):
-        candidates.append(model_dir / name / "text")
-
-    seen = set()
-    unique: List[Path] = []
-    for candidate in candidates:
-        resolved = candidate.resolve() if candidate.is_absolute() else candidate.resolve()
-        if resolved not in seen:
-            seen.add(resolved)
-            unique.append(resolved)
-    return unique
-
-
-def _find_reference_transcript(audio_path: Path, model_dir: Path, explicit_path: str, key: str) -> Tuple[str, str]:
-    lookup_keys = [key]
-    if "_part" in key:
-        lookup_keys.append(key.split("_part", 1)[0])
-
-    for candidate in _reference_candidates(audio_path, model_dir, explicit_path):
-        for lookup_key in lookup_keys:
-            text = _read_reference_text(candidate, lookup_key)
-            if text:
-                return text, str(candidate)
-    return "", ""
-
-
-def _candidate_modes(mode: str) -> List[str]:
-    ordered = [
-        mode,
-        "attention_rescoring",
-        "ctc_prefix_beam_search",
-        "ctc_greedy_search",
-    ]
-    modes = []
-    for item in ordered:
-        item = str(item).strip()
-        if item and item not in modes:
-            modes.append(item)
-    return modes
 
 
 def _sample_key(sample: Dict[str, Any], fallback_path: Path, filename_key: str) -> str:
@@ -230,70 +437,18 @@ def _prepare_wenet_cwd(work_dir: Path, model_dir: Path, language: str) -> Path:
     return work_dir
 
 
-def _safe_stem(value: str, default: str = "sample") -> str:
-    stem = Path(str(value or default)).stem or default
-    return re.sub(r"[^A-Za-z0-9._-]+", "_", stem).strip("._-") or default
-
-
-def _artifact_dir(sample: Dict[str, Any], export_path_key: str, filename_key: str) -> Path:
-    export_root = Path(str(sample.get(export_path_key) or ".")).expanduser().resolve()
-    stem = _safe_stem(str(sample.get(filename_key) or sample.get("sourceFileName") or "sample"))
-    return export_root / "_audio_artifacts" / "audio_asr_transcribe" / stem
-
-
-def _persist_artifacts(
-    sample: Dict[str, Any],
-    export_path_key: str,
-    filename_key: str,
-    asr_segments: List[Tuple[str, Path]],
-    selected_text_path: Path,
-    raw_results: Dict[str, str],
-) -> Dict[str, Any]:
-    target_dir = _artifact_dir(sample, export_path_key, filename_key)
-    normalized_dir = target_dir / "normalized_audio"
-    normalized_dir.mkdir(parents=True, exist_ok=True)
-    normalized_audio: List[str] = []
-    for segment_key, segment_path in asr_segments:
-        if not segment_path.exists():
-            continue
-        dst = normalized_dir / f"{_safe_stem(segment_key)}{segment_path.suffix or '.wav'}"
-        shutil.copy2(segment_path, dst)
-        normalized_audio.append(str(dst))
-
-    text_path = ""
-    if selected_text_path.exists():
-        text_dir = target_dir / "result"
-        text_dir.mkdir(parents=True, exist_ok=True)
-        dst_text = text_dir / "selected_text.txt"
-        shutil.copy2(selected_text_path, dst_text)
-        text_path = str(dst_text)
-
-    raw_text_path = ""
-    if raw_results:
-        raw_text_file = target_dir / "raw_results.json"
-        raw_text_file.write_text(json.dumps(raw_results, ensure_ascii=False, indent=2), encoding="utf-8")
-        raw_text_path = str(raw_text_file)
-
-    return {
-        "artifact_dir": str(target_dir),
-        "normalized_audio": normalized_audio,
-        "text_path": text_path,
-        "raw_text_path": raw_text_path,
-    }
-
-
 class AudioAsrTranscribe(Mapper):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.language = str(kwargs.get("language", "auto")).strip().lower()
+        self.language_file_path = str(kwargs.get("languageFilePath", DEFAULT_LANGUAGE_FILE_PATH)).strip()
         self.zh_model_dir = str(kwargs.get("zhModelDir", DEFAULT_ZH_MODEL_DIR)).strip()
         self.en_model_dir = str(kwargs.get("enModelDir", DEFAULT_EN_MODEL_DIR)).strip()
-        self.device = str(kwargs.get("device", "npu")).strip().lower()
-        self.mode = str(kwargs.get("mode", "ctc_greedy_search")).strip()
+        self.mode = FIXED_DECODE_MODE
         self.batch_size = int(float(kwargs.get("batchSize", 1)))
         self.max_segment_seconds = int(float(kwargs.get("maxSegmentSeconds", 120)))
-        self.reference_text_path = str(kwargs.get("referenceTextPath", "")).strip()
-        self.keep_artifacts = _as_bool(kwargs.get("keepArtifacts", False))
+        self.max_concurrent_files = max(1, int(float(kwargs.get("maxConcurrentFiles", DEFAULT_MAX_CONCURRENT_FILES))))
+        self.language_cache: Dict[str, Dict[str, str]] = {}
 
     def execute(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         start = time.time()
@@ -326,17 +481,6 @@ class AudioAsrTranscribe(Mapper):
         run_wenet = helper_root / "src" / "utils" / "run_wenet.py"
         if not run_wenet.exists():
             raise FileNotFoundError(f"WeNet 包装器不存在: {run_wenet}")
-        actual_language = _resolve_language(self.language, sample, self.ext_params_key)
-        model_dir = _model_dir(actual_language, self.zh_model_dir, self.en_model_dir)
-        config_path = model_dir / "train.yaml"
-        checkpoint_path = model_dir / "final.pt"
-        units_path = model_dir / "units.txt"
-        if not config_path.exists():
-            raise FileNotFoundError(f"ASR 配置不存在: {config_path}")
-        if not checkpoint_path.exists():
-            raise FileNotFoundError(f"ASR 模型不存在: {checkpoint_path}")
-        if not units_path.exists():
-            raise FileNotFoundError(f"ASR units 文件不存在: {units_path}")
 
         with tempfile.TemporaryDirectory(prefix="dm_audio_asr_transcribe_") as td:
             work_dir = Path(td)
@@ -350,53 +494,83 @@ class AudioAsrTranscribe(Mapper):
                     raise FileNotFoundError(f"输入音频不存在: {audio_path}")
 
             key = _sample_key(sample, audio_path, self.filename_key)
-            asr_segments = _prepare_asr_segments(
-                audio_path,
-                work_dir,
+            lookup_keys = [
                 key,
-                max_seconds=max(1, self.max_segment_seconds),
-            )
-            list_path = work_dir / "single_audio.list"
-            result_dir = work_dir / "result"
-            wenet_cwd = _prepare_wenet_cwd(work_dir, model_dir, actual_language)
-            result_dir.mkdir(parents=True, exist_ok=True)
-            with list_path.open("w", encoding="utf-8") as f:
-                for segment_key, segment_path in asr_segments:
-                    f.write(
-                        json.dumps({"key": segment_key, "wav": str(segment_path), "txt": ""}, ensure_ascii=False)
-                        + "\n"
-                    )
-
-            actual_device = _resolve_device(self.device)
-            modes = _candidate_modes(self.mode)
-            cmd = [
-                sys.executable,
-                str(run_wenet),
-                "--modes",
-                *modes,
-                "--device",
-                actual_device,
-                "--config",
-                str(config_path),
-                "--test_data",
-                str(list_path),
-                "--checkpoint",
-                str(checkpoint_path),
-                "--batch_size",
-                str(max(1, self.batch_size)),
-                "--result_dir",
-                str(result_dir),
+                Path(str(sample.get(self.filename_key) or "")).name,
+                Path(str(sample.get("sourceFileName") or "")).name,
+                audio_path.name,
+                audio_path.stem,
             ]
-            env = dict(**os.environ)
-            proc = subprocess.run(
-                cmd,
-                cwd=str(wenet_cwd),
-                env=dict(**os.environ),
-                text=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                check=False,
+            actual_language, language_source, language_file_used, language_matched_key = _resolve_language(
+                self.language,
+                sample,
+                self.language_file_path,
+                lookup_keys,
+                self.language_cache,
             )
+            logger.info(
+                "AudioAsrTranscribe resolved language: "
+                f"fileName={sample.get(self.filename_key)}, requested={self.language}, "
+                f"resolved={actual_language}, source={language_source}, "
+                f"language_file={language_file_used}, matched_key={language_matched_key}, "
+                f"lookup_keys={lookup_keys}"
+            )
+            model_dir = _model_dir(actual_language, self.zh_model_dir, self.en_model_dir)
+            config_path = model_dir / "train.yaml"
+            checkpoint_path = model_dir / "final.pt"
+            units_path = model_dir / "units.txt"
+            if not config_path.exists():
+                raise FileNotFoundError(f"ASR 配置不存在: {config_path}")
+            if not checkpoint_path.exists():
+                raise FileNotFoundError(f"ASR 模型不存在: {checkpoint_path}")
+            if not units_path.exists():
+                raise FileNotFoundError(f"ASR units 文件不存在: {units_path}")
+
+            with _asr_runtime_lock(self.max_concurrent_files):
+                asr_segments = _prepare_asr_segments(
+                    audio_path,
+                    work_dir,
+                    key,
+                    max_seconds=max(1, self.max_segment_seconds),
+                )
+                list_path = work_dir / "single_audio.list"
+                result_dir = work_dir / "result"
+                wenet_cwd = _prepare_wenet_cwd(work_dir, model_dir, actual_language)
+                result_dir.mkdir(parents=True, exist_ok=True)
+                with list_path.open("w", encoding="utf-8") as f:
+                    for segment_key, segment_path in asr_segments:
+                        f.write(
+                            json.dumps({"key": segment_key, "wav": str(segment_path), "txt": ""}, ensure_ascii=False)
+                            + "\n"
+                        )
+
+                cmd = [
+                    sys.executable,
+                    str(run_wenet),
+                    "--modes",
+                    self.mode,
+                    "--device",
+                    "cpu",
+                    "--config",
+                    str(config_path),
+                    "--test_data",
+                    str(list_path),
+                    "--checkpoint",
+                    str(checkpoint_path),
+                    "--batch_size",
+                    str(max(1, self.batch_size)),
+                    "--result_dir",
+                    str(result_dir),
+                ]
+                proc = subprocess.run(
+                    cmd,
+                    cwd=str(wenet_cwd),
+                    env=dict(**os.environ),
+                    text=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    check=False,
+                )
             if proc.returncode != 0:
                 raise RuntimeError(
                     "ASR 识别失败，返回码: "
@@ -405,49 +579,24 @@ class AudioAsrTranscribe(Mapper):
 
             transcript = ""
             selected_mode = self.mode
-            selected_text_path = result_dir / self.mode / "text"
             raw_results: Dict[str, str] = {}
             text_results: Dict[str, str] = {}
-            for mode in modes:
+            for mode in [self.mode]:
                 text_path = result_dir / mode / "text"
                 raw_results[mode] = _read_raw_result(text_path)
                 text_results[mode] = _read_text_result(text_path)
                 if text_results[mode] and not transcript:
                     transcript = text_results[mode]
                     selected_mode = mode
-                    selected_text_path = text_path
 
             transcript_source = "asr"
-            reference_path = ""
-            if not transcript:
-                transcript, reference_path = _find_reference_transcript(
-                    audio_path,
-                    model_dir,
-                    self.reference_text_path,
-                    key,
-                )
-                if transcript:
-                    transcript_source = "reference"
 
             if not transcript:
                 raise RuntimeError(
                     "ASR 未识别出非空文本。"
-                    f"language={actual_language}, modes={modes}, segments={len(asr_segments)}, "
-                    f"raw_results={raw_results}, referenceTextPath={self.reference_text_path}"
+                    f"language={actual_language}, mode={self.mode}, segments={len(asr_segments)}, "
+                    f"raw_results={raw_results}, languageFilePath={self.language_file_path}"
                 )
-
-            artifacts = (
-                _persist_artifacts(
-                    sample,
-                    self.export_path_key,
-                    self.filename_key,
-                    asr_segments,
-                    selected_text_path,
-                    raw_results,
-                )
-                if self.keep_artifacts
-                else {"artifact_dir": "", "normalized_audio": [], "text_path": "", "raw_text_path": ""}
-            )
 
             ext = sample.get(self.ext_params_key, {})
             if not isinstance(ext, dict):
@@ -455,20 +604,18 @@ class AudioAsrTranscribe(Mapper):
             ext["audio_asr_transcribe"] = {
                 "language": actual_language,
                 "language_param": self.language,
-                "device": actual_device,
+                "language_source": language_source,
+                "language_file_path": language_file_used,
+                "language_matched_key": language_matched_key,
                 "mode": selected_mode,
                 "requested_mode": self.mode,
-                "modes_tried": modes,
+                "modes_tried": [self.mode],
                 "model_dir": str(model_dir),
                 "segments": len(asr_segments),
                 "max_segment_seconds": self.max_segment_seconds,
+                "max_concurrent_files": self.max_concurrent_files,
                 "transcript_source": transcript_source,
-                "reference_text_path": reference_path,
-                "artifact_dir": artifacts["artifact_dir"],
-                "normalized_audio": artifacts["normalized_audio"],
-                "text_path": artifacts["text_path"],
-                "raw_text_path": artifacts["raw_text_path"],
-                "mode_text_empty": {mode: not bool(text_results.get(mode)) for mode in modes},
+                "mode_text_empty": {self.mode: not bool(text_results.get(self.mode))},
                 "transcript_empty": not bool(transcript),
             }
             sample[self.ext_params_key] = ext

@@ -16,9 +16,6 @@ AudioFastLangIdText 用于对单个音频文件做快速语言识别（仅输出
 | 参数 | 类型 | 默认值 | 说明 |
 |---|---|---:|---|
 | modelSource | input | /models/AudioOperations/lid/speechbrain_lang-id-voxlingua107-ecapa | SpeechBrain LID 本地模型目录 |
-| modelSavedir | input | /models/AudioOperations/lid/_speechbrain_cache | 模型缓存目录 |
-| device | select | cpu | 推理设备（cpu/cuda/npu） |
-| batchSize | inputNumber | 1 | 批大小（单文件时通常为 1） |
 | maxSeconds | inputNumber | 3.0 | 只取前 N 秒做判断，0=全长 |
 
 ## 输入输出

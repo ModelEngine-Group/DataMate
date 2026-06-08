@@ -47,9 +47,8 @@ class AudioFastLangIdText(Mapper):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.model_source = str(kwargs.get("modelSource", "")).strip()
-        self.model_savedir = str(kwargs.get("modelSavedir", "")).strip()
-        self.device = str(kwargs.get("device", "cpu")).strip()
-        self.batch_size = int(float(kwargs.get("batchSize", 1)))
+        self.model_savedir = DEFAULT_LID_MODEL_SAVEDIR
+        self.batch_size = 1
         self.max_seconds = float(kwargs.get("maxSeconds", 3.0))
 
     def execute(self, sample: Dict[str, Any]) -> Dict[str, Any]:
@@ -116,7 +115,7 @@ class AudioFastLangIdText(Mapper):
                     "--output",
                     str(out_path),
                     "--device",
-                    self.device,
+                    "cpu",
                     "--batch_size",
                     str(max(1, self.batch_size)),
                     "--max_seconds",

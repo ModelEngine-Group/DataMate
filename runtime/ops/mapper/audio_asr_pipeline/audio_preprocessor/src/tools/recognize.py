@@ -37,14 +37,6 @@ def get_project_root() -> Path:
     return _PROJECT_ROOT
 
 
-def check_npu_available() -> bool:
-    try:
-        import torch_npu
-        return True
-    except ImportError:
-        return len(list(Path("/dev").glob("davinci*"))) > 0
-
-
 def get_default_paths() -> dict:
     root = get_project_root()
     model_root = Path("/models/AudioOperations/asr")
@@ -57,16 +49,8 @@ def get_default_paths() -> dict:
     }
 
 
-def resolve_device(device_arg: str) -> str:
-    if device_arg == "auto":
-        return "npu" if check_npu_available() else "cpu"
-    if device_arg == "npu":
-        if not check_npu_available():
-            raise ValueError("指定使用 NPU，但设备不支持 NPU")
-        return "npu"
-    if device_arg == "cpu":
-        return "cpu"
-    raise ValueError(f"不支持的设备类型: {device_arg}")
+def resolve_device(_device_arg: str) -> str:
+    return "cpu"
 
 
 def check_paths(paths: dict, language: str) -> None:
@@ -123,7 +107,7 @@ def run_recognize(language: str, audio_list: str, result_dir: str, device: str) 
         "--result_dir", str(paths['result_dir']),
     ]
     print_header("语音识别配置")
-    print_info(f"语言: {language}  设备: {actual_device}")
+    print_info(f"语言: {language}")
     print_info(f"列表: {paths['audio_list']}  结果: {paths['result_dir']}")
     try:
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
@@ -166,7 +150,7 @@ def main():
     parser.add_argument("--language", "-l", choices=["zh", "en"], default="zh")
     parser.add_argument("--audio_list", "-a", default=str(defaults['audio_list']))
     parser.add_argument("--result_dir", "-r", default=str(defaults['result_dir']))
-    parser.add_argument("--device", "-d", choices=["auto", "npu", "cpu"], default="npu")
+    parser.add_argument("--device", "-d", default="cpu", help=argparse.SUPPRESS)
     args = parser.parse_args()
     print_header("语音识别")
     try:

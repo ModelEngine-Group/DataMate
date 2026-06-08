@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-import json
 import re
-import sys
 import tempfile
 import time
 from pathlib import Path
@@ -25,12 +23,6 @@ except ImportError:
 
 
 DEFAULT_HF_MODEL_DIR = "/models/AudioOperations/emotion/new_model"
-DEFAULT_SMALL_CHECKPOINT = "/models/AudioOperations/emotion/small_model.safetensors"
-
-
-def _package_root() -> Path:
-    return Path(__file__).resolve().parent
-
 
 def _resolve_model_dir(value: str, fallback: Path) -> Path:
     raw = str(value or "").strip()
@@ -98,36 +90,13 @@ def _load_wav_16k_mono(path: Path):
         return wav.to(torch.float32) if wav.dtype != torch.float32 else wav
 
 
-def _detect_device(device_arg: str):
+def _cpu_device():
     import torch
 
-    dev = str(device_arg or "auto").strip().lower()
-    if dev == "cpu":
-        return torch.device("cpu")
-    if dev == "cuda":
-        return torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    if dev == "npu":
-        try:
-            import torch_npu  # type: ignore  # noqa: F401
-            return torch.device("npu")
-        except Exception:
-            return torch.device("privateuseone")
-    if dev == "auto":
-        try:
-            import torch_npu  # type: ignore  # noqa: F401
-            try:
-                return torch.device("npu")
-            except Exception:
-                return torch.device("privateuseone")
-        except Exception:
-            if torch.cuda.is_available():
-                return torch.device("cuda")
-            return torch.device("cpu")
-    raise ValueError(f"不支持的情感识别设备: {device_arg}")
+    return torch.device("cpu")
 
 
 _HF_CACHE: Dict[Tuple[str, str], Tuple[Any, Any]] = {}
-_SMALL_CACHE: Dict[Tuple[str, str], Any] = {}
 
 
 def _load_hf_model(model_dir: Path, device):
@@ -166,20 +135,6 @@ def _load_hf_model(model_dir: Path, device):
     model.to(device)
     _HF_CACHE[cache_key] = (model, feature_extractor)
     return model, feature_extractor
-
-
-def _load_small_model(checkpoint: Path, device):
-    cache_key = (str(checkpoint), str(device))
-    if cache_key in _SMALL_CACHE:
-        return _SMALL_CACHE[cache_key]
-    utils_dir = _package_root() / "helpers" / "utils"
-    if str(utils_dir) not in sys.path:
-        sys.path.insert(0, str(utils_dir))
-    from emotion_small_model import load_small_model_from_safetensors  # type: ignore
-
-    model = load_small_model_from_safetensors(checkpoint, device=device)
-    _SMALL_CACHE[cache_key] = model
-    return model
 
 
 def _zh_mapping() -> Dict[str, str]:
@@ -224,27 +179,10 @@ def _predict_hf(model, feature_extractor, wav_16k, device) -> Tuple[str, float, 
         return str(label or pred_id).lower(), score, distribution
 
 
-def _predict_small(model, wav_16k, device) -> Tuple[str, float, Dict[str, float]]:
-    import torch
-
-    labels = ["neutral", "calm", "happy", "sad", "angry", "fearful", "disgust", "surprised"]
-    with torch.inference_mode():
-        logits = model(input_values=wav_16k.unsqueeze(0).to(device))
-        probs = torch.softmax(logits, dim=-1)[0]
-        pred_id = int(torch.argmax(probs).item())
-        score = float(probs[pred_id].detach().cpu().item())
-        distribution = {labels[i]: round(float(probs[i].detach().cpu().item()), 8) for i in range(len(labels))}
-        return labels[pred_id], score, distribution
-
-
 class AudioEmotionRecognize(Mapper):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.backend = str(kwargs.get("backend", "hf")).strip().lower()
         self.hf_model_dir = str(kwargs.get("hfModelDir", DEFAULT_HF_MODEL_DIR)).strip()
-        self.small_checkpoint = str(kwargs.get("smallCheckpoint", DEFAULT_SMALL_CHECKPOINT)).strip()
-        self.device = str(kwargs.get("device", "auto")).strip().lower()
-        self.keep_audio = str(kwargs.get("keepAudio", "true")).strip().lower() in {"1", "true", "yes", "y", "on"}
 
     def execute(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         start = time.time()
@@ -273,40 +211,31 @@ class AudioEmotionRecognize(Mapper):
                 self.ext_params_key,
             )
 
-        device = _detect_device(self.device)
+        device = _cpu_device()
         data = sample.get(self.data_key)
         audio_bytes = b""
         with tempfile.TemporaryDirectory(prefix="dm_audio_emotion_") as td:
             work_dir = Path(td)
             if isinstance(data, (bytes, bytearray)) and data:
-                audio_bytes = bytes(data)
+                raw_audio_bytes = bytes(data)
                 audio_path = work_dir / f"input.{_audio_ext(sample)}"
-                audio_path.write_bytes(audio_bytes)
+                audio_path.write_bytes(raw_audio_bytes)
+                if self.is_last_op:
+                    audio_bytes = raw_audio_bytes
             else:
                 audio_path = Path(str(sample.get(self.filepath_key, ""))).expanduser().resolve()
                 if not audio_path.exists():
                     raise FileNotFoundError(f"输入音频不存在: {audio_path}")
-                if self.keep_audio or self.is_last_op:
+                if self.is_last_op:
                     audio_bytes = audio_path.read_bytes()
             wav = _load_wav_16k_mono(audio_path)
 
-        backend = self.backend
-        if backend not in {"hf", "small"}:
-            raise ValueError(f"不支持的情感识别后端: {self.backend}")
-        if backend == "small":
-            checkpoint = _resolve_model_dir(self.small_checkpoint, Path(DEFAULT_SMALL_CHECKPOINT))
-            if not checkpoint.exists():
-                raise FileNotFoundError(f"情感识别 small checkpoint 不存在: {checkpoint}")
-            model = _load_small_model(checkpoint, device)
-            pred_en, score, distribution = _predict_small(model, wav, device)
-            model_path = str(checkpoint)
-        else:
-            model_dir = _resolve_model_dir(self.hf_model_dir, Path(DEFAULT_HF_MODEL_DIR))
-            if not model_dir.exists():
-                raise FileNotFoundError(f"情感识别 HF 模型目录不存在: {model_dir}")
-            model, feature_extractor = _load_hf_model(model_dir, device)
-            pred_en, score, distribution = _predict_hf(model, feature_extractor, wav, device)
-            model_path = str(model_dir)
+        model_dir = _resolve_model_dir(self.hf_model_dir, Path(DEFAULT_HF_MODEL_DIR))
+        if not model_dir.exists():
+            raise FileNotFoundError(f"情感识别模型目录不存在: {model_dir}")
+        model, feature_extractor = _load_hf_model(model_dir, device)
+        pred_en, score, distribution = _predict_hf(model, feature_extractor, wav, device)
+        model_path = str(model_dir)
 
         pred_zh = _zh_mapping().get(pred_en, pred_en)
         key = _sample_key(sample, Path(str(sample.get(self.filepath_key, "sample"))), self.filename_key)
@@ -316,7 +245,6 @@ class AudioEmotionRecognize(Mapper):
             "pred_zh": pred_zh,
             "score": round(float(score), 8),
             "distribution": distribution,
-            "backend": backend,
             "model_path": model_path,
             "device": str(device),
         }
@@ -328,8 +256,10 @@ class AudioEmotionRecognize(Mapper):
         sample[self.ext_params_key] = ext
 
         target_ext = _audio_ext(sample)
-        if audio_bytes:
+        if self.is_last_op and audio_bytes:
             sample[self.data_key] = audio_bytes
+        else:
+            sample[self.data_key] = b""
         sample[self.text_key] = ""
         if self.is_last_op:
             sample[self.filetype_key] = "txt"

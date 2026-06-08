@@ -26,6 +26,28 @@ except ImportError:
         sys.exit(1)
 
 
+def _prepend_env_path(name: str, value: Path) -> None:
+    if not value.exists():
+        return
+    current = os.environ.get(name, "")
+    parts = [p for p in current.split(os.pathsep) if p]
+    value_s = str(value)
+    if value_s not in parts:
+        os.environ[name] = os.pathsep.join([value_s] + parts)
+
+
+def _external_ffmpeg_bin() -> str | None:
+    ops_site = Path(os.environ.get("DATAMATE_OPS_SITE_PACKAGES", "/usr/local/lib/ops/site-packages"))
+    ffmpeg_root = Path(os.environ.get("DATAMATE_FFMPEG_ROOT", str(ops_site / "ffmpeg")))
+    ffmpeg_bin = ffmpeg_root / "bin" / "ffmpeg"
+    ffmpeg_lib = ffmpeg_root / "lib"
+    if ffmpeg_bin.exists():
+        _prepend_env_path("PATH", ffmpeg_bin.parent)
+        _prepend_env_path("LD_LIBRARY_PATH", ffmpeg_lib)
+        return str(ffmpeg_bin)
+    return shutil.which("ffmpeg") or shutil.which("avconv")
+
+
 def get_allowed_input_exts(config_path: Optional[str] = None) -> set[str]:
     """从配置文件获取允许的输入扩展名
     
@@ -81,10 +103,14 @@ class ConvertSpec:
 
 def _import_pydub():
     """Import pydub from the DataMate runtime environment."""
+    ffmpeg_bin = _external_ffmpeg_bin()
     try:
         from pydub import AudioSegment  # type: ignore
     except Exception as e:  # pragma: no cover
         raise RuntimeError(f"无法导入 pydub，请在 DataMate 运行环境安装 pydub。原始错误：{e}") from e
+    if ffmpeg_bin:
+        AudioSegment.converter = ffmpeg_bin
+        AudioSegment.ffmpeg = ffmpeg_bin
     return AudioSegment
 
 
@@ -186,8 +212,8 @@ def _ensure_parent_dirs(paths: Iterable[Path]) -> None:
 
 def _check_ffmpeg_hint() -> str | None:
     # pydub relies on ffmpeg/avlib. Give a clear hint if missing.
-    if shutil.which("ffmpeg") is None and shutil.which("avconv") is None:
-        return "未检测到 ffmpeg/avconv，pydub 可能无法解码 mp3/aac/m4a/flac。请先安装 ffmpeg。"
+    if _external_ffmpeg_bin() is None:
+        return "未检测到 ffmpeg/avconv，pydub 可能无法解码 mp3/aac/m4a/flac。请确认外置依赖目录已挂载。"
     return None
 
 

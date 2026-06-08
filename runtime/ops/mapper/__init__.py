@@ -83,8 +83,11 @@ def _import_operators():
     from . import video_keyframe_extract
     from . import video_deborder_crop
     from . import video_audio_extract
-    from . import video_speech_asr
     from . import video_subtitle_ocr
     from . import video_text_ocr
+    try:
+        from . import video_speech_asr
+    except ImportError:
+        pass
 
 _import_operators()

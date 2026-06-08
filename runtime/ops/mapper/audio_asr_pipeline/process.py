@@ -71,16 +71,6 @@ def _export_report_dir(sample: Dict[str, Any], export_path_key: str, filename_ke
     return export_root / "audio_reports" / "asr_pipeline" / _safe_stem(sample, filename_key)
 
 
-def _extra_path(sample: Dict[str, Any]) -> Path | None:
-    value = str(sample.get("extraFilePath") or "").strip()
-    if not value:
-        return None
-    p = Path(value).expanduser()
-    if not p.is_absolute():
-        p = (_repo_root() / p).resolve()
-    return p if p.exists() else None
-
-
 def _expand_dataset_placeholders(path_value: str, sample: Dict[str, Any] | None = None) -> str:
     value = str(path_value or "").strip()
     if sample:
@@ -135,11 +125,9 @@ class AudioAsrPipeline(Mapper):
         self.silence_rms_ratio_th = float(kwargs.get("silenceRmsRatioTh", 0.05))
 
         self.lid_model_source = str(kwargs.get("lidModelSource", "")).strip()
-        self.lid_device = str(kwargs.get("lidDevice", "cpu")).strip()
         self.lid_max_seconds = float(kwargs.get("lidMaxSeconds", 3.0))
 
         self.max_segment_seconds = int(float(kwargs.get("maxSegmentSeconds", 120)))
-        self.asr_device = str(kwargs.get("asrDevice", "npu")).strip()
 
         self.do_keyword_recall = _as_bool(kwargs.get("doKeywordRecall", False))
         self.reference_path = str(kwargs.get("referencePath", "")).strip()
@@ -190,11 +178,8 @@ class AudioAsrPipeline(Mapper):
         reference_path = _resolve_optional_path(self.reference_path, sample)
         if reference_path:
             if not reference_path.exists():
-                logger.warning(f"参考资源路径不存在，将继续使用已有 extraFilePath 或显式参考参数: {reference_path}")
+                logger.warning(f"参考资源路径不存在，将继续使用显式关键词参数: {reference_path}")
                 reference_path = Path()
-        if reference_path:
-            sample["extraFilePath"] = str(reference_path)
-            sample["extraFileType"] = reference_path.suffix.lstrip(".") if reference_path.is_file() else "directory"
 
         # 用临时工作区隔离每个 sample，避免污染 audio_preprocessor 自身的 output_data
         with tempfile.TemporaryDirectory(prefix="dm_audio_asr_") as td:
@@ -320,7 +305,6 @@ class AudioAsrPipeline(Mapper):
                             "silence_ratio": quality.get("silence_ratio", 0),
                             "global_rms": quality.get("global_rms", 0),
                             "reason": str(quality.get("reason", "")),
-                            "skip_downstream": True,
                         }
                         sample[self.ext_params_key] = ext
                         if str(quality.get("quality_flag", "ok")).lower() == "invalid":
@@ -353,7 +337,7 @@ class AudioAsrPipeline(Mapper):
                     "--output",
                     str(lid_out_list),
                     "--device",
-                    self.lid_device,
+                    "cpu",
                     "--batch_size",
                     "1",
                     "--max_seconds",
@@ -412,7 +396,7 @@ class AudioAsrPipeline(Mapper):
                     "--asr_root",
                     str(out_asr),
                     "--device",
-                    self.asr_device,
+                    "cpu",
                 ]
                 cwd_backup = os.getcwd()
                 os.chdir(work)
@@ -446,7 +430,7 @@ class AudioAsrPipeline(Mapper):
 
                 from audio_preprocessor.src.pipeline import eval_keyword_recall as _kwr  # type: ignore
 
-                extra = _extra_path(sample)
+                extra = reference_path if reference_path else None
                 zh_kw = _resolve_optional_path(self.zh_keyword_path, sample) if self.zh_keyword_path else Path()
                 if not _valid_file_path(zh_kw):
                     zh_kw = _find_named_file(extra, ("zh_keyword.txt", "zh_keywords.txt")) or Path()
@@ -460,7 +444,7 @@ class AudioAsrPipeline(Mapper):
                 if not _valid_file_path(zh_kw) and not _valid_file_path(en_kw):
                     raise FileNotFoundError(
                         f"关键词文件不存在。zhKeywordPath={zh_kw or ''}, enKeywordPath={en_kw or ''}, "
-                        f"extraFilePath={sample.get('extraFilePath') or ''}"
+                        f"referencePath={reference_path or ''}"
                     )
 
                 persistent_validation = _export_report_dir(sample, self.export_path_key, self.filename_key)
@@ -529,15 +513,15 @@ class AudioAsrPipeline(Mapper):
                 ext = {"_raw": ext}
             ext["audio_asr"] = {
                 "lang": lang,
-                "artifacts": {
-                    "work_dir": str(work),
-                    "normalized_dir": str(out_norm),
-                    "denoise_dir": str(out_denoise) if self.do_denoise else "",
-                    "lid_list": str(lid_out_list),
-                    "split_dir": str(out_split),
-                    "asr_dir": str(out_asr),
-                    "merged_text": str(merged),
-                    "validation_dir": str(persistent_validation) if self.do_keyword_recall else "",
+                "steps": {
+                    "normalization": True,
+                    "denoise": self.do_denoise,
+                    "anomaly_filter": self.do_anomaly_filter,
+                    "lid": True,
+                    "split": True,
+                    "asr": True,
+                    "merge": True,
+                    "keyword_recall": self.do_keyword_recall,
                 },
             }
             if reference_path:

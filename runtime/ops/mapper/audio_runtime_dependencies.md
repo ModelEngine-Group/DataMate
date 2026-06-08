@@ -1,8 +1,19 @@
 # DataMate Audio Runtime Dependencies
 
-These dependencies should be installed in the DataMate runtime environment. They should not be vendored inside individual audio operator directories.
+These dependencies are runtime-level assets. They should not be vendored inside
+individual audio operator directories or operator zip files.
 
-## Python Packages
+For an already published DataMate image, place extra runtime files under the
+operator dependency volume mounted at:
+
+```text
+/usr/local/lib/ops/site-packages
+```
+
+The runtime image already writes this directory into `ops.pth`, so Python
+packages placed there are importable without rebuilding the image.
+
+## Python Packages Already Expected In The Image
 
 Use `audio_runtime_requirements.txt` for Python package installation.
 
@@ -19,28 +30,42 @@ Important pinned packages:
 - `onnxruntime==1.19.2`
 - `transformers==4.57.6`
 - `timm==1.0.26`
-- `panns-inference==0.1.1`
 
 ## System Packages
 
-- `ffmpeg==6.1.1` is the recommended runtime binary version. `pydub` uses the `ffmpeg` command on `PATH` for formats such as `mp3`, `aac`, `m4a`, and some `flac` paths. If the DataMate base image must use OS packages, keep the installed `ffmpeg` at `>=4.4` and record the exact OS package version in the image build manifest.
+- `ffmpeg==6.1.1` is the recommended binary version. If the image does not
+  provide `ffmpeg` on `PATH`, put the executable and runtime libraries at:
+
+```text
+/usr/local/lib/ops/site-packages/ffmpeg/bin/ffmpeg
+/usr/local/lib/ops/site-packages/ffmpeg/lib/*.so*
+```
+
+Audio format conversion operators will detect this path automatically. You can
+override the location with `DATAMATE_OPS_SITE_PACKAGES` or `DATAMATE_FFMPEG_ROOT`.
 
 Recommended runtime check:
 
 ```bash
-ffmpeg -version
+DATAMATE_FFMPEG_ROOT=/usr/local/lib/ops/site-packages/ffmpeg \
+  /usr/local/lib/ops/site-packages/ffmpeg/bin/ffmpeg -version
 python -c "import torch, torchaudio, speechbrain, pydub, soundfile, numpy, scipy, onnxruntime, transformers, timm"
 ```
 
 ## WeNet
 
-`audio_asr_transcribe` and `audio_asr_pipeline` import `wenet.bin.recognize` from the runtime environment.
+`audio_asr_transcribe` and `audio_asr_pipeline` import `wenet.bin.recognize`
+from the runtime environment.
 
-The project previously carried WeNet source under each ASR operator. That source has been removed from the operator package. The removed vendored source does not expose a package version in `wenet/__init__.py`, so this cleanup cannot derive a reliable semantic version from the previous copy. Since `wenet` is not available as a normal PyPI package in this environment, DataMate deployment must provide WeNet with a fixed source pin and record that pin as the runtime version, using one of:
+For the current deployment strategy, put WeNet source at:
 
-- an internal wheel with a fixed version, installed into the runtime image;
-- a fixed git tag or commit of `wenet-e2e/wenet`, installed during image build;
-- a system Python package placed on the runtime `PYTHONPATH`.
+```text
+/usr/local/lib/ops/site-packages/wenet
+```
+
+The project previously carried duplicate WeNet source under each ASR operator.
+That source has been removed from operator packages and kept as a dependency
+named by package, not by operator.
 
 The runtime must satisfy:
 
@@ -59,7 +84,6 @@ Model weights are still external runtime assets and are not Python dependencies:
 - English ASR model: `/models/AudioOperations/asr/librispeech`
 - GTCRN model: `/models/AudioOperations/gtcrn/gtcrn.onnx`
 - AST model: `/models/AudioOperations/recog/audioset_10_10_0.4593.pth`
-- PANNs model: `/models/AudioOperations/panns/Cnn14_16k_mAP=0.438.pth`
 
 ## Operators Affected
 

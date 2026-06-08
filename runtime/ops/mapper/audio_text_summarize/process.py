@@ -391,7 +391,6 @@ class AudioTextSummarize(Mapper):
         self.providers_priority = str(kwargs.get("providersPriority", "CANNExecutionProvider,CPUExecutionProvider")).strip()
         self.cpu_threads = int(float(kwargs.get("cpuThreads", 4)))
         self.max_windows = int(float(kwargs.get("maxWindows", 96)))
-        self.keep_original = _as_bool(kwargs.get("keepOriginalInExt", False))
 
     def execute(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         start = time.time()
@@ -446,8 +445,6 @@ class AudioTextSummarize(Mapper):
                 "method": method,
                 "runtime": {k: v for k, v in meta.items() if k != "lang"},
             }
-            if self.keep_original:
-                item["original_text"] = row_text
             details.append(item)
 
         ext = sample.get(self.ext_params_key, {})

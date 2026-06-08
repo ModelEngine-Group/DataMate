@@ -98,14 +98,6 @@ settings:
     min: 1
     max: 512
     step: 1
-  keepOriginalInExt:
-    name: 'ext 保留原文'
-    type: 'switch'
-    description: '是否在 ext_params 明细中保留原始文本。'
-    defaultVal: 'false'
-    required: false
-    checkedLabel: '保留'
-    unCheckedLabel: '不保留'
 runtime:
   memory: 2147483648
   cpu: 0.5
@@ -113,7 +105,7 @@ runtime:
   npu: 0
   storage: 10MB
 metrics:
-  - name: '摘要方式'
-    metric: '抽取式概括，优先保留原文连续片段'
+  - name: '处理耗时'
+    metric: '依输入文本长度、概括方法与运行环境而定'
 release:
   - '首次发布，支持 ASR 文本单条/多行概括'

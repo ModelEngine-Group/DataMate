@@ -192,3 +192,11 @@ Thumbs.db
 **/volumes/
 
 **/rag_storage/
+
+# Local operator runtime dependencies are kept outside tracked operator packages.
+../DataMate_additional_dependency/
+
+# Keep mapper operator package structure aligned with the repository.
+runtime/ops/mapper/**/local_libs/
+runtime/ops/mapper/**/bin/
+runtime/ops/mapper/**/lib/

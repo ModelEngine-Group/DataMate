@@ -111,6 +111,10 @@ def _patch_yaml_loader_max_depth() -> None:
         pass
 
 
+def _speechbrain_device() -> str:
+    return "cpu"
+
+
 def _find_audio_files(audio_dir: Path) -> List[Path]:
     patterns = ["*.wav", "*.WAV", "*.flac", "*.FLAC", "*.mp3", "*.MP3", "*.aac", "*.AAC", "*.m4a", "*.M4A"]
     files: List[Path] = []
@@ -236,6 +240,7 @@ def _lid_predict_items(
 
     from speechbrain.inference.classifiers import EncoderClassifier  # type: ignore
 
+    device = _speechbrain_device()
     # 使用本地目录：/abs/path/to/model_dir
     src_path = Path(model_source)
     is_local_dir = src_path.exists() and src_path.is_dir()
@@ -267,7 +272,6 @@ def _lid_predict_items(
             "加载 SpeechBrain LID 模型失败。\n"
             f"- source={model_source}\n"
             f"- savedir={model_savedir}\n"
-            f"- device={device}\n"
             f"- error={type(e).__name__}: {e}"
         ) from e
 
@@ -389,7 +393,7 @@ def parse_arguments():
         help="SpeechBrain LID 本地模型目录。",
     )
     parser.add_argument("--model_savedir", default=str(default_savedir), help=f"模型缓存目录，默认: {default_savedir}")
-    parser.add_argument("--device", default="cpu", help="推理设备，例如 cpu / cuda / npu（取决于 torch 环境）")
+    parser.add_argument("--device", default="cpu", help=argparse.SUPPRESS)
     parser.add_argument("--batch_size", type=int, default=8, help="批大小（越大越快，但更吃内存）")
     parser.add_argument("--max_seconds", type=float, default=3.0, help="只取音频前 N 秒做判断，0 表示全长")
 
@@ -452,14 +456,14 @@ def main() -> int:
     print_info(f"待识别音频数: {len(items)}")
     print_info(f"模型: {args.model_source}")
     print_info(f"模型缓存目录: {model_savedir}")
-    print_info(f"device={args.device}, batch_size={args.batch_size}, max_seconds={args.max_seconds}")
+    print_info(f"batch_size={args.batch_size}, max_seconds={args.max_seconds}")
 
     try:
         out_items = _lid_predict_items(
             items=items,
             model_source=args.model_source,
             model_savedir=model_savedir,
-            device=args.device,
+            device="cpu",
             batch_size=max(1, int(args.batch_size)),
             max_seconds=float(args.max_seconds),
         )

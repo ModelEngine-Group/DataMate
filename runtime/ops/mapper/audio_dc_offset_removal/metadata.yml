@@ -1,7 +1,7 @@
 name: 'audioUtils-去直流分量'
 name_en: 'audioUtils-DC Offset Removal'
-description: '去除音频直流分量（减均值），处理音频并由 DataMate 统一导出结果。'
-description_en: 'Remove DC offset (subtract mean). Process audio and let DataMate export the result.'
+description: '去除音频直流分量（按声道或单声道减均值），自动跳过 references 等非音频文件，并软跳过不可解码伪音频。'
+description_en: 'Remove DC offset (subtract mean per channel or mono), skip reference/non-audio files, and softly skip unreadable pseudo-audio.'
 language: 'python'
 vendor: 'huawei'
 raw_id: 'AudioDcOffsetRemoval'
@@ -11,7 +11,26 @@ types:
 modal: 'audio'
 inputs: 'audio'
 outputs: 'audio'
-settings: {}
+settings:
+  channelMode:
+    name: '声道处理'
+    type: 'select'
+    description: 'preserve 按原声道分别减均值；mono 会先转单声道再减均值。'
+    defaultVal: 'preserve'
+    required: true
+    options:
+      - label: '保持声道'
+        value: 'preserve'
+      - label: '转单声道'
+        value: 'mono'
+  offsetThreshold:
+    name: '偏移阈值'
+    type: 'slider'
+    description: '最大绝对直流偏移低于该阈值时不处理。0 表示总是处理。'
+    defaultVal: 0.0
+    min: 0
+    max: 0.1
+    step: 0.0001
 runtime:
   memory: 104857600
   cpu: 0.1
@@ -24,3 +43,4 @@ metrics:
     metric: '依输入音频长度与运行环境而定'
 release:
   - '首次发布'
+  - '新增声道处理与偏移阈值参数；非音频、reference 文件及不可解码伪音频自动软跳过'

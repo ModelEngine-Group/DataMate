@@ -2,13 +2,13 @@
 
 ## 概述
 
-AudioAsrPipeline 将 `audio_preprocessor` 的推荐流水线封装为一个 DataMate Mapper 算子：标准化、（可选）降噪、（可选）异常过滤、语言识别、切分、ASR 识别与合并，并可选计算中英文关键词召回率。算子按 DataMate 单样本范式处理当前输入音频，最终只导出该输入文件对应的一个 `.txt` 转写文件，并在 `ext_params` 中记录中间产物路径，便于排查与验收。
+AudioAsrPipeline 将 `audio_preprocessor` 的推荐流水线封装为一个 DataMate Mapper 算子：标准化、（可选）降噪、（可选）异常过滤、语言识别、切分、ASR 识别与合并，并可选计算中英文关键词召回率。算子按 DataMate 单样本范式处理当前输入音频，最终导出该输入文件对应的一个 `.txt` 转写文件，并在 `ext_params` 中记录运行信息，便于排查与验收。
 
 ## 功能特性
 
 - **端到端流水线**：normalization →（可选）GTCRN →（可选）异常过滤 → LID → split → ASR → merge →（可选）关键词召回率
-- **可配置**：每个关键步骤参数化（降噪开关、过滤阈值、LID 截断秒数、切分长度、ASR 设备等）
-- **结果可追溯**：中间产物路径记录在 `ext_params.audio_asr.artifacts`
+- **可配置**：每个关键步骤参数化（降噪开关、过滤阈值、LID 截断秒数、切分长度等）
+- **结果可追溯**：关键步骤、语言结果、质量检测结果和可选召回率报告记录在 `ext_params.audio_asr`
 - **关键词召回率**：复用 `audio_preprocessor/src/pipeline/eval_keyword_recall.py`，生成 `keyword_recall.txt` 并写入导出目录
 - **一入一出**：每个输入音频输出一个 `.txt`，内容为该音频的转写文本
 
@@ -24,14 +24,12 @@ AudioAsrPipeline 将 `audio_preprocessor` 的推荐流水线封装为一个 Data
 | silenceRatioTh | slider | 0.8 | 静音帧比例阈值（0~1） |
 | silenceRmsRatioTh | slider | 0.05 | 静音判定阈值比例 |
 | lidModelSource | input | /models/AudioOperations/lid/speechbrain_lang-id-voxlingua107-ecapa | SpeechBrain LID 本地模型目录 |
-| lidDevice | select | cpu | LID 推理设备（cpu/cuda/npu） |
 | lidMaxSeconds | inputNumber | 3.0 | LID 只取前 N 秒，0=全长 |
 | maxSegmentSeconds | inputNumber | 120 | 切分最大秒数 |
-| asrDevice | select | npu | ASR 设备参数（npu/cpu/auto） |
 | doKeywordRecall | switch | false | 是否在 ASR 后计算关键词召回率 |
-| referencePath | input | /dataset/{dataset_id}/references | 参考文件或参考目录路径；写入 `extraFilePath` 供后续评估算子读取，路径不存在会回退 |
-| zhKeywordPath | input | /dataset/{dataset_id}/references/zh_keyword.txt | 中文关键词文件；不存在时优先从 `referencePath/extraFilePath` 找 `zh_keyword.txt` |
-| enKeywordPath | input | /dataset/{dataset_id}/references/en_keyword.txt | 英文关键词文件；不存在时优先从 `referencePath/extraFilePath` 找 `en_keyword.txt` |
+| referencePath | input | /dataset/{dataset_id}/references | 关键词召回率参考文件或参考目录路径，路径不存在会回退到显式关键词文件参数 |
+| zhKeywordPath | input | /dataset/{dataset_id}/references/zh_keyword.txt | 中文关键词文件；不存在时优先从 `referencePath` 找 `zh_keyword.txt` |
+| enKeywordPath | input | /dataset/{dataset_id}/references/en_keyword.txt | 英文关键词文件；不存在时优先从 `referencePath` 找 `en_keyword.txt` |
 | keepKeywordDetails | switch | false | 是否将逐句 hit/miss 明细写入 `ext_params` |
 
 ## 输入输出
@@ -41,8 +39,8 @@ AudioAsrPipeline 将 `audio_preprocessor` 的推荐流水线封装为一个 Data
   - `sample["text"]`：当前输入音频对应的转写文本，并导出为 `.txt`
   - `sample["ext_params"]["audio_asr"]`：
     - `lang`：LID 结果（zh/en）
-    - `artifacts`：中间产物路径（normalized/denoise/lid/split/asr/merged_text）
-    - `reference`：填写 `referencePath` 后记录参考资源路径，并传给后续评估算子
+    - `steps`：本次启用的处理步骤
+    - `reference`：填写 `referencePath` 后记录本次使用的参考资源路径
     - `keyword_recall`：启用 `doKeywordRecall` 后写入中英文关键词召回率、样本数与报告路径，报告位于 `audio_reports/asr_pipeline/<文件名>/keyword_recall.txt`
 
 ## 依赖说明

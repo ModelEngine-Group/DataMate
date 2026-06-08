@@ -2,7 +2,7 @@
 
 ## 概述
 
-AudioGtcrnDenoise 处理输入音频，并将结果写入 `sample["data"]`，同时设置 `sample["target_type"]`。输出路径、同名文件处理和最终落盘均交由 DataMate 的标准导出流程负责。
+AudioGtcrnDenoise 处理输入音频，输出处理后的音频文件。
 
 ## 参数说明
 
@@ -12,8 +12,8 @@ AudioGtcrnDenoise 处理输入音频，并将结果写入 `sample["data"]`，同
 
 ## 输入输出
 
-- **输入**：`sample["filePath"]`，若上游算子已产生 `sample["data"]`，则优先处理该音频字节。
-- **输出**：`sample["data"]` 为处理后的音频字节；`sample["target_type"]` 为目标音频后缀。
+- **输入**：`sample["filePath"]` 指向的音频文件。
+- **输出**：处理后的音频文件。
 
 ## 依赖说明
 

@@ -2,7 +2,7 @@
 """
 语音识别脚本
 调用 WeNet 模型进行音频转文本识别
-支持中文和英文，自动选择设备
+支持中文和英文
 """
 
 import argparse
@@ -66,15 +66,6 @@ def get_project_root() -> Path:
     return Path(__file__).resolve().parent.parent.parent
 
 
-def check_npu_available() -> bool:
-    try:
-        import torch_npu
-        return True
-    except ImportError:
-        npu_devices = list(Path("/dev").glob("davinci*"))
-        return len(npu_devices) > 0
-
-
 def get_default_paths() -> dict:
     project_root = get_project_root()
     model_root = Path("/models/AudioOperations/asr")
@@ -87,21 +78,8 @@ def get_default_paths() -> dict:
     }
 
 
-def resolve_device(device_arg: str) -> str:
-    if device_arg == "auto":
-        if check_npu_available():
-            print_info("检测到 NPU 设备，使用 NPU")
-            return "npu"
-        else:
-            print_info("未检测到 NPU 设备，使用 CPU")
-            return "cpu"
-    elif device_arg == "npu":
-        if check_npu_available():
-            return "npu"
-        raise ValueError("指定使用 NPU，但设备不支持 NPU")
-    elif device_arg == "cpu":
-        return "cpu"
-    raise ValueError(f"不支持的设备类型: {device_arg}")
+def resolve_device(_device_arg: str) -> str:
+    return "cpu"
 
 
 def check_paths(paths: dict, language: str) -> None:
@@ -181,7 +159,6 @@ def run_recognize(language: str, audio_list: str, result_dir: str, device: str) 
     ]
     print_header("语音识别配置")
     print_info(f"语言: {language} ({model_name})")
-    print_info(f"设备: {actual_device}")
     print_info(f"音频列表: {paths['audio_list']}")
     print_info(f"结果目录: {paths['result_dir']}")
     print_info(f"配置文件: {Path(config_file).name}")
@@ -289,13 +266,12 @@ def main():
   %(prog)s --language en                 # 英文识别
   %(prog)s --audio_list ./my_audio.list
   %(prog)s --result_dir ./my_results
-  %(prog)s --device npu
         """
     )
     parser.add_argument("--language", "-l", choices=["zh", "en"], default="zh", help="音频语言")
     parser.add_argument("--audio_list", "-a", default=str(defaults['audio_list']), help="音频列表路径")
     parser.add_argument("--result_dir", "-r", default=str(defaults['result_dir']), help="结果目录")
-    parser.add_argument("--device", "-d", choices=["auto", "npu", "cpu"], default="npu", help="设备")
+    parser.add_argument("--device", "-d", default="cpu", help=argparse.SUPPRESS)
     args = parser.parse_args()
     print_header("语音识别")
     try:

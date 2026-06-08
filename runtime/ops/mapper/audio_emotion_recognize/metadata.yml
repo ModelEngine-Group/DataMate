@@ -1,7 +1,7 @@
 name: 'audioOps-语音情感识别'
 name_en: 'audioOps-Speech Emotion Recognition'
-description: '识别当前音频的 8 类语音情感；标注写入 ext_params.audio_emotion_recognize，并保持音频作为输出。'
-description_en: 'Recognize 8 speech emotion classes for one audio sample; write ext_params.audio_emotion_recognize and keep the audio as output.'
+description: '识别当前音频的 8 类语音情感，并把标注写入 ext_params.audio_emotion_recognize。'
+description_en: 'Recognize 8 speech emotion classes for one audio sample and write ext_params.audio_emotion_recognize.'
 language: 'python'
 vendor: 'huawei'
 raw_id: 'AudioEmotionRecognize'
@@ -12,52 +12,12 @@ modal: 'audio'
 inputs: 'audio'
 outputs: 'audio'
 settings:
-  backend:
-    name: '推理后端'
-    description: 'hf 使用本地 HuggingFace 音频分类模型；small 使用轻量 safetensors checkpoint。'
-    type: 'select'
-    defaultVal: 'hf'
-    required: true
-    options:
-      - label: 'HuggingFace'
-        value: 'hf'
-      - label: 'Small'
-        value: 'small'
   hfModelDir:
-    name: 'HF 模型目录'
+    name: '模型目录'
     description: '包含 config.json、preprocessor_config.json 与 model.safetensors 的情感识别模型目录。'
     type: 'input'
     defaultVal: '/models/AudioOperations/emotion/new_model'
     required: false
-  smallCheckpoint:
-    name: 'Small 权重路径'
-    description: 'small 后端使用的 safetensors 权重。'
-    type: 'input'
-    defaultVal: '/models/AudioOperations/emotion/small_model.safetensors'
-    required: false
-  device:
-    name: '设备'
-    description: 'auto/npu/cpu/cuda。'
-    type: 'select'
-    defaultVal: 'auto'
-    required: true
-    options:
-      - label: 'auto'
-        value: 'auto'
-      - label: 'cpu'
-        value: 'cpu'
-      - label: 'npu'
-        value: 'npu'
-      - label: 'cuda'
-        value: 'cuda'
-  keepAudio:
-    name: '中间节点保留音频'
-    type: 'switch'
-    description: '作为中间节点时是否保留音频字节给下游算子。'
-    defaultVal: 'true'
-    required: false
-    checkedLabel: '保留'
-    unCheckedLabel: '不保留'
 runtime:
   memory: 4294967296
   cpu: 1.0
@@ -65,7 +25,7 @@ runtime:
   npu: 0
   storage: 20MB
 metrics:
-  - name: '情感类别'
-    metric: 'happy/angry/sad/fearful/disgust/surprised/neutral/calm 映射为 喜/怒/哀/惧/厌/惊/中/困惑'
+  - name: '处理耗时'
+    metric: '依输入音频长度与模型而定'
 release:
   - '首次发布，支持单文件 8 类语音情感识别'

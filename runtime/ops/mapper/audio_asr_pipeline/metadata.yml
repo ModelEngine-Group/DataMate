@@ -1,7 +1,7 @@
 name: 'audioOps-音频识别流水线'
 name_en: 'audioOps-Audio ASR Pipeline'
-description: '调用 audio_preprocessor 的 normalization→(可选)GTCRN→(可选)异常过滤→LID→切分→ASR→合并，对当前输入音频导出一个 txt 转写文件，并在 ext_params 中记录中间产物路径。'
-description_en: 'Run audio_preprocessor pipeline for the current audio file and export one txt transcript; records artifacts in ext_params.'
+description: '调用 audio_preprocessor 的 normalization→(可选)GTCRN→(可选)异常过滤→LID→切分→ASR→合并，对当前输入音频导出一个 txt 转写文件，并在 ext_params 中记录运行信息。'
+description_en: 'Run audio_preprocessor pipeline for the current audio file and export one txt transcript; records runtime information in ext_params.'
 language: 'python'
 vendor: 'huawei'
 raw_id: 'AudioAsrPipeline'
@@ -68,18 +68,6 @@ settings:
     description: 'SpeechBrain LID 本地模型目录。默认使用固定部署路径 /models/AudioOperations/lid/speechbrain_lang-id-voxlingua107-ecapa。'
     defaultVal: '/models/AudioOperations/lid/speechbrain_lang-id-voxlingua107-ecapa'
     required: false
-  lidDevice:
-    name: 'LID 设备'
-    type: 'select'
-    defaultVal: 'cpu'
-    required: true
-    options:
-      - label: 'cpu'
-        value: 'cpu'
-      - label: 'cuda'
-        value: 'cuda'
-      - label: 'npu'
-        value: 'npu'
   lidMaxSeconds:
     name: 'LID 截断秒数'
     type: 'inputNumber'
@@ -94,19 +82,6 @@ settings:
     min: 5
     max: 3600
     step: 1
-  asrDevice:
-    name: 'ASR 设备'
-    type: 'select'
-    description: '传给 recognize_monitor 的 device 参数（npu/cpu/auto）。'
-    defaultVal: 'npu'
-    required: true
-    options:
-      - label: 'auto'
-        value: 'auto'
-      - label: 'cpu'
-        value: 'cpu'
-      - label: 'npu'
-        value: 'npu'
   doKeywordRecall:
     name: '启用关键词召回率'
     type: 'switch'
@@ -118,19 +93,19 @@ settings:
   referencePath:
     name: '参考资源路径'
     type: 'input'
-    description: '可填写数据集中的参考文件或参考目录路径；会写入 extraFilePath，供后续召回率/词错率评估自动读取。默认使用当前数据集 /dataset/{dataset_id}/references，目录中建议包含 zh_keyword.txt、en_keyword.txt、zh_transcript.txt、en_transcript.txt。若路径不存在会自动回退。'
+    description: '关键词召回率使用的参考文件或参考目录路径。默认使用当前数据集 /dataset/{dataset_id}/references，目录中建议包含 zh_keyword.txt、en_keyword.txt。若路径不存在会回退到显式关键词文件参数。'
     defaultVal: '/dataset/{dataset_id}/references'
     required: false
   zhKeywordPath:
     name: '中文关键词文件'
     type: 'input'
-    description: 'Kaldi 格式中文关键词文件路径；默认指向当前数据集 references/zh_keyword.txt。若不存在，优先从 referencePath/extraFilePath 找 zh_keyword.txt。'
+    description: 'Kaldi 格式中文关键词文件路径；默认指向当前数据集 references/zh_keyword.txt。若不存在，优先从 referencePath 找 zh_keyword.txt。'
     defaultVal: '/dataset/{dataset_id}/references/zh_keyword.txt'
     required: false
   enKeywordPath:
     name: '英文关键词文件'
     type: 'input'
-    description: 'Kaldi 格式英文关键词文件路径；默认指向当前数据集 references/en_keyword.txt。若不存在，优先从 referencePath/extraFilePath 找 en_keyword.txt。'
+    description: 'Kaldi 格式英文关键词文件路径；默认指向当前数据集 references/en_keyword.txt。若不存在，优先从 referencePath 找 en_keyword.txt。'
     defaultVal: '/dataset/{dataset_id}/references/en_keyword.txt'
     required: false
   keepKeywordDetails:
@@ -142,14 +117,14 @@ settings:
     checkedLabel: '写入'
     unCheckedLabel: '不写入'
 runtime:
-  memory: 4294967296
+  memory: null
   cpu: 1.0
   gpu: 0
   npu: 0
   storage: 1GB
 metrics:
-  - name: '关键词召回率'
-    metric: '启用 doKeywordRecall 后由关键词文件与 ASR 结果计算'
+  - name: '处理耗时'
+    metric: '依输入音频长度、启用步骤与模型而定'
 release:
   - '首次发布，支持音频标准化/降噪/过滤/LID/切分/ASR/合并'
   - '新增可选中英文关键词召回率评估'

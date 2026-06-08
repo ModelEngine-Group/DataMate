@@ -18,33 +18,6 @@ settings:
     type: 'input'
     defaultVal: '/models/AudioOperations/lid/speechbrain_lang-id-voxlingua107-ecapa'
     required: false
-  modelSavedir:
-    name: '模型缓存目录'
-    description: 'SpeechBrain 模型缓存目录（可选）。'
-    type: 'input'
-    defaultVal: '/models/AudioOperations/lid/_speechbrain_cache'
-    required: false
-  device:
-    name: '设备'
-    description: 'cpu/cuda/npu 等（取决于 torch 环境）。'
-    type: 'select'
-    defaultVal: 'cpu'
-    required: true
-    options:
-      - label: 'cpu'
-        value: 'cpu'
-      - label: 'cuda'
-        value: 'cuda'
-      - label: 'npu'
-        value: 'npu'
-  batchSize:
-    name: '批大小'
-    type: 'inputNumber'
-    description: '批大小（单文件时意义不大）。'
-    defaultVal: 1
-    min: 1
-    max: 64
-    step: 1
   maxSeconds:
     name: '截断秒数'
     type: 'inputNumber'
@@ -62,6 +35,6 @@ runtime:
 
 metrics:
   - name: '处理耗时'
-    metric: '依输入音频长度与运行环境而定'
+    metric: '依输入音频长度而定'
 release:
   - '首次发布'

@@ -155,7 +155,7 @@ def main() -> int:
         "--config",
         "-c",
         default=None,
-        help="YAML 配置文件路径（可选）。支持写 recognize_monitor: {split_dir:..., asr_root:..., device:...} 或直接顶层同名键",
+        help="YAML 配置文件路径（可选）。支持写 recognize_monitor: {split_dir:..., asr_root:...} 或直接顶层同名键",
     )
     parser.add_argument(
         "--split_dir",
@@ -174,8 +174,8 @@ def main() -> int:
     )
     parser.add_argument(
         "--device",
-        default="npu",
-        help="传给 src.utils.recognize 的设备参数（auto/npu/cpu），默认 auto",
+        default="cpu",
+        help=argparse.SUPPRESS,
     )
     # 默认并行，同时保留 --no-parallel 以便资源不足时回退
     parser.add_argument(

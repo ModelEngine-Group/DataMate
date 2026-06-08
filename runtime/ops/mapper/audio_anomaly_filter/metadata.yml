@@ -1,7 +1,7 @@
 name: 'audioOps-异常语音检测与过滤'
 name_en: 'audioOps-Audio Anomaly Detect & Filter'
-description: '对音频做快速异常检测：时长范围、静音帧比例与可读性。结果写入 ext_params.audio_quality；可控制下游音频算子是否跳过异常样本。'
-description_en: 'Fast audio anomaly detection (duration, silence ratio and readability). Writes ext_params.audio_quality and can make downstream audio ops skip invalid samples.'
+description: '对音频做快速异常检测：时长范围、静音帧比例与可读性。异常音频写入 references 清单；默认过滤异常音频，也可保留原文件名输出。'
+description_en: 'Fast audio anomaly detection (duration, silence ratio and readability). Writes invalid samples to a references report; filters invalid audio by default or keeps it with the original name.'
 language: 'python'
 vendor: 'huawei'
 raw_id: 'AudioAnomalyFilter'
@@ -44,14 +44,20 @@ settings:
     min: 0
     max: 1
     step: 0.01
-  skipInvalidDownstream:
-    name: '下游跳过异常音频'
-    description: '开启后，后续音频算子遇到 quality_flag=invalid 会软跳过；关闭后仅打标并继续处理。不可读取的伪 wav 会被标为 invalid。'
+  keepInvalidAudio:
+    name: '保留异常音频'
+    description: '关闭时异常音频只写入清单并不输出；开启时异常音频继续输出，文件名保持不变。'
     type: 'switch'
-    defaultVal: 'true'
+    defaultVal: 'false'
     required: false
-    checkedLabel: '跳过'
-    unCheckedLabel: '继续'
+    checkedLabel: '保留'
+    unCheckedLabel: '过滤'
+  anomalyReportPath:
+    name: '异常清单路径'
+    description: '异常音频清单 JSONL 路径。默认优先写入当前输出数据集 references/anomaly_report.jsonl；支持 {dataset_id} 占位。'
+    type: 'input'
+    defaultVal: '/dataset/{dataset_id}/references/anomaly_report.jsonl'
+    required: false
 runtime:
   memory: 104857600
   cpu: 0.2
@@ -64,3 +70,4 @@ metrics:
     metric: '依输入音频长度与运行环境而定'
 release:
   - '首次发布'
+  - '异常音频改为写入 references 清单；新增是否保留异常音频开关，输出文件名保持不变'

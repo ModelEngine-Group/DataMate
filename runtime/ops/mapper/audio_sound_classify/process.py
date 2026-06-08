@@ -7,7 +7,6 @@ import json
 import re
 import tempfile
 import time
-from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Literal, Tuple
@@ -27,7 +26,6 @@ except ImportError:
     from audio_skip import invalid_quality_reason, is_audio_sample, mark_skipped_sample
 
 
-DEFAULT_PANNS_CHECKPOINT = "/models/AudioOperations/panns/Cnn14_16k_mAP=0.438.pth"
 DEFAULT_AST_CHECKPOINT = "/models/AudioOperations/recog/audioset_10_10_0.4593.pth"
 
 
@@ -99,20 +97,6 @@ def _load_audio_16k_mono(path: Path) -> np.ndarray:
         return _load_audio_16k(path, sr=16000)
 
 
-def _load_label_macro_map(tsv_path: Path) -> Dict[str, str]:
-    label_to_macro: Dict[str, str] = {}
-    with tsv_path.open(encoding="utf-8", newline="") as f:
-        reader = csv.DictReader(f, delimiter="\t")
-        for row in reader:
-            label = str(row.get("label") or "").strip()
-            macro = str(row.get("macro_class") or "").strip()
-            if label and macro:
-                label_to_macro[label] = macro
-    if not label_to_macro:
-        raise ValueError(f"音频分类大类映射为空: {tsv_path}")
-    return label_to_macro
-
-
 @dataclass(frozen=True)
 class MacroMap:
     macro_to_labels: Dict[str, List[str]]
@@ -148,89 +132,13 @@ def _load_audioset_labels_csv(csv_path: Path) -> List[str]:
     return labels
 
 
-def _macro_from_topk(
-    labels: List[str],
-    probs: np.ndarray,
-    top_idx: np.ndarray,
-    label_to_macro: Dict[str, str],
-) -> Tuple[str, Dict[str, float]]:
-    scores: Dict[str, float] = defaultdict(float)
-    for i in top_idx.tolist():
-        label = str(labels[i])
-        macro = label_to_macro.get(label, "Other")
-        scores[macro] += float(probs[i])
-    if not scores:
-        return "Other", {}
-    best_macro = max(scores, key=lambda k: scores[k])
-    return best_macro, dict(scores)
-
-
-def _decide_macro_class(
-    labels: List[str],
-    probs: np.ndarray,
-    top_idx: np.ndarray,
-    label_to_macro: Dict[str, str],
-    speech_threshold: float,
-) -> Tuple[str, Dict[str, float], Dict[str, float]]:
-    best_macro, macro_scores = _macro_from_topk(labels, probs, top_idx, label_to_macro)
-    human_speech_score = float(macro_scores.get("HumanSpeech", 0.0))
-    final_macro = "HumanSpeech" if human_speech_score > float(speech_threshold) else best_macro
-    return final_macro, macro_scores, {"HumanSpeech": human_speech_score, "topk": float(len(top_idx))}
-
-
-_MODEL_CACHE: Dict[Tuple[str, str], Any] = {}
 _AST_MODEL_CACHE: Dict[Tuple[str, str], Tuple[Any, Any]] = {}
 
 
-def _load_tagger(checkpoint_path: Path, device: str):
-    cache_key = (str(checkpoint_path), str(device))
-    if cache_key in _MODEL_CACHE:
-        return _MODEL_CACHE[cache_key]
-
-    from panns_inference import AudioTagging  # type: ignore
-    from panns_inference.config import classes_num  # type: ignore
-    from panns_inference.models import Cnn14  # type: ignore
-
-    model = Cnn14(
-        sample_rate=16000,
-        window_size=512,
-        hop_size=160,
-        mel_bins=64,
-        fmin=50,
-        fmax=8000,
-        classes_num=classes_num,
-    )
-    tagger = AudioTagging(model=model, checkpoint_path=str(checkpoint_path), device=str(device))
-    _MODEL_CACHE[cache_key] = tagger
-    return tagger
-
-
-def _detect_torch_device(device_arg: str):
+def _cpu_torch_device():
     import torch
 
-    dev = str(device_arg or "auto").strip().lower()
-    if dev == "cpu":
-        return torch.device("cpu")
-    if dev == "cuda":
-        return torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    if dev == "npu":
-        try:
-            import torch_npu  # type: ignore  # noqa: F401
-            return torch.device("npu")
-        except Exception:
-            return torch.device("privateuseone")
-    if dev == "auto":
-        try:
-            import torch_npu  # type: ignore  # noqa: F401
-            try:
-                return torch.device("npu")
-            except Exception:
-                return torch.device("privateuseone")
-        except Exception:
-            if torch.cuda.is_available():
-                return torch.device("cuda")
-            return torch.device("cpu")
-    raise ValueError(f"不支持的音频分类设备: {device_arg}")
+    return torch.device("cpu")
 
 
 def _log_mel_128(wav_16k: np.ndarray) -> np.ndarray:
@@ -333,7 +241,6 @@ def _infer_ast(
     checkpoint_path: Path,
     labels_csv: Path,
     macro_map_path: Path,
-    device_arg: str,
     topk: int,
     segment_sec: float,
     hop_sec: float,
@@ -343,7 +250,7 @@ def _infer_ast(
 
     labels = _load_audioset_labels_csv(labels_csv)
     macro_map = _load_macro_map_json(macro_map_path)
-    device = _detect_torch_device(device_arg)
+    device = _cpu_torch_device()
     model, device = _load_ast_model(checkpoint_path, len(labels), device)
     wav = _load_audio_16k_mono(audio_path)
 
@@ -392,24 +299,14 @@ def _infer_ast(
 class AudioSoundClassify(Mapper):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.backend = str(kwargs.get("backend", "ast")).strip().lower()
-        compat_checkpoint = str(kwargs.get("checkpoint", "")).strip()
-        self.panns_checkpoint = str(
-            kwargs.get("pannsCheckpoint") or (compat_checkpoint if self.backend == "panns" else "") or DEFAULT_PANNS_CHECKPOINT
-        ).strip()
-        self.ast_checkpoint = str(
-            kwargs.get("astCheckpoint") or (compat_checkpoint if self.backend == "ast" else "") or DEFAULT_AST_CHECKPOINT
-        ).strip()
-        self.macro_map = str(kwargs.get("macroMap", "")).strip()
+        self.backend = "ast"
+        self.ast_checkpoint = str(kwargs.get("astCheckpoint") or DEFAULT_AST_CHECKPOINT).strip()
         self.ast_macro_map = str(kwargs.get("astMacroMap", "")).strip()
         self.labels_csv = str(kwargs.get("labelsCsv", "")).strip()
-        self.device = str(kwargs.get("device", "auto")).strip().lower()
         self.topk = int(float(kwargs.get("topK", 10)))
-        self.speech_threshold = float(kwargs.get("humanSpeechThreshold", 0.2))
         self.segment_sec = float(kwargs.get("segmentSeconds", 10.24))
         self.hop_sec = float(kwargs.get("hopSeconds", 5.12))
         self.macro_agg = str(kwargs.get("macroAgg", "max")).strip().lower()
-        self.keep_audio = str(kwargs.get("keepAudio", "true")).strip().lower() in {"1", "true", "yes", "y", "on"}
 
     def execute(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         start = time.time()
@@ -452,81 +349,37 @@ class AudioSoundClassify(Mapper):
                 audio_path = Path(str(sample.get(self.filepath_key, ""))).expanduser().resolve()
                 if not audio_path.exists():
                     raise FileNotFoundError(f"输入音频不存在: {audio_path}")
-                if self.keep_audio or self.is_last_op:
+                if self.is_last_op:
                     audio_bytes = audio_path.read_bytes()
             audio_path_for_infer = audio_path
 
-            if self.backend == "ast":
-                checkpoint_path = _resolve_path(self.ast_checkpoint, Path(DEFAULT_AST_CHECKPOINT))
-                labels_csv = _resolve_path(
-                    self.labels_csv,
-                    package_root / "models" / "recog" / "class_labels_indices.csv",
-                )
-                macro_map_path = _resolve_path(
-                    self.ast_macro_map,
-                    package_root / "models" / "recog" / "audioset_macro_map_v1.json",
-                )
-                if not checkpoint_path.exists():
-                    raise FileNotFoundError(f"AST 分类模型不存在: {checkpoint_path}")
-                if not labels_csv.exists():
-                    raise FileNotFoundError(f"AudioSet labels CSV 不存在: {labels_csv}")
-                if not macro_map_path.exists():
-                    raise FileNotFoundError(f"AST 大类映射不存在: {macro_map_path}")
-                if self.macro_agg not in {"max", "sum"}:
-                    raise ValueError(f"不支持的 macroAgg: {self.macro_agg}")
-                result_core = _infer_ast(
-                    audio_path_for_infer,
-                    checkpoint_path,
-                    labels_csv,
-                    macro_map_path,
-                    self.device,
-                    self.topk,
-                    self.segment_sec,
-                    self.hop_sec,
-                    self.macro_agg,  # type: ignore[arg-type]
-                )
-            elif self.backend == "panns":
-                checkpoint_path = _resolve_path(self.panns_checkpoint, Path(DEFAULT_PANNS_CHECKPOINT))
-                fallback_macro = package_root / "models" / "panns" / "classes_macro_draft.tsv"
-                macro_map_path = _resolve_path(self.macro_map, fallback_macro)
-                if not checkpoint_path.exists():
-                    raise FileNotFoundError(f"PANNs 分类模型不存在: {checkpoint_path}")
-                if not macro_map_path.exists():
-                    raise FileNotFoundError(f"音频分类大类映射不存在: {macro_map_path}")
-                label_to_macro = _load_label_macro_map(macro_map_path)
-                tagger = _load_tagger(checkpoint_path, self.device)
-                audio = _load_audio_16k(audio_path_for_infer, sr=16000)
-                clipwise_output, _embedding = tagger.inference(audio[None, :])
-                probs = clipwise_output[0]
-                labels = list(tagger.labels)
-                topk = max(1, min(int(self.topk), len(labels)))
-                top_idx = np.argsort(probs)[::-1][:topk]
-                final_macro, macro_scores, rule_scores = _decide_macro_class(
-                    labels,
-                    probs,
-                    top_idx,
-                    label_to_macro,
-                    self.speech_threshold,
-                )
-                result_core = {
-                    "macro_class": final_macro,
-                    "macro_scores": {k: round(float(v), 8) for k, v in macro_scores.items()},
-                    "macro_rule_scores": {k: round(float(v), 8) for k, v in rule_scores.items()},
-                    "small_topk": [
-                        {
-                            "label": str(labels[i]),
-                            "macro_class": label_to_macro.get(str(labels[i]), "Other"),
-                            "prob": round(float(probs[i]), 8),
-                        }
-                        for i in top_idx
-                    ],
-                    "model": "PANNs Cnn14 16k AudioSet",
-                    "checkpoint": str(checkpoint_path),
-                    "macro_map": str(macro_map_path),
-                    "device": self.device,
-                }
-            else:
-                raise ValueError(f"不支持的音频分类后端: {self.backend}")
+            checkpoint_path = _resolve_path(self.ast_checkpoint, Path(DEFAULT_AST_CHECKPOINT))
+            labels_csv = _resolve_path(
+                self.labels_csv,
+                package_root / "models" / "recog" / "class_labels_indices.csv",
+            )
+            macro_map_path = _resolve_path(
+                self.ast_macro_map,
+                package_root / "models" / "recog" / "audioset_macro_map_v1.json",
+            )
+            if not checkpoint_path.exists():
+                raise FileNotFoundError(f"AST 分类模型不存在: {checkpoint_path}")
+            if not labels_csv.exists():
+                raise FileNotFoundError(f"AudioSet labels CSV 不存在: {labels_csv}")
+            if not macro_map_path.exists():
+                raise FileNotFoundError(f"AST 大类映射不存在: {macro_map_path}")
+            if self.macro_agg not in {"max", "sum"}:
+                raise ValueError(f"不支持的 macroAgg: {self.macro_agg}")
+            result_core = _infer_ast(
+                audio_path_for_infer,
+                checkpoint_path,
+                labels_csv,
+                macro_map_path,
+                self.topk,
+                self.segment_sec,
+                self.hop_sec,
+                self.macro_agg,  # type: ignore[arg-type]
+            )
 
         key = _sample_key(sample, audio_path, self.filename_key)
         result = {

@@ -1,6 +1,8 @@
 # -- encoding: utf-8 --
 
 import io
+import os
+import shutil
 import time
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
@@ -14,11 +16,37 @@ except ImportError:
     from audio_skip import invalid_quality_reason, is_audio_sample, mark_skipped_sample
 
 
+def _prepend_env_path(name: str, value: Path) -> None:
+    if not value.exists():
+        return
+    current = os.environ.get(name, "")
+    parts = [p for p in current.split(os.pathsep) if p]
+    value_s = str(value)
+    if value_s not in parts:
+        os.environ[name] = os.pathsep.join([value_s] + parts)
+
+
+def _external_ffmpeg_bin() -> Optional[str]:
+    ops_site = Path(os.environ.get("DATAMATE_OPS_SITE_PACKAGES", "/usr/local/lib/ops/site-packages"))
+    ffmpeg_root = Path(os.environ.get("DATAMATE_FFMPEG_ROOT", str(ops_site / "ffmpeg")))
+    ffmpeg_bin = ffmpeg_root / "bin" / "ffmpeg"
+    ffmpeg_lib = ffmpeg_root / "lib"
+    if ffmpeg_bin.exists():
+        _prepend_env_path("PATH", ffmpeg_bin.parent)
+        _prepend_env_path("LD_LIBRARY_PATH", ffmpeg_lib)
+        return str(ffmpeg_bin)
+    return shutil.which("ffmpeg") or shutil.which("avconv")
+
+
 def _load_audio_backend() -> Tuple[Optional[object], Optional[object]]:
+    ffmpeg_bin = _external_ffmpeg_bin()
     audiosegment = None
     sf = None
     try:
         from pydub import AudioSegment  # type: ignore
+        if ffmpeg_bin:
+            AudioSegment.converter = ffmpeg_bin
+            AudioSegment.ffmpeg = ffmpeg_bin
         audiosegment = AudioSegment
     except Exception:
         audiosegment = None

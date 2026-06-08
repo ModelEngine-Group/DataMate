@@ -24,7 +24,7 @@
 1. DataMate runtime 需要安装 [audio_runtime_requirements.txt](audio_runtime_requirements.txt) 中固定版本的 Python 包。
 2. DataMate runtime 的系统环境需要能直接执行 `ffmpeg -version`。
 3. ASR 相关算子需要 runtime 能导入 `wenet.bin.recognize`，WeNet 不再由算子目录内置。
-4. 算子目录不再内置 `speechbrain`、`wenet`、`ffmpeg`、`panns_inference` 等第三方依赖。
+4. 算子目录不再内置 `speechbrain`、`wenet`、`ffmpeg` 等第三方依赖。
 
 1. 在 DataMate 中创建一个输入数据集和一个输出数据集。
 2. 导入测试素材。建议至少导入以下文件：
@@ -42,10 +42,10 @@
      - `audio\summary\BAC009S0002W0122.wav`
      - `audio\summary\BAC009S0002W0123.wav`
 3. 单算子测试时，每次只选择一个目标算子运行，输出保存到新的输出数据集。
-4. 串联测试时，要求上一个算子的输出数据集作为下一个算子的输入数据集。
+4. 每个算子按独立算子测试，不要求依赖其他算子的输出数据集。
 5. 每次测试后检查三点：
    - 任务是否成功完成，无报错。
-   - 输出数据集中文件数量是否与输入样本数量一致，除非算子本身明确过滤或跳过。
+   - 输出数据集中文件数量是否与输入样本数量一致。
    - 输出文件类型、文件内容、文件名标记或 `ext_params` 是否符合算子功能。
 
 ## 1. audio_anomaly_filter
@@ -68,10 +68,9 @@ audio\summary\84-121123-0000.flac
    - `minDur = 1.0`
    - `maxDur = 20000.0`
    - `silenceRatioTh = 0.8`
-   - `skipInvalidDownstream = true`
 4. 检查输出数据集：
    - 每个输入音频都应有对应输出。
-   - 正常音频应仍可作为音频被后续音频算子继续处理。
+   - 正常音频应仍可作为音频读取。
    - `ext_params.audio_quality.quality_flag` 应为 `ok` 或 `invalid`。
    - `ext_params.audio_quality.duration`、`silence_ratio`、`global_rms` 应存在。
 5. 异常分支测试：
@@ -79,7 +78,7 @@ audio\summary\84-121123-0000.flac
    - 再次运行。
    - 输出样本应被标记为 `invalid`。
    - 文件名中可能出现 `__quality_invalid_...` 标记。
-   - 音频数据仍应保留，供后续算子根据 `skipInvalidDownstream` 决定是否跳过。
+   - 音频数据仍应保留。
 
 通过标准：
 
@@ -124,7 +123,6 @@ audio\summary\84-121123-0000.flac
 1. 输入数据集导入中文和英文语音。
 2. 推荐先单独测试中文：
    - 参数 `language = zh`
-   - 参数 `device` 根据环境选择，优先使用实际可用设备；无 NPU 时使用 `cpu`。
    - 其他参数保持默认。
 3. 运行 `audio_asr_transcribe`。
 4. 检查输出数据集：
@@ -136,18 +134,17 @@ audio\summary\84-121123-0000.flac
    - 参数 `language = en`
    - 输入英文 `librispeech_*.wav`。
    - 输出文本应为英文内容，且不为空。
-6. 串联测试：
-   - 先运行 `audio_fast_lang_id`。
-   - 将其输出数据集作为 `audio_asr_transcribe` 输入。
+6. 自动语言测试：
+   - 准备 `references/language.jsonl` 或显式填写 `languageFilePath`。
    - `audio_asr_transcribe` 参数设置为 `language = auto`。
-   - 检查中文音频使用中文模型，英文音频使用英文模型。
+   - 检查语言文件命中的样本使用对应中文或英文模型。
 
 通过标准：
 
 - 算子运行成功。
 - 输出类型为文本。
 - 转写文本非空。
-- `language = auto` 时能读取上游 LID 结果或文件名标记。
+- `language = auto` 时能读取语言文件，未命中时按中文兜底。
 
 ## 3. audio_dc_offset_removal
 
@@ -169,11 +166,7 @@ audio\summary\BAC009S0002W0122.wav
    - 输出文件数量应与输入一致。
    - 输出仍应为音频文件。
    - 输出目标格式应为 `wav`。
-   - 音频可以正常播放或被后续音频算子读取。
-4. 可选串联验证：
-   - 将输出继续输入 `audio_asr_transcribe`。
-   - ASR 应能正常产生文本。
-
+   - 音频可以正常播放或读取。
 通过标准：
 
 - 算子运行成功。
@@ -182,7 +175,7 @@ audio\summary\BAC009S0002W0122.wav
 
 ## 4. audio_fast_lang_id
 
-用途：识别语音音频语言为 `zh` 或 `en`，结果写入 `ext_params.audio_lid.lang`，同时保留原音频给下游继续使用。
+用途：识别语音音频语言为 `zh` 或 `en`，结果写入 `ext_params.audio_lid.lang`，同时输出原音频。
 
 推荐素材：
 
@@ -206,7 +199,6 @@ humanSpeech\en\librispeech_0001.wav
 1. 输入数据集同时导入中文和英文语音。
 2. 运行 `audio_fast_lang_id`。
 3. 参数建议保持默认：
-   - `device = cpu`
    - `maxSeconds = 3.0`
 4. 检查输出数据集：
    - 输出文件数量应与输入一致。
@@ -214,16 +206,12 @@ humanSpeech\en\librispeech_0001.wav
    - 中文样本的 `ext_params.audio_lid.lang` 应为 `zh`。
    - 英文样本的 `ext_params.audio_lid.lang` 应为 `en`。
    - 文件名中应带有类似 `__lid_zh` 或 `__lid_en` 的标记。
-5. 串联验证：
-   - 将输出数据集作为 `audio_asr_transcribe` 输入。
-   - `audio_asr_transcribe.language` 设置为 `auto`。
-   - ASR 应能继续读取音频并输出文本。
 
 通过标准：
 
 - 语言标签正确。
 - 输出仍保留音频。
-- 能作为 ASR 的上游算子使用。
+
 
 ## 5. audio_fast_lang_id_text
 
@@ -249,7 +237,6 @@ humanSpeech\en\librispeech_0000.wav
 1. 输入数据集导入一条中文语音和一条英文语音。
 2. 运行 `audio_fast_lang_id_text`。
 3. 参数建议保持默认：
-   - `device = cpu`
    - `maxSeconds = 3.0`
 4. 检查输出数据集：
    - 输出文件应为文本。
@@ -286,7 +273,7 @@ humanSpeech\zh\aishell_0000.wav
 4. 检查输出数据集：
    - 输出文件数量应与输入一致。
    - 输出应为 WAV 音频。
-   - 音频应能正常播放或被后续算子读取。
+   - 音频应能正常播放或读取。
    - `ext_params.audio_format_convert.format` 应为 `wav`。
    - `ext_params.audio_format_convert.sample_rate` 应为 `16000`。
    - `ext_params.audio_format_convert.channels` 应为 `1`。
@@ -298,7 +285,7 @@ humanSpeech\zh\aishell_0000.wav
 
 - 算子运行成功。
 - 输出格式、采样率、声道配置符合参数。
-- 输出仍是音频，可作为下游音频算子输入。
+- 输出仍是音频。
 
 ## 7. audio_gtcrn_denoise
 
@@ -328,11 +315,7 @@ audio\summary\BAC009S0002W0122.wav
 4. 检查输出数据集：
    - 输出文件数量应与输入一致。
    - 输出应为 WAV 音频。
-   - 音频应能正常播放或被后续音频算子读取。
-5. 可选串联验证：
-   - 将输出继续输入 `audio_asr_transcribe`。
-   - ASR 应能正常输出文本。
-
+   - 音频应能正常播放或读取。
 通过标准：
 
 - 算子运行成功。
@@ -365,7 +348,7 @@ audio\summary\BAC009S0002W0122.wav
 4. 检查输出数据集：
    - 输出文件数量应与输入一致。
    - 输出应为 WAV 音频。
-   - 音频应能正常播放或被后续音频算子读取。
+   - 音频应能正常播放或读取。
 5. 参数分支测试：
    - 将 `freqHz` 改为 `60`。
    - 再次运行，任务应成功。
@@ -404,7 +387,7 @@ audio\summary\BAC009S0002W0122.wav
 4. 检查输出数据集：
    - 输出文件数量应与输入一致。
    - 输出应为 WAV 音频。
-   - 音频应能正常播放或被后续音频算子读取。
+   - 音频应能正常播放或读取。
 5. 参数分支测试：
    - 将 `thresholdDb` 设置为 `-20`。
    - 将 `floorRatio` 设置为 `0`。
@@ -420,9 +403,9 @@ audio\summary\BAC009S0002W0122.wav
 
 用途：输入 ASR 文本，输出摘要文本。该算子输入是文本，不是音频。
 
-推荐素材和前置流程：
+推荐素材：
 
-建议先用以下音频跑出 ASR 文本，再把 ASR 输出数据集作为本算子的输入：
+使用 txt 文本样本，或先用 ASR 算子生成的转写文本数据集：
 
 ```text
 audio\summary\84-121123-0000.flac
@@ -433,16 +416,15 @@ audio\summary\BAC009S0002W0123.wav
 
 测试步骤：
 
-1. 先运行 `audio_asr_transcribe`，得到文本输出数据集。
-2. 将 ASR 输出数据集作为 `audio_text_summarize` 的输入。
-3. 运行 `audio_text_summarize`。
-4. 推荐参数：
+1. 导入 txt 文本样本或使用已有文本数据集。
+2. 运行 `audio_text_summarize`。
+3. 推荐参数：
    - `method = extractive`
    - `lineMode = single`
    - `maxSummaryCharsZh = 40`
    - `maxSummaryWordsEn = 18`
    - `preserveKeys = true`
-5. 检查输出数据集：
+4. 检查输出数据集：
    - 输出文件应为文本。
    - 摘要文本不应为空。
    - 中文摘要长度应大致受 `maxSummaryCharsZh` 控制。

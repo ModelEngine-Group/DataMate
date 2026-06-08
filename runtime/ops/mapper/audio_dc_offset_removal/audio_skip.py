@@ -67,28 +67,7 @@ def is_audio_sample(
 
 
 def invalid_quality_reason(sample: Dict[str, Any], ext_params_key: str = "ext_params") -> str:
-    for key in ("fileName", "sourceFileName", "filePath"):
-        marker_source = Path(str(sample.get(key) or "")).stem.lower()
-        marker = "__quality_invalid"
-        if marker in marker_source:
-            reason = marker_source.split(marker, 1)[1].strip("_") or "invalid_audio"
-            return f"invalid_audio_quality:{reason}"
-
-    ext = sample.get(ext_params_key, {})
-    if not isinstance(ext, dict):
-        return ""
-    quality = ext.get("audio_quality", {})
-    if not isinstance(quality, dict):
-        return ""
-    if str(quality.get("quality_flag") or "").strip().lower() != "invalid":
-        return ""
-    skip_downstream = quality.get("skip_downstream", True)
-    if isinstance(skip_downstream, str):
-        skip_downstream = skip_downstream.strip().lower() in {"1", "true", "yes", "y", "on"}
-    if not skip_downstream:
-        return ""
-    reason = str(quality.get("reason") or "invalid_audio").strip()
-    return f"invalid_audio_quality:{reason}"
+    return ""
 
 
 def mark_skipped_sample(
