@@ -141,7 +141,7 @@ backend:
           name: datamate-conf
           key: JWT_SECRET
     - name: datamate.rag.milvus-uri
-      value: "http://milvus:19530"
+      value: "http://datamate-milvus:19530"
     - name: datamate.jwt.enable
       value: &DATAMATE_JWT_ENABLE 'false'
   volumes:
@@ -175,7 +175,7 @@ backend-python:
     - name: datamate_jwt_enable
       value: *DATAMATE_JWT_ENABLE
     - name: milvus_uri
-      value: "http://milvus:19530"
+      value: "http://datamate-milvus:19530"
     - name: LABEL_STUDIO_USER_TOKEN
       valueFrom:
         secretKeyRef:
