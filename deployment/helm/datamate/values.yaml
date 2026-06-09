@@ -207,6 +207,11 @@ gateway:
   nodeSelector: {}
   tolerations: []
   env:
+    - name: DB_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: datamate-conf
+          key: DB_PASSWORD
     - name: JWT_SECRET
       valueFrom:
         secretKeyRef:

@@ -644,7 +644,7 @@ minio:
     pullPolicy: IfNotPresent
   accessKey: ""  # Set via secrets.yaml or --set
   secretKey: ""  # Set via secrets.yaml or --set
-  existingSecret: ""
+  existingSecret: milvus-minio-secret"
   bucketName: "milvus-bucket"
   rootPath: file
   useIAM: false
