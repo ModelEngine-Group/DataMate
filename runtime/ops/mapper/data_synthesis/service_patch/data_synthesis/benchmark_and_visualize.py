@@ -13,14 +13,14 @@ def resolve_model_path() -> str:
     candidates = [
         os.getenv("MODEL_PATH"),
         os.getenv("DATA_SYNTHESIS_MODEL_PATH"),
-        "/model/Qwen/Qwen3-1___7b-Medical-R1-sft",
-        str(Path.home() / ".cache/modelscope/testUser/Qwen3-1___7b-Medical-R1-sft"),
+        "/model/Qwen/Qwen3-4B-Instruct-2507",
+        str(Path.home() / ".cache/modelscope/testUser/Qwen3-4B-Instruct-2507"),
     ]
     for path in candidates:
         if path and os.path.exists(path):
             return path
     # 兜底：优先返回显式环境变量，否则返回容器默认挂载路径
-    return os.getenv("MODEL_PATH") or "/model/Qwen/Qwen3-1___7b-Medical-R1-sft"
+    return os.getenv("MODEL_PATH") or "/model/Qwen/Qwen3-4B-Instruct-2507"
 
 def generate_mock_inputs(num_samples=50):
     # (保持原样，省略以节省篇幅)

@@ -1,5 +1,5 @@
 name: 'data_quality_evaluator'
-description: 'Call the standalone data_synthesis HTTP service to evaluate generated data quality and export one JSON result file.'
+description: 'Call the standalone data_quality_evaluator HTTP service to evaluate generated data quality and export one JSON result file.'
 language: 'python'
 vendor: 'huawei'
 raw_id: 'DataQualityEvaluatorMapper'
@@ -22,9 +22,9 @@ runtime:
 settings:
   serviceUrl:
     name: 'Service URL'
-    description: 'HTTP endpoint of the standalone data_synthesis service.'
+    description: 'HTTP endpoint of the standalone data_quality_evaluator service.'
     type: 'input'
-    defaultVal: 'http://data-synthesis-service:18080'
+    defaultVal: 'http://data-quality-evaluator-service:18112'
     required: true
   targetDimensions:
     name: 'Target Dimensions'

@@ -194,7 +194,7 @@ def create_golden_dataset():
     print(f"✅ 金标准数据集已生成: {OUTPUT_FILE}")
     print(f"📊 包含样本数: {len(dataset)} 条")
     print("="*50)
-    print("👉 下一步：请运行 data_evaluator.py，让模型对这些数据打分，")
+    print("下一步：请使用独立的 data_quality_evaluator_service 对这些数据打分，")
     print("   然后计算 模型分 与 这里预置的 human_scores 的一致性。")
     print("   (你也可以手动打开 json 修改 human_scores 以符合你的个人标准)")
 

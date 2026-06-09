@@ -18,13 +18,13 @@ def resolve_model_path() -> str:
     candidates = [
         os.getenv("MODEL_PATH"),
         os.getenv("DATA_SYNTHESIS_MODEL_PATH"),
-        "/model/Qwen/Qwen3-1___7b-Medical-R1-sft",
-        str(Path.home() / ".cache/modelscope/testUser/Qwen3-1___7b-Medical-R1-sft"),
+        "/model/Qwen/Qwen3-4B-Instruct-2507",
+        str(Path.home() / ".cache/modelscope/testUser/Qwen3-4B-Instruct-2507"),
     ]
     for path in candidates:
         if path and os.path.exists(path):
             return path
-    return os.getenv("MODEL_PATH") or "/model/Qwen/Qwen3-1___7b-Medical-R1-sft"
+    return os.getenv("MODEL_PATH") or "/model/Qwen/Qwen3-4B-Instruct-2507"
 
 
 MODEL_PATH = resolve_model_path()

@@ -353,7 +353,7 @@ class MedicalDataEvaluator:
                 prompts.append(prompt)
                 task_mapping.append((i, dim))
 
-        print(f"🚀 [Evaluator] 开始批量打分: {len(data_list)} 条数据 x {len(target_dimensions)} 维度 = {len(prompts)} 次推理")
+        print(f"[Evaluator] 开始批量打分: {len(data_list)} 条数据 x {len(target_dimensions)} 维度 = {len(prompts)} 次推理")
         
         # 2. 执行推理 (Low Temperature for consistency)
         sampling_params = SamplingParams(

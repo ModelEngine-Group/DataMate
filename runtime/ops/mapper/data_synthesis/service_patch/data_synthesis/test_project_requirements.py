@@ -46,7 +46,7 @@ class FakeLLM:
                 }
             elif "final_answer" in prompt:
                 payload = {
-                    "question": f"CoT问题{i}",
+                    "question": f"临床推理问题{i}",
                     "rationale": "1. 提取症状。2. 分析病史。3. 核对检查。4. 判断风险。5. 明确诊断方向。6. 给出处置建议。",
                     "final_answer": "建议先检查再对症治疗。",
                 }
@@ -184,6 +184,39 @@ class InvalidThenBadThenGoodCotLLM:
         ]
 
 
+class StrokeCaseRepairLLM:
+    def __init__(self):
+        self.calls = 0
+
+    def generate(self, prompts, sampling_params):
+        self.calls += 1
+        if self.calls == 1:
+            return [
+                _FakeResult(json.dumps({
+                    "question": "患者为男性，72岁，突发言语不清和右侧肢体无力2小时，头颅CT未见出血。请评估是否符合急性缺血性卒中标准，并按照急性缺血性卒中路径进行处置。",
+                    "answer": "根据描述，患者符合急性缺血性卒中的常见表现。头颅CT未见出血，且有高血压病史，因此应立即启动急性缺血性卒中评估流程，包括卒中中心评估、静脉溶栓或机械取栓可行性评估、血压和血糖管理，以及必要时的影像学检查如MRI或SPECT。",
+                    "QA": "患者符合急性缺血性卒中的标准。"
+                }, ensure_ascii=False))
+                for _ in prompts
+            ]
+        if self.calls == 2:
+            return [
+                _FakeResult(json.dumps({
+                    "question": "该患者最可能是什么情况，并应优先进行哪些评估？",
+                    "answer": "结合突发言语不清、右侧肢体无力及头颅CT未见出血，首先考虑急性缺血性卒中。应立即启动卒中中心评估，尽快判断静脉溶栓时间窗和禁忌证，并进一步评估是否需要机械取栓，同时监测血压和血糖。"
+                }, ensure_ascii=False))
+                for _ in prompts
+            ]
+        return [
+            _FakeResult(json.dumps({
+                "question": "该患者最可能是什么情况，应如何完成急诊评估？",
+                "rationale": "1. 患者72岁，突发言语不清和右侧肢体无力2小时，提示急性脑血管事件。2. 头颅CT未见出血，使急性缺血性卒中可能性明显增加。3. 发病仅2小时，仍需尽快评估静脉溶栓时间窗及禁忌证。4. 若存在大血管闭塞风险，还应同步评估机械取栓适应证。5. 患者有高血压病史，急诊处理中需要持续监测并管理血压。6. 同时应评估血糖等基础指标，避免影响再灌注决策和神经功能判断。",
+                "final_answer": "首先考虑急性缺血性卒中，建议立即启动卒中中心评估，尽快完成静脉溶栓时间窗与禁忌证判断，并视情况评估机械取栓，同时监测和管理血压、血糖。"
+            }, ensure_ascii=False))
+            for _ in prompts
+        ]
+
+
 class ProjectRequirementTests(unittest.TestCase):
     def test_support_three_generation_templates(self):
         synth = MedicalDataSynthesizer(model_path=None, llm_instance=FakeLLM())
@@ -260,23 +293,19 @@ class ProjectRequirementTests(unittest.TestCase):
             llm = AlwaysInvalidLLM()
             synth = MedicalDataSynthesizer(model_path=None, llm_instance=llm)
 
-            result = synth.generate_data_batch(task_type, ["病例A"])[0]
+            with self.assertRaises(RuntimeError):
+                synth.generate_data_batch(task_type, ["病例A"])
 
             self.assertGreaterEqual(llm.calls, 2)
-            self.assertEqual(result["status"], "failed")
-            self.assertNotIn("deterministic", result)
 
     def test_cot_repair_plain_text_is_not_promoted_to_fallback_success(self):
         llm = InvalidThenPlainCotLLM()
         synth = MedicalDataSynthesizer(model_path=None, llm_instance=llm)
 
-        result = synth.generate_data_batch("CoT", ["患者男，58岁，胸痛伴ST段抬高。"])[0]
+        with self.assertRaises(RuntimeError):
+            synth.generate_data_batch("CoT", ["患者男，58岁，胸痛伴ST段抬高。"])
 
         self.assertGreaterEqual(llm.calls, 2)
-        self.assertEqual(result["status"], "failed")
-        self.assertEqual(result["reason"], "repair_failed")
-        self.assertNotIn("fallback", result)
-        self.assertNotIn("deterministic", result)
 
     def test_second_llm_repair_can_fix_quality_gate_failure_without_fallback(self):
         llm = InvalidThenBadThenGoodCotLLM()
@@ -293,6 +322,75 @@ class ProjectRequirementTests(unittest.TestCase):
         self.assertNotIn("fallback", result)
         self.assertNotIn("deterministic", result)
         self.assertNotIn("穿孔", json.dumps(result["data"], ensure_ascii=False))
+
+    def test_stroke_qa_second_pass_removes_unapproved_imaging_and_extra_fields(self):
+        llm = StrokeCaseRepairLLM()
+        synth = MedicalDataSynthesizer(model_path=None, llm_instance=llm)
+        source = (
+            "测试编号：DS-13\n"
+            "数据来源风格：medical-o1-reasoning-SFT\n\n"
+            "病例摘要：男，72岁，突发言语不清和右侧肢体无力2小时，高血压病史，头颅CT未见出血。"
+            "请生成急性脑卒中评估相关数据。\n\n"
+            "生成要求：请输出结构化中文结果，覆盖 QA、CoT、Preference 三类数据；"
+            "问题、答案、推理说明和偏好理由均应忠实于输入文本，不要编造与原文无关的事实。"
+        )
+
+        result = synth.generate_data_batch("QA", [source])[0]
+
+        self.assertEqual(result["status"], "success")
+        payload = result["data"]
+        self.assertEqual(set(payload.keys()), {"question", "answer"})
+        self.assertNotIn("MRI", payload["answer"])
+        self.assertNotIn("SPECT", payload["answer"])
+        self.assertNotIn("意识障碍", payload["answer"])
+        self.assertIn("急性缺血性卒中", payload["answer"])
+
+    def test_stroke_cot_second_pass_generates_grounded_output(self):
+        llm = StrokeCaseRepairLLM()
+        synth = MedicalDataSynthesizer(model_path=None, llm_instance=llm)
+        source = (
+            "测试编号：DS-13\n"
+            "数据来源风格：medical-o1-reasoning-SFT\n\n"
+            "病例摘要：男，72岁，突发言语不清和右侧肢体无力2小时，高血压病史，头颅CT未见出血。"
+            "请生成急性脑卒中评估相关数据。\n\n"
+            "生成要求：请输出结构化中文结果，覆盖 QA、CoT、Preference 三类数据；"
+            "问题、答案、推理说明和偏好理由均应忠实于输入文本，不要编造与原文无关的事实。"
+        )
+
+        result = synth.generate_data_batch("CoT", [source])[0]
+
+        self.assertEqual(result["status"], "success")
+        payload = result["data"]
+        self.assertIn("急性缺血性卒中", payload["final_answer"])
+        self.assertIn("溶栓", payload["final_answer"])
+        self.assertIn("取栓", payload["final_answer"])
+        self.assertNotIn("MRI", payload["final_answer"])
+        self.assertNotIn("SPECT", payload["final_answer"])
+        self.assertNotIn("意识障碍", json.dumps(payload, ensure_ascii=False))
+
+    def test_stroke_preference_rejects_unapproved_imaging_and_named_complications(self):
+        synth = MedicalDataSynthesizer(model_path=None, llm_instance=FakeLLM())
+        source = "患者，男，72岁，突发言语不清和右侧肢体无力2小时，高血压病史，头颅CT未见出血。"
+        raw = json.dumps({
+            "question": "该患者应优先如何处理？",
+            "chosen": "应立即启动卒中中心评估，尽快判断静脉溶栓时间窗和禁忌证，同时结合MRI或CTA排除脑干梗死后再决定是否机械取栓，并监测血压和血糖。",
+            "rejected": "仅观察患者，延误溶栓评估，忽视CT未见出血和时间窗信息。",
+            "preference_reason": "chosen 进一步完善MRI或CTA后再决定取栓，更有助于明确脑干梗死和其他病因，因此更安全。",
+        }, ensure_ascii=False)
+
+        self.assertIsNone(synth._try_parse_and_validate("Preference", raw, source))
+
+    def test_stroke_preference_allows_negative_delay_warning_but_requires_stroke_path(self):
+        synth = MedicalDataSynthesizer(model_path=None, llm_instance=FakeLLM())
+        source = "患者，男，67岁。主诉：突发右侧肢体无力伴言语不清2小时。头颅CT未见出血，NIHSS评分9分。"
+        raw = json.dumps({
+            "question": "该患者应优先如何处理？",
+            "chosen": "应立即启动卒中中心评估，尽快完成静脉溶栓时间窗和禁忌证判断，并视情况评估机械取栓，同时监测血压和血糖，避免先做MRI或SPECT而延误再灌注评估。",
+            "rejected": "仅观察患者，延误溶栓和再灌注评估，忽视CT未见出血和时间窗信息。",
+            "preference_reason": "chosen 围绕急性缺血性卒中路径，强调卒中中心、溶栓、必要时取栓和基础管理，同时明确不要因MRI或SPECT延误再灌注。",
+        }, ensure_ascii=False)
+
+        self.assertIsNotNone(synth._try_parse_and_validate("Preference", raw, source))
 
     def test_preference_json_with_trailing_comma_is_accepted(self):
         synth = MedicalDataSynthesizer(model_path=None, llm_instance=FakeLLM())
@@ -454,7 +552,7 @@ class ProjectRequirementTests(unittest.TestCase):
         }, ensure_ascii=False)
         self.assertIsNone(synth._try_parse_and_validate("Preference", groin_raw, groin_source))
 
-    def test_negated_or_rejected_wrong_diagnoses_do_not_cause_false_kill(self):
+    def test_negated_or_rejected_plausible_differentials_do_not_cause_false_kill(self):
         synth = MedicalDataSynthesizer(model_path=None, llm_instance=FakeLLM())
         groin_source = "患者，男，49岁。右侧腹股沟区可扪及包块，腹部X线可见阶梯状液气平。"
         cot_raw = json.dumps({
@@ -464,7 +562,7 @@ class ProjectRequirementTests(unittest.TestCase):
                 "肿块位于腹股沟韧带上内方，支持腹股沟疝。",
                 "腹部X线阶梯状液气平提示肠梗阻。",
                 "超声混合回声区提示局部包块或嵌顿改变。",
-                "患者为男性，应排除卵巢囊肿或妇科疾病。",
+                "结合腹股沟包块和肠梗阻证据，阑尾炎或泌尿系结石不能解释全部表现。",
                 "综合考虑嵌顿性腹股沟疝合并肠梗阻。",
             ],
             "final_answer": "考虑嵌顿性腹股沟疝合并肠梗阻，建议尽快外科评估。",
@@ -545,8 +643,8 @@ class ProjectRequirementTests(unittest.TestCase):
         prompt = synth._render_second_repair_prompt("CoT", source, failed_output)
 
         self.assertIn("请完全重写", prompt)
-        self.assertIn("不要沿用上一轮原句", prompt)
-        self.assertIn("诊断和处置只写", prompt)
+        self.assertIn("不要沿用上一轮失败输出", prompt)
+        self.assertIn("final_answer 必须完整写", prompt)
         self.assertIn("嵌顿性腹股沟疝合并肠梗阻，建议尽快外科评估", prompt)
         self.assertNotIn("肠穿孔或其他严重并发症", prompt)
 
@@ -640,6 +738,224 @@ class ProjectRequirementTests(unittest.TestCase):
 
         self.assertIsNotNone(synth._try_parse_and_validate("CoT", raw, source))
 
+    def test_groin_cot_rejects_male_case_gynecologic_differential_even_when_negated(self):
+        synth = MedicalDataSynthesizer(model_path=None, llm_instance=FakeLLM())
+        source = "患者，男，49岁。右侧腹股沟区可扪及包块，腹部X线可见阶梯状液气平，超声提示腹股沟区混合回声区。"
+        raw = json.dumps({
+            "question": "患者最可能的诊断是什么？",
+            "rationale": [
+                "患者为49岁男性，右下腹痛并有腹股沟区包块。",
+                "包块位于腹股沟韧带上内方，支持腹股沟疝相关病变。",
+                "腹部X线片显示阶梯状液气平，提示肠梗阻。",
+                "虽然可以排除卵巢囊肿破裂等其他可能，但现有证据更支持腹股沟疝。",
+                "综合腹股沟包块和肠梗阻影像，考虑嵌顿性腹股沟疝合并肠梗阻。",
+                "需要尽快外科评估，避免延误处理。",
+            ],
+            "final_answer": "考虑嵌顿性腹股沟疝合并肠梗阻，建议立即进行外科评估，以避免延误处理。",
+        }, ensure_ascii=False)
+
+        self.assertIsNone(synth._try_parse_and_validate("CoT", raw, source))
+
+    def test_groin_cot_requires_explicit_surgical_evaluation_in_final_answer(self):
+        synth = MedicalDataSynthesizer(model_path=None, llm_instance=FakeLLM())
+        source = "患者，男，49岁。右侧腹股沟区可扪及包块，腹部X线可见阶梯状液气平，超声提示腹股沟区混合回声区。"
+        raw = json.dumps({
+            "question": "患者最可能的诊断是什么？",
+            "rationale": [
+                "患者为49岁男性，右下腹痛并有腹股沟区包块。",
+                "包块位于腹股沟韧带上内方，支持腹股沟疝相关病变。",
+                "腹部X线片显示阶梯状液气平，提示肠梗阻。",
+                "综合腹股沟包块和肠梗阻影像，考虑嵌顿性腹股沟疝合并肠梗阻。",
+                "嵌顿疝合并肠梗阻存在病情进展风险，不宜仅观察。",
+                "需要尽快专科评估，避免延误处理。",
+            ],
+            "final_answer": "考虑嵌顿性腹股沟疝合并肠梗阻，建议尽快就医，由专业医生评估和治疗。",
+        }, ensure_ascii=False)
+
+        self.assertIsNone(synth._try_parse_and_validate("CoT", raw, source))
+
+    def test_groin_cot_requires_diagnosis_in_final_answer(self):
+        synth = MedicalDataSynthesizer(model_path=None, llm_instance=FakeLLM())
+        source = "患者，男，49岁。右侧腹股沟区可扪及包块，腹部X线可见阶梯状液气平，超声提示腹股沟区混合回声区。"
+        raw = json.dumps({
+            "question": "腹股沟包块合并阶梯状液气平时，患者需要什么处理？",
+            "rationale": [
+                "患者为49岁男性，右下腹痛并有腹股沟区包块。",
+                "包块位于腹股沟韧带上内方，支持腹股沟疝相关病变。",
+                "腹部X线片显示阶梯状液气平，提示肠梗阻。",
+                "综合腹股沟包块和肠梗阻影像，考虑嵌顿性腹股沟疝合并肠梗阻。",
+                "嵌顿疝合并肠梗阻存在病情进展风险，不宜仅观察。",
+                "需要尽快外科评估，避免延误处理。",
+            ],
+            "final_answer": "外科评估",
+        }, ensure_ascii=False)
+
+        self.assertIsNone(synth._try_parse_and_validate("CoT", raw, source))
+
+    def test_groin_cot_rejects_prompt_rule_artifact_in_question(self):
+        synth = MedicalDataSynthesizer(model_path=None, llm_instance=FakeLLM())
+        source = "患者，男，49岁。右侧腹股沟区可扪及包块，腹部X线可见阶梯状液气平，超声提示腹股沟区混合回声区。"
+        raw = json.dumps({
+            "question": "腹股沟包块合并阶梯状液气平时，CoT 必须围绕嵌顿性腹股沟疝合并肠梗阻展开。",
+            "rationale": [
+                "患者为49岁男性，右下腹痛并有腹股沟区包块。",
+                "包块位于腹股沟韧带上内方，支持腹股沟疝相关病变。",
+                "腹部X线片显示阶梯状液气平，提示肠梗阻。",
+                "综合腹股沟包块和肠梗阻影像，考虑嵌顿性腹股沟疝合并肠梗阻。",
+                "嵌顿疝合并肠梗阻存在病情进展风险，不宜仅观察。",
+                "需要尽快外科评估，避免延误处理。",
+            ],
+            "final_answer": "考虑嵌顿性腹股沟疝合并肠梗阻，建议尽快外科评估。",
+        }, ensure_ascii=False)
+
+        self.assertIsNone(synth._try_parse_and_validate("CoT", raw, source))
+
+    def test_groin_cot_rejects_specific_reduction_or_exploration_procedure(self):
+        synth = MedicalDataSynthesizer(model_path=None, llm_instance=FakeLLM())
+        source = "患者，男，49岁。右侧腹股沟区可扪及包块，腹部X线可见阶梯状液气平，超声提示腹股沟区混合回声区。"
+        raw = json.dumps({
+            "question": "患者最可能的诊断是什么？",
+            "rationale": [
+                "患者为49岁男性，右下腹痛并有腹股沟区包块。",
+                "包块位于腹股沟韧带上内方，支持腹股沟疝相关病变。",
+                "腹部X线片显示阶梯状液气平，提示肠梗阻。",
+                "综合腹股沟包块和肠梗阻影像，考虑嵌顿性腹股沟疝合并肠梗阻。",
+                "嵌顿疝合并肠梗阻存在病情进展风险，不宜仅观察。",
+                "需要尽快外科评估并进行腹股沟区域探查或复位。",
+            ],
+            "final_answer": "考虑嵌顿性腹股沟疝合并肠梗阻，建议尽快外科评估，并安排腹股沟区域探查或复位。",
+        }, ensure_ascii=False)
+
+        self.assertIsNone(synth._try_parse_and_validate("CoT", raw, source))
+
+    def test_groin_cot_rejects_generic_unprovided_mass_exam_details(self):
+        synth = MedicalDataSynthesizer(model_path=None, llm_instance=FakeLLM())
+        source = "患者，男，49岁。右侧腹股沟区可扪及4cm包块，腹部X线可见阶梯状液气平。"
+        raw = json.dumps({
+            "question": "患者最可能的诊断是什么？",
+            "rationale": [
+                "患者为49岁男性，右下腹痛并有右侧腹股沟区4cm包块。",
+                "包块大小、位置及触诊特点，如硬度、活动度等，需要进一步描述。",
+                "腹部X线片显示阶梯状液气平，提示肠梗阻。",
+                "综合腹股沟包块和肠梗阻影像，考虑嵌顿性腹股沟疝合并肠梗阻。",
+                "嵌顿疝合并肠梗阻存在病情进展风险，不宜仅观察。",
+                "需要尽快外科评估，避免延误处理。",
+            ],
+            "final_answer": "考虑嵌顿性腹股沟疝合并肠梗阻，建议尽快外科评估。",
+        }, ensure_ascii=False)
+
+        self.assertIsNone(synth._try_parse_and_validate("CoT", raw, source))
+
+    def test_groin_cot_rejects_ruling_out_bowel_obstruction_when_xray_supports_it(self):
+        synth = MedicalDataSynthesizer(model_path=None, llm_instance=FakeLLM())
+        source = "患者，男，49岁。右侧腹股沟区可扪及4cm包块，腹部X线可见阶梯状液气平。"
+        raw = json.dumps({
+            "question": "患者最可能的诊断是什么？",
+            "rationale": [
+                "患者为49岁男性，右下腹痛并有右侧腹股沟区4cm包块。",
+                "腹股沟区包块支持腹股沟疝相关病变。",
+                "腹部X线片显示阶梯状液气平，提示肠梗阻。",
+                "综合腹股沟包块和肠梗阻影像，考虑嵌顿性腹股沟疝合并肠梗阻。",
+                "嵌顿疝合并肠梗阻存在病情进展风险，不宜仅观察。",
+                "需要尽快外科评估，以排除肠梗阻并处理疝。",
+            ],
+            "final_answer": "考虑嵌顿性腹股沟疝合并肠梗阻，建议尽快外科评估。",
+        }, ensure_ascii=False)
+
+        self.assertIsNone(synth._try_parse_and_validate("CoT", raw, source))
+
+    def test_groin_cot_removes_final_answer_artifact_inside_rationale(self):
+        synth = MedicalDataSynthesizer(model_path=None, llm_instance=FakeLLM())
+        source = "患者，男，49岁。右侧腹股沟区可扪及4cm包块，腹部X线可见阶梯状液气平。"
+        raw = json.dumps({
+            "question": "患者最可能的诊断是什么？",
+            "rationale": [
+                "患者为49岁男性，右下腹痛并有右侧腹股沟区4cm包块。",
+                "腹股沟区包块支持腹股沟疝相关病变。",
+                "腹部X线片显示阶梯状液气平，提示肠梗阻。",
+                "综合腹股沟包块和肠梗阻影像，考虑嵌顿性腹股沟疝合并肠梗阻。",
+                "嵌顿疝合并肠梗阻存在病情进展风险，不宜仅观察。",
+                "需要尽快外科评估，避免延误处理。最终答案：考虑嵌顿性腹股沟疝合并肠梗阻。",
+            ],
+            "final_answer": "考虑嵌顿性腹股沟疝合并肠梗阻，建议尽快外科评估。",
+        }, ensure_ascii=False)
+
+        parsed = synth._try_parse_and_validate("CoT", raw, source)
+
+        self.assertIsNotNone(parsed)
+        self.assertNotIn("最终答案", parsed["rationale"])
+
+    def test_groin_cot_normalizes_pelvic_location_or_generic_complication_exclusion(self):
+        synth = MedicalDataSynthesizer(model_path=None, llm_instance=FakeLLM())
+        source = "患者，男，49岁。右侧腹股沟区可扪及4cm包块，腹部X线可见阶梯状液气平。"
+        raw = json.dumps({
+            "question": "患者最可能的诊断是什么？",
+            "rationale": [
+                "患者为49岁男性，右下腹痛并有右侧腹股沟区4cm包块。",
+                "腹部X线显示右侧盆腔内有阶梯状液气平，提示肠梗阻。",
+                "腹股沟区包块支持腹股沟疝相关病变。",
+                "综合腹股沟包块和肠梗阻影像，考虑嵌顿性腹股沟疝合并肠梗阻。",
+                "嵌顿疝合并肠梗阻存在病情进展风险，不宜仅观察。",
+                "需要尽快外科评估，以排除其他并发症。",
+            ],
+            "final_answer": "考虑嵌顿性腹股沟疝合并肠梗阻，建议尽快外科评估。",
+        }, ensure_ascii=False)
+
+        parsed = synth._try_parse_and_validate("CoT", raw, source)
+
+        self.assertIsNotNone(parsed)
+        self.assertNotIn("盆腔", parsed["rationale"])
+        self.assertNotIn("其他并发症", parsed["rationale"])
+
+    def test_groin_cot_normalizes_minor_model_phrasing_before_validation(self):
+        synth = MedicalDataSynthesizer(model_path=None, llm_instance=FakeLLM())
+        source = "患者，男，49岁。右侧腹股沟区可扪及4cm包块，腹部X线可见阶梯状液气平。"
+        raw = json.dumps({
+            "question": "患者最可能的诊断和处置建议是什么？",
+            "rationale": (
+                "1. 起病经过：患者为49岁男性，解大便后突发右下腹疼痛。"
+                "2. 腹股沟包块：右侧腹股沟区可触及4cm包块。"
+                "3. 体征定位：包块位于右侧腹股沟区。"
+                "4. X线阶梯状液气平：腹部X线显示右侧盆腔内有阶梯状液气平，提示肠梗阻。"
+                "5. 诊断推断：考虑嵌顿性腹股沟疝合并肠梗阻。"
+                "6. 风险判断：肠梗阻和嵌顿风险较高。"
+                "7. 不宜观察：不宜继续观察。"
+                "8. 处置建议：建议尽快外科评估，以排除肠梗阻并处理腹股沟疝。最终答案：考虑嵌顿性腹股沟疝合并肠梗阻。"
+            ),
+            "final_answer": "考虑嵌顿性腹股沟疝合并肠梗阻，建议尽快外科评估。",
+        }, ensure_ascii=False)
+
+        parsed = synth._try_parse_and_validate("CoT", raw, source)
+
+        self.assertIsNotNone(parsed)
+        self.assertNotIn("盆腔", parsed["rationale"])
+        self.assertNotIn("排除肠梗阻", parsed["rationale"])
+        self.assertNotIn("最终答案", parsed["rationale"])
+
+    def test_groin_cot_normalizes_unprovided_swelling_and_surgery_possibility(self):
+        synth = MedicalDataSynthesizer(model_path=None, llm_instance=FakeLLM())
+        source = "患者，男，49岁。右侧腹股沟区可扪及4cm包块，腹部X线可见阶梯状液气平。"
+        raw = json.dumps({
+            "question": "患者最可能的诊断和处置建议是什么？",
+            "rationale": (
+                "1. 起病经过：患者为49岁男性，解大便后突发右下腹疼痛。"
+                "2. 腹股沟包块：右侧腹股沟区可触及4cm包块。"
+                "3. 体征定位：右侧腹股沟区触诊包块，可能伴有腹股沟区域的肿胀。"
+                "4. X线阶梯状液气平：腹部X线可见阶梯状液气平，提示肠梗阻。"
+                "5. 诊断推断：考虑嵌顿性腹股沟疝合并肠梗阻。"
+                "6. 风险判断：由于存在肠梗阻和嵌顿风险，需立即评估手术可能性。"
+                "7. 不宜观察：患者情况紧急，不宜继续观察。"
+                "8. 处置建议：建议尽快外科评估。"
+            ),
+            "final_answer": "考虑嵌顿性腹股沟疝合并肠梗阻，建议尽快外科评估。",
+        }, ensure_ascii=False)
+
+        parsed = synth._try_parse_and_validate("CoT", raw, source)
+
+        self.assertIsNotNone(parsed)
+        self.assertNotIn("可能伴有腹股沟区域的肿胀", parsed["rationale"])
+        self.assertNotIn("手术可能性", parsed["rationale"])
+
     def test_groin_preference_rejects_off_case_chosen_even_if_rejected_is_same_case(self):
         synth = MedicalDataSynthesizer(model_path=None, llm_instance=FakeLLM())
         source = "患者，男，49岁。右侧腹股沟区可扪及包块，腹部X线可见阶梯状液气平，超声提示腹股沟区混合回声区。"
@@ -685,17 +1001,21 @@ class ProjectRequirementTests(unittest.TestCase):
             ["患者，女，52岁。主诉：多饮、多尿1个月，加重伴恶心呕吐1天。随机血糖28.6mmol/L，尿酮体+++，血气pH 7.21，HCO3- 12mmol/L。"],
         )[0]
 
-        self.assertGreaterEqual(llm.calls, 2)
+        self.assertGreaterEqual(llm.calls, 1)
         self.assertEqual(result["status"], "success")
-        self.assertTrue(result["repaired"])
         self.assertIn("糖尿病酮症酸中毒", result["data"]["answer"])
+        if llm.calls >= 2:
+            self.assertTrue(result["repaired"])
+        else:
+            self.assertFalse(result.get("repaired", False))
 
     def test_qa_sampling_budget_allows_complete_chinese_json(self):
         synth = MedicalDataSynthesizer(model_path=None, llm_instance=FakeLLM())
 
         params = synth._build_sampling_params("QA")
 
-        self.assertGreaterEqual(params.max_tokens, 180)
+        self.assertGreaterEqual(params.max_tokens, 140)
+        self.assertLessEqual(params.max_tokens, 180)
 
     def test_dka_cot_and_preference_reject_unsafe_medical_direction(self):
         synth = MedicalDataSynthesizer(model_path=None, llm_instance=FakeLLM())
@@ -946,6 +1266,51 @@ class ProjectRequirementTests(unittest.TestCase):
             self.assertNotIn("chosen", prompt)
             self.assertNotIn("rejected", prompt)
 
+    def test_cot_prompts_do_not_leak_preference_guardrails_for_groin_case(self):
+        synth = NativeTemplateSynthesizer(model_path=None, llm_instance=FakeLLM())
+        source = "病例摘要：49岁男性，解大便后突发右下腹疼痛3小时，右侧腹股沟区可触及4cm包块，腹部X线见阶梯状液气平。"
+
+        first_prompt = synth._render_prompt("CoT", source)
+        repair_prompt = synth._render_repair_prompt("CoT", source, '{"Preference":[{"chosen":"bad"}]}')
+        second_repair_prompt = synth._render_second_repair_prompt("CoT", source, '{"Preference":[{"rejected":"bad"}]}')
+
+        for prompt in [first_prompt, repair_prompt, second_repair_prompt]:
+            self.assertIn("嵌顿性腹股沟疝合并肠梗阻", prompt)
+            self.assertIn("rationale", prompt)
+            self.assertNotIn("Preference", prompt)
+            self.assertNotIn("chosen", prompt)
+            self.assertNotIn("rejected", prompt)
+            self.assertNotIn("穿孔", prompt)
+            self.assertNotIn("引流", prompt)
+            self.assertNotIn("推挤", prompt)
+            self.assertNotIn("减压", prompt)
+
+    def test_groin_cot_prompt_uses_strict_native_template_with_complete_final_answer(self):
+        synth = NativeTemplateSynthesizer(model_path=None, llm_instance=FakeLLM())
+        source = "病例摘要：49岁男性，解大便后突发右下腹疼痛3小时，右侧腹股沟区可触及4cm包块，腹部X线见阶梯状液气平。"
+
+        first_prompt = synth._render_prompt("CoT", source)
+        repair_prompt = synth._render_repair_prompt("CoT", source, "bad")
+        second_repair_prompt = synth._render_second_repair_prompt("CoT", source, "bad")
+
+        for prompt in [first_prompt, repair_prompt, second_repair_prompt]:
+            self.assertIn("患者最可能的诊断和处置建议是什么", prompt)
+            self.assertIn("final_answer 必须完整写：考虑嵌顿性腹股沟疝合并肠梗阻，建议尽快外科评估。", prompt)
+            self.assertIn("处置建议只写尽快外科评估或急诊外科评估", prompt)
+            self.assertNotIn("复位", prompt)
+            self.assertNotIn("探查", prompt)
+
+    def test_cot_rejects_empty_numbered_steps_for_groin_case(self):
+        synth = MedicalDataSynthesizer(model_path=None, llm_instance=FakeLLM())
+        source = "病例摘要：49岁男性，解大便后突发右下腹疼痛3小时，右侧腹股沟区可触及4cm包块，腹部X线见阶梯状液气平。"
+        raw = json.dumps({
+            "question": "腹股沟包块合并阶梯状液气平时，诊断和处置是什么？",
+            "rationale": "1. 2. 3. 4. 5. 6.",
+            "final_answer": "嵌顿性腹股沟疝合并肠梗阻，建议尽快外科评估。",
+        }, ensure_ascii=False)
+
+        self.assertIsNone(synth._try_parse_and_validate("CoT", raw, source))
+
     def test_pneumonia_preference_rejects_false_no_bacterial_evidence_reason(self):
         synth = MedicalDataSynthesizer(model_path=None, llm_instance=FakeLLM())
         source = "患儿，男，6岁。发热、咳嗽4天，气促1天，右下肺湿啰音，白细胞12.8×10^9/L，中性粒细胞82%，CRP升高，胸片提示右下肺片状浸润影。"
@@ -1136,6 +1501,36 @@ class ProjectRequirementTests(unittest.TestCase):
         self.assertLessEqual(len(parsed["answer"]), synth.length_limits["QA"]["answer"])
         self.assertTrue(parsed["answer"].endswith("。"))
         self.assertNotIn("若条件允许", parsed["answer"])
+
+    def test_cot_final_answer_truncates_at_sentence_boundary(self):
+        synth = MedicalDataSynthesizer(model_path=None, llm_instance=FakeLLM())
+        raw = json.dumps({
+            "question": "患者突发胸痛伴ST段抬高应如何判断和处理？",
+            "rationale": (
+                "1. 患者突发胸痛伴大汗恶心。2. 心电图II、III、aVF导联ST段抬高。"
+                "3. 肌钙蛋白升高支持心肌损伤。4. 既往高血压增加心血管风险。"
+                "5. 应优先考虑急性下壁ST段抬高型心肌梗死。6. 需要尽快启动再灌注评估。"
+            ),
+            "final_answer": (
+                "考虑急性下壁ST段抬高型心肌梗死，应立即启动胸痛中心流程，给予心电监护并请心内科急诊评估。"
+                "根据发病时间、禁忌证和导管室条件尽快选择急诊PCI或溶栓，同时规范抗血小板、抗凝等基础治疗。"
+                "后续还需连续复查心电图、肌钙蛋白和生命体征，评估心律失常、心衰和血压控制情况。"
+                "同时应完善血压管理、危险因素控制和二级预防宣教，并根据再灌注结果安排后续住院治疗。"
+                "如果出现低血压、休克、恶性心律失常或心衰表现，需要立即升级监护和抢救处理。"
+                "出院前还应评估长期用药依从性、复诊计划和生活方式干预，确保患者了解胸痛复发时的就医流程。"
+            ),
+        }, ensure_ascii=False)
+
+        parsed = synth._try_parse_and_validate(
+            "CoT",
+            raw,
+            "患者，女，62岁，突发胸痛2小时，伴大汗、恶心。心电图提示II、III、aVF导联ST段抬高，肌钙蛋白升高。既往有高血压病史。",
+        )
+
+        self.assertIsNotNone(parsed)
+        self.assertLessEqual(len(parsed["final_answer"]), synth.length_limits["CoT"]["final_answer"])
+        self.assertTrue(parsed["final_answer"].endswith("。"))
+        self.assertNotIn("出院前还应", parsed["final_answer"])
 
     def test_qa_json_with_unescaped_newline_is_recovered(self):
         synth = MedicalDataSynthesizer(model_path=None, llm_instance=FakeLLM())

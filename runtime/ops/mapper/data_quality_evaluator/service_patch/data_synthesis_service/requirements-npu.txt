@@ -1,2 +1,0 @@
-# Backward-compatible alias for the full NPU/vLLM service dependencies.
--r requirements.txt

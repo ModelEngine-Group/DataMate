@@ -2,6 +2,7 @@ import json
 import os
 import sys
 import unittest
+from subprocess import CompletedProcess
 from unittest.mock import patch
 
 
@@ -44,8 +45,15 @@ class _FakeEvaluator:
 
 
 class EvaluatorBackendServiceTests(unittest.TestCase):
+    @patch("data_synthesis_service.core.subprocess.run")
     @patch("data_synthesis_service.core.MedicalDataEvaluator")
-    def test_evaluate_file_initializes_evaluator_with_vllm_backend(self, evaluator_cls):
+    def test_evaluate_file_routes_vllm_backend_to_isolated_worker(self, evaluator_cls, run_mock):
+        run_mock.return_value = CompletedProcess(
+            args=["python"],
+            returncode=0,
+            stdout='{"status":"success","source_file":"records.json","record_count":1,"dimensions":[],"results":[],"runtime":{"evaluator_backend":"vllm","vllm_enabled":true}}',
+            stderr="",
+        )
         evaluator_cls.side_effect = lambda model_path, **kwargs: _FakeEvaluator(kwargs["backend"])
         service = SynthesisService(synthesizer=_FakeSynthesizer())
 
@@ -54,7 +62,8 @@ class EvaluatorBackendServiceTests(unittest.TestCase):
             json.dumps([{"id": 1, "type": "QA", "content": json.dumps({"question": "q", "answer": "a"})}]),
         )
 
-        self.assertEqual(evaluator_cls.call_args.kwargs["backend"], "vllm")
+        evaluator_cls.assert_not_called()
+        run_mock.assert_called_once()
         self.assertEqual(result["runtime"]["evaluator_backend"], "vllm")
         self.assertTrue(result["runtime"]["vllm_enabled"])
 

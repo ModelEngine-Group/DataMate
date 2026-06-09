@@ -24,8 +24,14 @@ settings:
     name: 'Service URL'
     description: 'HTTP endpoint of the standalone data_synthesis service.'
     type: 'input'
-    defaultVal: 'http://data-synthesis-service:18080'
+    defaultVal: 'http://data-synthesis-service:18103'
     required: true
+  serviceUrls:
+    name: 'Service URL Pool'
+    description: 'Optional comma-separated hot service pool, for example http://data-synthesis-service:18103,http://data-synthesis-service-2:18103 . When provided, requests rotate across these services.'
+    type: 'input'
+    defaultVal: ''
+    required: false
   taskTypes:
     name: 'Task Types'
     description: 'Comma-separated task types. Supported values: QA, CoT, Preference.'
@@ -34,9 +40,9 @@ settings:
     required: true
   includeMetrics:
     name: 'Include Metrics'
-    description: 'Whether to include evaluator and requirement metrics in the JSON response.'
+    description: 'Whether to include evaluator and requirement metrics in the JSON response. Keep disabled for platform batch tests to avoid serial model queue timeout.'
     type: 'switch'
-    defaultVal: 'true'
+    defaultVal: 'false'
     required: false
     checkedLabel: 'true'
     unCheckedLabel: 'false'
@@ -44,5 +50,19 @@ settings:
     name: 'Timeout'
     description: 'HTTP request timeout in seconds.'
     type: 'input'
-    defaultVal: '300'
+    defaultVal: '3600'
     required: true
+  lockWaitTimeoutSec:
+    name: 'Lock Wait Timeout'
+    description: 'Maximum seconds a Ray worker waits for the single-service call lock before failing. Keep this larger than a full platform batch queue.'
+    type: 'input'
+    defaultVal: '7200'
+    required: true
+  useServiceLock:
+    name: 'Use Service Lock'
+    description: 'Whether to enable per-service file locking in the operator. Default false so Ray workers can use multiple hot service instances in parallel.'
+    type: 'switch'
+    defaultVal: 'false'
+    required: false
+    checkedLabel: 'true'
+    unCheckedLabel: 'false'

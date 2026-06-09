@@ -14,12 +14,12 @@ opencv-python-headless==4.9.0.80
 onnxruntime==1.23.2
 einops==0.8.2
 loguru==0.7.3
-pi_heif==1.0.0
+pi-heif==1.1.1
 pikepdf==9.8.1
-pdf2image
-pypdfium2
+pdf2image==1.17.0
+pypdfium2==4.30.0
 
 # 系统依赖
 # - Ascend CANN/driver runtime
-# - poppler/pdf render dependencies required by unstructured/pdf2image
+# - poppler/pdf render dependencies required by unstructured/pdf2image==1.17.0
 # - LibreOffice/soffice for DOCX/DOC strict NPU mode

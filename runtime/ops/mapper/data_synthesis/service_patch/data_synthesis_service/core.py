@@ -2,7 +2,9 @@ import json
 import os
 import subprocess
 import sys
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from typing import Any, Dict, Iterable, List, Optional
 
@@ -13,14 +15,54 @@ DATA_SYNTHESIS_DIR = os.path.join(PROJECT_ROOT, "data_synthesis")
 if DATA_SYNTHESIS_DIR not in sys.path:
     sys.path.insert(0, DATA_SYNTHESIS_DIR)
 
-from data_evaluator import MedicalDataEvaluator
 from data_synthesizer import MedicalDataSynthesizer
-from requirement_metrics import calculate_generation_metrics, check_project_targets
 
 
 SUPPORTED_TASK_TYPES = ("QA", "CoT", "Preference")
-DEFAULT_EVALUATION_DIMENSIONS = ("准确性", "相关性", "安全性", "多样性", "完整性")
-DEFAULT_EVALUATOR_MODEL_PATH = "/model/Qwen/Qwen2.5-7B-Instruct"
+DEFAULT_SYNTHESIS_MODEL_PATH = "/model/Qwen/Qwen3-4B-Instruct-2507"
+SERVICE_REQUEST_LOCK = threading.RLock()
+WORKER_RESULT_PREFIX = "__DATA_SYNTHESIS_RESULT__"
+
+
+def _parse_worker_stdout(stdout: str) -> Dict[str, Any]:
+    output_lines = [line.strip() for line in stdout.splitlines() if line.strip()]
+    if not output_lines:
+        raise RuntimeError("subprocess returned empty output")
+
+    for line in reversed(output_lines):
+        if line.startswith(WORKER_RESULT_PREFIX):
+            return json.loads(line[len(WORKER_RESULT_PREFIX):])
+
+    for line in reversed(output_lines):
+        if line.startswith("{") or line.startswith("["):
+            return json.loads(line)
+
+    raise RuntimeError("subprocess returned no JSON result")
+
+
+def _initialize_npu_context() -> Optional[str]:
+    visible = (
+        os.environ.get("ASCEND_VISIBLE_DEVICES")
+        or os.environ.get("ASCEND_RT_VISIBLE_DEVICES")
+        or os.environ.get("NPU_VISIBLE_DEVICES")
+        or ""
+    ).strip()
+    logical_device = 0
+    if visible:
+        first = visible.split(",")[0].strip()
+        if first.isdigit() and len(visible.split(",")) > 1:
+            logical_device = 0
+
+    try:
+        import torch
+        import torch_npu  # noqa: F401
+
+        if hasattr(torch, "npu") and torch.npu.is_available():
+            torch.npu.set_device(logical_device)
+            return f"npu:{logical_device}"
+    except Exception as exc:  # pragma: no cover - depends on Ascend runtime
+        return f"npu_init_failed:{exc}"
+    return None
 
 
 @dataclass
@@ -31,6 +73,18 @@ class _GeneratedCandidate:
 @dataclass
 class _GeneratedResult:
     outputs: List[_GeneratedCandidate]
+
+
+def _sampling_param_value(sampling_params: Any, name: str, default: Any, value_type: Any) -> Any:
+    kwargs = getattr(sampling_params, "kwargs", None)
+    if isinstance(kwargs, dict) and name in kwargs:
+        value = kwargs[name]
+    else:
+        value = getattr(sampling_params, name, default)
+    try:
+        return value_type(value)
+    except (TypeError, ValueError):
+        return default
 
 
 class TransformersLLMAdapter:
@@ -48,6 +102,7 @@ class TransformersLLMAdapter:
             import torch_npu  # noqa: F401
 
             if hasattr(torch, "npu") and torch.npu.is_available():
+                _initialize_npu_context()
                 self._device = "npu:0"
                 model_dtype = torch.float16
         except Exception:
@@ -68,10 +123,10 @@ class TransformersLLMAdapter:
         self._model.eval()
 
     def generate(self, prompts: List[str], sampling_params: Any) -> List[_GeneratedResult]:
-        max_new_tokens = int(getattr(sampling_params, "kwargs", {}).get("max_tokens", 256))
-        temperature = float(getattr(sampling_params, "kwargs", {}).get("temperature", 0.1))
-        top_p = float(getattr(sampling_params, "kwargs", {}).get("top_p", 0.9))
-        repetition_penalty = float(getattr(sampling_params, "kwargs", {}).get("repetition_penalty", 1.0))
+        max_new_tokens = _sampling_param_value(sampling_params, "max_tokens", 256, int)
+        temperature = _sampling_param_value(sampling_params, "temperature", 0.1, float)
+        top_p = _sampling_param_value(sampling_params, "top_p", 0.9, float)
+        repetition_penalty = _sampling_param_value(sampling_params, "repetition_penalty", 1.0, float)
 
         outputs: List[_GeneratedResult] = []
         for prompt in prompts:
@@ -109,134 +164,38 @@ def _normalize_task_types(task_types: Optional[Iterable[str]]) -> List[str]:
     return normalized
 
 
-def _normalize_dimensions(target_dimensions: Optional[Iterable[str]]) -> List[str]:
-    if target_dimensions is None:
-        return list(DEFAULT_EVALUATION_DIMENSIONS)
-    normalized = [str(dim).strip() for dim in target_dimensions if str(dim).strip()]
-    invalid = [dim for dim in normalized if dim not in DEFAULT_EVALUATION_DIMENSIONS]
-    if invalid:
-        raise ValueError(f"Unsupported target_dimensions: {invalid}")
-    if not normalized:
-        raise ValueError("target_dimensions must not be empty")
-    return normalized
-
-
-def _make_record(record_id: int, task_type: str, payload: Dict[str, Any]) -> Dict[str, Any]:
-    return {
-        "id": record_id,
-        "type": task_type,
-        "content": json.dumps(payload, ensure_ascii=False),
-    }
-
-
-def _records_from_synthesis_payload(payload: Dict[str, Any]) -> List[Dict[str, Any]]:
-    records: List[Dict[str, Any]] = []
-    next_id = 1
-    results = payload.get("results", {})
-    if not isinstance(results, dict):
-        return records
-
-    for task_type in SUPPORTED_TASK_TYPES:
-        items = results.get(task_type, [])
-        if not isinstance(items, list):
-            continue
-        for item in items:
-            data = item
-            if isinstance(item, dict) and "data" in item:
-                if item.get("status") != "success":
-                    continue
-                data = item.get("data", {})
-            if not isinstance(data, dict):
-                continue
-            records.append(_make_record(next_id, task_type, data))
-            next_id += 1
-    return records
-
-
-def _parse_evaluation_input(text: str) -> List[Dict[str, Any]]:
-    raw = (text or "").strip()
-    if not raw:
-        raise ValueError("text must not be empty")
-
-    try:
-        parsed = json.loads(raw)
-    except json.JSONDecodeError as exc:
-        raise ValueError("evaluation input must be JSON text") from exc
-
-    if isinstance(parsed, dict) and "results" in parsed:
-        records = _records_from_synthesis_payload(parsed)
-        if records:
-            return records
-        raise ValueError("No successful generated records found in synthesis results")
-
-    if isinstance(parsed, dict) and isinstance(parsed.get("records"), list):
-        parsed = parsed["records"]
-
-    if isinstance(parsed, dict) and "content" in parsed:
-        parsed = [parsed]
-
-    if not isinstance(parsed, list):
-        raise ValueError("evaluation input must be a JSON array, a record object, or synthesis results JSON")
-
-    records: List[Dict[str, Any]] = []
-    for idx, item in enumerate(parsed, start=1):
-        if not isinstance(item, dict):
-            raise ValueError("Each evaluation record must be a JSON object")
-        content = item.get("content")
-        if isinstance(content, dict):
-            task_type = str(item.get("type") or "QA")
-            records.append(_make_record(int(item.get("id") or idx), task_type, content))
-            continue
-        if not isinstance(content, str) or not content.strip():
-            raise ValueError("Each evaluation record must contain non-empty content")
-        records.append(
-            {
-                "id": int(item.get("id") or idx),
-                "type": str(item.get("type") or "QA"),
-                "content": content,
-            }
-        )
-
-    if not records:
-        raise ValueError("No evaluation records found")
-    return records
-
-
 class SynthesisService:
     def __init__(
         self,
         model_path: Optional[str] = None,
-        evaluator_model_path: Optional[str] = None,
         synthesizer: Any = None,
-        evaluator: Any = None,
     ) -> None:
-        self.model_path = model_path or os.environ.get("DATA_SYNTHESIS_MODEL_PATH") or os.environ.get("MODEL_PATH")
-        self.evaluator_model_path = (
-            evaluator_model_path
-            or os.environ.get("DATA_EVALUATOR_MODEL_PATH")
-            or DEFAULT_EVALUATOR_MODEL_PATH
+        env_synthesis_model_path = (os.environ.get("DATA_SYNTHESIS_MODEL_PATH") or "").strip()
+        env_model_path = (os.environ.get("MODEL_PATH") or "").strip()
+        self.model_path = (
+            (model_path or "").strip()
+            or env_synthesis_model_path
+            or env_model_path
+            or DEFAULT_SYNTHESIS_MODEL_PATH
         )
         self.backend = os.environ.get("DATA_SYNTHESIS_BACKEND", "auto").lower()
-        self.run_mode = os.environ.get("DATA_SYNTHESIS_RUN_MODE", "inprocess").lower()
+        requested_run_mode = os.environ.get("DATA_SYNTHESIS_RUN_MODE", "inprocess").lower()
+        force_subprocess = os.environ.get("DATA_SYNTHESIS_FORCE_SUBPROCESS", "").lower() == "true"
+        self.run_mode = "subprocess" if requested_run_mode == "subprocess" and force_subprocess else "inprocess"
         self._ready = False
-        self._init_error: Optional[str] = "Service not initialized"
+        self._init_error: Optional[str] = None
         self._synthesizer_error: Optional[str] = None
-        self._evaluator_error: Optional[str] = None
         self.synthesizer = synthesizer
-        self.evaluator = evaluator
-        self.evaluator_backend = (
-            os.environ.get("DATA_EVALUATOR_BACKEND")
-            or "vllm"
-        ).strip().lower()
+        self._model_lock = threading.RLock()
+        self._model_executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="data-synthesis-model")
+        self._npu_context: Optional[str] = None
 
-    def _initialize_components(self) -> None:
-        try:
-            self.synthesizer = self.synthesizer or self._build_synthesizer()
-            self._ready = True
-            self._init_error = None
-        except Exception as exc:
-            self._ready = False
-            self._init_error = str(exc)
+    def _run_on_model_thread(self, func: Any, *args: Any, **kwargs: Any) -> Any:
+        return self._model_executor.submit(func, *args, **kwargs).result()
+
+    def _run_exclusive_request(self, func: Any, *args: Any, **kwargs: Any) -> Any:
+        with SERVICE_REQUEST_LOCK:
+            return func(*args, **kwargs)
 
     def _ensure_synthesizer_initialized(self) -> None:
         if self.synthesizer is not None:
@@ -244,7 +203,7 @@ class SynthesisService:
             self._init_error = None
             return
         try:
-            self.synthesizer = self._build_synthesizer()
+            self.synthesizer = self._run_on_model_thread(self._build_synthesizer)
             self._ready = True
             self._init_error = None
             self._synthesizer_error = None
@@ -253,39 +212,34 @@ class SynthesisService:
             self._init_error = str(exc)
             self._synthesizer_error = str(exc)
 
-    def _ensure_evaluator_initialized(self, backend: Optional[str] = None) -> None:
-        requested_backend = (backend or self.evaluator_backend or "vllm").strip().lower()
-        current_backend = getattr(self.evaluator, "backend", None)
-        if self.evaluator is not None and current_backend in (None, requested_backend):
-            self._evaluator_error = None
-            return
-        try:
-            self.evaluator = MedicalDataEvaluator(
-                self.evaluator_model_path,
-                backend=requested_backend,
-            )
-            self._evaluator_error = None
-        except Exception as exc:
-            self._evaluator_error = str(exc)
-            raise
-
     def _ensure_initialized(self) -> None:
-        if self._ready and self.synthesizer is not None:
-            return
-        self._ensure_synthesizer_initialized()
-        if not self._ready:
+        with self._model_lock:
+            if self._ready and self.synthesizer is not None:
+                return
             self._ensure_synthesizer_initialized()
+            if not self._ready:
+                self._ensure_synthesizer_initialized()
+
+    def warmup(self) -> Dict[str, Any]:
+        if self.run_mode == "subprocess":
+            return self.health()
+        self._ensure_initialized()
+        if not self._ready or self.synthesizer is None:
+            return self.health()
+        with self._model_lock:
+            self._run_on_model_thread(
+                self.synthesizer.generate_data_batch,
+                "QA",
+                ["warmup probe"],
+            )
+        return self.health()
 
     def health(self) -> Dict[str, Any]:
-        if self.run_mode != "subprocess":
-            self._ensure_initialized()
         return {
             "service": "data_synthesis",
             "ready": True if self.run_mode == "subprocess" else self._ready,
             "model_path": self.model_path,
-            "evaluator_model_path": self.evaluator_model_path,
             "backend": self.backend,
-            "evaluator_backend": self.evaluator_backend,
             "error": None if self.run_mode == "subprocess" else self._init_error,
         }
 
@@ -318,7 +272,8 @@ class SynthesisService:
         include_metrics: bool = True,
     ) -> Dict[str, Any]:
         if self.run_mode == "subprocess":
-            return self._synthesize_via_subprocess(
+            return self._run_exclusive_request(
+                self._synthesize_via_subprocess,
                 file_name=file_name,
                 text=text,
                 task_types=task_types,
@@ -336,34 +291,32 @@ class SynthesisService:
         normalized_task_types = _normalize_task_types(task_types)
         results: Dict[str, List[Dict[str, Any]]] = {task_type: [] for task_type in SUPPORTED_TASK_TYPES}
         records: List[Dict[str, Any]] = []
-        evaluation_inputs: List[Dict[str, Any]] = []
 
         for task_type in normalized_task_types:
             started_at = time.time()
-            batch_results = self.synthesizer.generate_data_batch(task_type, [normalized_text])
+            with self._model_lock:
+                batch_results = self._run_on_model_thread(
+                    self.synthesizer.generate_data_batch,
+                    task_type,
+                    [normalized_text],
+                )
             elapsed = time.time() - started_at
             per_item_latency = elapsed / max(len(batch_results), 1)
             results[task_type] = batch_results
 
             for item in batch_results:
-                record = {
-                    "task_type": task_type,
-                    "status": item.get("status", "failed"),
-                    "latency": per_item_latency,
-                    "data": item.get("data", {}),
-                }
-                records.append(record)
-                if item.get("status") == "success":
-                    evaluation_inputs.append(
-                        {
-                            "type": task_type,
-                            "content": json.dumps(item.get("data", {}), ensure_ascii=False),
-                        }
-                    )
+                records.append(
+                    {
+                        "task_type": task_type,
+                        "status": item.get("status", "failed"),
+                        "latency": per_item_latency,
+                        "data": item.get("data", {}),
+                    }
+                )
 
         metrics: Dict[str, Any] = {}
         if include_metrics:
-            metrics = self._build_metrics(records, evaluation_inputs)
+            metrics = self._build_metrics(records)
 
         return {
             "source_file": file_name,
@@ -372,59 +325,6 @@ class SynthesisService:
             "metrics": metrics,
             "status": "success",
         }
-
-    def evaluate_text(
-        self,
-        file_name: str,
-        text: str,
-        target_dimensions: Optional[Iterable[str]] = None,
-        include_summary: bool = True,
-        model_path: Optional[str] = None,
-        backend: Optional[str] = None,
-    ) -> Dict[str, Any]:
-        if self.run_mode == "subprocess":
-            return self._evaluate_via_subprocess(
-                file_name=file_name,
-                text=text,
-                target_dimensions=target_dimensions,
-                include_summary=include_summary,
-                model_path=model_path,
-                backend=backend,
-            )
-
-        if model_path and model_path != self.evaluator_model_path:
-            self.evaluator_model_path = model_path
-            self.evaluator = None
-        try:
-            self._ensure_evaluator_initialized(backend or self.evaluator_backend or "vllm")
-        except Exception as exc:
-            raise RuntimeError(str(exc)) from exc
-        if self.evaluator is None:
-            raise RuntimeError(self._init_error or "Evaluator is not ready")
-
-        records = _parse_evaluation_input(text)
-        dimensions = _normalize_dimensions(target_dimensions)
-        evaluation_results = self.evaluator.evaluate(records, target_dimensions=dimensions)
-
-        response: Dict[str, Any] = {
-            "source_file": file_name,
-            "record_count": len(records),
-            "dimensions": dimensions,
-            "results": evaluation_results,
-            "runtime": (
-                self.evaluator.runtime_metadata()
-                if hasattr(self.evaluator, "runtime_metadata")
-                else {
-                    "evaluator_backend": getattr(self.evaluator, "backend", "unknown"),
-                    "evaluator_model_path": self.evaluator_model_path,
-                    "vllm_enabled": getattr(self.evaluator, "backend", None) == "vllm",
-                }
-            ),
-            "status": "success",
-        }
-        if include_summary:
-            response["summary"] = self._build_evaluation_summary(records, evaluation_results, dimensions)
-        return response
 
     def _synthesize_via_subprocess(
         self,
@@ -457,7 +357,7 @@ result = service.synthesize_text(
     task_types=payload["task_types"],
     include_metrics=payload["include_metrics"],
 )
-print(json.dumps(result, ensure_ascii=False))
+print("__DATA_SYNTHESIS_RESULT__" + json.dumps(result, ensure_ascii=False))
 """
         env = os.environ.copy()
         env["DATA_SYNTHESIS_RUN_MODE"] = "inprocess"
@@ -473,135 +373,23 @@ print(json.dumps(result, ensure_ascii=False))
         if completed.returncode != 0:
             error_text = (completed.stderr or completed.stdout or "subprocess failed").strip()
             raise RuntimeError(error_text)
-        output_lines = [line.strip() for line in completed.stdout.splitlines() if line.strip()]
-        if not output_lines:
-            raise RuntimeError("subprocess returned empty output")
-        return json.loads(output_lines[-1])
+        return _parse_worker_stdout(completed.stdout)
 
-    def _evaluate_via_subprocess(
-        self,
-        file_name: str,
-        text: str,
-        target_dimensions: Optional[Iterable[str]],
-        include_summary: bool,
-        model_path: Optional[str],
-        backend: Optional[str] = None,
-    ) -> Dict[str, Any]:
-        normalized_dimensions = _normalize_dimensions(target_dimensions)
-        worker_payload = {
-            "action": "evaluate",
-            "file_name": file_name,
-            "text": text,
-            "target_dimensions": normalized_dimensions,
-            "include_summary": include_summary,
-            "model_path": model_path or self.evaluator_model_path,
-            "synthesis_model_path": self.model_path,
-            "backend": self.backend,
-            "evaluator_backend": backend or self.evaluator_backend or "vllm",
-        }
-        return self._run_subprocess_worker(worker_payload)
-
-    def _run_subprocess_worker(self, worker_payload: Dict[str, Any]) -> Dict[str, Any]:
-        worker_code = """
-import json
-import os
-import sys
-payload = json.loads(sys.stdin.read())
-os.environ["DATA_SYNTHESIS_MODEL_PATH"] = payload.get("synthesis_model_path") or payload.get("model_path") or ""
-os.environ["DATA_EVALUATOR_MODEL_PATH"] = payload.get("model_path") or ""
-os.environ["DATA_SYNTHESIS_BACKEND"] = payload.get("backend") or "auto"
-os.environ["DATA_EVALUATOR_BACKEND"] = payload.get("evaluator_backend") or "vllm"
-from data_synthesis_service.core import SynthesisService
-service = SynthesisService(
-    model_path=payload.get("synthesis_model_path"),
-    evaluator_model_path=payload.get("model_path"),
-)
-action = payload.get("action")
-if action == "synthesize":
-    result = service.synthesize_text(
-        file_name=payload["file_name"],
-        text=payload["text"],
-        task_types=payload["task_types"],
-        include_metrics=payload["include_metrics"],
-    )
-elif action == "evaluate":
-    result = service.evaluate_text(
-        file_name=payload["file_name"],
-        text=payload["text"],
-        target_dimensions=payload["target_dimensions"],
-        include_summary=payload["include_summary"],
-        model_path=payload.get("model_path"),
-        backend=payload.get("evaluator_backend"),
-    )
-else:
-    raise RuntimeError(f"Unsupported action: {action}")
-print(json.dumps(result, ensure_ascii=False))
-"""
-        env = os.environ.copy()
-        env["DATA_SYNTHESIS_RUN_MODE"] = "inprocess"
-        completed = subprocess.run(
-            [sys.executable, "-c", worker_code],
-            input=json.dumps(worker_payload, ensure_ascii=False),
-            text=True,
-            capture_output=True,
-            env=env,
-            cwd=PROJECT_ROOT,
-            check=False,
+    def _build_metrics(self, records: List[Dict[str, Any]]) -> Dict[str, Any]:
+        success_count = sum(1 for record in records if record.get("status") == "success")
+        total = len(records)
+        avg_latency = (
+            sum(float(record.get("latency", 0.0)) for record in records) / total
+            if total
+            else 0.0
         )
-        if completed.returncode != 0:
-            error_text = (completed.stderr or completed.stdout or "subprocess failed").strip()
-            raise RuntimeError(error_text)
-        output_lines = [line.strip() for line in completed.stdout.splitlines() if line.strip()]
-        if not output_lines:
-            raise RuntimeError("subprocess returned empty output")
-        return json.loads(output_lines[-1])
-
-    def _build_metrics(
-        self,
-        records: List[Dict[str, Any]],
-        evaluation_inputs: List[Dict[str, Any]],
-    ) -> Dict[str, Any]:
-        try:
-            self._ensure_evaluator_initialized("rule")
-            evaluator_scores = self.evaluator.evaluate(evaluation_inputs) if evaluation_inputs else []
-            summary = calculate_generation_metrics(records, evaluator_scores)
-            return {
-                "ready": True,
-                "summary": summary,
-                "targets": check_project_targets(summary),
-            }
-        except Exception as exc:
-            return {"ready": False, "error": str(exc)}
-
-    def _build_evaluation_summary(
-        self,
-        records: List[Dict[str, Any]],
-        evaluation_results: List[Dict[str, Any]],
-        dimensions: List[str],
-    ) -> Dict[str, Any]:
-        per_dimension: Dict[str, Dict[str, Any]] = {}
-        for dim in dimensions:
-            scores = []
-            for item in evaluation_results:
-                score = item.get("scores", {}).get(dim, {}).get("score", -1)
-                if isinstance(score, int) and score >= 0:
-                    scores.append(score)
-            pass_count = sum(1 for score in scores if score == 1)
-            total = len(scores)
-            pass_rate = (pass_count / total * 100.0) if total else 0.0
-            per_dimension[dim] = {
-                "pass_count": pass_count,
-                "total": total,
-                "pass_rate_pct": pass_rate,
-            }
-
-        task_type_counts: Dict[str, int] = {}
-        for record in records:
-            task_type = str(record.get("type") or "QA")
-            task_type_counts[task_type] = task_type_counts.get(task_type, 0) + 1
-
         return {
-            "record_count": len(records),
-            "task_type_counts": task_type_counts,
-            "dimensions": per_dimension,
+            "ready": True,
+            "summary": {
+                "record_count": total,
+                "success_count": success_count,
+                "success_rate_pct": (success_count / total * 100.0) if total else 0.0,
+                "avg_latency_sec": avg_latency,
+            },
+            "note": "Model-based quality evaluation is provided by data_quality_evaluator_service.",
         }

@@ -1,41 +1,23 @@
 # data_synthesis 测试用例
 
-本目录提供公开数据集来源说明和轻量可运行样例，用于验收平台复测数据合成算子。
+本目录提供 30 个中文测试用例，用于在 DataMate 平台验证数据合成算子。测试输入均为中文医疗问答、中文病例摘要或中文健康咨询风格文本。
 
-## 公开数据集来源
+## 公开数据来源参考
 
-- `cMedQA2`
-  中文医学问答数据集，适合验证中文医学 QA、CoT 和 Preference 数据生成。
-  <https://github.com/zhangsheng93/cMedQA2>
-  <https://huggingface.co/datasets/fzkuji/cMedQA2>
-- `PubMedQA`
-  生物医学问答数据集，适合验证专业医学英文文本生成。
-  <https://github.com/pubmedqa/pubmedqa>
-  <https://huggingface.co/datasets/qiaojin/PubMedQA>
-  <https://arxiv.org/abs/1909.06146>
+- cMedQA2：https://github.com/zhangsheng93/cMedQA2
+- medical-o1-reasoning-SFT：https://huggingface.co/datasets/FreedomIntelligence/medical-o1-reasoning-SFT
 
-## 本目录样例
+上述链接用于说明测试样例的数据风格来源；本目录中的输入文件已整理为可直接上传平台的小型中文样例。
 
-- `example_input/cmedqa2_style_case_cn.txt`
-  基于 `cMedQA2` 场景整理的中文医学问答输入。
-- `example_input/pubmedqa_style_case_en.txt`
-  基于 `PubMedQA` 场景整理的英文医学问答输入。
-- `cases.json`
-  记录测试样例来源、推荐任务类型和验收检查点。
+## 测试方法
 
-## 平台测试步骤
+1. 在 DataMate 平台上传并启用 data_synthesis 算子。
+2. 只上传 `example_input` 目录下的 `.txt` 输入文件，不要上传 `cases.json`、`README.md` 或整个 `test_cases` 外层目录。
+3. 参数 `taskTypes` 填写 `QA,CoT,Preference`。
+4. 运行完成后下载结果 JSON。
+5. 对照 `cases.json` 中的 `checks` 检查 QA、CoT、Preference 三类结果是否存在、是否为中文、是否没有乱码。
 
-1. 部署 `data_synthesis` 独立服务，确认 DataMate 运行环境能访问服务地址。
-2. 在 DataMate 算子市场上传 `../data_synthesis.zip`。
-3. 创建任务并上传 `example_input/` 下任一文本文件。
-4. 算子参数设置 `taskTypes=QA,CoT,Preference`。
-5. 运行任务并下载输出 JSON。
+## 目录说明
 
-## 检查项
-
-- 输出 JSON 包含 `source_file`、`task_types`、`results`、`status`。
-- `results.QA`、`results.CoT`、`results.Preference` 均非空。
-- `QA` 至少包含 `question`、`answer`。
-- `CoT` 至少包含 `question`、`rationale`、`final_answer`。
-- `Preference` 至少包含 `question`、`chosen`、`rejected`、`preference_reason`。
-- 失败样本应标记为 `failed`，不应伪装成成功结果。
+- `cases.json`：30 个中文测试 case 的清单和验收检查点。
+- `example_input/*.txt`：30 个可直接上传 DataMate 的中文输入文件。

@@ -15,21 +15,32 @@ except Exception:  # pragma: no cover
             self.target_type_key = kwargs.get("target_type_key", "target_type")
 
 
-DEFAULT_SERVICE_URL = "http://data-synthesis-service:18080"
+DEFAULT_SERVICE_URL = "http://data-quality-evaluator-service:18112"
 DEFAULT_EVALUATOR_MODEL_PATH = "/model/Qwen/Qwen2.5-7B-Instruct"
+DIM_ACCURACY = "\u51c6\u786e\u6027"
+DIM_RELEVANCE = "\u76f8\u5173\u6027"
+DIM_SAFETY = "\u5b89\u5168\u6027"
+DIM_DIVERSITY = "\u591a\u6837\u6027"
+DIM_COMPLETENESS = "\u5b8c\u6574\u6027"
 DIMENSION_ALIASES = {
-    "accuracy": "准确性",
-    "relevance": "相关性",
-    "safety": "安全性",
-    "diversity": "多样性",
-    "completeness": "完整性",
-    "准确性": "准确性",
-    "相关性": "相关性",
-    "安全性": "安全性",
-    "多样性": "多样性",
-    "完整性": "完整性",
+    "accuracy": DIM_ACCURACY,
+    "relevance": DIM_RELEVANCE,
+    "safety": DIM_SAFETY,
+    "diversity": DIM_DIVERSITY,
+    "completeness": DIM_COMPLETENESS,
+    DIM_ACCURACY: DIM_ACCURACY,
+    DIM_RELEVANCE: DIM_RELEVANCE,
+    DIM_SAFETY: DIM_SAFETY,
+    DIM_DIVERSITY: DIM_DIVERSITY,
+    DIM_COMPLETENESS: DIM_COMPLETENESS,
 }
-DEFAULT_DIMENSIONS = ["准确性", "相关性", "安全性", "多样性", "完整性"]
+DEFAULT_DIMENSIONS = [
+    DIM_ACCURACY,
+    DIM_RELEVANCE,
+    DIM_SAFETY,
+    DIM_DIVERSITY,
+    DIM_COMPLETENESS,
+]
 
 
 def _parse_dimensions(value: Any) -> List[str]:
@@ -40,7 +51,6 @@ def _parse_dimensions(value: Any) -> List[str]:
     else:
         items = [str(item).strip() for item in value if str(item).strip()]
 
-    # DataMate may garble non-ASCII operator params into question marks.
     if items and all(set(item) <= {"?"} for item in items):
         return list(DEFAULT_DIMENSIONS)
 

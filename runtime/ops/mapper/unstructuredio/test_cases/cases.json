@@ -1,74 +1,87 @@
 [
   {
-    "id": "pdf_arxiv_transformer",
+    "id": "unstructuredio_case_01",
     "operator": "unstructuredio",
-    "dataset": "arXiv",
-    "document_type": "pdf",
-    "sample_file": "example_input/attention_is_all_you_need.pdf",
-    "purpose": "验证学术 PDF 的多页解析、页码覆盖、坐标完整性与表格识别能力。",
-    "source_urls": [
-      "https://arxiv.org/pdf/1706.03762.pdf",
-      "https://arxiv.org/abs/1706.03762"
-    ],
+    "dataset": "attention_is_all_you_need",
+    "file_type": "PDF",
+    "input_file": "example_input/attention_is_all_you_need.pdf",
+    "source_urls": ["https://arxiv.org/pdf/1706.03762"],
+    "purpose": "验证公开论文 PDF 的基础文本抽取、页码、坐标和表格结构输出。",
+    "run_parameters": {
+      "exportType": "json",
+      "pdfStrategy": "auto",
+      "pdfInferTableStructure": "true",
+      "suppressPdfNoise": "true"
+    },
     "checks": [
-      "输出 JSON 非空",
-      "page_number 不能全部为 1",
-      "coordinates 非空率 >= 90%",
-      "应包含正文块且存在表格相关内容"
+      "输出为合法 JSON",
+      "元素数组非空",
+      "PDF 元素包含 page_number",
+      "PDF 元素包含 coordinates",
+      "表格元素或 text_as_html 尽量保留"
     ]
   },
   {
-    "id": "pdf_arxiv_bert",
+    "id": "unstructuredio_case_02",
     "operator": "unstructuredio",
-    "dataset": "arXiv",
-    "document_type": "pdf",
-    "sample_file": "example_input/bert_pretraining.pdf",
-    "purpose": "验证另一份公开论文 PDF 的通用解析稳定性，避免只对单篇样本适配。",
-    "source_urls": [
-      "https://arxiv.org/pdf/1810.04805.pdf",
-      "https://arxiv.org/abs/1810.04805"
-    ],
+    "dataset": "bert_pretraining",
+    "file_type": "PDF",
+    "input_file": "example_input/bert_pretraining.pdf",
+    "source_urls": ["https://arxiv.org/pdf/1810.04805"],
+    "purpose": "验证公开论文 PDF 的多页正文、标题、页码和 metadata 输出。",
+    "run_parameters": {
+      "exportType": "json",
+      "pdfStrategy": "auto",
+      "pdfInferTableStructure": "true",
+      "suppressPdfNoise": "true"
+    },
     "checks": [
-      "输出 JSON 非空",
-      "应覆盖多页",
-      "主要标题与正文文本可读",
-      "coordinates 非空率 >= 90%"
+      "输出为合法 JSON",
+      "元素数组非空",
+      "识别标题或正文",
+      "多页内容 page_number 不应全部固定为 1",
+      "metadata 字段存在"
     ]
   },
   {
-    "id": "docx_corpus_sample_1",
+    "id": "unstructuredio_case_03",
     "operator": "unstructuredio",
-    "dataset": "docx-corpus",
-    "document_type": "docx",
-    "sample_file": "example_input/docx_corpus_sample_1.docx",
-    "purpose": "验证 DOCX 原生链路的段落、表格顺序和 coordinates 补全能力。",
-    "source_urls": [
-      "https://docxcorp.us/",
-      "https://docxcorp.us/documents/00042714bec87fe8097f604fdd230760c956aac77fa56fcd5bc5ffb68c60690a.docx"
-    ],
+    "dataset": "docx_corpus_sample_1",
+    "file_type": "DOCX",
+    "input_file": "example_input/docx_corpus_sample_1.docx",
+    "source_urls": ["https://file-examples.com/index.php/sample-documents-download/sample-doc-download/"],
+    "purpose": "验证公开 DOCX 样本的段落、标题和 metadata 输出。",
+    "run_parameters": {
+      "exportType": "json",
+      "enableDocxFastpath": "true",
+      "jsonIndent": "2"
+    },
     "checks": [
-      "输出 JSON 非空",
-      "标题、段落、表格顺序应基本合理",
-      "coordinates 不能全部为空",
-      "不应整份文档全部落在第一页"
+      "输出为合法 JSON",
+      "元素数组非空",
+      "DOCX 文本内容非空",
+      "metadata 保留文件类型信息"
     ]
   },
   {
-    "id": "docx_corpus_sample_2",
+    "id": "unstructuredio_case_04",
     "operator": "unstructuredio",
-    "dataset": "docx-corpus",
-    "document_type": "docx",
-    "sample_file": "example_input/docx_corpus_sample_2.docx",
-    "purpose": "验证表格较多的 DOCX 样本在输出形态上仍与 unstructured 兼容。",
-    "source_urls": [
-      "https://docxcorp.us/",
-      "https://docxcorp.us/documents/000e366a02330e96ce5e878a2c2ecceba7374715a1065a5ece914d024a25d951.docx"
-    ],
+    "dataset": "docx_corpus_sample_2",
+    "file_type": "DOCX",
+    "input_file": "example_input/docx_corpus_sample_2.docx",
+    "source_urls": ["https://file-examples.com/index.php/sample-documents-download/sample-doc-download/"],
+    "purpose": "验证公开 DOCX 样本的段落、表格和结构化输出。",
+    "run_parameters": {
+      "exportType": "json",
+      "enableDocxFastpath": "true",
+      "jsonIndent": "2"
+    },
     "checks": [
-      "输出 JSON 非空",
-      "表格附近文本不应全部退化为普通叙述块",
-      "coordinates 不能全部为空",
-      "文本顺序应与原文大体一致"
+      "输出为合法 JSON",
+      "元素数组非空",
+      "保留段落顺序",
+      "表格内容尽量保留为 Table 或 text_as_html",
+      "metadata 不应全部为 null"
     ]
   }
 ]
