@@ -345,6 +345,7 @@ class AudioAnomalyFilter(Mapper):
                 sample[self.data_key] = b""
                 sample[self.filetype_key] = ""
                 sample[self.target_type_key] = ""
+                sample[self.filepath_key] = ""
                 logger.info(
                     f"fileName: {sample.get(self.filename_key)}, method: AudioAnomalyFilter "
                     f"filtered invalid audio, report={anomaly_report_file}, costs {time.time() - start:6f} s"

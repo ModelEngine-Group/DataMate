@@ -19,7 +19,7 @@ settings:
     defaultVal: 'auto'
     required: true
     options:
-      - label: '自动（找不到语言文件则中文）'
+      - label: '自动'
         value: 'auto'
       - label: '中文'
         value: 'zh'
@@ -43,22 +43,6 @@ settings:
     type: 'input'
     defaultVal: '/models/AudioOperations/asr/librispeech'
     required: false
-  batchSize:
-    name: '批大小'
-    description: '单文件转写建议保持 1。'
-    type: 'inputNumber'
-    defaultVal: 1
-    min: 1
-    max: 16
-    step: 1
-  maxConcurrentFiles:
-    name: '最大并发文件数'
-    description: '同一容器内同时运行 ASR 推理的文件数。默认 1 可避免多 worker 同时加载模型导致 OOM。'
-    type: 'inputNumber'
-    defaultVal: 1
-    min: 1
-    max: 4
-    step: 1
   maxSegmentSeconds:
     name: '最大切片秒数'
     description: 'ASR 前将长音频按该时长切片，再按顺序合并文本。'

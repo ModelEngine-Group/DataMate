@@ -22,6 +22,13 @@ from datamate.core.base_op import Mapper
 
 
 DEFAULT_ONNX_MODEL_DIR = "/models/AudioOperations/summary/summary-model"
+DEFAULT_METHOD = "bert_onnx"
+DEFAULT_MIN_SUMMARY_WORDS_EN = 8
+DEFAULT_LINE_MODE = "single"
+DEFAULT_PRESERVE_KEYS = True
+DEFAULT_PROVIDERS_PRIORITY = "CANNExecutionProvider,CPUExecutionProvider"
+DEFAULT_CPU_THREADS = 24
+DEFAULT_MAX_WINDOWS = 96
 _RE_CJK = re.compile(r"[\u4e00-\u9fff]")
 _RE_EN_WORD = re.compile(r"[A-Za-z]+(?:'[A-Za-z]+)?")
 _EN_STOP = {
@@ -381,16 +388,16 @@ def _onnx_extractive_summary(
 class AudioTextSummarize(Mapper):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.method = str(kwargs.get("method", "extractive")).strip().lower()
+        self.method = DEFAULT_METHOD
         self.max_chars_zh = int(float(kwargs.get("maxSummaryCharsZh", 40)))
         self.max_words_en = int(float(kwargs.get("maxSummaryWordsEn", 18)))
-        self.min_words_en = int(float(kwargs.get("minSummaryWordsEn", 8)))
-        self.line_mode = str(kwargs.get("lineMode", "single")).strip().lower()
-        self.preserve_keys = _as_bool(kwargs.get("preserveKeys", True))
+        self.min_words_en = DEFAULT_MIN_SUMMARY_WORDS_EN
+        self.line_mode = DEFAULT_LINE_MODE
+        self.preserve_keys = DEFAULT_PRESERVE_KEYS
         self.onnx_model_dir = str(kwargs.get("onnxModelDir", DEFAULT_ONNX_MODEL_DIR)).strip()
-        self.providers_priority = str(kwargs.get("providersPriority", "CANNExecutionProvider,CPUExecutionProvider")).strip()
-        self.cpu_threads = int(float(kwargs.get("cpuThreads", 4)))
-        self.max_windows = int(float(kwargs.get("maxWindows", 96)))
+        self.providers_priority = DEFAULT_PROVIDERS_PRIORITY
+        self.cpu_threads = DEFAULT_CPU_THREADS
+        self.max_windows = DEFAULT_MAX_WINDOWS
 
     def execute(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         start = time.time()
@@ -407,26 +414,20 @@ class AudioTextSummarize(Mapper):
         rows = _parse_keyed_lines(text, self.line_mode)
         summaries: List[Tuple[str, str, str, Dict[str, Any]]] = []
         method = self.method
-        if method not in {"extractive", "bert_onnx"}:
-            raise ValueError(f"不支持的文本概括方法: {self.method}")
 
         for key, row_text in rows:
-            if method == "bert_onnx":
-                model_dir = _resolve_onnx_model_dir(self.onnx_model_dir)
-                providers = _pick_providers(self.providers_priority)
-                summary, lang, meta = _onnx_extractive_summary(
-                    row_text,
-                    model_dir=model_dir,
-                    providers=providers,
-                    cpu_threads=self.cpu_threads,
-                    max_chars_zh=self.max_chars_zh,
-                    max_words_en=self.max_words_en,
-                    max_windows=self.max_windows,
-                )
-                meta["model_dir"] = str(model_dir)
-            else:
-                summary, lang = _extractive_summary(row_text, self.max_chars_zh, self.max_words_en, self.min_words_en)
-                meta = {"providers": ["CPUExecutionProvider"], "windows": 0}
+            model_dir = _resolve_onnx_model_dir(self.onnx_model_dir)
+            providers = _pick_providers(self.providers_priority)
+            summary, lang, meta = _onnx_extractive_summary(
+                row_text,
+                model_dir=model_dir,
+                providers=providers,
+                cpu_threads=self.cpu_threads,
+                max_chars_zh=self.max_chars_zh,
+                max_words_en=self.max_words_en,
+                max_windows=self.max_windows,
+            )
+            meta["model_dir"] = str(model_dir)
             summaries.append((key, row_text, summary, {"lang": lang, **meta}))
 
         if self.preserve_keys and any(key for key, _text, _summary, _meta in summaries):

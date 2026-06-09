@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 import csv
+import fcntl
+import hashlib
 import json
-import re
 import tempfile
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Literal, Tuple
+from typing import Any, Dict, Iterable, List, Literal, Set, Tuple
 
 import numpy as np
 try:
@@ -27,6 +28,8 @@ except ImportError:
 
 
 DEFAULT_AST_CHECKPOINT = "/models/AudioOperations/recog/audioset_10_10_0.4593.pth"
+DEFAULT_SOUND_REPORT_PATH = "/dataset/{dataset_id}/references/sound_classification.jsonl"
+SOUND_LOCK_DIR = Path("/tmp/datamate_audio_sound_classify_locks")
 
 
 def _package_root() -> Path:
@@ -42,6 +45,12 @@ def _resolve_path(value: str, fallback: Path) -> Path:
     return fallback.resolve()
 
 
+def _as_bool(v: object) -> bool:
+    if isinstance(v, bool):
+        return v
+    return str(v).strip().lower() in {"1", "true", "yes", "y", "on", "保存", "文本"}
+
+
 def _audio_ext(sample: Dict[str, Any], default_ext: str = "wav") -> str:
     ext = str(sample.get("target_type") or sample.get("fileType") or default_ext).strip().lower().lstrip(".")
     return ext or default_ext
@@ -54,19 +63,148 @@ def _sample_key(sample: Dict[str, Any], audio_path: Path, filename_key: str) -> 
     return audio_path.stem
 
 
-def _safe_marker(value: str, default: str = "unknown") -> str:
-    marker = re.sub(r"[^A-Za-z0-9._-]+", "_", str(value or default)).strip("._-")
-    return marker[:80] or default
+def _dataset_root_from_audio_path(path_value: str) -> Path:
+    if not path_value:
+        return Path()
+    p = Path(path_value).expanduser()
+    parts = p.parts
+    for idx, part in enumerate(parts):
+        if part == "dataset" and idx + 1 < len(parts):
+            return Path(*parts[: idx + 2])
+    return p.parent
 
 
-def _strip_sound_marker(stem: str) -> str:
-    return re.sub(r"__sound_[A-Za-z0-9._-]+$", "", str(stem or "sample"))
+def _expand_dataset_placeholders(path_value: str, sample: Dict[str, Any]) -> str:
+    value = str(path_value or "").strip()
+    dataset_id = str(sample.get("dataset_id") or sample.get("datasetId") or "").strip()
+    if dataset_id:
+        value = value.replace("{dataset_id}", dataset_id).replace("${dataset_id}", dataset_id)
+        value = value.replace("{datasetId}", dataset_id).replace("${datasetId}", dataset_id)
+    return value
 
 
-def _mark_sound_filename(sample: Dict[str, Any], filename_key: str, label: str, target_ext: str) -> None:
-    file_name = str(sample.get(filename_key) or "").strip()
-    stem = _strip_sound_marker(Path(file_name).stem if file_name else "sample")
-    sample[filename_key] = f"{stem}__sound_{_safe_marker(label)}.{target_ext}"
+def _has_unresolved_dataset_placeholder(path_value: str) -> bool:
+    return any(token in path_value for token in ("{dataset_id}", "${dataset_id}", "{datasetId}", "${datasetId}"))
+
+
+def _default_sound_report_path(sample: Dict[str, Any]) -> Path:
+    export_path = str(sample.get("export_path") or "").strip()
+    if export_path:
+        return Path(export_path).expanduser() / "references" / "sound_classification.jsonl"
+
+    dataset_id = str(sample.get("dataset_id") or sample.get("datasetId") or "").strip()
+    if dataset_id:
+        return Path("/dataset") / dataset_id / "references" / "sound_classification.jsonl"
+
+    file_path = str(sample.get("filePath") or "")
+    dataset_root = _dataset_root_from_audio_path(file_path)
+    if str(dataset_root) not in {"", "."}:
+        return dataset_root / "references" / "sound_classification.jsonl"
+
+    return Path("/dataset") / "references" / "sound_classification.jsonl"
+
+
+def _resolve_sound_report_path(path_value: str, sample: Dict[str, Any]) -> Path:
+    raw_value = str(path_value or DEFAULT_SOUND_REPORT_PATH).strip()
+    expanded = _expand_dataset_placeholders(raw_value, sample)
+    if not expanded:
+        return _default_sound_report_path(sample)
+    if raw_value == DEFAULT_SOUND_REPORT_PATH and sample.get("export_path"):
+        return _default_sound_report_path(sample)
+    if _has_unresolved_dataset_placeholder(expanded):
+        return _default_sound_report_path(sample)
+
+    p = Path(expanded).expanduser()
+    if p.is_absolute():
+        return p
+
+    file_path = str(sample.get("filePath") or "")
+    dataset_root = _dataset_root_from_audio_path(file_path)
+    if str(dataset_root) not in {"", "."}:
+        return dataset_root / p
+    return (Path(__file__).resolve().parent / p).resolve()
+
+
+def _source_file_name(sample: Dict[str, Any], filename_key: str, filepath_key: str) -> str:
+    for key in (filename_key, "sourceFileName", "filename"):
+        value = str(sample.get(key) or "").strip()
+        if value:
+            return Path(value).name
+    path_value = str(sample.get(filepath_key) or "").strip()
+    if path_value:
+        return Path(path_value).name
+    return "sample.wav"
+
+
+def _normalize_lookup_key(value: object) -> str:
+    raw = str(value or "").strip()
+    if not raw:
+        return ""
+    return Path(raw).stem.lower()
+
+
+def _sound_record_keys(row: Dict[str, Any]) -> Set[str]:
+    keys = set()
+    for field in ("key", "file", "fileName", "filename", "path"):
+        key = _normalize_lookup_key(row.get(field))
+        if key:
+            keys.add(key)
+    return keys
+
+
+def _parse_jsonl_record(line: str) -> Tuple[Dict[str, Any], Set[str]]:
+    text = line.strip()
+    if not text or not text.startswith("{"):
+        return {}, set()
+    try:
+        row = json.loads(text)
+    except Exception:
+        return {}, set()
+    if not isinstance(row, dict):
+        return {}, set()
+    return row, _sound_record_keys(row)
+
+
+def _upsert_sound_report(path: Path, file_name: str, result: Dict[str, Any]) -> None:
+    file_name = Path(file_name).name
+    record = dict(result)
+    record.update(
+        {
+            "file": file_name,
+            "fileName": file_name,
+            "key": Path(file_name).stem,
+        }
+    )
+    record_keys = _sound_record_keys(record)
+    lock_name = hashlib.sha1(str(path).encode("utf-8")).hexdigest() + ".lock"
+    SOUND_LOCK_DIR.mkdir(parents=True, exist_ok=True)
+    lock_path = SOUND_LOCK_DIR / lock_name
+
+    with lock_path.open("w", encoding="utf-8") as lock_file:
+        fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            kept_lines: List[str] = []
+            if path.exists():
+                for line in path.read_text(encoding="utf-8", errors="ignore").splitlines():
+                    row, keys = _parse_jsonl_record(line)
+                    if row and keys & record_keys:
+                        continue
+                    if line.strip():
+                        kept_lines.append(line)
+            kept_lines.append(json.dumps(record, ensure_ascii=False))
+            tmp_path = path.with_suffix(path.suffix + ".tmp")
+            tmp_path.write_text("\n".join(kept_lines) + "\n", encoding="utf-8")
+            tmp_path.replace(path)
+        finally:
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+
+
+def _resolve_checkpoint_companion_path(checkpoint_path: Path, file_name: str, fallback: Path) -> Path:
+    candidate = checkpoint_path.resolve().parent / file_name
+    if candidate.exists():
+        return candidate
+    return fallback.resolve()
 
 
 def _load_audio_16k(path: Path, sr: int = 16000) -> np.ndarray:
@@ -301,8 +439,10 @@ class AudioSoundClassify(Mapper):
         super().__init__(*args, **kwargs)
         self.backend = "ast"
         self.ast_checkpoint = str(kwargs.get("astCheckpoint") or DEFAULT_AST_CHECKPOINT).strip()
-        self.ast_macro_map = str(kwargs.get("astMacroMap", "")).strip()
-        self.labels_csv = str(kwargs.get("labelsCsv", "")).strip()
+        self.save_as_text = _as_bool(kwargs.get("saveAsText", True))
+        self.result_report_path = str(
+            kwargs.get("resultSavePath", kwargs.get("resultReportPath", DEFAULT_SOUND_REPORT_PATH))
+        ).strip()
         self.topk = int(float(kwargs.get("topK", 10)))
         self.segment_sec = float(kwargs.get("segmentSeconds", 10.24))
         self.hop_sec = float(kwargs.get("hopSeconds", 5.12))
@@ -354,12 +494,14 @@ class AudioSoundClassify(Mapper):
             audio_path_for_infer = audio_path
 
             checkpoint_path = _resolve_path(self.ast_checkpoint, Path(DEFAULT_AST_CHECKPOINT))
-            labels_csv = _resolve_path(
-                self.labels_csv,
+            labels_csv = _resolve_checkpoint_companion_path(
+                checkpoint_path,
+                "class_labels_indices.csv",
                 package_root / "models" / "recog" / "class_labels_indices.csv",
             )
-            macro_map_path = _resolve_path(
-                self.ast_macro_map,
+            macro_map_path = _resolve_checkpoint_companion_path(
+                checkpoint_path,
+                "audioset_macro_map_v1.json",
                 package_root / "models" / "recog" / "audioset_macro_map_v1.json",
             )
             if not checkpoint_path.exists():
@@ -387,6 +529,13 @@ class AudioSoundClassify(Mapper):
             "backend": self.backend,
             **result_core,
         }
+        source_file_name = _source_file_name(sample, self.filename_key, self.filepath_key)
+        result_report_file = ""
+        if not self.save_as_text:
+            report_path = _resolve_sound_report_path(self.result_report_path, sample)
+            _upsert_sound_report(report_path, source_file_name, result)
+            result_report_file = str(report_path)
+            result["result_report_file"] = result_report_file
 
         ext = sample.get(self.ext_params_key, {})
         if not isinstance(ext, dict):
@@ -395,18 +544,24 @@ class AudioSoundClassify(Mapper):
         sample[self.ext_params_key] = ext
 
         target_ext = _audio_ext(sample)
-        if audio_bytes:
-            sample[self.data_key] = audio_bytes
-        sample[self.text_key] = ""
-        if self.is_last_op:
+        if self.save_as_text:
+            sample[self.text_key] = str(result.get("macro_class") or "").strip()
+            sample[self.data_key] = b""
             sample[self.filetype_key] = "txt"
-            sample[self.target_type_key] = target_ext
+            sample[self.target_type_key] = "txt"
         else:
-            sample[self.filetype_key] = target_ext
-            sample[self.target_type_key] = target_ext
-        _mark_sound_filename(sample, self.filename_key, str(result.get("macro_class") or "unknown"), target_ext)
+            sample[self.text_key] = ""
+            sample[self.data_key] = audio_bytes if audio_bytes else b""
+            if self.is_last_op:
+                sample[self.filetype_key] = "txt"
+                sample[self.target_type_key] = target_ext
+            else:
+                sample[self.filetype_key] = target_ext
+                sample[self.target_type_key] = target_ext
 
         logger.info(
-            f"fileName: {sample.get(self.filename_key)}, method: AudioSoundClassify costs {time.time() - start:6f} s"
+            f"fileName: {sample.get(self.filename_key)}, method: AudioSoundClassify "
+            f"save_as_text={self.save_as_text}, pred={result.get('macro_class')}, report={result_report_file}, "
+            f"costs {time.time() - start:6f} s"
         )
         return sample

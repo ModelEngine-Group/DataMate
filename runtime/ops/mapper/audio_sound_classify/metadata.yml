@@ -1,7 +1,7 @@
 name: 'audioOps-音频场景分类'
 name_en: 'audioOps-Audio Sound Classification'
-description: '调用 AST AudioSet 预训练模型识别当前音频的声音类别；标注写入 ext_params.audio_sound_classify，并保持音频作为输出。'
-description_en: 'Classify one audio sample with an AST AudioSet model; write ext_params.audio_sound_classify and keep the audio as output.'
+description: '识别当前音频的声音大类与细类；默认输出一个 txt 标签，也可保留原音频并把识别结果写入 references 清单。'
+description_en: 'Classify one audio sample with an AST AudioSet model. By default outputs a txt label; optionally keeps the audio and writes results to a references report.'
 language: 'python'
 vendor: 'huawei'
 raw_id: 'AudioSoundClassify'
@@ -18,17 +18,19 @@ settings:
     type: 'input'
     defaultVal: '/models/AudioOperations/recog/audioset_10_10_0.4593.pth'
     required: false
-  astMacroMap:
-    name: 'AST 大类映射表'
-    description: '粗类映射 JSON；留空使用算子内置映射。'
-    type: 'input'
-    defaultVal: ''
+  saveAsText:
+    name: '输出为文本标签'
+    description: '开启时每个音频输出一个 txt，内容为预测声音大类标签；关闭时保留原音频不改名，并把识别结果写入 references 清单。'
+    type: 'switch'
+    defaultVal: 'true'
     required: false
-  labelsCsv:
-    name: 'AudioSet 标签表'
-    description: 'class_labels_indices.csv；留空使用算子内置标签表。'
+    checkedLabel: '文本标签'
+    unCheckedLabel: '保留音频'
+  resultSavePath:
+    name: '分类结果保存文件'
+    description: 'saveAsText 关闭时写入的声音分类结果 JSONL 文件。默认优先写入当前输出数据集 references/sound_classification.jsonl；支持 {dataset_id} 占位，也可填写绝对路径。'
     type: 'input'
-    defaultVal: ''
+    defaultVal: '/dataset/{dataset_id}/references/sound_classification.jsonl'
     required: false
   topK:
     name: '细类 TopK'
@@ -76,3 +78,4 @@ metrics:
     metric: '依输入音频长度与模型而定'
 release:
   - '首次发布，支持 AST AudioSet 声音分类'
+  - '新增文本标签/保留音频两种输出模式；标签映射文件改为随模型目录自动定位'

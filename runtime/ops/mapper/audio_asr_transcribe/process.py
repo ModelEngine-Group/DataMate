@@ -18,15 +18,16 @@ from loguru import logger
 
 from datamate.core.base_op import Mapper
 try:
-    from .audio_skip import invalid_quality_reason, is_audio_sample, mark_skipped_sample
+    from .audio_skip import invalid_quality_reason, is_audio_sample, mark_skipped_sample, resolve_audio_input_path
 except ImportError:
-    from audio_skip import invalid_quality_reason, is_audio_sample, mark_skipped_sample
+    from audio_skip import invalid_quality_reason, is_audio_sample, mark_skipped_sample, resolve_audio_input_path
 
 
 DEFAULT_ZH_MODEL_DIR = "/models/AudioOperations/asr/aishell"
 DEFAULT_EN_MODEL_DIR = "/models/AudioOperations/asr/librispeech"
 DEFAULT_LANGUAGE_FILE_PATH = "/dataset/{dataset_id}/references/language.jsonl"
-DEFAULT_MAX_CONCURRENT_FILES = 1
+FIXED_BATCH_SIZE = 1
+FIXED_MAX_CONCURRENT_FILES = 1
 FIXED_DECODE_MODE = "ctc_greedy_search"
 LID_MARKER_RE = re.compile(r"(?:^|__)lid_(zh|en)(?:__|$)")
 LANGUAGE_FILE_NAMES = ("language.jsonl", "language.txt", "language.tsv")
@@ -445,9 +446,9 @@ class AudioAsrTranscribe(Mapper):
         self.zh_model_dir = str(kwargs.get("zhModelDir", DEFAULT_ZH_MODEL_DIR)).strip()
         self.en_model_dir = str(kwargs.get("enModelDir", DEFAULT_EN_MODEL_DIR)).strip()
         self.mode = FIXED_DECODE_MODE
-        self.batch_size = int(float(kwargs.get("batchSize", 1)))
+        self.batch_size = FIXED_BATCH_SIZE
         self.max_segment_seconds = int(float(kwargs.get("maxSegmentSeconds", 120)))
-        self.max_concurrent_files = max(1, int(float(kwargs.get("maxConcurrentFiles", DEFAULT_MAX_CONCURRENT_FILES))))
+        self.max_concurrent_files = FIXED_MAX_CONCURRENT_FILES
         self.language_cache: Dict[str, Dict[str, str]] = {}
 
     def execute(self, sample: Dict[str, Any]) -> Dict[str, Any]:
@@ -489,7 +490,7 @@ class AudioAsrTranscribe(Mapper):
                 audio_path = work_dir / f"input.{_audio_ext(sample)}"
                 audio_path.write_bytes(bytes(data))
             else:
-                audio_path = Path(str(sample.get(self.filepath_key, ""))).expanduser().resolve()
+                audio_path = resolve_audio_input_path(sample, self.filepath_key)
                 if not audio_path.exists():
                     raise FileNotFoundError(f"输入音频不存在: {audio_path}")
 

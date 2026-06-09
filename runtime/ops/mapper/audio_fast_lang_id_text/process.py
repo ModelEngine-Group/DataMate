@@ -10,9 +10,9 @@ from loguru import logger
 
 from datamate.core.base_op import Mapper
 try:
-    from .audio_skip import invalid_quality_reason, is_audio_sample, mark_skipped_sample
+    from .audio_skip import invalid_quality_reason, is_audio_sample, mark_skipped_sample, resolve_audio_input_path
 except ImportError:
-    from audio_skip import invalid_quality_reason, is_audio_sample, mark_skipped_sample
+    from audio_skip import invalid_quality_reason, is_audio_sample, mark_skipped_sample, resolve_audio_input_path
 
 
 DEFAULT_LID_MODEL_SOURCE = "/models/AudioOperations/lid/speechbrain_lang-id-voxlingua107-ecapa"
@@ -94,7 +94,7 @@ class AudioFastLangIdText(Mapper):
                 wav_path = work_dir / f"input.{_audio_ext(sample)}"
                 wav_path.write_bytes(bytes(data))
             else:
-                wav_path = Path(sample.get(self.filepath_key, "")).resolve()
+                wav_path = resolve_audio_input_path(sample, self.filepath_key)
                 if not wav_path.exists():
                     raise FileNotFoundError(f"输入音频不存在: {wav_path}")
 
