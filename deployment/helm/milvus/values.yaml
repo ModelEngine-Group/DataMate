@@ -616,7 +616,7 @@ attu:
     #  - secretName: chart-attu-tls
     #    hosts:
     #      - milvus-attu.local
-  
+
   route:
     enabled: false
     host: ""
@@ -644,7 +644,7 @@ minio:
     pullPolicy: IfNotPresent
   accessKey: ""  # Set via secrets.yaml or --set
   secretKey: ""  # Set via secrets.yaml or --set
-  existingSecret: milvus-minio-secret"
+  existingSecret: milvus-minio-secret
   bucketName: "milvus-bucket"
   rootPath: file
   useIAM: false
@@ -1296,7 +1296,7 @@ kafka:
   zookeeper:
     enabled: true
     replicaCount: 3
-    image: 
+    image:
       repository: bitnamilegacy/zookeeper
       tag: 3.7.0
 
