@@ -118,6 +118,7 @@ extraConfigFiles:
 ## ref: http://kubernetes.io/docs/user-guide/services/
 ##
 service:
+  nameOverride: datamate-milvus
   type: ClusterIP
   port: 19530
   portName: milvus
