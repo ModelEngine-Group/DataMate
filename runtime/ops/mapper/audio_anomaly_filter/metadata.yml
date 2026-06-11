@@ -45,13 +45,13 @@ settings:
     max: 1
     step: 0.01
   keepInvalidAudio:
-    name: '保留异常音频'
-    description: '关闭时异常音频只写入清单并不输出；开启时异常音频继续输出，文件名保持不变。'
+    name: '异常音频处理'
+    description: '选择“过滤”时异常音频只写入清单并不输出；选择“保留”时异常音频继续输出，文件名保持不变。'
     type: 'switch'
     defaultVal: 'false'
     required: false
-    checkedLabel: '保留'
-    unCheckedLabel: '过滤'
+    checkedLabel: '过滤'
+    unCheckedLabel: '保留'
   anomalyReportPath:
     name: '异常清单路径'
     description: '异常音频清单 JSONL 路径。默认优先写入当前输出数据集 references/anomaly_report.jsonl；支持 {dataset_id} 占位。'
@@ -70,4 +70,5 @@ metrics:
     metric: '依输入音频长度与运行环境而定'
 release:
   - '首次发布'
-  - '异常音频改为写入 references 清单；新增是否保留异常音频开关，输出文件名保持不变'
+  - '异常音频改为写入 references 清单；支持选择过滤或保留异常音频，输出文件名保持不变'
+  - '修正异常音频处理开关展示文案'

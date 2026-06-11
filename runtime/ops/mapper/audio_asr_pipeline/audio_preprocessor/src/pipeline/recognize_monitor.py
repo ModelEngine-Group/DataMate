@@ -278,7 +278,17 @@ def main() -> int:
 
         # 合并结果
         print_info("合并子片段结果...")
-        from src.pipeline import merge_asr_by_source  # type: ignore
+        try:
+            from . import merge_asr_by_source  # type: ignore
+        except Exception:
+            import importlib.util
+
+            merge_path = PROJECT_ROOT / "src" / "pipeline" / "merge_asr_by_source.py"
+            spec = importlib.util.spec_from_file_location("merge_asr_by_source", merge_path)
+            if spec is None or spec.loader is None:
+                raise ModuleNotFoundError(f"Cannot load merge_asr_by_source from {merge_path}")
+            merge_asr_by_source = importlib.util.module_from_spec(spec)  # type: ignore
+            spec.loader.exec_module(merge_asr_by_source)  # type: ignore[union-attr]
 
         rc = merge_asr_by_source.main_for_api(  # type: ignore[attr-defined]
             list_file=list_file,

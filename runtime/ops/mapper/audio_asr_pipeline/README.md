@@ -1,15 +1,14 @@
-# AudioAsrPipeline 音频预处理与中英ASR流水线算子
+# AudioAsrPipeline 音频预处理与中英 ASR 流水线算子
 
 ## 概述
 
-AudioAsrPipeline 将 `audio_preprocessor` 的推荐流水线封装为一个 DataMate Mapper 算子：标准化、（可选）降噪、（可选）异常过滤、语言识别、切分、ASR 识别与合并，并可选计算中英文关键词召回率。算子按 DataMate 单样本范式处理当前输入音频，最终导出该输入文件对应的一个 `.txt` 转写文件，并在 `ext_params` 中记录运行信息，便于排查与验收。
+AudioAsrPipeline 将标准化、可选降噪、可选异常过滤、语言识别、切分、ASR 识别与合并封装为一个 DataMate Mapper 算子。算子按 DataMate 单样本范式处理当前输入音频，最终导出该输入文件对应的一个 `.txt` 转写文件，并在 `ext_params` 中记录运行信息，便于排查与验收。
 
 ## 功能特性
 
-- **端到端流水线**：normalization →（可选）GTCRN →（可选）异常过滤 → LID → split → ASR → merge →（可选）关键词召回率
+- **端到端流水线**：normalization →（可选）GTCRN →（可选）异常过滤 → LID → split → ASR → merge
 - **可配置**：每个关键步骤参数化（降噪开关、过滤阈值、LID 截断秒数、切分长度等）
-- **结果可追溯**：关键步骤、语言结果、质量检测结果和可选召回率报告记录在 `ext_params.audio_asr`
-- **关键词召回率**：复用 `audio_preprocessor/src/pipeline/eval_keyword_recall.py`，生成 `keyword_recall.txt` 并写入导出目录
+- **结果可追溯**：关键步骤、语言结果和质量检测结果记录在 `ext_params.audio_asr`
 - **一入一出**：每个输入音频输出一个 `.txt`，内容为该音频的转写文本
 
 ## 参数说明
@@ -26,11 +25,6 @@ AudioAsrPipeline 将 `audio_preprocessor` 的推荐流水线封装为一个 Data
 | lidModelSource | input | /models/AudioOperations/lid/speechbrain_lang-id-voxlingua107-ecapa | SpeechBrain LID 本地模型目录 |
 | lidMaxSeconds | inputNumber | 3.0 | LID 只取前 N 秒，0=全长 |
 | maxSegmentSeconds | inputNumber | 120 | 切分最大秒数 |
-| doKeywordRecall | switch | false | 是否在 ASR 后计算关键词召回率 |
-| referencePath | input | /dataset/{dataset_id}/references | 关键词召回率参考文件或参考目录路径，路径不存在会回退到显式关键词文件参数 |
-| zhKeywordPath | input | /dataset/{dataset_id}/references/zh_keyword.txt | 中文关键词文件；不存在时优先从 `referencePath` 找 `zh_keyword.txt` |
-| enKeywordPath | input | /dataset/{dataset_id}/references/en_keyword.txt | 英文关键词文件；不存在时优先从 `referencePath` 找 `en_keyword.txt` |
-| keepKeywordDetails | switch | false | 是否将逐句 hit/miss 明细写入 `ext_params` |
 
 ## 输入输出
 
@@ -40,8 +34,6 @@ AudioAsrPipeline 将 `audio_preprocessor` 的推荐流水线封装为一个 Data
   - `sample["ext_params"]["audio_asr"]`：
     - `lang`：LID 结果（zh/en）
     - `steps`：本次启用的处理步骤
-    - `reference`：填写 `referencePath` 后记录本次使用的参考资源路径
-    - `keyword_recall`：启用 `doKeywordRecall` 后写入中英文关键词召回率、样本数与报告路径，报告位于 `audio_reports/asr_pipeline/<文件名>/keyword_recall.txt`
 
 ## 依赖说明
 
@@ -51,10 +43,7 @@ AudioAsrPipeline 将 `audio_preprocessor` 的推荐流水线封装为一个 Data
   - 降噪：`onnxruntime`（以及 GTCRN 模型文件）
 - **系统依赖**：
   - `pydub` 通常需要 `ffmpeg`
-- **关键词召回率**：
-  - 使用纯 Python 文本处理，不额外依赖模型
 
 ## 版本历史
 
 - **v1.0.0**：首次发布，支持音频标准化/（可选）降噪/过滤/LID/切分/ASR/合并
-- **v1.1.0**：同步 `audio_preprocessor` 关键词召回率能力，支持可选中英文关键词召回率评估

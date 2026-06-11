@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import math
 import os
 import re
@@ -24,8 +23,6 @@ from datamate.core.base_op import Mapper
 DEFAULT_ONNX_MODEL_DIR = "/models/AudioOperations/summary/summary-model"
 DEFAULT_METHOD = "bert_onnx"
 DEFAULT_MIN_SUMMARY_WORDS_EN = 8
-DEFAULT_LINE_MODE = "single"
-DEFAULT_PRESERVE_KEYS = True
 DEFAULT_PROVIDERS_PRIORITY = "CANNExecutionProvider,CPUExecutionProvider"
 DEFAULT_CPU_THREADS = 24
 DEFAULT_MAX_WINDOWS = 96
@@ -186,29 +183,24 @@ def _extractive_summary(text: str, max_chars_zh: int, max_words_en: int, min_wor
     return _best_en_window(text, min_words=int(min_words_en), max_words=int(max_words_en)), lang
 
 
-def _parse_keyed_lines(text: str, mode: str) -> List[Tuple[str, str]]:
-    rows: List[Tuple[str, str]] = []
-    lines = [line.rstrip("\n") for line in (text or "").splitlines() if line.strip()]
-    if not lines:
-        return []
-    actual_mode = str(mode or "single").strip().lower()
-    if actual_mode == "single":
-        return [("", text.strip())]
-    if actual_mode == "auto":
-        if not all("\t" in line for line in lines):
-            return [("", text.strip())]
-        actual_mode = "tab"
-    for idx, line in enumerate(lines):
-        if actual_mode == "tab" and "\t" in line:
-            key, value = line.split("\t", 1)
-        elif actual_mode == "space":
-            parts = line.strip().split(maxsplit=1)
-            key = parts[0] if parts else str(idx)
-            value = parts[1] if len(parts) > 1 else ""
-        else:
-            key, value = str(idx), line
-        rows.append((key.strip(), value.strip()))
-    return rows
+def _normalize_single_input_text(text: str) -> str:
+    stripped = (text or "").strip()
+    lines = [line.strip() for line in stripped.splitlines() if line.strip()]
+    if len(lines) == 1 and "\t" in lines[0]:
+        _key, value = lines[0].split("\t", 1)
+        return value.strip()
+    return stripped
+
+
+def _text_file_name(sample: Dict[str, Any], filename_key: str, filepath_key: str) -> str:
+    for key in (filename_key, "sourceFileName", "filename"):
+        value = str(sample.get(key) or "").strip()
+        if value:
+            return Path(value).name
+    path_value = str(sample.get(filepath_key) or "").strip()
+    if path_value:
+        return Path(path_value).name
+    return "sample.txt"
 
 
 def _mark_skipped_text_sample(sample: Dict[str, Any], reason: str, op_name: str, keys: Tuple[str, ...]) -> Dict[str, Any]:
@@ -392,8 +384,6 @@ class AudioTextSummarize(Mapper):
         self.max_chars_zh = int(float(kwargs.get("maxSummaryCharsZh", 40)))
         self.max_words_en = int(float(kwargs.get("maxSummaryWordsEn", 18)))
         self.min_words_en = DEFAULT_MIN_SUMMARY_WORDS_EN
-        self.line_mode = DEFAULT_LINE_MODE
-        self.preserve_keys = DEFAULT_PRESERVE_KEYS
         self.onnx_model_dir = str(kwargs.get("onnxModelDir", DEFAULT_ONNX_MODEL_DIR)).strip()
         self.providers_priority = DEFAULT_PROVIDERS_PRIORITY
         self.cpu_threads = DEFAULT_CPU_THREADS
@@ -409,56 +399,45 @@ class AudioTextSummarize(Mapper):
                 self.__class__.__name__,
                 (self.text_key, self.data_key, self.filetype_key, self.target_type_key, self.ext_params_key),
             )
+        text = _normalize_single_input_text(text)
+        if not text.strip():
+            return _mark_skipped_text_sample(
+                sample,
+                "empty_text_for_summary",
+                self.__class__.__name__,
+                (self.text_key, self.data_key, self.filetype_key, self.target_type_key, self.ext_params_key),
+            )
 
         _limit_cpu_threads(self.cpu_threads)
-        rows = _parse_keyed_lines(text, self.line_mode)
-        summaries: List[Tuple[str, str, str, Dict[str, Any]]] = []
         method = self.method
-
-        for key, row_text in rows:
-            model_dir = _resolve_onnx_model_dir(self.onnx_model_dir)
-            providers = _pick_providers(self.providers_priority)
-            summary, lang, meta = _onnx_extractive_summary(
-                row_text,
-                model_dir=model_dir,
-                providers=providers,
-                cpu_threads=self.cpu_threads,
-                max_chars_zh=self.max_chars_zh,
-                max_words_en=self.max_words_en,
-                max_windows=self.max_windows,
-            )
-            meta["model_dir"] = str(model_dir)
-            summaries.append((key, row_text, summary, {"lang": lang, **meta}))
-
-        if self.preserve_keys and any(key for key, _text, _summary, _meta in summaries):
-            output_text = "\n".join(f"{key}\t{summary}" if key else summary for key, _text, summary, _meta in summaries)
-        else:
-            output_text = "\n".join(summary for _key, _text, summary, _meta in summaries)
-
-        details = []
-        for key, row_text, summary, meta in summaries:
-            item: Dict[str, Any] = {
-                "key": key,
-                "summary": summary,
-                "language": meta.get("lang"),
-                "input_chars": len(row_text),
-                "summary_chars": len(summary),
-                "method": method,
-                "runtime": {k: v for k, v in meta.items() if k != "lang"},
-            }
-            details.append(item)
+        model_dir = _resolve_onnx_model_dir(self.onnx_model_dir)
+        providers = _pick_providers(self.providers_priority)
+        summary, lang, meta = _onnx_extractive_summary(
+            text,
+            model_dir=model_dir,
+            providers=providers,
+            cpu_threads=self.cpu_threads,
+            max_chars_zh=self.max_chars_zh,
+            max_words_en=self.max_words_en,
+            max_windows=self.max_windows,
+        )
+        meta["model_dir"] = str(model_dir)
 
         ext = sample.get(self.ext_params_key, {})
         if not isinstance(ext, dict):
             ext = {"_raw": ext}
         ext["audio_text_summarize"] = {
             "method": method,
-            "line_mode": self.line_mode,
-            "items": details,
+            "file": _text_file_name(sample, self.filename_key, self.filepath_key),
+            "language": lang,
+            "summary": summary,
+            "input_chars": len(text),
+            "summary_chars": len(summary),
+            "runtime": meta,
             "elapsed_ms": round((time.time() - start) * 1000.0, 3),
         }
         sample[self.ext_params_key] = ext
-        sample[self.text_key] = output_text
+        sample[self.text_key] = summary
         sample[self.data_key] = b""
         sample[self.filetype_key] = "txt"
         sample[self.target_type_key] = "txt"

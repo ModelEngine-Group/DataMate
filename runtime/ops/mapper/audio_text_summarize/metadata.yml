@@ -1,7 +1,7 @@
 name: 'audioOps-ASR文本概括'
 name_en: 'audioOps-ASR Text Summarization'
-description: '对文本内容做高保真概括，输入输出均为文本；默认使用本地 ONNX 模型做语义选片。'
-description_en: 'Summarize text content with text input and text output; by default uses a local ONNX model for semantic span selection.'
+description: '对每个传入文本文件分别做概括，输入输出均为文本；默认使用本地 ONNX 模型做语义选片。'
+description_en: 'Summarize each input text file independently with text input and text output; by default uses a local ONNX model for semantic span selection.'
 language: 'python'
 vendor: 'huawei'
 raw_id: 'AudioTextSummarize'
@@ -44,5 +44,6 @@ metrics:
   - name: '处理耗时'
     metric: '依输入文本长度、概括方法与运行环境而定'
 release:
-  - '首次发布，支持 ASR 文本单条/多行概括'
+  - '首次发布，支持 ASR 文本概括'
   - '参数精简为模型目录、中文最大字数、英文最大词数；其余使用当前默认配置'
+  - '改为每个传入文本文件独立概括，不再把多条 ASR 结果合并到单个输出文件'

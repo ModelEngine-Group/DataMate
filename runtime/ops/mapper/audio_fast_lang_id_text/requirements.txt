@@ -1,4 +1,0 @@
-torch==2.8.0
-torchaudio==2.8.0
-speechbrain==1.0.3
-HyperPyYAML==1.2.2

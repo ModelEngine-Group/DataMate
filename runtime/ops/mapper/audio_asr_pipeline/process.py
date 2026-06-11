@@ -57,60 +57,6 @@ def _ensure_sys_path(p: Path) -> None:
         sys.path.insert(0, sp)
 
 
-def _safe_stem(sample: Dict[str, Any], filename_key: str) -> str:
-    stem = Path(str(sample.get(filename_key) or "sample")).stem or "sample"
-    return "".join(ch if ch.isalnum() or ch in ("-", "_") else "_" for ch in stem)
-
-
-def _export_report_dir(sample: Dict[str, Any], export_path_key: str, filename_key: str) -> Path:
-    export_root = Path(str(sample.get(export_path_key) or "")).expanduser()
-    if not export_root:
-        export_root = Path.cwd()
-    if not export_root.is_absolute():
-        export_root = (_repo_root() / export_root).resolve()
-    return export_root / "audio_reports" / "asr_pipeline" / _safe_stem(sample, filename_key)
-
-
-def _expand_dataset_placeholders(path_value: str, sample: Dict[str, Any] | None = None) -> str:
-    value = str(path_value or "").strip()
-    if sample:
-        dataset_id = str(sample.get("dataset_id") or "").strip()
-        if dataset_id:
-            value = value.replace("{dataset_id}", dataset_id).replace("${dataset_id}", dataset_id)
-            value = value.replace("{datasetId}", dataset_id).replace("${datasetId}", dataset_id)
-    return value
-
-
-def _resolve_optional_path(path_value: str, sample: Dict[str, Any] | None = None) -> Path:
-    path_value = _expand_dataset_placeholders(path_value, sample)
-    value = str(path_value or "").strip()
-    if not value:
-        return Path()
-    p = Path(value).expanduser()
-    if not p.is_absolute():
-        p = (_repo_root() / p).resolve()
-    return p
-
-
-def _find_named_file(root: Path | None, names: tuple[str, ...]) -> Path | None:
-    if root is None:
-        return None
-    if root.is_file():
-        return root if root.name in names else None
-    for name in names:
-        p = root / name
-        if p.exists() and p.is_file():
-            return p
-    for p in root.rglob("*"):
-        if p.is_file() and p.name in names:
-            return p
-    return None
-
-
-def _valid_file_path(path: Path | None) -> bool:
-    return path is not None and str(path) not in {"", "."} and path.exists() and path.is_file()
-
-
 class AudioAsrPipeline(Mapper):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -128,12 +74,6 @@ class AudioAsrPipeline(Mapper):
         self.lid_max_seconds = float(kwargs.get("lidMaxSeconds", 3.0))
 
         self.max_segment_seconds = int(float(kwargs.get("maxSegmentSeconds", 120)))
-
-        self.do_keyword_recall = _as_bool(kwargs.get("doKeywordRecall", False))
-        self.reference_path = str(kwargs.get("referencePath", "")).strip()
-        self.zh_keyword_path = str(kwargs.get("zhKeywordPath", "")).strip()
-        self.en_keyword_path = str(kwargs.get("enKeywordPath", "")).strip()
-        self.keep_keyword_details = _as_bool(kwargs.get("keepKeywordDetails", False))
 
     def execute(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         start = time.time()
@@ -175,12 +115,6 @@ class AudioAsrPipeline(Mapper):
         if not in_path.exists():
             raise FileNotFoundError(f"输入音频不存在: {in_path}")
 
-        reference_path = _resolve_optional_path(self.reference_path, sample)
-        if reference_path:
-            if not reference_path.exists():
-                logger.warning(f"参考资源路径不存在，将继续使用显式关键词参数: {reference_path}")
-                reference_path = Path()
-
         # 用临时工作区隔离每个 sample，避免污染 audio_preprocessor 自身的 output_data
         with tempfile.TemporaryDirectory(prefix="dm_audio_asr_") as td:
             work = Path(td)
@@ -190,7 +124,6 @@ class AudioAsrPipeline(Mapper):
             out_lid = work / "output_data" / "lid"
             out_split = work / "output_data" / "split"
             out_asr = work / "output_data" / "asr"
-            out_validation = work / "output_data" / "validation"
             models_link = work / "models"
             src_link = work / "src"
 
@@ -200,7 +133,6 @@ class AudioAsrPipeline(Mapper):
             out_lid.mkdir(parents=True, exist_ok=True)
             out_split.mkdir(parents=True, exist_ok=True)
             out_asr.mkdir(parents=True, exist_ok=True)
-            out_validation.mkdir(parents=True, exist_ok=True)
             if not models_link.exists():
                 models_link.symlink_to(asr_model_root.parent, target_is_directory=True)
             if not src_link.exists():
@@ -424,84 +356,6 @@ class AudioAsrPipeline(Mapper):
                 transcript_parts.append(parts[1] if len(parts) > 1 else "")
             merged_text = "\n".join(part for part in transcript_parts if part)
 
-            keyword_recall = None
-            if self.do_keyword_recall:
-                import sys
-
-                from audio_preprocessor.src.pipeline import eval_keyword_recall as _kwr  # type: ignore
-
-                extra = reference_path if reference_path else None
-                zh_kw = _resolve_optional_path(self.zh_keyword_path, sample) if self.zh_keyword_path else Path()
-                if not _valid_file_path(zh_kw):
-                    zh_kw = _find_named_file(extra, ("zh_keyword.txt", "zh_keywords.txt")) or Path()
-                en_kw = _resolve_optional_path(self.en_keyword_path, sample) if self.en_keyword_path else Path()
-                if not _valid_file_path(en_kw):
-                    en_kw = _find_named_file(extra, ("en_keyword.txt", "en_keywords.txt")) or Path()
-                if _valid_file_path(zh_kw) and not zh_kw.is_absolute():
-                    zh_kw = (_repo_root() / zh_kw).resolve()
-                if _valid_file_path(en_kw) and not en_kw.is_absolute():
-                    en_kw = (_repo_root() / en_kw).resolve()
-                if not _valid_file_path(zh_kw) and not _valid_file_path(en_kw):
-                    raise FileNotFoundError(
-                        f"关键词文件不存在。zhKeywordPath={zh_kw or ''}, enKeywordPath={en_kw or ''}, "
-                        f"referencePath={reference_path or ''}"
-                    )
-
-                persistent_validation = _export_report_dir(sample, self.export_path_key, self.filename_key)
-                persistent_validation.mkdir(parents=True, exist_ok=True)
-
-                argv_backup = sys.argv[:]
-                try:
-                    sys.argv = [
-                        sys.argv[0],
-                        "--zh_kw",
-                        str(zh_kw),
-                        "--en_kw",
-                        str(en_kw),
-                        "--hyp",
-                        str(merged),
-                        "--work_dir",
-                        str(persistent_validation),
-                    ]
-                    rc = _kwr.main()
-                    if rc != 0:
-                        raise RuntimeError(f"eval_keyword_recall 失败，返回码: {rc}")
-                finally:
-                    sys.argv = argv_backup
-
-                zh_kw_map = _kwr.read_kw_kaldi(zh_kw)
-                en_kw_map = _kwr.read_kw_kaldi(en_kw)
-                hyp_map = _kwr.read_kv_text(merged)
-                zh_result = _kwr.compute_keyword_recall_per_lang(
-                    zh_kw_map, hyp_map, "中文", use_substring_match=True
-                )
-                en_result = _kwr.compute_keyword_recall_per_lang(
-                    en_kw_map, hyp_map, "英文", use_substring_match=False
-                )
-                keyword_recall = {
-                    "zh": {
-                        "recall": round(float(zh_result[0]), 6),
-                        "used_utterances": int(zh_result[1]),
-                        "total_intersection_utterances": int(zh_result[2]),
-                    },
-                    "en": {
-                        "recall": round(float(en_result[0]), 6),
-                        "used_utterances": int(en_result[1]),
-                        "total_intersection_utterances": int(en_result[2]),
-                    },
-                    "artifacts": {
-                        "zh_keyword": str(zh_kw),
-                        "en_keyword": str(en_kw),
-                        "report": str(persistent_validation / "keyword_recall.txt"),
-                        "report_dir": str(persistent_validation),
-                    },
-                }
-                if self.keep_keyword_details:
-                    keyword_recall["details"] = {
-                        "zh": zh_result[3],
-                        "en": en_result[3],
-                    }
-
             # 写回 sample
             sample[self.text_key] = merged_text
             sample[self.data_key] = b""
@@ -521,16 +375,8 @@ class AudioAsrPipeline(Mapper):
                     "split": True,
                     "asr": True,
                     "merge": True,
-                    "keyword_recall": self.do_keyword_recall,
                 },
             }
-            if reference_path:
-                ext["audio_asr"]["reference"] = {
-                    "path": str(reference_path),
-                    "type": "file" if reference_path.is_file() else "directory",
-                }
-            if keyword_recall is not None:
-                ext["audio_asr"]["keyword_recall"] = keyword_recall
             sample[self.ext_params_key] = ext
 
         logger.info(

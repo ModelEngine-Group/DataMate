@@ -1,7 +1,7 @@
 name: 'audioOps-音频识别流水线'
 name_en: 'audioOps-Audio ASR Pipeline'
-description: '调用 audio_preprocessor 的 normalization→(可选)GTCRN→(可选)异常过滤→LID→切分→ASR→合并，对当前输入音频导出一个 txt 转写文件，并在 ext_params 中记录运行信息。'
-description_en: 'Run audio_preprocessor pipeline for the current audio file and export one txt transcript; records runtime information in ext_params.'
+description: '对当前输入音频执行格式归一化、可选降噪、可选异常过滤、语言识别、切分、ASR 与合并，导出一个 txt 转写文件，并在 ext_params 中记录运行信息。'
+description_en: 'Run normalization, optional denoise, optional anomaly filtering, LID, splitting, ASR and merge for the current audio file; export one txt transcript and record runtime information in ext_params.'
 language: 'python'
 vendor: 'huawei'
 raw_id: 'AudioAsrPipeline'
@@ -82,40 +82,6 @@ settings:
     min: 5
     max: 3600
     step: 1
-  doKeywordRecall:
-    name: '启用关键词召回率'
-    type: 'switch'
-    description: '是否在 ASR 完成后计算中英文关键词召回率。'
-    defaultVal: 'false'
-    required: false
-    checkedLabel: '开启'
-    unCheckedLabel: '关闭'
-  referencePath:
-    name: '参考资源路径'
-    type: 'input'
-    description: '关键词召回率使用的参考文件或参考目录路径。默认使用当前数据集 /dataset/{dataset_id}/references，目录中建议包含 zh_keyword.txt、en_keyword.txt。若路径不存在会回退到显式关键词文件参数。'
-    defaultVal: '/dataset/{dataset_id}/references'
-    required: false
-  zhKeywordPath:
-    name: '中文关键词文件'
-    type: 'input'
-    description: 'Kaldi 格式中文关键词文件路径；默认指向当前数据集 references/zh_keyword.txt。若不存在，优先从 referencePath 找 zh_keyword.txt。'
-    defaultVal: '/dataset/{dataset_id}/references/zh_keyword.txt'
-    required: false
-  enKeywordPath:
-    name: '英文关键词文件'
-    type: 'input'
-    description: 'Kaldi 格式英文关键词文件路径；默认指向当前数据集 references/en_keyword.txt。若不存在，优先从 referencePath 找 en_keyword.txt。'
-    defaultVal: '/dataset/{dataset_id}/references/en_keyword.txt'
-    required: false
-  keepKeywordDetails:
-    name: '写入召回率逐句明细'
-    type: 'switch'
-    description: '是否将逐句 hit/miss 明细写入 ext_params.audio_asr.keyword_recall。报告文件始终包含明细并写入导出目录。'
-    defaultVal: 'false'
-    required: false
-    checkedLabel: '写入'
-    unCheckedLabel: '不写入'
 runtime:
   memory: null
   cpu: 1.0
@@ -127,4 +93,3 @@ metrics:
     metric: '依输入音频长度、启用步骤与模型而定'
 release:
   - '首次发布，支持音频标准化/降噪/过滤/LID/切分/ASR/合并'
-  - '新增可选中英文关键词召回率评估'
