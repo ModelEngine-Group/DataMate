@@ -26,6 +26,15 @@ wsi_enhance_operator/
 |-- process.py
 |-- README.md
 |-- requirements.txt
+|-- tests/
+|   |-- pytest.ini
+|   `-- pytest/
+|       |-- test_augmentations.py
+|       |-- test_helpers.py
+|       |-- test_stain_normalization.py
+|       |-- test_stain_template_manager.py
+|       |-- test_wsi_processor.py
+|       `-- test_wsi_reader.py
 |-- augmentations/
 |   |-- __init__.py
 |   `-- augmentations.py
@@ -59,6 +68,7 @@ wsi_enhance_operator/
 - `wsi_processor/`: contour and detection post-processing helpers
 - `wsi_reader/`: WSI file reading abstraction
 - `requirements.txt`: Python dependencies required by this operator package
+- `tests/`: pytest-based unit tests for the mapper package
 
 ## Model Path
 
@@ -137,3 +147,12 @@ The operator writes result paths and summary fields back into `sample`. Common o
 4. Ensure model files are mounted under `/models/WSIEnhance/<model_folder>`.
 5. Import the operator package from `runtime/ops/mapper/__init__.py`.
 6. Configure parameters from the DataMate frontend or task definition.
+
+## Unit Tests
+
+Run unit tests from the mapper directory with `PYTHONPATH` pointed to the operator package root:
+
+```bash
+cd runtime/ops/mapper/wsi_enhance_operator
+PYTHONPATH=. python -m pytest tests/pytest -q
+```

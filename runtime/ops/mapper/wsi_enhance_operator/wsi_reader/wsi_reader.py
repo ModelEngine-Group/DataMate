@@ -29,7 +29,10 @@ def _preload_openslide() -> Exception | None:
 
 try:
     _OPENSLIDE_PRELOAD_ERROR = _preload_openslide()
-    import openslide
+    import openslide as _openslide_module
+    if not hasattr(_openslide_module, "OpenSlide"):
+        raise ImportError("openslide Python module is missing OpenSlide binding")
+    openslide = _openslide_module
 except Exception as exc:  # pragma: no cover
     openslide = None
     _OPENSLIDE_IMPORT_ERROR = _OPENSLIDE_PRELOAD_ERROR or exc
@@ -68,8 +71,12 @@ class WSIReader:
 
         suffix = os.path.splitext(file_path)[1].lower()
         if openslide is not None:
-            self._slide = openslide.OpenSlide(file_path)
-            return
+            try:
+                self._slide = openslide.OpenSlide(file_path)
+                return
+            except Exception as exc:
+                if not self._can_fallback_to_raster(suffix, exc):
+                    raise
 
         if suffix in RASTER_EXTENSIONS and Image is not None:
             self._mode = "raster"
@@ -93,6 +100,15 @@ class WSIReader:
             "such as .svs/.ndpi, or use a standard raster image for fallback testing."
         )
         return " ".join(parts)
+
+    @staticmethod
+    def _can_fallback_to_raster(suffix: str, exc: Exception) -> bool:
+        if suffix not in RASTER_EXTENSIONS or Image is None:
+            return False
+        unsupported_exc = getattr(openslide, "OpenSlideUnsupportedFormatError", None)
+        if unsupported_exc is not None and isinstance(exc, unsupported_exc):
+            return True
+        return isinstance(exc, OSError)
 
     @property
     def dimensions(self) -> Tuple[int, int]:
