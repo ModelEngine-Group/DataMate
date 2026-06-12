@@ -358,7 +358,8 @@ VALID_K8S_TARGETS := datamate deer-flow milvus label-studio data-juicer mineru m
 		exit 1; \
 	fi
 	@if [ "$*" = "label-studio" ]; then \
-     	helm upgrade label-studio deployment/helm/label-studio/ -n $(NAMESPACE) --install; \
+		if [ -f /tmp/datamate-helm-args.sh ]; then source /tmp/datamate-helm-args.sh; fi; \
+		helm upgrade label-studio deployment/helm/label-studio/ -n $(NAMESPACE) --install $${HELM_LABEL_STUDIO_TOLERATIONS:-}; \
     elif [ "$*" = "mineru" ] || [ "$*" = "mineru-910B" ] || [ "$*" = "mineru-910C" ]; then \
 		kubectl apply -f deployment/kubernetes/mineru/deploy-910.yaml -n $(NAMESPACE); \
 	elif [ "$*" = "mineru-310P" ]; then \
@@ -383,9 +384,9 @@ VALID_K8S_TARGETS := datamate deer-flow milvus label-studio data-juicer mineru m
 			HELM_EXTRA_ARGS=""; \
 		fi; \
 		if [ -n "$$HELM_NODE_SELECTOR_ARGS" ] || [ -n "$$HELM_TOLERATIONS_ARGS" ]; then \
-			helm upgrade datamate deployment/helm/datamate/ -n $(NAMESPACE) --install --force --set global.image.repository=$(REGISTRY) --set public.secrets.create=$$SECRETS_CREATE $$HELM_EXTRA_ARGS $$HELM_NODE_SELECTOR_ARGS $$HELM_TOLERATIONS_ARGS; \
+			helm upgrade datamate deployment/helm/datamate/ -n $(NAMESPACE) --install --force --set global.image.repository=$(REGISTRY) --set public.secrets.create=$$SECRETS_CREATE --set public.persistentVolumeClaim.accessModes=ReadWriteOnce $$HELM_EXTRA_ARGS $$HELM_NODE_SELECTOR_ARGS $$HELM_TOLERATIONS_ARGS; \
 		else \
-			helm upgrade datamate deployment/helm/datamate/ -n $(NAMESPACE) --install --force --set global.image.repository=$(REGISTRY) --set public.secrets.create=$$SECRETS_CREATE $$HELM_EXTRA_ARGS; \
+			helm upgrade datamate deployment/helm/datamate/ -n $(NAMESPACE) --install --force --set global.image.repository=$(REGISTRY) --set public.secrets.create=$$SECRETS_CREATE --set public.persistentVolumeClaim.accessModes=ReadWriteOnce $$HELM_EXTRA_ARGS; \
 		fi; \
 		rm -f /tmp/datamate-secret-values-*.yaml; \
 	elif [ "$*" = "deer-flow" ]; then \
@@ -402,7 +403,9 @@ VALID_K8S_TARGETS := datamate deer-flow milvus label-studio data-juicer mineru m
 		fi; \
 		helm upgrade milvus deployment/helm/milvus -n $(NAMESPACE) --install \
 			--set minio.accessKey="$$MILVUS_MINIO_ACCESS_KEY" \
-			--set minio.secretKey="$$MILVUS_MINIO_SECRET_KEY" $$HELM_MILVUS_TOLERATIONS; \
+			--set minio.secretKey="$$MILVUS_MINIO_SECRET_KEY" \
+			--set log.persistence.persistentVolumeClaim.accessModes=ReadWriteOnce \
+			$$HELM_MILVUS_TOLERATIONS; \
 	elif [ "$*" = "data-juicer" ] || [ "$*" = "dj" ]; then \
 		kubectl apply -f deployment/kubernetes/data-juicer/deploy.yaml -n $(NAMESPACE); \
 	fi
@@ -423,13 +426,8 @@ VALID_K8S_TARGETS := datamate deer-flow milvus label-studio data-juicer mineru m
 	elif [ "$*" = "mineru-310P" ]; then \
 		kubectl delete -f deployment/kubernetes/mineru/deploy-310.yaml -n $(NAMESPACE); \
 	elif [ "$*" = "datamate" ]; then \
-		echo ""; \
-		echo "Remove node configuration (labels/taints)? (y/n) [n]"; \
-		read -p "> " CLEANUP_NODES; \
-		if [ "$$CLEANUP_NODES" = "y" ] || [ "$$CLEANUP_NODES" = "Y" ]; then \
-			$(MAKE) node-cleanup; \
-		fi; \
 		helm uninstall datamate -n $(NAMESPACE) --ignore-not-found; \
+		$(MAKE) node-cleanup; \
 	elif [ "$*" = "deer-flow" ]; then \
 		helm uninstall deer-flow -n $(NAMESPACE) --ignore-not-found; \
 	elif [ "$*" = "milvus" ]; then \

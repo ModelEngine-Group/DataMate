@@ -365,23 +365,35 @@ generate_helm_args() {
         HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set-string global.tolerations[0].operator=Equal"
         HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set-string global.tolerations[0].value=${LABEL_VALUE}"
         HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set-string global.tolerations[0].effect=${TAINT_EFFECT}"
-        
+
         # Milvus-specific tolerations (Milvus chart uses direct tolerations, not global.tolerations)
         HELM_MILVUS_TOLERATIONS="--set-string tolerations[0].key=${LABEL_KEY}"
         HELM_MILVUS_TOLERATIONS="$HELM_MILVUS_TOLERATIONS --set-string tolerations[0].operator=Equal"
         HELM_MILVUS_TOLERATIONS="$HELM_MILVUS_TOLERATIONS --set-string tolerations[0].value=${LABEL_VALUE}"
         HELM_MILVUS_TOLERATIONS="$HELM_MILVUS_TOLERATIONS --set-string tolerations[0].effect=${TAINT_EFFECT}"
-        
+
         # Milvus sub-chart tolerations (etcd, minio don't inherit parent chart tolerations)
         HELM_MILVUS_TOLERATIONS="$HELM_MILVUS_TOLERATIONS --set-string etcd.tolerations[0].key=${LABEL_KEY}"
         HELM_MILVUS_TOLERATIONS="$HELM_MILVUS_TOLERATIONS --set-string etcd.tolerations[0].operator=Equal"
         HELM_MILVUS_TOLERATIONS="$HELM_MILVUS_TOLERATIONS --set-string etcd.tolerations[0].value=${LABEL_VALUE}"
         HELM_MILVUS_TOLERATIONS="$HELM_MILVUS_TOLERATIONS --set-string etcd.tolerations[0].effect=${TAINT_EFFECT}"
-        
+
         HELM_MILVUS_TOLERATIONS="$HELM_MILVUS_TOLERATIONS --set-string minio.tolerations[0].key=${LABEL_KEY}"
         HELM_MILVUS_TOLERATIONS="$HELM_MILVUS_TOLERATIONS --set-string minio.tolerations[0].operator=Equal"
         HELM_MILVUS_TOLERATIONS="$HELM_MILVUS_TOLERATIONS --set-string minio.tolerations[0].value=${LABEL_VALUE}"
         HELM_MILVUS_TOLERATIONS="$HELM_MILVUS_TOLERATIONS --set-string minio.tolerations[0].effect=${TAINT_EFFECT}"
+
+        # Label-studio tolerations (app + pgbouncer)
+        HELM_LABEL_STUDIO_TOLERATIONS="--set-string tolerations[0].key=${LABEL_KEY}"
+        HELM_LABEL_STUDIO_TOLERATIONS="$HELM_LABEL_STUDIO_TOLERATIONS --set-string tolerations[0].operator=Equal"
+        HELM_LABEL_STUDIO_TOLERATIONS="$HELM_LABEL_STUDIO_TOLERATIONS --set-string tolerations[0].value=${LABEL_VALUE}"
+        HELM_LABEL_STUDIO_TOLERATIONS="$HELM_LABEL_STUDIO_TOLERATIONS --set-string tolerations[0].effect=${TAINT_EFFECT}"
+        HELM_LABEL_STUDIO_TOLERATIONS="$HELM_LABEL_STUDIO_TOLERATIONS --set-string nodeSelector.${LABEL_KEY_ESCAPED}=${LABEL_VALUE}"
+        HELM_LABEL_STUDIO_TOLERATIONS="$HELM_LABEL_STUDIO_TOLERATIONS --set-string pgbouncer.tolerations[0].key=${LABEL_KEY}"
+        HELM_LABEL_STUDIO_TOLERATIONS="$HELM_LABEL_STUDIO_TOLERATIONS --set-string pgbouncer.tolerations[0].operator=Equal"
+        HELM_LABEL_STUDIO_TOLERATIONS="$HELM_LABEL_STUDIO_TOLERATIONS --set-string pgbouncer.tolerations[0].value=${LABEL_VALUE}"
+        HELM_LABEL_STUDIO_TOLERATIONS="$HELM_LABEL_STUDIO_TOLERATIONS --set-string pgbouncer.tolerations[0].effect=${TAINT_EFFECT}"
+        HELM_LABEL_STUDIO_TOLERATIONS="$HELM_LABEL_STUDIO_TOLERATIONS --set-string pgbouncer.nodeSelector.${LABEL_KEY_ESCAPED}=${LABEL_VALUE}"
 
         for SERVICE in $SERVICES; do
             HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set-string ${SERVICE}.tolerations[0].key=${LABEL_KEY}"
@@ -418,6 +430,7 @@ generate_helm_args() {
     else
         HELM_TOLERATIONS_ARGS=""
         HELM_MILVUS_TOLERATIONS=""
+        HELM_LABEL_STUDIO_TOLERATIONS=""
     fi
 
     # Write Helm args to temp file for Makefile to source
@@ -426,6 +439,7 @@ generate_helm_args() {
 export HELM_NODE_SELECTOR_ARGS="$HELM_NODE_SELECTOR_ARGS"
 export HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS"
 export HELM_MILVUS_TOLERATIONS="$HELM_MILVUS_TOLERATIONS"
+export HELM_LABEL_STUDIO_TOLERATIONS="$HELM_LABEL_STUDIO_TOLERATIONS"
 EOF
 }
 
@@ -470,6 +484,7 @@ main() {
 export HELM_NODE_SELECTOR_ARGS=""
 export HELM_TOLERATIONS_ARGS=""
 export HELM_MILVUS_TOLERATIONS=""
+export HELM_LABEL_STUDIO_TOLERATIONS=""
 EOF
         exit 0
     fi
