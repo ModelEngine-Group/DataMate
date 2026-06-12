@@ -233,6 +233,7 @@ ifeq ($(origin INSTALLER), undefined)
 else
 	$(MAKE) datamate-$(INSTALLER)-install
 	$(MAKE) milvus-$(INSTALLER)-install
+	@rm -f /tmp/datamate-helm-args.sh
 endif
 
 .PHONY: uninstall-%
@@ -386,7 +387,6 @@ VALID_K8S_TARGETS := datamate deer-flow milvus label-studio data-juicer mineru m
 		else \
 			helm upgrade datamate deployment/helm/datamate/ -n $(NAMESPACE) --install --force --set global.image.repository=$(REGISTRY) --set public.secrets.create=$$SECRETS_CREATE $$HELM_EXTRA_ARGS; \
 		fi; \
-		rm -f /tmp/datamate-helm-args.sh; \
 		rm -f /tmp/datamate-secret-values-*.yaml; \
 	elif [ "$*" = "deer-flow" ]; then \
 		cp runtime/deer-flow/.env deployment/helm/deer-flow/charts/public/.env; \
@@ -397,9 +397,12 @@ VALID_K8S_TARGETS := datamate deer-flow milvus label-studio data-juicer mineru m
 		bash scripts/k8s/collect-secrets.sh --component milvus -n $(NAMESPACE); \
 		MILVUS_MINIO_ACCESS_KEY=$$(kubectl get secret milvus-minio-secret -n $(NAMESPACE) -o jsonpath='{.data.accesskey}' | base64 -d); \
 		MILVUS_MINIO_SECRET_KEY=$$(kubectl get secret milvus-minio-secret -n $(NAMESPACE) -o jsonpath='{.data.secretkey}' | base64 -d); \
+		if [ -f /tmp/datamate-helm-args.sh ]; then \
+			source /tmp/datamate-helm-args.sh; \
+		fi; \
 		helm upgrade milvus deployment/helm/milvus -n $(NAMESPACE) --install \
 			--set minio.accessKey="$$MILVUS_MINIO_ACCESS_KEY" \
-			--set minio.secretKey="$$MILVUS_MINIO_SECRET_KEY"; \
+			--set minio.secretKey="$$MILVUS_MINIO_SECRET_KEY" $$HELM_MILVUS_TOLERATIONS; \
 	elif [ "$*" = "data-juicer" ] || [ "$*" = "dj" ]; then \
 		kubectl apply -f deployment/kubernetes/data-juicer/deploy.yaml -n $(NAMESPACE); \
 	fi

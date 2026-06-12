@@ -6,11 +6,9 @@ fullnameOverride: ""
 
 ## Define toleration for node isolation
 ## This anchor can be referenced throughout the configuration
-nodeIsolationTolerations: &nodeIsolationTolerations
-  - key: "node-role.kubernetes.io/datamate"
-    operator: "Equal"
-    value: "true"
-    effect: "NoSchedule"
+## NOTE: Default is empty array - tolerations should be set via Helm --set
+## during install if node isolation is configured
+nodeIsolationTolerations: &nodeIsolationTolerations []
 
 ## Enable or disable Milvus Cluster mode
 cluster:
@@ -39,7 +37,9 @@ nodeSelector: {}
 # Global tolerations
 # If set, this will apply to all milvus components
 # Individual components can be set to a different tolerations
-tolerations: *nodeIsolationTolerations
+# Default: empty (no tolerations) - allows scheduling on any node
+# Set via --set tolerations[0].key=... during install if node isolation is needed
+tolerations: []
 
 # Global affinity
 # If set, this will apply to all milvus components
@@ -218,7 +218,7 @@ log:
       ## ReadWriteMany access mode required for milvus cluster.
       ##
       storageClass:
-      accessModes: ReadWriteMany
+      accessModes: ReadWriteOnce
       size: 10Gi
       subPath: ""
       storagePath:
