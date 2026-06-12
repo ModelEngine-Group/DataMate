@@ -371,6 +371,17 @@ generate_helm_args() {
         HELM_MILVUS_TOLERATIONS="$HELM_MILVUS_TOLERATIONS --set-string tolerations[0].operator=Equal"
         HELM_MILVUS_TOLERATIONS="$HELM_MILVUS_TOLERATIONS --set-string tolerations[0].value=${LABEL_VALUE}"
         HELM_MILVUS_TOLERATIONS="$HELM_MILVUS_TOLERATIONS --set-string tolerations[0].effect=${TAINT_EFFECT}"
+        
+        # Milvus sub-chart tolerations (etcd, minio don't inherit parent chart tolerations)
+        HELM_MILVUS_TOLERATIONS="$HELM_MILVUS_TOLERATIONS --set-string etcd.tolerations[0].key=${LABEL_KEY}"
+        HELM_MILVUS_TOLERATIONS="$HELM_MILVUS_TOLERATIONS --set-string etcd.tolerations[0].operator=Equal"
+        HELM_MILVUS_TOLERATIONS="$HELM_MILVUS_TOLERATIONS --set-string etcd.tolerations[0].value=${LABEL_VALUE}"
+        HELM_MILVUS_TOLERATIONS="$HELM_MILVUS_TOLERATIONS --set-string etcd.tolerations[0].effect=${TAINT_EFFECT}"
+        
+        HELM_MILVUS_TOLERATIONS="$HELM_MILVUS_TOLERATIONS --set-string minio.tolerations[0].key=${LABEL_KEY}"
+        HELM_MILVUS_TOLERATIONS="$HELM_MILVUS_TOLERATIONS --set-string minio.tolerations[0].operator=Equal"
+        HELM_MILVUS_TOLERATIONS="$HELM_MILVUS_TOLERATIONS --set-string minio.tolerations[0].value=${LABEL_VALUE}"
+        HELM_MILVUS_TOLERATIONS="$HELM_MILVUS_TOLERATIONS --set-string minio.tolerations[0].effect=${TAINT_EFFECT}"
 
         for SERVICE in $SERVICES; do
             HELM_TOLERATIONS_ARGS="$HELM_TOLERATIONS_ARGS --set-string ${SERVICE}.tolerations[0].key=${LABEL_KEY}"
