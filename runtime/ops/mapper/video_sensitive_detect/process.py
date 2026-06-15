@@ -3,10 +3,15 @@ import os
 import json
 import cv2
 
+from datamate.core.base_op import Mapper
 from .._video_common.paths import make_run_dir, ensure_dir
 from .._video_common.log import get_logger
 from .._video_common.io_video import get_video_info
-from .._video_common.qwen_http_client import qwenvl_infer_by_image_path, save_frame_to_jpg
+from .._video_common.qwen_http_client import (
+    qwenvl_infer_by_image_path,
+    resolve_qwenvl_service_url,
+    save_frame_to_jpg,
+)
 
 
 def _merge_times_to_segments(times, gap=1.5, pad=0.5):
@@ -27,7 +32,7 @@ def _merge_times_to_segments(times, gap=1.5, pad=0.5):
     return segs
 
 
-class VideoSensitiveDetect:
+class VideoSensitiveDetect(Mapper):
     """
     抽帧 + QwenVL HTTP 敏感检测（对齐 qwen_vl_server.py）：
 
@@ -37,7 +42,7 @@ class VideoSensitiveDetect:
       返回: {is_sensitive,label,score,reason}
 
     params:
-      - service_url: 默认 http://127.0.0.1:18080
+      - service_url: 默认 http://qwen-vl-service:18080
       - timeout_sec: 默认 180
       - sample_fps: 默认 1.0
       - threshold: 默认 0.5
@@ -48,8 +53,12 @@ class VideoSensitiveDetect:
       - out_dir/sensitive_segments.json
     """
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.params = dict(kwargs)
+
     def execute(self, sample: dict, params: dict = None):
-        params = params or {}
+        params = params or self.params
         video_path = sample["filePath"]
         export_path = sample.get("export_path", "./outputs")
 
@@ -59,7 +68,7 @@ class VideoSensitiveDetect:
         frames_dir = ensure_dir(os.path.join(art_dir, "frames"))
         logger = get_logger("VideoSensitiveDetect", log_dir)
 
-        service_url = params.get("service_url", "http://127.0.0.1:18080")
+        service_url = resolve_qwenvl_service_url(params.get("service_url"))
         timeout_sec = int(params.get("timeout_sec", 180))
         sample_fps = float(params.get("sample_fps", 1.0))
         threshold = float(params.get("threshold", 0.5))
@@ -151,5 +160,7 @@ class VideoSensitiveDetect:
         with open(json_path, "w", encoding="utf-8") as f:
             json.dump(result, f, ensure_ascii=False, indent=2)
 
+        result = {"out_dir": out_dir, "segments_json": json_path, "segments_count": len(segs)}
+        sample.update(result)
         logger.info(f"Done. segments_json={json_path}, segments={len(segs)}, hits={len(hits)}")
-        return {"out_dir": out_dir, "segments_json": json_path, "segments_count": len(segs)}
+        return sample

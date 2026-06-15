@@ -1,7 +1,7 @@
-name: '关键帧提取'
+name: '视频关键帧提取'
 name_en: 'Video Keyframe Extract'
-description: '基于 ffmpeg scene detect 提取关键帧，并可补封面帧（t=0），输出 keyframes.json 与关键帧图片。'
-description_en: 'Extract keyframes via ffmpeg scene detect and optional cover frame (t=0); outputs keyframes.json and images.'
+description: '基于 ffmpeg scene detect 提取关键帧，并可保留首帧和尾帧。'
+description_en: 'Extract keyframes with ffmpeg scene detect, with optional first and last frame retention.'
 language: 'python'
 vendor: 'huawei'
 raw_id: 'VideoKeyframeExtract'
@@ -14,3 +14,68 @@ effect:
   after: ''
 inputs: 'video'
 outputs: 'image'
+settings:
+  scene_threshold:
+    name: '场景阈值'
+    description: '场景切换敏感度，越小越容易出帧。'
+    type: 'slider'
+    defaultVal: 0.3
+    required: false
+    min: 0.05
+    max: 0.6
+    step: 0.05
+  max_keyframes:
+    name: '最大关键帧数'
+    description: '限制最多输出多少张关键帧。'
+    type: 'slider'
+    defaultVal: 30
+    required: false
+    min: 1
+    max: 100
+    step: 1
+  min_interval_sec:
+    name: '最小间隔秒数'
+    description: '相邻关键帧的最小时长间隔。'
+    type: 'slider'
+    defaultVal: 1.0
+    required: false
+    min: 0.2
+    max: 10.0
+    step: 0.2
+  always_include_first:
+    name: '保留首帧'
+    description: '是否额外保留视频首帧。'
+    type: 'switch'
+    defaultVal: 'true'
+    required: false
+    checkedLabel: '保留'
+    unCheckedLabel: '不保留'
+  always_include_last:
+    name: '保留尾帧'
+    description: '是否额外保留视频尾帧。'
+    type: 'switch'
+    defaultVal: 'true'
+    required: false
+    checkedLabel: '保留'
+    unCheckedLabel: '不保留'
+  quality:
+    name: 'JPEG 质量等级'
+    description: 'ffmpeg 输出图片质量参数，越小质量越高。'
+    type: 'slider'
+    defaultVal: 2
+    required: false
+    min: 1
+    max: 10
+    step: 1
+  ffmpeg_path:
+    name: 'FFmpeg 路径'
+    description: '留空时自动使用环境中的 ffmpeg。'
+    type: 'input'
+    defaultVal: ''
+    required: false
+  ffprobe_path:
+    name: 'FFprobe 路径'
+    description: '留空时自动使用环境中的 ffprobe。'
+    type: 'input'
+    defaultVal: ''
+    required: false

@@ -4,11 +4,12 @@ import json
 import shutil
 import subprocess
 
+from datamate.core.base_op import Mapper
 from .._video_common.paths import make_run_dir, ensure_dir
 from .._video_common.log import get_logger
 
 
-class VideoAudioExtract:
+class VideoAudioExtract(Mapper):
     """从视频提取音频（wav 16k mono）
 
     params:
@@ -22,8 +23,12 @@ class VideoAudioExtract:
       - artifacts/audio_info.json
     """
 
-    @staticmethod
-    def execute(sample, params):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.params = dict(kwargs)
+
+    def execute(self, sample, params=None):
+        params = params or self.params
         video_path = sample["filePath"]
         export_path = sample.get("export_path", "./outputs")
 
@@ -77,5 +82,7 @@ class VideoAudioExtract:
         with open(info_path, "w", encoding="utf-8") as f:
             json.dump(info, f, ensure_ascii=False, indent=2)
 
+        result = {"out_dir": out_dir, "audio_path": audio_path, "audio_info": info_path}
+        sample.update(result)
         logger.info(f"Done. audio={audio_path}")
-        return {"out_dir": out_dir, "audio_path": audio_path, "audio_info": info_path}
+        return sample

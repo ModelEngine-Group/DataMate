@@ -1,7 +1,7 @@
 name: '视频摘要（QwenVL）'
 name_en: 'Video Summary (QwenVL)'
-description: '抽多帧拼 montage，只调用一次 QwenVL summary，输出 summary.json（含 montage.jpg 与证据帧）。'
-description_en: 'Build montage from sampled frames, call QwenVL summary once; outputs summary.json with montage and evidence.'
+description: '抽取多帧拼接成 montage，并调用 QwenVL 生成视频摘要。'
+description_en: 'Build a montage from sampled frames and call QwenVL to generate a video summary.'
 language: 'python'
 vendor: 'huawei'
 raw_id: 'VideoSummaryQwenVL'
@@ -14,3 +14,97 @@ effect:
   after: ''
 inputs: 'video'
 outputs: 'text'
+settings:
+  sample_fps:
+    name: '抽帧频率'
+    description: '每秒抽取多少帧用于摘要。'
+    type: 'slider'
+    defaultVal: 1.0
+    required: false
+    min: 0.5
+    max: 4.0
+    step: 0.5
+  max_frames:
+    name: '最大抽帧数'
+    description: '最多拼接多少帧到 montage。'
+    type: 'slider'
+    defaultVal: 12
+    required: false
+    min: 4
+    max: 32
+    step: 2
+  language:
+    name: '输出语言'
+    description: '摘要输出语言。'
+    type: 'select'
+    defaultVal: 'zh'
+    required: false
+    options:
+      - label: '中文'
+        value: 'zh'
+      - label: '英文'
+        value: 'en'
+  style:
+    name: '摘要风格'
+    description: '摘要生成风格。'
+    type: 'select'
+    defaultVal: 'normal'
+    required: false
+    options:
+      - label: 'normal'
+        value: 'normal'
+      - label: 'brief'
+        value: 'brief'
+      - label: 'detail'
+        value: 'detail'
+  max_new_tokens:
+    name: '最大生成长度'
+    description: 'QwenVL 生成摘要时允许的最大 token 数。'
+    type: 'slider'
+    defaultVal: 160
+    required: false
+    min: 32
+    max: 512
+    step: 32
+  montage_cell_w:
+    name: '拼图单元宽度'
+    description: 'montage 每个单元格的宽度。'
+    type: 'slider'
+    defaultVal: 384
+    required: false
+    min: 128
+    max: 640
+    step: 32
+  montage_cell_h:
+    name: '拼图单元高度'
+    description: 'montage 每个单元格的高度。'
+    type: 'slider'
+    defaultVal: 216
+    required: false
+    min: 72
+    max: 480
+    step: 24
+  montage_max_cols:
+    name: '拼图最大列数'
+    description: 'montage 最多每行放多少列。'
+    type: 'slider'
+    defaultVal: 4
+    required: false
+    min: 1
+    max: 6
+    step: 1
+  timeout_sec:
+    name: '超时秒数'
+    description: '调用 QwenVL 的超时时间。'
+    type: 'slider'
+    defaultVal: 180
+    required: false
+    min: 30
+    max: 600
+    step: 30
+  service_url:
+    name: 'Qwen 服务地址'
+    description: '留空时读取环境变量，否则使用这里填写的地址。'
+    type: 'input'
+    defaultVal: 'http://qwen-vl-service:18080'
+    required: false

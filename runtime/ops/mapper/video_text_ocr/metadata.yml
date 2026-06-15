@@ -1,7 +1,7 @@
-name: '视频显著文字OCR提取'
+name: '视频显著文字 OCR'
 name_en: 'Video Text OCR'
-description: '对视频上方/主要区域显著文字进行OCR识别，输出 text_ocr.json；可选自动去黑边、抽帧、跳过相似帧。'
-description_en: 'OCR for salient texts on main/top region, outputs text_ocr.json; optional deborder, sampling, frame skipping.'
+description: '识别视频上方区域中的显著文字，输出 text_ocr.json。'
+description_en: 'Recognize salient text in the upper region of the video and output text_ocr.json.'
 language: 'python'
 vendor: 'huawei'
 raw_id: 'VideoTextOCR'
@@ -14,3 +14,195 @@ effect:
   after: ''
 inputs: 'video'
 outputs: 'text'
+settings:
+  preprocess_deborder:
+    name: '先去黑边'
+    description: '是否在 OCR 前先做黑边裁切。'
+    type: 'switch'
+    defaultVal: 'true'
+    required: false
+    checkedLabel: '开启'
+    unCheckedLabel: '关闭'
+  sample_fps:
+    name: '抽帧频率'
+    description: '每秒抽取多少帧用于显著文字 OCR。'
+    type: 'slider'
+    defaultVal: 1.0
+    required: false
+    min: 0.5
+    max: 6.0
+    step: 0.5
+  max_frames:
+    name: '最大抽帧数'
+    description: '限制最多参与 OCR 的帧数。'
+    type: 'slider'
+    defaultVal: 160
+    required: false
+    min: 20
+    max: 1000
+    step: 20
+  top_ratio:
+    name: '上方区域比例'
+    description: '从顶部截取多少比例作为显著文字 ROI。'
+    type: 'slider'
+    defaultVal: 0.70
+    required: false
+    min: 0.1
+    max: 1.0
+    step: 0.05
+  enable_min_score:
+    name: '启用最小 OCR 分数'
+    description: '关闭时不过滤低分 OCR 结果。'
+    type: 'switch'
+    defaultVal: 'false'
+    required: false
+    checkedLabel: '开启'
+    unCheckedLabel: '关闭'
+  min_score:
+    name: '最小 OCR 分数'
+    description: '低于该分数的 OCR 结果会被过滤。'
+    type: 'slider'
+    defaultVal: 0.20
+    required: false
+    min: 0.0
+    max: 1.0
+    step: 0.05
+  enable_roi_diff_thr:
+    name: '启用 ROI 差异阈值'
+    description: '关闭时不按 ROI 变化过滤重复帧。'
+    type: 'switch'
+    defaultVal: 'false'
+    required: false
+    checkedLabel: '开启'
+    unCheckedLabel: '关闭'
+  roi_diff_thr:
+    name: 'ROI 差异阈值'
+    description: '相邻帧 ROI 变化低于该值时会跳过 OCR。'
+    type: 'slider'
+    defaultVal: 6.0
+    required: false
+    min: 0.0
+    max: 20.0
+    step: 0.5
+  exact_frame_dedup:
+    name: '完全相同画面去重'
+    description: '相邻抽帧的 OCR 区域完全一致时，直接跳过后一帧。'
+    type: 'switch'
+    defaultVal: 'true'
+    required: false
+    checkedLabel: '开启'
+    unCheckedLabel: '关闭'
+  fix_english_space:
+    name: '修复英文空格'
+    description: '是否修复英文单词间距。'
+    type: 'switch'
+    defaultVal: 'true'
+    required: false
+    checkedLabel: '开启'
+    unCheckedLabel: '关闭'
+  use_wordninja:
+    name: '启用英文切词'
+    description: '是否使用 wordninja 做英文切词修复。'
+    type: 'switch'
+    defaultVal: 'true'
+    required: false
+    checkedLabel: '开启'
+    unCheckedLabel: '关闭'
+  enable_ocr_upscale:
+    name: '启用 OCR 放大'
+    description: '关闭时不做 OCR 放大。'
+    type: 'switch'
+    defaultVal: 'false'
+    required: false
+    checkedLabel: '开启'
+    unCheckedLabel: '关闭'
+  ocr_upscale:
+    name: 'OCR 放大倍数'
+    description: 'OCR 前对 ROI 的放大倍数。'
+    type: 'slider'
+    defaultVal: 1.5
+    required: false
+    min: 1.0
+    max: 3.0
+    step: 0.1
+  ocr_sharpen:
+    name: 'OCR 锐化'
+    description: '是否在 OCR 前进行锐化。'
+    type: 'switch'
+    defaultVal: 'true'
+    required: false
+    checkedLabel: '开启'
+    unCheckedLabel: '关闭'
+  enable_ocr_contrast:
+    name: '启用 OCR 对比度'
+    description: '关闭时不做额外对比度增强。'
+    type: 'switch'
+    defaultVal: 'false'
+    required: false
+    checkedLabel: '开启'
+    unCheckedLabel: '关闭'
+  ocr_contrast:
+    name: 'OCR 对比度'
+    description: 'OCR 预处理时的对比度系数。'
+    type: 'slider'
+    defaultVal: 1.20
+    required: false
+    min: 0.8
+    max: 2.0
+    step: 0.05
+  enable_ocr_brightness:
+    name: '启用 OCR 亮度增量'
+    description: '关闭时不做额外亮度增强。'
+    type: 'switch'
+    defaultVal: 'false'
+    required: false
+    checkedLabel: '开启'
+    unCheckedLabel: '关闭'
+  ocr_brightness:
+    name: 'OCR 亮度增量'
+    description: 'OCR 预处理时的亮度增量。'
+    type: 'slider'
+    defaultVal: 4
+    required: false
+    min: 0
+    max: 20
+    step: 1
+  start_sec:
+    name: '起始秒数'
+    description: '从视频的哪个时间开始 OCR。'
+    type: 'slider'
+    defaultVal: 0.0
+    required: false
+    min: 0.0
+    max: 60.0
+    step: 1.0
+  end_sec:
+    name: '结束秒数'
+    description: '可选，留空表示处理到视频结束。'
+    type: 'input'
+    defaultVal: ''
+    required: false
+  dedup_sim_thr:
+    name: '去重相似度阈值'
+    description: '文本去重时使用的相似度阈值。'
+    type: 'slider'
+    defaultVal: 0.92
+    required: false
+    min: 0.5
+    max: 1.0
+    step: 0.01
+  dedup_time_window:
+    name: '去重时间窗口'
+    description: '文本去重时使用的时间窗口秒数。'
+    type: 'slider'
+    defaultVal: 2.0
+    required: false
+    min: 0.0
+    max: 10.0
+    step: 0.5
+  ffmpeg_path:
+    name: 'FFmpeg 路径'
+    description: '留空时自动使用环境中的 ffmpeg。'
+    type: 'input'
+    defaultVal: ''
+    required: false
