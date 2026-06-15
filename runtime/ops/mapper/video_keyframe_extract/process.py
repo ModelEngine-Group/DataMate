@@ -6,6 +6,10 @@ import subprocess
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
 
+from datamate.core.base_op import Mapper
+from .._video_common.paths import make_run_dir
+from .._video_common.params import parse_bool
+
 
 def _run(cmd: List[str]) -> Tuple[int, str]:
     p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
@@ -95,7 +99,12 @@ class VideoKeyframeExtractLocal:
     """
 
     def run(self, video_path: str, out_dir: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        p = KeyframeParams(**(params or {}))
+        valid_keys = set(KeyframeParams.__dataclass_fields__.keys())
+        clean_params = {k: v for k, v in (params or {}).items() if k in valid_keys}
+        for key in ("always_include_first", "always_include_last"):
+            if key in clean_params:
+                clean_params[key] = parse_bool(clean_params[key], default=True)
+        p = KeyframeParams(**clean_params)
 
         ffmpeg = p.ffmpeg_path or shutil.which("ffmpeg")
         ffprobe = p.ffprobe_path or shutil.which("ffprobe")
@@ -283,6 +292,23 @@ class VideoKeyframeExtractLocal:
             "keyframes_json": out_json,
             "keyframes_dir": key_dir,
         }
+
+
+class VideoKeyframeExtract(Mapper):
+    """DataMate Mapper wrapper for local ffmpeg keyframe extraction."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.params = dict(kwargs)
+
+    def execute(self, sample: Dict[str, Any], params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        params = params or self.params
+        video_path = sample["filePath"]
+        export_path = sample.get("export_path", "./outputs")
+        out_dir = make_run_dir(export_path, "video_keyframe_extract")
+        result = VideoKeyframeExtractLocal().run(video_path=video_path, out_dir=out_dir, params=params)
+        sample.update(result)
+        return sample
 
 
 if __name__ == "__main__":

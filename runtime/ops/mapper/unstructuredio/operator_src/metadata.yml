@@ -1,0 +1,101 @@
+name: 'UnstructuredIO 文档解析'
+description: '基于 unstructured 的文档结构化解析算子，输出 unstructured 兼容 JSON。'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'UnstructuredIOMapper'
+version: '1.0.0'
+modal: 'text'
+inputs: 'text'
+outputs: 'text'
+types:
+  - 'cleaning'
+  - 'annotation'
+release:
+  - '首次发布'
+  - '支持 PDF、DOCX、DOC 及 unstructured 可识别文档格式'
+  - '输出 unstructured 兼容元素 JSON，并补充 NPU/OCR 优先路径、DOCX 快路径与 PDF 噪声抑制'
+metrics:
+  - name: '输出形态'
+    metric: 'unstructured-compatible JSON'
+  - name: '表格保留'
+    metric: '保留 Table / text_as_html 字段'
+  - name: 'PDF 稳定性'
+    metric: '优先 NPU/OCR hi_res，失败后 fast/auto 自动回退'
+runtime:
+  memory: 2147483648
+  cpu: 1
+  gpu: 0
+  npu: 1
+settings:
+  exportType:
+    name: '导出格式'
+    description: '默认导出为 JSON；也可导出 JSONL 或纯文本预览。'
+    type: 'select'
+    defaultVal: 'json'
+    required: false
+    options:
+      - label: 'JSON'
+        value: 'json'
+      - label: 'JSONL'
+        value: 'jsonl'
+      - label: 'TXT'
+        value: 'txt'
+  pdfStrategy:
+    name: 'PDF 策略'
+    description: '该参数用于 NPU/OCR 失败后的兜底策略；正常情况下优先走 NPU/OCR hi_res。'
+    type: 'radio'
+    defaultVal: 'auto'
+    required: false
+    options:
+      - label: 'Auto'
+        value: 'auto'
+      - label: 'Fast'
+        value: 'fast'
+      - label: 'HiRes'
+        value: 'hi_res'
+  pdfInferTableStructure:
+    name: 'PDF 表格结构'
+    description: '为 PDF 开启 Table / text_as_html 推断，优先保持 unstructured 输出形态。'
+    type: 'switch'
+    defaultVal: 'true'
+    required: false
+    checkedLabel: '开启'
+    unCheckedLabel: '关闭'
+  enableDocxFastpath:
+    name: 'DOCX 快路径'
+    description: '优先使用兼容型 DOCX 快路径，失败时自动回退到 unstructured 原生解析。'
+    type: 'switch'
+    defaultVal: 'true'
+    required: false
+    checkedLabel: '开启'
+    unCheckedLabel: '关闭'
+  suppressPdfNoise:
+    name: 'PDF 噪声抑制'
+    description: '仅过滤首页明显竖排边缘乱码，尽量少误杀。'
+    type: 'switch'
+    defaultVal: 'true'
+    required: false
+    checkedLabel: '开启'
+    unCheckedLabel: '关闭'
+  fallbackToAuto:
+    name: 'PDF 自动回退'
+    description: '当 fast 路径结果过少时，自动回退到 auto 解析。'
+    type: 'switch'
+    defaultVal: 'true'
+    required: false
+    checkedLabel: '开启'
+    unCheckedLabel: '关闭'
+  requireNpuModels:
+    name: '强制 NPU 模型链路'
+    description: '验收模式。开启后 PDF 必须使用 YOLOX PT NPU + PaddleOCR NPU；DOCX/DOC 先转 PDF 后走同一视觉 NPU 链路。任一 NPU 模型或 OCR NPU 不可用时直接失败，不回退 CPU。'
+    type: 'switch'
+    defaultVal: 'false'
+    required: false
+    checkedLabel: '开启'
+    unCheckedLabel: '关闭'
+  jsonIndent:
+    name: 'JSON 缩进'
+    description: 'JSON 导出缩进空格数，默认 2。'
+    type: 'input'
+    defaultVal: '2'
+    required: false

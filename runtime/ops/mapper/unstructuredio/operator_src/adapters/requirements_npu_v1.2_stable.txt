@@ -1,0 +1,25 @@
+# 910b-jss 临时 NPU 验证环境关键依赖
+# 说明：该文件是验收环境参考，不建议由 DataMate 算子上传包在运行时自动 pip install。
+
+unstructured==0.18.32
+unstructured-inference==1.2.0
+torch==2.7.0
+torch-npu==2.7.1
+torchvision==0.22.0
+paddlepaddle==3.3.1
+paddle-custom-npu==3.3.0
+paddleocr==2.7.3
+numpy==1.26.4
+opencv-python-headless==4.9.0.80
+onnxruntime==1.23.2
+einops==0.8.2
+loguru==0.7.3
+pi-heif==1.1.1
+pikepdf==9.8.1
+pdf2image==1.17.0
+pypdfium2==4.30.0
+
+# 系统依赖
+# - Ascend CANN/driver runtime
+# - poppler/pdf render dependencies required by unstructured/pdf2image==1.17.0
+# - LibreOffice/soffice for DOCX/DOC strict NPU mode

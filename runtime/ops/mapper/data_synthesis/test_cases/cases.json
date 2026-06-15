@@ -1,0 +1,602 @@
+[
+    {
+        "id":  "data_synthesis_case_01",
+        "operator":  "data_synthesis",
+        "dataset":  "cMedQA2",
+        "input_file":  "example_input/ds_case_01.txt",
+        "source_urls":  [
+                            "https://github.com/zhangsheng93/cMedQA2"
+                        ],
+        "purpose":  "验证中文医疗文本输入下，算子能够生成 QA、CoT、Preference 三类结构化合成数据。",
+        "run_parameters":  {
+                               "taskTypes":  "QA,CoT,Preference"
+                           },
+        "checks":  [
+                       "输出必须是合法 JSON。",
+                       "results.QA、results.CoT、results.Preference 三类结果均应存在。",
+                       "每类结果应包含 status 字段；成功结果不得为空。",
+                       "Preference 结果应包含 question、chosen、rejected、preference_reason 等关键字段。",
+                       "输出内容应为中文，不应出现乱码或英文样例正文。"
+                   ]
+    },
+    {
+        "id":  "data_synthesis_case_02",
+        "operator":  "data_synthesis",
+        "dataset":  "中文医疗问答公开语料",
+        "input_file":  "example_input/ds_case_02.txt",
+        "source_urls":  [
+                            "https://github.com/zhangsheng93/cMedQA2"
+                        ],
+        "purpose":  "验证中文医疗文本输入下，算子能够生成 QA、CoT、Preference 三类结构化合成数据。",
+        "run_parameters":  {
+                               "taskTypes":  "QA,CoT,Preference"
+                           },
+        "checks":  [
+                       "输出必须是合法 JSON。",
+                       "results.QA、results.CoT、results.Preference 三类结果均应存在。",
+                       "每类结果应包含 status 字段；成功结果不得为空。",
+                       "Preference 结果应包含 question、chosen、rejected、preference_reason 等关键字段。",
+                       "输出内容应为中文，不应出现乱码或英文样例正文。"
+                   ]
+    },
+    {
+        "id":  "data_synthesis_case_03",
+        "operator":  "data_synthesis",
+        "dataset":  "medical-o1-reasoning-SFT",
+        "input_file":  "example_input/ds_case_03.txt",
+        "source_urls":  [
+                            "https://huggingface.co/datasets/FreedomIntelligence/medical-o1-reasoning-SFT"
+                        ],
+        "purpose":  "验证中文医疗文本输入下，算子能够生成 QA、CoT、Preference 三类结构化合成数据。",
+        "run_parameters":  {
+                               "taskTypes":  "QA,CoT,Preference"
+                           },
+        "checks":  [
+                       "输出必须是合法 JSON。",
+                       "results.QA、results.CoT、results.Preference 三类结果均应存在。",
+                       "每类结果应包含 status 字段；成功结果不得为空。",
+                       "Preference 结果应包含 question、chosen、rejected、preference_reason 等关键字段。",
+                       "输出内容应为中文，不应出现乱码或英文样例正文。"
+                   ]
+    },
+    {
+        "id":  "data_synthesis_case_04",
+        "operator":  "data_synthesis",
+        "dataset":  "medical-o1-reasoning-SFT",
+        "input_file":  "example_input/ds_case_04.txt",
+        "source_urls":  [
+                            "https://huggingface.co/datasets/FreedomIntelligence/medical-o1-reasoning-SFT"
+                        ],
+        "purpose":  "验证中文医疗文本输入下，算子能够生成 QA、CoT、Preference 三类结构化合成数据。",
+        "run_parameters":  {
+                               "taskTypes":  "QA,CoT,Preference"
+                           },
+        "checks":  [
+                       "输出必须是合法 JSON。",
+                       "results.QA、results.CoT、results.Preference 三类结果均应存在。",
+                       "每类结果应包含 status 字段；成功结果不得为空。",
+                       "Preference 结果应包含 question、chosen、rejected、preference_reason 等关键字段。",
+                       "输出内容应为中文，不应出现乱码或英文样例正文。"
+                   ]
+    },
+    {
+        "id":  "data_synthesis_case_05",
+        "operator":  "data_synthesis",
+        "dataset":  "中文临床病例公开样式",
+        "input_file":  "example_input/ds_case_05.txt",
+        "source_urls":  [
+                            "https://huggingface.co/datasets/FreedomIntelligence/medical-o1-reasoning-SFT"
+                        ],
+        "purpose":  "验证中文医疗文本输入下，算子能够生成 QA、CoT、Preference 三类结构化合成数据。",
+        "run_parameters":  {
+                               "taskTypes":  "QA,CoT,Preference"
+                           },
+        "checks":  [
+                       "输出必须是合法 JSON。",
+                       "results.QA、results.CoT、results.Preference 三类结果均应存在。",
+                       "每类结果应包含 status 字段；成功结果不得为空。",
+                       "Preference 结果应包含 question、chosen、rejected、preference_reason 等关键字段。",
+                       "输出内容应为中文，不应出现乱码或英文样例正文。"
+                   ]
+    },
+    {
+        "id":  "data_synthesis_case_06",
+        "operator":  "data_synthesis",
+        "dataset":  "cMedQA2",
+        "input_file":  "example_input/ds_case_06.txt",
+        "source_urls":  [
+                            "https://github.com/zhangsheng93/cMedQA2"
+                        ],
+        "purpose":  "验证中文医疗文本输入下，算子能够生成 QA、CoT、Preference 三类结构化合成数据。",
+        "run_parameters":  {
+                               "taskTypes":  "QA,CoT,Preference"
+                           },
+        "checks":  [
+                       "输出必须是合法 JSON。",
+                       "results.QA、results.CoT、results.Preference 三类结果均应存在。",
+                       "每类结果应包含 status 字段；成功结果不得为空。",
+                       "Preference 结果应包含 question、chosen、rejected、preference_reason 等关键字段。",
+                       "输出内容应为中文，不应出现乱码或英文样例正文。"
+                   ]
+    },
+    {
+        "id":  "data_synthesis_case_07",
+        "operator":  "data_synthesis",
+        "dataset":  "中文医疗问答公开语料",
+        "input_file":  "example_input/ds_case_07.txt",
+        "source_urls":  [
+                            "https://github.com/zhangsheng93/cMedQA2"
+                        ],
+        "purpose":  "验证中文医疗文本输入下，算子能够生成 QA、CoT、Preference 三类结构化合成数据。",
+        "run_parameters":  {
+                               "taskTypes":  "QA,CoT,Preference"
+                           },
+        "checks":  [
+                       "输出必须是合法 JSON。",
+                       "results.QA、results.CoT、results.Preference 三类结果均应存在。",
+                       "每类结果应包含 status 字段；成功结果不得为空。",
+                       "Preference 结果应包含 question、chosen、rejected、preference_reason 等关键字段。",
+                       "输出内容应为中文，不应出现乱码或英文样例正文。"
+                   ]
+    },
+    {
+        "id":  "data_synthesis_case_08",
+        "operator":  "data_synthesis",
+        "dataset":  "medical-o1-reasoning-SFT",
+        "input_file":  "example_input/ds_case_08.txt",
+        "source_urls":  [
+                            "https://huggingface.co/datasets/FreedomIntelligence/medical-o1-reasoning-SFT"
+                        ],
+        "purpose":  "验证中文医疗文本输入下，算子能够生成 QA、CoT、Preference 三类结构化合成数据。",
+        "run_parameters":  {
+                               "taskTypes":  "QA,CoT,Preference"
+                           },
+        "checks":  [
+                       "输出必须是合法 JSON。",
+                       "results.QA、results.CoT、results.Preference 三类结果均应存在。",
+                       "每类结果应包含 status 字段；成功结果不得为空。",
+                       "Preference 结果应包含 question、chosen、rejected、preference_reason 等关键字段。",
+                       "输出内容应为中文，不应出现乱码或英文样例正文。"
+                   ]
+    },
+    {
+        "id":  "data_synthesis_case_09",
+        "operator":  "data_synthesis",
+        "dataset":  "中文健康科普公开样式",
+        "input_file":  "example_input/ds_case_09.txt",
+        "source_urls":  [
+                            "https://github.com/zhangsheng93/cMedQA2"
+                        ],
+        "purpose":  "验证中文医疗文本输入下，算子能够生成 QA、CoT、Preference 三类结构化合成数据。",
+        "run_parameters":  {
+                               "taskTypes":  "QA,CoT,Preference"
+                           },
+        "checks":  [
+                       "输出必须是合法 JSON。",
+                       "results.QA、results.CoT、results.Preference 三类结果均应存在。",
+                       "每类结果应包含 status 字段；成功结果不得为空。",
+                       "Preference 结果应包含 question、chosen、rejected、preference_reason 等关键字段。",
+                       "输出内容应为中文，不应出现乱码或英文样例正文。"
+                   ]
+    },
+    {
+        "id":  "data_synthesis_case_10",
+        "operator":  "data_synthesis",
+        "dataset":  "中文临床病例公开样式",
+        "input_file":  "example_input/ds_case_10.txt",
+        "source_urls":  [
+                            "https://huggingface.co/datasets/FreedomIntelligence/medical-o1-reasoning-SFT"
+                        ],
+        "purpose":  "验证中文医疗文本输入下，算子能够生成 QA、CoT、Preference 三类结构化合成数据。",
+        "run_parameters":  {
+                               "taskTypes":  "QA,CoT,Preference"
+                           },
+        "checks":  [
+                       "输出必须是合法 JSON。",
+                       "results.QA、results.CoT、results.Preference 三类结果均应存在。",
+                       "每类结果应包含 status 字段；成功结果不得为空。",
+                       "Preference 结果应包含 question、chosen、rejected、preference_reason 等关键字段。",
+                       "输出内容应为中文，不应出现乱码或英文样例正文。"
+                   ]
+    },
+    {
+        "id":  "data_synthesis_case_11",
+        "operator":  "data_synthesis",
+        "dataset":  "cMedQA2",
+        "input_file":  "example_input/ds_case_11.txt",
+        "source_urls":  [
+                            "https://github.com/zhangsheng93/cMedQA2"
+                        ],
+        "purpose":  "验证中文医疗文本输入下，算子能够生成 QA、CoT、Preference 三类结构化合成数据。",
+        "run_parameters":  {
+                               "taskTypes":  "QA,CoT,Preference"
+                           },
+        "checks":  [
+                       "输出必须是合法 JSON。",
+                       "results.QA、results.CoT、results.Preference 三类结果均应存在。",
+                       "每类结果应包含 status 字段；成功结果不得为空。",
+                       "Preference 结果应包含 question、chosen、rejected、preference_reason 等关键字段。",
+                       "输出内容应为中文，不应出现乱码或英文样例正文。"
+                   ]
+    },
+    {
+        "id":  "data_synthesis_case_12",
+        "operator":  "data_synthesis",
+        "dataset":  "中文医疗问答公开语料",
+        "input_file":  "example_input/ds_case_12.txt",
+        "source_urls":  [
+                            "https://github.com/zhangsheng93/cMedQA2"
+                        ],
+        "purpose":  "验证中文医疗文本输入下，算子能够生成 QA、CoT、Preference 三类结构化合成数据。",
+        "run_parameters":  {
+                               "taskTypes":  "QA,CoT,Preference"
+                           },
+        "checks":  [
+                       "输出必须是合法 JSON。",
+                       "results.QA、results.CoT、results.Preference 三类结果均应存在。",
+                       "每类结果应包含 status 字段；成功结果不得为空。",
+                       "Preference 结果应包含 question、chosen、rejected、preference_reason 等关键字段。",
+                       "输出内容应为中文，不应出现乱码或英文样例正文。"
+                   ]
+    },
+    {
+        "id":  "data_synthesis_case_13",
+        "operator":  "data_synthesis",
+        "dataset":  "medical-o1-reasoning-SFT",
+        "input_file":  "example_input/ds_case_13.txt",
+        "source_urls":  [
+                            "https://huggingface.co/datasets/FreedomIntelligence/medical-o1-reasoning-SFT"
+                        ],
+        "purpose":  "验证中文医疗文本输入下，算子能够生成 QA、CoT、Preference 三类结构化合成数据。",
+        "run_parameters":  {
+                               "taskTypes":  "QA,CoT,Preference"
+                           },
+        "checks":  [
+                       "输出必须是合法 JSON。",
+                       "results.QA、results.CoT、results.Preference 三类结果均应存在。",
+                       "每类结果应包含 status 字段；成功结果不得为空。",
+                       "Preference 结果应包含 question、chosen、rejected、preference_reason 等关键字段。",
+                       "输出内容应为中文，不应出现乱码或英文样例正文。"
+                   ]
+    },
+    {
+        "id":  "data_synthesis_case_14",
+        "operator":  "data_synthesis",
+        "dataset":  "中文临床病例公开样式",
+        "input_file":  "example_input/ds_case_14.txt",
+        "source_urls":  [
+                            "https://huggingface.co/datasets/FreedomIntelligence/medical-o1-reasoning-SFT"
+                        ],
+        "purpose":  "验证中文医疗文本输入下，算子能够生成 QA、CoT、Preference 三类结构化合成数据。",
+        "run_parameters":  {
+                               "taskTypes":  "QA,CoT,Preference"
+                           },
+        "checks":  [
+                       "输出必须是合法 JSON。",
+                       "results.QA、results.CoT、results.Preference 三类结果均应存在。",
+                       "每类结果应包含 status 字段；成功结果不得为空。",
+                       "Preference 结果应包含 question、chosen、rejected、preference_reason 等关键字段。",
+                       "输出内容应为中文，不应出现乱码或英文样例正文。"
+                   ]
+    },
+    {
+        "id":  "data_synthesis_case_15",
+        "operator":  "data_synthesis",
+        "dataset":  "cMedQA2",
+        "input_file":  "example_input/ds_case_15.txt",
+        "source_urls":  [
+                            "https://github.com/zhangsheng93/cMedQA2"
+                        ],
+        "purpose":  "验证中文医疗文本输入下，算子能够生成 QA、CoT、Preference 三类结构化合成数据。",
+        "run_parameters":  {
+                               "taskTypes":  "QA,CoT,Preference"
+                           },
+        "checks":  [
+                       "输出必须是合法 JSON。",
+                       "results.QA、results.CoT、results.Preference 三类结果均应存在。",
+                       "每类结果应包含 status 字段；成功结果不得为空。",
+                       "Preference 结果应包含 question、chosen、rejected、preference_reason 等关键字段。",
+                       "输出内容应为中文，不应出现乱码或英文样例正文。"
+                   ]
+    },
+    {
+        "id":  "data_synthesis_case_16",
+        "operator":  "data_synthesis",
+        "dataset":  "中文健康科普公开样式",
+        "input_file":  "example_input/ds_case_16.txt",
+        "source_urls":  [
+                            "https://github.com/zhangsheng93/cMedQA2"
+                        ],
+        "purpose":  "验证中文医疗文本输入下，算子能够生成 QA、CoT、Preference 三类结构化合成数据。",
+        "run_parameters":  {
+                               "taskTypes":  "QA,CoT,Preference"
+                           },
+        "checks":  [
+                       "输出必须是合法 JSON。",
+                       "results.QA、results.CoT、results.Preference 三类结果均应存在。",
+                       "每类结果应包含 status 字段；成功结果不得为空。",
+                       "Preference 结果应包含 question、chosen、rejected、preference_reason 等关键字段。",
+                       "输出内容应为中文，不应出现乱码或英文样例正文。"
+                   ]
+    },
+    {
+        "id":  "data_synthesis_case_17",
+        "operator":  "data_synthesis",
+        "dataset":  "medical-o1-reasoning-SFT",
+        "input_file":  "example_input/ds_case_17.txt",
+        "source_urls":  [
+                            "https://huggingface.co/datasets/FreedomIntelligence/medical-o1-reasoning-SFT"
+                        ],
+        "purpose":  "验证中文医疗文本输入下，算子能够生成 QA、CoT、Preference 三类结构化合成数据。",
+        "run_parameters":  {
+                               "taskTypes":  "QA,CoT,Preference"
+                           },
+        "checks":  [
+                       "输出必须是合法 JSON。",
+                       "results.QA、results.CoT、results.Preference 三类结果均应存在。",
+                       "每类结果应包含 status 字段；成功结果不得为空。",
+                       "Preference 结果应包含 question、chosen、rejected、preference_reason 等关键字段。",
+                       "输出内容应为中文，不应出现乱码或英文样例正文。"
+                   ]
+    },
+    {
+        "id":  "data_synthesis_case_18",
+        "operator":  "data_synthesis",
+        "dataset":  "中文医疗问答公开语料",
+        "input_file":  "example_input/ds_case_18.txt",
+        "source_urls":  [
+                            "https://github.com/zhangsheng93/cMedQA2"
+                        ],
+        "purpose":  "验证中文医疗文本输入下，算子能够生成 QA、CoT、Preference 三类结构化合成数据。",
+        "run_parameters":  {
+                               "taskTypes":  "QA,CoT,Preference"
+                           },
+        "checks":  [
+                       "输出必须是合法 JSON。",
+                       "results.QA、results.CoT、results.Preference 三类结果均应存在。",
+                       "每类结果应包含 status 字段；成功结果不得为空。",
+                       "Preference 结果应包含 question、chosen、rejected、preference_reason 等关键字段。",
+                       "输出内容应为中文，不应出现乱码或英文样例正文。"
+                   ]
+    },
+    {
+        "id":  "data_synthesis_case_19",
+        "operator":  "data_synthesis",
+        "dataset":  "中文临床病例公开样式",
+        "input_file":  "example_input/ds_case_19.txt",
+        "source_urls":  [
+                            "https://huggingface.co/datasets/FreedomIntelligence/medical-o1-reasoning-SFT"
+                        ],
+        "purpose":  "验证中文医疗文本输入下，算子能够生成 QA、CoT、Preference 三类结构化合成数据。",
+        "run_parameters":  {
+                               "taskTypes":  "QA,CoT,Preference"
+                           },
+        "checks":  [
+                       "输出必须是合法 JSON。",
+                       "results.QA、results.CoT、results.Preference 三类结果均应存在。",
+                       "每类结果应包含 status 字段；成功结果不得为空。",
+                       "Preference 结果应包含 question、chosen、rejected、preference_reason 等关键字段。",
+                       "输出内容应为中文，不应出现乱码或英文样例正文。"
+                   ]
+    },
+    {
+        "id":  "data_synthesis_case_20",
+        "operator":  "data_synthesis",
+        "dataset":  "cMedQA2",
+        "input_file":  "example_input/ds_case_20.txt",
+        "source_urls":  [
+                            "https://github.com/zhangsheng93/cMedQA2"
+                        ],
+        "purpose":  "验证中文医疗文本输入下，算子能够生成 QA、CoT、Preference 三类结构化合成数据。",
+        "run_parameters":  {
+                               "taskTypes":  "QA,CoT,Preference"
+                           },
+        "checks":  [
+                       "输出必须是合法 JSON。",
+                       "results.QA、results.CoT、results.Preference 三类结果均应存在。",
+                       "每类结果应包含 status 字段；成功结果不得为空。",
+                       "Preference 结果应包含 question、chosen、rejected、preference_reason 等关键字段。",
+                       "输出内容应为中文，不应出现乱码或英文样例正文。"
+                   ]
+    },
+    {
+        "id":  "data_synthesis_case_21",
+        "operator":  "data_synthesis",
+        "dataset":  "中文健康科普公开样式",
+        "input_file":  "example_input/ds_case_21.txt",
+        "source_urls":  [
+                            "https://github.com/zhangsheng93/cMedQA2"
+                        ],
+        "purpose":  "验证中文医疗文本输入下，算子能够生成 QA、CoT、Preference 三类结构化合成数据。",
+        "run_parameters":  {
+                               "taskTypes":  "QA,CoT,Preference"
+                           },
+        "checks":  [
+                       "输出必须是合法 JSON。",
+                       "results.QA、results.CoT、results.Preference 三类结果均应存在。",
+                       "每类结果应包含 status 字段；成功结果不得为空。",
+                       "Preference 结果应包含 question、chosen、rejected、preference_reason 等关键字段。",
+                       "输出内容应为中文，不应出现乱码或英文样例正文。"
+                   ]
+    },
+    {
+        "id":  "data_synthesis_case_22",
+        "operator":  "data_synthesis",
+        "dataset":  "medical-o1-reasoning-SFT",
+        "input_file":  "example_input/ds_case_22.txt",
+        "source_urls":  [
+                            "https://huggingface.co/datasets/FreedomIntelligence/medical-o1-reasoning-SFT"
+                        ],
+        "purpose":  "验证中文医疗文本输入下，算子能够生成 QA、CoT、Preference 三类结构化合成数据。",
+        "run_parameters":  {
+                               "taskTypes":  "QA,CoT,Preference"
+                           },
+        "checks":  [
+                       "输出必须是合法 JSON。",
+                       "results.QA、results.CoT、results.Preference 三类结果均应存在。",
+                       "每类结果应包含 status 字段；成功结果不得为空。",
+                       "Preference 结果应包含 question、chosen、rejected、preference_reason 等关键字段。",
+                       "输出内容应为中文，不应出现乱码或英文样例正文。"
+                   ]
+    },
+    {
+        "id":  "data_synthesis_case_23",
+        "operator":  "data_synthesis",
+        "dataset":  "中文医疗问答公开语料",
+        "input_file":  "example_input/ds_case_23.txt",
+        "source_urls":  [
+                            "https://github.com/zhangsheng93/cMedQA2"
+                        ],
+        "purpose":  "验证中文医疗文本输入下，算子能够生成 QA、CoT、Preference 三类结构化合成数据。",
+        "run_parameters":  {
+                               "taskTypes":  "QA,CoT,Preference"
+                           },
+        "checks":  [
+                       "输出必须是合法 JSON。",
+                       "results.QA、results.CoT、results.Preference 三类结果均应存在。",
+                       "每类结果应包含 status 字段；成功结果不得为空。",
+                       "Preference 结果应包含 question、chosen、rejected、preference_reason 等关键字段。",
+                       "输出内容应为中文，不应出现乱码或英文样例正文。"
+                   ]
+    },
+    {
+        "id":  "data_synthesis_case_24",
+        "operator":  "data_synthesis",
+        "dataset":  "中文临床病例公开样式",
+        "input_file":  "example_input/ds_case_24.txt",
+        "source_urls":  [
+                            "https://huggingface.co/datasets/FreedomIntelligence/medical-o1-reasoning-SFT"
+                        ],
+        "purpose":  "验证中文医疗文本输入下，算子能够生成 QA、CoT、Preference 三类结构化合成数据。",
+        "run_parameters":  {
+                               "taskTypes":  "QA,CoT,Preference"
+                           },
+        "checks":  [
+                       "输出必须是合法 JSON。",
+                       "results.QA、results.CoT、results.Preference 三类结果均应存在。",
+                       "每类结果应包含 status 字段；成功结果不得为空。",
+                       "Preference 结果应包含 question、chosen、rejected、preference_reason 等关键字段。",
+                       "输出内容应为中文，不应出现乱码或英文样例正文。"
+                   ]
+    },
+    {
+        "id":  "data_synthesis_case_25",
+        "operator":  "data_synthesis",
+        "dataset":  "cMedQA2",
+        "input_file":  "example_input/ds_case_25.txt",
+        "source_urls":  [
+                            "https://github.com/zhangsheng93/cMedQA2"
+                        ],
+        "purpose":  "验证中文医疗文本输入下，算子能够生成 QA、CoT、Preference 三类结构化合成数据。",
+        "run_parameters":  {
+                               "taskTypes":  "QA,CoT,Preference"
+                           },
+        "checks":  [
+                       "输出必须是合法 JSON。",
+                       "results.QA、results.CoT、results.Preference 三类结果均应存在。",
+                       "每类结果应包含 status 字段；成功结果不得为空。",
+                       "Preference 结果应包含 question、chosen、rejected、preference_reason 等关键字段。",
+                       "输出内容应为中文，不应出现乱码或英文样例正文。"
+                   ]
+    },
+    {
+        "id":  "data_synthesis_case_26",
+        "operator":  "data_synthesis",
+        "dataset":  "中文健康科普公开样式",
+        "input_file":  "example_input/ds_case_26.txt",
+        "source_urls":  [
+                            "https://github.com/zhangsheng93/cMedQA2"
+                        ],
+        "purpose":  "验证中文医疗文本输入下，算子能够生成 QA、CoT、Preference 三类结构化合成数据。",
+        "run_parameters":  {
+                               "taskTypes":  "QA,CoT,Preference"
+                           },
+        "checks":  [
+                       "输出必须是合法 JSON。",
+                       "results.QA、results.CoT、results.Preference 三类结果均应存在。",
+                       "每类结果应包含 status 字段；成功结果不得为空。",
+                       "Preference 结果应包含 question、chosen、rejected、preference_reason 等关键字段。",
+                       "输出内容应为中文，不应出现乱码或英文样例正文。"
+                   ]
+    },
+    {
+        "id":  "data_synthesis_case_27",
+        "operator":  "data_synthesis",
+        "dataset":  "medical-o1-reasoning-SFT",
+        "input_file":  "example_input/ds_case_27.txt",
+        "source_urls":  [
+                            "https://huggingface.co/datasets/FreedomIntelligence/medical-o1-reasoning-SFT"
+                        ],
+        "purpose":  "验证中文医疗文本输入下，算子能够生成 QA、CoT、Preference 三类结构化合成数据。",
+        "run_parameters":  {
+                               "taskTypes":  "QA,CoT,Preference"
+                           },
+        "checks":  [
+                       "输出必须是合法 JSON。",
+                       "results.QA、results.CoT、results.Preference 三类结果均应存在。",
+                       "每类结果应包含 status 字段；成功结果不得为空。",
+                       "Preference 结果应包含 question、chosen、rejected、preference_reason 等关键字段。",
+                       "输出内容应为中文，不应出现乱码或英文样例正文。"
+                   ]
+    },
+    {
+        "id":  "data_synthesis_case_28",
+        "operator":  "data_synthesis",
+        "dataset":  "中文医疗问答公开语料",
+        "input_file":  "example_input/ds_case_28.txt",
+        "source_urls":  [
+                            "https://github.com/zhangsheng93/cMedQA2"
+                        ],
+        "purpose":  "验证中文医疗文本输入下，算子能够生成 QA、CoT、Preference 三类结构化合成数据。",
+        "run_parameters":  {
+                               "taskTypes":  "QA,CoT,Preference"
+                           },
+        "checks":  [
+                       "输出必须是合法 JSON。",
+                       "results.QA、results.CoT、results.Preference 三类结果均应存在。",
+                       "每类结果应包含 status 字段；成功结果不得为空。",
+                       "Preference 结果应包含 question、chosen、rejected、preference_reason 等关键字段。",
+                       "输出内容应为中文，不应出现乱码或英文样例正文。"
+                   ]
+    },
+    {
+        "id":  "data_synthesis_case_29",
+        "operator":  "data_synthesis",
+        "dataset":  "中文临床病例公开样式",
+        "input_file":  "example_input/ds_case_29.txt",
+        "source_urls":  [
+                            "https://huggingface.co/datasets/FreedomIntelligence/medical-o1-reasoning-SFT"
+                        ],
+        "purpose":  "验证中文医疗文本输入下，算子能够生成 QA、CoT、Preference 三类结构化合成数据。",
+        "run_parameters":  {
+                               "taskTypes":  "QA,CoT,Preference"
+                           },
+        "checks":  [
+                       "输出必须是合法 JSON。",
+                       "results.QA、results.CoT、results.Preference 三类结果均应存在。",
+                       "每类结果应包含 status 字段；成功结果不得为空。",
+                       "Preference 结果应包含 question、chosen、rejected、preference_reason 等关键字段。",
+                       "输出内容应为中文，不应出现乱码或英文样例正文。"
+                   ]
+    },
+    {
+        "id":  "data_synthesis_case_30",
+        "operator":  "data_synthesis",
+        "dataset":  "cMedQA2",
+        "input_file":  "example_input/ds_case_30.txt",
+        "source_urls":  [
+                            "https://github.com/zhangsheng93/cMedQA2"
+                        ],
+        "purpose":  "验证中文医疗文本输入下，算子能够生成 QA、CoT、Preference 三类结构化合成数据。",
+        "run_parameters":  {
+                               "taskTypes":  "QA,CoT,Preference"
+                           },
+        "checks":  [
+                       "输出必须是合法 JSON。",
+                       "results.QA、results.CoT、results.Preference 三类结果均应存在。",
+                       "每类结果应包含 status 字段；成功结果不得为空。",
+                       "Preference 结果应包含 question、chosen、rejected、preference_reason 等关键字段。",
+                       "输出内容应为中文，不应出现乱码或英文样例正文。"
+                   ]
+    }
+]

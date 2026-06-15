@@ -3,14 +3,20 @@ import os
 import json
 import cv2
 
+from datamate.core.base_op import Mapper
 from .._video_common.paths import make_run_dir, ensure_dir
 from .._video_common.log import get_logger
+from .._video_common.params import parse_bool
 from .._video_common.io_video import get_video_info
-from .._video_common.qwen_http_client import qwenvl_infer_by_image_path, save_frame_to_jpg
+from .._video_common.qwen_http_client import (
+    qwenvl_infer_by_image_path,
+    resolve_qwenvl_service_url,
+    save_frame_to_jpg,
+)
 
 
 def _make_segments(duration_sec: float, params: dict):
-    adaptive = bool(params.get("adaptive_segment", True))
+    adaptive = parse_bool(params.get("adaptive_segment", True), default=True)
     max_segments = int(params.get("max_segments", 60))
     max_new_tokens = int(params.get("max_new_tokens", 32))
 
@@ -35,13 +41,13 @@ def _make_segments(duration_sec: float, params: dict):
     return segs
 
 
-class VideoEventTagQwenVL:
+class VideoEventTagQwenVL(Mapper):
     """
     分段取中点帧 → QwenVL HTTP 事件标注（对齐服务端 task=event_tag）：
       返回: {event}
 
     params:
-      - service_url: 默认 http://127.0.0.1:18080
+      - service_url: 默认 http://qwen-vl-service:18080
       - timeout_sec: 默认 180
       - adaptive_segment: 默认 True
       - target_segments: 默认 12
@@ -55,8 +61,12 @@ class VideoEventTagQwenVL:
       - artifacts/frames/*.jpg
     """
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.params = dict(kwargs)
+
     def execute(self, sample, params=None):
-        params = params or {}
+        params = params or self.params
         video_path = sample["filePath"]
         export_path = sample.get("export_path", "./outputs")
 
@@ -66,7 +76,7 @@ class VideoEventTagQwenVL:
         frames_dir = ensure_dir(os.path.join(art_dir, "frames"))
         logger = get_logger("VideoEventTagQwenVL", log_dir)
 
-        service_url = params.get("service_url", "http://127.0.0.1:18080")
+        service_url = resolve_qwenvl_service_url(params.get("service_url"))
         timeout_sec = int(params.get("timeout_sec", 180))
         max_new_tokens = int(params.get("max_new_tokens", 32))
 
@@ -131,5 +141,7 @@ class VideoEventTagQwenVL:
                 indent=2,
             )
 
+        result = {"out_dir": out_dir, "events_json": out_json, "segments_count": len(events)}
+        sample.update(result)
         logger.info(f"Done. events_json={out_json}, segments={len(events)}")
-        return {"out_dir": out_dir, "events_json": out_json, "segments_count": len(events)}
+        return sample
