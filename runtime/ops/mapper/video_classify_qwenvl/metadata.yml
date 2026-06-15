@@ -1,7 +1,7 @@
 name: '视频分类（QwenVL）'
 name_en: 'Video Classify (QwenVL)'
-description: '抽帧调用 QwenVL classify22，多帧投票输出分类结果 classification.json。'
-description_en: 'Sample frames and call QwenVL classify22; vote to output classification.json.'
+description: '抽帧调用 QwenVL 22类视频分类，多帧投票输出分类结果 classification.json。'
+description_en: 'Sample frames and call QwenVL 22-class video classification; vote to output classification.json.'
 language: 'python'
 vendor: 'huawei'
 raw_id: 'VideoClassifyQwenVL'
@@ -14,3 +14,46 @@ effect:
   after: ''
 inputs: 'video'
 outputs: 'text'
+settings:
+  sample_fps:
+    name: '抽帧频率'
+    description: '每秒抽取多少帧用于分类，值越大覆盖越充分，但耗时也更高。'
+    type: 'slider'
+    defaultVal: 1.0
+    required: false
+    min: 0.5
+    max: 4.0
+    step: 0.5
+  max_frames:
+    name: '最大帧数'
+    description: '最多送入分类投票的帧数，运动视频建议适当增大。'
+    type: 'slider'
+    defaultVal: 12
+    required: false
+    min: 4
+    max: 32
+    step: 2
+  return_topk:
+    name: '返回TopK'
+    description: '输出结果中保留的候选类别数量。'
+    type: 'slider'
+    defaultVal: 3
+    required: false
+    min: 1
+    max: 5
+    step: 1
+  timeout_sec:
+    name: '超时时间(秒)'
+    description: '单帧请求 QwenVL 服务的超时时间。'
+    type: 'slider'
+    defaultVal: 180
+    required: false
+    min: 30
+    max: 600
+    step: 30
+  service_url:
+    name: 'Qwen服务地址'
+    description: '留空时默认读取 QWEN_VL_ENDPOINT，否则使用这里填写的地址。'
+    type: 'input'
+    defaultVal: 'http://qwen-vl-service:18080'
+    required: false

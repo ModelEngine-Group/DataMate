@@ -2,12 +2,14 @@
 import os
 import json
 
+from datamate.core.base_op import Mapper
 from .._video_common.paths import make_run_dir
 from .._video_common.log import get_logger
 from .._video_common.ffmpeg import run_cmd
+from .._video_common.params import parse_bool
 
 
-class VideoFormatConvert:
+class VideoFormatConvert(Mapper):
     """
     仅做“容器格式转换”（不重编码）：
     - 通过 ffmpeg stream copy 实现：-c:v copy -c:a copy
@@ -30,8 +32,12 @@ class VideoFormatConvert:
       out_dir/run.log
     """
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.params = dict(kwargs)
+
     def execute(self, sample: dict, params: dict = None):
-        params = params or {}
+        params = params or self.params
         in_path = sample["filePath"]
         export_path = sample["export_path"]
 
@@ -39,15 +45,20 @@ class VideoFormatConvert:
         logger = get_logger("VideoFormatConvert", log_dir=out_dir)
 
         # 目标容器
+        supported_containers = {"mp4", "avi", "mov", "wmv", "mkv", "m4v"}
         container = str(params.get("container", "mp4")).lstrip(".").lower()
-        out_name = params.get("out_name", f"converted.{container}")
+        if container not in supported_containers:
+            raise ValueError(
+                f"Unsupported container '{container}'. Supported formats: {sorted(supported_containers)}"
+            )
+        out_name = params.get("out_name") or f"converted.{container}"
         if not out_name.lower().endswith(f".{container}"):
             # 防止用户给了不匹配的后缀
             out_name = f"{out_name}.{container}"
         out_video = os.path.join(out_dir, out_name)
 
-        copy_video = bool(params.get("copy_video", True))
-        copy_audio = bool(params.get("copy_audio", True))
+        copy_video = parse_bool(params.get("copy_video", True), default=True)
+        copy_audio = parse_bool(params.get("copy_audio", True), default=True)
         extra_args = params.get("extra_args", None)  # list[str] or None
 
         logger.info(f"Start container convert (stream copy). in={in_path}, out={out_video}, container={container}")
@@ -93,5 +104,6 @@ class VideoFormatConvert:
         with open(json_path, "w", encoding="utf-8") as f:
             json.dump(result, f, ensure_ascii=False, indent=2)
 
+        sample.update(result)
         logger.info(f"Done. output={out_video}")
-        return result
+        return sample

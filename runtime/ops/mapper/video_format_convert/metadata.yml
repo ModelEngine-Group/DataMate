@@ -1,7 +1,7 @@
 name: '视频格式转换'
 name_en: 'Video Format Convert'
-description: '仅做容器格式转换（stream copy，不重编码）；输出 converted.xxx 与 convert_result.json。'
-description_en: 'Container remux via ffmpeg stream copy (no re-encode); outputs converted.xxx and convert_result.json.'
+description: '通过 ffmpeg 进行封装格式转换，可选择直接 copy 或重新编码音视频流。'
+description_en: 'Convert video container with ffmpeg, with optional stream copy or re-encoding.'
 language: 'python'
 vendor: 'huawei'
 raw_id: 'VideoFormatConvert'
@@ -14,3 +14,45 @@ effect:
   after: ''
 inputs: 'video'
 outputs: 'video'
+settings:
+  container:
+    name: '目标封装格式'
+    description: '选择输出容器格式。'
+    type: 'select'
+    defaultVal: 'mp4'
+    required: false
+    options:
+      - label: 'mp4'
+        value: 'mp4'
+      - label: 'm4v'
+        value: 'm4v'
+      - label: 'mkv'
+        value: 'mkv'
+      - label: 'mov'
+        value: 'mov'
+      - label: 'avi'
+        value: 'avi'
+      - label: 'wmv'
+        value: 'wmv'
+  out_name:
+    name: '输出文件名'
+    description: '留空时自动使用 converted.扩展名。'
+    type: 'input'
+    defaultVal: ''
+    required: false
+  copy_video:
+    name: '视频流直接复制'
+    description: '关闭后会改为 libx264 重新编码。'
+    type: 'switch'
+    defaultVal: 'true'
+    required: false
+    checkedLabel: '是'
+    unCheckedLabel: '否'
+  copy_audio:
+    name: '音频流直接复制'
+    description: '关闭后会改为 AAC 重新编码。'
+    type: 'switch'
+    defaultVal: 'true'
+    required: false
+    checkedLabel: '是'
+    unCheckedLabel: '否'

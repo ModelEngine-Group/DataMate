@@ -3,14 +3,12 @@ import os
 import json
 import collections
 import cv2
-import importlib
 
+from datamate.core.base_op import Mapper
 from .._video_common.paths import make_run_dir, ensure_dir
 from .._video_common.log import get_logger
 from .._video_common.io_video import get_video_info
-
-_qwen = importlib.import_module("tools.qwen_sensitive")
-qwenvl_infer = _qwen.qwenvl_infer
+from .._video_common.qwen_http_client import qwenvl_infer_by_image_path, resolve_qwenvl_service_url
 
 
 CLASS_NAMES = [
@@ -38,10 +36,14 @@ def _sample_frame_indices(total_frames: int, fps: float, sample_fps: float, max_
     return idxs
 
 
-class VideoClassifyQwenVL:
+class VideoClassifyQwenVL(Mapper):
     """视频分类
 
-    思路：抽帧 -> 调 QwenVL 服务 task=classify25 -> 多帧投票输出 top1
+    思路：抽帧 -> 调 QwenVL 服务做 22 类分类 -> 多帧投票输出 top1
+
+    说明：
+      - 当前服务端线上接口名仍兼容使用 legacy task "classify25"
+      - 但返回的类别集合按当前 22 类版本进行解释
 
     params:
       - sample_fps: float, default 1.0
@@ -49,8 +51,12 @@ class VideoClassifyQwenVL:
       - return_topk: int, default 3
     """
 
-    @staticmethod
-    def execute(sample, params):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.params = dict(kwargs)
+
+    def execute(self, sample, params=None):
+        params = params or self.params
         video_path = sample["filePath"]
         export_path = sample.get("export_path", "./outputs")
 
@@ -68,6 +74,8 @@ class VideoClassifyQwenVL:
         sample_fps = float(params.get("sample_fps", 1.0))
         max_frames = int(params.get("max_frames", 12))
         return_topk = int(params.get("return_topk", 3))
+        service_url = resolve_qwenvl_service_url(params.get("service_url"))
+        timeout_sec = int(params.get("timeout_sec", 180))
 
         idxs = _sample_frame_indices(total, fps, sample_fps, max_frames)
         logger.info(f"fps={fps:.3f}, frames={total}, sample_fps={sample_fps}, idxs={len(idxs)}")
@@ -87,11 +95,17 @@ class VideoClassifyQwenVL:
             jpg_path = os.path.join(frames_dir, f"frame_{int(fi):06d}.jpg")
             cv2.imwrite(jpg_path, frame)
 
-            resp = qwenvl_infer(frame, task="classify25", timeout=180)
+            resp = qwenvl_infer_by_image_path(
+                image_path=jpg_path,
+                task="classify25",
+                service_url=service_url,
+                max_new_tokens=16,
+                timeout=timeout_sec,
+            )
             cid = int(resp.get("class_id", DEFAULT_CLASS_ID) or DEFAULT_CLASS_ID)
-            cname = resp.get("class_name", DEFAULT_CLASS_NAME) or DEFAULT_CLASS_NAME
-
-            if cname not in CLASS_NAMES:
+            if 1 <= cid <= len(CLASS_NAMES):
+                cname = CLASS_NAMES[cid - 1]
+            else:
                 cid = DEFAULT_CLASS_ID
                 cname = DEFAULT_CLASS_NAME
 
@@ -128,5 +142,7 @@ class VideoClassifyQwenVL:
         with open(json_path, "w", encoding="utf-8") as f:
             json.dump(result, f, ensure_ascii=False, indent=2)
 
+        out = {"out_dir": out_dir, "classification_json": json_path, "top1": result["top1"]}
+        sample.update(out)
         logger.info(f"Done. classification_json={json_path}")
-        return {"out_dir": out_dir, "classification_json": json_path, "top1": result["top1"]}
+        return sample
