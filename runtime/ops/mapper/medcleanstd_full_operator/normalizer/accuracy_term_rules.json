@@ -1,0 +1,422 @@
+[
+  {
+    "text": "腹痛",
+    "type": "症状",
+    "std_name": "腹痛",
+    "std_code": "K52.916"
+  },
+  {
+    "text": "结肠癌",
+    "type": "疾病",
+    "std_name": "结肠结核瘤",
+    "std_code": "A18.305+"
+  },
+  {
+    "text": "结肠腺管状腺瘤",
+    "type": "疾病",
+    "std_name": "结肠结核瘤",
+    "std_code": "A18.305+"
+  },
+  {
+    "text": "结节",
+    "type": "症状",
+    "std_name": "关节结核",
+    "std_code": "A18.002+"
+  },
+  {
+    "text": "腹泻",
+    "type": "症状",
+    "std_name": "腹痛",
+    "std_code": "K52.916"
+  },
+  {
+    "text": "结肠恶性肿瘤",
+    "type": "疾病",
+    "std_name": "结肠结核瘤",
+    "std_code": "A18.305+"
+  },
+  {
+    "text": "食管炎",
+    "type": "疾病",
+    "std_name": "结核性食管炎",
+    "std_code": "A18.807+"
+  },
+  {
+    "text": "（横结肠）肠管状腺瘤",
+    "type": "疾病",
+    "std_name": "结肠结核瘤",
+    "std_code": "A18.305+"
+  },
+  {
+    "text": "(左半结肠)大肠回盲部结外粘膜相关淋巴组织边缘区B细胞淋巴瘤(MALT)",
+    "type": "疾病",
+    "std_name": "肠系膜淋巴结结核",
+    "std_code": "A18.316+"
+  },
+  {
+    "text": "皮疹",
+    "type": "症状",
+    "std_name": "斑疹热",
+    "std_code": "A77.900"
+  },
+  {
+    "text": "结肠肿瘤",
+    "type": "疾病",
+    "std_name": "结肠结核瘤",
+    "std_code": "A18.305+"
+  },
+  {
+    "text": "慢性宫颈炎",
+    "type": "疾病",
+    "std_name": "衣原体性宫颈炎",
+    "std_code": "A56.002"
+  },
+  {
+    "text": "肠瘘",
+    "type": "疾病",
+    "std_name": "结核性肛瘘",
+    "std_code": "A18.306+"
+  },
+  {
+    "text": "升结肠癌",
+    "type": "疾病",
+    "std_name": "结肠结核瘤",
+    "std_code": "A18.305+"
+  },
+  {
+    "text": "口腔溃疡",
+    "type": "疾病",
+    "std_name": "坏死性溃疡性口炎",
+    "std_code": "A69.000"
+  },
+  {
+    "text": "畏寒",
+    "type": "症状",
+    "std_name": "伤寒",
+    "std_code": "A01.000"
+  },
+  {
+    "text": "降结肠癌",
+    "type": "疾病",
+    "std_name": "结肠结核瘤",
+    "std_code": "A18.305+"
+  },
+  {
+    "text": "脓肿",
+    "type": "症状",
+    "std_name": "结核性皮肤脓肿",
+    "std_code": "A18.405"
+  },
+  {
+    "text": "左半结肠肿瘤",
+    "type": "疾病",
+    "std_name": "结肠结核瘤",
+    "std_code": "A18.305+"
+  },
+  {
+    "text": "肝内外胆管结石",
+    "type": "疾病",
+    "std_name": "胆管结核",
+    "std_code": "A18.815+"
+  },
+  {
+    "text": "结肠炎性息肉",
+    "type": "疾病",
+    "std_name": "结肠炎",
+    "std_code": "A09.902"
+  },
+  {
+    "text": "胆囊炎",
+    "type": "疾病",
+    "std_name": "胆囊结核",
+    "std_code": "A18.816+"
+  },
+  {
+    "text": "结肠术后",
+    "type": "疾病",
+    "std_name": "结肠炎",
+    "std_code": "A09.902"
+  },
+  {
+    "text": "两肺结节 转移瘤",
+    "type": "疾病",
+    "std_name": "肺结核瘤",
+    "std_code": "A16.201"
+  },
+  {
+    "text": "结肠CA",
+    "type": "疾病",
+    "std_name": "结肠炎",
+    "std_code": "A09.902"
+  },
+  {
+    "text": "结肠肿块",
+    "type": "症状",
+    "std_name": "结肠结核瘤",
+    "std_code": "A18.305+"
+  },
+  {
+    "text": "结肠肝曲癌",
+    "type": "疾病",
+    "std_name": "结肠结核瘤",
+    "std_code": "A18.305+"
+  },
+  {
+    "text": "脓血",
+    "type": "症状",
+    "std_name": "脓毒症",
+    "std_code": "A41.901"
+  },
+  {
+    "text": "乙型病毒性肝炎",
+    "type": "疾病",
+    "std_name": "伤寒性肝炎",
+    "std_code": "A01.001+"
+  },
+  {
+    "text": "结肠占位性病变",
+    "type": "疾病",
+    "std_name": "结肠炎",
+    "std_code": "A09.902"
+  },
+  {
+    "text": "小肠淋巴瘤",
+    "type": "疾病",
+    "std_name": "肠道阿米巴瘤",
+    "std_code": "A06.300"
+  },
+  {
+    "text": "结肠多发绒毛状管状腺瘤",
+    "type": "疾病",
+    "std_name": "结肠结核瘤",
+    "std_code": "A18.305+"
+  },
+  {
+    "text": "肠壁转移瘤",
+    "type": "疾病",
+    "std_name": "结肠结核瘤",
+    "std_code": "A18.305+"
+  },
+  {
+    "text": "结肠脾曲癌",
+    "type": "疾病",
+    "std_name": "结肠结核瘤",
+    "std_code": "A18.305+"
+  },
+  {
+    "text": "升结肠恶性肿瘤",
+    "type": "疾病",
+    "std_name": "结肠结核瘤",
+    "std_code": "A18.305+"
+  },
+  {
+    "text": "横结肠癌",
+    "type": "疾病",
+    "std_name": "结肠结核瘤",
+    "std_code": "A18.305+"
+  },
+  {
+    "text": "左侧结肠癌",
+    "type": "疾病",
+    "std_name": "结肠结核瘤",
+    "std_code": "A18.305+"
+  },
+  {
+    "text": "结肠腺癌",
+    "type": "疾病",
+    "std_name": "结肠结核瘤",
+    "std_code": "A18.305+"
+  },
+  {
+    "text": "（结肠）溃疡型腺癌",
+    "type": "疾病",
+    "std_name": "结肠结核瘤",
+    "std_code": "A18.305+"
+  },
+  {
+    "text": "肠粘膜慢性炎",
+    "type": "疾病",
+    "std_name": "急性感染性肠炎",
+    "std_code": "A09.007"
+  },
+  {
+    "text": "吐泻",
+    "type": "症状",
+    "std_name": "腹痛",
+    "std_code": "K52.916"
+  },
+  {
+    "text": "炎症性肠病",
+    "type": "疾病",
+    "std_name": "病毒性肠炎",
+    "std_code": "A08.401"
+  },
+  {
+    "text": "急性阑尾炎",
+    "type": "疾病",
+    "std_name": "急性结肠炎",
+    "std_code": "K52.906"
+  },
+  {
+    "text": "溃疡性结肠炎",
+    "type": "疾病",
+    "std_name": "结肠炎",
+    "std_code": "A09.902"
+  },
+  {
+    "text": "肝炎",
+    "type": "疾病",
+    "std_name": "伤寒性肝炎",
+    "std_code": "A01.001+"
+  },
+  {
+    "text": "结核",
+    "type": "疾病",
+    "std_name": "骨结核",
+    "std_code": "A18.001+"
+  },
+  {
+    "text": "霉菌性食管炎",
+    "type": "疾病",
+    "std_name": "结核性食管炎",
+    "std_code": "A18.807+"
+  },
+  {
+    "text": "肺炎",
+    "type": "疾病",
+    "std_name": "肺炎球菌感染",
+    "std_code": "A49.102"
+  },
+  {
+    "text": "两侧胸腔积液",
+    "type": "疾病",
+    "std_name": "结核性胸腔积液",
+    "std_code": "A16.502"
+  },
+  {
+    "text": "心包积液",
+    "type": "疾病",
+    "std_name": "结核性心包积液",
+    "std_code": "A18.809+"
+  },
+  {
+    "text": "肺部感染",
+    "type": "疾病",
+    "std_name": "肺炎杆菌感染",
+    "std_code": "A49.802"
+  },
+  {
+    "text": "心包腔积液",
+    "type": "疾病",
+    "std_name": "结核性心包积液",
+    "std_code": "A18.809+"
+  },
+  {
+    "text": "低蛋白血症",
+    "type": "疾病",
+    "std_name": "朊蛋白病",
+    "std_code": "A81.801"
+  },
+  {
+    "text": "肺结核",
+    "type": "疾病",
+    "std_name": "肺结核瘤",
+    "std_code": "A16.201"
+  },
+  {
+    "text": "肺癌",
+    "type": "疾病",
+    "std_name": "肺结核瘤",
+    "std_code": "A16.201"
+  },
+  {
+    "text": "泌尿道感染",
+    "type": "疾病",
+    "std_name": "泌尿生殖道的衣原体感染",
+    "std_code": "A56.200"
+  },
+  {
+    "text": "慢性前列腺炎",
+    "type": "疾病",
+    "std_name": "淋球菌性前列腺炎",
+    "std_code": "A54.202+"
+  },
+  {
+    "text": "感染性休克",
+    "type": "疾病",
+    "std_name": "中毒性休克综合征",
+    "std_code": "A48.300"
+  },
+  {
+    "text": "腹腔积液",
+    "type": "疾病",
+    "std_name": "结核性腹腔积液",
+    "std_code": "A18.309"
+  },
+  {
+    "text": "老年痴呆",
+    "type": "疾病",
+    "std_name": "幼年型麻痹性痴呆",
+    "std_code": "A50.401"
+  },
+  {
+    "text": "肝硬化",
+    "type": "疾病",
+    "std_name": "梅毒性肝硬化",
+    "std_code": "A52.705+"
+  },
+  {
+    "text": "炎性肉芽肿",
+    "type": "疾病",
+    "std_name": "腹股沟肉芽肿",
+    "std_code": "A58.x00"
+  },
+  {
+    "text": "陈旧性肺结核",
+    "type": "疾病",
+    "std_name": "结核性肺炎",
+    "std_code": "A16.202"
+  },
+  {
+    "text": "咽痛",
+    "type": "症状",
+    "std_name": "咽白喉",
+    "std_code": "A36.000"
+  },
+  {
+    "text": "传染病",
+    "type": "疾病",
+    "std_name": "传染病，其他的",
+    "std_code": "B99.x00"
+  },
+  {
+    "text": "乙肝",
+    "type": "疾病",
+    "std_name": "乙型病毒性肝炎",
+    "std_code": "B16.904"
+  },
+  {
+    "text": "丙肝",
+    "type": "疾病",
+    "std_name": "急性丙型肝炎",
+    "std_code": "B17.100"
+  },
+  {
+    "text": "梅毒",
+    "type": "疾病",
+    "std_name": "梅毒",
+    "std_code": "A53.900"
+  },
+  {
+    "text": "艾滋病",
+    "type": "疾病",
+    "std_name": "艾滋病",
+    "std_code": "B24.x01"
+  },
+  {
+    "text": "腹腔积液增多、感染性休克",
+    "type": "疾病",
+    "std_name": "结核性腹腔积液",
+    "std_code": "A18.309"
+  }
+]
