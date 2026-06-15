@@ -1,0 +1,3 @@
+# DataMate operator wrapper dependencies.
+# Heavy model runtime dependencies are provided by the standalone service.
+requests==2.32.5

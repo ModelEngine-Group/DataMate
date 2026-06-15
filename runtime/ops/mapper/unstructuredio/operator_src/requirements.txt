@@ -1,0 +1,26 @@
+# Core document parsing dependencies verified in datamate-runtime on 910b.
+unstructured==0.18.15
+unstructured-inference==1.6.10
+python-docx==1.2.0
+requests==2.32.5
+numpy==2.2.6
+pandas==2.3.3
+opencv-python-headless==4.13.0.92
+safetensors==0.7.0
+transformers==4.57.6
+torch==2.8.0+cpu
+torchvision==0.23.0
+pdf2image==1.17.0
+pypdfium2==4.30.0
+pikepdf==10.5.1
+pi-heif==1.1.1
+onnxruntime==1.19.2
+einops==0.8.2
+loguru==0.7.3
+paddlepaddle==3.2.2
+paddleocr==3.3.0
+
+# Ascend/NPU optional runtime.
+# Install from the Ascend-compatible wheel/index that matches the target CANN
+# runtime; importing torch_npu also requires sourcing the CANN environment.
+torch-npu==2.8.0
