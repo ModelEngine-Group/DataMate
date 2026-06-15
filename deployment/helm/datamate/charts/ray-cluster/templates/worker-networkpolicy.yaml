@@ -1,0 +1,21 @@
+{{- if and .Values.workerNetworkPolicy.enabled .Values.workerNetworkPolicy.blockedCIDRs }}
+apiVersion: crd.projectcalico.org/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "ray-cluster.fullname" . }}-worker-egress
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "ray-cluster.labels" . | nindent 4 }}
+spec:
+  selector: ray.io/node-type == "worker"
+  types:
+    - Egress
+  egress:
+    - action: Deny
+      destination:
+        nets:
+{{- range .Values.workerNetworkPolicy.blockedCIDRs }}
+          - {{ . }}
+{{- end }}
+    - action: Allow
+{{- end }}

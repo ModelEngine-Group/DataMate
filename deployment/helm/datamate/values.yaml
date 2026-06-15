@@ -302,6 +302,10 @@ runtime:
 
 ray-cluster:
   enabled: true
+  workerNetworkPolicy:
+    enabled: true
+    # Use CIDR notation, for example 192.0.2.10/32 for a single IPv4 address.
+    blockedCIDRs: []
   head:
     nodeSelector: {}
     tolerations: []
