@@ -137,12 +137,7 @@ worker:
   serviceAccountName: ""
   restartPolicy: ""
   rayStartParams: {}
-  # initContainers follows standard K8s init container schema.
-  # If image is omitted, it defaults to the Ray runtime image.
   initContainers: []
-  # - name: init-runtime
-  #   command: ["sh", "-c"]
-  #   args: ["your custom command"]
   # containerEnv specifies environment variables for the Ray container,
   # Follows standard K8s container env schema.
   containerEnv: []
@@ -211,12 +206,6 @@ additionalWorkerGroups:
     serviceAccountName: ""
     restartPolicy: ""
     rayStartParams: {}
-    # initContainers follows standard K8s init container schema.
-    # If image is omitted, it defaults to the Ray runtime image.
-    initContainers: []
-    # - name: init-runtime
-    #   command: ["sh", "-c"]
-    #   args: ["your custom command"]
     # containerEnv specifies environment variables for the Ray container,
     # Follows standard K8s container env schema.
     containerEnv: []
