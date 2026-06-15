@@ -88,6 +88,7 @@ def _import_operators():
         from . import video_speech_asr
     except ImportError:
         pass
+    from . import wsi_enhance_operator
     from . import medcleanstd_full_operator
 
 _import_operators()
