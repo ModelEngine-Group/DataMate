@@ -1,0 +1,95 @@
+name: 'audioOps-音频识别流水线'
+name_en: 'audioOps-Audio ASR Pipeline'
+description: '对当前输入音频执行格式归一化、可选降噪、可选异常过滤、语言识别、切分、ASR 与合并，导出一个 txt 转写文件，并在 ext_params 中记录运行信息。'
+description_en: 'Run normalization, optional denoise, optional anomaly filtering, LID, splitting, ASR and merge for the current audio file; export one txt transcript and record runtime information in ext_params.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'AudioAsrPipeline'
+version: '1.0.0'
+types:
+  - 'annotation'
+modal: 'audio'
+inputs: 'audio'
+outputs: 'text'
+settings:
+  doDenoise:
+    name: '启用降噪'
+    type: 'switch'
+    description: '是否启用 GTCRN 降噪。'
+    defaultVal: 'false'
+    required: false
+    checkedLabel: '开启'
+    unCheckedLabel: '关闭'
+  denoiseModelPath:
+    name: '降噪模型路径'
+    type: 'input'
+    description: 'GTCRN ONNX 模型绝对路径；默认使用固定部署路径 /models/AudioOperations/gtcrn/gtcrn.onnx。'
+    defaultVal: '/models/AudioOperations/gtcrn/gtcrn.onnx'
+    required: false
+  doAnomalyFilter:
+    name: '启用异常过滤'
+    type: 'switch'
+    description: '是否启用异常语音检测与过滤（时长/静音比例）。'
+    defaultVal: 'true'
+    required: false
+    checkedLabel: '开启'
+    unCheckedLabel: '关闭'
+  minDur:
+    name: '最小时长(秒)'
+    type: 'inputNumber'
+    defaultVal: 1.0
+    min: 0
+    max: 36000
+    step: 0.1
+  maxDur:
+    name: '最大时长(秒)'
+    type: 'inputNumber'
+    defaultVal: 20000.0
+    min: 0
+    max: 360000
+    step: 1
+  silenceRatioTh:
+    name: '静音帧比例阈值'
+    type: 'slider'
+    defaultVal: 0.8
+    min: 0
+    max: 1
+    step: 0.01
+  silenceRmsRatioTh:
+    name: '静音判定比例'
+    type: 'slider'
+    defaultVal: 0.05
+    min: 0
+    max: 1
+    step: 0.01
+  lidModelSource:
+    name: 'LID 模型源'
+    type: 'input'
+    description: 'SpeechBrain LID 本地模型目录。默认使用固定部署路径 /models/AudioOperations/lid/speechbrain_lang-id-voxlingua107-ecapa。'
+    defaultVal: '/models/AudioOperations/lid/speechbrain_lang-id-voxlingua107-ecapa'
+    required: false
+  lidMaxSeconds:
+    name: 'LID 截断秒数'
+    type: 'inputNumber'
+    defaultVal: 3.0
+    min: 0
+    max: 60
+    step: 0.5
+  maxSegmentSeconds:
+    name: '切分最大秒数'
+    type: 'inputNumber'
+    defaultVal: 120
+    min: 5
+    max: 3600
+    step: 1
+runtime:
+  memory: null
+  cpu: 1.0
+  gpu: 0
+  npu: 0
+  storage: 1GB
+metrics:
+  - name: '处理耗时'
+    metric: '依输入音频长度、启用步骤与模型而定'
+release:
+  - '首次发布，支持音频标准化/降噪/过滤/LID/切分/ASR/合并'

@@ -138,6 +138,12 @@ class RayDataset(BasicDataset):
             registry_content = RELATIVE_OPERATORS.modules.get(op_name)
         if isinstance(registry_content, str):
             # registry_content是module的路径
+            if registry_content.startswith("ops.user."):
+                importlib.invalidate_caches()
+                package_name = registry_content.rsplit(".", 1)[0]
+                for module_name in list(sys.modules):
+                    if module_name == registry_content or module_name == package_name or module_name.startswith(f"{package_name}."):
+                        sys.modules.pop(module_name, None)
             submodule = importlib.import_module(registry_content)
             res = getattr(submodule, op_name, None)
             if res is None:

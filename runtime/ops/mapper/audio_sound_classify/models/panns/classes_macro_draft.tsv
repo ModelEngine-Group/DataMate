@@ -1,0 +1,528 @@
+label	macro_class
+Speech	HumanSpeech
+Male speech, man speaking	HumanSpeech
+Female speech, woman speaking	HumanSpeech
+Child speech, kid speaking	HumanSpeech
+Conversation	HumanSpeech
+Narration, monologue	HumanSpeech
+Babbling	HumanSpeech
+Speech synthesizer	HumanSpeech
+Shout	HumanSpeech
+Bellow	AnimalSounds
+Whoop	CrowdAmbience
+Yell	HumanSpeech
+Battle cry	CrowdAmbience
+Children shouting	HumanSpeech
+Screaming	HumanSpeech
+Whispering	HumanSpeech
+Laughter	HumanBodySound
+Baby laughter	HumanBodySound
+Giggle	HumanBodySound
+Snicker	HumanBodySound
+Belly laugh	HumanBodySound
+Chuckle, chortle	HumanBodySound
+Crying, sobbing	HumanBodySound
+Baby cry, infant cry	HumanBodySound
+Whimper	HumanBodySound
+Wail, moan	HumanBodySound
+Sigh	HumanBodySound
+Singing	SingingVocal
+Choir	SingingVocal
+Yodeling	SingingVocal
+Chant	SingingVocal
+Mantra	HumanSpeech
+Male singing	SingingVocal
+Female singing	SingingVocal
+Child singing	SingingVocal
+Synthetic singing	SingingVocal
+Rapping	SingingVocal
+Humming	SingingVocal
+Groan	HumanBodySound
+Grunt	HumanBodySound
+Whistling	SingingVocal
+Breathing	HumanBodySound
+Wheeze	HumanBodySound
+Snoring	HumanBodySound
+Gasp	HumanBodySound
+Pant	HumanBodySound
+Snort	HumanBodySound
+Cough	HumanBodySound
+Throat clearing	HumanBodySound
+Sneeze	HumanBodySound
+Sniff	HumanBodySound
+Run	HumanBodySound
+Shuffle	HumanBodySound
+Walk, footsteps	HumanBodySound
+Chewing, mastication	HumanBodySound
+Biting	HumanBodySound
+Gargling	HumanBodySound
+Stomach rumble	HumanBodySound
+Burping, eructation	HumanBodySound
+Hiccup	HumanBodySound
+Fart	HumanBodySound
+Hands	HumanBodySound
+Finger snapping	HumanBodySound
+Clapping	HumanBodySound
+Heart sounds, heartbeat	HumanBodySound
+Heart murmur	HumanBodySound
+Cheering	CrowdAmbience
+Applause	CrowdAmbience
+Chatter	HumanSpeech
+Crowd	CrowdAmbience
+Hubbub, speech noise, speech babble	CrowdAmbience
+Children playing	CrowdAmbience
+Animal	AnimalSounds
+Domestic animals, pets	AnimalSounds
+Dog	AnimalSounds
+Bark	AnimalSounds
+Yip	AnimalSounds
+Howl	AnimalSounds
+Bow-wow	AnimalSounds
+Growling	AnimalSounds
+Whimper (dog)	AnimalSounds
+Cat	AnimalSounds
+Purr	AnimalSounds
+Meow	AnimalSounds
+Hiss	AnimalSounds
+Caterwaul	AnimalSounds
+Livestock, farm animals, working animals	AnimalSounds
+Horse	AnimalSounds
+Clip-clop	AnimalSounds
+Neigh, whinny	AnimalSounds
+Cattle, bovinae	AnimalSounds
+Moo	AnimalSounds
+Cowbell	AnimalSounds
+Pig	AnimalSounds
+Oink	AnimalSounds
+Goat	AnimalSounds
+Bleat	AnimalSounds
+Sheep	AnimalSounds
+Fowl	AnimalSounds
+Chicken, rooster	AnimalSounds
+Cluck	AnimalSounds
+Crowing, cock-a-doodle-doo	AnimalSounds
+Turkey	AnimalSounds
+Gobble	AnimalSounds
+Duck	AnimalSounds
+Quack	AnimalSounds
+Goose	AnimalSounds
+Honk	AnimalSounds
+Wild animals	AnimalSounds
+Roaring cats (lions, tigers)	AnimalSounds
+Roar	AnimalSounds
+Bird	AnimalSounds
+Bird vocalization, bird call, bird song	AnimalSounds
+Chirp, tweet	AnimalSounds
+Squawk	AnimalSounds
+Pigeon, dove	AnimalSounds
+Coo	AnimalSounds
+Crow	AnimalSounds
+Caw	AnimalSounds
+Owl	AnimalSounds
+Hoot	AnimalSounds
+Bird flight, flapping wings	AnimalSounds
+Canidae, dogs, wolves	AnimalSounds
+Rodents, rats, mice	AnimalSounds
+Mouse	AnimalSounds
+Patter	AnimalSounds
+Insect	AnimalSounds
+Cricket	AnimalSounds
+Mosquito	AnimalSounds
+Fly, housefly	AnimalSounds
+Buzz	AnimalSounds
+Bee, wasp, etc.	AnimalSounds
+Frog	AnimalSounds
+Croak	AnimalSounds
+Snake	AnimalSounds
+Rattle	NoiseArtifact
+Whale vocalization	AnimalSounds
+Music	RecordedMusic
+Musical instrument	MusicalInstrument
+Plucked string instrument	MusicalInstrument
+Guitar	MusicalInstrument
+Electric guitar	MusicalInstrument
+Bass guitar	MusicalInstrument
+Acoustic guitar	MusicalInstrument
+Steel guitar, slide guitar	MusicalInstrument
+Tapping (guitar technique)	MusicalInstrument
+Strum	MusicalInstrument
+Banjo	MusicalInstrument
+Sitar	MusicalInstrument
+Mandolin	MusicalInstrument
+Zither	MusicalInstrument
+Ukulele	MusicalInstrument
+Keyboard (musical)	MusicalInstrument
+Piano	MusicalInstrument
+Electric piano	MusicalInstrument
+Organ	MusicalInstrument
+Electronic organ	MusicalInstrument
+Hammond organ	MusicalInstrument
+Synthesizer	MusicalInstrument
+Sampler	MusicalInstrument
+Harpsichord	MusicalInstrument
+Percussion	MusicalInstrument
+Drum kit	MusicalInstrument
+Drum machine	MusicalInstrument
+Drum	MusicalInstrument
+Snare drum	MusicalInstrument
+Rimshot	MusicalInstrument
+Drum roll	MusicalInstrument
+Bass drum	MusicalInstrument
+Timpani	MusicalInstrument
+Tabla	MusicalInstrument
+Cymbal	MusicalInstrument
+Hi-hat	MusicalInstrument
+Wood block	MusicalInstrument
+Tambourine	MusicalInstrument
+Rattle (instrument)	MusicalInstrument
+Maraca	MusicalInstrument
+Gong	MusicalInstrument
+Tubular bells	MusicalInstrument
+Mallet percussion	MusicalInstrument
+Marimba, xylophone	MusicalInstrument
+Glockenspiel	MusicalInstrument
+Vibraphone	MusicalInstrument
+Steelpan	MusicalInstrument
+Orchestra	MusicalInstrument
+Brass instrument	MusicalInstrument
+French horn	MusicalInstrument
+Trumpet	MusicalInstrument
+Trombone	MusicalInstrument
+Bowed string instrument	MusicalInstrument
+String section	MusicalInstrument
+Violin, fiddle	MusicalInstrument
+Pizzicato	MusicalInstrument
+Cello	MusicalInstrument
+Double bass	MusicalInstrument
+Wind instrument, woodwind instrument	MusicalInstrument
+Flute	MusicalInstrument
+Saxophone	MusicalInstrument
+Clarinet	MusicalInstrument
+Harp	MusicalInstrument
+Bell	MusicalInstrument
+Church bell	MusicalInstrument
+Jingle bell	MusicalInstrument
+Bicycle bell	Transportation
+Tuning fork	MusicalInstrument
+Chime	MusicalInstrument
+Wind chime	MusicalInstrument
+Change ringing (campanology)	MusicalInstrument
+Harmonica	MusicalInstrument
+Accordion	MusicalInstrument
+Bagpipes	MusicalInstrument
+Didgeridoo	MusicalInstrument
+Shofar	MusicalInstrument
+Theremin	MusicalInstrument
+Singing bowl	MusicalInstrument
+Scratching (performance technique)	MusicalInstrument
+Pop music	RecordedMusic
+Hip hop music	RecordedMusic
+Beatboxing	SingingVocal
+Rock music	RecordedMusic
+Heavy metal	RecordedMusic
+Punk rock	RecordedMusic
+Grunge	HumanBodySound
+Progressive rock	RecordedMusic
+Rock and roll	RecordedMusic
+Psychedelic rock	RecordedMusic
+Rhythm and blues	RecordedMusic
+Soul music	RecordedMusic
+Reggae	RecordedMusic
+Country	RecordedMusic
+Swing music	RecordedMusic
+Bluegrass	RecordedMusic
+Funk	RecordedMusic
+Folk music	RecordedMusic
+Middle Eastern music	RecordedMusic
+Jazz	RecordedMusic
+Disco	RecordedMusic
+Classical music	RecordedMusic
+Opera	RecordedMusic
+Electronic music	RecordedMusic
+House music	RecordedMusic
+Techno	RecordedMusic
+Dubstep	RecordedMusic
+Drum and bass	RecordedMusic
+Electronica	RecordedMusic
+Electronic dance music	RecordedMusic
+Ambient music	RecordedMusic
+Trance music	RecordedMusic
+Music of Latin America	RecordedMusic
+Salsa music	RecordedMusic
+Flamenco	RecordedMusic
+Blues	RecordedMusic
+Music for children	RecordedMusic
+New-age music	RecordedMusic
+Vocal music	RecordedMusic
+A capella	RecordedMusic
+Music of Africa	RecordedMusic
+Afrobeat	RecordedMusic
+Christian music	RecordedMusic
+Gospel music	RecordedMusic
+Music of Asia	RecordedMusic
+Carnatic music	RecordedMusic
+Music of Bollywood	RecordedMusic
+Ska	RecordedMusic
+Traditional music	RecordedMusic
+Independent music	RecordedMusic
+Song	RecordedMusic
+Background music	RecordedMusic
+Theme music	RecordedMusic
+Jingle (music)	RecordedMusic
+Soundtrack music	RecordedMusic
+Lullaby	RecordedMusic
+Video game music	RecordedMusic
+Christmas music	RecordedMusic
+Dance music	RecordedMusic
+Wedding music	RecordedMusic
+Happy music	RecordedMusic
+Funny music	RecordedMusic
+Sad music	RecordedMusic
+Tender music	RecordedMusic
+Exciting music	RecordedMusic
+Angry music	RecordedMusic
+Scary music	RecordedMusic
+Wind	NatureWaterFire
+Rustling leaves	NatureWaterFire
+Wind noise (microphone)	NatureWaterFire
+Thunderstorm	NatureWaterFire
+Thunder	NatureWaterFire
+Water	NatureWaterFire
+Rain	NatureWaterFire
+Raindrop	NatureWaterFire
+Rain on surface	NatureWaterFire
+Stream	NatureWaterFire
+Waterfall	NatureWaterFire
+Ocean	NatureWaterFire
+Waves, surf	NatureWaterFire
+Steam	NatureWaterFire
+Gurgling	NatureWaterFire
+Fire	NatureWaterFire
+Crackle	NatureWaterFire
+Vehicle	Transportation
+Boat, Water vehicle	Transportation
+Sailboat, sailing ship	Transportation
+Rowboat, canoe, kayak	Transportation
+Motorboat, speedboat	Transportation
+Ship	Transportation
+Motor vehicle (road)	Transportation
+Car	Transportation
+Vehicle horn, car horn, honking	Transportation
+Toot	Transportation
+Car alarm	AlarmSignal
+Power windows, electric windows	Transportation
+Skidding	Transportation
+Tire squeal	Transportation
+Car passing by	Transportation
+Race car, auto racing	Transportation
+Truck	Transportation
+Air brake	Transportation
+Air horn, truck horn	Transportation
+Reversing beeps	Transportation
+Ice cream truck, ice cream van	Transportation
+Bus	Transportation
+Emergency vehicle	Transportation
+Police car (siren)	Transportation
+Ambulance (siren)	Transportation
+Fire engine, fire truck (siren)	Transportation
+Motorcycle	Transportation
+Traffic noise, roadway noise	Transportation
+Rail transport	Transportation
+Train	Transportation
+Train whistle	Transportation
+Train horn	Transportation
+Railroad car, train wagon	Transportation
+Train wheels squealing	Transportation
+Subway, metro, underground	Transportation
+Aircraft	Transportation
+Aircraft engine	Transportation
+Jet engine	Transportation
+Propeller, airscrew	Transportation
+Helicopter	Transportation
+Fixed-wing aircraft, airplane	Transportation
+Bicycle	Transportation
+Skateboard	Transportation
+Engine	MachineAppliance
+Light engine (high frequency)	MachineAppliance
+Dental drill, dentist's drill	MachineAppliance
+Lawn mower	MachineAppliance
+Chainsaw	MachineAppliance
+Medium engine (mid frequency)	MachineAppliance
+Heavy engine (low frequency)	MachineAppliance
+Engine knocking	MachineAppliance
+Engine starting	MachineAppliance
+Idling	MachineAppliance
+Accelerating, revving, vroom	Transportation
+Door	ToolImpact
+Doorbell	AlarmSignal
+Ding-dong	AlarmSignal
+Sliding door	ToolImpact
+Slam	ToolImpact
+Knock	ToolImpact
+Tap	ToolImpact
+Squeak	ToolImpact
+Cupboard open or close	ToolImpact
+Drawer open or close	ToolImpact
+Dishes, pots, and pans	ToolImpact
+Cutlery, silverware	ToolImpact
+Chopping (food)	ToolImpact
+Frying (food)	ToolImpact
+Microwave oven	MachineAppliance
+Blender	MachineAppliance
+Water tap, faucet	ToolImpact
+Sink (filling or washing)	NatureWaterFire
+Bathtub (filling or washing)	ToolImpact
+Hair dryer	MachineAppliance
+Toilet flush	ToolImpact
+Toothbrush	MachineAppliance
+Electric toothbrush	MachineAppliance
+Vacuum cleaner	MachineAppliance
+Zipper (clothing)	ToolImpact
+Keys jangling	ToolImpact
+Coin (dropping)	ToolImpact
+Scissors	ToolImpact
+Electric shaver, electric razor	MachineAppliance
+Shuffling cards	ToolImpact
+Typing	ToolImpact
+Typewriter	ToolImpact
+Computer keyboard	ToolImpact
+Writing	ToolImpact
+Alarm	AlarmSignal
+Telephone	AlarmSignal
+Telephone bell ringing	AlarmSignal
+Ringtone	AlarmSignal
+Telephone dialing, DTMF	AlarmSignal
+Dial tone	AlarmSignal
+Busy signal	AlarmSignal
+Alarm clock	AlarmSignal
+Siren	AlarmSignal
+Civil defense siren	AlarmSignal
+Buzzer	AlarmSignal
+Smoke detector, smoke alarm	AlarmSignal
+Fire alarm	AlarmSignal
+Foghorn	Transportation
+Whistle	AlarmSignal
+Steam whistle	NatureWaterFire
+Mechanisms	MachineAppliance
+Ratchet, pawl	MachineAppliance
+Clock	MachineAppliance
+Tick	MachineAppliance
+Tick-tock	MachineAppliance
+Gears	MachineAppliance
+Pulleys	MachineAppliance
+Sewing machine	MachineAppliance
+Mechanical fan	MachineAppliance
+Air conditioning	MachineAppliance
+Cash register	MachineAppliance
+Printer	MachineAppliance
+Camera	MachineAppliance
+Single-lens reflex camera	MachineAppliance
+Tools	ToolImpact
+Hammer	ToolImpact
+Jackhammer	ToolImpact
+Sawing	ToolImpact
+Filing (rasp)	ToolImpact
+Sanding	ToolImpact
+Power tool	ToolImpact
+Drill	ToolImpact
+Explosion	ExplosionWeapon
+Gunshot, gunfire	ExplosionWeapon
+Machine gun	ExplosionWeapon
+Fusillade	ExplosionWeapon
+Artillery fire	ExplosionWeapon
+Cap gun	ExplosionWeapon
+Fireworks	ExplosionWeapon
+Firecracker	ExplosionWeapon
+Burst, pop	ToolImpact
+Eruption	NatureWaterFire
+Boom	ToolImpact
+Wood	ToolImpact
+Chop	ToolImpact
+Splinter	ToolImpact
+Crack	ToolImpact
+Glass	ToolImpact
+Chink, clink	ToolImpact
+Shatter	ToolImpact
+Liquid	NatureWaterFire
+Splash, splatter	NatureWaterFire
+Slosh	NatureWaterFire
+Squish	NatureWaterFire
+Drip	NatureWaterFire
+Pour	NatureWaterFire
+Trickle, dribble	NatureWaterFire
+Gush	NatureWaterFire
+Fill (with liquid)	NatureWaterFire
+Spray	NatureWaterFire
+Pump (liquid)	MachineAppliance
+Stir	NatureWaterFire
+Boiling	NatureWaterFire
+Sonar	Other
+Arrow	Other
+Whoosh, swoosh, swish	ToolImpact
+Thump, thud	ToolImpact
+Thunk	ToolImpact
+Electronic tuner	MachineAppliance
+Effects unit	MachineAppliance
+Chorus effect	MachineAppliance
+Basketball bounce	ToolImpact
+Bang	ToolImpact
+Slap, smack	ToolImpact
+Whack, thwack	ToolImpact
+Smash, crash	ToolImpact
+Breaking	ToolImpact
+Bouncing	ToolImpact
+Whip	ToolImpact
+Flap	ToolImpact
+Scratch	ToolImpact
+Scrape	ToolImpact
+Rub	ToolImpact
+Roll	ToolImpact
+Crushing	ToolImpact
+Crumpling, crinkling	ToolImpact
+Tearing	ToolImpact
+Beep, bleep	AlarmSignal
+Ping	ToolImpact
+Ding	ToolImpact
+Clang	ToolImpact
+Squeal	ToolImpact
+Creak	ToolImpact
+Rustle	ToolImpact
+Whir	ToolImpact
+Clatter	ToolImpact
+Sizzle	ToolImpact
+Clicking	ToolImpact
+Clickety-clack	ToolImpact
+Rumble	ToolImpact
+Plop	ToolImpact
+Jingle, tinkle	ToolImpact
+Hum	HumanSpeech
+Zing	ToolImpact
+Boing	ToolImpact
+Crunch	HumanBodySound
+Silence	Other
+Sine wave	NoiseArtifact
+Harmonic	NoiseArtifact
+Chirp tone	NoiseArtifact
+Sound effect	Other
+Pulse	NoiseArtifact
+Inside, small room	CrowdAmbience
+Inside, large room or hall	CrowdAmbience
+Inside, public space	CrowdAmbience
+Outside, urban or manmade	CrowdAmbience
+Outside, rural or natural	CrowdAmbience
+Reverberation	CrowdAmbience
+Echo	CrowdAmbience
+Noise	NoiseArtifact
+Environmental noise	NoiseArtifact
+Static	NoiseArtifact
+Mains hum	NoiseArtifact
+Distortion	NoiseArtifact
+Sidetone	NoiseArtifact
+Cacophony	CrowdAmbience
+White noise	NoiseArtifact
+Pink noise	NoiseArtifact
+Throbbing	NoiseArtifact
+Vibration	NoiseArtifact
+Television	CrowdAmbience
+Radio	CrowdAmbience
+Field recording	CrowdAmbience

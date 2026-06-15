@@ -1,0 +1,23 @@
+# DataMate audio operators runtime dependencies.
+# Install these into the DataMate runtime image/environment, not inside each operator package.
+
+torch==2.8.0
+torch_npu==2.8.0
+torchaudio==2.8.0
+torchvision==0.23.0
+numpy==2.2.6
+scipy==1.13.1
+soundfile==0.12.1
+pydub==0.25.1
+speechbrain==1.0.3
+HyperPyYAML==1.2.2
+onnxruntime==1.19.2
+jieba==0.42.1
+transformers==4.57.6
+safetensors==0.7.0
+librosa==0.10.2.post1
+torchlibrosa==0.0.4
+timm==1.0.26
+sentencepiece==0.2.1
+PyYAML==6.0.2
+loguru==0.7.3

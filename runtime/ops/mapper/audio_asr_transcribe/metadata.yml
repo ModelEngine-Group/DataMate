@@ -1,0 +1,65 @@
+name: 'audioOps-音频转文本'
+name_en: 'audioOps-Audio ASR Transcribe'
+description: '调用 WeNet ASR 模型对输入音频进行转写；自动模式按语言文件为每条音频指定中文或英文模型，未命中则按中文识别。'
+description_en: 'Transcribe input audio with WeNet ASR; can use a language mapping file to choose zh/en model per audio.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'AudioAsrTranscribe'
+version: '1.0.0'
+types:
+  - 'annotation'
+modal: 'audio'
+inputs: 'audio'
+outputs: 'text'
+settings:
+  language:
+    name: '语言'
+    description: '选择 ASR 模型语言。语言文件命中时优先按文件指定语言识别；未命中时按此参数，自动模式最终按中文兜底。'
+    type: 'select'
+    defaultVal: 'auto'
+    required: true
+    options:
+      - label: '自动'
+        value: 'auto'
+      - label: '中文'
+        value: 'zh'
+      - label: '英文'
+        value: 'en'
+  languageFilePath:
+    name: '语言文件路径'
+    description: '语言映射 JSONL 文件路径。默认读取 references/language.jsonl；算子也会从任务清单和源音频所在数据集目录反查。每行一个 JSON 对象，包含 file 和 lang。'
+    type: 'input'
+    defaultVal: '/dataset/{dataset_id}/references/language.jsonl'
+    required: false
+  zhModelDir:
+    name: '中文模型目录'
+    description: '包含 train.yaml、final.pt 与 units.txt 的中文 ASR 模型目录。'
+    type: 'input'
+    defaultVal: '/models/AudioOperations/asr/aishell'
+    required: false
+  enModelDir:
+    name: '英文模型目录'
+    description: '包含 train.yaml、final.pt 与 units.txt 的英文 ASR 模型目录。'
+    type: 'input'
+    defaultVal: '/models/AudioOperations/asr/librispeech'
+    required: false
+  maxSegmentSeconds:
+    name: '最大切片秒数'
+    description: 'ASR 前将长音频按该时长切片，再按顺序合并文本。'
+    type: 'inputNumber'
+    defaultVal: 120
+    min: 5
+    max: 600
+    step: 1
+runtime:
+  memory: null
+  cpu: 1.0
+  gpu: 0
+  npu: 0
+  storage: 50MB
+metrics:
+  - name: '处理耗时'
+    metric: '依输入音频长度与模型而定'
+release:
+  - '首次发布，支持单文件音频转文本'
+  - '固定 ctc_greedy_search 解码，新增语言文件路径，移除参考文本回填与中间产物保留选项'

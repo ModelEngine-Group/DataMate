@@ -1,0 +1,46 @@
+name: 'audioOps-语音情感识别'
+name_en: 'audioOps-Speech Emotion Recognition'
+description: '识别当前音频的 8 类语音情感；默认输出对应情感标签 txt，也可保留原音频并将结果写入 references 清单。'
+description_en: 'Recognize 8 speech emotion classes. By default outputs a txt emotion label; optionally keeps audio and writes results to a references report.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'AudioEmotionRecognize'
+version: '1.0.0'
+types:
+  - 'annotation'
+modal: 'audio'
+inputs: 'audio'
+outputs: 'audio'
+settings:
+  hfModelDir:
+    name: '模型目录'
+    description: '包含 config.json、preprocessor_config.json 与 model.safetensors 的情感识别模型目录。'
+    type: 'input'
+    defaultVal: '/models/AudioOperations/emotion/wav2vec2-lg-xlsr-en-speech-emotion-recognition'
+    required: false
+  saveAsText:
+    name: '输出为文本标签'
+    description: '开启时每个音频输出一个 txt，内容为预测情感标签；关闭时保留原音频不改名，并把识别结果写入 references 清单。'
+    type: 'switch'
+    defaultVal: 'true'
+    required: false
+    checkedLabel: '文本标签'
+    unCheckedLabel: '保留音频'
+  resultSavePath:
+    name: '情感识别结果保存文件'
+    description: 'saveAsText 关闭时写入的情感识别结果 JSONL 文件。默认优先写入当前输出数据集 references/emotion_recognition.jsonl；支持 {dataset_id} 占位，也可填写绝对路径。'
+    type: 'input'
+    defaultVal: '/dataset/{dataset_id}/references/emotion_recognition.jsonl'
+    required: false
+runtime:
+  memory: 4294967296
+  cpu: 1.0
+  gpu: 0
+  npu: 0
+  storage: 20MB
+metrics:
+  - name: '处理耗时'
+    metric: '依输入音频长度与模型而定'
+release:
+  - '首次发布，支持单文件 8 类语音情感识别'
+  - '模型目录改为 wav2vec2-lg-xlsr-en-speech-emotion-recognition；新增文本标签/保留音频两种输出模式'

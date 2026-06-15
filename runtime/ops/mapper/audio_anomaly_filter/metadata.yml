@@ -1,0 +1,74 @@
+name: 'audioOps-异常语音检测与过滤'
+name_en: 'audioOps-Audio Anomaly Detect & Filter'
+description: '对音频做快速异常检测：时长范围、静音帧比例与可读性。异常音频写入 references 清单；默认过滤异常音频，也可保留原文件名输出。'
+description_en: 'Fast audio anomaly detection (duration, silence ratio and readability). Writes invalid samples to a references report; filters invalid audio by default or keeps it with the original name.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'AudioAnomalyFilter'
+version: '1.0.0'
+types:
+  - 'cleaning'
+modal: 'audio'
+inputs: 'audio'
+outputs: 'audio'
+settings:
+  minDur:
+    name: '最小时长(秒)'
+    type: 'inputNumber'
+    description: '小于该值视为异常。'
+    defaultVal: 1.0
+    min: 0
+    max: 36000
+    step: 0.1
+  maxDur:
+    name: '最大时长(秒)'
+    type: 'inputNumber'
+    description: '大于该值视为异常。'
+    defaultVal: 20000.0
+    min: 0
+    max: 360000
+    step: 1
+  silenceRatioTh:
+    name: '静音帧比例阈值'
+    type: 'slider'
+    description: '静音帧比例 >= 阈值 时视为异常。'
+    defaultVal: 0.8
+    min: 0
+    max: 1
+    step: 0.01
+  silenceRmsRatioTh:
+    name: '静音判定比例'
+    type: 'slider'
+    description: '静音判定阈值 = global_rms * 该比例。'
+    defaultVal: 0.05
+    min: 0
+    max: 1
+    step: 0.01
+  keepInvalidAudio:
+    name: '异常音频处理'
+    description: '选择“过滤”时异常音频只写入清单并不输出；选择“保留”时异常音频继续输出，文件名保持不变。'
+    type: 'switch'
+    defaultVal: 'false'
+    required: false
+    checkedLabel: '过滤'
+    unCheckedLabel: '保留'
+  anomalyReportPath:
+    name: '异常清单路径'
+    description: '异常音频清单 JSONL 路径。默认优先写入当前输出数据集 references/anomaly_report.jsonl；支持 {dataset_id} 占位。'
+    type: 'input'
+    defaultVal: '/dataset/{dataset_id}/references/anomaly_report.jsonl'
+    required: false
+runtime:
+  memory: 104857600
+  cpu: 0.2
+  gpu: 0
+  npu: 0
+  storage: 10MB
+
+metrics:
+  - name: '处理耗时'
+    metric: '依输入音频长度与运行环境而定'
+release:
+  - '首次发布'
+  - '异常音频改为写入 references 清单；支持选择过滤或保留异常音频，输出文件名保持不变'
+  - '修正异常音频处理开关展示文案'

@@ -1,0 +1,5 @@
+jieba
+numpy
+onnxruntime
+transformers
+loguru

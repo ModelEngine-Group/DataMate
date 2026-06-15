@@ -1,0 +1,81 @@
+name: 'audioOps-音频场景分类'
+name_en: 'audioOps-Audio Sound Classification'
+description: '识别当前音频的声音大类与细类；默认输出一个 txt 标签，也可保留原音频并把识别结果写入 references 清单。'
+description_en: 'Classify one audio sample with an AST AudioSet model. By default outputs a txt label; optionally keeps the audio and writes results to a references report.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'AudioSoundClassify'
+version: '1.0.0'
+types:
+  - 'annotation'
+modal: 'audio'
+inputs: 'audio'
+outputs: 'audio'
+settings:
+  astCheckpoint:
+    name: 'AST 模型路径'
+    description: 'AST AudioSet checkpoint 路径。'
+    type: 'input'
+    defaultVal: '/models/AudioOperations/recog/audioset_10_10_0.4593.pth'
+    required: false
+  saveAsText:
+    name: '输出为文本标签'
+    description: '开启时每个音频输出一个 txt，内容为预测声音大类标签；关闭时保留原音频不改名，并把识别结果写入 references 清单。'
+    type: 'switch'
+    defaultVal: 'true'
+    required: false
+    checkedLabel: '文本标签'
+    unCheckedLabel: '保留音频'
+  resultSavePath:
+    name: '分类结果保存文件'
+    description: 'saveAsText 关闭时写入的声音分类结果 JSONL 文件。默认优先写入当前输出数据集 references/sound_classification.jsonl；支持 {dataset_id} 占位，也可填写绝对路径。'
+    type: 'input'
+    defaultVal: '/dataset/{dataset_id}/references/sound_classification.jsonl'
+    required: false
+  topK:
+    name: '细类 TopK'
+    type: 'inputNumber'
+    description: '输出 AudioSet 细类数量。'
+    defaultVal: 10
+    min: 1
+    max: 50
+    step: 1
+  segmentSeconds:
+    name: 'AST 分段秒数'
+    type: 'inputNumber'
+    description: '滑窗分段长度。'
+    defaultVal: 10.24
+    min: 1
+    max: 120
+    step: 0.01
+  hopSeconds:
+    name: 'AST 步长秒数'
+    type: 'inputNumber'
+    description: '滑窗步长。'
+    defaultVal: 5.12
+    min: 0.1
+    max: 120
+    step: 0.01
+  macroAgg:
+    name: 'AST 大类聚合'
+    description: '将细类聚合成大类的策略。'
+    type: 'select'
+    defaultVal: 'max'
+    required: true
+    options:
+      - label: 'max'
+        value: 'max'
+      - label: 'sum'
+        value: 'sum'
+runtime:
+  memory: 4294967296
+  cpu: 1.0
+  gpu: 0
+  npu: 0
+  storage: 20MB
+metrics:
+  - name: '处理耗时'
+    metric: '依输入音频长度与模型而定'
+release:
+  - '首次发布，支持 AST AudioSet 声音分类'
+  - '新增文本标签/保留音频两种输出模式；标签映射文件改为随模型目录自动定位'

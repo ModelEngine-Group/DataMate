@@ -1,0 +1,49 @@
+name: 'audioOps-ASR文本概括'
+name_en: 'audioOps-ASR Text Summarization'
+description: '对每个传入文本文件分别做概括，输入输出均为文本；默认使用本地 ONNX 模型做语义选片。'
+description_en: 'Summarize each input text file independently with text input and text output; by default uses a local ONNX model for semantic span selection.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'AudioTextSummarize'
+version: '1.0.0'
+types:
+  - 'annotation'
+modal: 'text'
+inputs: 'text'
+outputs: 'text'
+settings:
+  onnxModelDir:
+    name: '模型目录'
+    description: '本地 ONNX 摘要模型目录，需包含 model.onnx 与 tokenizer 文件。'
+    type: 'input'
+    defaultVal: '/models/AudioOperations/summary/summary-model'
+    required: false
+  maxSummaryCharsZh:
+    name: '中文最大字数'
+    type: 'inputNumber'
+    description: '中文摘要最大字符数，0 表示不限制。'
+    defaultVal: 40
+    min: 0
+    max: 500
+    step: 1
+  maxSummaryWordsEn:
+    name: '英文最大词数'
+    type: 'inputNumber'
+    description: '英文摘要最大词数，0 表示不限制。'
+    defaultVal: 18
+    min: 0
+    max: 200
+    step: 1
+runtime:
+  memory: 2147483648
+  cpu: 0.5
+  gpu: 0
+  npu: 0
+  storage: 10MB
+metrics:
+  - name: '处理耗时'
+    metric: '依输入文本长度、概括方法与运行环境而定'
+release:
+  - '首次发布，支持 ASR 文本概括'
+  - '参数精简为模型目录、中文最大字数、英文最大词数；其余使用当前默认配置'
+  - '改为每个传入文本文件独立概括，不再把多条 ASR 结果合并到单个输出文件'

@@ -1,0 +1,58 @@
+name: 'audioOps-快速语言识别（中英）'
+name_en: 'audioOps-Fast Language ID (zh/en)'
+description: '调用 SpeechBrain LID 对输入音频识别 zh/en；默认集成模式保留原音频并写入 references/language.jsonl，供后续 ASR 自动选择语言模型；也可切换为独立模式输出 txt 标签。'
+description_en: 'Run SpeechBrain LID for zh/en. Integrated mode keeps audio and writes references/language.jsonl for downstream ASR; standalone mode outputs a txt label.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'AudioFastLangId'
+version: '1.0.0'
+types:
+  - 'annotation'
+modal: 'audio'
+inputs: 'audio'
+outputs: 'audio'
+settings:
+  outputMode:
+    name: '输出模式'
+    description: '集成模式：保留原音频并写入语言文件，适合接 audioOps-音频转文本；独立模式：每个音频输出一个 txt，内容为 zh 或 en。'
+    type: 'select'
+    defaultVal: 'integrated'
+    required: true
+    options:
+      - label: '集成模式'
+        value: 'integrated'
+      - label: '独立模式'
+        value: 'standalone'
+  languageFilePath:
+    name: '语言文件路径'
+    description: '集成模式下写入的 JSONL 路径。默认会优先写入当前任务输出数据集的 references/language.jsonl；若需固定路径可填写绝对路径。'
+    type: 'input'
+    defaultVal: '/dataset/{dataset_id}/references/language.jsonl'
+    required: false
+  modelSource:
+    name: '模型源'
+    description: 'SpeechBrain LID 本地模型目录。'
+    type: 'input'
+    defaultVal: '/models/AudioOperations/lid/speechbrain_lang-id-voxlingua107-ecapa'
+    required: false
+  maxSeconds:
+    name: '截断秒数'
+    type: 'inputNumber'
+    description: '只取前 N 秒做判断，0=全长。'
+    defaultVal: 3.0
+    min: 0
+    max: 60
+    step: 0.5
+runtime:
+  memory: 2147483648
+  cpu: 0.5
+  gpu: 0
+  npu: 0
+  storage: 10MB
+
+metrics:
+  - name: '处理耗时'
+    metric: '依输入音频长度而定'
+release:
+  - '首次发布'
+  - '新增集成/独立输出模式；集成模式写入 language.jsonl 并保留音频，便于接入 ASR 转写算子'

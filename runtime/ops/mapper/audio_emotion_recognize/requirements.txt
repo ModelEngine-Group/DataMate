@@ -1,0 +1,8 @@
+torch
+torchaudio
+transformers
+safetensors
+soundfile
+scipy
+numpy
+loguru

@@ -1,0 +1,37 @@
+name: 'audioTest-EmotionResultValidation'
+name_en: 'audioTest-Emotion Result Validation'
+description: '针对 audioOps-语音情感识别默认输出的文本标签数据集，按 RAVDESS 文件名规则解析真实情感并计算准确率。'
+description_en: 'Validate txt emotion-label outputs from audioOps-Speech Emotion Recognition using RAVDESS filename emotion codes.'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'AudioTestEmotionResultValidation'
+version: '1.0.0'
+types:
+  - 'evaluation'
+modal: 'text'
+inputs: 'text'
+outputs: 'text'
+settings:
+  validationReportPath:
+    name: '验证报告路径'
+    description: '逐文件验证结果 JSONL 路径。默认优先写入当前输出数据集 references/emotion_validation.jsonl；支持 {dataset_id} 占位。'
+    type: 'input'
+    defaultVal: '/dataset/{dataset_id}/references/emotion_validation.jsonl'
+    required: false
+  summaryPath:
+    name: '汇总报告路径'
+    description: '准确率汇总 JSON 路径。默认优先写入当前输出数据集 references/emotion_validation_summary.json；支持 {dataset_id} 占位。'
+    type: 'input'
+    defaultVal: '/dataset/{dataset_id}/references/emotion_validation_summary.json'
+    required: false
+runtime:
+  memory: 104857600
+  cpu: 0.1
+  gpu: 0
+  npu: 0
+  storage: 10MB
+metrics:
+  - name: '准确率'
+    metric: 'correct / evaluated'
+release:
+  - '首次发布，支持 RAVDESS 文件名情感码验证'
