@@ -16,6 +16,12 @@ fullnameOverride: "datamate-raycluster"
 imagePullSecrets: []
 # - name: an-existing-secret
 
+workerNetworkPolicy:
+  enabled: false
+  # CIDRs to block from Ray worker pod egress. Use /32 for a single IPv4 address.
+  blockedCIDRs: []
+  # - 192.0.2.10/32
+
 # common defined values shared between the head and worker
 common:
   # containerEnv specifies environment variables for the Ray head and worker containers.

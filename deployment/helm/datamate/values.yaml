@@ -302,6 +302,10 @@ runtime:
 
 ray-cluster:
   enabled: true
+  workerNetworkPolicy:
+    enabled: true
+    # Use CIDR notation, for example 192.0.2.10/32 for a single IPv4 address.
+    blockedCIDRs: []
   head:
     nodeSelector: {}
     tolerations: []
@@ -376,24 +380,6 @@ ray-cluster:
   worker:
     nodeSelector: {}
     tolerations: []
-    initContainers:
-      - name: ray-init
-        securityContext:
-          runAsUser: 0
-          capabilities:
-            add:
-              - "NET_ADMIN"
-        env:
-          - name: BLOCKED_IP
-            value: ""
-        command:
-          - bash
-          - -c
-          - |
-            IFS=',' read -ra bips <<< "${BLOCKED_IP}"
-            for bip in "${bips[@]}"; do
-              iptables -A OUTPUT -m owner --uid-owner 1100 -d ${bip} -j REJECT
-            done
     containerEnv:
       - name: RAY_DEDUP_LOGS
         value: "0"
@@ -452,24 +438,6 @@ ray-cluster:
       maxReplicas: 8
       rayStartParams:
         resources: '"{\"npu\": 1}"'
-      initContainers:
-        - name: ray-init
-          securityContext:
-            runAsUser: 0
-            capabilities:
-              add:
-                - "NET_ADMIN"
-          env:
-            - name: BLOCKED_IP
-              value: ""
-          command:
-            - bash
-            - -c
-            - |
-              IFS=',' read -ra bips <<< "${BLOCKED_IP}"
-              for bip in "${bips[@]}"; do
-                iptables -A OUTPUT -m owner --uid-owner 1100 -d ${bip} -j REJECT
-              done
       containerEnv:
         - name: RAY_DEDUP_LOGS
           value: "0"
