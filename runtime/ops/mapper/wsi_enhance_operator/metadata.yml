@@ -1,0 +1,149 @@
+name: 'WSIEnhance 一体化算子'
+description: '在一个算子中完成 WSI 轮廓识别、patch 提取、可选 stain 归一化和可选数据增强。'
+language: 'python'
+vendor: 'huawei'
+raw_id: 'WSIEnhanceMapper'
+version: '2.0.0'
+modal: 'image'
+inputs: 'image'
+outputs: 'image'
+types:
+  - 'cleaning'
+release:
+  - '整合 segmentation、patch extract、stain normalize、patch augment 四个阶段为一个算子'
+  - '支持通过参数控制是否保存原始 patch、是否执行 stain 归一化、是否执行数据增强'
+runtime:
+  memory: 2147483648
+  cpu: 1.0
+  gpu: 0.1
+  npu: 0.1
+settings:
+  model_folder:
+    name: '模型版本目录'
+    description: '位于 /models/WSIEnhance 下的 SlideSegmenter 模型目录。'
+    type: 'input'
+    defaultVal: '2025-10-18'
+    required: false
+  thumbnail_size:
+    name: '缩略图最大边长'
+    description: '用于组织分割的缩略图最大边长。'
+    type: 'slider'
+    defaultVal: 3072
+    min: 1024
+    max: 8192
+    step: 256
+  patch_size:
+    name: 'Patch 尺寸'
+    description: '提取 patch 的尺寸。'
+    type: 'slider'
+    defaultVal: 256
+    min: 64
+    max: 512
+    step: 32
+  patch_bg_thresh:
+    name: '背景灰度阈值'
+    description: '灰度高于该值视为背景。'
+    type: 'slider'
+    defaultVal: 210
+    min: 150
+    max: 240
+    step: 5
+  patch_max_bg_ratio:
+    name: '最大背景占比'
+    description: '超过该背景比例的 patch 会被过滤。'
+    type: 'slider'
+    defaultVal: 0.85
+    min: 0.5
+    max: 0.95
+    step: 0.05
+  save_patches:
+    name: '保存原始 Patch'
+    description: '是否将提取出的原始 patch 落盘到数据集目录。启用 Stain 归一化时该项会自动失效，不再保留原始 patch。'
+    type: 'switch'
+    defaultVal: 'true'
+    required: false
+    checkedLabel: '保存'
+    unCheckedLabel: '不保存'
+  enable_stain_normalize:
+    name: '启用 Stain 归一化'
+    description: '是否执行 patch 染色归一化。'
+    type: 'switch'
+    defaultVal: 'false'
+    required: false
+    checkedLabel: '启用'
+    unCheckedLabel: '关闭'
+  save_normalized_patches:
+    name: '保存归一化 Patch'
+    description: '启用 stain 归一化后，是否保存归一化结果。'
+    type: 'switch'
+    defaultVal: 'true'
+    required: false
+    checkedLabel: '保存'
+    unCheckedLabel: '不保存'
+  stain_method:
+    name: '归一化方法'
+    description: '选择染色归一化方法。'
+    type: 'select'
+    defaultVal: 'macenko'
+    required: false
+    options:
+      - label: 'Macenko'
+        value: 'macenko'
+      - label: 'Reinhard'
+        value: 'reinhard'
+      - label: 'Vahadane'
+        value: 'vahadane'
+  stain_target:
+    name: '目标模板路径'
+    description: '可选目标模板图像路径。'
+    type: 'input'
+    defaultVal: ''
+    required: false
+  enable_augmentation:
+    name: '启用数据增强'
+    description: '是否执行 patch 数据增强。'
+    type: 'switch'
+    defaultVal: 'false'
+    required: false
+    checkedLabel: '启用'
+    unCheckedLabel: '关闭'
+  save_augmented_patches:
+    name: '保存增强 Patch'
+    description: '启用数据增强后，是否保存增强结果。'
+    type: 'switch'
+    defaultVal: 'true'
+    required: false
+    checkedLabel: '保存'
+    unCheckedLabel: '不保存'
+  aug_factor:
+    name: '增强倍数'
+    description: '每个输入 patch 生成的增强版本数量。'
+    type: 'slider'
+    defaultVal: 1
+    min: 1
+    max: 10
+    step: 1
+  aug_rotate:
+    name: '启用旋转'
+    description: '是否启用随机旋转。'
+    type: 'switch'
+    defaultVal: 'true'
+    required: false
+    checkedLabel: '启用'
+    unCheckedLabel: '关闭'
+  aug_flip:
+    name: '启用翻转'
+    description: '是否启用随机翻转。'
+    type: 'switch'
+    defaultVal: 'true'
+    required: false
+    checkedLabel: '启用'
+    unCheckedLabel: '关闭'
+  aug_color_jitter:
+    name: '启用颜色抖动'
+    description: '是否启用亮度、对比度、饱和度扰动。'
+    type: 'switch'
+    defaultVal: 'true'
+    required: false
+    checkedLabel: '启用'
+    unCheckedLabel: '关闭'
