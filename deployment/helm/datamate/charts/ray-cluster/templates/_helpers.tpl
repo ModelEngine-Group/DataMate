@@ -66,3 +66,24 @@ Name of image
 {{- $name }}:{{ $tag }}
 {{- end }}
 {{- end }}
+
+{{/*
+Render worker init containers, defaulting missing image fields to the Ray runtime image.
+*/}}
+{{- define "ray-cluster.workerInitContainers" -}}
+{{- $root := .root -}}
+{{- $image := include "ray-cluster.image" $root -}}
+{{- $imagePullPolicy := default $root.Values.image.pullPolicy $root.Values.global.image.pullPolicy -}}
+{{- $containers := list -}}
+{{- range $container := (.initContainers | default list) }}
+{{- $containerWithDefaults := deepCopy $container -}}
+{{- if not $containerWithDefaults.image }}
+{{- $_ := set $containerWithDefaults "image" $image -}}
+{{- end }}
+{{- if not $containerWithDefaults.imagePullPolicy }}
+{{- $_ := set $containerWithDefaults "imagePullPolicy" $imagePullPolicy -}}
+{{- end }}
+{{- $containers = append $containers $containerWithDefaults -}}
+{{- end }}
+{{- toYaml $containers -}}
+{{- end }}

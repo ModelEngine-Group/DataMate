@@ -190,7 +190,7 @@ spec:
       spec:
         {{- with .Values.worker.initContainers }}
         initContainers:
-        {{- toYaml . | nindent 8 }}
+        {{- include "ray-cluster.workerInitContainers" (dict "root" $ "initContainers" .) | nindent 8 }}
         {{- end }}
         containers:
         - name: ray-worker
@@ -313,7 +313,7 @@ spec:
       spec:
         {{- with $values.initContainers }}
         initContainers:
-        {{- toYaml . | nindent 8 }}
+        {{- include "ray-cluster.workerInitContainers" (dict "root" $ "initContainers" .) | nindent 8 }}
         {{- end }}
         containers:
         - name: ray-worker
