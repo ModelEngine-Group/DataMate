@@ -1,7 +1,7 @@
 {
   "name": "apireader",
   "parameter": {
-    "api": "http://127.0.0.1:9000",
+    "api": "https://api.example.com/data",
     "method": "GET",
     "body": "{\"name\": \"value\"}",
     "headers": {

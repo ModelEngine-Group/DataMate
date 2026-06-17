@@ -1,6 +1,5 @@
 package com.datamate.plugin.reader.s3reader;
 
-import java.net.URI;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -56,6 +55,7 @@ public class S3Reader extends Reader {
             if (StringUtils.isBlank(endpoint)) {
                 throw new RuntimeException("endpoint is required for s3reader");
             }
+            HttpEndpointSecurity.validateExternalHttpUri(endpoint, "endpoint");
             if (StringUtils.isBlank(bucket)) {
                 throw new RuntimeException("bucket is required for s3reader");
             }
@@ -105,6 +105,7 @@ public class S3Reader extends Reader {
             this.prefix = this.jobConfig.getString("prefix");
             // OBS也是默认us-east-1，这里保留默认值
             this.region = this.jobConfig.getString("region", "us-east-1");
+            HttpEndpointSecurity.validateExternalHttpUri(this.endpoint, "endpoint");
             this.s3 = getS3Client();
             this.effectivePrefix = getEffectivePrefix();
         }
@@ -190,7 +191,7 @@ public class S3Reader extends Reader {
                     .pathStyleAccessEnabled(true)
                     .build();
                 return S3Client.builder()
-                    .endpointOverride(new URI(endpoint))
+                    .endpointOverride(HttpEndpointSecurity.validateExternalHttpUri(endpoint, "endpoint"))
                     .region(Region.of(region))
                     .serviceConfiguration(serviceConfig)
                     .credentialsProvider(StaticCredentialsProvider.create(creds))
