@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import DOMPurify from 'dompurify';
 import mammoth from 'mammoth';
+import { sanitizeDocxHtml } from './docxSanitizer';
 
 export interface DocxPreviewProps {
   blob?: Blob;
@@ -9,7 +9,6 @@ export interface DocxPreviewProps {
 
 export const DocxPreview: React.FC<DocxPreviewProps> = ({
   blob,
-  fileName
 }) => {
   const [html, setHtml] = useState<string>('');
   const [loading, setLoading] = useState(true);
@@ -29,16 +28,9 @@ export const DocxPreview: React.FC<DocxPreviewProps> = ({
 
         const arrayBuffer = await blob.arrayBuffer();
         const result = await mammoth.convertToHtml({ arrayBuffer });
-        // Sanitize HTML to prevent XSS from malicious DOCX files (FCE)
-        const sanitized = DOMPurify.sanitize(result.value, {
-          ALLOWED_TAGS: ['h1','h2','h3','h4','h5','h6','p','br','hr','ul','ol','li',
-            'table','thead','tbody','tr','th','td','strong','em','b','i','u','s',
-            'a','img','sup','sub','pre','code','blockquote','span','div'],
-          ALLOWED_ATTR: ['href','target','src','alt','width','height','colspan',
-            'rowspan','style','class','id','data-*'],
-        });
+        const sanitized = sanitizeDocxHtml(result.value);
         setHtml(sanitized);
-      } catch (err) {
+      } catch {
         setError('Failed to convert Word document');
       } finally {
         setLoading(false);
