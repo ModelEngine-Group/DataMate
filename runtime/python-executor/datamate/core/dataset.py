@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import re
 import importlib
 import sys
 import uuid
@@ -129,6 +130,10 @@ class RayDataset(BasicDataset):
         :param op_name: 算子名称
         :return: 算子对象
         '''
+        # Validate op_name to prevent path traversal / code injection (CodeQL / FCE)
+        if not op_name or not re.match(r'^[A-Za-z_][A-Za-z0-9_]*$', op_name):
+            raise ValueError(f"Invalid operator name: {op_name}")
+
         parent_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "ops")
         if parent_dir not in sys.path:
             sys.path.insert(0, parent_dir)
@@ -137,6 +142,9 @@ class RayDataset(BasicDataset):
             from core.base_op import OPERATORS as RELATIVE_OPERATORS
             registry_content = RELATIVE_OPERATORS.modules.get(op_name)
         if isinstance(registry_content, str):
+            # Validate registry_content is a safe dotted module path (no path separators)
+            if not re.match(r'^[A-Za-z_][A-Za-z0-9_.]*$', registry_content):
+                raise ValueError(f"Invalid module path for operator {op_name}: {registry_content}")
             # registry_content是module的路径
             submodule = importlib.import_module(registry_content)
             res = getattr(submodule, op_name, None)
