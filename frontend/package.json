@@ -12,8 +12,10 @@
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.11.2",
+    "@types/dompurify": "^3.0.5",
     "@xyflow/react": "^12.8.3",
     "antd": "^5.27.0",
+    "dompurify": "^3.4.10",
     "i18next": "^25.8.0",
     "jssha": "^3.3.1",
     "jszip": "^3.10.1",

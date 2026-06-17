@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import DOMPurify from 'dompurify';
 import mammoth from 'mammoth';
 
 export interface DocxPreviewProps {
@@ -28,7 +29,15 @@ export const DocxPreview: React.FC<DocxPreviewProps> = ({
 
         const arrayBuffer = await blob.arrayBuffer();
         const result = await mammoth.convertToHtml({ arrayBuffer });
-        setHtml(result.value);
+        // Sanitize HTML to prevent XSS from malicious DOCX files (FCE)
+        const sanitized = DOMPurify.sanitize(result.value, {
+          ALLOWED_TAGS: ['h1','h2','h3','h4','h5','h6','p','br','hr','ul','ol','li',
+            'table','thead','tbody','tr','th','td','strong','em','b','i','u','s',
+            'a','img','sup','sub','pre','code','blockquote','span','div'],
+          ALLOWED_ATTR: ['href','target','src','alt','width','height','colspan',
+            'rowspan','style','class','id','data-*'],
+        });
+        setHtml(sanitized);
       } catch (err) {
         setError('Failed to convert Word document');
       } finally {
