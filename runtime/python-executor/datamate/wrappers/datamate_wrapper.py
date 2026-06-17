@@ -8,10 +8,14 @@ from datamate.scheduler import ray_job_scheduler
 
 async def submit(task_id, config_path, retry_count: int = 0):
     current_dir = os.path.dirname(__file__)
+    executor_script = os.path.join(current_dir, 'datamate_executor.py')
 
     if not is_k8s():
-        await cmd_scheduler.submit(task_id, f"python {os.path.join(current_dir, 'datamate_executor.py')} "
-                                            f"--config_path={config_path}")
+        # Use argument list to avoid shell injection (CodeQL / FCE)
+        await cmd_scheduler.submit(
+            task_id,
+            cmd_args=["python", executor_script, f"--config_path={config_path}"]
+        )
         return
 
     script_path = os.path.join(current_dir, "datamate_executor.py")
