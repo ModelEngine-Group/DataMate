@@ -3,6 +3,9 @@ package com.datamate.datamanagement.infrastructure.config;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * 数据管理服务配置属性
  */
@@ -33,6 +36,7 @@ public class DataManagementProperties {
         private String uploadDir = "./uploads";
         private long maxFileSize = 10485760; // 10MB
         private long maxRequestSize = 52428800; // 50MB
+        private List<String> allowedSourceDirs = new ArrayList<>();
 
         public String getUploadDir() {
             return uploadDir;
@@ -56,6 +60,14 @@ public class DataManagementProperties {
 
         public void setMaxRequestSize(long maxRequestSize) {
             this.maxRequestSize = maxRequestSize;
+        }
+
+        public List<String> getAllowedSourceDirs() {
+            return allowedSourceDirs;
+        }
+
+        public void setAllowedSourceDirs(List<String> allowedSourceDirs) {
+            this.allowedSourceDirs = allowedSourceDirs;
         }
     }
 

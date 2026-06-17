@@ -20,6 +20,7 @@ import com.datamate.datamanagement.domain.model.dataset.Dataset;
 import com.datamate.datamanagement.domain.model.dataset.DatasetFile;
 import com.datamate.datamanagement.domain.model.dataset.DatasetFileUploadCheckInfo;
 import com.datamate.datamanagement.infrastructure.exception.DataManagementErrorCode;
+import com.datamate.datamanagement.infrastructure.config.DataManagementProperties;
 import com.datamate.datamanagement.infrastructure.persistence.repository.DatasetFileRepository;
 import com.datamate.datamanagement.infrastructure.persistence.repository.DatasetRepository;
 import com.datamate.datamanagement.interfaces.converter.DatasetConverter;
@@ -82,12 +83,16 @@ public class DatasetFileApplicationService {
     @Value("${datamate.data-management.file.duplicate:COVER}")
     private DuplicateMethod duplicateMethod;
 
+    private final DataManagementProperties dataManagementProperties;
+
     @Autowired
     public DatasetFileApplicationService(DatasetFileRepository datasetFileRepository,
-                                         DatasetRepository datasetRepository, FileService fileService) {
+                                         DatasetRepository datasetRepository, FileService fileService,
+                                         DataManagementProperties dataManagementProperties) {
         this.datasetFileRepository = datasetFileRepository;
         this.datasetRepository = datasetRepository;
         this.fileService = fileService;
+        this.dataManagementProperties = dataManagementProperties;
     }
 
     /**
@@ -1114,6 +1119,13 @@ public class DatasetFileApplicationService {
             throw BusinessException.of(SystemErrorCode.FILE_SYSTEM_ERROR);
         }
 
+        // 检查源路径是否在允许的目录范围内，防止任意文件读取
+        if (!isSourcePathAllowed(source)) {
+            log.warn("Source file path is outside allowed directories: {}", sourPath);
+            throw BusinessException.of(CommonErrorCode.PARAM_ERROR,
+                    "Source file path is outside allowed directories: " + sourPath);
+        }
+
         try {
             if (Files.exists(target) && Files.isSameFile(source, target)) {
                 return;
@@ -1163,6 +1175,32 @@ public class DatasetFileApplicationService {
                 .lastAccessTime(currentTime)
                 .metadata(objectMapper.writeValueAsString(file.getMetadata()))
                 .build();
+    }
+
+    /**
+     * 检查源文件路径是否在允许的目录范围内
+     *
+     * @param sourcePath 规范化后的源文件路径
+     * @return true 如果路径在任一允许目录内
+     */
+    private boolean isSourcePathAllowed(Path sourcePath) {
+        List<String> allowedDirs = dataManagementProperties.getFileStorage().getAllowedSourceDirs();
+        if (allowedDirs == null || allowedDirs.isEmpty()) {
+            log.warn("No allowed source directories configured, denying source path: {}", sourcePath);
+            return false;
+        }
+
+        Path normalizedSource = sourcePath.normalize().toAbsolutePath();
+        for (String allowedDir : allowedDirs) {
+            if (StringUtils.isBlank(allowedDir)) {
+                continue;
+            }
+            Path normalizedAllowed = Paths.get(allowedDir).normalize().toAbsolutePath();
+            if (normalizedSource.startsWith(normalizedAllowed)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
