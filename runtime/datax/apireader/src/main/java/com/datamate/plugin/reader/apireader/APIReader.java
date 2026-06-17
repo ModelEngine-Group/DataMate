@@ -26,6 +26,7 @@ import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.apache.hc.core5.http.io.entity.StringEntity;
+import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 
@@ -50,9 +51,7 @@ public class APIReader extends Reader {
             String api = this.jobConfig.getString("api");
             Object schema = this.jobConfig.get("schema");
 
-            if (StringUtils.isBlank(api)) {
-                throw new RuntimeException("api is required for APIReader");
-            }
+            HttpEndpointSecurity.validateExternalHttpUri(api, "api");
             if (schema == null) {
                 throw new RuntimeException("schema configuration is required for APIReader");
             }
@@ -211,13 +210,17 @@ public class APIReader extends Reader {
          * 简单的HTTP请求实现
          */
         private String doHttpRequest(String urlStr, String method, String body, Configuration headers) throws Exception {
-            RequestConfig requestConfig = RequestConfig.custom().build();
+            URI safeUri = HttpEndpointSecurity.validateExternalHttpUri(urlStr, "api");
+            RequestConfig requestConfig = RequestConfig.custom()
+                    .setRedirectsEnabled(false)
+                    .build();
 
             try (CloseableHttpClient client = HttpClients.custom()
+                    .disableRedirectHandling()
                     .setDefaultRequestConfig(requestConfig)
                     .build()) {
 
-                HttpUriRequestBase request = buildRequest(urlStr, method, body);
+                HttpUriRequestBase request = buildRequest(safeUri, method, body);
 
                 if (headers != null && !headers.getKeys().isEmpty()) {
                     for (String key : headers.getKeys()) {
@@ -238,21 +241,21 @@ public class APIReader extends Reader {
             }
         }
 
-        private HttpUriRequestBase buildRequest(String urlStr, String method, String body) {
+        private HttpUriRequestBase buildRequest(URI uri, String method, String body) {
             String verb = StringUtils.defaultIfBlank(method, "GET").toUpperCase();
             HttpUriRequestBase request;
             switch (verb) {
                 case "POST":
-                    request = new HttpPost(urlStr);
+                    request = new HttpPost(uri);
                     break;
                 case "PUT":
-                    request = new HttpPut(urlStr);
+                    request = new HttpPut(uri);
                     break;
                 case "DELETE":
-                    request = new HttpDelete(urlStr);
+                    request = new HttpDelete(uri);
                     break;
                 default:
-                    request = new HttpGet(urlStr);
+                    request = new HttpGet(uri);
                     break;
             }
 

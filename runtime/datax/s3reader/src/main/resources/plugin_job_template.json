@@ -1,7 +1,7 @@
 {
   "name": "s3reader",
   "parameter": {
-    "endpoint": "http://127.0.0.1:9000",
+    "endpoint": "https://s3.example.com",
     "bucket": "test-bucket",
     "accessKey": "ak-xxx",
     "secretKey": "sk-xxx",
