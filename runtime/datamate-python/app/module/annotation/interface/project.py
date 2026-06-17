@@ -2,7 +2,7 @@ from typing import Optional
 import math
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Path, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, Path, Response, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
@@ -33,13 +33,39 @@ router = APIRouter(
 logger = get_logger(__name__)
 
 @router.get("/{mapping_id}/login")
-async def list_mappings(
+async def login_label_studio_project(
+    mapping_id: str = Path(..., description="项目映射ID"),
+    request: Request = None,
     db: AsyncSession = Depends(get_db)
 ):
+    """登录 Label Studio 项目 — 需要认证且校验项目归属"""
+    # 检查用户认证
+    user = request.headers.get("User") if request else None
+    if not user or not user.strip():
+        logger.warning(f"Unauthorized access attempt to annotation login: mapping_id={mapping_id}")
+        raise HTTPException(status_code=401, detail="Authentication required")
+
+    # 校验 mapping_id 对应的项目存在
+    stmt = select(LabelingProject).where(
+        LabelingProject.id == mapping_id,
+        LabelingProject.deleted_at.is_(None)
+    )
+    result = await db.execute(stmt)
+    project = result.scalar_one_or_none()
+    if not project:
+        logger.warning(f"Project not found for login: mapping_id={mapping_id}, user={user}")
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    logger.info(f"User '{user}' logging into Label Studio project: mapping_id={mapping_id}, "
+                f"project_name={project.name}")
+
     try:
         ls_client = LabelStudioClient(base_url=settings.label_studio_base_url,
                                       token=settings.label_studio_user_token)
         target_response = await ls_client.login_label_studio()
+        if target_response is None:
+            raise HTTPException(status_code=502, detail="Label Studio login failed")
+
         headers = dict(target_response.headers)
         set_cookies = target_response.headers.get_list("set-cookie")
 
