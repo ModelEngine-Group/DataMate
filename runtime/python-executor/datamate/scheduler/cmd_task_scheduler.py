@@ -11,13 +11,14 @@ from .scheduler import Task, TaskStatus, TaskResult, TaskScheduler
 class CommandTask(Task):
     """命令任务包装类"""
 
-    def __init__(self, task_id: str, command: str, log_path = None, shell: bool = True,
-                 timeout: Optional[int] = None, *args, **kwargs):
+    def __init__(self, task_id: str, command: str = None, log_path = None, shell: bool = True,
+                 timeout: Optional[int] = None, cmd_args: List[str] = None, *args, **kwargs):
         super().__init__(task_id, *args, **kwargs)
         self.max_backups = 9
         self.log_path = log_path
         self.command = command
-        self.shell = shell
+        self.cmd_args = cmd_args
+        self.shell = shell if cmd_args is None else False
         self.timeout = timeout
         self.return_code = None
         self._process = None
@@ -44,8 +45,15 @@ class CommandTask(Task):
                 current_log_path = f"{self.log_path}.{counter}"
 
             with open(current_log_path, 'a') as f:
-                # 使用 asyncio.create_subprocess_shell 或 create_subprocess_exec
-                if self.shell:
+                if self.cmd_args is not None:
+                    # Safe: use argument list with create_subprocess_exec (no shell injection)
+                    process = await asyncio.create_subprocess_exec(
+                        *self.cmd_args,
+                        stdout=f,
+                        stderr=asyncio.subprocess.STDOUT,
+                        **self.kwargs
+                    )
+                elif self.shell:
                     process = await asyncio.create_subprocess_shell(
                         self.command,
                         stdout=f,
@@ -132,7 +140,7 @@ class CommandTask(Task):
     def to_result(self) -> TaskResult:
         """转换为结果对象"""
         self.result = {
-            "command": self.command,
+            "command": self.command or self.cmd_args,
             "return_code": self.return_code,
         }
         return super().to_result()
@@ -144,13 +152,13 @@ class CommandScheduler(TaskScheduler):
     def __init__(self, max_concurrent: int = 5):
         super().__init__(max_concurrent)
 
-    async def submit(self, task_id, command: str, log_path = None, shell: bool = True,
-                     timeout: Optional[int] = None, **kwargs) -> str:
+    async def submit(self, task_id, command: str = None, log_path = None, shell: bool = True,
+                     timeout: Optional[int] = None, cmd_args: List[str] = None, **kwargs) -> str:
         if log_path is None:
             log_path = f"/flow/{task_id}/output.log"
 
         """提交命令任务"""
-        task = CommandTask(task_id, command, log_path, shell, timeout, **kwargs)
+        task = CommandTask(task_id, command, log_path, shell, timeout, cmd_args=cmd_args, **kwargs)
         self.tasks[task_id] = task
 
         # 使用信号量限制并发
