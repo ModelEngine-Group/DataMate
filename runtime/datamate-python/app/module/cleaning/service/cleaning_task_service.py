@@ -381,12 +381,12 @@ class CleaningTaskService:
         self, db: AsyncSession, task_id: str, retry_count: int
     ) -> List[CleaningTaskLog]:
         """Get task log"""
-        self.validator.check_task_id(task_id)
+        safe_task_id = self.validator.sanitize_task_id(task_id)
 
         flow_root = Path(FLOW_PATH).resolve()
-        log_path = flow_root / task_id / "output.log"
+        log_path = flow_root / safe_task_id / "output.log"
         if retry_count > 0:
-            log_path = flow_root / task_id / f"output.log.{retry_count}"
+            log_path = flow_root / safe_task_id / f"output.log.{retry_count}"
 
         # 防止路径穿越：规范化后校验仍在 FLOW_PATH 下
         resolved_log_path = log_path.resolve()
@@ -437,9 +437,9 @@ class CleaningTaskService:
 
     async def delete_task(self, db: AsyncSession, task_id: str) -> None:
         """Delete task"""
-        self.validator.check_task_id(task_id)
+        safe_task_id = self.validator.sanitize_task_id(task_id)
 
-        task = await self.task_repo.find_task_by_id(db, task_id)
+        task = await self.task_repo.find_task_by_id(db, safe_task_id)
         if not task:
             raise BusinessError(ErrorCodes.CLEANING_TASK_NOT_FOUND, task_id)
 
@@ -450,13 +450,13 @@ class CleaningTaskService:
                 "Task is running, cannot be deleted. Please stop the task first."
             )
 
-        await self.task_repo.delete_task_by_id(db, task_id)
-        await self.operator_instance_repo.delete_by_instance_id(db, task_id)
-        await self.result_repo.delete_by_instance_id(db, task_id)
+        await self.task_repo.delete_task_by_id(db, safe_task_id)
+        await self.operator_instance_repo.delete_by_instance_id(db, safe_task_id)
+        await self.result_repo.delete_by_instance_id(db, safe_task_id)
 
         # 删除任务相关文件
         flow_root = Path(FLOW_PATH).resolve()
-        task_path = (flow_root / task_id).resolve()
+        task_path = (flow_root / safe_task_id).resolve()
         # 防止路径穿越：parents 校验目标路径仍在 flow_root 下
         if flow_root not in task_path.parents:
             logger.warning(f"Path traversal attempt in delete_task: task_id={task_id}")

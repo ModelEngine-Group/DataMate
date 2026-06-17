@@ -103,6 +103,15 @@ class CleaningTaskValidator:
     @staticmethod
     def check_task_id(task_id: str) -> None:
         """Validate task ID — rejects non-UUID and path traversal patterns"""
+        CleaningTaskValidator.sanitize_task_id(task_id)
+
+    @staticmethod
+    def sanitize_task_id(task_id: str) -> str:
+        """Validate and return sanitized task_id for safe path construction.
+
+        CodeQL recognizes the return value of this function as sanitized,
+        allowing safe use in path construction.
+        """
         if not task_id:
             raise BusinessError(ErrorCodes.CLEANING_TASK_ID_REQUIRED)
         if not _TASK_ID_PATTERN.match(task_id):
@@ -110,3 +119,4 @@ class CleaningTaskValidator:
                 ErrorCodes.CLEANING_TASK_ID_REQUIRED,
                 f"Invalid task_id format: {task_id}",
             )
+        return task_id

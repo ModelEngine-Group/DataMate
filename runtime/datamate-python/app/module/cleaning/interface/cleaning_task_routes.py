@@ -21,6 +21,17 @@ logger = get_logger(__name__)
 # Module-level pattern for task_id sanitization (CodeQL sanitizer)
 _TASK_ID_PATTERN = re.compile(r"^[A-Za-z0-9_-]+$")
 
+
+def _sanitize_task_id(task_id: str) -> str:
+    """Validate and return sanitized task_id for safe path construction.
+
+    CodeQL recognizes the return value of this function as sanitized,
+    allowing safe use in path construction.
+    """
+    if not _TASK_ID_PATTERN.fullmatch(task_id):
+        raise ValueError(f"Invalid task_id: {task_id}")
+    return task_id
+
 router = APIRouter(prefix="/cleaning/tasks", tags=["Cleaning Tasks"])
 
 
@@ -290,8 +301,10 @@ async def stream_cleaning_task_log(
 
     flow_base = Path("/flow").resolve()
 
-    # 校验 task_id 格式，防止不受控数据直接用于路径构造
-    if not _TASK_ID_PATTERN.fullmatch(task_id):
+    # 校验 task_id 并获取净化后的值（CodeQL 认可此返回值为安全）
+    try:
+        safe_task_id = _sanitize_task_id(task_id)
+    except ValueError:
         logger.warning(f"Invalid task_id in stream_log: task_id={task_id}")
 
         async def invalid_error_generator():
@@ -300,7 +313,7 @@ async def stream_cleaning_task_log(
         return StreamingResponse(invalid_error_generator(), media_type="text/event-stream")
 
     task_service = _get_task_service(db)
-    task = await task_service.task_repo.find_task_by_id(db, task_id)
+    task = await task_service.task_repo.find_task_by_id(db, safe_task_id)
 
     if not task:
 
@@ -310,7 +323,7 @@ async def stream_cleaning_task_log(
         return StreamingResponse(error_generator(), media_type="text/event-stream")
 
     log_filename = "output.log" if retry_count == 0 else f"output.log.{retry_count}"
-    log_path = (flow_base / task_id / log_filename).resolve()
+    log_path = (flow_base / safe_task_id / log_filename).resolve()
 
     # 防止路径穿越：parents 校验仍在 flow_base 下
     if flow_base not in log_path.parents:
@@ -349,7 +362,7 @@ async def stream_cleaning_task_log(
 
         while True:
             try:
-                current_task = await task_service.task_repo.find_task_by_id(db, task_id)
+                current_task = await task_service.task_repo.find_task_by_id(db, safe_task_id)
                 is_task_finished = current_task and current_task.status in [
                     "COMPLETED",
                     "FAILED",
@@ -437,8 +450,10 @@ async def download_cleaning_task_log(
 
     flow_base = Path("/flow").resolve()
 
-    # 校验 task_id 格式，防止不受控数据直接用于路径构造
-    if not _TASK_ID_PATTERN.fullmatch(task_id):
+    # 校验 task_id 并获取净化后的值（CodeQL 认可此返回值为安全）
+    try:
+        safe_task_id = _sanitize_task_id(task_id)
+    except ValueError:
         logger.warning(f"Invalid task_id in download_log: task_id={task_id}")
         from app.core.exception import BusinessError, ErrorCodes
         raise BusinessError(
@@ -447,7 +462,7 @@ async def download_cleaning_task_log(
         )
 
     task_service = _get_task_service(db)
-    task = await task_service.task_repo.find_task_by_id(db, task_id)
+    task = await task_service.task_repo.find_task_by_id(db, safe_task_id)
 
     if not task:
         from app.core.exception import BusinessError, ErrorCodes
@@ -455,7 +470,7 @@ async def download_cleaning_task_log(
         raise BusinessError(ErrorCodes.CLEANING_TASK_NOT_FOUND, task_id)
 
     log_filename = "output.log" if retry_count == 0 else f"output.log.{retry_count}"
-    log_path = (flow_base / task_id / log_filename).resolve()
+    log_path = (flow_base / safe_task_id / log_filename).resolve()
 
     # 防止路径穿越：parents 校验仍在 flow_base 下
     if flow_base not in log_path.parents:
