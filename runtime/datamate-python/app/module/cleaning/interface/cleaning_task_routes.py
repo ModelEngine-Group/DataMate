@@ -281,6 +281,7 @@ async def stream_cleaning_task_log(
     """Stream cleaning task log via SSE"""
     import asyncio
     import json
+    import os
     import re
     from pathlib import Path
 
@@ -299,6 +300,16 @@ async def stream_cleaning_task_log(
     log_path = Path(f"{FLOW_PATH}/{task_id}/output.log")
     if retry_count > 0:
         log_path = Path(f"{FLOW_PATH}/{task_id}/output.log.{retry_count}")
+
+    # 防止路径穿越：规范化后校验仍在 /flow 下
+    log_path = log_path.resolve()
+    if not str(log_path).startswith(FLOW_PATH + "/"):
+        logger.warning(f"Path traversal attempt in stream_log: task_id={task_id}")
+
+        async def traversal_error_generator():
+            yield f"data: {json.dumps({'level': 'ERROR', 'message': 'Invalid task_id'}, ensure_ascii=False)}\n\n"
+
+        return StreamingResponse(traversal_error_generator(), media_type="text/event-stream")
 
     standard_level_pattern = re.compile(
         r"\b(DEBUG|Debug|INFO|Info|WARN|Warn|WARNING|Warning|ERROR|Error|FATAL|Fatal)\b"
@@ -427,6 +438,16 @@ async def download_cleaning_task_log(
     log_path = Path(f"{FLOW_PATH}/{task_id}/output.log")
     if retry_count > 0:
         log_path = Path(f"{FLOW_PATH}/{task_id}/output.log.{retry_count}")
+
+    # 防止路径穿越：规范化后校验仍在 /flow 下
+    log_path = log_path.resolve()
+    if not str(log_path).startswith(FLOW_PATH + "/"):
+        logger.warning(f"Path traversal attempt in download_log: task_id={task_id}")
+        from app.core.exception import BusinessError, ErrorCodes
+        raise BusinessError(
+            ErrorCodes.CLEANING_TASK_LOG_NOT_FOUND,
+            f"Invalid task_id: {task_id}",
+        )
 
     if not log_path.exists():
         from app.core.exception import BusinessError, ErrorCodes

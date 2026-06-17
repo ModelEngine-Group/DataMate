@@ -1,8 +1,15 @@
+import re
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exception import BusinessError, ErrorCodes
 from app.module.cleaning.schema import OperatorInstanceDto
 from app.module.operator.constants import CATEGORY_DATA_JUICER_ID, CATEGORY_DATAMATE_ID
+
+# UUID pattern for task_id validation (prevents path traversal)
+_TASK_ID_PATTERN = re.compile(
+    r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
+)
 
 
 class CleaningTaskValidator:
@@ -95,6 +102,11 @@ class CleaningTaskValidator:
 
     @staticmethod
     def check_task_id(task_id: str) -> None:
-        """Validate task ID"""
+        """Validate task ID — rejects non-UUID and path traversal patterns"""
         if not task_id:
             raise BusinessError(ErrorCodes.CLEANING_TASK_ID_REQUIRED)
+        if not _TASK_ID_PATTERN.match(task_id):
+            raise BusinessError(
+                ErrorCodes.CLEANING_TASK_ID_REQUIRED,
+                f"Invalid task_id format: {task_id}",
+            )

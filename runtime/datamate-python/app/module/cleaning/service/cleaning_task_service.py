@@ -1,4 +1,5 @@
 import json
+import os
 import re
 import shutil
 import uuid
@@ -386,6 +387,12 @@ class CleaningTaskService:
         if retry_count > 0:
             log_path = Path(f"{FLOW_PATH}/{task_id}/output.log.{retry_count}")
 
+        # 防止路径穿越：规范化后校验仍在 /flow 下
+        log_path = log_path.resolve()
+        if not str(log_path).startswith(FLOW_PATH + "/"):
+            logger.warning(f"Path traversal attempt detected: task_id={task_id}")
+            return []
+
         if not log_path.exists():
             return []
 
@@ -447,7 +454,15 @@ class CleaningTaskService:
         await self.result_repo.delete_by_instance_id(db, task_id)
 
         # 删除任务相关文件
-        task_path = Path(f"{FLOW_PATH}/{task_id}")
+        task_path = Path(f"{FLOW_PATH}/{task_id}").resolve()
+        # 防止路径穿越：规范化后校验仍在 /flow 下
+        if not str(task_path).startswith(FLOW_PATH + "/"):
+            logger.warning(f"Path traversal attempt in delete_task: task_id={task_id}")
+            raise BusinessError(
+                ErrorCodes.CLEANING_TASK_NOT_FOUND,
+                f"Invalid task_id: {task_id}",
+            )
+
         if task_path.exists():
             try:
                 shutil.rmtree(task_path)
