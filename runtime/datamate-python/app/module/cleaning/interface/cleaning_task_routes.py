@@ -1,4 +1,5 @@
 from typing import Optional
+import re
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
@@ -16,6 +17,9 @@ from app.module.cleaning.service import CleaningTaskService
 from app.module.shared.schema import StandardResponse, PaginatedData
 
 logger = get_logger(__name__)
+
+# Module-level pattern for task_id sanitization (CodeQL sanitizer)
+_TASK_ID_PATTERN = re.compile(r"^[A-Za-z0-9_-]+$")
 
 router = APIRouter(prefix="/cleaning/tasks", tags=["Cleaning Tasks"])
 
@@ -287,7 +291,7 @@ async def stream_cleaning_task_log(
     flow_base = Path("/flow").resolve()
 
     # 校验 task_id 格式，防止不受控数据直接用于路径构造
-    if not re.fullmatch(r"[A-Za-z0-9_-]+", task_id):
+    if not _TASK_ID_PATTERN.fullmatch(task_id):
         logger.warning(f"Invalid task_id in stream_log: task_id={task_id}")
 
         async def invalid_error_generator():
@@ -308,10 +312,8 @@ async def stream_cleaning_task_log(
     log_filename = "output.log" if retry_count == 0 else f"output.log.{retry_count}"
     log_path = (flow_base / task_id / log_filename).resolve()
 
-    # 防止路径穿越：relative_to 校验仍在 flow_base 下
-    try:
-        log_path.relative_to(flow_base)
-    except ValueError:
+    # 防止路径穿越：parents 校验仍在 flow_base 下
+    if flow_base not in log_path.parents:
         logger.warning(f"Path traversal attempt in stream_log: task_id={task_id}")
 
         async def traversal_error_generator():
@@ -436,7 +438,7 @@ async def download_cleaning_task_log(
     flow_base = Path("/flow").resolve()
 
     # 校验 task_id 格式，防止不受控数据直接用于路径构造
-    if not re.fullmatch(r"[A-Za-z0-9_-]+", task_id):
+    if not _TASK_ID_PATTERN.fullmatch(task_id):
         logger.warning(f"Invalid task_id in download_log: task_id={task_id}")
         from app.core.exception import BusinessError, ErrorCodes
         raise BusinessError(
@@ -455,10 +457,8 @@ async def download_cleaning_task_log(
     log_filename = "output.log" if retry_count == 0 else f"output.log.{retry_count}"
     log_path = (flow_base / task_id / log_filename).resolve()
 
-    # 防止路径穿越：relative_to 校验仍在 flow_base 下
-    try:
-        log_path.relative_to(flow_base)
-    except ValueError:
+    # 防止路径穿越：parents 校验仍在 flow_base 下
+    if flow_base not in log_path.parents:
         logger.warning(f"Path traversal attempt in download_log: task_id={task_id}")
         from app.core.exception import BusinessError, ErrorCodes
         raise BusinessError(

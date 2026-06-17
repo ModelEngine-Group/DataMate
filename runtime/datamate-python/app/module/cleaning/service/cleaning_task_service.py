@@ -390,9 +390,7 @@ class CleaningTaskService:
 
         # 防止路径穿越：规范化后校验仍在 FLOW_PATH 下
         resolved_log_path = log_path.resolve()
-        try:
-            resolved_log_path.relative_to(flow_root)
-        except ValueError:
+        if flow_root not in resolved_log_path.parents:
             logger.warning(f"Path traversal attempt detected: task_id={task_id}")
             return []
 
@@ -459,10 +457,8 @@ class CleaningTaskService:
         # 删除任务相关文件
         flow_root = Path(FLOW_PATH).resolve()
         task_path = (flow_root / task_id).resolve()
-        # 防止路径穿越：relative_to 校验目标路径仍在 flow_root 下
-        try:
-            task_path.relative_to(flow_root)
-        except ValueError:
+        # 防止路径穿越：parents 校验目标路径仍在 flow_root 下
+        if flow_root not in task_path.parents:
             logger.warning(f"Path traversal attempt in delete_task: task_id={task_id}")
             raise BusinessError(
                 ErrorCodes.CLEANING_TASK_NOT_FOUND,
