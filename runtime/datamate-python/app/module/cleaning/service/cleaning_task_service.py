@@ -1,4 +1,5 @@
 import json
+import os
 import re
 import shutil
 import uuid
@@ -31,6 +32,34 @@ from app.module.shared.common.lineage import LineageService
 from app.module.shared.schema.lineage import NodeType, EdgeType
 
 logger = get_logger(__name__)
+
+# Module-level sanitizers (CodeQL recognizes return values of module-level
+# functions as sanitized; instance-method calls are not tracked through)
+_TASK_ID_PATTERN = re.compile(
+    r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
+)
+
+
+def _sanitize_task_id(task_id: str) -> str:
+    """Validate and return sanitized task_id for safe path construction."""
+    if not task_id:
+        raise BusinessError(ErrorCodes.CLEANING_TASK_ID_REQUIRED)
+    if not _TASK_ID_PATTERN.match(task_id):
+        raise BusinessError(
+            ErrorCodes.CLEANING_TASK_ID_REQUIRED,
+            f"Invalid task_id format: {task_id}",
+        )
+    return task_id
+
+
+def _sanitize_retry_count(retry_count: int) -> int:
+    """Validate and return sanitized retry_count for safe path construction."""
+    if retry_count < 0 or retry_count > 1000:
+        raise BusinessError(
+            ErrorCodes.CLEANING_TASK_ID_REQUIRED,
+            f"Invalid retry_count: {retry_count}",
+        )
+    return retry_count
 
 DATASET_PATH = "/dataset"
 FLOW_PATH = "/flow"
@@ -380,13 +409,21 @@ class CleaningTaskService:
         self, db: AsyncSession, task_id: str, retry_count: int
     ) -> List[CleaningTaskLog]:
         """Get task log"""
-        self.validator.check_task_id(task_id)
+        safe_task_id = _sanitize_task_id(task_id)
+        safe_retry_count = _sanitize_retry_count(retry_count)
 
-        log_path = Path(f"{FLOW_PATH}/{task_id}/output.log")
-        if retry_count > 0:
-            log_path = Path(f"{FLOW_PATH}/{task_id}/output.log.{retry_count}")
+        flow_root = Path(FLOW_PATH).resolve()
+        log_path = flow_root / safe_task_id / "output.log"
+        if safe_retry_count > 0:
+            log_path = flow_root / safe_task_id / f"output.log.{safe_retry_count}"
 
-        if not log_path.exists():
+        # 防止路径穿越：规范化后校验仍在 FLOW_PATH 下
+        resolved_log_path = log_path.resolve()
+        if flow_root not in resolved_log_path.parents:
+            logger.warning(f"Path traversal attempt detected: task_id={task_id}")
+            return []
+
+        if not resolved_log_path.exists():
             return []
 
         logs = []
@@ -397,7 +434,7 @@ class CleaningTaskService:
         )
         exception_suffix_pattern = re.compile(r"\b\w+(Warning|Error|Exception)\b")
 
-        with open(log_path, "r", encoding="utf-8") as f:
+        with open(resolved_log_path, "r", encoding="utf-8") as f:
             for line in f:
                 last_level = self._get_log_level(
                     line, last_level, standard_level_pattern, exception_suffix_pattern
@@ -429,9 +466,9 @@ class CleaningTaskService:
 
     async def delete_task(self, db: AsyncSession, task_id: str) -> None:
         """Delete task"""
-        self.validator.check_task_id(task_id)
+        safe_task_id = _sanitize_task_id(task_id)
 
-        task = await self.task_repo.find_task_by_id(db, task_id)
+        task = await self.task_repo.find_task_by_id(db, safe_task_id)
         if not task:
             raise BusinessError(ErrorCodes.CLEANING_TASK_NOT_FOUND, task_id)
 
@@ -442,12 +479,21 @@ class CleaningTaskService:
                 "Task is running, cannot be deleted. Please stop the task first."
             )
 
-        await self.task_repo.delete_task_by_id(db, task_id)
-        await self.operator_instance_repo.delete_by_instance_id(db, task_id)
-        await self.result_repo.delete_by_instance_id(db, task_id)
+        await self.task_repo.delete_task_by_id(db, safe_task_id)
+        await self.operator_instance_repo.delete_by_instance_id(db, safe_task_id)
+        await self.result_repo.delete_by_instance_id(db, safe_task_id)
 
         # 删除任务相关文件
-        task_path = Path(f"{FLOW_PATH}/{task_id}")
+        flow_root = Path(FLOW_PATH).resolve()
+        task_path = (flow_root / safe_task_id).resolve()
+        # 防止路径穿越：parents 校验目标路径仍在 flow_root 下
+        if flow_root not in task_path.parents:
+            logger.warning(f"Path traversal attempt in delete_task: task_id={task_id}")
+            raise BusinessError(
+                ErrorCodes.CLEANING_TASK_NOT_FOUND,
+                f"Invalid task_id: {task_id}",
+            )
+
         if task_path.exists():
             try:
                 shutil.rmtree(task_path)

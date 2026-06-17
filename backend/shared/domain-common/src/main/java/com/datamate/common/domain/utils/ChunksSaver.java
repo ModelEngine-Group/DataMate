@@ -49,6 +49,14 @@ public class ChunksSaver {
         }
 
         File finalFile = new File(preUploadReq.getUploadPath(), fileUploadRequest.getFileName());
+        // 防止路径穿越：规范化后校验仍在 uploadPath 下
+        Path uploadBasePath = Paths.get(preUploadReq.getUploadPath()).normalize().toAbsolutePath();
+        Path finalFilePath = finalFile.toPath().normalize().toAbsolutePath();
+        if (!finalFilePath.startsWith(uploadBasePath)) {
+            log.error("Path traversal attempt detected in chunk save: fileName={}, finalPath={}",
+                fileUploadRequest.getFileName(), finalFilePath);
+            throw BusinessException.of(SystemErrorCode.FILE_SYSTEM_ERROR);
+        }
         // 确保父目录存在（处理嵌套文件夹上传的情况）
         File parentDir = finalFile.getParentFile();
         if (parentDir != null && !parentDir.exists()) {
@@ -91,6 +99,14 @@ public class ChunksSaver {
     public static File saveFile(ChunkUploadRequest fileUploadRequest, ChunkUploadPreRequest preUploadReq) {
         // 保存文件
         File targetFile = new File(preUploadReq.getUploadPath(), fileUploadRequest.getFileName());
+        // 防止路径穿越：规范化后校验仍在 uploadPath 下
+        Path uploadBasePath = Paths.get(preUploadReq.getUploadPath()).normalize().toAbsolutePath();
+        Path targetFilePath = targetFile.toPath().normalize().toAbsolutePath();
+        if (!targetFilePath.startsWith(uploadBasePath)) {
+            log.error("Path traversal attempt detected in saveFile: fileName={}, targetPath={}",
+                fileUploadRequest.getFileName(), targetFilePath);
+            throw BusinessException.of(SystemErrorCode.FILE_SYSTEM_ERROR);
+        }
         // 确保父目录存在（处理嵌套文件夹上传的情况）
         File parentDir = targetFile.getParentFile();
         if (parentDir != null && !parentDir.exists()) {

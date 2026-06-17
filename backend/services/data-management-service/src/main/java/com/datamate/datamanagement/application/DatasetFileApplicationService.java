@@ -498,6 +498,16 @@ public class DatasetFileApplicationService {
             if (!prefix.isEmpty()) {
                 uploadPath = uploadPath + File.separator + prefix.replace("/", File.separator);
             }
+
+            // 防止路径穿越：规范化后校验 uploadPath 仍在 datasetBasePath 下
+            Path normalizedUploadPath = Paths.get(uploadPath).normalize().toAbsolutePath();
+            Path normalizedBase = Paths.get(datasetBasePath).normalize().toAbsolutePath();
+            if (!normalizedUploadPath.startsWith(normalizedBase)) {
+                log.warn("Path traversal attempt in preUpload: datasetId={}, prefix={}, uploadPath={}",
+                    datasetId, prefix, normalizedUploadPath);
+                throw BusinessException.of(CommonErrorCode.PARAM_ERROR,
+                    "Upload path outside allowed directory");
+            }
         }
 
         ChunkUploadPreRequest request = ChunkUploadPreRequest.builder().build();

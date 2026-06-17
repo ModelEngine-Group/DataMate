@@ -57,6 +57,16 @@ class ChunksSaver:
 
         final_file = Path(upload_path) / file_upload_request.file_name
 
+        # 防止路径穿越：规范化后校验仍在 upload_path 下
+        resolved_final = final_file.resolve()
+        resolved_base = Path(upload_path).resolve()
+        if not str(resolved_final).startswith(str(resolved_base) + os.sep):
+            logger.error(
+                f"Path traversal attempt in chunk save: file_name={file_upload_request.file_name}, "
+                f"resolved_path={resolved_final}"
+            )
+            raise ValueError("Path traversal detected in file name")
+
         try:
             temp_file.rename(final_file)
         except OSError as e:
@@ -88,6 +98,16 @@ class ChunksSaver:
             保存后的文件路径
         """
         target_file = Path(upload_path) / file_upload_request.file_name
+
+        # 防止路径穿越：规范化后校验仍在 upload_path 下
+        resolved_target = target_file.resolve()
+        resolved_base = Path(upload_path).resolve()
+        if not str(resolved_target).startswith(str(resolved_base) + os.sep):
+            logger.error(
+                f"Path traversal attempt in save_file: file_name={file_upload_request.file_name}, "
+                f"resolved_path={resolved_target}"
+            )
+            raise ValueError("Path traversal detected in file name")
 
         logger.info(f"file path {target_file}, file size {len(file_content)}")
 
