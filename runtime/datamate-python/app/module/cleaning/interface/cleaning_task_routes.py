@@ -281,11 +281,19 @@ async def stream_cleaning_task_log(
     """Stream cleaning task log via SSE"""
     import asyncio
     import json
-    import os
     import re
     from pathlib import Path
 
-    FLOW_PATH = "/flow"
+    flow_base = Path("/flow").resolve()
+
+    # 校验 task_id 格式，防止不受控数据直接用于路径构造
+    if not re.fullmatch(r"[A-Za-z0-9_-]+", task_id):
+        logger.warning(f"Invalid task_id in stream_log: task_id={task_id}")
+
+        async def invalid_error_generator():
+            yield f"data: {json.dumps({'level': 'ERROR', 'message': 'Invalid task_id'}, ensure_ascii=False)}\n\n"
+
+        return StreamingResponse(invalid_error_generator(), media_type="text/event-stream")
 
     task_service = _get_task_service(db)
     task = await task_service.task_repo.find_task_by_id(db, task_id)
@@ -297,13 +305,13 @@ async def stream_cleaning_task_log(
 
         return StreamingResponse(error_generator(), media_type="text/event-stream")
 
-    log_path = Path(f"{FLOW_PATH}/{task_id}/output.log")
-    if retry_count > 0:
-        log_path = Path(f"{FLOW_PATH}/{task_id}/output.log.{retry_count}")
+    log_filename = "output.log" if retry_count == 0 else f"output.log.{retry_count}"
+    log_path = (flow_base / task_id / log_filename).resolve()
 
-    # 防止路径穿越：规范化后校验仍在 /flow 下
-    log_path = log_path.resolve()
-    if not str(log_path).startswith(FLOW_PATH + "/"):
+    # 防止路径穿越：relative_to 校验仍在 flow_base 下
+    try:
+        log_path.relative_to(flow_base)
+    except ValueError:
         logger.warning(f"Path traversal attempt in stream_log: task_id={task_id}")
 
         async def traversal_error_generator():
@@ -425,7 +433,16 @@ async def download_cleaning_task_log(
     from pathlib import Path
     from fastapi.responses import FileResponse
 
-    FLOW_PATH = "/flow"
+    flow_base = Path("/flow").resolve()
+
+    # 校验 task_id 格式，防止不受控数据直接用于路径构造
+    if not re.fullmatch(r"[A-Za-z0-9_-]+", task_id):
+        logger.warning(f"Invalid task_id in download_log: task_id={task_id}")
+        from app.core.exception import BusinessError, ErrorCodes
+        raise BusinessError(
+            ErrorCodes.CLEANING_TASK_LOG_NOT_FOUND,
+            f"Invalid task_id: {task_id}",
+        )
 
     task_service = _get_task_service(db)
     task = await task_service.task_repo.find_task_by_id(db, task_id)
@@ -435,13 +452,13 @@ async def download_cleaning_task_log(
 
         raise BusinessError(ErrorCodes.CLEANING_TASK_NOT_FOUND, task_id)
 
-    log_path = Path(f"{FLOW_PATH}/{task_id}/output.log")
-    if retry_count > 0:
-        log_path = Path(f"{FLOW_PATH}/{task_id}/output.log.{retry_count}")
+    log_filename = "output.log" if retry_count == 0 else f"output.log.{retry_count}"
+    log_path = (flow_base / task_id / log_filename).resolve()
 
-    # 防止路径穿越：规范化后校验仍在 /flow 下
-    log_path = log_path.resolve()
-    if not str(log_path).startswith(FLOW_PATH + "/"):
+    # 防止路径穿越：relative_to 校验仍在 flow_base 下
+    try:
+        log_path.relative_to(flow_base)
+    except ValueError:
         logger.warning(f"Path traversal attempt in download_log: task_id={task_id}")
         from app.core.exception import BusinessError, ErrorCodes
         raise BusinessError(

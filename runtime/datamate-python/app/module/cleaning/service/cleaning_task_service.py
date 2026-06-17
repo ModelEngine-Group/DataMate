@@ -383,17 +383,20 @@ class CleaningTaskService:
         """Get task log"""
         self.validator.check_task_id(task_id)
 
-        log_path = Path(f"{FLOW_PATH}/{task_id}/output.log")
+        flow_root = Path(FLOW_PATH).resolve()
+        log_path = flow_root / task_id / "output.log"
         if retry_count > 0:
-            log_path = Path(f"{FLOW_PATH}/{task_id}/output.log.{retry_count}")
+            log_path = flow_root / task_id / f"output.log.{retry_count}"
 
-        # 防止路径穿越：规范化后校验仍在 /flow 下
-        log_path = log_path.resolve()
-        if not str(log_path).startswith(FLOW_PATH + "/"):
+        # 防止路径穿越：规范化后校验仍在 FLOW_PATH 下
+        resolved_log_path = log_path.resolve()
+        try:
+            resolved_log_path.relative_to(flow_root)
+        except ValueError:
             logger.warning(f"Path traversal attempt detected: task_id={task_id}")
             return []
 
-        if not log_path.exists():
+        if not resolved_log_path.exists():
             return []
 
         logs = []
@@ -404,7 +407,7 @@ class CleaningTaskService:
         )
         exception_suffix_pattern = re.compile(r"\b\w+(Warning|Error|Exception)\b")
 
-        with open(log_path, "r", encoding="utf-8") as f:
+        with open(resolved_log_path, "r", encoding="utf-8") as f:
             for line in f:
                 last_level = self._get_log_level(
                     line, last_level, standard_level_pattern, exception_suffix_pattern
@@ -454,9 +457,12 @@ class CleaningTaskService:
         await self.result_repo.delete_by_instance_id(db, task_id)
 
         # 删除任务相关文件
-        task_path = Path(f"{FLOW_PATH}/{task_id}").resolve()
-        # 防止路径穿越：规范化后校验仍在 /flow 下
-        if not str(task_path).startswith(FLOW_PATH + "/"):
+        flow_root = Path(FLOW_PATH).resolve()
+        task_path = (flow_root / task_id).resolve()
+        # 防止路径穿越：relative_to 校验目标路径仍在 flow_root 下
+        try:
+            task_path.relative_to(flow_root)
+        except ValueError:
             logger.warning(f"Path traversal attempt in delete_task: task_id={task_id}")
             raise BusinessError(
                 ErrorCodes.CLEANING_TASK_NOT_FOUND,
