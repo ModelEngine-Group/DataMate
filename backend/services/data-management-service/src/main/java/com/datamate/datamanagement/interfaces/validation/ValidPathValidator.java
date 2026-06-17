@@ -54,6 +54,15 @@ public class ValidPathValidator implements ConstraintValidator<ValidPath, String
             return false;
         }
 
+        // 检查是否包含路径遍历序列 ..
+        if (value.contains("..")) {
+            context.disableDefaultConstraintViolation();
+            context.buildConstraintViolationWithTemplate(
+                "路径不允许包含 '..'"
+            ).addConstraintViolation();
+            return false;
+        }
+
         // 检查是否包含非法字符
         if (!PATH_PATTERN.matcher(value).matches()) {
             context.disableDefaultConstraintViolation();

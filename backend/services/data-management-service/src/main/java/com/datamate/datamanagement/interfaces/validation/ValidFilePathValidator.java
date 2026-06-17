@@ -31,6 +31,15 @@ public class ValidFilePathValidator implements ConstraintValidator<ValidFilePath
             return true; // 空值由 @NotBlank 等其他注解处理
         }
 
+        // 检查是否包含路径遍历序列 ..
+        if (value.contains("..")) {
+            context.disableDefaultConstraintViolation();
+            context.buildConstraintViolationWithTemplate(
+                "文件路径不允许包含 '..'"
+            ).addConstraintViolation();
+            return false;
+        }
+
         boolean isValid = FILE_PATH_PATTERN.matcher(value).matches();
 
         if (!isValid) {
