@@ -33,6 +33,34 @@ from app.module.shared.schema.lineage import NodeType, EdgeType
 
 logger = get_logger(__name__)
 
+# Module-level sanitizers (CodeQL recognizes return values of module-level
+# functions as sanitized; instance-method calls are not tracked through)
+_TASK_ID_PATTERN = re.compile(
+    r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
+)
+
+
+def _sanitize_task_id(task_id: str) -> str:
+    """Validate and return sanitized task_id for safe path construction."""
+    if not task_id:
+        raise BusinessError(ErrorCodes.CLEANING_TASK_ID_REQUIRED)
+    if not _TASK_ID_PATTERN.match(task_id):
+        raise BusinessError(
+            ErrorCodes.CLEANING_TASK_ID_REQUIRED,
+            f"Invalid task_id format: {task_id}",
+        )
+    return task_id
+
+
+def _sanitize_retry_count(retry_count: int) -> int:
+    """Validate and return sanitized retry_count for safe path construction."""
+    if retry_count < 0 or retry_count > 1000:
+        raise BusinessError(
+            ErrorCodes.CLEANING_TASK_ID_REQUIRED,
+            f"Invalid retry_count: {retry_count}",
+        )
+    return retry_count
+
 DATASET_PATH = "/dataset"
 FLOW_PATH = "/flow"
 
@@ -381,8 +409,8 @@ class CleaningTaskService:
         self, db: AsyncSession, task_id: str, retry_count: int
     ) -> List[CleaningTaskLog]:
         """Get task log"""
-        safe_task_id = self.validator.sanitize_task_id(task_id)
-        safe_retry_count = self.validator.sanitize_retry_count(retry_count)
+        safe_task_id = _sanitize_task_id(task_id)
+        safe_retry_count = _sanitize_retry_count(retry_count)
 
         flow_root = Path(FLOW_PATH).resolve()
         log_path = flow_root / safe_task_id / "output.log"
@@ -438,7 +466,7 @@ class CleaningTaskService:
 
     async def delete_task(self, db: AsyncSession, task_id: str) -> None:
         """Delete task"""
-        safe_task_id = self.validator.sanitize_task_id(task_id)
+        safe_task_id = _sanitize_task_id(task_id)
 
         task = await self.task_repo.find_task_by_id(db, safe_task_id)
         if not task:
