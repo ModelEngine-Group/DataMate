@@ -98,7 +98,16 @@ public class GlusterfsReader extends Reader {
                 readPath = this.mountPoint + "/" + this.subPath.replaceFirst("^/+", "");
             }
 
-            try (Stream<Path> stream = Files.list(Paths.get(readPath))) {
+            // 防止路径穿越：规范化后校验读取路径仍在 mount 点下
+            Path normalizedReadPath = Paths.get(readPath).normalize().toAbsolutePath();
+            Path normalizedMount = Paths.get(this.mountPoint).normalize().toAbsolutePath();
+            if (!normalizedReadPath.startsWith(normalizedMount)) {
+                LOG.error("Path traversal detected in reader: readPath={} outside mountPoint={}",
+                    normalizedReadPath, normalizedMount);
+                throw new RuntimeException("Read path outside mount point: " + readPath);
+            }
+
+            try (Stream<Path> stream = Files.list(normalizedReadPath)) {
                 List<String> fileList = stream.filter(Files::isRegularFile)
                         .filter(file -> fileType.isEmpty() || fileType.contains(getFileSuffix(file)))
                         .map(path -> path.getFileName().toString())
