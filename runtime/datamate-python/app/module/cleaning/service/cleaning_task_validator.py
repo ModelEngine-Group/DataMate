@@ -120,3 +120,17 @@ class CleaningTaskValidator:
                 f"Invalid task_id format: {task_id}",
             )
         return task_id
+
+    @staticmethod
+    def sanitize_retry_count(retry_count: int) -> int:
+        """Validate and return sanitized retry_count for safe path construction.
+
+        CodeQL recognizes the return value of this function as sanitized,
+        allowing safe use in path construction.
+        """
+        if retry_count < 0 or retry_count > 1000:
+            raise BusinessError(
+                ErrorCodes.CLEANING_TASK_ID_REQUIRED,
+                f"Invalid retry_count: {retry_count}",
+            )
+        return retry_count

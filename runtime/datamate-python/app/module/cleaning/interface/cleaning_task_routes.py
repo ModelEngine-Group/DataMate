@@ -32,6 +32,17 @@ def _sanitize_task_id(task_id: str) -> str:
         raise ValueError(f"Invalid task_id: {task_id}")
     return task_id
 
+
+def _sanitize_retry_count(retry_count: int) -> int:
+    """Validate and return sanitized retry_count for safe path construction.
+
+    CodeQL recognizes the return value of this function as sanitized,
+    allowing safe use in path construction.
+    """
+    if retry_count < 0 or retry_count > 1000:
+        raise ValueError(f"Invalid retry_count: {retry_count}")
+    return retry_count
+
 router = APIRouter(prefix="/cleaning/tasks", tags=["Cleaning Tasks"])
 
 
@@ -322,7 +333,9 @@ async def stream_cleaning_task_log(
 
         return StreamingResponse(error_generator(), media_type="text/event-stream")
 
-    log_filename = "output.log" if retry_count == 0 else f"output.log.{retry_count}"
+    # 校验并净化 retry_count（CodeQL 认可此返回值为安全）
+    safe_retry_count = _sanitize_retry_count(retry_count)
+    log_filename = "output.log" if safe_retry_count == 0 else f"output.log.{safe_retry_count}"
     log_path = (flow_base / safe_task_id / log_filename).resolve()
 
     # 防止路径穿越：parents 校验仍在 flow_base 下
@@ -469,7 +482,9 @@ async def download_cleaning_task_log(
 
         raise BusinessError(ErrorCodes.CLEANING_TASK_NOT_FOUND, task_id)
 
-    log_filename = "output.log" if retry_count == 0 else f"output.log.{retry_count}"
+    # 校验并净化 retry_count（CodeQL 认可此返回值为安全）
+    safe_retry_count = _sanitize_retry_count(retry_count)
+    log_filename = "output.log" if safe_retry_count == 0 else f"output.log.{safe_retry_count}"
     log_path = (flow_base / safe_task_id / log_filename).resolve()
 
     # 防止路径穿越：parents 校验仍在 flow_base 下

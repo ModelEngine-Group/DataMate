@@ -382,11 +382,12 @@ class CleaningTaskService:
     ) -> List[CleaningTaskLog]:
         """Get task log"""
         safe_task_id = self.validator.sanitize_task_id(task_id)
+        safe_retry_count = self.validator.sanitize_retry_count(retry_count)
 
         flow_root = Path(FLOW_PATH).resolve()
         log_path = flow_root / safe_task_id / "output.log"
-        if retry_count > 0:
-            log_path = flow_root / safe_task_id / f"output.log.{retry_count}"
+        if safe_retry_count > 0:
+            log_path = flow_root / safe_task_id / f"output.log.{safe_retry_count}"
 
         # 防止路径穿越：规范化后校验仍在 FLOW_PATH 下
         resolved_log_path = log_path.resolve()
