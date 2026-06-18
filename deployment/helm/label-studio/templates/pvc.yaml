@@ -14,7 +14,7 @@ spec:
   persistentVolumeReclaimPolicy: Delete
   storageClassName: {{ .Values.persistence.storageClass }}
   local:
-    path: {{ .Values.persistence.storagePath | default "/opt/k8s/datamate" }}/label-studio/data
+    path: {{ .Values.persistence.storagePath | default "/opt/k8s/datamate" }}/data
   claimRef:
     apiVersion: v1
     kind: PersistentVolumeClaim
@@ -43,7 +43,7 @@ spec:
   persistentVolumeReclaimPolicy: Delete
   storageClassName: {{ .Values.persistence.storageClass }}
   local:
-    path: {{ .Values.persistence.storagePath | default "/opt/k8s/datamate" }}/label-studio/dataset
+    path: {{ .Values.persistence.storagePath | default "/opt/k8s/datamate" }}/dataset
   claimRef:
     apiVersion: v1
     kind: PersistentVolumeClaim
