@@ -48,6 +48,7 @@ class CleaningTaskScheduler:
         if submitted:
             await self.task_repo.update_task(db, task)
             self._polling_task_ids.add(task_id)
+            return submitted
 
         task.status = CleaningTaskStatus.FAILED
         task.finished_at = datetime.now()
