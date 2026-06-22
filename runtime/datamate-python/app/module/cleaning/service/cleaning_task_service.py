@@ -3,6 +3,7 @@ import os
 import re
 import shutil
 import uuid
+from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Any, Set
 
@@ -518,9 +519,21 @@ class CleaningTaskService:
         await self.scan_dataset(db, task_id, task.src_dataset_id, succeed_set)
         await self.result_repo.delete_by_instance_id(db, task_id, "FAILED")
 
-        return await self.scheduler.execute_task(
-            db, task_id, (task.retry_count or 0) + 1
-        )
+        try:
+            return await self.scheduler.execute_task(
+                db, task_id, (task.retry_count or 0) + 1
+            )
+        except Exception as e:
+            logger.exception(
+                "execute_task failed, task_id=%s, retry_count=%s",
+                task_id,
+                (task.retry_count or 0) + 1,
+            )
+
+            task = CleaningTaskDto()
+            task.status = CleaningTaskStatus.FAILED
+            task.finished_at = datetime.now()
+            await self.task_repo.update_task(db, task)
 
     async def stop_task(self, db: AsyncSession, task_id: str) -> bool:
         """Stop task"""
