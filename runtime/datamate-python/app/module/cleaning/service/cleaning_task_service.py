@@ -524,10 +524,8 @@ class CleaningTaskService:
                 db, task_id, (task.retry_count or 0) + 1
             )
         except Exception as e:
-            logger.exception(
-                "execute_task failed, task_id=%s, retry_count=%s",
-                task_id,
-                (task.retry_count or 0) + 1,
+            logger.error(
+                "execute_task failed, task_id=%s, retry_count=%s", task_id, (task.retry_count or 0) + 1, e
             )
 
             task = CleaningTaskDto()
