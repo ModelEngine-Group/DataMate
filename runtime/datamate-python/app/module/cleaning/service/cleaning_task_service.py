@@ -525,10 +525,11 @@ class CleaningTaskService:
             )
         except Exception as e:
             logger.error(
-                "execute_task failed, task_id=%s, retry_count=%s", task_id, (task.retry_count or 0) + 1, e
+                f"execute_task failed, task_id={task_id}, retry_count={(task.retry_count or 0) + 1}: {e}"
             )
 
             task = CleaningTaskDto()
+            task.id = task_id
             task.status = CleaningTaskStatus.FAILED
             task.finished_at = datetime.now()
             await self.task_repo.update_task(db, task)
