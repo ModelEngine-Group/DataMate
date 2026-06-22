@@ -43,11 +43,14 @@ class CleaningTaskScheduler:
         task.started_at = datetime.now()
         task.retry_count = retry_count
 
-        await self.task_repo.update_task(db, task)
         submitted = await self.runtime_client.submit_task(task_id, retry_count)
 
         if submitted:
+            await self.task_repo.update_task(db, task)
             self._polling_task_ids.add(task_id)
+
+        task.status = CleaningTaskStatus.FAILED
+        await self.task_repo.update_task(db, task)
 
         return submitted
 
