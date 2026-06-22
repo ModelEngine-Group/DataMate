@@ -533,6 +533,7 @@ class CleaningTaskService:
             task.status = CleaningTaskStatus.FAILED
             task.finished_at = datetime.now()
             await self.task_repo.update_task(db, task)
+            return False
 
     async def stop_task(self, db: AsyncSession, task_id: str) -> bool:
         """Stop task"""
