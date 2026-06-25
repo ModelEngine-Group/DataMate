@@ -26,6 +26,7 @@ from app.module.collection.schedule import (
 )
 from app.module.shared.schedule import Scheduler
 from app.module.generation.service.task_executor import init_executor, shutdown_executor
+from app.module.system.service.log_pvc_monitor import schedule_log_pvc_monitor
 
 setup_logging()
 logger = get_logger(__name__)
@@ -68,6 +69,7 @@ async def lifespan(app: FastAPI):
     collection_scheduler.start()
     set_collection_scheduler(collection_scheduler)
     await load_scheduled_collection_tasks()
+    schedule_log_pvc_monitor(collection_scheduler)
 
     # Initialize generation task executor
     init_executor(max_workers=10, max_concurrent_tasks=5)

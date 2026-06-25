@@ -178,6 +178,18 @@ backend-python:
           key: DB_PASSWORD
     - name: datamate_jwt_enable
       value: *DATAMATE_JWT_ENABLE
+    - name: LOG_PVC_MONITOR_ENABLED
+      value: "true"
+    - name: LOG_PVC_MONITOR_PATH
+      value: "/var/log/datamate"
+    - name: LOG_PVC_MONITOR_THRESHOLD
+      value: "0.9"
+    - name: LOG_PVC_MONITOR_INTERVAL_SECONDS
+      value: "300"
+    - name: LOG_PVC_MONITOR_DELETE_BATCH_SIZE
+      value: "10"
+    - name: LOG_PVC_MONITOR_FILE_SUFFIXES
+      value: "log,out,err"
     - name: milvus_uri
       value: "http://datamate-milvus:19530"
     - name: LABEL_STUDIO_USER_TOKEN
