@@ -11,7 +11,12 @@ ENV POSTGRES_INITDB_ARGS="--encoding=UTF8 --lc-collate=en_US.UTF-8 --lc-ctype=en
 RUN mkdir -p /etc/postgresql/
 # 复制 PostgreSQL 主配置文件
 COPY scripts/images/database/postgresql.cnf /etc/postgresql/postgresql.conf
+COPY scripts/images/database/prune-postgres-logs.sh /usr/local/bin/prune-postgres-logs.sh
+COPY scripts/images/database/start.sh /usr/local/bin/datamate-database-start.sh
 
 COPY scripts/db/ /docker-entrypoint-initdb.d/
 
+RUN chmod +x /usr/local/bin/prune-postgres-logs.sh /usr/local/bin/datamate-database-start.sh
+
+ENTRYPOINT ["/usr/local/bin/datamate-database-start.sh"]
 CMD ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]

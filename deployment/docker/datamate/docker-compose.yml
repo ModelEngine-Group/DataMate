@@ -12,6 +12,8 @@ services:
       - DB_PASSWORD=${DB_PASSWORD:?DB_PASSWORD is required. Set in .env file}
       - JWT_SECRET=${JWT_SECRET:?JWT_SECRET is required. Set in .env file}
       - datamate.jwt.enable=${DATAMATE_JWT_ENABLE:-false}
+      - LOG_ROTATION_MAX_SIZE=${LOG_ROTATION_MAX_SIZE:-100MB}
+      - LOG_ROTATION_BACKUP_COUNT=${LOG_ROTATION_BACKUP_COUNT:-30}
     volumes:
       - dataset_volume:/dataset
       - flow_volume:/flow
@@ -31,6 +33,8 @@ services:
       - "18000:18000"
     environment:
       - log_level=DEBUG
+      - LOG_ROTATION_MAX_SIZE=${LOG_ROTATION_MAX_SIZE:-100MB}
+      - LOG_ROTATION_BACKUP_COUNT=${LOG_ROTATION_BACKUP_COUNT:-30}
       - LOG_PVC_MONITOR_ENABLED=${LOG_PVC_MONITOR_ENABLED:-true}
       - LOG_PVC_MONITOR_PATH=${LOG_PVC_MONITOR_PATH:-/var/log/datamate}
       - LOG_PVC_MONITOR_THRESHOLD=${LOG_PVC_MONITOR_THRESHOLD:-0.9}
@@ -66,6 +70,10 @@ services:
     environment:
       - JWT_SECRET=${JWT_SECRET:-}
       - datamate.jwt.enable=${DATAMATE_JWT_ENABLE:-false}
+      - LOG_ROTATION_MAX_SIZE=${LOG_ROTATION_MAX_SIZE:-100MB}
+      - LOG_ROTATION_BACKUP_COUNT=${LOG_ROTATION_BACKUP_COUNT:-30}
+    volumes:
+      - log_volume:/var/log/datamate
     networks: [ datamate ]
 
   datamate-frontend:
@@ -74,6 +82,9 @@ services:
     restart: on-failure
     ports:
       - "30000:3000"
+    environment:
+      - LOG_ROTATION_MAX_SIZE=${LOG_ROTATION_MAX_SIZE:-100MB}
+      - LOG_ROTATION_BACKUP_COUNT=${LOG_ROTATION_BACKUP_COUNT:-30}
     volumes:
       - frontend_log_volume:/var/log/datamate/frontend
     networks: [ datamate ]
@@ -88,6 +99,7 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=${DB_PASSWORD:?DB_PASSWORD is required. Set in .env file}
+      - LOG_ROTATION_BACKUP_COUNT=${LOG_ROTATION_BACKUP_COUNT:-30}
     volumes:
       - postgresql_volume:/var/lib/postgresql/data
       - database_log_volume:/var/log/datamate/database
@@ -102,6 +114,8 @@ services:
     environment:
       RAY_DEDUP_LOGS: "0"
       RAY_TQDM_PATCH_PRINT: "0"
+      LOG_ROTATION_MAX_SIZE: ${LOG_ROTATION_MAX_SIZE:-100MB}
+      LOG_ROTATION_BACKUP_COUNT: ${LOG_ROTATION_BACKUP_COUNT:-30}
       PG_HOST: "datamate-database"
       PG_PORT: "5432"
       PG_USER: "postgres"

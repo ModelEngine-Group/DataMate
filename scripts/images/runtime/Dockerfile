@@ -14,6 +14,7 @@ COPY runtime/python-executor /opt/runtime
 COPY runtime/ops /opt/runtime/datamate/ops
 COPY runtime/ops/user /opt/runtime/user
 COPY scripts/images/runtime/start.sh /opt/runtime/start.sh
+COPY scripts/images/common/log-rotate-copytruncate.sh /usr/local/bin/log-rotate-copytruncate.sh
 
 ENV PYTHONPATH=/opt/runtime/datamate/
 ENV UV_EXTRA_INDEX_URL="https://download.pytorch.org/whl/cpu"
@@ -30,6 +31,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
     && chmod +x /opt/runtime/start.sh \
+    && chmod +x /usr/local/bin/log-rotate-copytruncate.sh \
     && dos2unix /opt/runtime/start.sh
 
 EXPOSE 8081

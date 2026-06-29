@@ -12,6 +12,11 @@ function set_proxy_protocol() {
     echo "Nginx configuration file updated."
 }
 
+mkdir -p /var/log/datamate/frontend
+touch /var/log/datamate/frontend/access.log /var/log/datamate/frontend/error.log
+chown -R nginx:nginx /var/log/datamate/frontend 2>/dev/null || true
+/usr/local/bin/rotate-nginx-logs.sh &
+
 if [ -f "/cert/server.pem" ]; then
     cp /cert/server.pem /etc/nginx/cert/server.pem
     chown nginx:nginx /etc/nginx/cert/server.pem

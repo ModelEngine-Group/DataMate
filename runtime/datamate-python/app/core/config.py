@@ -33,6 +33,8 @@ class Settings(BaseSettings):
     log_pvc_monitor_interval_seconds: int = 300
     log_pvc_monitor_delete_batch_size: int = 10
     log_pvc_monitor_file_suffixes: str = "log,out,err"
+    log_rotation_max_size: str = "100MB"
+    log_rotation_backup_count: int = 30
     rag_storage_dir: str = "/data/rag_storage"
 
     # Database
