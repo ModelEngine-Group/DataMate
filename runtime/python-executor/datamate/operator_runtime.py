@@ -20,11 +20,33 @@ from datamate.wrappers import WRAPPERS
 # 日志配置
 LOG_DIR = "/var/log/datamate/runtime"
 os.makedirs(LOG_DIR, exist_ok=True)
+LOG_ROTATION_BACKUP_COUNT = int(os.getenv("LOG_ROTATION_BACKUP_COUNT", "30"))
+
+
+def _normalize_log_rotation_size(value: str) -> str:
+    match = re.match(r"^\s*(\d+)\s*([KMG]?B?)?\s*$", value, re.IGNORECASE)
+    if not match:
+        return "100 MB"
+
+    amount = match.group(1)
+    unit = (match.group(2) or "B").upper()
+    if unit in {"K", "KB"}:
+        return f"{amount} KB"
+    if unit in {"M", "MB"}:
+        return f"{amount} MB"
+    if unit in {"G", "GB"}:
+        return f"{amount} GB"
+    return amount
+
+
+LOG_ROTATION_MAX_SIZE = _normalize_log_rotation_size(os.getenv("LOG_ROTATION_MAX_SIZE", "100MB"))
 logger.add(
     f"{LOG_DIR}/runtime.log",
     format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {name}:{function}:{line} - {message}",
     level="DEBUG",
-    enqueue=True
+    enqueue=True,
+    rotation=LOG_ROTATION_MAX_SIZE,
+    retention=LOG_ROTATION_BACKUP_COUNT,
 )
 
 

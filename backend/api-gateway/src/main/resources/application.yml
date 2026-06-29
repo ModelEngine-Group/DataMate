@@ -42,3 +42,6 @@ oms:
   # 服务器端口配置
 server:
   port: 8080  # 必须有这个配置
+
+logging:
+  config: classpath:log4j2.xml
