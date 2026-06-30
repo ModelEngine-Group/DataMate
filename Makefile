@@ -358,7 +358,7 @@ VALID_K8S_TARGETS := datamate deer-flow milvus label-studio data-juicer mineru m
 		exit 1; \
 	fi
 	@if [ "$*" = "label-studio" ]; then \
-		if [ -f /tmp/datamate-helm-args.sh ]; then source /tmp/datamate-helm-args.sh; fi; \
+		if [ -f /tmp/datamate-helm-args.sh ]; then . /tmp/datamate-helm-args.sh; fi; \
 		helm upgrade label-studio deployment/helm/label-studio/ -n $(NAMESPACE) --install $${HELM_LABEL_STUDIO_TOLERATIONS:-}; \
     elif [ "$*" = "mineru" ] || [ "$*" = "mineru-910B" ] || [ "$*" = "mineru-910C" ]; then \
 		kubectl apply -f deployment/kubernetes/mineru/deploy-910.yaml -n $(NAMESPACE); \
@@ -369,7 +369,7 @@ VALID_K8S_TARGETS := datamate deer-flow milvus label-studio data-juicer mineru m
 		chmod +x scripts/k8s/node-setup.sh; \
 		./scripts/k8s/node-setup.sh --namespace $(NAMESPACE); \
 		if [ -f /tmp/datamate-helm-args.sh ]; then \
-			source /tmp/datamate-helm-args.sh; \
+			. /tmp/datamate-helm-args.sh; \
 		fi; \
 		chmod +x scripts/k8s/collect-secrets.sh; \
 		eval $$(NAMESPACE=$(NAMESPACE) bash scripts/k8s/collect-secrets.sh); \
@@ -399,7 +399,7 @@ VALID_K8S_TARGETS := datamate deer-flow milvus label-studio data-juicer mineru m
 		MILVUS_MINIO_ACCESS_KEY=$$(kubectl get secret milvus-minio-secret -n $(NAMESPACE) -o jsonpath='{.data.accesskey}' | base64 -d); \
 		MILVUS_MINIO_SECRET_KEY=$$(kubectl get secret milvus-minio-secret -n $(NAMESPACE) -o jsonpath='{.data.secretkey}' | base64 -d); \
 		if [ -f /tmp/datamate-helm-args.sh ]; then \
-			source /tmp/datamate-helm-args.sh; \
+			. /tmp/datamate-helm-args.sh; \
 		fi; \
 		helm upgrade milvus deployment/helm/milvus -n $(NAMESPACE) --install \
 			--set minio.accessKey="$$MILVUS_MINIO_ACCESS_KEY" \
