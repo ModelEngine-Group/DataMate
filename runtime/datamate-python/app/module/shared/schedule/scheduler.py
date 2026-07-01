@@ -2,11 +2,12 @@ from __future__ import annotations
 
 from typing import Any, Callable, Optional
 
+import pytz
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
+from apscheduler.triggers.interval import IntervalTrigger
 
 from app.core.logging import get_logger
-import pytz
 
 logger = get_logger(__name__)
 
@@ -46,6 +47,30 @@ class Scheduler:
         scheduler = self._get_scheduler()
         # 使用调度器的时区创建 CronTrigger
         trigger = CronTrigger.from_crontab(cron_expression, timezone=scheduler.timezone)
+        scheduler.add_job(
+            func,
+            trigger=trigger,
+            args=args or [],
+            kwargs=kwargs or {},
+            id=job_id,
+            replace_existing=job_kwargs.pop("replace_existing", True),
+            max_instances=job_kwargs.pop("max_instances", 1),
+            coalesce=job_kwargs.pop("coalesce", True),
+            misfire_grace_time=job_kwargs.pop("misfire_grace_time", 60),
+            **job_kwargs,
+        )
+
+    def add_interval_job(
+        self,
+        job_id: str,
+        seconds: int,
+        func: Callable[..., Any],
+        args: Optional[list[Any]] = None,
+        kwargs: Optional[dict[str, Any]] = None,
+        **job_kwargs: Any,
+    ) -> None:
+        scheduler = self._get_scheduler()
+        trigger = IntervalTrigger(seconds=seconds, timezone=scheduler.timezone)
         scheduler.add_job(
             func,
             trigger=trigger,

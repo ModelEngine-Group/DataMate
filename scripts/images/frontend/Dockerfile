@@ -23,11 +23,14 @@ COPY scripts/images/frontend/routes.inc /opt/frontend/routes.inc
 COPY scripts/images/frontend/http_backend.conf /opt/frontend/http_backend.conf
 COPY scripts/images/frontend/https_backend.conf /opt/frontend/https_backend.conf
 COPY scripts/images/frontend/nginx.conf /opt/frontend/nginx.conf
+COPY scripts/images/frontend/rotate-nginx-logs.sh /usr/local/bin/rotate-nginx-logs.sh
 
 COPY scripts/images/frontend/start.sh /opt/frontend/start.sh
 
 RUN dos2unix /opt/frontend/start.sh \
+    && dos2unix /usr/local/bin/rotate-nginx-logs.sh \
     && chmod +x /opt/frontend/start.sh \
+    && chmod +x /usr/local/bin/rotate-nginx-logs.sh \
     && mkdir -p /etc/nginx/cert \
     && ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
     && rm -f /etc/nginx/nginx.conf \

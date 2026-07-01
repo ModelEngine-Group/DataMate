@@ -115,6 +115,8 @@ database:
         secretKeyRef:
           name: datamate-conf
           key: HOME_PAGE_URL
+    - name: LOG_ROTATION_BACKUP_COUNT
+      value: "30"
   volumes:
     - *dataVolume
     - *logVolume
@@ -148,6 +150,10 @@ backend:
       value: "http://datamate-milvus:19530"
     - name: datamate.jwt.enable
       value: &DATAMATE_JWT_ENABLE 'false'
+    - name: LOG_ROTATION_MAX_SIZE
+      value: &LOG_ROTATION_MAX_SIZE "100MB"
+    - name: LOG_ROTATION_BACKUP_COUNT
+      value: &LOG_ROTATION_BACKUP_COUNT "30"
   volumes:
     - *datasetVolume
     - *flowVolume
@@ -178,6 +184,22 @@ backend-python:
           key: DB_PASSWORD
     - name: datamate_jwt_enable
       value: *DATAMATE_JWT_ENABLE
+    - name: LOG_ROTATION_MAX_SIZE
+      value: *LOG_ROTATION_MAX_SIZE
+    - name: LOG_ROTATION_BACKUP_COUNT
+      value: *LOG_ROTATION_BACKUP_COUNT
+    - name: LOG_PVC_MONITOR_ENABLED
+      value: "true"
+    - name: LOG_PVC_MONITOR_PATH
+      value: "/var/log/datamate"
+    - name: LOG_PVC_MONITOR_THRESHOLD
+      value: "0.9"
+    - name: LOG_PVC_MONITOR_INTERVAL_SECONDS
+      value: "300"
+    - name: LOG_PVC_MONITOR_DELETE_BATCH_SIZE
+      value: "10"
+    - name: LOG_PVC_MONITOR_FILE_SUFFIXES
+      value: "log,out,err"
     - name: milvus_uri
       value: "http://datamate-milvus:19530"
     - name: LABEL_STUDIO_USER_TOKEN
@@ -220,6 +242,10 @@ gateway:
       value: *DATAMATE_JWT_ENABLE
     - name: OMS_AUTH_ENABLED
       value: "false"
+    - name: LOG_ROTATION_MAX_SIZE
+      value: *LOG_ROTATION_MAX_SIZE
+    - name: LOG_ROTATION_BACKUP_COUNT
+      value: *LOG_ROTATION_BACKUP_COUNT
   volumes:
     - *logVolume
   volumeMounts:
@@ -246,6 +272,10 @@ frontend:
           key: DOMAIN
     - name: REAL_IP_MODE
       value: "off"
+    - name: LOG_ROTATION_MAX_SIZE
+      value: *LOG_ROTATION_MAX_SIZE
+    - name: LOG_ROTATION_BACKUP_COUNT
+      value: *LOG_ROTATION_BACKUP_COUNT
   volumes:
     - *logVolume
     - name: cert-volume
@@ -282,6 +312,10 @@ runtime:
           key: DB_PASSWORD
     - name: PG_DATABASE
       value: "datamate"
+    - name: LOG_ROTATION_MAX_SIZE
+      value: *LOG_ROTATION_MAX_SIZE
+    - name: LOG_ROTATION_BACKUP_COUNT
+      value: *LOG_ROTATION_BACKUP_COUNT
   volumes:
     - *datasetVolume
     - *flowVolume
@@ -332,6 +366,10 @@ ray-cluster:
         value: "0"
       - name: RAY_TQDM_PATCH_PRINT
         value: "0"
+      - name: LOG_ROTATION_MAX_SIZE
+        value: *LOG_ROTATION_MAX_SIZE
+      - name: LOG_ROTATION_BACKUP_COUNT
+        value: *LOG_ROTATION_BACKUP_COUNT
       - name: PG_HOST
         value: "datamate-database"
       - name: PG_PORT
@@ -389,6 +427,10 @@ ray-cluster:
         value: "0"
       - name: RAY_TQDM_PATCH_PRINT
         value: "0"
+      - name: LOG_ROTATION_MAX_SIZE
+        value: *LOG_ROTATION_MAX_SIZE
+      - name: LOG_ROTATION_BACKUP_COUNT
+        value: *LOG_ROTATION_BACKUP_COUNT
       - name: PG_HOST
         value: "datamate-database"
       - name: PG_PORT
@@ -413,6 +455,13 @@ ray-cluster:
       requests:
         cpu: "1"
         memory: "2G"
+    lifecycle: &rayLogRotationLifecycle
+      postStart:
+        exec:
+          command:
+            - /bin/bash
+            - -c
+            - "nohup /usr/local/bin/log-rotate-copytruncate.sh /tmp/ray >/tmp/log-rotation.out 2>/tmp/log-rotation.err &"
     volumes:
       - *datasetVolume
       - *flowVolume
@@ -447,6 +496,10 @@ ray-cluster:
           value: "0"
         - name: RAY_TQDM_PATCH_PRINT
           value: "0"
+        - name: LOG_ROTATION_MAX_SIZE
+          value: *LOG_ROTATION_MAX_SIZE
+        - name: LOG_ROTATION_BACKUP_COUNT
+          value: *LOG_ROTATION_BACKUP_COUNT
         - name: PG_HOST
           value: "datamate-database"
         - name: PG_PORT
@@ -473,6 +526,7 @@ ray-cluster:
           cpu: "1"
           memory: "2G"
           huawei.com/Ascend910: 1
+      lifecycle: *rayLogRotationLifecycle
       volumes:
         - *datasetVolume
         - *flowVolume
@@ -511,6 +565,10 @@ ray-cluster:
           value: "0"
         - name: RAY_TQDM_PATCH_PRINT
           value: "0"
+        - name: LOG_ROTATION_MAX_SIZE
+          value: *LOG_ROTATION_MAX_SIZE
+        - name: LOG_ROTATION_BACKUP_COUNT
+          value: *LOG_ROTATION_BACKUP_COUNT
         - name: PG_HOST
           value: "datamate-database"
         - name: PG_PORT
@@ -537,6 +595,7 @@ ray-cluster:
           cpu: "1"
           memory: "2G"
           nvidia.com/gpu: 1
+      lifecycle: *rayLogRotationLifecycle
       volumes:
         - *datasetVolume
         - *flowVolume
