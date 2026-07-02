@@ -100,7 +100,7 @@ class CleaningTaskScheduler:
         from datetime import datetime
 
         logger.info("[Polling] Global status polling loop started")
-        terminal_statuses = {"completed", "failed", "cancelled", "stopped"}
+        terminal_statuses = {"completed", "failed", "cancelled", "stopped", "not_found"}
 
         while True:
             task_ids = list(self._polling_task_ids)
