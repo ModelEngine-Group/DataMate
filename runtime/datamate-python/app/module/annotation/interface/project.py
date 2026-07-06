@@ -39,9 +39,9 @@ async def login_label_studio_project(
     db: AsyncSession = Depends(get_db)
 ):
     """登录 Label Studio 项目 — 需要认证且校验项目归属"""
-    # 检查用户认证
+    # 检查用户认证（仅在 JWT 启用时强制要求）
     user = request.headers.get("User") if request else None
-    if not user or not user.strip():
+    if settings.datamate_jwt_enable and (not user or not user.strip()):
         logger.warning(f"Unauthorized access attempt to annotation login: mapping_id={mapping_id}")
         raise HTTPException(status_code=401, detail="Authentication required")
 
@@ -53,10 +53,10 @@ async def login_label_studio_project(
     result = await db.execute(stmt)
     project = result.scalar_one_or_none()
     if not project:
-        logger.warning(f"Project not found for login: mapping_id={mapping_id}, user={user}")
+        logger.warning(f"Project not found for login: mapping_id={mapping_id}, user={user or 'anonymous'}")
         raise HTTPException(status_code=404, detail="Project not found")
 
-    logger.info(f"User '{user}' logging into Label Studio project: mapping_id={mapping_id}, "
+    logger.info(f"User '{user or 'anonymous'}' logging into Label Studio project: mapping_id={mapping_id}, "
                 f"project_name={project.name}")
 
     try:
