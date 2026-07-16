@@ -133,10 +133,10 @@ export default function DataAnnotation() {
     // Open Label Studio project page in a new tab
     (async () => {
       try {
-        // prefer using labeling project id already present on the task
-        // `mapAnnotationTask` normalizes upstream fields into `labelingProjId`/`projId`,
-        // so prefer those and fall back to the task id if necessary.
+        // `labelingProjId` = Label Studio project ID (integer), used for LS URL only
+        // `mappingId` = mapping UUID, used for backend API calls
         let labelingProjId = (task as any).labelingProjId || (task as any).projId || undefined;
+        let mappingId = (task as any).id || undefined;
 
         // no fallback external mapping lookup; rely on normalized fields from mapAnnotationTask
 
@@ -144,7 +144,7 @@ export default function DataAnnotation() {
         const base = labelStudioBase;
 
         // no debug logging in production
-        await loginAnnotationUsingGet(labelingProjId)
+        await loginAnnotationUsingGet(mappingId)
         if (labelingProjId) {
           // only open external Label Studio when we have a configured base url
           if (base) {
