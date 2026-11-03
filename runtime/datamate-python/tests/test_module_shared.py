@@ -66,9 +66,57 @@ def test_get_items_from_json_file_for_qa(tmp_path) -> None:
     assert items[0]["instruction"] == "q1"
 
 
-def test_cot_handler_validate_json_requires_question_field() -> None:
+def test_cot_handler_validate_json_accepts_instruction_and_output() -> None:
     handler = COTItemHandler()
-    assert handler.validate_json({"instruction": "x", "output": "y"}) is False
+    assert handler.validate_json({"instruction": "x", "output": "y"}) is True
+    assert handler.validate_json(
+        {"instruction": "x", "output": "y", "chain_of_thought": "z"}
+    ) is True
+
+
+def test_cot_handler_validate_json_rejects_missing_output() -> None:
+    handler = COTItemHandler()
+    assert handler.validate_json({"instruction": "x", "chain_of_thought": "z"}) is False
+
+
+def test_get_items_from_jsonl_parses_cot_rows(tmp_path) -> None:
+    file_path = tmp_path / "cot.jsonl"
+    rows = [
+        {"instruction": "1+1=?", "output": "2", "chain_of_thought": "1 plus 1 equals 2"},
+        {"instruction": "missing output"},
+        {
+            "instruction": "2+2=?",
+            "output": "4",
+            "chain_of_thought": "2 plus 2 equals 4",
+        },
+    ]
+    file_path.write_text(
+        "\n".join(json.dumps(r, ensure_ascii=False) for r in rows) + "\n",
+        encoding="utf-8",
+    )
+
+    handler = COTItemHandler()
+    items = handler.get_items_from_file(str(file_path))
+
+    assert len(items) == 2
+    assert items[1]["output"] == "4"
+
+
+def test_get_items_from_json_file_wraps_single_object(tmp_path) -> None:
+    file_path = tmp_path / "cot.json"
+    file_path.write_text(
+        json.dumps(
+            {"instruction": "1+1=?", "output": "2", "chain_of_thought": "1 plus 1 equals 2"},
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
+    handler = COTItemHandler()
+    items = handler.get_items_from_file(str(file_path))
+
+    assert len(items) == 1
+    assert items[0]["instruction"] == "1+1=?"
 
 
 def test_factory_get_handler_returns_cot_handler() -> None:
