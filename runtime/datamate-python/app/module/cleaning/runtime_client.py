@@ -4,6 +4,10 @@ from app.core.logging import get_logger
 
 logger = get_logger(__name__)
 
+# 状态查询是轻量的本地接口，不需要沿用提交任务的 60s 超时；
+# 超时只会让这一轮轮询“无结论”，不会再据此判失败。
+STATUS_REQUEST_TIMEOUT_SECONDS = 10.0
+
 
 class RuntimeClient:
     """HTTP client for communicating with runtime service"""
@@ -46,7 +50,7 @@ class RuntimeClient:
         """Get task status from runtime"""
         try:
             url = f"{self.base_url}/api/task/{task_id}/status"
-            response = await self.client.get(url)
+            response = await self.client.get(url, timeout=STATUS_REQUEST_TIMEOUT_SECONDS)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPError as e:

@@ -1,8 +1,18 @@
+from datetime import datetime
 from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, delete, func
+from sqlalchemy import select, delete, func, update
 from app.db.models.cleaning import CleaningTask
 from app.module.cleaning.schema import CleaningTaskDto
+
+
+# 终态集合：写入终态后不再接受控制面的状态覆盖
+TERMINAL_TASK_STATUSES = (
+    "COMPLETED",
+    "PARTIAL_SUCCESS",
+    "FAILED",
+    "STOPPED",
+)
 
 
 class CleaningTaskRepository:
@@ -126,6 +136,42 @@ class CleaningTaskRepository:
                 db_task.retry_count = task.retry_count
 
             await db.flush()
+
+    async def find_status(self, db: AsyncSession, task_id: str) -> Optional[str]:
+        """Query task status only (cheap read for polling)"""
+        query = select(self.model.status).where(self.model.id == task_id)
+        result = await db.execute(query)
+        return result.scalar_one_or_none()
+
+    async def finish_if_unfinished(
+        self,
+        db: AsyncSession,
+        task_id: str,
+        status: str,
+        finished_at: Optional[datetime] = None
+    ) -> bool:
+        """Write a terminal status only when the task is not terminal yet.
+
+        Returns True when the row was updated, False when the task was missing
+        or already in a terminal state. This keeps the control plane from
+        overwriting a status the executor already wrote directly to the table.
+        """
+        values = {"status": status}
+        if finished_at is not None:
+            values["finished_at"] = finished_at
+
+        query = (
+            update(self.model)
+            .where(
+                self.model.id == task_id,
+                self.model.status.notin_(TERMINAL_TASK_STATUSES),
+            )
+            .values(**values)
+            .execution_options(synchronize_session=False)
+        )
+        result = await db.execute(query)
+        await db.flush()
+        return bool(result.rowcount and result.rowcount > 0)
 
     async def delete_task_by_id(self, db: AsyncSession, task_id: str) -> None:
         """Delete task by ID"""
