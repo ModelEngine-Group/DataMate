@@ -641,6 +641,7 @@ minio:
   name: minio
   mode: standalone
   image:
+    repository: "ghcr.io/modelengine-group/minio"
     tag: "RELEASE.2024-12-18T13-15-44Z"
     pullPolicy: IfNotPresent
   accessKey: ""  # Set via secrets.yaml or --set
