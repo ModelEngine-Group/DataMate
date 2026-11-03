@@ -92,6 +92,12 @@ class ErrorCodes:
     EVALUATION_MODEL_NOT_FOUND: Final = ErrorCode(
         "evaluation.0003", "Evaluation model not found", 404
     )
+    EVALUATION_NO_ITEMS: Final = ErrorCode(
+        "evaluation.0004", "No evaluable items found in the selected data source", 400
+    )
+    EVALUATION_ALL_ITEMS_FAILED: Final = ErrorCode(
+        "evaluation.0005", "All evaluation items failed to be evaluated", 500
+    )
 
     # ========== 生成模块 ==========
     GENERATION_TASK_NOT_FOUND: Final = ErrorCode(

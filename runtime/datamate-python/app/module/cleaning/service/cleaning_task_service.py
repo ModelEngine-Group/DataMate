@@ -503,12 +503,20 @@ class CleaningTaskService:
 
     async def execute_task(self, db: AsyncSession, task_id: str) -> bool:
         """Execute task"""
-        succeeded = await self.result_repo.find_by_instance_id(db, task_id, "COMPLETED")
-        succeed_set = {res.src_file_id for res in succeeded}
-
         task = await self.task_repo.find_task_by_id(db, task_id)
         if not task:
             raise BusinessError(ErrorCodes.CLEANING_TASK_NOT_FOUND, task_id)
+
+        # 运行中的任务不能重复提交：否则会起第二个 Ray Job，并产生重复的清洗结果。
+        # 需要重跑时先停止任务（状态置 STOPPED），再执行。
+        if task.status == CleaningTaskStatus.RUNNING:
+            raise BusinessError(
+                ErrorCodes.CLEANING_TASK_STATUS_INVALID,
+                "Task is running, cannot be executed again. Please stop the task first."
+            )
+
+        succeeded = await self.result_repo.find_by_instance_id(db, task_id, "COMPLETED")
+        succeed_set = {res.src_file_id for res in succeeded}
 
         src_dataset = await self.dataset_service.get_dataset(task.src_dataset_id)
         if src_dataset:

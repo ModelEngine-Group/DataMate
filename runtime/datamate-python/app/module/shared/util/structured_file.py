@@ -26,10 +26,13 @@ class StructuredFileItemHandler:
                 data = json.load(f)
                 if not self.validate_json(data):
                     return items
-                items = data
+                # A JSON file may hold a single item object instead of a list.
+                items = [data] if isinstance(data, dict) else data
         elif file_type == "JSONL":
             with open(file_path, "r", encoding="utf-8") as f:
                 for line in f:
+                    if not line.strip():
+                        continue
                     data = json.loads(line)
                     if not self.validate_json(data):
                         continue
@@ -77,7 +80,7 @@ class COTItemHandler(StructuredFileItemHandler):
                 "output": {"type": "string"},
                 "chain_of_thought": {"type": "string"}
             },
-            "required": ["question", "instruction", "output"],
+            "required": ["instruction", "output"],
         }
         self.schema_list = {
             "type": "array",
