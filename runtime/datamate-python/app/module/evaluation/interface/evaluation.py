@@ -115,6 +115,7 @@ async def list_evaluation_tasks(
     name: Optional[str] = Query(None, description="任务名称模糊查询"),
     status: Optional[str] = Query(None, description="任务状态过滤"),
     task_type: Optional[str] = Query(None, description="任务类型过滤"),
+    eval_method: Optional[str] = Query(None, description="评估方式过滤"),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -126,6 +127,7 @@ async def list_evaluation_tasks(
         name: 任务名称模糊查询
         status: 任务状态过滤
         task_type: 任务类型过滤
+        eval_method: 评估方式过滤
         db: 数据库会话
 
     Returns:
@@ -140,6 +142,8 @@ async def list_evaluation_tasks(
         query = query.where(EvaluationTask.status == status)
     if task_type:
         query = query.where(EvaluationTask.task_type == task_type)
+    if eval_method:
+        query = query.where(EvaluationTask.eval_method == eval_method)
 
     # 获取总数
     count_query = select(func.count()).select_from(query.subquery())

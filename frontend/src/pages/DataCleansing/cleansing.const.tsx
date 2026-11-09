@@ -54,17 +54,19 @@ export const mapTask = (task: CleansingTask, t: (key: string) => string) => {
   const finishedAt = formatDateTime(task.finishedAt);
   const startedAt = formatDateTime(task.startedAt);
   const createdAt = formatDateTime(task.createdAt);
+  const timestamps = [task.updatedAt, task.finishedAt, task.startedAt, task.createdAt]
+    .filter(Boolean)
+    .map((value) => new Date(value).getTime())
+    .filter(Number.isFinite);
   return {
     ...task,
     ...task.progress,
     createdAt,
     startedAt,
     finishedAt,
-    updatedAt: formatDateTime(
-      new Date(Math.max(...[
-        new Date(task.finishedAt).getTime(),
-        new Date(task.startedAt).getTime(),
-        new Date(task.createdAt).getTime()])).toISOString()),
+    updatedAt: timestamps.length
+      ? formatDateTime(new Date(Math.max(...timestamps)).toISOString())
+      : "",
     icon: <BrushCleaning className="w-full h-full" />,
     status,
     duration,

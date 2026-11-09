@@ -45,6 +45,7 @@ export default function DataEvaluationPage() {
     searchParams,
     setSearchParams,
     handleFiltersChange,
+    handleKeywordChange,
     fetchData,
   } = useFetchData<EvaluationTask>(
     getPagedEvaluationTaskUsingGet,
@@ -220,9 +221,7 @@ export default function DataEvaluationPage() {
         {/* 搜索、筛选和视图控制 */}
         <SearchControls
           searchTerm={searchParams.keyword}
-          onSearchChange={(keyword) =>
-            setSearchParams({ ...searchParams, keyword })
-          }
+          onSearchChange={handleKeywordChange}
           searchPlaceholder={t("dataEvaluation.home.searchPlaceholder")}
           filters={filterOptions}
           onFiltersChange={handleFiltersChange}

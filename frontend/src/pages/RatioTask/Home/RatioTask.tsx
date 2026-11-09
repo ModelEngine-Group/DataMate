@@ -3,6 +3,7 @@ import { Button, Card, Table, App, Badge, Tooltip } from "antd";
 import { Plus } from "lucide-react";
 import { DeleteOutlined } from "@ant-design/icons";
 import type { RatioTaskItem } from "@/pages/RatioTask/ratio.model";
+import { RatioStatus } from "@/pages/RatioTask/ratio.model";
 import { useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 import CardView from "@/components/CardView";
@@ -79,7 +80,7 @@ export default function RatioTasksPage() {
         { label: t("ratioTask.home.filters.allStatus"), value: "all" },
         { label: t("ratioTask.home.filters.pending"), value: "PENDING" },
         { label: t("ratioTask.home.filters.running"), value: "RUNNING" },
-        { label: t("ratioTask.home.filters.success"), value: "SUCCESS" },
+        { label: t("ratioTask.home.filters.success"), value: RatioStatus.COMPLETED },
         { label: t("ratioTask.home.filters.failed"), value: "FAILED" },
         { label: t("ratioTask.home.filters.paused"), value: "PAUSED" },
       ],

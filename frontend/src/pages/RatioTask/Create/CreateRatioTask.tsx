@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Button, Form, message } from "antd";
 import { ArrowLeft, ChevronRight } from "lucide-react";
 import { createRatioTaskUsingPost } from "@/pages/RatioTask/ratio.api.ts";
@@ -28,8 +28,16 @@ export default function CreateRatioTask() {
   const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [creating, setCreating] = useState(false);
   const [distributions, setDistributions] = useState<
-    Record<string, Record<string, number>>
+    Record<string, Record<string, Record<string, number>>>
   >({});
+
+  const handleDatasetsChange = useCallback((list: Dataset[]) => {
+    setDatasets((previous) => {
+      const merged = new Map(previous.map((dataset) => [String(dataset.id), dataset]));
+      list.forEach((dataset) => merged.set(String(dataset.id), dataset));
+      return Array.from(merged.values());
+    });
+  }, []);
 
   const handleCreateRatioTask = async () => {
     try {
@@ -119,7 +127,7 @@ export default function CreateRatioTask() {
                   }));
                 }}
                 onDistributionsChange={(next) => setDistributions(next)}
-                onDatasetsChange={(list) => setDatasets(list)}
+                onDatasetsChange={handleDatasetsChange}
               />
               <ChevronRight className="self-center" />
               <RatioConfig

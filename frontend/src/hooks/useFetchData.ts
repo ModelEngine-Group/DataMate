@@ -12,11 +12,20 @@
 // stopPolling();  // 停止轮询
 // 手动调用 fetchData() 时，如果正在轮询，会重新开始轮询计时
 // 轮询时会同时执行主要的 fetchFunction 和所有额外的轮询函数
-import { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { useDebouncedEffect } from "./useDebouncedEffect";
+import { useState, useRef, useEffect, useCallback } from "react";
 import Loading from "@/utils/loading";
 import { App } from "antd";
 import { useTranslation } from "react-i18next";
+
+interface SearchFilters {
+  type?: string[];
+  status?: string[];
+  tags?: string[];
+  categories?: string[][];
+  selectedStar?: boolean;
+  builtIn?: string[];
+  [key: string]: string[] | string[][] | boolean | undefined;
+}
 
 export default function useFetchData<T>(
   fetchFunc: (params?: any) => Promise<any>,
@@ -48,7 +57,7 @@ export default function useFetchData<T>(
       tags: [] as string[],
       categories: [] as string[][],
       selectedStar: false,
-    },
+    } as SearchFilters,
     current: 1,
     pageSize: 12,
   });
@@ -60,9 +69,6 @@ export default function useFetchData<T>(
   // 组件挂载状态 ref
   const isMountedRef = useRef(true);
   
-  // 跟踪上一次的 searchParams，用于避免重复请求
-  const prevSearchParamsRef = useRef<string>("");
-
   // Pagination configuration
   const [pagination, setPagination] = useState({
     total: 0,
@@ -94,7 +100,7 @@ export default function useFetchData<T>(
     });
   };
 
-  function getFirstOfArray(arr: string[]) {
+  function getFirstOfArray(arr?: string[]) {
     if (!arr || arr.length === 0 || !Array.isArray(arr)) return undefined;
     if (arr[0] === "all") return undefined;
     return arr[0];
@@ -123,18 +129,25 @@ export default function useFetchData<T>(
       }
 
       try {
-        const apiParams = {
+        const builtIn = getFirstOfArray(filter.builtIn);
+        const apiParams: Record<string, unknown> = {
           categories: filter.categories,
           ...extraParams,
           keyword,
           isStar: filter.selectedStar ? true : undefined,
           type: getFirstOfArray(filter?.type) || undefined,
           status: getFirstOfArray(filter?.status) || undefined,
-          built_in: filter?.builtIn !== undefined ? (getFirstOfArray(filter?.builtIn) === "true") : undefined,
+          built_in: builtIn === undefined ? undefined : builtIn === "true",
           tags: filter?.tags?.length ? filter.tags.join(",") : undefined,
           page: current - pageOffset,
           size: pageSize,
         };
+
+        Object.entries(filter).forEach(([key, value]) => {
+          if (!["type", "status", "tags", "categories", "selectedStar", "builtIn"].includes(key)) {
+            apiParams[key] = Array.isArray(value) ? getFirstOfArray(value as string[]) : value;
+          }
+        });
 
         Object.keys(searchParamsRef.current).forEach(key => {
           if (!['keyword', 'filter', 'current', 'pageSize'].includes(key) && apiParams[key as keyof typeof apiParams] === undefined) {
@@ -160,36 +173,35 @@ export default function useFetchData<T>(
         }));
         let result = [];
         if (mapDataFunc) {
-          result = data?.content.map(mapDataFunc) ?? [];
+          result = data?.content?.map(mapDataFunc) ?? [];
         }
         setTableData(result);
+      } catch (error) {
+        if (!isMountedRef.current) {
+          return;
+        }
 
-        if (wasPolling) {
+        if (error && typeof error === "object" && "status" in error && error.status === 401) {
+          message.warning(t('hooks.fetchData.loginRequired'));
+        } else {
+          message.error(t('hooks.fetchData.fetchFailed'));
+        }
+      } finally {
+        if (isMountedRef.current && !skipPollingRestart) {
+          Loading.hide();
+          setLoading(false);
+        }
+        if (wasPolling && isPollingRef.current && isMountedRef.current) {
           const poll = () => {
             pollingTimerRef.current = setTimeout(() => {
-              fetchData({}, true).then(() => {
-                if (pollingTimerRef.current && isMountedRef.current) {
+              fetchDataRef.current({}, true).then(() => {
+                if (isPollingRef.current && isMountedRef.current) {
                   poll();
                 }
               });
             }, pollingInterval);
           };
           poll();
-        }
-      } catch (error) {
-        if (!isMountedRef.current) {
-          return;
-        }
-        
-        if (error.status === 401) {
-          message.warn(t('hooks.fetchData.loginRequired'));
-        } else {
-          message.error(t('hooks.fetchData.fetchFailed'));
-        }
-      } finally {
-        if (isMountedRef.current) {
-          Loading.hide();
-          setLoading(false);
         }
       }
     },
@@ -213,8 +225,8 @@ export default function useFetchData<T>(
 
     const poll = () => {
       pollingTimerRef.current = setTimeout(() => {
-        fetchData({}, true).then(() => {
-          if (pollingTimerRef.current && isMountedRef.current) {
+        fetchDataRef.current({}, true).then(() => {
+          if (isPollingRef.current && isMountedRef.current) {
             poll();
           }
         });
@@ -231,45 +243,23 @@ export default function useFetchData<T>(
     isPollingRef.current = false;
   }, [clearPollingTimer]);
 
-  // 搜索参数变化时，自动刷新数据
-  // 使用 useEffect + 深比较，而不是将对象作为依赖项
+  // 使用最新回调，避免内联映射函数变化取消尚未执行的搜索请求。
+  const fetchDataRef = useRef(fetchData);
+  fetchDataRef.current = fetchData;
+  const searchParamsKey = JSON.stringify(searchParams);
+
   useEffect(() => {
-    if (!isMountedRef.current) return;
-    
-    // 序列化当前参数
-    const currentParamsString = JSON.stringify({
-      keyword: searchParams.keyword,
-      filterType: searchParams.filter.type,
-      filterStatus: searchParams.filter.status,
-      filterTags: searchParams.filter.tags,
-      filterCategories: searchParams.filter.categories,
-      selectedStar: searchParams.filter.selectedStar,
-      current: searchParams.current,
-      pageSize: searchParams.pageSize,
-    });
-    
-    // 检查参数是否真的变化了
-    if (currentParamsString === prevSearchParamsRef.current) {
-      return;
-    }
-    prevSearchParamsRef.current = currentParamsString;
-    
     // 防抖处理
     const timer = setTimeout(() => {
       if (isMountedRef.current) {
-        fetchData();
+        fetchDataRef.current();
       }
-    }, searchParams?.keyword ? 500 : 0);
+    }, searchParamsRef.current.keyword ? 500 : 0);
     
     return () => {
       clearTimeout(timer);
     };
-  }, [searchParams, fetchData]);
-
-  // 组件挂载时重置 prevSearchParamsRef，解决 StrictMode 双重挂载问题
-  useEffect(() => {
-    prevSearchParamsRef.current = "";
-  }, []);
+  }, [searchParamsKey]);
 
   // 组件卸载时清理轮询和状态
   useEffect(() => {

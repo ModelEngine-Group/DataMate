@@ -61,7 +61,7 @@ export default function RatioTaskDetail() {
 
   useEffect(() => {
     fetchRatioTask();
-  }, [t]);
+  }, [fetchRatioTask]);
 
   const handleRefresh = useCallback(
     async (showMessage = true) => {
@@ -73,7 +73,7 @@ export default function RatioTaskDetail() {
 
   const handleDelete = async () => {
     await deleteRatioTasksUsingDelete(id as string);
-    navigate("/ratio/task");
+    navigate("/data/synthesis/ratio-task");
     message.success(t("ratioTask.detail.messages.deleteSuccess"));
   };
 
@@ -113,7 +113,7 @@ export default function RatioTaskDetail() {
       danger: true,
       confirm: {
         title: t("ratioTask.detail.confirm.deleteTitle"),
-        description: t("ratioTask.detail.confirm.deleteDesc", { itemName: task.name }),
+        description: t("ratioTask.detail.confirm.deleteDesc", { itemName: ratioTask.name }),
         okText: t("dataManagement.confirm.deleteConfirm"),
         cancelText: t("dataManagement.confirm.deleteCancel"),
         okType: "danger",
