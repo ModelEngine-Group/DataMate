@@ -34,7 +34,11 @@ export function getTagConfigUsingGet() {
 
 // 标注模板管理
 export function queryAnnotationTemplatesUsingGet(params?: any) {
-  return get("/api/annotation/template", params);
+  const { built_in, ...rest } = params || {};
+  return get("/api/annotation/template", {
+    ...rest,
+    builtIn: built_in ?? rest.builtIn,
+  });
 }
 
 export function createAnnotationTemplateUsingPost(data: any) {

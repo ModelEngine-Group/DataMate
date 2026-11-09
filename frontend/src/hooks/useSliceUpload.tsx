@@ -107,6 +107,7 @@ export function useFileSliceUpload(
     let newTask = { ...task };
     // 使用 datasetId 调用 API，key 用于唯一标识任务
     await uploadChunk(datasetId || key, formData, {
+      signal: task.controller.signal,
       onUploadProgress: (e) => {
         const loadedSize = loaded + e.loaded;
         const curPercent = Number((loadedSize / totalSize) * 100).toFixed(2);
@@ -185,12 +186,13 @@ export function useFileSliceUpload(
       const totalSize = files.reduce((acc, file) => acc + file.size, 0);
       await uploadFile({ task, files, totalSize });
     } catch (err) {
+      if (task.controller.signal.aborted) return;
       console.error(err);
       message.error(t('hooks.sliceUpload.uploadFailed'));
       removeTask({
         ...task,
-        isCancel: true,
         ...taskListRef.current.find((item) => item.key === task.key),
+        isCancel: true,
       });
     }
   };

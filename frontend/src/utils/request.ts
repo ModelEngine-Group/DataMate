@@ -20,23 +20,20 @@ class Request {
   }
 
   _count = 0;
-  $interval;
 
   get count() {
     return this._count;
   }
 
   set count(value) {
-    clearTimeout(this.$interval);
-    if (value > 0) {
+    const nextCount = Math.max(0, value);
+    if (this._count === 0 && nextCount > 0) {
       Loading.show();
     }
-    if (value <= 0) {
-      this.$interval = setTimeout(() => {
-        Loading.hide();
-      }, 300);
+    if (this._count > 0 && nextCount === 0) {
+      Loading.hide();
     }
-    this._count = value >= 0 ? value : 0;
+    this._count = nextCount;
   }
 
   /**
@@ -84,71 +81,56 @@ class Request {
    */
   createXHRWithProgress(url, config, onProgress, onDownloadProgress) {
     return new Promise((resolve, reject) => {
+      if (config.signal?.aborted) {
+        reject(new DOMException("上传已取消", "AbortError"));
+        return;
+      }
       const xhr = new XMLHttpRequest();
-      xhr.open("POST", url);
+      xhr.open(config.method || "POST", url);
+      xhr.withCredentials = config.credentials === "include";
+      if (config.timeout) xhr.timeout = config.timeout;
 
-      // 设置请求头
       if (config.headers) {
         Object.keys(config.headers).forEach((key) => {
           xhr.setRequestHeader(key, config.headers[key]);
         });
       }
 
-      // 监听上传进度
-      xhr.upload.addEventListener("progress", function (event) {
-        if (event.lengthComputable) {
-          if (onProgress) {
-            onProgress(event);
-          }
-          if (onDownloadProgress) {
-            onDownloadProgress(event);
-          }
-        }
+      xhr.upload.addEventListener("progress", (event) => {
+        if (event.lengthComputable) onProgress?.(event);
+      });
+      xhr.addEventListener("progress", (event) => {
+        if (event.lengthComputable) onDownloadProgress?.(event);
       });
 
-      // 请求完成处理
       xhr.addEventListener("load", () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          let response;
-          try {
-            // 尝试解析JSON
-            const contentType = xhr.getResponseHeader("content-type");
-            if (contentType && contentType.includes("application/json")) {
-              response = JSON.parse(xhr.responseText);
-            } else {
-              response = xhr.responseText;
-            }
-          } catch (e) {
-            response = xhr.responseText;
+        let response = xhr.responseText;
+        try {
+          const contentType = xhr.getResponseHeader("content-type");
+          if (contentType?.includes("application/json")) {
+            response = JSON.parse(xhr.responseText);
           }
-
-          resolve({
-            data: response,
-            status: xhr.status,
-            statusText: xhr.statusText,
-            headers: xhr.getAllResponseHeaders(),
-            xhr: xhr,
-          });
-        } else {
-          reject(new Error(`HTTP error! status: ${xhr.status}`));
+        } catch {
+          // 保留非 JSON 响应，由响应拦截器处理错误。
         }
+        resolve({
+          data: response,
+          status: xhr.status,
+          statusText: xhr.statusText,
+          headers: xhr.getAllResponseHeaders(),
+          xhr,
+        });
       });
+      xhr.addEventListener("error", () => reject(new Error("网络错误")));
+      xhr.addEventListener("abort", () => reject(new DOMException("上传已取消", "AbortError")));
+      xhr.addEventListener("timeout", () => reject(new Error("请求超时")));
 
-      // 请求错误
-      xhr.addEventListener("error", function () {
-        console.error("网络错误");
-        if (onError) onError(new Error("网络错误"));
-      });
-
-      // 请求中止
-      xhr.addEventListener("abort", function () {
-        console.log("上传已取消");
-        if (onError) onError(new Error("上传已取消"));
-      });
-
+      const abort = () => xhr.abort();
+      config.signal?.addEventListener("abort", abort, { once: true });
+      xhr.addEventListener("loadend", () => {
+        config.signal?.removeEventListener("abort", abort);
+      }, { once: true });
       xhr.send(config.body);
-
-      return xhr; // 返回 xhr 对象以便后续控制
     });
   }
 
@@ -174,11 +156,6 @@ class Request {
    * 处理响应
    */
   async handleResponse(response, config) {
-    // 如果显示了loading，需要隐藏
-    if (config.showLoading) {
-      this.count--;
-    }
-
     // 执行响应拦截器
     const processedResponse = await this.executeResponseInterceptors(
       response,
@@ -252,29 +229,23 @@ class Request {
    * 通用请求方法
    */
   async request(url, config) {
-    // 处理showLoading参数
-    if (config.showLoading) {
-      this.count++;
+    if (config.showLoading) this.count++;
+    try {
+      const processedConfig = await this.executeRequestInterceptors(config);
+      if (processedConfig.onUploadProgress || processedConfig.onDownloadProgress) {
+        const xhrResponse = await this.createXHRWithProgress(
+          url,
+          processedConfig,
+          processedConfig.onUploadProgress,
+          processedConfig.onDownloadProgress
+        );
+        return await this.handleXHRResponse(xhrResponse, processedConfig);
+      }
+      const response = await fetch(url, processedConfig);
+      return await this.handleResponse(response, processedConfig);
+    } finally {
+      if (config.showLoading) this.count--;
     }
-
-    // 执行请求拦截器
-    const processedConfig = await this.executeRequestInterceptors(config);
-
-    // 如果需要进度监听，使用XMLHttpRequest
-    if (config.onUploadProgress || config.onDownloadProgress) {
-      const xhrResponse = await this.createXHRWithProgress(
-        url,
-        processedConfig,
-        config.onUploadProgress,
-        config.onDownloadProgress
-      );
-      return await this.handleXHRResponse(xhrResponse, processedConfig);
-    }
-    // 否则使用fetch
-    if (processedConfig.body instanceof FormData) {
-    }
-    const response = await fetch(url, processedConfig);
-    return await this.handleResponse(response, processedConfig);
   }
 
   /**
@@ -623,7 +594,7 @@ request.addResponseInterceptor(async (response, config) => {
 
   const { status } = response;
 
-  let resData: {};
+  let resData: { code?: string | number; message?: string; msg?: string };
 
   try {
     // 关键点 1: response.data 在原生 fetch 中是不存在的，必须用 .json() 解析
@@ -643,7 +614,7 @@ request.addResponseInterceptor(async (response, config) => {
 
   // 3. 判断成功 (根据你的后端约定：200/0 为成功)
   // 如果是成功状态，直接返回 response，不拦截
-  if (status === 200 && (code === 200 || code === 0 || code === '0')) {
+  if (response.ok && (resData.code == null || [200, '200', 0, '0'].includes(code))) {
     return response;
   }
 

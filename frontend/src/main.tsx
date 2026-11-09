@@ -65,13 +65,13 @@ function getAuthToken(): string | null {
  * 在任何渲染之前检查系统参数 sys.home.page.url，若已配置则立即跳转，确保无闪烁。
  * 使用原始 fetch 但携带 JWT token，避免已登录用户仍收到 401。
  */
-async function checkHomePageRedirect(requireLogin: boolean): Promise<{ redirected: boolean; authNeeded: boolean }> {
+async function checkHomePageRedirect(requireLogin: boolean, authenticated: boolean): Promise<{ redirected: boolean; authNeeded: boolean }> {
   if (window.location.pathname !== '/') {
     return { redirected: false, authNeeded: false };
   }
 
-  // 如果需要登录，检查是否有缓存的登录页URL
-  if (requireLogin) {
+  // 尚未登录且要求登录时，检查是否有缓存的登录页URL
+  if (requireLogin && !authenticated) {
     const cachedUrl = getCachedHomePageUrl();
     if (cachedUrl) {
       window.location.replace(cachedUrl);
@@ -81,7 +81,7 @@ async function checkHomePageRedirect(requireLogin: boolean): Promise<{ redirecte
     return { redirected: false, authNeeded: true };
   }
 
-  // 不需要登录时，检查自定义首页
+  // 已认证或允许匿名访问时，检查自定义首页
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   const token = getAuthToken();
   if (token) {
@@ -118,27 +118,34 @@ async function checkHomePageRedirect(requireLogin: boolean): Promise<{ redirecte
 }
 
 /**
- * 检查是否需要登录（从后端获取配置）
+ * 检查登录策略和当前认证状态（从后端获取）
  * 这个检查应该在应用启动时总是执行，无论当前路径是什么
  */
-async function checkRequireLoginMode(): Promise<boolean> {
+async function checkLoginState(): Promise<{ requireLogin: boolean; authenticated: boolean }> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  const token = getAuthToken();
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
   try {
     const userResponse = await fetch('/api/user/me', {
       method: 'GET',
       credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
     });
 
     if (userResponse.ok) {
       const userResult = await userResponse.json();
       const requireLogin = userResult?.data?.requireLogin ?? false;
-      // 设置全局标记，供 request.ts 使用
+      const authenticated = userResult?.data?.authenticated === true;
+      // 登录策略与认证状态分别保存，已登录时仍需处理后续令牌过期。
       setRequireLoginMode(requireLogin);
-      return requireLogin;
+      return { requireLogin, authenticated };
     } else if (userResponse.status === 401) {
       // /api/user/me 本身返回 401，说明需要登录
       setRequireLoginMode(true);
-      return true;
+      return { requireLogin: true, authenticated: false };
     }
   } catch (e) {
     console.error('[bootstrap] Failed to check login requirement:', e);
@@ -146,7 +153,7 @@ async function checkRequireLoginMode(): Promise<boolean> {
 
   // 默认不需要登录
   setRequireLoginMode(false);
-  return false;
+  return { requireLogin: false, authenticated: false };
 }
 
 async function bootstrap() {
@@ -154,10 +161,10 @@ async function bootstrap() {
   if (!container) return;
 
   // 首先检查是否需要登录（无论当前路径是什么）
-  const requireLogin = await checkRequireLoginMode();
+  const { requireLogin, authenticated } = await checkLoginState();
 
   // 然后检查自定义首页重定向（只在根路径时）
-  const { redirected, authNeeded } = await checkHomePageRedirect(requireLogin);
+  const { redirected, authNeeded } = await checkHomePageRedirect(requireLogin, authenticated);
 
   if (redirected) {
     return;

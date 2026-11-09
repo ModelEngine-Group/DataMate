@@ -490,8 +490,8 @@ export function useFilesOperation(dataset: Dataset, onDatasetUpdate?: () => Prom
       }
     },
     handleRenameFile: async (file, newBaseName: string) => {
+      const trimmed = (newBaseName || "").trim();
       try {
-        const trimmed = (newBaseName || "").trim();
         if (!trimmed) {
           message.warning({ content: "请输入文件名称" });
           return;
@@ -512,8 +512,8 @@ export function useFilesOperation(dataset: Dataset, onDatasetUpdate?: () => Prom
       }
     },
     handleRenameDirectory: async (directoryPath: string, oldName: string, newName: string) => {
+      const trimmed = (newName || "").trim();
       try {
-        const trimmed = (newName || "").trim();
         if (!trimmed) {
           message.warning({ content: "请输入文件夹名称" });
           return;

@@ -5,7 +5,13 @@ export function createEvaluationTaskUsingPost(data: any) {
 }
 
 export function getPagedEvaluationTaskUsingGet(params?: any) {
-  return get("/api/evaluation/tasks", params);
+  const { keyword, taskType, evalMethod, ...rest } = params || {};
+  return get("/api/evaluation/tasks", {
+    ...rest,
+    name: keyword || rest.name,
+    task_type: taskType || rest.task_type,
+    eval_method: evalMethod || rest.eval_method,
+  });
 }
 
 export function deleteEvaluationTaskUsingGet(id: string) {

@@ -17,12 +17,12 @@ import {
   queryCleaningTaskByIdUsingGet, queryCleaningTaskLogByIdUsingGet, queryCleaningTaskResultByIdUsingGet,
   stopCleaningTaskUsingPost,
 } from "../cleansing.api";
-import {getTaskStatusMap, mapTask} from "../cleansing.const";
+import {mapTask} from "../cleansing.const";
 import {CleansingResult, TaskStatus} from "@/pages/DataCleansing/cleansing.model";
 import BasicInfo from "./components/BasicInfo";
 import OperatorTable from "./components/OperatorTable";
 import FileTable from "./components/FileTable";
-import LogsTable from "./components/LogsTable";
+import LogsTable, {type LogEntry} from "./components/LogsTable";
 import {formatExecutionDuration} from "@/utils/unit.ts";
 import {ReloadOutlined} from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
@@ -63,7 +63,7 @@ export default function CleansingTaskDetail() {
     navigate("/data/cleansing");
   };
 
-  const [result, setResult] = useState<CleansingResult[]>();
+  const [result, setResult] = useState<CleansingResult[]>([]);
 
   const fetchTaskResult = async () => {
     if (!id) return;
@@ -76,7 +76,7 @@ export default function CleansingTaskDetail() {
     }
   };
 
-  const [taskLog, setTaskLog] = useState();
+  const [taskLog, setTaskLog] = useState<LogEntry[]>([]);
 
   const fetchTaskLog = async (retryCount: number) => {
     if (!id) return;
@@ -92,20 +92,20 @@ export default function CleansingTaskDetail() {
   const handleRefresh = async () => {
     fetchTaskDetail();
     {activeTab === "files" && await fetchTaskResult()}
-    {activeTab === "logs" && await fetchTaskLog(task.retryCount)}
+    {activeTab === "logs" && await fetchTaskLog(task?.retryCount ?? 0)}
   };
 
   useEffect(() => {
     fetchTaskDetail();
   }, [id, t]);
 
-  const [task, setTask] = useState(null);
+  const [task, setTask] = useState<ReturnType<typeof mapTask> | null>(null);
   const [activeTab, setActiveTab] = useState("basic");
 
   const headerData = {
     ...task,
     icon: <LayoutList className="w-8 h-8" />,
-    status: getTaskStatusMap(t)[task?.status],
+    status: task?.status,
     createdAt: task?.createdAt,
     lastUpdated: task?.updatedAt,
   };
@@ -114,7 +114,7 @@ export default function CleansingTaskDetail() {
     {
       icon: <Clock className="w-4 h-4 text-blue-500" />,
       label: t("dataCleansing.detail.statistics.totalDuration"),
-      value: formatExecutionDuration(task?.startedAt, task?.finishedAt) || "--",
+      value: formatExecutionDuration(task?.startedAt ?? "", task?.finishedAt ?? "") || "--",
     },
     {
       icon: <CheckCircle className="w-4 h-4 text-green-500" />,
@@ -210,12 +210,12 @@ export default function CleansingTaskDetail() {
       <div className="flex-overflow-auto p-6 pt-2 bg-white rounded-md shadow">
         <Tabs activeKey={activeTab} items={tabList} onChange={setActiveTab} />
         <div className="h-full flex-1 overflow-auto">
-          {activeTab === "basic" && (
+          {activeTab === "basic" && task && (
             <BasicInfo task={task} />
           )}
           {activeTab === "operators" && <OperatorTable task={task} />}
           {activeTab === "files" && <FileTable result={result} fetchTaskResult={fetchTaskResult} />}
-          {activeTab === "logs" && <LogsTable taskLog={taskLog} fetchTaskLog={fetchTaskLog} retryCount={task.retryCount} taskName={task.name} taskStatus={task?.status?.value} />}
+          {activeTab === "logs" && <LogsTable taskLog={taskLog} fetchTaskLog={fetchTaskLog} retryCount={task?.retryCount ?? 0} taskName={task?.name ?? ""} taskStatus={task?.status?.value} />}
         </div>
       </div>
     </>

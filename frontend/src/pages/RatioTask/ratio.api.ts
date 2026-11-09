@@ -2,7 +2,11 @@ import { get, post, put, del, download } from "@/utils/request";
 
 // 查询配比任务列表（分页）
 export function queryRatioTasksUsingGet(params?: any) {
-  return get("/api/synthesis/ratio-task", params);
+  const { keyword, ...rest } = params || {};
+  return get("/api/synthesis/ratio-task", {
+    ...rest,
+    name: keyword || rest.name,
+  });
 }
 
 // 查询配比任务详情

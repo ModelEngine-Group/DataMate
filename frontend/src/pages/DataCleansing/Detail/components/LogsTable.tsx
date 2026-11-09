@@ -7,7 +7,7 @@ import VirtualList from 'rc-virtual-list';
 import { streamCleaningTaskLog, downloadCleaningTaskLog } from "../../cleansing.api";
 import { TaskStatus } from "../../cleansing.model";
 
-interface LogEntry {
+export interface LogEntry {
   level: string;
   message: string;
 }
@@ -24,7 +24,7 @@ export default function LogsTable({
   taskStatus
 }: {
   taskLog: LogEntry[],
-  fetchTaskLog: () => Promise<LogEntry[]>,
+  fetchTaskLog: (retryCount: number) => Promise<void>,
   retryCount: number,
   taskName: string,
   taskStatus?: TaskStatus

@@ -1,8 +1,8 @@
-import {Button, Modal, Table, Badge, Input, Popover} from "antd";
+import {App, Button, Modal, Table, Badge, Input, Popover} from "antd";
 import { Download } from "lucide-react";
 import {useEffect, useState} from "react";
 import {useParams} from "react-router";
-import {TaskStatus} from "@/pages/DataCleansing/cleansing.model.ts";
+import {type CleansingResult, TaskStatus} from "@/pages/DataCleansing/cleansing.model.ts";
 import {getTaskStatusMap} from "@/pages/DataCleansing/cleansing.const.tsx";
 import { useTranslation } from "react-i18next";
 
@@ -73,9 +73,13 @@ function JsonValue({ value, depth = 0 }: { value: any; depth?: number }) {
 }
 
 // 模拟文件列表数据
-export default function FileTable({result, fetchTaskResult}) {
+export default function FileTable({result = [], fetchTaskResult}: {
+  result?: CleansingResult[];
+  fetchTaskResult: () => Promise<void>;
+}) {
   const { id = "" } = useParams();
   const { t } = useTranslation();
+  const { message } = App.useApp();
   const [showFileCompareDialog, setShowFileCompareDialog] = useState(false);
   const [selectedFile, setSelectedFile] = useState<any>(null);
   const [selectedFileIds, setSelectedFileIds] = useState<string[]>([]);
@@ -191,7 +195,7 @@ export default function FileTable({result, fetchTaskResult}) {
         </div>
       ),
       onFilter: (value: string, record: any) =>
-        record.srcName.toLowerCase().includes(value.toLowerCase()),
+        (record.srcName || "").toLowerCase().includes(value.toLowerCase()),
       render: (text: string) => (
         <span>{text?.replace(/\.[^/.]+$/, "")}</span>
       ),
@@ -228,7 +232,7 @@ export default function FileTable({result, fetchTaskResult}) {
         </div>
       ),
       onFilter: (value: string, record: any) =>
-        record.destName.toLowerCase().includes(value.toLowerCase()),
+        (record.destName || "").toLowerCase().includes(value.toLowerCase()),
       render: (text: string) => (
         <span>{text?.replace(/\.[^/.]+$/, "")}</span>
       ),
@@ -264,7 +268,7 @@ export default function FileTable({result, fetchTaskResult}) {
         </div>
       ),
       onFilter: (value: string, record: any) =>
-        record.srcType.toLowerCase().includes(value.toLowerCase()),
+        (record.srcType || "").toLowerCase().includes(value.toLowerCase()),
       render: (text: string) => (
         <span className="font-mono text-sm">{text}</span>
       ),
@@ -300,7 +304,7 @@ export default function FileTable({result, fetchTaskResult}) {
         </div>
       ),
       onFilter: (value: string, record: any) =>
-        record.destType.toLowerCase().includes(value.toLowerCase()),
+        (record.destType || "").toLowerCase().includes(value.toLowerCase()),
       render: (text: string) => (
         <span className="font-mono text-sm">{text || "-"}</span>
       ),
