@@ -68,7 +68,8 @@ services:
     ports:
       - '8080:8080'
     environment:
-      - JWT_SECRET=${JWT_SECRET:-}
+      - DB_PASSWORD=${DB_PASSWORD:?DB_PASSWORD is required. Set in .env file}
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET is required. Set in .env file}
       - datamate.jwt.enable=${DATAMATE_JWT_ENABLE:-false}
       - LOG_ROTATION_MAX_SIZE=${LOG_ROTATION_MAX_SIZE:-100MB}
       - LOG_ROTATION_BACKUP_COUNT=${LOG_ROTATION_BACKUP_COUNT:-30}
