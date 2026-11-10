@@ -544,7 +544,7 @@ export default function SynthesisTaskTab() {
             />
           </Form.Item>
           <Form.Item
-            label={t('synthesisTask.home.modal.evalMethod')}
+            label={t('synthesisTask.home.modal.evalMethod.label')}
             name="evalMethod"
             rules={[{ required: true, message: t('synthesisTask.home.modal.evalMethodRequired') }]}
           >
@@ -555,12 +555,14 @@ export default function SynthesisTaskTab() {
             />
           </Form.Item>
           <Form.Item
-            label="评估模型"
+            label={t('synthesisTask.home.modal.evalModel')}
             name="modelId"
-            rules={[{ required: true, message: "请选择评估模型" }]}
+            rules={[{ required: true, message: t('dataEvaluation.create.messages.modelRequired') }]}
           >
             <Select
-              placeholder={modelLoading ? "加载模型中..." : "请选择用于评估的模型"}
+              placeholder={modelLoading
+                ? t('synthesisTask.home.modal.placeholders.modelLoading')
+                : t('synthesisTask.home.modal.placeholders.selectModel')}
               loading={modelLoading}
               options={chatModelOptions}
               showSearch
@@ -568,10 +570,10 @@ export default function SynthesisTaskTab() {
             />
           </Form.Item>
           {currentEvalTask && (
-            <Form.Item label="评估对象">
+            <Form.Item label={t('synthesisTask.home.modal.evalObject')}>
               <div className="text-xs text-gray-500">
-                源类型：合成任务（SYNTHESIS）<br />
-                源名称：{currentEvalTask.name}
+                {t('synthesisTask.home.modal.evalSource')}<br />
+                {t('synthesisTask.home.modal.sourceName', { name: currentEvalTask.name })}
               </div>
             </Form.Item>
           )}

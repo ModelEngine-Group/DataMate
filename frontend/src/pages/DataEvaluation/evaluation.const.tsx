@@ -23,7 +23,6 @@ export function getTaskTypes(t: TFunction) {
 export function getEvalMethods(t: TFunction) {
   return [
     { label: t("dataEvaluation.create.evalMethods.auto"), value: "AUTO" },
-    { label: t("dataEvaluation.create.evalMethods.manual"), value: "MANUAL" },
   ];
 }
 
@@ -33,6 +32,9 @@ export const getEvalType = (type: string, t?: TFunction) => {
 };
 
 export const getEvalMethod = (type: string, t?: TFunction) => {
+  if (type === "MANUAL") {
+    return t ? t("dataEvaluation.create.evalMethods.manual") : "人工评估";
+  }
   if (t) return getEvalMethods(t).find((item) => item.value === type)?.label;
   return EVAL_METHODS.find((item) => item.value === type)?.label;
 };

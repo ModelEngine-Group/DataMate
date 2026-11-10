@@ -4,7 +4,6 @@ import { PlusOutlined } from "@ant-design/icons";
 import { Plus, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
-import InstructionTemplateTab from "./components/InstructionTemplateTab";
 import SynthesisTaskTab from "./components/SynthesisTaskTab";
 
 export default function DataSynthesisPage() {
@@ -37,14 +36,6 @@ export default function DataSynthesisPage() {
         </div>
         <div className="flex items-center gap-2">
           <Button
-            onClick={() => {
-              navigate("/data/synthesis/task/create-template");
-            }}
-            icon={<PlusOutlined />}
-          >
-            {t('synthesisTask.actions.createTemplate')}
-          </Button>
-          <Button
             type="primary"
             onClick={() => navigate("/data/synthesis/task/create")}
             icon={<PlusOutlined />}
@@ -57,11 +48,6 @@ export default function DataSynthesisPage() {
       <Tabs
         items={[
           { key: "tasks", label: t('synthesisTask.tabs.tasks'), children: <SynthesisTaskTab /> },
-          {
-            key: "templates",
-            label: t('synthesisTask.tabs.templates'),
-            children: <InstructionTemplateTab />,
-          },
         ]}
         activeKey={activeTab}
         onChange={setActiveTab}

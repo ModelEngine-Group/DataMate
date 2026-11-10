@@ -31,18 +31,71 @@ export function queryCleaningTaskLogByIdUsingGet(taskId: string | number, retryC
   return get(`/api/cleaning/tasks/${taskId}/log/${retryCount}`);
 }
 
-export function streamCleaningTaskLog(taskId: string | number, retryCount: number = 0): EventSource {
+export interface CleaningTaskLogStream {
+  onmessage: ((event: { data: string }) => void) | null;
+  onerror: ((error: unknown) => void) | null;
+  close: () => void;
+}
+
+export function streamCleaningTaskLog(taskId: string | number, retryCount: number = 0): CleaningTaskLogStream {
   const url = `/api/cleaning/tasks/${taskId}/log/stream?retry_count=${retryCount}`;
-  return new EventSource(url);
+  const controller = new AbortController();
+  const stream: CleaningTaskLogStream = {
+    onmessage: null,
+    onerror: null,
+    close: () => controller.abort(),
+  };
+
+  // Fetch supports the Authorization header supplied by the request interceptor.
+  void (async () => {
+    try {
+      const response = await get(url, null, {
+        responseType: "stream",
+        headers: { Accept: "text/event-stream" },
+        signal: controller.signal,
+      });
+      if (!response.headers.get("content-type")?.includes("text/event-stream") || !response.body) {
+        throw new Error("Invalid log stream response");
+      }
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let data: string[] = [];
+      try {
+        while (!controller.signal.aborted) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          let end: number;
+          while (!controller.signal.aborted && (end = buffer.indexOf("\n")) !== -1) {
+            const line = buffer.slice(0, end).replace(/\r$/, "");
+            buffer = buffer.slice(end + 1);
+            if (line === "") {
+              if (data.length) stream.onmessage?.({ data: data.join("\n") });
+              data = [];
+            } else if (line === "data" || line.startsWith("data:")) {
+              data.push(line.slice(5).replace(/^ /, ""));
+            }
+          }
+        }
+      } finally {
+        await reader.cancel();
+        reader.releaseLock();
+      }
+      if (!controller.signal.aborted) {
+        throw new Error("Log stream ended");
+      }
+    } catch (error) {
+      if (!controller.signal.aborted) stream.onerror?.(error);
+    }
+  })();
+
+  return stream;
 }
 
 export async function downloadCleaningTaskLog(taskId: string | number, retryCount: number = 0): Promise<Blob> {
   const url = `/api/cleaning/tasks/${taskId}/log/${retryCount}/download`;
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error('Failed to download log file');
-  }
-  return response.blob();
+  return get(url, null, { responseType: "blob" });
 }
 
 export function updateCleaningTaskByIdUsingPut(taskId: string | number, data: any) {

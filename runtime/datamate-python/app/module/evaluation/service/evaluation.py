@@ -274,6 +274,7 @@ class EvaluationTaskService:
         """
         logger.info(f"Background evaluation worker started add items for task {task_id}")
         items_ready = False
+        is_manual = False
         async with AsyncSessionLocal() as session:
             task = None
             try:
@@ -282,6 +283,7 @@ class EvaluationTaskService:
                 if task is None:
                     logger.error(f"Evaluation task {task_id} not found, skip background worker")
                     return
+                is_manual = task.eval_method == "MANUAL"
                 factory = EvaluationExecutorFactory(session, task)
                 executor = factory.get_executor(task.source_type)
                 await executor.save_eval_items()
@@ -297,6 +299,10 @@ class EvaluationTaskService:
 
         if not items_ready:
             logger.error(f"Skip evaluation for task {task_id} because item preparation failed")
+            return
+
+        if is_manual:
+            logger.info(f"Manual evaluation task {task_id} is ready for review")
             return
 
         logger.info(f"Background evaluation worker started for task {task_id}")

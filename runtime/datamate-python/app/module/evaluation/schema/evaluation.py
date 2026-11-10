@@ -1,5 +1,5 @@
-from typing import List, Optional, Dict, Any
-from pydantic import BaseModel, Field, field_validator
+from typing import List, Optional, Dict, Any, Literal
+from pydantic import BaseModel, Field, model_validator
 from enum import Enum
 
 from app.core.logging import get_logger
@@ -9,7 +9,7 @@ logger = get_logger(__name__)
 
 class EvaluationConfig(BaseModel):
     """评估配置项"""
-    model_id: str = Field(..., alias="modelId", description="模型id")
+    model_id: Optional[str] = Field(None, alias="modelId", description="模型id（自动评估必填）")
     dimensions: list[dict] = Field(..., alias="dimensions", description="评估维度")
 
 
@@ -21,9 +21,15 @@ class CreateEvaluationTaskRequest(BaseModel):
     source_type: str = Field(..., alias="sourceType", description="待评估对象类型：DATASET/SYNTHESIS")
     source_id: str = Field(..., alias="sourceId", description="待评估对象ID")
     source_name: str = Field(..., alias="sourceName", description="待评估对象名称")
-    eval_method: str = Field("AUTO", alias="evalMethod", description="评估提示词")
+    eval_method: Literal["AUTO", "MANUAL"] = Field("AUTO", alias="evalMethod", description="评估方式")
     eval_prompt: Optional[str] = Field(None, alias="evalPrompt", description="评估提示词")
     eval_config: EvaluationConfig = Field(..., alias="evalConfig", description="评估配置项列表")
+
+    @model_validator(mode="after")
+    def validate_auto_model(self):
+        if self.eval_method == "AUTO" and not (self.eval_config.model_id or "").strip():
+            raise ValueError("modelId is required for automatic evaluation")
+        return self
 
 
 class EvaluationTaskItem(BaseModel):

@@ -68,9 +68,11 @@ async def create_evaluation_task(
     if existing_task.scalar_one_or_none():
         raise BusinessError(ErrorCodes.EVALUATION_MODEL_NOT_FOUND, data={"name": request.name})
 
-    models = await get_model_by_id(db, request.eval_config.model_id)
-    if not models:
-        raise BusinessError(ErrorCodes.EVALUATION_MODEL_NOT_FOUND, data={"model_id": request.eval_config.model_id})
+    models = None
+    if request.eval_method == "AUTO":
+        models = await get_model_by_id(db, request.eval_config.model_id)
+        if not models:
+            raise BusinessError(ErrorCodes.EVALUATION_MODEL_NOT_FOUND, data={"model_id": request.eval_config.model_id})
 
     # 创建评估任务
     task = EvaluationTask(
@@ -81,10 +83,11 @@ async def create_evaluation_task(
         source_type=request.source_type,
         source_id=request.source_id,
         source_name=request.source_name,
+        eval_method=request.eval_method,
         eval_prompt=request.eval_prompt,
         eval_config=json.dumps({
-            "modelId": request.eval_config.model_id,
-            "modelName": models.model_name,
+            "modelId": request.eval_config.model_id if models else None,
+            "modelName": models.model_name if models else None,
             "dimensions": request.eval_config.dimensions,
         }),
         status=TaskStatus.PENDING.value,

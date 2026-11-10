@@ -7,7 +7,7 @@
     "dev": "vite",
     "mock": "cd src/mock && nodemon --config nodemon.json --inspect=0.0.0.0:9229 mock.cjs --env=development --port=8002",
     "build": "vite build",
-    "test": "node --test tests/basic-functionality.test.cjs tests/bootstrap-auth.test.cjs",
+    "test": "node --test tests/basic-functionality.test.cjs tests/bootstrap-auth.test.cjs tests/cleaning-logs.test.cjs",
     "lint": "eslint .",
     "preview": "vite preview"
   },
