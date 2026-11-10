@@ -2338,11 +2338,13 @@
         "evalTitle": "Create Evaluation Task",
         "evalName": "Evaluation Task Name",
         "evalMethod": {
+          "label": "Evaluation Method",
           "auto": "Auto Evaluation",
           "cot": "CoT Evaluation",
           "qa": "QA Evaluation"
         },
         "evalModel": "Evaluation Model",
+        "evalObject": "Evaluation Object",
         "evalSource": "Source: Synthesis Task (SYNTHESIS)",
         "sourceName": "Source Name: {{name}}",
         "startEval": "Start Evaluation",

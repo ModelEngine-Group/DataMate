@@ -179,6 +179,13 @@ class Request {
       throw error;
     }
 
+    if (config.responseType === "stream") {
+      return processedResponse;
+    }
+    if (config.responseType === "blob") {
+      return await processedResponse.blob();
+    }
+
     // 检查响应是否为空
     const contentType = processedResponse.headers.get("content-type");
     if (contentType && contentType.includes("application/json")) {
@@ -600,7 +607,9 @@ request.addResponseInterceptor(async (response, config) => {
     // 关键点 1: response.data 在原生 fetch 中是不存在的，必须用 .json() 解析
     // 关键点 2: 必须用 .clone()，因为流只能读一次。读了克隆的，原版 response 还能留给外面用
     // 关键点 3: 必须 await，因为读取流是异步的
-    resData = await response.clone().json();
+    resData = response.headers.get("content-type")?.includes("application/json")
+      ? await response.clone().json()
+      : {};
   } catch (e) {
     // 如果后端返回的不是 JSON (比如 404 HTML 页面，或者空字符串)，json() 会报错
     // 这里捕获异常，保证 resData 至少是个空对象，不会导致后面取值 crash

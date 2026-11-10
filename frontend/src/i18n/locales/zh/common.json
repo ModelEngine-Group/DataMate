@@ -2337,11 +2337,13 @@
         "evalTitle": "创建评估任务",
         "evalName": "评估任务名称",
         "evalMethod": {
+          "label": "评估方式",
           "auto": "自动评估",
           "cot": "CoT 评估",
           "qa": "QA 评估"
         },
         "evalModel": "评估模型",
+        "evalObject": "评估对象",
         "evalSource": "来源：合成任务（SYNTHESIS）",
         "sourceName": "源名称：{{name}}",
         "startEval": "开始评估",

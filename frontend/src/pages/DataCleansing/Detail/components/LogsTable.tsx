@@ -34,7 +34,7 @@ export default function LogsTable({
   const [selectedLog, setSelectedLog] = useState(retryCount + 1);
   const [streamingLogs, setStreamingLogs] = useState<LogEntry[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
-  const eventSourceRef = useRef<EventSource | null>(null);
+  const eventSourceRef = useRef<ReturnType<typeof streamCleaningTaskLog> | null>(null);
   const { message } = App.useApp();
 
   // Only stream when task is RUNNING and viewing the latest run
@@ -123,7 +123,7 @@ export default function LogsTable({
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${taskName}_${t("dataCleansing.logTable.nthRun", { num: selectedLog })}.log`;
+      a.download = `${taskName}_${t("dataCleansing.detail.logTable.nthRun", { num: selectedLog })}.log`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
