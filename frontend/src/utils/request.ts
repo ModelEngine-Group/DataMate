@@ -430,22 +430,6 @@ class Request {
   }
 
   /**
-   * 获取当前认证 token
-   */
-  getAuthToken() {
-    const session = localStorage.getItem("session");
-    if (session) {
-      try {
-        const sessionData = JSON.parse(session);
-        return sessionData.token;
-      } catch {
-        return null;
-      }
-    }
-    return null;
-  }
-
-  /**
    * 下载文件
    * @param {string} url - 请求URL
    * @param {object} params - 查询参数
@@ -454,27 +438,15 @@ class Request {
    * @param {object} options - 额外的fetch选项，包括showLoading, onDownloadProgress
    */
   async download(url, params = null, filename = "", action = "download", options = {}) {
-    // 对于预览，使用 fetch + blob 方式
+    if (action !== "preview" && action !== "download") return {};
+
+    // 下载与预览统一携带认证头和 Cookie，并复用登录失效处理。
+    const response = await this.get(url, params, { ...options, responseType: "stream" });
+    const blob = await response.blob();
+    const blobUrl = window.URL.createObjectURL(blob);
+    const name = filename || this.parseContentDisposition(response.headers.get("Content-Disposition")) || `download_${Date.now()}`;
+
     if (action === "preview") {
-      const fullURL = this.buildURL(url, params);
-      const config = {
-        method: "GET",
-        ...options,
-      };
-
-      const processedConfig = await this.executeRequestInterceptors(config);
-      const response = await fetch(fullURL, processedConfig);
-
-      // 文件预览不需要执行响应拦截器（因为响应是二进制数据，不是JSON）
-      // 直接检查响应状态
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const blob = await response.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
-      const name = filename || this.parseContentDisposition(response.headers.get("Content-Disposition")) || `download_${Date.now()}`;
-
       return {
         blob,
         blobUrl,
@@ -484,26 +456,18 @@ class Request {
       };
     }
 
-    // 对于下载，使用原生 <a> 标签 + token 参数
-    if (action === "download") {
-      // 获取 token 并添加到 URL 参数中
-      const token = this.getAuthToken();
-      const downloadParams = token ? { ...params, token } : params;
-      const fullURL = this.buildURL(url, downloadParams);
-
-      // 创建隐藏的 <a> 标签触发下载
-      const link = document.createElement("a");
-      link.href = fullURL;
-      link.download = filename || `download_${Date.now()}`;
-      link.style.display = "none";
-      document.body.appendChild(link);
+    const link = document.createElement("a");
+    link.href = blobUrl;
+    link.download = name;
+    link.style.display = "none";
+    document.body.appendChild(link);
+    try {
       link.click();
+    } finally {
       document.body.removeChild(link);
-
-      return { success: true };
+      setTimeout(() => window.URL.revokeObjectURL(blobUrl), 0);
     }
-
-    return {};
+    return { success: true };
   }
 
   /**
