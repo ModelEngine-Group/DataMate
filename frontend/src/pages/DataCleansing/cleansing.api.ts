@@ -1,4 +1,4 @@
-import { get, post, put, del } from "@/utils/request";
+import { get, post, put, del, download } from "@/utils/request";
 
 // 清洗任务相关接口
 export function queryCleaningTasksUsingGet(params?: any) {
@@ -18,13 +18,7 @@ export function queryCleaningTaskResultByIdUsingGet(taskId: string | number) {
 }
 
 export function downloadCleaningTaskFiles(taskId: string | number) {
-  const url = `/api/cleaning/tasks/${taskId}/result/download`;
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `task_${taskId}_files.zip`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  return download(`/api/cleaning/tasks/${taskId}/result/download`, null, `task_${taskId}_files.zip`);
 }
 
 export function queryCleaningTaskLogByIdUsingGet(taskId: string | number, retryCount: number) {

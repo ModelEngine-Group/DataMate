@@ -17,6 +17,7 @@ import type { MenuProps } from 'antd';
 import { Globe } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
+import { get } from "@/utils/request";
 
 export default function WelcomePage() {
   const navigate = useNavigate();
@@ -43,26 +44,19 @@ export default function WelcomePage() {
   ];
 
   const checkDeerFlowDeploy = async (): Promise<boolean> => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-      
-      const response = await fetch('/deer-flow-backend/config', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      await get('/deer-flow-backend/config', null, {
+        responseType: 'stream',
         signal: controller.signal,
         cache: 'no-store'
       });
-      
-      clearTimeout(timeoutId);
-
-      if (response.ok) {
-        return true;
-      }
+      return true;
     } catch (error) {
       console.error('接口检查失败:', error);
+    } finally {
+      clearTimeout(timeoutId);
     }
     return false;
   };

@@ -5,6 +5,7 @@ import {useParams} from "react-router";
 import {type CleansingResult, TaskStatus} from "@/pages/DataCleansing/cleansing.model.ts";
 import {getTaskStatusMap} from "@/pages/DataCleansing/cleansing.const.tsx";
 import { useTranslation } from "react-i18next";
+import { downloadCleaningTaskFiles } from "@/pages/DataCleansing/cleansing.api";
 
 // 渲染 JSON 值的辅助组件
 function JsonValue({ value, depth = 0 }: { value: any; depth?: number }) {
@@ -109,19 +110,7 @@ export default function FileTable({result = [], fetchTaskResult}: {
   };
   const handleDownload = async () => {
     try {
-      const response = await fetch(`/api/cleaning/tasks/${id}/result/download`);
-      if (!response.ok) {
-        throw new Error('Download failed');
-      }
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `task_${id}_files.zip`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      await downloadCleaningTaskFiles(id);
     } catch (error) {
       console.error('Download failed:', error);
       message.error(t("dataCleansing.detail.fileTable.downloadFilesFailed"));

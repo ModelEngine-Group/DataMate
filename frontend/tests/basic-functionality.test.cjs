@@ -293,6 +293,7 @@ test('cleaning file filters tolerate unfinished results and failed downloads sho
     'react-router': { useParams: () => ({ id: 'cleaning-1' }) },
     '@/pages/DataCleansing/cleansing.model.ts': {},
     '@/pages/DataCleansing/cleansing.const.tsx': {},
+    '@/pages/DataCleansing/cleansing.api': { downloadCleaningTaskFiles: async () => { throw new Error('Download failed'); } },
     'react-i18next': { useTranslation: () => ({ t: translate }) },
   }, { fetch: async () => ({ ok: false }), console: { error() {} } }).default;
   const tree = runner.render(() => FileTable({ fetchTaskResult() {} }));
